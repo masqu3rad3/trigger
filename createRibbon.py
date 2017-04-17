@@ -12,7 +12,7 @@ import pymel.core as pm
 import extraProcedures as extra
 reload(extra)
 
-def createRibbon(startPoint, endPoint, name):
+def createRibbon(startPoint, endPoint, name, orientation):
     nonScaleGrp=pm.group(em=True, name="RBN_nonScaleGrp_"+name)
     ribbonLength=extra.getDistance(pm.PyNode(startPoint), pm.PyNode(endPoint))
     nSurfTrans=pm.nurbsPlane(ax=(0,0,1),u=5,v=1, w=ribbonLength, lr=(1.0/ribbonLength), name="nSurf_"+name)
@@ -112,7 +112,7 @@ def createRibbon(startPoint, endPoint, name):
     scaleGrp=pm.group(name="RBN_ScaleGrp_"+name)
     tempPoCon=pm.pointConstraint(startPoint, endPoint, scaleGrp)
     pm.delete(tempPoCon)
-    tempAimCon=pm.aimConstraint(endPoint, scaleGrp, aim=(1,0,0), o=(-90,0,0))
+    tempAimCon=pm.aimConstraint(endPoint, scaleGrp, aim=(1,0,0), o=(orientation,0,0))
     pm.delete(tempAimCon)
     
     ### Create Stretch Squash Nodes

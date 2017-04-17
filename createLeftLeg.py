@@ -537,7 +537,7 @@ def createLeg(whichLeg):
         
         # Upperleg Ribbon
         
-        ribbonConnections_upperLeg=cr.createRibbon("Loc_Root_"+whichLeg, "Loc_Knee_"+whichLeg, "up_"+whichLeg)
+        ribbonConnections_upperLeg=cr.createRibbon("Loc_Root_"+whichLeg, "Loc_Knee_"+whichLeg, "up_"+whichLeg, -90)
         
         ribbonStart_paCon_upperLeg_Start=pm.parentConstraint(jIK_orig_Root, jFK_Root, ribbonConnections_upperLeg[0], mo=True)
         ribbonStart_paCon_upperLeg_End=pm.parentConstraint(midLock_IK, midLock_FK, ribbonConnections_upperLeg[1], mo=True)
@@ -550,7 +550,7 @@ def createLeg(whichLeg):
         
         # Lowerleg Ribbon
         
-        ribbonConnections_lowerLeg=cr.createRibbon("Loc_Knee_"+whichLeg, "Loc_Foot_"+whichLeg, "low_"+whichLeg)
+        ribbonConnections_lowerLeg=cr.createRibbon("Loc_Knee_"+whichLeg, "Loc_Foot_"+whichLeg, "low_"+whichLeg, 90)
         
         ribbonStart_paCon_lowerLeg_Start=pm.parentConstraint(midLock_IK, midLock_FK, ribbonConnections_lowerLeg[0], mo=True)
         ribbonStart_paCon_lowerLeg_End=pm.parentConstraint(jIK_orig_End, jFK_Foot, ribbonConnections_lowerLeg[1], mo=True)
@@ -561,16 +561,6 @@ def createLeg(whichLeg):
         cont_FK_IK.fk_ik >> (ribbonStart_paCon_lowerLeg_End+"."+jIK_orig_End+"W0")
         fk_ik_rvs.outputX >> (ribbonStart_paCon_lowerLeg_End+"."+jFK_Foot+"W1")
         
-        #LowerlegEnd_Sw_tr_RBN=pm.createNode("blendColors", name="LowerlegEnd_Sw_tr_RBN_"+whichLeg)
-        #LowerlegEnd_Sw_rot_RBN=pm.createNode("blendColors", name="LowerlegEnd_Sw_rot_RBN_"+whichLeg)
-        #jIK_orig_End.translate >> LowerlegEnd_Sw_tr_RBN.color2
-        #jFK_Foot.translate >> LowerlegEnd_Sw_tr_RBN.color1
-        #jIK_orig_End.rotate >> LowerlegEnd_Sw_rot_RBN.color2
-        #jFK_Foot.rotate >> LowerlegEnd_Sw_rot_RBN.color1
-        #cont_FK_IK.fk_ik >> LowerlegEnd_Sw_tr_RBN.blender
-        #cont_FK_IK.fk_ik >> LowerlegEnd_Sw_rot_RBN.blender
-        #LowerlegEnd_Sw_tr_RBN.output >> ribbonConnections_lowerLeg[1].translate
-        #LowerlegEnd_Sw_rot_RBN.output >> ribbonConnections_lowerLeg[1].rotate
         
         # Foot Joint
         
