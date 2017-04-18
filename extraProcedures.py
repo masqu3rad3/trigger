@@ -9,8 +9,6 @@ def getDistance( objA, objB ):
     Bx, By, Bz = objB.getTranslation(space="world")
     return (  (Ax-Bx)**2 + (Ay-By)**2 + (Az-Bz)**2  )**0.5
     
-    
-    
 def createUpGrp(obj, suffix):
     grpName = (obj.name() + "_" + suffix)
     slJoGrp = pm.group (em=True,name=grpName)
