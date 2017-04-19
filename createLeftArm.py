@@ -88,7 +88,7 @@ ikHandle_RP=pm.ikHandle(sj=jIK_RP_Up, ee=jIK_RP_LowEnd, name="ikHandle_RP_"+whic
 ###Create Control Curve - IK
 cont_IK_hand=pm.circle(nrx=1, nry=0, nrz=0, name="cont_IK_hand_"+whichArm)
 extra.alignTo(cont_IK_hand, jIK_RP_LowEnd)
-tempAimCon=pm.aimConstraint(jIK_RP_Low, cont_IK_hand)
+tempAimCon=pm.aimConstraint(jIK_RP_Low, cont_IK_hand, o=(0,180,0))
 pm.delete(tempAimCon)
 
 cont_IK_hand_ORE=extra.createUpGrp(cont_IK_hand[0], "_ORE")
@@ -392,8 +392,40 @@ blShape_FKtoIK=pm.blendShape(letterIK, letterFK)
 
 cont_FK_IK=pm.rename(letterFK, "cont_FK_IK_"+whichArm)
 pm.select(cont_FK_IK)
+
+## FK-IK ICON Attributes
 pm.addAttr( shortName="fk_ik", longName="FK_IK", defaultValue=1.0, minValue=0.0, maxValue=1.0, at="float", k=True)
 pm.addAttr( shortName="autoTwist", longName="Auto_Twist", defaultValue=1.0, minValue=0.0, maxValue=1.0, at="float", k=True)
+pm.addAttr( longName="Thumb", at="enum", en="--------", k=True) 
+pm.addAttr( shortName="spreadThumb", longName="Spread_Thumb", defaultValue=0.0, at="float", k=True)
+pm.addAttr( shortName="thumbUpDown", longName="Thumb_Up_Down", defaultValue=0.0, at="float", k=True)
+pm.addAttr( shortName="thumbBendA", longName="Thumb_Bend_A", defaultValue=0.0, at="float", k=True)
+pm.addAttr( shortName="thumbBendB", longName="Thumb_Bend_B", defaultValue=0.0, at="float", k=True)
+
+pm.addAttr( longName="Index_Finger", at="enum", en="--------", k=True) 
+pm.addAttr( shortName="indexBendA", longName="Index_Bend_A", defaultValue=0.0, at="float", k=True)
+pm.addAttr( shortName="indexBendB", longName="Index_Bend_B", defaultValue=0.0, at="float", k=True)
+pm.addAttr( shortName="indexBendC", longName="Index_Bend_C", defaultValue=0.0, at="float", k=True)
+pm.addAttr( shortName="indexSpread", longName="Index_Spread", defaultValue=0.0, at="float", k=True)
+
+pm.addAttr( longName="Middle_Finger", at="enum", en="--------", k=True) 
+pm.addAttr( shortName="middleBendA", longName="Middle_Bend_A", defaultValue=0.0, at="float", k=True)
+pm.addAttr( shortName="middleBendB", longName="Middle_Bend_B", defaultValue=0.0, at="float", k=True)
+pm.addAttr( shortName="middleBendC", longName="Middle_Bend_C", defaultValue=0.0, at="float", k=True)
+pm.addAttr( shortName="middleSpread", longName="Middle_Spread", defaultValue=0.0, at="float", k=True)
+
+pm.addAttr( longName="Ring_Finger", at="enum", en="--------", k=True) 
+pm.addAttr( shortName="ringBendA", longName="Ring_Bend_A", defaultValue=0.0, at="float", k=True)
+pm.addAttr( shortName="ringBendB", longName="Ring_Bend_B", defaultValue=0.0, at="float", k=True)
+pm.addAttr( shortName="ringBendC", longName="Ring_Bend_C", defaultValue=0.0, at="float", k=True)
+pm.addAttr( shortName="ringSpread", longName="Ring_Spread", defaultValue=0.0, at="float", k=True)
+
+pm.addAttr( longName="Pinky_Finger", at="enum", en="--------", k=True) 
+pm.addAttr( shortName="pinkyBendA", longName="Pinky_Bend_A", defaultValue=0.0, at="float", k=True)
+pm.addAttr( shortName="pinkyBendB", longName="Pinky_Bend_B", defaultValue=0.0, at="float", k=True)
+pm.addAttr( shortName="pinkyBendC", longName="Pinky_Bend_C", defaultValue=0.0, at="float", k=True)
+pm.addAttr( shortName="pinkySpread", longName="Pinky_Spread", defaultValue=0.0, at="float", k=True)
+
 
 
 fk_ik_rvs=pm.createNode("reverse", name="fk_ik_rvs"+whichArm)
@@ -417,9 +449,11 @@ pm.makeIdentity(cont_FK_IK, a=True)
 logoScale=initUpperArmDist/4
 pm.setAttr(cont_FK_IK+".scale", (logoScale, logoScale, logoScale))
 pm.makeIdentity(cont_FK_IK, a=True)
-extra.alignTo(cont_FK_IK, "Loc_Up_"+whichArm)
+extra.alignTo(cont_FK_IK, "Loc_LowEnd_"+whichArm)
 
 pm.move(cont_FK_IK, (0,logoScale*2,0), r=True)
+
+cont_FK_IK_POS=extra.createUpGrp(cont_FK_IK, "_POS")
 
 
 ### Create End Lock
@@ -444,7 +478,7 @@ autoTwist.outputX >> endLock_Twist.rotateX
 cont_FK_IK.fk_ik >> endLockRot.blender
 cont_FK_IK.autoTwist >> autoTwist.input2X
 
-
+pm.parentConstraint(endLock, cont_FK_IK_POS, mo=True)
 
 #endLockRot=pm.parentConstraint(IK_parentGRP, jFK_Low, endLock, st=["x","y","z"], mo=True)
 ##pm.setAttr(endLockRot.interpType, 0)
@@ -496,6 +530,9 @@ fk_ik_rvs.outputX >> (ribbonStart_paCon_lowerArm_Start+"."+midLock_FK+"W1")
 ###############################################
 ################### HAND ######################
 ###############################################
+
+handMaster=pm.spaceLocator(name="handMaster"+whichArm)
+extra.alignTo(handMaster, endLock)
 
 pm.select(d=True)
 jDef_Hand=pm.joint(name="jDef_Hand_"+whichArm, p=pm.PyNode("Loc_LowEnd_"+whichArm).getTranslation(space="world"), radius=1.0)
@@ -558,8 +595,33 @@ pm.joint(jDef_thumb01, e=True, zso=True, oj="xyz", sao="yup")
 pm.joint(jDef_thumb02, e=True, zso=True, oj="xyz", sao="yup")
 pm.joint(jDef_thumb03, e=True, zso=True, oj="xyz", sao="yup")
 
+pm.parent(jDef_Hand, handMaster)
 
 ### Hand Controllers
+
+cont_FK_Hand=pm.curve(name="cont_FK_Hand"+whichArm, d=1,p=[(-1,1,1), (-1,1,-1), (1,1,-1), (1,1,1), (-1,1,1), (-1,-1,1), (-1,-1,-1), (-1,1,-1), (-1,1,1), (-1,-1,1), (1,-1,1), (1,1,1), (1,1,-1), (1,-1,-1), (1,-1,1), (1,-1,-1), (-1,-1,-1)],k= [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16])
+extra.alignTo(cont_FK_Hand, pm.PyNode("Loc_LowEnd_"+whichArm))
+temp_AimCon=pm.aimConstraint(pm.PyNode("Loc_LowEnd_"+whichArm), cont_FK_Hand)
+pm.delete(temp_AimCon)
+handContScale=extra.getDistance(pm.PyNode("Loc_index00_"+whichArm), pm.PyNode("Loc_index01_"+whichArm))
+pm.setAttr(cont_FK_Hand.scale, (handContScale,handContScale,handContScale))
+pm.makeIdentity(cont_FK_Hand, a=True, r=False)
+cont_FK_Hand_POS=extra.createUpGrp(cont_FK_Hand, "_POS")
+cont_FK_Hand_ORE=extra.createUpGrp(cont_FK_Hand, "_ORE")
+
+pm.pointConstraint(endLock, handMaster, mo=True)
+#pm.parentConstraint(endLock,cont_FK_Hand_POS)
+pm.parent(cont_FK_Hand_POS, cont_FK_Low)
+handOriCon=pm.orientConstraint(cont_IK_hand, cont_FK_Hand, handMaster, mo=False)
+cont_FK_IK.fk_ik >> (handOriCon+"."+cont_IK_hand[0]+"W0")
+fk_ik_rvs.outputX >> (handOriCon+"."+cont_FK_Hand+"W1")
+
+# handFKIK_blend=pm.createNode("blendColors", name="handFKIK_blend")
+# cont_IK_hand[0].rotate >> handFKIK_blend.color1
+# cont_FK_Hand.rotate >> handFKIK_blend.color2
+# cont_FK_IK.fk_ik >> handFKIK_blend.blender
+# handFKIK_blend.output >> handMaster.rotate
+
 
 divider=3
 ##pinky
@@ -589,6 +651,7 @@ pm.parentConstraint(cont_pinky00, jDef_pinky00)
 pm.parentConstraint(cont_pinky01, jDef_pinky01)
 pm.parentConstraint(cont_pinky02, jDef_pinky02)
 
+pm.parent(cont_pinky00_ORE, handMaster)
 ##ring
 handContScale00=extra.getDistance(jDef_ring00, jDef_ring01)
 handContScale01=extra.getDistance(jDef_ring01, jDef_ring02)
@@ -616,6 +679,7 @@ pm.parentConstraint(cont_ring00, jDef_ring00)
 pm.parentConstraint(cont_ring01, jDef_ring01)
 pm.parentConstraint(cont_ring02, jDef_ring02)
 
+pm.parent(cont_ring00_ORE, handMaster)
 ##middle
 handContScale00=extra.getDistance(jDef_middle00, jDef_middle01)
 handContScale01=extra.getDistance(jDef_middle01, jDef_middle02)
@@ -644,6 +708,7 @@ pm.parentConstraint(cont_middle00, jDef_middle00)
 pm.parentConstraint(cont_middle01, jDef_middle01)
 pm.parentConstraint(cont_middle02, jDef_middle02)
 
+pm.parent(cont_middle00_ORE, handMaster)
 ##index
 handContScale00=extra.getDistance(jDef_index00, jDef_index01)
 handContScale01=extra.getDistance(jDef_index01, jDef_index02)
@@ -673,6 +738,7 @@ pm.parentConstraint(cont_index00, jDef_index00)
 pm.parentConstraint(cont_index01, jDef_index01)
 pm.parentConstraint(cont_index02, jDef_index02)
 
+pm.parent(cont_index00_ORE, handMaster)
 ##thumb
 handContScale00=extra.getDistance(jDef_thumb00, jDef_thumb01)
 handContScale01=extra.getDistance(jDef_thumb01, jDef_thumb02)
@@ -701,80 +767,79 @@ pm.parentConstraint(cont_thumb00, jDef_thumb00)
 pm.parentConstraint(cont_thumb01, jDef_thumb01)
 pm.parentConstraint(cont_thumb02, jDef_thumb02)
 
-## Hand Constraints
+pm.parent(cont_thumb00_ORE, handMaster)
 
 
 
+# ### FINAL ROUND UP
 
-### FINAL ROUND UP
+# # Create Master Root and Scale and nonScale Group
 
-# Create Master Root and Scale and nonScale Group
+# pm.parent(jIK_SC_Root, masterRoot)
+# pm.parent(jIK_RP_Root, masterRoot)
+# pm.parent(jIK_orig_Root, masterRoot)
+# pm.parent(jFK_Root, masterRoot)
 
-pm.parent(jIK_SC_Root, masterRoot)
-pm.parent(jIK_RP_Root, masterRoot)
-pm.parent(jIK_orig_Root, masterRoot)
-pm.parent(jFK_Root, masterRoot)
+# scaleGrp=pm.group(name="scaleGrp_"+whichArm, em=True)
+# nonScaleGrp=pm.group(name="NonScaleGrp_"+whichArm, em=True)
+# tempPoCon=pm.pointConstraint("Loc_Foot_"+whichArm, scaleGrp, mo=False)
+# pm.delete(tempPoCon)
 
-scaleGrp=pm.group(name="scaleGrp_"+whichArm, em=True)
-nonScaleGrp=pm.group(name="NonScaleGrp_"+whichArm, em=True)
-tempPoCon=pm.pointConstraint("Loc_Foot_"+whichArm, scaleGrp, mo=False)
-pm.delete(tempPoCon)
+# pm.parent(masterRoot, scaleGrp)
+# pm.parent(legStart, scaleGrp)
+# pm.parent(legEnd, scaleGrp)
+# pm.parent(IK_parentGRP, scaleGrp)
+# pm.parent(cont_FK_UpLeg_ORE, scaleGrp)
+# pm.parent(cont_FK_LowLeg_ORE, scaleGrp)
+# pm.parent(cont_FK_Foot_ORE, scaleGrp)
+# pm.parent(cont_FK_Ball_ORE, scaleGrp)
+# pm.parent(midLock_FK, scaleGrp)
+# pm.parent(midLock_IK, scaleGrp)
 
-pm.parent(masterRoot, scaleGrp)
-pm.parent(legStart, scaleGrp)
-pm.parent(legEnd, scaleGrp)
-pm.parent(IK_parentGRP, scaleGrp)
-pm.parent(cont_FK_UpLeg_ORE, scaleGrp)
-pm.parent(cont_FK_LowLeg_ORE, scaleGrp)
-pm.parent(cont_FK_Foot_ORE, scaleGrp)
-pm.parent(cont_FK_Ball_ORE, scaleGrp)
-pm.parent(midLock_FK, scaleGrp)
-pm.parent(midLock_IK, scaleGrp)
+# pm.parent(ribbonConnections_upperArm[2], scaleGrp)
+# pm.parent(ribbonConnections_upperArm[3], nonScaleGrp)
 
-pm.parent(ribbonConnections_upperArm[2], scaleGrp)
-pm.parent(ribbonConnections_upperArm[3], nonScaleGrp)
+# pm.parent(ribbonConnections_lowerArm[2], scaleGrp)
+# pm.parent(ribbonConnections_lowerArm[3], nonScaleGrp)
 
-pm.parent(ribbonConnections_lowerArm[2], scaleGrp)
-pm.parent(ribbonConnections_lowerArm[3], nonScaleGrp)
+# pm.parent(jDef_Foot, scaleGrp)
 
-pm.parent(jDef_Foot, scaleGrp)
+# ### Animator Fool Proofing
 
-### Animator Fool Proofing
+# #cont_FK_IK
+# pm.setAttr(cont_FK_IK+".sx", lock=True, keyable=False, channelBox=False)
+# pm.setAttr(cont_FK_IK+".sy", lock=True, keyable=False, channelBox=False)
+# pm.setAttr(cont_FK_IK+".sz", lock=True, keyable=False, channelBox=False)
+# pm.setAttr(cont_FK_IK+".v", lock=True, keyable=False, channelBox=False)
 
-#cont_FK_IK
-pm.setAttr(cont_FK_IK+".sx", lock=True, keyable=False, channelBox=False)
-pm.setAttr(cont_FK_IK+".sy", lock=True, keyable=False, channelBox=False)
-pm.setAttr(cont_FK_IK+".sz", lock=True, keyable=False, channelBox=False)
-pm.setAttr(cont_FK_IK+".v", lock=True, keyable=False, channelBox=False)
+# #cont_FK_Ball
+# pm.setAttr(cont_FK_Ball+".tx", lock=True, keyable=False, channelBox=False)
+# pm.setAttr(cont_FK_Ball+".ty", lock=True, keyable=False, channelBox=False)
+# pm.setAttr(cont_FK_Ball+".tz", lock=True, keyable=False, channelBox=False)
+# pm.setAttr(cont_FK_Ball+".v", lock=True, keyable=False, channelBox=False)
 
-#cont_FK_Ball
-pm.setAttr(cont_FK_Ball+".tx", lock=True, keyable=False, channelBox=False)
-pm.setAttr(cont_FK_Ball+".ty", lock=True, keyable=False, channelBox=False)
-pm.setAttr(cont_FK_Ball+".tz", lock=True, keyable=False, channelBox=False)
-pm.setAttr(cont_FK_Ball+".v", lock=True, keyable=False, channelBox=False)
+# #cont_IK_foot
+# pm.setAttr(cont_IK_foot[0]+".sx", lock=True, keyable=False, channelBox=False)
+# pm.setAttr(cont_IK_foot[0]+".sy", lock=True, keyable=False, channelBox=False)
+# pm.setAttr(cont_IK_foot[0]+".sz", lock=True, keyable=False, channelBox=False)
+# #pm.setAttr(cont_IK_foot[0]+".v", lock=True, keyable=False, channelBox=False)
 
-#cont_IK_foot
-pm.setAttr(cont_IK_foot[0]+".sx", lock=True, keyable=False, channelBox=False)
-pm.setAttr(cont_IK_foot[0]+".sy", lock=True, keyable=False, channelBox=False)
-pm.setAttr(cont_IK_foot[0]+".sz", lock=True, keyable=False, channelBox=False)
-#pm.setAttr(cont_IK_foot[0]+".v", lock=True, keyable=False, channelBox=False)
+# #cont_FK_UpLeg
+# pm.setAttr(cont_FK_UpLeg+".tx", lock=True, keyable=False, channelBox=False)
+# pm.setAttr(cont_FK_UpLeg+".ty", lock=True, keyable=False, channelBox=False)
+# pm.setAttr(cont_FK_UpLeg+".tz", lock=True, keyable=False, channelBox=False)
+# pm.setAttr(cont_FK_UpLeg+".v", lock=True, keyable=False, channelBox=False)
 
-#cont_FK_UpLeg
-pm.setAttr(cont_FK_UpLeg+".tx", lock=True, keyable=False, channelBox=False)
-pm.setAttr(cont_FK_UpLeg+".ty", lock=True, keyable=False, channelBox=False)
-pm.setAttr(cont_FK_UpLeg+".tz", lock=True, keyable=False, channelBox=False)
-pm.setAttr(cont_FK_UpLeg+".v", lock=True, keyable=False, channelBox=False)
+# #cont_FK_LowLeg
+# pm.setAttr(cont_FK_LowLeg+".tx", lock=True, keyable=False, channelBox=False)
+# pm.setAttr(cont_FK_LowLeg+".ty", lock=True, keyable=False, channelBox=False)
+# pm.setAttr(cont_FK_LowLeg+".tz", lock=True, keyable=False, channelBox=False)
+# pm.setAttr(cont_FK_LowLeg+".v", lock=True, keyable=False, channelBox=False)
 
-#cont_FK_LowLeg
-pm.setAttr(cont_FK_LowLeg+".tx", lock=True, keyable=False, channelBox=False)
-pm.setAttr(cont_FK_LowLeg+".ty", lock=True, keyable=False, channelBox=False)
-pm.setAttr(cont_FK_LowLeg+".tz", lock=True, keyable=False, channelBox=False)
-pm.setAttr(cont_FK_LowLeg+".v", lock=True, keyable=False, channelBox=False)
-
-#cont_FK_Foot
-pm.setAttr(cont_FK_Foot+".tx", lock=True, keyable=False, channelBox=False)
-pm.setAttr(cont_FK_Foot+".ty", lock=True, keyable=False, channelBox=False)
-pm.setAttr(cont_FK_Foot+".tz", lock=True, keyable=False, channelBox=False)
-pm.setAttr(cont_FK_Foot+".v", lock=True, keyable=False, channelBox=False)
+# #cont_FK_Foot
+# pm.setAttr(cont_FK_Foot+".tx", lock=True, keyable=False, channelBox=False)
+# pm.setAttr(cont_FK_Foot+".ty", lock=True, keyable=False, channelBox=False)
+# pm.setAttr(cont_FK_Foot+".tz", lock=True, keyable=False, channelBox=False)
+# pm.setAttr(cont_FK_Foot+".v", lock=True, keyable=False, channelBox=False)
 
 
