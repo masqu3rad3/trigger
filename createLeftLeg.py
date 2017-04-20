@@ -169,11 +169,11 @@ def createLeg(whichLeg):
         ###Create Midlock - IK
 
         midLock_IK=pm.spaceLocator(name="midLock_IK_"+whichLeg)
-
-        extra.alignTo(midLock_IK, pm.PyNode("Loc_Knee_"+whichLeg))
         pm.makeIdentity(a=True)
+        extra.alignTo(midLock_IK, pm.PyNode("Loc_Knee_"+whichLeg))
+        
         pm.pointConstraint(jIK_orig_Knee, midLock_IK, mo=False)
-        MidLockIK_ori=pm.orientConstraint(jIK_orig_Root, jIK_orig_Knee, midLock_IK, mo=True)
+        MidLockIK_ori=pm.orientConstraint(jIK_orig_Root, jIK_orig_Knee, midLock_IK, mo=False)
         pm.setAttr(MidLockIK_ori.interpType, 0)
 
         ###Create Pole Vector Curve - IK
@@ -463,6 +463,7 @@ def createLeg(whichLeg):
         pm.pointConstraint(jFK_Knee, midLock_FK, mo=False)
         MidLockFK_ori=pm.orientConstraint(jFK_Root, jFK_Knee, midLock_FK, mo=False)
         pm.setAttr(MidLockFK_ori.interpType, 0)
+        
 
         ### CReate Constraints and Hierarchy
         pm.orientConstraint(cont_FK_UpLeg, jFK_Root, mo=False)
