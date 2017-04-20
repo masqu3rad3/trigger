@@ -508,6 +508,7 @@ def createLeg(whichLeg):
         cont_FK_IK=pm.rename(letterFK, "cont_FK_IK_"+whichLeg)
         pm.select(cont_FK_IK)
         pm.addAttr( shortName="fk_ik", longName="FK_IK", defaultValue=1.0, minValue=0.0, maxValue=1.0, at="float", k=True)
+        pm.addAttr( shortName="autoTwist", longName="Auto_Twist", defaultValue=1.0, minValue=0.0, maxValue=1.0, at="float", k=True)
 
         fk_ik_rvs=pm.createNode("reverse", name="fk_ik_rvs"+whichLeg)
         cont_FK_IK.fk_ik >> blShape_FKtoIK[0].weight[0]
@@ -536,8 +537,39 @@ def createLeg(whichLeg):
         tempPoCon=pm.pointConstraint("Loc_Foot_"+whichLeg, cont_FK_IK, mo=False)
         pm.delete(tempPoCon)
         pm.move(cont_FK_IK, (logoScale*2,0,0), r=True)
-            
-            
+        
+        cont_FK_IK_POS=extra.createUpGrp(cont_FK_IK, "_POS")
+
+        
+        ### Create End Lock
+        endLock=pm.spaceLocator(name="endLock_"+whichLeg)
+        extra.alignTo(endLock, jIK_orig_End)
+        endLock_Ore=extra.createUpGrp(endLock, "_Ore")
+        endLock_Pos=extra.createUpGrp(endLock, "_Pos")
+        endLock_Twist=extra.createUpGrp(endLock, "_Twist")
+        tempAimCon=pm.aimConstraint(jIK_orig_Knee, endLock_Ore, o=(0,180,0))
+        pm.delete(tempAimCon)
+        endLockWeight=pm.pointConstraint(jIK_orig_End, jFK_Foot, endLock_Pos, mo=False)
+        cont_FK_IK.fk_ik >> (endLockWeight+"."+jIK_orig_End+"W0")
+        fk_ik_rvs.outputX >> (endLockWeight+"."+jFK_Foot+"W1")
+        
+        #endLockRot=pm.createNode("blendColors", name="endLockRot_"+whichLeg)
+        #autoTwist=pm.createNode("multiplyDivide", name="autoTwist_"+whichLeg)
+        
+        #IK_parentGRP.rotateX >> endLockRot.color1R
+        #jFK_Foot.rotateX >> endLockRot.color2R
+        #endLockRot.outputR >> autoTwist.input1X
+        #autoTwist.outputX >> endLock_Twist.rotateX
+        #cont_FK_IK.fk_ik >> endLockRot.blender
+        #cont_FK_IK.autoTwist >> autoTwist.input2X
+
+        pm.parentConstraint(endLock, cont_FK_IK_POS, mo=True)
+
+        endLockRot=pm.parentConstraint(IK_parentGRP, jFK_Foot, endLock, mo=True)
+        pm.setAttr(endLockRot.interpType, 0)
+        cont_FK_IK.fk_ik >> (endLockRot+"."+IK_parentGRP+"W0")
+        fk_ik_rvs.outputX >> (endLockRot+"."+jFK_Foot+"W1")
+        
         ### Create Tigh Controller
         cont_thigh=pm.curve(name="cont_thigh"+whichLeg, d=1,p=[(-1,1,1), (-1,1,-1), (1,1,-1), (1,1,1), (-1,1,1), (-1,-1,1), (-1,-1,-1), (-1,1,-1), (-1,1,1), (-1,-1,1), (1,-1,1), (1,1,1), (1,1,-1), (1,-1,-1), (1,-1,1), (1,-1,-1), (-1,-1,-1)],k= [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16])
         extra.alignTo(cont_thigh, pm.PyNode("jFK_Root_"+whichLeg))
@@ -579,13 +611,13 @@ def createLeg(whichLeg):
         ribbonConnections_lowerLeg=cr.createRibbon("Loc_Knee_"+whichLeg, "Loc_Foot_"+whichLeg, "low_"+whichLeg, 90)
 
         ribbonStart_paCon_lowerLeg_Start=pm.parentConstraint(midLock_IK, midLock_FK, ribbonConnections_lowerLeg[0], mo=True)
-        ribbonStart_paCon_lowerLeg_End=pm.parentConstraint(jIK_orig_End, jFK_Foot, ribbonConnections_lowerLeg[1], mo=True)
+        ribbonStart_paCon_lowerLeg_End=pm.parentConstraint(endLock, ribbonConnections_lowerLeg[1], mo=True)
 
         cont_FK_IK.fk_ik >> (ribbonStart_paCon_lowerLeg_Start+"."+midLock_IK+"W0")
         fk_ik_rvs.outputX >> (ribbonStart_paCon_lowerLeg_Start+"."+midLock_FK+"W1")
 
-        cont_FK_IK.fk_ik >> (ribbonStart_paCon_lowerLeg_End+"."+jIK_orig_End+"W0")
-        fk_ik_rvs.outputX >> (ribbonStart_paCon_lowerLeg_End+"."+jFK_Foot+"W1")
+        #cont_FK_IK.fk_ik >> (ribbonStart_paCon_lowerLeg_End+"."+jIK_orig_End+"W0")
+        #fk_ik_rvs.outputX >> (ribbonStart_paCon_lowerLeg_End+"."+jFK_Foot+"W1")
 
         pm.scaleConstraint(scaleGrp,ribbonConnections_lowerLeg[2])
 
