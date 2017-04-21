@@ -544,12 +544,12 @@ def createLeg(whichLeg):
         
         ### Create End Lock
         endLock=pm.spaceLocator(name="endLock_"+whichLeg)
-        extra.alignTo(endLock, jIK_orig_End)
+        extra.alignTo(endLock, pm.PyNode("Loc_Foot_"+whichLeg))
         endLock_Ore=extra.createUpGrp(endLock, "_Ore")
         endLock_Pos=extra.createUpGrp(endLock, "_Pos")
         endLock_Twist=extra.createUpGrp(endLock, "_Twist")
-        tempAimCon=pm.aimConstraint(jIK_orig_Knee, endLock_Ore, o=(0,180,0))
-        pm.delete(tempAimCon)
+        #tempAimCon=pm.aimConstraint(jIK_orig_Knee, endLock_Ore, o=(0,180,0))
+        #pm.delete(tempAimCon)
         endLockWeight=pm.pointConstraint(jIK_orig_End, jFK_Foot, endLock_Pos, mo=False)
         cont_FK_IK.fk_ik >> (endLockWeight+"."+jIK_orig_End+"W0")
         fk_ik_rvs.outputX >> (endLockWeight+"."+jFK_Foot+"W1")

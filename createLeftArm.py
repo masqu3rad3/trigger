@@ -10,7 +10,7 @@ import createRibbon as cr
 reload(cr)
 
 
-whichArm="r_arm"
+whichArm="l_arm"
 ###########################
 ######### IK ARM ##########
 ###########################
@@ -20,37 +20,43 @@ whichArm="r_arm"
 #     if (len(legLocators)>=4):
 #         ###Create Joints
 
+##Groups
+scaleGrp=pm.group(name="scaleGrp_"+whichArm, em=True)
+tempPoCon=pm.pointConstraint("jInit_Shoulder_"+whichArm, scaleGrp, mo=False)
+pm.delete(tempPoCon)
+nonScaleGrp=pm.group(name="NonScaleGrp_"+whichArm, em=True)
+
 masterRoot=pm.group(em=True, name="masterRoot_"+whichArm)
-tempPoCon=pm.pointConstraint("Loc_Shoulder_"+whichArm, masterRoot, mo=False)
+tempPoCon=pm.pointConstraint("jInit_Shoulder_"+whichArm, masterRoot, mo=False)
 pm.delete(tempPoCon)
 pm.makeIdentity(a=True)
 
 masterIK=pm.spaceLocator(name="masterIK_"+whichArm)
-tempPoCon=pm.pointConstraint("Loc_LowEnd_"+whichArm, masterIK)
+tempPoCon=pm.pointConstraint("jInit_LowEnd_"+whichArm, masterIK)
 pm.delete(tempPoCon)
 
-initUpperArmDist=extra.getDistance(pm.PyNode("Loc_Up_"+whichArm), pm.PyNode("Loc_Low_"+whichArm))
-initLowerArmDist=extra.getDistance(pm.PyNode("Loc_Low_"+whichArm), pm.PyNode("Loc_LowEnd_"+whichArm))
+initUpperArmDist=extra.getDistance(pm.PyNode("jInit_Up_"+whichArm), pm.PyNode("jInit_Low_"+whichArm))
+initLowerArmDist=extra.getDistance(pm.PyNode("jInit_Low_"+whichArm), pm.PyNode("jInit_LowEnd_"+whichArm))
 
 #Shoulder Joints
 pm.select(d=True)
-jDef_Shoulder=pm.joint(name="jDef_Shoulder_"+whichArm, p=pm.PyNode("Loc_Shoulder_"+whichArm).getTranslation(space="world"), radius=1.5)
-j_ShoulderEnd=pm.joint(name="j_ShoulderEnd_"+whichArm, p=pm.PyNode("Loc_Up_"+whichArm).getTranslation(space="world"), radius=1.5)
+jDef_Shoulder=pm.joint(name="jDef_Shoulder_"+whichArm, p=pm.PyNode("jInit_Shoulder_"+whichArm).getTranslation(space="world"), radius=1.5)
+j_ShoulderEnd=pm.joint(name="j_ShoulderEnd_"+whichArm, p=pm.PyNode("jInit_Up_"+whichArm).getTranslation(space="world"), radius=1.5)
 
 pm.select(d=True)
-jIK_orig_Up=pm.joint(name="jIK_orig_Up_"+whichArm, p=pm.PyNode("Loc_Up_"+whichArm).getTranslation(space="world"), radius=1.5)
-jIK_orig_Low=pm.joint(name="jIK_orig_Low_"+whichArm, p=pm.PyNode("Loc_Low_"+whichArm).getTranslation(space="world"), radius=1.5)
-jIK_orig_LowEnd=pm.joint(name="jIK_orig_LowEnd_"+whichArm, p=pm.PyNode("Loc_LowEnd_"+whichArm).getTranslation(space="world"), radius=1.5)        
+jIK_orig_Up=pm.joint(name="jIK_orig_Up_"+whichArm, p=pm.PyNode("jInit_Up_"+whichArm).getTranslation(space="world"), radius=1.5)
+jIK_orig_Low=pm.joint(name="jIK_orig_Low_"+whichArm, p=pm.PyNode("jInit_Low_"+whichArm).getTranslation(space="world"), radius=1.5)
+jIK_orig_LowEnd=pm.joint(name="jIK_orig_LowEnd_"+whichArm, p=pm.PyNode("jInit_LowEnd_"+whichArm).getTranslation(space="world"), radius=1.5)        
 pm.select(d=True)
 
-jIK_SC_Up=pm.joint(name="jIK_SC_Up_"+whichArm, p=pm.PyNode("Loc_Up_"+whichArm).getTranslation(space="world"), radius=1)
-jIK_SC_Low=pm.joint(name="jIK_SC_Low_"+whichArm, p=pm.PyNode("Loc_Low_"+whichArm).getTranslation(space="world"), radius=1)
-jIK_SC_LowEnd=pm.joint(name="jIK_SC_LowEnd_"+whichArm, p=pm.PyNode("Loc_LowEnd_"+whichArm).getTranslation(space="world"), radius=1)
+jIK_SC_Up=pm.joint(name="jIK_SC_Up_"+whichArm, p=pm.PyNode("jInit_Up_"+whichArm).getTranslation(space="world"), radius=1)
+jIK_SC_Low=pm.joint(name="jIK_SC_Low_"+whichArm, p=pm.PyNode("jInit_Low_"+whichArm).getTranslation(space="world"), radius=1)
+jIK_SC_LowEnd=pm.joint(name="jIK_SC_LowEnd_"+whichArm, p=pm.PyNode("jInit_LowEnd_"+whichArm).getTranslation(space="world"), radius=1)
 pm.select(d=True)
 
-jIK_RP_Up=pm.joint(name="jIK_RP_Up_"+whichArm, p=pm.PyNode("Loc_Up_"+whichArm).getTranslation(space="world"), radius=0.7)
-jIK_RP_Low=pm.joint(name="jIK_RP_Low_"+whichArm, p=pm.PyNode("Loc_Low_"+whichArm).getTranslation(space="world"), radius=0.7)
-jIK_RP_LowEnd=pm.joint(name="jIK_RP_LowEnd_"+whichArm, p=pm.PyNode("Loc_LowEnd_"+whichArm).getTranslation(space="world"), radius=0.7)
+jIK_RP_Up=pm.joint(name="jIK_RP_Up_"+whichArm, p=pm.PyNode("jInit_Up_"+whichArm).getTranslation(space="world"), radius=0.7)
+jIK_RP_Low=pm.joint(name="jIK_RP_Low_"+whichArm, p=pm.PyNode("jInit_Low_"+whichArm).getTranslation(space="world"), radius=0.7)
+jIK_RP_LowEnd=pm.joint(name="jIK_RP_LowEnd_"+whichArm, p=pm.PyNode("jInit_LowEnd_"+whichArm).getTranslation(space="world"), radius=0.7)
 pm.select(d=True)
 
 pm.joint(jDef_Shoulder, e=True, zso=True, oj="xyz", sao="yup")
@@ -68,11 +74,46 @@ pm.joint(jIK_RP_Up, e=True, zso=True, oj="xyz", sao="yup")
 pm.joint(jIK_RP_Low, e=True, zso=True, oj="xyz", sao="yup")
 pm.joint(jIK_RP_LowEnd, e=True, zso=True, oj="xyz", sao="yup")
 
+
+# ### Create End Lock
+# endLock=pm.spaceLocator(name="endLock"+whichArm)
+# extra.alignTo(endLock, pm.PyNode("jInit_LowEnd_"+whichArm))
+# endLock_Ore=extra.createUpGrp(endLock, "_Ore")
+# endLock_Pos=extra.createUpGrp(endLock, "_Pos")
+# endLock_Twist=extra.createUpGrp(endLock, "_Twist")
+
+# endLockWeight=pm.pointConstraint(jIK_orig_LowEnd, jFK_LowEnd, endLock_Pos, mo=False)
+# cont_FK_IK.fk_ik >> (endLockWeight+"."+jIK_orig_LowEnd+"W0")
+# fk_ik_rvs.outputX >> (endLockWeight+"."+jFK_LowEnd+"W1")
+
+# pm.parentConstraint(endLock, cont_FK_IK_POS, mo=True)
+
+# endLockRot=pm.parentConstraint(IK_parentGRP, jFK_Low, endLock, mo=True)
+# pm.setAttr(endLockRot.interpType, 0)
+# cont_FK_IK.fk_ik >> (endLockRot+"."+IK_parentGRP+"W0")
+# fk_ik_rvs.outputX >> (endLockRot+"."+jFK_Low+"W1")
+
+
 ###Create Start Lock
 
+# startLock=pm.spaceLocator(name="startLock"+whichArm)
+# extra.alignTo(startLock, pm.PyNode("jInit_Shoulder_"+whichArm))
+# pm.parent(startLock, j_ShoulderEnd)
+
+# pm.parentConstraint(startLock, jIK_SC_Up, mo=True)
+# pm.parentConstraint(startLock, jIK_RP_Up, mo=True)
+
+
 startLock=pm.spaceLocator(name="startLock"+whichArm)
-extra.alignTo(startLock, j_ShoulderEnd)
-pm.parent(startLock, j_ShoulderEnd)
+extra.alignTo(startLock, pm.PyNode("jInit_Up_"+whichArm))
+startLock_Ore=extra.createUpGrp(startLock, "_Ore")
+startLock_Pos=extra.createUpGrp(startLock, "_Pos")
+startLock_Twist=extra.createUpGrp(startLock, "_Twist")
+
+
+startLockRot=pm.parentConstraint(j_ShoulderEnd,startLock, mo=True)
+pm.setAttr(startLockRot.interpType, 0)
+
 
 pm.parentConstraint(startLock, jIK_SC_Up, mo=True)
 pm.parentConstraint(startLock, jIK_RP_Up, mo=True)
@@ -84,7 +125,7 @@ ikHandle_RP=pm.ikHandle(sj=jIK_RP_Up, ee=jIK_RP_LowEnd, name="ikHandle_RP_"+whic
 
 ###Create Control Curve - IK
 cont_IK_hand=pm.circle(nrx=1, nry=0, nrz=0, name="cont_IK_hand_"+whichArm)
-extra.alignTo(cont_IK_hand, pm.PyNode("Loc_LowEnd_"+whichArm))
+extra.alignTo(cont_IK_hand, pm.PyNode("jInit_LowEnd_"+whichArm))
 #tempAimCon=pm.aimConstraint(jIK_RP_Low, cont_IK_hand, o=(0,180,0))
 #pm.delete(tempAimCon)
 
@@ -101,7 +142,7 @@ pm.addAttr( shortName="stretch", longName="Stretch", defaultValue=100.0, minValu
 
 midLock_IK=pm.spaceLocator(name="midLock_IK_"+whichArm)
 
-extra.alignTo(midLock_IK, pm.PyNode("Loc_Low_"+whichArm))
+extra.alignTo(midLock_IK, pm.PyNode("jInit_Low_"+whichArm))
 pm.makeIdentity(a=True)
 pm.pointConstraint(jIK_orig_Low, midLock_IK, mo=False)
 MidLockIK_ori=pm.orientConstraint(jIK_orig_Up, jIK_orig_Low, midLock_IK, mo=True)
@@ -113,7 +154,7 @@ cont_Pole=pm.curve(name="cont_Pole_"+whichArm, d=1,p=[(-1, 0, -3), (-1, 0, -1),(
 pm.setAttr(cont_Pole+".scale", (0.5,0.5,0.5))
 pm.rotate(cont_Pole, (90,0,0))
 pm.makeIdentity(a=True)
-tempCons=pm.pointConstraint( "Loc_Low_"+whichArm, cont_Pole, w=.1, mo=False)
+tempCons=pm.pointConstraint( "jInit_Low_"+whichArm, cont_Pole, w=.1, mo=False)
 pm.delete(tempCons)
 pm.makeIdentity(a=True)
 pm.move(cont_Pole, (0,0,-5))
@@ -213,7 +254,7 @@ cont_IK_hand[0].stretch >> stretchOffset.input1D[2]
 
 
 IK_parentGRP=pm.group(name="IK_parentGRP_"+whichArm, em=True)
-extra.alignTo(IK_parentGRP, "Loc_LowEnd_"+whichArm)
+extra.alignTo(IK_parentGRP, "jInit_LowEnd_"+whichArm)
 
 pm.parent(ikHandle_SC[0], IK_parentGRP)
 pm.parent(ikHandle_RP[0], IK_parentGRP)
@@ -273,8 +314,10 @@ pm.select(cont_Shoulder)
 pm.setAttr(cont_Shoulder.scale, (initUpperArmDist/5,initUpperArmDist/5,initUpperArmDist/5))
 pm.makeIdentity(cont_Shoulder, a=True)
 cont_Shoulder_POS=extra.createUpGrp(cont_Shoulder, "_POS")
-extra.alignTo(cont_Shoulder_POS, pm.PyNode("Loc_Shoulder_"+whichArm))
-
+extra.alignTo(cont_Shoulder_POS, pm.PyNode("jInit_Shoulder_"+whichArm))
+pm.select(cont_Shoulder)
+pm.addAttr( shortName="autoTwist", longName="Auto_Twist", defaultValue=1.0, minValue=0.0, maxValue=1.0, at="float", k=True)
+pm.select(d=True)
 ### FInal Round UP
 
 pm.parent(jIK_orig_Up, masterRoot)
@@ -296,9 +339,9 @@ jDef_paCon=pm.parentConstraint(cont_Shoulder, jDef_Shoulder, mo=True)
 
         
 pm.select(d=True)
-jFK_Up=pm.joint(name="jFK_Up_"+whichArm, p=pm.PyNode("Loc_Up_"+whichArm).getTranslation(space="world"), radius=1.0)
-jFK_Low=pm.joint(name="jFK_Low_"+whichArm, p=pm.PyNode("Loc_Low_"+whichArm).getTranslation(space="world"), radius=1.0)
-jFK_LowEnd=pm.joint(name="jFK_LowEnd_"+whichArm, p=pm.PyNode("Loc_LowEnd_"+whichArm).getTranslation(space="world"), radius=1.0)
+jFK_Up=pm.joint(name="jFK_Up_"+whichArm, p=pm.PyNode("jInit_Up_"+whichArm).getTranslation(space="world"), radius=1.0)
+jFK_Low=pm.joint(name="jFK_Low_"+whichArm, p=pm.PyNode("jInit_Low_"+whichArm).getTranslation(space="world"), radius=1.0)
+jFK_LowEnd=pm.joint(name="jFK_LowEnd_"+whichArm, p=pm.PyNode("jInit_LowEnd_"+whichArm).getTranslation(space="world"), radius=1.0)
 
 
 pm.joint(jFK_Up, e=True, zso=True, oj="xyz", sao="yup")
@@ -317,7 +360,7 @@ pm.delete(temp_AimCon);
 pm.setAttr(cont_FK_Up.scale, (pm.getAttr(jFK_Low.translateX)/2,0.5,0.5))
 
 
-PvTarget=pm.PyNode("Loc_Up_"+whichArm).getTranslation(space="world")
+PvTarget=pm.PyNode("jInit_Up_"+whichArm).getTranslation(space="world")
 pm.xform(cont_FK_Up, piv=PvTarget, ws=True)
 
 cont_FK_Up_ORE=extra.createUpGrp(cont_FK_Up, "ORE")
@@ -335,7 +378,7 @@ pm.delete(temp_AimCon);
 pm.setAttr(cont_FK_Low.scale, (pm.getAttr(jFK_Low.translateX)/2,0.5,0.5))
 
 
-PvTarget=pm.PyNode("Loc_Low_"+whichArm).getTranslation(space="world")
+PvTarget=pm.PyNode("jInit_Low_"+whichArm).getTranslation(space="world")
 pm.xform(cont_FK_Low, piv=PvTarget, ws=True)
 
 cont_FK_Low_ORE=extra.createUpGrp(cont_FK_Low, "ORE")
@@ -345,7 +388,7 @@ pm.makeIdentity(cont_FK_Low, a=True, t=True, r=False, s=True)
 
 midLock_FK=pm.spaceLocator(name="midLock_FK_"+whichArm)
 pm.makeIdentity(midLock_FK)
-extra.alignTo(midLock_FK, pm.PyNode("Loc_Low_"+whichArm))
+extra.alignTo(midLock_FK, pm.PyNode("jInit_Low_"+whichArm))
 pm.pointConstraint(jFK_Low, midLock_FK, mo=False)
 MidLockFK_ori=pm.orientConstraint(jFK_Up, jFK_Low, midLock_FK, mo=True)
 pm.setAttr(MidLockFK_ori.interpType, 0)
@@ -443,7 +486,7 @@ pm.makeIdentity(cont_FK_IK, a=True)
 logoScale=initUpperArmDist/4
 pm.setAttr(cont_FK_IK+".scale", (logoScale, logoScale, logoScale))
 pm.makeIdentity(cont_FK_IK, a=True)
-extra.alignTo(cont_FK_IK, "Loc_LowEnd_"+whichArm)
+extra.alignTo(cont_FK_IK, "jInit_LowEnd_"+whichArm)
 
 pm.move(cont_FK_IK, (0,logoScale*2,0), r=True)
 
@@ -452,32 +495,21 @@ cont_FK_IK_POS=extra.createUpGrp(cont_FK_IK, "_POS")
 
 ### Create End Lock
 endLock=pm.spaceLocator(name="endLock"+whichArm)
-extra.alignTo(endLock, pm.PyNode("Loc_LowEnd_"+whichArm))
+extra.alignTo(endLock, pm.PyNode("jInit_LowEnd_"+whichArm))
 endLock_Ore=extra.createUpGrp(endLock, "_Ore")
 endLock_Pos=extra.createUpGrp(endLock, "_Pos")
 endLock_Twist=extra.createUpGrp(endLock, "_Twist")
-#tempAimCon=pm.aimConstraint(jFK_Low, endLock_Ore, o=(0,180,0), u=(0,1,0))
-#pm.delete(tempAimCon)
+
 endLockWeight=pm.pointConstraint(jIK_orig_LowEnd, jFK_LowEnd, endLock_Pos, mo=False)
 cont_FK_IK.fk_ik >> (endLockWeight+"."+jIK_orig_LowEnd+"W0")
 fk_ik_rvs.outputX >> (endLockWeight+"."+jFK_LowEnd+"W1")
 
-endLockRot=pm.createNode("blendColors", name="endLockRot_"+whichArm)
-autoTwist=pm.createNode("multiplyDivide", name="autoTwist_"+whichArm)
-
-IK_parentGRP.rotateX >> endLockRot.color1R
-jFK_Low.rotateX >> endLockRot.color2R
-endLockRot.outputR >> autoTwist.input1X
-autoTwist.outputX >> endLock_Twist.rotateX
-cont_FK_IK.fk_ik >> endLockRot.blender
-cont_FK_IK.autoTwist >> autoTwist.input2X
-
 pm.parentConstraint(endLock, cont_FK_IK_POS, mo=True)
 
-#endLockRot=pm.parentConstraint(IK_parentGRP, jFK_Low, endLock, st=["x","y","z"], mo=True)
-##pm.setAttr(endLockRot.interpType, 0)
-#cont_FK_IK.fk_ik >> (endLockRot+"."+IK_parentGRP+"W0")
-#fk_ik_rvs.outputX >> (endLockRot+"."+jFK_Low+"W1")
+endLockRot=pm.parentConstraint(IK_parentGRP, jFK_Low, endLock, mo=True)
+pm.setAttr(endLockRot.interpType, 0)
+cont_FK_IK.fk_ik >> (endLockRot+"."+IK_parentGRP+"W0")
+fk_ik_rvs.outputX >> (endLockRot+"."+jFK_Low+"W1")
     
 ###################################
 #### CREATE DEFORMATION JOINTS ####
@@ -485,20 +517,27 @@ pm.parentConstraint(endLock, cont_FK_IK_POS, mo=True)
 
 # UpperArm Ribbon
 
-ribbonConnections_upperArm=cr.createRibbon("Loc_Up_"+whichArm, "Loc_Low_"+whichArm, "up_"+whichArm, 0)
+ribbonConnections_upperArm=cr.createRibbon("jInit_Up_"+whichArm, "jInit_Low_"+whichArm, "up_"+whichArm, 0)
 
-ribbonStart_paCon_upperArm_Start=pm.parentConstraint(jIK_orig_Up, jFK_Up, ribbonConnections_upperArm[0], mo=True)
+ribbonStart_paCon_upperArm_Start=pm.parentConstraint(startLock, ribbonConnections_upperArm[0], mo=True)
 ribbonStart_paCon_upperArm_End=pm.parentConstraint(midLock_IK, midLock_FK, ribbonConnections_upperArm[1], mo=True)
 
-cont_FK_IK.fk_ik >> (ribbonStart_paCon_upperArm_Start+"."+jIK_orig_Up+"W0")
-fk_ik_rvs.outputX >> (ribbonStart_paCon_upperArm_Start+"."+jFK_Up+"W1")
+#cont_FK_IK.fk_ik >> (ribbonStart_paCon_upperArm_Start+"."+jIK_orig_Up+"W0")
+#fk_ik_rvs.outputX >> (ribbonStart_paCon_upperArm_Start+"."+jFK_Up+"W1")
 
 cont_FK_IK.fk_ik >> (ribbonStart_paCon_upperArm_End+"."+midLock_IK+"W0")
 fk_ik_rvs.outputX >> (ribbonStart_paCon_upperArm_End+"."+midLock_FK+"W1")
 
+pm.scaleConstraint(scaleGrp,ribbonConnections_upperArm[2])
+
+autoTwist=pm.createNode("multiplyDivide", name="autoTwist_"+whichArm)
+cont_Shoulder.autoTwist >> autoTwist.input2X
+ribbonStart_paCon_upperArm_Start.constraintRotate >> autoTwist.input1
+autoTwist.output >> ribbonConnections_upperArm[0].rotate
+
 # LowerArm Ribbon
 
-ribbonConnections_lowerArm=cr.createRibbon("Loc_Low_"+whichArm, "Loc_LowEnd_"+whichArm, "low_"+whichArm, 0)
+ribbonConnections_lowerArm=cr.createRibbon("jInit_Low_"+whichArm, "jInit_LowEnd_"+whichArm, "low_"+whichArm, 0)
 
 ribbonStart_paCon_lowerArm_Start=pm.parentConstraint(midLock_IK, midLock_FK, ribbonConnections_lowerArm[0], mo=True)
 ribbonStart_paCon_lowerArm_End=pm.parentConstraint(endLock, ribbonConnections_lowerArm[1], mo=True)
@@ -508,6 +547,13 @@ fk_ik_rvs.outputX >> (ribbonStart_paCon_lowerArm_Start+"."+midLock_FK+"W1")
 
 # cont_FK_IK.fk_ik >> (ribbonStart_paCon_lowerArm_End+"."+jIK_orig_LowEnd+"W0")
 # fk_ik_rvs.outputX >> (ribbonStart_paCon_lowerArm_End+"."+jFK_LowEnd+"W1")
+
+pm.scaleConstraint(scaleGrp,ribbonConnections_lowerArm[2])
+
+autoTwist=pm.createNode("multiplyDivide", name="autoTwist_"+whichArm)
+cont_FK_IK.autoTwist >> autoTwist.input2X
+ribbonStart_paCon_lowerArm_End.constraintRotate >> autoTwist.input1
+autoTwist.output >> ribbonConnections_lowerArm[1].rotate
 
 #LowerlegEnd_Sw_tr_RBN=pm.createNode("blendColors", name="LowerlegEnd_Sw_tr_RBN_"+whichArm)
 #LowerlegEnd_Sw_rot_RBN=pm.createNode("blendColors", name="LowerlegEnd_Sw_rot_RBN_"+whichArm)
@@ -529,37 +575,37 @@ handMaster=pm.spaceLocator(name="handMaster"+whichArm)
 extra.alignTo(handMaster, endLock)
 
 pm.select(d=True)
-jDef_Hand=pm.joint(name="jDef_Hand_"+whichArm, p=pm.PyNode("Loc_LowEnd_"+whichArm).getTranslation(space="world"), radius=1.0)
+jDef_Hand=pm.joint(name="jDef_Hand_"+whichArm, p=pm.PyNode("jInit_LowEnd_"+whichArm).getTranslation(space="world"), radius=1.0)
 
 pm.select(d=True)
-jDef_pinky00=pm.joint(name="jDef_pinky00_"+whichArm, p=pm.PyNode("Loc_pinky00_"+whichArm).getTranslation(space="world"), radius=1.0)
-jDef_pinky01=pm.joint(name="jDef_pinky01_"+whichArm, p=pm.PyNode("Loc_pinky01_"+whichArm).getTranslation(space="world"), radius=1.0)
-jDef_pinky02=pm.joint(name="jDef_pinky02_"+whichArm, p=pm.PyNode("Loc_pinky02_"+whichArm).getTranslation(space="world"), radius=1.0)
-jDef_pinky03=pm.joint(name="jDef_pinky03_"+whichArm, p=pm.PyNode("Loc_pinky03_"+whichArm).getTranslation(space="world"), radius=1.0)
+jDef_pinky00=pm.joint(name="jDef_pinky00_"+whichArm, p=pm.PyNode("jInit_pinky00_"+whichArm).getTranslation(space="world"), radius=1.0)
+jDef_pinky01=pm.joint(name="jDef_pinky01_"+whichArm, p=pm.PyNode("jInit_pinky01_"+whichArm).getTranslation(space="world"), radius=1.0)
+jDef_pinky02=pm.joint(name="jDef_pinky02_"+whichArm, p=pm.PyNode("jInit_pinky02_"+whichArm).getTranslation(space="world"), radius=1.0)
+jDef_pinky03=pm.joint(name="jDef_pinky03_"+whichArm, p=pm.PyNode("jInit_pinky03_"+whichArm).getTranslation(space="world"), radius=1.0)
 
 pm.select(d=True)
-jDef_ring00=pm.joint(name="jDef_ring00_"+whichArm, p=pm.PyNode("Loc_ring00_"+whichArm).getTranslation(space="world"), radius=1.0)
-jDef_ring01=pm.joint(name="jDef_ring01_"+whichArm, p=pm.PyNode("Loc_ring01_"+whichArm).getTranslation(space="world"), radius=1.0)
-jDef_ring02=pm.joint(name="jDef_ring02_"+whichArm, p=pm.PyNode("Loc_ring02_"+whichArm).getTranslation(space="world"), radius=1.0)
-jDef_ring03=pm.joint(name="jDef_ring03_"+whichArm, p=pm.PyNode("Loc_ring03_"+whichArm).getTranslation(space="world"), radius=1.0)
+jDef_ring00=pm.joint(name="jDef_ring00_"+whichArm, p=pm.PyNode("jInit_ring00_"+whichArm).getTranslation(space="world"), radius=1.0)
+jDef_ring01=pm.joint(name="jDef_ring01_"+whichArm, p=pm.PyNode("jInit_ring01_"+whichArm).getTranslation(space="world"), radius=1.0)
+jDef_ring02=pm.joint(name="jDef_ring02_"+whichArm, p=pm.PyNode("jInit_ring02_"+whichArm).getTranslation(space="world"), radius=1.0)
+jDef_ring03=pm.joint(name="jDef_ring03_"+whichArm, p=pm.PyNode("jInit_ring03_"+whichArm).getTranslation(space="world"), radius=1.0)
 
 pm.select(d=True)
-jDef_middle00=pm.joint(name="jDef_middle00_"+whichArm, p=pm.PyNode("Loc_middle00_"+whichArm).getTranslation(space="world"), radius=1.0)
-jDef_middle01=pm.joint(name="jDef_middle01_"+whichArm, p=pm.PyNode("Loc_middle01_"+whichArm).getTranslation(space="world"), radius=1.0)
-jDef_middle02=pm.joint(name="jDef_middle02_"+whichArm, p=pm.PyNode("Loc_middle02_"+whichArm).getTranslation(space="world"), radius=1.0)
-jDef_middle03=pm.joint(name="jDef_middle03_"+whichArm, p=pm.PyNode("Loc_middle03_"+whichArm).getTranslation(space="world"), radius=1.0)
+jDef_middle00=pm.joint(name="jDef_middle00_"+whichArm, p=pm.PyNode("jInit_middle00_"+whichArm).getTranslation(space="world"), radius=1.0)
+jDef_middle01=pm.joint(name="jDef_middle01_"+whichArm, p=pm.PyNode("jInit_middle01_"+whichArm).getTranslation(space="world"), radius=1.0)
+jDef_middle02=pm.joint(name="jDef_middle02_"+whichArm, p=pm.PyNode("jInit_middle02_"+whichArm).getTranslation(space="world"), radius=1.0)
+jDef_middle03=pm.joint(name="jDef_middle03_"+whichArm, p=pm.PyNode("jInit_middle03_"+whichArm).getTranslation(space="world"), radius=1.0)
 
 pm.select(d=True)
-jDef_index00=pm.joint(name="jDef_index00_"+whichArm, p=pm.PyNode("Loc_index00_"+whichArm).getTranslation(space="world"), radius=1.0)
-jDef_index01=pm.joint(name="jDef_index01_"+whichArm, p=pm.PyNode("Loc_index01_"+whichArm).getTranslation(space="world"), radius=1.0)
-jDef_index02=pm.joint(name="jDef_index02_"+whichArm, p=pm.PyNode("Loc_index02_"+whichArm).getTranslation(space="world"), radius=1.0)
-jDef_index03=pm.joint(name="jDef_index03_"+whichArm, p=pm.PyNode("Loc_index03_"+whichArm).getTranslation(space="world"), radius=1.0)
+jDef_index00=pm.joint(name="jDef_index00_"+whichArm, p=pm.PyNode("jInit_index00_"+whichArm).getTranslation(space="world"), radius=1.0)
+jDef_index01=pm.joint(name="jDef_index01_"+whichArm, p=pm.PyNode("jInit_index01_"+whichArm).getTranslation(space="world"), radius=1.0)
+jDef_index02=pm.joint(name="jDef_index02_"+whichArm, p=pm.PyNode("jInit_index02_"+whichArm).getTranslation(space="world"), radius=1.0)
+jDef_index03=pm.joint(name="jDef_index03_"+whichArm, p=pm.PyNode("jInit_index03_"+whichArm).getTranslation(space="world"), radius=1.0)
 
 pm.select(d=True)
-jDef_thumb00=pm.joint(name="jDef_thumb00_"+whichArm, p=pm.PyNode("Loc_thumb00_"+whichArm).getTranslation(space="world"), radius=1.0)
-jDef_thumb01=pm.joint(name="jDef_thumb01_"+whichArm, p=pm.PyNode("Loc_thumb01_"+whichArm).getTranslation(space="world"), radius=1.0)
-jDef_thumb02=pm.joint(name="jDef_thumb02_"+whichArm, p=pm.PyNode("Loc_thumb02_"+whichArm).getTranslation(space="world"), radius=1.0)
-jDef_thumb03=pm.joint(name="jDef_thumb03_"+whichArm, p=pm.PyNode("Loc_thumb03_"+whichArm).getTranslation(space="world"), radius=1.0)
+jDef_thumb00=pm.joint(name="jDef_thumb00_"+whichArm, p=pm.PyNode("jInit_thumb00_"+whichArm).getTranslation(space="world"), radius=1.0)
+jDef_thumb01=pm.joint(name="jDef_thumb01_"+whichArm, p=pm.PyNode("jInit_thumb01_"+whichArm).getTranslation(space="world"), radius=1.0)
+jDef_thumb02=pm.joint(name="jDef_thumb02_"+whichArm, p=pm.PyNode("jInit_thumb02_"+whichArm).getTranslation(space="world"), radius=1.0)
+jDef_thumb03=pm.joint(name="jDef_thumb03_"+whichArm, p=pm.PyNode("jInit_thumb03_"+whichArm).getTranslation(space="world"), radius=1.0)
 
 pm.parent(jDef_pinky00, jDef_Hand)
 pm.parent(jDef_ring00, jDef_Hand)
@@ -594,10 +640,10 @@ pm.parent(jDef_Hand, handMaster)
 ### Hand Controllers
 
 cont_FK_Hand=pm.curve(name="cont_FK_Hand"+whichArm, d=1,p=[(-1,1,1), (-1,1,-1), (1,1,-1), (1,1,1), (-1,1,1), (-1,-1,1), (-1,-1,-1), (-1,1,-1), (-1,1,1), (-1,-1,1), (1,-1,1), (1,1,1), (1,1,-1), (1,-1,-1), (1,-1,1), (1,-1,-1), (-1,-1,-1)],k= [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16])
-#extra.alignTo(cont_FK_Hand, pm.PyNode("Loc_LowEnd_"+whichArm))
-#temp_AimCon=pm.aimConstraint(pm.PyNode("Loc_LowEnd_"+whichArm), cont_FK_Hand)
+#extra.alignTo(cont_FK_Hand, pm.PyNode("jInit_LowEnd_"+whichArm))
+#temp_AimCon=pm.aimConstraint(pm.PyNode("jInit_LowEnd_"+whichArm), cont_FK_Hand)
 #pm.delete(temp_AimCon)
-handContScale=extra.getDistance(pm.PyNode("Loc_index00_"+whichArm), pm.PyNode("Loc_index01_"+whichArm))
+handContScale=extra.getDistance(pm.PyNode("jInit_index00_"+whichArm), pm.PyNode("jInit_index01_"+whichArm))
 pm.setAttr(cont_FK_Hand.scale, (handContScale,handContScale,handContScale))
 pm.makeIdentity(cont_FK_Hand, a=True, r=False)
 extra.alignTo(cont_FK_Hand, endLock)
