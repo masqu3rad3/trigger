@@ -10,7 +10,7 @@ import createRibbon as cr
 reload(cr)
 
 
-whichArm="l_arm"
+whichArm="r_arm"
 ###########################
 ######### IK ARM ##########
 ###########################
@@ -31,7 +31,6 @@ pm.delete(tempPoCon)
 
 initUpperArmDist=extra.getDistance(pm.PyNode("Loc_Up_"+whichArm), pm.PyNode("Loc_Low_"+whichArm))
 initLowerArmDist=extra.getDistance(pm.PyNode("Loc_Low_"+whichArm), pm.PyNode("Loc_LowEnd_"+whichArm))
-
 
 #Shoulder Joints
 pm.select(d=True)
@@ -77,8 +76,6 @@ pm.parent(startLock, j_ShoulderEnd)
 
 pm.parentConstraint(startLock, jIK_SC_Up, mo=True)
 pm.parentConstraint(startLock, jIK_RP_Up, mo=True)
-
-
 
 ###Create IK handles
 
@@ -462,7 +459,7 @@ extra.alignTo(endLock, jIK_orig_LowEnd)
 endLock_Ore=extra.createUpGrp(endLock, "_Ore")
 endLock_Pos=extra.createUpGrp(endLock, "_Pos")
 endLock_Twist=extra.createUpGrp(endLock, "_Twist")
-tempAimCon=pm.aimConstraint(jFK_Low, endLock_Ore, o=(0,180,0))
+tempAimCon=pm.aimConstraint(jFK_Low, endLock_Ore, o=(0,180,0), u=(0,1,0))
 pm.delete(tempAimCon)
 endLockWeight=pm.pointConstraint(jIK_orig_LowEnd, jFK_LowEnd, endLock_Pos, mo=False)
 cont_FK_IK.fk_ik >> (endLockWeight+"."+jIK_orig_LowEnd+"W0")
@@ -600,12 +597,14 @@ pm.parent(jDef_Hand, handMaster)
 ### Hand Controllers
 
 cont_FK_Hand=pm.curve(name="cont_FK_Hand"+whichArm, d=1,p=[(-1,1,1), (-1,1,-1), (1,1,-1), (1,1,1), (-1,1,1), (-1,-1,1), (-1,-1,-1), (-1,1,-1), (-1,1,1), (-1,-1,1), (1,-1,1), (1,1,1), (1,1,-1), (1,-1,-1), (1,-1,1), (1,-1,-1), (-1,-1,-1)],k= [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16])
-extra.alignTo(cont_FK_Hand, pm.PyNode("Loc_LowEnd_"+whichArm))
-temp_AimCon=pm.aimConstraint(pm.PyNode("Loc_LowEnd_"+whichArm), cont_FK_Hand)
-pm.delete(temp_AimCon)
+#extra.alignTo(cont_FK_Hand, pm.PyNode("Loc_LowEnd_"+whichArm))
+#temp_AimCon=pm.aimConstraint(pm.PyNode("Loc_LowEnd_"+whichArm), cont_FK_Hand)
+#pm.delete(temp_AimCon)
 handContScale=extra.getDistance(pm.PyNode("Loc_index00_"+whichArm), pm.PyNode("Loc_index01_"+whichArm))
 pm.setAttr(cont_FK_Hand.scale, (handContScale,handContScale,handContScale))
 pm.makeIdentity(cont_FK_Hand, a=True, r=False)
+extra.alignTo(cont_FK_Hand, endLock)
+
 cont_FK_Hand_POS=extra.createUpGrp(cont_FK_Hand, "_POS")
 cont_FK_Hand_ORE=extra.createUpGrp(cont_FK_Hand, "_ORE")
 

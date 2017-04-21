@@ -539,6 +539,7 @@ def createLeg(whichLeg):
         pm.move(cont_FK_IK, (logoScale*2,0,0), r=True)
         
         cont_FK_IK_POS=extra.createUpGrp(cont_FK_IK, "_POS")
+        pm.parent(cont_FK_IK_POS, scaleGrp)
 
         
         ### Create End Lock
@@ -564,7 +565,10 @@ def createLeg(whichLeg):
         #cont_FK_IK.autoTwist >> autoTwist.input2X
 
         pm.parentConstraint(endLock, cont_FK_IK_POS, mo=True)
+        pm.parent(endLock_Ore, scaleGrp)
 
+
+        
         endLockRot=pm.parentConstraint(IK_parentGRP, jFK_Foot, endLock, mo=True)
         pm.setAttr(endLockRot.interpType, 0)
         cont_FK_IK.fk_ik >> (endLockRot+"."+IK_parentGRP+"W0")
@@ -620,6 +624,12 @@ def createLeg(whichLeg):
         #fk_ik_rvs.outputX >> (ribbonStart_paCon_lowerLeg_End+"."+jFK_Foot+"W1")
 
         pm.scaleConstraint(scaleGrp,ribbonConnections_lowerLeg[2])
+        
+        autoTwist=pm.createNode("multiplyDivide", name="autoTwist_"+whichLeg)
+        cont_FK_IK.autoTwist >> autoTwist.input2X
+        ribbonStart_paCon_lowerLeg_End.constraintRotate >> autoTwist.input1
+        autoTwist.output >> ribbonConnections_lowerLeg[1].rotate
+        
 
         # Foot Joint
 
