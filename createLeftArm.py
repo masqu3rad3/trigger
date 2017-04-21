@@ -10,7 +10,7 @@ import createRibbon as cr
 reload(cr)
 
 
-whichArm="l_arm"
+whichArm="r_arm"
 ###########################
 ######### IK ARM ##########
 ###########################
@@ -263,25 +263,17 @@ cont_IK_hand[0].polevector >> poleVector_Rvs.inputX
 cont_IK_hand[0].polevector >> cont_Pole.v
 
 ### Shoulder Controller
+cont_Shoulder=pm.curve (d=3, p=((-3, 0, 1),(-1, 2, 1), (1, 2, 1), (3, 0, 1), (3, 0, 0),(3, 0, -1),(1, 2, -1),(-1, 2, -1),(-3, 0, -1),(-3, 0, 0)),k=(0,0,0,1,2,3,4,5,6,7,7,7),name="cont_Shoulder_"+whichArm)
+pm.rotate(cont_Shoulder, (0,90,0))
+pm.makeIdentity(a=True)
+pm.closeCurve (cont_Shoulder,ch=0,ps=0,rpo=1,bb=0.5,bki=0,p=0.1)
+pm.delete(cont_Shoulder, ch=True)
 
-cont_Shoulder=pm.circle()
-#pm.closeCurve (cont_Shoulder,ch=0,ps=0,rpo=1,bb=0.5,bki=0,p=0.1)
-pm.delete(cont_Shoulder[0], ch=True)
-pm.rotate(cont_Shoulder[0], (0,90,0))
-pm.makeIdentity(cont_Shoulder[0], a=True)
-extra.alignTo(cont_Shoulder[0], pm.PyNode("Loc_Shoulder_"+whichArm))
-# pm.makeIdentity(cont_Shoulder, a=True)
-# #pm.rotate(cont_Shoulder, (0,90,0))
-# pm.makeIdentity(cont_Shoulder, a=True)
-# pm.select(cont_Shoulder)
-# pm.setAttr(cont_Shoulder.scale, (initUpperArmDist/5,initUpperArmDist/5,initUpperArmDist/5))
-# pm.makeIdentity(cont_Shoulder, a=True)
-# cont_Shoulder_POS=extra.createUpGrp(cont_Shoulder, "_POS")
-# extra.alignTo(cont_Shoulder_POS, pm.PyNode("Loc_Shoulder_"+whichArm))
-# pm.select(cont_Shoulder)
-# pm.rotate(cont_Shoulder, (0,90,0))
-#tempAimCon=pm.aimConstraint(startLock, cont_Shoulder_POS, o=(0,90,0))
-#pm.delete(tempAimCon)
+pm.select(cont_Shoulder)
+pm.setAttr(cont_Shoulder.scale, (initUpperArmDist/5,initUpperArmDist/5,initUpperArmDist/5))
+pm.makeIdentity(cont_Shoulder, a=True)
+cont_Shoulder_POS=extra.createUpGrp(cont_Shoulder, "_POS")
+extra.alignTo(cont_Shoulder_POS, pm.PyNode("Loc_Shoulder_"+whichArm))
 
 ### FInal Round UP
 
@@ -315,10 +307,10 @@ pm.joint(jFK_LowEnd, e=True, zso=True, oj="xyz", sao="yup")
 
 ### Create Controller Curves
 
-#UpLeg Cont
+#UpArm Cont
 cont_FK_Up=pm.curve(name="cont_FK_Up_"+whichArm, d=1,p=[(-1,1,1), (-1,1,-1), (1,1,-1), (1,1,1), (-1,1,1), (-1,-1,1), (-1,-1,-1), (-1,1,-1), (-1,1,1), (-1,-1,1), (1,-1,1), (1,1,1), (1,1,-1), (1,-1,-1), (1,-1,1), (1,-1,-1), (-1,-1,-1)],k= [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16])
 temp_PoCon=pm.pointConstraint(jFK_Up, jFK_Low, cont_FK_Up)
-temp_AimCon=pm.aimConstraint(jFK_Low, cont_FK_Up, o=(0,0,0))
+temp_AimCon=pm.aimConstraint(jFK_Low, cont_FK_Up, o=(0,0,0), u=(0,1,0))
 pm.delete(temp_PoCon);
 pm.delete(temp_AimCon);
 
@@ -334,7 +326,7 @@ pm.makeIdentity(cont_FK_Up, a=True, t=True, r=False, s=True)
 
 pm.pointConstraint(startLock, cont_FK_Up_ORE, mo=True)
 
-#LowLeg Cont
+#LowArm Cont
 cont_FK_Low=pm.curve(name="cont_FK_Low_"+whichArm, d=1,p=[(-1,1,1), (-1,1,-1), (1,1,-1), (1,1,1), (-1,1,1), (-1,-1,1), (-1,-1,-1), (-1,1,-1), (-1,1,1), (-1,-1,1), (1,-1,1), (1,1,1), (1,1,-1), (1,-1,-1), (1,-1,1), (1,-1,-1), (-1,-1,-1)],k= [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16])
 temp_PoCon=pm.pointConstraint(jFK_Low, jFK_LowEnd, cont_FK_Low)
 temp_AimCon=pm.aimConstraint(jFK_LowEnd, cont_FK_Low, o=(0,0,0))
