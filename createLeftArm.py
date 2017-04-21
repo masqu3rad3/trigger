@@ -10,7 +10,7 @@ import createRibbon as cr
 reload(cr)
 
 
-whichArm="r_arm"
+whichArm="l_arm"
 ###########################
 ######### IK ARM ##########
 ###########################
@@ -84,9 +84,9 @@ ikHandle_RP=pm.ikHandle(sj=jIK_RP_Up, ee=jIK_RP_LowEnd, name="ikHandle_RP_"+whic
 
 ###Create Control Curve - IK
 cont_IK_hand=pm.circle(nrx=1, nry=0, nrz=0, name="cont_IK_hand_"+whichArm)
-extra.alignTo(cont_IK_hand, jIK_RP_LowEnd)
-tempAimCon=pm.aimConstraint(jIK_RP_Low, cont_IK_hand, o=(0,180,0))
-pm.delete(tempAimCon)
+extra.alignTo(cont_IK_hand, pm.PyNode("Loc_LowEnd_"+whichArm))
+#tempAimCon=pm.aimConstraint(jIK_RP_Low, cont_IK_hand, o=(0,180,0))
+#pm.delete(tempAimCon)
 
 cont_IK_hand_ORE=extra.createUpGrp(cont_IK_hand[0], "_ORE")
 
@@ -264,19 +264,24 @@ cont_IK_hand[0].polevector >> cont_Pole.v
 
 ### Shoulder Controller
 
-cont_Shoulder=pm.curve (d=3, p=((-3, 0, 1),(-1, 2, 1), (1, 2, 1), (3, 0, 1), (3, 0, 0),(3, 0, -1),(1, 2, -1),(-1, 2, -1),(-3, 0, -1),(-3, 0, 0)),k=(0,0,0,1,2,3,4,5,6,7,7,7),name="cont_Shoulder_"+whichArm)
-pm.closeCurve (cont_Shoulder,ch=0,ps=0,rpo=1,bb=0.5,bki=0,p=0.1)
-pm.delete(cont_Shoulder, ch=True)
-pm.makeIdentity(cont_Shoulder, a=True)
-
-pm.select(cont_Shoulder)
-pm.setAttr(cont_Shoulder.scale, (initUpperArmDist/5,initUpperArmDist/5,initUpperArmDist/5))
-pm.makeIdentity(cont_Shoulder, a=True)
-cont_Shoulder_POS=extra.createUpGrp(cont_Shoulder, "_POS")
-extra.alignTo(cont_Shoulder_POS, masterRoot)
-
-tempAimCon=pm.aimConstraint(startLock, cont_Shoulder_POS, o=(0,90,0))
-pm.delete(tempAimCon)
+cont_Shoulder=pm.circle()
+#pm.closeCurve (cont_Shoulder,ch=0,ps=0,rpo=1,bb=0.5,bki=0,p=0.1)
+pm.delete(cont_Shoulder[0], ch=True)
+pm.rotate(cont_Shoulder[0], (0,90,0))
+pm.makeIdentity(cont_Shoulder[0], a=True)
+extra.alignTo(cont_Shoulder[0], pm.PyNode("Loc_Shoulder_"+whichArm))
+# pm.makeIdentity(cont_Shoulder, a=True)
+# #pm.rotate(cont_Shoulder, (0,90,0))
+# pm.makeIdentity(cont_Shoulder, a=True)
+# pm.select(cont_Shoulder)
+# pm.setAttr(cont_Shoulder.scale, (initUpperArmDist/5,initUpperArmDist/5,initUpperArmDist/5))
+# pm.makeIdentity(cont_Shoulder, a=True)
+# cont_Shoulder_POS=extra.createUpGrp(cont_Shoulder, "_POS")
+# extra.alignTo(cont_Shoulder_POS, pm.PyNode("Loc_Shoulder_"+whichArm))
+# pm.select(cont_Shoulder)
+# pm.rotate(cont_Shoulder, (0,90,0))
+#tempAimCon=pm.aimConstraint(startLock, cont_Shoulder_POS, o=(0,90,0))
+#pm.delete(tempAimCon)
 
 ### FInal Round UP
 
@@ -455,12 +460,12 @@ cont_FK_IK_POS=extra.createUpGrp(cont_FK_IK, "_POS")
 
 ### Create End Lock
 endLock=pm.spaceLocator(name="endLock"+whichArm)
-extra.alignTo(endLock, jIK_orig_LowEnd)
+extra.alignTo(endLock, pm.PyNode("Loc_LowEnd_"+whichArm))
 endLock_Ore=extra.createUpGrp(endLock, "_Ore")
 endLock_Pos=extra.createUpGrp(endLock, "_Pos")
 endLock_Twist=extra.createUpGrp(endLock, "_Twist")
-tempAimCon=pm.aimConstraint(jFK_Low, endLock_Ore, o=(0,180,0), u=(0,1,0))
-pm.delete(tempAimCon)
+#tempAimCon=pm.aimConstraint(jFK_Low, endLock_Ore, o=(0,180,0), u=(0,1,0))
+#pm.delete(tempAimCon)
 endLockWeight=pm.pointConstraint(jIK_orig_LowEnd, jFK_LowEnd, endLock_Pos, mo=False)
 cont_FK_IK.fk_ik >> (endLockWeight+"."+jIK_orig_LowEnd+"W0")
 fk_ik_rvs.outputX >> (endLockWeight+"."+jFK_LowEnd+"W1")

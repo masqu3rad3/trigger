@@ -4,6 +4,10 @@ def alignTo(node1, node2):
         pointCon=pm.parentConstraint (node2, node1, mo=False)
         pm.delete (pointCon)
         
+def alignPositionTo(node1, node2):
+        pointCon=pm.pointConstraint (node2, node1, mo=False)
+        pm.delete (pointCon)        
+        
 def getDistance( objA, objB ):
     Ax, Ay, Az = objA.getTranslation(space="world")
     Bx, By, Bz = objB.getTranslation(space="world")
