@@ -298,6 +298,7 @@ cont_Shoulder_POS=extra.createUpGrp(cont_Shoulder, "_POS")
 extra.alignTo(cont_Shoulder_POS, pm.PyNode("jInit_Shoulder_"+whichArm))
 pm.select(cont_Shoulder)
 pm.addAttr( shortName="autoTwist", longName="Auto_Twist", defaultValue=1.0, minValue=0.0, maxValue=1.0, at="float", k=True)
+pm.addAttr( shortName="manualTwist", longName="Manual_Twist", defaultValue=0.0, at="float", k=True)
 pm.select(d=True)
 
 pm.parent(jIK_orig_Up, masterRoot)
@@ -515,14 +516,27 @@ pm.scaleConstraint(scaleGrp,ribbonConnections_upperArm[2])
 
 # AUTO AND MANUAL TWIST
 
+#auto
 autoTwist=pm.createNode("multiplyDivide", name="autoTwist_"+whichArm)
 cont_Shoulder.autoTwist >> autoTwist.input2X
 ribbonStart_paCon_upperArm_Start.constraintRotate >> autoTwist.input1
-autoTwist.output >> ribbonConnections_upperArm[0].rotate
-
+#autoTwist.output >> ribbonConnections_upperArm[0].rotate
 
 ###!!! The parent constrain override should be disconnected like this
 pm.disconnectAttr(ribbonStart_paCon_upperArm_Start.constraintRotateX, ribbonConnections_upperArm[0].rotateX)
+
+#manual
+AddManualTwist=pm.createNode("plusMinusAverage", name=("AddManualTwist_UpperArm_"+whichArm))
+autoTwist.output >> AddManualTwist.input3D[0]
+cont_Shoulder.manualTwist >> AddManualTwist.input3D[1].input3Dx
+
+#connect to the joint
+AddManualTwist.output3D >> ribbonConnections_upperArm[0].rotate
+
+
+
+
+
 
 # LOWERARM RIBBON
 
@@ -545,14 +559,18 @@ pm.scaleConstraint(scaleGrp,ribbonConnections_lowerArm[2])
 autoTwist=pm.createNode("multiplyDivide", name="autoTwist_"+whichArm)
 cont_FK_IK.autoTwist >> autoTwist.input2X
 ribbonStart_paCon_lowerArm_End.constraintRotate >> autoTwist.input1
-autoTwist.output >> ribbonConnections_lowerArm[1].rotate
+#autoTwist.output >> ribbonConnections_lowerArm[1].rotate
 
 ###!!! The parent constrain override should be disconnected like this
 pm.disconnectAttr(ribbonStart_paCon_lowerArm_End.constraintRotateX, ribbonConnections_lowerArm[1].rotateX)
 
 #manual
+AddManualTwist=pm.createNode("plusMinusAverage", name=("AddManualTwist_LowerArm_"+whichArm))
+autoTwist.output >> AddManualTwist.input3D[0]
+cont_FK_IK.manualTwist >> AddManualTwist.input3D[1].input3Dx
 
-#cont_FK_IK.manualTwist >> endLock.rotateX
+#connect to the joint
+AddManualTwist.output3D >> ribbonConnections_lowerArm[1].rotate
 
 ###############################################
 ################### HAND ######################

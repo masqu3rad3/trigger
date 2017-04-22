@@ -75,5 +75,5 @@ def initArmBones(whichArm):
     pm.parent(index00, lowendarm)
     pm.parent(thumb00, lowendarm)
 
-initArmBones("l_arm")
+#initArmBones("l_arm")
 initLegBones("l_leg")
