@@ -36,12 +36,7 @@ pm.parent(jDef_Rcon, scaleGrp)
 ######### IK LEG ##########
 ###########################
 
-startLock=pm.spaceLocator(name="startLock_"+whichLeg)
 
-tempPoCon=pm.pointConstraint("jInit_UpLeg_"+whichLeg, startLock, mo=False)
-pm.delete(tempPoCon)
-
-pm.parentConstraint(jDef_Upleg, startLock)
 
 masterIK=pm.spaceLocator(name="masterIK_"+whichLeg)
 tempPoCon=pm.pointConstraint("jInit_Foot_"+whichLeg, masterIK)
@@ -118,6 +113,20 @@ pm.makeIdentity(Pv_BallRoll, a=True, t=False, r=True, s=True)
 Pv_BallLean=pm.group(name="Pv_BallLean_"+whichLeg, em=True)
 extra.alignTo(Pv_BallLean, "jInit_Ball_"+whichLeg)
 pm.makeIdentity(Pv_BallLean, a=True, t=False, r=True, s=True)
+
+#startLock=pm.spaceLocator(name="startLock_"+whichLeg)
+startLock=pm.spaceLocator(name="startLock_"+whichLeg)
+extra.alignTo(startLock, pm.PyNode("jInit_UpLeg_"+whichLeg))
+startLock_Ore=extra.createUpGrp(startLock, "_Ore")
+startLock_Pos=extra.createUpGrp(startLock, "_Pos")
+startLock_Twist=extra.createUpGrp(startLock, "_AutoTwist")
+
+startLockRot=pm.parentConstraint(jDef_Upleg, startLock, mo=True)
+pm.setAttr(startLockRot.interpType, 0)
+
+pm.parentConstraint(startLock, jIK_SC_Root, mo=True)
+pm.parentConstraint(startLock, jIK_RP_Root, mo=True)
+
 
 ###Create IK handles
 
@@ -397,15 +406,19 @@ temp_AimCon=pm.aimConstraint(jFK_Knee, cont_FK_UpLeg, o=(180,0,0))
 pm.delete(temp_PoCon)
 pm.delete(temp_AimCon)
 
-pm.setAttr(cont_FK_UpLeg+".scale", (pm.getAttr(jFK_Knee+".translateX")/2,0.5,0.5))
-pm.makeIdentity(a=True, t=True, r=False, s=True)
+pm.setAttr(cont_FK_UpLeg.scale, (pm.getAttr(jFK_Knee.translateX)/2,0.5,0.5))
+#pm.makeIdentity(a=True, t=True, r=False, s=True)
 
 PvTarget=pm.PyNode("jInit_UpLeg_"+whichLeg).getTranslation(space="world")
 pm.xform(cont_FK_UpLeg, piv=PvTarget, ws=True)
 
-cont_FK_UpLeg_ORE=pm.group(name="cont_FK_UpLeg_ORE_"+whichLeg, em=True)
-temp_PaCon=pm.parentConstraint(cont_FK_UpLeg, cont_FK_UpLeg_ORE, mo=False)
-pm.delete(temp_PaCon)
+cont_FK_UpLeg_ORE=extra.createUpGrp(cont_FK_UpLeg, "ORE")
+pm.makeIdentity(cont_FK_UpLeg, a=True, t=True, r=False, s=True)
+
+pm.pointConstraint(startLock, cont_FK_UpLeg_ORE, mo=True)
+
+#temp_PaCon=pm.parentConstraint(cont_FK_UpLeg, cont_FK_UpLeg_ORE, mo=False)
+#pm.delete(temp_PaCon)
 pm.makeIdentity(a=True, t=True, r=False, s=True)
 pm.parent(cont_FK_UpLeg, cont_FK_UpLeg_ORE)
 pm.parentConstraint(startLock, cont_FK_UpLeg_ORE, mo=True)
@@ -476,6 +489,8 @@ pm.setAttr(MidLockFK_ori.interpType, 0)
 
 ### CReate Constraints and Hierarchy
 pm.orientConstraint(cont_FK_UpLeg, jFK_Root, mo=False)
+pm.pointConstraint(startLock, jFK_Root, mo=False)
+
 pm.orientConstraint(cont_FK_LowLeg, jFK_Knee, mo=False)
 pm.orientConstraint(cont_FK_Foot, jFK_Foot, mo=False)
 pm.orientConstraint(cont_FK_Ball, jFK_Ball, mo=False)
@@ -586,6 +601,11 @@ fk_ik_rvs.outputX >> (endLockRot+"."+jFK_Foot+"W1")
 
 ### Create Tigh Controller
 cont_thigh=pm.curve(name="cont_thigh"+whichLeg, d=1,p=[(-1,1,1), (-1,1,-1), (1,1,-1), (1,1,1), (-1,1,1), (-1,-1,1), (-1,-1,-1), (-1,1,-1), (-1,1,1), (-1,-1,1), (1,-1,1), (1,1,1), (1,1,-1), (1,-1,-1), (1,-1,1), (1,-1,-1), (-1,-1,-1)],k= [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16])
+
+pm.addAttr( shortName="autoTwist", longName="Auto_Twist", defaultValue=1.0, minValue=0.0, maxValue=1.0, at="float", k=True)
+pm.addAttr( shortName="manualTwist", longName="Manual_Twist", defaultValue=0.0, at="float", k=True)
+
+
 extra.alignTo(cont_thigh, pm.PyNode("jFK_Root_"+whichLeg))
 thighContScale=extra.getDistance(pm.PyNode("jInit_UpLeg_"+whichLeg), pm.PyNode("jInit_Knee_"+whichLeg))/4
 pm.setAttr(cont_thigh.scale, (thighContScale,thighContScale/4,thighContScale))
@@ -609,16 +629,35 @@ pm.parentConstraint(cont_thigh, jDef_Rcon, mo=True)
 
 ribbonConnections_upperLeg=cr.createRibbon("jInit_UpLeg_"+whichLeg, "jInit_Knee_"+whichLeg, "up_"+whichLeg, -90)
 
-ribbonStart_paCon_upperLeg_Start=pm.parentConstraint(jIK_orig_Root, jFK_Root, ribbonConnections_upperLeg[0], mo=True)
+ribbonStart_paCon_upperLeg_Start=pm.parentConstraint(startLock, ribbonConnections_upperLeg[0], mo=True)
 ribbonStart_paCon_upperLeg_End=pm.parentConstraint(midLock_IK, midLock_FK, ribbonConnections_upperLeg[1], mo=True)
 
-cont_FK_IK.fk_ik >> (ribbonStart_paCon_upperLeg_Start+"."+jIK_orig_Root+"W0")
-fk_ik_rvs.outputX >> (ribbonStart_paCon_upperLeg_Start+"."+jFK_Root+"W1")
+#cont_FK_IK.fk_ik >> (ribbonStart_paCon_upperLeg_Start+"."+jIK_orig_Root+"W0")
+#fk_ik_rvs.outputX >> (ribbonStart_paCon_upperLeg_Start+"."+jFK_Root+"W1")
 
 cont_FK_IK.fk_ik >> (ribbonStart_paCon_upperLeg_End+"."+midLock_IK+"W0")
 fk_ik_rvs.outputX >> (ribbonStart_paCon_upperLeg_End+"."+midLock_FK+"W1")
 
 pm.scaleConstraint(scaleGrp,ribbonConnections_upperLeg[2])
+
+# AUTO AND MANUAL TWIST
+
+#auto
+autoTwist=pm.createNode("multiplyDivide", name="autoTwist_"+whichLeg)
+cont_thigh.autoTwist >> autoTwist.input2X
+ribbonStart_paCon_upperLeg_Start.constraintRotate >> autoTwist.input1
+#autoTwist.output >> ribbonConnections_upperArm[0].rotate
+
+###!!! The parent constrain override should be disconnected like this
+pm.disconnectAttr(ribbonStart_paCon_upperLeg_Start.constraintRotateX, ribbonConnections_upperLeg[0].rotateX)
+
+#manual
+AddManualTwist=pm.createNode("plusMinusAverage", name=("AddManualTwist_UpperLeg_"+whichLeg))
+autoTwist.output >> AddManualTwist.input3D[0]
+cont_thigh.manualTwist >> AddManualTwist.input3D[1].input3Dx
+
+#connect to the joint
+AddManualTwist.output3D >> ribbonConnections_upperLeg[0].rotate
 
 # LOWERLEG RIBBON
 
