@@ -75,25 +75,6 @@ pm.joint(jIK_RP_Low, e=True, zso=True, oj="xyz", sao="yup")
 pm.joint(jIK_RP_LowEnd, e=True, zso=True, oj="xyz", sao="yup")
 
 
-# ### Create End Lock
-# endLock=pm.spaceLocator(name="endLock"+whichArm)
-# extra.alignTo(endLock, pm.PyNode("jInit_LowEnd_"+whichArm))
-# endLock_Ore=extra.createUpGrp(endLock, "_Ore")
-# endLock_Pos=extra.createUpGrp(endLock, "_Pos")
-# endLock_Twist=extra.createUpGrp(endLock, "_Twist")
-
-# endLockWeight=pm.pointConstraint(jIK_orig_LowEnd, jFK_LowEnd, endLock_Pos, mo=False)
-# cont_FK_IK.fk_ik >> (endLockWeight+"."+jIK_orig_LowEnd+"W0")
-# fk_ik_rvs.outputX >> (endLockWeight+"."+jFK_LowEnd+"W1")
-
-# pm.parentConstraint(endLock, cont_FK_IK_POS, mo=True)
-
-# endLockRot=pm.parentConstraint(IK_parentGRP, jFK_Low, endLock, mo=True)
-# pm.setAttr(endLockRot.interpType, 0)
-# cont_FK_IK.fk_ik >> (endLockRot+"."+IK_parentGRP+"W0")
-# fk_ik_rvs.outputX >> (endLockRot+"."+jFK_Low+"W1")
-
-
 ###Create Start Lock
 
 # startLock=pm.spaceLocator(name="startLock"+whichArm)
@@ -108,7 +89,7 @@ startLock=pm.spaceLocator(name="startLock"+whichArm)
 extra.alignTo(startLock, pm.PyNode("jInit_Up_"+whichArm))
 startLock_Ore=extra.createUpGrp(startLock, "_Ore")
 startLock_Pos=extra.createUpGrp(startLock, "_Pos")
-startLock_Twist=extra.createUpGrp(startLock, "_Twist")
+startLock_Twist=extra.createUpGrp(startLock, "_AutoTwist")
 
 
 startLockRot=pm.parentConstraint(j_ShoulderEnd,startLock, mo=True)
@@ -318,7 +299,6 @@ extra.alignTo(cont_Shoulder_POS, pm.PyNode("jInit_Shoulder_"+whichArm))
 pm.select(cont_Shoulder)
 pm.addAttr( shortName="autoTwist", longName="Auto_Twist", defaultValue=1.0, minValue=0.0, maxValue=1.0, at="float", k=True)
 pm.select(d=True)
-### FInal Round UP
 
 pm.parent(jIK_orig_Up, masterRoot)
 pm.parent(jIK_SC_Up, masterRoot)
@@ -433,6 +413,7 @@ pm.select(cont_FK_IK)
 ## FK-IK ICON Attributes
 pm.addAttr( shortName="fk_ik", longName="FK_IK", defaultValue=1.0, minValue=0.0, maxValue=1.0, at="float", k=True)
 pm.addAttr( shortName="autoTwist", longName="Auto_Twist", defaultValue=1.0, minValue=0.0, maxValue=1.0, at="float", k=True)
+pm.addAttr( shortName="manualTwist", longName="Manual_Twist", defaultValue=0.0, at="float", k=True)
 pm.addAttr( longName="Thumb", at="enum", en="--------", k=True) 
 pm.addAttr( shortName="spreadThumb", longName="Spread_Thumb", defaultValue=0.0, at="float", k=True)
 pm.addAttr( shortName="thumbUpDown", longName="Thumb_Up_Down", defaultValue=0.0, at="float", k=True)
@@ -498,7 +479,7 @@ endLock=pm.spaceLocator(name="endLock"+whichArm)
 extra.alignTo(endLock, pm.PyNode("jInit_LowEnd_"+whichArm))
 endLock_Ore=extra.createUpGrp(endLock, "_Ore")
 endLock_Pos=extra.createUpGrp(endLock, "_Pos")
-endLock_Twist=extra.createUpGrp(endLock, "_Twist")
+endLock_Twist=extra.createUpGrp(endLock, "_AutoTwist")
 
 endLockWeight=pm.pointConstraint(jIK_orig_LowEnd, jFK_LowEnd, endLock_Pos, mo=False)
 cont_FK_IK.fk_ik >> (endLockWeight+"."+jIK_orig_LowEnd+"W0")
@@ -506,16 +487,18 @@ fk_ik_rvs.outputX >> (endLockWeight+"."+jFK_LowEnd+"W1")
 
 pm.parentConstraint(endLock, cont_FK_IK_POS, mo=True)
 
-endLockRot=pm.parentConstraint(IK_parentGRP, jFK_Low, endLock, mo=True)
+endLockRot=pm.parentConstraint(IK_parentGRP, jFK_Low, endLock_Twist, mo=True)
 pm.setAttr(endLockRot.interpType, 0)
 cont_FK_IK.fk_ik >> (endLockRot+"."+IK_parentGRP+"W0")
 fk_ik_rvs.outputX >> (endLockRot+"."+jFK_Low+"W1")
+
+
     
 ###################################
 #### CREATE DEFORMATION JOINTS ####
 ###################################
 
-# UpperArm Ribbon
+# UPPERARM RIBBON
 
 ribbonConnections_upperArm=cr.createRibbon("jInit_Up_"+whichArm, "jInit_Low_"+whichArm, "up_"+whichArm, 0)
 
@@ -530,12 +513,18 @@ fk_ik_rvs.outputX >> (ribbonStart_paCon_upperArm_End+"."+midLock_FK+"W1")
 
 pm.scaleConstraint(scaleGrp,ribbonConnections_upperArm[2])
 
+# AUTO AND MANUAL TWIST
+
 autoTwist=pm.createNode("multiplyDivide", name="autoTwist_"+whichArm)
 cont_Shoulder.autoTwist >> autoTwist.input2X
 ribbonStart_paCon_upperArm_Start.constraintRotate >> autoTwist.input1
 autoTwist.output >> ribbonConnections_upperArm[0].rotate
 
-# LowerArm Ribbon
+
+###!!! The parent constrain override should be disconnected like this
+pm.disconnectAttr(ribbonStart_paCon_upperArm_Start.constraintRotateX, ribbonConnections_upperArm[0].rotateX)
+
+# LOWERARM RIBBON
 
 ribbonConnections_lowerArm=cr.createRibbon("jInit_Low_"+whichArm, "jInit_LowEnd_"+whichArm, "low_"+whichArm, 0)
 
@@ -550,22 +539,20 @@ fk_ik_rvs.outputX >> (ribbonStart_paCon_lowerArm_Start+"."+midLock_FK+"W1")
 
 pm.scaleConstraint(scaleGrp,ribbonConnections_lowerArm[2])
 
+# AUTO AND MANUAL TWIST
+
+#auto
 autoTwist=pm.createNode("multiplyDivide", name="autoTwist_"+whichArm)
 cont_FK_IK.autoTwist >> autoTwist.input2X
 ribbonStart_paCon_lowerArm_End.constraintRotate >> autoTwist.input1
 autoTwist.output >> ribbonConnections_lowerArm[1].rotate
 
-#LowerlegEnd_Sw_tr_RBN=pm.createNode("blendColors", name="LowerlegEnd_Sw_tr_RBN_"+whichArm)
-#LowerlegEnd_Sw_rot_RBN=pm.createNode("blendColors", name="LowerlegEnd_Sw_rot_RBN_"+whichArm)
-#jIK_orig_End.translate >> LowerlegEnd_Sw_tr_RBN.color2
-#jFK_Foot.translate >> LowerlegEnd_Sw_tr_RBN.color1
-#jIK_orig_End.rotate >> LowerlegEnd_Sw_rot_RBN.color2
-#jFK_Foot.rotate >> LowerlegEnd_Sw_rot_RBN.color1
-#cont_FK_IK.fk_ik >> LowerlegEnd_Sw_tr_RBN.blender
-#cont_FK_IK.fk_ik >> LowerlegEnd_Sw_rot_RBN.blender
-#LowerlegEnd_Sw_tr_RBN.output >> ribbonConnections_lowerArm[1].translate
-#LowerlegEnd_Sw_rot_RBN.output >> ribbonConnections_lowerArm[1].rotate
+###!!! The parent constrain override should be disconnected like this
+pm.disconnectAttr(ribbonStart_paCon_lowerArm_End.constraintRotateX, ribbonConnections_lowerArm[1].rotateX)
 
+#manual
+
+#cont_FK_IK.manualTwist >> endLock.rotateX
 
 ###############################################
 ################### HAND ######################
