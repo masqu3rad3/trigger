@@ -22,18 +22,15 @@ whichArm="l_arm"
 
 ##Groups
 scaleGrp=pm.group(name="scaleGrp_"+whichArm, em=True)
-tempPoCon=pm.pointConstraint("jInit_Shoulder_"+whichArm, scaleGrp, mo=False)
-pm.delete(tempPoCon)
+extra.alignTo(scaleGrp, "jInit_Shoulder_"+whichArm, 0)
 nonScaleGrp=pm.group(name="NonScaleGrp_"+whichArm, em=True)
 
 masterRoot=pm.group(em=True, name="masterRoot_"+whichArm)
-tempPoCon=pm.pointConstraint("jInit_Shoulder_"+whichArm, masterRoot, mo=False)
-pm.delete(tempPoCon)
+extra.alignTo(masterRoot, "jInit_Shoulder_"+whichArm,0)
 pm.makeIdentity(a=True)
 
 masterIK=pm.spaceLocator(name="masterIK_"+whichArm)
-tempPoCon=pm.pointConstraint("jInit_LowEnd_"+whichArm, masterIK)
-pm.delete(tempPoCon)
+extra.alignTo(masterIK, "jInit_LowEnd_"+whichArm,0)
 
 initUpperArmDist=extra.getDistance(pm.PyNode("jInit_Up_"+whichArm), pm.PyNode("jInit_Low_"+whichArm))
 initLowerArmDist=extra.getDistance(pm.PyNode("jInit_Low_"+whichArm), pm.PyNode("jInit_LowEnd_"+whichArm))
@@ -77,16 +74,8 @@ pm.joint(jIK_RP_LowEnd, e=True, zso=True, oj="xyz", sao="yup")
 
 ###Create Start Lock
 
-# startLock=pm.spaceLocator(name="startLock"+whichArm)
-# extra.alignTo(startLock, pm.PyNode("jInit_Shoulder_"+whichArm))
-# pm.parent(startLock, j_ShoulderEnd)
-
-# pm.parentConstraint(startLock, jIK_SC_Up, mo=True)
-# pm.parentConstraint(startLock, jIK_RP_Up, mo=True)
-
-
 startLock=pm.spaceLocator(name="startLock"+whichArm)
-extra.alignTo(startLock, pm.PyNode("jInit_Up_"+whichArm))
+extra.alignTo(startLock, pm.PyNode("jInit_Up_"+whichArm),2)
 startLock_Ore=extra.createUpGrp(startLock, "_Ore")
 startLock_Pos=extra.createUpGrp(startLock, "_Pos")
 startLock_Twist=extra.createUpGrp(startLock, "_AutoTwist")
@@ -106,9 +95,7 @@ ikHandle_RP=pm.ikHandle(sj=jIK_RP_Up, ee=jIK_RP_LowEnd, name="ikHandle_RP_"+whic
 
 ###Create Control Curve - IK
 cont_IK_hand=pm.circle(nrx=1, nry=0, nrz=0, name="cont_IK_hand_"+whichArm)
-extra.alignTo(cont_IK_hand, pm.PyNode("jInit_LowEnd_"+whichArm))
-#tempAimCon=pm.aimConstraint(jIK_RP_Low, cont_IK_hand, o=(0,180,0))
-#pm.delete(tempAimCon)
+extra.alignTo(cont_IK_hand, pm.PyNode("jInit_LowEnd_"+whichArm),2)
 
 cont_IK_hand_ORE=extra.createUpGrp(cont_IK_hand[0], "_ORE")
 
@@ -123,7 +110,7 @@ pm.addAttr( shortName="stretch", longName="Stretch", defaultValue=100.0, minValu
 
 midLock_IK=pm.spaceLocator(name="midLock_IK_"+whichArm)
 
-extra.alignTo(midLock_IK, pm.PyNode("jInit_Low_"+whichArm))
+extra.alignTo(midLock_IK, pm.PyNode("jInit_Low_"+whichArm),2)
 pm.makeIdentity(a=True)
 pm.pointConstraint(jIK_orig_Low, midLock_IK, mo=False)
 MidLockIK_ori=pm.orientConstraint(jIK_orig_Up, jIK_orig_Low, midLock_IK, mo=True)
@@ -149,7 +136,7 @@ pm.poleVectorConstraint(cont_Pole, "ikHandle_RP_"+whichArm)
 ### Create and constrain Distance Locators
 
 armStart= pm.spaceLocator(name="armStart_"+whichArm)
-extra.alignTo(armStart, jIK_orig_Up)
+extra.alignTo(armStart, jIK_orig_Up,2)
 pm.parentConstraint(j_ShoulderEnd, armStart)
 
 armEnd= pm.spaceLocator(name="armEnd_"+whichArm)
@@ -235,7 +222,7 @@ cont_IK_hand[0].stretch >> stretchOffset.input1D[2]
 
 
 IK_parentGRP=pm.group(name="IK_parentGRP_"+whichArm, em=True)
-extra.alignTo(IK_parentGRP, "jInit_LowEnd_"+whichArm)
+extra.alignTo(IK_parentGRP, "jInit_LowEnd_"+whichArm,2)
 
 pm.parent(ikHandle_SC[0], IK_parentGRP)
 pm.parent(ikHandle_RP[0], IK_parentGRP)
@@ -295,7 +282,7 @@ pm.select(cont_Shoulder)
 pm.setAttr(cont_Shoulder.scale, (initUpperArmDist/5,initUpperArmDist/5,initUpperArmDist/5))
 pm.makeIdentity(cont_Shoulder, a=True)
 cont_Shoulder_POS=extra.createUpGrp(cont_Shoulder, "_POS")
-extra.alignTo(cont_Shoulder_POS, pm.PyNode("jInit_Shoulder_"+whichArm))
+extra.alignTo(cont_Shoulder_POS, "jInit_Shoulder_"+whichArm, 2)
 pm.select(cont_Shoulder)
 pm.addAttr( shortName="autoTwist", longName="Auto_Twist", defaultValue=1.0, minValue=0.0, maxValue=1.0, at="float", k=True)
 pm.addAttr( shortName="manualTwist", longName="Manual_Twist", defaultValue=0.0, at="float", k=True)
@@ -334,8 +321,9 @@ pm.joint(jFK_LowEnd, e=True, zso=True, oj="xyz", sao="yup")
 #UpArm Cont
 cont_FK_Up=pm.curve(name="cont_FK_Up_"+whichArm, d=1,p=[(-1,1,1), (-1,1,-1), (1,1,-1), (1,1,1), (-1,1,1), (-1,-1,1), (-1,-1,-1), (-1,1,-1), (-1,1,1), (-1,-1,1), (1,-1,1), (1,1,1), (1,1,-1), (1,-1,-1), (1,-1,1), (1,-1,-1), (-1,-1,-1)],k= [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16])
 temp_PoCon=pm.pointConstraint(jFK_Up, jFK_Low, cont_FK_Up)
+pm.delete(temp_PoCon)
+extra.alignTo(cont_FK_Up, jFK_Low,1)
 temp_AimCon=pm.aimConstraint(jFK_Low, cont_FK_Up, o=(0,0,0), u=(0,1,0))
-pm.delete(temp_PoCon);
 pm.delete(temp_AimCon);
 
 pm.setAttr(cont_FK_Up.scale, (pm.getAttr(jFK_Low.translateX)/2,0.5,0.5))
@@ -353,9 +341,11 @@ pm.pointConstraint(startLock, cont_FK_Up_ORE, mo=True)
 #LowArm Cont
 cont_FK_Low=pm.curve(name="cont_FK_Low_"+whichArm, d=1,p=[(-1,1,1), (-1,1,-1), (1,1,-1), (1,1,1), (-1,1,1), (-1,-1,1), (-1,-1,-1), (-1,1,-1), (-1,1,1), (-1,-1,1), (1,-1,1), (1,1,1), (1,1,-1), (1,-1,-1), (1,-1,1), (1,-1,-1), (-1,-1,-1)],k= [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16])
 temp_PoCon=pm.pointConstraint(jFK_Low, jFK_LowEnd, cont_FK_Low)
-temp_AimCon=pm.aimConstraint(jFK_LowEnd, cont_FK_Low, o=(0,0,0))
 pm.delete(temp_PoCon);
+extra.alignTo(cont_FK_Low, jFK_LowEnd, 1)
+temp_AimCon=pm.aimConstraint(jFK_LowEnd, cont_FK_Low, o=(0,0,0), u=(0,1,0))
 pm.delete(temp_AimCon);
+
 pm.setAttr(cont_FK_Low.scale, (pm.getAttr(jFK_Low.translateX)/2,0.5,0.5))
 
 
@@ -369,7 +359,7 @@ pm.makeIdentity(cont_FK_Low, a=True, t=True, r=False, s=True)
 
 midLock_FK=pm.spaceLocator(name="midLock_FK_"+whichArm)
 pm.makeIdentity(midLock_FK)
-extra.alignTo(midLock_FK, pm.PyNode("jInit_Low_"+whichArm))
+extra.alignTo(midLock_FK, "jInit_Low_"+whichArm, 2)
 pm.pointConstraint(jFK_Low, midLock_FK, mo=False)
 MidLockFK_ori=pm.orientConstraint(jFK_Up, jFK_Low, midLock_FK, mo=True)
 pm.setAttr(MidLockFK_ori.interpType, 0)
@@ -468,7 +458,7 @@ pm.makeIdentity(cont_FK_IK, a=True)
 logoScale=initUpperArmDist/4
 pm.setAttr(cont_FK_IK+".scale", (logoScale, logoScale, logoScale))
 pm.makeIdentity(cont_FK_IK, a=True)
-extra.alignTo(cont_FK_IK, "jInit_LowEnd_"+whichArm)
+extra.alignTo(cont_FK_IK, "jInit_LowEnd_"+whichArm, 2)
 
 pm.move(cont_FK_IK, (0,logoScale*2,0), r=True)
 
@@ -477,7 +467,7 @@ cont_FK_IK_POS=extra.createUpGrp(cont_FK_IK, "_POS")
 
 ### Create End Lock
 endLock=pm.spaceLocator(name="endLock"+whichArm)
-extra.alignTo(endLock, pm.PyNode("jInit_LowEnd_"+whichArm))
+extra.alignTo(endLock, "jInit_LowEnd_"+whichArm, 2)
 endLock_Ore=extra.createUpGrp(endLock, "_Ore")
 endLock_Pos=extra.createUpGrp(endLock, "_Pos")
 endLock_Twist=extra.createUpGrp(endLock, "_AutoTwist")
@@ -506,9 +496,6 @@ ribbonConnections_upperArm=cr.createRibbon("jInit_Up_"+whichArm, "jInit_Low_"+wh
 ribbonStart_paCon_upperArm_Start=pm.parentConstraint(startLock, ribbonConnections_upperArm[0], mo=True)
 ribbonStart_paCon_upperArm_End=pm.parentConstraint(midLock_IK, midLock_FK, ribbonConnections_upperArm[1], mo=True)
 
-#cont_FK_IK.fk_ik >> (ribbonStart_paCon_upperArm_Start+"."+jIK_orig_Up+"W0")
-#fk_ik_rvs.outputX >> (ribbonStart_paCon_upperArm_Start+"."+jFK_Up+"W1")
-
 cont_FK_IK.fk_ik >> (ribbonStart_paCon_upperArm_End+"."+midLock_IK+"W0")
 fk_ik_rvs.outputX >> (ribbonStart_paCon_upperArm_End+"."+midLock_FK+"W1")
 
@@ -520,7 +507,6 @@ pm.scaleConstraint(scaleGrp,ribbonConnections_upperArm[2])
 autoTwist=pm.createNode("multiplyDivide", name="autoTwist_"+whichArm)
 cont_Shoulder.autoTwist >> autoTwist.input2X
 ribbonStart_paCon_upperArm_Start.constraintRotate >> autoTwist.input1
-#autoTwist.output >> ribbonConnections_upperArm[0].rotate
 
 ###!!! The parent constrain override should be disconnected like this
 pm.disconnectAttr(ribbonStart_paCon_upperArm_Start.constraintRotateX, ribbonConnections_upperArm[0].rotateX)
@@ -548,9 +534,6 @@ ribbonStart_paCon_lowerArm_End=pm.parentConstraint(endLock, ribbonConnections_lo
 cont_FK_IK.fk_ik >> (ribbonStart_paCon_lowerArm_Start+"."+midLock_IK+"W0")
 fk_ik_rvs.outputX >> (ribbonStart_paCon_lowerArm_Start+"."+midLock_FK+"W1")
 
-# cont_FK_IK.fk_ik >> (ribbonStart_paCon_lowerArm_End+"."+jIK_orig_LowEnd+"W0")
-# fk_ik_rvs.outputX >> (ribbonStart_paCon_lowerArm_End+"."+jFK_LowEnd+"W1")
-
 pm.scaleConstraint(scaleGrp,ribbonConnections_lowerArm[2])
 
 # AUTO AND MANUAL TWIST
@@ -559,7 +542,6 @@ pm.scaleConstraint(scaleGrp,ribbonConnections_lowerArm[2])
 autoTwist=pm.createNode("multiplyDivide", name="autoTwist_"+whichArm)
 cont_FK_IK.autoTwist >> autoTwist.input2X
 ribbonStart_paCon_lowerArm_End.constraintRotate >> autoTwist.input1
-#autoTwist.output >> ribbonConnections_lowerArm[1].rotate
 
 ###!!! The parent constrain override should be disconnected like this
 pm.disconnectAttr(ribbonStart_paCon_lowerArm_End.constraintRotateX, ribbonConnections_lowerArm[1].rotateX)
@@ -577,7 +559,7 @@ AddManualTwist.output3D >> ribbonConnections_lowerArm[1].rotate
 ###############################################
 
 handMaster=pm.spaceLocator(name="handMaster"+whichArm)
-extra.alignTo(handMaster, endLock)
+extra.alignTo(handMaster, endLock, 2)
 
 pm.select(d=True)
 jDef_Hand=pm.joint(name="jDef_Hand_"+whichArm, p=pm.PyNode("jInit_LowEnd_"+whichArm).getTranslation(space="world"), radius=1.0)
@@ -645,19 +627,16 @@ pm.parent(jDef_Hand, handMaster)
 ### Hand Controllers
 
 cont_FK_Hand=pm.curve(name="cont_FK_Hand"+whichArm, d=1,p=[(-1,1,1), (-1,1,-1), (1,1,-1), (1,1,1), (-1,1,1), (-1,-1,1), (-1,-1,-1), (-1,1,-1), (-1,1,1), (-1,-1,1), (1,-1,1), (1,1,1), (1,1,-1), (1,-1,-1), (1,-1,1), (1,-1,-1), (-1,-1,-1)],k= [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16])
-#extra.alignTo(cont_FK_Hand, pm.PyNode("jInit_LowEnd_"+whichArm))
-#temp_AimCon=pm.aimConstraint(pm.PyNode("jInit_LowEnd_"+whichArm), cont_FK_Hand)
-#pm.delete(temp_AimCon)
+
 handContScale=extra.getDistance(pm.PyNode("jInit_index00_"+whichArm), pm.PyNode("jInit_index01_"+whichArm))
 pm.setAttr(cont_FK_Hand.scale, (handContScale,handContScale,handContScale))
 pm.makeIdentity(cont_FK_Hand, a=True, r=False)
-extra.alignTo(cont_FK_Hand, endLock)
+extra.alignTo(cont_FK_Hand, endLock,2)
 
 cont_FK_Hand_POS=extra.createUpGrp(cont_FK_Hand, "_POS")
 cont_FK_Hand_ORE=extra.createUpGrp(cont_FK_Hand, "_ORE")
 
 pm.pointConstraint(endLock, handMaster, mo=True)
-#pm.parentConstraint(endLock,cont_FK_Hand_POS)
 pm.parent(cont_FK_Hand_POS, cont_FK_Low)
 handOriCon=pm.orientConstraint(cont_IK_hand, cont_FK_Hand, handMaster, mo=False)
 cont_FK_IK.fk_ik >> (handOriCon+"."+cont_IK_hand[0]+"W0")
@@ -677,17 +656,17 @@ handContScale01=extra.getDistance(jDef_pinky01, jDef_pinky02)
 handContScale02=extra.getDistance(jDef_pinky02, jDef_pinky03)
 
 cont_pinky00=pm.circle(name="cont_pinky00"+whichArm, radius=handContScale00/divider, nr=(1,0,0))
-extra.alignTo(cont_pinky00, jDef_pinky00)
+extra.alignTo(cont_pinky00, jDef_pinky00,2)
 cont_pinky00_ORE=extra.createUpGrp(cont_pinky00[0], "_ORE")
 cont_pinky00_con=extra.createUpGrp(cont_pinky00[0], "_con")
 
 cont_pinky01=pm.circle(name="cont_pinky01"+whichArm, radius=handContScale01/divider, nr=(1,0,0))
-extra.alignTo(cont_pinky01, jDef_pinky01)
+extra.alignTo(cont_pinky01, jDef_pinky01,2)
 cont_pinky01_ORE=extra.createUpGrp(cont_pinky01[0], "_ORE")
 cont_pinky01_con=extra.createUpGrp(cont_pinky01[0], "_con")
 
 cont_pinky02=pm.circle(name="cont_pinky02"+whichArm, radius=handContScale02/divider, nr=(1,0,0))
-extra.alignTo(cont_pinky02, jDef_pinky02)
+extra.alignTo(cont_pinky02, jDef_pinky02,2)
 cont_pinky02_ORE=extra.createUpGrp(cont_pinky02[0], "_ORE")
 cont_pinky02_con=extra.createUpGrp(cont_pinky02[0], "_con")
 
@@ -705,17 +684,17 @@ handContScale01=extra.getDistance(jDef_ring01, jDef_ring02)
 handContScale02=extra.getDistance(jDef_ring02, jDef_ring03)
 
 cont_ring00=pm.circle(name="cont_ring00"+whichArm, radius=handContScale00/divider, nr=(1,0,0))
-extra.alignTo(cont_ring00, jDef_ring00)
+extra.alignTo(cont_ring00, jDef_ring00,2)
 cont_ring00_ORE=extra.createUpGrp(cont_ring00[0], "_ORE")
 cont_ring00_con=extra.createUpGrp(cont_ring00[0], "_con")
 
 cont_ring01=pm.circle(name="cont_ring01"+whichArm, radius=handContScale01/divider, nr=(1,0,0))
-extra.alignTo(cont_ring01, jDef_ring01)
+extra.alignTo(cont_ring01, jDef_ring01,2)
 cont_ring01_ORE=extra.createUpGrp(cont_ring01[0], "_ORE")
 cont_ring01_con=extra.createUpGrp(cont_ring01[0], "_con")
 
 cont_ring02=pm.circle(name="cont_ring02"+whichArm, radius=handContScale02/divider, nr=(1,0,0))
-extra.alignTo(cont_ring02, jDef_ring02)
+extra.alignTo(cont_ring02, jDef_ring02,2)
 cont_ring02_ORE=extra.createUpGrp(cont_ring02[0], "_ORE")
 cont_ring02_con=extra.createUpGrp(cont_ring02[0], "_con")
 
@@ -733,18 +712,18 @@ handContScale01=extra.getDistance(jDef_middle01, jDef_middle02)
 handContScale02=extra.getDistance(jDef_middle02, jDef_middle03)
 
 cont_middle00=pm.circle(name="cont_middle00"+whichArm, radius=handContScale00/divider, nr=(1,0,0))
-extra.alignTo(cont_middle00, jDef_middle00)
+extra.alignTo(cont_middle00, jDef_middle00,2)
 cont_middle00_ORE=extra.createUpGrp(cont_middle00[0], "_ORE")
 cont_middle00_con=extra.createUpGrp(cont_middle00[0], "_con")
 
 cont_middle01=pm.circle(name="cont_middle01"+whichArm, radius=handContScale01/divider, nr=(1,0,0))
-extra.alignTo(cont_middle01, jDef_middle01)
+extra.alignTo(cont_middle01, jDef_middle01,2)
 cont_middle01_ORE=extra.createUpGrp(cont_middle01[0], "_ORE")
 cont_middle01_con=extra.createUpGrp(cont_middle01[0], "_con")
 
 
 cont_middle02=pm.circle(name="cont_middle02"+whichArm, radius=handContScale02/divider, nr=(1,0,0))
-extra.alignTo(cont_middle02, jDef_middle02)
+extra.alignTo(cont_middle02, jDef_middle02,2)
 cont_middle02_ORE=extra.createUpGrp(cont_middle02[0], "_ORE")
 cont_middle01_con=extra.createUpGrp(cont_middle01[0], "_con")
 
@@ -762,19 +741,19 @@ handContScale01=extra.getDistance(jDef_index01, jDef_index02)
 handContScale02=extra.getDistance(jDef_index02, jDef_index03)
 
 cont_index00=pm.circle(name="cont_index00"+whichArm, radius=handContScale00/divider, nr=(1,0,0))
-extra.alignTo(cont_index00, jDef_index00)
+extra.alignTo(cont_index00, jDef_index00,2)
 cont_index00_ORE=extra.createUpGrp(cont_index00[0], "_ORE")
 cont_index00_con=extra.createUpGrp(cont_index00[0], "_con")
 
 
 cont_index01=pm.circle(name="cont_index01"+whichArm, radius=handContScale01/divider, nr=(1,0,0))
-extra.alignTo(cont_index01, jDef_index01)
+extra.alignTo(cont_index01, jDef_index01,2)
 cont_index01_ORE=extra.createUpGrp(cont_index01[0], "_ORE")
 cont_index01_con=extra.createUpGrp(cont_index01[0], "_con")
 
 
 cont_index02=pm.circle(name="cont_index02"+whichArm, radius=handContScale02/divider, nr=(1,0,0))
-extra.alignTo(cont_index02, jDef_index02)
+extra.alignTo(cont_index02, jDef_index02,2)
 cont_index02_ORE=extra.createUpGrp(cont_index02[0], "_ORE")
 cont_index02_con=extra.createUpGrp(cont_index02[0], "_con")
 
@@ -792,18 +771,18 @@ handContScale01=extra.getDistance(jDef_thumb01, jDef_thumb02)
 handContScale02=extra.getDistance(jDef_thumb02, jDef_thumb03)
 
 cont_thumb00=pm.circle(name="cont_thumb00"+whichArm, radius=handContScale00/divider, nr=(1,0,0))
-extra.alignTo(cont_thumb00, jDef_thumb00)
+extra.alignTo(cont_thumb00, jDef_thumb00,2)
 cont_thumb00_ORE=extra.createUpGrp(cont_thumb00[0], "_ORE")
 cont_thumb00_con=extra.createUpGrp(cont_thumb00[0], "_con")
 
 
 cont_thumb01=pm.circle(name="cont_thumb01"+whichArm, radius=handContScale01/divider, nr=(1,0,0))
-extra.alignTo(cont_thumb01, jDef_thumb01)
+extra.alignTo(cont_thumb01, jDef_thumb01,2)
 cont_thumb01_ORE=extra.createUpGrp(cont_thumb01[0], "_ORE")
 cont_thumb01_con=extra.createUpGrp(cont_thumb01[0], "_con")
 
 cont_thumb02=pm.circle(name="cont_thumb02"+whichArm, radius=handContScale02/divider, nr=(1,0,0))
-extra.alignTo(cont_thumb02, jDef_thumb02)
+extra.alignTo(cont_thumb02, jDef_thumb02,2)
 cont_thumb02_ORE=extra.createUpGrp(cont_thumb02[0], "_ORE")
 cont_thumb02_con=extra.createUpGrp(cont_thumb02[0], "_con")
 

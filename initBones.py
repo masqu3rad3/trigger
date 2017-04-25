@@ -28,6 +28,11 @@ def initLegBones(whichLeg):
     pm.joint(foot, e=True, zso=True, oj="xyz", sao="yup")
     pm.joint(ball, e=True, zso=True, oj="xyz", sao="yup")
     pm.joint(toe, e=True, zso=True, oj="xyz", sao="yup")
+    pm.parent(heelpv, foot)
+    pm.parent(toepv, foot)
+    pm.parent(bankin,foot)
+    pm.parent(bankout,foot)
+    
 
 #  TODO // Make a fool check for if there is a naming conflict 
 
@@ -75,5 +80,5 @@ def initArmBones(whichArm):
     pm.parent(index00, lowendarm)
     pm.parent(thumb00, lowendarm)
 
-#initArmBones("l_arm")
+initArmBones("l_arm")
 initLegBones("l_leg")
