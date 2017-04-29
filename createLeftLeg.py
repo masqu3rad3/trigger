@@ -190,12 +190,12 @@ pm.addAttr( shortName="bank", longName="Bank", defaultValue=0.0, at="double", k=
 midLock_IK=pm.spaceLocator(name="midLock_IK_"+whichLeg)
 pm.makeIdentity(a=True)
 extra.alignTo(midLock_IK, "jInit_Knee_"+whichLeg, 2)
-midLock_IK_conFix=extra.createUpGrp(midLock_IK, "conFix")
+#midLock_IK_conFix=extra.createUpGrp(midLock_IK, "conFix")
 
 
-pm.pointConstraint(jIK_orig_Knee, midLock_IK_conFix, mo=False)
-MidLockIK_ori=pm.orientConstraint(jIK_orig_Root, jIK_orig_Knee, midLock_IK_conFix, mo=False)
-pm.setAttr(MidLockIK_ori.interpType, 3)
+pm.pointConstraint(jIK_orig_Knee, midLock_IK, mo=False)
+MidLockIK_ori=pm.orientConstraint(jIK_orig_Root, jIK_orig_Knee, midLock_IK, mo=False)
+pm.setAttr(MidLockIK_ori.interpType, 0)
 
 ###Create Pole Vector Curve - IK
 
@@ -517,11 +517,10 @@ pm.xform(cont_FK_Ball, piv=PvTarget, ws=True)
 midLock_FK=pm.spaceLocator(name="midLock_FK_"+whichLeg)
 pm.makeIdentity(midLock_FK)
 extra.alignTo(midLock_FK, "jInit_Knee_"+whichLeg, 2)
-midLock_FK_conFix=extra.createUpGrp(midLock_FK, "conFix")
 
-pm.pointConstraint(jFK_Knee, midLock_FK_conFix, mo=False)
-MidLockFK_ori=pm.orientConstraint(jFK_Root, jFK_Knee, midLock_FK_conFix, mo=False)
-pm.setAttr(MidLockFK_ori.interpType, 3)
+pm.pointConstraint(jFK_Knee, midLock_FK, mo=False)
+MidLockFK_ori=pm.orientConstraint(jFK_Root, jFK_Knee, midLock_FK, mo=False)
+pm.setAttr(MidLockFK_ori.interpType, 0)
 
 
 ### CReate Constraints and Hierarchy
@@ -576,7 +575,7 @@ pm.select(cont_FK_IK)
 pm.addAttr( shortName="fk_ik", longName="FK_IK", defaultValue=1.0, minValue=0.0, maxValue=1.0, at="float", k=True)
 pm.addAttr( shortName="autoTwist", longName="Auto_Twist", defaultValue=1.0, minValue=0.0, maxValue=1.0, at="float", k=True)
 pm.addAttr( shortName="manualTwist", longName="Manual_Twist", defaultValue=0.0, at="float", k=True)
-pm.addAttr( shortName="twistInterpolation", longName="Twist_Interpolation", at="enum", enumName="No_Flip:Average:Shortest:Longest:Cache", k=True)
+pm.addAttr( shortName="twistInterpolation", longName="Twist_Interpolation", at="enum", enumName="No_Flip:Average:Shortest:Longest:Cache", defaultValue=2, k=True)
 
 fk_ik_rvs=pm.createNode("reverse", name="fk_ik_rvs"+whichLeg)
 cont_FK_IK.fk_ik >> blShape_FKtoIK[0].weight[0]
@@ -667,21 +666,21 @@ pm.scaleConstraint(scaleGrp,ribbonConnections_upperLeg[2])
 # AUTO AND MANUAL TWIST
 
 #auto
-autoTwist=pm.createNode("multiplyDivide", name="autoTwist_"+whichLeg)
-cont_thigh.autoTwist >> autoTwist.input2X
-ribbonStart_paCon_upperLeg_Start.constraintRotate >> autoTwist.input1
+autoTwistThigh=pm.createNode("multiplyDivide", name="autoTwistThigh_"+whichLeg)
+cont_thigh.autoTwist >> autoTwistThigh.input2X
+ribbonStart_paCon_upperLeg_Start.constraintRotate >> autoTwistThigh.input1
 #autoTwist.output >> ribbonConnections_upperArm[0].rotate
 
 ###!!! The parent constrain override should be disconnected like this
 pm.disconnectAttr(ribbonStart_paCon_upperLeg_Start.constraintRotateX, ribbonConnections_upperLeg[0].rotateX)
 
 #manual
-AddManualTwist=pm.createNode("plusMinusAverage", name=("AddManualTwist_UpperLeg_"+whichLeg))
-autoTwist.output >> AddManualTwist.input3D[0]
-cont_thigh.manualTwist >> AddManualTwist.input3D[1].input3Dx
+AddManualTwistThigh=pm.createNode("plusMinusAverage", name=("AddManualTwist_UpperLeg_"+whichLeg))
+autoTwistThigh.output >> AddManualTwistThigh.input3D[0]
+cont_thigh.manualTwist >> AddManualTwistThigh.input3D[1].input3Dx
 
 #connect to the joint
-AddManualTwist.output3D >> ribbonConnections_upperLeg[0].rotate
+AddManualTwistThigh.output3D >> ribbonConnections_upperLeg[0].rotate
 
 # LOWERLEG RIBBON
 
@@ -701,21 +700,21 @@ pm.scaleConstraint(scaleGrp,ribbonConnections_lowerLeg[2])
 # AUTO AND MANUAL TWIST
 
 #auto
-autoTwist=pm.createNode("multiplyDivide", name="autoTwist_"+whichLeg)
-cont_FK_IK.autoTwist >> autoTwist.input2X
-ribbonStart_paCon_lowerLeg_End.constraintRotate >> autoTwist.input1
+autoTwistAnkle=pm.createNode("multiplyDivide", name="autoTwistAnkle_"+whichLeg)
+cont_FK_IK.autoTwist >> autoTwistAnkle.input2X
+ribbonStart_paCon_lowerLeg_End.constraintRotate >> autoTwistAnkle.input1
 #autoTwist.output >> ribbonConnections_lowerLeg[1].rotate
 
 ###!!! The parent constrain override should be disconnected like this
 pm.disconnectAttr(ribbonStart_paCon_lowerLeg_End.constraintRotateX, ribbonConnections_lowerLeg[1].rotateX)
 
 #manual
-AddManualTwist=pm.createNode("plusMinusAverage", name=("AddManualTwist_LowerLeg_"+whichLeg))
-autoTwist.output >> AddManualTwist.input3D[0]
-cont_FK_IK.manualTwist >> AddManualTwist.input3D[1].input3Dx
+AddManualTwistAnkle=pm.createNode("plusMinusAverage", name=("AddManualTwist_LowerLeg_"+whichLeg))
+autoTwistAnkle.output >> AddManualTwistAnkle.input3D[0]
+cont_FK_IK.manualTwist >> AddManualTwistAnkle.input3D[1].input3Dx
 
 #connect to the joint
-AddManualTwist.output3D >> ribbonConnections_lowerLeg[1].rotate
+AddManualTwistAnkle.output3D >> ribbonConnections_lowerLeg[1].rotate
 
 # Foot Joint
 
@@ -763,8 +762,8 @@ pm.parent(legStart, scaleGrp)
 pm.parent(legEnd, scaleGrp)
 pm.parent(IK_parentGRP, scaleGrp)
 pm.parent(cont_thigh_OFF, scaleGrp)
-pm.parent(midLock_IK_conFix, scaleGrp)
-pm.parent(midLock_FK_conFix, scaleGrp)
+pm.parent(midLock_IK, scaleGrp)
+pm.parent(midLock_FK, scaleGrp)
 #pm.parent(startLock, scaleGrp)
 
 pm.parent(ribbonConnections_upperLeg[2], nonScaleGrp)
