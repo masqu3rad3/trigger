@@ -114,7 +114,9 @@ Pv_BallLean=pm.group(name="Pv_BallLean_"+whichLeg, em=True)
 extra.alignTo(Pv_BallLean, "jInit_Ball_"+whichLeg, 0)
 pm.makeIdentity(Pv_BallLean, a=True, t=False, r=True, s=True)
 
-#startLock=pm.spaceLocator(name="startLock_"+whichLeg)
+
+## Create Start Lock
+
 startLock=pm.spaceLocator(name="startLock_"+whichLeg)
 extra.alignTo(startLock, "jInit_UpLeg_"+whichLeg, 2)
 startLock_Ore=extra.createUpGrp(startLock, "_Ore")
@@ -189,12 +191,13 @@ pm.addAttr( shortName="bank", longName="Bank", defaultValue=0.0, at="double", k=
 
 target_midLock_IK=pm.spaceLocator(name="target_midLock_IK_"+whichLeg)
 pm.makeIdentity(a=True)
-extra.alignTo(target_midLock_IK, "jInit_Knee_"+whichLeg, 2)
-
+extra.alignTo(target_midLock_IK, "jInit_Knee_"+whichLeg, 0)
 
 pm.pointConstraint(jIK_orig_Knee, target_midLock_IK, mo=False)
 MidLockIK_ori=pm.orientConstraint(jIK_orig_Root, jIK_orig_Knee, target_midLock_IK, mo=False)
 pm.setAttr(MidLockIK_ori.interpType, 0)
+
+#MidLockIK_ori=pm.aimConstraint(jIK_orig_Root, jIK_orig_End, target_midLock_IK, mo=False)
 
 ###Create Pole Vector Curve - IK
 
@@ -222,8 +225,6 @@ pm.pointConstraint(masterIK, legEnd, mo=False)
 
 
 ### Create Nodes and Connections for Strethchy IK SC
-#initUpperLegDist=extra.getDistance(jIK_SC_Root, jIK_SC_Knee)
-#initLowerLegDist=extra.getDistance(jIK_SC_Knee, jIK_Foot)
 
 stretchOffset=pm.createNode("plusMinusAverage", name="stretchOffset_"+whichLeg)
 distance_SC=pm.createNode("distanceBetween", name="distance_SC_"+whichLeg)
@@ -398,13 +399,6 @@ pm.xform(cont_thigh, piv=PvTarget, ws=True)
 pm.makeIdentity(cont_thigh, a=True, t=True, r=False, s=True)
 pm.parentConstraint(cont_thigh, jDef_Rcon, mo=True)
 
-#pm.makeIdentity(cont_thigh, a=True, t=True, r=False, s=True)
-
-
-
-
-
-
 
 ###########################
 ######### FK LEG ##########
@@ -515,11 +509,11 @@ pm.xform(cont_FK_Ball, piv=PvTarget, ws=True)
 
 target_midLock_FK=pm.spaceLocator(name="target_midLock_FK_"+whichLeg)
 pm.makeIdentity(target_midLock_FK)
-extra.alignTo(target_midLock_FK, "jInit_Knee_"+whichLeg, 2)
+extra.alignTo(target_midLock_FK, "jInit_Knee_"+whichLeg, 0)
 
 pm.pointConstraint(jFK_Knee, target_midLock_FK, mo=False)
-MidLockFK_ori=pm.orientConstraint(jFK_Root, jFK_Knee, target_midLock_FK, mo=False)
-pm.setAttr(MidLockFK_ori.interpType, 0)
+MidLockFK_ori=pm.orientConstraint(jFK_Root, jFK_Knee, target_midLock_FK, mo=True)
+#pm.setAttr(MidLockFK_ori.interpType, 0)
 
 
 
@@ -535,19 +529,6 @@ pm.parent(cont_FK_UpLeg_OFF, cont_thigh)
 pm.parent(cont_FK_LowLeg_OFF, cont_FK_UpLeg)
 pm.parent(cont_FK_Foot_OFF, cont_FK_LowLeg)
 pm.parent(cont_FK_Ball_OFF, cont_FK_Foot)
-
-# pm.pointConstraint(jFK_Knee, cont_FK_LowLeg_OFF, mo=True)
-# pm.pointConstraint(jFK_Foot, cont_FK_Foot_OFF, mo=True)
-# pm.pointConstraint(jFK_Ball, cont_FK_Ball_OFF, mo=True)
-
-# pm.orientConstraint(cont_FK_UpLeg, cont_FK_LowLeg_OFF, mo=True)
-# pm.orientConstraint(cont_FK_LowLeg, cont_FK_Foot_OFF, mo=True)
-# pm.orientConstraint(cont_FK_Foot, cont_FK_Ball_OFF, mo=True)
-
-#pm.scaleConstraint(cont_FK_UpLeg, jFK_Root, mo=False)
-#pm.scaleConstraint(cont_FK_LowLeg, jFK_Knee, mo=False)
-#pm.scaleConstraint(cont_FK_Foot, jFK_Foot, mo=False)
-#pm.scaleConstraint(cont_FK_Ball, jFK_Ball, mo=False)
 
 ### Create FK IK Icon
 
@@ -591,8 +572,6 @@ pm.setAttr(cont_FK_IK+".sx", 0.1)
 pm.setAttr(cont_FK_IK+".sy", 0.1)
 pm.setAttr(cont_FK_IK+".sz", 0.1)
 
-####################################################cont_FK_IK.fk_ik 
-
 pm.delete(letterIK)
 
 pm.select(cont_FK_IK)
@@ -608,9 +587,25 @@ pm.move(cont_FK_IK, (logoScale*2,0,0), r=True)
 cont_FK_IK_POS=extra.createUpGrp(cont_FK_IK, "_POS")
 pm.parent(cont_FK_IK_POS, scaleGrp)
 
+### Create MidLock controller
+
+contScale= extra.getDistance(pm.PyNode("jInit_Foot_"+whichLeg), pm.PyNode("jInit_Knee_"+whichLeg))/3
+cont_midLock=pm.circle(name="cont_mid_"+whichLeg, nr=(1,0,0), ch=0)
+pm.rebuildCurve(cont_midLock, s=12, ch=0)
+pm.select(cont_midLock[0].cv[0],cont_midLock[0].cv[2],cont_midLock[0].cv[4],cont_midLock[0].cv[6],cont_midLock[0].cv[8],cont_midLock[0].cv[10])
+pm.scale(0.5, 0.5, 0.5)
+pm.select(d=True)
+pm.setAttr(cont_midLock[0].scale, (contScale, contScale, contScale))
+extra.alignTo(cont_midLock, "jInit_Knee_"+whichLeg, 0)
+pm.makeIdentity(cont_midLock, a=True)
+
+
 ### Create MASTER Midlock
 
-midLock=pm.spaceLocator(name="midLock"+whichLeg)
+midLock=pm.spaceLocator(name="midLock_"+whichLeg)
+extra.alignTo(midLock, cont_midLock, 0)
+midLock_POS=extra.createUpGrp(cont_midLock[0], "POS")
+midLock_CON=extra.createUpGrp(cont_midLock[0], "CON")
 
 midLockBlendPos=pm.createNode("blendColors", name="midLockBlendPos_"+whichLeg)
 midLockBlendRot=pm.createNode("blendColors", name="midLockBlendRot_"+whichLeg)
@@ -621,12 +616,13 @@ target_midLock_IK.rotate >> midLockBlendRot.color1
 target_midLock_FK.translate >> midLockBlendPos.color2
 target_midLock_FK.rotate >> midLockBlendRot.color2
 
-midLockBlendPos.output >> midLock.translate
-midLockBlendRot.output >> midLock.rotate
+midLockBlendPos.output >> midLock_POS.translate
+midLockBlendRot.output >> midLock_POS.rotate
 
 cont_FK_IK.fk_ik >> midLockBlendPos.blender
 cont_FK_IK.fk_ik >> midLockBlendRot.blender
 
+pm.parentConstraint(cont_midLock[0], midLock, mo=True)
 
 ### Create End Lock
 endLock=pm.spaceLocator(name="endLock_"+whichLeg)
@@ -634,21 +630,9 @@ extra.alignTo(endLock, "jInit_Foot_"+whichLeg, 2)
 endLock_Ore=extra.createUpGrp(endLock, "_Ore")
 endLock_Pos=extra.createUpGrp(endLock, "_Pos")
 endLock_Twist=extra.createUpGrp(endLock, "_Twist")
-#tempAimCon=pm.aimConstraint(jIK_orig_Knee, endLock_Ore, o=(0,180,0))
-#pm.delete(tempAimCon)
 endLockWeight=pm.pointConstraint(jIK_orig_End, jFK_Foot, endLock_Pos, mo=False)
 cont_FK_IK.fk_ik >> (endLockWeight+"."+jIK_orig_End+"W0")
 fk_ik_rvs.outputX >> (endLockWeight+"."+jFK_Foot+"W1")
-
-#endLockRot=pm.createNode("blendColors", name="endLockRot_"+whichLeg)
-#autoTwist=pm.createNode("multiplyDivide", name="autoTwist_"+whichLeg)
-
-#IK_parentGRP.rotateX >> endLockRot.color1R
-#jFK_Foot.rotateX >> endLockRot.color2R
-#endLockRot.outputR >> autoTwist.input1X
-#autoTwist.outputX >> endLock_Twist.rotateX
-#cont_FK_IK.fk_ik >> endLockRot.blender
-#cont_FK_IK.autoTwist >> autoTwist.input2X
 
 pm.parentConstraint(endLock, cont_FK_IK_POS, mo=True)
 pm.parent(endLock_Ore, scaleGrp)
@@ -665,20 +649,12 @@ fk_ik_rvs.outputX >> (endLockRot+"."+jFK_Foot+"W1")
 #### CREATE DEFORMATION JOINTS ####
 ###################################
 
-
-
 # UPPERLEG RIBBON
 
 ribbonConnections_upperLeg=cr.createRibbon("jInit_UpLeg_"+whichLeg, "jInit_Knee_"+whichLeg, "up_"+whichLeg, -90)
 
 ribbonStart_paCon_upperLeg_Start=pm.parentConstraint(startLock, ribbonConnections_upperLeg[0], mo=True)
 ribbonStart_paCon_upperLeg_End=pm.parentConstraint(midLock, ribbonConnections_upperLeg[1], mo=True)
-
-#cont_FK_IK.fk_ik >> (ribbonStart_paCon_upperLeg_Start+"."+jIK_orig_Root+"W0")
-#fk_ik_rvs.outputX >> (ribbonStart_paCon_upperLeg_Start+"."+jFK_Root+"W1")
-
-##cont_FK_IK.fk_ik >> (ribbonStart_paCon_upperLeg_End+"."+midLock_IK+"W0")
-##fk_ik_rvs.outputX >> (ribbonStart_paCon_upperLeg_End+"."+midLock_FK+"W1")
 
 pm.scaleConstraint(scaleGrp,ribbonConnections_upperLeg[2])
 
@@ -688,7 +664,6 @@ pm.scaleConstraint(scaleGrp,ribbonConnections_upperLeg[2])
 autoTwistThigh=pm.createNode("multiplyDivide", name="autoTwistThigh_"+whichLeg)
 cont_thigh.autoTwist >> autoTwistThigh.input2X
 ribbonStart_paCon_upperLeg_Start.constraintRotate >> autoTwistThigh.input1
-#autoTwist.output >> ribbonConnections_upperArm[0].rotate
 
 ###!!! The parent constrain override should be disconnected like this
 pm.disconnectAttr(ribbonStart_paCon_upperLeg_Start.constraintRotateX, ribbonConnections_upperLeg[0].rotateX)
@@ -708,12 +683,6 @@ ribbonConnections_lowerLeg=cr.createRibbon("jInit_Knee_"+whichLeg, "jInit_Foot_"
 ribbonStart_paCon_lowerLeg_Start=pm.parentConstraint(midLock, ribbonConnections_lowerLeg[0], mo=True)
 ribbonStart_paCon_lowerLeg_End=pm.parentConstraint(endLock, ribbonConnections_lowerLeg[1], mo=True)
 
-#cont_FK_IK.fk_ik >> (ribbonStart_paCon_lowerLeg_Start+"."+midLock_IK+"W0")
-#fk_ik_rvs.outputX >> (ribbonStart_paCon_lowerLeg_Start+"."+midLock_FK+"W1")
-
-#cont_FK_IK.fk_ik >> (ribbonStart_paCon_lowerLeg_End+"."+jIK_orig_End+"W0")
-#fk_ik_rvs.outputX >> (ribbonStart_paCon_lowerLeg_End+"."+jFK_Foot+"W1")
-
 pm.scaleConstraint(scaleGrp,ribbonConnections_lowerLeg[2])
 
 # AUTO AND MANUAL TWIST
@@ -722,7 +691,6 @@ pm.scaleConstraint(scaleGrp,ribbonConnections_lowerLeg[2])
 autoTwistAnkle=pm.createNode("multiplyDivide", name="autoTwistAnkle_"+whichLeg)
 cont_FK_IK.autoTwist >> autoTwistAnkle.input2X
 ribbonStart_paCon_lowerLeg_End.constraintRotate >> autoTwistAnkle.input1
-#autoTwist.output >> ribbonConnections_lowerLeg[1].rotate
 
 ###!!! The parent constrain override should be disconnected like this
 pm.disconnectAttr(ribbonStart_paCon_lowerLeg_End.constraintRotateX, ribbonConnections_lowerLeg[1].rotateX)
@@ -755,26 +723,20 @@ fk_ik_rvs.outputX >> (ball_paCon+"."+jFK_Ball+"W1")
 cont_FK_IK.fk_ik >> (toe_paCon+"."+jIK_Toe+"W0")
 fk_ik_rvs.outputX >> (toe_paCon+"."+jFK_Toe+"W1")
 
-
 ### FINAL ROUND UP
 
 # Create Master Root and Scale and nonScale Group
 
-#Interpolation Types
-cont_FK_IK.twistInterpolation >> startLockRot.interpType
-cont_FK_IK.twistInterpolation >> MidLockIK_ori.interpType
-cont_FK_IK.twistInterpolation >> MidLockFK_ori.interpType
-#cont_FK_IK.twistInterpolation >> midLockRot.interpType
-cont_FK_IK.twistInterpolation >> endLockRot.interpType
+###Interpolation Types
+##cont_FK_IK.twistInterpolation >> startLockRot.interpType
+##cont_FK_IK.twistInterpolation >> MidLockIK_ori.interpType
+##cont_FK_IK.twistInterpolation >> MidLockFK_ori.interpType
+##cont_FK_IK.twistInterpolation >> endLockRot.interpType
 
 pm.parent(jIK_SC_Root, startLock)
 pm.parent(jIK_RP_Root, startLock)
 pm.parent(jIK_orig_Root, startLock)
 pm.parent(jFK_Root, startLock)
-
-
-
-
 
 pm.parent(startLock_Ore, scaleGrp)
 pm.parent(legStart, scaleGrp)
@@ -783,8 +745,7 @@ pm.parent(IK_parentGRP, scaleGrp)
 pm.parent(cont_thigh_OFF, scaleGrp)
 pm.parent(target_midLock_IK, scaleGrp)
 pm.parent(target_midLock_FK, scaleGrp)
-pm.parent(midLock, scaleGrp)
-#pm.parent(startLock, scaleGrp)
+pm.parent(midLock_POS, scaleGrp)
 
 pm.parent(ribbonConnections_upperLeg[2], nonScaleGrp)
 pm.parent(ribbonConnections_upperLeg[3], nonScaleGrp)
