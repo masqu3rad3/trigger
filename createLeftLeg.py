@@ -185,16 +185,15 @@ pm.addAttr( shortName="tSpin", longName="Toes_Spin", defaultValue=0.0, at="doubl
 pm.addAttr( shortName="tWiggle", longName="Toes_Wiggle", defaultValue=0.0, at="double", k=True)
 pm.addAttr( shortName="bank", longName="Bank", defaultValue=0.0, at="double", k=True)
 
-###Create Midlock - IK
+###Create Midlock - IK Target
 
-midLock_IK=pm.spaceLocator(name="midLock_IK_"+whichLeg)
+target_midLock_IK=pm.spaceLocator(name="target_midLock_IK_"+whichLeg)
 pm.makeIdentity(a=True)
-extra.alignTo(midLock_IK, "jInit_Knee_"+whichLeg, 2)
-#midLock_IK_conFix=extra.createUpGrp(midLock_IK, "conFix")
+extra.alignTo(target_midLock_IK, "jInit_Knee_"+whichLeg, 2)
 
 
-pm.pointConstraint(jIK_orig_Knee, midLock_IK, mo=False)
-MidLockIK_ori=pm.orientConstraint(jIK_orig_Root, jIK_orig_Knee, midLock_IK, mo=False)
+pm.pointConstraint(jIK_orig_Knee, target_midLock_IK, mo=False)
+MidLockIK_ori=pm.orientConstraint(jIK_orig_Root, jIK_orig_Knee, target_midLock_IK, mo=False)
 pm.setAttr(MidLockIK_ori.interpType, 0)
 
 ###Create Pole Vector Curve - IK
@@ -514,13 +513,14 @@ pm.xform(cont_FK_Ball, piv=PvTarget, ws=True)
 
 ### Create Midlock - FK
 
-midLock_FK=pm.spaceLocator(name="midLock_FK_"+whichLeg)
-pm.makeIdentity(midLock_FK)
-extra.alignTo(midLock_FK, "jInit_Knee_"+whichLeg, 2)
+target_midLock_FK=pm.spaceLocator(name="target_midLock_FK_"+whichLeg)
+pm.makeIdentity(target_midLock_FK)
+extra.alignTo(target_midLock_FK, "jInit_Knee_"+whichLeg, 2)
 
-pm.pointConstraint(jFK_Knee, midLock_FK, mo=False)
-MidLockFK_ori=pm.orientConstraint(jFK_Root, jFK_Knee, midLock_FK, mo=False)
+pm.pointConstraint(jFK_Knee, target_midLock_FK, mo=False)
+MidLockFK_ori=pm.orientConstraint(jFK_Root, jFK_Knee, target_midLock_FK, mo=False)
 pm.setAttr(MidLockFK_ori.interpType, 0)
+
 
 
 ### CReate Constraints and Hierarchy
@@ -608,6 +608,25 @@ pm.move(cont_FK_IK, (logoScale*2,0,0), r=True)
 cont_FK_IK_POS=extra.createUpGrp(cont_FK_IK, "_POS")
 pm.parent(cont_FK_IK_POS, scaleGrp)
 
+### Create MASTER Midlock
+
+midLock=pm.spaceLocator(name="midLock"+whichLeg)
+
+midLockBlendPos=pm.createNode("blendColors", name="midLockBlendPos_"+whichLeg)
+midLockBlendRot=pm.createNode("blendColors", name="midLockBlendRot_"+whichLeg)
+
+target_midLock_IK.translate >> midLockBlendPos.color1
+target_midLock_IK.rotate >> midLockBlendRot.color1
+
+target_midLock_FK.translate >> midLockBlendPos.color2
+target_midLock_FK.rotate >> midLockBlendRot.color2
+
+midLockBlendPos.output >> midLock.translate
+midLockBlendRot.output >> midLock.rotate
+
+cont_FK_IK.fk_ik >> midLockBlendPos.blender
+cont_FK_IK.fk_ik >> midLockBlendRot.blender
+
 
 ### Create End Lock
 endLock=pm.spaceLocator(name="endLock_"+whichLeg)
@@ -653,13 +672,13 @@ fk_ik_rvs.outputX >> (endLockRot+"."+jFK_Foot+"W1")
 ribbonConnections_upperLeg=cr.createRibbon("jInit_UpLeg_"+whichLeg, "jInit_Knee_"+whichLeg, "up_"+whichLeg, -90)
 
 ribbonStart_paCon_upperLeg_Start=pm.parentConstraint(startLock, ribbonConnections_upperLeg[0], mo=True)
-ribbonStart_paCon_upperLeg_End=pm.parentConstraint(midLock_IK, midLock_FK, ribbonConnections_upperLeg[1], mo=True)
+ribbonStart_paCon_upperLeg_End=pm.parentConstraint(midLock, ribbonConnections_upperLeg[1], mo=True)
 
 #cont_FK_IK.fk_ik >> (ribbonStart_paCon_upperLeg_Start+"."+jIK_orig_Root+"W0")
 #fk_ik_rvs.outputX >> (ribbonStart_paCon_upperLeg_Start+"."+jFK_Root+"W1")
 
-cont_FK_IK.fk_ik >> (ribbonStart_paCon_upperLeg_End+"."+midLock_IK+"W0")
-fk_ik_rvs.outputX >> (ribbonStart_paCon_upperLeg_End+"."+midLock_FK+"W1")
+##cont_FK_IK.fk_ik >> (ribbonStart_paCon_upperLeg_End+"."+midLock_IK+"W0")
+##fk_ik_rvs.outputX >> (ribbonStart_paCon_upperLeg_End+"."+midLock_FK+"W1")
 
 pm.scaleConstraint(scaleGrp,ribbonConnections_upperLeg[2])
 
@@ -686,11 +705,11 @@ AddManualTwistThigh.output3D >> ribbonConnections_upperLeg[0].rotate
 
 ribbonConnections_lowerLeg=cr.createRibbon("jInit_Knee_"+whichLeg, "jInit_Foot_"+whichLeg, "low_"+whichLeg, 90)
 
-ribbonStart_paCon_lowerLeg_Start=pm.parentConstraint(midLock_IK, midLock_FK, ribbonConnections_lowerLeg[0], mo=True)
+ribbonStart_paCon_lowerLeg_Start=pm.parentConstraint(midLock, ribbonConnections_lowerLeg[0], mo=True)
 ribbonStart_paCon_lowerLeg_End=pm.parentConstraint(endLock, ribbonConnections_lowerLeg[1], mo=True)
 
-cont_FK_IK.fk_ik >> (ribbonStart_paCon_lowerLeg_Start+"."+midLock_IK+"W0")
-fk_ik_rvs.outputX >> (ribbonStart_paCon_lowerLeg_Start+"."+midLock_FK+"W1")
+#cont_FK_IK.fk_ik >> (ribbonStart_paCon_lowerLeg_Start+"."+midLock_IK+"W0")
+#fk_ik_rvs.outputX >> (ribbonStart_paCon_lowerLeg_Start+"."+midLock_FK+"W1")
 
 #cont_FK_IK.fk_ik >> (ribbonStart_paCon_lowerLeg_End+"."+jIK_orig_End+"W0")
 #fk_ik_rvs.outputX >> (ribbonStart_paCon_lowerLeg_End+"."+jFK_Foot+"W1")
@@ -762,8 +781,9 @@ pm.parent(legStart, scaleGrp)
 pm.parent(legEnd, scaleGrp)
 pm.parent(IK_parentGRP, scaleGrp)
 pm.parent(cont_thigh_OFF, scaleGrp)
-pm.parent(midLock_IK, scaleGrp)
-pm.parent(midLock_FK, scaleGrp)
+pm.parent(target_midLock_IK, scaleGrp)
+pm.parent(target_midLock_FK, scaleGrp)
+pm.parent(midLock, scaleGrp)
 #pm.parent(startLock, scaleGrp)
 
 pm.parent(ribbonConnections_upperLeg[2], nonScaleGrp)
