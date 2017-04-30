@@ -125,7 +125,7 @@ startLock_Pos=extra.createUpGrp(startLock, "_Pos")
 startLock_Twist=extra.createUpGrp(startLock, "_AutoTwist")
 
 startLockRot=pm.parentConstraint(jDef_Upleg, startLock, mo=True)
-pm.setAttr(startLockRot.interpType, 0)
+#pm.setAttr(startLockRot.interpType, 0)
 
 pm.parentConstraint(startLock, jIK_SC_Root, mo=True)
 pm.parentConstraint(startLock, jIK_RP_Root, mo=True)
@@ -190,13 +190,13 @@ pm.addAttr( shortName="bank", longName="Bank", defaultValue=0.0, at="double", k=
 
 ###Create Midlock - IK Target
 
-target_midLock_IK=pm.spaceLocator(name="target_midLock_IK_"+whichLeg)
-pm.makeIdentity(a=True)
-extra.alignTo(target_midLock_IK, "jInit_Knee_"+whichLeg, 0)
+# target_midLock_IK=pm.spaceLocator(name="target_midLock_IK_"+whichLeg)
+# pm.makeIdentity(a=True)
+# extra.alignTo(target_midLock_IK, "jInit_Knee_"+whichLeg, 0)
 
-pm.pointConstraint(jIK_orig_Knee, target_midLock_IK, mo=False)
-MidLockIK_ori=pm.orientConstraint(jIK_orig_Root, jIK_orig_Knee, target_midLock_IK, mo=False)
-pm.setAttr(MidLockIK_ori.interpType, 0)
+# pm.pointConstraint(jIK_orig_Knee, target_midLock_IK, mo=False)
+# MidLockIK_ori=pm.orientConstraint(jIK_orig_Root, jIK_orig_Knee, target_midLock_IK, mo=False)
+# pm.setAttr(MidLockIK_ori.interpType, 0)
 
 #MidLockIK_ori=pm.aimConstraint(jIK_orig_Root, jIK_orig_End, target_midLock_IK, mo=False)
 
@@ -445,6 +445,8 @@ pm.parent(cont_FK_UpLeg, cont_FK_UpLeg_ORE)
 
 pm.parentConstraint(startLock, cont_FK_UpLeg_OFF, mo=True)
 
+cont_FK_UpLeg.scaleY >> jFK_Root.scaleX ## WILL BE ADDED TO ARM
+
 #LowLeg Cont
 cont_FK_LowLeg=pm.curve(name="cont_FK_LowLeg_"+whichLeg, d=1,p=[(-1,1,1), (-1,1,-1), (1,1,-1), (1,1,1), (-1,1,1), (-1,-1,1), (-1,-1,-1), (-1,1,-1), (-1,1,1), (-1,-1,1), (1,-1,1), (1,1,1), (1,1,-1), (1,-1,-1), (1,-1,1), (1,-1,-1), (-1,-1,-1)],k= [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16])
 pm.setAttr(cont_FK_LowLeg.scale, (pm.getAttr(jFK_Foot.translateX)/8,pm.getAttr(jFK_Foot.translateX)/2,pm.getAttr(jFK_Foot.translateX)/8))
@@ -464,6 +466,10 @@ pm.makeIdentity(a=True, t=True, r=False, s=True)
 
 PvTarget=pm.PyNode("jInit_Knee_"+whichLeg).getTranslation(space="world")
 pm.xform(cont_FK_LowLeg, piv=PvTarget, ws=True)
+pm.xform(cont_FK_LowLeg_OFF, piv=PvTarget, ws=True) ## WILL BE ADDED TO ARM
+pm.pointConstraint(jFK_Knee, cont_FK_LowLeg_OFF)  ## WILL BE ADDED TO ARM
+
+cont_FK_LowLeg.scaleY >> jFK_Knee.scaleX ## WILL BE ADDED TO ARM
 
 #Foot Cont
 cont_FK_Foot=pm.curve(name="cont_FK_Foot_"+whichLeg, d=1,p=[(-1,1,1), (-1,1,-1), (1,1,-1), (1,1,1), (-1,1,1), (-1,-1,1), (-1,-1,-1), (-1,1,-1), (-1,1,1), (-1,-1,1), (1,-1,1), (1,1,1), (1,1,-1), (1,-1,-1), (1,-1,1), (1,-1,-1), (-1,-1,-1)],k= [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16])
@@ -484,6 +490,11 @@ pm.makeIdentity(a=True, t=True, r=False, s=True)
 
 PvTarget=pm.PyNode("jInit_Foot_"+whichLeg).getTranslation(space="world")
 pm.xform(cont_FK_Foot, piv=PvTarget, ws=True)
+pm.xform(cont_FK_Foot_OFF, piv=PvTarget, ws=True) ## WILL BE ADDED TO ARM
+pm.pointConstraint(jFK_Foot, cont_FK_Foot_OFF)  ## WILL BE ADDED TO ARM
+
+cont_FK_Foot.scaleY >> jFK_Foot.scaleX ## WILL BE ADDED TO ARM
+
 
 #Ball Cont
 cont_FK_Ball=pm.curve(name="cont_FK_Ball_"+whichLeg, d=1,p=[(-1,1,1), (-1,1,-1), (1,1,-1), (1,1,1), (-1,1,1), (-1,-1,1), (-1,-1,-1), (-1,1,-1), (-1,1,1), (-1,-1,1), (1,-1,1), (1,1,1), (1,1,-1), (1,-1,-1), (1,-1,1), (1,-1,-1), (-1,-1,-1)],k= [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16])
@@ -505,16 +516,10 @@ pm.makeIdentity(a=True, t=True, r=False, s=True)
 
 PvTarget=pm.PyNode("jInit_Ball_"+whichLeg).getTranslation(space="world")
 pm.xform(cont_FK_Ball, piv=PvTarget, ws=True)
+pm.xform(cont_FK_Ball_OFF, piv=PvTarget, ws=True) ## WILL BE ADDED TO ARM
+pm.pointConstraint(jFK_Ball, cont_FK_Ball_OFF)  ## WILL BE ADDED TO ARM
 
-### Create Midlock - FK
-
-target_midLock_FK=pm.spaceLocator(name="target_midLock_FK_"+whichLeg)
-pm.makeIdentity(target_midLock_FK)
-extra.alignTo(target_midLock_FK, "jInit_Knee_"+whichLeg, 0)
-
-pm.pointConstraint(jFK_Knee, target_midLock_FK, mo=False)
-MidLockFK_ori=pm.orientConstraint(jFK_Root, jFK_Knee, target_midLock_FK, mo=True)
-#pm.setAttr(MidLockFK_ori.interpType, 0)
+cont_FK_Ball.scaleY >> jFK_Ball.scaleX ## WILL BE ADDED TO ARM
 
 
 
@@ -526,10 +531,15 @@ pm.orientConstraint(cont_FK_LowLeg, jFK_Knee, mo=True)
 pm.orientConstraint(cont_FK_Foot, jFK_Foot, mo=True)
 pm.orientConstraint(cont_FK_Ball, jFK_Ball, mo=True)
 
-pm.parent(cont_FK_UpLeg_OFF, cont_thigh)
-pm.parent(cont_FK_LowLeg_OFF, cont_FK_UpLeg)
-pm.parent(cont_FK_Foot_OFF, cont_FK_LowLeg)
-pm.parent(cont_FK_Ball_OFF, cont_FK_Foot)
+pm.parentConstraint(cont_thigh, cont_FK_UpLeg_OFF, mo=True)
+pm.parentConstraint(cont_FK_UpLeg, cont_FK_LowLeg_OFF, mo=True)
+pm.parentConstraint(cont_FK_LowLeg, cont_FK_Foot_OFF, mo=True)
+pm.parentConstraint(cont_FK_Foot, cont_FK_Ball_OFF, mo=True)
+
+# pm.parent(cont_FK_UpLeg_OFF, cont_thigh)
+# pm.parent(cont_FK_LowLeg_OFF, cont_FK_UpLeg)
+# pm.parent(cont_FK_Foot_OFF, cont_FK_LowLeg)
+# pm.parent(cont_FK_Ball_OFF, cont_FK_Foot)
 
 ### Create FK IK Icon
 
@@ -625,32 +635,13 @@ midLock_rotXsw.output >> midLock_xBln.input1Z
 pm.setAttr(midLock_xBln.input2Z, 0.5)
 midLock_xBln.outputZ >> cont_midLock_AVE.rotateX
 
-### Create MASTER Midlock
+### Create Midlock
 
 midLock=pm.spaceLocator(name="midLock_"+whichLeg)
 extra.alignTo(midLock, cont_midLock, 0)
 
 pm.parentConstraint(cont_midLock, midLock, mo=False)
 
-# midLock_POS=extra.createUpGrp(cont_midLock[0], "POS")
-# midLock_CON=extra.createUpGrp(cont_midLock[0], "CON")
-
-# midLockBlendPos=pm.createNode("blendColors", name="midLockBlendPos_"+whichLeg)
-# midLockBlendRot=pm.createNode("blendColors", name="midLockBlendRot_"+whichLeg)
-
-# target_midLock_IK.translate >> midLockBlendPos.color1
-# target_midLock_IK.rotate >> midLockBlendRot.color1
-
-# target_midLock_FK.translate >> midLockBlendPos.color2
-# target_midLock_FK.rotate >> midLockBlendRot.color2
-
-# midLockBlendPos.output >> midLock_POS.translate
-# midLockBlendRot.output >> midLock_POS.rotate
-
-# cont_FK_IK.fk_ik >> midLockBlendPos.blender
-# cont_FK_IK.fk_ik >> midLockBlendRot.blender
-
-# pm.parentConstraint(cont_midLock[0], midLock, mo=True)
 
 ### Create End Lock
 endLock=pm.spaceLocator(name="endLock_"+whichLeg)
@@ -668,7 +659,7 @@ pm.parent(endLock_Ore, scaleGrp)
 
 
 endLockRot=pm.parentConstraint(IK_parentGRP, jFK_Foot, endLock, st=("x","y","z"), mo=True)
-pm.setAttr(endLockRot.interpType, 0)
+#pm.setAttr(endLockRot.interpType, 0)
 cont_FK_IK.fk_ik >> (endLockRot+"."+IK_parentGRP+"W0")
 fk_ik_rvs.outputX >> (endLockRot+"."+jFK_Foot+"W1")
 
@@ -756,10 +747,10 @@ fk_ik_rvs.outputX >> (toe_paCon+"."+jFK_Toe+"W1")
 # Create Master Root and Scale and nonScale Group
 
 ###Interpolation Types
-##cont_FK_IK.twistInterpolation >> startLockRot.interpType
+#cont_FK_IK.twistInterpolation >> startLockRot.interpType
 ##cont_FK_IK.twistInterpolation >> MidLockIK_ori.interpType
 ##cont_FK_IK.twistInterpolation >> MidLockFK_ori.interpType
-##cont_FK_IK.twistInterpolation >> endLockRot.interpType
+#cont_FK_IK.twistInterpolation >> endLockRot.interpType
 
 pm.parent(jIK_SC_Root, startLock)
 pm.parent(jIK_RP_Root, startLock)
@@ -771,8 +762,12 @@ pm.parent(legStart, scaleGrp)
 pm.parent(legEnd, scaleGrp)
 pm.parent(IK_parentGRP, scaleGrp)
 pm.parent(cont_thigh_OFF, scaleGrp)
-pm.parent(target_midLock_IK, scaleGrp)
-pm.parent(target_midLock_FK, scaleGrp)
+pm.parent(cont_FK_UpLeg_OFF, scaleGrp)
+pm.parent(cont_FK_LowLeg_OFF, scaleGrp)
+pm.parent(cont_FK_Foot_OFF, scaleGrp)
+pm.parent(cont_FK_Ball_OFF, scaleGrp)
+#pm.parent(target_midLock_IK, scaleGrp)
+#pm.parent(target_midLock_FK, scaleGrp)
 pm.parent(midLock, scaleGrp)
 pm.parent(cont_midLock_POS, scaleGrp)
 
