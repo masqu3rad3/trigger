@@ -3,7 +3,8 @@
 
 import pymel.core as pm
 import sys
-sys.path.append("C:\Users\Arda\Documents\maya\2017\scripts\AutoRigger_ard")
+#sys.path.append("C:/Users/kutlu/Documents/maya/2017/scripts/tik_autorigger")
+
 
 import extraProcedures as extra
 reload(extra)
@@ -590,39 +591,66 @@ pm.parent(cont_FK_IK_POS, scaleGrp)
 ### Create MidLock controller
 
 contScale= extra.getDistance(pm.PyNode("jInit_Foot_"+whichLeg), pm.PyNode("jInit_Knee_"+whichLeg))/3
-cont_midLock=pm.circle(name="cont_mid_"+whichLeg, nr=(1,0,0), ch=0)
+cont_midLock=pm.circle(name="cont_mid_"+whichLeg, nr=(0,1,0), ch=0)
 pm.rebuildCurve(cont_midLock, s=12, ch=0)
 pm.select(cont_midLock[0].cv[0],cont_midLock[0].cv[2],cont_midLock[0].cv[4],cont_midLock[0].cv[6],cont_midLock[0].cv[8],cont_midLock[0].cv[10])
 pm.scale(0.5, 0.5, 0.5)
 pm.select(d=True)
 pm.setAttr(cont_midLock[0].scale, (contScale, contScale, contScale))
-extra.alignTo(cont_midLock, "jInit_Knee_"+whichLeg, 0)
 pm.makeIdentity(cont_midLock, a=True)
 
+cont_midLock_POS=extra.createUpGrp(cont_midLock[0],"POS")
+cont_midLock_AVE=extra.createUpGrp(cont_midLock[0],"AVE")
+extra.alignTo(cont_midLock_POS, "jInit_Knee_"+whichLeg, 0)
+
+
+midLock_paConWeight=pm.parentConstraint(jIK_orig_Root, jFK_Root, cont_midLock_POS, mo=True)
+cont_FK_IK.fk_ik >> (midLock_paConWeight+"."+jIK_orig_Root+"W0")
+fk_ik_rvs.outputX >> (midLock_paConWeight+"."+jFK_Root+"W1")
+
+midLock_poConWeight=pm.pointConstraint(jIK_orig_Knee, jFK_Knee, cont_midLock_AVE, mo=False)
+cont_FK_IK.fk_ik >> (midLock_poConWeight+"."+jIK_orig_Knee+"W0")
+fk_ik_rvs.outputX >> (midLock_poConWeight+"."+jFK_Knee+"W1")
+
+midLock_xBln=pm.createNode("multiplyDivide", name="midLock_xBln"+whichLeg)
+
+midLock_rotXsw=pm.createNode("blendTwoAttr", name="midLock_rotXsw"+whichLeg)
+jIK_orig_Knee.rotateZ >> midLock_rotXsw.input[0]
+jFK_Knee.rotateZ >> midLock_rotXsw.input[1]
+fk_ik_rvs.outputX >> midLock_rotXsw.attributesBlender
+
+midLock_rotXsw.output >> midLock_xBln.input1Z
+
+
+pm.setAttr(midLock_xBln.input2Z, 0.5)
+midLock_xBln.outputZ >> cont_midLock_AVE.rotateX
 
 ### Create MASTER Midlock
 
 midLock=pm.spaceLocator(name="midLock_"+whichLeg)
 extra.alignTo(midLock, cont_midLock, 0)
-midLock_POS=extra.createUpGrp(cont_midLock[0], "POS")
-midLock_CON=extra.createUpGrp(cont_midLock[0], "CON")
 
-midLockBlendPos=pm.createNode("blendColors", name="midLockBlendPos_"+whichLeg)
-midLockBlendRot=pm.createNode("blendColors", name="midLockBlendRot_"+whichLeg)
+pm.parentConstraint(cont_midLock, midLock, mo=False)
 
-target_midLock_IK.translate >> midLockBlendPos.color1
-target_midLock_IK.rotate >> midLockBlendRot.color1
+# midLock_POS=extra.createUpGrp(cont_midLock[0], "POS")
+# midLock_CON=extra.createUpGrp(cont_midLock[0], "CON")
 
-target_midLock_FK.translate >> midLockBlendPos.color2
-target_midLock_FK.rotate >> midLockBlendRot.color2
+# midLockBlendPos=pm.createNode("blendColors", name="midLockBlendPos_"+whichLeg)
+# midLockBlendRot=pm.createNode("blendColors", name="midLockBlendRot_"+whichLeg)
 
-midLockBlendPos.output >> midLock_POS.translate
-midLockBlendRot.output >> midLock_POS.rotate
+# target_midLock_IK.translate >> midLockBlendPos.color1
+# target_midLock_IK.rotate >> midLockBlendRot.color1
 
-cont_FK_IK.fk_ik >> midLockBlendPos.blender
-cont_FK_IK.fk_ik >> midLockBlendRot.blender
+# target_midLock_FK.translate >> midLockBlendPos.color2
+# target_midLock_FK.rotate >> midLockBlendRot.color2
 
-pm.parentConstraint(cont_midLock[0], midLock, mo=True)
+# midLockBlendPos.output >> midLock_POS.translate
+# midLockBlendRot.output >> midLock_POS.rotate
+
+# cont_FK_IK.fk_ik >> midLockBlendPos.blender
+# cont_FK_IK.fk_ik >> midLockBlendRot.blender
+
+# pm.parentConstraint(cont_midLock[0], midLock, mo=True)
 
 ### Create End Lock
 endLock=pm.spaceLocator(name="endLock_"+whichLeg)
@@ -745,7 +773,8 @@ pm.parent(IK_parentGRP, scaleGrp)
 pm.parent(cont_thigh_OFF, scaleGrp)
 pm.parent(target_midLock_IK, scaleGrp)
 pm.parent(target_midLock_FK, scaleGrp)
-pm.parent(midLock_POS, scaleGrp)
+pm.parent(midLock, scaleGrp)
+pm.parent(cont_midLock_POS, scaleGrp)
 
 pm.parent(ribbonConnections_upperLeg[2], nonScaleGrp)
 pm.parent(ribbonConnections_upperLeg[3], nonScaleGrp)

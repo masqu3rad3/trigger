@@ -32,7 +32,7 @@ def alignTo(node1, node2, mode, o=None):
 
     
 def createUpGrp(obj, suffix):
-    grpName = (obj.name() + "_" + suffix)
+    grpName = (obj.nodeName() + "_" + suffix)
     slJoGrp = pm.group (em=True,name=grpName)
 
     #align the new created empty group to the selected object
