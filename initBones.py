@@ -33,6 +33,9 @@ def initLegBones(whichLeg):
     pm.parent(bankin,foot)
     pm.parent(bankout,foot)
     
+    pm.select(rcon)
+    pm.mirrorJoint(
+    
 
 #  TODO // Make a fool check for if there is a naming conflict 
 

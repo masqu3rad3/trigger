@@ -20,9 +20,10 @@ def createRibbon(startPoint, endPoint, name, orientation):
     pm.rebuildSurface (nSurfTrans, ch=1, rpo=1, rt=0, end=1, kr=2, kcp=0, kc=0, su=5, du=3, sv=1, dv=1, tol=0, fr=0, dir=1)
     pm.makeIdentity(a=True)
     nSurf=nSurfTrans[0].getShape()
-    
+    toHide=[]
     follicleList=[]
     deformerJoints=[]
+    toHide.append(nSurfTrans[0])
     for i in range (0, 5):
         follicle = pm.createNode('follicle', name="follicle_"+name+str(i))
         nSurf.local.connect(follicle.inputSurface)
@@ -38,14 +39,18 @@ def createRibbon(startPoint, endPoint, name, orientation):
         pm.joint(defJ, e=True, zso=True, oj='zxy')
         deformerJoints.append(defJ)
         pm.parent(follicle.getParent(), nonScaleGrp)
+        toHide.append(follicle)
         
     pm.select(d=True)
     startJoint=pm.joint(name="jRbn_Start_"+name, radius=2)
+    toHide.append(startJoint)
     pm.move(startJoint, (-(ribbonLength/2.0),0,0))
     pm.select(d=True)
     middleJoint=pm.joint(name="jRbn_Mid_"+name, radius=2)
+    toHide.append(middleJoint)
     pm.select(d=True)
     endJoint=pm.joint(name="jRbn_End_"+name, radius=2)
+    toHide.append(endJoint)
     pm.move(endJoint, ((ribbonLength/2.0),0,0))
     
     pm.select(nSurf)
@@ -58,9 +63,11 @@ def createRibbon(startPoint, endPoint, name, orientation):
     pm.move(start_AIM, (-(ribbonLength/2.0),0,0))
     pm.makeIdentity(a=True)
     start_UP=pm.spaceLocator(name="jRbn_Start_"+name)
+    toHide.append(start_UP.getShape())
     pm.move(start_UP, (-(ribbonLength/2.0),0.5,0))
     
     start_POS=pm.spaceLocator(name="jRbn_Start_"+name)
+    toHide.append(start_POS.getShape())
     pm.move(start_POS, (-(ribbonLength/2.0),0,0))
     pm.makeIdentity(a=True)
     
@@ -75,9 +82,11 @@ def createRibbon(startPoint, endPoint, name, orientation):
     pm.move(end_AIM, (-(ribbonLength/-2.0),0,0))
     pm.makeIdentity(a=True)
     end_UP=pm.spaceLocator(name="jRbn_End_"+name)
+    toHide.append(end_UP.getShape())
     pm.move(end_UP, (-(ribbonLength/-2.0),0.5,0))
     
     end_POS=pm.spaceLocator(name="jRbn_End_"+name)
+    toHide.append(end_POS.getShape())
     pm.move(end_POS, (-(ribbonLength/-2.0),0,0))
     pm.makeIdentity(a=True)
     
@@ -89,12 +98,15 @@ def createRibbon(startPoint, endPoint, name, orientation):
     pm.select(d=True)
     middle_CONT=pm.circle(nr=(1,0,0), name="cont_midRbn_"+name)
     middle_OFF=pm.spaceLocator(name="jRbn_Mid_"+name)
+    toHide.append(middle_OFF.getShape())
     middle_AIM=pm.group(em=True, name="jRbn_Mid_"+name)
     pm.move(middle_AIM, (0,0,0))
     pm.makeIdentity(a=True)
     middle_UP=pm.spaceLocator(name="jRbn_Mid_"+name)
+    toHide.append(middle_UP.getShape())
     pm.move(middle_UP, (0,0.5,0))
     middle_POS=pm.spaceLocator(name="jRbn_Mid_"+name)
+    toHide.append(middle_POS.getShape())
     pm.move(middle_POS, (0,0,0))
     pm.makeIdentity(a=True)
     
@@ -212,5 +224,5 @@ def createRibbon(startPoint, endPoint, name, orientation):
     glob_pow_def_j3.output >> deformerJoints[3].scale
     glob_pow_def_j4.output >> deformerJoints[4].scale
 
-    returnArray=[start_POS, end_POS, scaleGrp, nonScaleGrp, deformerJoints, middle_CONT]
+    returnArray=[start_POS, end_POS, scaleGrp, nonScaleGrp, deformerJoints, middle_CONT, toHide]
     return(returnArray)

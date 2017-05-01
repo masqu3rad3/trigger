@@ -4,7 +4,9 @@
 import pymel.core as pm
 import sys
 #sys.path.append("C:/Users/kutlu/Documents/maya/2017/scripts/tik_autorigger")
-
+path='C:/Users/Arda/Documents/maya/2017/scripts/tik_autorigger'
+if not path in sys.path:
+    sys.path.append(path)
 
 import extraProcedures as extra
 reload(extra)
@@ -27,9 +29,9 @@ nonScaleGrp=pm.group(name="NonScaleGrp_"+whichLeg, em=True)
 ###Create common Joints
 pm.select(d=True)
 jDef_Rcon=pm.joint(name="jDef_Rcon_"+whichLeg, p=pm.PyNode("jInit_Rcon_"+whichLeg).getTranslation(space="world"), radius=1.5)
-jDef_Upleg=pm.joint(name="jDef_UpLeg_"+whichLeg, p=pm.PyNode("jInit_UpLeg_"+whichLeg).getTranslation(space="world"), radius=1.5)
+jDef_UpLeg=pm.joint(name="jDef_UpLeg_"+whichLeg, p=pm.PyNode("jInit_UpLeg_"+whichLeg).getTranslation(space="world"), radius=1.5)
 pm.joint(jDef_Rcon, e=True, zso=True, oj="xyz")
-pm.joint(jDef_Upleg, e=True, zso=True, oj="xyz")
+pm.joint(jDef_UpLeg, e=True, zso=True, oj="xyz")
 pm.parent(jDef_Rcon, scaleGrp)
 
 
@@ -65,7 +67,6 @@ jIK_Ball=pm.joint(name="jIK_Ball_"+whichLeg, p=pm.PyNode("jInit_Ball_"+whichLeg)
 jIK_Toe=pm.joint(name="jIK_Toe_"+whichLeg, p=pm.PyNode("jInit_Toe_"+whichLeg).getTranslation(space="world"), radius=1.0)
 
 
-
 pm.joint(jIK_orig_Root, e=True, zso=True, oj="xyz")
 pm.joint(jIK_orig_Knee, e=True, zso=True, oj="xyz")
 pm.joint(jIK_orig_End, e=True, zso=True, oj="xyz")
@@ -78,7 +79,6 @@ pm.joint(jIK_RP_End, e=True, zso=True, oj="xyz")
 pm.joint(jIK_Foot, e=True, zso=True, oj="xyz")
 pm.joint(jIK_Ball, e=True, zso=True, oj="xyz")
 pm.joint(jIK_Toe, e=True, zso=True, oj="xyz")
-
 
 ###Create Foot Pivots
 pm.select(cl=True)
@@ -115,7 +115,6 @@ Pv_BallLean=pm.group(name="Pv_BallLean_"+whichLeg, em=True)
 extra.alignTo(Pv_BallLean, "jInit_Ball_"+whichLeg, 0)
 pm.makeIdentity(Pv_BallLean, a=True, t=False, r=True, s=True)
 
-
 ## Create Start Lock
 
 startLock=pm.spaceLocator(name="startLock_"+whichLeg)
@@ -124,12 +123,11 @@ startLock_Ore=extra.createUpGrp(startLock, "_Ore")
 startLock_Pos=extra.createUpGrp(startLock, "_Pos")
 startLock_Twist=extra.createUpGrp(startLock, "_AutoTwist")
 
-startLockRot=pm.parentConstraint(jDef_Upleg, startLock, mo=True)
+startLockRot=pm.parentConstraint(jDef_UpLeg, startLock, mo=True)
 #pm.setAttr(startLockRot.interpType, 0)
 
 pm.parentConstraint(startLock, jIK_SC_Root, mo=True)
 pm.parentConstraint(startLock, jIK_RP_Root, mo=True)
-
 
 ###Create IK handles
 
@@ -170,7 +168,6 @@ pm.makeIdentity(a=True)
 target=pm.PyNode("jInit_Foot_"+whichLeg).getTranslation(space="world")
 pm.setAttr(cont_IK_foot[0]+".rotatePivot", (target.x,target.y,target.z))
 
-
 ###Add ATTRIBUTES to the IK Foot Controller
 pm.select(cont_IK_foot)
 pm.addAttr( shortName="polevector", longName="Pole_Vector", defaultValue=0.0, minValue=0.0, maxValue=1.0, at="double", k=True)
@@ -187,18 +184,6 @@ pm.addAttr( shortName="tRoll", longName="Toes_Roll", defaultValue=0.0, at="doubl
 pm.addAttr( shortName="tSpin", longName="Toes_Spin", defaultValue=0.0, at="double", k=True)
 pm.addAttr( shortName="tWiggle", longName="Toes_Wiggle", defaultValue=0.0, at="double", k=True)
 pm.addAttr( shortName="bank", longName="Bank", defaultValue=0.0, at="double", k=True)
-
-###Create Midlock - IK Target
-
-# target_midLock_IK=pm.spaceLocator(name="target_midLock_IK_"+whichLeg)
-# pm.makeIdentity(a=True)
-# extra.alignTo(target_midLock_IK, "jInit_Knee_"+whichLeg, 0)
-
-# pm.pointConstraint(jIK_orig_Knee, target_midLock_IK, mo=False)
-# MidLockIK_ori=pm.orientConstraint(jIK_orig_Root, jIK_orig_Knee, target_midLock_IK, mo=False)
-# pm.setAttr(MidLockIK_ori.interpType, 0)
-
-#MidLockIK_ori=pm.aimConstraint(jIK_orig_Root, jIK_orig_End, target_midLock_IK, mo=False)
 
 ###Create Pole Vector Curve - IK
 
@@ -224,7 +209,6 @@ pm.pointConstraint(startLock, legStart, mo=False)
 legEnd= pm.spaceLocator(name="legEnd_loc_"+whichLeg)
 pm.pointConstraint(masterIK, legEnd, mo=False)
 
-
 ### Create Nodes and Connections for Strethchy IK SC
 
 stretchOffset=pm.createNode("plusMinusAverage", name="stretchOffset_"+whichLeg)
@@ -247,7 +231,6 @@ pm.setAttr(initialLengthMultip_SC+".input1Y", initLowerLegDist)
 pm.setAttr(initialDivide_SC+".operation", 2)
 pm.setAttr(stretchCondition_SC+".operation", 2)
 
-
 ### Bind Attributes and make constraints
 
 # Bind Stretch Attributes
@@ -266,7 +249,6 @@ initialLengthMultip_SC.outputX >> extraScaleMult_SC.input1X
 initialLengthMultip_SC.outputY >> extraScaleMult_SC.input1Y
 initialLengthMultip_SC.outputX >> stretchOffset.input1D[0]
 initialLengthMultip_SC.outputY >> stretchOffset.input1D[1]
-
 
 extraScaleMult_SC.outputX >> stretchAmount_SC.input1X
 extraScaleMult_SC.outputY >> stretchAmount_SC.input1Y
@@ -303,7 +285,6 @@ cont_IK_foot[0].squash >> squashyness_SC.blender
 stretchOffset.output1D >> IK_stretch_distanceClamp.maxR
 cont_IK_foot[0].stretch >> IK_stretch_stretchynessClamp.inputR
 cont_IK_foot[0].stretch >> stretchOffset.input1D[2]
-
 
 # Bind Foot Attributes to the controller
 cont_IK_foot[0].bLean >> Pv_BallLean.rotateY
@@ -375,30 +356,33 @@ cont_IK_foot[0].polevector >> poleVector_Rvs.inputX
 cont_IK_foot[0].polevector >> cont_Pole.v
 
 ### Create Tigh Controller
-thighContScale=extra.getDistance(pm.PyNode("jInit_UpLeg_"+whichLeg), pm.PyNode("jInit_Knee_"+whichLeg))/4
-cont_thigh=pm.curve(name="cont_thigh"+whichLeg, d=1,p=[(-1,1,1), (-1,1,-1), (1,1,-1), (1,1,1), (-1,1,1), (-1,-1,1), (-1,-1,-1), (-1,1,-1), (-1,1,1), (-1,-1,1), (1,-1,1), (1,1,1), (1,1,-1), (1,-1,-1), (1,-1,1), (1,-1,-1), (-1,-1,-1)],k= [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16])
-pm.setAttr(cont_thigh.scale, (thighContScale,thighContScale,thighContScale/4))
-pm.makeIdentity(cont_thigh, a=True)
 
-cont_thigh_OFF=extra.createUpGrp(cont_thigh, "OFF")
-cont_thigh_ORE=extra.createUpGrp(cont_thigh, "ORE")
+thighContScale=extra.getDistance(pm.PyNode("jInit_UpLeg_"+whichLeg), pm.PyNode("jInit_Knee_"+whichLeg))/4
+cont_Thigh=pm.curve(name="cont_Thigh"+whichLeg, d=1,p=[(-1,1,1), (-1,1,-1), (1,1,-1), (1,1,1), (-1,1,1), (-1,-1,1), (-1,-1,-1), (-1,1,-1), (-1,1,1), (-1,-1,1), (1,-1,1), (1,1,1), (1,1,-1), (1,-1,-1), (1,-1,1), (1,-1,-1), (-1,-1,-1)],k= [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16])
+pm.setAttr(cont_Thigh.scale, (thighContScale,thighContScale,thighContScale/4))
+pm.makeIdentity(cont_Thigh, a=True)
+
+cont_Thigh_OFF=extra.createUpGrp(cont_Thigh, "OFF")
+cont_Thigh_ORE=extra.createUpGrp(cont_Thigh, "ORE")
 if whichLeg=="r_leg":
-    pm.setAttr(cont_thigh_ORE.rotateX, -180)
-extra.alignTo(cont_thigh_OFF, "jInit_UpLeg_"+whichLeg, 2)
+    pm.setAttr(cont_Thigh_ORE.rotateX, -180)
+extra.alignTo(cont_Thigh_OFF, "jInit_UpLeg_"+whichLeg, 2)
 
 
 pm.addAttr( shortName="autoTwist", longName="Auto_Twist", defaultValue=1.0, minValue=0.0, maxValue=1.0, at="float", k=True)
 pm.addAttr( shortName="manualTwist", longName="Manual_Twist", defaultValue=0.0, at="float", k=True)
 
-extra.alignTo(cont_thigh_OFF, "jInit_UpLeg_"+whichLeg, 2)
+extra.alignTo(cont_Thigh_OFF, "jInit_UpLeg_"+whichLeg, 2)
 PvTarget=pm.PyNode("jInit_Rcon_"+whichLeg).getTranslation(space="world")
 
-pm.move(cont_thigh, (0,thighContScale*2,0), r=True)
-temp_AimCon=pm.aimConstraint("jInit_UpLeg_"+whichLeg, cont_thigh, o=(0,0,0))
+pm.move(cont_Thigh, (0,thighContScale*2,0), r=True)
+temp_AimCon=pm.aimConstraint("jInit_UpLeg_"+whichLeg, cont_Thigh, o=(0,0,0))
 pm.delete(temp_AimCon)
-pm.xform(cont_thigh, piv=PvTarget, ws=True)
-pm.makeIdentity(cont_thigh, a=True, t=True, r=False, s=True)
-pm.parentConstraint(cont_thigh, jDef_Rcon, mo=True)
+pm.makeIdentity(cont_Thigh, a=True)
+pm.xform(cont_Thigh, piv=PvTarget, ws=True)
+pm.makeIdentity(cont_Thigh, a=True, t=True, r=False, s=True)
+pm.parentConstraint(cont_Thigh, jDef_Rcon, mo=True, st=("x","y","z"))
+pm.pointConstraint(cont_Thigh, jDef_UpLeg, mo=True)
 
 
 ###########################
@@ -448,6 +432,7 @@ pm.parentConstraint(startLock, cont_FK_UpLeg_OFF, mo=True)
 cont_FK_UpLeg.scaleY >> jFK_Root.scaleX ## WILL BE ADDED TO ARM
 
 #LowLeg Cont
+
 cont_FK_LowLeg=pm.curve(name="cont_FK_LowLeg_"+whichLeg, d=1,p=[(-1,1,1), (-1,1,-1), (1,1,-1), (1,1,1), (-1,1,1), (-1,-1,1), (-1,-1,-1), (-1,1,-1), (-1,1,1), (-1,-1,1), (1,-1,1), (1,1,1), (1,1,-1), (1,-1,-1), (1,-1,1), (1,-1,-1), (-1,-1,-1)],k= [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16])
 pm.setAttr(cont_FK_LowLeg.scale, (pm.getAttr(jFK_Foot.translateX)/8,pm.getAttr(jFK_Foot.translateX)/2,pm.getAttr(jFK_Foot.translateX)/8))
 pm.makeIdentity(cont_FK_LowLeg, a=True)
@@ -495,8 +480,8 @@ pm.pointConstraint(jFK_Foot, cont_FK_Foot_OFF)  ## WILL BE ADDED TO ARM
 
 cont_FK_Foot.scaleY >> jFK_Foot.scaleX ## WILL BE ADDED TO ARM
 
-
 #Ball Cont
+
 cont_FK_Ball=pm.curve(name="cont_FK_Ball_"+whichLeg, d=1,p=[(-1,1,1), (-1,1,-1), (1,1,-1), (1,1,1), (-1,1,1), (-1,-1,1), (-1,-1,-1), (-1,1,-1), (-1,1,1), (-1,-1,1), (1,-1,1), (1,1,1), (1,1,-1), (1,-1,-1), (1,-1,1), (1,-1,-1), (-1,-1,-1)],k= [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16])
 pm.setAttr(cont_FK_Ball.scale, (pm.getAttr(jFK_Toe.translateX)/4,pm.getAttr(jFK_Toe.translateX)/2,pm.getAttr(jFK_Toe.translateX)/4))
 pm.makeIdentity(cont_FK_Ball, a=True)
@@ -521,8 +506,6 @@ pm.pointConstraint(jFK_Ball, cont_FK_Ball_OFF)  ## WILL BE ADDED TO ARM
 
 cont_FK_Ball.scaleY >> jFK_Ball.scaleX ## WILL BE ADDED TO ARM
 
-
-
 ### CReate Constraints and Hierarchy
 pm.orientConstraint(cont_FK_UpLeg, jFK_Root, mo=True)
 pm.pointConstraint(startLock, jFK_Root, mo=False)
@@ -531,15 +514,10 @@ pm.orientConstraint(cont_FK_LowLeg, jFK_Knee, mo=True)
 pm.orientConstraint(cont_FK_Foot, jFK_Foot, mo=True)
 pm.orientConstraint(cont_FK_Ball, jFK_Ball, mo=True)
 
-pm.parentConstraint(cont_thigh, cont_FK_UpLeg_OFF, mo=True)
+pm.parentConstraint(cont_Thigh, cont_FK_UpLeg_OFF, mo=True)
 pm.parentConstraint(cont_FK_UpLeg, cont_FK_LowLeg_OFF, mo=True)
 pm.parentConstraint(cont_FK_LowLeg, cont_FK_Foot_OFF, mo=True)
-pm.parentConstraint(cont_FK_Foot, cont_FK_Ball_OFF, mo=True)
-
-# pm.parent(cont_FK_UpLeg_OFF, cont_thigh)
-# pm.parent(cont_FK_LowLeg_OFF, cont_FK_UpLeg)
-# pm.parent(cont_FK_Foot_OFF, cont_FK_LowLeg)
-# pm.parent(cont_FK_Ball_OFF, cont_FK_Foot)
+pm.parentConstraint(cont_FK_Foot, cont_FK_Ball_OFF, mo=True, st=("x","y","z"))
 
 ### Create FK IK Icon
 
@@ -567,7 +545,7 @@ pm.select(cont_FK_IK)
 pm.addAttr( shortName="fk_ik", longName="FK_IK", defaultValue=1.0, minValue=0.0, maxValue=1.0, at="float", k=True)
 pm.addAttr( shortName="autoTwist", longName="Auto_Twist", defaultValue=1.0, minValue=0.0, maxValue=1.0, at="float", k=True)
 pm.addAttr( shortName="manualTwist", longName="Manual_Twist", defaultValue=0.0, at="float", k=True)
-pm.addAttr( shortName="twistInterpolation", longName="Twist_Interpolation", at="enum", enumName="No_Flip:Average:Shortest:Longest:Cache", defaultValue=2, k=True)
+pm.addAttr( shortName="rigVis", longName="Rig_Visibility", defaultValue=1, minValue=0, maxValue=1, at="long", k=True)
 
 fk_ik_rvs=pm.createNode("reverse", name="fk_ik_rvs"+whichLeg)
 cont_FK_IK.fk_ik >> blShape_FKtoIK[0].weight[0]
@@ -576,7 +554,7 @@ cont_FK_IK.fk_ik >> fk_ik_rvs.inputX
 fk_ik_rvs.outputX >> cont_FK_UpLeg_OFF.visibility
 fk_ik_rvs.outputX >> cont_FK_LowLeg_OFF.visibility
 fk_ik_rvs.outputX >> cont_FK_Foot_OFF.visibility
-fk_ik_rvs.outputX >> cont_FK_Ball_ORE.visibility
+fk_ik_rvs.outputX >> cont_FK_Ball_OFF.visibility
 cont_FK_IK.fk_ik >> cont_IK_foot[0].visibility
 
 pm.setAttr(cont_FK_IK+".sx", 0.1)
@@ -631,7 +609,6 @@ fk_ik_rvs.outputX >> midLock_rotXsw.attributesBlender
 
 midLock_rotXsw.output >> midLock_xBln.input1Z
 
-
 pm.setAttr(midLock_xBln.input2Z, 0.5)
 midLock_xBln.outputZ >> cont_midLock_AVE.rotateX
 
@@ -641,7 +618,6 @@ midLock=pm.spaceLocator(name="midLock_"+whichLeg)
 extra.alignTo(midLock, cont_midLock, 0)
 
 pm.parentConstraint(cont_midLock, midLock, mo=False)
-
 
 ### Create End Lock
 endLock=pm.spaceLocator(name="endLock_"+whichLeg)
@@ -656,13 +632,10 @@ fk_ik_rvs.outputX >> (endLockWeight+"."+jFK_Foot+"W1")
 pm.parentConstraint(endLock, cont_FK_IK_POS, mo=True)
 pm.parent(endLock_Ore, scaleGrp)
 
-
-
 endLockRot=pm.parentConstraint(IK_parentGRP, jFK_Foot, endLock, st=("x","y","z"), mo=True)
 #pm.setAttr(endLockRot.interpType, 0)
 cont_FK_IK.fk_ik >> (endLockRot+"."+IK_parentGRP+"W0")
 fk_ik_rvs.outputX >> (endLockRot+"."+jFK_Foot+"W1")
-
 
 ###################################
 #### CREATE DEFORMATION JOINTS ####
@@ -681,7 +654,7 @@ pm.scaleConstraint(scaleGrp,ribbonConnections_upperLeg[2])
 
 #auto
 autoTwistThigh=pm.createNode("multiplyDivide", name="autoTwistThigh_"+whichLeg)
-cont_thigh.autoTwist >> autoTwistThigh.input2X
+cont_Thigh.autoTwist >> autoTwistThigh.input2X
 ribbonStart_paCon_upperLeg_Start.constraintRotate >> autoTwistThigh.input1
 
 ###!!! The parent constrain override should be disconnected like this
@@ -690,7 +663,7 @@ pm.disconnectAttr(ribbonStart_paCon_upperLeg_Start.constraintRotateX, ribbonConn
 #manual
 AddManualTwistThigh=pm.createNode("plusMinusAverage", name=("AddManualTwist_UpperLeg_"+whichLeg))
 autoTwistThigh.output >> AddManualTwistThigh.input3D[0]
-cont_thigh.manualTwist >> AddManualTwistThigh.input3D[1].input3Dx
+cont_Thigh.manualTwist >> AddManualTwistThigh.input3D[1].input3Dx
 
 #connect to the joint
 AddManualTwistThigh.output3D >> ribbonConnections_upperLeg[0].rotate
@@ -746,12 +719,6 @@ fk_ik_rvs.outputX >> (toe_paCon+"."+jFK_Toe+"W1")
 
 # Create Master Root and Scale and nonScale Group
 
-###Interpolation Types
-#cont_FK_IK.twistInterpolation >> startLockRot.interpType
-##cont_FK_IK.twistInterpolation >> MidLockIK_ori.interpType
-##cont_FK_IK.twistInterpolation >> MidLockFK_ori.interpType
-#cont_FK_IK.twistInterpolation >> endLockRot.interpType
-
 pm.parent(jIK_SC_Root, startLock)
 pm.parent(jIK_RP_Root, startLock)
 pm.parent(jIK_orig_Root, startLock)
@@ -761,13 +728,11 @@ pm.parent(startLock_Ore, scaleGrp)
 pm.parent(legStart, scaleGrp)
 pm.parent(legEnd, scaleGrp)
 pm.parent(IK_parentGRP, scaleGrp)
-pm.parent(cont_thigh_OFF, scaleGrp)
+pm.parent(cont_Thigh_OFF, scaleGrp)
 pm.parent(cont_FK_UpLeg_OFF, scaleGrp)
 pm.parent(cont_FK_LowLeg_OFF, scaleGrp)
 pm.parent(cont_FK_Foot_OFF, scaleGrp)
 pm.parent(cont_FK_Ball_OFF, scaleGrp)
-#pm.parent(target_midLock_IK, scaleGrp)
-#pm.parent(target_midLock_FK, scaleGrp)
 pm.parent(midLock, scaleGrp)
 pm.parent(cont_midLock_POS, scaleGrp)
 
@@ -781,46 +746,122 @@ pm.parent(jDef_Foot, scaleGrp)
 
 ### Animator Fool Proofing
 
+#cont_Thigh
+pm.setAttr(cont_Thigh+".sx", lock=True, keyable=False, channelBox=False)
+pm.setAttr(cont_Thigh+".sy", lock=True, keyable=False, channelBox=False)
+pm.setAttr(cont_Thigh+".sz", lock=True, keyable=False, channelBox=False)
+
+#cont_IK_foot
+pm.setAttr(cont_IK_foot[0]+".sx", lock=True, keyable=False, channelBox=False)
+pm.setAttr(cont_IK_foot[0]+".sy", lock=True, keyable=False, channelBox=False)
+pm.setAttr(cont_IK_foot[0]+".sz", lock=True, keyable=False, channelBox=False)
+pm.setAttr(cont_IK_foot[0]+".v", lock=True, keyable=False, channelBox=False)
+
 #cont_FK_IK
 pm.setAttr(cont_FK_IK+".sx", lock=True, keyable=False, channelBox=False)
 pm.setAttr(cont_FK_IK+".sy", lock=True, keyable=False, channelBox=False)
 pm.setAttr(cont_FK_IK+".sz", lock=True, keyable=False, channelBox=False)
 pm.setAttr(cont_FK_IK+".v", lock=True, keyable=False, channelBox=False)
 
-#cont_FK_Ball
-pm.setAttr(cont_FK_Ball+".tx", lock=True, keyable=False, channelBox=False)
-pm.setAttr(cont_FK_Ball+".ty", lock=True, keyable=False, channelBox=False)
-pm.setAttr(cont_FK_Ball+".tz", lock=True, keyable=False, channelBox=False)
-pm.setAttr(cont_FK_Ball+".v", lock=True, keyable=False, channelBox=False)
-
-#cont_IK_foot
-pm.setAttr(cont_IK_foot[0]+".sx", lock=True, keyable=False, channelBox=False)
-pm.setAttr(cont_IK_foot[0]+".sy", lock=True, keyable=False, channelBox=False)
-pm.setAttr(cont_IK_foot[0]+".sz", lock=True, keyable=False, channelBox=False)
-#pm.setAttr(cont_IK_foot[0]+".v", lock=True, keyable=False, channelBox=False)
-
 #cont_FK_UpLeg
 pm.setAttr(cont_FK_UpLeg+".tx", lock=True, keyable=False, channelBox=False)
 pm.setAttr(cont_FK_UpLeg+".ty", lock=True, keyable=False, channelBox=False)
 pm.setAttr(cont_FK_UpLeg+".tz", lock=True, keyable=False, channelBox=False)
+pm.setAttr(cont_FK_UpLeg+".sy", lock=True, keyable=False, channelBox=False)
+pm.setAttr(cont_FK_UpLeg+".sz", lock=True, keyable=False, channelBox=False)
 pm.setAttr(cont_FK_UpLeg+".v", lock=True, keyable=False, channelBox=False)
 
 #cont_FK_LowLeg
 pm.setAttr(cont_FK_LowLeg+".tx", lock=True, keyable=False, channelBox=False)
 pm.setAttr(cont_FK_LowLeg+".ty", lock=True, keyable=False, channelBox=False)
 pm.setAttr(cont_FK_LowLeg+".tz", lock=True, keyable=False, channelBox=False)
+pm.setAttr(cont_FK_LowLeg+".sy", lock=True, keyable=False, channelBox=False)
+pm.setAttr(cont_FK_LowLeg+".sz", lock=True, keyable=False, channelBox=False)
 pm.setAttr(cont_FK_LowLeg+".v", lock=True, keyable=False, channelBox=False)
 
 #cont_FK_Foot
 pm.setAttr(cont_FK_Foot+".tx", lock=True, keyable=False, channelBox=False)
 pm.setAttr(cont_FK_Foot+".ty", lock=True, keyable=False, channelBox=False)
 pm.setAttr(cont_FK_Foot+".tz", lock=True, keyable=False, channelBox=False)
+pm.setAttr(cont_FK_Foot+".sy", lock=True, keyable=False, channelBox=False)
+pm.setAttr(cont_FK_Foot+".sz", lock=True, keyable=False, channelBox=False)
 pm.setAttr(cont_FK_Foot+".v", lock=True, keyable=False, channelBox=False)
+
+#cont_FK_Ball
+pm.setAttr(cont_FK_Ball+".tx", lock=True, keyable=False, channelBox=False)
+pm.setAttr(cont_FK_Ball+".ty", lock=True, keyable=False, channelBox=False)
+pm.setAttr(cont_FK_Ball+".tz", lock=True, keyable=False, channelBox=False)
+pm.setAttr(cont_FK_Ball+".sy", lock=True, keyable=False, channelBox=False)
+pm.setAttr(cont_FK_Ball+".sz", lock=True, keyable=False, channelBox=False)
+pm.setAttr(cont_FK_Ball+".v", lock=True, keyable=False, channelBox=False)
+
+## COLOR CODING
+
+if whichLeg == "l_leg":
+    index = 13 ##Red color index
+    indexMin = 9 ##Magenta color index
+else:
+    index = 6 ##Blue Color index
+
+cont_ThighShape = cont_Thigh.getShape()
+pm.setAttr(cont_ThighShape.overrideEnabled, True)
+pm.setAttr(cont_ThighShape.overrideColor, index)
+
+cont_IK_footShape = cont_IK_foot[0].getShape()
+pm.setAttr(cont_IK_footShape.overrideEnabled, True)
+pm.setAttr(cont_IK_footShape.overrideColor, index)
+
+pm.setAttr(cont_FK_IK.overrideEnabled, True)
+pm.setAttr(cont_FK_IK.overrideColor, index)
+
+cont_FK_UpLegShape = cont_FK_UpLeg.getShape()
+pm.setAttr(cont_FK_UpLegShape.overrideEnabled, True)
+pm.setAttr(cont_FK_UpLegShape.overrideColor, index)
+
+cont_FK_LowLegShape = cont_FK_LowLeg.getShape()
+pm.setAttr(cont_FK_LowLegShape.overrideEnabled, True)
+pm.setAttr(cont_FK_LowLegShape.overrideColor, index)
+
+cont_FK_FootShape = cont_FK_Foot.getShape()
+pm.setAttr(cont_FK_FootShape.overrideEnabled, True)
+pm.setAttr(cont_FK_FootShape.overrideColor, index)
+
+cont_FK_BallShape = cont_FK_Ball.getShape()
+pm.setAttr(cont_FK_BallShape.overrideEnabled, True)
+pm.setAttr(cont_FK_BallShape .overrideColor, index)
+
+cont_midLockShape = cont_midLock[0].getShape()
+pm.setAttr(cont_midLockShape.overrideEnabled, True)
+pm.setAttr(cont_midLockShape.overrideColor, indexMin)
+
+upperRbnContShape=ribbonConnections_upperLeg[5][0].getShape()
+pm.setAttr(upperRbnContShape.overrideEnabled, True)
+pm.setAttr(upperRbnContShape.overrideColor, indexMin)
+
+lowerRbnContShape=ribbonConnections_lowerLeg[5][0].getShape()
+pm.setAttr(lowerRbnContShape.overrideEnabled, True)
+pm.setAttr(lowerRbnContShape.overrideColor, indexMin)
+
+## CONNECT RIG data visibility
+
+cont_FK_IK.rigVis >> endLock_Ore.v
+cont_FK_IK.rigVis >> startLock_Ore.v
+cont_FK_IK.rigVis >> legStart.v
+cont_FK_IK.rigVis >> legEnd.v
+cont_FK_IK.rigVis >> IK_parentGRP.v
+cont_FK_IK.rigVis >> midLock.v
+for i in ribbonConnections_lowerLeg[6]:
+    cont_FK_IK.rigVis >> i.v
+for i in ribbonConnections_upperLeg[6]:
+    cont_FK_IK.rigVis >> i.v
+    
+pm.setAttr(cont_FK_IK.rigVis, 0)
+
+
 
 #     else:
 #         pm.error("Some or all Leg Locators are missing (or Renamed)")
     
 # createLeg("l_leg")
-
 
 
