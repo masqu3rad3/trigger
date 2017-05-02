@@ -1,27 +1,38 @@
 import pymel.core as pm
-
+import sys
+#sys.path.append("C:/Users/kutlu/Documents/maya/2017/scripts/tik_autorigger")
+path='C:/Users/Arda/Documents/maya/2017/scripts/tik_autorigger'
+if not path in sys.path:
+    sys.path.append(path)
+    
+import extraProcedures as extra
+reload(extra)
+    
 ### Create Locators
 
 #  TODO // Make a fool check for if there is a naming conflict 
 
-whichLeg="l_leg"
+#whichLeg="l_leg"
 
-def initLegBones(whichLeg):
+
+
+def initLegBones(whichLeg, dir):
+    jointList=[]
     pm.select(d=True)
-    rcon=pm.joint(p=(0,14,0), name=("jInit_Rcon_"+whichLeg))
-    upleg=pm.joint(p=(5,10,0), name=("jInit_UpLeg_"+whichLeg))
-    knee=pm.joint(p=(5,5,1), name=("jInit_Knee_"+whichLeg))
-    foot=pm.joint(p=(5,1,0), name=("jInit_Foot_"+whichLeg))
-    ball=pm.joint(p=(5,0,2), name=("jInit_Ball_"+whichLeg))
-    toe=pm.joint(p=(5,0,4), name=("jInit_Toe_"+whichLeg))
+    rcon=pm.joint(p=(0*dir,14,0), name=("jInit_Rcon_"+whichLeg))
+    upleg=pm.joint(p=(5*dir,10,0), name=("jInit_UpLeg_"+whichLeg))
+    knee=pm.joint(p=(5*dir,5,1), name=("jInit_Knee_"+whichLeg))
+    foot=pm.joint(p=(5*dir,1,0), name=("jInit_Foot_"+whichLeg))
+    ball=pm.joint(p=(5*dir,0,2), name=("jInit_Ball_"+whichLeg))
+    toe=pm.joint(p=(5*dir,0,4), name=("jInit_Toe_"+whichLeg))
     pm.select(d=True)
-    bankout=pm.joint(p=(4,0,2), name=("jInit_BankOut_"+whichLeg))
+    bankout=pm.joint(p=(4*dir,0,2), name=("jInit_BankOut_"+whichLeg))
     pm.select(d=True)
-    bankin=pm.joint(p=(6,0,2), name=("jInit_BankIn_"+whichLeg))
+    bankin=pm.joint(p=(6*dir,0,2), name=("jInit_BankIn_"+whichLeg))
     pm.select(d=True)
-    toepv=pm.joint(p=(5,0,4.3), name=("jInit_ToePv_"+whichLeg))
+    toepv=pm.joint(p=(5*dir,0,4.3), name=("jInit_ToePv_"+whichLeg))
     pm.select(d=True)
-    heelpv=pm.joint(p=(5,0,-0.2), name=("jInit_HeelPv_"+whichLeg))
+    heelpv=pm.joint(p=(5*dir,0,-0.2), name=("jInit_HeelPv_"+whichLeg))
     pm.joint(rcon, e=True, zso=True, oj="xyz", sao="yup")
     pm.joint(upleg, e=True, zso=True, oj="xyz", sao="yup")
     pm.joint(knee, e=True, zso=True, oj="xyz", sao="yup")
@@ -32,56 +43,100 @@ def initLegBones(whichLeg):
     pm.parent(toepv, foot)
     pm.parent(bankin,foot)
     pm.parent(bankout,foot)
-    
-    pm.select(rcon)
-    pm.mirrorJoint(
-    
+    jointList=[rcon, upleg, knee, foot, ball, toe, bankout, bankin,toepv, heelpv]
+    return jointList
+
+L_loc_grp=pm.group(name="locGrp_l_leg", em=True)
+pm.setAttr(L_loc_grp.v,0)
+R_loc_grp=pm.group(name="locGrp_r_leg", em=True)
+pm.setAttr(R_loc_grp.v,0)
+L_joints=initLegBones("l_leg", 1)
+L_locators=[]
+for i in range (0,len(L_joints)):
+    locator=pm.spaceLocator(name="loc_"+L_joints[i].name())
+    L_locators.append(locator)
+    pm.parentConstraint(L_joints[i], locator, mo=False)
+    pm.parent(locator,L_loc_grp)
+R_joints=initLegBones("r_leg", -1)
+R_locators=[]
+for x in range (0,len(R_joints)):
+    locator=pm.spaceLocator(name="loc_"+R_joints[x].name())
+    R_locators.append(locator)
+    extra.alignTo(locator,R_joints[x],2)
+    pm.parentConstraint(locator, R_joints[x], mo=True)
+    extra.connectMirror(L_locators[x], R_locators[x],"X")
+    pm.parent(locator,R_loc_grp)
+
+
 
 #  TODO // Make a fool check for if there is a naming conflict 
 
 
-def initArmBones(whichArm):
+def initArmBones(whichArm, dir):
     pm.select(d=True)
-    shoulder=pm.joint(p=(0,10,0), name=("jInit_Shoulder_"+whichArm))
-    uparm=pm.joint(p=(2,10,0), name=("jInit_Up_"+whichArm))
-    lowarm=pm.joint(p=(7,10,-1), name=("jInit_Low_"+whichArm))
-    lowendarm=pm.joint(p=(12,10,0), name=("jInit_LowEnd_"+whichArm))
+    shoulder=pm.joint(p=(0*dir,10,0), name=("jInit_Shoulder_"+whichArm))
+    uparm=pm.joint(p=(2*dir,10,0), name=("jInit_Up_"+whichArm))
+    lowarm=pm.joint(p=(7*dir,10,-1), name=("jInit_Low_"+whichArm))
+    lowendarm=pm.joint(p=(12*dir,10,0), name=("jInit_LowEnd_"+whichArm))
 
     pm.select(d=True)
-    pinky00=pm.joint(p=(14,10,-1), name=("jInit_pinky00_"+whichArm))
-    pinky01=pm.joint(p=(15,10,-1), name=("jInit_pinky01_"+whichArm))
-    pinky02=pm.joint(p=(16,10,-1), name=("jInit_pinky02_"+whichArm))
-    pinky03=pm.joint(p=(17,10,-1), name=("jInit_pinky03_"+whichArm))
+    pinky00=pm.joint(p=(14*dir,10,-1), name=("jInit_pinky00_"+whichArm))
+    pinky01=pm.joint(p=(15*dir,10,-1), name=("jInit_pinky01_"+whichArm))
+    pinky02=pm.joint(p=(16*dir,10,-1), name=("jInit_pinky02_"+whichArm))
+    pinky03=pm.joint(p=(17*dir,10,-1), name=("jInit_pinky03_"+whichArm))
 
     pm.select(d=True)
-    ring00=pm.joint(p=(14,10,-0.5), name=("jInit_ring00_"+whichArm))
-    ring01=pm.joint(p=(15,10,-0.5), name=("jInit_ring01_"+whichArm))
-    ring02=pm.joint(p=(16,10,-0.5), name=("jInit_ring02_"+whichArm))
-    ring03=pm.joint(p=(17,10,-0.5), name=("jInit_ring03_"+whichArm))
+    ring00=pm.joint(p=(14*dir,10,-0.5), name=("jInit_ring00_"+whichArm))
+    ring01=pm.joint(p=(15*dir,10,-0.5), name=("jInit_ring01_"+whichArm))
+    ring02=pm.joint(p=(16*dir,10,-0.5), name=("jInit_ring02_"+whichArm))
+    ring03=pm.joint(p=(17*dir,10,-0.5), name=("jInit_ring03_"+whichArm))
 
     pm.select(d=True)
-    middle00=pm.joint(p=(14,10,0), name=("jInit_middle00_"+whichArm))
-    middle01=pm.joint(p=(15,10,0), name=("jInit_middle01_"+whichArm))
-    middle02=pm.joint(p=(16,10,0), name=("jInit_middle02_"+whichArm))
-    middle03=pm.joint(p=(17,10,0), name=("jInit_middle03_"+whichArm))
+    middle00=pm.joint(p=(14*dir,10,0), name=("jInit_middle00_"+whichArm))
+    middle01=pm.joint(p=(15*dir,10,0), name=("jInit_middle01_"+whichArm))
+    middle02=pm.joint(p=(16*dir,10,0), name=("jInit_middle02_"+whichArm))
+    middle03=pm.joint(p=(17*dir,10,0), name=("jInit_middle03_"+whichArm))
 
     pm.select(d=True)
-    index00=pm.joint(p=(14,10,0.5), name=("jInit_index00_"+whichArm))
-    index01=pm.joint(p=(15,10,0.5), name=("jInit_index01_"+whichArm))
-    index02=pm.joint(p=(16,10,0.5), name=("jInit_index02_"+whichArm))
-    index03=pm.joint(p=(17,10,0.5), name=("jInit_index03_"+whichArm))
+    index00=pm.joint(p=(14*dir,10,0.5), name=("jInit_index00_"+whichArm))
+    index01=pm.joint(p=(15*dir,10,0.5), name=("jInit_index01_"+whichArm))
+    index02=pm.joint(p=(16*dir,10,0.5), name=("jInit_index02_"+whichArm))
+    index03=pm.joint(p=(17*dir,10,0.5), name=("jInit_index03_"+whichArm))
 
     pm.select(d=True)
-    thumb00=pm.joint(p=(13,10,1), name=("jInit_thumb00_"+whichArm))
-    thumb01=pm.joint(p=(13,10,1.5), name=("jInit_thumb01_"+whichArm))
-    thumb02=pm.joint(p=(13,10,2), name=("jInit_thumb02_"+whichArm))
-    thumb03=pm.joint(p=(13,10,2.5), name=("jInit_thumb03_"+whichArm))
+    thumb00=pm.joint(p=(13*dir,10,1), name=("jInit_thumb00_"+whichArm))
+    thumb01=pm.joint(p=(13*dir,10,1.5), name=("jInit_thumb01_"+whichArm))
+    thumb02=pm.joint(p=(13*dir,10,2), name=("jInit_thumb02_"+whichArm))
+    thumb03=pm.joint(p=(13*dir,10,2.5), name=("jInit_thumb03_"+whichArm))
 
     pm.parent(pinky00, lowendarm)
     pm.parent(ring00, lowendarm)
     pm.parent(middle00, lowendarm)
     pm.parent(index00, lowendarm)
     pm.parent(thumb00, lowendarm)
+    jointList=[shoulder, uparm, lowarm, lowendarm, pinky00, pinky01, pinky02, pinky03, ring00, ring01, ring02, ring03, middle00, middle01, middle02, middle03, index00, index01, index02, index03, thumb00, thumb01, thumb02, thumb03]
+    return jointList
 
-initArmBones("l_arm")
-initLegBones("l_leg")
+
+L_loc_grp_arm=pm.group(name="locGrp_l_arm", em=True)
+pm.setAttr(L_loc_grp_arm.v,0)
+R_loc_grp_arm=pm.group(name="locGrp_r_arm", em=True)
+pm.setAttr(R_loc_grp_arm.v,0)
+L_joints_arm=initArmBones("l_arm", 1)
+L_locators_arm=[]
+for i in range (0,len(L_joints_arm)):
+    locator=pm.spaceLocator(name="loc_"+L_joints_arm[i].name())
+    L_locators_arm.append(locator)
+    pm.parentConstraint(L_joints_arm[i], locator, mo=False)
+    pm.parent(locator,L_loc_grp_arm)
+R_joints_arm=initArmBones("r_arm", -1)
+R_locators_arm=[]
+for x in range (0,len(R_joints_arm)):
+    locator=pm.spaceLocator(name="loc_"+R_joints_arm[x].name())
+    R_locators_arm.append(locator)
+    extra.alignTo(locator,R_joints_arm[x],2)
+    pm.parentConstraint(locator, R_joints_arm[x], mo=True)
+    extra.connectMirror(L_locators_arm[x], R_locators_arm[x],"X")
+    pm.parent(locator,R_loc_grp_arm)
+
+

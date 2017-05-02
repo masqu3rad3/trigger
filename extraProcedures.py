@@ -47,3 +47,51 @@ def createUpGrp(obj, suffix):
     pm.parent(obj,slJoGrp)
     grpName =""
     return slJoGrp
+
+
+
+## example use: connectMirror(obj1, obj2, "X")
+def connectMirror (node1, node2, mirrorAxis):
+    #nodes Translate
+    rvsNodeT=pm.createNode("reverse")
+    minusOpT=pm.createNode("plusMinusAverage")
+    pm.setAttr(minusOpT.operation,2)
+    node1.translate >> rvsNodeT.input
+    rvsNodeT.output >> minusOpT.input3D[0]
+    pm.setAttr(minusOpT.input3D[1],(1,1,1))
+    #nodes Rotate
+    rvsNodeR=pm.createNode("reverse")
+    minusOpR=pm.createNode("plusMinusAverage")
+    pm.setAttr(minusOpR.operation, 2)
+    node1.rotate >> rvsNodeR.input
+    rvsNodeR.output >> minusOpR.input3D[0]
+    pm.setAttr(minusOpR.input3D[1],(1,1,1))
+    
+    #Translate
+    
+    if (mirrorAxis=="X"):
+        minusOpT.output3Dx >> node2.tx
+        node1.ty >> node2.ty
+        node1.tz >> node2.tz
+        
+        node1.rx >> node2.rx
+        minusOpR.output3Dy >> node2.ry
+        minusOpR.output3Dz >> node2.rz
+    if (mirrorAxis=="Y"):
+        node1.tx >> node2.tx
+        minusOpT.output3Dy >> node2.ty
+        node1.tz >> node2.tz
+        
+        minusOpR.output3Dx >> node2.rx
+        node1.ry >> node2.ry
+        minusOpR.output3Dz >> node2.rz
+        
+    if (mirrorAxis=="Z"):
+        node1.tx >> node2.tx
+        node1.ty >> node2.ty
+        minusOpT.output3Dz >> node2.tz
+        
+        node1.rx >> node2.rx
+        minusOpR.output3Dy >> node2.ry
+        minusOpR.output3Dz >> node2.rz
+
