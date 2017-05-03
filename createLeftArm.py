@@ -82,7 +82,7 @@ startLock_Twist=extra.createUpGrp(startLock, "_AutoTwist")
 
 
 startLockRot=pm.parentConstraint(j_ShoulderEnd,startLock, mo=True)
-pm.setAttr(startLockRot.interpType, 0)
+#pm.setAttr(startLockRot.interpType, 0)
 
 
 pm.parentConstraint(startLock, jIK_SC_Up, mo=True)
@@ -99,22 +99,22 @@ extra.alignTo(cont_IK_hand, pm.PyNode("jInit_LowEnd_"+whichArm),2)
 
 cont_IK_hand_ORE=extra.createUpGrp(cont_IK_hand[0], "_ORE")
 
-###Add ATTRIBUTES to the IK Foot Controller
+###Add ATTRIBUTES to the IK Hand Controller
 pm.addAttr( shortName="polevector", longName="Pole_Vector", defaultValue=0.0, minValue=0.0, maxValue=1.0, at="double", k=True)
 pm.addAttr( shortName="sUpArm", longName="Scale_Upper_Arm", defaultValue=1.0, minValue=0.0, at="double", k=True)
 pm.addAttr( shortName="sLowArm", longName="Scale_Lower_Arm", defaultValue=1.0, minValue=0.0, at="double", k=True)
 pm.addAttr( shortName="squash", longName="Squash", defaultValue=0.0, minValue=0.0, maxValue=1.0, at="double", k=True)
 pm.addAttr( shortName="stretch", longName="Stretch", defaultValue=100.0, minValue=0.0, maxValue=100.0, at="double", k=True)
 
-###Create Midlock - IK
+# ###Create Midlock - IK
 
-midLock_IK=pm.spaceLocator(name="midLock_IK_"+whichArm)
+# midLock_IK=pm.spaceLocator(name="midLock_IK_"+whichArm)
 
-extra.alignTo(midLock_IK, pm.PyNode("jInit_Low_"+whichArm),2)
-pm.makeIdentity(a=True)
-pm.pointConstraint(jIK_orig_Low, midLock_IK, mo=False)
-MidLockIK_ori=pm.orientConstraint(jIK_orig_Up, jIK_orig_Low, midLock_IK, mo=True)
-pm.setAttr(MidLockIK_ori.interpType, 0)
+# extra.alignTo(midLock_IK, pm.PyNode("jInit_Low_"+whichArm),2)
+# pm.makeIdentity(a=True)
+# pm.pointConstraint(jIK_orig_Low, midLock_IK, mo=False)
+# MidLockIK_ori=pm.orientConstraint(jIK_orig_Up, jIK_orig_Low, midLock_IK, mo=True)
+# #pm.setAttr(MidLockIK_ori.interpType, 0)
 
 ###Create Pole Vector Curve - IK
 
@@ -136,8 +136,9 @@ pm.poleVectorConstraint(cont_Pole, "ikHandle_RP_"+whichArm)
 ### Create and constrain Distance Locators
 
 armStart= pm.spaceLocator(name="armStart_"+whichArm)
-extra.alignTo(armStart, jIK_orig_Up,2)
-pm.parentConstraint(j_ShoulderEnd, armStart)
+# extra.alignTo(armStart, jIK_orig_Up,2)
+# pm.parentConstraint(j_ShoulderEnd, armStart)
+pm.pointConstraint(startLock, armStart, mo=False)
 
 armEnd= pm.spaceLocator(name="armEnd_"+whichArm)
 pm.pointConstraint(masterIK, armEnd, mo=False)
@@ -274,15 +275,23 @@ cont_IK_hand[0].polevector >> cont_Pole.v
 ### Shoulder Controller
 cont_Shoulder=pm.curve (d=3, p=((-3, 0, 1),(-1, 2, 1), (1, 2, 1), (3, 0, 1), (3, 0, 0),(3, 0, -1),(1, 2, -1),(-1, 2, -1),(-3, 0, -1),(-3, 0, 0)),k=(0,0,0,1,2,3,4,5,6,7,7,7),name="cont_Shoulder_"+whichArm)
 pm.rotate(cont_Shoulder, (0,90,0))
-pm.makeIdentity(a=True)
+pm.makeIdentity(cont_Shoulder, a=True)
 pm.closeCurve (cont_Shoulder,ch=0,ps=0,rpo=1,bb=0.5,bki=0,p=0.1)
 pm.delete(cont_Shoulder, ch=True)
 
 pm.select(cont_Shoulder)
 pm.setAttr(cont_Shoulder.scale, (initUpperArmDist/5,initUpperArmDist/5,initUpperArmDist/5))
 pm.makeIdentity(cont_Shoulder, a=True)
-cont_Shoulder_POS=extra.createUpGrp(cont_Shoulder, "_POS")
-extra.alignTo(cont_Shoulder_POS, "jInit_Shoulder_"+whichArm, 2)
+cont_Shoulder_OFF=extra.createUpGrp(cont_Shoulder, "OFF")
+cont_Shoulder_ORE=extra.createUpGrp(cont_Shoulder, "ORE")
+cont_Shoulder_POS=extra.createUpGrp(cont_Shoulder, "POS")
+
+extra.alignTo(cont_Shoulder_OFF, "jInit_Shoulder_"+whichArm, 2)
+
+if whichArm=="r_arm":
+    pm.setAttr(cont_Shoulder.scaleY, -1)
+    pm.makeIdentity(cont_Shoulder, a=True)
+    pm.setAttr(cont_Shoulder_ORE.rotateX, -180)
 pm.select(cont_Shoulder)
 pm.addAttr( shortName="autoTwist", longName="Auto_Twist", defaultValue=1.0, minValue=0.0, maxValue=1.0, at="float", k=True)
 pm.addAttr( shortName="manualTwist", longName="Manual_Twist", defaultValue=0.0, at="float", k=True)
@@ -319,63 +328,107 @@ pm.joint(jFK_LowEnd, e=True, zso=True, oj="xyz", sao="yup")
 ### Create Controller Curves
 
 #UpArm Cont
-cont_FK_Up=pm.curve(name="cont_FK_Up_"+whichArm, d=1,p=[(-1,1,1), (-1,1,-1), (1,1,-1), (1,1,1), (-1,1,1), (-1,-1,1), (-1,-1,-1), (-1,1,-1), (-1,1,1), (-1,-1,1), (1,-1,1), (1,1,1), (1,1,-1), (1,-1,-1), (1,-1,1), (1,-1,-1), (-1,-1,-1)],k= [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16])
-temp_PoCon=pm.pointConstraint(jFK_Up, jFK_Low, cont_FK_Up)
+
+################## // START of mod
+cont_FK_UpArm=pm.curve(name="cont_FK_UpArm_"+whichArm, d=1,p=[(-1,1,1), (-1,1,-1), (1,1,-1), (1,1,1), (-1,1,1), (-1,-1,1), (-1,-1,-1), (-1,1,-1), (-1,1,1), (-1,-1,1), (1,-1,1), (1,1,1), (1,1,-1), (1,-1,-1), (1,-1,1), (1,-1,-1), (-1,-1,-1)],k= [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16])
+pm.setAttr(cont_FK_UpArm.scale, (pm.getAttr(jFK_Low.translateX)/8,pm.getAttr(jFK_Low.translateX)/2,pm.getAttr(jFK_Low.translateX)/8))
+pm.makeIdentity(cont_FK_UpArm, a=True)
+
+cont_FK_UpArm_OFF=extra.createUpGrp(cont_FK_UpArm, "OFF")
+cont_FK_UpArm_ORE=extra.createUpGrp(cont_FK_UpArm, "ORE")
+if whichArm=="r_arm":
+    pm.setAttr(cont_FK_UpArm_ORE.rotateX, -180)
+
+temp_PoCon=pm.pointConstraint(jFK_Up, jFK_Low, cont_FK_UpArm_OFF)
 pm.delete(temp_PoCon)
-extra.alignTo(cont_FK_Up, jFK_Low,1)
-temp_AimCon=pm.aimConstraint(jFK_Low, cont_FK_Up, o=(0,0,0), u=(0,1,0))
-pm.delete(temp_AimCon);
-
-pm.setAttr(cont_FK_Up.scale, (pm.getAttr(jFK_Low.translateX)/2,0.5,0.5))
-
+temp_AimCon=pm.aimConstraint(jFK_Low, cont_FK_UpArm_OFF, o=(90,90,0), u=(0,1,0))
+pm.delete(temp_AimCon)
 
 PvTarget=pm.PyNode("jInit_Up_"+whichArm).getTranslation(space="world")
-pm.xform(cont_FK_Up, piv=PvTarget, ws=True)
+pm.xform(cont_FK_UpArm, piv=PvTarget, ws=True)
+pm.xform(cont_FK_UpArm_ORE, piv=PvTarget, ws=True)
+pm.xform(cont_FK_UpArm_OFF, piv=PvTarget, ws=True)
 
-cont_FK_Up_ORE=extra.createUpGrp(cont_FK_Up, "ORE")
-pm.makeIdentity(cont_FK_Up, a=True, t=True, r=False, s=True)
+pm.makeIdentity(a=True, t=True, r=False, s=True)
+pm.parent(cont_FK_UpArm, cont_FK_UpArm_ORE)
+
+cont_FK_UpArm.scaleY >> jFK_Up.scaleX
+
+################## // END of mod
+
+# temp_PoCon=pm.pointConstraint(jFK_Up, jFK_Low, cont_FK_UpArm)
+# pm.delete(temp_PoCon)
+# extra.alignTo(cont_FK_UpArm, jFK_Low,1)
+# temp_AimCon=pm.aimConstraint(jFK_Low, cont_FK_UpArm, o=(0,0,0), u=(0,1,0))
+# pm.delete(temp_AimCon);
+
+# pm.setAttr(cont_FK_UpArm.scale, (pm.getAttr(jFK_Low.translateX)/2,0.5,0.5))
 
 
-pm.pointConstraint(startLock, cont_FK_Up_ORE, mo=True)
+# PvTarget=pm.PyNode("jInit_Up_"+whichArm).getTranslation(space="world")
+# pm.xform(cont_FK_UpArm, piv=PvTarget, ws=True)
+
+# cont_FK_UpArm_ORE=extra.createUpGrp(cont_FK_UpArm, "ORE")
+# pm.makeIdentity(cont_FK_UpArm, a=True, t=True, r=False, s=True)
+
+
+# pm.pointConstraint(startLock, cont_FK_UpArm_ORE, mo=True)
 
 #LowArm Cont
+
+################## // START of mod
 cont_FK_Low=pm.curve(name="cont_FK_Low_"+whichArm, d=1,p=[(-1,1,1), (-1,1,-1), (1,1,-1), (1,1,1), (-1,1,1), (-1,-1,1), (-1,-1,-1), (-1,1,-1), (-1,1,1), (-1,-1,1), (1,-1,1), (1,1,1), (1,1,-1), (1,-1,-1), (1,-1,1), (1,-1,-1), (-1,-1,-1)],k= [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16])
-temp_PoCon=pm.pointConstraint(jFK_Low, jFK_LowEnd, cont_FK_Low)
-pm.delete(temp_PoCon);
-extra.alignTo(cont_FK_Low, jFK_LowEnd, 1)
-temp_AimCon=pm.aimConstraint(jFK_LowEnd, cont_FK_Low, o=(0,0,0), u=(0,1,0))
-pm.delete(temp_AimCon);
+pm.setAttr(cont_FK_Low.scale, (pm.getAttr(jFK_LowEnd.translateX)/8,pm.getAttr(jFK_LowEnd.translateX)/2,pm.getAttr(jFK_LowEnd.translateX)/8))
+pm.makeIdentity(cont_FK_Low, a=True)
 
-pm.setAttr(cont_FK_Low.scale, (pm.getAttr(jFK_Low.translateX)/2,0.5,0.5))
+cont_FK_Low_OFF=extra.createUpGrp(cont_FK_Low, "OFF")
+cont_FK_Low_ORE=extra.createUpGrp(cont_FK_Low, "ORE")
+if whichArm=="r_arm":
+    pm.setAttr(cont_FK_Low_ORE.rotateX, -180)
 
+temp_PoCon=pm.pointConstraint(jFK_Low, jFK_LowEnd, cont_FK_Low_OFF)
+pm.delete(temp_PoCon)
+temp_AimCon=pm.aimConstraint(jFK_LowEnd, cont_FK_Low_OFF, o=(90,90,0), u=(0,1,0))
+pm.delete(temp_AimCon)
+
+pm.makeIdentity(a=True, t=True, r=False, s=True)
 
 PvTarget=pm.PyNode("jInit_Low_"+whichArm).getTranslation(space="world")
 pm.xform(cont_FK_Low, piv=PvTarget, ws=True)
+pm.xform(cont_FK_Low_ORE, piv=PvTarget, ws=True)
+pm.xform(cont_FK_Low_OFF, piv=PvTarget, ws=True)
 
-cont_FK_Low_ORE=extra.createUpGrp(cont_FK_Low, "ORE")
-pm.makeIdentity(cont_FK_Low, a=True, t=True, r=False, s=True)
+cont_FK_Low.scaleY >> jFK_Low.scaleX
+
+
+
+################## // END of mod
+
 
 ### Create Midlock - FK
 
-midLock_FK=pm.spaceLocator(name="midLock_FK_"+whichArm)
-pm.makeIdentity(midLock_FK)
-extra.alignTo(midLock_FK, "jInit_Low_"+whichArm, 2)
-pm.pointConstraint(jFK_Low, midLock_FK, mo=False)
-MidLockFK_ori=pm.orientConstraint(jFK_Up, jFK_Low, midLock_FK, mo=True)
-pm.setAttr(MidLockFK_ori.interpType, 0)
+# midLock_FK=pm.spaceLocator(name="midLock_FK_"+whichArm)
+# pm.makeIdentity(midLock_FK)
+# extra.alignTo(midLock_FK, "jInit_Low_"+whichArm, 2)
+# pm.pointConstraint(jFK_Low, midLock_FK, mo=False)
+# MidLockFK_ori=pm.orientConstraint(jFK_Up, jFK_Low, midLock_FK, mo=True)
+# #pm.setAttr(MidLockFK_ori.interpType, 0)
 
 ### CReate Constraints and Hierarchy
-pm.orientConstraint(cont_FK_Up, jFK_Up, mo=True)
+pm.orientConstraint(cont_FK_UpArm, jFK_Up, mo=True)
 pm.pointConstraint(startLock, jFK_Up, mo=False)
 
 pm.orientConstraint(cont_FK_Low, jFK_Low, mo=True)
 
-pm.pointConstraint(jFK_Low, cont_FK_Low_ORE, mo=False)
+#pm.pointConstraint(jFK_Low, cont_FK_Low_ORE, mo=False)
 
-pm.orientConstraint(cont_FK_Up, cont_FK_Low_ORE, mo=True)
+#pm.orientConstraint(cont_FK_UpArm, cont_FK_Low_ORE, mo=True)
 
-pm.scaleConstraint(cont_FK_Up, jFK_Up, mo=False)
-pm.scaleConstraint(cont_FK_Low, jFK_Low, mo=False)
+#pm.scaleConstraint(cont_FK_UpArm, jFK_Up, mo=False)
+#pm.scaleConstraint(cont_FK_Low, jFK_Low, mo=False)
+
+pm.parentConstraint(cont_Shoulder, cont_FK_UpArm_OFF, sr=("x","y","z") ,mo=True)
+pm.parentConstraint(cont_FK_UpArm, cont_FK_Low_OFF, mo=True)
 
 ### Create FK IK Icon
 
@@ -441,7 +494,7 @@ fk_ik_rvs=pm.createNode("reverse", name="fk_ik_rvs"+whichArm)
 cont_FK_IK.fk_ik >> blShape_FKtoIK[0].weight[0]
 cont_FK_IK.fk_ik >> fk_ik_rvs.inputX
 
-fk_ik_rvs.outputX >> cont_FK_Up_ORE.visibility
+fk_ik_rvs.outputX >> cont_FK_UpArm_ORE.visibility
 fk_ik_rvs.outputX >> cont_FK_Low_ORE.visibility
 
 cont_FK_IK.fk_ik >> cont_IK_hand[0].visibility
@@ -464,22 +517,72 @@ pm.move(cont_FK_IK, (0,logoScale*2,0), r=True)
 
 cont_FK_IK_POS=extra.createUpGrp(cont_FK_IK, "_POS")
 
+########################## EDIT MAy 3 #################################
+
+### Create MidLock controller
+
+contScale= extra.getDistance(pm.PyNode("jInit_Low_"+whichArm), pm.PyNode("jInit_LowEnd_"+whichArm))/3
+cont_midLock=pm.circle(name="cont_mid_"+whichLeg, nr=(1,0,0), ch=0)
+pm.rebuildCurve(cont_midLock, s=12, ch=0)
+pm.select(cont_midLock[0].cv[0],cont_midLock[0].cv[2],cont_midLock[0].cv[4],cont_midLock[0].cv[6],cont_midLock[0].cv[8],cont_midLock[0].cv[10])
+pm.scale(0.5, 0.5, 0.5)
+pm.select(d=True)
+pm.setAttr(cont_midLock[0].scale, (contScale, contScale, contScale))
+pm.makeIdentity(cont_midLock, a=True)
+
+cont_midLock_POS=extra.createUpGrp(cont_midLock[0],"POS")
+cont_midLock_AVE=extra.createUpGrp(cont_midLock[0],"AVE")
+extra.alignTo(cont_midLock_POS, "jInit_Low_"+whichArm, 0)
+
+
+midLock_paConWeight=pm.parentConstraint(jIK_orig_Up, jFK_Up, cont_midLock_POS, mo=True)
+cont_FK_IK.fk_ik >> (midLock_paConWeight+"."+jIK_orig_Up+"W0")
+fk_ik_rvs.outputX >> (midLock_paConWeight+"."+jFK_Up+"W1")
+
+midLock_poConWeight=pm.pointConstraint(jIK_orig_Low, jFK_Low, cont_midLock_AVE, mo=False)
+cont_FK_IK.fk_ik >> (midLock_poConWeight+"."+jIK_orig_Low+"W0")
+fk_ik_rvs.outputX >> (midLock_poConWeight+"."+jFK_Low+"W1")
+
+midLock_xBln=pm.createNode("multiplyDivide", name="midLock_xBln"+whichArm)
+
+midLock_rotXsw=pm.createNode("blendTwoAttr", name="midLock_rotXsw"+whichArm)
+jIK_orig_Low.rotateY >> midLock_rotXsw.input[0]
+jFK_Low.rotateY >> midLock_rotXsw.input[1]
+fk_ik_rvs.outputX >> midLock_rotXsw.attributesBlender
+
+midLock_rotXsw.output >> midLock_xBln.input1Z
+
+pm.setAttr(midLock_xBln.input2Z, 0.5)
+midLock_xBln.outputZ >> cont_midLock_AVE.rotateY
+
+### Create Midlock
+
+midLock=pm.spaceLocator(name="midLock_"+whichArm)
+extra.alignTo(midLock, cont_midLock, 0)
+
+pm.parentConstraint(cont_midLock, midLock, mo=False)
+
+
+########################## EDIT /END
+
+
 
 ### Create End Lock
 endLock=pm.spaceLocator(name="endLock"+whichArm)
 extra.alignTo(endLock, "jInit_LowEnd_"+whichArm, 2)
 endLock_Ore=extra.createUpGrp(endLock, "_Ore")
 endLock_Pos=extra.createUpGrp(endLock, "_Pos")
-endLock_Twist=extra.createUpGrp(endLock, "_AutoTwist")
+endLock_Twist=extra.createUpGrp(endLock, "_Twist")
 
 endLockWeight=pm.pointConstraint(jIK_orig_LowEnd, jFK_LowEnd, endLock_Pos, mo=False)
 cont_FK_IK.fk_ik >> (endLockWeight+"."+jIK_orig_LowEnd+"W0")
 fk_ik_rvs.outputX >> (endLockWeight+"."+jFK_LowEnd+"W1")
 
 pm.parentConstraint(endLock, cont_FK_IK_POS, mo=True)
+pm.parent(endLock_Ore, scaleGrp)
 
 endLockRot=pm.parentConstraint(IK_parentGRP, jFK_Low, endLock_Twist, mo=True)
-pm.setAttr(endLockRot.interpType, 0)
+#pm.setAttr(endLockRot.interpType, 0)
 cont_FK_IK.fk_ik >> (endLockRot+"."+IK_parentGRP+"W0")
 fk_ik_rvs.outputX >> (endLockRot+"."+jFK_Low+"W1")
 
@@ -494,10 +597,7 @@ fk_ik_rvs.outputX >> (endLockRot+"."+jFK_Low+"W1")
 ribbonConnections_upperArm=cr.createRibbon("jInit_Up_"+whichArm, "jInit_Low_"+whichArm, "up_"+whichArm, 0)
 
 ribbonStart_paCon_upperArm_Start=pm.parentConstraint(startLock, ribbonConnections_upperArm[0], mo=True)
-ribbonStart_paCon_upperArm_End=pm.parentConstraint(midLock_IK, midLock_FK, ribbonConnections_upperArm[1], mo=True)
-
-cont_FK_IK.fk_ik >> (ribbonStart_paCon_upperArm_End+"."+midLock_IK+"W0")
-fk_ik_rvs.outputX >> (ribbonStart_paCon_upperArm_End+"."+midLock_FK+"W1")
+ribbonStart_paCon_upperArm_End=pm.parentConstraint(midLock, ribbonConnections_upperArm[1], mo=True)
 
 pm.scaleConstraint(scaleGrp,ribbonConnections_upperArm[2])
 
@@ -528,11 +628,8 @@ AddManualTwist.output3D >> ribbonConnections_upperArm[0].rotate
 
 ribbonConnections_lowerArm=cr.createRibbon("jInit_Low_"+whichArm, "jInit_LowEnd_"+whichArm, "low_"+whichArm, 0)
 
-ribbonStart_paCon_lowerArm_Start=pm.parentConstraint(midLock_IK, midLock_FK, ribbonConnections_lowerArm[0], mo=True)
+ribbonStart_paCon_lowerArm_Start=pm.parentConstraint(midLock, ribbonConnections_lowerArm[0], mo=True)
 ribbonStart_paCon_lowerArm_End=pm.parentConstraint(endLock, ribbonConnections_lowerArm[1], mo=True)
-
-cont_FK_IK.fk_ik >> (ribbonStart_paCon_lowerArm_Start+"."+midLock_IK+"W0")
-fk_ik_rvs.outputX >> (ribbonStart_paCon_lowerArm_Start+"."+midLock_FK+"W1")
 
 pm.scaleConstraint(scaleGrp,ribbonConnections_lowerArm[2])
 
@@ -636,11 +733,20 @@ extra.alignTo(cont_FK_Hand, endLock,2)
 cont_FK_Hand_POS=extra.createUpGrp(cont_FK_Hand, "_POS")
 cont_FK_Hand_ORE=extra.createUpGrp(cont_FK_Hand, "_ORE")
 
+handLock=pm.spaceLocator(name="handLock"+whichArm) ## Bu iki satir r arm mirror posing icin dondurulse bile dogru bir weighted constraint yapilmasi icin araya bir node olusturuyor.
+extra.alignTo(handLock, cont_FK_Hand_ORE, 0)
+
+if whichArm=="r_arm":
+    pm.setAttr(cont_FK_Hand_ORE.rotateX, -180)
+
+pm.parentConstraint(cont_FK_Hand, handLock, mo=True) ## Olusturulan ara node baglanir
+
 pm.pointConstraint(endLock, handMaster, mo=True)
-pm.parent(cont_FK_Hand_POS, cont_FK_Low)
-handOriCon=pm.orientConstraint(cont_IK_hand, cont_FK_Hand, handMaster, mo=False)
+pm.parentConstraint(cont_FK_Low_OFF,cont_FK_Hand_POS, mo=True)
+#pm.parent(cont_FK_Hand_POS, cont_FK_Low)
+handOriCon=pm.orientConstraint(cont_IK_hand, handLock, handMaster, mo=False)
 cont_FK_IK.fk_ik >> (handOriCon+"."+cont_IK_hand[0]+"W0")
-fk_ik_rvs.outputX >> (handOriCon+"."+cont_FK_Hand+"W1")
+fk_ik_rvs.outputX >> (handOriCon+"."+handLock+"W1")
 
 # handFKIK_blend=pm.createNode("blendColors", name="handFKIK_blend")
 # cont_IK_hand[0].rotate >> handFKIK_blend.color1
@@ -797,22 +903,26 @@ pm.parent(cont_thumb00_ORE, handMaster)
 
 
 
-# ### FINAL ROUND UP
+### FINAL ROUND UP
 
-# # Create Master Root and Scale and nonScale Group
 
-# pm.parent(jIK_SC_Root, masterRoot)
-# pm.parent(jIK_RP_Root, masterRoot)
-# pm.parent(jIK_orig_Root, masterRoot)
-# pm.parent(jFK_Root, masterRoot)
 
-# scaleGrp=pm.group(name="scaleGrp_"+whichArm, em=True)
-# nonScaleGrp=pm.group(name="NonScaleGrp_"+whichArm, em=True)
-# tempPoCon=pm.pointConstraint("Loc_Foot_"+whichArm, scaleGrp, mo=False)
-# pm.delete(tempPoCon)
+# pm.parent(startLock_Ore, scaleGrp)
+# pm.parent(armStart, scaleGrp)
+# pm.parent(armEnd, scaleGrp)
+# pm.parent(IK_parentGRP, scaleGrp)
+# pm.parent(cont_Shoulder_OFF, scaleGrp)
+# pm.parent(cont_FK_UpArm_OFF, scaleGrp)
+# pm.parent(cont_FK_LowLeg_OFF, scaleGrp)
+# pm.parent(cont_FK_Foot_OFF, scaleGrp)
+# pm.parent(cont_FK_Ball_OFF, scaleGrp)
+# pm.parent(midLock, scaleGrp)
+# pm.parent(cont_midLock_POS, scaleGrp)
+
+# ####################################################
 
 # pm.parent(masterRoot, scaleGrp)
-# pm.parent(legStart, scaleGrp)
+# pm.parent(armStart, scaleGrp)
 # pm.parent(legEnd, scaleGrp)
 # pm.parent(IK_parentGRP, scaleGrp)
 # pm.parent(cont_FK_UpLeg_ORE, scaleGrp)
@@ -850,7 +960,7 @@ pm.parent(cont_thumb00_ORE, handMaster)
 # pm.setAttr(cont_IK_foot[0]+".sz", lock=True, keyable=False, channelBox=False)
 # #pm.setAttr(cont_IK_foot[0]+".v", lock=True, keyable=False, channelBox=False)
 
-# #cont_FK_UpLeg
+# #cont_FK_UpArm
 # pm.setAttr(cont_FK_UpLeg+".tx", lock=True, keyable=False, channelBox=False)
 # pm.setAttr(cont_FK_UpLeg+".ty", lock=True, keyable=False, channelBox=False)
 # pm.setAttr(cont_FK_UpLeg+".tz", lock=True, keyable=False, channelBox=False)
