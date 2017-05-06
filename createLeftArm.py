@@ -97,7 +97,8 @@ ikHandle_RP=pm.ikHandle(sj=jIK_RP_Up, ee=jIK_RP_LowEnd, name="ikHandle_RP_"+whic
 cont_IK_hand=pm.circle(nrx=1, nry=0, nrz=0, name="cont_IK_hand_"+whichArm)
 extra.alignTo(cont_IK_hand, pm.PyNode("jInit_LowEnd_"+whichArm),2)
 
-cont_IK_hand_ORE=extra.createUpGrp(cont_IK_hand[0], "_ORE")
+cont_IK_hand_OFF=extra.createUpGrp(cont_IK_hand[0], "OFF")
+cont_IK_hand_ORE=extra.createUpGrp(cont_IK_hand[0], "ORE")
 
 ###Add ATTRIBUTES to the IK Hand Controller
 pm.addAttr( shortName="polevector", longName="Pole_Vector", defaultValue=0.0, minValue=0.0, maxValue=1.0, at="double", k=True)
@@ -522,7 +523,7 @@ cont_FK_IK_POS=extra.createUpGrp(cont_FK_IK, "_POS")
 ### Create MidLock controller
 
 contScale= extra.getDistance(pm.PyNode("jInit_Low_"+whichArm), pm.PyNode("jInit_LowEnd_"+whichArm))/3
-cont_midLock=pm.circle(name="cont_mid_"+whichLeg, nr=(1,0,0), ch=0)
+cont_midLock=pm.circle(name="cont_mid_"+whichArm, nr=(1,0,0), ch=0)
 pm.rebuildCurve(cont_midLock, s=12, ch=0)
 pm.select(cont_midLock[0].cv[0],cont_midLock[0].cv[2],cont_midLock[0].cv[4],cont_midLock[0].cv[6],cont_midLock[0].cv[8],cont_midLock[0].cv[10])
 pm.scale(0.5, 0.5, 0.5)
@@ -581,7 +582,7 @@ fk_ik_rvs.outputX >> (endLockWeight+"."+jFK_LowEnd+"W1")
 pm.parentConstraint(endLock, cont_FK_IK_POS, mo=True)
 pm.parent(endLock_Ore, scaleGrp)
 
-endLockRot=pm.parentConstraint(IK_parentGRP, jFK_Low, endLock_Twist, mo=True)
+endLockRot=pm.parentConstraint(IK_parentGRP, jFK_Low, endLock_Twist, st=("x","y","z"), mo=True)
 #pm.setAttr(endLockRot.interpType, 0)
 cont_FK_IK.fk_ik >> (endLockRot+"."+IK_parentGRP+"W0")
 fk_ik_rvs.outputX >> (endLockRot+"."+jFK_Low+"W1")
@@ -723,13 +724,14 @@ pm.parent(jDef_Hand, handMaster)
 
 ### Hand Controllers
 
-cont_FK_Hand=pm.curve(name="cont_FK_Hand"+whichArm, d=1,p=[(-1,1,1), (-1,1,-1), (1,1,-1), (1,1,1), (-1,1,1), (-1,-1,1), (-1,-1,-1), (-1,1,-1), (-1,1,1), (-1,-1,1), (1,-1,1), (1,1,1), (1,1,-1), (1,-1,-1), (1,-1,1), (1,-1,-1), (-1,-1,-1)],k= [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16])
+cont_FK_Hand=pm.curve(name="cont_FK_Hand_"+whichArm, d=1,p=[(-1,1,1), (-1,1,-1), (1,1,-1), (1,1,1), (-1,1,1), (-1,-1,1), (-1,-1,-1), (-1,1,-1), (-1,1,1), (-1,-1,1), (1,-1,1), (1,1,1), (1,1,-1), (1,-1,-1), (1,-1,1), (1,-1,-1), (-1,-1,-1)],k= [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16])
 
 handContScale=extra.getDistance(pm.PyNode("jInit_index00_"+whichArm), pm.PyNode("jInit_index01_"+whichArm))
 pm.setAttr(cont_FK_Hand.scale, (handContScale,handContScale,handContScale))
 pm.makeIdentity(cont_FK_Hand, a=True, r=False)
 extra.alignTo(cont_FK_Hand, endLock,2)
 
+cont_FK_Hand_OFF=extra.createUpGrp(cont_FK_Hand, "_OFF")
 cont_FK_Hand_POS=extra.createUpGrp(cont_FK_Hand, "_POS")
 cont_FK_Hand_ORE=extra.createUpGrp(cont_FK_Hand, "_ORE")
 
@@ -747,6 +749,7 @@ pm.parentConstraint(cont_FK_Low_OFF,cont_FK_Hand_POS, mo=True)
 handOriCon=pm.orientConstraint(cont_IK_hand, handLock, handMaster, mo=False)
 cont_FK_IK.fk_ik >> (handOriCon+"."+cont_IK_hand[0]+"W0")
 fk_ik_rvs.outputX >> (handOriCon+"."+handLock+"W1")
+fk_ik_rvs.outputX >> cont_FK_Hand.v
 
 # handFKIK_blend=pm.createNode("blendColors", name="handFKIK_blend")
 # cont_IK_hand[0].rotate >> handFKIK_blend.color1
@@ -756,7 +759,7 @@ fk_ik_rvs.outputX >> (handOriCon+"."+handLock+"W1")
 
 
 divider=3
-##pinky
+##PINKY
 handContScale00=extra.getDistance(jDef_pinky00, jDef_pinky01)
 handContScale01=extra.getDistance(jDef_pinky01, jDef_pinky02)
 handContScale02=extra.getDistance(jDef_pinky02, jDef_pinky03)
@@ -784,7 +787,16 @@ pm.parentConstraint(cont_pinky01, jDef_pinky01)
 pm.parentConstraint(cont_pinky02, jDef_pinky02)
 
 pm.parent(cont_pinky00_ORE, handMaster)
-##ring
+#######spread
+pinkySprMult=pm.createNode("multiplyDivide", name="pinkySprMult"+whichArm)
+pm.setAttr(pinkySprMult.input1Y, 0.4)
+cont_FK_IK.pinkySpread >> pinkySprMult.input2Y 
+pinkySprMult.outputY >> cont_pinky00_con.rotateY
+
+cont_FK_IK.pinkySpread >> cont_pinky01_con.rotateY
+
+
+##RING
 handContScale00=extra.getDistance(jDef_ring00, jDef_ring01)
 handContScale01=extra.getDistance(jDef_ring01, jDef_ring02)
 handContScale02=extra.getDistance(jDef_ring02, jDef_ring03)
@@ -812,6 +824,15 @@ pm.parentConstraint(cont_ring01, jDef_ring01)
 pm.parentConstraint(cont_ring02, jDef_ring02)
 
 pm.parent(cont_ring00_ORE, handMaster)
+#######spread
+ringSprMult=pm.createNode("multiplyDivide", name="ringSprMult"+whichArm)
+pm.setAttr(ringSprMult.input1Y, 0.4)
+cont_FK_IK.ringSpread >> ringSprMult.input2Y 
+ringSprMult.outputY >> cont_ring00_con.rotateY
+
+cont_FK_IK.ringSpread >> cont_ring01_con.rotateY
+
+
 ##middle
 handContScale00=extra.getDistance(jDef_middle00, jDef_middle01)
 handContScale01=extra.getDistance(jDef_middle01, jDef_middle02)
@@ -841,6 +862,14 @@ pm.parentConstraint(cont_middle01, jDef_middle01)
 pm.parentConstraint(cont_middle02, jDef_middle02)
 
 pm.parent(cont_middle00_ORE, handMaster)
+#######spread
+middleSprMult=pm.createNode("multiplyDivide", name="middleSprMult"+whichArm)
+pm.setAttr(middleSprMult.input1Y, 0.4)
+cont_FK_IK.middleSpread >> middleSprMult.input2Y 
+middleSprMult.outputY >> cont_middle00_con.rotateY
+
+cont_FK_IK.middleSpread >> cont_middle01_con.rotateY
+
 ##index
 handContScale00=extra.getDistance(jDef_index00, jDef_index01)
 handContScale01=extra.getDistance(jDef_index01, jDef_index02)
@@ -871,6 +900,14 @@ pm.parentConstraint(cont_index01, jDef_index01)
 pm.parentConstraint(cont_index02, jDef_index02)
 
 pm.parent(cont_index00_ORE, handMaster)
+#######spread
+indexSprMult=pm.createNode("multiplyDivide", name="indexSprMult"+whichArm)
+pm.setAttr(indexSprMult.input1Y, 0.4)
+cont_FK_IK.indexSpread >> indexSprMult.input2Y 
+indexSprMult.outputY >> cont_index00_con.rotateY
+
+cont_FK_IK.indexSpread >> cont_index01_con.rotateY
+
 ##thumb
 handContScale00=extra.getDistance(jDef_thumb00, jDef_thumb01)
 handContScale01=extra.getDistance(jDef_thumb01, jDef_thumb02)
@@ -901,45 +938,49 @@ pm.parentConstraint(cont_thumb02, jDef_thumb02)
 
 pm.parent(cont_thumb00_ORE, handMaster)
 
+#######spread
+thumbSprMult=pm.createNode("multiplyDivide", name="thumbSprMult"+whichArm)
+pm.setAttr(thumbSprMult.input1Y, 0.4)
+cont_FK_IK.thumbSpread >> thumbSprMult.input2Y 
+thumbSprMult.outputY >> cont_thumb00_con.rotateY
+
+cont_FK_IK.thumbSpread >> cont_thumb01_con.rotateY
+
 
 
 ### FINAL ROUND UP
 
+pm.select(armStart)
 
-
-# pm.parent(startLock_Ore, scaleGrp)
-# pm.parent(armStart, scaleGrp)
-# pm.parent(armEnd, scaleGrp)
-# pm.parent(IK_parentGRP, scaleGrp)
-# pm.parent(cont_Shoulder_OFF, scaleGrp)
-# pm.parent(cont_FK_UpArm_OFF, scaleGrp)
-# pm.parent(cont_FK_LowLeg_OFF, scaleGrp)
-# pm.parent(cont_FK_Foot_OFF, scaleGrp)
-# pm.parent(cont_FK_Ball_OFF, scaleGrp)
-# pm.parent(midLock, scaleGrp)
-# pm.parent(cont_midLock_POS, scaleGrp)
+pm.parent(startLock_Ore, scaleGrp)
+pm.parent(armStart, scaleGrp)
+pm.parent(armEnd, scaleGrp)
+pm.parent(IK_parentGRP, scaleGrp)
+pm.parent(cont_Shoulder_OFF, scaleGrp)
+pm.parent(cont_FK_UpArm_OFF, scaleGrp)
+pm.parent(cont_FK_Low_OFF, scaleGrp)
+pm.parent(cont_FK_Hand_OFF, scaleGrp)
+pm.parent(cont_IK_hand_OFF, scaleGrp)
+pm.parent(midLock, scaleGrp)
+pm.parent(cont_midLock_POS, scaleGrp)
 
 # ####################################################
 
-# pm.parent(masterRoot, scaleGrp)
-# pm.parent(armStart, scaleGrp)
-# pm.parent(legEnd, scaleGrp)
-# pm.parent(IK_parentGRP, scaleGrp)
-# pm.parent(cont_FK_UpLeg_ORE, scaleGrp)
-# pm.parent(cont_FK_LowLeg_ORE, scaleGrp)
-# pm.parent(cont_FK_Foot_ORE, scaleGrp)
-# pm.parent(cont_FK_Ball_ORE, scaleGrp)
-# pm.parent(midLock_FK, scaleGrp)
-# pm.parent(midLock_IK, scaleGrp)
 
-# pm.parent(ribbonConnections_upperArm[2], scaleGrp)
-# pm.parent(ribbonConnections_upperArm[3], nonScaleGrp)
 
-# pm.parent(ribbonConnections_lowerArm[2], scaleGrp)
-# pm.parent(ribbonConnections_lowerArm[3], nonScaleGrp)
+pm.parent(ribbonConnections_upperArm[2], scaleGrp)
+pm.parent(ribbonConnections_upperArm[3], nonScaleGrp)
 
-# pm.parent(jDef_Foot, scaleGrp)
+pm.parent(ribbonConnections_lowerArm[2], scaleGrp)
+pm.parent(ribbonConnections_lowerArm[3], nonScaleGrp)
 
+pm.parent(jDef_Shoulder, scaleGrp)
+
+pm.parent(handLock, scaleGrp)
+pm.parent(masterRoot, scaleGrp)
+pm.parent(jFK_Up, scaleGrp)
+pm.parent(cont_FK_IK_POS, scaleGrp)
+pm.parent(handMaster, scaleGrp)
 # ### Animator Fool Proofing
 
 # #cont_FK_IK
