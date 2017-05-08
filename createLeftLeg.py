@@ -430,7 +430,6 @@ def createLeg(whichLeg):
         cont_FK_UpLeg.scaleY >> jFK_Root.scaleX ## WILL BE ADDED TO ARM
 
         #LowLeg Cont
-
         cont_FK_LowLeg=pm.curve(name="cont_FK_LowLeg_"+whichLeg, d=1,p=[(-1,1,1), (-1,1,-1), (1,1,-1), (1,1,1), (-1,1,1), (-1,-1,1), (-1,-1,-1), (-1,1,-1), (-1,1,1), (-1,-1,1), (1,-1,1), (1,1,1), (1,1,-1), (1,-1,-1), (1,-1,1), (1,-1,-1), (-1,-1,-1)],k= [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16])
         pm.setAttr(cont_FK_LowLeg.scale, (pm.getAttr(jFK_Foot.translateX)/8,pm.getAttr(jFK_Foot.translateX)/2,pm.getAttr(jFK_Foot.translateX)/8))
         pm.makeIdentity(cont_FK_LowLeg, a=True)

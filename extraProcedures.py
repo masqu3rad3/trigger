@@ -95,3 +95,11 @@ def connectMirror (node1, node2, mirrorAxis):
         minusOpR.output3Dy >> node2.ry
         minusOpR.output3Dz >> node2.rz
 
+
+def colorize (node, index):
+    
+    #shape=node.getShape()
+    shapes=pm.listRelatives(node, s=True)
+    for i in shapes:
+        pm.setAttr(i.overrideEnabled, True)
+        pm.setAttr(i.overrideColor, index)
