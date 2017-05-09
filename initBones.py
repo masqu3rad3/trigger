@@ -46,17 +46,17 @@ def initLegBones(whichLeg, dir):
     jointList=[rcon, upleg, knee, foot, ball, toe, bankout, bankin,toepv, heelpv]
     return jointList
 
-L_loc_grp=pm.group(name="locGrp_l_leg", em=True)
-pm.setAttr(L_loc_grp.v,0)
-R_loc_grp=pm.group(name="locGrp_r_leg", em=True)
-pm.setAttr(R_loc_grp.v,0)
+L_loc_grp_arm=pm.group(name="locGrp_l_leg", em=True)
+pm.setAttr(L_loc_grp_arm.v,0)
+R_loc_grp_arm=pm.group(name="locGrp_r_leg", em=True)
+pm.setAttr(R_loc_grp_arm.v,0)
 L_joints=initLegBones("l_leg", 1)
 L_locators=[]
 for i in range (0,len(L_joints)):
     locator=pm.spaceLocator(name="loc_"+L_joints[i].name())
     L_locators.append(locator)
     pm.parentConstraint(L_joints[i], locator, mo=False)
-    pm.parent(locator,L_loc_grp)
+    pm.parent(locator,L_loc_grp_arm)
 R_joints=initLegBones("r_leg", -1)
 R_locators=[]
 for x in range (0,len(R_joints)):
@@ -65,7 +65,7 @@ for x in range (0,len(R_joints)):
     extra.alignTo(locator,R_joints[x],2)
     pm.parentConstraint(locator, R_joints[x], mo=True)
     extra.connectMirror(L_locators[x], R_locators[x],"X")
-    pm.parent(locator,R_loc_grp)
+    pm.parent(locator,R_loc_grp_arm)
 
 
 
