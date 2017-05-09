@@ -16,8 +16,8 @@ reload(cr)
 #whichLeg="l_leg"
 
 def createLeg(whichLeg):
-     legLocators=pm.ls("jInit*"+whichLeg)
-     if (len(legLocators)>=9):
+     initBones=pm.ls("jInit*"+whichLeg)
+     if (len(initBones)>=9):
         
         
         ##Groups
@@ -816,12 +816,13 @@ def createLeg(whichLeg):
             
         pm.setAttr(cont_FK_IK.rigVis, 0)
 
-
+        #return [Spine_Connection, IK_Controller, Pole_Vector, Do_Not_Touch_Data]
+        return [scaleGrp, cont_IK_foot, cont_Pole, nonScaleGrp]
 
      else:
-         pm.error("Some or all Leg Locators are missing (or Renamed)")
+         pm.error("Some or all Leg Init Bones are missing (or Renamed)")
     
-createLeg("l_leg")
-createLeg("r_leg")
+leftLeg=createLeg("l_leg")
+rightLeg=createLeg("r_leg")
 
 

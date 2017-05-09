@@ -103,3 +103,8 @@ def colorize (node, index):
     for i in shapes:
         pm.setAttr(i.overrideEnabled, True)
         pm.setAttr(i.overrideColor, index)
+        
+def lockAndHide (node, channelArray):
+    for i in channelArray:
+        pm.setAttr(node+"."+i, lock=True, keyable=False, channelBox=False)
+    
