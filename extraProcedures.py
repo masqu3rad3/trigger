@@ -108,3 +108,13 @@ def lockAndHide (node, channelArray):
     for i in channelArray:
         pm.setAttr(node+"."+i, lock=True, keyable=False, channelBox=False)
     
+def alignBetween (node, targetA, targetB, pos=True, rot=True):
+    if pos:
+        tempPo=pm.pointConstraint(targetA, targetB, node, mo=False)
+        pm.delete(tempPo)
+    if rot:
+        tempAim=pm.aimConstraint(targetB,node, mo=False)
+        pm.delete(tempAim)
+    
+    
+    
