@@ -1,5 +1,3 @@
-## //TODO
-## Ribbon flips when switching between  FK - IK
 
 import pymel.core as pm
 import sys
@@ -13,13 +11,19 @@ reload(extra)
 import createRibbon as cr
 reload(cr)
 
+import contIcons as icon
+reload(icon)
+
 #whichLeg="l_leg"
 
 def createLeg(whichLeg):
     initBones=pm.ls("jInit*"+whichLeg)
     if (len(initBones)<9):
-         pm.error("Some or all Leg Init Bones are missing (or Renamed)")
-         return
+        pm.error("Some or all Leg Init Bones are missing (or Renamed)")
+        return
+    if pm.objExists("scaleGrp_"+whichLeg):
+        pm.error("Leg with the same name exists in the scene (or maybe not purged completely")
+        return
     ##Groups
     scaleGrp=pm.group(name="scaleGrp_"+whichLeg, em=True)
     tempPoCon=pm.pointConstraint("jInit_Foot_"+whichLeg, scaleGrp, mo=False)
@@ -517,36 +521,15 @@ def createLeg(whichLeg):
     pm.parentConstraint(cont_FK_Foot, cont_FK_Ball_OFF, mo=True)
 
     ### Create FK IK Icon
+    iconScale=(extra.getDistance(pm.PyNode("jInit_Foot_"+whichLeg), pm.PyNode("jInit_Knee_"+whichLeg)))/4
 
-    letterFK_F=pm.curve (d= 1, p= [( -8.145734, -5.011799, 0 ), ( -8.145734, 4.99286, 0 ), ( -1.059101, 4.99286, 0 ), ( -1.059101, 2.908556, 0 ), ( -5.227709, 2.908556,0 ), ( -5.227709, 1.241113, 0 ), ( -1.892823, 1.241113, 0 ), ( -1.892823, -0.843191, 0 ), ( -5.227709, -0.843191, 0 ), ( -5.227709, -5.011799, 0 ), ( -8.145734, -5.011799, 0)], k=[ 0 ,  1 ,  2 ,  3 ,  4 ,  5 ,  6 ,  7 ,  8 ,  9 ,  10 ], name="letterFK_F")
-    letterFK_K=pm.curve (d= 1, p= [(  1.025203, -5.011799, 0 ), (  1.025203, 4.99286, 0 ), (  3.943228, 4.99286, 0 ), (  3.943228, 1.215065, 0 ), (  7.193445, 4.99286, 0 ), (  11.029861, 4.99286, 0 ), (  7.382331, 1.084794, 0 ), (  11.029861, -5.011799, 0 ), (  7.857814, -5.011799, 0 ), (  5.669293, -0.752001, 0 ), (  3.943228, -2.608331, 0 ), (  3.943228, -5.011799, 0 ), (  1.025203, -5.011799, 0)], k= [0 , 1 , 2 , 3 , 4 , 5 , 6 , 7 , 8 , 9 , 10 , 11 , 12], name="letterFK_K")
+    cont_FK_IKList=icon.fkikSwitch(("cont_FK_IK_"+whichLeg), (iconScale,iconScale,iconScale))
+    cont_FK_IK=cont_FK_IKList[0]
+    fk_ik_rvs=cont_FK_IKList[1]
 
-    pm.parent(letterFK_K+"Shape", letterFK_F, r=True, s=True)
-    pm.delete(letterFK_K)
-
-    letterFK=pm.rename(letterFK_F, "letterFK")
-
-    letterIK=pm.duplicate(letterFK, name="letterIK")
-
-    pm.move(-4.168608, 0, 0, "letterIKShape.cv[2]", r=True, os=True, wd=True)
-    pm.move(-4.168608, 0, 0, "letterIKShape.cv[3]", r=True, os=True, wd=True)
-    pm.move(-3.334886, 0, 0, "letterIKShape.cv[6]", r=True, os=True, wd=True)
-    pm.move(-3.334886, 0, 0, "letterIKShape.cv[7]", r=True, os=True, wd=True)
-    pm.move(2.897946, 0, 0, "letterIKShape.cv[0:10]", r=True, os=True, wd=True)
-    pm.move(-1.505933, 0, 0, "letterIK_KShape.cv[0:12]", r=True, os=True, wd=True)
-
-    blShape_FKtoIK=pm.blendShape(letterIK, letterFK)
-
-    cont_FK_IK=pm.rename(letterFK, "cont_FK_IK_"+whichLeg)
-    pm.select(cont_FK_IK)
-    pm.addAttr( shortName="fk_ik", longName="FK_IK", defaultValue=1.0, minValue=0.0, maxValue=1.0, at="float", k=True)
-    pm.addAttr( shortName="autoTwist", longName="Auto_Twist", defaultValue=1.0, minValue=0.0, maxValue=1.0, at="float", k=True)
-    pm.addAttr( shortName="manualTwist", longName="Manual_Twist", defaultValue=0.0, at="float", k=True)
-    pm.addAttr( shortName="rigVis", longName="Rig_Visibility", defaultValue=1, minValue=0, maxValue=1, at="long", k=True)
-
-    fk_ik_rvs=pm.createNode("reverse", name="fk_ik_rvs"+whichLeg)
-    cont_FK_IK.fk_ik >> blShape_FKtoIK[0].weight[0]
-    cont_FK_IK.fk_ik >> fk_ik_rvs.inputX
+    pm.addAttr(cont_FK_IK, shortName="autoTwist", longName="Auto_Twist", defaultValue=1.0, minValue=0.0, maxValue=1.0, at="float", k=True)
+    pm.addAttr(cont_FK_IK, shortName="manualTwist", longName="Manual_Twist", defaultValue=0.0, at="float", k=True)
+    pm.addAttr(cont_FK_IK, shortName="rigVis", longName="Rig_Visibility", defaultValue=1, minValue=0, maxValue=1, at="long", k=True)
 
     fk_ik_rvs.outputX >> cont_FK_UpLeg_OFF.visibility
     fk_ik_rvs.outputX >> cont_FK_LowLeg_OFF.visibility
@@ -554,24 +537,12 @@ def createLeg(whichLeg):
     fk_ik_rvs.outputX >> cont_FK_Ball_OFF.visibility
     cont_FK_IK.fk_ik >> cont_IK_foot[0].visibility
 
-    pm.setAttr(cont_FK_IK+".sx", 0.1)
-    pm.setAttr(cont_FK_IK+".sy", 0.1)
-    pm.setAttr(cont_FK_IK+".sz", 0.1)
-
-    pm.delete(letterIK)
-
-    pm.select(cont_FK_IK)
-    pm.makeIdentity(a=True)
-
-    logoScale=(extra.getDistance(pm.PyNode("jInit_Foot_"+whichLeg), pm.PyNode("jInit_Knee_"+whichLeg)))/4
-    pm.setAttr(cont_FK_IK+".scale", (logoScale, logoScale, logoScale))
-    pm.makeIdentity(a=True)
-    tempPoCon=pm.pointConstraint("jInit_Foot_"+whichLeg, cont_FK_IK, mo=False)
-    pm.delete(tempPoCon)
+    extra.alignTo(cont_FK_IK, pm.PyNode("jInit_Foot_"+whichLeg))
+    
     if whichLeg=="r_leg":
-        pm.move(cont_FK_IK, (-(logoScale*2),0,0), r=True)
+        pm.move(cont_FK_IK, (-(iconScale*2),0,0), r=True)
     else:
-        pm.move(cont_FK_IK, (logoScale*2,0,0), r=True)
+        pm.move(cont_FK_IK, (iconScale*2,0,0), r=True)
 
     cont_FK_IK_POS=extra.createUpGrp(cont_FK_IK, "_POS")
     pm.parent(cont_FK_IK_POS, scaleGrp)
@@ -820,7 +791,7 @@ def createLeg(whichLeg):
     return [scaleGrp, cont_IK_foot, cont_Pole, nonScaleGrp]
 
     
-leftLeg=createLeg("l_leg")
-rightLeg=createLeg("r_leg")
+#leftLeg=createLeg("l_leg")
+#rightLeg=createLeg("r_leg")
 
 
