@@ -273,7 +273,7 @@ def createArm(whichArm):
     cont_IK_hand.polevector >> cont_Pole.v
 
     ### Shoulder Controller
-    shouldercontScale=(initShoulderDist/3,initShoulderDist/3,initShoulderDist/3,)
+    shouldercontScale=(initShoulderDist/2,initShoulderDist/2,initShoulderDist/2,)
     cont_Shoulder=icon.shoulder("", shouldercontScale)
 
     if whichArm=="r_arm":
@@ -322,10 +322,11 @@ def createArm(whichArm):
     pm.joint(jFK_LowEnd, e=True, zso=True, oj="xyz", sao="yup")
 
     ### Create Controller Curves
-
-    cont_FK_UpArm=pm.curve(name="cont_FK_UpArm_"+whichArm, d=1,p=[(-1,1,1), (-1,1,-1), (1,1,-1), (1,1,1), (-1,1,1), (-1,-1,1), (-1,-1,-1), (-1,1,-1), (-1,1,1), (-1,-1,1), (1,-1,1), (1,1,1), (1,1,-1), (1,-1,-1), (1,-1,1), (1,-1,-1), (-1,-1,-1)],k= [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16])
-    pm.setAttr(cont_FK_UpArm.scale, (pm.getAttr(jFK_Low.translateX)/8,pm.getAttr(jFK_Low.translateX)/2,pm.getAttr(jFK_Low.translateX)/8))
-    pm.makeIdentity(cont_FK_UpArm, a=True)
+    scalecontFkUpArm=(initUpperArmDist/8,initUpperArmDist/2,initUpperArmDist/8)
+    cont_FK_UpArm=icon.cube("cont_FK_UpArm_"+whichArm, scalecontFkUpArm)
+    # cont_FK_UpArm=pm.curve(name="cont_FK_UpArm_"+whichArm, d=1,p=[(-1,1,1), (-1,1,-1), (1,1,-1), (1,1,1), (-1,1,1), (-1,-1,1), (-1,-1,-1), (-1,1,-1), (-1,1,1), (-1,-1,1), (1,-1,1), (1,1,1), (1,1,-1), (1,-1,-1), (1,-1,1), (1,-1,-1), (-1,-1,-1)],k= [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16])
+    # pm.setAttr(cont_FK_UpArm.scale, (pm.getAttr(jFK_Low.translateX)/8,pm.getAttr(jFK_Low.translateX)/2,pm.getAttr(jFK_Low.translateX)/8))
+    # pm.makeIdentity(cont_FK_UpArm, a=True)
 
     cont_FK_UpArm_OFF=extra.createUpGrp(cont_FK_UpArm, "OFF")
     cont_FK_UpArm_ORE=extra.createUpGrp(cont_FK_UpArm, "ORE")
@@ -347,9 +348,13 @@ def createArm(whichArm):
 
     cont_FK_UpArm.scaleY >> jFK_Up.scaleX
 
-    cont_FK_LowArm=pm.curve(name="cont_FK_LowArm_"+whichArm, d=1,p=[(-1,1,1), (-1,1,-1), (1,1,-1), (1,1,1), (-1,1,1), (-1,-1,1), (-1,-1,-1), (-1,1,-1), (-1,1,1), (-1,-1,1), (1,-1,1), (1,1,1), (1,1,-1), (1,-1,-1), (1,-1,1), (1,-1,-1), (-1,-1,-1)],k= [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16])
-    pm.setAttr(cont_FK_LowArm.scale, (pm.getAttr(jFK_LowEnd.translateX)/8,pm.getAttr(jFK_LowEnd.translateX)/2,pm.getAttr(jFK_LowEnd.translateX)/8))
-    pm.makeIdentity(cont_FK_LowArm, a=True)
+    scalecontFkLowArm=(initLowerArmDist/8,initLowerArmDist/2,initLowerArmDist/8)
+
+    cont_FK_LowArm=icon.cube("cont_FK_LowArm_"+whichArm, scalecontFkLowArm)
+
+    # cont_FK_LowArm=pm.curve(name="cont_FK_LowArm_"+whichArm, d=1,p=[(-1,1,1), (-1,1,-1), (1,1,-1), (1,1,1), (-1,1,1), (-1,-1,1), (-1,-1,-1), (-1,1,-1), (-1,1,1), (-1,-1,1), (1,-1,1), (1,1,1), (1,1,-1), (1,-1,-1), (1,-1,1), (1,-1,-1), (-1,-1,-1)],k= [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16])
+    # pm.setAttr(cont_FK_LowArm.scale, (pm.getAttr(jFK_LowEnd.translateX)/8,pm.getAttr(jFK_LowEnd.translateX)/2,pm.getAttr(jFK_LowEnd.translateX)/8))
+    # pm.makeIdentity(cont_FK_LowArm, a=True)
 
     cont_FK_LowArm_OFF=extra.createUpGrp(cont_FK_LowArm, "OFF")
     cont_FK_LowArm_ORE=extra.createUpGrp(cont_FK_LowArm, "ORE")
@@ -409,17 +414,18 @@ def createArm(whichArm):
 
     ### Create MidLock controller
 
-    midcontScale= (initLowerArmDist/3,initLowerArmDist/3, initLowerArmDist/3)
-    cont_midLock=pm.circle(name="cont_mid_"+whichArm, nr=(1,0,0), ch=0)
-    pm.rebuildCurve(cont_midLock, s=12, ch=0)
-    pm.select(cont_midLock[0].cv[0],cont_midLock[0].cv[2],cont_midLock[0].cv[4],cont_midLock[0].cv[6],cont_midLock[0].cv[8],cont_midLock[0].cv[10])
-    pm.scale(0.5, 0.5, 0.5)
-    pm.select(d=True)
-    pm.setAttr(cont_midLock[0].scale, (midcontScale))
-    pm.makeIdentity(cont_midLock, a=True)
+    midcontScale= (initLowerArmDist/4,initLowerArmDist/4, initLowerArmDist/4)
+    cont_midLock=icon.star("cont_mid_"+whichArm, midcontScale, normal=(1, 0, 0))
+    # cont_midLock=pm.circle(name="cont_mid_"+whichArm, nr=(1,0,0), ch=0)
+    # pm.rebuildCurve(cont_midLock, s=12, ch=0)
+    # pm.select(cont_midLock[0].cv[0],cont_midLock[0].cv[2],cont_midLock[0].cv[4],cont_midLock[0].cv[6],cont_midLock[0].cv[8],cont_midLock[0].cv[10])
+    # pm.scale(0.5, 0.5, 0.5)
+    # pm.select(d=True)
+    # pm.setAttr(cont_midLock[0].scale, (midcontScale))
+    # pm.makeIdentity(cont_midLock, a=True)
 
-    cont_midLock_POS=extra.createUpGrp(cont_midLock[0],"POS")
-    cont_midLock_AVE=extra.createUpGrp(cont_midLock[0],"AVE")
+    cont_midLock_POS=extra.createUpGrp(cont_midLock,"POS")
+    cont_midLock_AVE=extra.createUpGrp(cont_midLock,"AVE")
     extra.alignTo(cont_midLock_POS, "jInit_Low_"+whichArm, 0)
 
     midLock_paConWeight=pm.parentConstraint(jIK_orig_Up, jFK_Up, cont_midLock_POS, mo=True)
@@ -531,7 +537,7 @@ def createArm(whichArm):
 
     ### Hand Controllers
 
-    FKcontScale=(initLowerArmDist/4,initLowerArmDist/4,initLowerArmDist/4)
+    FKcontScale=(initLowerArmDist/5,initLowerArmDist/5,initLowerArmDist/5)
     cont_FK_Hand=icon.cube("cont_FK_Hand_"+whichArm, FKcontScale)
     extra.alignTo(cont_FK_Hand, endLock,2)
 
@@ -601,7 +607,7 @@ def createArm(whichArm):
     # ### Animator Fool Proofing
     
     extra.lockAndHide(cont_IK_hand, ["v"])
-    extra.lockAndHide(cont_midLock[0], ["sx", "sy", "sz", "v"])
+    extra.lockAndHide(cont_midLock, ["sx", "sy", "sz", "v"])
     extra.lockAndHide(cont_FK_IK, ["sx","sy","sz","v"])
     extra.lockAndHide(cont_FK_Hand, ["tx","ty","tz","v"])
     extra.lockAndHide(cont_FK_LowArm, ["tx","ty","tz","sx","sz","v"])

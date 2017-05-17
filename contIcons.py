@@ -66,18 +66,19 @@ def thigh(name, scale, location=None):
     pm.makeIdentity(cont_thigh, a=True)
     return cont_thigh
     
-def star(name, scale, location=None):
+def star(name, scale, location=None, normal=(0, 1, 0)):
     """
     Createa a star-ish shaped controller
     Args:
         name: name of the controller. Must be a String
         scale: Scale value as vector. example (1,1.5,1)
         location: Optional Location as vector. example (12,0,2) 
-
+        normal: Optional normal override
+        
     Returns:
         Controller node
     """
-    cont_star=pm.circle(name=name, nr=(0, 1, 0), ch=0, radius=1.5)
+    cont_star=pm.circle(name=name, nr=normal, ch=0, radius=1.5)
     pm.rebuildCurve(cont_star, s=12, ch=0)
     pm.select(cont_star[0].cv[0], cont_star[0].cv[2], cont_star[0].cv[4], cont_star[0].cv[6], cont_star[0].cv[8], cont_star[0].cv[10])
     pm.scale(0.5, 0.5, 0.5)

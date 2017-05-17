@@ -5,8 +5,8 @@ import pymel.core as pm
 import extraProcedures as extra
 reload(extra)
 
-import mrCubic as mrC
-reload(mrC)
+# import mrCubic as mrC
+# reload(mrC)
 
 def createSplineIK(refJoints, name, cuts, dropoff=2):
     #refJoints=pm.ls("jInit_spine*")
@@ -14,14 +14,13 @@ def createSplineIK(refJoints, name, cuts, dropoff=2):
     scaleGrp=pm.group(name="scaleGrp_"+name, em=True)
     nonScaleGrp=pm.group(name="nonScaleGrp_"+name, em=True)
 
-    #dropoff=2
-    #cuts=6
     extra.getDistance(refJoints[0], refJoints[0])
     totalLength=0
     rootPoint=refJoints[0].getTranslation(space="world")
-    #splitCount=5
+
     contDistances=[]
     contCurves=[]
+    contCurves_ORE=[]
     ctrlDistance=0
 
     for i in range (0, len(refJoints)):
@@ -52,7 +51,7 @@ def createSplineIK(refJoints, name, cuts, dropoff=2):
         defJoints.append(j)
         curvePoints.append(place)
 
-    mrC.mrCube(defJoints)
+    #mrC.mrCube(defJoints)
 
     # ## Fix orientation of deformation joints
     # for i in defJoints:
@@ -88,6 +87,7 @@ def createSplineIK(refJoints, name, cuts, dropoff=2):
         extra.alignTo(cont_Curve_ORE, contJoints[i],2)
         pm.parentConstraint(cont_Curve[0], contJoints[i])
         contCurves.append(cont_Curve)
+        contCurves_ORE.append(cont_Curve_ORE)
 
     pm.setAttr(splineIK[0].dTwistControlEnable, 1)
     pm.setAttr(splineIK[0].dWorldUpType, 4)
@@ -170,7 +170,10 @@ def createSplineIK(refJoints, name, cuts, dropoff=2):
         contCurves[0][0].preserveVol >> volumeSw.blender
         
         boneGlobMult.output >> defJoints[i].scale
-        
+
+    ## Create endLock
+    endLock= pm.spaceLocator(name="endLock_"+name)
+    pm.pointConstraint(defJoints[len(defJoints)-1], endLock, mo=False)
     ## grouping
     pm.parent(contJoints,scaleGrp)
     pm.parent(splineIK[0], nonScaleGrp)
@@ -178,6 +181,7 @@ def createSplineIK(refJoints, name, cuts, dropoff=2):
     pm.parent(defJoints[0], nonScaleGrp)
     
     ## return (ConnectionPointBottom, ConnectionPointUp, [Controllers], scaleGrp, nonScaleGrp)
-    
+    returnList=[contCurves_ORE[0], endLock, scaleGrp, nonScaleGrp]
+    return returnList
 
 
