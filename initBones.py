@@ -18,6 +18,14 @@ def createInitBones(fingers=5, spineSegments=3):
     Returns:
 
     """
+    spineSegments=spineSegments+1
+    if fingers > 5 or fingers < 0:
+        pm.error("Finger limits exceeded. Must be between 1-5")
+        return
+    if spineSegments < 2 :
+        pm.error("Minimum spine segment must be 1")
+        return
+
     # fingers=5
     # spineSegments=3
     ### Create Locators
@@ -75,8 +83,8 @@ def createInitBones(fingers=5, spineSegments=3):
         uparm=pm.joint(p=(5*dir,25,0), name=("jInit_Up_"+whichArm))
         lowarm=pm.joint(p=(9*dir,25,-1), name=("jInit_Low_"+whichArm))
         lowendarm=pm.joint(p=(14*dir,25,0), name=("jInit_LowEnd_"+whichArm))
-        pm.addAttr(lowendarm, shortName="fingerCount", longName="fingerCount", defaultValue=fingerCount, minValue=0,
-                   maxValue=5, at="long", k=False)
+        # pm.addAttr(lowendarm, shortName="fingerCount", longName="fingerCount", defaultValue=fingerCount, minValue=0,
+        #            maxValue=5, at="long", k=False)
         jointList=[shoulder, uparm, lowarm, lowendarm]
 
         if fingerCount==0:
@@ -215,13 +223,18 @@ def createInitBones(fingers=5, spineSegments=3):
 
     joints_spine=initSpineBones(spineSegments)
 
+    pm.parent(joints_l_arm[0], joints_spine[spineSegments-1])
+    pm.parent(joints_r_arm[0], joints_spine[spineSegments-1])
+    pm.parent(joints_l_leg[0], joints_spine[0])
+    pm.parent(joints_r_leg[0], joints_spine[0])
+
     initBonesGrp=pm.group(em=True, name="initBones")
-    pm.parent(joints_l_leg[0],initBonesGrp)
+    # pm.parent(joints_l_leg[0],initBonesGrp)
     pm.parent(L_loc_grp_leg,initBonesGrp)
-    pm.parent(joints_r_leg[0],initBonesGrp)
+    # pm.parent(joints_r_leg[0],initBonesGrp)
     pm.parent(R_loc_grp_leg,initBonesGrp)
-    pm.parent(joints_l_arm[0],initBonesGrp)
+    # pm.parent(joints_l_arm[0],initBonesGrp)
     pm.parent(L_loc_grp_arm,initBonesGrp)
-    pm.parent(joints_r_arm[0],initBonesGrp)
+    # pm.parent(joints_r_arm[0],initBonesGrp)
     pm.parent(R_loc_grp_arm,initBonesGrp)
     pm.parent(joints_spine[0],initBonesGrp)

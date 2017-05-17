@@ -177,7 +177,7 @@ def createSplineIK(refJoints, name, cuts, dropoff=2):
     pm.parent(splineCurve, nonScaleGrp)
     pm.parent(defJoints[0], nonScaleGrp)
     
-    ## return ([Controllers], scaleGrp, nonScaleGrp)
+    ## return (ConnectionPointBottom, ConnectionPointUp, [Controllers], scaleGrp, nonScaleGrp)
     
-createSplineIK(pm.ls("jInit_spine*"), "tst", 8, dropoff=2)
+
 
