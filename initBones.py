@@ -8,7 +8,7 @@ if not path in sys.path:
 import extraProcedures as extra
 reload(extra)
 
-def createInitBones(fingers=5, spineSegments=3):
+def createInitBones(fingers=5, spineSegments=2):
     """
     This Function creates Initialization Bones to be used as reference points in the final rig.
     Args:
@@ -153,13 +153,13 @@ def createInitBones(fingers=5, spineSegments=3):
             pm.message("Define at least 3 segment")
             return
         rPoint=14.0
-        nPoint=25.0
+        nPoint=21.0
         add=(nPoint-rPoint)/(spineCount-1)
         jointList=[]
         for i in range(0, spineCount):
             spine = pm.joint(p=(0,(rPoint+(add*i)),0), name="jInit_spine"+str(i))
             jointList.append(spine)
-        neck = pm.joint(p=(0, 26.757, 0.249), name=("jInit_neck"))
+        neck = pm.joint(p=(0, 25.757, 0.249), name=("jInit_neck"))
         jointList.append(neck)
         head = pm.joint(p=(0, 29.418, 0.817), name=("jInit_head"))
         jointList.append(head)

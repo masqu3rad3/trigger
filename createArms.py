@@ -659,5 +659,6 @@ def createArm(whichArm):
         
     pm.setAttr(cont_FK_IK.rigVis, 0)
 
-    #return [Spine_Connection, IK_Controller, Pole_Vector, Do_Not_Touch_Data]
-    return [scaleGrp, cont_IK_hand_OFF, cont_Pole, nonScaleGrp]
+    #return [Spine_Connection, IK_Controller, IK Controller OFF, Pole_Vector, Do_Not_Touch_Data]
+    returnTuple=(scaleGrp, cont_IK_hand, cont_IK_hand_OFF, cont_Pole, nonScaleGrp)
+    return returnTuple

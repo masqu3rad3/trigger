@@ -4,6 +4,8 @@ import pymel.core as pm
 
 import extraProcedures as extra
 reload(extra)
+import contIcons as icon
+reload(icon)
 
 # import mrCubic as mrC
 # reload(mrC)
@@ -47,7 +49,7 @@ def createSplineIK(refJoints, name, cuts, dropoff=2):
     for i in range (0, cuts+1):
         place=rootVc+(segmentVc*(i))
         j=pm.joint(p=place, name="jDef_"+name+str(i))
-        pm.setAttr(j.displayLocalAxis, 1)
+        #pm.setAttr(j.displayLocalAxis, 1)
         defJoints.append(j)
         curvePoints.append(place)
 
@@ -79,13 +81,17 @@ def createSplineIK(refJoints, name, cuts, dropoff=2):
     for i in range (0, len(contJoints)):
         extra.alignTo(contJoints[i], refJoints[i],0)
         ## Create control Curves
-        cont_Curve=pm.circle(name="cont_spline_"+name+str(i), nr=(0,1,0))
+        # cont_Curve=pm.circle(name="cont_spline_"+name+str(i), nr=(0,1,0))
         scaleRatio=(totalLength/len(contJoints))
-        pm.setAttr(cont_Curve[0].scale, (scaleRatio, scaleRatio, scaleRatio))
-        pm.makeIdentity(cont_Curve[0], a=True, t=False, r=False, s=True)
-        cont_Curve_ORE=extra.createUpGrp(cont_Curve[0],"ORE")
+        if i != 0 and i != (len(contJoints)-1):
+            cont_Curve=icon.star("cont_spline_"+name+str(i), (scaleRatio,scaleRatio,scaleRatio))
+        #pm.setAttr(cont_Curve[0].scale, (scaleRatio, scaleRatio, scaleRatio))
+        #pm.makeIdentity(cont_Curve[0], a=True, t=False, r=False, s=True)
+        else:
+            cont_Curve=pm.spaceLocator(name="lockPoint_"+name+str(i))
+        cont_Curve_ORE=extra.createUpGrp(cont_Curve,"ORE")
         extra.alignTo(cont_Curve_ORE, contJoints[i],2)
-        pm.parentConstraint(cont_Curve[0], contJoints[i])
+        pm.parentConstraint(cont_Curve, contJoints[i])
         contCurves.append(cont_Curve)
         contCurves_ORE.append(cont_Curve_ORE)
 
@@ -96,24 +102,24 @@ def createSplineIK(refJoints, name, cuts, dropoff=2):
     pm.setAttr(splineIK[0].dWorldUpVector, (0,0,1))
     pm.setAttr(splineIK[0].dWorldUpVectorEnd, (0,0,1))
 
-    contCurves[0][0].worldMatrix >> splineIK[0].dWorldUpMatrix
-    contCurves[len(contCurves)-1][0].worldMatrix >> splineIK[0].dWorldUpMatrixEnd
+    contCurves[0].worldMatrix >> splineIK[0].dWorldUpMatrix
+    contCurves[len(contCurves)-1].worldMatrix >> splineIK[0].dWorldUpMatrixEnd
 
     ## Create Stretch and Squash Nodes
+    midCont=(contCurves[int(len(contCurves)/2)])
 
+    pm.addAttr(midCont, shortName='preserveVol', longName='Preserve_Volume', defaultValue=0.0, minValue=0.0, maxValue=1.0, at="double", k=True)
+    pm.addAttr(midCont, shortName='volumeFactor', longName='Volume_Factor', defaultValue=1, at="double", k=True)
 
-    pm.addAttr(contCurves[0], shortName='preserveVol', longName='Preserve_Volume', defaultValue=0.0, minValue=0.0, maxValue=1.0, at="double", k=True)
-    pm.addAttr(contCurves[0], shortName='volumeFactor', longName='Volume_Factor', defaultValue=1, at="double", k=True)
-
-    pm.addAttr(contCurves[0], shortName='stretchy', longName='Stretchyness', defaultValue=1, minValue=0.0, maxValue=1.0, at="double", k=True)
+    pm.addAttr(midCont, shortName='stretchy', longName='Stretchyness', defaultValue=1, minValue=0.0, maxValue=1.0, at="double", k=True)
 
     curveInfo=pm.arclen(splineCurve, ch=True)
     initialLength=pm.getAttr(curveInfo.arcLength)
 
-    step=1
+    #step=1
     powValue=0
-    increase=0
-    decrease=0
+    #increase=0
+    #decrease=0
     for i in range (0, len(defJoints)):
         
         curveGlobMult=pm.createNode("multiplyDivide", name="curveGlobMult_"+name)
@@ -129,25 +135,36 @@ def createSplineIK(refJoints, name, cuts, dropoff=2):
         middlePoint=(len(defJoints)/2)
         volumePow=pm.createNode("multiplyDivide", name="volume_Power_"+name)
         volumeFactor=pm.createNode("multiplyDivide", name="volume_Factor_"+name)
-        contCurves[0][0].volumeFactor >> volumeFactor.input1X
-        contCurves[0][0].volumeFactor >> volumeFactor.input1Z
+        midCont.volumeFactor >> volumeFactor.input1X
+        midCont.volumeFactor >> volumeFactor.input1Z
         volumeFactor.output >> volumePow.input2
-        
+
         pm.setAttr(volumePow.operation, 3)
-        if (i<middlePoint):
+
+        ## make sure first and last joints preserves the full volume
+        print "current iteration "+str(i)
+        print "defJoint "+str(len(defJoints))
+        print "middlePoint "+str(middlePoint)
+        if i == 0 or i == len(defJoints)-1:
+            pm.setAttr(volumeFactor.input2X, 0)
+            pm.setAttr(volumeFactor.input2Z, 0)
+
+        elif (i<=middlePoint):
+            powValue = powValue - 1
             pm.setAttr(volumeFactor.input2X, powValue )
             pm.setAttr(volumeFactor.input2Z, powValue)
-            powValue=powValue-1
+
         else:
+            powValue = powValue + 1
             pm.setAttr(volumeFactor.input2X, powValue)
             pm.setAttr(volumeFactor.input2Z, powValue)
-            powValue=powValue+1
+
             
             
         curveInfo.arcLength >> curveGlobMult.input1X
         pm.setAttr(stretchSw.input[0],initialLength)
         curveGlobMult.outputX >> stretchSw.input[1]
-        contCurves[0][0].stretchy >> stretchSw.attributesBlender
+        midCont.stretchy >> stretchSw.attributesBlender
         
         scaleGrp.sx >> curveGlobMult.input2X
         stretchSw.output >> lengthMult.input1X
@@ -167,9 +184,19 @@ def createSplineIK(refJoints, name, cuts, dropoff=2):
         scaleGrp.sx >> boneGlobMult.input2X
         scaleGrp.sx >> boneGlobMult.input2Y
         scaleGrp.sx >> boneGlobMult.input2Z
-        contCurves[0][0].preserveVol >> volumeSw.blender
-        
+        midCont.preserveVol >> volumeSw.blender
+
         boneGlobMult.output >> defJoints[i].scale
+
+    ## alignment of middle section(s)
+
+
+    # if len(contCurves)==3:
+    #     firstController=contCurves[0]
+    #     lastController=contCurves[len(contCurves)-1]
+    #     for i in range (1, len(contCurves_ORE)-1): ## exclude first and last controller
+    #         pm.pointConstraint(firstController, lastController, contCurves_ORE[i], mo=True)
+    #         pm.aimConstraint(contCurves[i+1], contCurves_ORE[i], mo=True)
 
     ## Create endLock
     endLock= pm.spaceLocator(name="endLock_"+name)
@@ -179,9 +206,13 @@ def createSplineIK(refJoints, name, cuts, dropoff=2):
     pm.parent(splineIK[0], nonScaleGrp)
     pm.parent(splineCurve, nonScaleGrp)
     pm.parent(defJoints[0], nonScaleGrp)
-    
-    ## return (ConnectionPointBottom, ConnectionPointUp, [Controllers], scaleGrp, nonScaleGrp)
-    returnList=[contCurves_ORE[0], endLock, scaleGrp, nonScaleGrp]
-    return returnList
+
+    ## fool proofing
+    for i in contCurves:
+        extra.lockAndHide(i, ["sx", "sy", "sz"])
+
+    ## return (ConnectionPointBottom, chestControllerConnection, endLock, scaleGrp, nonScaleGrp)
+    returnTuple=(contCurves_ORE, contCurves[len(contCurves)-1], endLock, scaleGrp, nonScaleGrp)
+    return returnTuple
 
 

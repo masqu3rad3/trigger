@@ -788,10 +788,9 @@ def createLeg(whichLeg):
     pm.setAttr(cont_FK_IK.rigVis, 0)
 
     #return [Spine_Connection, IK_Controller, Pole_Vector, Do_Not_Touch_Data]
-    return [scaleGrp, cont_IK_foot, cont_Pole, nonScaleGrp]
+    returnTuple=(scaleGrp, cont_IK_foot, cont_Pole, nonScaleGrp)
+    return returnTuple
 
-    
-#leftLeg=createLeg("l_leg")
-#rightLeg=createLeg("r_leg")
+
 
 
