@@ -38,7 +38,7 @@ neckPoint=pm.PyNode("jInit_neck").getTranslation(space="world")
 
 
 cont_placement=icon.circle("cont_Place_"+rigName, (initLegsDis,initLegsDis,initLegsDis))
-cont_master=icon.circle("cont_Master_"+rigName, (initLegsDis*1.5,initLegsDis*1.5,initLegsDis*1.5))
+cont_master=icon.triCircle("cont_Master_"+rigName, (initLegsDis*1.5,initLegsDis*1.5,initLegsDis*1.5))
 
 pm.parent(cont_placement, cont_master)
 

@@ -3,9 +3,9 @@ import pymel.core as pm
 # import extraProcedures as extra
 # reload(extra)
 
-def circle(name, scale, location=None, normal=(0, 1, 0)):
+def circle(name="cont_circle", scale=(1,1,1), location=None, normal=(0, 1, 0)):
     """
-    Createa a circle controller. Nothing Fancy...
+    Creates a circle controller. Nothing Fancy...
     Args:
         name: name of the controller. Must be a String
         scale: scale value as vector, example (1,1.5,1)
@@ -24,9 +24,9 @@ def circle(name, scale, location=None, normal=(0, 1, 0)):
     return cont_circle[0]
 
 
-def cube(name, scale, location=None):
+def cube(name="cont_cube", scale=(1,1,1), location=None):
     """
-    Createa a cube controller as a single shape
+    Creates a cube controller as a single shape
     Args:
         name: name of the controller. Must be a String
         scale: Scale value as vector. example (1,1.5,1)
@@ -46,9 +46,9 @@ def cube(name, scale, location=None):
     pm.makeIdentity(cont_cube, a=True)
     return cont_cube
 
-def thigh(name, scale, location=None):
+def thigh(name="cont_thigh", scale=(1,1,1), location=None):
     """
-    Createa a cube controller as a single shape
+    Creates a cube controller as a single shape
     Args:
         name: name of the controller. Must be a String
         scale: Scale value as vector. example (1,1.5,1)
@@ -66,9 +66,9 @@ def thigh(name, scale, location=None):
     pm.makeIdentity(cont_thigh, a=True)
     return cont_thigh
     
-def star(name, scale, location=None, normal=(0, 1, 0)):
+def star(name="cont_star", scale=(1,1,1), location=None, normal=(0, 1, 0)):
     """
-    Createa a star-ish shaped controller
+    Creates a star-ish shaped controller
     Args:
         name: name of the controller. Must be a String
         scale: Scale value as vector. example (1,1.5,1)
@@ -89,9 +89,9 @@ def star(name, scale, location=None, normal=(0, 1, 0)):
     pm.makeIdentity(cont_star, a=True)
     return cont_star[0]
     
-def fkikSwitch(name, scale, location=None):
+def fkikSwitch(name="cont_fkik", scale=(1,1,1), location=None):
     """
-    Createa a FK-IK controller. 
+    Creates a FK-IK controller. 
     Args:
         name: name of the controller. Must be a String
         scale: Scale value as vector. example (1,1.5,1)
@@ -138,9 +138,9 @@ def fkikSwitch(name, scale, location=None):
     pm.makeIdentity(a=True)
     return [cont_FK_IK, fk_ik_rvs]
     
-def shoulder(name, scale, location=None):
+def shoulder(name="cont_shoulder", scale=(1,1,1), location=None):
     """
-    Createa a bended Eliptical controller for shoulders.
+    Creates a bended Eliptical controller for shoulders.
     Args:
         name: name of the controller. Must be a String
         scale: Scale value as vector. example (1,1.5,1)
@@ -159,9 +159,9 @@ def shoulder(name, scale, location=None):
     pm.makeIdentity(cont_shoulder, a=True)
     return cont_shoulder
 
-def plus(name, scale, location=None):
+def plus(name="cont_plus", scale=(1,1,1), location=None):
     """
-    Createa a plus controller. Usually for pole vector
+    Creates a plus controller. Usually for pole vector
     Args:
         name: name of the controller. Must be a String
         scale: scale value as vector, example (1,1.5,1)
@@ -179,9 +179,9 @@ def plus(name, scale, location=None):
     pm.makeIdentity(cont_Pole, a=True)
     return cont_Pole
     
-def waist(name, scale, location=None):
+def waist(name="cont_waist", scale=(1,1,1), location=None):
     """
-    Createa a plus controller. Usually for pole vector
+    Creates a plus controller. Usually for pole vector
     Args:
         name: name of the controller. Must be a String
         scale: scale value as vector, example (1,1.5,1)
@@ -199,8 +199,17 @@ def waist(name, scale, location=None):
     pm.makeIdentity(cont_waist, a=True)
     return cont_waist
 
-def square(name, scale, location=None):
+def square(name="cont_square", scale=(1,1,1), location=None):
+    """
+    Creates a square controller. 
+    Args:
+        name: name of the controller. Must be a String
+        scale: scale value as vector, example (1,1.5,1)
+        location: Optional Location as vector. example (12,0,2) 
+    Returns:
+        Controller node
 
+    """
     cont_square=pm.curve(name=name, d=1, p= [(1, 0, 1), (-1, 0, 1), (-1, 0, -1), (1, 0, -1), (1, 0, 1)], k=[0, 1, 2, 3, 4])
     pm.setAttr(cont_square.scale, scale)
     if location:
@@ -208,7 +217,17 @@ def square(name, scale, location=None):
     pm.makeIdentity(cont_square, a=True)
     return cont_square
 
-def ngon(name, scale, location=None):
+def ngon(name="cont_ngon", scale=(1,1,1), location=None):
+    """
+    Creates a ngon controller. 
+    Args:
+        name: name of the controller. Must be a String
+        scale: scale value as vector, example (1,1.5,1)
+        location: Optional Location as vector. example (12,0,2) 
+    Returns:
+        Controller node
+
+    """
 
     cont_ngon=pm.curve(name=name, d=1, p=[ (-2, 0, -4), (2, 0, -4), (4, 0, -2), (4, 0, 2), (2, 0, 4), (-2, 0, 4), (-4, 0, 2), (-4, 0, -2), (-2, 0, -4)], k=[0, 1, 2, 3, 4, 5, 6, 7, 8])
     pm.setAttr(cont_ngon + ".scale", (0.25, 0.25, 0.25))
@@ -218,3 +237,92 @@ def ngon(name, scale, location=None):
         pm.move(cont_ngon, location)
     pm.makeIdentity(cont_ngon, a=True)
     return cont_ngon
+
+def triCircle(name="cont_triCircle", scale=(1,1,1), location=None):
+    """
+    Creates a circle controller with triangles on each direction. 
+    Args:
+        name: name of the controller. Must be a String
+        scale: scale value as vector, example (1,1.5,1)
+        location: Optional Location as vector. example (12,0,2) 
+    Returns:
+        Controller node
+
+    """
+    cont_triCircle=pm.circle(name=name, nr=(0,1,0), ch=0)
+    masterTri=pm.curve(bezier=True, d=3, p=[(0, 0, 8), (0, 0, 8), (-5, 0, 0), (-5, 0, 0), (-5, 0, 0), (0, 0, -8), (0, 0, -8), (0, 0, -8), (-1, 0, -1), (-1, 0, 0)], k=[0,0,0,1,1,1,2,2,2,3,3,3])
+    pm.setAttr(masterTri.scale, (0.03,0.03,0.03))
+    pm.move(masterTri,(-1.036, 0, 0))
+    pm.xform(masterTri, piv=(0,0,0), ws=True)
+    pm.makeIdentity(masterTri, a=True)
+    for i in range (0,4):
+        newTri=pm.duplicate(masterTri)
+        pm.makeIdentity(newTri, a=True)
+        newTriShape=newTri[0].getShape()
+        pm.rotate(masterTri, (0,90,0), r=True)
+        pm.parent(newTriShape, cont_triCircle[0], r=True, s=True)
+        pm.delete(newTri)
+    pm.delete(masterTri)
+    pm.setAttr(cont_triCircle[0].scale, scale)
+    if location:
+        pm.move(cont_triCircle[0], location)
+    pm.makeIdentity(cont_triCircle, a=True)
+    return cont_triCircle[0]
+
+
+def curvedCircle(name="cont_curvedCircle", scale=(1, 1, 1), location=None):
+    """
+    Creates a slightly curved circle controller
+    Args:
+        name: name of the controller. Must be a String
+        scale: Scale value as vector. example (1,1.5,1)
+        location: Optional Location as vector. example (12,0,2) 
+
+    Returns:
+        Controller node
+    """
+    cont_curvedCircle = pm.circle(name=name, nr=(0,1,0), ch=0, radius=1)
+    pm.rebuildCurve(cont_curvedCircle, s=12, ch=0)
+    pm.select(cont_curvedCircle[0].cv[3], cont_curvedCircle[0].cv[4], cont_curvedCircle[0].cv[5], cont_curvedCircle[0].cv[9], cont_curvedCircle[0].cv[10],
+              cont_curvedCircle[0].cv[11])
+    pm.move((0, 0.25, 0), r=True)
+    pm.select(d=True)
+    pm.setAttr(cont_curvedCircle[0].scale, scale)
+    if location:
+        pm.move(cont_curvedCircle[0], location)
+    pm.makeIdentity(cont_curvedCircle, a=True)
+    return cont_curvedCircle[0]
+
+def halfDome(name="cont_halfDome", scale=(1,1,1), location=None):
+
+    halfCurve=pm.curve(name=name, bezier=True, d=3, p=[(-2, 0, 0), (-2, 0, 0), (-2, 0, -2), (0, 0, -2), (2, 0, -2), (2, 0, 0), (2, 0, 0)],
+             k=[0, 0, 0, 1, 1, 1, 2, 2, 2])
+    halfCurveD1=pm.duplicate(halfCurve)
+    pm.rotate(halfCurveD1, (90,0,0))
+    pm.makeIdentity(halfCurveD1, a=True)
+
+    halfCurveD2 = pm.duplicate(halfCurve)
+    pm.rotate(halfCurveD2, (180, 0, 0))
+    pm.makeIdentity(halfCurveD2, a=True)
+
+    halfCurveD3 = pm.duplicate(halfCurveD1)
+    pm.rotate(halfCurveD3, (0,90,0))
+    pm.makeIdentity(halfCurveD3, a=True)
+
+    halfCurveD1Shape = halfCurveD1[0].getShape()
+    halfCurveD2Shape = halfCurveD2[0].getShape()
+    halfCurveD3Shape = halfCurveD3[0].getShape()
+
+    pm.parent(halfCurveD1Shape, halfCurve, r=True, s=True)
+    pm.delete(halfCurveD1)
+    pm.parent(halfCurveD2Shape, halfCurve, r=True, s=True)
+    pm.delete(halfCurveD2)
+    pm.parent(halfCurveD3Shape, halfCurve, r=True, s=True)
+    pm.delete(halfCurveD3)
+
+    pm.setAttr(halfCurve.scale, scale)
+    if location:
+        pm.move(halfCurve, location)
+    pm.makeIdentity(halfCurve, a=True)
+    pm.select(d=True)
+    return halfCurve
