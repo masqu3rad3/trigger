@@ -142,9 +142,6 @@ def createSplineIK(refJoints, name, cuts, dropoff=2):
         pm.setAttr(volumePow.operation, 3)
 
         ## make sure first and last joints preserves the full volume
-        print "current iteration "+str(i)
-        print "defJoint "+str(len(defJoints))
-        print "middlePoint "+str(middlePoint)
         if i == 0 or i == len(defJoints)-1:
             pm.setAttr(volumeFactor.input2X, 0)
             pm.setAttr(volumeFactor.input2Z, 0)
