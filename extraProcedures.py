@@ -173,3 +173,119 @@ def alignBetween (node, targetA, targetB, pos=True, rot=True):
         tempAim=pm.aimConstraint(targetB,node, mo=False)
         pm.delete(tempAim)
 
+def attrPass (sourceNode, targetNode, attributes=[], inConnections=True, outConnections=True, keepSourceAttributes=False, values=True, daisyChain=False, overrideEx=False):
+    """
+    Copies the attributes from source node to the target node.
+    Args:
+        sourceNode: (Unicode) Source Object which the attributes will be copied from 
+        targetNode: (Unicode) Target Object which the attributes will be copied onto.
+        attributes: (List of Strings) Optional. If left blank, all user defined custom attributes will be copied. Accepts String list.
+        inConnections: (Bool) whether the incoming connections will be copied or not. Default is True. daisyChain overrides this argument.
+        outConnections: (Bool) whether the incoming connections will be copied or not. Default is True. If True, the present out connections of source object will be lost. 
+        keepSourceAttributes: (Bool) If False the copied attributes will be deleted from the source node. Default is False 
+        values: (Bool) If True the values of the attributes will be copied as well
+        daisyChain: (Bool) If true, instead of copyAttr command, it connects the source attributes to the target attributes. Non-destructive. Overrides inConnections and outConnections.
+        overrideExisting: (Bool) When this flas set to True, if an Attribute on the target node with the same name exists, it gets deleted and created again to ensure it has the same properties.
+    Returns: None
+
+    """
+
+    # get the user defined attributes:
+    if len(attributes)==0:
+        userAttr = pm.listAttr(sourceNode, ud=True)
+    else:
+        userAttr = attributes
+
+    for attr in userAttr:
+        # if an attribute with the same name exists, pass it
+        if pm.attributeQuery(attr, node=targetNode, exists=True):
+            if overrideEx:
+                pm.deleteAttr("%s.%s" % (targetNode, attr))
+            else:
+                continue
+
+
+        flagBuildList=[]
+        atType = pm.getAttr("%s.%s" % (sourceNode,attr), type=True)
+        atTypeFlag = "at='%s'" % (str(atType))
+        flagBuildList.append(atTypeFlag)
+
+        if pm.attributeQuery(attr, node=sourceNode, enum=True)==True:
+            enumList=pm.attributeQuery(attr, node=sourceNode, listEnum=True)
+            enumListFlag="en='%s'" % str(enumList[0])
+            flagBuildList.append(enumListFlag)
+
+        hiddenState = pm.attributeQuery(attr, node=sourceNode, hidden=True)
+        hiddenStateFlag = "h=%s" % (str(hiddenState))
+        flagBuildList.append(hiddenStateFlag)
+
+        keyableState = pm.attributeQuery(attr, node=sourceNode, keyable=True)
+        keyableStateFlag = "k=%s" % (str(keyableState))
+        flagBuildList.append(keyableStateFlag)
+
+        longName = pm.attributeQuery(attr, node=sourceNode, longName=True)
+        longNameFlag = "ln='%s'" % str(longName)
+        flagBuildList.append(longNameFlag)
+
+        if pm.attributeQuery(attr, node=sourceNode, maxExists=True) == True:
+            hardMax=pm.attributeQuery(attr, node=sourceNode, maximum =True)
+            hardMaxFlag = "max=%s" % (str(hardMax[0]))
+            flagBuildList.append(hardMaxFlag)
+
+        if pm.attributeQuery(attr, node=sourceNode, minExists=True) == True:
+            hardMin = pm.attributeQuery(attr, node=sourceNode, minimum=True)
+            hardMinFlag = "min=%s" % (str(hardMin[0]))
+            flagBuildList.append(hardMinFlag)
+
+        readState = pm.attributeQuery(attr, node=sourceNode, readable=True)
+        readStateFlag = "r=%s" % (readState)
+        flagBuildList.append(readStateFlag)
+
+        shortName = pm.attributeQuery(attr, node=sourceNode, shortName=True)
+        shortNameFlag = "sn='%s'" % str(shortName)
+        flagBuildList.append(shortNameFlag)
+
+        if pm.attributeQuery(attr, node=sourceNode, softMaxExists=True) == True:
+            softMax=pm.attributeQuery(attr, node=sourceNode, softMax =True)
+            softMaxFlag = "smx=%s" % (str(softMax[0]))
+            flagBuildList.append(softMaxFlag)
+
+        if pm.attributeQuery(attr, node=sourceNode, softMinExists=True) == True:
+            softMin=pm.attributeQuery(attr, node=sourceNode, softMin =True)
+            softMinFlag = "smn=%s" % (str(softMin[0]))
+            flagBuildList.append(softMinFlag)
+
+        writeState = pm.attributeQuery(attr, node=sourceNode, writable=True)
+        writeStateFlag = "w=%s" % (writeState)
+        flagBuildList.append(writeStateFlag)
+
+        #print flagBuildList
+
+        # parse the flagBuildList into single string
+        addAttribute="pm.addAttr(pm.PyNode('%s'), " % (targetNode)
+        for i in range (0,len(flagBuildList)):
+
+            addAttribute+=flagBuildList[i]
+            if i < len(flagBuildList)-1:
+                addAttribute += ", "
+            else:
+                addAttribute += ")"
+        print addAttribute
+
+        exec(addAttribute)
+
+    print ("daisyChain" + str(daisyChain))
+    if daisyChain==True:
+        # create connections between old and new attributes
+        for i in range (0, len(userAttr)):
+            if values==True:
+                # get value
+                value=pm.getAttr(pm.PyNode("%s.%s" % (sourceNode, userAttr[i])))
+                # set Value
+                pm.setAttr(pm.PyNode("%s.%s" % (targetNode, userAttr[i])), value)
+            pm.PyNode("%s.%s" % (targetNode, userAttr[i])) >> pm.PyNode("%s.%s" % (sourceNode, userAttr[i]))
+    else:
+        pm.copyAttr(sourceNode, targetNode, inConnections=inConnections, outConnections=outConnections, values=values, attribute=userAttr)
+        if keepSourceAttributes==False:
+            for i in userAttr:
+                pm.deleteAttr("%s.%s" % (sourceNode,i))

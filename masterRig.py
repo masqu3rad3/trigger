@@ -21,6 +21,9 @@ reload(leg)
 import createSpine as spine
 reload(spine)
 
+import createNeck as neck
+reload(neck)
+
 rigName="hoyt"
 
 ## get dimensions
@@ -94,8 +97,17 @@ nonScaleGrp_l_leg=leftLeg[3]
 pm.parentConstraint(gmRoot, scaleGrp_l_leg, mo=True)
 pm.scaleConstraint(cont_master, scaleGrp_l_leg)
 
+## NECK and HEAD
+neckAndHead=neck.createNeck()
+neckRoot=neckAndHead[0]
+cont_neck=neckAndHead[1]
+cont_head=neckAndHead[2]
+scaleGrp_neck=neckAndHead[3]
+nonScaleGrp_neck=neckAndHead[4]
+pm.parentConstraint(endLock_spine, neckRoot, mo=True)
+pm.scaleConstraint(cont_master, scaleGrp_neck)
 
-## color coding
+# COLOR CODING
 index = 17
 extra.colorize(cont_master, index)
 extra.colorize(cont_placement, index)

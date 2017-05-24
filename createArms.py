@@ -604,7 +604,8 @@ def createArm(whichArm):
     pm.parent(jFK_Up, scaleGrp)
     pm.parent(cont_FK_IK_POS, scaleGrp)
     pm.parent(handMaster, scaleGrp)
-    # ### Animator Fool Proofing
+
+    # FOOL PROOFING
     
     extra.lockAndHide(cont_IK_hand, ["v"])
     extra.lockAndHide(cont_midLock, ["sx", "sy", "sz", "v"])
@@ -616,7 +617,7 @@ def createArm(whichArm):
     for i in handConts:
         extra.lockAndHide(i, ["sx","sy","sz","v"])
     
-    ## COLOR CODING
+    # COLOR CODING
     
     if whichArm == "l_arm":
         index = 13 ##Red color index
@@ -658,6 +659,8 @@ def createArm(whichArm):
         cont_FK_IK.rigVis >> i.v
         
     pm.setAttr(cont_FK_IK.rigVis, 0)
+
+    # RETURN
 
     #return [Spine_Connection, IK_Controller, IK Controller OFF, Pole_Vector, Do_Not_Touch_Data]
     returnTuple=(scaleGrp, cont_IK_hand, cont_IK_hand_OFF, cont_Pole, nonScaleGrp)

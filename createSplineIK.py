@@ -80,13 +80,10 @@ def createSplineIK(refJoints, name, cuts, dropoff=2):
 
     for i in range (0, len(contJoints)):
         extra.alignTo(contJoints[i], refJoints[i],0)
-        ## Create control Curves
-        # cont_Curve=pm.circle(name="cont_spline_"+name+str(i), nr=(0,1,0))
         scaleRatio=(totalLength/len(contJoints))
         if i != 0 and i != (len(contJoints)-1):
+            ## Create control Curve if it is not the first or last control joint
             cont_Curve=icon.star("cont_spline_"+name+str(i), (scaleRatio,scaleRatio,scaleRatio))
-        #pm.setAttr(cont_Curve[0].scale, (scaleRatio, scaleRatio, scaleRatio))
-        #pm.makeIdentity(cont_Curve[0], a=True, t=False, r=False, s=True)
         else:
             cont_Curve=pm.spaceLocator(name="lockPoint_"+name+str(i))
         cont_Curve_ORE=extra.createUpGrp(cont_Curve,"ORE")
@@ -106,20 +103,20 @@ def createSplineIK(refJoints, name, cuts, dropoff=2):
     contCurves[len(contCurves)-1].worldMatrix >> splineIK[0].dWorldUpMatrixEnd
 
     ## Create Stretch and Squash Nodes
-    midCont=(contCurves[int(len(contCurves)/2)])
 
-    pm.addAttr(midCont, shortName='preserveVol', longName='Preserve_Volume', defaultValue=0.0, minValue=0.0, maxValue=1.0, at="double", k=True)
-    pm.addAttr(midCont, shortName='volumeFactor', longName='Volume_Factor', defaultValue=1, at="double", k=True)
+    # first controller is the one which holds the attributes to be passed
+    attPassCont=(contCurves[0])
 
-    pm.addAttr(midCont, shortName='stretchy', longName='Stretchyness', defaultValue=1, minValue=0.0, maxValue=1.0, at="double", k=True)
+    pm.addAttr(attPassCont, shortName='preserveVol', longName='Preserve_Volume', defaultValue=0.0, minValue=0.0, maxValue=1.0, at="double", k=True)
+    pm.addAttr(attPassCont, shortName='volumeFactor', longName='Volume_Factor', defaultValue=1, at="double", k=True)
+
+    pm.addAttr(attPassCont, shortName='stretchy', longName='Stretchyness', defaultValue=1, minValue=0.0, maxValue=1.0, at="double", k=True)
 
     curveInfo=pm.arclen(splineCurve, ch=True)
     initialLength=pm.getAttr(curveInfo.arcLength)
 
-    #step=1
     powValue=0
-    #increase=0
-    #decrease=0
+
     for i in range (0, len(defJoints)):
         
         curveGlobMult=pm.createNode("multiplyDivide", name="curveGlobMult_"+name)
@@ -135,8 +132,8 @@ def createSplineIK(refJoints, name, cuts, dropoff=2):
         middlePoint=(len(defJoints)/2)
         volumePow=pm.createNode("multiplyDivide", name="volume_Power_"+name)
         volumeFactor=pm.createNode("multiplyDivide", name="volume_Factor_"+name)
-        midCont.volumeFactor >> volumeFactor.input1X
-        midCont.volumeFactor >> volumeFactor.input1Z
+        attPassCont.volumeFactor >> volumeFactor.input1X
+        attPassCont.volumeFactor >> volumeFactor.input1Z
         volumeFactor.output >> volumePow.input2
 
         pm.setAttr(volumePow.operation, 3)
@@ -161,7 +158,7 @@ def createSplineIK(refJoints, name, cuts, dropoff=2):
         curveInfo.arcLength >> curveGlobMult.input1X
         pm.setAttr(stretchSw.input[0],initialLength)
         curveGlobMult.outputX >> stretchSw.input[1]
-        midCont.stretchy >> stretchSw.attributesBlender
+        attPassCont.stretchy >> stretchSw.attributesBlender
         
         scaleGrp.sx >> curveGlobMult.input2X
         stretchSw.output >> lengthMult.input1X
@@ -181,7 +178,7 @@ def createSplineIK(refJoints, name, cuts, dropoff=2):
         scaleGrp.sx >> boneGlobMult.input2X
         scaleGrp.sx >> boneGlobMult.input2Y
         scaleGrp.sx >> boneGlobMult.input2Z
-        midCont.preserveVol >> volumeSw.blender
+        attPassCont.preserveVol >> volumeSw.blender
 
         boneGlobMult.output >> defJoints[i].scale
 
@@ -198,18 +195,21 @@ def createSplineIK(refJoints, name, cuts, dropoff=2):
     ## Create endLock
     endLock= pm.spaceLocator(name="endLock_"+name)
     pm.pointConstraint(defJoints[len(defJoints)-1], endLock, mo=False)
-    ## grouping
+
+    # GROUPING
+
     pm.parent(contJoints,scaleGrp)
     pm.parent(splineIK[0], nonScaleGrp)
     pm.parent(splineCurve, nonScaleGrp)
     pm.parent(defJoints[0], nonScaleGrp)
 
-    ## fool proofing
+    # FOOL PROOFING
     for i in contCurves:
         extra.lockAndHide(i, ["sx", "sy", "sz"])
 
-    ## return (ConnectionPointBottom, chestControllerConnection, endLock, scaleGrp, nonScaleGrp)
-    returnTuple=(contCurves_ORE, contCurves[len(contCurves)-1], endLock, scaleGrp, nonScaleGrp)
+    # RETURN
+    ## returns: (ConnectionPointBottom, chestControllerConnection, endLock, scaleGrp, nonScaleGrp, node that holds attributes to be passed)
+    returnTuple=(contCurves_ORE, contCurves[len(contCurves)-1], endLock, scaleGrp, nonScaleGrp, attPassCont)
     return returnTuple
 
 

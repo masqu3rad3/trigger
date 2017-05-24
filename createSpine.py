@@ -19,7 +19,6 @@ def createSpine():
     rootPoint = pm.PyNode("jInit_spine0").getTranslation(space="world")
     midPoint = spineList[len(spineList) / 2].getTranslation(space="world")
     chestPoint = spineList[len(spineList) - 1].getTranslation(space="world")
-    #chestPoint = (0,38,0)
     neckPoint = pm.PyNode("jInit_neck").getTranslation(space="world")
 
     pm.select(None)
@@ -39,11 +38,17 @@ def createSpine():
     endPositionLock= spine[2]
     scaleGrp=spine[3]
     nonScaleGrp=spine[4]
+    passCont=spine[5]
 
+    # # connect the spine root to the master root
     pm.parentConstraint(gmRoot, bottomConnection, mo=True)
+    # # connect the spine end
     pm.parentConstraint(cont_chest, upConnection, mo=True)
+    # # connect the master root to the hips controller
     pm.parentConstraint(cont_hips, gmRoot, mo=True)
 
+    # # pass Stretch controls from the splineIK to neck controller
+    extra.attrPass(passCont, cont_chest)
 
     ## create locators on the mid controller to be used as alignment
     midSpineLocA = pm.spaceLocator(name="midSpineLocA", p=midPoint)
