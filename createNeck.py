@@ -37,9 +37,11 @@ def createNeck():
     headPivPos = headStart.getTranslation(space="world")
     headScale = (extra.getDistance(headStart, headEnd)/3)
     cont_head = icon.halfDome(name="cont_head", scale=(headScale, headScale, headScale), location=headCenterPos)
-    pm.rotate(cont_head, (-90, 0, 0))
-    pm.makeIdentity(cont_head, a=True)
+    cont_head_ORE = extra.createUpGrp(cont_head, "ORE")
+    pm.rotate(cont_head_ORE, (-90, 0, 0))
+
     pm.xform(cont_head, piv=headPivPos, ws=True)
+    pm.makeIdentity(cont_head, a=True)
 
     # # head Squash Controller
     squashCenterPos = headEnd.getTranslation(space="world")
@@ -87,6 +89,9 @@ def createNeck():
     pm.parent(neckSP_endConnection, scaleGrp)
     pm.parent(neckSP_endLock, scaleGrp)
     pm.parent(neckSP_scaleGrp, scaleGrp)
+
+    pm.parent(cont_neck_ORE, scaleGrp)
+    pm.parent(cont_head_ORE, scaleGrp)
 
     pm.parent(headSP_startConnection, scaleGrp)
     pm.parent(headSP_endConnection, scaleGrp)

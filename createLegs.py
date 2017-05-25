@@ -157,15 +157,17 @@ def createLeg(whichLeg):
     xScale=extra.getDistance(Pv_BankOut, Pv_BankIn)
     offset=extra.getDistance(Pv_Ball, Pv_Heel)
 
-    cont_IK_foot=pm.circle(nrx=0, nry=1, nrz=0, name="cont_IK_foot_"+whichLeg)
-    pm.setAttr(cont_IK_foot[0]+".scaleX", xScale*0.75)
-    pm.setAttr(cont_IK_foot[0]+".scaleZ", zScale*0.75)
+    cont_IK_foot=icon.circle("cont_IK_foot_"+whichLeg, scale=(xScale*0.75, 1, zScale*0.75), normal=(0, 1, 0))
+    # cont_IK_foot=pm.circle(nrx=0, nry=1, nrz=0, name="cont_IK_foot_"+whichLeg)
+    # pm.setAttr(cont_IK_foot[0]+".scaleX", xScale*0.75)
+    # pm.setAttr(cont_IK_foot[0]+".scaleZ", zScale*0.75)
+    cont_IK_foot_OFF = extra.createUpGrp(cont_IK_foot, "OFF")
 
     tempCons=pm.pointConstraint( Pv_Toe, Pv_Heel, Pv_BankIn, Pv_BankOut, cont_IK_foot, w=.1, mo=False)
     pm.delete(tempCons)
     pm.makeIdentity(a=True)
     target=pm.PyNode("jInit_Foot_"+whichLeg).getTranslation(space="world")
-    pm.setAttr(cont_IK_foot[0]+".rotatePivot", (target.x,target.y,target.z))
+    pm.setAttr(cont_IK_foot+".rotatePivot", (target.x,target.y,target.z))
 
     ###Add ATTRIBUTES to the IK Foot Controller
     pm.select(cont_IK_foot)
@@ -273,34 +275,34 @@ def createLeg(whichLeg):
     stretchyness_SC.outputR >> jIK_RP_Knee.translateX
     stretchyness_SC.outputG >> jIK_RP_End.translateX
 
-    cont_IK_foot[0].rotate >> jIK_RP_End.rotate
+    cont_IK_foot.rotate >> jIK_RP_End.rotate
 
     # Stretch Attributes Controller connections
 
-    cont_IK_foot[0].sUpLeg >> extraScaleMult_SC.input2X
-    cont_IK_foot[0].sLowLeg >> extraScaleMult_SC.input2Y 
-    cont_IK_foot[0].squash >> squashyness_SC.blender
+    cont_IK_foot.sUpLeg >> extraScaleMult_SC.input2X
+    cont_IK_foot.sLowLeg >> extraScaleMult_SC.input2Y
+    cont_IK_foot.squash >> squashyness_SC.blender
 
     stretchOffset.output1D >> IK_stretch_distanceClamp.maxR
-    cont_IK_foot[0].stretch >> IK_stretch_stretchynessClamp.inputR
-    cont_IK_foot[0].stretch >> stretchOffset.input1D[2]
+    cont_IK_foot.stretch >> IK_stretch_stretchynessClamp.inputR
+    cont_IK_foot.stretch >> stretchOffset.input1D[2]
 
     # Bind Foot Attributes to the controller
-    cont_IK_foot[0].bLean >> Pv_BallLean.rotateY
-    cont_IK_foot[0].bRoll >> Pv_BallRoll.rotateX
-    cont_IK_foot[0].bSpin >> Pv_BallSpin.rotateY
-    cont_IK_foot[0].hRoll >> Pv_Heel.rotateX
-    cont_IK_foot[0].hSpin >> Pv_Heel.rotateY
-    cont_IK_foot[0].tRoll >> Pv_Toe.rotateX
-    cont_IK_foot[0].tSpin >> Pv_Toe.rotateY
-    cont_IK_foot[0].tWiggle >> Pv_Ball.rotateX
-
+    cont_IK_foot.bLean >> Pv_BallLean.rotateY
+    cont_IK_foot.bRoll >> Pv_BallRoll.rotateX
+    cont_IK_foot.bSpin >> Pv_BallSpin.rotateY
+    cont_IK_foot.hRoll >> Pv_Heel.rotateX
+    cont_IK_foot.hSpin >> Pv_Heel.rotateY
+    cont_IK_foot.tRoll >> Pv_Toe.rotateX
+    cont_IK_foot.tSpin >> Pv_Toe.rotateY
+    cont_IK_foot.tWiggle >> Pv_Ball.rotateX
+    # // TODO: Reduction possible
     pm.select(Pv_BankOut)
-    pm.setDrivenKeyframe(cd=cont_IK_foot[0].bank, at="rotateZ", dv=0, v=0)
-    pm.setDrivenKeyframe(cd=cont_IK_foot[0].bank, at="rotateZ", dv=-90, v=90)
+    pm.setDrivenKeyframe(cd=cont_IK_foot.bank, at="rotateZ", dv=0, v=0)
+    pm.setDrivenKeyframe(cd=cont_IK_foot.bank, at="rotateZ", dv=-90, v=90)
     pm.select(Pv_BankIn)
-    pm.setDrivenKeyframe(cd=cont_IK_foot[0].bank, at="rotateZ", dv=0, v=0)
-    pm.setDrivenKeyframe(cd=cont_IK_foot[0].bank, at="rotateZ", dv=90, v=-90)
+    pm.setDrivenKeyframe(cd=cont_IK_foot.bank, at="rotateZ", dv=0, v=0)
+    pm.setDrivenKeyframe(cd=cont_IK_foot.bank, at="rotateZ", dv=90, v=-90)
 
     IK_parentGRP=pm.group(name="IK_parentGRP_"+whichLeg, em=True)
     extra.alignTo(IK_parentGRP, "jInit_Foot_"+whichLeg, 0)
@@ -317,42 +319,42 @@ def createLeg(whichLeg):
     jIK_SC_Root.rotate >> blendORE_IK_root.color2
     jIK_RP_Root.rotate >> blendORE_IK_root.color1
     blendORE_IK_root.output >> jIK_orig_Root.rotate
-    cont_IK_foot[0].polevector >> blendORE_IK_root.blender
+    cont_IK_foot.polevector >> blendORE_IK_root.blender
 
     blendPOS_IK_root=pm.createNode("blendColors", name="blendPOS_IK_root_"+whichLeg)
     jIK_SC_Root.translate >> blendPOS_IK_root.color2
     jIK_RP_Root.translate >> blendPOS_IK_root.color1
     blendPOS_IK_root.output >> jIK_orig_Root.translate
-    cont_IK_foot[0].polevector >> blendPOS_IK_root.blender
+    cont_IK_foot.polevector >> blendPOS_IK_root.blender
 
     blendORE_IK_knee=pm.createNode("blendColors", name="blendORE_IK_knee_"+whichLeg)
     jIK_SC_Knee.rotate >> blendORE_IK_knee.color2
     jIK_RP_Knee.rotate >> blendORE_IK_knee.color1
     blendORE_IK_knee.output >> jIK_orig_Knee.rotate
-    cont_IK_foot[0].polevector >> blendORE_IK_knee.blender
+    cont_IK_foot.polevector >> blendORE_IK_knee.blender
 
     blendPOS_IK_knee=pm.createNode("blendColors", name="blendPOS_IK_knee_"+whichLeg)
     jIK_SC_Knee.translate >> blendPOS_IK_knee.color2
     jIK_RP_Knee.translate >> blendPOS_IK_knee.color1
     blendPOS_IK_knee.output >> jIK_orig_Knee.translate
-    cont_IK_foot[0].polevector >> blendPOS_IK_knee.blender
+    cont_IK_foot.polevector >> blendPOS_IK_knee.blender
 
     blendORE_IK_end=pm.createNode("blendColors", name="blendORE_IK_end_"+whichLeg)
     jIK_SC_End.rotate >> blendORE_IK_end.color2
     jIK_RP_End.rotate >> blendORE_IK_end.color1
     blendORE_IK_end.output >> jIK_orig_End.rotate
-    cont_IK_foot[0].polevector >> blendORE_IK_end.blender
+    cont_IK_foot.polevector >> blendORE_IK_end.blender
 
     blendPOS_IK_end=pm.createNode("blendColors", name="blendPOS_IK_end_"+whichLeg)
     jIK_SC_End.translate >> blendPOS_IK_end.color2
     jIK_RP_End.translate >> blendPOS_IK_end.color1
     blendPOS_IK_end.output >> jIK_orig_End.translate
-    cont_IK_foot[0].polevector >> blendPOS_IK_end.blender
+    cont_IK_foot.polevector >> blendPOS_IK_end.blender
 
     poleVector_Rvs=pm.createNode("reverse", name="poleVector_Rvs_"+whichLeg)
-    cont_IK_foot[0].polevector >> poleVector_Rvs.inputX
+    cont_IK_foot.polevector >> poleVector_Rvs.inputX
 
-    cont_IK_foot[0].polevector >> cont_Pole.v
+    cont_IK_foot.polevector >> cont_Pole.v
 
     ### Create Tigh Controller
 
@@ -530,7 +532,7 @@ def createLeg(whichLeg):
     fk_ik_rvs.outputX >> cont_FK_LowLeg_OFF.visibility
     fk_ik_rvs.outputX >> cont_FK_Foot_OFF.visibility
     fk_ik_rvs.outputX >> cont_FK_Ball_OFF.visibility
-    cont_FK_IK.fk_ik >> cont_IK_foot[0].visibility
+    cont_FK_IK.fk_ik >> cont_IK_foot.visibility
 
     extra.alignTo(cont_FK_IK, pm.PyNode("jInit_Foot_"+whichLeg))
     
@@ -701,6 +703,7 @@ def createLeg(whichLeg):
     pm.parent(cont_FK_Ball_OFF, scaleGrp)
     pm.parent(midLock, scaleGrp)
     pm.parent(cont_midLock_POS, scaleGrp)
+    pm.parent(cont_IK_foot_OFF, scaleGrp)
 
     pm.parent(ribbonConnections_upperLeg[2], nonScaleGrp)
     pm.parent(ribbonConnections_upperLeg[3], nonScaleGrp)
@@ -713,7 +716,7 @@ def createLeg(whichLeg):
     ### Animator Fool Proofing
 
     extra.lockAndHide(cont_Thigh, ["sx", "sy", "sz", "v"])
-    extra.lockAndHide(cont_IK_foot[0], ["sx", "sy", "sz", "v"])
+    extra.lockAndHide(cont_IK_foot, ["sx", "sy", "sz", "v"])
     extra.lockAndHide(cont_FK_IK, ["sx", "sy", "sz", "v"])
     extra.lockAndHide(cont_FK_UpLeg, ["tx", "ty", "tz", "sx", "sz", "v"])
     extra.lockAndHide(cont_FK_LowLeg, ["tx", "ty", "tz", "sx", "sz", "v"])
@@ -732,7 +735,7 @@ def createLeg(whichLeg):
     pm.setAttr(cont_ThighShape.overrideEnabled, True)
     pm.setAttr(cont_ThighShape.overrideColor, index)
 
-    cont_IK_footShape = cont_IK_foot[0].getShape()
+    cont_IK_footShape = cont_IK_foot.getShape()
     pm.setAttr(cont_IK_footShape.overrideEnabled, True)
     pm.setAttr(cont_IK_footShape.overrideColor, index)
 

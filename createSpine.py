@@ -20,6 +20,21 @@ def createSpine():
     midPoint = spineList[len(spineList) / 2].getTranslation(space="world")
     chestPoint = spineList[len(spineList) - 1].getTranslation(space="world")
     neckPoint = pm.PyNode("jInit_neck").getTranslation(space="world")
+    armPoint_r_arm = pm.PyNode("jInit_Shoulder_r_arm").getTranslation(space="world")
+    armPoint_l_arm = pm.PyNode("jInit_Shoulder_l_arm").getTranslation(space="world")
+
+    # # Create Plug Joints
+    pm.select(None)
+    jChestPlug = pm.joint(name="jChestPlug", p=chestPoint)
+    pm.select(None)
+    jHeadPlug = pm.joint(name="jHeadPlug", p=neckPoint)
+    pm.select(None)
+    jArmPlug_r_arm = pm.joint(name="jArmPlug_r_arm", p=armPoint_r_arm)
+    pm.select(None)
+    jArmPlug_l_arm = pm.joint(name="jArmPlug_l_arm", p=armPoint_l_arm)
+
+    # parent upper plug joints
+    pm.parent(jArmPlug_l_arm, jArmPlug_r_arm, jHeadPlug, jChestPlug)
 
     pm.select(None)
     gmRoot = pm.joint(p=rootPoint, name="gmRoot", radius=10)
@@ -30,6 +45,7 @@ def createSpine():
 
     cont_chest = icon.cube("cont_Chest", (initShouDis, initUpBodyDis / 2, initUpBodyDis / 2),
                            location=(chestPoint + neckPoint) / 2)
+    pm.xform(cont_chest, piv=chestPoint)
 
     spine=spline.createSplineIK(pm.ls("jInit_spine*"), "spine", 4, dropoff=2)
     bottomConnection= spine[0][0]
@@ -46,6 +62,10 @@ def createSpine():
     pm.parentConstraint(cont_chest, upConnection, mo=True)
     # # connect the master root to the hips controller
     pm.parentConstraint(cont_hips, gmRoot, mo=True)
+
+    # # connect upper plug points to the spine and orient it to the chest controller
+    pm.pointConstraint(endPositionLock, jChestPlug)
+    pm.orientConstraint(cont_chest, jChestPlug)
 
     # # pass Stretch controls from the splineIK to neck controller
     extra.attrPass(passCont, cont_chest)
@@ -75,6 +95,7 @@ def createSpine():
     pm.parent(cont_spineFK_A_02, cont_spineFK_A_01)
     pm.parent(cont_spineFK_A_01, cont_body)
     pm.parent(spine[0], scaleGrp) # contcurve Ore s -> scaleGrp
+    pm.parent(jChestPlug, scaleGrp)
 
     pm.parent(midSpineLocB, cont_hips)
     pm.parent(cont_hips, cont_spineFK_B_01)
@@ -106,6 +127,6 @@ def createSpine():
     extra.colorize(cont_spineFK_B_02, indexFKB)
     extra.colorize(cont_spineFK_B_03, indexFKB)
 
-    #return (scaleGrp, cont_chest, master Root, endLock, nonScaleGrp)
-    returnTuple=(scaleGrp, cont_body, cont_chest, gmRoot, endPositionLock, nonScaleGrp)
+    #return (scaleGrp, cont_chest, master Root, head plug, rightArmPlug, leftArmPlug, nonScaleGrp)
+    returnTuple=(scaleGrp, cont_body, cont_hips, cont_chest, gmRoot, jHeadPlug, jArmPlug_r_arm, jArmPlug_l_arm, nonScaleGrp)
     return returnTuple

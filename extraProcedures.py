@@ -289,3 +289,71 @@ def attrPass (sourceNode, targetNode, attributes=[], inConnections=True, outConn
         if keepSourceAttributes==False:
             for i in userAttr:
                 pm.deleteAttr("%s.%s" % (sourceNode,i))
+
+def spaceSwitcher (node, targetList, overrideExisting=False, mode="parent", defaultVal=1):
+    """
+    Creates the space switch attributes between selected node (controller) and targets.
+    Args:
+        node: (single object) Object which anchor space will be switched. Mostly a controller curve.
+        targetList: (list of objects) The node will be anchored between these targets.
+        overrideExisting: (bool) If True, the existing attributes on the node with the same name will be deleted and recreated. Default False
+        mode: (String) The type of the constrain that will be applied to the node. Valid options are "parent", "point and "orient". Default "parent"
+        defaultVal: (integer) Default value for the new Switch attribute. If it is out of range, 1 will be used. default: 1.
+        
+    Returns: None
+
+    """
+
+    anchors=list(targetList)
+    if anchors.__contains__(node):
+        # if targetList contains the node itself, remove it
+        anchors.remove(node)
+    if anchors==[]:
+        pm.error("target list is empty or no valid targets")
+
+    if len(anchors) > defaultVal:
+        defaultVal=1
+    modeList=("parent", "point", "orient")
+    if not modeList.__contains__(mode):
+        pm.error("unknown mode flag. Valid mode flags are 'parent', 'point' and 'orient' ")
+    # create the enumerator list
+    enumFlag = "worldSpace:"
+    for enum in range (0, len(anchors)):
+        cur = str(anchors[enum])
+        cur = cur.replace("cont_", "")
+        enumFlag += "%s:" % cur
+
+    # # check if the attribute exists
+    if pm.attributeQuery(mode+"Switch", node=node, exists=True):
+        if overrideExisting:
+            pm.deleteAttr("{0}.{1}Switch".format(node, mode))
+        else:
+            pm.error("Switch Attribute already exists. Use overrideExisting=True to delete the old")
+    pm.addAttr(node, at="enum", k=True, shortName=mode+"Switch", longName=mode+"_Switch", en=enumFlag, defaultValue=defaultVal)
+    driver = "%s.%sSwitch" %(node, mode)
+
+    switchGrp=createUpGrp(node, (mode+"SW"))
+    if mode == "parent":
+        con = pm.parentConstraint(anchors, switchGrp, mo=True)
+    elif mode == "point":
+        con = pm.parentConstraint(anchors, switchGrp, sr=("x","y","z"), mo=True)
+    elif mode == "orient":
+        con = pm.parentConstraint(anchors, switchGrp, st=("x","y","z"), mo=True)
+
+
+    ## make worldSpace driven key (all zero)
+    for i in range (0, len(anchors)):
+        attr="{0}W{1}".format(anchors[i],i)
+        pm.setDrivenKeyframe(con, cd=driver, at=attr, dv=0, v=0)
+
+    # # loop for each DRIVER POSITION
+    for dPos in range (0, len(anchors)):
+        # # loop for each target at parent constraint
+        for t in range (0, len(anchors)):
+            attr = "{0}W{1}".format(anchors[t], t)
+            # # if driver value matches the attribute, make the value 1, else 0
+            if t == (dPos):
+                value = 1
+            else:
+                value = 0
+            pm.setDrivenKeyframe(con, cd=driver, at=attr , dv=dPos+1, v=value )
