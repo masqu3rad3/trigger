@@ -12,6 +12,9 @@ import pymel.core as pm
 import extraProcedures as extra
 reload(extra)
 
+import contIcons as icon
+reload(icon)
+
 def createRibbon(startPoint, endPoint, name, orientation):
     nonScaleGrp=pm.group(em=True, name="RBN_nonScaleGrp_"+name)
     ribbonLength=extra.getDistance(pm.PyNode(startPoint), pm.PyNode(endPoint))
@@ -96,7 +99,8 @@ def createRibbon(startPoint, endPoint, name, orientation):
     
     #Mid Upnodes
     pm.select(d=True)
-    middle_CONT=pm.circle(nr=(1,0,0), name="cont_midRbn_"+name)
+    middle_CONT = icon.circle("cont_midRbn_"+name, normal=(1,0,0))
+    #middle_CONT=pm.circle(nr=(1,0,0), name="cont_midRbn_"+name)
     middle_OFF=pm.spaceLocator(name="jRbn_Mid_"+name)
     toHide.append(middle_OFF.getShape())
     middle_AIM=pm.group(em=True, name="jRbn_Mid_"+name)
@@ -110,8 +114,8 @@ def createRibbon(startPoint, endPoint, name, orientation):
     pm.move(middle_POS, (0,0,0))
     pm.makeIdentity(a=True)
     
-    pm.parent(middleJoint, middle_CONT[0])
-    pm.parent(middle_CONT[0], middle_OFF)
+    pm.parent(middleJoint, middle_CONT)
+    pm.parent(middle_CONT, middle_OFF)
     pm.parent(middle_OFF, middle_AIM)
     pm.parent(middle_UP, middle_AIM, middle_POS)
     pm.aimConstraint(start_POS, middle_AIM, aimVector=(0,0,-1), upVector=(0,1,0), wut=1, wuo=middle_UP, mo=True)
@@ -130,7 +134,7 @@ def createRibbon(startPoint, endPoint, name, orientation):
     ### Create Stretch Squash Nodes
     ##
     
-    pm.select(middle_CONT[0])
+    pm.select(middle_CONT)
     pm.addAttr(shortName='preserveVol', longName='Preserve_Volume', defaultValue=0.0, minValue=0.0, maxValue=1.0, at="double", k=True)
     pm.select(scaleGrp)
     
@@ -182,11 +186,11 @@ def createRibbon(startPoint, endPoint, name, orientation):
     
     scaleGrp.scale >> globalDefMult.input2
     
-    middle_CONT[0].preserveVol >> def_volumePreserve0.blender
-    middle_CONT[0].preserveVol >> def_volumePreserve1.blender
-    middle_CONT[0].preserveVol >> def_volumePreserve2.blender
-    middle_CONT[0].preserveVol >> def_volumePreserve3.blender
-    middle_CONT[0].preserveVol >> def_volumePreserve4.blender
+    middle_CONT.preserveVol >> def_volumePreserve0.blender
+    middle_CONT.preserveVol >> def_volumePreserve1.blender
+    middle_CONT.preserveVol >> def_volumePreserve2.blender
+    middle_CONT.preserveVol >> def_volumePreserve3.blender
+    middle_CONT.preserveVol >> def_volumePreserve4.blender
     
     scaleGrp.scale >> glob_pow_def_j0.input2
     scaleGrp.scale >> glob_pow_def_j1.input2

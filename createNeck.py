@@ -51,7 +51,9 @@ def createNeck():
     # create spline IK for neck
     neckRootLoc = pm.spaceLocator(name="neckRootLoc")
     extra.alignTo(neckRootLoc, neckStart)
+
     neckSpline=spline.createSplineIK([neckStart,headStart],"neckSplineIK", 4, dropoff=2)
+    neckSP_IKCrv_ORE_List = neckSpline[0]
     neckSP_startConnection = neckSpline[0][0]
     pm.parent(neckSP_startConnection, neckRootLoc)
     neckSP_endConnection = neckSpline[0][1]
@@ -59,6 +61,8 @@ def createNeck():
     neckSP_scaleGrp = neckSpline[3]
     neckSP_nonScaleGrp = neckSpline[4]
     neckSP_passCont = neckSpline[5]
+    neckSP_defJoints = neckSpline[6]
+    neckSP_noTouchListList = neckSpline[7]
     # # Connect neck start to the neck controller
     pm.orientConstraint(cont_neck, neckSP_startConnection, mo=True) # This will be position constrained to the spine(or similar)
     pm.pointConstraint(neckSP_startConnection, cont_neck_ORE)
@@ -69,12 +73,16 @@ def createNeck():
 
     # create spline IK for Head squash
     headSpline = spline.createSplineIK([headStart, headEnd], "headSquashSplineIK", 4, dropoff=2)
+    headSP_IKCrv_ORE_List = headSpline[0]
     headSP_startConnection = headSpline[0][0]
     headSP_endConnection = headSpline[0][1]
     headSP_endLock = headSpline[2]
     headSP_scaleGrp = headSpline[3]
     headSP_nonScaleGrp = headSpline[4]
     headSP_passCont = headSpline[5]
+    headSP_defJoints = headSpline[6]
+    headSP_noTouchListList = headSpline[7]
+
     # # Position the head spline IK to end of the neck
     pm.pointConstraint(neckSP_endLock, headSP_startConnection, mo=True)
     # # orient the head spline to the head controller
@@ -91,7 +99,7 @@ def createNeck():
     pm.parent(neckSP_scaleGrp, scaleGrp)
 
     pm.parent(cont_neck_ORE, scaleGrp)
-    pm.parent(cont_head_ORE, scaleGrp)
+    #pm.parent(cont_head_ORE, scaleGrp)
 
     pm.parent(headSP_startConnection, scaleGrp)
     pm.parent(headSP_endConnection, scaleGrp)
@@ -101,6 +109,52 @@ def createNeck():
     pm.parent(neckSP_nonScaleGrp, nonScaleGrp)
     pm.parent(headSP_nonScaleGrp, nonScaleGrp)
 
+
+
+
+    # RIG VISIBILITY
+
+    # global visibilities attributes
+
+    pm.addAttr(scaleGrp, at="bool", ln="Control_Visibility", sn="contVis", defaultValue=True)
+    pm.addAttr(scaleGrp, at="bool", ln="Joints_Visibility", sn="jointVis", defaultValue=True)
+    pm.addAttr(scaleGrp, at="bool", ln="Rig_Visibility", sn="rigVis", defaultValue=False)
+    # make the created attributes visible in the channelbox
+    pm.setAttr(scaleGrp.contVis, cb=True)
+    pm.setAttr(scaleGrp.jointVis, cb=True)
+    pm.setAttr(scaleGrp.rigVis, cb=True)
+
+    # global control visibilities
+
+    scaleGrp.contVis >> cont_head_ORE.v
+    scaleGrp.contVis >> cont_neck_ORE.v
+    scaleGrp.contVis >> cont_headSquash.v
+
+    # global joint visibilities
+
+    for i in headSP_defJoints:
+        scaleGrp.jointVis >> i.v
+
+    for i in neckSP_defJoints:
+        scaleGrp.jointVis >> i.v
+
+    # global rig visibilities
+
+    scaleGrp.rigVis >> headSP_IKCrv_ORE_List[0].v
+    scaleGrp.rigVis >> headSP_IKCrv_ORE_List[len(headSP_IKCrv_ORE_List)-1].v
+
+    scaleGrp.rigVis >> neckSP_IKCrv_ORE_List[0].v
+    scaleGrp.rigVis >> neckSP_IKCrv_ORE_List[len(headSP_IKCrv_ORE_List)-1].v
+
+    for lst in headSP_noTouchListList:
+        for i in lst:
+            scaleGrp.rigVis >> i.v
+
+    for lst in neckSP_noTouchListList:
+        for i in lst:
+            scaleGrp.rigVis >> i.v
+
+    # //TODO
 
     # FOOL PROOF
     extra.lockAndHide(cont_headSquash, ["sx", "sy", "sz", "v"])
@@ -113,13 +167,9 @@ def createNeck():
     extra.colorize(cont_neck, index)
     extra.colorize(cont_headSquash, index)
 
-    # RIG VISIBILITY
-
-    # //TODO
-
     # RETURN
 
-    # # returns: (neck root, head controller, scale group, non-scale group)
+    # # returns: (neck root, neck controller, head controller, scale group, non-scale group)
     returnTuple = (neckRootLoc, cont_neck, cont_head, scaleGrp, nonScaleGrp)
     return returnTuple
     # //TODO

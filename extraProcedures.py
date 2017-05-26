@@ -56,16 +56,16 @@ def createUpGrp(obj, suffix):
     #align the new created empty group to the selected object
     pointCon = pm.parentConstraint (obj, slJoGrp, mo=False)
     pm.delete (pointCon)
+    # pm.makeIdentity(slJoGrp, a=True)
     
     #check if the target object has a parent
     originalParent = pm.listRelatives(obj, p=True)
     if (len(originalParent) > 0):
-        pm.parent(slJoGrp, originalParent[0])
+        pm.parent(slJoGrp, originalParent[0], r=False)
+        pm.makeIdentity(slJoGrp, a=True)
 
     pm.parent(obj,slJoGrp)
     return slJoGrp
-
-
 
 ## example use: connectMirror(obj1, obj2, "X")
 def connectMirror (node1, node2, mirrorAxis="X"):
@@ -197,12 +197,7 @@ def attrPass (sourceNode, targetNode, attributes=[], inConnections=True, outConn
         userAttr = attributes
 
     for attr in userAttr:
-        # if an attribute with the same name exists, pass it
-        if pm.attributeQuery(attr, node=targetNode, exists=True):
-            if overrideEx:
-                pm.deleteAttr("%s.%s" % (targetNode, attr))
-            else:
-                continue
+
 
 
         flagBuildList=[]
@@ -259,7 +254,6 @@ def attrPass (sourceNode, targetNode, attributes=[], inConnections=True, outConn
         writeStateFlag = "w=%s" % (writeState)
         flagBuildList.append(writeStateFlag)
 
-        #print flagBuildList
 
         # parse the flagBuildList into single string
         addAttribute="pm.addAttr(pm.PyNode('%s'), " % (targetNode)
@@ -270,11 +264,18 @@ def attrPass (sourceNode, targetNode, attributes=[], inConnections=True, outConn
                 addAttribute += ", "
             else:
                 addAttribute += ")"
-        print addAttribute
 
-        exec(addAttribute)
 
-    print ("daisyChain" + str(daisyChain))
+        # if an attribute with the same name exists
+        if pm.attributeQuery(attr, node=targetNode, exists=True):
+            if overrideEx:
+                pm.deleteAttr("%s.%s" % (targetNode, attr))
+                exec (addAttribute)
+            else:
+                continue
+        else:
+            exec(addAttribute)
+
     if daisyChain==True:
         # create connections between old and new attributes
         for i in range (0, len(userAttr)):

@@ -27,6 +27,8 @@ def createLeg(whichLeg):
 
     ###Create common Joints
     pm.select(d=True)
+    jDef_midLeg = pm.joint(name="jDef_midLeg_"+whichLeg, p=pm.PyNode("jInit_Knee_"+whichLeg).getTranslation(space="world"), radius=1.5)
+    pm.select(d=True)
     jDef_Rcon=pm.joint(name="jDef_Rcon_"+whichLeg, p=pm.PyNode("jInit_Rcon_"+whichLeg).getTranslation(space="world"), radius=1.5)
     jDef_UpLeg=pm.joint(name="jDef_UpLeg_"+whichLeg, p=pm.PyNode("jInit_UpLeg_"+whichLeg).getTranslation(space="world"), radius=1.5)
     pm.joint(jDef_Rcon, e=True, zso=True, oj="xyz")
@@ -188,18 +190,16 @@ def createLeg(whichLeg):
 
     ###Create Pole Vector Curve - IK
 
-    cont_Pole=pm.curve(name="cont_Pole_"+whichLeg, d=1,p=[(-1, 0, -3), (-1, 0, -1),(-3, 0, -1), (-3, 0, 1), (-1, 0, 1), (-1, 0, 3), (1, 0, 3), (1, 0, 1), (3, 0, 1), (3, 0, -1), (1, 0, -1), (1, 0, -3), (-1, 0, -3)], k=[0,1,2,3,4,5,6,7,8,9,10,11,12])
-    pm.setAttr(cont_Pole+".scale", (0.5,0.5,0.5))
+    polecontS = (((initUpperLegDist + initLowerLegDist) / 2) / 10)
+    polecontScale = (polecontS, polecontS, polecontS)
+    cont_Pole = icon.plus("cont_Pole_" + whichLeg, polecontScale)
+    pm.rotate(cont_Pole, (90, 0, 0))
     pm.makeIdentity(a=True)
-    tempCons=pm.pointConstraint( "jInit_Knee_"+whichLeg, cont_Pole, w=.1, mo=False, sk="z")
-    pm.delete(tempCons)
-    tempCons=pm.pointConstraint( "jInit_ToePv_"+whichLeg, cont_Pole, w=.1, mo=False, sk=["x","y"])
-    pm.delete(tempCons)
-    tempCons=pm.aimConstraint( "jInit_Knee_"+whichLeg, cont_Pole, w=.1, mo=False, o=(0,0,90))
-    pm.delete(tempCons)
-    scaleValue=(((initUpperLegDist+initLowerLegDist)/2)/10)
-    pm.setAttr(cont_Pole+".scale", (scaleValue,scaleValue,scaleValue))
+    extra.alignTo(cont_Pole, pm.PyNode("jInit_Knee_" + whichLeg), 0)
+    pm.move(cont_Pole, (0, 0, polecontS*5), r=True)
     pm.makeIdentity(a=True)
+    cont_Pole_OFF = extra.createUpGrp(cont_Pole, "OFF")
+
     pm.poleVectorConstraint(cont_Pole, "ikHandle_RP_"+whichLeg)
 
     ### Create and constrain Distance Locators
@@ -440,6 +440,7 @@ def createLeg(whichLeg):
     if whichLeg=="r_leg":
         pm.setAttr(cont_FK_LowLeg_ORE.rotateX, -180)
 
+    # //TODO : Take care the alignment functions and below lines
     temp_PoCon=pm.pointConstraint(jFK_Knee, jFK_Foot, cont_FK_LowLeg_OFF)
     pm.delete(temp_PoCon)
     temp_AimCon=pm.aimConstraint(jFK_Foot, cont_FK_LowLeg_OFF, o=(90,90,0), u=(0,1,0))
@@ -526,12 +527,16 @@ def createLeg(whichLeg):
 
     pm.addAttr(cont_FK_IK, shortName="autoTwist", longName="Auto_Twist", defaultValue=1.0, minValue=0.0, maxValue=1.0, at="float", k=True)
     pm.addAttr(cont_FK_IK, shortName="manualTwist", longName="Manual_Twist", defaultValue=0.0, at="float", k=True)
-    pm.addAttr(cont_FK_IK, shortName="rigVis", longName="Rig_Visibility", defaultValue=1, minValue=0, maxValue=1, at="long", k=True)
+    pm.addAttr(cont_FK_IK, shortName="tweakControls", longName="Tweak_Controls", defaultValue=0, at="bool")
+    pm.setAttr(cont_FK_IK.tweakControls, cb=True)
+    pm.addAttr(cont_FK_IK, shortName="fingerControls", longName="Finger_Controls", defaultValue=0, at="bool")
+    pm.setAttr(cont_FK_IK.fingerControls, cb=True)
 
-    fk_ik_rvs.outputX >> cont_FK_UpLeg_OFF.visibility
-    fk_ik_rvs.outputX >> cont_FK_LowLeg_OFF.visibility
-    fk_ik_rvs.outputX >> cont_FK_Foot_OFF.visibility
-    fk_ik_rvs.outputX >> cont_FK_Ball_OFF.visibility
+
+    fk_ik_rvs.outputX >> cont_FK_UpLeg_ORE.visibility
+    fk_ik_rvs.outputX >> cont_FK_LowLeg_ORE.visibility
+    fk_ik_rvs.outputX >> cont_FK_Foot_ORE.visibility
+    fk_ik_rvs.outputX >> cont_FK_Ball_ORE.visibility
     cont_FK_IK.fk_ik >> cont_IK_foot.visibility
 
     extra.alignTo(cont_FK_IK, pm.PyNode("jInit_Foot_"+whichLeg))
@@ -546,17 +551,20 @@ def createLeg(whichLeg):
 
     ### Create MidLock controller
 
-    contScale= extra.getDistance(pm.PyNode("jInit_Foot_"+whichLeg), pm.PyNode("jInit_Knee_"+whichLeg))/3
-    cont_midLock=pm.circle(name="cont_mid_"+whichLeg, nr=(0,1,0), ch=0)
-    pm.rebuildCurve(cont_midLock, s=12, ch=0)
-    pm.select(cont_midLock[0].cv[0],cont_midLock[0].cv[2],cont_midLock[0].cv[4],cont_midLock[0].cv[6],cont_midLock[0].cv[8],cont_midLock[0].cv[10])
-    pm.scale(0.5, 0.5, 0.5)
-    pm.select(d=True)
-    pm.setAttr(cont_midLock[0].scale, (contScale, contScale, contScale))
-    pm.makeIdentity(cont_midLock, a=True)
+    midcontScale= extra.getDistance(pm.PyNode("jInit_Foot_"+whichLeg), pm.PyNode("jInit_Knee_"+whichLeg))/3
+    cont_midLock = icon.star("cont_mid_" + whichLeg, (midcontScale, midcontScale, midcontScale), normal=(0, 1, 0))
 
-    cont_midLock_POS=extra.createUpGrp(cont_midLock[0],"POS")
-    cont_midLock_AVE=extra.createUpGrp(cont_midLock[0],"AVE")
+
+    # cont_midLock=pm.circle(name="cont_mid_"+whichLeg, nr=(0,1,0), ch=0)
+    # pm.rebuildCurve(cont_midLock, s=12, ch=0)
+    # pm.select(cont_midLock[0].cv[0],cont_midLock[0].cv[2],cont_midLock[0].cv[4],cont_midLock[0].cv[6],cont_midLock[0].cv[8],cont_midLock[0].cv[10])
+    # pm.scale(0.5, 0.5, 0.5)
+    # pm.select(d=True)
+    # pm.setAttr(cont_midLock[0].scale, (contScale, contScale, contScale))
+    # pm.makeIdentity(cont_midLock, a=True)
+
+    cont_midLock_POS=extra.createUpGrp(cont_midLock,"POS")
+    cont_midLock_AVE=extra.createUpGrp(cont_midLock,"AVE")
     extra.alignTo(cont_midLock_POS, "jInit_Knee_"+whichLeg, 0)
 
 
@@ -583,6 +591,8 @@ def createLeg(whichLeg):
     ### Create Midlock
 
     midLock=pm.spaceLocator(name="midLock_"+whichLeg)
+    pm.parentConstraint(midLock, jDef_midLeg)
+    #pm.scaleConstraint(midLock, jDef_midLeg)
     extra.alignTo(midLock, cont_midLock, 0)
 
     pm.parentConstraint(cont_midLock, midLock, mo=False)
@@ -612,11 +622,19 @@ def createLeg(whichLeg):
     # UPPERLEG RIBBON
 
     ribbonConnections_upperLeg=cr.createRibbon("jInit_UpLeg_"+whichLeg, "jInit_Knee_"+whichLeg, "up_"+whichLeg, -90)
+    startPos_rbnUpper = ribbonConnections_upperLeg[0]
+    endPos_rbnUpper = ribbonConnections_upperLeg[1]
+    scaleGrp_rbnUpper = ribbonConnections_upperLeg[2]
+    nonScaleGrp_rbnUpper = ribbonConnections_upperLeg[3]
+    deformerJoints_rbnUpper = ribbonConnections_upperLeg[4]
+    middleCont_rbnUpper = ribbonConnections_upperLeg[5]
+    toHide_rbnUpper = ribbonConnections_upperLeg[6]
 
-    ribbonStart_paCon_upperLeg_Start=pm.parentConstraint(startLock, ribbonConnections_upperLeg[0], mo=True)
-    ribbonStart_paCon_upperLeg_End=pm.parentConstraint(midLock, ribbonConnections_upperLeg[1], mo=True)
 
-    pm.scaleConstraint(scaleGrp,ribbonConnections_upperLeg[2])
+    ribbonStart_paCon_upperLeg_Start=pm.parentConstraint(startLock, startPos_rbnUpper, mo=True)
+    ribbonStart_paCon_upperLeg_End=pm.parentConstraint(midLock, endPos_rbnUpper, mo=True)
+
+    pm.scaleConstraint(scaleGrp,scaleGrp_rbnUpper)
 
     # AUTO AND MANUAL TWIST
 
@@ -626,7 +644,7 @@ def createLeg(whichLeg):
     ribbonStart_paCon_upperLeg_Start.constraintRotate >> autoTwistThigh.input1
 
     ###!!! The parent constrain override should be disconnected like this
-    pm.disconnectAttr(ribbonStart_paCon_upperLeg_Start.constraintRotateX, ribbonConnections_upperLeg[0].rotateX)
+    pm.disconnectAttr(ribbonStart_paCon_upperLeg_Start.constraintRotateX, startPos_rbnUpper.rotateX)
 
     #manual
     AddManualTwistThigh=pm.createNode("plusMinusAverage", name=("AddManualTwist_UpperLeg_"+whichLeg))
@@ -634,16 +652,24 @@ def createLeg(whichLeg):
     cont_Thigh.manualTwist >> AddManualTwistThigh.input3D[1].input3Dx
 
     #connect to the joint
-    AddManualTwistThigh.output3D >> ribbonConnections_upperLeg[0].rotate
+    AddManualTwistThigh.output3D >> startPos_rbnUpper.rotate
 
     # LOWERLEG RIBBON
 
     ribbonConnections_lowerLeg=cr.createRibbon("jInit_Knee_"+whichLeg, "jInit_Foot_"+whichLeg, "low_"+whichLeg, 90)
 
-    ribbonStart_paCon_lowerLeg_Start=pm.parentConstraint(midLock, ribbonConnections_lowerLeg[0], mo=True)
-    ribbonStart_paCon_lowerLeg_End=pm.parentConstraint(endLock, ribbonConnections_lowerLeg[1], mo=True)
+    startPos_rbnLower = ribbonConnections_lowerLeg[0]
+    endPos_rbnLower = ribbonConnections_lowerLeg[1]
+    scaleGrp_rbnLower = ribbonConnections_lowerLeg[2]
+    nonScaleGrp_rbnLower = ribbonConnections_lowerLeg[3]
+    deformerJoints_rbnLower = ribbonConnections_lowerLeg[4]
+    middleCont_rbnLower = ribbonConnections_lowerLeg[5]
+    toHide_rbnLower = ribbonConnections_lowerLeg[6]
 
-    pm.scaleConstraint(scaleGrp,ribbonConnections_lowerLeg[2])
+    ribbonStart_paCon_lowerLeg_Start=pm.parentConstraint(midLock, startPos_rbnLower, mo=True)
+    ribbonStart_paCon_lowerLeg_End=pm.parentConstraint(endLock, endPos_rbnLower, mo=True)
+
+    pm.scaleConstraint(scaleGrp,scaleGrp_rbnLower)
 
     # AUTO AND MANUAL TWIST
 
@@ -653,7 +679,7 @@ def createLeg(whichLeg):
     ribbonStart_paCon_lowerLeg_End.constraintRotate >> autoTwistAnkle.input1
 
     ###!!! The parent constrain override should be disconnected like this
-    pm.disconnectAttr(ribbonStart_paCon_lowerLeg_End.constraintRotateX, ribbonConnections_lowerLeg[1].rotateX)
+    pm.disconnectAttr(ribbonStart_paCon_lowerLeg_End.constraintRotateX, endPos_rbnLower.rotateX)
 
     #manual
     AddManualTwistAnkle=pm.createNode("plusMinusAverage", name=("AddManualTwist_LowerLeg_"+whichLeg))
@@ -661,7 +687,7 @@ def createLeg(whichLeg):
     cont_FK_IK.manualTwist >> AddManualTwistAnkle.input3D[1].input3Dx
 
     #connect to the joint
-    AddManualTwistAnkle.output3D >> ribbonConnections_lowerLeg[1].rotate
+    AddManualTwistAnkle.output3D >> endPos_rbnLower.rotate
 
     # Foot Joint
 
@@ -703,17 +729,60 @@ def createLeg(whichLeg):
     pm.parent(cont_FK_Ball_OFF, scaleGrp)
     pm.parent(midLock, scaleGrp)
     pm.parent(cont_midLock_POS, scaleGrp)
-    pm.parent(cont_IK_foot_OFF, scaleGrp)
+    #pm.parent(cont_IK_foot_OFF, scaleGrp)
+    pm.parent(cont_Pole_OFF, scaleGrp)
 
-    pm.parent(ribbonConnections_upperLeg[2], nonScaleGrp)
-    pm.parent(ribbonConnections_upperLeg[3], nonScaleGrp)
+    pm.parent(scaleGrp_rbnUpper, nonScaleGrp)
+    pm.parent(nonScaleGrp_rbnUpper, nonScaleGrp)
 
-    pm.parent(ribbonConnections_lowerLeg[2], nonScaleGrp)
-    pm.parent(ribbonConnections_lowerLeg[3], nonScaleGrp)
+    pm.parent(scaleGrp_rbnLower, nonScaleGrp)
+    pm.parent(nonScaleGrp_rbnLower, nonScaleGrp)
 
     pm.parent(jDef_Foot, scaleGrp)
 
-    ### Animator Fool Proofing
+
+
+    ## CONNECT RIG VISIBILITIES
+
+    # Tweak Controls
+
+    tweakControls = (middleCont_rbnUpper, middleCont_rbnLower, cont_midLock)
+    for i in tweakControls:
+        cont_FK_IK.tweakControls >> i.v
+
+    pm.addAttr(scaleGrp, at="bool", ln="Control_Visibility", sn="contVis", defaultValue=True)
+    pm.addAttr(scaleGrp, at="bool", ln="Joints_Visibility", sn="jointVis", defaultValue=True)
+    pm.addAttr(scaleGrp, at="bool", ln="Rig_Visibility", sn="rigVis", defaultValue=False)
+    # make the created attributes visible in the channelbox
+    pm.setAttr(scaleGrp.contVis, cb=True)
+    pm.setAttr(scaleGrp.jointVis, cb=True)
+    pm.setAttr(scaleGrp.rigVis, cb=True)
+
+    nodesContVis = [cont_Pole_OFF, cont_Thigh_OFF, cont_IK_foot_OFF, cont_FK_Foot_OFF, cont_midLock_POS, cont_FK_IK_POS, cont_FK_Ball_OFF, cont_FK_LowLeg_OFF, cont_FK_UpLeg_OFF, scaleGrp_rbnUpper, scaleGrp_rbnLower]
+    nodesJointVis = [jDef_midLeg, jDef_Ball, jDef_Foot, jDef_Rcon, jDef_Toe, jDef_UpLeg]
+    nodesJointVisLists = [deformerJoints_rbnUpper, deformerJoints_rbnLower, nodesJointVis]
+    nodesRigVis = [endLock_Ore, startLock_Ore, legStart, legEnd, IK_parentGRP, midLock]
+
+    # Cont visibilities
+    for i in nodesContVis:
+        scaleGrp.contVis >> i.v
+
+    # global joint visibilities
+    for lst in nodesJointVisLists:
+        for j in lst:
+            scaleGrp.jointVis >> j.v
+
+    # Rig Visibilities
+    for i in nodesRigVis:
+        scaleGrp.rigVis >> i.v
+    for i in toHide_rbnLower:
+        scaleGrp.rigVis >> i.v
+    for i in toHide_rbnUpper:
+        scaleGrp.rigVis >> i.v
+
+    # pm.setAttr(cont_FK_IK.rigVis, 0)
+
+    # # FOOL PROOFING
 
     extra.lockAndHide(cont_Thigh, ["sx", "sy", "sz", "v"])
     extra.lockAndHide(cont_IK_foot, ["sx", "sy", "sz", "v"])
@@ -723,71 +792,32 @@ def createLeg(whichLeg):
     extra.lockAndHide(cont_FK_Foot, ["tx", "ty", "tz", "sx", "sz", "v"])
     extra.lockAndHide(cont_FK_Ball, ["tx", "ty", "tz", "sx", "sz", "v"])
 
-    ## COLOR CODING
+    # # COLOR CODING
 
     if whichLeg == "l_leg":
-        index = 13 ##Red color index
-        indexMin = 9 ##Magenta color index
+        index = 13  ##Red color index
+        indexMin = 9  ##Magenta color index
     else:
-        index = 6 ##Blue Color index
+        index = 6  ##Blue Color index
         indexMin = 18
-    cont_ThighShape = cont_Thigh.getShape()
-    pm.setAttr(cont_ThighShape.overrideEnabled, True)
-    pm.setAttr(cont_ThighShape.overrideColor, index)
 
-    cont_IK_footShape = cont_IK_foot.getShape()
-    pm.setAttr(cont_IK_footShape.overrideEnabled, True)
-    pm.setAttr(cont_IK_footShape.overrideColor, index)
+    extra.colorize(cont_Thigh, index)
+    extra.colorize(cont_IK_foot, index)
+    extra.colorize(cont_FK_IK, index)
+    extra.colorize(cont_FK_UpLeg, index)
+    extra.colorize(cont_FK_LowLeg, index)
+    extra.colorize(cont_FK_Foot, index)
+    extra.colorize(cont_FK_Ball, index)
 
-    pm.setAttr(cont_FK_IK.overrideEnabled, True)
-    pm.setAttr(cont_FK_IK.overrideColor, index)
+    extra.colorize(cont_midLock, indexMin)
+    extra.colorize(middleCont_rbnUpper, indexMin)
+    extra.colorize(middleCont_rbnLower, indexMin)
 
-    cont_FK_UpLegShape = cont_FK_UpLeg.getShape()
-    pm.setAttr(cont_FK_UpLegShape.overrideEnabled, True)
-    pm.setAttr(cont_FK_UpLegShape.overrideColor, index)
-
-    cont_FK_LowLegShape = cont_FK_LowLeg.getShape()
-    pm.setAttr(cont_FK_LowLegShape.overrideEnabled, True)
-    pm.setAttr(cont_FK_LowLegShape.overrideColor, index)
-
-    cont_FK_FootShape = cont_FK_Foot.getShape()
-    pm.setAttr(cont_FK_FootShape.overrideEnabled, True)
-    pm.setAttr(cont_FK_FootShape.overrideColor, index)
-
-    cont_FK_BallShape = cont_FK_Ball.getShape()
-    pm.setAttr(cont_FK_BallShape.overrideEnabled, True)
-    pm.setAttr(cont_FK_BallShape .overrideColor, index)
-
-    cont_midLockShape = cont_midLock[0].getShape()
-    pm.setAttr(cont_midLockShape.overrideEnabled, True)
-    pm.setAttr(cont_midLockShape.overrideColor, indexMin)
-
-    upperRbnContShape=ribbonConnections_upperLeg[5][0].getShape()
-    pm.setAttr(upperRbnContShape.overrideEnabled, True)
-    pm.setAttr(upperRbnContShape.overrideColor, indexMin)
-
-    lowerRbnContShape=ribbonConnections_lowerLeg[5][0].getShape()
-    pm.setAttr(lowerRbnContShape.overrideEnabled, True)
-    pm.setAttr(lowerRbnContShape.overrideColor, indexMin)
-
-    ## CONNECT RIG data visibility
-
-    cont_FK_IK.rigVis >> endLock_Ore.v
-    cont_FK_IK.rigVis >> startLock_Ore.v
-    cont_FK_IK.rigVis >> legStart.v
-    cont_FK_IK.rigVis >> legEnd.v
-    cont_FK_IK.rigVis >> IK_parentGRP.v
-    cont_FK_IK.rigVis >> midLock.v
-    for i in ribbonConnections_lowerLeg[6]:
-        cont_FK_IK.rigVis >> i.v
-    for i in ribbonConnections_upperLeg[6]:
-        cont_FK_IK.rigVis >> i.v
-        
-    pm.setAttr(cont_FK_IK.rigVis, 0)
 
     #return [Spine_Connection, IK_Controller, Pole_Vector, Do_Not_Touch_Data]
     returnTuple=(scaleGrp, cont_IK_foot, cont_Pole, nonScaleGrp)
     return returnTuple
+
 
 
 

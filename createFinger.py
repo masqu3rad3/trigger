@@ -13,12 +13,16 @@ def rigSingleFinger(handController, fingerBones, suffix, mirror=False, mirrorAxi
         pm.error("there should be minimum 2 joints")
         return
     # try to find which finger is this
-    fingerTuple=("thumb","index","middle","ring","pinky")
+    fingerTuple=("thumb", "index", "middle", "ring", "pinky")
+    whichFinger=""
     for i in range(len(fingerTuple)):
+
         if fingerTuple[i] in fingerBones[0].name():
             whichFinger=fingerTuple[i]
+            break
         else:
             whichFinger=fingerBones[0].name()
+
     # first add split line and spread attribute.
     pm.addAttr(handController, longName=whichFinger, at="enum", en="--------", k=True)
     pm.addAttr(handController, shortName="{0}{1}".format(whichFinger, "Spread"), defaultValue=0.0, at="float", k=True)
@@ -77,7 +81,7 @@ def rigSingleFinger(handController, fingerBones, suffix, mirror=False, mirrorAxi
         pm.PyNode("{0}.{1}".format(handController, bendAttr)) >> conts_con[f].rotateZ
 
     # Return [fingerRoot_OFF, jDefList]
-    returnList=[conts_OFF[0], jDefList, conts_con]
+    returnList=[conts_OFF[0], jDefList, conts]
     return returnList
 
 
@@ -86,22 +90,25 @@ def rigFingers(rootBone, controller, suffix, mirror=False):
     rootMaster = pm.spaceLocator(name="handMaster_" + suffix)
     extra.alignTo(rootMaster, rootBone, 2)
     pm.select(d=True)
-    jDefList=[]
+    #deformerJoints=[]
     jDef_Root=pm.joint(name="jDef_fingerRoot_"+suffix, p=rootPosition, radius=1.0)
-    jDefList.append(jDef_Root)
+    deformerJoints=[[jDef_Root]]
     pm.parent(jDef_Root, rootMaster)
     fingerRoots=pm.listRelatives(rootBone, children=True, type="joint")
     # fingerCount=len(fingerRoots)
 
+    allControllers_con=[]
 
     for i in fingerRoots:
         fingerBones=pm.listRelatives(i, children=True, ad=True, type="joint")
         fingerBones.append(i)
         fingerBones=list(reversed(fingerBones))
-        fingerReturnList=rigSingleFinger(controller, fingerBones, suffix, mirror=mirror)
-        pm.parent(fingerReturnList[0],rootMaster)
-        pm.parent(fingerReturnList[1][0],jDef_Root)
-        jDefList.append(fingerReturnList[1])
+        finger=rigSingleFinger(controller, fingerBones, suffix, mirror=mirror)
+        fingerCons = finger[2]
+        allControllers_con.append(fingerCons)
+        pm.parent(finger[0],rootMaster)
+        pm.parent(finger[1][0],jDef_Root)
+        deformerJoints.append(finger[1])
 
-    #return [rootmaster]
-    return [rootMaster, fingerReturnList[2]]
+    #return [rootmaster, allControllers_con]
+    return [rootMaster, allControllers_con, deformerJoints]

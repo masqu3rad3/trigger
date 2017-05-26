@@ -205,11 +205,18 @@ def createSplineIK(refJoints, name, cuts, dropoff=2):
 
     # FOOL PROOFING
     for i in contCurves:
-        extra.lockAndHide(i, ["sx", "sy", "sz"])
+        extra.lockAndHide(i, ["sx", "sy", "sz", "v"])
 
+    # COLOR CODING
+    index=17
+    for i in range (0, len(contCurves)):
+        if i!=0 or i!=len(contCurves):
+            extra.colorize(contCurves[i], index)
     # RETURN
-    ## returns: (ConnectionPointBottom, chestControllerConnection, endLock, scaleGrp, nonScaleGrp, node that holds attributes to be passed)
-    returnTuple=(contCurves_ORE, contCurves[len(contCurves)-1], endLock, scaleGrp, nonScaleGrp, attPassCont)
+
+    noTouchData = ([splineCurve, splineIK[0], endLock], contJoints)
+    ## returns: (ConnectionPointBottom, chestControllerConnection, endLock, scaleGrp, nonScaleGrp, Nodes with attributes to pass, deformation joints)
+    returnTuple=(contCurves_ORE, contCurves[len(contCurves)-1], endLock, scaleGrp, nonScaleGrp, attPassCont, defJoints, noTouchData)
     return returnTuple
 
 

@@ -48,6 +48,7 @@ def createSpine():
     pm.xform(cont_chest, piv=chestPoint)
 
     spine=spline.createSplineIK(pm.ls("jInit_spine*"), "spine", 4, dropoff=2)
+    splineIKCurves_ORE_List = spine[0]
     bottomConnection= spine[0][0]
     upConnection= spine[1]
     midConnection= spine[0][len(spine[0])/2]
@@ -55,6 +56,8 @@ def createSpine():
     scaleGrp=spine[3]
     nonScaleGrp=spine[4]
     passCont=spine[5]
+    defJoints = spine[6]
+    noTouchListofLists = spine[7]
 
     # # connect the spine root to the master root
     pm.parentConstraint(gmRoot, bottomConnection, mo=True)
@@ -104,7 +107,78 @@ def createSpine():
     pm.parent(cont_spineFK_B_03, cont_body)
     pm.parent(endPositionLock, scaleGrp)
 
-    ## fool proofing
+    ## CONNECT RIG VISIBILITES
+
+    # create visibility attributes for cont_Body
+
+    pm.addAttr(cont_body, at="bool", ln="FK_A_Visibility", sn="fkAvis", defaultValue=True)
+    pm.addAttr(cont_body, at="bool", ln="FK_B_Visibility", sn="fkBvis", defaultValue=True)
+    pm.addAttr(cont_body, at="bool", ln="Tweaks_Visibility", sn="tweakVis", defaultValue=True)
+    # make the created attributes visible in the channelbox
+    pm.setAttr(cont_body.fkAvis, cb=True)
+    pm.setAttr(cont_body.fkBvis, cb=True)
+    pm.setAttr(cont_body.tweakVis, cb=True)
+
+    fkContsA = (cont_spineFK_A_01.getShape(), cont_spineFK_A_02.getShape(), cont_spineFK_A_03.getShape())
+    fkContsB = (cont_spineFK_B_01.getShape(), cont_spineFK_B_02.getShape(), cont_spineFK_B_03.getShape())
+
+    for i in fkContsA:
+        cont_body.fkAvis >> i.visibility
+    for i in fkContsB:
+        cont_body.fkBvis >> i.visibility
+
+    for i in range (0, len(splineIKCurves_ORE_List)):
+        if i != 0 or i != len(splineIKCurves_ORE_List):
+            node = extra.createUpGrp(splineIKCurves_ORE_List[i], "OFF")
+            cont_body.tweakVis >> node.v
+
+    # global visibilities attributes
+
+    pm.addAttr(scaleGrp, at="bool", ln="Control_Visibility", sn="contVis", defaultValue=True)
+    pm.addAttr(scaleGrp, at="bool", ln="Joints_Visibility", sn="jointVis", defaultValue=True)
+    pm.addAttr(scaleGrp, at="bool", ln="Rig_Visibility", sn="rigVis", defaultValue=False)
+    # make the created attributes visible in the channelbox
+    pm.setAttr(scaleGrp.contVis, cb=True)
+    pm.setAttr(scaleGrp.jointVis, cb=True)
+    pm.setAttr(scaleGrp.rigVis, cb=True)
+
+    # global cont visibilities
+
+    for i in range (0, len(splineIKCurves_ORE_List)):
+        if i != 0 or i != len(splineIKCurves_ORE_List):
+            scaleGrp.contVis >> splineIKCurves_ORE_List[i].v
+    scaleGrp.contVis >> cont_body.v
+
+    # global joint visibilities
+
+    for i in defJoints:
+        scaleGrp.jointVis >> i.v
+
+    # global rig visibilities
+
+    scaleGrp.rigVis >> splineIKCurves_ORE_List[0].v
+    scaleGrp.rigVis >> splineIKCurves_ORE_List[len(splineIKCurves_ORE_List)-1].v
+
+    scaleGrp.rigVis >> midSpineLocA.v
+    scaleGrp.rigVis >> midSpineLocB.v
+
+    scaleGrp.rigVis >> gmRoot.v
+
+    scaleGrp.rigVis >> jChestPlug.v
+    scaleGrp.rigVis >> jArmPlug_l_arm.v
+    scaleGrp.rigVis >> jArmPlug_r_arm.v
+    scaleGrp.rigVis >> jHeadPlug.v
+
+    for lst in noTouchListofLists:
+        for i in lst:
+            scaleGrp.rigVis >> i.v
+
+
+    ## FOOL PROOFING
+
+    extra.lockAndHide(cont_body, "v")
+    extra.lockAndHide(cont_hips, ["sx", "sy", "sz", "v"])
+    extra.lockAndHide(cont_chest, ["sx", "sy", "sz", "v"])
     extra.lockAndHide(cont_spineFK_A_01, ["tx", "ty", "tz", "sx", "sy", "sz", "v"])
     extra.lockAndHide(cont_spineFK_A_02, ["tx", "ty", "tz", "sx", "sy", "sz", "v"])
     extra.lockAndHide(cont_spineFK_A_03, ["tx", "ty", "tz", "sx", "sy", "sz", "v"])
@@ -112,7 +186,8 @@ def createSpine():
     extra.lockAndHide(cont_spineFK_B_02, ["tx", "ty", "tz", "sx", "sy", "sz", "v"])
     extra.lockAndHide(cont_spineFK_B_03, ["tx", "ty", "tz", "sx", "sy", "sz", "v"])
 
-    ## color coding
+    ## COLOR CODING
+
     index = 17
     indexIK = 20
     indexFKA = 30
