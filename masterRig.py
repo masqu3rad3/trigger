@@ -1,3 +1,7 @@
+import time
+
+start = time.time()
+
 ## masterRig
 import pymel.core as pm
 import sys
@@ -175,4 +179,5 @@ index = 17
 extra.colorize(cont_master, index)
 extra.colorize(cont_placement, index)
 
-
+end = time.time()
+print(end - start)

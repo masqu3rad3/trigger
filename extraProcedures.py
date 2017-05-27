@@ -40,7 +40,7 @@ def alignTo(node1, node2, mode=0, o=(0,0,0)):
         pm.delete(parentCon)
 
     
-def createUpGrp(obj, suffix):
+def createUpGrp(obj, suffix, mi=True):
     """
     Creates an Upper Group for the given object.
     Args:
@@ -62,7 +62,8 @@ def createUpGrp(obj, suffix):
     originalParent = pm.listRelatives(obj, p=True)
     if (len(originalParent) > 0):
         pm.parent(slJoGrp, originalParent[0], r=False)
-        pm.makeIdentity(slJoGrp, a=True)
+        if mi:
+            pm.makeIdentity(slJoGrp, a=True)
 
     pm.parent(obj,slJoGrp)
     return slJoGrp

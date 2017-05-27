@@ -302,8 +302,8 @@ def createArm(whichArm):
     if whichArm == "r_arm":
         pm.setAttr(cont_Shoulder.scaleY, -1)
         pm.makeIdentity(cont_Shoulder, a=True, t=False, r=False, s=True)
-    pm.closeCurve(cont_Shoulder, ch=0, ps=0, rpo=1, bb=0.5, bki=0, p=0.1)
-    pm.delete(cont_Shoulder, ch=True)
+    # pm.closeCurve(cont_Shoulder, ch=0, ps=0, rpo=1, bb=0.5, bki=0, p=0.1)
+    # pm.delete(cont_Shoulder, ch=True)
 
     cont_Shoulder_OFF = extra.createUpGrp(cont_Shoulder, "OFF")
     cont_Shoulder_ORE = extra.createUpGrp(cont_Shoulder, "ORE")
@@ -359,6 +359,7 @@ def createArm(whichArm):
     if whichArm == "r_arm":
         pm.setAttr(cont_FK_UpArm_ORE.rotateX, -180)
 
+    # extra.alignBetween(cont_FK_UpArm_OFF, jFK_Up, jFK_Low, o=(90, 90, 0), u=(0, 1, 0))
     temp_PoCon = pm.pointConstraint(jFK_Up, jFK_Low, cont_FK_UpArm_OFF)
     pm.delete(temp_PoCon)
     temp_AimCon = pm.aimConstraint(jFK_Low, cont_FK_UpArm_OFF, o=(90, 90, 0), u=(0, 1, 0))
@@ -387,6 +388,7 @@ def createArm(whichArm):
     if whichArm == "r_arm":
         pm.setAttr(cont_FK_LowArm_ORE.rotateX, -180)
 
+    # extra.alignBetween(cont_FK_LowArm_OFF, jFK_Low, jFK_LowEnd, o=(90, 90, 0), u=(0, 1, 0))
     temp_PoCon = pm.pointConstraint(jFK_Low, jFK_LowEnd, cont_FK_LowArm_OFF)
     pm.delete(temp_PoCon)
     temp_AimCon = pm.aimConstraint(jFK_LowEnd, cont_FK_LowArm_OFF, o=(90, 90, 0), u=(0, 1, 0))
