@@ -11,7 +11,7 @@ reload(icon)
 
 #whichLeg="l_leg"
 
-def createLeg(whichLeg):
+def createLeg(whichLeg, mirrorAxis="X"):
     initBones=pm.ls("jInit*"+whichLeg)
     if (len(initBones)<9):
         pm.error("Some or all Leg Init Bones are missing (or Renamed)")
@@ -366,7 +366,8 @@ def createLeg(whichLeg):
     cont_Thigh_OFF=extra.createUpGrp(cont_Thigh, "OFF")
     cont_Thigh_ORE=extra.createUpGrp(cont_Thigh, "ORE")
     if whichLeg=="r_leg":
-        pm.setAttr(cont_Thigh_ORE.rotateX, -180)
+        pm.setAttr("%s.scale%s" % (cont_Thigh_ORE, mirrorAxis), -1)
+        # pm.setAttr(cont_Thigh_ORE.rotateX, -180)
         
     pm.addAttr( shortName="autoTwist", longName="Auto_Twist", defaultValue=1.0, minValue=0.0, maxValue=1.0, at="float", k=True)
     pm.addAttr( shortName="manualTwist", longName="Manual_Twist", defaultValue=0.0, at="float", k=True)
@@ -412,7 +413,8 @@ def createLeg(whichLeg):
     cont_FK_UpLeg_OFF=extra.createUpGrp(cont_FK_UpLeg, "OFF")
     cont_FK_UpLeg_ORE=extra.createUpGrp(cont_FK_UpLeg, "ORE")
     if whichLeg=="r_leg":
-        pm.setAttr(cont_FK_UpLeg_ORE.rotateX, -180)
+        pm.setAttr("%s.scale%s" % (cont_FK_UpLeg_ORE, mirrorAxis), -1)
+        # pm.setAttr(cont_FK_UpLeg_ORE.rotateX, -180)
 
     temp_PoCon=pm.pointConstraint(jFK_Root, jFK_Knee, cont_FK_UpLeg_OFF)
     pm.delete(temp_PoCon)
@@ -438,7 +440,8 @@ def createLeg(whichLeg):
     cont_FK_LowLeg_OFF=extra.createUpGrp(cont_FK_LowLeg, "OFF")
     cont_FK_LowLeg_ORE=extra.createUpGrp(cont_FK_LowLeg, "ORE")
     if whichLeg=="r_leg":
-        pm.setAttr(cont_FK_LowLeg_ORE.rotateX, -180)
+        pm.setAttr("%s.scale%s" % (cont_FK_LowLeg_ORE, mirrorAxis), -1)
+        # pm.setAttr(cont_FK_LowLeg_ORE.rotateX, -180)
 
     # //TODO : Take care the alignment functions and below lines
     temp_PoCon=pm.pointConstraint(jFK_Knee, jFK_Foot, cont_FK_LowLeg_OFF)
@@ -463,7 +466,8 @@ def createLeg(whichLeg):
     cont_FK_Foot_OFF=extra.createUpGrp(cont_FK_Foot, "OFF")
     cont_FK_Foot_ORE=extra.createUpGrp(cont_FK_Foot, "ORE")
     if whichLeg=="r_leg":
-        pm.setAttr(cont_FK_Foot_ORE.rotateX, -180)
+        pm.setAttr("%s.scale%s" % (cont_FK_Foot_ORE, mirrorAxis), -1)
+        # pm.setAttr(cont_FK_Foot_ORE.rotateX, -180)
 
     temp_PoCon=pm.pointConstraint(jFK_Foot, jFK_Ball, cont_FK_Foot_OFF)
     pm.delete(temp_PoCon);
@@ -489,7 +493,8 @@ def createLeg(whichLeg):
     cont_FK_Ball_ORE=extra.createUpGrp(cont_FK_Ball, "ORE")
 
     if whichLeg=="r_leg":
-        pm.setAttr(cont_FK_Ball_ORE.rotateX, -180)
+        pm.setAttr("%s.scale%s" % (cont_FK_Ball_ORE, mirrorAxis), -1)
+        # pm.setAttr(cont_FK_Ball_ORE.rotateX, -180)
         
     temp_PoCon=pm.pointConstraint(jFK_Ball, jFK_Toe, cont_FK_Ball)
     pm.delete(temp_PoCon);
@@ -709,7 +714,7 @@ def createLeg(whichLeg):
     cont_FK_IK.fk_ik >> (toe_paCon+"."+jIK_Toe+"W0")
     fk_ik_rvs.outputX >> (toe_paCon+"."+jFK_Toe+"W1")
 
-    ### FINAL ROUND UP
+    # # GOOD PARENTING
 
     # Create Master Root and Scale and nonScale Group
 
@@ -731,6 +736,7 @@ def createLeg(whichLeg):
     pm.parent(cont_midLock_POS, scaleGrp)
     #pm.parent(cont_IK_foot_OFF, scaleGrp)
     pm.parent(cont_Pole_OFF, scaleGrp)
+    pm.parent(jDef_midLeg, scaleGrp)
 
     pm.parent(scaleGrp_rbnUpper, nonScaleGrp)
     pm.parent(nonScaleGrp_rbnUpper, nonScaleGrp)
@@ -815,7 +821,7 @@ def createLeg(whichLeg):
 
 
     #return [Spine_Connection, IK_Controller, Pole_Vector, Do_Not_Touch_Data]
-    returnTuple=(scaleGrp, cont_IK_foot, cont_Pole, nonScaleGrp)
+    returnTuple=(scaleGrp, cont_IK_foot, cont_Pole, nonScaleGrp, cont_IK_foot_OFF)
     return returnTuple
 
 

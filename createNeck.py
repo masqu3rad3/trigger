@@ -37,6 +37,7 @@ def createNeck():
     headPivPos = headStart.getTranslation(space="world")
     headScale = (extra.getDistance(headStart, headEnd)/3)
     cont_head = icon.halfDome(name="cont_head", scale=(headScale, headScale, headScale), location=headCenterPos)
+    cont_head_OFF = extra.createUpGrp(cont_head, "OFF")
     cont_head_ORE = extra.createUpGrp(cont_head, "ORE")
     pm.rotate(cont_head_ORE, (-90, 0, 0))
 
@@ -71,6 +72,9 @@ def createNeck():
     # # pass Stretch controls from the splineIK to neck controller
     extra.attrPass(neckSP_passCont, cont_neck)
 
+    # # Connect the scale to the scaleGrp
+    scaleGrp.scale >> neckSP_scaleGrp.scale
+
     # create spline IK for Head squash
     headSpline = spline.createSplineIK([headStart, headEnd], "headSquashSplineIK", 4, dropoff=2)
     headSP_IKCrv_ORE_List = headSpline[0]
@@ -92,7 +96,10 @@ def createNeck():
     # # pass Stretch controls from the splineIK to neck controller
     extra.attrPass(headSP_passCont, cont_headSquash)
 
-    # GROUPING
+    # # Connect the scale to the scaleGrp
+    scaleGrp.scale >> headSP_scaleGrp.scale
+
+    # GOOD PARENTING
     pm.parent(neckRootLoc, scaleGrp)
     pm.parent(neckSP_endConnection, scaleGrp)
     pm.parent(neckSP_endLock, scaleGrp)
@@ -169,7 +176,7 @@ def createNeck():
 
     # RETURN
 
-    # # returns: (neck root, neck controller, head controller, scale group, non-scale group)
-    returnTuple = (neckRootLoc, cont_neck, cont_head, scaleGrp, nonScaleGrp)
+    # # returns: (neck root, neck controller, head controller, scale group, non-scale group, cont_head_OFF)
+    returnTuple = (neckRootLoc, cont_neck, cont_head, scaleGrp, nonScaleGrp, cont_head_OFF)
     return returnTuple
     # //TODO

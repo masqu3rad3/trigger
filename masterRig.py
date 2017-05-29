@@ -111,8 +111,10 @@ scaleGrp_r_leg = rightLeg[0]
 cont_IK_foot_r_leg = rightLeg[1]
 cont_Pole_r_leg = rightLeg[2]
 nonScaleGrp_r_leg = rightLeg[3]
+cont_IK_foot_OFF_r_leg = rightLeg[4]
 pm.parentConstraint(gmRoot, scaleGrp_r_leg, mo=True)
 pm.scaleConstraint(cont_master, scaleGrp_r_leg)
+pm.scaleConstraint(cont_master, cont_IK_foot_OFF_r_leg)
 extra.attrPass(scaleGrp_r_leg, cont_master, values=True, daisyChain=True, overrideEx=False)
 
 
@@ -121,8 +123,10 @@ scaleGrp_l_leg = leftLeg[0]
 cont_IK_foot_l_leg = leftLeg[1]
 cont_Pole_l_leg = leftLeg[2]
 nonScaleGrp_l_leg = leftLeg[3]
+cont_IK_foot_OFF_l_leg = leftLeg[4]
 pm.parentConstraint(gmRoot, scaleGrp_l_leg, mo=True)
 pm.scaleConstraint(cont_master, scaleGrp_l_leg)
+pm.scaleConstraint(cont_master, cont_IK_foot_OFF_l_leg)
 extra.attrPass(scaleGrp_l_leg, cont_master, values=True, daisyChain=True, overrideEx=False)
 
 
@@ -133,8 +137,10 @@ cont_neck = neckAndHead[1]
 cont_head = neckAndHead[2]
 scaleGrp_neck = neckAndHead[3]
 nonScaleGrp_neck = neckAndHead[4]
+cont_head_OFF = neckAndHead[5]
 pm.parentConstraint(neckPlug, neckRoot, mo=True)
 pm.scaleConstraint(cont_master, scaleGrp_neck)
+pm.scaleConstraint(cont_master, cont_head_OFF)
 extra.attrPass(scaleGrp_neck, cont_master, values=True, daisyChain=True, overrideEx=False)
 
 # ANCHOR SWITCHES
@@ -173,6 +179,12 @@ pm.parent(nonScaleGrp_spine, rootGroup)
 
 pm.parent(gmRoot, rootGroup)
 pm.parent(cont_master, rootGroup)
+
+pm.parent(cont_head_OFF, rootGroup)
+pm.parent(cont_IK_foot_OFF_l_leg, rootGroup)
+pm.parent(cont_IK_foot_OFF_r_leg, rootGroup)
+pm.parent(cont_IK_hand_OFF_l_arm, rootGroup)
+pm.parent(cont_IK_hand_OFF_r_arm, rootGroup)
 
 # COLOR CODING
 index = 17

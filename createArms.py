@@ -23,7 +23,7 @@ reload(cf)
 ######### IK ARM ##########
 ###########################
 
-def createArm(whichArm):
+def createArm(whichArm, mirrorAxis="X"):
     # contScale= extra.getDistance(pm.PyNode("jInit_Low_"+whichArm), pm.PyNode("jInit_LowEnd_"+whichArm))
 
     initBones = pm.ls("jInit*" + whichArm)
@@ -299,9 +299,11 @@ def createArm(whichArm):
     shouldercontScale = (initShoulderDist / 2, initShoulderDist / 2, initShoulderDist / 2,)
     cont_Shoulder = icon.shoulder("cont_Shoulder_" + whichArm, shouldercontScale)
 
-    if whichArm == "r_arm":
-        pm.setAttr(cont_Shoulder.scaleY, -1)
-        pm.makeIdentity(cont_Shoulder, a=True, t=False, r=False, s=True)
+    # if whichArm == "r_arm":
+    #     pm.setAttr(cont_Shoulder.scaleY, -1)
+    #     pm.makeIdentity(cont_Shoulder, a=True, t=False, r=False, s=True)
+
+
     # pm.closeCurve(cont_Shoulder, ch=0, ps=0, rpo=1, bb=0.5, bki=0, p=0.1)
     # pm.delete(cont_Shoulder, ch=True)
 
@@ -312,8 +314,9 @@ def createArm(whichArm):
     extra.alignTo(cont_Shoulder_OFF, "jInit_Shoulder_" + whichArm, 2)
 
     if whichArm == "r_arm":
-        pm.makeIdentity(cont_Shoulder, a=True)
-        pm.setAttr(cont_Shoulder_ORE.rotateX, -180)
+        pm.setAttr("%s.scale%s" %(cont_Shoulder_ORE,mirrorAxis), -1)
+        #pm.makeIdentity(cont_Shoulder, a=True)
+        #pm.setAttr(cont_Shoulder_ORE.rotateX, -180)
 
     pm.select(cont_Shoulder)
     pm.addAttr(shortName="autoTwist", longName="Auto_Twist", defaultValue=1.0, minValue=0.0, maxValue=1.0, at="float",
@@ -357,9 +360,10 @@ def createArm(whichArm):
     cont_FK_UpArm_OFF = extra.createUpGrp(cont_FK_UpArm, "OFF")
     cont_FK_UpArm_ORE = extra.createUpGrp(cont_FK_UpArm, "ORE")
     if whichArm == "r_arm":
-        pm.setAttr(cont_FK_UpArm_ORE.rotateX, -180)
+        pm.setAttr("%s.scale%s" %(cont_FK_UpArm_ORE,mirrorAxis), -1)
+        #pm.setAttr(cont_FK_UpArm_ORE.rotateX, -180)
 
-    # extra.alignBetween(cont_FK_UpArm_OFF, jFK_Up, jFK_Low, o=(90, 90, 0), u=(0, 1, 0))
+    #extra.alignBetween(cont_FK_UpArm_OFF, jFK_Up, jFK_Low, o=(90, 90, 0), u=(0, 1, 0))
     temp_PoCon = pm.pointConstraint(jFK_Up, jFK_Low, cont_FK_UpArm_OFF)
     pm.delete(temp_PoCon)
     temp_AimCon = pm.aimConstraint(jFK_Low, cont_FK_UpArm_OFF, o=(90, 90, 0), u=(0, 1, 0))
@@ -386,9 +390,10 @@ def createArm(whichArm):
     cont_FK_LowArm_OFF = extra.createUpGrp(cont_FK_LowArm, "OFF")
     cont_FK_LowArm_ORE = extra.createUpGrp(cont_FK_LowArm, "ORE")
     if whichArm == "r_arm":
-        pm.setAttr(cont_FK_LowArm_ORE.rotateX, -180)
+        pm.setAttr("%s.scale%s" %(cont_FK_LowArm_ORE,mirrorAxis), -1)
+        #pm.setAttr(cont_FK_LowArm_ORE.rotateX, -180)
 
-    # extra.alignBetween(cont_FK_LowArm_OFF, jFK_Low, jFK_LowEnd, o=(90, 90, 0), u=(0, 1, 0))
+    #extra.alignBetween(cont_FK_LowArm_OFF, jFK_Low, jFK_LowEnd, o=(90, 90, 0), u=(0, 1, 0))
     temp_PoCon = pm.pointConstraint(jFK_Low, jFK_LowEnd, cont_FK_LowArm_OFF)
     pm.delete(temp_PoCon)
     temp_AimCon = pm.aimConstraint(jFK_LowEnd, cont_FK_LowArm_OFF, o=(90, 90, 0), u=(0, 1, 0))
@@ -599,9 +604,10 @@ def createArm(whichArm):
     extra.alignTo(handLock, cont_FK_Hand_ORE, 0)
 
     if whichArm == "r_arm":
-        pm.setAttr(cont_FK_Hand_ORE.rotateX, -180)
+        pm.setAttr("%s.scale%s" % (cont_FK_Hand_ORE, mirrorAxis), -1)
+    #     #pm.setAttr(cont_FK_Hand_ORE.rotateX, -180)
 
-    pm.parentConstraint(cont_FK_Hand, handLock, mo=True)  ## Olusturulan ara node baglanir
+    #pm.parentConstraint(cont_FK_Hand, handLock, mo=True)  ## Olusturulan ara node baglanir
     ####################
     ## CREATE FINGERS ##
     ####################
@@ -623,9 +629,16 @@ def createArm(whichArm):
     fk_ik_rvs.outputX >> (handOriCon + "." + handLock + "W1")
     fk_ik_rvs.outputX >> cont_FK_Hand.v
 
-    handScaCon = pm.scaleConstraint(cont_IK_hand, cont_FK_Hand, handMaster, mo=False)
-    cont_FK_IK.fk_ik >> (handScaCon + "." + cont_IK_hand + "W0")
-    fk_ik_rvs.outputX >> (handScaCon + "." + cont_FK_Hand + "W1")
+
+    handScaCon = pm.createNode("blendColors", name="handScaCon_" + whichArm)
+    cont_IK_hand.scale >> handScaCon.color1
+    cont_FK_Hand.scale >> handScaCon.color2
+    cont_FK_IK.fk_ik >> handScaCon.blender
+    handScaCon.output >> handMaster.scale
+
+    # handScaCon = pm.scaleConstraint(cont_IK_hand, cont_FK_Hand, handMaster, mo=False)
+    # cont_FK_IK.fk_ik >> (handScaCon + "." + cont_IK_hand + "W0")
+    # fk_ik_rvs.outputX >> (handScaCon + "." + cont_FK_Hand + "W1")
 
     ### FINAL ROUND UP
 

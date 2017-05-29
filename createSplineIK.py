@@ -48,7 +48,10 @@ def createSplineIK(refJoints, name, cuts, dropoff=2):
     ## Create deformation Joints
     for i in range (0, cuts+1):
         place=rootVc+(segmentVc*(i))
-        j=pm.joint(p=place, name="jDef_"+name+str(i))
+        if i < cuts+1:
+            j=pm.joint(p=place, name="jDef_"+name+str(i))
+        else:
+            j = pm.joint(p=place, name="j_" + name + str(i))
         #pm.setAttr(j.displayLocalAxis, 1)
         defJoints.append(j)
         curvePoints.append(place)

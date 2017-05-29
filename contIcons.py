@@ -150,6 +150,7 @@ def shoulder(name="cont_shoulder", scale=(1,1,1), location=None):
         Controller node
     """
     cont_shoulder=pm.curve (d=3, p=((-3, 0, 1),(-1, 2, 1), (1, 2, 1), (3, 0, 1), (3, 0, 0),(3, 0, -1),(1, 2, -1),(-1, 2, -1),(-3, 0, -1),(-3, 0, 0)),k=(0,0,0,1,2,3,4,5,6,7,7,7),name=name)
+
     pm.setAttr(cont_shoulder.scale, (0.5, 0.5, 0.5))
     pm.makeIdentity(cont_shoulder, a=True)
     pm.setAttr(cont_shoulder.scale, scale)
@@ -157,6 +158,10 @@ def shoulder(name="cont_shoulder", scale=(1,1,1), location=None):
     if location:
         pm.move(cont_shoulder, location)
     pm.makeIdentity(cont_shoulder, a=True)
+
+    pm.closeCurve(cont_shoulder, ch=0, ps=0, rpo=1, bb=0.5, bki=0, p=0.1)
+    pm.delete(cont_shoulder, ch=True)
+
     return cont_shoulder
 
 def plus(name="cont_plus", scale=(1,1,1), location=None):

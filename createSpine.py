@@ -25,9 +25,9 @@ def createSpine():
 
     # # Create Plug Joints
     pm.select(None)
-    jChestPlug = pm.joint(name="jChestPlug", p=chestPoint)
+    jChestPlug = pm.joint(name="jDef_ChestPlug", p=chestPoint)
     pm.select(None)
-    jHeadPlug = pm.joint(name="jHeadPlug", p=neckPoint)
+    jHeadPlug = pm.joint(name="jDef_HeadPlug", p=neckPoint)
     pm.select(None)
     jArmPlug_r_arm = pm.joint(name="jArmPlug_r_arm", p=armPoint_r_arm)
     pm.select(None)
@@ -153,6 +153,8 @@ def createSpine():
 
     for i in defJoints:
         scaleGrp.jointVis >> i.v
+    scaleGrp.jointVis >> jChestPlug.v
+    scaleGrp.jointVis >> jHeadPlug.v
 
     # global rig visibilities
 
@@ -164,10 +166,10 @@ def createSpine():
 
     scaleGrp.rigVis >> gmRoot.v
 
-    scaleGrp.rigVis >> jChestPlug.v
+    #scaleGrp.rigVis >> jChestPlug.v
     scaleGrp.rigVis >> jArmPlug_l_arm.v
     scaleGrp.rigVis >> jArmPlug_r_arm.v
-    scaleGrp.rigVis >> jHeadPlug.v
+    #scaleGrp.rigVis >> jHeadPlug.v
 
     for lst in noTouchListofLists:
         for i in lst:

@@ -14,6 +14,32 @@ def getDistance( node1, node2):
     Bx, By, Bz = node2.getTranslation(space="world")
     return ((Ax-Bx)**2 + (Ay-By)**2 + (Az-Bz)**2)**0.5
     
+# def alignTo(node1, node2, mode=0, o=(0,0,0)):
+#     """
+#     Aligns the first node to the second.
+#     Args:
+#         node1: Node to be aligned.
+#         node2: Target Node.
+#         mode: Specifies the alignment Mode. Valid Values: 0=position only, 1=Rotation Only, 2=Position and Rotation
+#         o: Offset Value. Default: (0,0,0)
+#
+#     Returns:None
+#
+#     """
+#     if mode==0:
+#         ##Position Only
+#         pointCon=pm.pointConstraint (node2, node1, mo=False, o=o)
+#         pm.delete(pointCon)
+#     elif mode==1:
+#         ##Rotation Only
+#         orientCon=pm.orientConstraint (node2, node1, mo=False, o=o)
+#         pm.delete(orientCon)
+#     elif mode==2:
+#         ##Position and Rotation
+#         parentCon=pm.parentConstraint (node2, node1, mo=False)
+#         pm.delete(parentCon)
+
+
 def alignTo(node1, node2, mode=0, o=(0,0,0)):
     """
     Aligns the first node to the second.
@@ -26,20 +52,38 @@ def alignTo(node1, node2, mode=0, o=(0,0,0)):
     Returns:None
 
     """
+    if type(node1) == str:
+        node1 = pm.PyNode(node1)
+
+    if type(node2) == str:
+        node2 = pm.PyNode(node2)
+
     if mode==0:
         ##Position Only
-        pointCon=pm.pointConstraint (node2, node1, mo=False, o=o)
-        pm.delete(pointCon)
+        targetLoc = node2.getRotatePivot(space="world")
+        pm.move(node1, targetLoc, a=True, ws=True)
+
     elif mode==1:
         ##Rotation Only
-        orientCon=pm.orientConstraint (node2, node1, mo=False, o=o)
-        pm.delete(orientCon)
+        if node2.type() == "joint":
+            tempOri = pm.orientConstraint(node2, node1, o=o, mo=False)
+            pm.delete(tempOri)
+        else:
+            targetRot = node2.getRotation()
+            pm.rotate(node1, targetRot, a=True, ws=True)
+
     elif mode==2:
         ##Position and Rotation
-        parentCon=pm.parentConstraint (node2, node1, mo=False)
-        pm.delete(parentCon)
+        targetLoc = node2.getRotatePivot(space="world")
+        pm.move(node1, targetLoc, a=True, ws=True)
+        if node2.type() == "joint":
+            tempOri = pm.orientConstraint(node2, node1, o=o, mo=False)
+            pm.delete(tempOri)
+        else:
+            targetRot = node2.getRotation()
+            pm.rotate(node1, targetRot, a=True, ws=True)
 
-    
+
 def createUpGrp(obj, suffix, mi=True):
     """
     Creates an Upper Group for the given object.
@@ -51,22 +95,24 @@ def createUpGrp(obj, suffix, mi=True):
 
     """
     grpName = (obj.nodeName() + "_" + suffix)
-    slJoGrp = pm.group (em=True,name=grpName)
+    newGrp = pm.group (em=True,name=grpName)
 
     #align the new created empty group to the selected object
-    pointCon = pm.parentConstraint (obj, slJoGrp, mo=False)
-    pm.delete (pointCon)
-    # pm.makeIdentity(slJoGrp, a=True)
+
+    alignTo(newGrp, obj, mode=2)
+    # pointCon = pm.parentConstraint (obj, newGrp, mo=False)
+    # pm.delete (pointCon)
+    # pm.makeIdentity(newGrp, a=True)
     
     #check if the target object has a parent
     originalParent = pm.listRelatives(obj, p=True)
     if (len(originalParent) > 0):
-        pm.parent(slJoGrp, originalParent[0], r=False)
+        pm.parent(newGrp, originalParent[0], r=False)
         if mi:
-            pm.makeIdentity(slJoGrp, a=True)
+            pm.makeIdentity(newGrp, a=True)
 
-    pm.parent(obj,slJoGrp)
-    return slJoGrp
+    pm.parent(obj,newGrp)
+    return newGrp
 
 ## example use: connectMirror(obj1, obj2, "X")
 def connectMirror (node1, node2, mirrorAxis="X"):
@@ -154,7 +200,7 @@ def lockAndHide (node, channelArray):
         attribute=("{0}.{1}".format(node, i))
         pm.setAttr(attribute, lock=True, keyable=False, channelBox=False)
     
-def alignBetween (node, targetA, targetB, pos=True, rot=True):
+def alignBetween (node, targetA, targetB, pos=True, rot=True, o=(0,0,0)):
     """
     Alignes the node between target A and target B
     Args:
@@ -171,7 +217,7 @@ def alignBetween (node, targetA, targetB, pos=True, rot=True):
         tempPo=pm.pointConstraint(targetA, targetB, node, mo=False)
         pm.delete(tempPo)
     if rot:
-        tempAim=pm.aimConstraint(targetB,node, mo=False)
+        tempAim=pm.aimConstraint(targetB,node, mo=False, o=o)
         pm.delete(tempAim)
 
 def attrPass (sourceNode, targetNode, attributes=[], inConnections=True, outConnections=True, keepSourceAttributes=False, values=True, daisyChain=False, overrideEx=False):

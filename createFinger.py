@@ -42,25 +42,36 @@ def rigSingleFinger(handController, fingerBones, suffix, mirror=False, mirrorAxi
     conts_OFF = []
     conts_ORE = []
     conts_con = []
-    for i in range(0, len(jDefList)-1):  # this second loop is necessary because joints needs to be aligned
-        pm.joint(jDefList[i], e=True, zso=True, oj="xyz", sao="yup")
+
+    for h in jDefList:
+        pm.joint(h, e=True, zso=True, oj="xyz", sao="yup") # this second loop is necessary because joints needs to be aligned
+
+    for i in range(0, len(jDefList)-1):
+        #pm.joint(jDefList[i], e=True, zso=True, oj="xyz", sao="yup")
         contScl = (pm.getAttr(jDefList[1].tx)/2)
         contName = ("cont_{0}{1}_{2}".format(whichFinger, i, suffix))
         cont = icon.circle(contName,(contScl,contScl,contScl), normal=(1,0,0))
-        if i>0:
-            pm.parent(cont, conts[len(conts)-1])
-        #cont = pm.circle(name="cont_{0}{1}_{2}".format(whichFinger, i, whichArm), radius=handContScale, nr=(1, 0, 0))
-        extra.alignTo(cont, jDefList[i], 0)
         cont_OFF=extra.createUpGrp(cont,"OFF", mi=False)
         conts_OFF.append([cont_OFF])
         cont_ORE = extra.createUpGrp(cont, "ORE", mi=False)
         cont_con = extra.createUpGrp(cont, "con", mi=False)
-        if mirror:
-            pm.setAttr("{0}.rotate{1}".format(cont_ORE, mirrorAxis), -180)
+
+
+
+
         extra.alignTo(cont_OFF, jDefList[i], 2)
-        pm.parentConstraint(cont, jDefList[i], mo=True)
+
+        if mirror:
+            pm.setAttr("%s.scale%s" % (cont_OFF, mirrorAxis), -1)
+        #     # pm.setAttr("{0}.rotate{1}".format(cont_ORE, mirrorAxis), -180)
+
+        if i>0:
+            pm.parent(cont_OFF, conts[len(conts)-1])
+            pm.makeIdentity(cont, a=True)
         conts.append(cont)
         conts_con.append(cont_con)
+
+        pm.parentConstraint(cont, jDefList[i], mo=True)
 
     # Spread
     sprMult=pm.createNode("multiplyDivide", name="sprMult_{0}_{1}".format(whichFinger, suffix))
