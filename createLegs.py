@@ -366,7 +366,8 @@ def createLeg(whichLeg, mirrorAxis="X"):
     cont_Thigh_OFF=extra.createUpGrp(cont_Thigh, "OFF")
     cont_Thigh_ORE=extra.createUpGrp(cont_Thigh, "ORE")
     if whichLeg=="r_leg":
-        pm.setAttr("%s.scale%s" % (cont_Thigh_ORE, mirrorAxis), -1)
+        #pm.setAttr("%s.scale%s" % (cont_Thigh_ORE, mirrorAxis), -1)
+        pm.setAttr("%s.rotate%s" %(cont_Thigh_ORE, mirrorAxis), -180)
         # pm.setAttr(cont_Thigh_ORE.rotateX, -180)
         
     pm.addAttr( shortName="autoTwist", longName="Auto_Twist", defaultValue=1.0, minValue=0.0, maxValue=1.0, at="float", k=True)
@@ -413,7 +414,9 @@ def createLeg(whichLeg, mirrorAxis="X"):
     cont_FK_UpLeg_OFF=extra.createUpGrp(cont_FK_UpLeg, "OFF")
     cont_FK_UpLeg_ORE=extra.createUpGrp(cont_FK_UpLeg, "ORE")
     if whichLeg=="r_leg":
-        pm.setAttr("%s.scale%s" % (cont_FK_UpLeg_ORE, mirrorAxis), -1)
+        # pm.setAttr("%s.scale%s" % (cont_FK_UpLeg_ORE, mirrorAxis), -1)
+        pm.setAttr("%s.rotate%s" %(cont_FK_UpLeg_ORE, mirrorAxis), -180)
+
         # pm.setAttr(cont_FK_UpLeg_ORE.rotateX, -180)
 
     temp_PoCon=pm.pointConstraint(jFK_Root, jFK_Knee, cont_FK_UpLeg_OFF)
@@ -440,7 +443,9 @@ def createLeg(whichLeg, mirrorAxis="X"):
     cont_FK_LowLeg_OFF=extra.createUpGrp(cont_FK_LowLeg, "OFF")
     cont_FK_LowLeg_ORE=extra.createUpGrp(cont_FK_LowLeg, "ORE")
     if whichLeg=="r_leg":
-        pm.setAttr("%s.scale%s" % (cont_FK_LowLeg_ORE, mirrorAxis), -1)
+        # pm.setAttr("%s.scale%s" % (cont_FK_LowLeg_ORE, mirrorAxis), -1)
+        pm.setAttr("%s.rotate%s" %(cont_FK_LowLeg_ORE, mirrorAxis), -180)
+
         # pm.setAttr(cont_FK_LowLeg_ORE.rotateX, -180)
 
     # //TODO : Take care the alignment functions and below lines
@@ -466,7 +471,9 @@ def createLeg(whichLeg, mirrorAxis="X"):
     cont_FK_Foot_OFF=extra.createUpGrp(cont_FK_Foot, "OFF")
     cont_FK_Foot_ORE=extra.createUpGrp(cont_FK_Foot, "ORE")
     if whichLeg=="r_leg":
-        pm.setAttr("%s.scale%s" % (cont_FK_Foot_ORE, mirrorAxis), -1)
+        # pm.setAttr("%s.scale%s" % (cont_FK_Foot_ORE, mirrorAxis), -1)
+        pm.setAttr("%s.rotate%s" %(cont_FK_Foot_ORE, mirrorAxis), -180)
+
         # pm.setAttr(cont_FK_Foot_ORE.rotateX, -180)
 
     temp_PoCon=pm.pointConstraint(jFK_Foot, jFK_Ball, cont_FK_Foot_OFF)
@@ -493,7 +500,9 @@ def createLeg(whichLeg, mirrorAxis="X"):
     cont_FK_Ball_ORE=extra.createUpGrp(cont_FK_Ball, "ORE")
 
     if whichLeg=="r_leg":
-        pm.setAttr("%s.scale%s" % (cont_FK_Ball_ORE, mirrorAxis), -1)
+        # pm.setAttr("%s.scale%s" % (cont_FK_Ball_ORE, mirrorAxis), -1)
+        pm.setAttr("%s.rotate%s" %(cont_FK_Ball_ORE, mirrorAxis), -180)
+
         # pm.setAttr(cont_FK_Ball_ORE.rotateX, -180)
         
     temp_PoCon=pm.pointConstraint(jFK_Ball, jFK_Toe, cont_FK_Ball)

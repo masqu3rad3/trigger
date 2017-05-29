@@ -56,13 +56,15 @@ def rigSingleFinger(handController, fingerBones, suffix, mirror=False, mirrorAxi
         cont_ORE = extra.createUpGrp(cont, "ORE", mi=False)
         cont_con = extra.createUpGrp(cont, "con", mi=False)
 
-
+        if mirror:
+            #pm.setAttr("%s.scale%s" % (cont_OFF, mirrorAxis), -1)
+            pm.setAttr("%s.rotate%s" %(cont_ORE, mirrorAxis), -180)
 
 
         extra.alignTo(cont_OFF, jDefList[i], 2)
 
-        if mirror:
-            pm.setAttr("%s.scale%s" % (cont_OFF, mirrorAxis), -1)
+
+
         #     # pm.setAttr("{0}.rotate{1}".format(cont_ORE, mirrorAxis), -180)
 
         if i>0:

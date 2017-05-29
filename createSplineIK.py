@@ -97,7 +97,7 @@ def createSplineIK(refJoints, name, cuts, dropoff=2):
 
     pm.setAttr(splineIK[0].dTwistControlEnable, 1)
     pm.setAttr(splineIK[0].dWorldUpType, 4)
-    pm.setAttr(splineIK[0].dForwardAxis, 2)
+    #pm.setAttr(splineIK[0].dForwardAxis, 2)
     pm.setAttr(splineIK[0].dWorldUpAxis, 3)
     pm.setAttr(splineIK[0].dWorldUpVector, (0,0,1))
     pm.setAttr(splineIK[0].dWorldUpVectorEnd, (0,0,1))
