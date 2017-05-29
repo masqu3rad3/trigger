@@ -314,8 +314,12 @@ def createArm(whichArm, mirrorAxis="X"):
     extra.alignTo(cont_Shoulder_OFF, "jInit_Shoulder_" + whichArm, 2)
 
     if whichArm == "r_arm":
-        pm.setAttr("%s.scale%s" %(cont_Shoulder_ORE,mirrorAxis), -1)
+        #pm.setAttr("%s.scale%s" %(cont_Shoulder_ORE,mirrorAxis), -1)
+        pm.setAttr("%s.rotate%s" % (cont_Shoulder_ORE, mirrorAxis), -180)
+        pm.setAttr(cont_Shoulder.scaleY, -1)
+        pm.makeIdentity(cont_Shoulder, a=True, t=False, r=False, s=True)
         #pm.makeIdentity(cont_Shoulder, a=True)
+
         #pm.setAttr(cont_Shoulder_ORE.rotateX, -180)
 
     pm.select(cont_Shoulder)
@@ -360,7 +364,9 @@ def createArm(whichArm, mirrorAxis="X"):
     cont_FK_UpArm_OFF = extra.createUpGrp(cont_FK_UpArm, "OFF")
     cont_FK_UpArm_ORE = extra.createUpGrp(cont_FK_UpArm, "ORE")
     if whichArm == "r_arm":
-        pm.setAttr("%s.scale%s" %(cont_FK_UpArm_ORE,mirrorAxis), -1)
+        #pm.setAttr("%s.scale%s" %(cont_FK_UpArm_ORE,mirrorAxis), -1)
+        pm.setAttr("%s.rotate%s" % (cont_FK_UpArm_ORE, mirrorAxis), -180)
+
         #pm.setAttr(cont_FK_UpArm_ORE.rotateX, -180)
 
     #extra.alignBetween(cont_FK_UpArm_OFF, jFK_Up, jFK_Low, o=(90, 90, 0), u=(0, 1, 0))
@@ -390,7 +396,9 @@ def createArm(whichArm, mirrorAxis="X"):
     cont_FK_LowArm_OFF = extra.createUpGrp(cont_FK_LowArm, "OFF")
     cont_FK_LowArm_ORE = extra.createUpGrp(cont_FK_LowArm, "ORE")
     if whichArm == "r_arm":
-        pm.setAttr("%s.scale%s" %(cont_FK_LowArm_ORE,mirrorAxis), -1)
+        #pm.setAttr("%s.scale%s" %(cont_FK_LowArm_ORE,mirrorAxis), -1)
+        pm.setAttr("%s.rotate%s" % (cont_FK_LowArm_ORE, mirrorAxis), -180)
+
         #pm.setAttr(cont_FK_LowArm_ORE.rotateX, -180)
 
     #extra.alignBetween(cont_FK_LowArm_OFF, jFK_Low, jFK_LowEnd, o=(90, 90, 0), u=(0, 1, 0))
@@ -604,7 +612,9 @@ def createArm(whichArm, mirrorAxis="X"):
     extra.alignTo(handLock, cont_FK_Hand_ORE, 0)
 
     if whichArm == "r_arm":
-        pm.setAttr("%s.scale%s" % (cont_FK_Hand_ORE, mirrorAxis), -1)
+        #pm.setAttr("%s.scale%s" % (cont_FK_Hand_ORE, mirrorAxis), -1)
+        pm.setAttr("%s.rotate%s" % (cont_FK_Hand_ORE, mirrorAxis), -180)
+
     #     #pm.setAttr(cont_FK_Hand_ORE.rotateX, -180)
 
     #pm.parentConstraint(cont_FK_Hand, handLock, mo=True)  ## Olusturulan ara node baglanir
