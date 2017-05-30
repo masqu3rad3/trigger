@@ -5,8 +5,8 @@ reload(extra)
 import contIcons as icon
 reload(icon)
 
-import createSplineIK as spline
-reload(spline)
+import createTwistSpline as tSpline
+reload(tSpline)
 
 def createSpine():
     spineList = pm.ls("jInit_spine*")
@@ -47,7 +47,7 @@ def createSpine():
                            location=(chestPoint + neckPoint) / 2)
     pm.xform(cont_chest, piv=chestPoint)
 
-    spine=spline.createSplineIK(pm.ls("jInit_spine*"), "spine", 4, dropoff=2)
+    spine=tSpline.createTspline(pm.ls("jInit_spine*"), "spine", 4, dropoff=2)
     splineIKCurves_ORE_List = spine[0]
     bottomConnection= spine[0][0]
     upConnection= spine[1]

@@ -27,9 +27,9 @@ import createLegs as leg
 
 reload(leg)
 
-import createSpine as spine
+import createSpine as tSpine
 
-reload(spine)
+reload(tSpine)
 
 import createNeck as neck
 
@@ -62,7 +62,7 @@ pm.setAttr(cont_master.rigVis, cb=True)
 
 pm.parent(cont_placement, cont_master)
 
-spine = spine.createSpine()
+spine = tSpine.createSpine()
 scaleGrp_spine = spine[0]
 cont_body = spine[1]
 cont_hips = spine[2]
