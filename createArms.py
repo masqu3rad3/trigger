@@ -314,7 +314,9 @@ def createArm(whichArm, mirrorAxis="X"):
     extra.alignTo(cont_Shoulder_OFF, "jInit_Shoulder_" + whichArm, 2)
 
     if whichArm == "r_arm":
-        pm.setAttr("%s.scale%s" %(cont_Shoulder_ORE,mirrorAxis), -1)
+        pm.setAttr(cont_Shoulder.scaleY, -1)
+        #pm.setAttr("%s.scale%s" %(cont_Shoulder_ORE,mirrorAxis), -1)
+        pm.setAttr("%s.rotate%s" % (cont_Shoulder_ORE, mirrorAxis), -180)
         #pm.makeIdentity(cont_Shoulder, a=True)
         #pm.setAttr(cont_Shoulder_ORE.rotateX, -180)
 
@@ -360,7 +362,8 @@ def createArm(whichArm, mirrorAxis="X"):
     cont_FK_UpArm_OFF = extra.createUpGrp(cont_FK_UpArm, "OFF")
     cont_FK_UpArm_ORE = extra.createUpGrp(cont_FK_UpArm, "ORE")
     if whichArm == "r_arm":
-        pm.setAttr("%s.scale%s" %(cont_FK_UpArm_ORE,mirrorAxis), -1)
+        pm.setAttr("%s.rotate%s" % (cont_FK_UpArm_ORE, mirrorAxis), -180)
+        # pm.setAttr("%s.scale%s" %(cont_FK_UpArm_ORE,mirrorAxis), -1)
         #pm.setAttr(cont_FK_UpArm_ORE.rotateX, -180)
 
     #extra.alignBetween(cont_FK_UpArm_OFF, jFK_Up, jFK_Low, o=(90, 90, 0), u=(0, 1, 0))
@@ -390,7 +393,8 @@ def createArm(whichArm, mirrorAxis="X"):
     cont_FK_LowArm_OFF = extra.createUpGrp(cont_FK_LowArm, "OFF")
     cont_FK_LowArm_ORE = extra.createUpGrp(cont_FK_LowArm, "ORE")
     if whichArm == "r_arm":
-        pm.setAttr("%s.scale%s" %(cont_FK_LowArm_ORE,mirrorAxis), -1)
+        pm.setAttr("%s.rotate%s" %(cont_FK_LowArm_ORE,mirrorAxis), -180)
+        # pm.setAttr("%s.scale%s" %(cont_FK_LowArm_ORE,mirrorAxis), -1)
         #pm.setAttr(cont_FK_LowArm_ORE.rotateX, -180)
 
     #extra.alignBetween(cont_FK_LowArm_OFF, jFK_Low, jFK_LowEnd, o=(90, 90, 0), u=(0, 1, 0))
@@ -593,7 +597,7 @@ def createArm(whichArm, mirrorAxis="X"):
 
     FKcontScale = (initLowerArmDist / 5, initLowerArmDist / 5, initLowerArmDist / 5)
     cont_FK_Hand = icon.cube("cont_FK_Hand_" + whichArm, FKcontScale)
-    extra.alignTo(cont_FK_Hand, endLock, 2)
+    extra.alignTo(cont_FK_Hand, endLock_Ore, 2)
 
     cont_FK_Hand_OFF = extra.createUpGrp(cont_FK_Hand, "OFF")
     cont_FK_Hand_POS = extra.createUpGrp(cont_FK_Hand, "POS")
@@ -601,13 +605,15 @@ def createArm(whichArm, mirrorAxis="X"):
 
     handLock = pm.spaceLocator(
         name="handLock_" + whichArm)  ## Bu iki satir r arm mirror posing icin dondurulse bile dogru bir weighted constraint yapilmasi icin araya bir node olusturuyor.
-    extra.alignTo(handLock, cont_FK_Hand_ORE, 0)
+    extra.alignTo(handLock, cont_FK_Hand_OFF, 2)
 
     if whichArm == "r_arm":
-        pm.setAttr("%s.scale%s" % (cont_FK_Hand_ORE, mirrorAxis), -1)
+        pm.setAttr("%s.rotate%s" % (cont_FK_Hand_ORE, mirrorAxis), -180)
+        #pm.setAttr("%s.scale%s" % (cont_FK_Hand_ORE, mirrorAxis), -1)
     #     #pm.setAttr(cont_FK_Hand_ORE.rotateX, -180)
 
-    #pm.parentConstraint(cont_FK_Hand, handLock, mo=True)  ## Olusturulan ara node baglanir
+    pm.parentConstraint(cont_FK_Hand, handLock, mo=True)  ## Olusturulan ara node baglanir
+
     ####################
     ## CREATE FINGERS ##
     ####################
@@ -696,9 +702,8 @@ def createArm(whichArm, mirrorAxis="X"):
                     cont_FK_LowArm_OFF, cont_FK_UpArm_OFF, scaleGrp_rbnLower, scaleGrp_rbnUpper, cont_midLock_POS]
     nodesJointVis = [jDef_midArm, jDef_paCon, jDef_Shoulder]
     nodesJointVisLists = [deformerJoints_rbnLower, deformerJoints_rbnUpper, nodesJointVis ]
-    nodesRigVis = [endLock_Ore, startLock_Ore, armStart, armEnd, IK_parentGRP, midLock, masterRoot, jFK_Up, handLock,
-                   (handMaster.getShape())]
-
+    # nodesRigVis = [endLock_Ore, startLock_Ore, armStart, armEnd, IK_parentGRP, midLock, masterRoot, jFK_Up, handLock,(handMaster.getShape())]
+    nodesRigVis = [endLock_Twist, startLock_Ore, armStart, armEnd, IK_parentGRP, midLock, masterRoot, jFK_Up, handLock,(handMaster.getShape())]
     # global Cont visibilities
 
 

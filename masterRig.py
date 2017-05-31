@@ -79,7 +79,7 @@ pm.scaleConstraint(cont_master, scaleGrp_spine)
 extra.attrPass(scaleGrp_spine, cont_master, values=True, daisyChain=True, overrideEx=False)
 
 ## ARMS
-
+reload(arm)
 rightArm = arm.createArm("r_arm")
 scaleGrp_r_arm = rightArm[0]
 cont_IK_hand_r_arm = rightArm[1]
@@ -91,7 +91,7 @@ pm.scaleConstraint(cont_master, scaleGrp_r_arm)
 pm.scaleConstraint(cont_master, cont_IK_hand_OFF_r_arm)
 extra.attrPass(scaleGrp_r_arm, cont_master, values=True, daisyChain=True, overrideEx=False)
 
-
+reload(arm)
 leftArm = arm.createArm("l_arm")
 scaleGrp_l_arm = leftArm[0]
 cont_IK_hand_l_arm = leftArm[1]
@@ -163,22 +163,30 @@ extra.spaceSwitcher(cont_neck, [cont_placement, cont_master, cont_hips, cont_che
 
 rootGroup=pm.group(name=rigName, em=True)
 extra.lockAndHide(rootGroup, ["tx", "ty", "tz", "rx", "ry", "rz", "sx", "sy", "sz"])
-pm.parent(scaleGrp_r_arm, rootGroup)
-pm.parent(scaleGrp_l_arm, rootGroup)
-pm.parent(scaleGrp_r_leg, rootGroup)
-pm.parent(scaleGrp_l_leg, rootGroup)
-pm.parent(scaleGrp_neck, rootGroup)
-pm.parent(scaleGrp_spine, rootGroup)
 
+pm.parent(cont_master, rootGroup)
+
+pm.parent(scaleGrp_r_arm, rootGroup)
 pm.parent(nonScaleGrp_r_arm, rootGroup)
+
+pm.parent(scaleGrp_l_arm, rootGroup)
 pm.parent(nonScaleGrp_l_arm, rootGroup)
+
+pm.parent(scaleGrp_r_leg, rootGroup)
 pm.parent(nonScaleGrp_r_leg, rootGroup)
+
+pm.parent(scaleGrp_l_leg, rootGroup)
 pm.parent(nonScaleGrp_l_leg, rootGroup)
+
+pm.parent(scaleGrp_neck, rootGroup)
 pm.parent(nonScaleGrp_neck, rootGroup)
+
+pm.parent(scaleGrp_spine, rootGroup)
 pm.parent(nonScaleGrp_spine, rootGroup)
 
+
 pm.parent(gmRoot, rootGroup)
-pm.parent(cont_master, rootGroup)
+
 
 pm.parent(cont_head_OFF, rootGroup)
 pm.parent(cont_IK_foot_OFF_l_leg, rootGroup)

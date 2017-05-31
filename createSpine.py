@@ -1,12 +1,16 @@
 import pymel.core as pm
 import collections
 import extraProcedures as extra
+
 reload(extra)
 import contIcons as icon
+
 reload(icon)
 
 import createTwistSpline as tSpline
+
 reload(tSpline)
+
 
 def createSpine():
     spineList = pm.ls("jInit_spine*")
@@ -40,24 +44,24 @@ def createSpine():
     gmRoot = pm.joint(p=rootPoint, name="gmRoot", radius=10)
     contHipsScale = (initLegsDis / 1.5, initLegsDis / 1.5, initLegsDis / 1.5)
     cont_hips = icon.waist("cont_Hips", contHipsScale, location=rootPoint)
-    contBodyScale = (initLegsDis*0.75, initLegsDis*0.75, initLegsDis*0.75)
+    contBodyScale = (initLegsDis * 0.75, initLegsDis * 0.75, initLegsDis * 0.75)
     cont_body = icon.square("cont_Body", contBodyScale, location=rootPoint)
 
     cont_chest = icon.cube("cont_Chest", (initShouDis, initUpBodyDis / 2, initUpBodyDis / 2),
                            location=(chestPoint + neckPoint) / 2)
     pm.xform(cont_chest, piv=chestPoint)
 
-    spine=tSpline.createTspline(pm.ls("jInit_spine*"), "spine", 4, dropoff=2)
+    spine = tSpline.createTspline(pm.ls("jInit_spine*"), "spine", 4, dropoff=2)
     splineIKCurves_ORE_List = spine[0]
-    bottomConnection= spine[0][0]
-    upConnection= spine[1]
-    midConnection= spine[0][len(spine[0])/2]
-    endPositionLock= spine[2]
-    scaleGrp=spine[3]
-    nonScaleGrp=spine[4]
-    passCont=spine[5]
-    defJoints = spine[6]
-    noTouchListofLists = spine[7]
+    bottomConnection = spine[1]
+    upConnection = spine[2]
+    midConnection = spine[0][len(spine[0]) / 2]
+    endPositionLock = spine[3]
+    scaleGrp = spine[4]
+    nonScaleGrp = spine[5]
+    passCont = spine[6]
+    defJoints = spine[7]
+    noTouchListofLists = spine[8]
 
     # # connect the spine root to the master root
     pm.parentConstraint(gmRoot, bottomConnection, mo=True)
@@ -79,8 +83,6 @@ def createSpine():
 
     pm.parentConstraint(midSpineLocA, midSpineLocB, midConnection, mo=True)
 
-
-
     contSpineFKAScale = (initLegsDis / 2, initLegsDis / 2, initLegsDis / 2)
     cont_spineFK_A_01 = icon.circle("cont_SpineFK_A01", contSpineFKAScale, location=rootPoint)
     cont_spineFK_A_02 = icon.circle("cont_SpineFK_A02", contSpineFKAScale, location=midPoint)
@@ -97,7 +99,7 @@ def createSpine():
     pm.parent(cont_spineFK_A_03, cont_spineFK_A_02)
     pm.parent(cont_spineFK_A_02, cont_spineFK_A_01)
     pm.parent(cont_spineFK_A_01, cont_body)
-    pm.parent(spine[0], scaleGrp) # contcurve Ore s -> scaleGrp
+    pm.parent(spine[0], scaleGrp)  # contcurve Ore s -> scaleGrp
     pm.parent(jChestPlug, scaleGrp)
 
     pm.parent(midSpineLocB, cont_hips)
@@ -127,7 +129,7 @@ def createSpine():
     for i in fkContsB:
         cont_body.fkBvis >> i.visibility
 
-    for i in range (0, len(splineIKCurves_ORE_List)):
+    for i in range(0, len(splineIKCurves_ORE_List)):
         if i != 0 or i != len(splineIKCurves_ORE_List):
             node = extra.createUpGrp(splineIKCurves_ORE_List[i], "OFF")
             cont_body.tweakVis >> node.v
@@ -144,7 +146,7 @@ def createSpine():
 
     # global cont visibilities
 
-    for i in range (0, len(splineIKCurves_ORE_List)):
+    for i in range(0, len(splineIKCurves_ORE_List)):
         if i != 0 or i != len(splineIKCurves_ORE_List):
             scaleGrp.contVis >> splineIKCurves_ORE_List[i].v
     scaleGrp.contVis >> cont_body.v
@@ -159,22 +161,21 @@ def createSpine():
     # global rig visibilities
 
     scaleGrp.rigVis >> splineIKCurves_ORE_List[0].v
-    scaleGrp.rigVis >> splineIKCurves_ORE_List[len(splineIKCurves_ORE_List)-1].v
+    scaleGrp.rigVis >> splineIKCurves_ORE_List[len(splineIKCurves_ORE_List) - 1].v
 
     scaleGrp.rigVis >> midSpineLocA.v
     scaleGrp.rigVis >> midSpineLocB.v
 
     scaleGrp.rigVis >> gmRoot.v
 
-    #scaleGrp.rigVis >> jChestPlug.v
+    # scaleGrp.rigVis >> jChestPlug.v
     scaleGrp.rigVis >> jArmPlug_l_arm.v
     scaleGrp.rigVis >> jArmPlug_r_arm.v
-    #scaleGrp.rigVis >> jHeadPlug.v
+    # scaleGrp.rigVis >> jHeadPlug.v
 
     for lst in noTouchListofLists:
         for i in lst:
             scaleGrp.rigVis >> i.v
-
 
     ## FOOL PROOFING
 
@@ -204,6 +205,7 @@ def createSpine():
     extra.colorize(cont_spineFK_B_02, indexFKB)
     extra.colorize(cont_spineFK_B_03, indexFKB)
 
-    #return (scaleGrp, cont_chest, master Root, head plug, rightArmPlug, leftArmPlug, nonScaleGrp)
-    returnTuple=(scaleGrp, cont_body, cont_hips, cont_chest, gmRoot, jHeadPlug, jArmPlug_r_arm, jArmPlug_l_arm, nonScaleGrp)
+    # return (scaleGrp, cont_chest, master Root, head plug, rightArmPlug, leftArmPlug, nonScaleGrp)
+    returnTuple = (
+    scaleGrp, cont_body, cont_hips, cont_chest, gmRoot, jHeadPlug, jArmPlug_r_arm, jArmPlug_l_arm, nonScaleGrp)
     return returnTuple

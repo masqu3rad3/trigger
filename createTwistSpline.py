@@ -48,15 +48,25 @@ def createTspline(refJoints, name, cuts, dropoff=2):
     for i in range(0, cuts + 2): # iterates one extra to create an additional joint for orientation
         place = rootVc + (segmentVc * (i))
         j = pm.joint(p=place, name="jIK_" + name + str(i), )
-        pm.setAttr(j.displayLocalAxis, 1)
+        # pm.setAttr(j.displayLocalAxis, 1)
         if i < (cuts+1): # if it is not the extra bone, update the lists
             IKjoints.append(j)
             curvePoints.append(place)
 
+    pm.parent(IKjoints[0], nonScaleGrp)
+
     # ORIENT JOINTS PROPERLY
 
+    ######  ######  ####### ######  ####### ######  #       #     #
+    #     # #     # #     # #     # #       #     # #        #   #
+    #     # #     # #     # #     # #       #     # #         # #
+    ######  ######  #     # ######  #####   ######  #          #
+    #       #   #   #     # #       #       #   #   #          #
+    #       #    #  #     # #       #       #    #  #          #
+    #       #     # ####### #       ####### #     # #######    #
+
     for j in IKjoints:
-        pm.joint(j, e=True, zso=True, oj="xyz", sao="yup")
+        pm.joint(j, e=True, zso=True, oj="yzx", sao="zup")
 
     # get rid of the extra bone
     deadBone = pm.listRelatives(IKjoints[len(IKjoints)-1], c=True)
@@ -71,13 +81,13 @@ def createTspline(refJoints, name, cuts, dropoff=2):
     for i in range(0, len(contDistances)):
         ctrlVc = splitVc.normal() * contDistances[i]
         place = rootVc + (ctrlVc)
-        j = pm.joint(p=place, name="jCont_spline_" + name + str(i), radius=5, o=(0,0,90))
-        pm.setAttr(j.displayLocalAxis, 1)
+        j = pm.joint(p=place, name="jCont_spline_" + name + str(i), radius=5, o=(0,0,0))
+        # pm.setAttr(j.displayLocalAxis, 1)
         contJoints.append(j)
         pm.select(d=True)
 
-    for j in contJoints:
-        pm.joint(j, e=True, zso=True, oj="xyz", sao="yup")
+    # for j in contJoints:
+    #     pm.joint(j, e=True, zso=True, oj="yzx", sao="zup")
 
 
     # create the splineIK for the IK joints
@@ -95,9 +105,11 @@ def createTspline(refJoints, name, cuts, dropoff=2):
 
     # create the RP Solver IKs for the jDef joints
     poleGroups=[]
+    RPhandles=[]
     for i in range (0,len(defJoints)):
         if i < len(defJoints)-1:
             RP = pm.ikHandle(sj=defJoints[i], ee=defJoints[i+1], name="tSpine_RP_%s_%s" %(i, name), sol="ikRPsolver")
+            RPhandles.append(RP[0])
             #rpSolvers.append(RP[0])
             # # create locator and group for each rp
             loc = pm.spaceLocator(name="tSpinePoleLoc_%s_%s" %(i, name))
@@ -109,6 +121,7 @@ def createTspline(refJoints, name, cuts, dropoff=2):
             poleGroups.append(loc_OFF)
             pm.poleVectorConstraint(loc, RP[0])
             pm.pointConstraint(IKjoints[i+1], RP[0])
+            pm.parent(RP[0], nonScaleGrp)
 
     # # connect the roots of two chains
     pm.pointConstraint(IKjoints[0], defJoints[0], mo=False)
@@ -116,10 +129,10 @@ def createTspline(refJoints, name, cuts, dropoff=2):
     # connect rotations of locator groups
     for i in range (0,len(poleGroups)):
         blender = pm.createNode("blendTwoAttr", name="tSplineX_blend"+str(i))
-        contJoints[0].rotateX >> blender.input[0]
-        contJoints[len(contJoints) - 1].rotateX >> blender.input[1]
+        contJoints[0].rotateY >> blender.input[0]
+        contJoints[len(contJoints) - 1].rotateY >> blender.input[1]
         blender.output >> poleGroups[i].rotateY
-        blendRatio = (i+1.0) /5
+        blendRatio = (i+0.0) / (cuts-1.0)
         pm.setAttr(blender.attributesBlender, blendRatio)
 
 
@@ -133,17 +146,17 @@ def createTspline(refJoints, name, cuts, dropoff=2):
             cont_Curve=icon.star("cont_spline_"+name+str(i), (scaleRatio,scaleRatio,scaleRatio))
         else:
             cont_Curve=pm.spaceLocator(name="lockPoint_"+name+str(i))
-        cont_Curve_OFF = extra.createUpGrp(cont_Curve, "OFF")
+        #cont_Curve_OFF = extra.createUpGrp(cont_Curve, "OFF")
         cont_Curve_ORE=extra.createUpGrp(cont_Curve,"ORE")
-        extra.alignTo(cont_Curve_OFF, contJoints[i],2)
+        extra.alignTo(cont_Curve_ORE, contJoints[i],2)
         pm.parentConstraint(cont_Curve, contJoints[i])
         contCurves.append(cont_Curve)
         contCurves_ORE.append(cont_Curve_ORE)
 
     # STRETCH and SQUASH
-
-    ## Create Stretch and Squash Nodes
-
+    #
+    # Create Stretch and Squash Nodes
+    #
     # first controller is the one which holds the attributes to be passed
     attPassCont = (contCurves[0])
 
@@ -174,7 +187,7 @@ def createTspline(refJoints, name, cuts, dropoff=2):
         middlePoint = (len(IKjoints) / 2)
         volumePow = pm.createNode("multiplyDivide", name="volume_Power_" + name)
         volumeFactor = pm.createNode("multiplyDivide", name="volume_Factor_" + name)
-        attPassCont.volumeFactor >> volumeFactor.input1Y
+        attPassCont.volumeFactor >> volumeFactor.input1X
         attPassCont.volumeFactor >> volumeFactor.input1Z
         volumeFactor.output >> volumePow.input2
 
@@ -182,17 +195,17 @@ def createTspline(refJoints, name, cuts, dropoff=2):
 
         ## make sure first and last joints preserves the full volume
         if i == 0 or i == len(IKjoints) - 1:
-            pm.setAttr(volumeFactor.input2Y, 0)
+            pm.setAttr(volumeFactor.input2X, 0)
             pm.setAttr(volumeFactor.input2Z, 0)
 
         elif (i <= middlePoint):
             powValue = powValue - 1
-            pm.setAttr(volumeFactor.input2Y, powValue)
+            pm.setAttr(volumeFactor.input2X, powValue)
             pm.setAttr(volumeFactor.input2Z, powValue)
 
         else:
             powValue = powValue + 1
-            pm.setAttr(volumeFactor.input2Y, powValue)
+            pm.setAttr(volumeFactor.input2X, powValue)
             pm.setAttr(volumeFactor.input2Z, powValue)
 
         curveInfo.arcLength >> curveGlobMult.input1X
@@ -203,15 +216,15 @@ def createTspline(refJoints, name, cuts, dropoff=2):
         scaleGrp.sx >> curveGlobMult.input2X
         stretchSw.output >> lengthMult.input1X
         pm.setAttr(lengthMult.input2X, initialLength)
-        lengthMult.outputX >> boneGlobMult.input1X
+        lengthMult.outputX >> boneGlobMult.input1Y
 
-        lengthMult.outputX >> volumePow.input1Y
+        lengthMult.outputX >> volumePow.input1X
         lengthMult.outputX >> volumePow.input1Z
-        pm.setAttr(volumeSw.color2G, 1)
+        pm.setAttr(volumeSw.color2R, 1)
         pm.setAttr(volumeSw.color2B, 1)
-        volumePow.outputX >> volumeSw.color1G
+        volumePow.outputX >> volumeSw.color1R
         volumePow.outputX >> volumeSw.color1B
-        volumeSw.outputG >> boneGlobMult.input1Y
+        volumeSw.outputR >> boneGlobMult.input1X
         volumeSw.outputB >> boneGlobMult.input1Z
         scaleGrp.sx >> boneGlobMult.input2X
         scaleGrp.sx >> boneGlobMult.input2Y
@@ -221,7 +234,7 @@ def createTspline(refJoints, name, cuts, dropoff=2):
         boneGlobMult.output >> IKjoints[i].scale
         boneGlobMult.output >> defJoints[i].scale
 
-    ## Create endLock
+    # Create endLock
     endLock= pm.spaceLocator(name="endLock_"+name)
     pm.pointConstraint(defJoints[len(defJoints)-1], endLock, mo=False)
 
@@ -244,7 +257,7 @@ def createTspline(refJoints, name, cuts, dropoff=2):
 
     # RETURN
 
-    noTouchData = ([splineCurve, splineIK[0], endLock], contJoints, poleGroups)
-    ## returns: (ConnectionPointBottom, chestControllerConnection, endLock, scaleGrp, nonScaleGrp, Nodes with attributes to pass, deformation joints)
-    returnTuple=(contCurves_ORE, contCurves[len(contCurves)-1], endLock, scaleGrp, nonScaleGrp, attPassCont, defJoints, noTouchData)
+    noTouchData = ([splineCurve, splineIK[0], endLock], IKjoints, contJoints, poleGroups, RPhandles)
+    ## returns: (ConnectionPointBottom, bottomController, chestController, endLock, scaleGrp, nonScaleGrp, Nodes with attributes to pass, deformation joints)
+    returnTuple=(contCurves_ORE, contCurves[0], contCurves[len(contCurves)-1], endLock, scaleGrp, nonScaleGrp, attPassCont, defJoints, noTouchData)
     return returnTuple
