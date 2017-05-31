@@ -31,8 +31,10 @@ def rigSingleFinger(handController, fingerBones, suffix, mirror=False, mirrorAxi
     pm.select(d=True)
     for i in range(0, len(fingerBones)):
         jPos = fingerBones[i].getTranslation(space="world")
-        j = pm.joint(name="jDef_{0}{1}_{2}".format(whichFinger, i, suffix), p=jPos, radius=1.0)
-
+        jOri = pm.joint(fingerBones[i], q=True, o=True)
+        print jOri
+        j = pm.joint(name="jDef_{0}{1}_{2}".format(whichFinger, i, suffix), radius=1.0)
+        extra.alignTo(j, fingerBones[i], 2)
         if i == (len(fingerBones) - 1):
             replacedName = (j.name()).replace("jDef", "j")
             pm.rename(j, replacedName)
@@ -43,8 +45,8 @@ def rigSingleFinger(handController, fingerBones, suffix, mirror=False, mirrorAxi
     conts_ORE = []
     conts_con = []
 
-    for h in jDefList:
-        pm.joint(h, e=True, zso=True, oj="xyz", sao="yup") # this second loop is necessary because joints needs to be aligned
+    # for h in jDefList:
+    #     pm.joint(h, e=True, zso=True, oj="xyz", sao="yup") # this second loop is necessary because joints needs to be aligned
 
     for i in range(0, len(jDefList)-1):
         #pm.joint(jDefList[i], e=True, zso=True, oj="xyz", sao="yup")
@@ -98,13 +100,25 @@ def rigSingleFinger(handController, fingerBones, suffix, mirror=False, mirrorAxi
     return returnList
 
 
-def rigFingers(rootBone, controller, suffix, mirror=False):
+def rigFingers(rootBone, controller, suffix="", mirror=False):
+    """
+    Rigs all the child fingers (or similar limbs) If there is a thumb finger is present, it the reference Joints name should contain the word 'thumb' in it 
+    Args:
+        rootBone: (class) Parent of all limbs. For example a hand joint or foot joint.
+        controller: (class) Controller object which will hold the custom attributes.
+        suffix: (String, optional) This string will be added at the end of the names of the new nodes.
+        mirror: If True, the controllers will be mirrored for the right limb.
+
+    Returns: List [Master Root, All Controllers' connection group, deformer joints]
+
+    """
     rootPosition=rootBone.getTranslation(space="world")
     rootMaster = pm.spaceLocator(name="handMaster_" + suffix)
     extra.alignTo(rootMaster, rootBone, 2)
     pm.select(d=True)
     #deformerJoints=[]
     jDef_Root=pm.joint(name="jDef_fingerRoot_"+suffix, p=rootPosition, radius=1.0)
+    extra.alignTo(jDef_Root, rootBone, 2)
     deformerJoints=[[jDef_Root]]
     pm.parent(jDef_Root, rootMaster)
     fingerRoots=pm.listRelatives(rootBone, children=True, type="joint")

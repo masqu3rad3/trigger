@@ -97,7 +97,10 @@ def createInitBones(fingers=5, spineSegments=2):
             index03=pm.joint(p=(17.746*dir,25.05,1.139), name=("jInit_index03_"+whichArm))
             index04=pm.joint(p=(18.278*dir,25.05,1.254), name=("jInit_index04_"+whichArm))
             pm.parent(index00, lowendarm)
-            jointList.extend([index00,index01,index02,index03,index04])
+            indexJoints = [index00,index01,index02,index03,index04]
+            for i in indexJoints:
+                pm.joint(i, e=True, zso=True, oj="xyz", sao="yup")
+            jointList.extend(indexJoints)
 
             if fingerCount>1:
                 pm.select(d=True)
@@ -106,7 +109,10 @@ def createInitBones(fingers=5, spineSegments=2):
                 thumb02=pm.joint(p=(15.64*dir,24.523,1.885), name=("jInit_thumb02_"+whichArm))
                 thumb03=pm.joint(p=(16.053*dir,24.276,2.356), name=("jInit_thumb03_"+whichArm))
                 pm.parent(thumb00, lowendarm)
-                jointList.extend([thumb00,thumb01,thumb02,thumb03])
+                thumbJoints = [thumb00,thumb01,thumb02,thumb03]
+                for i in thumbJoints:
+                    pm.joint(i, e=True, zso=True, oj="xyz", sao="yup")
+                jointList.extend(thumbJoints)
 
                 if fingerCount>2:
                     pm.select(d=True)
@@ -116,7 +122,10 @@ def createInitBones(fingers=5, spineSegments=2):
                     middle03=pm.joint(p=(18.012*dir,25.123,0.242), name=("jInit_middle03_"+whichArm))
                     middle04=pm.joint(p=(18.588*dir,25.123,0.285), name=("jInit_middle04_"+whichArm))
                     pm.parent(middle00, lowendarm)
-                    jointList.extend([middle00,middle01,middle02,middle03,middle04])
+                    middleJoints = [middle00,middle01,middle02,middle03,middle04]
+                    for i in middleJoints:
+                        pm.joint(i, e=True, zso=True, oj="xyz", sao="yup")
+                    jointList.extend(middleJoints)
 
                     if fingerCount>3:
                         pm.select(d=True)
@@ -126,7 +135,10 @@ def createInitBones(fingers=5, spineSegments=2):
                         ring03=pm.joint(p=(17.926*dir,25.123,-0.58), name=("jInit_ring03_"+whichArm))
                         ring04=pm.joint(p=(18.414*dir,25.123,-0.61), name=("jInit_ring04_"+whichArm))
                         pm.parent(ring00, lowendarm)
-                        jointList.extend([ring00,ring01,ring02,ring03,ring04])
+                        ringJoints = [ring00,ring01,ring02,ring03,ring04]
+                        for i in ringJoints:
+                            pm.joint(i, e=True, zso=True, oj="xyz", sao="yup")
+                        jointList.extend(ringJoints)
 
                         if fingerCount>4:
                             pm.select(d=True)
@@ -136,7 +148,10 @@ def createInitBones(fingers=5, spineSegments=2):
                             pinky03=pm.joint(p=(17.378*dir,25,-1.286), name=("jInit_pinky03_"+whichArm))
                             pinky04=pm.joint(p=(17.767*dir,25,-1.361), name=("jInit_pinky04_"+whichArm))
                             pm.parent(pinky00, lowendarm)
-                            jointList.extend([pinky00,pinky01,pinky02,pinky03,pinky04])
+                            pinkyJoints = [pinky00,pinky01,pinky02,pinky03,pinky04]
+                            for i in pinkyJoints:
+                                pm.joint(i, e=True, zso=True, oj="xyz", sao="yup")
+                            jointList.extend(pinkyJoints)
                             if fingerCount>5:
                                 pm.error("finger limit is 5. Exceeded")
             return jointList
