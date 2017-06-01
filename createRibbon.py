@@ -17,7 +17,12 @@ reload(icon)
 
 def createRibbon(startPoint, endPoint, name, orientation):
     nonScaleGrp=pm.group(em=True, name="RBN_nonScaleGrp_"+name)
-    ribbonLength=extra.getDistance(pm.PyNode(startPoint), pm.PyNode(endPoint))
+
+    if startPoint.type() == str:
+        startPoint = pm.PyNode("startPoint")
+    if endPoint.type() == str:
+        endPoint = pm.PyNode("endPoint")
+    ribbonLength=extra.getDistance(startPoint, endPoint)
     nSurfTrans=pm.nurbsPlane(ax=(0,0,1),u=5,v=1, w=ribbonLength, lr=(1.0/ribbonLength), name="nSurf_"+name)
     pm.parent(nSurfTrans[0], nonScaleGrp)
     pm.rebuildSurface (nSurfTrans, ch=1, rpo=1, rt=0, end=1, kr=2, kcp=0, kc=0, su=5, du=3, sv=1, dv=1, tol=0, fr=0, dir=1)

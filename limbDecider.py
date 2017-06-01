@@ -47,31 +47,42 @@ def limbDecider(rootJoint, limbType="auto", whichSide="auto", mirrorAxis="-X"):
         # get the necessary ref Joints
         errorMsg="arm joints missing or wrong"
         shoulder = rootJoint
-        shoulderChildren = pm.listRelatives(shoulder, c=True)
-        if len(shoulderChildren) == 1:
-            upArm = shoulderChildren[0]
-            upArmChildren = pm.listRelatives(upArm, c=True)
-            if len(upArmChildren) == 1:
-                lowArm = upArmChildren[0]
-                lowArmChildren = pm.listRelatives(lowArm, c=True)
-                if len(lowArmChildren) == 1:
-                    lowArmEnd = lowArmChildren[0]
-                    # create the Dictionary
-                    armInits = {"shoulder": shoulder, "upArm": upArm, "lowArm": lowArm, "lowArmEnd": lowArmEnd}
-                else:
-                    pm.error(errorMsg)
-            else:
-                pm.error(errorMsg)
-        else:
-            pm.error(errorMsg)
+        upArm = (jFoolProof(shoulder))[0]
+        lowArm = (jFoolProof(upArm))[0]
+        lowArmEnd = (jFoolProof(lowArm))[0]
+
+        armInits = {
+            "shoulder": shoulder,
+            "upArm": upArm,
+            "lowArm": lowArm,
+            "lowArmEnd": lowArmEnd
+        }
+        arm.createArm(armInits, (whichSide+"_arm"), mirrorAxis=mAxis)
 
 
-    print limbType
-    print whichSide
-    print armInits["shoulder"]
 
-    # limbRoots = pm.listRelatives(rootJoint, c=True)
-    # print limbRoots
-    #
-    # for i in range (len(limbRoots)):
-    #     print limbRoots[i]
+
+
+
+def getLegBones(rootNode):
+    rCon = rootNode
+    rootNodeChildren = pm.listRelatives(rootNode, c=True)
+    if jFoolProof(rootNodeChildren):
+        rootNodeChildren[0]
+
+
+
+
+def jFoolProof(node, type="joint", limit=1):
+    children = pm.listRelatives(node, c=True)
+    validChildren=[]
+    jCount=0
+    for i in children:
+        if i.type() == type:
+            validChildren.append(i)
+            jCount += 1
+    if jCount > 0 < limit:
+        return validChildren
+    else:
+        pm.error("joint count does not meet the requirements")
+
