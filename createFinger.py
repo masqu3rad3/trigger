@@ -5,8 +5,20 @@ import contIcons as icon
 reload(icon)
 
 
+def rigSingleFinger(handController, fingerBones, suffix="", mirror=False, mirrorAxis="Z", thumb=False):
+    """
+    Rigs a single finger. (or a similar limb)
+    Args:
+        handController: (Transform Node) The Object which will be the custom attributes created on. 
+        fingerBones: (List of Joints) List of reference joints. Deformation joints will be created according to them.
+        suffix: (String, optional) This string will be added at the end of the names of the new nodes.
+        mirror: (Bool) If True, the controllers will be mirrored for the right limb. Default is False
+        mirrorAxis: (String) Self explanatory. Valid options are "X", "Y", "Z" Letters must be capital.
+        thumb: (Boolean) If true, the custom attributes will be suitable for thumb movement. 
 
-def rigSingleFinger(handController, fingerBones, suffix, mirror=False, mirrorAxis="Z", thumb=False):
+    Returns: List [Finger Roots OFF Group List, Deformer Joints List, Control Curves List]
+
+    """
     if "thumb" in fingerBones[0]:
         thumb=True
     if len(fingerBones)<2:
@@ -62,12 +74,7 @@ def rigSingleFinger(handController, fingerBones, suffix, mirror=False, mirrorAxi
             #pm.setAttr("%s.scale%s" % (cont_OFF, mirrorAxis), -1)
             pm.setAttr("%s.rotate%s" %(cont_ORE, mirrorAxis), -180)
 
-
         extra.alignTo(cont_OFF, jDefList[i], 2)
-
-
-
-        #     # pm.setAttr("{0}.rotate{1}".format(cont_ORE, mirrorAxis), -180)
 
         if i>0:
             pm.parent(cont_OFF, conts[len(conts)-1])
@@ -95,7 +102,7 @@ def rigSingleFinger(handController, fingerBones, suffix, mirror=False, mirrorAxi
         bend = pm.addAttr(handController, shortName=bendAttr, defaultValue=0.0, at="float", k=True)
         pm.PyNode("{0}.{1}".format(handController, bendAttr)) >> conts_con[f].rotateZ
 
-    # Return [fingerRoot_OFF, jDefList]
+    # Return [fingerRoot_OFF, jDefList, controllers]
     returnList=[conts_OFF[0], jDefList, conts]
     return returnList
 
@@ -109,7 +116,7 @@ def rigFingers(rootBone, controller, suffix="", mirror=False):
         suffix: (String, optional) This string will be added at the end of the names of the new nodes.
         mirror: If True, the controllers will be mirrored for the right limb.
 
-    Returns: List [Master Root, All Controllers' connection group, deformer joints]
+    Returns: List [Master Root, All Controllers' connection group, Deformer joints List]
 
     """
     rootPosition=rootBone.getTranslation(space="world")

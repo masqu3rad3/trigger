@@ -405,3 +405,4 @@ def spaceSwitcher (node, targetList, overrideExisting=False, mode="parent", defa
             else:
                 value = 0
             pm.setDrivenKeyframe(con, cd=driver, at=attr , dv=dPos+1, v=value )
+

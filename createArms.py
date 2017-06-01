@@ -24,16 +24,10 @@ reload(cf)
 ###########################
 
 def createArm(whichArm, mirrorAxis="X"):
-    # contScale= extra.getDistance(pm.PyNode("jInit_Low_"+whichArm), pm.PyNode("jInit_LowEnd_"+whichArm))
 
     initBones = pm.ls("jInit*" + whichArm)
     totalJcount = 4
-    # if pm.objExists(pm.PyNode("jInit_LowEnd_{}".format(whichArm))):
-    #     fingerCount=pm.getAttr(pm.PyNode("jInit_LowEnd_{0}.{1}".format(whichArm,"fingerCount")))
-    #     totalJcount=4+(fingerCount*5)-1
-    # else:
-    #     pm.error("Some or all Arm Init Bones are missing (or Renamed)(fingercount)")
-    #     return
+
     if (len(initBones) < totalJcount):
         pm.error("Some or all Arm Init Bones are missing (or Renamed)")
         return
@@ -774,3 +768,4 @@ def createArm(whichArm, mirrorAxis="X"):
     # return [Spine_Connection, IK_Controller, IK Controller OFF, Pole_Vector, Do_Not_Touch_Data, nodesContVis]
     returnTuple = (scaleGrp, cont_IK_hand, cont_IK_hand_OFF, cont_Pole, nonScaleGrp, nodesContVis)
     return returnTuple
+
