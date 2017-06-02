@@ -406,3 +406,113 @@ def spaceSwitcher (node, targetList, overrideExisting=False, mode="parent", defa
                 value = 0
             pm.setDrivenKeyframe(con, cd=driver, at=attr , dv=dPos+1, v=value )
 
+def jointTypeID(jNode, idBy="idByLabel"):
+    if type(jNode) == str:
+        jNode = pm.PyNode(jNode)
+
+    # acceptable type keys to use.
+
+    # // TODO: FIX DICTIONARY for ALL JOINTS or vice-versa
+
+    typeDict = {
+        1: 'Root',
+        2: 'Hip',
+        3: 'Knee',
+        4: 'Foot',
+        5: 'Toe',
+        6: 'Spine',
+        7: 'Neck',
+        8: 'Head',
+        9: 'Collar',
+        10: 'Shoulder',
+        11: 'Elbow',
+        12: 'Hand',
+        13: 'Finger',
+        14: 'Thumb',
+        18: 'Other',
+        19: 'Index Finger',
+        20: 'Middle Finger',
+        21: 'Ring Finger',
+        22: 'Pinky Finger',
+        23: 'Extra Finger',
+        24: 'Big Toe',
+        25: 'Index Toe',
+        26: 'Middle Toe',
+        27: 'Ring Toe',
+        28: 'Pinky Toe',
+        29: 'Extra Toe'
+    }
+    if idBy == "idByLabel":
+            typeNum = pm.getAttr(jNode+".type") # object oriented approach is not working in pymel
+
+            if typeNum not in typeDict.keys():
+                pm.error("Joint Type is not detected with idByLabel method")
+
+            if typeNum == 18: # if type is in the 'other' category:
+                typeName = pm.getAttr(jNode.otherType)
+            else:
+                typeName = typeDict[typeNum]
+            return typeName
+
+    if idBy == "idByName":
+        if "arm" in jNode.name():
+            typeName = "arm"
+        elif "leg" in jNode.name():
+            typeName = "leg"
+        elif "spine" in jNode.name():
+            typeName = "spine"
+        elif "neck" in jNode.name():
+            typeName = "neck"
+        elif "indexF" in jNode.name():
+            typeName = "Index Finger"
+        elif "thumb" in jNode.name():
+            typeName = "Thumb"
+        elif "middleF" in jNode.name():
+            typeName = "Middle Finger"
+        elif "ringF" in jNode.name():
+            typeName = "Ring Finger"
+        elif "pinkyF" in jNode.name():
+            typeName = "Pinky Finger"
+        elif "indexT" in jNode.name():
+            typeName = "Index Toe"
+        elif "bigT" in jNode.name():
+            typeName = "Big Toe"
+        elif "middleT" in jNode.name():
+            typeName = "Middle Toe"
+        elif "ringT" in jNode.name():
+            typeName = "Ring Toe"
+        elif "pinkyT" in jNode.name():
+            typeName = "Pinky Toe"
+        else:
+            pm.error("Joint Type is not detected with idByName method")
+        return typeName
+
+def jointSideID(jNode, idBy="idByLabel"):
+    if type(jNode) == str:
+        jNode = pm.PyNode(jNode)
+    # acceptable side keys to use.
+    sideDict = {
+        0: 'C',
+        1: 'L',
+        2: 'R',
+    }
+
+    if idBy == "idByLabel":
+            sideNum = pm.getAttr(jNode.side)
+
+            if sideNum not in sideDict.keys():
+                pm.error("Joint Side is not detected with idByLabel method")
+            side = sideDict[sideNum]
+            return side
+
+    if idBy == "idByName":
+        # identify the side
+        if "_R_" in jNode.name():
+            side = sideDict[2]
+        elif "_L_" in jNode.name():
+            side = sideDict[1]
+        elif "_C_" in jNode.name():
+            side = sideDict[0]
+        else:
+            pm.error("Joint Side is not detected with idByName method")
+        return side

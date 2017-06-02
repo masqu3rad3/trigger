@@ -33,7 +33,7 @@ def createInitBones(fingers=5, spineSegments=2):
     #whichLeg="l_leg"
 
     ########### LEG BONES DEF ############
-
+    # // TODO: FIX THE NAMES
     def initLegBones(whichLeg, dir):
         pm.select(d=True)
         if pm.objExists("jInit_*"+whichLeg):
@@ -67,39 +67,52 @@ def createInitBones(fingers=5, spineSegments=2):
         return jointList
 
 
-
-
-
-    #  TODO // Make a fool check for if there is a naming conflict
-
     ########### ARM BONES DEF ############
 
     def initArmBones(whichArm, dir, fingerCount=5):
+        if dir == -1:
+            side = 2
+        if dir == 1:
+            side = 1
         if pm.objExists("jInit_*"+whichArm):
             pm.error("Naming mismatch!!! There are Arm Initializers in the Scene")
             return
         pm.select(d=True)
-        shoulder=pm.joint(p=(2*dir,25,0), name=("jInit_Shoulder_"+whichArm))
-        uparm=pm.joint(p=(5*dir,25,0), name=("jInit_Up_"+whichArm))
-        lowarm=pm.joint(p=(9*dir,25,-1), name=("jInit_Low_"+whichArm))
-        lowendarm=pm.joint(p=(14*dir,25,0), name=("jInit_LowEnd_"+whichArm))
-        # pm.addAttr(lowendarm, shortName="fingerCount", longName="fingerCount", defaultValue=fingerCount, minValue=0,
-        #            maxValue=5, at="long", k=False)
-        jointList=[shoulder, uparm, lowarm, lowendarm]
+        collar=pm.joint(p=(2*dir,25,0), name=("jInit_collar_"+whichArm))
+        shoulder=pm.joint(p=(5*dir,25,0), name=("jInit_shoulder_"+whichArm))
+        elbow=pm.joint(p=(9*dir,25,-1), name=("jInit_elbow_"+whichArm))
+        hand=pm.joint(p=(14*dir,25,0), name=("jInit_hand_"+whichArm))
+        # Orientation
+        pm.joint(collar, e=True, zso=True, oj="xyz", sao="yup")
+        pm.joint(shoulder, e=True, zso=True, oj="xyz", sao="yup")
+        pm.joint(elbow, e=True, zso=True, oj="xyz", sao="yup")
+        pm.joint(hand, e=True, zso=True, oj="xyz", sao="yup")
+        # Joint Labeling
+        pm.setAttr(collar+".side", side)
+        pm.setAttr(collar+".type", 9)
+        pm.setAttr(shoulder + ".side", side)
+        pm.setAttr(shoulder + ".type", 10)
+        pm.setAttr(elbow + ".side", side)
+        pm.setAttr(elbow + ".type", 11)
+        pm.setAttr(hand + ".side", side)
+        pm.setAttr(hand + ".type", 12)
+
+        jointList=[collar, shoulder, elbow, hand]
 
         if fingerCount==0:
             return jointList
         if fingerCount>0:
             pm.select(d=True)
-            index00=pm.joint(p=(15.517*dir,25.05,0.656), name=("jInit_index00_"+whichArm))
-            index01=pm.joint(p=(16.494*dir,25.05,0.868), name=("jInit_index01_"+whichArm))
-            index02=pm.joint(p=(17.126*dir,25.05,1.005), name=("jInit_index02_"+whichArm))
-            index03=pm.joint(p=(17.746*dir,25.05,1.139), name=("jInit_index03_"+whichArm))
-            index04=pm.joint(p=(18.278*dir,25.05,1.254), name=("jInit_index04_"+whichArm))
-            pm.parent(index00, lowendarm)
+            index00=pm.joint(p=(15.517*dir,25.05,0.656), name=("jInit_indexF00_"+whichArm))
+            index01=pm.joint(p=(16.494*dir,25.05,0.868), name=("jInit_indexF01_"+whichArm))
+            index02=pm.joint(p=(17.126*dir,25.05,1.005), name=("jInit_indexF02_"+whichArm))
+            index03=pm.joint(p=(17.746*dir,25.05,1.139), name=("jInit_indexF03_"+whichArm))
+            index04=pm.joint(p=(18.278*dir,25.05,1.254), name=("jInit_indexF04_"+whichArm))
+            pm.parent(index00, hand)
             indexJoints = [index00,index01,index02,index03,index04]
             for i in indexJoints:
                 pm.joint(i, e=True, zso=True, oj="xyz", sao="yup")
+
             jointList.extend(indexJoints)
 
             if fingerCount>1:
@@ -108,7 +121,7 @@ def createInitBones(fingers=5, spineSegments=2):
                 thumb01=pm.joint(p=(15.192*dir,24.79,1.375), name=("jInit_thumb01_"+whichArm))
                 thumb02=pm.joint(p=(15.64*dir,24.523,1.885), name=("jInit_thumb02_"+whichArm))
                 thumb03=pm.joint(p=(16.053*dir,24.276,2.356), name=("jInit_thumb03_"+whichArm))
-                pm.parent(thumb00, lowendarm)
+                pm.parent(thumb00, hand)
                 thumbJoints = [thumb00,thumb01,thumb02,thumb03]
                 for i in thumbJoints:
                     pm.joint(i, e=True, zso=True, oj="xyz", sao="yup")
@@ -116,12 +129,12 @@ def createInitBones(fingers=5, spineSegments=2):
 
                 if fingerCount>2:
                     pm.select(d=True)
-                    middle00=pm.joint(p=(15.597*dir,25.123,0.063), name=("jInit_middle00_"+whichArm))
-                    middle01=pm.joint(p=(16.594*dir,25.123,0.137), name=("jInit_middle01_"+whichArm))
-                    middle02=pm.joint(p=(17.312*dir,25.123,0.19), name=("jInit_middle02_"+whichArm))
-                    middle03=pm.joint(p=(18.012*dir,25.123,0.242), name=("jInit_middle03_"+whichArm))
-                    middle04=pm.joint(p=(18.588*dir,25.123,0.285), name=("jInit_middle04_"+whichArm))
-                    pm.parent(middle00, lowendarm)
+                    middle00=pm.joint(p=(15.597*dir,25.123,0.063), name=("jInit_middleF00_"+whichArm))
+                    middle01=pm.joint(p=(16.594*dir,25.123,0.137), name=("jInit_middleF01_"+whichArm))
+                    middle02=pm.joint(p=(17.312*dir,25.123,0.19), name=("jInit_middleF02_"+whichArm))
+                    middle03=pm.joint(p=(18.012*dir,25.123,0.242), name=("jInit_middleF03_"+whichArm))
+                    middle04=pm.joint(p=(18.588*dir,25.123,0.285), name=("jInit_middleF04_"+whichArm))
+                    pm.parent(middle00, hand)
                     middleJoints = [middle00,middle01,middle02,middle03,middle04]
                     for i in middleJoints:
                         pm.joint(i, e=True, zso=True, oj="xyz", sao="yup")
@@ -129,12 +142,12 @@ def createInitBones(fingers=5, spineSegments=2):
 
                     if fingerCount>3:
                         pm.select(d=True)
-                        ring00=pm.joint(p=(15.605*dir,25.123,-0.437), name=("jInit_ring00_"+whichArm))
-                        ring01=pm.joint(p=(16.603*dir,25.123,-0.499), name=("jInit_ring01_"+whichArm))
-                        ring02=pm.joint(p=(17.301*dir,25.123,-0.541), name=("jInit_ring02_"+whichArm))
-                        ring03=pm.joint(p=(17.926*dir,25.123,-0.58), name=("jInit_ring03_"+whichArm))
-                        ring04=pm.joint(p=(18.414*dir,25.123,-0.61), name=("jInit_ring04_"+whichArm))
-                        pm.parent(ring00, lowendarm)
+                        ring00=pm.joint(p=(15.605*dir,25.123,-0.437), name=("jInit_ringF00_"+whichArm))
+                        ring01=pm.joint(p=(16.603*dir,25.123,-0.499), name=("jInit_ringF01_"+whichArm))
+                        ring02=pm.joint(p=(17.301*dir,25.123,-0.541), name=("jInit_ringF02_"+whichArm))
+                        ring03=pm.joint(p=(17.926*dir,25.123,-0.58), name=("jInit_ringF03_"+whichArm))
+                        ring04=pm.joint(p=(18.414*dir,25.123,-0.61), name=("jInit_ringF04_"+whichArm))
+                        pm.parent(ring00, hand)
                         ringJoints = [ring00,ring01,ring02,ring03,ring04]
                         for i in ringJoints:
                             pm.joint(i, e=True, zso=True, oj="xyz", sao="yup")
@@ -142,12 +155,12 @@ def createInitBones(fingers=5, spineSegments=2):
 
                         if fingerCount>4:
                             pm.select(d=True)
-                            pinky00=pm.joint(p=(15.405*dir,25,-0.909), name=("jInit_pinky00_"+whichArm))
-                            pinky01=pm.joint(p=(16.387*dir,25,-1.097), name=("jInit_pinky01_"+whichArm))
-                            pinky02=pm.joint(p=(16.907*dir,25,-1.196), name=("jInit_pinky02_"+whichArm))
-                            pinky03=pm.joint(p=(17.378*dir,25,-1.286), name=("jInit_pinky03_"+whichArm))
-                            pinky04=pm.joint(p=(17.767*dir,25,-1.361), name=("jInit_pinky04_"+whichArm))
-                            pm.parent(pinky00, lowendarm)
+                            pinky00=pm.joint(p=(15.405*dir,25,-0.909), name=("jInit_pinkyF00_"+whichArm))
+                            pinky01=pm.joint(p=(16.387*dir,25,-1.097), name=("jInit_pinkyF01_"+whichArm))
+                            pinky02=pm.joint(p=(16.907*dir,25,-1.196), name=("jInit_pinkyF02_"+whichArm))
+                            pinky03=pm.joint(p=(17.378*dir,25,-1.286), name=("jInit_pinkyF03_"+whichArm))
+                            pinky04=pm.joint(p=(17.767*dir,25,-1.361), name=("jInit_pinkyF04_"+whichArm))
+                            pm.parent(pinky00, hand)
                             pinkyJoints = [pinky00,pinky01,pinky02,pinky03,pinky04]
                             for i in pinkyJoints:
                                 pm.joint(i, e=True, zso=True, oj="xyz", sao="yup")
@@ -213,18 +226,18 @@ def createInitBones(fingers=5, spineSegments=2):
 
     ## Create Arm Init Bones
 
-    L_loc_grp_arm=pm.group(name="locGrp_l_arm", em=True)
+    L_loc_grp_arm=pm.group(name="locGrp_L_arm", em=True)
     pm.setAttr(L_loc_grp_arm.v,0)
-    R_loc_grp_arm=pm.group(name="locGrp_r_arm", em=True)
+    R_loc_grp_arm=pm.group(name="locGrp_R_arm", em=True)
     pm.setAttr(R_loc_grp_arm.v,0)
-    joints_l_arm=initArmBones("l_arm", 1, fingers)
+    joints_l_arm=initArmBones("L_arm", 1, fingers)
     locators_l_arm=[]
     for i in range (0,len(joints_l_arm)):
         locator=pm.spaceLocator(name="loc_"+joints_l_arm[i].name())
         locators_l_arm.append(locator)
         pm.parentConstraint(joints_l_arm[i], locator, mo=False)
         pm.parent(locator,L_loc_grp_arm)
-    joints_r_arm=initArmBones("r_arm", -1, fingers)
+    joints_r_arm=initArmBones("R_arm", -1, fingers)
     locators_r_arm=[]
     for x in range (0,len(joints_r_arm)):
         locator=pm.spaceLocator(name="loc_"+joints_r_arm[x].name())

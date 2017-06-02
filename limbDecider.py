@@ -9,7 +9,7 @@ reload(leg)
 import extraProcedures as extra
 reload(extra)
 
-def limbDecider(rootJoint, limbType="auto", whichSide="auto", mirrorAxis="-X"):
+def limbDecider(rootJoint, limbType="idByLabel", whichSide="idByLabel", mirrorAxis="-X"):
 
     validAxes = ("X", "Y", "Z", "-X", "-Y", "-Z")
     if not mirrorAxis in validAxes:
@@ -19,61 +19,79 @@ def limbDecider(rootJoint, limbType="auto", whichSide="auto", mirrorAxis="-X"):
     if "-" in mirrorAxis:
         mNegative = True
     mAxis = mirrorAxis.replace("-", "")
-    print "mNegative", "=>", mNegative
-    print "mNaxis", "=>", mAxis
-    validLimbTypes=("arm", "leg")
+    validLimbTypes=("arm", "leg") # // TODO: more will be added
     rootName = rootJoint.name()
 
-    # understand the limbType
-    if limbType == "auto":
-        for i in range (len(validLimbTypes)):
-            if validLimbTypes[i] in rootName:
-                limbType = validLimbTypes[i]
-        if limbType == "auto":
-             pm.error("No Matching Limb Type with the joint name. You may try override it by using 'limbType' flag")
 
-    # understand which side is it
-    if whichSide == "auto":
-        rootP = rootJoint.getTranslation(space="world")
-        val=0
-        exec("val=rootP."+mAxis.lower())
-        print "val", "=?", val
-        if val > 0 and mNegative == True:
-            whichSide="l"
-        else:
-            whichSide="r"
+    limbType = extra.jointTypeID(rootJoint, limbType)
+    print "limbType", limbType
+    limbSide = extra.jointSideID(rootJoint, whichSide)
+    print "limbSide", limbSide
 
-    if limbType == "arm":
-        # get the necessary ref Joints
-        errorMsg="arm joints missing or wrong"
-        shoulder = rootJoint
-        upArm = (jFoolProof(shoulder))[0]
-        lowArm = (jFoolProof(upArm))[0]
-        lowArmEnd = (jFoolProof(lowArm))[0]
-
-        armInits = {
-            "shoulder": shoulder,
-            "upArm": upArm,
-            "lowArm": lowArm,
-            "lowArmEnd": lowArmEnd
-        }
-        arm.createArm(armInits, (whichSide+"_arm"), mirrorAxis=mAxis)
+    # if this is an arm connection
+    if limbType == "Collar" or "arm":
+        arm.createArm(getArmBones(rootJoint), suffix=limbSide+"_arm", side=limbSide, mirrorAxis=mAxis)
 
 
+## TODO
+    # # understand the limbType
+    # if limbType == "auto":
+    #     for i in range (len(validLimbTypes)):
+    #         if validLimbTypes[i] in rootName:
+    #             limbType = validLimbTypes[i]
+    #     if limbType == "auto":
+    #          pm.error("No Matching Limb Type with the joint name. You may try override it by using 'limbType' flag")
+    #
+    # # understand which side is it
+    # if whichSide == "auto":
+    #     rootP = rootJoint.getTranslation(space="world")
+    #     val=0
+    #     exec("val=rootP."+mAxis.lower())
+    #     print "val", "=?", val
+    #     if val > 0 and mNegative == True:
+    #         whichSide="l"
+    #     else:
+    #         whichSide="r"
+
+    # if limbType == "arm":
+    #     arm.createArm(getArmBones(rootJoint), (whichSide+"_arm"), mirrorAxis=mAxis)
+    #
+    # if limbType == "leg":
+    #     getLegBones(rootJoint)
+    #     # // TODO: LEG CREATION
 
 
+
+
+def getArmBones(rootNode):
+    shoulder = rootNode
+    upArm = (jFoolProof(shoulder))[0]
+    lowArm = (jFoolProof(upArm))[0]
+    lowArmEnd = (jFoolProof(lowArm))[0]
+    armInits = {
+        "Collar": shoulder,
+        "Shoulder": upArm,
+        "Elbow": lowArm,
+        "Hand": lowArmEnd
+    }
+    return armInits
 
 
 def getLegBones(rootNode):
     rCon = rootNode
-    rootNodeChildren = pm.listRelatives(rootNode, c=True)
-    if jFoolProof(rootNodeChildren):
-        rootNodeChildren[0]
+    upLeg = (jFoolProof(rCon))[0]
+    knee = (jFoolProof(upLeg))[0]
+    foot = (jFoolProof(knee))[0]
+    footJoints = jFoolProof(foot, min=5, max=5)
+    print footJoints
+    # // TODO: GET ALL LEG BONES
 
 
 
 
-def jFoolProof(node, type="joint", limit=1):
+
+
+def jFoolProof(node, type="joint", min=1, max=1):
     children = pm.listRelatives(node, c=True)
     validChildren=[]
     jCount=0
@@ -81,7 +99,8 @@ def jFoolProof(node, type="joint", limit=1):
         if i.type() == type:
             validChildren.append(i)
             jCount += 1
-    if jCount > 0 < limit:
+    print jCount
+    if min <= jCount <= max:
         return validChildren
     else:
         pm.error("joint count does not meet the requirements")
