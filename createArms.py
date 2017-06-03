@@ -30,10 +30,10 @@ def createArm(armInits, suffix="", side="L", mirrorAxis="X"):
         suffix = "%s%s" % (suffix, str(idCounter + 1))
 
 
-    shoulderRef = armInits["Collar"]
-    upArmRef = armInits["Shoulder"]
-    lowArmRef = armInits["Elbow"]
-    lowArmEndRef = armInits["Hand"]
+    collarRef = armInits["Collar"]
+    shoulderRef = armInits["Shoulder"]
+    elbowRef = armInits["Elbow"]
+    handRef = armInits["Hand"]
 
     if len(armInits)<4:
         pm.error("Missing Joints for Arm Setup")
@@ -41,51 +41,51 @@ def createArm(armInits, suffix="", side="L", mirrorAxis="X"):
 
     ##Groups
     scaleGrp = pm.group(name="scaleGrp_" + suffix, em=True)
-    extra.alignTo(scaleGrp, shoulderRef, 0)
+    extra.alignTo(scaleGrp, collarRef, 0)
     nonScaleGrp = pm.group(name="NonScaleGrp_" + suffix, em=True)
 
     masterRoot = pm.group(em=True, name="masterRoot_" + suffix)
-    extra.alignTo(masterRoot, shoulderRef, 0)
+    extra.alignTo(masterRoot, collarRef, 0)
     pm.makeIdentity(a=True)
 
     masterIK = pm.spaceLocator(name="masterIK_" + suffix)
-    extra.alignTo(masterIK, lowArmEndRef, 0)
+    extra.alignTo(masterIK, handRef, 0)
 
+    collarPos = collarRef.getTranslation(space="world")
     shoulderPos = shoulderRef.getTranslation(space="world")
-    upArmPos = upArmRef.getTranslation(space="world")
-    lowArmPos = lowArmRef.getTranslation(space="world")
-    lowArmEndPos = lowArmEndRef.getTranslation(space="world")
-    initShoulderDist = extra.getDistance(shoulderRef, upArmRef)
-    initUpperArmDist = extra.getDistance(upArmRef, lowArmRef)
-    initLowerArmDist = extra.getDistance(lowArmRef, lowArmEndRef)
+    elbowPos = elbowRef.getTranslation(space="world")
+    handPos = handRef.getTranslation(space="world")
+    initShoulderDist = extra.getDistance(collarRef, shoulderRef)
+    initUpperArmDist = extra.getDistance(shoulderRef, elbowRef)
+    initLowerArmDist = extra.getDistance(elbowRef, handRef)
 
     # Shoulder Joints
     pm.select(d=True)
-    jDef_Shoulder = pm.joint(name="jDef_Shoulder_" + suffix, p=shoulderPos, radius=1.5)
-    j_ShoulderEnd = pm.joint(name="j_ShoulderEnd_" + suffix, p=upArmPos, radius=1.5)
+    jDef_Collar = pm.joint(name="jDef_Collar_" + suffix, p=collarPos, radius=1.5)
+    j_CollarEnd = pm.joint(name="j_CollarEnd_" + suffix, p=shoulderPos, radius=1.5)
 
     pm.select(d=True)
-    jDef_midArm = pm.joint(name="jDef_midArm_" + suffix, p=lowArmPos, radius=1.5)
+    jDef_elbow = pm.joint(name="jDef_elbow_" + suffix, p=elbowPos, radius=1.5)
 
     pm.select(d=True)
-    jIK_orig_Up = pm.joint(name="jIK_orig_Up_" + suffix, p=upArmPos, radius=1.5)
-    jIK_orig_Low = pm.joint(name="jIK_orig_Low_" + suffix, p=lowArmPos, radius=1.5)
-    jIK_orig_LowEnd = pm.joint(name="jIK_orig_LowEnd_" + suffix, p=lowArmEndPos, radius=1.5)
+    jIK_orig_Up = pm.joint(name="jIK_orig_Up_" + suffix, p=shoulderPos, radius=1.5)
+    jIK_orig_Low = pm.joint(name="jIK_orig_Low_" + suffix, p=elbowPos, radius=1.5)
+    jIK_orig_LowEnd = pm.joint(name="jIK_orig_LowEnd_" + suffix, p=handPos, radius=1.5)
 
     pm.select(d=True)
-    jIK_SC_Up = pm.joint(name="jIK_SC_Up_" + suffix, p=upArmPos, radius=1)
-    jIK_SC_Low = pm.joint(name="jIK_SC_Low_" + suffix, p=lowArmPos, radius=1)
-    jIK_SC_LowEnd = pm.joint(name="jIK_SC_LowEnd_" + suffix, p=lowArmEndPos, radius=1)
+    jIK_SC_Up = pm.joint(name="jIK_SC_Up_" + suffix, p=shoulderPos, radius=1)
+    jIK_SC_Low = pm.joint(name="jIK_SC_Low_" + suffix, p=elbowPos, radius=1)
+    jIK_SC_LowEnd = pm.joint(name="jIK_SC_LowEnd_" + suffix, p=handPos, radius=1)
 
     pm.select(d=True)
-    jIK_RP_Up = pm.joint(name="jIK_RP_Up_" + suffix, p=upArmPos, radius=0.7)
-    jIK_RP_Low = pm.joint(name="jIK_RP_Low_" + suffix, p=lowArmPos, radius=0.7)
-    jIK_RP_LowEnd = pm.joint(name="jIK_RP_LowEnd_" + suffix, p=lowArmEndPos, radius=0.7)
+    jIK_RP_Up = pm.joint(name="jIK_RP_Up_" + suffix, p=shoulderPos, radius=0.7)
+    jIK_RP_Low = pm.joint(name="jIK_RP_Low_" + suffix, p=elbowPos, radius=0.7)
+    jIK_RP_LowEnd = pm.joint(name="jIK_RP_LowEnd_" + suffix, p=handPos, radius=0.7)
 
     pm.select(d=True)
 
-    pm.joint(jDef_Shoulder, e=True, zso=True, oj="xyz", sao="yup")
-    pm.joint(j_ShoulderEnd, e=True, zso=True, oj="xyz", sao="yup")
+    pm.joint(jDef_Collar, e=True, zso=True, oj="xyz", sao="yup")
+    pm.joint(j_CollarEnd, e=True, zso=True, oj="xyz", sao="yup")
 
     pm.joint(jIK_orig_Up, e=True, zso=True, oj="xyz", sao="yup")
     pm.joint(jIK_orig_Low, e=True, zso=True, oj="xyz", sao="yup")
@@ -102,12 +102,12 @@ def createArm(armInits, suffix="", side="L", mirrorAxis="X"):
     ###Create Start Lock
 
     startLock = pm.spaceLocator(name="startLock_" + suffix)
-    extra.alignTo(startLock, upArmRef, 2)
+    extra.alignTo(startLock, shoulderRef, 2)
     startLock_Ore = extra.createUpGrp(startLock, "Ore")
     startLock_Pos = extra.createUpGrp(startLock, "Pos")
     startLock_Twist = extra.createUpGrp(startLock, "AutoTwist")
 
-    startLockWeight = pm.parentConstraint(j_ShoulderEnd, startLock, sr=("y", "z"), mo=True)
+    startLockWeight = pm.parentConstraint(j_CollarEnd, startLock, sr=("y", "z"), mo=True)
 
     # pm.setAttr(startLockWeight.interpType, 0)
 
@@ -122,7 +122,7 @@ def createArm(armInits, suffix="", side="L", mirrorAxis="X"):
     ###Create Control Curve - IK
     IKcontScale = (initLowerArmDist / 3, initLowerArmDist / 3, initLowerArmDist / 3)
     cont_IK_hand = icon.circle("cont_IK_hand_" + suffix, IKcontScale, normal=(1, 0, 0))
-    extra.alignTo(cont_IK_hand, lowArmEndRef, 2)
+    extra.alignTo(cont_IK_hand, handRef, 2)
 
     cont_IK_hand_OFF = extra.createUpGrp(cont_IK_hand, "OFF")
     cont_IK_hand_ORE = extra.createUpGrp(cont_IK_hand, "ORE")
@@ -143,7 +143,7 @@ def createArm(armInits, suffix="", side="L", mirrorAxis="X"):
     cont_Pole = icon.plus("cont_Pole_" + suffix, polecontScale)
     pm.rotate(cont_Pole, (90, 0, 0))
     pm.makeIdentity(a=True)
-    extra.alignTo(cont_Pole, lowArmRef, 0)
+    extra.alignTo(cont_Pole, elbowRef, 0)
 
     pm.move(cont_Pole, (0, 0, (-polecontS*5)), r=True)
     pm.makeIdentity(a=True)
@@ -237,7 +237,7 @@ def createArm(armInits, suffix="", side="L", mirrorAxis="X"):
     cont_IK_hand.stretch >> stretchOffset.input1D[2]
 
     IK_parentGRP = pm.group(name="IK_parentGRP_" + suffix, em=True)
-    extra.alignTo(IK_parentGRP, lowArmEndRef, 2)
+    extra.alignTo(IK_parentGRP, handRef, 2)
 
     pm.parent(ikHandle_SC[0], IK_parentGRP)
     pm.parent(ikHandle_RP[0], IK_parentGRP)
@@ -295,7 +295,7 @@ def createArm(armInits, suffix="", side="L", mirrorAxis="X"):
     cont_Shoulder_ORE = extra.createUpGrp(cont_Shoulder, "ORE")
     cont_Shoulder_POS = extra.createUpGrp(cont_Shoulder, "POS")
 
-    extra.alignTo(cont_Shoulder_OFF, shoulderRef, 2)
+    extra.alignTo(cont_Shoulder_OFF, collarRef, 2)
 
     if side == "R":
         pm.setAttr("%s.rotate%s" % (cont_Shoulder_ORE, mirrorAxis), -180)
@@ -315,16 +315,16 @@ def createArm(armInits, suffix="", side="L", mirrorAxis="X"):
 
     pm.makeIdentity(a=True)
 
-    jDef_paCon = pm.parentConstraint(cont_Shoulder, jDef_Shoulder, mo=True)
+    jDef_paCon = pm.parentConstraint(cont_Shoulder, jDef_Collar, mo=True)
 
     ###########################
     ######### FK ARM ##########
     ###########################
 
     pm.select(d=True)
-    jFK_Up = pm.joint(name="jFK_Up_" + suffix, p=upArmPos, radius=1.0)
-    jFK_Low = pm.joint(name="jFK_Low_" + suffix, p=lowArmPos, radius=1.0)
-    jFK_LowEnd = pm.joint(name="jFK_LowEnd_" + suffix, p=lowArmEndPos, radius=1.0)
+    jFK_Up = pm.joint(name="jFK_Up_" + suffix, p=shoulderPos, radius=1.0)
+    jFK_Low = pm.joint(name="jFK_Low_" + suffix, p=elbowPos, radius=1.0)
+    jFK_LowEnd = pm.joint(name="jFK_LowEnd_" + suffix, p=handPos, radius=1.0)
 
     pm.joint(jFK_Up, e=True, zso=True, oj="xyz", sao="yup")
     pm.joint(jFK_Low, e=True, zso=True, oj="xyz", sao="yup")
@@ -344,7 +344,7 @@ def createArm(armInits, suffix="", side="L", mirrorAxis="X"):
     temp_AimCon = pm.aimConstraint(jFK_Low, cont_FK_UpArm_OFF, o=(90, 90, 0), u=(0, 1, 0))
     pm.delete(temp_AimCon)
 
-    PvTarget = upArmPos
+    PvTarget = shoulderPos
     pm.xform(cont_FK_UpArm, piv=PvTarget, ws=True)
     pm.xform(cont_FK_UpArm_ORE, piv=PvTarget, ws=True)
     pm.xform(cont_FK_UpArm_OFF, piv=PvTarget, ws=True)
@@ -370,7 +370,7 @@ def createArm(armInits, suffix="", side="L", mirrorAxis="X"):
 
     pm.makeIdentity(a=True, t=True, r=False, s=True)
 
-    PvTarget = lowArmPos
+    PvTarget = elbowPos
     pm.xform(cont_FK_LowArm, piv=PvTarget, ws=True)
     pm.xform(cont_FK_LowArm_ORE, piv=PvTarget, ws=True)
     pm.xform(cont_FK_LowArm_OFF, piv=PvTarget, ws=True)
@@ -412,7 +412,7 @@ def createArm(armInits, suffix="", side="L", mirrorAxis="X"):
 
     cont_FK_IK.fk_ik >> cont_IK_hand.visibility
 
-    extra.alignTo(cont_FK_IK, lowArmEndRef, 2)
+    extra.alignTo(cont_FK_IK, handRef, 2)
 
     pm.move(cont_FK_IK, (0, iconScale * 2, 0), r=True)
 
@@ -425,7 +425,7 @@ def createArm(armInits, suffix="", side="L", mirrorAxis="X"):
 
     cont_midLock_POS = extra.createUpGrp(cont_midLock, "POS")
     cont_midLock_AVE = extra.createUpGrp(cont_midLock, "AVE")
-    extra.alignTo(cont_midLock_POS, lowArmRef, 0)
+    extra.alignTo(cont_midLock_POS, elbowRef, 0)
 
     midLock_paConWeight = pm.parentConstraint(jIK_orig_Up, jFK_Up, cont_midLock_POS, mo=True)
     cont_FK_IK.fk_ik >> (midLock_paConWeight + "." + jIK_orig_Up + "W0")
@@ -450,14 +450,14 @@ def createArm(armInits, suffix="", side="L", mirrorAxis="X"):
     ### Create Midlock
 
     midLock = pm.spaceLocator(name="midLock_" + suffix)
-    pm.parentConstraint(midLock, jDef_midArm)
+    pm.parentConstraint(midLock, jDef_elbow)
     extra.alignTo(midLock, cont_midLock, 0)
 
     pm.parentConstraint(cont_midLock, midLock, mo=False)
 
     ### Create End Lock
     endLock = pm.spaceLocator(name="endLock_" + suffix)
-    extra.alignTo(endLock, lowArmEndRef, 2)
+    extra.alignTo(endLock, handRef, 2)
     endLock_Ore = extra.createUpGrp(endLock, "Ore")
     endLock_Pos = extra.createUpGrp(endLock, "Pos")
     endLock_Twist = extra.createUpGrp(endLock, "Twist")
@@ -479,7 +479,7 @@ def createArm(armInits, suffix="", side="L", mirrorAxis="X"):
 
     # UPPERARM RIBBON
 
-    ribbonConnections_upperArm = cr.createRibbon(upArmRef, lowArmRef, "up_" + suffix, 0)
+    ribbonConnections_upperArm = cr.createRibbon(shoulderRef, elbowRef, "up_" + suffix, 0)
     startPos_rbnUpper = ribbonConnections_upperArm[0]
     endPos_rbnUpper = ribbonConnections_upperArm[1]
     scaleGrp_rbnUpper = ribbonConnections_upperArm[2]
@@ -513,7 +513,7 @@ def createArm(armInits, suffix="", side="L", mirrorAxis="X"):
 
     # LOWERARM RIBBON
 
-    ribbonConnections_lowerArm = cr.createRibbon(lowArmRef, lowArmEndRef, "low_" + suffix,
+    ribbonConnections_lowerArm = cr.createRibbon(elbowRef, handRef, "low_" + suffix,
                                                  0)
     startPos_rbnLower = ribbonConnections_lowerArm[0]
     endPos_rbnLower = ribbonConnections_lowerArm[1]
@@ -577,7 +577,7 @@ def createArm(armInits, suffix="", side="L", mirrorAxis="X"):
         mirror = True
     else:
         mirror = False
-    handRoot = lowArmEndRef
+    handRoot = handRef
     fingersReturn = cf.rigFingers(handRoot, cont_FK_IK, suffix, mirror)
     handMaster = fingersReturn[0]
     handConts = fingersReturn[1]
@@ -612,7 +612,7 @@ def createArm(armInits, suffix="", side="L", mirrorAxis="X"):
     pm.parent(midLock, scaleGrp)
     pm.parent(cont_midLock_POS, scaleGrp)
     pm.parent(cont_Pole_OFF, scaleGrp)
-    pm.parent(jDef_midArm, scaleGrp)
+    pm.parent(jDef_elbow, scaleGrp)
 
     pm.parent(scaleGrp_rbnUpper, nonScaleGrp)
     pm.parent(nonScaleGrp_rbnUpper, nonScaleGrp)
@@ -620,7 +620,7 @@ def createArm(armInits, suffix="", side="L", mirrorAxis="X"):
     pm.parent(scaleGrp_rbnLower, nonScaleGrp)
     pm.parent(nonScaleGrp_rbnLower, nonScaleGrp)
 
-    pm.parent(jDef_Shoulder, scaleGrp)
+    pm.parent(jDef_Collar, scaleGrp)
 
     pm.parent(handLock, scaleGrp)
     pm.parent(masterRoot, scaleGrp)
@@ -651,7 +651,7 @@ def createArm(armInits, suffix="", side="L", mirrorAxis="X"):
 
     nodesContVis = [cont_Pole_OFF, cont_Shoulder_OFF, cont_IK_hand_OFF, cont_FK_Hand_OFF, cont_FK_IK_POS,
                     cont_FK_LowArm_OFF, cont_FK_UpArm_OFF, scaleGrp_rbnLower, scaleGrp_rbnUpper, cont_midLock_POS]
-    nodesJointVis = [jDef_midArm, jDef_paCon, jDef_Shoulder]
+    nodesJointVis = [jDef_elbow, jDef_paCon, jDef_Collar]
     nodesJointVisLists = [deformerJoints_rbnLower, deformerJoints_rbnUpper, nodesJointVis ]
     nodesRigVis = [endLock_Twist, startLock_Ore, armStart, armEnd, IK_parentGRP, midLock, masterRoot, jFK_Up, handLock,(handMaster.getShape())]
     # global Cont visibilities

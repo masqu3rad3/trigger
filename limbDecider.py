@@ -64,15 +64,15 @@ def limbDecider(rootJoint, limbType="idByLabel", whichSide="idByLabel", mirrorAx
 
 
 def getArmBones(rootNode):
-    shoulder = rootNode
-    upArm = (jFoolProof(shoulder))[0]
-    lowArm = (jFoolProof(upArm))[0]
-    lowArmEnd = (jFoolProof(lowArm))[0]
+    collar = rootNode
+    shoulder = (jFoolProof(collar))[0]
+    elbow = (jFoolProof(shoulder))[0]
+    hand = (jFoolProof(elbow))[0]
     armInits = {
-        "Collar": shoulder,
-        "Shoulder": upArm,
-        "Elbow": lowArm,
-        "Hand": lowArmEnd
+        "Collar": collar,
+        "Shoulder": shoulder,
+        "Elbow": elbow,
+        "Hand": hand
     }
     return armInits
 

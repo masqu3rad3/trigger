@@ -1,7 +1,6 @@
 import pymel.core as pm
 import sys
-#sys.path.append("C:/Users/kutlu/Documents/maya/2017/scripts/tik_autorigger")
-path='C:/Users/Arda/Documents/maya/2017/scripts/tik_autorigger'
+path = "%s/%s" % (sys.path[len(sys.path)-1],"tik_autorigger")
 if not path in sys.path:
     sys.path.append(path)
     
