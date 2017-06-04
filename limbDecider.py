@@ -10,7 +10,19 @@ import extraProcedures as extra
 reload(extra)
 
 def limbDecider(rootJoint, limbType="idByLabel", whichSide="idByLabel", mirrorAxis="-X"):
+    """
+    Creates a limb or body part.
+    Args:
+        rootJoint: (Joint) The root joint of the limb or body part which will be created. This is a Collar bone for the arms, a thigh bone for legs, etc.
+        limbType: (String) Specifies the type of the limb. Valid values are, "arm", "leg", TODO// MORE WILL COME, "idByLabel", "idByName". idByLabel checks the label values of the joint. If there is a mismatch it throws an error. ifByName checks the name conventions of the node. If there is a mismatch it throws an error.
+        whichSide: (String) Specifies which side of this lim resides. Valid values are, "right",
+        mirrorAxis:
 
+    Returns:
+
+    """
+    if rootJoint.type() != "joint":
+        pm.error("Root node must be a Joint")
     validAxes = ("X", "Y", "Z", "-X", "-Y", "-Z")
     if not mirrorAxis in validAxes:
         pm.error("Not Valid mirrorAxis. Valid values are 'X', 'Y', 'Z', '-X', '-Y', '-Z'")
@@ -22,11 +34,11 @@ def limbDecider(rootJoint, limbType="idByLabel", whichSide="idByLabel", mirrorAx
     validLimbTypes=("arm", "leg") # // TODO: more will be added
     rootName = rootJoint.name()
 
+    if limbType == "idByName" or "idByLabel":
+        limbType = extra.jointTypeID(rootJoint, limbType)
+    if whichSide == "idByName" or "idByLabel":
+        limbSide = extra.jointSideID(rootJoint, whichSide)
 
-    limbType = extra.jointTypeID(rootJoint, limbType)
-    print "limbType", limbType
-    limbSide = extra.jointSideID(rootJoint, whichSide)
-    print "limbSide", limbSide
 
     # if this is an arm connection
     if limbType == "Collar" or "arm":
