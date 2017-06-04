@@ -34,12 +34,16 @@ def createInitBones(fingers=5, spineSegments=2):
     ########### LEG BONES DEF ############
     # // TODO: FIX THE NAMES
     def initLegBones(whichLeg, dir):
+        if dir == -1:
+            side = 2
+        if dir == 1:
+            side = 1
         pm.select(d=True)
         if pm.objExists("jInit_*"+whichLeg):
             pm.error("Naming mismatch!!! There are Leg Initializers in the Scene")
             return
-        rcon=pm.joint(p=(2*dir,14,0), name=("jInit_Rcon_"+whichLeg))
-        upleg=pm.joint(p=(5*dir,10,0), name=("jInit_UpLeg_"+whichLeg))
+        root=pm.joint(p=(2*dir,14,0), name=("jInit_Root_"+whichLeg))
+        hip=pm.joint(p=(5*dir,10,0), name=("jInit_Hip_"+whichLeg))
         knee=pm.joint(p=(5*dir,5,1), name=("jInit_Knee_"+whichLeg))
         foot=pm.joint(p=(5*dir,1,0), name=("jInit_Foot_"+whichLeg))
         ball=pm.joint(p=(5*dir,0,2), name=("jInit_Ball_"+whichLeg))
@@ -52,8 +56,8 @@ def createInitBones(fingers=5, spineSegments=2):
         toepv=pm.joint(p=(5*dir,0,4.3), name=("jInit_ToePv_"+whichLeg))
         pm.select(d=True)
         heelpv=pm.joint(p=(5*dir,0,-0.2), name=("jInit_HeelPv_"+whichLeg))
-        pm.joint(rcon, e=True, zso=True, oj="xyz", sao="yup")
-        pm.joint(upleg, e=True, zso=True, oj="xyz", sao="yup")
+        pm.joint(root, e=True, zso=True, oj="xyz", sao="yup")
+        pm.joint(hip, e=True, zso=True, oj="xyz", sao="yup")
         pm.joint(knee, e=True, zso=True, oj="xyz", sao="yup")
         pm.joint(foot, e=True, zso=True, oj="xyz", sao="yup")
         pm.joint(ball, e=True, zso=True, oj="xyz", sao="yup")
@@ -62,7 +66,35 @@ def createInitBones(fingers=5, spineSegments=2):
         pm.parent(toepv, foot)
         pm.parent(bankin,foot)
         pm.parent(bankout,foot)
-        jointList=[rcon, upleg, knee, foot, ball, toe, bankout, bankin,toepv, heelpv]
+
+        pm.setAttr(root+".side", side)
+        pm.setAttr(root+".type", 18)
+        pm.setAttr(root+".otherType", "LegRoot")
+        pm.setAttr(knee+".side", side)
+        pm.setAttr(knee+".type", 3)
+        pm.setAttr(foot + ".side", side)
+        pm.setAttr(foot + ".type", 4)
+
+        pm.setAttr(ball + ".side", side)
+        pm.setAttr(ball + ".type", 18)
+        pm.setAttr(ball + ".otherType", "Ball")
+
+        pm.setAttr(toe + ".side", side)
+        pm.setAttr(toe + ".type", 5)
+
+        pm.setAttr(heelpv + ".side", side)
+        pm.setAttr(heelpv+ ".type", 18)
+        pm.setAttr(heelpv+ ".otherType", "HeelPV")
+        pm.setAttr(toepv + ".side", side)
+        pm.setAttr(toepv+ ".type", 18)
+        pm.setAttr(toepv + ".otherType", "ToePV")
+        pm.setAttr(bankin+ ".side", side)
+        pm.setAttr(bankin + ".type", 18)
+        pm.setAttr(bankin + ".otherType", "BankIN")
+        pm.setAttr(bankout + ".side", side)
+        pm.setAttr(bankout + ".type", 18)
+        pm.setAttr(bankout + ".otherType", "BankOUT")
+        jointList=[root, hip, knee, foot, ball, toe, bankout, bankin,toepv, heelpv]
         return jointList
 
 

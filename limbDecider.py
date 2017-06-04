@@ -46,30 +46,6 @@ def limbDecider(rootJoint, limbType="idByLabel", whichSide="idByLabel", mirrorAx
 
 
 ## TODO
-    # # understand the limbType
-    # if limbType == "auto":
-    #     for i in range (len(validLimbTypes)):
-    #         if validLimbTypes[i] in rootName:
-    #             limbType = validLimbTypes[i]
-    #     if limbType == "auto":
-    #          pm.error("No Matching Limb Type with the joint name. You may try override it by using 'limbType' flag")
-    #
-    # # understand which side is it
-    # if whichSide == "auto":
-    #     rootP = rootJoint.getTranslation(space="world")
-    #     val=0
-    #     exec("val=rootP."+mAxis.lower())
-    #     print "val", "=?", val
-    #     if val > 0 and mNegative == True:
-    #         whichSide="l"
-    #     else:
-    #         whichSide="r"
-
-    # if limbType == "arm":
-    #     arm.createArm(getArmBones(rootJoint), (whichSide+"_arm"), mirrorAxis=mAxis)
-    #
-    # if limbType == "leg":
-    #     getLegBones(rootJoint)
     #     # // TODO: LEG CREATION
 
 
@@ -89,12 +65,19 @@ def getArmBones(rootNode):
     return armInits
 
 
-def getLegBones(rootNode):
-    rCon = rootNode
-    upLeg = (jFoolProof(rCon))[0]
-    knee = (jFoolProof(upLeg))[0]
-    foot = (jFoolProof(knee))[0]
-    footJoints = jFoolProof(foot, min=5, max=5)
+# def getLegBones(rootNode, getType="idByName"):
+#     validFootJoints = ["Ball", "HeelPV", "ToePV", "BankIN", "BankOUT"]
+#     root = rootNode
+#     hip = (jFoolProof(root))[0]
+#     knee = (jFoolProof(hip))[0]
+#     foot = (jFoolProof(knee))[0]
+#     footJoints = jFoolProof(foot, min=5, max=5)
+#     if getType == "idByName":
+#         for j in footJoints:
+#             x = extra.jointTypeID(j, idBy="idByName")
+#             if x in validFootJoints:
+
+
     print footJoints
     # // TODO: GET ALL LEG BONES
 
