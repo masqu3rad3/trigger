@@ -42,7 +42,7 @@ def createInitBones(fingers=5, spineSegments=2):
         if pm.objExists("jInit_*"+whichLeg):
             pm.error("Naming mismatch!!! There are Leg Initializers in the Scene")
             return
-        root=pm.joint(p=(2*dir,14,0), name=("jInit_Root_"+whichLeg))
+        root=pm.joint(p=(2*dir,14,0), name=("jInit_LegRoot_"+whichLeg))
         hip=pm.joint(p=(5*dir,10,0), name=("jInit_Hip_"+whichLeg))
         knee=pm.joint(p=(5*dir,5,1), name=("jInit_Knee_"+whichLeg))
         foot=pm.joint(p=(5*dir,1,0), name=("jInit_Foot_"+whichLeg))
@@ -70,6 +70,8 @@ def createInitBones(fingers=5, spineSegments=2):
         pm.setAttr(root+".side", side)
         pm.setAttr(root+".type", 18)
         pm.setAttr(root+".otherType", "LegRoot")
+        pm.setAttr(hip+".side", side)
+        pm.setAttr(hip+".type", 2)
         pm.setAttr(knee+".side", side)
         pm.setAttr(knee+".type", 3)
         pm.setAttr(foot + ".side", side)
@@ -95,6 +97,8 @@ def createInitBones(fingers=5, spineSegments=2):
         pm.setAttr(bankout + ".type", 18)
         pm.setAttr(bankout + ".otherType", "BankOUT")
         jointList=[root, hip, knee, foot, ball, toe, bankout, bankin,toepv, heelpv]
+        for i in jointList:
+            pm.setAttr(i + ".drawLabel", 1)
         return jointList
 
 
@@ -131,6 +135,8 @@ def createInitBones(fingers=5, spineSegments=2):
         jointList=[collar, shoulder, elbow, hand]
 
         if fingerCount==0:
+            for i in jointList:
+                pm.setAttr(i + ".drawLabel", 1)
             return jointList
         if fingerCount>0:
             pm.select(d=True)
@@ -139,11 +145,14 @@ def createInitBones(fingers=5, spineSegments=2):
             index02=pm.joint(p=(17.126*dir,25.05,1.005), name=("jInit_indexF02_"+whichArm))
             index03=pm.joint(p=(17.746*dir,25.05,1.139), name=("jInit_indexF03_"+whichArm))
             index04=pm.joint(p=(18.278*dir,25.05,1.254), name=("jInit_indexF04_"+whichArm))
+
             pm.parent(index00, hand)
             indexJoints = [index00,index01,index02,index03,index04]
             for i in indexJoints:
                 pm.joint(i, e=True, zso=True, oj="xyz", sao="yup")
-
+                pm.setAttr(i + ".side", side)
+                pm.setAttr(i + ".type", 19)
+            pm.setAttr(index01 + ".drawLabel", 1)
             jointList.extend(indexJoints)
 
             if fingerCount>1:
@@ -156,6 +165,9 @@ def createInitBones(fingers=5, spineSegments=2):
                 thumbJoints = [thumb00,thumb01,thumb02,thumb03]
                 for i in thumbJoints:
                     pm.joint(i, e=True, zso=True, oj="xyz", sao="yup")
+                    pm.setAttr(i + ".side", side)
+                    pm.setAttr(i + ".type", 14)
+                pm.setAttr(thumb01 + ".drawLabel", 1)
                 jointList.extend(thumbJoints)
 
                 if fingerCount>2:
@@ -169,6 +181,9 @@ def createInitBones(fingers=5, spineSegments=2):
                     middleJoints = [middle00,middle01,middle02,middle03,middle04]
                     for i in middleJoints:
                         pm.joint(i, e=True, zso=True, oj="xyz", sao="yup")
+                        pm.setAttr(i + ".side", side)
+                        pm.setAttr(i + ".type", 20)
+                    pm.setAttr(middle01 + ".drawLabel", 1)
                     jointList.extend(middleJoints)
 
                     if fingerCount>3:
@@ -182,6 +197,9 @@ def createInitBones(fingers=5, spineSegments=2):
                         ringJoints = [ring00,ring01,ring02,ring03,ring04]
                         for i in ringJoints:
                             pm.joint(i, e=True, zso=True, oj="xyz", sao="yup")
+                            pm.setAttr(i + ".side", side)
+                            pm.setAttr(i + ".type", 21)
+                        pm.setAttr(ring01 + ".drawLabel", 1)
                         jointList.extend(ringJoints)
 
                         if fingerCount>4:
@@ -195,6 +213,9 @@ def createInitBones(fingers=5, spineSegments=2):
                             pinkyJoints = [pinky00,pinky01,pinky02,pinky03,pinky04]
                             for i in pinkyJoints:
                                 pm.joint(i, e=True, zso=True, oj="xyz", sao="yup")
+                                pm.setAttr(i + ".side", side)
+                                pm.setAttr(i + ".type", 22)
+                            pm.setAttr(pinky01 + ".drawLabel", 1)
                             jointList.extend(pinkyJoints)
                             if fingerCount>5:
                                 pm.error("finger limit is 5. Exceeded")
@@ -217,6 +238,10 @@ def createInitBones(fingers=5, spineSegments=2):
         jointList=[]
         for i in range(0, spineCount):
             spine = pm.joint(p=(0,(rPoint+(add*i)),0), name="jInit_spine"+str(i))
+            pm.setAttr(spine+ ".side", 0)
+            pm.setAttr(spine + ".type", 6)
+
+
             jointList.append(spine)
         neck = pm.joint(p=(0, 25.757, 0.249), name=("jInit_neck"))
         jointList.append(neck)
@@ -229,7 +254,27 @@ def createInitBones(fingers=5, spineSegments=2):
         jointList.append(jawStart)
         jawEnd = pm.joint(p=(0, 27.857, 3.161), name=("jInit_jawEnd"))
         jointList.append(jawEnd)
+
+        pm.setAttr(neck + ".side", 0)
+        pm.setAttr(neck + ".type", 7)
+
+        pm.setAttr(head + ".side", 0)
+        pm.setAttr(head + ".type", 8)
+
+        pm.setAttr(headEnd + ".side", 0)
+        pm.setAttr(headEnd + ".type", 8)
+
+        pm.setAttr(jawStart + ".side", 0)
+        pm.setAttr(jawStart+ ".type", 18)
+        pm.setAttr(jawStart+ ".otherType", "Jaw")
+
+        pm.setAttr(jawEnd + ".side", 0)
+        pm.setAttr(jawEnd+ ".type", 18)
+        pm.setAttr(jawEnd+ ".otherType", "Jaw")
+
         pm.parent(jawStart, head)
+        for i in jointList:
+            pm.setAttr(i + ".drawLabel", 1)
         return jointList
 
 
@@ -238,14 +283,14 @@ def createInitBones(fingers=5, spineSegments=2):
     pm.setAttr(L_loc_grp_leg.v,0)
     R_loc_grp_leg=pm.group(name="locGrp_r_leg", em=True)
     pm.setAttr(R_loc_grp_leg.v,0)
-    joints_l_leg=initLegBones("l_leg", 1)
+    joints_l_leg=initLegBones("L_leg", 1)
     locators_l_leg=[]
     for i in range (0,len(joints_l_leg)):
         locator=pm.spaceLocator(name="loc_"+joints_l_leg[i].name())
         locators_l_leg.append(locator)
         pm.parentConstraint(joints_l_leg[i], locator, mo=False)
         pm.parent(locator,L_loc_grp_leg)
-    joints_r_leg=initLegBones("r_leg", -1)
+    joints_r_leg=initLegBones("R_leg", -1)
     locators_r_leg=[]
     for x in range (0,len(joints_r_leg)):
         locator=pm.spaceLocator(name="loc_"+joints_r_leg[x].name())

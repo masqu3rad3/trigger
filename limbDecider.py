@@ -9,7 +9,7 @@ reload(leg)
 import extraProcedures as extra
 reload(extra)
 
-def limbDecider(rootJoint, limbType="idByLabel", whichSide="idByLabel", mirrorAxis="-X"):
+def limbDecider(rootJoint, limbType="idByLabel", whichSide="idByLabel", mirrorAxis="X"):
     """
     Creates a limb or body part.
     Args:
@@ -21,34 +21,26 @@ def limbDecider(rootJoint, limbType="idByLabel", whichSide="idByLabel", mirrorAx
     Returns:
 
     """
+
     if rootJoint.type() != "joint":
         pm.error("Root node must be a Joint")
-    validAxes = ("X", "Y", "Z", "-X", "-Y", "-Z")
+    validAxes = ("X", "Y", "Z")
     if not mirrorAxis in validAxes:
-        pm.error("Not Valid mirrorAxis. Valid values are 'X', 'Y', 'Z', '-X', '-Y', '-Z'")
+        pm.error("Not Valid mirrorAxis. Valid values are 'X', 'Y', 'Z'")
 
-    mNegative = False
-    if "-" in mirrorAxis:
-        mNegative = True
-    mAxis = mirrorAxis.replace("-", "")
     validLimbTypes=("arm", "leg") # // TODO: more will be added
     rootName = rootJoint.name()
 
-    if limbType == "idByName" or "idByLabel":
-        limbType = extra.jointTypeID(rootJoint, limbType)
-    if whichSide == "idByName" or "idByLabel":
-        limbSide = extra.jointSideID(rootJoint, whichSide)
+    if limbType == "idByLabel" or "idByName":
+        limbID = extra.identifyMaster(rootJoint, idBy=limbType)
+        if not "N/A" in limbID:
+            # //TODO FIX HERE
+    ######################################
 
 
     # if this is an arm connection
     if limbType == "Collar" or "arm":
-        arm.createArm(getArmBones(rootJoint), suffix=limbSide+"_arm", side=limbSide, mirrorAxis=mAxis)
-
-
-## TODO
-    #     # // TODO: LEG CREATION
-
-
+        arm.createArm(getArmBones(rootJoint), suffix=limbSide+"_arm", side=limbSide, mirrorAxis=mirrorAxis)
 
 
 def getArmBones(rootNode):
