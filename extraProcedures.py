@@ -583,6 +583,32 @@ def identifyMaster(node, idBy="idByLabel"):
         if limbName in i:
             limbType = limbDictionary.keys()[limbDictionary.values().index(i)]
 
-    return limbName, limbType
+    ## Get the Side
+
+    sideDict = {
+        0: 'C',
+        1: 'L',
+        2: 'R',
+    }
+
+    if idBy == "idByLabel":
+            sideNum = pm.getAttr(node.side)
+
+            if sideNum not in sideDict.keys():
+                pm.error("Joint Side is not detected with idByLabel method")
+            side = sideDict[sideNum]
+
+    if idBy == "idByName":
+        # identify the side
+        if "_R_" in node.name():
+            side = sideDict[2]
+        elif "_L_" in node.name():
+            side = sideDict[1]
+        elif "_C_" in node.name():
+            side = sideDict[0]
+        else:
+            pm.error("Joint Side is not detected with idByName method")
+
+    return limbName, limbType, side
 
 

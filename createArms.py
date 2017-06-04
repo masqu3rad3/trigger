@@ -1,10 +1,6 @@
 import pymel.core as pm
 import sys
 
-path = 'C:/Users/Arda/Documents/maya/2017/scripts/tik_autorigger'
-if not path in sys.path:
-    sys.path.append(path)
-
 import extraProcedures as extra
 
 reload(extra)
