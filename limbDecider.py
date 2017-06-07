@@ -23,6 +23,7 @@ def limbDecider(rootJoint, limbType="idByLabel", whichSide="idByLabel", mirrorAx
     """
     if rootJoint.type() != "joint":
         pm.error("Root node must be a Joint")
+<<<<<<< Updated upstream
     validAxes = ("X", "Y", "Z", "-X", "-Y", "-Z")
     if not mirrorAxis in validAxes:
         pm.error("Not Valid mirrorAxis. Valid values are 'X', 'Y', 'Z', '-X', '-Y', '-Z'")
@@ -73,6 +74,21 @@ def limbDecider(rootJoint, limbType="idByLabel", whichSide="idByLabel", mirrorAx
     #     # // TODO: LEG CREATION
 
 
+=======
+
+    # Collect all joints connected to the master root
+    allJoints = pm.listRelatives(rootJoint, ad=True, type="joint")
+    # print allJoints
+    limbJoints=[]
+    for j in allJoints:
+        limbProperties = extra.identifyMaster(j)
+        print limbProperties
+        # If the joint is a collar bone, create an arm there
+        # if limbProperties[0] == "Collar":
+        #     arm.createArm(getArmBones(j), suffix=limbProperties[2]+"_arm", side=limbProperties[2])
+        if limbProperties[0] == "LegRoot":
+            leg.createLeg(getLegBones(j), suffix=limbProperties[2]+"_leg", side=limbProperties[2])
+>>>>>>> Stashed changes
 
 
 def getArmBones(rootNode):

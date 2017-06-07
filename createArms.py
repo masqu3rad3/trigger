@@ -29,15 +29,18 @@ def createArm(armInits, suffix="", side="L", mirrorAxis="X"):
     while pm.objExists("scaleGrp_" + suffix):
         suffix = "%s%s" % (suffix, str(idCounter + 1))
 
+    if len(armInits)<4:
+        pm.error("Missing Joints for Arm Setup")
+        return
 
+
+    # reinitialize the dictionary for easy use
     collarRef = armInits["Collar"]
     shoulderRef = armInits["Shoulder"]
     elbowRef = armInits["Elbow"]
     handRef = armInits["Hand"]
 
-    if len(armInits)<4:
-        pm.error("Missing Joints for Arm Setup")
-        return
+
 
     ##Groups
     scaleGrp = pm.group(name="scaleGrp_" + suffix, em=True)
