@@ -24,7 +24,7 @@ def limbDecider(rootJoint):
         if limbProperties[0] == "Collar":
             arm.createArm(getArmBones(j), suffix=limbProperties[2]+"_arm", side=limbProperties[2])
         if limbProperties[0] == "LegRoot":
-            print(getLegBones(j))
+            leg.createLeg(getLegBones(j), suffix=limbProperties[2] + "_leg", side=limbProperties[2])
 
 
 
