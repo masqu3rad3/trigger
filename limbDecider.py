@@ -9,20 +9,11 @@ reload(leg)
 import extraProcedures as extra
 reload(extra)
 
-def limbDecider(rootJoint, limbType="idByLabel", whichSide="idByLabel", mirrorAxis="-X"):
-    """
-    Creates a limb or body part.
-    Args:
-        rootJoint: (Joint) The root joint of the limb or body part which will be created. This is a Collar bone for the arms, a thigh bone for legs, etc.
-        limbType: (String) Specifies the type of the limb. Valid values are, "arm", "leg", TODO// MORE WILL COME, "idByLabel", "idByName". idByLabel checks the label values of the joint. If there is a mismatch it throws an error. ifByName checks the name conventions of the node. If there is a mismatch it throws an error.
-        whichSide: (String) Specifies which side of this lim resides. Valid values are, "right",
-        mirrorAxis:
+def limbDecider(rootJoint):
 
-    Returns:
-
-    """
     if rootJoint.type() != "joint":
         pm.error("Root node must be a Joint")
+<<<<<<< HEAD
 <<<<<<< Updated upstream
     validAxes = ("X", "Y", "Z", "-X", "-Y", "-Z")
     if not mirrorAxis in validAxes:
@@ -72,7 +63,21 @@ def limbDecider(rootJoint, limbType="idByLabel", whichSide="idByLabel", mirrorAx
     # if limbType == "leg":
     #     getLegBones(rootJoint)
     #     # // TODO: LEG CREATION
+=======
+>>>>>>> desperado
 
+    # Collect all joints connected to the master root
+    allJoints = pm.listRelatives(rootJoint, ad=True, type="joint")
+    # print allJoints
+    limbJoints=[]
+    for j in allJoints:
+        limbProperties = extra.identifyMaster(j)
+        print limbProperties
+        # If the joint is a collar bone, create an arm there
+        # if limbProperties[0] == "Collar":
+        #     arm.createArm(getArmBones(j), suffix=limbProperties[2]+"_arm", side=limbProperties[2])
+        if limbProperties[0] == "LegRoot":
+            leg.createLeg(getLegBones(j), suffix=limbProperties[2] + "_leg", side=limbProperties[2])
 
 =======
 
@@ -106,17 +111,38 @@ def getArmBones(rootNode):
 
 
 def getLegBones(rootNode):
-    rCon = rootNode
-    upLeg = (jFoolProof(rCon))[0]
-    knee = (jFoolProof(upLeg))[0]
+    # validFootJoints = ["Ball", "HeelPV", "ToePV", "BankIN", "BankOUT"]
+    root = rootNode
+    hip = (jFoolProof(root))[0]
+    knee = (jFoolProof(hip))[0]
     foot = (jFoolProof(knee))[0]
     footJoints = jFoolProof(foot, min=5, max=5)
-    print footJoints
-    # // TODO: GET ALL LEG BONES
-
-
-
-
+    for j in footJoints:
+        jID = extra.identifyMaster(j)
+        if jID[0] == "Ball":
+            ball = j
+        elif jID[0] == "HeelPV":
+            heelPV = j
+        elif jID[0] == "ToePV":
+            toePV = j
+        elif jID[0] == "BankIN":
+            bankIN = j
+        elif jID[0] == "BankOUT":
+            bankOUT = j
+        else:
+            pm.error("Problem getting Foot reference joints")
+    legInits = {
+        "LegRoot": root,
+        "Hip": hip,
+        "Knee": knee,
+        "Foot": foot,
+        "Ball": ball,
+        "HeelPV": heelPV,
+        "ToePV": toePV,
+        "BankIN": bankIN,
+        "BankOUT": bankOUT
+    }
+    return legInits
 
 
 def jFoolProof(node, type="joint", min=1, max=1):
