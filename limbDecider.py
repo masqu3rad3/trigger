@@ -16,16 +16,16 @@ def limbDecider(rootJoint):
 
     # Collect all joints connected to the master root
     allJoints = pm.listRelatives(rootJoint, ad=True, type="joint")
+    # print allJoints
     limbJoints=[]
     for j in allJoints:
         limbProperties = extra.identifyMaster(j)
-
+        print limbProperties
         # If the joint is a collar bone, create an arm there
-        if limbProperties[0] == "Collar":
-            arm.createArm(getArmBones(j), suffix=limbProperties[2]+"_arm", side=limbProperties[2])
+        # if limbProperties[0] == "Collar":
+        #     arm.createArm(getArmBones(j), suffix=limbProperties[2]+"_arm", side=limbProperties[2])
         if limbProperties[0] == "LegRoot":
             leg.createLeg(getLegBones(j), suffix=limbProperties[2] + "_leg", side=limbProperties[2])
-
 
 
 
