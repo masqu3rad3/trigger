@@ -1,10 +1,13 @@
 import pymel.core as pm
 
-import createArms as arm
+import armClass as arm
 reload(arm)
 
-import createLegs as leg
+import legClass as leg
 reload(leg)
+
+import neckAndHeadClass as neckAndHead
+reload(neckAndHead)
 
 import extraProcedures as extra
 reload(extra)
@@ -16,14 +19,27 @@ def limbDecider(rootJoint):
     allJoints = pm.listRelatives(rootJoint, ad=True, type="joint")
     # print allJoints
     limbJoints=[]
+
+    armList=[]
+    legList=[]
+    neckList=[]
     for j in allJoints:
         limbProperties = extra.identifyMaster(j)
-        print limbProperties
         # If the joint is a collar bone, create an arm there
         if limbProperties[0] == "Collar":
-            arm.createArm(getArmBones(j), suffix=limbProperties[2]+"_arm", side=limbProperties[2])
+            limb_arm = arm.arm()
+            limb_arm.createArm(getArmBones(j), suffix=limbProperties[2]+"_arm", side=limbProperties[2])
+            armList.append(limb_arm )
+            # arm.createArm(getArmBones(j), suffix=limbProperties[2]+"_arm", side=limbProperties[2])
         if limbProperties[0] == "LegRoot":
-            leg.createLeg(getLegBones(j), suffix=limbProperties[2]+"_leg", side=limbProperties[2])
+            limb_leg = leg.leg()
+            limb_leg.createLeg(getLegBones(j), suffix=limbProperties[2]+"_leg", side=limbProperties[2])
+            legList.append(limb_leg)
+        if limbProperties[0] == "Neck":
+            limb_neck = neckAndHead.neckAndHead()
+            limb_neck.createNeckAndHead(getNeckAndHeadBones(j), suffix="_n")
+            # TODO: Make the neckAndHeadClass procedural -> needs to be compatible with multiple heads
+            neckList.append(limb_neck)
 
 def getArmBones(rootNode):
     collar = rootNode
@@ -71,6 +87,27 @@ def getLegBones(rootNode):
         "BankOUT": bankOUT
     }
     return legInits
+
+def getNeckAndHeadBones(rootNode):
+    neck = rootNode
+    head = (jFoolProof(neck))[0]
+    rest = (jFoolProof(head, min=2, max=2))
+    for j in rest:
+        jID = extra.identifyMaster(j)
+        if jID[0] == "Jaw":
+            jaw =j
+            jawEnd = jFoolProof(j)[0]
+        if jID[0] == "Head":
+            headEnd = j
+    neckAndHeadInits = {
+        "Neck": neck,
+        "Head": head,
+        "HeadEnd": headEnd,
+        "Jaw": jaw,
+        "JawEnd": jawEnd
+    }
+    return neckAndHeadInits
+
 
 
 def jFoolProof(node, type="joint", min=1, max=1):
