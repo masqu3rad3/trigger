@@ -38,8 +38,9 @@ def limbDecider(rootJoint):
         if limbProperties[0] == "Neck":
             limb_neck = neckAndHead.neckAndHead()
             limb_neck.createNeckAndHead(getNeckAndHeadBones(j), suffix="_n")
-            # TODO: Make the neckAndHeadClass procedural -> needs to be compatible with multiple heads
             neckList.append(limb_neck)
+
+        ## //TODO : Make Finger Class, Make Spine Class
 
 def getArmBones(rootNode):
     collar = rootNode
