@@ -16,7 +16,8 @@ def limbDecider(rootJoint):
 
 
     # Collect all joints connected to the master root
-    allJoints = pm.listRelatives(rootJoint, ad=True, type="joint")
+    allJoints = [rootJoint]
+    allJoints = allJoints + (pm.listRelatives(rootJoint, ad=True, type="joint"))
     # print allJoints
     limbJoints=[]
 
@@ -29,7 +30,7 @@ def limbDecider(rootJoint):
         if limbProperties[0] == "Collar":
             limb_arm = arm.arm()
             limb_arm.createArm(getArmBones(j), suffix=limbProperties[2]+"_arm", side=limbProperties[2])
-            armList.append(limb_arm )
+            armList.append(limb_arm)
             # arm.createArm(getArmBones(j), suffix=limbProperties[2]+"_arm", side=limbProperties[2])
         if limbProperties[0] == "LegRoot":
             limb_leg = leg.leg()
@@ -39,8 +40,10 @@ def limbDecider(rootJoint):
             limb_neck = neckAndHead.neckAndHead()
             limb_neck.createNeckAndHead(getNeckAndHeadBones(j), suffix="_n")
             neckList.append(limb_neck)
+        if limbProperties[0] == "Root":
+            pass
 
-        ## //TODO : Make Finger Class, Make Spine Class
+        ## //TODO : Make Spine Class
 
 def getArmBones(rootNode):
     collar = rootNode
@@ -109,6 +112,17 @@ def getNeckAndHeadBones(rootNode):
     }
     return neckAndHeadInits
 
+def getSpineBones(rootNode):
+    spineRoot = rootNode
+    spineNodes = []
+    spineNodes.append(rootNode)
+    firstSpine = jFoolProof(rootNode, min=1, max=100)[0]
+    testSpine = firstSpine
+    while testSpine != None:
+        spineNodes.append(testSpine)
+        testSpine = jFoolProof(testSpine)
+    return spineNodes
+    # return spineRoot+spineNodes
 
 
 def jFoolProof(node, type="joint", min=1, max=1):
@@ -123,5 +137,6 @@ def jFoolProof(node, type="joint", min=1, max=1):
     if min <= jCount <= max:
         return validChildren
     else:
-        pm.error("joint count does not meet the requirements")
+        return None
+        # pm.error("joint count does not meet the requirements")
 
