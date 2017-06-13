@@ -5,7 +5,7 @@ reload(extra)
 
 class initBones(object):
     fingers = 5
-    spineSegments = 2
+    spineSegments = 3
     def createInitBones(self):
         """
         This Function creates Initialization Bones to be used as reference points in the final rig.
@@ -16,11 +16,10 @@ class initBones(object):
         Returns:
     
         """
-        spineSegments=self.spineSegments+1
         if self.fingers > 5 or self.fingers < 0:
             pm.error("Finger limits exceeded. Must be between 1-5")
             return
-        if spineSegments < 2 :
+        if self.spineSegments+1 < 2 :
             pm.error("Minimum spine segment must be 1")
             return
 

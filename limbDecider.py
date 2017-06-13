@@ -9,6 +9,9 @@ reload(leg)
 import neckAndHeadClass as neckAndHead
 reload(neckAndHead)
 
+import spineClass as spine
+reload(spine)
+
 import extraProcedures as extra
 reload(extra)
 
@@ -24,9 +27,10 @@ def limbDecider(rootJoint):
     armList=[]
     legList=[]
     neckList=[]
+    spineList=[]
     for j in allJoints:
         limbProperties = extra.identifyMaster(j)
-        # If the joint is a collar bone, create an arm there
+        ## If the joint is a collar bone, create an arm there
         if limbProperties[0] == "Collar":
             limb_arm = arm.arm()
             limb_arm.createArm(getArmBones(j), suffix=limbProperties[2]+"_arm", side=limbProperties[2])
@@ -41,9 +45,11 @@ def limbDecider(rootJoint):
             limb_neck.createNeckAndHead(getNeckAndHeadBones(j), suffix="_n")
             neckList.append(limb_neck)
         if limbProperties[0] == "Root":
-            pass
-
-        ## //TODO : Make Spine Class
+            # print getSpineBones(j)
+            limb_spine = spine.spine()
+            limb_spine.createSpine(getSpineBones(j), suffix="_s") # s for spine...
+            spineList.append(limb_spine)
+        ## //TODO : CONNECT THE PLUGS, ANCHOR SWITCHES, GOOD PARENTING
 
 def getArmBones(rootNode):
     collar = rootNode
@@ -116,11 +122,15 @@ def getSpineBones(rootNode):
     spineRoot = rootNode
     spineNodes = []
     spineNodes.append(rootNode)
-    firstSpine = jFoolProof(rootNode, min=1, max=100)[0]
+
+    ## get the first Spine after root
+    rootChildren = jFoolProof(rootNode, min=1, max=1000)
+    firstSpine = [j for j in rootChildren if extra.identifyMaster(j)[0] == "Spine"]
     testSpine = firstSpine
-    while testSpine != None:
-        spineNodes.append(testSpine)
-        testSpine = jFoolProof(testSpine)
+    while len(testSpine) == 1:
+        spineNodes.append(testSpine[0])
+        testSpine = jFoolProof(testSpine, min=1, max=100)
+
     return spineNodes
     # return spineRoot+spineNodes
 
