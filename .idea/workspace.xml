@@ -2,13 +2,11 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="bdfbef2a-4950-4179-8f83-98af3651d5cf" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/fingerClass.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/multiFingersClass.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/spineClass.py" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/initBones.py" afterPath="$PROJECT_DIR$/initBonesClass.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/armClass.py" afterPath="$PROJECT_DIR$/armClass.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/limbDecider.py" afterPath="$PROJECT_DIR$/limbDecider.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/legClass.py" afterPath="$PROJECT_DIR$/legClass.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/neckAndHeadClass.py" afterPath="$PROJECT_DIR$/neckAndHeadClass.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/spineClass.py" afterPath="$PROJECT_DIR$/spineClass.py" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -19,91 +17,115 @@
   </component>
   <component name="ExecutionTargetManager" SELECTED_TARGET="default_target" />
   <component name="FileEditorManager">
-    <leaf>
-      <file leaf-file-name="initBonesClass.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/initBonesClass.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-1980">
-              <caret line="30" column="46" lean-forward="true" selection-start-line="30" selection-start-column="46" selection-end-line="30" selection-end-column="46" />
-              <folding>
-                <element signature="e#1#24#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="limbDecider.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/limbDecider.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="703">
-              <caret line="45" column="36" lean-forward="true" selection-start-line="45" selection-start-column="36" selection-end-line="45" selection-end-column="36" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="createSpine.py" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/createSpine.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="4465">
-              <caret line="209" column="81" lean-forward="false" selection-start-line="209" selection-start-column="67" selection-end-line="209" selection-end-column="81" />
-              <folding>
-                <element signature="e#0#23#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="spineClass.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/spineClass.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="264">
-              <caret line="14" column="0" lean-forward="false" selection-start-line="14" selection-start-column="0" selection-end-line="22" selection-end-column="14" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="masterRig.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/masterRig.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="946">
-              <caret line="88" column="28" lean-forward="false" selection-start-line="88" selection-start-column="20" selection-end-line="88" selection-end-column="28" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="armClass.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/armClass.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="4818">
-              <caret line="357" column="33" lean-forward="false" selection-start-line="357" selection-start-column="33" selection-end-line="357" selection-end-column="33" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="extraProcedures.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/extraProcedures.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="307">
-              <caret line="537" column="20" lean-forward="true" selection-start-line="537" selection-start-column="20" selection-end-line="537" selection-end-column="20" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-    </leaf>
+    <splitter split-orientation="horizontal" split-proportion="0.53718245">
+      <split-first>
+        <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
+          <file leaf-file-name="limbDecider.py" pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/limbDecider.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="660">
+                  <caret line="45" column="36" lean-forward="false" selection-start-line="45" selection-start-column="36" selection-end-line="45" selection-end-column="36" />
+                  <folding>
+                    <element signature="e#0#23#0" expanded="true" />
+                  </folding>
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file leaf-file-name="createSpine.py" pinned="false" current-in-tab="true">
+            <entry file="file://$PROJECT_DIR$/createSpine.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="316">
+                  <caret line="23" column="12" lean-forward="false" selection-start-line="23" selection-start-column="4" selection-end-line="23" selection-end-column="12" />
+                  <folding />
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file leaf-file-name="spineClass.py" pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/spineClass.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="352">
+                  <caret line="39" column="17" lean-forward="false" selection-start-line="39" selection-start-column="8" selection-end-line="39" selection-end-column="17" />
+                  <folding />
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file leaf-file-name="ribbonClass.py" pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/ribbonClass.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="220">
+                  <caret line="12" column="13" lean-forward="false" selection-start-line="12" selection-start-column="13" selection-end-line="12" selection-end-column="13" />
+                  <folding />
+                </state>
+              </provider>
+            </entry>
+          </file>
+        </leaf>
+      </split-first>
+      <split-second>
+        <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
+          <file leaf-file-name="legClass.py" pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/legClass.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="16874">
+                  <caret line="769" column="0" lean-forward="true" selection-start-line="769" selection-start-column="0" selection-end-line="769" selection-end-column="0" />
+                  <folding />
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file leaf-file-name="armClass.py" pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/armClass.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="726">
+                  <caret line="60" column="59" lean-forward="true" selection-start-line="60" selection-start-column="20" selection-end-line="60" selection-end-column="59" />
+                  <folding />
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file leaf-file-name="neckAndHeadClass.py" pinned="false" current-in-tab="true">
+            <entry file="file://$PROJECT_DIR$/neckAndHeadClass.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="616">
+                  <caret line="28" column="0" lean-forward="false" selection-start-line="28" selection-start-column="0" selection-end-line="34" selection-end-column="18" />
+                  <folding>
+                    <element signature="e#0#23#0" expanded="true" />
+                  </folding>
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file leaf-file-name="createTwistSpline.py" pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/createTwistSpline.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="0">
+                  <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+                  <folding />
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file leaf-file-name="twistSplineClass.py" pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/twistSplineClass.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="5808">
+                  <caret line="266" column="42" lean-forward="false" selection-start-line="266" selection-start-column="42" selection-end-line="266" selection-end-column="42" />
+                  <folding>
+                    <element signature="e#0#23#0" expanded="true" />
+                  </folding>
+                </state>
+              </provider>
+            </entry>
+          </file>
+        </leaf>
+      </split-second>
+    </splitter>
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>neckSP_endLock</find>
-      <find>neckSP_nonScaleGrp</find>
-      <find>neckSP_defJoints</find>
-      <find>neckSP_noTouchListList</find>
-      <find>pm.pointConstraint(neckSpline</find>
-      <find>attPassCont</find>
       <find>pm.pointConstraint(neckSpline.endLock, headSP_startConnection, mo=True)</find>
       <find>endLock</find>
       <find>headSP_IKCrv_ORE_List</find>
@@ -128,6 +150,12 @@
       <find>ternary</find>
       <find>ternar</find>
       <find>jArmPlug_r_arm</find>
+      <find>parentContraint</find>
+      <find>neckRoot</find>
+      <find>OFF</find>
+      <find>cont_head</find>
+      <find>scaleGrp</find>
+      <find>jChestPlug</find>
     </findStrings>
     <replaceStrings>
       <replace>startConnection</replace>
@@ -146,25 +174,26 @@
         <option value="$PROJECT_DIR$/createRibbon.py" />
         <option value="$PROJECT_DIR$/createArms.py" />
         <option value="$PROJECT_DIR$/ribbonClass.py" />
-        <option value="$PROJECT_DIR$/legClass.py" />
         <option value="$PROJECT_DIR$/twistSplineClass.py" />
-        <option value="$PROJECT_DIR$/neckAndHeadClass.py" />
         <option value="$PROJECT_DIR$/fingerClass.py" />
         <option value="$PROJECT_DIR$/handAndFeetClass.py" />
         <option value="$PROJECT_DIR$/multiFingersClass.py" />
-        <option value="$PROJECT_DIR$/armClass.py" />
         <option value="$PROJECT_DIR$/initBones.py" />
         <option value="$PROJECT_DIR$/initBonesClass.py" />
         <option value="$PROJECT_DIR$/limbDecider.py" />
+        <option value="$PROJECT_DIR$/createSpine.py" />
+        <option value="$PROJECT_DIR$/armClass.py" />
+        <option value="$PROJECT_DIR$/neckAndHeadClass.py" />
+        <option value="$PROJECT_DIR$/legClass.py" />
         <option value="$PROJECT_DIR$/spineClass.py" />
       </list>
     </option>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="-4" />
-    <option name="y" value="-4" />
-    <option name="width" value="2568" />
-    <option name="height" value="1580" />
+    <option name="x" value="-8" />
+    <option name="y" value="-8" />
+    <option name="width" value="2576" />
+    <option name="height" value="1426" />
   </component>
   <component name="ProjectView">
     <navigator currentView="ProjectPane" proportions="" version="1">
@@ -181,7 +210,7 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Scratches" />
+      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <PATH>
@@ -196,7 +225,7 @@
           </PATH>
         </subPane>
       </pane>
-      <pane id="Scope" />
+      <pane id="Scratches" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -350,10 +379,10 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="-4" y="-4" width="2568" height="1580" extended-state="6" />
+    <frame x="-8" y="-8" width="2576" height="1426" extended-state="6" />
     <editor active="true" />
     <layout>
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.11556791" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.15429688" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.2462006" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
@@ -365,12 +394,23 @@
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
       <window_info id="Data View" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
+      <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
+      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.2462006" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.11556791" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32978722" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
+      <window_info id="Data View" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
     </layout>
   </component>
   <component name="VcsContentAnnotationSettings">
@@ -402,13 +442,7 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/initBones.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
+    <entry file="file://$PROJECT_DIR$/initBones.py" />
     <entry file="file://$PROJECT_DIR$/masterRig.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="88">
@@ -428,7 +462,9 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="594">
           <caret line="29" column="0" lean-forward="true" selection-start-line="29" selection-start-column="0" selection-end-line="29" selection-end-column="0" />
-          <folding />
+          <folding>
+            <element signature="e#0#23#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
@@ -459,7 +495,9 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="1320">
           <caret line="62" column="20" lean-forward="false" selection-start-line="62" selection-start-column="20" selection-end-line="62" selection-end-column="20" />
-          <folding />
+          <folding>
+            <element signature="e#0#23#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
@@ -485,13 +523,7 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/initBones.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
+    <entry file="file://$PROJECT_DIR$/initBones.py" />
     <entry file="file://$PROJECT_DIR$/extraProcedures.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
@@ -510,17 +542,13 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="1584">
           <caret line="74" column="20" lean-forward="false" selection-start-line="74" selection-start-column="20" selection-end-line="74" selection-end-column="20" />
-          <folding />
+          <folding>
+            <element signature="e#0#23#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/initBones.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
+    <entry file="file://$PROJECT_DIR$/initBones.py" />
     <entry file="file://$PROJECT_DIR$/createArms.py" />
     <entry file="file://$PROJECT_DIR$/contIcons.py">
       <provider selected="true" editor-type-id="text-editor">
@@ -548,19 +576,11 @@
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/createNeck.py" />
-    <entry file="file://$PROJECT_DIR$/handAndFeetClass.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1188">
-          <caret line="55" column="0" lean-forward="false" selection-start-line="55" selection-start-column="0" selection-end-line="55" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
+    <entry file="file://$PROJECT_DIR$/handAndFeetClass.py" />
     <entry file="file://$PROJECT_DIR$/createFinger.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="-2003">
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -568,9 +588,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="198">
           <caret line="9" column="13" lean-forward="false" selection-start-line="9" selection-start-column="4" selection-end-line="9" selection-end-column="13" />
-          <folding>
-            <element signature="e#0#23#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -582,18 +599,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/ribbonClass.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="280">
-          <caret line="16" column="0" lean-forward="true" selection-start-line="16" selection-start-column="0" selection-end-line="16" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/twistSplineClass.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="266">
-          <caret line="185" column="0" lean-forward="true" selection-start-line="185" selection-start-column="0" selection-end-line="185" selection-end-column="0" />
+        <state relative-caret-position="5808">
+          <caret line="266" column="42" lean-forward="false" selection-start-line="266" selection-start-column="42" selection-end-line="266" selection-end-column="42" />
           <folding>
             <element signature="e#0#23#0" expanded="true" />
           </folding>
@@ -604,52 +613,18 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="148">
           <caret line="18" column="19" lean-forward="true" selection-start-line="18" selection-start-column="19" selection-end-line="18" selection-end-column="19" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/createSplineIK.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="104">
-          <caret line="8" column="0" lean-forward="true" selection-start-line="8" selection-start-column="0" selection-end-line="8" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/createTwistSpline.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="82">
-          <caret line="7" column="16" lean-forward="true" selection-start-line="7" selection-start-column="16" selection-end-line="7" selection-end-column="16" />
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/neckAndHeadClass.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="178">
-          <caret line="34" column="0" lean-forward="true" selection-start-line="34" selection-start-column="0" selection-end-line="34" selection-end-column="0" />
-          <folding>
-            <element signature="e#0#23#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/legClass.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="470">
-          <caret line="119" column="44" lean-forward="false" selection-start-line="119" selection-start-column="44" selection-end-line="119" selection-end-column="44" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/initBones.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="946">
-          <caret line="241" column="0" lean-forward="false" selection-start-line="241" selection-start-column="0" selection-end-line="242" selection-end-column="45" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
+    <entry file="file://$PROJECT_DIR$/initBones.py" />
     <entry file="file://$PROJECT_DIR$/extraProcedures.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="307">
@@ -662,51 +637,82 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="-1980">
           <caret line="30" column="46" lean-forward="true" selection-start-line="30" selection-start-column="46" selection-end-line="30" selection-end-column="46" />
-          <folding>
-            <element signature="e#1#24#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/spineClass.py">
+    <entry file="file://$PROJECT_DIR$/createSplineIK.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="264">
-          <caret line="14" column="0" lean-forward="false" selection-start-line="14" selection-start-column="0" selection-end-line="22" selection-end-column="14" />
+        <state relative-caret-position="104">
+          <caret line="8" column="0" lean-forward="true" selection-start-line="8" selection-start-column="0" selection-end-line="8" selection-end-column="0" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/limbDecider.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="703">
-          <caret line="45" column="36" lean-forward="true" selection-start-line="45" selection-start-column="36" selection-end-line="45" selection-end-column="36" />
-          <folding />
+        <state relative-caret-position="660">
+          <caret line="45" column="36" lean-forward="false" selection-start-line="45" selection-start-column="36" selection-end-line="45" selection-end-column="36" />
+          <folding>
+            <element signature="e#0#23#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/armClass.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="4818">
-          <caret line="357" column="33" lean-forward="false" selection-start-line="357" selection-start-column="33" selection-end-line="357" selection-end-column="33" />
+        <state relative-caret-position="726">
+          <caret line="60" column="59" lean-forward="true" selection-start-line="60" selection-start-column="20" selection-end-line="60" selection-end-column="59" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/masterRig.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="946">
-          <caret line="88" column="28" lean-forward="false" selection-start-line="88" selection-start-column="20" selection-end-line="88" selection-end-column="28" />
+        <state relative-caret-position="44">
+          <caret line="2" column="19" lean-forward="true" selection-start-line="2" selection-start-column="19" selection-end-line="2" selection-end-column="19" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ribbonClass.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="220">
+          <caret line="12" column="13" lean-forward="false" selection-start-line="12" selection-start-column="13" selection-end-line="12" selection-end-column="13" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/legClass.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="16874">
+          <caret line="769" column="0" lean-forward="true" selection-start-line="769" selection-start-column="0" selection-end-line="769" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/neckAndHeadClass.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="616">
+          <caret line="28" column="0" lean-forward="false" selection-start-line="28" selection-start-column="0" selection-end-line="34" selection-end-column="18" />
+          <folding>
+            <element signature="e#0#23#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/spineClass.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="352">
+          <caret line="39" column="17" lean-forward="false" selection-start-line="39" selection-start-column="8" selection-end-line="39" selection-end-column="17" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/createSpine.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="4465">
-          <caret line="209" column="81" lean-forward="false" selection-start-line="209" selection-start-column="67" selection-end-line="209" selection-end-column="81" />
-          <folding>
-            <element signature="e#0#23#0" expanded="true" />
-          </folding>
+        <state relative-caret-position="316">
+          <caret line="23" column="12" lean-forward="false" selection-start-line="23" selection-start-column="4" selection-end-line="23" selection-end-column="12" />
+          <folding />
         </state>
       </provider>
     </entry>

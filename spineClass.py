@@ -19,36 +19,43 @@ class spine(object):
     # cont_hips = None
     # cont_chest = None
     # gmRoot = None
-    # jHeadPlug = None
-    # jArmPlug
-    def createSpine(self):
 
-        spineList = pm.ls("jInit_spine*")
+    def createSpine(self, inits, suffix=""):
+        idCounter = 0
+        ## create an unique suffix
+        while pm.objExists("scaleGrp_" + suffix):
+            suffix = "%s%s" % (suffix, str(idCounter + 1))
 
-        initShouDis = extra.getDistance(pm.PyNode("jInit_Shoulder_l_arm"), pm.PyNode("jInit_Shoulder_r_arm"))
-        initLegsDis = extra.getDistance(pm.PyNode("jInit_HeelPv_l_leg"), pm.PyNode("jInit_HeelPv_r_leg"))
-        initUpBodyDis = extra.getDistance(spineList[len(spineList) / 2], spineList[len(spineList) - 1])
-        initLowBodyDis = extra.getDistance(spineList[0], spineList[len(spineList) / 2])
+        if (len(inits) < 2):
+            pm.error("Insufficient Spine Initialization Joints")
+            return
 
-        rootPoint = pm.PyNode("jInit_spine0").getTranslation(space="world")
-        midPoint = spineList[len(spineList) / 2].getTranslation(space="world")
-        chestPoint = spineList[len(spineList) - 1].getTranslation(space="world")
-        neckPoint = pm.PyNode("jInit_neck").getTranslation(space="world")
-        armPoint_r_arm = pm.PyNode("jInit_Shoulder_r_arm").getTranslation(space="world")
-        armPoint_l_arm = pm.PyNode("jInit_Shoulder_l_arm").getTranslation(space="world")
+        # spineList = pm.ls("jInit_spine*")
+
+        # initShouDis = extra.getDistance(pm.PyNode("jInit_Shoulder_l_arm"), pm.PyNode("jInit_Shoulder_r_arm"))
+        # initLegsDis = extra.getDistance(pm.PyNode("jInit_HeelPv_l_leg"), pm.PyNode("jInit_HeelPv_r_leg"))
+        # initUpBodyDis = extra.getDistance(spineList[len(spineList) / 2], spineList[len(spineList) - 1])
+        # initLowBodyDis = extra.getDistance(spineList[0], spineList[len(spineList) / 2])
+
+        rootPoint = inits[0]
+        midPoint = inits[(len(inits)/2)-1]
+        chestPoint = inits[len(inits)-1]
+        # neckPoint = pm.PyNode("jInit_neck").getTranslation(space="world")
+        # armPoint_r_arm = pm.PyNode("jInit_Shoulder_r_arm").getTranslation(space="world")
+        # armPoint_l_arm = pm.PyNode("jInit_Shoulder_l_arm").getTranslation(space="world")
 
         # # Create Plug Joints
-        pm.select(None)
-        jChestPlug = pm.joint(name="jDef_ChestPlug", p=chestPoint)
-        pm.select(None)
-        jHeadPlug = pm.joint(name="jDef_HeadPlug", p=neckPoint)
-        pm.select(None)
-        jArmPlug_r_arm = pm.joint(name="jArmPlug_r_arm", p=armPoint_r_arm)
-        pm.select(None)
-        jArmPlug_l_arm = pm.joint(name="jArmPlug_l_arm", p=armPoint_l_arm)
+        # pm.select(None)
+        # jChestPlug = pm.joint(name="jDef_ChestPlug", p=chestPoint)
+        # pm.select(None)
+        # jHeadPlug = pm.joint(name="jDef_HeadPlug", p=neckPoint)
+        # pm.select(None)
+        # jArmPlug_r_arm = pm.joint(name="jArmPlug_r_arm", p=armPoint_r_arm)
+        # pm.select(None)
+        # jArmPlug_l_arm = pm.joint(name="jArmPlug_l_arm", p=armPoint_l_arm)
 
         # parent upper plug joints
-        pm.parent(jArmPlug_l_arm, jArmPlug_r_arm, jHeadPlug, jChestPlug)
+        # pm.parent(jArmPlug_l_arm, jArmPlug_r_arm, jHeadPlug, jChestPlug)
 
         pm.select(None)
         gmRoot = pm.joint(p=rootPoint, name="gmRoot", radius=10)

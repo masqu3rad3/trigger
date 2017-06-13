@@ -25,6 +25,7 @@ class arm():
     cont_IK_hand_OFF = None
     cont_Pole = None
     nodesContVis = None
+    limbPlug = None ## This is a joint node and should be parented to another joint.
     def createArm(self, armInits, suffix="", side="L", mirrorAxis="X"):
 
         idCounter=0
@@ -64,6 +65,10 @@ class arm():
         initShoulderDist = extra.getDistance(collarRef, shoulderRef)
         initUpperArmDist = extra.getDistance(shoulderRef, elbowRef)
         initLowerArmDist = extra.getDistance(elbowRef, handRef)
+
+        # Create Limb Plug
+        pm.select(d=True)
+        self.limbPlug = pm.joint(name="jPlug_" + suffix, p=collarPos, radius=3)
 
         # Shoulder Joints
         pm.select(d=True)
@@ -593,6 +598,7 @@ class arm():
 
         pm.select(armStart)
 
+        pm.parentConstraint(self.limbPlug, self.scaleGrp, mo=True)
         pm.parent(startLock_Ore, self.scaleGrp)
         pm.parent(armStart, self.scaleGrp)
         pm.parent(armEnd, self.scaleGrp)

@@ -22,6 +22,7 @@ class neckAndHead():
     cont_neck = None
     cont_head = None
     cont_head_OFF = None
+    limbPlug = None
 
     def createNeckAndHead(self, inits, suffix=""):
         idCounter = 0
@@ -47,6 +48,10 @@ class neckAndHead():
         # get necessary distances
         neckDist = extra.getDistance(neckStart, headStart)
         headDist = extra.getDistance(headStart, headEnd)
+
+        # Create Limb Plug
+        pm.select(d=True)
+        self.limbPlug = pm.joint(name="jPlug_" + suffix, p=neckStart.getTranslation(space="world"), radius=3)
 
         # create Controllers
 
@@ -114,7 +119,7 @@ class neckAndHead():
         # # Connect the scale to the scaleGrp
         self.scaleGrp.scale >> headSpline.scaleGrp.scale
 
-
+        pm.parentConstraint(self.limbPlug, self.neckRootLoc, mo=True)
 
         # GOOD PARENTING
         pm.parent(neckSpline.contCurves_ORE[0], self.neckRootLoc)

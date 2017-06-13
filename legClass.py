@@ -16,11 +16,12 @@ reload(icon)
 # whichLeg="l_leg"
 class leg():
     none = None
-    scaleGrp = none
-    cont_IK_foot = none
-    cont_Pole = none
-    nonScaleGrp = none
-    cont_IK_foot_OFF = none
+    scaleGrp = None
+    cont_IK_foot = None
+    cont_Pole = None
+    nonScaleGrp = None
+    cont_IK_foot_OFF = None
+    limbPlug = None
     def createLeg(self, legInits, suffix="", side="L", mirrorAxis="X"):
         idCounter = 0
         ## create an unique suffix
@@ -56,6 +57,11 @@ class leg():
         self.scaleGrp = pm.group(name="scaleGrp_" + suffix, em=True)
         extra.alignTo(self.scaleGrp, footRef, 0)
         self.nonScaleGrp = pm.group(name="NonScaleGrp_" + suffix, em=True)
+
+        ## Create Limb Plug
+        pm.select(d=True)
+        self.limbPlug = pm.joint(name="limbPlug_" + suffix, p=legRootPos, radius=3)
+
 
         ###Create common Joints
         pm.select(d=True)
@@ -757,6 +763,8 @@ class leg():
         fk_ik_rvs.outputX >> (toe_paCon + "." + jFK_Toe + "W1")
 
         # # GOOD PARENTING
+
+        pm.parentConstraint(self.limbPlug, self.scaleGrp, mo=True)
 
         # Create Master Root and Scale and nonScale Group
 
