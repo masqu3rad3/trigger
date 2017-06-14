@@ -31,19 +31,19 @@ def limbDecider(rootJoint):
     for j in allJoints:
         limbProperties = extra.identifyMaster(j)
         ## If the joint is a collar bone, create an arm there
-        if limbProperties[0] == "Collar":
-            limb_arm = arm.arm()
-            limb_arm.createArm(getArmBones(j), suffix=limbProperties[2]+"_arm", side=limbProperties[2])
-            armList.append(limb_arm)
-            # arm.createArm(getArmBones(j), suffix=limbProperties[2]+"_arm", side=limbProperties[2])
-        if limbProperties[0] == "LegRoot":
-            limb_leg = leg.leg()
-            limb_leg.createLeg(getLegBones(j), suffix=limbProperties[2]+"_leg", side=limbProperties[2])
-            legList.append(limb_leg)
-        if limbProperties[0] == "Neck":
-            limb_neck = neckAndHead.neckAndHead()
-            limb_neck.createNeckAndHead(getNeckAndHeadBones(j), suffix="_n")
-            neckList.append(limb_neck)
+        # if limbProperties[0] == "Collar":
+        #     limb_arm = arm.arm()
+        #     limb_arm.createArm(getArmBones(j), suffix=limbProperties[2]+"_arm", side=limbProperties[2])
+        #     armList.append(limb_arm)
+        #     # arm.createArm(getArmBones(j), suffix=limbProperties[2]+"_arm", side=limbProperties[2])
+        # if limbProperties[0] == "LegRoot":
+        #     limb_leg = leg.leg()
+        #     limb_leg.createLeg(getLegBones(j), suffix=limbProperties[2]+"_leg", side=limbProperties[2])
+        #     legList.append(limb_leg)
+        # if limbProperties[0] == "Neck":
+        #     limb_neck = neckAndHead.neckAndHead()
+        #     limb_neck.createNeckAndHead(getNeckAndHeadBones(j), suffix="_n")
+        #     neckList.append(limb_neck)
         if limbProperties[0] == "Root":
             # print getSpineBones(j)
             limb_spine = spine.spine()
