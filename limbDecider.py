@@ -15,6 +15,8 @@ reload(spine)
 import extraProcedures as extra
 reload(extra)
 
+import contIcons as icon
+
 def limbDecider(rootJoint):
 
 
@@ -22,34 +24,97 @@ def limbDecider(rootJoint):
     allJoints = [rootJoint]
     allJoints = allJoints + (pm.listRelatives(rootJoint, ad=True, type="joint"))
     # print allJoints
+
+
+
     limbJoints=[]
 
     armList=[]
     legList=[]
     neckList=[]
     spineList=[]
+    limbList=[]
+    rightHip = None
+    leftHip = None
     for j in allJoints:
         limbProperties = extra.identifyMaster(j)
+
+        # Get the HipSize
+        # get the Right Hip
+
+        if limbProperties[0] == "Hip" and limbProperties[2] == "R":
+            rightHip = j
+        # get the Left Hip
+        if limbProperties[0] == "Hip" and limbProperties[2] == "L":
+            leftHip = j
+
+
         ## If the joint is a collar bone, create an arm there
-        # if limbProperties[0] == "Collar":
-        #     limb_arm = arm.arm()
-        #     limb_arm.createArm(getArmBones(j), suffix=limbProperties[2]+"_arm", side=limbProperties[2])
-        #     armList.append(limb_arm)
-        #     # arm.createArm(getArmBones(j), suffix=limbProperties[2]+"_arm", side=limbProperties[2])
-        # if limbProperties[0] == "LegRoot":
-        #     limb_leg = leg.leg()
-        #     limb_leg.createLeg(getLegBones(j), suffix=limbProperties[2]+"_leg", side=limbProperties[2])
-        #     legList.append(limb_leg)
-        # if limbProperties[0] == "Neck":
-        #     limb_neck = neckAndHead.neckAndHead()
-        #     limb_neck.createNeckAndHead(getNeckAndHeadBones(j), suffix="_n")
-        #     neckList.append(limb_neck)
+        if limbProperties[0] == "Collar":
+            limb_arm = arm.arm()
+            limb_arm.createArm(getArmBones(j), suffix=limbProperties[2]+"_arm", side=limbProperties[2])
+            limbList.append(limb_arm)
+            print limb_arm.connectsTo
+            # arm.createArm(getArmBones(j), suffix=limbProperties[2]+"_arm", side=limbProperties[2])
+        if limbProperties[0] == "LegRoot":
+            limb_leg = leg.leg()
+            limb_leg.createLeg(getLegBones(j), suffix=limbProperties[2]+"_leg", side=limbProperties[2])
+            limbList.append(limb_leg)
+            print limb_leg.connectsTo
+
+        if limbProperties[0] == "Neck":
+            limb_neck = neckAndHead.neckAndHead()
+            limb_neck.createNeckAndHead(getNeckAndHeadBones(j), suffix="_n")
+            limbList.append(limb_neck)
+            print limb_neck.connectsTo
+
         if limbProperties[0] == "Root":
             # print getSpineBones(j)
             limb_spine = spine.spine()
             limb_spine.createSpine(getSpineBones(j), suffix="_s") # s for spine...
             spineList.append(limb_spine)
-        ## //TODO : CONNECT THE PLUGS, ANCHOR SWITCHES, GOOD PARENTING
+
+    # # Create the master and placement Controllers
+
+    if rightHip != None and leftHip != None:
+        hipSize = extra.getDistance(rightHip, leftHip)
+    else:
+        hipSize = 1
+    cont_placement = icon.circle("cont_Placement", (hipSize, hipSize, hipSize))
+    cont_master = icon.triCircle("cont_Master", (hipSize * 1.5, hipSize * 1.5, hipSize * 1.5))
+    pm.addAttr(cont_master, at="bool", ln="Control_Visibility", sn="contVis", defaultValue=True)
+    pm.addAttr(cont_master, at="bool", ln="Joints_Visibility", sn="jointVis")
+    pm.addAttr(cont_master, at="bool", ln="Rig_Visibility", sn="rigVis")
+    # make the created attributes visible in the channelbox
+    pm.setAttr(cont_master.contVis, cb=True)
+    pm.setAttr(cont_master.jointVis, cb=True)
+    pm.setAttr(cont_master.rigVis, cb=True)
+    pm.parent(cont_placement, cont_master)
+
+    # print "limbList", limbList
+    # print "sCons", limbList[0].scaleConstraints
+    # if there is a spine...
+    for sp in spineList:
+        # Connect the plugs
+        for limb in limbList:
+            print "limbConnects", limb.connectsTo
+            if limb.connectsTo == "Spine":  # this limb is gonna connected to the chest area
+                # parent the plug to the chest socket
+                pm.parent(limb.limbPlug, sp.chestSocket)
+
+            if limb.connectsTo == "Root":  # this limb is gonna connected to the root
+                # parent the plug to the root socket
+                pm.parent(limb.limbPlug, sp.rootSocket)
+                # print limb_spine.connectsTo
+            for s in limb.scaleConstraints:
+                pm.scaleConstraint(cont_master, s)
+            # pass the attributes
+            extra.attrPass(limb.scaleGrp, cont_master, values=True, daisyChain=True, overrideEx=False)
+            print limb.anchors
+            ## //TODO : WRITE A FUNCTION TO CREATE ANCHOR SWITCHES FOR EVERY ANCHOR IN EVERY LIMB TO OTHER ANCHOR POINTS EXCEPT ITSELF
+
+
+
 
 def getArmBones(rootNode):
     collar = rootNode

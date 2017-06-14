@@ -251,7 +251,7 @@ class spine(object):
         for i in midSpineLocB_List:
             spine.scaleGrp.rigVis >> i.v
 
-        spine.scaleGrp.rigVis >> self.rootSocket.v
+        # spine.scaleGrp.rigVis >> self.rootSocket.v
 
         # scaleGrp.rigVis >> self.chestSocket.v
         # spine.scaleGrp.rigVis >> jArmPlug_l_arm.v

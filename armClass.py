@@ -25,7 +25,13 @@ class arm():
     cont_IK_hand_OFF = None
     cont_Pole = None
     nodesContVis = None
-    limbPlug = None ## This is a joint node and should be parented to another joint.
+    limbPlug = None
+    connectsTo = None
+    scaleConstraints = []
+    anchors = []
+    anchorLocations = []
+
+    ## This is a joint node and should be parented to another joint.
     def createArm(self, armInits, suffix="", side="L", mirrorAxis="X"):
 
         idCounter=0
@@ -44,7 +50,10 @@ class arm():
         elbowRef = armInits["Elbow"]
         handRef = armInits["Hand"]
 
-
+        # find the Socket
+        collarParent = collarRef.getParent()
+        if not collarParent == None:
+            self.connectsTo = extra.identifyMaster(collarParent)[0]
 
         ##Groups
         self.scaleGrp = pm.group(name="scaleGrp_" + suffix, em=True)
@@ -718,4 +727,6 @@ class arm():
         extra.colorize(ribbonUpperArm.middleCont, indexMin)
         extra.colorize(ribbonLowerArm.middleCont, indexMin)
 
+        self.scaleConstraints = [self.scaleGrp, self.cont_IK_hand_OFF]
+        self.anchors = ((self.cont_IK_hand, "parent"),(self.cont_Pole, "parent"))
 

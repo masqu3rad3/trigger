@@ -23,6 +23,9 @@ class neckAndHead():
     cont_head = None
     cont_head_OFF = None
     limbPlug = None
+    connectsTo = None
+    scaleConstraints = []
+    anchors = []
 
     def createNeckAndHead(self, inits, suffix=""):
         idCounter = 0
@@ -40,6 +43,11 @@ class neckAndHead():
         headEnd = inits["HeadEnd"]
         jawStart = inits["Jaw"]
         jawEnd = inits["JawEnd"]
+
+        # find the Socket
+        neckParent = neckStart.getParent()
+        if not neckParent == None:
+            self.connectsTo = extra.identifyMaster(neckParent)[0]
 
         # define groups
         self.scaleGrp = pm.group(name="scaleGrp_"+suffix, em=True)
@@ -193,3 +201,6 @@ class neckAndHead():
         extra.colorize(self.cont_head, index)
         extra.colorize(self.cont_neck, index)
         extra.colorize(cont_headSquash, index)
+
+        self.scaleConstraints = [self.scaleGrp, self.cont_head_OFF]
+        self.anchors = ((self.cont_head, "point"),(self.cont_head, "orient"), (self.cont_neck, "orient"))

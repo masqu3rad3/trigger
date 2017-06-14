@@ -22,6 +22,10 @@ class leg():
     nonScaleGrp = None
     cont_IK_foot_OFF = None
     limbPlug = None
+    connectsTo = None
+    scaleConstraints = []
+    anchors = []
+
     def createLeg(self, legInits, suffix="", side="L", mirrorAxis="X"):
         idCounter = 0
         ## create an unique suffix
@@ -42,6 +46,11 @@ class leg():
         toePvRef = legInits["ToePV"]
         bankInRef = legInits["BankIN"]
         bankOutRef = legInits["BankOUT"]
+
+        # find the Socket
+        legParent = legRootRef.getParent()
+        if not legParent == None:
+            self.connectsTo = extra.identifyMaster(legParent)[0]
 
         legRootPos = legRootRef.getTranslation(space="world")
         hipPos = hipRef.getTranslation(space="world")
@@ -867,4 +876,6 @@ class leg():
         extra.colorize(ribbonUpperLeg.middleCont, indexMin)
         extra.colorize(ribbonLowerLeg.middleCont, indexMin)
 
+        self.scaleConstraints = [self.scaleGrp, self.cont_IK_foot_OFF]
+        self.anchors = ((self.cont_IK_foot, "parent"),(self.cont_Pole, "parent"))
 
