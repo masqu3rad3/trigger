@@ -728,5 +728,5 @@ class arm():
         extra.colorize(ribbonLowerArm.middleCont, indexMin)
 
         self.scaleConstraints = [self.scaleGrp, self.cont_IK_hand_OFF]
-        self.anchors = ((self.cont_IK_hand, "parent"),(self.cont_Pole, "parent"))
+        self.anchors = [(self.cont_IK_hand, "parent", 1, None),(self.cont_Pole, "parent", 1, None)]
 

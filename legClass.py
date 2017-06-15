@@ -25,6 +25,7 @@ class leg():
     connectsTo = None
     scaleConstraints = []
     anchors = []
+    anchorLocations = []
 
     def createLeg(self, legInits, suffix="", side="L", mirrorAxis="X"):
         idCounter = 0
@@ -877,5 +878,5 @@ class leg():
         extra.colorize(ribbonLowerLeg.middleCont, indexMin)
 
         self.scaleConstraints = [self.scaleGrp, self.cont_IK_foot_OFF]
-        self.anchors = ((self.cont_IK_foot, "parent"),(self.cont_Pole, "parent"))
+        self.anchors = [(self.cont_IK_foot, "parent", 1, None),(self.cont_Pole, "parent", 1, None)]
 

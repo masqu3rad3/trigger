@@ -36,6 +36,8 @@ def limbDecider(rootJoint):
     limbList=[]
     rightHip = None
     leftHip = None
+    anchorLocations = []
+    anchors = []
     for j in allJoints:
         limbProperties = extra.identifyMaster(j)
 
@@ -90,12 +92,25 @@ def limbDecider(rootJoint):
     pm.setAttr(cont_master.jointVis, cb=True)
     pm.setAttr(cont_master.rigVis, cb=True)
     pm.parent(cont_placement, cont_master)
+    # add these to the anchor locations
+    anchorLocations.append(cont_master)
+    anchorLocations.append(cont_placement)
+    # COLOR CODING
+    index = 17
+    extra.colorize(cont_master, index)
+    extra.colorize(cont_placement, index)
+    ############################
 
     # print "limbList", limbList
     # print "sCons", limbList[0].scaleConstraints
     # if there is a spine...
     for sp in spineList:
+        pm.parent(sp.cont_body, cont_placement)
+        pm.scaleConstraint(cont_master, sp.rootSocket)
+        pm.scaleConstraint(cont_master, sp.scaleGrp)
+        extra.attrPass(sp.scaleGrp, cont_master, values=True, daisyChain=True, overrideEx=False)
         # Connect the plugs
+        anchorLocations = anchorLocations + sp.anchorLocations
         for limb in limbList:
             print "limbConnects", limb.connectsTo
             if limb.connectsTo == "Spine":  # this limb is gonna connected to the chest area
@@ -110,7 +125,12 @@ def limbDecider(rootJoint):
                 pm.scaleConstraint(cont_master, s)
             # pass the attributes
             extra.attrPass(limb.scaleGrp, cont_master, values=True, daisyChain=True, overrideEx=False)
-            print limb.anchors
+            ## get all the anchor locations and anchors from the limbs
+            anchorLocations += limb.anchorLocations
+            anchors += limb.anchors
+
+    for anchor in anchors:
+        extra.spaceSwitcher(anchor[0], anchorLocations, mode=anchor[1], defaultVal=anchor[2], listException=anchor[3])
             ## //TODO : WRITE A FUNCTION TO CREATE ANCHOR SWITCHES FOR EVERY ANCHOR IN EVERY LIMB TO OTHER ANCHOR POINTS EXCEPT ITSELF
 
 

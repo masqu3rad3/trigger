@@ -26,6 +26,7 @@ class neckAndHead():
     connectsTo = None
     scaleConstraints = []
     anchors = []
+    anchorLocations = []
 
     def createNeckAndHead(self, inits, suffix=""):
         idCounter = 0
@@ -203,4 +204,9 @@ class neckAndHead():
         extra.colorize(cont_headSquash, index)
 
         self.scaleConstraints = [self.scaleGrp, self.cont_head_OFF]
-        self.anchors = ((self.cont_head, "point"),(self.cont_head, "orient"), (self.cont_neck, "orient"))
+        self.anchors = [(self.cont_head, "point", 5, None),
+                        (self.cont_head, "orient", 1, None)
+                        #(self.cont_neck, "orient", 4, [self.cont_head, self.cont_neck])
+                        ]
+        self.anchorLocations = [self.cont_neck, self.cont_head]
+

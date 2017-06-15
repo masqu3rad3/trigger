@@ -22,6 +22,8 @@ class spine(object):
     rootSocket = None
     nonScaleGrp = None
     chestSocket = None
+    anchors = []
+    anchorLocations = []
 
     def createSpine(self, inits, suffix=""):
         idCounter = 0
@@ -289,6 +291,7 @@ class spine(object):
 
 
         self.scaleGrp = spine.scaleGrp
+        self.anchorLocations = [self.cont_hips, self.cont_chest]
         # return (scaleGrp, self.cont_chest, master Root, head plug, rightArmPlug, leftArmPlug, nonScaleGrp)
         # returnTuple = (
         # scaleGrp, self.cont_body, self.cont_hips, self.cont_chest, gmRoot, jHeadPlug, jArmPlug_r_arm, jArmPlug_l_arm, nonScaleGrp)

@@ -338,7 +338,7 @@ def attrPass (sourceNode, targetNode, attributes=[], inConnections=True, outConn
             for i in userAttr:
                 pm.deleteAttr("%s.%s" % (sourceNode,i))
 
-def spaceSwitcher (node, targetList, overrideExisting=False, mode="parent", defaultVal=1):
+def spaceSwitcher (node, targetList, overrideExisting=False, mode="parent", defaultVal=1, listException = None):
     """
     Creates the space switch attributes between selected node (controller) and targets.
     Args:
@@ -347,7 +347,7 @@ def spaceSwitcher (node, targetList, overrideExisting=False, mode="parent", defa
         overrideExisting: (bool) If True, the existing attributes on the node with the same name will be deleted and recreated. Default False
         mode: (String) The type of the constrain that will be applied to the node. Valid options are "parent", "point and "orient". Default "parent"
         defaultVal: (integer) Default value for the new Switch attribute. If it is out of range, 1 will be used. default: 1.
-        
+        listException: (List) If this argument is not none, the given elements in the list will be removed from the targetList, in case it is in the list of course.
     Returns: None
 
     """
@@ -358,7 +358,14 @@ def spaceSwitcher (node, targetList, overrideExisting=False, mode="parent", defa
         anchors.remove(node)
     if anchors==[]:
         pm.error("target list is empty or no valid targets")
-
+    print "oldList", targetList
+    if listException != None:
+        print "exceptions", listException
+        for x in listException:
+            if targetList.__contains__(x):
+                targetList.remove(x)
+    print "newList", targetList
+    print "mode", mode
     if len(anchors) > defaultVal:
         defaultVal=1
     modeList=("parent", "point", "orient")
