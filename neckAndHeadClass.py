@@ -8,9 +8,6 @@ import contIcons as icon
 
 reload(icon)
 
-import createTwistSpline as spline
-
-reload(spline)
 import twistSplineClass as twistSpline
 reload(twistSpline)
 
@@ -39,14 +36,14 @@ class neckAndHead():
             return
 
         # define related joints
-        neckStart = inits["Neck"]
+        neckNodes = inits["Neck"]
         headStart = inits["Head"]
         headEnd = inits["HeadEnd"]
         jawStart = inits["Jaw"]
         jawEnd = inits["JawEnd"]
 
         # find the Socket
-        neckParent = neckStart.getParent()
+        neckParent = neckNodes[0].getParent()
         if not neckParent == None:
             self.connectsTo = extra.identifyMaster(neckParent)[0]
 
@@ -55,18 +52,18 @@ class neckAndHead():
         self.nonScaleGrp = pm.group(name="nonScaleGrp_"+suffix, em=True)
 
         # get necessary distances
-        neckDist = extra.getDistance(neckStart, headStart)
+        neckDist = extra.getDistance(neckNodes[0], headStart)
         headDist = extra.getDistance(headStart, headEnd)
 
         # Create Limb Plug
         pm.select(d=True)
-        self.limbPlug = pm.joint(name="jPlug_" + suffix, p=neckStart.getTranslation(space="world"), radius=3)
+        self.limbPlug = pm.joint(name="jPlug_" + suffix, p=neckNodes[0].getTranslation(space="world"), radius=3)
 
         # create Controllers
 
         # # neck Controller
         neckScale = (neckDist / 2, neckDist / 2, neckDist / 2)
-        self.cont_neck = icon.curvedCircle(name="cont_neck_"+suffix, scale=neckScale, location=(neckStart.getTranslation(space="world")))
+        self.cont_neck = icon.curvedCircle(name="cont_neck_"+suffix, scale=neckScale, location=(neckNodes[0].getTranslation(space="world")))
         cont_neck_ORE = extra.createUpGrp(self.cont_neck, "ORE")
 
         # # head Controller
@@ -84,17 +81,20 @@ class neckAndHead():
 
         # # head Squash Controller
         squashCenterPos = headEnd.getTranslation(space="world")
+
         cont_headSquash = icon.circle(name="cont_headSquash_"+suffix, scale=((headScale / 2), (headScale / 2), (headScale / 2)),
                                       normal=(0, 0, 1), location=squashCenterPos)
         pm.parent(cont_headSquash, self.cont_head)
 
         # create spline IK for neck
         self.neckRootLoc = pm.spaceLocator(name="neckRootLoc_"+suffix)
-        extra.alignTo(self.neckRootLoc, neckStart)
+        extra.alignTo(self.neckRootLoc, neckNodes[0])
 
         # neckSpline = spline.createTspline([neckStart, headStart], "neckSplineIK_"+suffix, 4, dropoff=2)
+
         neckSpline = twistSpline.twistSpline()
-        neckSpline.createTspline([neckStart, headStart], "neckSplineIK_"+suffix, 4, dropoff=2)
+
+        neckSpline.createTspline(neckNodes+[headStart], "neckSplineIK_"+suffix, 12, dropoff=1)
         # # Connect neck start to the neck controller
         pm.orientConstraint(self.cont_neck, neckSpline.contCurve_Start,
                             mo=True)  # This will be position constrained to the spine(or similar)
@@ -129,6 +129,42 @@ class neckAndHead():
         self.scaleGrp.scale >> headSpline.scaleGrp.scale
 
         pm.parentConstraint(self.limbPlug, self.neckRootLoc, mo=True)
+
+        ############ FOR LONG NECKS ##############
+
+        midSpineLocA_List = []
+        midSpineLocB_List = []
+        midControls = []
+        # cont_spineFK_A_List = []
+        # cont_spineFK_B_List = []
+        # contSpineFKAScale = (iconSize / 2, iconSize / 2, iconSize / 2)
+        # contSpineFKBScale = (iconSize / 2.5, iconSize / 2.5, iconSize / 2.5)
+        ## create locators on the mid controller to be used as alignment
+        for m in range (0, len(neckSpline.contCurves_ORE)):
+            pos = neckSpline.contCurves_ORE[m].getTranslation(space="world")
+            if m > 0 and m < (neckSpline.contCurves_ORE):
+
+                # anan = pm.spaceLocator(name="anan%s_%s" % (m, suffix), p=location)
+                # baban = pm.spaceLocator(name="baban%s_%s" % (m, suffix), p=location)
+                midSpineLocA = pm.spaceLocator(name="midSpineLocA_%s_%s" %(m, suffix), p=pos)
+                midSpineLocA_List.append(midSpineLocA)
+                midSpineLocB = pm.spaceLocator(name="midSpineLocB_%s_%s" % (m, suffix), p=pos)
+                midSpineLocB_List.append(midSpineLocB)
+                pm.parentConstraint(midSpineLocA, midSpineLocB, neckSpline.contCurves_ORE[m], mo=True)
+                midControls.append(neckSpline.contCurves_ORE[m])
+                pm.parent(midSpineLocA, self.cont_head)
+                pm.parent(midSpineLocB, self.cont_neck)
+
+            # contA = icon.circle("cont_SpineFK_A" + str(m), contSpineFKAScale, location=pos)
+            # cont_spineFK_A_List.append(contA)
+            #
+            # contB = icon.ngon("cont_SpineFK_B" + str(m), contSpineFKBScale, location=pos)
+            # cont_spineFK_B_List.append(contB)
+
+            # if m != 0:
+            #     pm.parent(cont_spineFK_A_List[m], cont_spineFK_A_List[m - 1])
+            #     pm.parent(cont_spineFK_B_List[m - 1], cont_spineFK_B_List[m])
+
 
         # GOOD PARENTING
         pm.parent(neckSpline.contCurves_ORE[0], self.neckRootLoc)
@@ -165,6 +201,8 @@ class neckAndHead():
         self.scaleGrp.contVis >> cont_head_ORE.v
         self.scaleGrp.contVis >> cont_neck_ORE.v
         self.scaleGrp.contVis >> cont_headSquash.v
+        for lst in midControls:
+            self.scaleGrp.contVis >> lst.v
 
         # global joint visibilities
 
@@ -177,10 +215,18 @@ class neckAndHead():
         # global rig visibilities
 
         self.scaleGrp.rigVis >> headSpline.contCurves_ORE[0].v
-        self.scaleGrp.rigVis >> headSpline.contCurves_ORE[len(headSpline.contCurves_ORE) - 1].v
+        self.scaleGrp.rigVis >> headSpline.contCurves_ORE[-1].v
 
         self.scaleGrp.rigVis >> neckSpline.contCurves_ORE[0].v
-        self.scaleGrp.rigVis >> neckSpline.contCurves_ORE[len(headSpline.contCurves_ORE) - 1].v
+        self.scaleGrp.rigVis >> neckSpline.contCurves_ORE[-1].v
+
+        self.scaleGrp.rigVis >> self.neckRootLoc.v
+
+        for lst in midSpineLocA_List:
+            self.scaleGrp.rigVis >> lst.v
+        for lst in midSpineLocB_List:
+            self.scaleGrp.rigVis >> lst.v
+
 
         for lst in headSpline.noTouchData:
             for i in lst:
@@ -204,9 +250,10 @@ class neckAndHead():
         extra.colorize(cont_headSquash, index)
 
         self.scaleConstraints = [self.scaleGrp, self.cont_head_OFF]
-        self.anchors = [(self.cont_head, "point", 5, None),
-                        (self.cont_head, "orient", 1, None)
-                        #(self.cont_neck, "orient", 4, [self.cont_head, self.cont_neck])
-                        ]
         self.anchorLocations = [self.cont_neck, self.cont_head]
+
+        self.anchors = [(self.cont_head, "point", 5, None),
+                        (self.cont_head, "orient", 1, None),
+                        (self.cont_neck, "orient", 4, [self.cont_head])
+                        ]
 

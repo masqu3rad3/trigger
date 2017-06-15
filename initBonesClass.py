@@ -1,11 +1,13 @@
 
 import pymel.core as pm
+import pymel.core.datatypes as dt
 import extraProcedures as extra
 reload(extra)
 
 class initBones(object):
     fingers = 5
     spineSegments = 3
+    neckSegments = 3
     def createInitBones(self):
         """
         This Function creates Initialization Bones to be used as reference points in the final rig.
@@ -221,26 +223,49 @@ class initBones(object):
         ########### SPINE BONES DEF ############
 
         def initSpineBones():
+
             if pm.objExists("jInit_spine*"):
                 pm.error("Naming mismatch!!! There are Spine Initializers in the Scene")
                 return
             pm.select(d=True)
-            if self.spineSegments<2:
-                pm.message("Define at least 3 segment")
+            if (self.spineSegments+1)<2:
+                pm.error("Define at least 3 segments for spine section")
                 return
             rPoint=14.0
             nPoint=21.0
-            add=(nPoint-rPoint)/(self.spineSegments-1)
+            add=(nPoint-rPoint)/((self.spineSegments+1)-1)
             jointList=[]
-            for i in range(0, self.spineSegments):
+            for i in range(0, (self.spineSegments+1)):
                 spine = pm.joint(p=(0,(rPoint+(add*i)),0), name="jInit_spine"+str(i))
                 pm.setAttr(spine+ ".side", 0)
                 type = 1 if i == 0 else 6
                 pm.setAttr(spine + ".type", type)
-
                 jointList.append(spine)
-            neck = pm.joint(p=(0, 25.757, 0.249), name=("jInit_neck"))
-            jointList.append(neck)
+
+            if pm.objExists("jInit_neck*"):
+                pm.error("Naming mismatch!!! There are Spine Initializers in the Scene")
+                return
+
+            # pm.select(d=True)
+            rPointNeck=dt.Vector(0,25.757,0)
+            nPointNeck=dt.Vector(0,29.418,0.817)
+            addNeck = (nPointNeck-rPointNeck)/(self.neckSegments)
+            jointListNeck=[]
+            for i in range(0, (self.neckSegments)):
+                neck = pm.joint(p=(rPointNeck+(addNeck*i)), name="jInit_neck"+str(i))
+                pm.setAttr(neck+ ".side", 0)
+
+                if i == 0:
+                    pm.setAttr(neck + ".type", 18)
+                    pm.setAttr(neck + ".otherType", "NeckRoot")
+                else:
+                    pm.setAttr(neck + ".type", 7)
+                jointListNeck.append(neck)
+
+
+
+            # neck = pm.joint(p=(0, 25.757, 0.249), name=("jInit_neck"))
+            # jointList.append(neck)
             head = pm.joint(p=(0, 29.418, 0.817), name=("jInit_head"))
             jointList.append(head)
             headEnd = pm.joint(p=(0, 32.848, 0.817), name=("jInit,headEnd"))
@@ -250,9 +275,6 @@ class initBones(object):
             jointList.append(jawStart)
             jawEnd = pm.joint(p=(0, 27.857, 3.161), name=("jInit_jawEnd"))
             jointList.append(jawEnd)
-
-            pm.setAttr(neck + ".side", 0)
-            pm.setAttr(neck + ".type", 7)
 
             pm.setAttr(head + ".side", 0)
             pm.setAttr(head + ".type", 8)
@@ -323,8 +345,8 @@ class initBones(object):
 
         joints_spine=initSpineBones()
 
-        pm.parent(joints_l_arm[0], joints_spine[self.spineSegments-1])
-        pm.parent(joints_r_arm[0], joints_spine[self.spineSegments-1])
+        pm.parent(joints_l_arm[0], joints_spine[(self.spineSegments+1)-1])
+        pm.parent(joints_r_arm[0], joints_spine[(self.spineSegments+1)-1])
         pm.parent(joints_l_leg[0], joints_spine[0])
         pm.parent(joints_r_leg[0], joints_spine[0])
 

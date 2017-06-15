@@ -352,29 +352,25 @@ def spaceSwitcher (node, targetList, overrideExisting=False, mode="parent", defa
 
     """
 
-    anchors=list(targetList)
-    if anchors.__contains__(node):
+    anchorPoses=list(targetList)
+    if anchorPoses.__contains__(node):
         # if targetList contains the node itself, remove it
-        anchors.remove(node)
-    if anchors==[]:
+        anchorPoses.remove(node)
+    if anchorPoses==[]:
         pm.error("target list is empty or no valid targets")
-    print "oldList", targetList
     if listException != None:
-        print "exceptions", listException
         for x in listException:
-            if targetList.__contains__(x):
-                targetList.remove(x)
-    print "newList", targetList
-    print "mode", mode
-    if len(anchors) > defaultVal:
+            if anchorPoses.__contains__(x):
+                anchorPoses.remove(x)
+    if len(anchorPoses) > defaultVal:
         defaultVal=1
     modeList=("parent", "point", "orient")
     if not modeList.__contains__(mode):
         pm.error("unknown mode flag. Valid mode flags are 'parent', 'point' and 'orient' ")
     # create the enumerator list
     enumFlag = "worldSpace:"
-    for enum in range (0, len(anchors)):
-        cur = str(anchors[enum])
+    for enum in range (0, len(anchorPoses)):
+        cur = str(anchorPoses[enum])
         cur = cur.replace("cont_", "")
         enumFlag += "%s:" % cur
 
@@ -389,23 +385,23 @@ def spaceSwitcher (node, targetList, overrideExisting=False, mode="parent", defa
 
     switchGrp=createUpGrp(node, (mode+"SW"))
     if mode == "parent":
-        con = pm.parentConstraint(anchors, switchGrp, mo=True)
+        con = pm.parentConstraint(anchorPoses, switchGrp, mo=True)
     elif mode == "point":
-        con = pm.parentConstraint(anchors, switchGrp, sr=("x","y","z"), mo=True)
+        con = pm.parentConstraint(anchorPoses, switchGrp, sr=("x","y","z"), mo=True)
     elif mode == "orient":
-        con = pm.parentConstraint(anchors, switchGrp, st=("x","y","z"), mo=True)
+        con = pm.parentConstraint(anchorPoses, switchGrp, st=("x","y","z"), mo=True)
 
 
     ## make worldSpace driven key (all zero)
-    for i in range (0, len(anchors)):
-        attr="{0}W{1}".format(anchors[i],i)
+    for i in range (0, len(anchorPoses)):
+        attr="{0}W{1}".format(anchorPoses[i],i)
         pm.setDrivenKeyframe(con, cd=driver, at=attr, dv=0, v=0)
 
     # # loop for each DRIVER POSITION
-    for dPos in range (0, len(anchors)):
+    for dPos in range (0, len(anchorPoses)):
         # # loop for each target at parent constraint
-        for t in range (0, len(anchors)):
-            attr = "{0}W{1}".format(anchors[t], t)
+        for t in range (0, len(anchorPoses)):
+            attr = "{0}W{1}".format(anchorPoses[t], t)
             # # if driver value matches the attribute, make the value 1, else 0
             if t == (dPos):
                 value = 1
@@ -566,7 +562,7 @@ def identifyMaster(node, idBy="idByLabel"):
         "hand": ["Finger", "Thumb", "Index_F", "Middle_F", "Ring_F", "Pinky_F", "Extra_F"],
         "foot": ["Ball", "HeelPV", "ToePV", "BankIN", "BankOUT"],
         "spine": ["Spine"],
-        "neck": ["Neck"],
+        "neck": ["NeckRoot", "Neck"],
         "head": ["Head", "Jaw"]
     }
 

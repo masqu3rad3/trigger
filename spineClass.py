@@ -41,7 +41,6 @@ class spine(object):
         # initLegsDis = extra.getDistance(pm.PyNode("jInit_HeelPv_l_leg"), pm.PyNode("jInit_HeelPv_r_leg"))
         # initUpBodyDis = extra.getDistance(spineList[len(spineList) / 2], spineList[len(spineList) - 1])
         # initLowBodyDis = extra.getDistance(spineList[0], spineList[len(spineList) / 2])
-        print inits
         iconSize = extra.getDistance(inits[0], inits[len(inits)-1])
 
         rootPoint = inits[0].getTranslation(space="world")
@@ -109,8 +108,6 @@ class spine(object):
         ## create locators on the mid controller to be used as alignment
         for m in range (0, len(spine.contCurves_ORE)):
             pos = spine.contCurves_ORE[m].getTranslation(space="world")
-            print "pos", pos
-            print "list", spine.contCurves_ORE, m
             if m > 0 and m < (spine.contCurves_ORE):
 
                 # anan = pm.spaceLocator(name="anan%s_%s" % (m, suffix), p=location)
@@ -133,50 +130,6 @@ class spine(object):
             if m != 0:
                 pm.parent(cont_spineFK_A_List[m], cont_spineFK_A_List[m - 1])
                 pm.parent(cont_spineFK_B_List[m - 1], cont_spineFK_B_List[m])
-
-
-
-
-        # midSpineLocA = pm.spaceLocator(name="midSpineLocA", p=midPoint)
-        # midSpineLocB = pm.spaceLocator(name="midSpineLocB", p=midPoint)
-        #
-        # pm.parentConstraint(midSpineLocA, midSpineLocB, midConnection, mo=True)
-
-
-
-
-
-        # for c in range (0, len(spine.contCurves_ORE)):
-        #     location = spine.contCurves_ORE[c].getTranslation(space="world")
-        #     print "location", location
-        #     contA = icon.circle("cont_SpineFK_A"+str(c), contSpineFKAScale, location=location)
-        #     cont_spineFK_A_List.append(contA)
-        #
-        #     contB = icon.ngon("cont_SpineFK_B"+str(c), contSpineFKBScale, location=location)
-        #     cont_spineFK_B_List.append(contB)
-        #
-        #     if c != 0:
-        #         pm.parent(cont_spineFK_A_List[c], cont_spineFK_A_List[c-1])
-        #         pm.parent(cont_spineFK_B_List[c-1], cont_spineFK_B_List[c])
-
-        # cont_spineFK_A_01 = icon.circle("cont_SpineFK_A01", contSpineFKAScale, location=rootPoint)
-        # cont_spineFK_A_02 = icon.circle("cont_SpineFK_A02", contSpineFKAScale, location=midPoint)
-        # cont_spineFK_A_03 = icon.circle("cont_SpineFK_A03", contSpineFKAScale, location=chestPoint)
-        #
-        #
-        # cont_spineFK_B_01 = icon.ngon("cont_SpineFK_B01", contSpineFKBScale, location=rootPoint)
-        # cont_spineFK_B_02 = icon.ngon("cont_SpineFK_B02", contSpineFKBScale, location=midPoint)
-        # cont_spineFK_B_03 = icon.ngon("cont_SpineFK_B03", contSpineFKBScale, location=chestPoint)
-
-        # good parenting
-        # print "HERE"
-        # for m in range (0, len(spine.contCurves_ORE)):
-        #     if 0 < m < len(spine.contCurves_ORE)-1:
-        #
-        #         pm.parent(midSpineLocA_List[m], self.cont_chest)
-        #         pm.parent(midSpineLocB_List[m], self.cont_hips)
-
-
 
         # pm.parent(midSpineLocA, self.cont_chest)
         pm.parent(self.cont_chest, cont_spineFK_A_List[-1])
