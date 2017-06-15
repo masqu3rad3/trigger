@@ -38,8 +38,6 @@ def limbDecider(rootJoint):
     anchors = []
     for j in allJoints:
         limbProperties = extra.identifyMaster(j)
-        print j.name(), limbProperties
-
         # Get the HipSize
         # get the Right Hip
 
@@ -61,7 +59,6 @@ def limbDecider(rootJoint):
             limbList.append(limb_leg)
 
         if limbProperties[0] == "NeckRoot":
-            print getNeckAndHeadBones(j)
             limb_neck = neckAndHead.neckAndHead()
             limb_neck.createNeckAndHead(getNeckAndHeadBones(j), suffix="_n")
             limbList.append(limb_neck)
@@ -208,7 +205,6 @@ def getNeckAndHeadBones(rootNode):
             jawEnd = jFoolProof(j)[0]
         if jID[0] == "Head":
             headEnd = j
-    # print "neckNodes", neckNodes
     neckAndHeadInits = {
         "Neck": neckNodes,
         "Head": head,

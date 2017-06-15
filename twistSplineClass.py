@@ -93,6 +93,9 @@ class twistSpline(object):
             ctrlVc = splitVc.normal() * contDistances[i]
             place = rootVc + (ctrlVc)
             j = pm.joint(p=place, name="jCont_spline_" + name + str(i), radius=5, o=(0, 0, 0))
+            #NEW
+            extra.alignTo(j, refJoints[i], 1)
+            #NEW
             # pm.setAttr(j.displayLocalAxis, 1)
             contJoints.append(j)
             pm.select(d=True)
@@ -153,8 +156,9 @@ class twistSpline(object):
                 cont_Curve = pm.spaceLocator(name="lockPoint_" + name + str(i))
             # cont_Curve_OFF = extra.createUpGrp(cont_Curve, "OFF")
             cont_Curve_ORE = extra.createUpGrp(cont_Curve, "ORE")
-            extra.alignTo(cont_Curve_ORE, contJoints[i], 2)
-            pm.parentConstraint(cont_Curve, contJoints[i])
+            extra.alignTo(cont_Curve_ORE, contJoints[i], 2, o=(0, 0, 90))
+            pm.parentConstraint(cont_Curve, contJoints[i], mo=True)
+            #extra.alignTo(cont_Curve_ORE, refJoints[i], 2)
             contCurves.append(cont_Curve)
             self.contCurves_ORE.append(cont_Curve_ORE)
 
