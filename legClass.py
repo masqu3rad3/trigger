@@ -20,7 +20,8 @@ class leg():
     cont_IK_foot = None
     cont_Pole = None
     nonScaleGrp = None
-    cont_IK_foot_OFF = None
+    # cont_IK_foot_OFF = None
+    cont_IK_OFF = None
     limbPlug = None
     connectsTo = None
     scaleConstraints = []
@@ -207,7 +208,7 @@ class leg():
         offset = extra.getDistance(Pv_Ball, Pv_Heel)
 
         self.cont_IK_foot = icon.circle("cont_IK_foot_" + suffix, scale=(xScale * 0.75, 1, zScale * 0.75), normal=(0, 1, 0))
-        self.cont_IK_foot_OFF = extra.createUpGrp(self.cont_IK_foot, "OFF")
+        cont_IK_foot_OFF = extra.createUpGrp(self.cont_IK_foot, "OFF")
 
         tempCons = pm.pointConstraint(Pv_Toe, Pv_Heel, Pv_BankIn, Pv_BankOut, self.cont_IK_foot, w=.1, mo=False)
         pm.delete(tempCons)
@@ -821,7 +822,7 @@ class leg():
         pm.setAttr(self.scaleGrp.jointVis, cb=True)
         pm.setAttr(self.scaleGrp.rigVis, cb=True)
 
-        nodesContVis = [cont_Pole_OFF, cont_Thigh_OFF, self.cont_IK_foot_OFF, cont_FK_Foot_OFF, cont_midLock_POS, cont_FK_IK_POS,
+        nodesContVis = [cont_Pole_OFF, cont_Thigh_OFF, cont_IK_foot_OFF, cont_FK_Foot_OFF, cont_midLock_POS, cont_FK_IK_POS,
                         cont_FK_Ball_OFF, cont_FK_LowLeg_OFF, cont_FK_UpLeg_OFF, ribbonUpperLeg.scaleGrp, ribbonLowerLeg.scaleGrp]
         nodesJointVis = [jDef_midLeg, jDef_Ball, jDef_Foot, jDef_legRoot, jDef_Toe, jDef_hip]
         nodesJointVisLists = [ribbonUpperLeg.deformerJoints, ribbonLowerLeg.deformerJoints, nodesJointVis]
@@ -877,6 +878,6 @@ class leg():
         extra.colorize(ribbonUpperLeg.middleCont, indexMin)
         extra.colorize(ribbonLowerLeg.middleCont, indexMin)
 
-        self.scaleConstraints = [self.scaleGrp, self.cont_IK_foot_OFF]
+        self.scaleConstraints = [self.scaleGrp, cont_IK_foot_OFF]
         self.anchors = [(self.cont_IK_foot, "parent", 1, None),(self.cont_Pole, "parent", 1, None)]
-
+        self.cont_IK_OFF = cont_IK_foot_OFF

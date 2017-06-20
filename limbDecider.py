@@ -49,21 +49,25 @@ def limbDecider(rootJoint):
 
         ## If the joint is a collar bone, create an arm there
         if limbProperties[0] == "Collar":
+            print limbProperties
             limb_arm = arm.arm()
             limb_arm.createArm(getArmBones(j), suffix=limbProperties[2]+"_arm", side=limbProperties[2])
             limbList.append(limb_arm)
-            # arm.createArm(getArmBones(j), suffix=limbProperties[2]+"_arm", side=limbProperties[2])
+
         if limbProperties[0] == "LegRoot":
+            print limbProperties
             limb_leg = leg.leg()
             limb_leg.createLeg(getLegBones(j), suffix=limbProperties[2]+"_leg", side=limbProperties[2])
             limbList.append(limb_leg)
 
         if limbProperties[0] == "NeckRoot":
+            print limbProperties
             limb_neck = neckAndHead.neckAndHead()
             limb_neck.createNeckAndHead(getNeckAndHeadBones(j), suffix="_n")
             limbList.append(limb_neck)
 
         if limbProperties[0] == "Root":
+            print limbProperties
             limb_spine = spine.spine()
             limb_spine.createSpine(getSpineBones(j), suffix="_s") # s for spine...
             spineList.append(limb_spine)
@@ -122,10 +126,24 @@ def limbDecider(rootJoint):
         extra.spaceSwitcher(anchor[0], anchorLocations, mode=anchor[1], defaultVal=anchor[2], listException=anchor[3])
             ## //TODO : WRITE A FUNCTION TO CREATE ANCHOR SWITCHES FOR EVERY ANCHOR IN EVERY LIMB TO OTHER ANCHOR POINTS EXCEPT ITSELF
 
+    # # GOOD PARENTING
+    rootGroup = pm.group(name="tik_autoRig", em=True)
+    extra.lockAndHide(rootGroup, ["tx", "ty", "tz", "rx", "ry", "rz", "sx", "sy", "sz"])
+    pm.parent(cont_master, rootGroup)
+
+    for i in limbList:
+        pm.parent(i.scaleGrp, rootGroup)
+        pm.parent(i.nonScaleGrp, rootGroup)
+        pm.parent(i.cont_IK_OFF, rootGroup)
+
+    for s in spineList:
+        pm.parent(s.scaleGrp, rootGroup)
+        pm.parent(s.nonScaleGrp, rootGroup)
+        pm.parent(s.rootSocket, rootGroup)
+
+
     end = time.time()
     print end-start
-
-
 
 def getArmBones(rootNode):
     collar = rootNode
@@ -141,7 +159,6 @@ def getArmBones(rootNode):
     return armInits
 
 def getLegBones(rootNode):
-    # validFootJoints = ["Ball", "HeelPV", "ToePV", "BankIN", "BankOUT"]
     root = rootNode
     hip = (jFoolProof(root))[0]
     knee = (jFoolProof(hip))[0]
@@ -179,10 +196,7 @@ def getNeckAndHeadBones(rootNode):
     neckNodes = []
     neckNodes.append(rootNode)
 
-    ## get the first Spine after root
-    # rootChildren = jFoolProof(rootNode, min=1, max=1000)
-    # firstNeck = [j for j in rootChildren if extra.identifyMaster(j)[0] == "NeckRoot" or "Neck"]
-    # currentNeck = firstNeck[0]
+
     currentJ = rootNode
     iter=0
     type = "neck"
@@ -242,4 +256,4 @@ def jFoolProof(node, type="joint", min=1, max=1):
         return validChildren
     else:
         return None
-        # pm.error("joint count does not meet the requirements")
+

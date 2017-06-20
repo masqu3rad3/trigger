@@ -18,7 +18,8 @@ class neckAndHead():
     neckRootLoc = None
     cont_neck = None
     cont_head = None
-    cont_head_OFF = None
+    # cont_head_OFF = None
+    cont_IK_OFF = None
     limbPlug = None
     connectsTo = None
     scaleConstraints = []
@@ -71,7 +72,7 @@ class neckAndHead():
         headPivPos = headStart.getTranslation(space="world")
         headScale = (extra.getDistance(headStart, headEnd) / 3)
         self.cont_head = icon.halfDome(name="cont_head_"+suffix, scale=(headScale, headScale, headScale), location=headCenterPos)
-        self.cont_head_OFF = extra.createUpGrp(self.cont_head, "OFF")
+        cont_head_OFF = extra.createUpGrp(self.cont_head, "OFF")
         cont_head_ORE = extra.createUpGrp(self.cont_head, "ORE")
         pm.rotate(self.cont_head, (-90, 0, 0))
         pm.makeIdentity(self.cont_head, a=True)
@@ -249,11 +250,11 @@ class neckAndHead():
         extra.colorize(self.cont_neck, index)
         extra.colorize(cont_headSquash, index)
 
-        self.scaleConstraints = [self.scaleGrp, self.cont_head_OFF]
+        self.scaleConstraints = [self.scaleGrp, cont_head_OFF]
         self.anchorLocations = [self.cont_neck, self.cont_head]
 
         self.anchors = [(self.cont_head, "point", 5, None),
                         (self.cont_head, "orient", 1, None),
                         (self.cont_neck, "orient", 4, [self.cont_head])
                         ]
-
+        self.cont_IK_OFF = cont_head_OFF

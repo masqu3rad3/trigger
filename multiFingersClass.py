@@ -33,6 +33,7 @@ class multiFingers(object):
         pm.select(d=True)
         # deformerJoints=[]
         jDef_Root = pm.joint(name="jDef_fingerRoot_" + suffix, p=rootPosition, radius=1.0)
+        self.defJoints.append([jDef_Root])
         extra.alignTo(jDef_Root, rootBone, 2)
         deformerJoints = [[jDef_Root]]
         pm.parent(jDef_Root, self.rootMaster)

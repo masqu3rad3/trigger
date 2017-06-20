@@ -22,7 +22,8 @@ class arm():
     scaleGrp = None
     nonScaleGrp = None
     cont_IK_hand = None
-    cont_IK_hand_OFF = None
+    # cont_IK_hand_OFF = None
+    cont_IK_OFF = None
     cont_Pole = None
     nodesContVis = None
     limbPlug = None
@@ -144,7 +145,7 @@ class arm():
         self.cont_IK_hand = icon.circle("cont_IK_hand_" + suffix, IKcontScale, normal=(1, 0, 0))
         extra.alignTo(self.cont_IK_hand, handRef, 2)
 
-        self.cont_IK_hand_OFF = extra.createUpGrp(self.cont_IK_hand, "OFF")
+        cont_IK_hand_OFF = extra.createUpGrp(self.cont_IK_hand, "OFF")
         cont_IK_hand_ORE = extra.createUpGrp(self.cont_IK_hand, "ORE")
 
         ###Add ATTRIBUTES to the IK Hand Controller
@@ -333,7 +334,7 @@ class arm():
 
         pm.select(cont_Shoulder)
 
-        pm.makeIdentity(a=True)
+        pm.makeIdentity(a=True, t=True, r=True, s=False)
 
         jDef_paCon = pm.parentConstraint(cont_Shoulder, jDef_Collar, mo=True)
 
@@ -656,7 +657,7 @@ class arm():
         pm.setAttr(self.scaleGrp.jointVis, cb=True)
         pm.setAttr(self.scaleGrp.rigVis, cb=True)
 
-        self.nodesContVis = [cont_Pole_OFF, cont_Shoulder_OFF, self.cont_IK_hand_OFF, cont_FK_Hand_OFF, cont_FK_IK_POS,
+        self.nodesContVis = [cont_Pole_OFF, cont_Shoulder_OFF, cont_IK_hand_OFF, cont_FK_Hand_OFF, cont_FK_IK_POS,
                         cont_FK_LowArm_OFF, cont_FK_UpArm_OFF, ribbonLowerArm.scaleGrp, ribbonUpperArm.scaleGrp, cont_midLock_POS]
         nodesJointVis = [jDef_elbow, jDef_paCon, jDef_Collar]
         nodesJointVisLists = [ribbonLowerArm.deformerJoints, ribbonUpperArm.deformerJoints, nodesJointVis ]
@@ -676,12 +677,12 @@ class arm():
         for lst in nodesJointVisLists:
             for j in lst:
                 self.scaleGrp.jointVis >> j.v
-
         for lst in handFingers.defJoints:
             for j in lst:
                 self.scaleGrp.jointVis >> j.v
 
         # global Rig visibilities
+
         for i in nodesRigVis:
             self.scaleGrp.rigVis >> i.v
         for i in ribbonLowerArm.toHide:
@@ -727,6 +728,6 @@ class arm():
         extra.colorize(ribbonUpperArm.middleCont, indexMin)
         extra.colorize(ribbonLowerArm.middleCont, indexMin)
 
-        self.scaleConstraints = [self.scaleGrp, self.cont_IK_hand_OFF]
+        self.scaleConstraints = [self.scaleGrp, cont_IK_hand_OFF]
         self.anchors = [(self.cont_IK_hand, "parent", 1, None),(self.cont_Pole, "parent", 1, None)]
-
+        self.cont_IK_OFF = cont_IK_hand_OFF
