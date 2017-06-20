@@ -45,6 +45,9 @@ class twistSpline(object):
             totalLength += currentJointLength
             contDistances.append(ctrlDistance)  # this list contains distance between each control point
 
+        for j in refJoints:
+            pm.joint(j, e=True, zso=True, oj="xyz", sao="yup")
+
         endVc = (rootVc.x, (rootVc.y + totalLength), rootVc.z)
 
         splitVc = endVc - rootVc
