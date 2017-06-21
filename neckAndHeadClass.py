@@ -91,14 +91,11 @@ class neckAndHead():
         self.neckRootLoc = pm.spaceLocator(name="neckRootLoc_"+suffix)
         extra.alignTo(self.neckRootLoc, neckNodes[0])
 
-        # neckSpline = spline.createTspline([neckStart, headStart], "neckSplineIK_"+suffix, 4, dropoff=2)
-
         neckSpline = twistSpline.twistSpline()
 
-        neckSpline.createTspline(neckNodes+[headStart], "neckSplineIK_"+suffix, 12, dropoff=1)
+        neckSpline.createTspline(neckNodes+[headStart], "neckSplineIK_"+suffix, 8, dropoff=1)
         # # Connect neck start to the neck controller
-        pm.orientConstraint(self.cont_neck, neckSpline.contCurve_Start,
-                            mo=True)  # This will be position constrained to the spine(or similar)
+        pm.orientConstraint(self.cont_neck, neckSpline.contCurve_Start, mo=True)  # This will be position constrained to the spine(or similar)
 
         pm.pointConstraint(neckSpline.contCurve_Start, cont_neck_ORE)
         # # Connect neck end to the head controller
@@ -111,7 +108,6 @@ class neckAndHead():
         self.scaleGrp.scale >> neckSpline.scaleGrp.scale
 
         # create spline IK for Head squash
-        # headSpline = spline.createTspline([headStart, headEnd], "headSquashSplineIK_"+suffix, 4, dropoff=2)
         headSpline = twistSpline.twistSpline()
         headSpline.createTspline([headStart, headEnd], "headSquashSplineIK_"+suffix, 4, dropoff=2)
 
@@ -185,9 +181,9 @@ class neckAndHead():
         pm.parent(neckSpline.nonScaleGrp, self.nonScaleGrp)
 
 
-        # RIG VISIBILITY
+        #### RIG VISIBILITY
 
-        # global visibilities attributes
+        #### global visibilities attributes
 
         pm.addAttr(self.scaleGrp, at="bool", ln="Control_Visibility", sn="contVis", defaultValue=True)
         pm.addAttr(self.scaleGrp, at="bool", ln="Joints_Visibility", sn="jointVis", defaultValue=True)
@@ -197,7 +193,7 @@ class neckAndHead():
         pm.setAttr(self.scaleGrp.jointVis, cb=True)
         pm.setAttr(self.scaleGrp.rigVis, cb=True)
 
-        # global control visibilities
+        #### global control visibilities
 
         self.scaleGrp.contVis >> cont_head_ORE.v
         self.scaleGrp.contVis >> cont_neck_ORE.v
@@ -213,8 +209,8 @@ class neckAndHead():
         for i in neckSpline.defJoints:
             self.scaleGrp.jointVis >> i.v
 
-        # global rig visibilities
-
+        #### global rig visibilities
+        #
         self.scaleGrp.rigVis >> headSpline.contCurves_ORE[0].v
         self.scaleGrp.rigVis >> headSpline.contCurves_ORE[-1].v
 
@@ -239,7 +235,7 @@ class neckAndHead():
 
         # //TODO
 
-        # FOOL PROOF
+        #### FOOL PROOF
         extra.lockAndHide(cont_headSquash, ["sx", "sy", "sz", "v"])
         extra.lockAndHide(self.cont_head, ["v"])
         extra.lockAndHide(self.cont_neck, ["tx", "ty", "tz", "v"])

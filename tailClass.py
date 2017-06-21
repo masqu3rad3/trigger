@@ -58,7 +58,7 @@ class tail(object):
         # pm.move(self.cont_chest, chestPoint, rpr=True)
 
         spine = twistSpline.twistSpline()
-        spine.createTspline(inits, "spine" + suffix, 12, dropoff=0.5)
+        spine.createTspline(inits, "spine" + suffix, 4, dropoff=2, mode="equalDistance")
 
         midConnection = spine.contCurves_ORE[(len(spine.contCurves_ORE)/2)]
 

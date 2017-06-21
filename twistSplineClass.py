@@ -24,7 +24,7 @@ class twistSpline(object):
     defJoints = None
     noTouchData = None
 
-    def createTspline(self, refJoints, name, cuts, dropoff=2):
+    def createTspline(self, refJoints, name, cuts, dropoff=2, mode="equalDistance"):
         self.scaleGrp = pm.group(name="scaleGrp_" + name, em=True)
         self.nonScaleGrp = pm.group(name="nonScaleGrp_" + name, em=True)
         rootVc = refJoints[0].getTranslation(space="world")  # Root Vector
@@ -58,14 +58,30 @@ class twistSpline(object):
         pm.select(d=True)
 
         # Create IK Joints ORIENTATION - ORIENTATION - ORIENTATION
+        if mode == "equalDistance":
 
-        for i in range(0, cuts + 2):  # iterates one extra to create an additional joint for orientation
-            place = rootVc + (segmentVc * (i))
-            j = pm.joint(p=place, name="jIK_" + name + str(i), )
-            # pm.setAttr(j.displayLocalAxis, 1)
-            if i < (cuts + 1):  # if it is not the extra bone, update the lists
+
+            for i in range(0, cuts + 2):  # iterates one extra to create an additional joint for orientation
+                place = rootVc + (segmentVc * (i))
+                j = pm.joint(p=place, name="jIK_" + name + str(i), )
+                # pm.setAttr(j.displayLocalAxis, 1)
+                if i < (cuts + 1):  # if it is not the extra bone, update the lists
+                    IKjoints.append(j)
+                    curvePoints.append(place)
+
+        elif mode == "sameDistance":
+            for i in range(0, len(contDistances)):
+                ctrlVc = splitVc.normal() * contDistances[i]
+                place = rootVc + (ctrlVc)
+                j = pm.joint(p=place, name="jIK_" + name + str(i), radius=2, o=(0, 90, 0))
+
+                #extra.alignTo(j, refJoints[i], 2)
+
                 IKjoints.append(j)
                 curvePoints.append(place)
+        else:
+            pm.error ("Mode is not supported - twistSplineClass.py")
+
 
         pm.parent(IKjoints[0], self.nonScaleGrp)
 
@@ -81,6 +97,7 @@ class twistSpline(object):
 
         for j in IKjoints:
             pm.joint(j, e=True, zso=True, oj="yzx", sao="zup")
+            #pm.joint(j, e=True, zso=True, oj="xyz", sao="yup")
 
         # get rid of the extra bone
         deadBone = pm.listRelatives(IKjoints[len(IKjoints) - 1], c=True)
@@ -96,12 +113,15 @@ class twistSpline(object):
             ctrlVc = splitVc.normal() * contDistances[i]
             place = rootVc + (ctrlVc)
             j = pm.joint(p=place, name="jCont_spline_" + name + str(i), radius=5, o=(0, 0, 0))
-            #NEW
-            extra.alignTo(j, refJoints[i], 1)
-            #NEW
-            # pm.setAttr(j.displayLocalAxis, 1)
+            #pm.setAttr(j.rotateZ, 90)
+#############################################################
+            # extra.alignTo(j, refJoints[i], 1)
+#############################################################
             contJoints.append(j)
             pm.select(d=True)
+
+
+
 
         # create the splineIK for the IK joints
         # # create the spline curve
@@ -150,7 +170,7 @@ class twistSpline(object):
         # CONTROL CURVES
 
         for i in range(0, len(contJoints)):
-            extra.alignTo(contJoints[i], refJoints[i], 0)
+            #extra.alignTo(contJoints[i], refJoints[i], 0)
             scaleRatio = (totalLength / len(contJoints))
             if i != 0 and i != (len(contJoints) - 1):
                 ## Create control Curve if it is not the first or last control joint
@@ -159,7 +179,7 @@ class twistSpline(object):
                 cont_Curve = pm.spaceLocator(name="lockPoint_" + name + str(i))
             # cont_Curve_OFF = extra.createUpGrp(cont_Curve, "OFF")
             cont_Curve_ORE = extra.createUpGrp(cont_Curve, "ORE")
-            extra.alignTo(cont_Curve_ORE, contJoints[i], 2, o=(0, 0, 90))
+            extra.alignTo(cont_Curve_ORE, contJoints[i], 2, o=(0, 0, 0))
             pm.parentConstraint(cont_Curve, contJoints[i], mo=True)
             #extra.alignTo(cont_Curve_ORE, refJoints[i], 2)
             contCurves.append(cont_Curve)
@@ -254,6 +274,16 @@ class twistSpline(object):
         # Create endLock
         self.endLock = pm.spaceLocator(name="endLock_" + name)
         pm.pointConstraint(self.defJoints[len(self.defJoints) - 1], self.endLock, mo=False)
+
+        #### Move them to original Positions
+
+        for o in range (0,len(self.contCurves_ORE)):
+            # if o != 0 and o != len(self.contCurves_ORE)-1:
+            #     extra.alignTo(self.contCurves_ORE[o], refJoints[o], 0)
+            #     extra.alignBetween(self.contCurves_ORE[o], refJoints[o], refJoints[o-1], pos=False, rot=False, ore=True, o=(0,0,0))
+            # else:
+            #     extra.alignTo(self.contCurves_ORE[o], refJoints[o], 2)
+            extra.alignTo(self.contCurves_ORE[o], refJoints[o], 0)
 
         # GOOD PARENTING
 

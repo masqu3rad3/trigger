@@ -74,12 +74,12 @@ def limbDecider(rootJoint):
             limb_spine.createSpine(getSpineBones(j), suffix="_s") # s for spine...
             spineList.append(limb_spine)
 
-        if limbProperties[0] == "TailRoot":
-            # print getTailBones(j)
-
-            limb_tail = tail.tail()
-            limb_tail.createTail(getTailBones(j), suffix="_tail")
-            limbList.append(limb_tail)
+        # if limbProperties[0] == "TailRoot":
+        #     # print getTailBones(j)
+        #
+        #     limb_tail = tail.tail()
+        #     limb_tail.createTail(getTailBones(j), suffix="_tail")
+        #     limbList.append(limb_tail)
 
     # # Create the master and placement Controllers
     if len(spineList) == 0 and len(limbList) == 0:

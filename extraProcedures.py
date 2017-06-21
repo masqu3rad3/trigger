@@ -200,7 +200,7 @@ def lockAndHide (node, channelArray):
         attribute=("{0}.{1}".format(node, i))
         pm.setAttr(attribute, lock=True, keyable=False, channelBox=False)
     
-def alignBetween (node, targetA, targetB, pos=True, rot=True, o=(0,0,0)):
+def alignBetween (node, targetA, targetB, pos=True, rot=True, ore=False, o=(0,0,0)):
     """
     Alignes the node between target A and target B
     Args:
@@ -219,6 +219,9 @@ def alignBetween (node, targetA, targetB, pos=True, rot=True, o=(0,0,0)):
     if rot:
         tempAim=pm.aimConstraint(targetB,node, mo=False, o=o)
         pm.delete(tempAim)
+    if ore:
+        tempOre=pm.orientConstraint(targetA, targetB, node, mo=False, o=o)
+        pm.delete(tempOre)
 
 def attrPass (sourceNode, targetNode, attributes=[], inConnections=True, outConnections=True, keepSourceAttributes=False, values=True, daisyChain=False, overrideEx=False):
     """
