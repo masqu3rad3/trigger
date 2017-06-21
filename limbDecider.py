@@ -14,6 +14,9 @@ reload(neckAndHead)
 import spineClass as spine
 reload(spine)
 
+import tailClass as tail
+reload(tail)
+
 import extraProcedures as extra
 reload(extra)
 
@@ -49,30 +52,38 @@ def limbDecider(rootJoint):
 
         ## If the joint is a collar bone, create an arm there
         if limbProperties[0] == "Collar":
-            print limbProperties
             limb_arm = arm.arm()
             limb_arm.createArm(getArmBones(j), suffix=limbProperties[2]+"_arm", side=limbProperties[2])
             limbList.append(limb_arm)
 
         if limbProperties[0] == "LegRoot":
-            print limbProperties
+
             limb_leg = leg.leg()
             limb_leg.createLeg(getLegBones(j), suffix=limbProperties[2]+"_leg", side=limbProperties[2])
             limbList.append(limb_leg)
 
         if limbProperties[0] == "NeckRoot":
-            print limbProperties
+
             limb_neck = neckAndHead.neckAndHead()
             limb_neck.createNeckAndHead(getNeckAndHeadBones(j), suffix="_n")
             limbList.append(limb_neck)
 
         if limbProperties[0] == "Root":
-            print limbProperties
+
             limb_spine = spine.spine()
             limb_spine.createSpine(getSpineBones(j), suffix="_s") # s for spine...
             spineList.append(limb_spine)
 
+        if limbProperties[0] == "TailRoot":
+            # print getTailBones(j)
+
+            limb_tail = tail.tail()
+            limb_tail.createTail(getTailBones(j), suffix="_tail")
+            limbList.append(limb_tail)
+
     # # Create the master and placement Controllers
+    if len(spineList) == 0 and len(limbList) == 0:
+        pm.error ("Nothing to do, quitting")
 
     if rightHip != None and leftHip != None:
         hipSize = extra.getDistance(rightHip, leftHip)
@@ -244,8 +255,27 @@ def getSpineBones(rootNode):
     return spineNodes
     # return spineRoot+spineNodes
 
+def getTailBones(rootNode):
+    tailRoot = rootNode
+    tailNodes = []
+    tailNodes.append(tailRoot)
+    currentSeg = jFoolProof(tailRoot, min=1, max=1)
+    try:currentSeg = currentSeg[0]
+    except:return tailNodes
+    while extra.identifyMaster(currentSeg)[1] == "tail":
+        tailNodes.append(currentSeg)
+        currentSeg = jFoolProof(currentSeg, min=1, max=1)
+        try:
+            currentSeg = currentSeg[0]
+        except:
+            return tailNodes
+    return tailNodes
+
+
 def jFoolProof(node, type="joint", min=1, max=1):
     children = pm.listRelatives(node, c=True)
+    if len(children) == 0:
+        return None
     validChildren=[]
     jCount=0
     for i in children:
