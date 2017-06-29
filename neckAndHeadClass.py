@@ -93,7 +93,7 @@ class neckAndHead():
 
         neckSpline = twistSpline.twistSpline()
 
-        neckSpline.createTspline(neckNodes+[headStart], "neckSplineIK_"+suffix, 8, dropoff=1)
+        neckSpline.createTspline(neckNodes+[headStart], "neckSplineIK_"+suffix, 3, dropoff=1)
         # # Connect neck start to the neck controller
         pm.orientConstraint(self.cont_neck, neckSpline.contCurve_Start, mo=True)  # This will be position constrained to the spine(or similar)
 

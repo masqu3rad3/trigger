@@ -14,8 +14,8 @@ reload(neckAndHead)
 import spineClass as spine
 reload(spine)
 
-import tailClass as tail
-reload(tail)
+import simpleTailClass as simpleTail
+reload(simpleTail)
 
 import extraProcedures as extra
 reload(extra)
@@ -74,12 +74,12 @@ def limbDecider(rootJoint):
             limb_spine.createSpine(getSpineBones(j), suffix="_s") # s for spine...
             spineList.append(limb_spine)
 
-        # if limbProperties[0] == "TailRoot":
-        #     # print getTailBones(j)
-        #
-        #     limb_tail = tail.tail()
-        #     limb_tail.createTail(getTailBones(j), suffix="_tail")
-        #     limbList.append(limb_tail)
+        if limbProperties[0] == "TailRoot":
+            # print getTailBones(j)
+
+            limb_tail = simpleTail.simpleTail()
+            limb_tail.createSimpleTail(getTailBones(j), suffix="_tail")
+            limbList.append(limb_tail)
 
     # # Create the master and placement Controllers
     if len(spineList) == 0 and len(limbList) == 0:
@@ -135,7 +135,6 @@ def limbDecider(rootJoint):
     anchors = list(reversed(anchors))
     for anchor in anchors:
         extra.spaceSwitcher(anchor[0], anchorLocations, mode=anchor[1], defaultVal=anchor[2], listException=anchor[3])
-            ## //TODO : WRITE A FUNCTION TO CREATE ANCHOR SWITCHES FOR EVERY ANCHOR IN EVERY LIMB TO OTHER ANCHOR POINTS EXCEPT ITSELF
 
     # # GOOD PARENTING
     rootGroup = pm.group(name="tik_autoRig", em=True)
