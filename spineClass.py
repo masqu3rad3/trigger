@@ -29,6 +29,7 @@ class spine(object):
         while pm.objExists("scaleGrp_" + suffix):
             suffix = "%s%s" % (suffix, str(idCounter + 1))
 
+        print inits
         if (len(inits) < 2):
             pm.error("Insufficient Spine Initialization Joints")
             return
@@ -43,7 +44,7 @@ class spine(object):
 
         # parent upper plug joints
         pm.select(None)
-        self.rootSocket = pm.joint(p=rootPoint, name="jDef_RootSocket", radius=10)
+        self.rootSocket = pm.joint(p=rootPoint, name="jDef_RootSocket", radius=3)
         contHipsScale = (iconSize / 1.5, iconSize / 1.5, iconSize / 1.5)
         self.cont_hips = icon.waist("cont_Hips", contHipsScale, location=rootPoint)
         contBodyScale = (iconSize * 0.75, iconSize * 0.75, iconSize * 0.75)

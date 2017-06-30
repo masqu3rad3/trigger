@@ -16,12 +16,14 @@ class simpleTail(object):
     limbPlug = None
     rootSocket = None
     nonScaleGrp = None
-
+    connectsTo = None
+    cont_IK_OFF = None
+    scaleConstraints = []
     anchors = []
     anchorLocations = []
 
     def createSimpleTail(self, inits, suffix=""):
-        print "inits",inits
+
         idCounter = 0
         ## create an unique suffix
         while pm.objExists("scaleGrp_" + suffix):
@@ -33,10 +35,20 @@ class simpleTail(object):
             pm.error("Insufficient Spine Initialization Joints")
             return
 
+        self.scaleGrp = pm.group(name="scaleGrp_" + suffix, em=True)
+        self.scaleConstraints.append(self.scaleGrp)
+
+        # find the Socket
+        tailParent = inits[0].getParent()
+        if tailParent != None and tailParent.type() == "joint":
+            self.connectsTo = extra.identifyMaster(tailParent)[0]
+
         ## Create LimbPlug
 
         pm.select(d=True)
         self.limbPlug = pm.joint(name="limbPlug_" + suffix, p=inits[0].getTranslation(space="world"), radius=3)
+        # self.scaleConstraints.append(self.limbPlug)
+        pm.parentConstraint(self.limbPlug, self.scaleGrp)
 
         ## Create Joints
         deformerJoints=[]
@@ -50,6 +62,8 @@ class simpleTail(object):
 
         for j in deformerJoints:
             pm.joint(j, e=True, zso=True, oj="yzx", sao="zup")
+
+        pm.parent(deformerJoints[0], self.scaleGrp)
 
         contList=[]
         cont_OREList=[]
@@ -77,16 +91,40 @@ class simpleTail(object):
                 if j != 0:
                     pm.parent(cont_OREList[j], contList[j-1])
                 else:
-                    pm.parent(cont_OREList[j], self.limbPlug)
+                    pm.parent(cont_OREList[j], self.scaleGrp)
             else: ## last joint has no cont, use the previous one to scale that
                 sGlobal = pm.createNode("multiplyDivide")
                 self.limbPlug.scale >> sGlobal.input1
                 contList[j-1].scale >> sGlobal.input2
                 sGlobal.output >> deformerJoints[j].scale
             # pm.scaleConstraint(cont, deformerJoints[j], mo=False)
-        import mrCubic as mcube
-        mcube.mrCube(deformerJoints)
+        # import mrCubic as mcube
+        # mcube.mrCube(deformerJoints)
 
+
+        pm.addAttr(self.scaleGrp, at="bool", ln="Control_Visibility", sn="contVis", defaultValue=True)
+        pm.addAttr(self.scaleGrp, at="bool", ln="Joints_Visibility", sn="jointVis", defaultValue=True)
+        pm.addAttr(self.scaleGrp, at="bool", ln="Rig_Visibility", sn="rigVis", defaultValue=False)
+        # make the created attributes visible in the channelbox
+        pm.setAttr(self.scaleGrp.contVis, cb=True)
+        pm.setAttr(self.scaleGrp.jointVis, cb=True)
+        pm.setAttr(self.scaleGrp.rigVis, cb=True)
+
+        ## Cont visibilities
+        for i in cont_OREList:
+            self.scaleGrp.contVis >> i.v
+
+        ## global joint visibilities
+        for j in deformerJoints:
+            self.scaleGrp.jointVis >> j.v
+
+        ## Rig Visibilities
+        self.scaleGrp.rigVis >> self.limbPlug.v
+
+        ## COLORIZE
+        index = 17
+        for i in contList:
+            extra.colorize(i, index)
 
 
 

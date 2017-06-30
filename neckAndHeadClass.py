@@ -178,7 +178,7 @@ class neckAndHead():
         pm.parent(headSpline.scaleGrp, self.scaleGrp)
 
         pm.parent(neckSpline.nonScaleGrp, self.nonScaleGrp)
-        pm.parent(neckSpline.nonScaleGrp, self.nonScaleGrp)
+        pm.parent(headSpline.nonScaleGrp, self.nonScaleGrp)
 
 
         #### RIG VISIBILITY

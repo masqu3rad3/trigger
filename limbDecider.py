@@ -27,7 +27,6 @@ def limbDecider(rootJoint):
     # Collect all joints connected to the master root
     allJoints = [rootJoint]
     allJoints = allJoints + (pm.listRelatives(rootJoint, ad=True, type="joint"))
-
     limbJoints=[]
 
     armList=[]
@@ -83,7 +82,8 @@ def limbDecider(rootJoint):
 
     # # Create the master and placement Controllers
     if len(spineList) == 0 and len(limbList) == 0:
-        pm.error ("Nothing to do, quitting")
+        # pm.error ("Nothing to do, quitting")
+        print "There is no spine"
 
     if rightHip != None and leftHip != None:
         hipSize = extra.getDistance(rightHip, leftHip)
@@ -117,6 +117,7 @@ def limbDecider(rootJoint):
         # Connect the plugs
         anchorLocations = anchorLocations + sp.anchorLocations
         for limb in limbList:
+
             if limb.connectsTo == "Spine":  # this limb is gonna connected to the chest area
                 # parent the plug to the chest socket
                 pm.parent(limb.limbPlug, sp.chestSocket)
@@ -135,7 +136,6 @@ def limbDecider(rootJoint):
     anchors = list(reversed(anchors))
     for anchor in anchors:
         extra.spaceSwitcher(anchor[0], anchorLocations, mode=anchor[1], defaultVal=anchor[2], listException=anchor[3])
-
     # # GOOD PARENTING
     rootGroup = pm.group(name="tik_autoRig", em=True)
     extra.lockAndHide(rootGroup, ["tx", "ty", "tz", "rx", "ry", "rz", "sx", "sy", "sz"])
@@ -238,21 +238,39 @@ def getNeckAndHeadBones(rootNode):
     }
     return neckAndHeadInits
 
+# def getSpineBones(rootNode):
+#     spineRoot = rootNode
+#     spineNodes = []
+#     spineNodes.append(rootNode)
+#
+#     ## get the first Spine after root
+#     rootChildren = jFoolProof(rootNode, min=1, max=1000)
+#     firstSpine = [j for j in rootChildren if extra.identifyMaster(j)[0] == "Spine"]
+#     testSpine = firstSpine
+#     while len(testSpine) == 1:
+#         spineNodes.append(testSpine[0])
+#         testSpine = jFoolProof(testSpine, min=1, max=100)
+#
+#     return spineNodes
+#     # return spineRoot+spineNodes
+
 def getSpineBones(rootNode):
     spineRoot = rootNode
     spineNodes = []
     spineNodes.append(rootNode)
-
-    ## get the first Spine after root
-    rootChildren = jFoolProof(rootNode, min=1, max=1000)
-    firstSpine = [j for j in rootChildren if extra.identifyMaster(j)[0] == "Spine"]
-    testSpine = firstSpine
-    while len(testSpine) == 1:
-        spineNodes.append(testSpine[0])
-        testSpine = jFoolProof(testSpine, min=1, max=100)
-
+    currentSeg = jFoolProof(spineRoot, min=1, max=9999)
+    try:currentSeg = currentSeg[0]
+    except:return spineNodes
+    while extra.identifyMaster(currentSeg)[1] == "spine":
+        spineNodes.append(currentSeg)
+        currentSeg = jFoolProof(currentSeg, min=1, max=1)
+        try:
+            currentSeg = currentSeg[0]
+        except:
+            return spineNodes
     return spineNodes
     # return spineRoot+spineNodes
+
 
 def getTailBones(rootNode):
     tailRoot = rootNode
