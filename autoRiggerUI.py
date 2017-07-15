@@ -29,25 +29,80 @@ def getMayaMainWindow():
     ptr = wrapInstance(long(win), QtWidgets.QMainWindow)
     return ptr
 
-
-class testUI(QtWidgets.QDialog):
+class bufferUI(QtWidgets.QDialog):
     def __init__(self):
-        for entry in QtWidgets.QApplication.allWidgets():
-            if entry.objectName() == windowName:
-                entry.close()
+        # for entry in QtWidgets.QApplication.allWidgets():
+        #     if entry.objectName() == windowName:
+        #         entry.close()
         parent = getMayaMainWindow()
-        super(testUI, self).__init__(parent=parent)
+        super(bufferUI, self).__init__(parent=parent)
+        self.superLayout = QtWidgets.QVBoxLayout(self)
+        self.setWindowTitle(windowName)
+        self.setObjectName(windowName)
+        self.show()
+
+
+class testUI(QtWidgets.QTabWidget):
+    def __init__(self):
+        # for entry in QtWidgets.QApplication.allWidgets():
+        #     if entry.objectName() == windowName:
+        #         entry.close()
+        # parent = getMayaMainWindow()
+
+        ## I use another QDialog as buffer since Tabs wont work when parented to the Maya Ui.
+        self.buffer=bufferUI()
+        super(testUI, self).__init__(parent=self.buffer)
+
+        ## This will put the Tab Widget into the buffer layout
+        self.buffer.superLayout.addWidget(self)
+
+        ## This will zero out the margins caused by the bufferUI
+        self.buffer.superLayout.setContentsMargins(0,0,0,0)
 
         self.setWindowTitle(windowName)
         self.setObjectName(windowName)
-        self.buildUI()
 
-    def buildUI(self):
+        self.tabDialog()
 
+
+    def tabDialog(self):
+        # width = self.buffer.frameGeometry().width()
+        # height = self.buffer.frameGeometry().height()
+        # self.resize(width, height)
+        # self.tabWidget = QtWidgets.QTabWidget(self)
+        # mainLayout = QtWidgets.QVBoxLayout()
+        # mainLayout.addWidget(self.tabWidget)
+        self.initBonesTab = QtWidgets.QWidget()
+        self.rigTab = QtWidgets.QWidget()
+        self.addTab(self.initBonesTab, "Init Bones")
+        self.addTab(self.rigTab, "Rigging")
+        self.initBonesUI()
+        self.tab2UI()
+
+    def tab1UI(self):
+        layout = QtWidgets.QFormLayout()
+        layout.addRow("Name", QtWidgets.QLineEdit())
+        layout.addRow("Address", QtWidgets.QLineEdit())
+        self.setTabText(0, "Contact Details")
+        self.initBonesTab.setLayout(layout)
+
+    def tab2UI(self):
+        layout = QtWidgets.QFormLayout()
+        sex = QtWidgets.QHBoxLayout()
+        sex.addWidget(QtWidgets.QRadioButton("Male"))
+        sex.addWidget(QtWidgets.QRadioButton("Female"))
+        layout.addRow(QtWidgets.QLabel("Sex"), sex)
+        layout.addRow("Date of Birth", QtWidgets.QLineEdit())
+        self.setTabText(1, "Personal Details")
+        self.rigTab.setLayout(layout)
+
+    def initBonesUI(self):
         wSize = 60
         hSize = 50
         ## This is the main layout
-        layout = QtWidgets.QVBoxLayout(self)
+        layout = QtWidgets.QVBoxLayout()
+        self.setTabText(0, "Init Bones")
+        self.initBonesTab.setLayout(layout)
 
         #   ___       _
         #  / __> ___ <_>._ _  ___
@@ -264,12 +319,7 @@ class testUI(QtWidgets.QDialog):
         segmentsColumnneck.addWidget(neckSegInt)
         firstRowneck.addWidget(neckCreate)
 
-        # searchLabel = QtWidgets.QLabel("Seach Filter: ")
-        # layout.addWidget(searchLabel)
-        # searchNameField = QtWidgets.QLineEdit()
-        # # self.searchNameField.textEdited.connect( <NEED TO CALL A FUNCTION> )
-        # layout.addWidget(searchNameField)
-        # defFingerBtn.clicked.connect(self.setColor)
+
 
     def testPop(self):
         exportWindow, ok = QtWidgets.QInputDialog.getItem(self, 'Text Input Dialog',
