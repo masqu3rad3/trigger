@@ -24,7 +24,7 @@ class ribbon():
     deformerJoints = None
     middleCont = None
     toHide = None
-    def createRibbon(self, startPoint, endPoint, name, orientation):
+    def createRibbon(self, startPoint, endPoint, name, orientation, jCount=5.0):
         self.nonScaleGrp=pm.group(em=True, name="RBN_nonScaleGrp_"+name)
 
         if type(startPoint) == str:
@@ -41,14 +41,15 @@ class ribbon():
         follicleList=[]
         self.deformerJoints=[]
         self.toHide.append(nSurfTrans[0])
-        for i in range (0, 5):
+
+        for i in range (0, int(jCount)):
             follicle = pm.createNode('follicle', name="follicle_"+name+str(i))
             nSurf.local.connect(follicle.inputSurface)
             nSurf.worldMatrix[0].connect(follicle.inputWorldMatrix)
             follicle.outRotate.connect(follicle.getParent().rotate)
             follicle.outTranslate.connect(follicle.getParent().translate)
             follicle.parameterV.set(0.5)
-            follicle.parameterU.set(0.1+(i/5.0))
+            follicle.parameterU.set(0.1+(i/jCount))
             follicle.getParent().t.lock()
             follicle.getParent().r.lock()
             follicleList.append(follicle)

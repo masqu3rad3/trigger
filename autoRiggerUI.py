@@ -31,9 +31,9 @@ def getMayaMainWindow():
 
 class bufferUI(QtWidgets.QDialog):
     def __init__(self):
-        # for entry in QtWidgets.QApplication.allWidgets():
-        #     if entry.objectName() == windowName:
-        #         entry.close()
+        for entry in QtWidgets.QApplication.allWidgets():
+            if entry.objectName() == windowName:
+                entry.close()
         parent = getMayaMainWindow()
         super(bufferUI, self).__init__(parent=parent)
         self.superLayout = QtWidgets.QVBoxLayout(self)
@@ -77,7 +77,7 @@ class testUI(QtWidgets.QTabWidget):
         self.addTab(self.initBonesTab, "Init Bones")
         self.addTab(self.rigTab, "Rigging")
         self.initBonesUI()
-        self.tab2UI()
+        self.createRigUI()
 
     def tab1UI(self):
         layout = QtWidgets.QFormLayout()
@@ -96,6 +96,12 @@ class testUI(QtWidgets.QTabWidget):
         self.setTabText(1, "Personal Details")
         self.rigTab.setLayout(layout)
 
+    def createRigUI(self):
+        layout = QtWidgets.QVBoxLayout()
+        self.setTabText(1, "Rigging")
+        self.rigTab.setLayout(layout)
+
+
     def initBonesUI(self):
         wSize = 60
         hSize = 50
@@ -110,7 +116,7 @@ class testUI(QtWidgets.QTabWidget):
         #  <___/|  _/|_||_|_|\___.
         #       |_|
 
-        spineLabel = QtWidgets.QLabel("Spine", minimumSize=(QtCore.QSize(20, 18)), parent=self)
+        spineLabel = QtWidgets.QLabel("Spine", minimumSize=(QtCore.QSize(180, 18)), parent=self)
         spineLabel.setFont(QtGui.QFont("Arial", weight=QtGui.QFont.Bold))
         spineLabel.setAlignment(QtCore.Qt.AlignCenter)
         spineLabel.setFrameStyle(QtWidgets.QFrame.Panel)
@@ -142,7 +148,7 @@ class testUI(QtWidgets.QTabWidget):
         #
 
         # ## These are the all Widgets in the Dialog
-        armLabel = QtWidgets.QLabel("Arm", minimumSize=(QtCore.QSize(20, 18)), parent=self)
+        armLabel = QtWidgets.QLabel("Arm", minimumSize=(QtCore.QSize(180, 18)), parent=self)
         armLabel.setFont(QtGui.QFont("Arial", weight=QtGui.QFont.Bold))
         armLabel.setAlignment(QtCore.Qt.AlignCenter)
         armLabel.setFrameStyle(QtWidgets.QFrame.Panel)
@@ -182,7 +188,7 @@ class testUI(QtWidgets.QTabWidget):
         #               <___'
 
         ## These are the all Widgets in the Dialog
-        fingerLabel = QtWidgets.QLabel("Finger", minimumSize=(QtCore.QSize(20, 18)), parent=self)
+        fingerLabel = QtWidgets.QLabel("Finger", minimumSize=(QtCore.QSize(180, 18)), parent=self)
         fingerLabel.setFont(QtGui.QFont("Arial", weight=QtGui.QFont.Bold))
         fingerLabel.setAlignment(QtCore.Qt.AlignCenter)
         fingerLabel.setFrameStyle(QtWidgets.QFrame.Panel)
@@ -224,7 +230,7 @@ class testUI(QtWidgets.QTabWidget):
         #            <___'
 
         ## These are the all Widgets in the Dialog
-        legLabel = QtWidgets.QLabel("Leg", minimumSize=(QtCore.QSize(20, 18)), parent=self)
+        legLabel = QtWidgets.QLabel("Leg", minimumSize=(QtCore.QSize(180, 18)), parent=self)
         legLabel.setFont(QtGui.QFont("Arial", weight=QtGui.QFont.Bold))
         legLabel.setAlignment(QtCore.Qt.AlignCenter)
         legLabel.setFrameStyle(QtWidgets.QFrame.Panel)
@@ -262,7 +268,7 @@ class testUI(QtWidgets.QTabWidget):
         #   |_|<___||_||_|
         #
 
-        tailLabel = QtWidgets.QLabel("Tail", minimumSize=(QtCore.QSize(20, 18)), parent=self)
+        tailLabel = QtWidgets.QLabel("Tail", minimumSize=(QtCore.QSize(180, 18)), parent=self)
         tailLabel.setFont(QtGui.QFont("Arial", weight=QtGui.QFont.Bold))
         tailLabel.setAlignment(QtCore.Qt.AlignCenter)
         tailLabel.setFrameStyle(QtWidgets.QFrame.Panel)
@@ -294,7 +300,7 @@ class testUI(QtWidgets.QTabWidget):
         #  |_\_|\___.\_|_.|_\_\ \_/\ |_|_|\___.<___|\___|
         #
 
-        neckLabel = QtWidgets.QLabel("Neck And Head", minimumSize=(QtCore.QSize(20, 18)), parent=self)
+        neckLabel = QtWidgets.QLabel("Neck And Head", minimumSize=(QtCore.QSize(180, 18)), parent=self)
         neckLabel.setFont(QtGui.QFont("Arial", weight=QtGui.QFont.Bold))
         neckLabel.setAlignment(QtCore.Qt.AlignCenter)
         neckLabel.setFrameStyle(QtWidgets.QFrame.Panel)
@@ -321,24 +327,24 @@ class testUI(QtWidgets.QTabWidget):
 
 
 
-    def testPop(self):
-        exportWindow, ok = QtWidgets.QInputDialog.getItem(self, 'Text Input Dialog',
-                                                          'SAVE BEFORE PROCEED\n\nANY UNSAVED WORK WILL BE LOST\n\nEnter Asset Name:')
-        if ok:
-            print "popped"
-
-    def setColor(self):
-        color = QtWidgets.QColorDialog.getColor(QtCore.Qt.green, self)
-        if color.isValid():
-            print(color.name())
-            print(QtGui.QPalette(color))
-            print color
-
-    def wheelEvent(self, event):
-        # print event.delta()
-        t = (math.pow(1.2, event.delta() / 120.0))
-        if event.modifiers() == QtCore.Qt.ControlModifier:
-            print t
+    # def testPop(self):
+    #     exportWindow, ok = QtWidgets.QInputDialog.getItem(self, 'Text Input Dialog',
+    #                                                       'SAVE BEFORE PROCEED\n\nANY UNSAVED WORK WILL BE LOST\n\nEnter Asset Name:')
+    #     if ok:
+    #         print "popped"
+    #
+    # def setColor(self):
+    #     color = QtWidgets.QColorDialog.getColor(QtCore.Qt.green, self)
+    #     if color.isValid():
+    #         print(color.name())
+    #         print(QtGui.QPalette(color))
+    #         print color
+    #
+    # def wheelEvent(self, event):
+    #     # print event.delta()
+    #     t = (math.pow(1.2, event.delta() / 120.0))
+    #     if event.modifiers() == QtCore.Qt.ControlModifier:
+    #         print t
 
 # testUI().show()
 
