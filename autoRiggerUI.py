@@ -16,7 +16,7 @@ else:
     from shiboken2 import wrapInstance
     from Qt.QtCore import Signal
 
-windowName = "TestUI"
+windowName = "Tik_AutoRigger"
 
 
 def getMayaMainWindow():
@@ -42,16 +42,16 @@ class bufferUI(QtWidgets.QDialog):
         self.show()
 
 
-class testUI(QtWidgets.QTabWidget):
+class mainUI(QtWidgets.QTabWidget):
     def __init__(self):
-        # for entry in QtWidgets.QApplication.allWidgets():
-        #     if entry.objectName() == windowName:
-        #         entry.close()
-        # parent = getMayaMainWindow()
+        for entry in QtWidgets.QApplication.allWidgets():
+            if entry.objectName() == windowName:
+                # print entry
+                entry.close()
 
         ## I use another QDialog as buffer since Tabs wont work when parented to the Maya Ui.
         self.buffer=bufferUI()
-        super(testUI, self).__init__(parent=self.buffer)
+        super(mainUI, self).__init__(parent=self.buffer)
 
         ## This will put the Tab Widget into the buffer layout
         self.buffer.superLayout.addWidget(self)
@@ -61,6 +61,8 @@ class testUI(QtWidgets.QTabWidget):
 
         self.setWindowTitle(windowName)
         self.setObjectName(windowName)
+        self.buffer.setMinimumSize(200, 600)
+        self.buffer.resize(150, 500)
 
         self.tabDialog()
 
@@ -77,24 +79,11 @@ class testUI(QtWidgets.QTabWidget):
         self.addTab(self.initBonesTab, "Init Bones")
         self.addTab(self.rigTab, "Rigging")
         self.initBonesUI()
-        self.tab2UI()
+        self.rigUI()
 
-    def tab1UI(self):
-        layout = QtWidgets.QFormLayout()
-        layout.addRow("Name", QtWidgets.QLineEdit())
-        layout.addRow("Address", QtWidgets.QLineEdit())
-        self.setTabText(0, "Contact Details")
-        self.initBonesTab.setLayout(layout)
+    def rigUI(self):
+        pass
 
-    def tab2UI(self):
-        layout = QtWidgets.QFormLayout()
-        sex = QtWidgets.QHBoxLayout()
-        sex.addWidget(QtWidgets.QRadioButton("Male"))
-        sex.addWidget(QtWidgets.QRadioButton("Female"))
-        layout.addRow(QtWidgets.QLabel("Sex"), sex)
-        layout.addRow("Date of Birth", QtWidgets.QLineEdit())
-        self.setTabText(1, "Personal Details")
-        self.rigTab.setLayout(layout)
 
     def initBonesUI(self):
         wSize = 60
@@ -116,7 +105,7 @@ class testUI(QtWidgets.QTabWidget):
         spineLabel.setFrameStyle(QtWidgets.QFrame.Panel)
         spineCreate = QtWidgets.QPushButton("Create", minimumSize=(QtCore.QSize(wSize, hSize)), maximumSize=(QtCore.QSize(wSize, hSize)), parent=self)
         spineSegLb = QtWidgets.QLabel("Segments")
-        spineSegInt = QtWidgets.QSpinBox(maximumSize=(QtCore.QSize(45, 50)))
+        spineSegInt = QtWidgets.QSpinBox(maximumSize=(QtCore.QSize(45, 50)),value=3, minimum=1)
 
         columnSpine = QtWidgets.QVBoxLayout()
         layout.addLayout(columnSpine)
@@ -268,7 +257,7 @@ class testUI(QtWidgets.QTabWidget):
         tailLabel.setFrameStyle(QtWidgets.QFrame.Panel)
         tailCreate = QtWidgets.QPushButton("Create", minimumSize=(QtCore.QSize(wSize, hSize)), maximumSize=(QtCore.QSize(wSize, hSize)), parent=self)
         tailSegLb = QtWidgets.QLabel("Segments")
-        tailSegInt = QtWidgets.QSpinBox(maximumSize=(QtCore.QSize(45, 50)))
+        tailSegInt = QtWidgets.QSpinBox(maximumSize=(QtCore.QSize(45, 50)),value=8, minimum=2)
 
         columntail = QtWidgets.QVBoxLayout()
         layout.addLayout(columntail)
@@ -300,7 +289,7 @@ class testUI(QtWidgets.QTabWidget):
         neckLabel.setFrameStyle(QtWidgets.QFrame.Panel)
         neckCreate = QtWidgets.QPushButton("Create", minimumSize=(QtCore.QSize(wSize, hSize)), maximumSize=(QtCore.QSize(wSize, hSize)), parent=self)
         neckSegLb = QtWidgets.QLabel("Segments")
-        neckSegInt = QtWidgets.QSpinBox(maximumSize=(QtCore.QSize(45, 50)))
+        neckSegInt = QtWidgets.QSpinBox(maximumSize=(QtCore.QSize(45, 50)), value=3, minimum=1)
 
         columnneck = QtWidgets.QVBoxLayout()
         layout.addLayout(columnneck)
