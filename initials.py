@@ -43,49 +43,25 @@ class initialJoints():
             pm.move(jointList[0], (0,2,0), relative=True)
             pm.parent(jointList[0],root)
 
-    def initArmBones(self, whichArm, faceDir="+z", upDir="+y", constrainedTo=None, parentNode=None):
+    def initArmBones(self, whichArm, constrainedTo=None, parentNode=None):
         # check validity of arguments
         whichArmValids = ["left", "right", "both", "auto"]
+        if whichArm not in whichArmValids:
+            pm.error("whichArm argument is not valid. Valid arguments are: %s" %whichArmValids)
 
         if len(pm.ls(sl=True, type="joint")) != 1 and whichArm == "auto":
             pm.warning("You need to select a single joint to use Auto method")
             return
 
-        if whichArm not in whichArmValids:
-            pm.error("whichArm argument is not valid. Valid arguments are: %s" %whichArmValids)
-        dirValids = ["+x", "+y", "+z", "-x", "-y", "-z", "+X", "+Y", "+Z", "-X", "-Y", "-Z"]
-        if faceDir not in dirValids:
-            pm.error("faceDir argument is not valid. Valid arguments are: %s" %dirValids)
-        if upDir not in dirValids:
-            pm.error("upDir argument is not valid. Valid arguments are: %s" % dirValids)
-
-
-
-        # make sure the imputs are lowercase:
-        faceDir = faceDir.lower()
-        upDir = upDir.lower()
-
         ## get the necessary info from arguments
         side = 1 if whichArm == "left" else 2
-        lookAxis = faceDir.strip("+-")
-        lookAxisMult = -1 if faceDir.strip(lookAxis) == "-" else 1
-
-        upAxis = upDir.strip("+-")
-        upAxisMult = -1 if upDir.strip(upAxis) == "-" else 1
-
-        if lookAxis == upAxis:
-            pm.error("faceDir and upDir cannot be the same axis")
-
-        mirrorAxis = "xyz".strip(lookAxis + upAxis)
         sideMult = 1 if whichArm == "left" else -1
-
 
         currentselection=pm.ls(sl=True)
 
-
         ID = 0
         suffix = whichArm
-        while pm.objExists("jInit_collar_"+suffix):
+        while pm.objExists("armInitsGrp_%s" %suffix):
             ID += 1
             suffix = "%s_%s" % (str(ID),whichArm)
 
@@ -98,8 +74,8 @@ class initialJoints():
             masterParent = parentNode
 
         if whichArm=="both":
-            leftLocs = self.initArmBones("left", faceDir, upDir)
-            self.initArmBones("right", faceDir, upDir, constrainedTo=leftLocs)
+            leftLocs = self.initArmBones("left")
+            self.initArmBones("right", constrainedTo=leftLocs)
             return
 
         if whichArm == "auto":
@@ -108,40 +84,32 @@ class initialJoints():
             if mirrorParent:
                 self.initArmBones(returnAlignment, constrainedTo=leftLocs, parentNode=mirrorParent)
             return
+        armGroup = pm.group(em=True, name="armInitsGrp_%s" %whichArm)
         pm.select(d=True)
 
-        if lookAxis == "z" and upAxis == "y":
+        if self.lookAxis == "z" and self.upAxis == "y":
             ## Facing Z Up Y
-            a = [("x","y","z"), 1*sideMult*lookAxisMult, 1*upAxisMult, 1*lookAxisMult]
-        elif lookAxis == "z" and upAxis == "x":
+            a = [("x","y","z"), 1*sideMult*self.lookAxisMult, 1*self.upAxisMult, 1*self.lookAxisMult]
+        elif self.lookAxis == "z" and self.upAxis == "x":
             ## Facing Z Up X
-            a = [("y", "x", "z"), -1*sideMult*lookAxisMult, 1*upAxisMult, 1*lookAxisMult]
-        elif lookAxis == "y" and upAxis == "z":
+            a = [("y", "x", "z"), -1*sideMult*self.lookAxisMult, 1*self.upAxisMult, 1*self.lookAxisMult]
+        elif self.lookAxis == "y" and self.upAxis == "z":
             ## Facing Y Up Z
-            a = [("x", "z", "y"), -1*sideMult*lookAxisMult, 1*upAxisMult, 1*lookAxisMult]
-        elif lookAxis == "y" and upAxis == "x":
+            a = [("x", "z", "y"), -1*sideMult*self.lookAxisMult, 1*self.upAxisMult, 1*self.lookAxisMult]
+        elif self.lookAxis == "y" and self.upAxis == "x":
             ## Facing Y Up X
-            a = [("y", "z", "x"), 1*sideMult*lookAxisMult, 1*upAxisMult, 1*lookAxisMult]
-        elif lookAxis == "x" and upAxis == "z":
+            a = [("y", "z", "x"), 1*sideMult*self.lookAxisMult, 1*self.upAxisMult, 1*self.lookAxisMult]
+        elif self.lookAxis == "x" and self.upAxis == "z":
             ## Facing X Up Z
-            a = [("z", "x", "y"), 1*sideMult*lookAxisMult, 1*upAxisMult, 1*lookAxisMult]
-        elif lookAxis == "x" and upAxis == "y":
+            a = [("z", "x", "y"), 1*sideMult*self.lookAxisMult, 1*self.upAxisMult, 1*self.lookAxisMult]
+        elif self.lookAxis == "x" and self.upAxis == "y":
             ## Facing X Up Y
-            a = [("z", "y", "x"), -1*sideMult*lookAxisMult, 1*upAxisMult, 1*lookAxisMult]
+            a = [("z", "y", "x"), -1*sideMult*self.lookAxisMult, 1*self.upAxisMult, 1*self.lookAxisMult]
 
-
-        order = a[0]
-        dirX = a[1]
-        dirY = a[2]
-        dirZ = a[3]
-        collarP = dt.Vector(2*dirX, 0, 0*dirZ)
-        collarVec = eval("collarP.{0},collarP.{1},collarP.{2}".format(order[0],order[1],order[2]))
-        shoulderP = dt.Vector(5*dirX,0,0*dirZ)
-        shoulderVec = eval("shoulderP.{0},shoulderP.{1},shoulderP.{2}".format(order[0],order[1],order[2]))
-        elbowP = dt.Vector(9*dirX,0,-1*dirZ)
-        elbowVec = eval("elbowP.{0},elbowP.{1},elbowP.{2}".format(order[0],order[1],order[2]))
-        handP = dt.Vector(14*dirX,0,0*dirZ)
-        handVec = eval("handP.{0},handP.{1},handP.{2}".format(order[0],order[1],order[2]))
+        collarVec = self.transformator((2, 0, 0), a)
+        shoulderVec = self.transformator((5, 0, 0), a)
+        elbowVec = self.transformator((9, 0, -1), a)
+        handVec = self.transformator((14, 0, 0 ), a)
 
         pm.select(d=True)
         collar = pm.joint(p=collarVec, name=("jInit_collar_" + suffix))
@@ -176,120 +144,102 @@ class initialJoints():
             if constrainedTo:
                 extra.alignTo(locator, jointList[i], 2)
                 pm.parentConstraint(locator, jointList[i], mo=True)
-                extra.connectMirror(constrainedTo[i], locatorsList[i], mirrorAxis=mirrorAxis.upper())
+                extra.connectMirror(constrainedTo[i], locatorsList[i], mirrorAxis=self.mirrorAxis.upper())
             else:
                 pm.parentConstraint(jointList[i], locator, mo=False)
             pm.parent(locator, loc_grp_arm)
+            pm.parent(loc_grp_arm, armGroup)
 
         if masterParent:
             if not constrainedTo:
                 # align the none constrained near to the selected joint
                 extra.alignTo(jointList[0], masterParent)
                 # move it a little along the mirrorAxis
-                value = pm.getAttr("%s.t%s" %(jointList[0],mirrorAxis))
-                pm.setAttr("%s.t%s" %(jointList[0],mirrorAxis), value+3)
+                value = pm.getAttr("%s.t%s" %(jointList[0],self.mirrorAxis))
+                pm.setAttr("%s.t%s" %(jointList[0],self.mirrorAxis), value+3)
 
             pm.parent(jointList[0], masterParent)
+        else:
+            pm.parent(jointList[0], armGroup)
         pm.select(currentselection)
         return locatorsList
 
-    def initLegBones(self, whichLeg, faceDir="+z", upDir="+y", constrainedTo=None):
+    def initLegBones(self, whichLeg, constrainedTo=None, parentNode=None):
 
         # check validity of arguments
-        whichLegValids = ["left", "right", "both"]
+        whichLegValids = ["left", "right", "both", "auto"]
         if whichLeg not in whichLegValids:
             pm.error("whichArm argument is not valid. Valid arguments are: %s" %whichLegValids)
-        dirValids = ["+x", "+y", "+z", "-x", "-y", "-z", "+X", "+Y", "+Z", "-X", "-Y", "-Z"]
-        if faceDir not in dirValids:
-            pm.error("faceDir argument is not valid. Valid arguments are: %s" %dirValids)
-        if upDir not in dirValids:
-            pm.error("upDir argument is not valid. Valid arguments are: %s" % dirValids)
-
-        # make sure the imputs are lowercase:
-        faceDir = faceDir.lower()
-        upDir = upDir.lower()
+            
+        if len(pm.ls(sl=True, type="joint")) != 1 and whichLeg == "auto":
+            pm.warning("You need to select a single joint to use Auto method")
+            return
 
         ## get the necessary info from arguments
         side = 1 if whichLeg == "left" else 2
-        lookAxis = faceDir.strip("+-")
-        lookAxisMult = -1 if faceDir.strip(lookAxis) == "-" else 1
-
-        upAxis = upDir.strip("+-")
-        upAxisMult = -1 if upDir.strip(upAxis) == "-" else 1
-
-        if lookAxis == upAxis:
-            pm.error("faceDir and upDir cannot be the same axis")
-
-        mirrorAxis = "xyz".strip(lookAxis + upAxis)
         sideMult = 1 if whichLeg == "left" else -1
-
 
         currentselection=pm.ls(sl=True)
 
-
-
         ID = 0
         suffix = whichLeg
-        while pm.objExists("jInit_LegRoot_"+suffix):
+        while pm.objExists("legInitsGrp_%s" %suffix):
             ID += 1
             suffix = "%s_%s" % (str(ID), whichLeg)
 
-        if pm.ls(sl=True, type="joint"):
-            masterParent = pm.ls(sl=True)[-1]
+        if not parentNode:
+            if pm.ls(sl=True, type="joint"):
+                masterParent = pm.ls(sl=True)[-1]
+            else:
+                masterParent = None
         else:
-            masterParent = None
+            masterParent = parentNode
 
         if whichLeg=="both":
-            leftLocs = self.initLegBones("left", faceDir, upDir)
-            self.initLegBones("right", faceDir, upDir, constrainedTo=leftLocs)
+            leftLocs = self.initLegBones("left")
+            self.initLegBones("right", constrainedTo=leftLocs)
             return
+        
+        if whichLeg == "auto":
+            mirrorParent, givenAlignment, returnAlignment = self.autoGet(masterParent)
+            leftLocs = self.initLegBones(givenAlignment)
+            if mirrorParent:
+                self.initLegBones(returnAlignment, constrainedTo=leftLocs, parentNode=mirrorParent)
+            return
+
+        legGroup = pm.group(em=True, name="legInitsGrp_%s" %whichLeg)
         pm.select(d=True)
 
-        if lookAxis == "z" and upAxis == "y":
+        if self.lookAxis == "z" and self.upAxis == "y":
             ## Facing Z Up Y
-            a = [("x","y","z"), 1*sideMult*lookAxisMult, 1*upAxisMult, 1*lookAxisMult]
-        elif lookAxis == "z" and upAxis == "x":
+            a = [("x","y","z"), 1*sideMult*self.lookAxisMult, 1*self.upAxisMult, 1*self.lookAxisMult]
+        elif self.lookAxis == "z" and self.upAxis == "x":
             ## Facing Z Up X
-            a = [("y", "x", "z"), -1*sideMult*lookAxisMult, 1*upAxisMult, 1*lookAxisMult]
-        elif lookAxis == "y" and upAxis == "z":
+            a = [("y", "x", "z"), -1*sideMult*self.lookAxisMult, 1*self.upAxisMult, 1*self.lookAxisMult]
+        elif self.lookAxis == "y" and self.upAxis == "z":
             ## Facing Y Up Z
-            a = [("x", "z", "y"), -1*sideMult*lookAxisMult, 1*upAxisMult, 1*lookAxisMult]
-        elif lookAxis == "y" and upAxis == "x":
+            a = [("x", "z", "y"), -1*sideMult*self.lookAxisMult, 1*self.upAxisMult, 1*self.lookAxisMult]
+        elif self.lookAxis == "y" and self.upAxis == "x":
             ## Facing Y Up X
-            a = [("y", "z", "x"), 1*sideMult*lookAxisMult, 1*upAxisMult, 1*lookAxisMult]
-        elif lookAxis == "x" and upAxis == "z":
+            a = [("y", "z", "x"), 1*sideMult*self.lookAxisMult, 1*self.upAxisMult, 1*self.lookAxisMult]
+        elif self.lookAxis == "x" and self.upAxis == "z":
             ## Facing X Up Z
-            a = [("z", "x", "y"), 1*sideMult*lookAxisMult, 1*upAxisMult, 1*lookAxisMult]
-        elif lookAxis == "x" and upAxis == "y":
+            a = [("z", "x", "y"), 1*sideMult*self.lookAxisMult, 1*self.upAxisMult, 1*self.lookAxisMult]
+        elif self.lookAxis == "x" and self.upAxis == "y":
             ## Facing X Up Y
-            a = [("z", "y", "x"), -1*sideMult*lookAxisMult, 1*upAxisMult, 1*lookAxisMult]
+            a = [("z", "y", "x"), -1*sideMult*self.lookAxisMult, 1*self.upAxisMult, 1*self.lookAxisMult]
 
-        order = a[0]
-        dirX = a[1]
-        dirY = a[2]
-        dirZ = a[3]
-
-        rootP = dt.Vector(2*dirX,14,0*dirZ)
-        rootVec = eval("rootP.{0},rootP.{1},rootP.{2}".format(order[0],order[1],order[2]))
-        hipP = dt.Vector(5*dirX,10,0*dirZ)
-        hipVec = eval("hipP.{0},hipP.{1},hipP.{2}".format(order[0],order[1],order[2]))
-        kneeP = dt.Vector(5*dirX,5,1*dirZ)
-        kneeVec = eval("kneeP.{0},kneeP.{1},kneeP.{2}".format(order[0],order[1],order[2]))
-        footP = dt.Vector(5*dirX,1,0*dirZ)
-        footVec = eval("footP.{0},footP.{1},footP.{2}".format(order[0],order[1],order[2]))
-        ballP = dt.Vector(5*dirX,0,2*dirZ)
-        ballVec = eval("ballP.{0},ballP.{1},ballP.{2}".format(order[0],order[1],order[2]))
-        toeP = dt.Vector(5*dirX,0,4*dirZ)
-        toeVec = eval("toeP.{0},toeP.{1},toeP.{2}".format(order[0],order[1],order[2]))
-        bankoutP = dt.Vector(4*dirX,0,2*dirZ)
-        bankoutVec = eval("bankoutP.{0},bankoutP.{1},bankoutP.{2}".format(order[0],order[1],order[2]))
-        bankinP = dt.Vector(6*dirX,0,2*dirZ)
-        bankinVec = eval("bankinP.{0},bankinP.{1},bankinP.{2}".format(order[0],order[1],order[2]))
-        toepvP = dt.Vector(5*dirX,0,4.3*dirZ)
-        toepvVec = eval("toepvP.{0},toepvP.{1},toepvP.{2}".format(order[0],order[1],order[2]))
-        heelpvP = dt.Vector(5*dirX,0,-0.2*dirZ)
-        heelpvVec = eval("heelpvP.{0},heelpvP.{1},heelpvP.{2}".format(order[0],order[1],order[2]))
-
+        rootVec = self.transformator((2,14,0), a)
+        hipVec = self.transformator((5,10,0), a)
+        kneeVec = self.transformator((5,5,1), a)
+        footVec = self.transformator((5,1,0), a)
+        ballVec = self.transformator((5,0,2), a)
+        toeVec = self.transformator((5,0,4), a)
+        bankoutVec = self.transformator((4,0,2), a)
+        bankinVec = self.transformator((6,0,2), a)
+        toepvVec = self.transformator((5,0,4.3), a)
+        heelpvVec = self.transformator((5,0,-0.2), a)
+        
 
         root = pm.joint(p=rootVec, name=("jInit_LegRoot_" + whichLeg))
         hip = pm.joint(p=hipVec, name=("jInit_Hip_" + whichLeg))
@@ -358,20 +308,23 @@ class initialJoints():
             if constrainedTo:
                 extra.alignTo(locator, jointList[i], 2)
                 pm.parentConstraint(locator, jointList[i], mo=True)
-                extra.connectMirror(constrainedTo[i], locatorsList[i], mirrorAxis=mirrorAxis.upper())
+                extra.connectMirror(constrainedTo[i], locatorsList[i], mirrorAxis=self.mirrorAxis.upper())
             else:
                 pm.parentConstraint(jointList[i], locator, mo=False)
             pm.parent(locator, loc_grp_leg)
+            pm.parent(loc_grp_leg, legGroup)
 
         if masterParent:
             if not constrainedTo:
                 # align the none constrained near to the selected joint
                 extra.alignTo(jointList[0], masterParent)
                 # move it a little along the mirrorAxis
-                value = pm.getAttr("%s.t%s" %(jointList[0],mirrorAxis))
-                pm.setAttr("%s.t%s" %(jointList[0],mirrorAxis), value+3)
+                value = pm.getAttr("%s.t%s" %(jointList[0],self.mirrorAxis))
+                pm.setAttr("%s.t%s" %(jointList[0],self.mirrorAxis), value+3)
 
             pm.parent(jointList[0], masterParent)
+        else:
+            pm.parent(jointList[0], legGroup)
         pm.select(currentselection)
         return locatorsList
 
@@ -393,9 +346,10 @@ class initialJoints():
 
         currentselection=pm.ls(sl=True)
 
+        # make the suffix unique
         ID = 0
         suffix = whichArm
-        while pm.objExists("jInit_collar_" + suffix):
+        while pm.objExists("handInitsGrp_%s" %suffix):
             ID += 1
             suffix = "%s_%s" % (str(ID), whichArm)
 
@@ -416,15 +370,14 @@ class initialJoints():
 
         if whichArm == "auto":
             mirrorParent, givenAlignment, returnAlignment = self.autoGet(masterParent)
-            leftLocs = self.initHandBones(givenAlignment, fingerCount=fingerCount)
+            if givenAlignment:
+                leftLocs = self.initHandBones(givenAlignment, fingerCount=fingerCount)
             if mirrorParent:
                 self.initHandBones(returnAlignment, fingerCount=fingerCount, constrainedTo=leftLocs, parentNode=mirrorParent)
             return
+
+        handGroup = pm.group(em=True, name="handInitsGrp_%s" %whichArm)
         pm.select(d=True)
-
-
-
-        print "masterParent", masterParent
 
         if self.lookAxis == "z" and self.upAxis == "y":
             ## Facing Z Up Y
@@ -576,6 +529,7 @@ class initialJoints():
             else:
                 pm.parentConstraint(jointList[i], locator, mo=False)
             pm.parent(locator, loc_grp_arm)
+            pm.parent(loc_grp_arm, handGroup)
         if masterParent:
             if not constrainedTo:
                 # align the none constrained near to the selected joint
@@ -595,7 +549,7 @@ class initialJoints():
         dirX = (transKey[1])
         dirY = (transKey[2])
         dirZ = (transKey[3])
-        newVector = dt.Vector(inputVector.x*dirX, inputVector.y, inputVector.z*dirZ)
+        newVector = dt.Vector(inputVector.x*dirX, inputVector.y*dirY, inputVector.z*dirZ)
         newOrder = eval("newVector.{0},newVector.{1},newVector.{2}".format(order[0],order[1],order[2]))
         return newOrder
 
@@ -619,8 +573,8 @@ class initialJoints():
             alignmentGiven = "left"
             alignmentReturn = "right"
         else:
-            pm.warning("cannot find mirror bone automatically")
-            return None, alignmentGiven, None
+            pm.warning("Bones cannot be identified automatically")
+            return None, None, None
         try:
             returnBone = pm.PyNode(mirrorBoneName)
         except:
@@ -628,3 +582,91 @@ class initialJoints():
             return None, alignmentGiven, None
         return returnBone, alignmentGiven, alignmentReturn
 
+    def changeOrientation(self, faceDir, upDir):
+        dirValids = ["+x", "+y", "+z", "-x", "-y", "-z", "+X", "+Y", "+Z", "-X", "-Y", "-Z"]
+        if faceDir not in dirValids:
+            pm.error("faceDir argument is not valid. Valid arguments are: %s" %dirValids)
+        if upDir not in dirValids:
+            pm.error("upDir argument is not valid. Valid arguments are: %s" % dirValids)
+        # make sure the imputs are lowercase:
+        faceDir = faceDir.lower()
+        upDir = upDir.lower()
+
+        lookAxis = faceDir.strip("+-")
+        lookAxisMult = -1 if faceDir.strip(lookAxis) == "-" else 1
+
+        upAxis = upDir.strip("+-")
+        upAxisMult = -1 if upDir.strip(upAxis) == "-" else 1
+
+        if lookAxis == upAxis:
+            pm.warning("faceDir and upDir cannot be the same axis, cancelling")
+            return
+        self.lookAxis = lookAxis
+        self.lookAxisMult = lookAxisMult
+        self.upAxis = upAxis
+        self.upAxisMult = upAxisMult
+        self.mirrorAxis = "xyz".strip(lookAxis + upAxis)
+
+    def initLimb (self, limb, whichSide, segments=3, fingerCount=5, constrainedTo = None, parentNode=None):
+
+        sideValids = ["left", "right", "both", "auto"]
+        if whichSide not in sideValids:
+            pm.error("side argument is not valid. Valid arguments are: %s" %sideValids)
+        if len(pm.ls(sl=True, type="joint")) != 1 and whichSide == "auto":
+            pm.warning("You need to select a single joint to use Auto method")
+            return
+        ## get the necessary info from arguments
+        side = 1 if whichSide == "left" else 2
+        sideMult = 1 if whichSide == "left" else -1
+
+        currentselection = pm.ls(sl=True)
+
+        ID = 0
+        suffix = whichSide
+        ## make the suffix unique (check the corresponding group name)
+        while pm.objExists("%sGrp_%s" %(limb,suffix)):
+            ID += 1
+            suffix = "%s_%s" % (str(ID), whichSide)
+
+        if not parentNode:
+            if pm.ls(sl=True, type="joint"):
+                masterParent = pm.ls(sl=True)[-1]
+            else:
+                masterParent = None
+        else:
+            masterParent = parentNode
+
+        if whichSide == "both":
+            constLocs = self.initLimb(limb, "left")
+            self.initLimb(limb, "right", constrainedTo=constLocs)
+            return
+        if whichSide == "auto":
+            mirrorParent, givenAlignment, returnAlignment = self.autoGet(masterParent)
+            constLocs = self.initLimb(limb, givenAlignment)
+            if mirrorParent:
+                self.initLimb(limb, returnAlignment, constrainedTo=constLocs, parentNode=mirrorParent)
+            return
+
+        limbGroup = pm.group(em=True, name="%sGrp_%s" %(limb,suffix))
+        pm.select(d=True)
+
+        if self.lookAxis == "z" and self.upAxis == "y":
+            ## Facing Z Up Y
+            a = [("x","y","z"), 1*sideMult*self.lookAxisMult, 1*self.upAxisMult, 1*self.lookAxisMult]
+        elif self.lookAxis == "z" and self.upAxis == "x":
+            ## Facing Z Up X
+            a = [("y", "x", "z"), -1*sideMult*self.lookAxisMult, 1*self.upAxisMult, 1*self.lookAxisMult]
+        elif self.lookAxis == "y" and self.upAxis == "z":
+            ## Facing Y Up Z
+            a = [("x", "z", "y"), -1*sideMult*self.lookAxisMult, 1*self.upAxisMult, 1*self.lookAxisMult]
+        elif self.lookAxis == "y" and self.upAxis == "x":
+            ## Facing Y Up X
+            a = [("y", "z", "x"), 1*sideMult*self.lookAxisMult, 1*self.upAxisMult, 1*self.lookAxisMult]
+        elif self.lookAxis == "x" and self.upAxis == "z":
+            ## Facing X Up Z
+            a = [("z", "x", "y"), 1*sideMult*self.lookAxisMult, 1*self.upAxisMult, 1*self.lookAxisMult]
+        elif self.lookAxis == "x" and self.upAxis == "y":
+            ## Facing X Up Y
+            a = [("z", "y", "x"), -1*sideMult*self.lookAxisMult, 1*self.upAxisMult, 1*self.lookAxisMult]
+
+        ### FROM HERE IT WILL BE LIMB SPECIFIC ###
