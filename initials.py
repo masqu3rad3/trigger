@@ -131,7 +131,6 @@ class initialJoints():
         if whichSide == "auto":
             mirrorParent, givenAlignment, returnAlignment = self.autoGet(masterParent)
             constLocs = self.initLimb(limb, givenAlignment)
-            print "constLocs", constLocs
             if mirrorParent:
                 self.initLimb(limb, returnAlignment, constrainedTo=constLocs, parentNode=mirrorParent)
             return
@@ -161,7 +160,7 @@ class initialJoints():
         ### FROM HERE IT WILL BE LIMB SPECIFIC ###
 
         if limb == "spine":
-            limbJoints, offsetVector = self.initialSpine(segments=segments, suffix=suffix)
+            limbJoints, offsetVector = self.initialSpine(transformKey=a, segments=segments, suffix=suffix)
 
         if limb == "arm":
             limbJoints, offsetVector = self.initialArm(transformKey=a, side=side, suffix=suffix)
@@ -175,10 +174,13 @@ class initialJoints():
             limbJoints, jRoots = self.initialHand(fingerCount=fingerCount, transformKey=a, side=side, suffix=suffix)
 
         if limb == "neck":
-            limbJoints, offsetVector = self.initialNeck(segments=segments, suffix=suffix)
+            limbJoints, offsetVector = self.initialNeck(transformKey=a, segments=segments, suffix=suffix)
 
         if limb == "tail":
-            limbJoints, offsetVector = self.initialTail(segments=segments, suffix=suffix)
+            limbJoints, offsetVector = self.initialTail(transformKey=a, segments=segments, suffix=suffix)
+
+        if limb == "finger":
+            limbJoints, offsetVector = self.initialFinger(segments=segments, transformKey=a, side=side, suffix=suffix)
 
 
         ### Constrain locating
@@ -231,7 +233,7 @@ class initialJoints():
         pm.select(currentselection)
         return locatorsList
 
-    def initialSpine(self, segments, suffix):
+    def initialSpine(self, transformKey, segments, suffix):
         """
         Creates a preset spine hieararchy with given segments
         Args:
@@ -241,12 +243,16 @@ class initialJoints():
         Returns: (List) jointList
 
         """
-        rPoint = 14.0
-        nPoint = 21.0
+
+        rPoint = dt.Vector(self.transformator((0, 14.0, 0), transformKey))
+        nPoint = dt.Vector(self.transformator((0, 21.0, 0), transformKey))
+        # rPoint = 14.0
+        # nPoint = 21.0
+        offsetVector = dt.normal(nPoint - rPoint)
         add = (nPoint - rPoint) / ((segments + 1) - 1)
         jointList = []
         for i in range(0, (segments + 1)):
-            spine = pm.joint(p=(0, (rPoint + (add * i)), 0), name="jInit_spine_%s_%s" %(suffix, str(i)))
+            spine = pm.joint(p=(rPoint + (add * i)), name="jInit_spine_%s_%s" %(suffix, str(i)))
             pm.setAttr(spine + ".side", 0)
             type = 1 if i == 0 else 6
             pm.setAttr(spine + ".type", type)
@@ -254,7 +260,7 @@ class initialJoints():
             for i in jointList:
                 pm.setAttr(i + ".drawLabel", 1)
         self.spineJointsList.append(jointList)
-        return jointList, dt.Vector(0,1,0)
+        return jointList, offsetVector
 
     def initialArm(self, transformKey, side, suffix):
         collarVec = self.transformator((2, 0, 0), transformKey)
@@ -498,12 +504,11 @@ class initialJoints():
                 pass
         return jointList, fingerRoots
 
-    def initialNeck(self, segments, suffix):
-        rPointNeck = dt.Vector(0, 25.757, 0)
-        nPointNeck = dt.Vector(0, 29.418, 0.817)
+    def initialNeck(self, transformKey, segments, suffix):
+        rPointNeck = dt.Vector(self.transformator((0, 25.757, 0), transformKey))
+        nPointNeck = dt.Vector(self.transformator((0, 29.418, 0.817), transformKey))
         offsetVector = dt.normal(nPointNeck-rPointNeck)
         addNeck = (nPointNeck - rPointNeck) / ((segments + 1) - 1)
-        print "here"
         jointList = []
         for i in range(0, (segments + 1)):
             neck = pm.joint(p=(rPointNeck + (addNeck * i)), name="jInit_neck_%s_%s" %(suffix, str(i)))
@@ -522,12 +527,12 @@ class initialJoints():
         self.neckJointsList.append(jointList)
         return jointList, offsetVector
 
-    def initialTail(self, segments, suffix):
-        rPointTail = dt.Vector(0, 14, 0)
-        nPointTail = dt.Vector(0, 8.075, -7.673)
+    def initialTail(self, transformKey, segments, suffix):
+
+        rPointTail = dt.Vector(self.transformator((0, 14, 0), transformKey))
+        nPointTail = dt.Vector(self.transformator((0, 8.075, -7.673), transformKey))
         offsetVector = dt.normal(nPointTail-rPointTail)
         addTail = (nPointTail - rPointTail) / ((segments + 1) - 1)
-        print "here"
         jointList = []
         for i in range(0, (segments + 1)):
             tail = pm.joint(p=(rPointTail + (addTail * i)), name="jInit_tail_%s_%s" %(suffix, str(i)))
@@ -546,7 +551,54 @@ class initialJoints():
         self.tailJointsList.append(jointList)
         return jointList, offsetVector
 
-    def initialFinger(self,segments, suffix, thumb=False):
+    def initialFinger(self,segments, transformKey, side, suffix, thumb=False):
         if segments < 2:
-            pm.error("minimum segments for the fingers are two. current: %s" %segments)
-        ## TODO // finish here
+            pm.warning("minimum segments for the fingers are two. current: %s" %segments)
+            return
+
+
+        rPointFinger = dt.Vector(self.transformator((0, 0, 0), transformKey))
+        nPointFinger = dt.Vector(self.transformator((5, 0, 0), transformKey))
+
+
+        offsetVector = dt.normal(nPointFinger-rPointFinger)
+        addFinger = (nPointFinger - rPointFinger) / ((segments + 1) - 1)
+
+        jointList = []
+        for i in range(0, (segments + 1)):
+            tail = pm.joint(p=(rPointFinger + (addFinger * i)), name="jInit_tail_%s_%s" %(suffix, str(i)))
+            pm.setAttr(tail + ".side", 0)
+
+            if i == 0:
+                pm.setAttr(tail + ".type", 18)
+                pm.setAttr(tail + ".otherType", "ExtraFingerRoot")
+                pm.setAttr(tail + ".drawLabel", 1)
+            else:
+                pm.setAttr(tail + ".type", 23)
+                # pm.setAttr(tail + ".otherType", "Tail")
+
+
+            jointList.append(tail)
+
+        self.tailJointsList.append(jointList)
+        return jointList, offsetVector
+
+    def initHumanoid(self):
+        self.initLimb("spine", "auto")
+        root = self.spineJointsList[-1][0]
+        chest = self.spineJointsList[-1][-1]
+        pm.select(root)
+        self.initLimb("leg", "auto")
+
+        pm.select(chest)
+        self.initLimb("arm", "auto")
+        self.initLimb("neck", "auto")
+        rHand =  self.armJointsList[-1][-1]
+
+        pm.select(rHand)
+        self.initLimb("hand", "auto")
+
+
+
+
+
