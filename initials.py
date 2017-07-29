@@ -9,61 +9,112 @@ class initialJoints():
     upAxisMult = 1
     mirrorAxis = "x"
 
-    def initSpineBones(self, segments):
-        ID = 0
-        suffix = str(ID)
-        while pm.objExists("jInit_spine"+suffix):
-            ID += 1
-            suffix = str(ID)
+    spineJointsList=[]
+    neckJointsList=[]
+    armJointsList=[]
+    legJointsList=[]
+    fingerJointsList=[]
+    tailJointsList=[]
 
+    def transformator (self, inputVector, transKey):
+        ## convert the input tuple to an actual vector:
+        inputVector = dt.Vector(inputVector)
+        order = transKey[0]
+        dirX = (transKey[1])
+        dirY = (transKey[2])
+        dirZ = (transKey[3])
+        newVector = dt.Vector(inputVector.x*dirX, inputVector.y*dirY, inputVector.z*dirZ)
+        newOrder = eval("newVector.{0},newVector.{1},newVector.{2}".format(order[0],order[1],order[2]))
+        return newOrder
 
-        if pm.ls(sl=True, type="joint"):
-            root = pm.ls(sl=True)[-1]
+    def autoGet (self, parentBone):
+        """
+        Gets the mirror of the given object by its name. Returns the left if it finds right and vice versa
+        Args:
+            parentBone: (pymel object) the object which name will be checked
+
+        Returns: (Tuple) None/pymel object, alignment of the given Obj(string), 
+                alignment of the returned Obj(string)  Ex.: (bone_left, "left", "right") 
+
+        """
+        boneName = parentBone.name()
+        if "_right" in boneName:
+            mirrorBoneName = boneName.replace("_right", "_left")
+            alignmentGiven = "right"
+            alignmentReturn = "left"
+        elif "_left" in boneName:
+            mirrorBoneName = boneName.replace("_left", "_right")
+            alignmentGiven = "left"
+            alignmentReturn = "right"
+        elif "_c" in boneName:
+            return None, "both", None
         else:
-            root = None
+            pm.warning("Bones cannot be identified automatically")
+            return None, None, None
+        try:
+            returnBone = pm.PyNode(mirrorBoneName)
+        except:
+            pm.warning("cannot find mirror bone automatically")
+            return None, alignmentGiven, None
+        return returnBone, alignmentGiven, alignmentReturn
 
-        pm.select(d=True)
+    def changeOrientation(self, faceDir, upDir):
+        dirValids = ["+x", "+y", "+z", "-x", "-y", "-z", "+X", "+Y", "+Z", "-X", "-Y", "-Z"]
+        if faceDir not in dirValids:
+            pm.error("faceDir argument is not valid. Valid arguments are: %s" %dirValids)
+        if upDir not in dirValids:
+            pm.error("upDir argument is not valid. Valid arguments are: %s" % dirValids)
+        # make sure the imputs are lowercase:
+        faceDir = faceDir.lower()
+        upDir = upDir.lower()
+
+        lookAxis = faceDir.strip("+-")
+        lookAxisMult = -1 if faceDir.strip(lookAxis) == "-" else 1
+
+        upAxis = upDir.strip("+-")
+        upAxisMult = -1 if upDir.strip(upAxis) == "-" else 1
+
+        if lookAxis == upAxis:
+            pm.warning("faceDir and upDir cannot be the same axis, cancelling")
+            return
+        self.lookAxis = lookAxis
+        self.lookAxisMult = lookAxisMult
+        self.upAxis = upAxis
+        self.upAxisMult = upAxisMult
+        self.mirrorAxis = "xyz".strip(lookAxis + upAxis)
+
+    def initLimb (self, limb, whichSide="left", segments=3, fingerCount=5, constrainedTo = None, parentNode=None):
+        ## skip side related stuff for no-side related limbs
+        nonSidedLimbs = ["spine", "neck", "tail"]
+        if limb in nonSidedLimbs:
+            whichSide = "c"
+
+        else:
+        ## check validity of arguments
+            sideValids = ["left", "right", "both", "auto"]
+            if whichSide not in sideValids:
+                pm.error("side argument '%s' is not valid. Valid arguments are: %s" %(whichSide, sideValids))
+            if len(pm.ls(sl=True, type="joint")) != 1 and whichSide == "auto":
+                pm.warning("You need to select a single joint to use Auto method")
+                return
+
+            ## get the necessary info from arguments
+            side = 1 if whichSide == "left" else 2
+
+        sideMult = 1 if whichSide == "left" else -1
+
         if (segments + 1) < 2:
-            pm.error("Define at least 3 segments for spine section")
-            return
-        rPoint = 14.0
-        nPoint = 21.0
-        add = (nPoint - rPoint) / ((segments + 1) - 1)
-        jointList = []
-        for i in range(0, (segments + 1)):
-            spine = pm.joint(p=(0, (rPoint + (add * i)), 0), name="jInit_spine%s_%s" %(suffix, str(i)))
-            pm.setAttr(spine + ".side", 0)
-            type = 1 if i == 0 else 6
-            pm.setAttr(spine + ".type", type)
-            jointList.append(spine)
-            for i in jointList:
-                pm.setAttr(i + ".drawLabel", 1)
-        if root:
-            extra.alignTo(jointList[0], root)
-            pm.move(jointList[0], (0,2,0), relative=True)
-            pm.parent(jointList[0],root)
-
-    def initArmBones(self, whichArm, constrainedTo=None, parentNode=None):
-        # check validity of arguments
-        whichArmValids = ["left", "right", "both", "auto"]
-        if whichArm not in whichArmValids:
-            pm.error("whichArm argument is not valid. Valid arguments are: %s" %whichArmValids)
-
-        if len(pm.ls(sl=True, type="joint")) != 1 and whichArm == "auto":
-            pm.warning("You need to select a single joint to use Auto method")
+            pm.error("Define at least 2 segments")
             return
 
-        ## get the necessary info from arguments
-        side = 1 if whichArm == "left" else 2
-        sideMult = 1 if whichArm == "left" else -1
-
-        currentselection=pm.ls(sl=True)
+        currentselection = pm.ls(sl=True)
 
         ID = 0
-        suffix = whichArm
-        while pm.objExists("armInitsGrp_%s" %suffix):
+        suffix = whichSide
+        ## make the suffix unique (check the corresponding group name)
+        while pm.objExists("%sGrp_%s" %(limb,suffix)):
             ID += 1
-            suffix = "%s_%s" % (str(ID),whichArm)
+            suffix = "%s_%s" % (str(ID), whichSide)
 
         if not parentNode:
             if pm.ls(sl=True, type="joint"):
@@ -73,18 +124,19 @@ class initialJoints():
         else:
             masterParent = parentNode
 
-        if whichArm=="both":
-            leftLocs = self.initArmBones("left")
-            self.initArmBones("right", constrainedTo=leftLocs)
+        if whichSide == "both":
+            constLocs = self.initLimb(limb, "left")
+            self.initLimb(limb, "right", constrainedTo=constLocs)
+            return
+        if whichSide == "auto":
+            mirrorParent, givenAlignment, returnAlignment = self.autoGet(masterParent)
+            constLocs = self.initLimb(limb, givenAlignment)
+            print "constLocs", constLocs
+            if mirrorParent:
+                self.initLimb(limb, returnAlignment, constrainedTo=constLocs, parentNode=mirrorParent)
             return
 
-        if whichArm == "auto":
-            mirrorParent, givenAlignment, returnAlignment = self.autoGet(masterParent)
-            leftLocs = self.initArmBones(givenAlignment)
-            if mirrorParent:
-                self.initArmBones(returnAlignment, constrainedTo=leftLocs, parentNode=mirrorParent)
-            return
-        armGroup = pm.group(em=True, name="armInitsGrp_%s" %whichArm)
+        limbGroup = pm.group(em=True, name="%sGrp_%s" %(limb,suffix))
         pm.select(d=True)
 
         if self.lookAxis == "z" and self.upAxis == "y":
@@ -106,10 +158,109 @@ class initialJoints():
             ## Facing X Up Y
             a = [("z", "y", "x"), -1*sideMult*self.lookAxisMult, 1*self.upAxisMult, 1*self.lookAxisMult]
 
-        collarVec = self.transformator((2, 0, 0), a)
-        shoulderVec = self.transformator((5, 0, 0), a)
-        elbowVec = self.transformator((9, 0, -1), a)
-        handVec = self.transformator((14, 0, 0 ), a)
+        ### FROM HERE IT WILL BE LIMB SPECIFIC ###
+
+        if limb == "spine":
+            limbJoints, offsetVector = self.initialSpine(segments=segments, suffix=suffix)
+
+        if limb == "arm":
+            limbJoints, offsetVector = self.initialArm(transformKey=a, side=side, suffix=suffix)
+            offsetVector = offsetVector * sideMult
+
+        if limb == "leg":
+            limbJoints, offsetVector = self.initialLeg(transformKey=a, side=side, suffix=suffix)
+            # offsetVector = offsetVector * sideMult
+
+        if limb == "hand":
+            limbJoints, jRoots = self.initialHand(fingerCount=fingerCount, transformKey=a, side=side, suffix=suffix)
+
+        if limb == "neck":
+            limbJoints, offsetVector = self.initialNeck(segments=segments, suffix=suffix)
+
+        if limb == "tail":
+            limbJoints, offsetVector = self.initialTail(segments=segments, suffix=suffix)
+
+
+        ### Constrain locating
+
+        loc_grp = pm.group(name=("locGrp_%s" %suffix), em=True)
+        pm.setAttr(loc_grp.v, 0)
+        locatorsList=[]
+        
+        for i in range (0,len(limbJoints)):
+            locator = pm.spaceLocator(name="loc_" + limbJoints[i].name())
+            locatorsList.append(locator)
+            if constrainedTo:
+                extra.alignTo(locator, limbJoints[i], 2)
+                pm.parentConstraint(locator, limbJoints[i], mo=True)
+                extra.connectMirror(constrainedTo[i], locatorsList[i], mirrorAxis=self.mirrorAxis.upper())
+            else:
+                pm.parentConstraint(limbJoints[i], locator, mo=False)
+            pm.parent(locator, loc_grp)
+            pm.parent(loc_grp, limbGroup)
+
+        # hand and foot limbs are actually just a collection of fingers.
+        # # That is why they need a temporary group to be moved together
+        if limb == "hand" or limb == "foot":
+            if masterParent:
+                if not constrainedTo:
+                    tempGroup = pm.group(em=True)
+                    pm.parent(jRoots, tempGroup)
+                    extra.alignTo(tempGroup, masterParent)
+                    pm.ungroup(tempGroup)
+                pm.parent(jRoots, masterParent)
+            else:
+                pm.parent(limbJoints[0], limbGroup)
+
+        else:
+            ### MOVE THE LIMB TO THE DESIRED LOCATION
+            if masterParent:
+                if not constrainedTo:
+                    # align the none constrained near to the selected joint
+                    extra.alignTo(limbJoints[0], masterParent)
+                    # move it a little along the mirrorAxis
+
+                    # value = pm.getAttr("%s.t%s" %(limbJoints[0],self.mirrorAxis))
+                    # pm.setAttr("%s.t%s" %(limbJoints[0],self.mirrorAxis), value+3)
+                    # move it along offsetvector
+                    pm.move(limbJoints[0], offsetVector, relative=True)
+
+                pm.parent(limbJoints[0], masterParent)
+            else:
+                pm.parent(limbJoints[0], limbGroup)
+        pm.select(currentselection)
+        return locatorsList
+
+    def initialSpine(self, segments, suffix):
+        """
+        Creates a preset spine hieararchy with given segments
+        Args:
+            segments: (int) segment count
+            suffix: (String) name suffix - must be unique
+
+        Returns: (List) jointList
+
+        """
+        rPoint = 14.0
+        nPoint = 21.0
+        add = (nPoint - rPoint) / ((segments + 1) - 1)
+        jointList = []
+        for i in range(0, (segments + 1)):
+            spine = pm.joint(p=(0, (rPoint + (add * i)), 0), name="jInit_spine_%s_%s" %(suffix, str(i)))
+            pm.setAttr(spine + ".side", 0)
+            type = 1 if i == 0 else 6
+            pm.setAttr(spine + ".type", type)
+            jointList.append(spine)
+            for i in jointList:
+                pm.setAttr(i + ".drawLabel", 1)
+        self.spineJointsList.append(jointList)
+        return jointList, dt.Vector(0,1,0)
+
+    def initialArm(self, transformKey, side, suffix):
+        collarVec = self.transformator((2, 0, 0), transformKey)
+        shoulderVec = self.transformator((5, 0, 0), transformKey)
+        elbowVec = self.transformator((9, 0, -1), transformKey)
+        handVec = self.transformator((14, 0, 0 ), transformKey)
 
         pm.select(d=True)
         collar = pm.joint(p=collarVec, name=("jInit_collar_" + suffix))
@@ -134,127 +285,42 @@ class initialJoints():
         jointList=[collar, shoulder, elbow, hand]
         for i in jointList:
             pm.setAttr(i + ".drawLabel", 1)
+        self.armJointsList.append(jointList)
+        if self.mirrorAxis == "x":
+            offsetAxis = dt.Vector(1,0,0)
+        if self.mirrorAxis == "y":
+            offsetAxis = dt.Vector(0,1,0)
+        if self.mirrorAxis == "z":
+            offsetAxis = dt.Vector(0, 0, 1)
 
-        loc_grp_arm = pm.group(name=("locGrp_%s" %suffix), em=True)
-        pm.setAttr(loc_grp_arm.v, 0)
-        locatorsList=[]
-        for i in range (0,len(jointList)):
-            locator = pm.spaceLocator(name="loc_" + jointList[i].name())
-            locatorsList.append(locator)
-            if constrainedTo:
-                extra.alignTo(locator, jointList[i], 2)
-                pm.parentConstraint(locator, jointList[i], mo=True)
-                extra.connectMirror(constrainedTo[i], locatorsList[i], mirrorAxis=self.mirrorAxis.upper())
-            else:
-                pm.parentConstraint(jointList[i], locator, mo=False)
-            pm.parent(locator, loc_grp_arm)
-            pm.parent(loc_grp_arm, armGroup)
-
-        if masterParent:
-            if not constrainedTo:
-                # align the none constrained near to the selected joint
-                extra.alignTo(jointList[0], masterParent)
-                # move it a little along the mirrorAxis
-                value = pm.getAttr("%s.t%s" %(jointList[0],self.mirrorAxis))
-                pm.setAttr("%s.t%s" %(jointList[0],self.mirrorAxis), value+3)
-
-            pm.parent(jointList[0], masterParent)
-        else:
-            pm.parent(jointList[0], armGroup)
-        pm.select(currentselection)
-        return locatorsList
-
-    def initLegBones(self, whichLeg, constrainedTo=None, parentNode=None):
-
-        # check validity of arguments
-        whichLegValids = ["left", "right", "both", "auto"]
-        if whichLeg not in whichLegValids:
-            pm.error("whichArm argument is not valid. Valid arguments are: %s" %whichLegValids)
-            
-        if len(pm.ls(sl=True, type="joint")) != 1 and whichLeg == "auto":
-            pm.warning("You need to select a single joint to use Auto method")
-            return
-
-        ## get the necessary info from arguments
-        side = 1 if whichLeg == "left" else 2
-        sideMult = 1 if whichLeg == "left" else -1
-
-        currentselection=pm.ls(sl=True)
-
-        ID = 0
-        suffix = whichLeg
-        while pm.objExists("legInitsGrp_%s" %suffix):
-            ID += 1
-            suffix = "%s_%s" % (str(ID), whichLeg)
-
-        if not parentNode:
-            if pm.ls(sl=True, type="joint"):
-                masterParent = pm.ls(sl=True)[-1]
-            else:
-                masterParent = None
-        else:
-            masterParent = parentNode
-
-        if whichLeg=="both":
-            leftLocs = self.initLegBones("left")
-            self.initLegBones("right", constrainedTo=leftLocs)
-            return
+        return jointList, offsetAxis
+    
+    def initialLeg(self, transformKey, side, suffix):
+        rootVec = self.transformator((2,14,0), transformKey)
+        hipVec = self.transformator((5,10,0), transformKey)
+        kneeVec = self.transformator((5,5,1), transformKey)
+        footVec = self.transformator((5,1,0), transformKey)
+        ballVec = self.transformator((5,0,2), transformKey)
+        toeVec = self.transformator((5,0,4), transformKey)
+        bankoutVec = self.transformator((4,0,2), transformKey)
+        bankinVec = self.transformator((6,0,2), transformKey)
+        toepvVec = self.transformator((5,0,4.3), transformKey)
+        heelpvVec = self.transformator((5,0,-0.2), transformKey)
         
-        if whichLeg == "auto":
-            mirrorParent, givenAlignment, returnAlignment = self.autoGet(masterParent)
-            leftLocs = self.initLegBones(givenAlignment)
-            if mirrorParent:
-                self.initLegBones(returnAlignment, constrainedTo=leftLocs, parentNode=mirrorParent)
-            return
-
-        legGroup = pm.group(em=True, name="legInitsGrp_%s" %whichLeg)
+        root = pm.joint(p=rootVec, name=("jInit_LegRoot_" + suffix))
+        hip = pm.joint(p=hipVec, name=("jInit_Hip_" + suffix))
+        knee = pm.joint(p=kneeVec, name=("jInit_Knee_" + suffix))
+        foot = pm.joint(p=footVec, name=("jInit_Foot_" + suffix))
+        ball = pm.joint(p=ballVec, name=("jInit_Ball_" + suffix))
+        toe = pm.joint(p=toeVec, name=("jInit_Toe_" + suffix))
         pm.select(d=True)
-
-        if self.lookAxis == "z" and self.upAxis == "y":
-            ## Facing Z Up Y
-            a = [("x","y","z"), 1*sideMult*self.lookAxisMult, 1*self.upAxisMult, 1*self.lookAxisMult]
-        elif self.lookAxis == "z" and self.upAxis == "x":
-            ## Facing Z Up X
-            a = [("y", "x", "z"), -1*sideMult*self.lookAxisMult, 1*self.upAxisMult, 1*self.lookAxisMult]
-        elif self.lookAxis == "y" and self.upAxis == "z":
-            ## Facing Y Up Z
-            a = [("x", "z", "y"), -1*sideMult*self.lookAxisMult, 1*self.upAxisMult, 1*self.lookAxisMult]
-        elif self.lookAxis == "y" and self.upAxis == "x":
-            ## Facing Y Up X
-            a = [("y", "z", "x"), 1*sideMult*self.lookAxisMult, 1*self.upAxisMult, 1*self.lookAxisMult]
-        elif self.lookAxis == "x" and self.upAxis == "z":
-            ## Facing X Up Z
-            a = [("z", "x", "y"), 1*sideMult*self.lookAxisMult, 1*self.upAxisMult, 1*self.lookAxisMult]
-        elif self.lookAxis == "x" and self.upAxis == "y":
-            ## Facing X Up Y
-            a = [("z", "y", "x"), -1*sideMult*self.lookAxisMult, 1*self.upAxisMult, 1*self.lookAxisMult]
-
-        rootVec = self.transformator((2,14,0), a)
-        hipVec = self.transformator((5,10,0), a)
-        kneeVec = self.transformator((5,5,1), a)
-        footVec = self.transformator((5,1,0), a)
-        ballVec = self.transformator((5,0,2), a)
-        toeVec = self.transformator((5,0,4), a)
-        bankoutVec = self.transformator((4,0,2), a)
-        bankinVec = self.transformator((6,0,2), a)
-        toepvVec = self.transformator((5,0,4.3), a)
-        heelpvVec = self.transformator((5,0,-0.2), a)
-        
-
-        root = pm.joint(p=rootVec, name=("jInit_LegRoot_" + whichLeg))
-        hip = pm.joint(p=hipVec, name=("jInit_Hip_" + whichLeg))
-        knee = pm.joint(p=kneeVec, name=("jInit_Knee_" + whichLeg))
-        foot = pm.joint(p=footVec, name=("jInit_Foot_" + whichLeg))
-        ball = pm.joint(p=ballVec, name=("jInit_Ball_" + whichLeg))
-        toe = pm.joint(p=toeVec, name=("jInit_Toe_" + whichLeg))
+        bankout = pm.joint(p=bankoutVec, name=("jInit_BankOut_" + suffix))
         pm.select(d=True)
-        bankout = pm.joint(p=bankoutVec, name=("jInit_BankOut_" + whichLeg))
+        bankin = pm.joint(p=bankinVec, name=("jInit_BankIn_" + suffix))
         pm.select(d=True)
-        bankin = pm.joint(p=bankinVec, name=("jInit_BankIn_" + whichLeg))
+        toepv = pm.joint(p=toepvVec, name=("jInit_ToePv_" + suffix))
         pm.select(d=True)
-        toepv = pm.joint(p=toepvVec, name=("jInit_ToePv_" + whichLeg))
-        pm.select(d=True)
-        heelpv = pm.joint(p=heelpvVec, name=("jInit_HeelPv_" + whichLeg))
+        heelpv = pm.joint(p=heelpvVec, name=("jInit_HeelPv_" + suffix))
         pm.joint(root, e=True, zso=True, oj="xyz", sao="yup")
         pm.joint(hip, e=True, zso=True, oj="xyz", sao="yup")
         pm.joint(knee, e=True, zso=True, oj="xyz", sao="yup")
@@ -298,208 +364,123 @@ class initialJoints():
         jointList = [root, hip, knee, foot, ball, toe, bankout, bankin, toepv, heelpv]
         for i in jointList:
             pm.setAttr(i + ".drawLabel", 1)
+        self.legJointsList.append(jointList)
+        if self.mirrorAxis == "x":
+            offsetAxis = dt.Vector(1,0,0)
+        if self.mirrorAxis == "y":
+            offsetAxis = dt.Vector(0,1,0)
+        if self.mirrorAxis == "z":
+            offsetAxis = dt.Vector(0, 0, 1)
 
-        loc_grp_leg = pm.group(name=("locGrp_%s" %suffix), em=True)
-        pm.setAttr(loc_grp_leg.v, 0)
-        locatorsList=[]
-        for i in range (0,len(jointList)):
-            locator = pm.spaceLocator(name="loc_" + jointList[i].name())
-            locatorsList.append(locator)
-            if constrainedTo:
-                extra.alignTo(locator, jointList[i], 2)
-                pm.parentConstraint(locator, jointList[i], mo=True)
-                extra.connectMirror(constrainedTo[i], locatorsList[i], mirrorAxis=self.mirrorAxis.upper())
-            else:
-                pm.parentConstraint(jointList[i], locator, mo=False)
-            pm.parent(locator, loc_grp_leg)
-            pm.parent(loc_grp_leg, legGroup)
+        return jointList, offsetAxis
 
-        if masterParent:
-            if not constrainedTo:
-                # align the none constrained near to the selected joint
-                extra.alignTo(jointList[0], masterParent)
-                # move it a little along the mirrorAxis
-                value = pm.getAttr("%s.t%s" %(jointList[0],self.mirrorAxis))
-                pm.setAttr("%s.t%s" %(jointList[0],self.mirrorAxis), value+3)
-
-            pm.parent(jointList[0], masterParent)
-        else:
-            pm.parent(jointList[0], legGroup)
-        pm.select(currentselection)
-        return locatorsList
-
-    def initHandBones (self, whichArm, fingerCount=5, constrainedTo=None, parentNode=None):
-        # check validity of arguments
-        if fingerCount < 1:
-            pm.error ("fingerCount cannot be smaller than 1")
-        whichArmValids = ["left", "right", "both", "auto"]
-        if whichArm not in whichArmValids:
-            pm.error("whichArm argument is not valid. Valid arguments are: %s" %whichArmValids)
-
-        if len(pm.ls(sl=True, type="joint")) != 1 and whichArm == "auto":
-            pm.warning("You need to select a single joint to use Auto method")
-            return
-
-        ## get the necessary info from arguments
-        side = 1 if whichArm == "left" else 2
-        sideMult = 1 if whichArm == "left" else -1
-
-        currentselection=pm.ls(sl=True)
-
-        # make the suffix unique
-        ID = 0
-        suffix = whichArm
-        while pm.objExists("handInitsGrp_%s" %suffix):
-            ID += 1
-            suffix = "%s_%s" % (str(ID), whichArm)
-
-        if not parentNode:
-            if pm.ls(sl=True, type="joint"):
-                masterParent = pm.ls(sl=True)[-1]
-            else:
-                pm.select(d=True)
-                masterParent = pm.joint(p=(0,0,0), name=("jInit_Hand_" + whichArm))
-                pm.select(currentselection)
-        else:
-            masterParent = parentNode
-
-        if whichArm == "both":
-            leftLocs = self.initHandBones("left", fingerCount=fingerCount)
-            self.initHandBones("right", fingerCount=fingerCount, constrainedTo=leftLocs)
-            return
-
-        if whichArm == "auto":
-            mirrorParent, givenAlignment, returnAlignment = self.autoGet(masterParent)
-            if givenAlignment:
-                leftLocs = self.initHandBones(givenAlignment, fingerCount=fingerCount)
-            if mirrorParent:
-                self.initHandBones(returnAlignment, fingerCount=fingerCount, constrainedTo=leftLocs, parentNode=mirrorParent)
-            return
-
-        handGroup = pm.group(em=True, name="handInitsGrp_%s" %whichArm)
-        pm.select(d=True)
-
-        if self.lookAxis == "z" and self.upAxis == "y":
-            ## Facing Z Up Y
-            a = [("x", "y", "z"), 1 * sideMult * self.lookAxisMult, 1 * self.upAxisMult, 1 * self.lookAxisMult]
-        elif self.lookAxis == "z" and self.upAxis == "x":
-            ## Facing Z Up X
-            a = [("y", "x", "z"), -1 * sideMult * self.lookAxisMult, 1 * self.upAxisMult, 1 * self.lookAxisMult]
-        elif self.lookAxis == "y" and self.upAxis == "z":
-            ## Facing Y Up Z
-            a = [("x", "z", "y"), -1 * sideMult * self.lookAxisMult, 1 * self.upAxisMult, 1 * self.lookAxisMult]
-        elif self.lookAxis == "y" and self.upAxis == "x":
-            ## Facing Y Up X
-            a = [("y", "z", "x"), 1 * sideMult * self.lookAxisMult, 1 * self.upAxisMult, 1 * self.lookAxisMult]
-        elif self.lookAxis == "x" and self.upAxis == "z":
-            ## Facing X Up Z
-            a = [("z", "x", "y"), 1 * sideMult * self.lookAxisMult, 1 * self.upAxisMult, 1 * self.lookAxisMult]
-        elif self.lookAxis == "x" and self.upAxis == "y":
-            ## Facing X Up Y
-            a = [("z", "y", "x"), -1 * sideMult * self.lookAxisMult, 1 * self.upAxisMult, 1 * self.lookAxisMult]
-
+    def initialHand(self, fingerCount, transformKey, side, suffix):
         jointList = []
         fingerRoots = []
         if fingerCount > 0:
-            thumb00vec = self.transformator((0.681,-0.143,0.733), a)
-            thumb01vec = self.transformator((1.192,-0.21,1.375), a)
+            thumb00vec = self.transformator((0.681, -0.143, 0.733), transformKey)
+            thumb01vec = self.transformator((1.192, -0.21, 1.375), transformKey)
 
-            thumb02vec = self.transformator((1.64,-0.477,1.885), a)
-            thumb03vec = self.transformator((2.053,-0.724,2.356), a)
+            thumb02vec = self.transformator((1.64, -0.477, 1.885), transformKey)
+            thumb03vec = self.transformator((2.053, -0.724, 2.356), transformKey)
 
             pm.select(d=True)
-            thumb00 = pm.joint(p=thumb00vec, name=("jInit_thumb00_" + whichArm))
-            thumb01 = pm.joint(p=thumb01vec, name=("jInit_thumb01_" + whichArm))
-            thumb02 = pm.joint(p=thumb02vec, name=("jInit_thumb02_" + whichArm))
-            thumb03 = pm.joint(p=thumb03vec, name=("jInit_thumb03_" + whichArm))
+            thumb00 = pm.joint(p=thumb00vec, name=("jInit_thumb00_" + suffix))
+            thumb01 = pm.joint(p=thumb01vec, name=("jInit_thumb01_" + suffix))
+            thumb02 = pm.joint(p=thumb02vec, name=("jInit_thumb02_" + suffix))
+            thumb03 = pm.joint(p=thumb03vec, name=("jInit_thumb03_" + suffix))
             thumbJoints = [thumb00, thumb01, thumb02, thumb03]
             for i in thumbJoints:
                 pm.joint(i, e=True, zso=True, oj="xyz", sao="yup")
                 pm.setAttr(i + ".side", side)
                 pm.setAttr(i + ".type", 14)
             pm.setAttr(thumb01 + ".drawLabel", 1)
+            self.fingerJointsList.append(thumbJoints)
             jointList.extend(thumbJoints)
             fingerRoots.append(thumb00)
 
         if fingerCount > 1:
-            index00vec = self.transformator((1.517,0.05,0.656), a)
-            index01vec = self.transformator((2.494,0.05,0.868), a)
-            index02vec = self.transformator((3.126,0.05,1.005), a)
-            index03vec = self.transformator((3.746,0.05,1.139), a)
-            index04vec = self.transformator((4.278,0.05,1.254), a)
+            index00vec = self.transformator((1.517, 0.05, 0.656), transformKey)
+            index01vec = self.transformator((2.494, 0.05, 0.868), transformKey)
+            index02vec = self.transformator((3.126, 0.05, 1.005), transformKey)
+            index03vec = self.transformator((3.746, 0.05, 1.139), transformKey)
+            index04vec = self.transformator((4.278, 0.05, 1.254), transformKey)
 
             pm.select(d=True)
-            index00 = pm.joint(p=index00vec, name=("jInit_indexF00_" + whichArm))
-            index01 = pm.joint(p=index01vec, name=("jInit_indexF01_" + whichArm))
-            index02 = pm.joint(p=index02vec, name=("jInit_indexF02_" + whichArm))
-            index03 = pm.joint(p=index03vec, name=("jInit_indexF03_" + whichArm))
-            index04 = pm.joint(p=index04vec, name=("jInit_indexF04_" + whichArm))
+            index00 = pm.joint(p=index00vec, name=("jInit_indexF00_" + suffix))
+            index01 = pm.joint(p=index01vec, name=("jInit_indexF01_" + suffix))
+            index02 = pm.joint(p=index02vec, name=("jInit_indexF02_" + suffix))
+            index03 = pm.joint(p=index03vec, name=("jInit_indexF03_" + suffix))
+            index04 = pm.joint(p=index04vec, name=("jInit_indexF04_" + suffix))
             indexJoints = [index00, index01, index02, index03, index04]
             for i in indexJoints:
                 pm.joint(i, e=True, zso=True, oj="xyz", sao="yup")
                 pm.setAttr(i + ".side", side)
                 pm.setAttr(i + ".type", 19)
             pm.setAttr(index01 + ".drawLabel", 1)
+            self.fingerJointsList.append(indexJoints)
             jointList.extend(indexJoints)
             fingerRoots.append(index00)
 
         if fingerCount > 2:
-            middle00vec = self.transformator((1.597,0.123,0.063), a)
-            middle01vec = self.transformator((2.594,0.123,0.137), a)
-            middle02vec = self.transformator((3.312,0.123,0.19), a)
-            middle03vec = self.transformator((4.012,0.123,0.242), a)
-            middle04vec = self.transformator((4.588,0.123,0.285), a)
+            middle00vec = self.transformator((1.597, 0.123, 0.063), transformKey)
+            middle01vec = self.transformator((2.594, 0.123, 0.137), transformKey)
+            middle02vec = self.transformator((3.312, 0.123, 0.19), transformKey)
+            middle03vec = self.transformator((4.012, 0.123, 0.242), transformKey)
+            middle04vec = self.transformator((4.588, 0.123, 0.285), transformKey)
 
             pm.select(d=True)
-            middle00 = pm.joint(p=middle00vec, name=("jInit_middleF00_" + whichArm))
-            middle01 = pm.joint(p=middle01vec, name=("jInit_middleF01_" + whichArm))
-            middle02 = pm.joint(p=middle02vec, name=("jInit_middleF02_" + whichArm))
-            middle03 = pm.joint(p=middle03vec, name=("jInit_middleF03_" + whichArm))
-            middle04 = pm.joint(p=middle04vec, name=("jInit_middleF04_" + whichArm))
+            middle00 = pm.joint(p=middle00vec, name=("jInit_middleF00_" + suffix))
+            middle01 = pm.joint(p=middle01vec, name=("jInit_middleF01_" + suffix))
+            middle02 = pm.joint(p=middle02vec, name=("jInit_middleF02_" + suffix))
+            middle03 = pm.joint(p=middle03vec, name=("jInit_middleF03_" + suffix))
+            middle04 = pm.joint(p=middle04vec, name=("jInit_middleF04_" + suffix))
             middleJoints = [middle00, middle01, middle02, middle03, middle04]
             for i in middleJoints:
                 pm.joint(i, e=True, zso=True, oj="xyz", sao="yup")
                 pm.setAttr(i + ".side", side)
                 pm.setAttr(i + ".type", 20)
             pm.setAttr(middle01 + ".drawLabel", 1)
+            self.fingerJointsList.append(middleJoints)
             jointList.extend(middleJoints)
             fingerRoots.append(middle00)
 
         if fingerCount > 3:
-            ring00vec = self.transformator((1.605,0.123,-0.437), a)
-            ring01vec = self.transformator((2.603,0.123,-0.499), a)
-            ring02vec = self.transformator((3.301,0.123,-0.541), a)
-            ring03vec = self.transformator((3.926,0.123,-0.58), a)
-            ring04vec = self.transformator((4.414,0.123,-0.58), a)
+            ring00vec = self.transformator((1.605, 0.123, -0.437), transformKey)
+            ring01vec = self.transformator((2.603, 0.123, -0.499), transformKey)
+            ring02vec = self.transformator((3.301, 0.123, -0.541), transformKey)
+            ring03vec = self.transformator((3.926, 0.123, -0.58), transformKey)
+            ring04vec = self.transformator((4.414, 0.123, -0.58), transformKey)
 
             pm.select(d=True)
-            ring00 = pm.joint(p=ring00vec, name=("jInit_ringF00_" + whichArm))
-            ring01 = pm.joint(p=ring01vec, name=("jInit_ringF01_" + whichArm))
-            ring02 = pm.joint(p=ring02vec, name=("jInit_ringF02_" + whichArm))
-            ring03 = pm.joint(p=ring03vec, name=("jInit_ringF03_" + whichArm))
-            ring04 = pm.joint(p=ring04vec, name=("jInit_ringF04_" + whichArm))
+            ring00 = pm.joint(p=ring00vec, name=("jInit_ringF00_" + suffix))
+            ring01 = pm.joint(p=ring01vec, name=("jInit_ringF01_" + suffix))
+            ring02 = pm.joint(p=ring02vec, name=("jInit_ringF02_" + suffix))
+            ring03 = pm.joint(p=ring03vec, name=("jInit_ringF03_" + suffix))
+            ring04 = pm.joint(p=ring04vec, name=("jInit_ringF04_" + suffix))
             ringJoints = [ring00, ring01, ring02, ring03, ring04]
             for i in ringJoints:
                 pm.joint(i, e=True, zso=True, oj="xyz", sao="yup")
                 pm.setAttr(i + ".side", side)
                 pm.setAttr(i + ".type", 21)
             pm.setAttr(ring01 + ".drawLabel", 1)
+            self.fingerJointsList.append(ringJoints)
             jointList.extend(ringJoints)
             fingerRoots.append(ring00)
 
         if fingerCount > 4:
-            pinky00vec = self.transformator((1.405,0,-0.909), a)
-            pinky01vec = self.transformator((2.387,0,-1.097), a)
-            pinky02vec = self.transformator((2.907,0,-1.196), a)
-            pinky03vec = self.transformator((3.378,0,-1.286), a)
-            pinky04vec = self.transformator((3.767,0,-1.361), a)
+            pinky00vec = self.transformator((1.405, 0, -0.909), transformKey)
+            pinky01vec = self.transformator((2.387, 0, -1.097), transformKey)
+            pinky02vec = self.transformator((2.907, 0, -1.196), transformKey)
+            pinky03vec = self.transformator((3.378, 0, -1.286), transformKey)
+            pinky04vec = self.transformator((3.767, 0, -1.361), transformKey)
 
             pm.select(d=True)
-            pinky00 = pm.joint(p=pinky00vec, name=("jInit_pinkyF00_" + whichArm))
-            pinky01 = pm.joint(p=pinky01vec, name=("jInit_pinkyF01_" + whichArm))
-            pinky02 = pm.joint(p=pinky02vec, name=("jInit_pinkyF02_" + whichArm))
-            pinky03 = pm.joint(p=pinky03vec, name=("jInit_pinkyF03_" + whichArm))
-            pinky04 = pm.joint(p=pinky04vec, name=("jInit_pinkyF04_" + whichArm))
+            pinky00 = pm.joint(p=pinky00vec, name=("jInit_pinkyF00_" + suffix))
+            pinky01 = pm.joint(p=pinky01vec, name=("jInit_pinkyF01_" + suffix))
+            pinky02 = pm.joint(p=pinky02vec, name=("jInit_pinkyF02_" + suffix))
+            pinky03 = pm.joint(p=pinky03vec, name=("jInit_pinkyF03_" + suffix))
+            pinky04 = pm.joint(p=pinky04vec, name=("jInit_pinkyF04_" + suffix))
             pinkyJoints = [pinky00, pinky01, pinky02, pinky03, pinky04]
 
             for i in pinkyJoints:
@@ -507,6 +488,7 @@ class initialJoints():
                 pm.setAttr(i + ".side", side)
                 pm.setAttr(i + ".type", 22)
             pm.setAttr(pinky01 + ".drawLabel", 1)
+            self.fingerJointsList.append(pinkyJoints)
             jointList.extend(pinkyJoints)
             fingerRoots.append(pinky00)
 
@@ -514,159 +496,52 @@ class initialJoints():
             for x in range(0, (fingerCount - 5)):
                 ##//TODO put extra fingers
                 pass
+        return jointList, fingerRoots
 
-        loc_grp_arm = pm.group(name=("locGrp_%s" %suffix), em=True)
-        pm.setAttr(loc_grp_arm.v, 0)
-        locatorsList=[]
+    def initialNeck(self, segments, suffix):
+        rPointNeck = dt.Vector(0, 25.757, 0)
+        nPointNeck = dt.Vector(0, 29.418, 0.817)
+        offsetVector = dt.normal(nPointNeck-rPointNeck)
+        addNeck = (nPointNeck - rPointNeck) / ((segments + 1) - 1)
+        print "here"
+        jointList = []
+        for i in range(0, (segments + 1)):
+            neck = pm.joint(p=(rPointNeck + (addNeck * i)), name="jInit_neck_%s_%s" %(suffix, str(i)))
+            pm.setAttr(neck + ".side", 0)
 
-        for i in range (0,len(jointList)):
-            locator = pm.spaceLocator(name="loc_" + jointList[i].name())
-            locatorsList.append(locator)
-            if constrainedTo:
-                extra.alignTo(locator, jointList[i], 2)
-                pm.parentConstraint(locator, jointList[i], mo=True)
-                extra.connectMirror(constrainedTo[i], locatorsList[i], mirrorAxis=self.mirrorAxis.upper())
+            if i == 0:
+                pm.setAttr(neck + ".type", 18)
+                pm.setAttr(neck + ".otherType", "NeckRoot")
             else:
-                pm.parentConstraint(jointList[i], locator, mo=False)
-            pm.parent(locator, loc_grp_arm)
-            pm.parent(loc_grp_arm, handGroup)
-        if masterParent:
-            if not constrainedTo:
-                # align the none constrained near to the selected joint
-                tempGroup = pm.group(em=True)
-                pm.parent(fingerRoots, tempGroup)
-                extra.alignTo(tempGroup, masterParent)
-                pm.ungroup(tempGroup)
-            pm.parent(fingerRoots, masterParent)
-        pm.select(currentselection)
+                pm.setAttr(neck + ".type", 7)
 
-        return locatorsList
+            pm.setAttr(neck + ".drawLabel", 1)
+            jointList.append(neck)
 
-    def transformator (self, inputVector, transKey):
-        ## convert the input tuple to an actual vector:
-        inputVector = dt.Vector(inputVector)
-        order = transKey[0]
-        dirX = (transKey[1])
-        dirY = (transKey[2])
-        dirZ = (transKey[3])
-        newVector = dt.Vector(inputVector.x*dirX, inputVector.y*dirY, inputVector.z*dirZ)
-        newOrder = eval("newVector.{0},newVector.{1},newVector.{2}".format(order[0],order[1],order[2]))
-        return newOrder
+        ## //TODO::: Attach a head
+        self.neckJointsList.append(jointList)
+        return jointList, offsetVector
 
-    def autoGet (self, parentBone):
-        """
-        Gets the mirror of the given object by its name. Returns the left if it finds right and vice versa
-        Args:
-            parentBone: (pymel object) the object which name will be checked
+    def initialTail(self, segments, suffix):
+        rPointTail = dt.Vector(0, 14, 0)
+        nPointTail = dt.Vector(0, 8.075, -7.673)
+        offsetVector = dt.normal(nPointTail-rPointTail)
+        addTail = (nPointTail - rPointTail) / ((segments + 1) - 1)
+        print "here"
+        jointList = []
+        for i in range(0, (segments + 1)):
+            tail = pm.joint(p=(rPointTail + (addTail * i)), name="jInit_tail_%s_%s" %(suffix, str(i)))
+            pm.setAttr(tail + ".side", 0)
 
-        Returns: (Tuple) None/pymel object, alignment of the given Obj(string), 
-                alignment of the returned Obj(string)  Ex.: (bone_left, "left", "right") 
-
-        """
-        boneName = parentBone.name()
-        if "_right" in boneName:
-            mirrorBoneName = boneName.replace("_right", "_left")
-            alignmentGiven = "right"
-            alignmentReturn = "left"
-        elif "_left" in boneName:
-            mirrorBoneName = boneName.replace("_left", "_right")
-            alignmentGiven = "left"
-            alignmentReturn = "right"
-        else:
-            pm.warning("Bones cannot be identified automatically")
-            return None, None, None
-        try:
-            returnBone = pm.PyNode(mirrorBoneName)
-        except:
-            pm.warning("cannot find mirror bone automatically")
-            return None, alignmentGiven, None
-        return returnBone, alignmentGiven, alignmentReturn
-
-    def changeOrientation(self, faceDir, upDir):
-        dirValids = ["+x", "+y", "+z", "-x", "-y", "-z", "+X", "+Y", "+Z", "-X", "-Y", "-Z"]
-        if faceDir not in dirValids:
-            pm.error("faceDir argument is not valid. Valid arguments are: %s" %dirValids)
-        if upDir not in dirValids:
-            pm.error("upDir argument is not valid. Valid arguments are: %s" % dirValids)
-        # make sure the imputs are lowercase:
-        faceDir = faceDir.lower()
-        upDir = upDir.lower()
-
-        lookAxis = faceDir.strip("+-")
-        lookAxisMult = -1 if faceDir.strip(lookAxis) == "-" else 1
-
-        upAxis = upDir.strip("+-")
-        upAxisMult = -1 if upDir.strip(upAxis) == "-" else 1
-
-        if lookAxis == upAxis:
-            pm.warning("faceDir and upDir cannot be the same axis, cancelling")
-            return
-        self.lookAxis = lookAxis
-        self.lookAxisMult = lookAxisMult
-        self.upAxis = upAxis
-        self.upAxisMult = upAxisMult
-        self.mirrorAxis = "xyz".strip(lookAxis + upAxis)
-
-    def initLimb (self, limb, whichSide, segments=3, fingerCount=5, constrainedTo = None, parentNode=None):
-
-        sideValids = ["left", "right", "both", "auto"]
-        if whichSide not in sideValids:
-            pm.error("side argument is not valid. Valid arguments are: %s" %sideValids)
-        if len(pm.ls(sl=True, type="joint")) != 1 and whichSide == "auto":
-            pm.warning("You need to select a single joint to use Auto method")
-            return
-        ## get the necessary info from arguments
-        side = 1 if whichSide == "left" else 2
-        sideMult = 1 if whichSide == "left" else -1
-
-        currentselection = pm.ls(sl=True)
-
-        ID = 0
-        suffix = whichSide
-        ## make the suffix unique (check the corresponding group name)
-        while pm.objExists("%sGrp_%s" %(limb,suffix)):
-            ID += 1
-            suffix = "%s_%s" % (str(ID), whichSide)
-
-        if not parentNode:
-            if pm.ls(sl=True, type="joint"):
-                masterParent = pm.ls(sl=True)[-1]
+            if i == 0:
+                pm.setAttr(tail + ".type", 18)
+                pm.setAttr(tail + ".otherType", "TailRoot")
             else:
-                masterParent = None
-        else:
-            masterParent = parentNode
+                pm.setAttr(tail + ".type", 18)
+                pm.setAttr(tail + ".otherType", "Tail")
 
-        if whichSide == "both":
-            constLocs = self.initLimb(limb, "left")
-            self.initLimb(limb, "right", constrainedTo=constLocs)
-            return
-        if whichSide == "auto":
-            mirrorParent, givenAlignment, returnAlignment = self.autoGet(masterParent)
-            constLocs = self.initLimb(limb, givenAlignment)
-            if mirrorParent:
-                self.initLimb(limb, returnAlignment, constrainedTo=constLocs, parentNode=mirrorParent)
-            return
+            pm.setAttr(tail + ".drawLabel", 1)
+            jointList.append(tail)
 
-        limbGroup = pm.group(em=True, name="%sGrp_%s" %(limb,suffix))
-        pm.select(d=True)
-
-        if self.lookAxis == "z" and self.upAxis == "y":
-            ## Facing Z Up Y
-            a = [("x","y","z"), 1*sideMult*self.lookAxisMult, 1*self.upAxisMult, 1*self.lookAxisMult]
-        elif self.lookAxis == "z" and self.upAxis == "x":
-            ## Facing Z Up X
-            a = [("y", "x", "z"), -1*sideMult*self.lookAxisMult, 1*self.upAxisMult, 1*self.lookAxisMult]
-        elif self.lookAxis == "y" and self.upAxis == "z":
-            ## Facing Y Up Z
-            a = [("x", "z", "y"), -1*sideMult*self.lookAxisMult, 1*self.upAxisMult, 1*self.lookAxisMult]
-        elif self.lookAxis == "y" and self.upAxis == "x":
-            ## Facing Y Up X
-            a = [("y", "z", "x"), 1*sideMult*self.lookAxisMult, 1*self.upAxisMult, 1*self.lookAxisMult]
-        elif self.lookAxis == "x" and self.upAxis == "z":
-            ## Facing X Up Z
-            a = [("z", "x", "y"), 1*sideMult*self.lookAxisMult, 1*self.upAxisMult, 1*self.lookAxisMult]
-        elif self.lookAxis == "x" and self.upAxis == "y":
-            ## Facing X Up Y
-            a = [("z", "y", "x"), -1*sideMult*self.lookAxisMult, 1*self.upAxisMult, 1*self.lookAxisMult]
-
-        ### FROM HERE IT WILL BE LIMB SPECIFIC ###
+        self.tailJointsList.append(jointList)
+        return jointList, offsetVector
