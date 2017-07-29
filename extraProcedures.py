@@ -126,6 +126,8 @@ def connectMirror (node1, node2, mirrorAxis="X"):
     Returns: None
 
     """
+    ## make sure the axis is uppercase:
+    mirrorAxis = mirrorAxis.upper()
     #nodes Translate
     rvsNodeT=pm.createNode("reverse")
     minusOpT=pm.createNode("plusMinusAverage")
@@ -617,5 +619,7 @@ def identifyMaster(node, idBy="idByLabel"):
             pm.error("Joint Side is not detected with idByName method")
 
     return limbName, limbType, side
+
+
 
 
