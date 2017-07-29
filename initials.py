@@ -545,3 +545,8 @@ class initialJoints():
 
         self.tailJointsList.append(jointList)
         return jointList, offsetVector
+
+    def initialFinger(self,segments, suffix, thumb=False):
+        if segments < 2:
+            pm.error("minimum segments for the fingers are two. current: %s" %segments)
+        ## TODO // finish here
