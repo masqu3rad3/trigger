@@ -32,7 +32,7 @@ class neckAndHead():
         while pm.objExists("scaleGrp_" + suffix):
             suffix = "%s%s" % (suffix, str(idCounter + 1))
 
-        if (len(inits) < 5):
+        if (len(inits) < 3):
             pm.error("Some or all Neck and Head Bones are missing (or Renamed)")
             return
 
@@ -40,8 +40,8 @@ class neckAndHead():
         neckNodes = inits["Neck"]
         headStart = inits["Head"]
         headEnd = inits["HeadEnd"]
-        jawStart = inits["Jaw"]
-        jawEnd = inits["JawEnd"]
+        # jawStart = inits["Jaw"]
+        # jawEnd = inits["JawEnd"]
 
         # find the Socket
         neckParent = neckNodes[0].getParent()
@@ -64,14 +64,17 @@ class neckAndHead():
 
         # # neck Controller
         neckScale = (neckDist / 2, neckDist / 2, neckDist / 2)
-        self.cont_neck = icon.curvedCircle(name="cont_neck_"+suffix, scale=neckScale, location=(neckNodes[0].getTranslation(space="world")))
+        # self.cont_neck = icon.curvedCircle(name="cont_neck_"+suffix, scale=neckScale, location=(neckNodes[0].getTranslation(space="world")))
+        self.cont_neck = icon.curvedCircle(name="cont_neck_" + suffix, scale=neckScale)
+        extra.alignTo(self.cont_neck, neckNodes[0], mode=0)
         cont_neck_ORE = extra.createUpGrp(self.cont_neck, "ORE")
 
         # # head Controller
         headCenterPos = (headStart.getTranslation(space="world") + headEnd.getTranslation(space="world")) / 2
         headPivPos = headStart.getTranslation(space="world")
         headScale = (extra.getDistance(headStart, headEnd) / 3)
-        self.cont_head = icon.halfDome(name="cont_head_"+suffix, scale=(headScale, headScale, headScale), location=headCenterPos)
+        self.cont_head = icon.halfDome(name="cont_head_"+suffix, scale=(headScale, headScale, headScale))
+        pm.move(self.cont_head, headCenterPos)
         cont_head_OFF = extra.createUpGrp(self.cont_head, "OFF")
         cont_head_ORE = extra.createUpGrp(self.cont_head, "ORE")
         pm.rotate(self.cont_head, (-90, 0, 0))
@@ -89,7 +92,7 @@ class neckAndHead():
 
         # create spline IK for neck
         self.neckRootLoc = pm.spaceLocator(name="neckRootLoc_"+suffix)
-        extra.alignTo(self.neckRootLoc, neckNodes[0])
+        extra.alignToAlter(self.neckRootLoc, neckNodes[0])
 
         neckSpline = twistSpline.twistSpline()
 
@@ -164,6 +167,7 @@ class neckAndHead():
 
 
         # GOOD PARENTING
+        pm.parent(neckSpline.contCurves_ORE, self.scaleGrp)
         pm.parent(neckSpline.contCurves_ORE[0], self.neckRootLoc)
         pm.parent(self.neckRootLoc, self.scaleGrp)
         pm.parent(neckSpline.contCurves_ORE[len(headSpline.contCurves_ORE) - 1], self.scaleGrp)

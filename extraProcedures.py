@@ -39,6 +39,27 @@ def getDistance( node1, node2):
 #         parentCon=pm.parentConstraint (node2, node1, mo=False)
 #         pm.delete(parentCon)
 
+# def matchMatrix(sourceObj, targetObj, mode="translation"):
+#     if mode == "both":
+#         targetMatrix = pm.xform(targetObj, query=True, worldSpace=True, matrix=True)
+#         pm.xform(sourceObj, worldSpace=True, matrix=targetMatrix)
+#     if mode == "translation":
+#         targetTranslation = pm.xform(targetObj, query=True, worldSpace=True, translation=True)
+#         pm.xform(sourceObj, worldSpace=True, translation =targetTranslation)
+#     if mode == "rotation":
+#         targetRotation = pm.xform(targetObj, query=True, worldSpace=True, rotation=True)
+#         pm.xform(sourceObj, worldSpace=True, rotation =targetRotation)
+
+def alignToAlter(sourceObj, targetObj, mode=0, o=(0,0,0)):
+    if mode == 0:
+        targetTranslation = pm.xform(targetObj, query=True, worldSpace=True, translation=True)
+        pm.xform(sourceObj, worldSpace=True, translation =targetTranslation)
+    if mode == 1:
+        targetRotation = pm.xform(targetObj, query=True, worldSpace=True, rotation=True)
+        pm.xform(sourceObj, worldSpace=True, rotation =targetRotation)
+    if mode == 2:
+        targetMatrix = pm.xform(targetObj, query=True, worldSpace=True, matrix=True)
+        pm.xform(sourceObj, worldSpace=True, matrix=targetMatrix)
 
 def alignTo(node1, node2, mode=0, o=(0,0,0)):
     """

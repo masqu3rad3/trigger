@@ -214,6 +214,7 @@ def getNeckAndHeadBones(rootNode):
         nextJ = jFoolProof(currentJ, min=1, max=1)[0]
 
         type = extra.identifyMaster(nextJ)[1]
+
         if type == "neck":
             neckNodes.append(nextJ)
             currentJ = nextJ
@@ -223,19 +224,21 @@ def getNeckAndHeadBones(rootNode):
     head = nextJ
     rest = (jFoolProof(head, min=1, max=100))
     for j in rest:
+
         jID = extra.identifyMaster(j)
         if jID[0] == "Jaw":
             jaw =j
             jawEnd = jFoolProof(j)[0]
-        if jID[0] == "Head":
+        if jID[0] == "HeadEnd":
             headEnd = j
     neckAndHeadInits = {
         "Neck": neckNodes,
         "Head": head,
         "HeadEnd": headEnd,
-        "Jaw": jaw,
-        "JawEnd": jawEnd
+        # "Jaw": jaw,
+        # "JawEnd": jawEnd
     }
+
     return neckAndHeadInits
 
 # def getSpineBones(rootNode):

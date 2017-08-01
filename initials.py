@@ -507,21 +507,32 @@ class initialJoints():
     def initialNeck(self, transformKey, segments, suffix):
         rPointNeck = dt.Vector(self.transformator((0, 25.757, 0), transformKey))
         nPointNeck = dt.Vector(self.transformator((0, 29.418, 0.817), transformKey))
+        pointHead = dt.Vector(self.transformator((0, 32,0.817), transformKey))
         offsetVector = dt.normal(nPointNeck-rPointNeck)
         addNeck = (nPointNeck - rPointNeck) / ((segments + 1) - 1)
         jointList = []
         for i in range(0, (segments + 1)):
-            neck = pm.joint(p=(rPointNeck + (addNeck * i)), name="jInit_neck_%s_%s" %(suffix, str(i)))
-            pm.setAttr(neck + ".side", 0)
+            if not i == (segments):
+                neck = pm.joint(p=(rPointNeck + (addNeck * i)), name="jInit_neck_%s_%s" %(suffix, str(i)))
+                pm.setAttr(neck + ".side", 0)
 
-            if i == 0:
-                pm.setAttr(neck + ".type", 18)
-                pm.setAttr(neck + ".otherType", "NeckRoot")
+                if i == 0:
+                    pm.setAttr(neck + ".type", 18)
+                    pm.setAttr(neck + ".otherType", "NeckRoot")
+                else:
+                    pm.setAttr(neck + ".type", 7)
+
             else:
-                pm.setAttr(neck + ".type", 7)
-
+                neck= pm.joint(p=(rPointNeck + (addNeck * i)), name="jInit_head_%s_%s" %(suffix, str(i)))
+                pm.setAttr(neck + ".type", 8)
             pm.setAttr(neck + ".drawLabel", 1)
             jointList.append(neck)
+        headEnd = pm.joint(p=pointHead, name="jInit_headEnd_%s_%s" %(suffix, str(i)))
+        pm.setAttr(headEnd + ".side", 0)
+        pm.setAttr(headEnd + ".type", 18)
+        pm.setAttr(headEnd + ".otherType", "HeadEnd")
+        pm.setAttr(headEnd + ".drawLabel", 1)
+        jointList.append(headEnd)
 
         ## //TODO::: Attach a head
         self.neckJointsList.append(jointList)
@@ -584,7 +595,7 @@ class initialJoints():
         return jointList, offsetVector
 
     def initHumanoid(self):
-        self.initLimb("spine", "auto")
+        self.initLimb("spine", "auto", segments=3)
         root = self.spineJointsList[-1][0]
         chest = self.spineJointsList[-1][-1]
         pm.select(root)
@@ -592,7 +603,7 @@ class initialJoints():
 
         pm.select(chest)
         self.initLimb("arm", "auto")
-        self.initLimb("neck", "auto")
+        self.initLimb("neck", "auto", segments=2)
         rHand =  self.armJointsList[-1][-1]
 
         pm.select(rHand)

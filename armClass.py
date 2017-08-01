@@ -591,7 +591,7 @@ class arm():
         handFingers.rigFingers(handRoot, cont_FK_IK, suffix, mirror)
 
         pm.pointConstraint(endLock, handFingers.rootMaster, mo=True)
-        pm.parentConstraint(cont_FK_LowArm_OFF, cont_FK_Hand_POS, mo=True)
+        pm.parentConstraint(cont_FK_LowArm, cont_FK_Hand_POS, mo=True)
         handOriCon = pm.orientConstraint(self.cont_IK_hand, handLock, handFingers.rootMaster, mo=False)
         cont_FK_IK.fk_ik >> (handOriCon + "." + self.cont_IK_hand + "W0")
         fk_ik_rvs.outputX >> (handOriCon + "." + handLock + "W1")
