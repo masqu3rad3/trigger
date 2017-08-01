@@ -13,7 +13,19 @@ def getDistance( node1, node2):
     Ax, Ay, Az = node1.getTranslation(space="world")
     Bx, By, Bz = node2.getTranslation(space="world")
     return ((Ax-Bx)**2 + (Ay-By)**2 + (Az-Bz)**2)**0.5
-    
+
+
+def alignTo(sourceObj, targetObj, mode=0, o=(0,0,0)):
+    if mode == 0:
+        targetTranslation = pm.xform(targetObj, query=True, worldSpace=True, translation=True)
+        pm.xform(sourceObj, worldSpace=True, translation =targetTranslation)
+    if mode == 1:
+        targetRotation = pm.xform(targetObj, query=True, worldSpace=True, rotation=True)
+        pm.xform(sourceObj, worldSpace=True, rotation =targetRotation)
+    if mode == 2:
+        targetMatrix = pm.xform(targetObj, query=True, worldSpace=True, matrix=True)
+        pm.xform(sourceObj, worldSpace=True, matrix=targetMatrix)
+
 # def alignTo(node1, node2, mode=0, o=(0,0,0)):
 #     """
 #     Aligns the first node to the second.
@@ -26,83 +38,36 @@ def getDistance( node1, node2):
 #     Returns:None
 #
 #     """
+#     if type(node1) == str:
+#         node1 = pm.PyNode(node1)
+#
+#     if type(node2) == str:
+#         node2 = pm.PyNode(node2)
+#
 #     if mode==0:
 #         ##Position Only
-#         pointCon=pm.pointConstraint (node2, node1, mo=False, o=o)
-#         pm.delete(pointCon)
+#         targetLoc = node2.getRotatePivot(space="world")
+#         pm.move(node1, targetLoc, a=True, ws=True)
+#
 #     elif mode==1:
 #         ##Rotation Only
-#         orientCon=pm.orientConstraint (node2, node1, mo=False, o=o)
-#         pm.delete(orientCon)
+#         if node2.type() == "joint":
+#             tempOri = pm.orientConstraint(node2, node1, o=o, mo=False)
+#             pm.delete(tempOri)
+#         else:
+#             targetRot = node2.getRotation()
+#             pm.rotate(node1, targetRot, a=True, ws=True)
+#
 #     elif mode==2:
 #         ##Position and Rotation
-#         parentCon=pm.parentConstraint (node2, node1, mo=False)
-#         pm.delete(parentCon)
-
-# def matchMatrix(sourceObj, targetObj, mode="translation"):
-#     if mode == "both":
-#         targetMatrix = pm.xform(targetObj, query=True, worldSpace=True, matrix=True)
-#         pm.xform(sourceObj, worldSpace=True, matrix=targetMatrix)
-#     if mode == "translation":
-#         targetTranslation = pm.xform(targetObj, query=True, worldSpace=True, translation=True)
-#         pm.xform(sourceObj, worldSpace=True, translation =targetTranslation)
-#     if mode == "rotation":
-#         targetRotation = pm.xform(targetObj, query=True, worldSpace=True, rotation=True)
-#         pm.xform(sourceObj, worldSpace=True, rotation =targetRotation)
-
-def alignToAlter(sourceObj, targetObj, mode=0, o=(0,0,0)):
-    if mode == 0:
-        targetTranslation = pm.xform(targetObj, query=True, worldSpace=True, translation=True)
-        pm.xform(sourceObj, worldSpace=True, translation =targetTranslation)
-    if mode == 1:
-        targetRotation = pm.xform(targetObj, query=True, worldSpace=True, rotation=True)
-        pm.xform(sourceObj, worldSpace=True, rotation =targetRotation)
-    if mode == 2:
-        targetMatrix = pm.xform(targetObj, query=True, worldSpace=True, matrix=True)
-        pm.xform(sourceObj, worldSpace=True, matrix=targetMatrix)
-
-def alignTo(node1, node2, mode=0, o=(0,0,0)):
-    """
-    Aligns the first node to the second.
-    Args:
-        node1: Node to be aligned.
-        node2: Target Node.
-        mode: Specifies the alignment Mode. Valid Values: 0=position only, 1=Rotation Only, 2=Position and Rotation
-        o: Offset Value. Default: (0,0,0)
-
-    Returns:None
-
-    """
-    if type(node1) == str:
-        node1 = pm.PyNode(node1)
-
-    if type(node2) == str:
-        node2 = pm.PyNode(node2)
-
-    if mode==0:
-        ##Position Only
-        targetLoc = node2.getRotatePivot(space="world")
-        pm.move(node1, targetLoc, a=True, ws=True)
-
-    elif mode==1:
-        ##Rotation Only
-        if node2.type() == "joint":
-            tempOri = pm.orientConstraint(node2, node1, o=o, mo=False)
-            pm.delete(tempOri)
-        else:
-            targetRot = node2.getRotation()
-            pm.rotate(node1, targetRot, a=True, ws=True)
-
-    elif mode==2:
-        ##Position and Rotation
-        targetLoc = node2.getRotatePivot(space="world")
-        pm.move(node1, targetLoc, a=True, ws=True)
-        if node2.type() == "joint":
-            tempOri = pm.orientConstraint(node2, node1, o=o, mo=False)
-            pm.delete(tempOri)
-        else:
-            targetRot = node2.getRotation()
-            pm.rotate(node1, targetRot, a=True, ws=True)
+#         targetLoc = node2.getRotatePivot(space="world")
+#         pm.move(node1, targetLoc, a=True, ws=True)
+#         if node2.type() == "joint":
+#             tempOri = pm.orientConstraint(node2, node1, o=o, mo=False)
+#             pm.delete(tempOri)
+#         else:
+#             targetRot = node2.getRotation()
+#             pm.rotate(node1, targetRot, a=True, ws=True)
 
 
 def createUpGrp(obj, suffix, mi=True):

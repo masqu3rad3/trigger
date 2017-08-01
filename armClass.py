@@ -585,6 +585,7 @@ class arm():
             mirror = True
         else:
             mirror = False
+            
         handRoot = handRef
         # fingersReturn = cf.rigFingers(handRoot, cont_FK_IK, suffix, mirror)
         handFingers = mFingers.multiFingers()
