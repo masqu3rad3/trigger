@@ -24,6 +24,11 @@ class spine(object):
     anchorLocations = []
 
     def createSpine(self, inits, suffix=""):
+        ## parse the dictionary inits into a list
+        sRoot=inits.get("Root")
+        spines=reversed(inits.get("Spine"))
+        inits = [sRoot] + sorted(spines)
+
         idCounter = 0
         ## create an unique suffix
         while pm.objExists("scaleGrp_" + suffix):

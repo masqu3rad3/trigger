@@ -549,12 +549,10 @@ def identifyMaster(node, idBy="idByLabel"):
 
     limbDictionary = {
         "arm": ["Collar", "Shoulder", "Elbow", "Hand"],
-        "leg": ["LegRoot", "Hip", "Knee", "Foot"],
+        "leg": ["LegRoot", "Hip", "Knee", "Foot", "Ball", "HeelPV", "ToePV", "BankIN", "BankOUT"],
         "hand": ["Finger", "Thumb", "Index_F", "Middle_F", "Ring_F", "Pinky_F", "Extra_F"],
-        "foot": ["Ball", "HeelPV", "ToePV", "BankIN", "BankOUT"],
         "spine": ["Spine", "Root"],
-        "neck": ["NeckRoot", "Neck"],
-        "head": ["Head", "Jaw"],
+        "neck": ["NeckRoot", "Neck", "Head", "Jaw", "HeadEnd"],
         "tail": ["TailRoot", "Tail"]
     }
 

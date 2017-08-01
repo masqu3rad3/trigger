@@ -147,7 +147,6 @@ class arm():
 
         cont_IK_hand_OFF = extra.createUpGrp(self.cont_IK_hand, "OFF")
         cont_IK_hand_ORE = extra.createUpGrp(self.cont_IK_hand, "ORE")
-
         ###Add ATTRIBUTES to the IK Hand Controller
         pm.addAttr(shortName="polevector", longName="Pole_Vector", defaultValue=0.0, minValue=0.0, maxValue=1.0,
                    at="double", k=True)
