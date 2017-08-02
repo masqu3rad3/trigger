@@ -44,9 +44,9 @@ class neckAndHead():
         # jawEnd = inits["JawEnd"]
 
         # find the Socket
-        neckParent = neckNodes[0].getParent()
-        if not neckParent == None:
-            self.connectsTo = extra.identifyMaster(neckParent)[0]
+        self.connectsTo = neckNodes[0].getParent()
+        # if not neckParent == None:
+        #     self.connectsTo = extra.identifyMaster(neckParent)[0]
 
         # define groups
         self.scaleGrp = pm.group(name="scaleGrp_"+suffix, em=True)

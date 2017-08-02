@@ -52,9 +52,9 @@ class arm():
         handRef = armInits["Hand"]
 
         # find the Socket
-        collarParent = collarRef.getParent()
-        if not collarParent == None:
-            self.connectsTo = extra.identifyMaster(collarParent)[0]
+        self.connectsTo = collarRef.getParent()
+        # if not collarParent == None:
+        #     self.connectsTo = extra.identifyMaster(collarParent)[0]
 
         ##Groups
         self.scaleGrp = pm.group(name="scaleGrp_" + suffix, em=True)

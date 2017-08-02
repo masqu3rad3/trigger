@@ -39,9 +39,9 @@ class simpleTail(object):
         self.scaleConstraints.append(self.scaleGrp)
 
         # find the Socket
-        tailParent = inits[0].getParent()
-        if tailParent != None and tailParent.type() == "joint":
-            self.connectsTo = extra.identifyMaster(tailParent)[0]
+        self.connectsTo = inits[0].getParent()
+        # if tailParent != None and tailParent.type() == "joint":
+        #     self.connectsTo = extra.identifyMaster(tailParent)[0]
 
         ## Create LimbPlug
 

@@ -13,6 +13,7 @@ import twistSplineClass as twistSpline
 reload(twistSpline)
 
 class spine(object):
+    socketDict = {}
     scaleGrp = None
     cont_body = None
     cont_hips = None
@@ -20,14 +21,18 @@ class spine(object):
     rootSocket = None
     nonScaleGrp = None
     chestSocket = None
+    connectsTo = None
     anchors = []
     anchorLocations = []
 
     def createSpine(self, inits, suffix=""):
+        print "inits", inits
+
         ## parse the dictionary inits into a list
         sRoot=inits.get("Root")
         spines=reversed(inits.get("Spine"))
-        inits = [sRoot] + sorted(spines)
+        spineEnd = inits.get("SpineEnd")
+        inits = [sRoot] + sorted(spines) + [spineEnd]
 
         idCounter = 0
         ## create an unique suffix
@@ -41,15 +46,16 @@ class spine(object):
 
         iconSize = extra.getDistance(inits[0], inits[len(inits)-1])
         rootPoint = inits[0].getTranslation(space="world")
-        chestPoint = inits[len(inits)-1].getTranslation(space="world")
+        chestPoint = inits[-1].getTranslation(space="world")
 
         # # Create Plug Joints
         pm.select(None)
         self.chestSocket = pm.joint(name="jDef_ChestSocket", p=chestPoint)
-
+        self.socketDict[spineEnd]=self.chestSocket
         # parent upper plug joints
         pm.select(None)
         self.rootSocket = pm.joint(p=rootPoint, name="jDef_RootSocket", radius=3)
+        self.socketDict[sRoot]=self.rootSocket
         contHipsScale = (iconSize / 1.5, iconSize / 1.5, iconSize / 1.5)
         self.cont_hips = icon.waist("cont_Hips", contHipsScale, location=rootPoint)
         contBodyScale = (iconSize * 0.75, iconSize * 0.75, iconSize * 0.75)

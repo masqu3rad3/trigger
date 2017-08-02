@@ -551,7 +551,7 @@ def identifyMaster(node, idBy="idByLabel"):
         "arm": ["Collar", "Shoulder", "Elbow", "Hand"],
         "leg": ["LegRoot", "Hip", "Knee", "Foot", "Ball", "HeelPV", "ToePV", "BankIN", "BankOUT"],
         "hand": ["Finger", "Thumb", "Index_F", "Middle_F", "Ring_F", "Pinky_F", "Extra_F"],
-        "spine": ["Spine", "Root"],
+        "spine": ["Spine", "Root", "SpineEnd"],
         "neck": ["NeckRoot", "Neck", "Head", "Jaw", "HeadEnd"],
         "tail": ["TailRoot", "Tail"]
     }

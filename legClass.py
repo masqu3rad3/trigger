@@ -50,9 +50,9 @@ class leg():
         bankOutRef = legInits["BankOUT"]
 
         # find the Socket
-        legParent = legRootRef.getParent()
-        if not legParent == None:
-            self.connectsTo = extra.identifyMaster(legParent)[0]
+        self.connectsTo = legRootRef.getParent()
+        # if not legParent == None:
+        #     self.connectsTo = extra.identifyMaster(legParent)[0]
 
         legRootPos = legRootRef.getTranslation(space="world")
         hipPos = hipRef.getTranslation(space="world")

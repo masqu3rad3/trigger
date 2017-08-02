@@ -254,8 +254,18 @@ class initialJoints():
         for i in range(0, (segments + 1)):
             spine = pm.joint(p=(rPoint + (add * i)), name="jInit_spine_%s_%s" %(suffix, str(i)))
             pm.setAttr(spine + ".side", 0)
-            type = 1 if i == 0 else 6
-            pm.setAttr(spine + ".type", type)
+            if i == 0:
+                type = 1
+                pm.setAttr(spine + ".type", type)
+            elif i == (segments):
+                type = 18
+                pm.setAttr(spine + ".type", type)
+                pm.setAttr(spine + ".otherType", "SpineEnd")
+
+            else:
+                type = 6
+                pm.setAttr(spine + ".type", type)
+
             jointList.append(spine)
             for i in jointList:
                 pm.setAttr(i + ".drawLabel", 1)
@@ -534,7 +544,6 @@ class initialJoints():
         pm.setAttr(headEnd + ".drawLabel", 1)
         jointList.append(headEnd)
 
-        ## //TODO::: Attach a head
         self.neckJointsList.append(jointList)
         return jointList, offsetVector
 
