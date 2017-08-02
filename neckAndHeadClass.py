@@ -92,7 +92,7 @@ class neckAndHead():
 
         # create spline IK for neck
         self.neckRootLoc = pm.spaceLocator(name="neckRootLoc_"+suffix)
-        extra.alignToAlter(self.neckRootLoc, neckNodes[0])
+        extra.alignTo(self.neckRootLoc, neckNodes[0])
 
         neckSpline = twistSpline.twistSpline()
 

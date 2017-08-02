@@ -48,7 +48,7 @@ class limbBuilder():
             if rType == limbType and rSide == limbSide:
                 # while rName in limbDict.keys():
                 #     rName+="+"
-                if rName == "Spine" or rName == "Neck": ## spine and neck joints are multiple, so put them in a list
+                if rName == "Spine" or rName == "Neck" or rName == "Tail": ## spine and neck joints are multiple, so put them in a list
                     multiList.append(i)
                     limbDict[rName]=multiList
                 else:

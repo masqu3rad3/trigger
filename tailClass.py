@@ -48,9 +48,12 @@ class tail(object):
         pm.select(None)
         self.rootSocket = pm.joint(p=rootPoint, name="jDef_RootSocket", radius=10)
         contHipsScale = (iconSize / 1.5, iconSize / 1.5, iconSize / 1.5)
-        self.cont_hips = icon.waist("cont_Hips", contHipsScale, location=rootPoint)
+        self.cont_hips = icon.waist("cont_Hips", contHipsScale)
+        extra.alignTo(self.cont_hips, inits[0],2)
         contBodyScale = (iconSize * 0.75, iconSize * 0.75, iconSize * 0.75)
-        self.cont_body = icon.square("cont_Body", contBodyScale, location=rootPoint)
+        self.cont_body = icon.square("cont_Body", contBodyScale)
+        extra.alignTo(self.cont_body, inits[-1], 2)
+
 
         # self.cont_chest = icon.cube("cont_Chest", (iconSize*0.5, iconSize*0.35, iconSize*0.2))
         # # move the pivot to its base

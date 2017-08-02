@@ -100,8 +100,8 @@ class twistSpline(object):
             #pm.joint(j, e=True, zso=True, oj="xyz", sao="yup")
 
         # get rid of the extra bone
-        deadBone = pm.listRelatives(IKjoints[len(IKjoints) - 1], c=True)
-        pm.delete(deadBone)
+        # deadBone = pm.listRelatives(IKjoints[len(IKjoints) - 1], c=True)
+        # pm.delete(deadBone)
 
         self.defJoints = pm.duplicate(IKjoints, name="jDef_%s0" % name)
 
@@ -179,14 +179,14 @@ class twistSpline(object):
                 cont_Curve = pm.spaceLocator(name="lockPoint_" + name + str(i))
             # cont_Curve_OFF = extra.createUpGrp(cont_Curve, "OFF")
             cont_Curve_ORE = extra.createUpGrp(cont_Curve, "ORE")
-            extra.alignTo(cont_Curve_ORE, contJoints[i], 2, o=(0, 0, 0))
+            extra.alignTo(cont_Curve_ORE, contJoints[i], 2)
             pm.parentConstraint(cont_Curve, contJoints[i], mo=True)
             #extra.alignTo(cont_Curve_ORE, refJoints[i], 2)
             contCurves.append(cont_Curve)
             self.contCurves_ORE.append(cont_Curve_ORE)
 
         self.contCurve_Start = contCurves[0]
-        self.contCurve_End = contCurves[len(contCurves) - 1]
+        self.contCurve_End = contCurves[-1]
         # STRETCH and SQUASH
         #
         # Create Stretch and Squash Nodes
@@ -283,7 +283,8 @@ class twistSpline(object):
             #     extra.alignBetween(self.contCurves_ORE[o], refJoints[o], refJoints[o-1], pos=False, rot=False, ore=True, o=(0,0,0))
             # else:
             #     extra.alignTo(self.contCurves_ORE[o], refJoints[o], 2)
-            extra.alignTo(self.contCurves_ORE[o], refJoints[o], 0)
+            extra.alignTo(self.contCurves_ORE[o], refJoints[o], 2)
+            pass
 
         # GOOD PARENTING
 

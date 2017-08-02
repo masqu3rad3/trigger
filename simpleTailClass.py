@@ -23,6 +23,12 @@ class simpleTail(object):
     anchorLocations = []
 
     def createSimpleTail(self, inits, suffix=""):
+        print inits
+        tailRoot = inits.get("TailRoot")
+        tails = (inits.get("Tail"))
+
+        inits = [tailRoot] + sorted(tails)
+
 
         idCounter = 0
         ## create an unique suffix
@@ -73,11 +79,17 @@ class simpleTail(object):
                 scaleDis = extra.getDistance(deformerJoints[j], deformerJoints[j+1])/2
                 cont = icon.cube(name="cont_%s_%s" %(suffix, str(j)), scale=(scaleDis,scaleDis,scaleDis))
                 contList.append(cont)
-                # extra.alignTo(cont, bone, 2)
+                # extra.alignToAlter(cont, bone, 2)
+
                 pm.xform(cont, piv=(0,-scaleDis,0))
+
+                extra.alignToAlter(cont, deformerJoints[j], 2)
+
+                # pm.makeIdentity(cont)
+
                 cont_ORE = extra.createUpGrp(cont, "ORE")
                 cont_OREList.append(cont_ORE)
-                extra.alignTo(cont_ORE, deformerJoints[j], 2)
+                # extra.alignToAlter(cont_ORE, deformerJoints[j], 2)
                 pm.parentConstraint(cont, deformerJoints[j], mo=True)
 
                 # create additive scalability

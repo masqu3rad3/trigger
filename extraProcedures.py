@@ -17,6 +17,7 @@ def getDistance( node1, node2):
 
 def alignTo(sourceObj, targetObj, mode=0, o=(0,0,0)):
     if mode == 0:
+
         targetTranslation = pm.xform(targetObj, query=True, worldSpace=True, translation=True)
         pm.xform(sourceObj, worldSpace=True, translation =targetTranslation)
     if mode == 1:
@@ -26,7 +27,57 @@ def alignTo(sourceObj, targetObj, mode=0, o=(0,0,0)):
         targetMatrix = pm.xform(targetObj, query=True, worldSpace=True, matrix=True)
         pm.xform(sourceObj, worldSpace=True, matrix=targetMatrix)
 
-# def alignTo(node1, node2, mode=0, o=(0,0,0)):
+
+def alignToAlter(node1, node2, mode=0, o=(0,0,0)):
+    """
+    Aligns the first node to the second.
+    Args:
+        node1: Node to be aligned.
+        node2: Target Node.
+        mode: Specifies the alignment Mode. Valid Values: 0=position only, 1=Rotation Only, 2=Position and Rotation
+        o: Offset Value. Default: (0,0,0)
+
+    Returns:None
+
+    """
+    if type(node1) == str:
+        node1 = pm.PyNode(node1)
+
+    if type(node2) == str:
+        node2 = pm.PyNode(node2)
+
+    if mode==0:
+        ##Position Only
+        tempPocon = pm.pointConstraint(node2, node1, mo=False)
+        pm.delete(tempPocon)
+        # targetLoc = node2.getRotatePivot(space="world")
+        # pm.move(node1, targetLoc, a=True, ws=True)
+
+    elif mode==1:
+        ##Rotation Only
+        if node2.type() == "joint":
+            tempOri = pm.orientConstraint(node2, node1, o=o, mo=False)
+            pm.delete(tempOri)
+        else:
+            targetRot = node2.getRotation()
+            pm.rotate(node1, targetRot, a=True, ws=True)
+
+    elif mode==2:
+        ##Position and Rotation
+        tempPacon = pm.parentConstraint(node2, node1, mo=False)
+        pm.delete(tempPacon)
+
+        # targetLoc = node2.getRotatePivot(space="world")
+        # pm.move(node1, targetLoc, a=True, ws=True)
+        # if node2.type() == "joint":
+        #     tempOri = pm.orientConstraint(node2, node1, o=o, mo=False)
+        #     pm.delete(tempOri)
+        # else:
+        #     targetRot = node2.getRotation()
+        #     pm.rotate(node1, targetRot, a=True, ws=True)
+
+#
+# def alignToOld(node1, node2, mode=0, o=(0,0,0)):
 #     """
 #     Aligns the first node to the second.
 #     Args:
@@ -68,7 +119,7 @@ def alignTo(sourceObj, targetObj, mode=0, o=(0,0,0)):
 #         else:
 #             targetRot = node2.getRotation()
 #             pm.rotate(node1, targetRot, a=True, ws=True)
-
+#
 
 def createUpGrp(obj, suffix, mi=True):
     """

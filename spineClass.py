@@ -26,13 +26,12 @@ class spine(object):
     anchorLocations = []
 
     def createSpine(self, inits, suffix=""):
-        print "inits", inits
-
-        ## parse the dictionary inits into a list
-        sRoot=inits.get("Root")
-        spines=reversed(inits.get("Spine"))
-        spineEnd = inits.get("SpineEnd")
-        inits = [sRoot] + sorted(spines) + [spineEnd]
+        if not isinstance(inits, list):
+            ## parse the dictionary inits into a list
+            sRoot=inits.get("Root")
+            spines=reversed(inits.get("Spine"))
+            spineEnd = inits.get("SpineEnd")
+            inits = [sRoot] + sorted(spines) + [spineEnd]
 
         idCounter = 0
         ## create an unique suffix
@@ -51,17 +50,26 @@ class spine(object):
         # # Create Plug Joints
         pm.select(None)
         self.chestSocket = pm.joint(name="jDef_ChestSocket", p=chestPoint)
-        self.socketDict[spineEnd]=self.chestSocket
+        self.socketDict[inits[-1]]=self.chestSocket
         # parent upper plug joints
         pm.select(None)
         self.rootSocket = pm.joint(p=rootPoint, name="jDef_RootSocket", radius=3)
-        self.socketDict[sRoot]=self.rootSocket
+        self.socketDict[inits[0]]=self.rootSocket
         contHipsScale = (iconSize / 1.5, iconSize / 1.5, iconSize / 1.5)
-        self.cont_hips = icon.waist("cont_Hips", contHipsScale, location=rootPoint)
+        # self.cont_hips = icon.waist("cont_Hips", contHipsScale, location=rootPoint)
+        self.cont_hips = icon.waist("cont_Hips", contHipsScale)
+        extra.alignTo(self.cont_hips, inits[0],2)
+
         contBodyScale = (iconSize * 0.75, iconSize * 0.75, iconSize * 0.75)
-        self.cont_body = icon.square("cont_Body", contBodyScale, location=rootPoint)
+        # self.cont_body = icon.square("cont_Body", contBodyScale)
+        self.cont_body = icon.square("cont_Body", contBodyScale)
+        extra.alignTo(self.cont_body, inits[0],2)
 
         self.cont_chest = icon.cube("cont_Chest", (iconSize*0.5, iconSize*0.35, iconSize*0.2))
+        extra.alignTo(self.cont_chest, inits[-1])
+        extra.alignTo(self.cont_chest, inits[len(inits)-2],1)
+
+
         # move the pivot to its base
         pm.xform(self.cont_chest, piv=(0,-iconSize/2,0))
         pm.move(self.cont_chest, chestPoint, rpr=True)
@@ -104,10 +112,15 @@ class spine(object):
                 pm.parent(midSpineLocA, self.cont_chest)
                 pm.parent(midSpineLocB, self.cont_hips)
 
-            contA = icon.circle("cont_SpineFK_A" + str(m), contSpineFKAScale, location=pos)
+            # contA = icon.circle("cont_SpineFK_A" + str(m), contSpineFKAScale, location=pos)
+            contA = icon.circle("cont_SpineFK_A" + str(m), contSpineFKAScale)
+            extra.alignTo(contA, spine.contCurves_ORE[m], 2)
             cont_spineFK_A_List.append(contA)
 
-            contB = icon.ngon("cont_SpineFK_B" + str(m), contSpineFKBScale, location=pos)
+            # contB = icon.ngon("cont_SpineFK_B" + str(m), contSpineFKBScale, location=pos)
+            contB = icon.ngon("cont_SpineFK_B" + str(m), contSpineFKBScale)
+            extra.alignTo(contB, spine.contCurves_ORE[m], 2)
+
             cont_spineFK_B_List.append(contB)
 
             if m != 0:
