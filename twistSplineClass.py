@@ -97,11 +97,11 @@ class twistSpline(object):
 
         for j in IKjoints:
             pm.joint(j, e=True, zso=True, oj="yzx", sao="zup")
-            #pm.joint(j, e=True, zso=True, oj="xyz", sao="yup")
+            # pm.joint(j, e=True, zso=True, oj="xyz", sao="yup")
 
         # get rid of the extra bone
-        # deadBone = pm.listRelatives(IKjoints[len(IKjoints) - 1], c=True)
-        # pm.delete(deadBone)
+        deadBone = pm.listRelatives(IKjoints[len(IKjoints) - 1], c=True)
+        pm.delete(deadBone)
 
         self.defJoints = pm.duplicate(IKjoints, name="jDef_%s0" % name)
 
@@ -149,7 +149,7 @@ class twistSpline(object):
                 extra.alignTo(loc_OFF, self.defJoints[i])
                 pm.move(loc, (1, 0, 0), r=True)
                 # parent locator groups, pole vector locators >> RP Solvers, point constraint RP Solver >> IK Joints
-                pm.parent(loc_OFF, IKjoints[i])
+                pm.parent(loc, IKjoints[i])
                 poleGroups.append(loc_OFF)
                 pm.poleVectorConstraint(loc, RP[0])
                 pm.pointConstraint(IKjoints[i + 1], RP[0])
@@ -179,14 +179,14 @@ class twistSpline(object):
                 cont_Curve = pm.spaceLocator(name="lockPoint_" + name + str(i))
             # cont_Curve_OFF = extra.createUpGrp(cont_Curve, "OFF")
             cont_Curve_ORE = extra.createUpGrp(cont_Curve, "ORE")
-            extra.alignTo(cont_Curve_ORE, contJoints[i], 2)
+            extra.alignTo(cont_Curve_ORE, contJoints[i], 2, o=(0, 0, 0))
             pm.parentConstraint(cont_Curve, contJoints[i], mo=True)
             #extra.alignTo(cont_Curve_ORE, refJoints[i], 2)
             contCurves.append(cont_Curve)
             self.contCurves_ORE.append(cont_Curve_ORE)
 
         self.contCurve_Start = contCurves[0]
-        self.contCurve_End = contCurves[-1]
+        self.contCurve_End = contCurves[len(contCurves) - 1]
         # STRETCH and SQUASH
         #
         # Create Stretch and Squash Nodes
@@ -275,7 +275,7 @@ class twistSpline(object):
         self.endLock = pm.spaceLocator(name="endLock_" + name)
         pm.pointConstraint(self.defJoints[len(self.defJoints) - 1], self.endLock, mo=False)
 
-        #### Move them to original Positions
+        ### Move them to original Positions
 
         for o in range (0,len(self.contCurves_ORE)):
             # if o != 0 and o != len(self.contCurves_ORE)-1:
@@ -283,8 +283,7 @@ class twistSpline(object):
             #     extra.alignBetween(self.contCurves_ORE[o], refJoints[o], refJoints[o-1], pos=False, rot=False, ore=True, o=(0,0,0))
             # else:
             #     extra.alignTo(self.contCurves_ORE[o], refJoints[o], 2)
-            extra.alignTo(self.contCurves_ORE[o], refJoints[o], 2)
-            pass
+            extra.alignTo(self.contCurves_ORE[o], refJoints[o], 0)
 
         # GOOD PARENTING
 

@@ -1,4 +1,5 @@
 import pymel.core as pm
+import pymel.core.datatypes as dt
 
 def getDistance( node1, node2):
     """
@@ -16,7 +17,7 @@ def getDistance( node1, node2):
 
 
 def alignTo(sourceObj=None, targetObj=None, mode=0, sl=False, o=(0,0,0)):
-
+    offset=dt.Vector(o)
     if sl == True:
         selection = pm.ls(sl=True)
         if not len(selection) == 2:
@@ -33,7 +34,7 @@ def alignTo(sourceObj=None, targetObj=None, mode=0, sl=False, o=(0,0,0)):
         pm.xform(sourceObj, worldSpace=True, translation =targetTranslation)
     if mode == 1:
         targetRotation = pm.xform(targetObj, query=True, worldSpace=True, rotation=True)
-        pm.xform(sourceObj, worldSpace=True, rotation =targetRotation)
+        pm.xform(sourceObj, worldSpace=True, rotation =targetRotation+offset)
     if mode == 2:
         targetMatrix = pm.xform(targetObj, query=True, worldSpace=True, matrix=True)
         pm.xform(sourceObj, worldSpace=True, matrix=targetMatrix)
