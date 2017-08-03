@@ -23,11 +23,10 @@ class simpleTail(object):
     anchorLocations = []
 
     def createSimpleTail(self, inits, suffix=""):
-        print inits
-        tailRoot = inits.get("TailRoot")
-        tails = (inits.get("Tail"))
-
-        inits = [tailRoot] + sorted(tails)
+        if not isinstance(inits, list):
+            tailRoot = inits.get("TailRoot")
+            tails = (inits.get("Tail"))
+            inits = [tailRoot] + sorted(tails)
 
 
         idCounter = 0

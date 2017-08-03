@@ -15,7 +15,18 @@ def getDistance( node1, node2):
     return ((Ax-Bx)**2 + (Ay-By)**2 + (Az-Bz)**2)**0.5
 
 
-def alignTo(sourceObj, targetObj, mode=0, o=(0,0,0)):
+def alignTo(sourceObj=None, targetObj=None, mode=0, sl=False, o=(0,0,0)):
+
+    if sl == True:
+        selection = pm.ls(sl=True)
+        if not len(selection) == 2:
+            pm.error("select exactly 2 objects")
+            return
+        sourceObj = selection[0]
+        targetObj = selection[1]
+    if not sourceObj or not targetObj:
+        pm.error("No source and/or target object defined")
+        return
     if mode == 0:
 
         targetTranslation = pm.xform(targetObj, query=True, worldSpace=True, translation=True)
@@ -140,7 +151,7 @@ def createUpGrp(obj, suffix, mi=True):
     # pointCon = pm.parentConstraint (obj, newGrp, mo=False)
     # pm.delete (pointCon)
     # pm.makeIdentity(newGrp, a=True)
-    
+
     #check if the target object has a parent
     originalParent = pm.listRelatives(obj, p=True)
     if (len(originalParent) > 0):
@@ -179,14 +190,14 @@ def connectMirror (node1, node2, mirrorAxis="X"):
     node1.rotate >> rvsNodeR.input
     rvsNodeR.output >> minusOpR.input3D[0]
     pm.setAttr(minusOpR.input3D[1], (1, 1, 1))
-    
+
     #Translate
-    
+
     if (mirrorAxis=="X"):
         minusOpT.output3Dx >> node2.tx
         node1.ty >> node2.ty
         node1.tz >> node2.tz
-        
+
         node1.rx >> node2.rx
         minusOpR.output3Dy >> node2.ry
         minusOpR.output3Dz >> node2.rz
@@ -194,16 +205,16 @@ def connectMirror (node1, node2, mirrorAxis="X"):
         node1.tx >> node2.tx
         minusOpT.output3Dy >> node2.ty
         node1.tz >> node2.tz
-        
+
         minusOpR.output3Dx >> node2.rx
         node1.ry >> node2.ry
         minusOpR.output3Dz >> node2.rz
-        
+
     if (mirrorAxis=="Z"):
         node1.tx >> node2.tx
         node1.ty >> node2.ty
         minusOpT.output3Dz >> node2.tz
-        
+
         node1.rx >> node2.rx
         minusOpR.output3Dy >> node2.ry
         minusOpR.output3Dz >> node2.rz
@@ -224,7 +235,7 @@ def colorize (node, index):
     for i in shapes:
         pm.setAttr(i.overrideEnabled, True)
         pm.setAttr(i.overrideColor, index)
-        
+
 def lockAndHide (node, channelArray):
     """
     Locks and hides the channels specified in the channelArray.
@@ -238,7 +249,7 @@ def lockAndHide (node, channelArray):
     for i in channelArray:
         attribute=("{0}.{1}".format(node, i))
         pm.setAttr(attribute, lock=True, keyable=False, channelBox=False)
-    
+
 def alignBetween (node, targetA, targetB, pos=True, rot=True, ore=False, o=(0,0,0)):
     """
     Alignes the node between target A and target B

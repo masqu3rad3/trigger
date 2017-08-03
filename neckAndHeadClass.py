@@ -11,6 +11,8 @@ reload(icon)
 import twistSplineClass as twistSpline
 reload(twistSpline)
 
+## TODO // NEEDS TO SUPPORT DIFFERENT ORIENTATIONS
+
 class neckAndHead():
 
     scaleGrp = None
