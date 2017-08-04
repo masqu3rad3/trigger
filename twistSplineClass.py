@@ -97,7 +97,7 @@ class twistSpline(object):
 
         for j in IKjoints:
             pm.joint(j, e=True, zso=True, oj="yzx", sao="zup")
-            # pm.joint(j, e=True, zso=True, oj="xyz", sao="yup")
+            #pm.joint(j, e=True, zso=True, oj="xyz", sao="yup")
 
         # get rid of the extra bone
         deadBone = pm.listRelatives(IKjoints[len(IKjoints) - 1], c=True)
@@ -149,7 +149,7 @@ class twistSpline(object):
                 extra.alignTo(loc_OFF, self.defJoints[i])
                 pm.move(loc, (1, 0, 0), r=True)
                 # parent locator groups, pole vector locators >> RP Solvers, point constraint RP Solver >> IK Joints
-                pm.parent(loc, IKjoints[i])
+                pm.parent(loc_OFF, IKjoints[i])
                 poleGroups.append(loc_OFF)
                 pm.poleVectorConstraint(loc, RP[0])
                 pm.pointConstraint(IKjoints[i + 1], RP[0])
@@ -159,10 +159,20 @@ class twistSpline(object):
         pm.pointConstraint(IKjoints[0], self.defJoints[0], mo=False)
 
         # connect rotations of locator groups
+
+        ## CREATE A TWIST NODE TO BE PASSED. this is the twist driver, connect it to rotation or attributes
+        self.twistNode = pm.createNode("multiplyDivide", name="twistNode")
         for i in range(0, len(poleGroups)):
             blender = pm.createNode("blendTwoAttr", name="tSplineX_blend" + str(i))
-            contJoints[0].rotateY >> blender.input[0]
-            contJoints[len(contJoints) - 1].rotateY >> blender.input[1]
+
+            self.twistNode.outputX >> blender.input[0]
+            self.twistNode.outputY >> blender.input[1]
+
+            # self.attPassCont.testXdown >> blender.input[0]
+            # self.attPassCont.testXup >> blender.input[1]
+
+            # contJoints[0].rotateX >> blender.input[0]
+            # contJoints[len(contJoints) - 1].rotateX >> blender.input[1]
             blender.output >> poleGroups[i].rotateY
             blendRatio = (i + 0.0) / (cuts - 1.0)
             pm.setAttr(blender.attributesBlender, blendRatio)
@@ -203,6 +213,8 @@ class twistSpline(object):
         pm.addAttr(self.attPassCont, shortName='stretchy', longName='Stretchyness', defaultValue=1, minValue=0.0,
                    maxValue=1.0,
                    at="double", k=True)
+
+
 
         curveInfo = pm.arclen(splineCurve, ch=True)
         initialLength = pm.getAttr(curveInfo.arcLength)
@@ -275,7 +287,7 @@ class twistSpline(object):
         self.endLock = pm.spaceLocator(name="endLock_" + name)
         pm.pointConstraint(self.defJoints[len(self.defJoints) - 1], self.endLock, mo=False)
 
-        ### Move them to original Positions
+        ## Move them to original Positions
 
         for o in range (0,len(self.contCurves_ORE)):
             # if o != 0 and o != len(self.contCurves_ORE)-1:
@@ -283,7 +295,15 @@ class twistSpline(object):
             #     extra.alignBetween(self.contCurves_ORE[o], refJoints[o], refJoints[o-1], pos=False, rot=False, ore=True, o=(0,0,0))
             # else:
             #     extra.alignTo(self.contCurves_ORE[o], refJoints[o], 2)
-            extra.alignTo(self.contCurves_ORE[o], refJoints[o], 0)
+
+            extra.alignTo(self.contCurves_ORE[o], refJoints[o])
+            if not o == (len(self.contCurves_ORE)-1):
+                tempAim = pm.aimConstraint(refJoints[o+1], self.contCurves_ORE[o], aimVector=(0,1,0), upVector=(0,1,0), mo=False)
+            else:
+                tempAim = pm.aimConstraint(refJoints[o-1], self.contCurves_ORE[o], aimVector=(0, -1, 0), upVector=(0, -1, 0), mo=False)
+            pm.delete(tempAim)
+
+            # extra.alignTo(self.contCurves_ORE[o], refJoints[o], 2)
 
         # GOOD PARENTING
 

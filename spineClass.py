@@ -79,11 +79,16 @@ class spine(object):
 
         midConnection = spine.contCurves_ORE[(len(spine.contCurves_ORE)/2)]
 
+
         self.nonScaleGrp = spine.nonScaleGrp
         # # connect the spine root to the master root
         pm.parentConstraint(self.rootSocket, spine.contCurve_Start, mo=True)
+        self.rootSocket.rotateY >> spine.twistNode.input1X
+
         # # connect the spine end
         pm.parentConstraint(self.cont_chest, spine.contCurve_End, mo=True)
+        self.cont_chest.rotateY >> spine.twistNode.input1Y
+
         # # connect the master root to the hips controller
         pm.parentConstraint(self.cont_hips, self.rootSocket, mo=True)
         # # connect upper plug points to the spine and orient it to the chest controller
@@ -115,12 +120,13 @@ class spine(object):
             # contA = icon.circle("cont_SpineFK_A" + str(m), contSpineFKAScale, location=pos)
             contA = icon.circle("cont_SpineFK_A" + str(m), contSpineFKAScale)
             extra.alignTo(contA, spine.contCurves_ORE[m], 2)
+            # pm.setAttr(contA.rotateAxisZ, 90)
             cont_spineFK_A_List.append(contA)
 
             # contB = icon.ngon("cont_SpineFK_B" + str(m), contSpineFKBScale, location=pos)
             contB = icon.ngon("cont_SpineFK_B" + str(m), contSpineFKBScale)
             extra.alignTo(contB, spine.contCurves_ORE[m], 2)
-
+            # pm.setAttr(contB.rotateAxisZ, 90)
             cont_spineFK_B_List.append(contB)
 
             if m != 0:
