@@ -22,6 +22,7 @@ class neckAndHead():
     cont_head = None
     # cont_head_OFF = None
     cont_IK_OFF = None
+    rootSocket = None
     limbPlug = None
     connectsTo = None
     scaleConstraints = []

@@ -10,6 +10,7 @@ reload(icon)
 
 
 class simpleTail(object):
+
     scaleGrp = None
     cont_body = None
     cont_hips = None

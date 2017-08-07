@@ -13,6 +13,7 @@ import twistSplineClass as twistSpline
 reload(twistSpline)
 
 class tail(object):
+
     scaleGrp = None
     cont_body = None
     cont_hips = None

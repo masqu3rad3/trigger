@@ -17,16 +17,24 @@ reload(spine)
 import simpleTailClass as simpleTail
 reload(simpleTail)
 
-class limbBuilder():
+class LimbBuilder():
     limbList = []
     validRootList = ["Collar", "LegRoot", "Root", "NeckRoot", "FingerRoot", "TailRoot"]
     bindingDictionary = {}
     def __init__(self):
         self.catalogueRoots(pm.ls(sl=True)[0])
+        self.leftHip = None
+        self.rightHip = None
+        self.rightShoulder = None
+        self.leftShoulder = None
+        self.anchorLocations = []
+        self.anchors = []
+        self.hipSize = 1.0
+        self.chestSize = 1.0
 
     ## get all the joint hierarchy and identify them
     def catalogueRoots(self, rootJoint):
-        # validRootList = ["Collar", "LegRoot", "Root", "NeckRoot", "FingerRoot", "TailRoot"]
+
         ## get all hierarchy
         allJ = pm.listRelatives(rootJoint, ad=True, type="joint")
         self.allRoots = [rootJoint]
@@ -54,7 +62,7 @@ class limbBuilder():
                 else:
                     limbDict[rName]=i
                 ## convert it to a dictionary
-                # wholeLimb.append(i)
+
         return limbDict, limbType, limbSide
     def buildRig(self):
         # first gather all used sockets
@@ -63,12 +71,21 @@ class limbBuilder():
             bones, type, side = self.getRestOfTheLimb(r)
 
             if type == "arm":
+                if side == "L":
+                    self.rightShoulder = bones["Shoulder"]
+                if side == "R":
+                    self.leftShoulder = bones["Shoulder"]
                 limb_arm = arm.arm()
                 limb_arm.createArm(bones, suffix=side + "_arm", side=side)
                 self.limbList.append(limb_arm)
                 # //TODO: add socket connections
 
             if type == "leg":
+                if side == "L":
+                    self.leftHip = bones["Hip"]
+                if side == "R":
+                    self.rightHip = bones["Hip"]
+
                 limb_leg = leg.leg()
                 limb_leg.createLeg(bones, suffix=side + "_leg", side=side)
                 self.limbList.append(limb_leg)
@@ -95,23 +112,76 @@ class limbBuilder():
                 self.limbList.append(limb_tail)
                 # //TODO: add socket connections
 
+        ## get sizes for controllers
+        if self.leftHip and self.rightHip:
+            self.hipSize=extra.getDistance(self.leftHip, self.rightHip)
+
+        if self.rightShoulder and self.leftShoulder:
+            self.chestSize = extra.getDistance(self.rightShoulder, self.leftShoulder)
+
+        cont_placement = icon.circle("cont_Placement", (self.hipSize, self.hipSize, self.hipSize))
+        cont_master = icon.triCircle("cont_Master", (self.hipSize * 1.5, self.hipSize * 1.5, self.hipSize * 1.5))
+        pm.addAttr(cont_master, at="bool", ln="Control_Visibility", sn="contVis", defaultValue=True)
+        pm.addAttr(cont_master, at="bool", ln="Joints_Visibility", sn="jointVis")
+        pm.addAttr(cont_master, at="bool", ln="Rig_Visibility", sn="rigVis")
+
+        # make the created attributes visible in the channelbox
+        pm.setAttr(cont_master.contVis, cb=True)
+        pm.setAttr(cont_master.jointVis, cb=True)
+        pm.setAttr(cont_master.rigVis, cb=True)
+        pm.parent(cont_placement, cont_master)
+        # add these to the anchor locations
+        self.anchorLocations.append(cont_master)
+        self.anchorLocations.append(cont_placement)
+        # COLOR CODING
+        index = 17
+        extra.colorize(cont_master, index)
+        extra.colorize(cont_placement, index)
+        ############################
+
         for limb in self.limbList:
+            self.anchorLocations += limb.anchorLocations
             if limb.connectsTo in self.socketPointDict.keys():
                 plug=limb.limbPlug
                 socket=self.socketPointDict.get(limb.connectsTo)
                 print "%s will connect to %s" %(plug, socket)
                 pm.parent(plug, socket)
+                self.anchors += limb.anchors
+
+
+        for anchor in list(reversed(self.anchors)):
+            extra.spaceSwitcher(anchor[0], self.anchorLocations, mode=anchor[1], defaultVal=anchor[2], listException=anchor[3])
+        # # GOOD PARENTING
+        rootGroup = pm.group(name="tik_autoRig", em=True)
+        extra.lockAndHide(rootGroup, ["tx", "ty", "tz", "rx", "ry", "rz", "sx", "sy", "sz"])
+        pm.parent(cont_master, rootGroup)
+
+
+        for i in self.limbList:
+
+            pm.parent(i.scaleGrp, rootGroup)
+            pm.parent(i.nonScaleGrp, rootGroup)
+            if i.cont_IK_OFF:
+                pm.parent(i.cont_IK_OFF, rootGroup)
+            if isinstance(i, spine.spine):
+                pm.parent(i.rootSocket, rootGroup)
+                pm.parent(i.cont_body, cont_placement)
+                pm.scaleConstraint(cont_master, i.rootSocket)
+                pm.scaleConstraint(cont_master, i.scaleGrp)
+            else:
+                for s in i.scaleConstraints:
+                    pm.scaleConstraint(cont_master, s)
+
 
     def getSocketPoints(self):
         self.socketPointDict={}
-        NonValidPlugNames=["Spine", "NeckRoot", "Neck", "Collar", "LegRoot", "ToePv", "HeelPv", "BankIN", "BankOUT"]
+        NonValidPlugNames=["Spine", "NeckRoot", "Neck", "Collar", "LegRoot", "ToePv", "HeelPv", "BankIN", "BankOUT", "Knee", "Elbow"]
         for r in self.allRoots:
 
             bones, type, side = self.getRestOfTheLimb(r)
             bones = self.flatten(bones)
 
             for b in bones:
-
                 if b not in NonValidPlugNames:
                     bChildren = b.getChildren()
                     for c in bChildren:
@@ -121,12 +191,7 @@ class limbBuilder():
                             if cName in self.validRootList:
                                 if not b in self.socketPointDict.keys():
                                     self.socketPointDict[b]= ""
-        # pprint.pprint(self.plugPointDict)
         return self.socketPointDict
-
-
-
-
 
     def flatten(self, d):
         res = []  # Result list
@@ -137,8 +202,6 @@ class limbBuilder():
             res = d
         else:
             res.append(d)
-            ## raise TypeError("Undefined type for flatten: %s" % type(d))
-
         return res
 
 

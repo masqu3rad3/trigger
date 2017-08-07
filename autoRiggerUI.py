@@ -3,7 +3,8 @@ import pymel.core as pm
 import Qt
 from Qt import QtWidgets, QtCore, QtGui
 from maya import OpenMayaUI as omui
-
+import initials as init
+reload(init)
 import math
 
 if Qt.__binding__ == "PySide":
@@ -64,6 +65,8 @@ class mainUI(QtWidgets.QTabWidget):
         self.buffer.setMinimumSize(200, 600)
         self.buffer.resize(150, 500)
 
+        self.initSkeleton = init.initialJoints()
+
         self.tabDialog()
 
 
@@ -86,6 +89,7 @@ class mainUI(QtWidgets.QTabWidget):
 
 
     def initBonesUI(self):
+
         wSize = 60
         hSize = 50
         ## This is the main layout
@@ -103,9 +107,9 @@ class mainUI(QtWidgets.QTabWidget):
         spineLabel.setFont(QtGui.QFont("Arial", weight=QtGui.QFont.Bold))
         spineLabel.setAlignment(QtCore.Qt.AlignCenter)
         spineLabel.setFrameStyle(QtWidgets.QFrame.Panel)
-        spineCreate = QtWidgets.QPushButton("Create", minimumSize=(QtCore.QSize(wSize, hSize)), maximumSize=(QtCore.QSize(wSize, hSize)), parent=self)
+        self.spineCreateBtn = QtWidgets.QPushButton("Create", minimumSize=(QtCore.QSize(wSize, hSize)), maximumSize=(QtCore.QSize(wSize, hSize)), parent=self)
         spineSegLb = QtWidgets.QLabel("Segments")
-        spineSegInt = QtWidgets.QSpinBox(maximumSize=(QtCore.QSize(45, 50)),value=3, minimum=1)
+        self.spineSegInt = QtWidgets.QSpinBox(maximumSize=(QtCore.QSize(45, 50)),value=3, minimum=1)
 
         columnSpine = QtWidgets.QVBoxLayout()
         layout.addLayout(columnSpine)
@@ -121,8 +125,11 @@ class mainUI(QtWidgets.QTabWidget):
         ## Add Widgets
 
         segmentsColumnSpine.addWidget(spineSegLb)
-        segmentsColumnSpine.addWidget(spineSegInt)
-        firstRowSpine.addWidget(spineCreate)
+        segmentsColumnSpine.addWidget(self.spineSegInt)
+        firstRowSpine.addWidget(self.spineCreateBtn)
+        self.spineCreateBtn.clicked.connect(self.createSpine)
+
+        # self.spineCreateBtn.clicked.connect(lambda segs=self.spineSegInt.value : self.initSkeleton.initLimb("spine", whichSide="auto", segments=12))
 
         #   ___
         #  | . | _ _ ._ _ _
@@ -135,17 +142,19 @@ class mainUI(QtWidgets.QTabWidget):
         armLabel.setFont(QtGui.QFont("Arial", weight=QtGui.QFont.Bold))
         armLabel.setAlignment(QtCore.Qt.AlignCenter)
         armLabel.setFrameStyle(QtWidgets.QFrame.Panel)
-        armCreate = QtWidgets.QPushButton("Create", minimumSize=(QtCore.QSize(wSize, hSize)), maximumSize=(QtCore.QSize(wSize, hSize)), parent=self)
+        self.armCreateBtn = QtWidgets.QPushButton("Create", minimumSize=(QtCore.QSize(wSize, hSize)), maximumSize=(QtCore.QSize(wSize, hSize)), parent=self)
 
         radioGrpArm = QtWidgets.QButtonGroup(layout)
-        armSideLeft = QtWidgets.QRadioButton("Left", parent=self)
-        armSideRight = QtWidgets.QRadioButton("Right", parent=self)
-        armSideBoth = QtWidgets.QRadioButton("Both", parent=self)
+        self.armSideLeft = QtWidgets.QRadioButton("Left", parent=self)
+        self.armSideRight = QtWidgets.QRadioButton("Right", parent=self)
+        self.armSideBoth = QtWidgets.QRadioButton("Both", parent=self)
+        self.armSideAuto = QtWidgets.QRadioButton("Auto", parent=self)
 
-        radioGrpArm.addButton(armSideLeft)
-        radioGrpArm.addButton(armSideRight)
-        radioGrpArm.addButton(armSideBoth)
-        armSideLeft.setChecked(True)
+        radioGrpArm.addButton(self.armSideLeft)
+        radioGrpArm.addButton(self.armSideRight)
+        radioGrpArm.addButton(self.armSideBoth)
+        radioGrpArm.addButton(self.armSideAuto)
+        self.armSideAuto.setChecked(True)
 
         columnArm = QtWidgets.QVBoxLayout()
         layout.addLayout(columnArm)
@@ -158,10 +167,15 @@ class mainUI(QtWidgets.QTabWidget):
         radioColumnArm.setAlignment(QtCore.Qt.AlignLeft)
         firstRowArm.addLayout(radioColumnArm)
 
-        radioColumnArm.addWidget(armSideLeft)
-        radioColumnArm.addWidget(armSideRight)
-        radioColumnArm.addWidget(armSideBoth)
-        firstRowArm.addWidget(armCreate)
+        radioColumnArm.addWidget(self.armSideLeft)
+        radioColumnArm.addWidget(self.armSideRight)
+        radioColumnArm.addWidget(self.armSideBoth)
+        radioColumnArm.addWidget(self.armSideAuto)
+
+        firstRowArm.addWidget(self.armCreateBtn)
+
+        self.armCreateBtn.clicked.connect(self.createArm)
+
 
 
         #   ___  _
@@ -175,19 +189,21 @@ class mainUI(QtWidgets.QTabWidget):
         fingerLabel.setFont(QtGui.QFont("Arial", weight=QtGui.QFont.Bold))
         fingerLabel.setAlignment(QtCore.Qt.AlignCenter)
         fingerLabel.setFrameStyle(QtWidgets.QFrame.Panel)
-        fingerCreate = QtWidgets.QPushButton("Create", minimumSize=(QtCore.QSize(wSize, hSize)), maximumSize=(QtCore.QSize(wSize, hSize)), parent=self)
+        self.fingerCreateBtn = QtWidgets.QPushButton("Create", minimumSize=(QtCore.QSize(wSize, hSize)), maximumSize=(QtCore.QSize(wSize, hSize)), parent=self)
 
         radioGrpFinger = QtWidgets.QButtonGroup(layout)
-        fingerSideLeft = QtWidgets.QRadioButton("Left", parent=self)
-        fingerSideRight = QtWidgets.QRadioButton("Right", parent=self)
-        fingerSideBoth = QtWidgets.QRadioButton("Both", parent=self)
+        self.fingerSideLeft = QtWidgets.QRadioButton("Left", parent=self)
+        self.fingerSideRight = QtWidgets.QRadioButton("Right", parent=self)
+        self.fingerSideBoth = QtWidgets.QRadioButton("Both", parent=self)
+        self.fingerSideAuto = QtWidgets.QRadioButton("Auto", parent=self)
 
-        radioGrpFinger.addButton(fingerSideLeft)
-        radioGrpFinger.addButton(fingerSideRight)
-        radioGrpFinger.addButton(fingerSideBoth)
-        fingerSideLeft.setChecked(True)
+        radioGrpFinger.addButton(self.fingerSideLeft)
+        radioGrpFinger.addButton(self.fingerSideRight)
+        radioGrpFinger.addButton(self.fingerSideBoth)
+        radioGrpFinger.addButton(self.fingerSideAuto)
+        self.fingerSideLeft.setChecked(True)
 
-        fingerIsThumbChk = QtWidgets.QCheckBox("Thumb", parent=self)
+        self.fingerIsThumbChk = QtWidgets.QCheckBox("Thumb", parent=self)
 
         columnFinger = QtWidgets.QVBoxLayout()
         layout.addLayout(columnFinger)
@@ -200,11 +216,14 @@ class mainUI(QtWidgets.QTabWidget):
         radioColumnFinger.setAlignment(QtCore.Qt.AlignLeft)
         firstRowFinger.addLayout(radioColumnFinger)
 
-        radioColumnFinger.addWidget(fingerSideLeft)
-        radioColumnFinger.addWidget(fingerSideRight)
-        radioColumnFinger.addWidget(fingerSideBoth)
-        radioColumnFinger.addWidget(fingerIsThumbChk)
-        firstRowFinger.addWidget(fingerCreate)
+        radioColumnFinger.addWidget(self.fingerSideLeft)
+        radioColumnFinger.addWidget(self.fingerSideRight)
+        radioColumnFinger.addWidget(self.fingerSideBoth)
+        radioColumnFinger.addWidget(self.fingerSideAuto)
+        radioColumnFinger.addWidget(self.fingerIsThumbChk)
+        firstRowFinger.addWidget(self.fingerCreateBtn)
+
+        self.fingerCreateBtn.clicked.connect(self.createFinger)
 
         #   _
         #  | |   ___  ___
@@ -217,16 +236,18 @@ class mainUI(QtWidgets.QTabWidget):
         legLabel.setFont(QtGui.QFont("Arial", weight=QtGui.QFont.Bold))
         legLabel.setAlignment(QtCore.Qt.AlignCenter)
         legLabel.setFrameStyle(QtWidgets.QFrame.Panel)
-        legCreate = QtWidgets.QPushButton("Create", minimumSize=(QtCore.QSize(wSize, hSize)), maximumSize=(QtCore.QSize(wSize, hSize)), parent=self)
+        self.legCreateBtn = QtWidgets.QPushButton("Create", minimumSize=(QtCore.QSize(wSize, hSize)), maximumSize=(QtCore.QSize(wSize, hSize)), parent=self)
 
         radioGrpLeg = QtWidgets.QButtonGroup(layout)
-        legSideLeft = QtWidgets.QRadioButton("Left", parent=self)
-        legSideRight = QtWidgets.QRadioButton("Right", parent=self)
-        legSideBoth = QtWidgets.QRadioButton("Both", parent=self)
-        radioGrpLeg.addButton(legSideLeft)
-        radioGrpLeg.addButton(legSideRight)
-        radioGrpLeg.addButton(legSideBoth)
-        legSideLeft.setChecked(True)
+        self.legSideLeft = QtWidgets.QRadioButton("Left", parent=self)
+        self.legSideRight = QtWidgets.QRadioButton("Right", parent=self)
+        self.legSideBoth = QtWidgets.QRadioButton("Both", parent=self)
+        self.legSideAuto = QtWidgets.QRadioButton("Auto", parent=self)
+        radioGrpLeg.addButton(self.legSideLeft)
+        radioGrpLeg.addButton(self.legSideRight)
+        radioGrpLeg.addButton(self.legSideBoth)
+        radioGrpLeg.addButton(self.legSideAuto)
+        self.legSideLeft.setChecked(True)
 
         columnLeg = QtWidgets.QVBoxLayout()
         layout.addLayout(columnLeg)
@@ -239,10 +260,13 @@ class mainUI(QtWidgets.QTabWidget):
         radioColumnLeg.setAlignment(QtCore.Qt.AlignLeft)
         firstRowLeg.addLayout(radioColumnLeg)
 
-        radioColumnLeg.addWidget(legSideLeft)
-        radioColumnLeg.addWidget(legSideRight)
-        radioColumnLeg.addWidget(legSideBoth)
-        firstRowLeg.addWidget(legCreate)
+        radioColumnLeg.addWidget(self.legSideLeft)
+        radioColumnLeg.addWidget(self.legSideRight)
+        radioColumnLeg.addWidget(self.legSideBoth)
+        radioColumnLeg.addWidget(self.legSideAuto)
+        firstRowLeg.addWidget(self.legCreateBtn)
+
+        self.legCreateBtn.clicked.connect(self.createLeg)
 
 
         #   ___      _  _
@@ -255,9 +279,9 @@ class mainUI(QtWidgets.QTabWidget):
         tailLabel.setFont(QtGui.QFont("Arial", weight=QtGui.QFont.Bold))
         tailLabel.setAlignment(QtCore.Qt.AlignCenter)
         tailLabel.setFrameStyle(QtWidgets.QFrame.Panel)
-        tailCreate = QtWidgets.QPushButton("Create", minimumSize=(QtCore.QSize(wSize, hSize)), maximumSize=(QtCore.QSize(wSize, hSize)), parent=self)
+        self.tailCreateBtn = QtWidgets.QPushButton("Create", minimumSize=(QtCore.QSize(wSize, hSize)), maximumSize=(QtCore.QSize(wSize, hSize)), parent=self)
         tailSegLb = QtWidgets.QLabel("Segments")
-        tailSegInt = QtWidgets.QSpinBox(maximumSize=(QtCore.QSize(45, 50)),value=8, minimum=2)
+        self.tailSegInt = QtWidgets.QSpinBox(maximumSize=(QtCore.QSize(45, 50)),value=8, minimum=2)
 
         columntail = QtWidgets.QVBoxLayout()
         layout.addLayout(columntail)
@@ -273,8 +297,10 @@ class mainUI(QtWidgets.QTabWidget):
         ## Add Widgets
 
         segmentsColumntail.addWidget(tailSegLb)
-        segmentsColumntail.addWidget(tailSegInt)
-        firstRowtail.addWidget(tailCreate)
+        segmentsColumntail.addWidget(self.tailSegInt)
+        firstRowtail.addWidget(self.tailCreateBtn)
+
+        self.tailCreateBtn.clicked.connect(self.createTail)
 
 
         #   _ _            _     _    _ _              _
@@ -287,9 +313,9 @@ class mainUI(QtWidgets.QTabWidget):
         neckLabel.setFont(QtGui.QFont("Arial", weight=QtGui.QFont.Bold))
         neckLabel.setAlignment(QtCore.Qt.AlignCenter)
         neckLabel.setFrameStyle(QtWidgets.QFrame.Panel)
-        neckCreate = QtWidgets.QPushButton("Create", minimumSize=(QtCore.QSize(wSize, hSize)), maximumSize=(QtCore.QSize(wSize, hSize)), parent=self)
+        self.neckCreateBtn = QtWidgets.QPushButton("Create", minimumSize=(QtCore.QSize(wSize, hSize)), maximumSize=(QtCore.QSize(wSize, hSize)), parent=self)
         neckSegLb = QtWidgets.QLabel("Segments")
-        neckSegInt = QtWidgets.QSpinBox(maximumSize=(QtCore.QSize(45, 50)), value=3, minimum=1)
+        self.neckSegInt = QtWidgets.QSpinBox(maximumSize=(QtCore.QSize(45, 50)), value=3, minimum=1)
 
         columnneck = QtWidgets.QVBoxLayout()
         layout.addLayout(columnneck)
@@ -305,9 +331,73 @@ class mainUI(QtWidgets.QTabWidget):
         ## Add Widgets
 
         segmentsColumnneck.addWidget(neckSegLb)
-        segmentsColumnneck.addWidget(neckSegInt)
-        firstRowneck.addWidget(neckCreate)
+        segmentsColumnneck.addWidget(self.neckSegInt)
+        firstRowneck.addWidget(self.neckCreateBtn)
 
+        self.neckCreateBtn.clicked.connect(self.createNeckAndHead)
+
+
+
+    def createArm(self):
+        pm.undoInfo(openChunk=True)
+        side=""
+        if self.armSideLeft.isChecked():
+            side = "left"
+        elif self.armSideRight.isChecked():
+            side = "right"
+        elif self.armSideBoth.isChecked():
+            side = "both"
+        elif self.armSideAuto.isChecked():
+            side = "auto"
+        self.initSkeleton.initLimb("arm", whichSide=side)
+        pm.undoInfo(closeChunk=True)
+
+    def createSpine(self):
+        pm.undoInfo(openChunk=True)
+        self.initSkeleton.initLimb("spine", segments=self.spineSegInt.value())
+        pm.undoInfo(closeChunk=True)
+
+    def createFinger(self):
+        pm.undoInfo(openChunk=True)
+
+        side = ""
+        if self.fingerSideLeft.isChecked():
+            side = "left"
+        elif self.fingerSideRight.isChecked():
+            side = "right"
+        elif self.fingerSideBoth.isChecked():
+            side = "both"
+        elif self.fingerSideAuto.isChecked():
+            side = "auto"
+
+        self.initSkeleton.initLimb("finger", whichSide=side, thumb=self.fingerIsThumbChk.isChecked())
+        pm.undoInfo(closeChunk=True)
+
+    def createLeg(self):
+        pm.undoInfo(openChunk=True)
+
+        side = ""
+        if self.legSideLeft.isChecked():
+            side = "left"
+        elif self.legSideRight.isChecked():
+            side = "right"
+        elif self.legSideBoth.isChecked():
+            side = "both"
+        elif self.legSideAuto.isChecked():
+            side = "auto"
+
+        self.initSkeleton.initLimb("leg", whichSide=side)
+        pm.undoInfo(closeChunk=True)
+
+    def createTail(self):
+        pm.undoInfo(openChunk=True)
+        self.initSkeleton.initLimb("tail", segments=self.tailSegInt.value())
+        pm.undoInfo(closeChunk=True)
+
+    def createNeckAndHead(self):
+        pm.undoInfo(openChunk=True)
+        self.initSkeleton.initLimb("neck", segments=self.neckSegInt.value())
+        pm.undoInfo(closeChunk=True)
 
 
     def testPop(self):

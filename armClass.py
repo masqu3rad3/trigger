@@ -24,6 +24,7 @@ class arm():
     cont_IK_hand = None
     # cont_IK_hand_OFF = None
     cont_IK_OFF = None
+    rootSocket = None
     cont_Pole = None
     nodesContVis = None
     limbPlug = None
@@ -727,6 +728,7 @@ class arm():
         extra.colorize(cont_midLock, indexMin)
         extra.colorize(ribbonUpperArm.middleCont, indexMin)
         extra.colorize(ribbonLowerArm.middleCont, indexMin)
+
 
         self.scaleConstraints = [self.scaleGrp, cont_IK_hand_OFF]
         self.anchors = [(self.cont_IK_hand, "parent", 1, None),(self.cont_Pole, "parent", 1, None)]

@@ -15,6 +15,7 @@ reload(icon)
 
 # whichLeg="l_leg"
 class leg():
+    limbID = "leg"
     none = None
     scaleGrp = None
     cont_IK_foot = None
@@ -22,6 +23,7 @@ class leg():
     nonScaleGrp = None
     # cont_IK_foot_OFF = None
     cont_IK_OFF = None
+    rootSocket = None
     limbPlug = None
     connectsTo = None
     scaleConstraints = []

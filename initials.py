@@ -3,18 +3,20 @@ import pymel.core.datatypes as dt
 import extraProcedures as extra
 
 class initialJoints():
-    lookAxis = "z"
-    lookAxisMult = 1
-    upAxis = "y"
-    upAxisMult = 1
-    mirrorAxis = "x"
 
-    spineJointsList=[]
-    neckJointsList=[]
-    armJointsList=[]
-    legJointsList=[]
-    fingerJointsList=[]
-    tailJointsList=[]
+    def __init__(self):
+        self.lookAxis = "z"
+        self.lookAxisMult = 1
+        self.upAxis = "y"
+        self.upAxisMult = 1
+        self.mirrorAxis = "x"
+
+        self.spineJointsList=[]
+        self.neckJointsList=[]
+        self.armJointsList=[]
+        self.legJointsList=[]
+        self.fingerJointsList=[]
+        self.tailJointsList=[]
 
     def transformator (self, inputVector, transKey):
         ## convert the input tuple to an actual vector:
@@ -83,7 +85,9 @@ class initialJoints():
         self.upAxisMult = upAxisMult
         self.mirrorAxis = "xyz".strip(lookAxis + upAxis)
 
-    def initLimb (self, limb, whichSide="left", segments=3, fingerCount=5, constrainedTo = None, parentNode=None):
+    def initLimb (self, limb, whichSide="left", segments=3, fingerCount=5, thumb=False, constrainedTo = None, parentNode=None):
+
+
         ## skip side related stuff for no-side related limbs
         nonSidedLimbs = ["spine", "neck", "tail"]
         if limb in nonSidedLimbs:
@@ -231,6 +235,7 @@ class initialJoints():
             else:
                 pm.parent(limbJoints[0], limbGroup)
         pm.select(currentselection)
+
         return locatorsList
 
     def initialSpine(self, transformKey, segments, suffix):

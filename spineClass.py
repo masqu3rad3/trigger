@@ -13,11 +13,13 @@ import twistSplineClass as twistSpline
 reload(twistSpline)
 
 class spine(object):
+
     socketDict = {}
     scaleGrp = None
     cont_body = None
     cont_hips = None
     cont_chest = None
+    cont_IK_OFF = None
     rootSocket = None
     nonScaleGrp = None
     chestSocket = None
