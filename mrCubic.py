@@ -16,15 +16,16 @@ def mrCube (jointList, width=1):
             ## create a cube for each child
 
             for c in children:
-                cubeGuy = pm.polyCube(name="mrCube_"+c, h=width, d=width, w=width)
-                extra.alignBetween(cubeGuy, j, c)
-                # scale it
-                height=extra.getDistance(j, c)
-                pm.setAttr(cubeGuy[0].sx, height)
-                pm.xform(cubeGuy[0], piv=cubeRoot, ws=True)
-                pm.parent(cubeGuy, mrCubeGrp)
-                # skin it
-                pm.skinCluster(cubeGuy[0], j)
+                if c.type() == "joint":
+                    cubeGuy = pm.polyCube(name="mrCube_"+c, h=width, d=width, w=width)
+                    extra.alignBetween(cubeGuy, j, c)
+                    # scale it
+                    height=extra.getDistance(j, c)
+                    pm.setAttr(cubeGuy[0].sx, height)
+                    pm.xform(cubeGuy[0], piv=cubeRoot, ws=True)
+                    pm.parent(cubeGuy, mrCubeGrp)
+                    # skin it
+                    pm.skinCluster(cubeGuy[0], j)
             if len(children) == 0:
                 pm.select(j)
                 cubeGuy = pm.polyCube(name="mrCube_" + j, h=width, d=width, w=width)

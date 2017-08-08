@@ -7,10 +7,10 @@ def circle(name="cont_circle", scale=(1,1,1), location=None, normal=(0, 1, 0)):
     """
     Creates a circle controller. Nothing Fancy...
     Args:
-        name: name of the controller. Must be a String
-        scale: scale value as vector, example (1,1.5,1)
-        location: Optional Location as vector. example (12,0,2) 
-        normal: Optional Normal as vector. Default is (0, 1, 0) Y Up
+        name: (String) name of the controller. Must be a String
+        scale: (Vector) scale value as vector, example (1,1.5,1)
+        location: (Vector) Optional Location as vector. example (12,0,2) 
+        normal: (Vector) Optional Normal as vector. Default is (0, 1, 0) Y Up
     Returns:
         Controller node
 
@@ -28,9 +28,9 @@ def cube(name="cont_cube", scale=(1,1,1), location=None):
     """
     Creates a cube controller as a single shape
     Args:
-        name: name of the controller. Must be a String
-        scale: Scale value as vector. example (1,1.5,1)
-        location: Optional Location as vector. example (12,0,2) 
+        name: (String) name of the controller. Must be a String
+        scale: (Vector) Scale value as vector. example (1,1.5,1)
+        location: (Vector) Optional Location as vector. example (12,0,2) 
 
     Returns:
         Controller node
@@ -50,9 +50,9 @@ def thigh(name="cont_thigh", scale=(1,1,1), location=None):
     """
     Creates a cube controller as a single shape
     Args:
-        name: name of the controller. Must be a String
-        scale: Scale value as vector. example (1,1.5,1)
-        location: Optional Location as vector. example (12,0,2) 
+        name: (String) name of the controller. Must be a String
+        scale: (Vector) Scale value as vector. example (1,1.5,1)
+        location: (Vector) Optional Location as vector. example (12,0,2) 
         
     Returns:
         Controller node
@@ -70,10 +70,10 @@ def star(name="cont_star", scale=(1,1,1), location=None, normal=(0, 1, 0)):
     """
     Creates a star-ish shaped controller
     Args:
-        name: name of the controller. Must be a String
-        scale: Scale value as vector. example (1,1.5,1)
-        location: Optional Location as vector. example (12,0,2) 
-        normal: Optional normal override
+        name: (String) name of the controller. Must be a String
+        scale: (Vector) Scale value as vector. example (1,1.5,1)
+        location: (Vector) Optional Location as vector. example (12,0,2) 
+        normal: (Vector) Optional normal override
         
     Returns:
         Controller node
@@ -93,9 +93,9 @@ def fkikSwitch(name="cont_fkik", scale=(1,1,1), location=None):
     """
     Creates a FK-IK controller. 
     Args:
-        name: name of the controller. Must be a String
-        scale: Scale value as vector. example (1,1.5,1)
-        location: Optional Location as vector. example (12,0,2) 
+        name: (String) name of the controller. Must be a String
+        scale: (Vector) Scale value as vector. example (1,1.5,1)
+        location: (Vector) Optional Location as vector. example (12,0,2) 
 
     Returns:
         A list Containing Controller Node (index 0) and Reverse node (1) to be used
@@ -142,9 +142,9 @@ def shoulder(name="cont_shoulder", scale=(1,1,1), location=None):
     """
     Creates a bended Eliptical controller for shoulders.
     Args:
-        name: name of the controller. Must be a String
-        scale: Scale value as vector. example (1,1.5,1)
-        location: Optional Location as vector. example (12,0,2) 
+        name: (String) name of the controller. Must be a String
+        scale: (Vector) Scale value as vector. example (1,1.5,1)
+        location: (Vector) Optional Location as vector. example (12,0,2) 
 
     Returns:
         Controller node
@@ -168,9 +168,9 @@ def plus(name="cont_plus", scale=(1,1,1), location=None):
     """
     Creates a plus controller. Usually for pole vector
     Args:
-        name: name of the controller. Must be a String
-        scale: scale value as vector, example (1,1.5,1)
-        location: Optional Location as vector. example (12,0,2) 
+        name: (String) name of the controller. Must be a String
+        scale: (Vector) scale value as vector, example (1,1.5,1)
+        location: (Vector) Optional Location as vector. example (12,0,2) 
     Returns:
         Controller node
 
@@ -188,9 +188,9 @@ def waist(name="cont_waist", scale=(1,1,1), location=None):
     """
     Creates a plus controller. Usually for pole vector
     Args:
-        name: name of the controller. Must be a String
-        scale: scale value as vector, example (1,1.5,1)
-        location: Optional Location as vector. example (12,0,2) 
+        name: (String) name of the controller. Must be a String
+        scale: (Vector) scale value as vector, example (1,1.5,1)
+        location: (Vector) Optional Location as vector. example (12,0,2) 
     Returns:
         Controller node
 
@@ -208,9 +208,9 @@ def square(name="cont_square", scale=(1,1,1), location=None):
     """
     Creates a square controller. 
     Args:
-        name: name of the controller. Must be a String
-        scale: scale value as vector, example (1,1.5,1)
-        location: Optional Location as vector. example (12,0,2) 
+        name: (String) name of the controller. Must be a String
+        scale: (Vector) scale value as vector, example (1,1.5,1)
+        location: (Vector) Optional Location as vector. example (12,0,2) 
     Returns:
         Controller node
 
@@ -226,9 +226,9 @@ def ngon(name="cont_ngon", scale=(1,1,1), location=None):
     """
     Creates a ngon controller. 
     Args:
-        name: name of the controller. Must be a String
-        scale: scale value as vector, example (1,1.5,1)
-        location: Optional Location as vector. example (12,0,2) 
+        name: (String) name of the controller. Must be a String
+        scale: (Vector) scale value as vector, example (1,1.5,1)
+        location: (Vector) Optional Location as vector. example (12,0,2) 
     Returns:
         Controller node
 
@@ -247,9 +247,9 @@ def triCircle(name="cont_triCircle", scale=(1,1,1), location=None):
     """
     Creates a circle controller with triangles on each direction. 
     Args:
-        name: name of the controller. Must be a String
-        scale: scale value as vector, example (1,1.5,1)
-        location: Optional Location as vector. example (12,0,2) 
+        name: (String) name of the controller. Must be a String
+        scale: (Vector) scale value as vector, example (1,1.5,1)
+        location: (Vector) Optional Location as vector. example (12,0,2) 
     Returns:
         Controller node
 
@@ -279,9 +279,9 @@ def curvedCircle(name="cont_curvedCircle", scale=(1, 1, 1), location=None):
     """
     Creates a slightly curved circle controller
     Args:
-        name: name of the controller. Must be a String
-        scale: Scale value as vector. example (1,1.5,1)
-        location: Optional Location as vector. example (12,0,2) 
+        name: (String) name of the controller. Must be a String
+        scale: (Vector) Scale value as vector. example (1,1.5,1)
+        location: (Vector) Optional Location as vector. example (12,0,2) 
 
     Returns:
         Controller node
@@ -299,6 +299,16 @@ def curvedCircle(name="cont_curvedCircle", scale=(1, 1, 1), location=None):
     return cont_curvedCircle[0]
 
 def halfDome(name="cont_halfDome", scale=(1,1,1), location=None):
+    """
+    Creates a Half-Dome curve
+    Args:
+        name: (String) name of the controller
+        scale: (Vector) Scale value as vector. example (1,1.5,1)
+        location: (Vector) Optional Location as vector. example (12,0,2) 
+
+    Returns:
+        Controller node
+    """
 
     halfCurve=pm.curve(name=name, bezier=True, d=3, p=[(-2, 0, 0), (-2, 0, 0), (-2, 0, -2), (0, 0, -2), (2, 0, -2), (2, 0, 0), (2, 0, 0)],
              k=[0, 0, 0, 1, 1, 1, 2, 2, 2])

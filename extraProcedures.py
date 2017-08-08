@@ -1,4 +1,5 @@
 import pymel.core as pm
+import pymel.core.datatypes as dt
 
 def getDistance( node1, node2):
     """
@@ -13,34 +14,33 @@ def getDistance( node1, node2):
     Ax, Ay, Az = node1.getTranslation(space="world")
     Bx, By, Bz = node2.getTranslation(space="world")
     return ((Ax-Bx)**2 + (Ay-By)**2 + (Az-Bz)**2)**0.5
-    
-# def alignTo(node1, node2, mode=0, o=(0,0,0)):
-#     """
-#     Aligns the first node to the second.
-#     Args:
-#         node1: Node to be aligned.
-#         node2: Target Node.
-#         mode: Specifies the alignment Mode. Valid Values: 0=position only, 1=Rotation Only, 2=Position and Rotation
-#         o: Offset Value. Default: (0,0,0)
-#
-#     Returns:None
-#
-#     """
-#     if mode==0:
-#         ##Position Only
-#         pointCon=pm.pointConstraint (node2, node1, mo=False, o=o)
-#         pm.delete(pointCon)
-#     elif mode==1:
-#         ##Rotation Only
-#         orientCon=pm.orientConstraint (node2, node1, mo=False, o=o)
-#         pm.delete(orientCon)
-#     elif mode==2:
-#         ##Position and Rotation
-#         parentCon=pm.parentConstraint (node2, node1, mo=False)
-#         pm.delete(parentCon)
 
 
-def alignTo(node1, node2, mode=0, o=(0,0,0)):
+def alignTo(sourceObj=None, targetObj=None, mode=0, sl=False, o=(0,0,0)):
+    offset=dt.Vector(o)
+    if sl == True:
+        selection = pm.ls(sl=True)
+        if not len(selection) == 2:
+            pm.error("select exactly 2 objects")
+            return
+        sourceObj = selection[0]
+        targetObj = selection[1]
+    if not sourceObj or not targetObj:
+        pm.error("No source and/or target object defined")
+        return
+    if mode == 0:
+
+        targetTranslation = pm.xform(targetObj, query=True, worldSpace=True, translation=True)
+        pm.xform(sourceObj, worldSpace=True, translation =targetTranslation)
+    if mode == 1:
+        targetRotation = pm.xform(targetObj, query=True, worldSpace=True, rotation=True)
+        pm.xform(sourceObj, worldSpace=True, rotation =targetRotation+offset)
+    if mode == 2:
+        targetMatrix = pm.xform(targetObj, query=True, worldSpace=True, matrix=True)
+        pm.xform(sourceObj, worldSpace=True, matrix=targetMatrix)
+
+
+def alignToAlter(node1, node2, mode=0, o=(0,0,0)):
     """
     Aligns the first node to the second.
     Args:
@@ -60,8 +60,10 @@ def alignTo(node1, node2, mode=0, o=(0,0,0)):
 
     if mode==0:
         ##Position Only
-        targetLoc = node2.getRotatePivot(space="world")
-        pm.move(node1, targetLoc, a=True, ws=True)
+        tempPocon = pm.pointConstraint(node2, node1, mo=False)
+        pm.delete(tempPocon)
+        # targetLoc = node2.getRotatePivot(space="world")
+        # pm.move(node1, targetLoc, a=True, ws=True)
 
     elif mode==1:
         ##Rotation Only
@@ -74,15 +76,62 @@ def alignTo(node1, node2, mode=0, o=(0,0,0)):
 
     elif mode==2:
         ##Position and Rotation
-        targetLoc = node2.getRotatePivot(space="world")
-        pm.move(node1, targetLoc, a=True, ws=True)
-        if node2.type() == "joint":
-            tempOri = pm.orientConstraint(node2, node1, o=o, mo=False)
-            pm.delete(tempOri)
-        else:
-            targetRot = node2.getRotation()
-            pm.rotate(node1, targetRot, a=True, ws=True)
+        tempPacon = pm.parentConstraint(node2, node1, mo=False)
+        pm.delete(tempPacon)
 
+        # targetLoc = node2.getRotatePivot(space="world")
+        # pm.move(node1, targetLoc, a=True, ws=True)
+        # if node2.type() == "joint":
+        #     tempOri = pm.orientConstraint(node2, node1, o=o, mo=False)
+        #     pm.delete(tempOri)
+        # else:
+        #     targetRot = node2.getRotation()
+        #     pm.rotate(node1, targetRot, a=True, ws=True)
+
+#
+# def alignToOld(node1, node2, mode=0, o=(0,0,0)):
+#     """
+#     Aligns the first node to the second.
+#     Args:
+#         node1: Node to be aligned.
+#         node2: Target Node.
+#         mode: Specifies the alignment Mode. Valid Values: 0=position only, 1=Rotation Only, 2=Position and Rotation
+#         o: Offset Value. Default: (0,0,0)
+#
+#     Returns:None
+#
+#     """
+#     if type(node1) == str:
+#         node1 = pm.PyNode(node1)
+#
+#     if type(node2) == str:
+#         node2 = pm.PyNode(node2)
+#
+#     if mode==0:
+#         ##Position Only
+#         targetLoc = node2.getRotatePivot(space="world")
+#         pm.move(node1, targetLoc, a=True, ws=True)
+#
+#     elif mode==1:
+#         ##Rotation Only
+#         if node2.type() == "joint":
+#             tempOri = pm.orientConstraint(node2, node1, o=o, mo=False)
+#             pm.delete(tempOri)
+#         else:
+#             targetRot = node2.getRotation()
+#             pm.rotate(node1, targetRot, a=True, ws=True)
+#
+#     elif mode==2:
+#         ##Position and Rotation
+#         targetLoc = node2.getRotatePivot(space="world")
+#         pm.move(node1, targetLoc, a=True, ws=True)
+#         if node2.type() == "joint":
+#             tempOri = pm.orientConstraint(node2, node1, o=o, mo=False)
+#             pm.delete(tempOri)
+#         else:
+#             targetRot = node2.getRotation()
+#             pm.rotate(node1, targetRot, a=True, ws=True)
+#
 
 def createUpGrp(obj, suffix, mi=True):
     """
@@ -103,7 +152,7 @@ def createUpGrp(obj, suffix, mi=True):
     # pointCon = pm.parentConstraint (obj, newGrp, mo=False)
     # pm.delete (pointCon)
     # pm.makeIdentity(newGrp, a=True)
-    
+
     #check if the target object has a parent
     originalParent = pm.listRelatives(obj, p=True)
     if (len(originalParent) > 0):
@@ -126,6 +175,8 @@ def connectMirror (node1, node2, mirrorAxis="X"):
     Returns: None
 
     """
+    ## make sure the axis is uppercase:
+    mirrorAxis = mirrorAxis.upper()
     #nodes Translate
     rvsNodeT=pm.createNode("reverse")
     minusOpT=pm.createNode("plusMinusAverage")
@@ -140,14 +191,14 @@ def connectMirror (node1, node2, mirrorAxis="X"):
     node1.rotate >> rvsNodeR.input
     rvsNodeR.output >> minusOpR.input3D[0]
     pm.setAttr(minusOpR.input3D[1], (1, 1, 1))
-    
+
     #Translate
-    
+
     if (mirrorAxis=="X"):
         minusOpT.output3Dx >> node2.tx
         node1.ty >> node2.ty
         node1.tz >> node2.tz
-        
+
         node1.rx >> node2.rx
         minusOpR.output3Dy >> node2.ry
         minusOpR.output3Dz >> node2.rz
@@ -155,16 +206,16 @@ def connectMirror (node1, node2, mirrorAxis="X"):
         node1.tx >> node2.tx
         minusOpT.output3Dy >> node2.ty
         node1.tz >> node2.tz
-        
+
         minusOpR.output3Dx >> node2.rx
         node1.ry >> node2.ry
         minusOpR.output3Dz >> node2.rz
-        
+
     if (mirrorAxis=="Z"):
         node1.tx >> node2.tx
         node1.ty >> node2.ty
         minusOpT.output3Dz >> node2.tz
-        
+
         node1.rx >> node2.rx
         minusOpR.output3Dy >> node2.ry
         minusOpR.output3Dz >> node2.rz
@@ -185,7 +236,7 @@ def colorize (node, index):
     for i in shapes:
         pm.setAttr(i.overrideEnabled, True)
         pm.setAttr(i.overrideColor, index)
-        
+
 def lockAndHide (node, channelArray):
     """
     Locks and hides the channels specified in the channelArray.
@@ -199,8 +250,8 @@ def lockAndHide (node, channelArray):
     for i in channelArray:
         attribute=("{0}.{1}".format(node, i))
         pm.setAttr(attribute, lock=True, keyable=False, channelBox=False)
-    
-def alignBetween (node, targetA, targetB, pos=True, rot=True, o=(0,0,0)):
+
+def alignBetween (node, targetA, targetB, pos=True, rot=True, ore=False, o=(0,0,0)):
     """
     Alignes the node between target A and target B
     Args:
@@ -219,6 +270,9 @@ def alignBetween (node, targetA, targetB, pos=True, rot=True, o=(0,0,0)):
     if rot:
         tempAim=pm.aimConstraint(targetB,node, mo=False, o=o)
         pm.delete(tempAim)
+    if ore:
+        tempOre=pm.orientConstraint(targetA, targetB, node, mo=False, o=o)
+        pm.delete(tempOre)
 
 def attrPass (sourceNode, targetNode, attributes=[], inConnections=True, outConnections=True, keepSourceAttributes=False, values=True, daisyChain=False, overrideEx=False):
     """
@@ -338,7 +392,7 @@ def attrPass (sourceNode, targetNode, attributes=[], inConnections=True, outConn
             for i in userAttr:
                 pm.deleteAttr("%s.%s" % (sourceNode,i))
 
-def spaceSwitcher (node, targetList, overrideExisting=False, mode="parent", defaultVal=1):
+def spaceSwitcher (node, targetList, overrideExisting=False, mode="parent", defaultVal=1, listException = None):
     """
     Creates the space switch attributes between selected node (controller) and targets.
     Args:
@@ -347,27 +401,30 @@ def spaceSwitcher (node, targetList, overrideExisting=False, mode="parent", defa
         overrideExisting: (bool) If True, the existing attributes on the node with the same name will be deleted and recreated. Default False
         mode: (String) The type of the constrain that will be applied to the node. Valid options are "parent", "point and "orient". Default "parent"
         defaultVal: (integer) Default value for the new Switch attribute. If it is out of range, 1 will be used. default: 1.
-        
+        listException: (List) If this argument is not none, the given elements in the list will be removed from the targetList, in case it is in the list of course.
     Returns: None
 
     """
 
-    anchors=list(targetList)
-    if anchors.__contains__(node):
+    anchorPoses=list(targetList)
+    if anchorPoses.__contains__(node):
         # if targetList contains the node itself, remove it
-        anchors.remove(node)
-    if anchors==[]:
+        anchorPoses.remove(node)
+    if anchorPoses==[]:
         pm.error("target list is empty or no valid targets")
-
-    if len(anchors) > defaultVal:
+    if listException != None:
+        for x in listException:
+            if anchorPoses.__contains__(x):
+                anchorPoses.remove(x)
+    if len(anchorPoses) > defaultVal:
         defaultVal=1
     modeList=("parent", "point", "orient")
     if not modeList.__contains__(mode):
         pm.error("unknown mode flag. Valid mode flags are 'parent', 'point' and 'orient' ")
     # create the enumerator list
     enumFlag = "worldSpace:"
-    for enum in range (0, len(anchors)):
-        cur = str(anchors[enum])
+    for enum in range (0, len(anchorPoses)):
+        cur = str(anchorPoses[enum])
         cur = cur.replace("cont_", "")
         enumFlag += "%s:" % cur
 
@@ -382,26 +439,234 @@ def spaceSwitcher (node, targetList, overrideExisting=False, mode="parent", defa
 
     switchGrp=createUpGrp(node, (mode+"SW"))
     if mode == "parent":
-        con = pm.parentConstraint(anchors, switchGrp, mo=True)
+        con = pm.parentConstraint(anchorPoses, switchGrp, mo=True)
     elif mode == "point":
-        con = pm.parentConstraint(anchors, switchGrp, sr=("x","y","z"), mo=True)
+        con = pm.parentConstraint(anchorPoses, switchGrp, sr=("x","y","z"), mo=True)
     elif mode == "orient":
-        con = pm.parentConstraint(anchors, switchGrp, st=("x","y","z"), mo=True)
+        con = pm.parentConstraint(anchorPoses, switchGrp, st=("x","y","z"), mo=True)
 
 
     ## make worldSpace driven key (all zero)
-    for i in range (0, len(anchors)):
-        attr="{0}W{1}".format(anchors[i],i)
+    for i in range (0, len(anchorPoses)):
+        attr="{0}W{1}".format(anchorPoses[i],i)
         pm.setDrivenKeyframe(con, cd=driver, at=attr, dv=0, v=0)
 
     # # loop for each DRIVER POSITION
-    for dPos in range (0, len(anchors)):
+    for dPos in range (0, len(anchorPoses)):
         # # loop for each target at parent constraint
-        for t in range (0, len(anchors)):
-            attr = "{0}W{1}".format(anchors[t], t)
+        for t in range (0, len(anchorPoses)):
+            attr = "{0}W{1}".format(anchorPoses[t], t)
             # # if driver value matches the attribute, make the value 1, else 0
             if t == (dPos):
                 value = 1
             else:
                 value = 0
             pm.setDrivenKeyframe(con, cd=driver, at=attr , dv=dPos+1, v=value )
+
+def jointTypeID(jNode, idBy="idByLabel"):
+    if type(jNode) == str:
+        jNode = pm.PyNode(jNode)
+
+    # acceptable type keys to use.
+
+    # // TODO: FIX DICTIONARY for ALL JOINTS or vice-versa
+
+    typeDict = {
+        1: 'Root',
+        2: 'Hip',
+        3: 'Knee',
+        4: 'Foot',
+        5: 'Toe',
+        6: 'Spine',
+        7: 'Neck',
+        8: 'Head',
+        9: 'Collar',
+        10: 'Shoulder',
+        11: 'Elbow',
+        12: 'Hand',
+        13: 'Finger',
+        14: 'Thumb',
+        18: 'Other',
+        19: 'Index Finger',
+        20: 'Middle Finger',
+        21: 'Ring Finger',
+        22: 'Pinky Finger',
+        23: 'Extra Finger',
+        24: 'Big Toe',
+        25: 'Index Toe',
+        26: 'Middle Toe',
+        27: 'Ring Toe',
+        28: 'Pinky Toe',
+        29: 'Extra Toe'
+    }
+    if idBy == "idByLabel":
+            typeNum = pm.getAttr(jNode+".type") # object oriented approach is not working in pymel
+
+            if typeNum not in typeDict.keys():
+                pm.error("Joint Type is not detected with idByLabel method")
+
+            if typeNum == 18: # if type is in the 'other' category:
+                typeName = pm.getAttr(jNode.otherType)
+            else:
+                typeName = typeDict[typeNum]
+            return typeName
+
+    if idBy == "idByName":
+        if "arm" in jNode.name():
+            typeName = "arm"
+        elif "leg" in jNode.name():
+            typeName = "leg"
+        elif "spine" in jNode.name():
+            typeName = "spine"
+        elif "neck" in jNode.name():
+            typeName = "neck"
+        elif "indexF" in jNode.name():
+            typeName = "Index Finger"
+        elif "thumb" in jNode.name():
+            typeName = "Thumb"
+        elif "middleF" in jNode.name():
+            typeName = "Middle Finger"
+        elif "ringF" in jNode.name():
+            typeName = "Ring Finger"
+        elif "pinkyF" in jNode.name():
+            typeName = "Pinky Finger"
+        elif "indexT" in jNode.name():
+            typeName = "Index Toe"
+        elif "bigT" in jNode.name():
+            typeName = "Big Toe"
+        elif "middleT" in jNode.name():
+            typeName = "Middle Toe"
+        elif "ringT" in jNode.name():
+            typeName = "Ring Toe"
+        elif "pinkyT" in jNode.name():
+            typeName = "Pinky Toe"
+        else:
+            pm.error("Joint Type is not detected with idByName method")
+        return typeName
+
+def jointSideID(jNode, idBy="idByLabel"):
+    if type(jNode) == str:
+        jNode = pm.PyNode(jNode)
+    # acceptable side keys to use.
+    sideDict = {
+        0: 'C',
+        1: 'L',
+        2: 'R',
+    }
+
+    if idBy == "idByLabel":
+            sideNum = pm.getAttr(jNode.side)
+
+            if sideNum not in sideDict.keys():
+                pm.error("Joint Side is not detected with idByLabel method")
+            side = sideDict[sideNum]
+            return side
+
+    if idBy == "idByName":
+        # identify the side
+        if "_R_" in jNode.name():
+            side = sideDict[2]
+        elif "_L_" in jNode.name():
+            side = sideDict[1]
+        elif "_C_" in jNode.name():
+            side = sideDict[0]
+        else:
+            pm.error("Joint Side is not detected with idByName method")
+        return side
+
+def identifyMaster(node, idBy="idByLabel"):
+    validIdByValues = ("idByLabel, idByName")
+
+    # define values as no
+    limbType = "N/A"
+    limbName = "N/A"
+
+    typeDict = {
+        1: 'Root',
+        2: 'Hip',
+        3: 'Knee',
+        4: 'Foot',
+        5: 'Toe',
+        6: 'Spine',
+        7: 'Neck',
+        8: 'Head',
+        9: 'Collar',
+        10: 'Shoulder',
+        11: 'Elbow',
+        12: 'Hand',
+        13: 'Finger',
+        14: 'Thumb',
+        18: 'Other',
+        19: 'Index_F',
+        20: 'Middle_F',
+        21: 'Ring_F',
+        22: 'Pinky_F',
+        23: 'Extra_F',
+        24: 'Big_T',
+        25: 'Index_T',
+        26: 'Middle_T',
+        27: 'Ring_T',
+        28: 'Pinky_T',
+        29: 'Extra_T'
+    }
+
+    limbDictionary = {
+        "arm": ["Collar", "Shoulder", "Elbow", "Hand"],
+        "leg": ["LegRoot", "Hip", "Knee", "Foot", "Ball", "HeelPV", "ToePV", "BankIN", "BankOUT"],
+        "hand": ["Finger", "Thumb", "Index_F", "Middle_F", "Ring_F", "Pinky_F", "Extra_F"],
+        "spine": ["Spine", "Root", "SpineEnd"],
+        "neck": ["NeckRoot", "Neck", "Head", "Jaw", "HeadEnd"],
+        "tail": ["TailRoot", "Tail"]
+    }
+
+    if not idBy in validIdByValues:
+        pm.error("idBy flag is not valid. Valid Values are:%s" %(validIdByValues))
+
+    ## get the label ID
+    if idBy == "idByLabel":
+        if node.type() != "joint":
+            pm.error("label identification can only be used for joints")
+    typeNum = pm.getAttr("%s.type" %node)
+    if typeNum not in typeDict.keys():
+        pm.error("Joint Type is not detected with idByLabel method")
+
+    if typeNum == 18:  # if type is in the 'other' category:
+        limbName = pm.getAttr(node.otherType)
+    else:
+        limbName = typeDict[typeNum]
+        # get which limb it is
+    for i in limbDictionary.values():
+        if limbName in i:
+            limbType = limbDictionary.keys()[limbDictionary.values().index(i)]
+
+    ## Get the Side
+
+    sideDict = {
+        0: 'C',
+        1: 'L',
+        2: 'R',
+    }
+
+    if idBy == "idByLabel":
+            sideNum = pm.getAttr(node.side)
+
+            if sideNum not in sideDict.keys():
+                pm.error("Joint Side is not detected with idByLabel method")
+            side = sideDict[sideNum]
+
+    if idBy == "idByName":
+        # identify the side
+        if "_R_" in node.name():
+            side = sideDict[2]
+        elif "_L_" in node.name():
+            side = sideDict[1]
+        elif "_C_" in node.name():
+            side = sideDict[0]
+        else:
+            pm.error("Joint Side is not detected with idByName method")
+
+    return limbName, limbType, side
+
+
+
+
