@@ -1,7 +1,5 @@
 import pymel.core as pm
 
-# import extraProcedures as extra
-# reload(extra)
 
 def circle(name="cont_circle", scale=(1,1,1), location=None, normal=(0, 1, 0)):
     """

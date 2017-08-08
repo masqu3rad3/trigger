@@ -1,5 +1,4 @@
 import pymel.core as pm
-import collections
 import extraProcedures as extra
 
 reload(extra)
@@ -38,7 +37,7 @@ class simpleTail(object):
         print "Creating Simple Tail %s" %suffix
 
         if (len(inits) < 2):
-            pm.error("Insufficient Spine Initialization Joints")
+            pm.error("Insufficient Tail Initialization Joints")
             return
 
         self.scaleGrp = pm.group(name="scaleGrp_" + suffix, em=True)

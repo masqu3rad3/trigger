@@ -1,5 +1,4 @@
 import pymel.core as pm
-import collections
 import extraProcedures as extra
 
 reload(extra)

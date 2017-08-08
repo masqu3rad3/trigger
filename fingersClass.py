@@ -1,0 +1,142 @@
+import pymel.core as pm
+import extraProcedures as extra
+
+reload(extra)
+import contIcons as icon
+
+reload(icon)
+
+
+
+class Fingers(object):
+    def __init__(self):
+        super(Fingers, self).__init__()
+        self.scaleGrp = None
+        self.cont_body = None
+        self.cont_hips = None
+        self.limbPlug = None
+        self.rootSocket = None
+        self.nonScaleGrp = None
+        self.connectsTo = None
+        self.cont_IK_OFF = None
+        self.scaleConstraints = []
+        self.anchors = []
+        self.anchorLocations = []
+        self.deformerJoints = []
+
+    rootMaster = None
+    allControllers = []
+    defJoints = []
+
+    def createFinger(self, inits, suffix="", side="L", parentController=None, thumb=False, mirrorAxis="X"):
+        if not isinstance(inits, list):
+            fingerRoot = inits.get("FingerRoot")
+            fingers = (inits.get("Finger"))
+            inits = [fingerRoot] + sorted(fingers)
+
+        idCounter = 0
+        ## create an unique suffix
+        while pm.objExists("scaleGrp_" + suffix):
+            suffix = "%s%s" % (suffix, str(idCounter + 1))
+
+        print "Creating Finger %s" %suffix
+
+        if (len(inits) < 2):
+            pm.error("Insufficient Finger Initialization Joints")
+            return
+
+        self.scaleGrp = pm.group(name="scaleGrp_" + suffix, em=True)
+        self.scaleConstraints.append(self.scaleGrp)
+
+        self.connectsTo = inits[0].getParent()
+
+        ## Create LimbPlug
+
+        pm.select(d=True)
+        self.limbPlug = pm.joint(name="limbPlug_" + suffix, p=inits[0].getTranslation(space="world"), radius=2)
+        # self.scaleConstraints.append(self.limbPlug)
+        pm.parentConstraint(self.limbPlug, self.scaleGrp)
+
+        pm.select(d=True)
+
+        iter = 0
+        for i in inits:
+            iter += 1
+            jPos = i.getTranslation(space="world")
+            jOri = pm.joint(i, q=True, o=True)
+            j = pm.joint(name="jDef_{0}{1}_{2}".format(side, iter, suffix), radius=1.0)
+            extra.alignTo(j, i, 2)
+            if iter == (len(inits)): # if it is the last joint dont add it to the deformers
+                replacedName = (j.name()).replace("jDef", "j")
+                pm.rename(j, replacedName)
+                continue
+            self.defJoints.append(j)
+
+        ## Create Controllers
+
+        self.conts = []
+        conts_OFF = []
+        conts_ORE = []
+        conts_con = []
+
+        for i in range(0, len(self.defJoints)):
+            contScl = (pm.getAttr(self.defJoints[1].tx) / 2)
+            contName = ("cont_{0}{1}_{2}".format(side, i, suffix))
+            cont = icon.circle(contName,(contScl,contScl,contScl), normal=(1,0,0))
+            cont_OFF=extra.createUpGrp(cont,"OFF", mi=False)
+            conts_OFF.append([cont_OFF])
+            cont_ORE = extra.createUpGrp(cont, "ORE", mi=False)
+            cont_con = extra.createUpGrp(cont, "con", mi=False)
+
+            if side == "R":
+                pm.setAttr("%s.rotate%s" %(cont_ORE, mirrorAxis), -180)
+
+            extra.alignTo(cont_OFF, self.defJoints[i], 2)
+
+            if i>0:
+                pm.parent(cont_OFF, self.conts[len(self.conts)-1])
+                pm.makeIdentity(cont, a=True)
+            self.conts.append(cont)
+            conts_con.append(cont_con)
+
+            pm.parentConstraint(cont, self.defJoints[i], mo=True)
+
+
+        ## Controller Attributtes
+
+        ## If there is no parent controller defined, create one. Everyone needs a parent
+
+        if not parentController:
+            parentController = icon.circle(("cont_{0}_{1}_Master".format(side, suffix)),(contScl*2,contScl*2,contScl*2), normal=(1,0,0))
+            extra.alignTo(parentController, self.defJoints[0], 2)
+
+        # Spread
+
+        spreadAttr = "{0}_{1}".format(suffix, "Spread")
+        pm.addAttr(parentController, shortName=spreadAttr , defaultValue=0.0, at="float", k=True)
+        sprMult=pm.createNode("multiplyDivide", name="sprMult_{0}_{1}".format(side, suffix))
+        pm.setAttr(sprMult.input1Y, 0.4)
+        print "here", parentController, spreadAttr
+        pm.connectAttr("%s.%s" %(parentController,spreadAttr), sprMult.input2Y)
+        # pm.PyNode("{0}.{1}{2}".format(parentController, side, "Spread")) >> sprMult.input2Y
+
+        sprMult.outputY >> conts_con[0].rotateY
+        # pm.PyNode("{0}.{1}{2}".format(parentController, side, "Spread")) >> conts_con[1].rotateY
+        pm.connectAttr("%s.%s" % (parentController, spreadAttr), conts_con[1].rotateY)
+
+        # Bend
+        # add bend attributes for each joint (except the end joint)
+        for f in range (0, (len(inits)-1)):
+            if f == 0 and thumb == True:
+                bendAttr="{0}{1}".format(suffix, "UpDown")
+            else:
+                bendAttr = "{0}{1}{2}".format(suffix, "Bend", f)
+
+            pm.addAttr(parentController, shortName=bendAttr, defaultValue=0.0, at="float", k=True)
+            pm.PyNode("{0}.{1}".format(parentController, bendAttr)) >> conts_con[f].rotateZ
+
+
+        self.fingerRoot = conts_OFF[0]
+
+
+

@@ -15,7 +15,6 @@ reload(icon)
 
 # whichLeg="l_leg"
 class leg():
-    limbID = "leg"
     none = None
     scaleGrp = None
     cont_IK_foot = None

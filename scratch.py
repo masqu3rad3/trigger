@@ -19,7 +19,7 @@ reload(simpleTail)
 
 class LimbBuilder():
     limbList = []
-    validRootList = ["Collar", "LegRoot", "Root", "NeckRoot", "FingerRoot", "TailRoot"]
+    validRootList = ["Collar", "LegRoot", "Root", "NeckRoot", "FingerRoot", "TailRoot", "FingerRoot", "ThumbRoot", "IndexRoot", "MiddleRoot", "RingRoot", "PinkyRoot"]
     bindingDictionary = {}
     def __init__(self):
         self.catalogueRoots(pm.ls(sl=True)[0])
@@ -31,6 +31,32 @@ class LimbBuilder():
         self.anchors = []
         self.hipSize = 1.0
         self.chestSize = 1.0
+        self.socketDictionary={}
+
+    def create(self, rootNode, connectedLimb=None):
+        # print rootNode
+        ## identify the root
+        rID = extra.identifyMaster(rootNode)
+        if rID[0] in self.validRootList:
+            ## create the limb for root
+            print "creating {0}. Root is {1}. Side is {2}".format(rID[0], rID[1], rID[2])
+            print connectedLimb
+
+            ##### LIMB CREATION HERE #####
+
+
+
+        # Do the same for all children recursively
+        children = rootNode.getChildren(type="joint")
+        for c in children:
+            cID =  extra.identifyMaster(c)
+            if cID[0] in self.validRootList:
+                limb="hedehot"+rootNode
+                ## ASSIGN THE NEW CREATED LIMB AS THE
+                self.create(c, connectedLimb=limb)
+            else:
+                self.create(c)
+
 
     ## get all the joint hierarchy and identify them
     def catalogueRoots(self, rootJoint):
