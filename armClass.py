@@ -47,10 +47,10 @@ class arm():
 
 
         # reinitialize the dictionary for easy use
-        collarRef = armInits["Collar"]
-        shoulderRef = armInits["Shoulder"]
-        elbowRef = armInits["Elbow"]
-        handRef = armInits["Hand"]
+        collarRef = armInits[0]
+        shoulderRef = armInits[1]
+        elbowRef = armInits[2]
+        handRef = armInits[3]
 
         # find the Socket
         self.connectsTo = collarRef.getParent()
