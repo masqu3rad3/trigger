@@ -587,14 +587,14 @@ class arm():
             mirror = False
             
         handRoot = handRef
-        handFingers = mFingers.multiFingers()
-        handFingers.rigFingers(handRoot, cont_FK_IK, suffix, mirror)
+        # handFingers = mFingers.multiFingers()
+        # handFingers.rigFingers(handRoot, cont_FK_IK, suffix, mirror)
 
-        pm.pointConstraint(endLock, handFingers.rootMaster, mo=True)
+        # pm.pointConstraint(endLock, handFingers.rootMaster, mo=True)
         pm.parentConstraint(cont_FK_LowArm, cont_FK_Hand_POS, mo=True)
-        handOriCon = pm.orientConstraint(self.cont_IK_hand, handLock, handFingers.rootMaster, mo=False)
-        cont_FK_IK.fk_ik >> (handOriCon + "." + self.cont_IK_hand + "W0")
-        fk_ik_rvs.outputX >> (handOriCon + "." + handLock + "W1")
+        # handOriCon = pm.orientConstraint(self.cont_IK_hand, handLock, handFingers.rootMaster, mo=False)
+        # cont_FK_IK.fk_ik >> (handOriCon + "." + self.cont_IK_hand + "W0")
+        # fk_ik_rvs.outputX >> (handOriCon + "." + handLock + "W1")
         fk_ik_rvs.outputX >> cont_FK_Hand.v
 
 
@@ -602,7 +602,7 @@ class arm():
         self.cont_IK_hand.scale >> handScaCon.color1
         cont_FK_Hand.scale >> handScaCon.color2
         cont_FK_IK.fk_ik >> handScaCon.blender
-        handScaCon.output >> handFingers.rootMaster.scale
+        # handScaCon.output >> handFingers.rootMaster.scale
 
         ### FINAL ROUND UP
 
@@ -634,7 +634,7 @@ class arm():
         pm.parent(masterRoot, self.scaleGrp)
         pm.parent(jFK_Up, self.scaleGrp)
         pm.parent(cont_FK_IK_POS, self.scaleGrp)
-        pm.parent(handFingers.rootMaster, self.scaleGrp)
+        # pm.parent(handFingers.rootMaster, self.scaleGrp)
 
         ## CONNECT RIG VISIBILITES
 
@@ -645,9 +645,9 @@ class arm():
             cont_FK_IK.tweakControls >> i.v
 
         # Hand controls
-        for finger in handFingers.allControllers:
-            for i in finger:
-                cont_FK_IK.fingerControls >> i.v
+        # for finger in handFingers.allControllers:
+        #     for i in finger:
+        #         cont_FK_IK.fingerControls >> i.v
 
         pm.addAttr(self.scaleGrp, at="bool", ln="Control_Visibility", sn="contVis", defaultValue=True)
         pm.addAttr(self.scaleGrp, at="bool", ln="Joints_Visibility", sn="jointVis", defaultValue=True)
@@ -661,25 +661,25 @@ class arm():
                         cont_FK_LowArm_OFF, cont_FK_UpArm_OFF, ribbonLowerArm.scaleGrp, ribbonUpperArm.scaleGrp, cont_midLock_POS]
         nodesJointVis = [jDef_elbow, jDef_paCon, jDef_Collar]
         nodesJointVisLists = [ribbonLowerArm.deformerJoints, ribbonUpperArm.deformerJoints, nodesJointVis ]
-        nodesRigVis = [endLock_Twist, startLock_Ore, armStart, armEnd, IK_parentGRP, midLock, masterRoot, jFK_Up, handLock,(handFingers.rootMaster.getShape())]
+        nodesRigVis = [endLock_Twist, startLock_Ore, armStart, armEnd, IK_parentGRP, midLock, masterRoot, jFK_Up, handLock]
         # global Cont visibilities
 
 
         for i in self.nodesContVis:
             self.scaleGrp.contVis >> i.v
-        for finger in handFingers.allControllers:
-            for i in finger:
+        # for finger in handFingers.allControllers:
+        #     for i in finger:
                 # reserve the controllers visibility for finger controls visibility on FK_IK switch
-                ek = i.getParent()
-                self.scaleGrp.contVis >> ek.v
+                # ek = i.getParent()
+                # self.scaleGrp.contVis >> ek.v
 
         # global Joint visibilities
         for lst in nodesJointVisLists:
             for j in lst:
                 self.scaleGrp.jointVis >> j.v
-        for lst in handFingers.defJoints:
-            for j in lst:
-                self.scaleGrp.jointVis >> j.v
+        # for lst in handFingers.defJoints:
+        #     for j in lst:
+        #         self.scaleGrp.jointVis >> j.v
 
         # global Rig visibilities
 
@@ -701,9 +701,9 @@ class arm():
         extra.lockAndHide(cont_FK_LowArm, ["tx", "ty", "tz", "sx", "sz", "v"])
         extra.lockAndHide(cont_FK_UpArm, ["tx", "ty", "tz", "sx", "sz", "v"])
         extra.lockAndHide(cont_Shoulder, ["sx", "sy", "sz", "v"])
-        for finger in handFingers.allControllers:
-            for eklem in finger:
-                extra.lockAndHide(eklem, ["sx", "sy", "sz"])
+        # for finger in handFingers.allControllers:
+        #     for eklem in finger:
+        #         extra.lockAndHide(eklem, ["sx", "sy", "sz"])
 
         # COLOR CODING
 
@@ -721,8 +721,8 @@ class arm():
         extra.colorize(cont_FK_UpArm, index)
         extra.colorize(cont_FK_LowArm, index)
         extra.colorize(cont_FK_Hand, index)
-        for i in handFingers.allControllers:
-            extra.colorize(i, indexMin)
+        # for i in handFingers.allControllers:
+        #     extra.colorize(i, indexMin)
 
         extra.colorize(cont_midLock, indexMin)
         extra.colorize(ribbonUpperArm.middleCont, indexMin)

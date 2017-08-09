@@ -40,12 +40,12 @@ class neckAndHead():
             return
 
         # define related joints
-        try:
-            neckNodes = [inits["NeckRoot"]] + inits["Neck"]
-        except:
-            neckNodes = [inits["NeckRoot"]]
-        headStart = inits["Head"]
-        headEnd = inits["HeadEnd"]
+
+        headEnd = inits.pop(-1)
+        headStart = inits.pop(-1)
+        neckNodes = list(inits)
+
+
         # jawStart = inits["Jaw"]
         # jawEnd = inits["JawEnd"]
 

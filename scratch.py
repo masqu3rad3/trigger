@@ -34,53 +34,55 @@ class LimbBuilder():
         self.socketDictionary={}
 
     def create(self, rootNode, connectedLimb=None, isRoot=False):
-
         if isRoot:
-            inits, type, side = self.getWholeLimb(rootNode)
+            anan = ""
+            anan = self.getWholeLimb(rootNode)
+            print anan
+            # inits, type, side = self.getWholeLimb(rootNode)
 
-            print rootNode
-            ### LIMB CREATION HERE #####
-            if type == "arm":
-                if side == "L":
-                    self.rightShoulder = inits[1]
-                if side == "R":
-                    self.leftShoulder = inits[1]
-                limb_arm = arm.arm()
-                limb_arm.createArm(inits, suffix=side + "_arm", side=side)
-                # self.limbList.append(limb_arm)
-                # //TODO: add socket connections
-
-            if type == "leg":
-                if side == "L":
-                    self.leftHip = inits[1]
-                if side == "R":
-                    self.rightHip = inits[1]
-
-                limb_leg = leg.leg()
-                limb_leg.createLeg(inits, suffix=side + "_leg", side=side)
-                # self.limbList.append(limb_leg)
-                # //TODO: add socket connections
-
-            if type == "neck":
-                limb_neck = neckAndHead.neckAndHead()
-                limb_neck.createNeckAndHead(inits, suffix="_n")
-                # self.limbList.append(limb_neck)
-                # //TODO: add socket connections
-
-            if type == "spine":
-                limb_spine = spine.spine()
-                limb_spine.createSpine(inits, suffix="_s")  # s for spine...
-                self.limbList.append(limb_spine)
-                # update the socketPointDict with the new created values
-                # for key in limb_spine.socketDict.keys():
-                #     if key in self.socketPointDict.keys():
-                #         self.socketPointDict[key] = limb_spine.socketDict.get(key)
-
-            if type == "tail":
-                limb_tail = simpleTail.simpleTail()
-                limb_tail.createSimpleTail(inits, suffix="_tail")
-                self.limbList.append(limb_tail)
-                # //TODO: add socket connections
+            # print "initBones", inits
+            # ### LIMB CREATION HERE #####
+            # if type == "arm":
+            #     if side == "L":
+            #         self.rightShoulder = inits[1]
+            #     if side == "R":
+            #         self.leftShoulder = inits[1]
+            #     limb_arm = arm.arm()
+            #     limb_arm.createArm(inits, suffix=side + "_arm", side=side)
+            #     # self.limbList.append(limb_arm)
+            #     # //TODO: add socket connections
+            #
+            # if type == "leg":
+            #     if side == "L":
+            #         self.leftHip = inits[1]
+            #     if side == "R":
+            #         self.rightHip = inits[1]
+            #
+            #     limb_leg = leg.leg()
+            #     limb_leg.createLeg(inits, suffix=side + "_leg", side=side)
+            #     # self.limbList.append(limb_leg)
+            #     # //TODO: add socket connections
+            #
+            # if type == "neck":
+            #     limb_neck = neckAndHead.neckAndHead()
+            #     limb_neck.createNeckAndHead(inits, suffix="_n")
+            #     # self.limbList.append(limb_neck)
+            #     # //TODO: add socket connections
+            #
+            # if type == "spine":
+            #     limb_spine = spine.spine()
+            #     limb_spine.createSpine(inits, suffix="_s")  # s for spine...
+            #     self.limbList.append(limb_spine)
+            #     # update the socketPointDict with the new created values
+            #     # for key in limb_spine.socketDict.keys():
+            #     #     if key in self.socketPointDict.keys():
+            #     #         self.socketPointDict[key] = limb_spine.socketDict.get(key)
+            #
+            # if type == "tail":
+            #     limb_tail = simpleTail.simpleTail()
+            #     limb_tail.createSimpleTail(inits, suffix="_tail")
+            #     self.limbList.append(limb_tail)
+            #     # //TODO: add socket connections
 
             ## make the connections while the limb is still hot
 
@@ -113,10 +115,10 @@ class LimbBuilder():
             if jID[0] in self.validRootList:
                 self.allRoots.append(j)
 
-    def getWholeLimb(self, rootNode, currentList=[]):
-        currentList.append(rootNode)
-        children = rootNode.getChildren(type="joint")
-        limbName, limbType, limbSide = extra.identifyMaster(rootNode)
+    def getWholeLimb(self, node, currentList=[]):
+        currentList.append(node)
+        children = node.getChildren(type="joint")
+        limbName, limbType, limbSide = extra.identifyMaster(node)
         for c in children:
             childName, childType, childSide = extra.identifyMaster(c)
             if childName not in self.validRootList and childType == limbType:
