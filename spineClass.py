@@ -34,12 +34,13 @@ class spine(object):
             spineEnd = inits.get("SpineEnd")
             inits = [sRoot] + sorted(spines) + [spineEnd]
 
+
         idCounter = 0
         ## create an unique suffix
         while pm.objExists("scaleGrp_" + suffix):
             suffix = "%s%s" % (suffix, str(idCounter + 1))
 
-        print inits
+
         if (len(inits) < 2):
             pm.error("Insufficient Spine Initialization Joints")
             return
