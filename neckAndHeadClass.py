@@ -35,7 +35,7 @@ class neckAndHead():
         while pm.objExists("scaleGrp_" + suffix):
             suffix = "%s%s" % (suffix, str(idCounter + 1))
 
-        if (len(inits) < 3):
+        if (len(inits) < 2):
             pm.error("Some or all Neck and Head Bones are missing (or Renamed)")
             return
 

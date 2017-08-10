@@ -22,7 +22,7 @@ class simpleTail(object):
     anchors = []
     anchorLocations = []
 
-    def createSimpleTail(self, inits, suffix=""):
+    def createSimpleTail(self, inits, suffix="", conts="cube"):
         if not isinstance(inits, list):
             tailRoot = inits.get("TailRoot")
             tails = (inits.get("Tail"))

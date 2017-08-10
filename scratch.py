@@ -17,6 +17,8 @@ reload(spine)
 import simpleTailClass as simpleTail
 reload(simpleTail)
 
+import pprint
+
 class LimbBuilder():
     limbList = []
     validRootList = ["Collar", "LegRoot", "Root", "NeckRoot", "FingerRoot", "TailRoot", "FingerRoot", "ThumbRoot", "IndexRoot", "MiddleRoot", "RingRoot", "PinkyRoot"]
@@ -33,14 +35,12 @@ class LimbBuilder():
         self.chestSize = 1.0
         self.socketDictionary={}
 
-    def create(self, rootNode, connectedLimb=None, isRoot=False):
+    def create(self, hedeHot, connectedLimb=None, isRoot=False):
         if isRoot:
-            anan = ""
-            anan = self.getWholeLimb(rootNode)
-            print anan
-            # inits, type, side = self.getWholeLimb(rootNode)
 
-            # print "initBones", inits
+            inits, type, side = self.getWholeLimb(hedeHot)
+
+            print(inits)
             # ### LIMB CREATION HERE #####
             # if type == "arm":
             #     if side == "L":
@@ -92,11 +92,11 @@ class LimbBuilder():
 
 
         # Do the same for all children recursively
-        children = rootNode.getChildren(type="joint")
+        children = hedeHot.getChildren(type="joint")
         for c in children:
             cID =  extra.identifyMaster(c)
             if cID[0] in self.validRootList:
-                limb="hedehot"+rootNode
+                limb="hedehot"+hedeHot
                 ## ASSIGN THE NEW CREATED LIMB AS THE
                 self.create(c, connectedLimb=limb, isRoot=True)
             else:
