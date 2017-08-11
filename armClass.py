@@ -19,6 +19,9 @@ reload(mFingers)
 ###########################
 class arm():
 
+    sockets = []
+    # startSocket = None
+    # endSocket = None
     scaleGrp = None
     nonScaleGrp = None
     cont_IK_hand = None
@@ -84,6 +87,7 @@ class arm():
         # Shoulder Joints
         pm.select(d=True)
         jDef_Collar = pm.joint(name="jDef_Collar_" + suffix, p=collarPos, radius=1.5)
+        self.sockets.append(jDef_Collar)
         j_CollarEnd = pm.joint(name="j_CollarEnd_" + suffix, p=shoulderPos, radius=1.5)
 
         pm.select(d=True)
@@ -585,16 +589,27 @@ class arm():
             mirror = True
         else:
             mirror = False
-            
+
+        rootPosition = handRef.getTranslation(space="world")
+        rootMaster = pm.spaceLocator(name="handMaster_" + suffix)
+        extra.alignTo(rootMaster, handRef, 2)
+        pm.select(d=True)
+        jDef_Hand = pm.joint(name="jDef_Hand_" + suffix, p=rootPosition, radius=1.0)
+        self.sockets.append(jDef_Hand)
+        # self.defJoints.append([jDef_Hand])
+        extra.alignTo(jDef_Hand, handRef, 2)
+        # deformerJoints = [[jDef_Hand]]
+        pm.parent(jDef_Hand, rootMaster)
+
         handRoot = handRef
         # handFingers = mFingers.multiFingers()
         # handFingers.rigFingers(handRoot, cont_FK_IK, suffix, mirror)
 
-        # pm.pointConstraint(endLock, handFingers.rootMaster, mo=True)
+        pm.pointConstraint(endLock, rootMaster, mo=True)
         pm.parentConstraint(cont_FK_LowArm, cont_FK_Hand_POS, mo=True)
-        # handOriCon = pm.orientConstraint(self.cont_IK_hand, handLock, handFingers.rootMaster, mo=False)
-        # cont_FK_IK.fk_ik >> (handOriCon + "." + self.cont_IK_hand + "W0")
-        # fk_ik_rvs.outputX >> (handOriCon + "." + handLock + "W1")
+        handOriCon = pm.orientConstraint(self.cont_IK_hand, handLock, rootMaster, mo=False)
+        cont_FK_IK.fk_ik >> (handOriCon + "." + self.cont_IK_hand + "W0")
+        fk_ik_rvs.outputX >> (handOriCon + "." + handLock + "W1")
         fk_ik_rvs.outputX >> cont_FK_Hand.v
 
 
@@ -602,7 +617,7 @@ class arm():
         self.cont_IK_hand.scale >> handScaCon.color1
         cont_FK_Hand.scale >> handScaCon.color2
         cont_FK_IK.fk_ik >> handScaCon.blender
-        # handScaCon.output >> handFingers.rootMaster.scale
+        handScaCon.output >> rootMaster.scale
 
         ### FINAL ROUND UP
 
@@ -659,9 +674,9 @@ class arm():
 
         self.nodesContVis = [cont_Pole_OFF, cont_Shoulder_OFF, cont_IK_hand_OFF, cont_FK_Hand_OFF, cont_FK_IK_POS,
                         cont_FK_LowArm_OFF, cont_FK_UpArm_OFF, ribbonLowerArm.scaleGrp, ribbonUpperArm.scaleGrp, cont_midLock_POS]
-        nodesJointVis = [jDef_elbow, jDef_paCon, jDef_Collar]
-        nodesJointVisLists = [ribbonLowerArm.deformerJoints, ribbonUpperArm.deformerJoints, nodesJointVis ]
-        nodesRigVis = [endLock_Twist, startLock_Ore, armStart, armEnd, IK_parentGRP, midLock, masterRoot, jFK_Up, handLock]
+        nodesJointVis = [jDef_elbow, jDef_paCon, jDef_Collar, jDef_Hand]
+        nodesJointVisLists = [ribbonLowerArm.deformerJoints, ribbonUpperArm.deformerJoints, nodesJointVis]
+        nodesRigVis = [endLock_Twist, startLock_Ore, armStart, armEnd, IK_parentGRP, midLock, masterRoot, jFK_Up, handLock, rootMaster]
         # global Cont visibilities
 
 

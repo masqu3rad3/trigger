@@ -22,7 +22,9 @@ class leg():
     nonScaleGrp = None
     # cont_IK_foot_OFF = None
     cont_IK_OFF = None
-    rootSocket = None
+    sockets = []
+    # startSocket = None
+    # endSocket = None
     limbPlug = None
     connectsTo = None
     scaleConstraints = []
@@ -80,6 +82,7 @@ class leg():
         jDef_midLeg = pm.joint(name="jDef_knee_" + suffix, p=kneePos, radius=1.5)
         pm.select(d=True)
         jDef_legRoot = pm.joint(name="jDef_legRoot_" + suffix, p=legRootPos, radius=1.5)
+        self.sockets.append(jDef_legRoot)
         jDef_hip = pm.joint(name="jDef_hip_" + suffix, p=hipPos, radius=1.5)
         pm.joint(jDef_legRoot, e=True, zso=True, oj="xyz")
         pm.joint(jDef_hip, e=True, zso=True, oj="xyz")
@@ -759,6 +762,7 @@ class leg():
         pm.select(d=True)
         jDef_Foot = pm.joint(name="jDef_Foot_" + suffix, p=footPos, radius=1.0)
         jDef_Ball = pm.joint(name="jDef_Ball_" + suffix, p=ballPos, radius=1.0)
+        self.sockets.append(jDef_Ball)
         jDef_Toe = pm.joint(name="jDef_Toe_" + suffix, p=toePvPos, radius=1.0)  ## POSSIBLE PROBLEM
 
         foot_paCon = pm.pointConstraint(jIK_Foot, jFK_Foot, jDef_Foot, mo=True)

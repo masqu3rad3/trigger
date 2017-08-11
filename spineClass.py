@@ -13,15 +13,16 @@ reload(twistSpline)
 
 class spine(object):
 
-    socketDict = {}
+    # socketDict = {}
     scaleGrp = None
     cont_body = None
     cont_hips = None
     cont_chest = None
     cont_IK_OFF = None
-    rootSocket = None
     nonScaleGrp = None
-    chestSocket = None
+    # startSocket = None
+    # endSocket = None
+    sockets = []
     connectsTo = None
     anchors = []
     anchorLocations = []
@@ -51,12 +52,16 @@ class spine(object):
 
         # # Create Plug Joints
         pm.select(None)
-        self.chestSocket = pm.joint(name="jDef_ChestSocket", p=chestPoint)
-        self.socketDict[inits[-1]]=self.chestSocket
+        self.limbPlug = pm.joint(name="limbPlug_" + suffix, p=rootPoint, radius=3)
+        pm.select(None)
+        self.endSocket = pm.joint(name="jDef_ChestSocket", p=chestPoint)
+        self.sockets.append(self.endSocket)
+        # self.socketDict[inits[-1]]=self.endSocket
         # parent upper plug joints
         pm.select(None)
-        self.rootSocket = pm.joint(p=rootPoint, name="jDef_RootSocket", radius=3)
-        self.socketDict[inits[0]]=self.rootSocket
+        self.startSocket = pm.joint(p=rootPoint, name="jDef_RootSocket", radius=3)
+        # self.socketDict[inits[0]]=self.startSocket
+        self.sockets.append(self.startSocket)
         contHipsScale = (iconSize / 1.5, iconSize / 1.5, iconSize / 1.5)
         # self.cont_hips = icon.waist("cont_Hips", contHipsScale, location=rootPoint)
         self.cont_hips = icon.waist("cont_Hips", contHipsScale)
@@ -66,6 +71,8 @@ class spine(object):
         # self.cont_body = icon.square("cont_Body", contBodyScale)
         self.cont_body = icon.square("cont_Body", contBodyScale)
         extra.alignTo(self.cont_body, inits[0],2)
+        cont_Body_POS = extra.createUpGrp(self.cont_body, "POS")
+        pm.parentConstraint(self.limbPlug, cont_Body_POS, mo=True)
 
         self.cont_chest = icon.cube("cont_Chest", (iconSize*0.5, iconSize*0.35, iconSize*0.2))
         extra.alignTo(self.cont_chest, inits[-1])
@@ -84,18 +91,18 @@ class spine(object):
 
         self.nonScaleGrp = spine.nonScaleGrp
         # # connect the spine root to the master root
-        pm.parentConstraint(self.rootSocket, spine.contCurve_Start, mo=True)
-        self.rootSocket.rotateY >> spine.twistNode.input1X
+        pm.parentConstraint(self.startSocket, spine.contCurve_Start, mo=True)
+        self.startSocket.rotateY >> spine.twistNode.input1X
 
         # # connect the spine end
         pm.parentConstraint(self.cont_chest, spine.contCurve_End, mo=True)
         self.cont_chest.rotateY >> spine.twistNode.input1Y
 
         # # connect the master root to the hips controller
-        pm.parentConstraint(self.cont_hips, self.rootSocket, mo=True)
+        pm.parentConstraint(self.cont_hips, self.startSocket, mo=True)
         # # connect upper plug points to the spine and orient it to the chest controller
-        pm.pointConstraint(spine.endLock, self.chestSocket)
-        pm.orientConstraint(self.cont_chest, self.chestSocket)
+        pm.pointConstraint(spine.endLock, self.endSocket)
+        pm.orientConstraint(self.cont_chest, self.endSocket)
 
         # # pass Stretch controls from the splineIK to neck controller
         extra.attrPass(spine.attPassCont, self.cont_chest)
@@ -138,7 +145,7 @@ class spine(object):
         pm.parent(self.cont_chest, cont_spineFK_A_List[-1])
         pm.parent(cont_spineFK_A_List[0], self.cont_body)
         pm.parent(spine.contCurves_ORE, spine.scaleGrp)  # contcurve Ore s -> scaleGrp
-        pm.parent(self.chestSocket, spine.scaleGrp)
+        pm.parent(self.endSocket, spine.scaleGrp)
 
         pm.parent(self.cont_hips, cont_spineFK_B_List[0])
         pm.parent(cont_spineFK_B_List[-1], self.cont_body)
@@ -186,8 +193,8 @@ class spine(object):
 
         for i in spine.defJoints:
             spine.scaleGrp.jointVis >> i.v
-        spine.scaleGrp.jointVis >> self.chestSocket.v
-        spine.scaleGrp.jointVis >> self.rootSocket.v
+        spine.scaleGrp.jointVis >> self.endSocket.v
+        spine.scaleGrp.jointVis >> self.startSocket.v
 
         # global rig visibilities
 
