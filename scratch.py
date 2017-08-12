@@ -32,6 +32,9 @@ class LimbBuilder():
         self.hipSize = 1.0
         self.chestSize = 1.0
         self.socketDictionary={}
+        self.allSocketsList=[]
+        self.limbCreationList = []
+        self.riggedLimbList = []
 
 
     def startBuilding(self):
@@ -76,6 +79,33 @@ class LimbBuilder():
             shoulderDist = extra.getDistance(leftShoulder, rightShoulder)
         return hipDist, shoulderDist
 
+    def getLimbDicts(self, node, isRoot=True, parentIndex=None):
+        """
+        Checks the given nodes entire hieararchy for roots, and catalogues the root nodes into dictionaries.
+        Returns: (List) [{limbDictionary}, LimbType, LimbSide]
+
+        """
+
+        if isRoot:
+            # print "rootNode", rootNode
+            # inits, type, side = self.getWholeLimb(node)
+            # inits = self.getWholeLimb(node)
+            limbDict = self.getWholeLimb(node)
+            limbDict.append(parentIndex)
+            self.limbCreationList.append(limbDict)
+            # self.limbCreationList.append([inits])
+
+        # Do the same for all children recursively
+        children = node.getChildren(type="joint")
+        for c in children:
+            cID =  extra.identifyMaster(c)
+            if cID[0] in self.validRootList:
+                ## ASSIGN THE NEW CREATED LIMB AS THE
+                self.getLimbDicts(c, isRoot=True, parentIndex=node)
+            else:
+                self.getLimbDicts(c, isRoot=False)
+
+
     def createMasters(self):
         self.cont_placement = icon.circle("cont_Placement", (self.hipDistance, self.hipDistance, self.hipDistance))
         self.cont_master = icon.triCircle("cont_Master", (self.hipDistance * 1.5, self.hipDistance * 1.5, self.hipDistance * 1.5))
@@ -103,101 +133,71 @@ class LimbBuilder():
         extra.lockAndHide(self.rootGroup, ["tx", "ty", "tz", "rx", "ry", "rz", "sx", "sy", "sz"])
         pm.parent(self.cont_master, self.rootGroup)
 
-    def createLimbs(self, rootNode, connectedLimb=None, isRoot=True):
-        limb = None
-        if isRoot:
-            # print "rootNode", rootNode
-            inits, type, side = self.getWholeLimb(rootNode)
+    def createLimbs(self, limbCreationList):
+        for x in limbCreationList:
+            # limb = None
             ### LIMB CREATION HERE #####
-            if type == "arm":
-
-                if side == "L":
-                    self.rightShoulder = inits["Shoulder"]
-                if side == "R":
-                    self.leftShoulder = inits["Shoulder"]
+            if x[1] == "arm":
+                if x[2] == "L":
+                    self.rightShoulder = x[0]["Shoulder"]
+                if x[2] == "R":
+                    self.leftShoulder = x[0]["Shoulder"]
                 limb = arm.arm()
-                limb.createArm(inits, suffix=side + "_arm", side=side)
-                print limb.limbPlug
+                limb.createArm(x[0], suffix=x[2] + "_arm", side=x[2])
+
                 # print "armsokets", limb.sockets
                 # self.limbList.append(limb_arm)
                 # //TODO: add socket connections
 
-            elif type == "leg":
-                if side == "L":
-                    self.leftHip = inits["Hip"]
-                if side == "R":
-                    self.rightHip = inits["Hip"]
+            elif x[1] == "leg":
+                if x[2] == "L":
+                    self.leftHip = x[0]["Hip"]
+                if x[2] == "R":
+                    self.rightHip = x[0]["Hip"]
 
                 limb = leg.leg()
-                limb.createLeg(inits, suffix=side + "_leg", side=side)
+                limb.createLeg(x[0], suffix=x[2] + "_leg", side=x[2])
                 # self.limbList.append(limb_leg)
                 # //TODO: add socket connections
 
-            elif type == "neck":
+            elif x[1] == "neck":
                 limb = neckAndHead.neckAndHead()
-                limb.createNeckAndHead(inits, suffix="_n")
+                limb.createNeckAndHead(x[0], suffix="_n")
                 # self.limbList.append(limb_neck)
                 # //TODO: add socket connections
 
-            elif type == "spine":
+            elif x[1] == "spine":
                 limb = spine.spine()
-                limb.createSpine(inits, suffix="_s")  # s for spine...
+                limb.createSpine(x[0], suffix="_s")  # s for spine...
                 # self.limbList.append(limb)
                 # update the socketPointDict with the new created values
                 # for key in limb_spine.socketDict.keys():
                 #     if key in self.socketPointDict.keys():
                 #         self.socketPointDict[key] = limb_spine.socketDict.get(key)
 
-            elif type == "tail":
+            elif x[1] == "tail":
                 limb = simpleTail.simpleTail()
-                limb.createSimpleTail(inits, suffix="_tail")
+                limb.createSimpleTail(x[0], suffix="_tail")
                 # self.limbList.append(limb)
                 # //TODO: add socket connections
 
+            ## gather all sockets in a list
+            print "limb", limb
+            print "limbSockets", limb.sockets
+            self.allSocketsList += limb.sockets
 
-            # make the connections while the limb is still hot
+            ## add the rigged limb to the riggedLimbList
+            self.riggedLimbList.append(limb)
+            # print the parent limb index:
 
-            # if not limb:
-            #     pm.error("limb cannot be identified")
+            parentInitJoint=x[3]
+            #
+            if parentInitJoint:
+                parentSocket = self.getNearestSocket(parentInitJoint, self.allSocketsList)
+                pm.parent(limb.limbPlug, parentSocket)
 
-            if connectedLimb:
-                print "%s connects to %s:" %(limb,connectedLimb)
-                # ## get the parent initials connection socket
-                parentInitial = rootNode.getParent()
-                connectionSocket = self.getNearestSocket(parentInitial, connectedLimb.sockets)
-                # print "currentLimb", limb
-                # print "connectingLimb", connectedLimb
-                # print "connectionSocket", connectionSocket
-                pm.parent(limb.limbPlug, connectionSocket)
+            ## find the proper socket:
 
-
-            # if connectedLimb and limb:
-            #     print "connects to %s:" %connectedLimb
-            #     pm.parent(limb.scaleGrp, self.rootGroup)
-            #     pm.parent(limb.nonScaleGrp, self.rootGroup)
-            #     if limb.cont_IK_OFF:
-            #         pm.parent(limb.cont_IK_OFF, self.rootGroup)
-            #         for s in limb.scaleConstraints:
-            #             pm.scaleConstraint(self.cont_master, s)
-            #     # pm.parent(limb.limbPlug)
-            # elif limb:
-            #     pm.parent(limb.limbPlug, self.rootGroup)
-            #     pm.parent(limb.limbPlug, self.cont_placement)
-            #     pm.scaleConstraint(self.cont_master, limb.startSocket)
-            #     pm.scaleConstraint(self.cont_master, limb.scaleGrp)
-
-
-        # Do the same for all children recursively
-        children = rootNode.getChildren(type="joint")
-        for c in children:
-            print "AMNANANANA", c
-            cID =  extra.identifyMaster(c)
-            if cID[0] in self.validRootList:
-                parentLimbomatik=limb
-                ## ASSIGN THE NEW CREATED LIMB AS THE
-                self.createLimbs(c, connectedLimb=parentLimbomatik, isRoot=True)
-            else:
-                self.createLimbs(c, isRoot=False)
 
     def getNearestSocket(self, initJoint, limbSockets):
         # gets the nearest socket of a limb
@@ -249,7 +249,7 @@ class LimbBuilder():
                     failedChildren += 1
             if len(children) == failedChildren:
                 z=False
-        return limbDict, limbType, limbSide
+        return [limbDict, limbType, limbSide]
 
     def getRestOfTheLimb(self, limbRoot):
         # wholeLimb=[limbRoot]
