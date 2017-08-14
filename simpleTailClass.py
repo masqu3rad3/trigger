@@ -14,10 +14,11 @@ class simpleTail(object):
     cont_body = None
     cont_hips = None
     limbPlug = None
-    rootSocket = None
+    # rootSocket = None
     nonScaleGrp = None
-    connectsTo = None
+    # connectsTo = None
     cont_IK_OFF = None
+    sockets = []
     scaleConstraints = []
     anchors = []
     anchorLocations = []
@@ -44,7 +45,7 @@ class simpleTail(object):
         self.scaleConstraints.append(self.scaleGrp)
 
         # find the Socket
-        self.connectsTo = inits[0].getParent()
+        # self.connectsTo = inits[0].getParent()
         # if tailParent != None and tailParent.type() == "joint":
         #     self.connectsTo = extra.identifyMaster(tailParent)[0]
 
@@ -63,6 +64,8 @@ class simpleTail(object):
         for j in range (0,len(inits)):
             location = inits[j].getTranslation(space="world")
             bone = pm.joint(name="jDef_" + suffix, p=location)
+            if j == 0 or j == len(inits):
+                self.sockets.append(bone)
             deformerJoints.append(bone)
 
         for j in deformerJoints:

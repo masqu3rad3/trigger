@@ -11,13 +11,13 @@ reload(icon)
 class Fingers(object):
     def __init__(self):
         super(Fingers, self).__init__()
+        self.sockets = []
         self.scaleGrp = None
         self.cont_body = None
         self.cont_hips = None
         self.limbPlug = None
-        self.rootSocket = None
         self.nonScaleGrp = None
-        self.connectsTo = None
+        # self.connectsTo = None
         self.cont_IK_OFF = None
         self.scaleConstraints = []
         self.anchors = []
@@ -30,10 +30,27 @@ class Fingers(object):
 
     def createFinger(self, inits, suffix="", side="L", parentController=None, thumb=False, mirrorAxis="X"):
         if not isinstance(inits, list):
-            fingerRoot = inits.get("FingerRoot")
-            fingers = (inits.get("Finger"))
-            inits = [fingerRoot] + sorted(fingers)
+            validRoots=["FingerRoot",
+                       "ThumbRoot", "IndexRoot", "MiddleRoot", "RingRoot", "PinkyRoot", "ExtraRoot"]
+            validFingers=["Finger", "Thumb", "Index_F", "Middle_F", "Ring_F", "Pinky_F", "Extra_F"]
 
+            for root in validRoots:
+                if inits.get(root):
+                    fingerRoot=[inits.get(root)]
+            for finger in validFingers:
+                if inits.get(finger):
+                    fingers = inits.get(finger)
+
+            if inits.get("Thumb") or inits.get("ThumbRoot"):
+                thumb = True
+
+            ## reinitialize the inits as a list
+            if fingerRoot and fingers:
+                inits = fingerRoot + fingers
+            else:
+                pm.error("fingers must have at least one root and one other joint")
+
+            print "fingerIOniuts", inits
         idCounter = 0
         ## create an unique suffix
         while pm.objExists("scaleGrp_" + suffix):
@@ -48,7 +65,7 @@ class Fingers(object):
         self.scaleGrp = pm.group(name="scaleGrp_" + suffix, em=True)
         self.scaleConstraints.append(self.scaleGrp)
 
-        self.connectsTo = inits[0].getParent()
+        # self.connectsTo = inits[0].getParent()
 
         ## Create LimbPlug
 
@@ -59,17 +76,18 @@ class Fingers(object):
 
         pm.select(d=True)
 
-        iter = 0
         for i in inits:
-            iter += 1
             jPos = i.getTranslation(space="world")
             jOri = pm.joint(i, q=True, o=True)
             j = pm.joint(name="jDef_{0}{1}_{2}".format(side, iter, suffix), radius=1.0)
             extra.alignTo(j, i, 2)
-            if iter == (len(inits)): # if it is the last joint dont add it to the deformers
+            if inits.index(i) == (len(inits)): # if it is the last joint dont add it to the deformers
                 replacedName = (j.name()).replace("jDef", "j")
                 pm.rename(j, replacedName)
+                self.sockets.append(i)
                 continue
+            if inits.index(i) == 0:
+                self.sockets.append(i)
             self.defJoints.append(j)
 
         ## Create Controllers
@@ -79,7 +97,7 @@ class Fingers(object):
         conts_ORE = []
         conts_con = []
 
-        for i in range(0, len(self.defJoints)):
+        for i in range(0, len(self.defJoints)-1):
             contScl = (pm.getAttr(self.defJoints[1].tx) / 2)
             contName = ("cont_{0}{1}_{2}".format(side, i, suffix))
             cont = icon.circle(contName,(contScl,contScl,contScl), normal=(1,0,0))
@@ -107,9 +125,9 @@ class Fingers(object):
         ## If there is no parent controller defined, create one. Everyone needs a parent
 
         if not parentController:
-            parentController = icon.circle(("cont_{0}_{1}_Master".format(side, suffix)),(contScl*2,contScl*2,contScl*2), normal=(1,0,0))
-            extra.alignTo(parentController, self.defJoints[0], 2)
-
+            # parentController = icon.circle(("cont_{0}_{1}_Master".format(side, suffix)),(contScl*2,contScl*2,contScl*2), normal=(1,0,0))
+            # extra.alignTo(parentController, self.defJoints[0], 2)
+            parentController=self.scaleGrp
         # Spread
 
         spreadAttr = "{0}_{1}".format(suffix, "Spread")

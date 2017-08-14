@@ -590,9 +590,9 @@ class arm():
         pm.select(d=True)
         jDef_Hand = pm.joint(name="jDef_Hand_" + suffix, p=rootPosition, radius=1.0)
         self.sockets.append(jDef_Hand)
-        # self.defJoints.append([jDef_Hand])
+        self.defJoints.append([jDef_Hand])
         extra.alignTo(jDef_Hand, handRef, 2)
-        # deformerJoints = [[jDef_Hand]]
+        deformerJoints = [[jDef_Hand]]
         pm.parent(jDef_Hand, rootMaster)
 
         handRoot = handRef
