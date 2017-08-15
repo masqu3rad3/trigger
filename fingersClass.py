@@ -6,12 +6,12 @@ import contIcons as icon
 
 reload(icon)
 
-
-
 class Fingers(object):
     def __init__(self):
         super(Fingers, self).__init__()
+        self.defJoints = []
         self.sockets = []
+        self.conts = []
         self.scaleGrp = None
         self.cont_body = None
         self.cont_hips = None
@@ -22,7 +22,6 @@ class Fingers(object):
         self.scaleConstraints = []
         self.anchors = []
         self.anchorLocations = []
-        self.deformerJoints = []
 
     rootMaster = None
     allControllers = []
@@ -30,6 +29,7 @@ class Fingers(object):
 
     def createFinger(self, inits, suffix="", side="L", parentController=None, thumb=False, mirrorAxis="X"):
         if not isinstance(inits, list):
+
             validRoots=["FingerRoot",
                        "ThumbRoot", "IndexRoot", "MiddleRoot", "RingRoot", "PinkyRoot", "ExtraRoot"]
             validFingers=["Finger", "Thumb", "Index_F", "Middle_F", "Ring_F", "Pinky_F", "Extra_F"]
@@ -50,7 +50,6 @@ class Fingers(object):
             else:
                 pm.error("fingers must have at least one root and one other joint")
 
-            print "fingerIOniuts", inits
         idCounter = 0
         ## create an unique suffix
         while pm.objExists("scaleGrp_" + suffix):
@@ -119,6 +118,8 @@ class Fingers(object):
 
             pm.parentConstraint(cont, self.defJoints[i], mo=True)
 
+        pm.parent(self.defJoints[0], self.scaleGrp)
+        pm.parent(conts_OFF[0], self.scaleGrp)
 
         ## Controller Attributtes
 
@@ -134,7 +135,6 @@ class Fingers(object):
         pm.addAttr(parentController, shortName=spreadAttr , defaultValue=0.0, at="float", k=True)
         sprMult=pm.createNode("multiplyDivide", name="sprMult_{0}_{1}".format(side, suffix))
         pm.setAttr(sprMult.input1Y, 0.4)
-        print "here", parentController, spreadAttr
         pm.connectAttr("%s.%s" %(parentController,spreadAttr), sprMult.input2Y)
         # pm.PyNode("{0}.{1}{2}".format(parentController, side, "Spread")) >> sprMult.input2Y
 
@@ -153,8 +153,8 @@ class Fingers(object):
             pm.addAttr(parentController, shortName=bendAttr, defaultValue=0.0, at="float", k=True)
             pm.PyNode("{0}.{1}".format(parentController, bendAttr)) >> conts_con[f].rotateZ
 
-
-        self.fingerRoot = conts_OFF[0]
+        # pm.parent(conts_OFF[0], self.limbPlug)
+        pm.parentConstraint(self.limbPlug, conts_OFF[0], mo=True)
 
 
 

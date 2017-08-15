@@ -69,7 +69,7 @@ class leg():
 
         ##Groups
         self.scaleGrp = pm.group(name="scaleGrp_" + suffix, em=True)
-        extra.alignTo(self.scaleGrp, footRef, 0)
+        extra.alignTo(self.scaleGrp, legRootRef, 0)
         self.nonScaleGrp = pm.group(name="NonScaleGrp_" + suffix, em=True)
 
         ## Create Limb Plug

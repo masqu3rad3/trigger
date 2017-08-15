@@ -14,6 +14,7 @@ reload(twistSpline)
 class spine(object):
 
     # socketDict = {}
+    scaleConstraints = []
     scaleGrp = None
     cont_body = None
     cont_hips = None
@@ -235,5 +236,6 @@ class spine(object):
             extra.colorize(i, indexFKB)
 
         self.scaleGrp = spine.scaleGrp
+        self.scaleConstraints.extend([self.scaleGrp, cont_Body_POS])
         self.anchorLocations = [self.cont_hips, self.cont_chest]
 

@@ -56,10 +56,10 @@ class LimbBuilder():
 
         # print "anchorLocs", self.anchorLocations
         # print "anchors", self.anchors
-        # Create anchors (spaceswithcers)
-        #
-        # for anchor in (self.anchors):
-        #     extra.spaceSwitcher(anchor[0], self.anchorLocations, mode=anchor[1], defaultVal=anchor[2], listException=anchor[3])
+        ## Create anchors (spaceswithcers)
+
+        for anchor in (self.anchors):
+            extra.spaceSwitcher(anchor[0], self.anchorLocations, mode=anchor[1], defaultVal=anchor[2], listException=anchor[3])
 
 
 
@@ -139,7 +139,9 @@ class LimbBuilder():
         pm.setAttr(self.cont_master.rigVis, cb=True)
         pm.parent(self.cont_placement, self.cont_master)
 
-        # add these to the anchor locations
+        # self.masterSocket = pm.joint(name="jSocket_master", pt=self.cont_placement)
+        # pm.parentConstraint(self.cont_placement, masterSocket)
+        # # add these to the anchor locations
         self.anchorLocations.append(self.cont_master)
         self.anchorLocations.append(self.cont_placement)
 
@@ -195,7 +197,6 @@ class LimbBuilder():
                 limb.createSimpleTail(x[0], suffix="_tail")
 
             elif x[1] == "finger":
-                print x[0]
                 limb = finger.Fingers()
                 limb.createFinger(x[0], suffix=x[2] + "_finger")
 
@@ -215,12 +216,25 @@ class LimbBuilder():
 
             parentInitJoint=x[3]
             #
-            print "parentInitJoint:", parentInitJoint
+            # print "parentInitJoint:", parentInitJoint
             if parentInitJoint:
                 parentSocket = self.getNearestSocket(parentInitJoint, self.allSocketsList)
-                print "parentSocket", parentSocket
-                pm.parent(limb.limbPlug, parentSocket)
+                # print "parentSocket", parentSocket
 
+            else:
+                parentSocket = self.cont_placement
+            pm.parent(limb.limbPlug, parentSocket)
+
+            ## Good parenting / scale connections
+            pm.parent(limb.scaleGrp, self.rootGroup)
+            if limb.nonScaleGrp:
+                pm.parent(limb.nonScaleGrp, self.rootGroup)
+            if limb.cont_IK_OFF:
+                pm.parent(limb.cont_IK_OFF, self.rootGroup)
+            for sCon in limb.scaleConstraints:
+                print "limb:", limb
+                print "scaleCon:", sCon
+                pm.scaleConstraint(self.cont_master, sCon)
 
     def getNearestSocket(self, initJoint, limbSockets):
         """
