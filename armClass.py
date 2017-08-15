@@ -643,7 +643,7 @@ class arm():
         pm.parent(masterRoot, self.scaleGrp)
         pm.parent(jFK_Up, self.scaleGrp)
         pm.parent(cont_FK_IK_POS, self.scaleGrp)
-        # pm.parent(handFingers.rootMaster, self.scaleGrp)
+        pm.parent(rootMaster, self.scaleGrp)
 
         ## CONNECT RIG VISIBILITES
 
@@ -670,7 +670,7 @@ class arm():
                         cont_FK_LowArm_OFF, cont_FK_UpArm_OFF, ribbonLowerArm.scaleGrp, ribbonUpperArm.scaleGrp, cont_midLock_POS]
         nodesJointVis = [jDef_elbow, jDef_paCon, jDef_Collar, jDef_Hand]
         nodesJointVisLists = [ribbonLowerArm.deformerJoints, ribbonUpperArm.deformerJoints, nodesJointVis]
-        nodesRigVis = [endLock_Twist, startLock_Ore, armStart, armEnd, IK_parentGRP, midLock, masterRoot, jFK_Up, handLock, rootMaster]
+        nodesRigVis = [endLock_Twist, startLock_Ore, armStart, armEnd, IK_parentGRP, midLock, masterRoot, jFK_Up, handLock, rootMaster.getShape()]
         # global Cont visibilities
 
 

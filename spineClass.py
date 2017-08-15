@@ -61,6 +61,7 @@ class spine(object):
         # parent upper plug joints
         pm.select(None)
         self.startSocket = pm.joint(p=rootPoint, name="jDef_RootSocket", radius=3)
+
         # self.socketDict[inits[0]]=self.startSocket
         self.sockets.append(self.startSocket)
         contHipsScale = (iconSize / 1.5, iconSize / 1.5, iconSize / 1.5)
@@ -236,6 +237,7 @@ class spine(object):
             extra.colorize(i, indexFKB)
 
         self.scaleGrp = spine.scaleGrp
+        pm.parent(self.startSocket, self.scaleGrp)
         self.scaleConstraints.extend([self.scaleGrp, cont_Body_POS])
         self.anchorLocations = [self.cont_hips, self.cont_chest]
 

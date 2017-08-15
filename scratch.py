@@ -227,13 +227,13 @@ class LimbBuilder():
 
             ## Good parenting / scale connections
             pm.parent(limb.scaleGrp, self.rootGroup)
+            scaleGrpPiv = limb.limbPlug.getTranslation(space="world")
+            pm.xform(limb.scaleGrp, piv=scaleGrpPiv, ws=True)
             if limb.nonScaleGrp:
                 pm.parent(limb.nonScaleGrp, self.rootGroup)
             if limb.cont_IK_OFF:
                 pm.parent(limb.cont_IK_OFF, self.rootGroup)
             for sCon in limb.scaleConstraints:
-                print "limb:", limb
-                print "scaleCon:", sCon
                 pm.scaleConstraint(self.cont_master, sCon)
 
     def getNearestSocket(self, initJoint, limbSockets):
