@@ -54,10 +54,7 @@ class LimbBuilder():
         # Create limbs and make connection to the parents
         self.createLimbs(self.limbCreationList)
 
-        # print "anchorLocs", self.anchorLocations
-        # print "anchors", self.anchors
         ## Create anchors (spaceswithcers)
-
         for anchor in (self.anchors):
             extra.spaceSwitcher(anchor[0], self.anchorLocations, mode=anchor[1], defaultVal=anchor[2], listException=anchor[3])
 
@@ -229,6 +226,9 @@ class LimbBuilder():
             pm.parent(limb.scaleGrp, self.rootGroup)
             scaleGrpPiv = limb.limbPlug.getTranslation(space="world")
             pm.xform(limb.scaleGrp, piv=scaleGrpPiv, ws=True)
+            ## pass the attributes
+            extra.attrPass(limb.scaleGrp, self.cont_master, values=True, daisyChain=True, overrideEx=False)
+
             if limb.nonScaleGrp:
                 pm.parent(limb.nonScaleGrp, self.rootGroup)
             if limb.cont_IK_OFF:

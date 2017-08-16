@@ -1,11 +1,18 @@
 import pymel.core as pm
+import maya.mel as mel
 import extraProcedures as extra
 
-def createStretchyIK(nodeList, suffix = "test"):
-    #
-    # startLock = pm.spaceLocator(name="startLock_" + suffix)
-    # extra.alignTo(startLock, startNode, 2)
-    # startLock_Ore = extra.createUpGrp(startLock, "_Ore")
+def createStretchyIK(nodeList, suffix = "strIK", solver="ikSCsolver"):
+    """
+    Nodelist must contain all the joints. Not only the first one and the last one.
+    Args:
+        nodeList: (List) list of joint which the IK will be build on.
+        suffix: (String) A unique suffix for naming the nodes and joints. Optional, default is "strIK"
+        solver: (String) Valid solvers are ikRPsolver, ikSCSolver and ikSpringSolver. Default is ikSCsolver
+
+    Returns: None
+
+    """
 
     ### Create and constrain Distance Locators
 
@@ -26,8 +33,13 @@ def createStretchyIK(nodeList, suffix = "test"):
     ### constrain the existing joints to the new created control joints
     pm.parentConstraint(startJo, startNode, mo=True)
 
+    if solver == "ikSpringSolver":
+        mel.eval("ikSpringSolver;")
+
     ### create the ikHandle
-    ikHandle = pm.ikHandle(sj=startNode, ee=endNode, name="ikHandle_" + suffix)
+    ikHandle = pm.ikHandle(sj=startNode, ee=endNode, name="ikHandle_" + suffix, sol=solver)
+    # ikHandle = pm.ikHandle(sj=startNode, ee=endNode, name="ikHandle_" + suffix, sol="ikRPsolver")
+
     #
     pm.parentConstraint(endJo, ikHandle[0], mo=True)
 

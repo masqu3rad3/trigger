@@ -40,6 +40,7 @@ class Fingers(object):
             for finger in validFingers:
                 if inits.get(finger):
                     fingers = inits.get(finger)
+                    suffix = "%s_%s" %(finger, side)
 
             if inits.get("Thumb") or inits.get("ThumbRoot"):
                 thumb = True
