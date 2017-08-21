@@ -1,10 +1,7 @@
-import time
 import pymel.core as pm
 import extraProcedures as extra
 reload(extra)
 import contIcons as icon
-
-import pprint
 
 import armClass as arm
 reload(arm)
@@ -20,14 +17,13 @@ reload(simpleTail)
 import fingersClass as finger
 reload(finger)
 
-import pprint
-
 class LimbBuilder():
 
     def __init__(self):
         # self.catalogueRoots(pm.ls(sl=True)[0])
-        self.validRootList = ["Collar", "LegRoot", "Root", "NeckRoot", "FingerRoot", "TailRoot", "FingerRoot", "ThumbRoot", "IndexRoot", "MiddleRoot", "RingRoot", "PinkyRoot"]
+        self.validRootList = ["Collar", "LegRoot", "Root", "NeckRoot", "TailRoot", "FingerRoot", "ThumbRoot", "IndexRoot", "MiddleRoot", "RingRoot", "PinkyRoot"]
         # self.limbList = []
+        self.fingerMatchList = []
         self.hipDistance = 1
         self.shoulderDistance = 1
         self.anchorLocations = []
@@ -39,7 +35,6 @@ class LimbBuilder():
         self.limbCreationList = []
         self.riggedLimbList = []
 
-
     def startBuilding(self):
         selection = pm.ls(sl=True, type="joint")
         if len(selection) != 1:
@@ -47,9 +42,7 @@ class LimbBuilder():
             return
         # first initialize the dimensions for icon creation
         self.hipDistance, self.shoulderDistance = self.getDimensions(selection[0])
-
         self.getLimbProperties(selection[0])
-
         self.createMasters()
         # Create limbs and make connection to the parents
         self.createLimbs(self.limbCreationList)
@@ -57,9 +50,6 @@ class LimbBuilder():
         ## Create anchors (spaceswithcers)
         for anchor in (self.anchors):
             extra.spaceSwitcher(anchor[0], self.anchorLocations, mode=anchor[1], defaultVal=anchor[2], listException=anchor[3])
-
-
-
 
     def getDimensions(self, rootNode):
         """
@@ -77,6 +67,7 @@ class LimbBuilder():
         leftShoulder = None
         rightShoulder = None
         allJoints = pm.listRelatives(rootNode, type="joint", ad=True)
+        allFingers = []
         for j in allJoints:
             jID = extra.identifyMaster(j)
 
@@ -88,10 +79,28 @@ class LimbBuilder():
                 leftShoulder = j
             if jID[0] == "Shoulder" and jID[2] == "R":
                 rightShoulder = j
+            ## collect fingers
+
+            # allFingerParents = []
+            validFingerRoots = ["FingerRoot", "ThumbRoot", "IndexRoot", "MiddleRoot", "RingRoot", "PinkyRoot"]
+            if jID[0] in validFingerRoots:
+                allFingers.append(j)
+                # if j.getParent():
+                #     allFingerParents.append(j.getParent())
         if leftHip and rightHip:
             hipDist = extra.getDistance(leftHip, rightHip)
         if leftShoulder and rightShoulder:
             shoulderDist = extra.getDistance(leftShoulder, rightShoulder)
+
+        self.fingerMatchList = []
+        for x in allFingers:
+            tempGrp = []
+            for y in allFingers:
+                if x.getParent() == y.getParent():
+                    tempGrp.append(y)
+            if len(tempGrp) > 0:
+                self.fingerMatchList.append(tempGrp)
+
         return hipDist, shoulderDist
 
     def getLimbProperties(self, node, isRoot=True, parentIndex=None):
@@ -112,7 +121,6 @@ class LimbBuilder():
         for c in children:
             cID =  extra.identifyMaster(c)
             if cID[0] in self.validRootList:
-                ## ASSIGN THE NEW CREATED LIMB AS THE
                 self.getLimbProperties(c, isRoot=True, parentIndex=node)
             else:
                 self.getLimbProperties(c, isRoot=False)
@@ -129,6 +137,12 @@ class LimbBuilder():
         pm.addAttr(self.cont_master, at="bool", ln="Control_Visibility", sn="contVis", defaultValue=True)
         pm.addAttr(self.cont_master, at="bool", ln="Joints_Visibility", sn="jointVis")
         pm.addAttr(self.cont_master, at="bool", ln="Rig_Visibility", sn="rigVis")
+
+        for f in self.fingerMatchList:
+            cont_fGroup = icon.square(name="cont_Fgrp_%s" %f[0].name())
+            tempPA = pm.parentConstraint(f, cont_fGroup)
+            # f.append(cont_fGroup)
+            pm.delete(tempPA)
 
         # make the created attributes visible in the channelbox
         pm.setAttr(self.cont_master.contVis, cb=True)
@@ -194,6 +208,7 @@ class LimbBuilder():
                 limb.createSimpleTail(x[0], suffix="_tail")
 
             elif x[1] == "finger":
+                # if x[0] in self.fingerMatchList
                 limb = finger.Fingers()
                 limb.createFinger(x[0], suffix=x[2] + "_finger")
 
@@ -252,18 +267,6 @@ class LimbBuilder():
         index = distanceList.index(min(distanceList))
         return limbSockets[index]
 
-    # def catalogueRoots(self, rootJoint):
-    #
-    #     ## get all hierarchy
-    #     allJ = pm.listRelatives(rootJoint, ad=True, type="joint")
-    #     self.allRoots = [rootJoint]
-    #     for j in allJ:
-    #         jID = extra.identifyMaster(j)
-    #         # first collect the roots
-    #         if jID[0] in self.validRootList:
-    #             self.allRoots.append(j)
-    #
-
     def getWholeLimb(self, node):
         limbDict = {}
         multiList = []
@@ -290,171 +293,6 @@ class LimbBuilder():
             if len(children) == failedChildren:
                 z=False
         return [limbDict, limbType, limbSide]
-
-    # def getRestOfTheLimb(self, limbRoot):
-    #     # wholeLimb=[limbRoot]
-    #     limbName, limbType, limbSide = extra.identifyMaster(limbRoot)
-    #     allRelatives = pm.listRelatives(limbRoot, ad=True, type="joint")
-    #     limbDict={}
-    #     limbDict[limbName]=limbRoot
-    #     multiList = []
-    #     for i in allRelatives:
-    #         rName, rType, rSide = extra.identifyMaster(i)
-    #         if rType == limbType and rSide == limbSide:
-    #             # while rName in limbDict.keys():
-    #             #     rName+="+"
-    #             if rName == "Spine" or rName == "Neck" or rName == "Tail": ## spine and neck joints are multiple, so put them in a list
-    #                 multiList.append(i)
-    #                 limbDict[rName]=multiList
-    #             else:
-    #                 limbDict[rName]=i
-    #             ## convert it to a dictionary
-    #
-    #     return limbDict, limbType, limbSide
-    # def buildRig(self):
-    #     # first gather all used sockets
-    #     self.getSocketPoints()
-    #     for r in self.allRoots:
-    #         bones, type, side = self.getRestOfTheLimb(r)
-    #
-    #         if type == "arm":
-    #             if side == "L":
-    #                 self.rightShoulder = bones["Shoulder"]
-    #             if side == "R":
-    #                 self.leftShoulder = bones["Shoulder"]
-    #             limb_arm = arm.arm()
-    #             limb_arm.createArm(bones, suffix=side + "_arm", side=side)
-    #             self.limbList.append(limb_arm)
-    #             # //TODO: add socket connections
-    #
-    #         if type == "leg":
-    #             if side == "L":
-    #                 self.leftHip = bones["Hip"]
-    #             if side == "R":
-    #                 self.rightHip = bones["Hip"]
-    #
-    #             limb_leg = leg.leg()
-    #             limb_leg.createLeg(bones, suffix=side + "_leg", side=side)
-    #             self.limbList.append(limb_leg)
-    #             # //TODO: add socket connections
-    #
-    #         if type == "neck":
-    #             limb_neck = neckAndHead.neckAndHead()
-    #             limb_neck.createNeckAndHead(bones, suffix="_n")
-    #             self.limbList.append(limb_neck)
-    #             # //TODO: add socket connections
-    #
-    #         if type == "spine":
-    #             limb_spine = spine.spine()
-    #             limb_spine.createSpine(bones, suffix="_s")  # s for spine...
-    #             self.limbList.append(limb_spine)
-    #             # update the socketPointDict with the new created values
-    #             for key in limb_spine.socketDict.keys():
-    #                 if key in self.socketPointDict.keys():
-    #                     self.socketPointDict[key]=limb_spine.socketDict.get(key)
-    #
-    #         if type == "tail":
-    #             limb_tail = simpleTail.simpleTail()
-    #             limb_tail.createSimpleTail(bones, suffix="_tail")
-    #             self.limbList.append(limb_tail)
-    #             # //TODO: add socket connections
-    #
-    #     ## get sizes for controllers
-    #     if self.leftHip and self.rightHip:
-    #         self.hipSize=extra.getDistance(self.leftHip, self.rightHip)
-    #
-    #     if self.rightShoulder and self.leftShoulder:
-    #         self.chestSize = extra.getDistance(self.rightShoulder, self.leftShoulder)
-    #
-    #     cont_placement = icon.circle("cont_Placement", (self.hipSize, self.hipSize, self.hipSize))
-    #     cont_master = icon.triCircle("cont_Master", (self.hipSize * 1.5, self.hipSize * 1.5, self.hipSize * 1.5))
-    #     pm.addAttr(cont_master, at="bool", ln="Control_Visibility", sn="contVis", defaultValue=True)
-    #     pm.addAttr(cont_master, at="bool", ln="Joints_Visibility", sn="jointVis")
-    #     pm.addAttr(cont_master, at="bool", ln="Rig_Visibility", sn="rigVis")
-    #
-    #     # make the created attributes visible in the channelbox
-    #     pm.setAttr(cont_master.contVis, cb=True)
-    #     pm.setAttr(cont_master.jointVis, cb=True)
-    #     pm.setAttr(cont_master.rigVis, cb=True)
-    #     pm.parent(cont_placement, cont_master)
-    #     # add these to the anchor locations
-    #     self.anchorLocations.append(cont_master)
-    #     self.anchorLocations.append(cont_placement)
-    #     # COLOR CODING
-    #     index = 17
-    #     extra.colorize(cont_master, index)
-    #     extra.colorize(cont_placement, index)
-    #     ############################
-    #
-    #     for limb in self.limbList:
-    #         self.anchorLocations += limb.anchorLocations
-    #         if limb.connectsTo in self.socketPointDict.keys():
-    #             plug=limb.limbPlug
-    #             socket=self.socketPointDict.get(limb.connectsTo)
-    #             print "%s will connect to %s" %(plug, socket)
-    #             pm.parent(plug, socket)
-    #             self.anchors += limb.anchors
-    #
-    #
-    #     for anchor in list(reversed(self.anchors)):
-    #         extra.spaceSwitcher(anchor[0], self.anchorLocations, mode=anchor[1], defaultVal=anchor[2], listException=anchor[3])
-    #     # # GOOD PARENTING
-    #     rootGroup = pm.group(name="tik_autoRig", em=True)
-    #     extra.lockAndHide(rootGroup, ["tx", "ty", "tz", "rx", "ry", "rz", "sx", "sy", "sz"])
-    #     pm.parent(cont_master, rootGroup)
-    #
-    #
-    #     for i in self.limbList:
-    #
-    #         pm.parent(i.scaleGrp, rootGroup)
-    #         pm.parent(i.nonScaleGrp, rootGroup)
-    #         if i.cont_IK_OFF:
-    #             pm.parent(i.cont_IK_OFF, rootGroup)
-    #         if isinstance(i, spine.spine):
-    #             pm.parent(i.startSocket, rootGroup)
-    #             pm.parent(i.cont_body, cont_placement)
-    #             pm.scaleConstraint(cont_master, i.startSocket)
-    #             pm.scaleConstraint(cont_master, i.scaleGrp)
-    #         else:
-    #             for s in i.scaleConstraints:
-    #                 pm.scaleConstraint(cont_master, s)
-    #
-
-    # def getSocketPoints(self):
-    #     self.socketPointDict={}
-    #     NonValidPlugNames=["Spine", "NeckRoot", "Neck", "Collar", "LegRoot", "ToePv", "HeelPv", "BankIN", "BankOUT", "Knee", "Elbow"]
-    #     for r in self.allRoots:
-    #
-    #         bones, type, side = self.getRestOfTheLimb(r)
-    #         bones = self.flatten(bones)
-    #
-    #         for b in bones:
-    #             if b not in NonValidPlugNames:
-    #                 bChildren = b.getChildren()
-    #                 for c in bChildren:
-    #                     if c.type() == "joint":
-    #                         cName, cType, cSide = extra.identifyMaster(c)
-    #                         if cName in self.validRootList:
-    #                             if not b in self.socketPointDict.keys():
-    #                                 self.socketPointDict[b]= ""
-    #     return self.socketPointDict
-
-    # def flatten(self, d):
-    #     res = []  # Result list
-    #     if isinstance(d, dict):
-    #         for key, val in d.items():
-    #             res.extend(self.flatten(val))
-    #     elif isinstance(d, list):
-    #         res = d
-    #     else:
-    #         res.append(d)
-    #     return res
-    #
-
-
-
-
-
 
 
 
