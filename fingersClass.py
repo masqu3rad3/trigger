@@ -28,6 +28,7 @@ class Fingers(object):
     defJoints = []
 
     def createFinger(self, inits, suffix="", side="L", parentController=None, thumb=False, mirrorAxis="X"):
+
         if not isinstance(inits, list):
 
             validRoots=["FingerRoot",

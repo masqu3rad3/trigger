@@ -133,8 +133,10 @@ class leg():
         pm.joint(jIK_Ball, e=True, zso=True, oj="xyz")
         pm.joint(jIK_Toe, e=True, zso=True, oj="xyz")
 
-        ###Create Foot Pivots
+        ###Create Foot Pivots and Ball Socket
         pm.select(cl=True)
+
+
 
         Pv_BankIn = pm.group(name="Pv_BankIn_" + suffix, em=True)
         extra.alignTo(Pv_BankIn, bankInRef, 0)
@@ -152,6 +154,10 @@ class leg():
         extra.alignTo(Pv_Ball, ballRef, 0)
         pm.makeIdentity(Pv_Ball, a=True, t=False, r=True, s=True)
 
+        jSocketBall = pm.joint(name="jBallSocket_" + suffix, radius=3)
+        pm.parentConstraint(Pv_Ball, jSocketBall)
+        self.sockets.append(jSocketBall)
+
         Pv_Heel = pm.group(name="Pv_Heel_" + suffix, em=True)
         extra.alignTo(Pv_Heel, heelPvRef, 0)
         pm.makeIdentity(Pv_Heel, a=True, t=False, r=True, s=True)
@@ -167,6 +173,7 @@ class leg():
         Pv_BallLean = pm.group(name="Pv_BallLean_" + suffix, em=True)
         extra.alignTo(Pv_BallLean, ballRef, 0)
         pm.makeIdentity(Pv_BallLean, a=True, t=False, r=True, s=True)
+
 
         ## Create Start Lock
 
@@ -762,7 +769,7 @@ class leg():
         pm.select(d=True)
         jDef_Foot = pm.joint(name="jDef_Foot_" + suffix, p=footPos, radius=1.0)
         jDef_Ball = pm.joint(name="jDef_Ball_" + suffix, p=ballPos, radius=1.0)
-        self.sockets.append(jDef_Ball)
+
         jDef_Toe = pm.joint(name="jDef_Toe_" + suffix, p=toePvPos, radius=1.0)  ## POSSIBLE PROBLEM
 
         foot_paCon = pm.pointConstraint(jIK_Foot, jFK_Foot, jDef_Foot, mo=True)

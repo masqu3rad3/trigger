@@ -24,6 +24,7 @@ class LimbBuilder():
         self.validRootList = ["Collar", "LegRoot", "Root", "NeckRoot", "TailRoot", "FingerRoot", "ThumbRoot", "IndexRoot", "MiddleRoot", "RingRoot", "PinkyRoot"]
         # self.limbList = []
         self.fingerMatchList = []
+        self.fingerMatchConts = []
         self.hipDistance = 1
         self.shoulderDistance = 1
         self.anchorLocations = []
@@ -35,14 +36,16 @@ class LimbBuilder():
         self.limbCreationList = []
         self.riggedLimbList = []
 
+
     def startBuilding(self):
         selection = pm.ls(sl=True, type="joint")
-        if len(selection) != 1:
+        if len(selection) != 1 or extra.identifyMaster(selection[0])[0] not in self.validRootList :
             pm.warning("select a single root joint")
             return
         # first initialize the dimensions for icon creation
         self.hipDistance, self.shoulderDistance = self.getDimensions(selection[0])
         self.getLimbProperties(selection[0])
+        print "matchList", self.fingerMatchList
         self.createMasters()
         # Create limbs and make connection to the parents
         self.createLimbs(self.limbCreationList)
@@ -50,6 +53,12 @@ class LimbBuilder():
         ## Create anchors (spaceswithcers)
         for anchor in (self.anchors):
             extra.spaceSwitcher(anchor[0], self.anchorLocations, mode=anchor[1], defaultVal=anchor[2], listException=anchor[3])
+
+        for x in self.fingerMatchConts:
+            contPos = extra.createUpGrp(x[0], "POS", mi=False)
+            socket = self.getNearestSocket(x[1],self.allSocketsList)
+            pm.parentConstraint(socket, contPos, mo=True)
+            pm.scaleConstraint(self.cont_master, contPos)
 
     def getDimensions(self, rootNode):
         """
@@ -98,7 +107,7 @@ class LimbBuilder():
             for y in allFingers:
                 if x.getParent() == y.getParent():
                     tempGrp.append(y)
-            if len(tempGrp) > 0:
+            if len(tempGrp) > 0 and tempGrp not in self.fingerMatchList:
                 self.fingerMatchList.append(tempGrp)
 
         return hipDist, shoulderDist
@@ -106,7 +115,11 @@ class LimbBuilder():
     def getLimbProperties(self, node, isRoot=True, parentIndex=None):
         """
         Checks the given nodes entire hieararchy for roots, and catalogues the root nodes into dictionaries.
-        Returns: (List) [{limbDictionary}, LimbType, LimbSide]
+        
+        isRoot: if True, the given joint is considered as true. Default is True. For recursion.
+        parentIndex: indicates the parent of the current node. Default is none. For recursion.
+        
+        Returns: None (Updates limbCreationList attribute of the parent class)
 
         """
 
@@ -114,7 +127,6 @@ class LimbBuilder():
             limbDict = self.getWholeLimb(node)
             limbDict.append(parentIndex)
             self.limbCreationList.append(limbDict)
-            # self.limbCreationList.append([inits])
 
         # Do the same for all children recursively
         children = node.getChildren(type="joint")
@@ -139,10 +151,15 @@ class LimbBuilder():
         pm.addAttr(self.cont_master, at="bool", ln="Rig_Visibility", sn="rigVis")
 
         for f in self.fingerMatchList:
-            cont_fGroup = icon.square(name="cont_Fgrp_%s" %f[0].name())
+            iconSize = extra.getDistance(f[0], f[-1])
+            cont_fGroup = icon.square(name="cont_Fgrp_%s" %f[0].name(), scale=(iconSize/6, iconSize/4, iconSize/2))
             tempPA = pm.parentConstraint(f, cont_fGroup)
             # f.append(cont_fGroup)
             pm.delete(tempPA)
+            pm.move(cont_fGroup, (0,iconSize/2,0), r=True)
+            pm.makeIdentity(cont_fGroup, a=True)
+            self.fingerMatchConts.append([cont_fGroup, f[0].getParent()])
+
 
         # make the created attributes visible in the channelbox
         pm.setAttr(self.cont_master.contVis, cb=True)
@@ -208,9 +225,15 @@ class LimbBuilder():
                 limb.createSimpleTail(x[0], suffix="_tail")
 
             elif x[1] == "finger":
-                # if x[0] in self.fingerMatchList
+                parentController = None
+                for matching in self.fingerMatchList:
+                    for f in matching:
+                        if f in x[0].values():
+                            index = self.fingerMatchList.index(matching)
+                            parentController = self.fingerMatchConts[index][0]
+
                 limb = finger.Fingers()
-                limb.createFinger(x[0], suffix=x[2] + "_finger")
+                limb.createFinger(x[0], suffix=x[2] + "_finger", parentController=parentController)
 
             else:
                 pm.error("limb creation failed.")

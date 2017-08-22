@@ -137,8 +137,9 @@ def createUpGrp(obj, suffix, mi=True):
     """
     Creates an Upper Group for the given object.
     Args:
-        obj: Source Object
-        suffix: Suffix for the group. String.
+        obj: (Pymel Object) Source Object
+        suffix: (String) Suffix for the group. String.
+        mi: (Boolean) Stands for "makeIdentity" If True, freezes the transformations of the new group. Default is True
 
     Returns: The created group node
 
