@@ -37,7 +37,7 @@ class LimbBuilder():
         self.riggedLimbList = []
 
 
-    def startBuilding(self):
+    def startBuilding(self, createAnchors=True):
         selection = pm.ls(sl=True, type="joint")
         if len(selection) != 1 or extra.identifyMaster(selection[0])[0] not in self.validRootList :
             pm.warning("select a single root joint")
@@ -51,8 +51,9 @@ class LimbBuilder():
         self.createLimbs(self.limbCreationList)
 
         ## Create anchors (spaceswithcers)
-        for anchor in (self.anchors):
-            extra.spaceSwitcher(anchor[0], self.anchorLocations, mode=anchor[1], defaultVal=anchor[2], listException=anchor[3])
+        if createAnchors:
+            for anchor in (self.anchors):
+                extra.spaceSwitcher(anchor[0], self.anchorLocations, mode=anchor[1], defaultVal=anchor[2], listException=anchor[3])
 
         for x in self.fingerMatchConts:
             contPos = extra.createUpGrp(x[0], "POS", mi=False)
@@ -210,19 +211,19 @@ class LimbBuilder():
                     self.rightHip = x[0]["Hip"]
 
                 limb = leg.leg()
-                limb.createLeg(x[0], suffix=x[2] + "_leg", side=x[2])
+                limb.createLeg(x[0], suffix=x[2] + "leg", side=x[2])
 
             elif x[1] == "neck":
                 limb = neckAndHead.neckAndHead()
-                limb.createNeckAndHead(x[0], suffix="_n")
+                limb.createNeckAndHead(x[0], suffix="n")
 
             elif x[1] == "spine":
                 limb = spine.spine()
-                limb.createSpine(x[0], suffix="_s")  # s for spine...
+                limb.createSpine(x[0], suffix="s")  # s for spine...
 
             elif x[1] == "tail":
                 limb = simpleTail.simpleTail()
-                limb.createSimpleTail(x[0], suffix="_tail")
+                limb.createSimpleTail(x[0], suffix="tail")
 
             elif x[1] == "finger":
                 parentController = None

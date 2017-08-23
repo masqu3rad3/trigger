@@ -39,9 +39,9 @@ class spine(object):
 
         idCounter = 0
         ## create an unique suffix
-        while pm.objExists("scaleGrp_" + suffix):
-            suffix = "%s%s" % (suffix, str(idCounter + 1))
-
+        while pm.objExists("scaleGrp_" + "spine" + suffix):
+            suffix = "%s%s" %(suffix, str(idCounter + 1))
+        print "suffix", suffix
 
         if (len(inits) < 2):
             pm.error("Insufficient Spine Initialization Joints")
@@ -118,10 +118,12 @@ class spine(object):
         ## create locators on the mid controller to be used as alignment
         for m in range (0, len(spine.contCurves_ORE)):
             pos = spine.contCurves_ORE[m].getTranslation(space="world")
+
             if m > 0 and m < (spine.contCurves_ORE):
-                midSpineLocA = pm.spaceLocator(name="midSpineLocA_%s_%s" %(m, suffix), p=pos)
+                print "suffix", suffix
+                midSpineLocA = pm.spaceLocator(name="midSpineLocA_%s_%s" %(str(m), suffix), p=pos)
                 midSpineLocA_List.append(midSpineLocA)
-                midSpineLocB = pm.spaceLocator(name="midSpineLocB_%s_%s" % (m, suffix), p=pos)
+                midSpineLocB = pm.spaceLocator(name="midSpineLocB_%s_%s" % (str(m), suffix), p=pos)
                 midSpineLocB_List.append(midSpineLocB)
                 pm.parentConstraint(midSpineLocA, midSpineLocB, spine.contCurves_ORE[m], mo=True)
 
@@ -129,13 +131,13 @@ class spine(object):
                 pm.parent(midSpineLocB, self.cont_hips)
 
             # contA = icon.circle("cont_SpineFK_A" + str(m), contSpineFKAScale, location=pos)
-            contA = icon.circle("cont_SpineFK_A" + str(m), contSpineFKAScale)
+            contA = icon.circle("cont_SpineFK_A" + str(m) + suffix, contSpineFKAScale)
             extra.alignTo(contA, spine.contCurves_ORE[m], 2)
             # pm.setAttr(contA.rotateAxisZ, 90)
             cont_spineFK_A_List.append(contA)
 
             # contB = icon.ngon("cont_SpineFK_B" + str(m), contSpineFKBScale, location=pos)
-            contB = icon.ngon("cont_SpineFK_B" + str(m), contSpineFKBScale)
+            contB = icon.ngon("cont_SpineFK_B" + str(m) + suffix, contSpineFKBScale)
             extra.alignTo(contB, spine.contCurves_ORE[m], 2)
             # pm.setAttr(contB.rotateAxisZ, 90)
             cont_spineFK_B_List.append(contB)
