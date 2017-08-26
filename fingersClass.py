@@ -78,8 +78,8 @@ class Fingers(object):
         pm.select(d=True)
 
         for i in inits:
-            jPos = i.getTranslation(space="world")
-            jOri = pm.joint(i, q=True, o=True)
+            # jPos = i.getTranslation(space="world")
+            # jOri = pm.joint(i, q=True, o=True)
             j = pm.joint(name="jDef_{0}{1}_{2}".format(side, iter, suffix), radius=1.0)
             extra.alignTo(j, i, 2)
             if inits.index(i) == (len(inits)): # if it is the last joint dont add it to the deformers

@@ -202,7 +202,7 @@ class LimbBuilder():
                 if x[2] == "R":
                     self.leftShoulder = x[0]["Shoulder"]
                 limb = arm.arm()
-                limb.createArm(x[0], suffix=x[2] + "_arm", side=x[2])
+                limb.createArm(x[0], suffix="%s_arm" %x[2], side=x[2])
 
             elif x[1] == "leg":
                 if x[2] == "L":
@@ -211,7 +211,7 @@ class LimbBuilder():
                     self.rightHip = x[0]["Hip"]
 
                 limb = leg.leg()
-                limb.createLeg(x[0], suffix=x[2] + "leg", side=x[2])
+                limb.createLeg(x[0], suffix="%s_leg" %x[2], side=x[2])
 
             elif x[1] == "neck":
                 limb = neckAndHead.neckAndHead()
@@ -234,7 +234,7 @@ class LimbBuilder():
                             parentController = self.fingerMatchConts[index][0]
 
                 limb = finger.Fingers()
-                limb.createFinger(x[0], suffix=x[2] + "_finger", parentController=parentController)
+                limb.createFinger(x[0], suffix="%s_finger" %x[2], parentController=parentController)
 
             else:
                 pm.error("limb creation failed.")

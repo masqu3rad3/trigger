@@ -30,6 +30,7 @@ class twistSpline(object):
         # ## create an unique suffix
         # while pm.objExists("scaleGrp_" + name):
         #     name = "%s%s" % (name, str(idCounter + 1))
+        # tempRefs = pm.duplicate(refJoints)
         print "name", name
         self.scaleGrp = pm.group(name="scaleGrp_" + name, em=True)
         self.nonScaleGrp = pm.group(name="nonScaleGrp_" + name, em=True)
@@ -51,8 +52,8 @@ class twistSpline(object):
             totalLength += currentJointLength
             contDistances.append(ctrlDistance)  # this list contains distance between each control point
 
-        for j in refJoints:
-            pm.joint(j, e=True, zso=True, oj="xyz", sao="yup")
+        # for j in refJoints:
+        #     pm.joint(j, e=True, zso=True, oj="xyz", sao="yup")
 
         endVc = (rootVc.x, (rootVc.y + totalLength), rootVc.z)
 
