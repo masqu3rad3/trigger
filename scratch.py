@@ -45,7 +45,6 @@ class LimbBuilder():
         # first initialize the dimensions for icon creation
         self.hipDistance, self.shoulderDistance = self.getDimensions(selection[0])
         self.getLimbProperties(selection[0])
-        print "matchList", self.fingerMatchList
         self.createMasters()
         # Create limbs and make connection to the parents
         self.createLimbs(self.limbCreationList)

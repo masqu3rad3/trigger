@@ -5,7 +5,10 @@ from Qt import QtWidgets, QtCore, QtGui
 from maya import OpenMayaUI as omui
 import initials as init
 reload(init)
+import scratch
+reload(scratch)
 import math
+
 
 if Qt.__binding__ == "PySide":
     from shiboken import wrapInstance
@@ -44,6 +47,8 @@ class bufferUI(QtWidgets.QDialog):
 
 
 class mainUI(QtWidgets.QTabWidget):
+    wSize = 60
+    hSize = 50
     def __init__(self):
         for entry in QtWidgets.QApplication.allWidgets():
             if entry.objectName() == windowName:
@@ -62,87 +67,121 @@ class mainUI(QtWidgets.QTabWidget):
 
         self.setWindowTitle(windowName)
         self.setObjectName(windowName)
-        self.buffer.setMinimumSize(200, 600)
-        self.buffer.resize(150, 500)
+        self.buffer.setMinimumSize(220, 100)
+        self.buffer.resize(240, 300)
 
         self.initSkeleton = init.initialJoints()
+        # self.rigger = scratch.LimbBuilder()
+
 
         self.tabDialog()
 
 
     def tabDialog(self):
-        # width = self.buffer.frameGeometry().width()
-        # height = self.buffer.frameGeometry().height()
-        # self.resize(width, height)
-        # self.tabWidget = QtWidgets.QTabWidget(self)
-        # mainLayout = QtWidgets.QVBoxLayout()
-        # mainLayout.addWidget(self.tabWidget)
-        self.initBonesTab = QtWidgets.QWidget()
-        self.rigTab = QtWidgets.QWidget()
+
+
+        self.initBonesTab = QtWidgets.QScrollArea()
+        self.initBonesTab.setWidget(QtWidgets.QWidget())
+
+        self.initBoneslayout = QtWidgets.QVBoxLayout(self.initBonesTab.widget())
+        self.initBoneslayout.setAlignment(QtCore.Qt.AlignTop)
+        self.initBonesTab.setWidgetResizable(True)
+
+        self.rigTab = QtWidgets.QScrollArea()
+        self.rigTab.setWidget(QtWidgets.QWidget())
+
+        self.riglayout = QtWidgets.QVBoxLayout(self.rigTab.widget())
+        self.riglayout.setAlignment(QtCore.Qt.AlignTop)
+        self.rigTab.setWidgetResizable(True)
+
         self.addTab(self.initBonesTab, "Init Bones")
         self.addTab(self.rigTab, "Rigging")
+
         self.initBonesUI()
         self.rigUI()
 
     def rigUI(self):
-        pass
+        label = QtWidgets.QLabel("Select a Root Joint \nand Press the Rig Button")
+        labelLayout = QtWidgets.QVBoxLayout()
+        rigBtn = QtWidgets.QPushButton("RIG")
 
+
+        labelLayout.addWidget(label)
+        labelLayout.addWidget(rigBtn)
+        self.riglayout.addLayout(labelLayout)
+        rigBtn.clicked.connect(self.rig)
+
+        # (lambda state, x=idx: self.button_pushed(x))
 
     def initBonesUI(self):
 
-        wSize = 60
-        hSize = 50
-        ## This is the main layout
-        layout = QtWidgets.QVBoxLayout()
-        self.setTabText(0, "Init Bones")
-        self.initBonesTab.setLayout(layout)
+        labels = ["Spine", "Neck", "Arm", "Finger", "Leg", "Tail", "Biped"]
+        pressEvents = []
+        for labelName in labels:
+            label = QtWidgets.QLabel(labelName, parent=self)
+            label.setFixedSize(QtCore.QSize(185, 18))
+            label.setFont(QtGui.QFont("Arial", weight=QtGui.QFont.Bold))
+            label.setAlignment(QtCore.Qt.AlignCenter)
+            label.setFrameStyle(QtWidgets.QFrame.Panel)
+            column = QtWidgets.QVBoxLayout()
+            self.initBoneslayout.addLayout(column)
+            column.addWidget(label)
+            eval("self.init{0}UI()".format(labelName))
+            pressEvents.append(label)
 
-        #   ___       _
-        #  / __> ___ <_>._ _  ___
-        #  \__ \| . \| || ' |/ ._>
-        #  <___/|  _/|_||_|_|\___.
-        #       |_|
 
-        spineLabel = QtWidgets.QLabel("Spine", minimumSize=(QtCore.QSize(20, 18)), parent=self)
-        spineLabel.setFont(QtGui.QFont("Arial", weight=QtGui.QFont.Bold))
-        spineLabel.setAlignment(QtCore.Qt.AlignCenter)
-        spineLabel.setFrameStyle(QtWidgets.QFrame.Panel)
-        self.spineCreateBtn = QtWidgets.QPushButton("Create", minimumSize=(QtCore.QSize(wSize, hSize)), maximumSize=(QtCore.QSize(wSize, hSize)), parent=self)
+        pressEvents[0].mousePressEvent = lambda x: self.hideToggle(self.spineGroupBox)
+        pressEvents[1].mousePressEvent = lambda x: self.hideToggle(self.neckGroupBox)
+        pressEvents[2].mousePressEvent = lambda x: self.hideToggle(self.armGroupBox)
+        pressEvents[3].mousePressEvent = lambda x: self.hideToggle(self.fingerGroupBox)
+        pressEvents[4].mousePressEvent = lambda x: self.hideToggle(self.legGroupBox)
+        pressEvents[5].mousePressEvent = lambda x: self.hideToggle(self.tailGroupBox)
+        pressEvents[6].mousePressEvent = lambda x: self.hideToggle(self.bipedGroupBox)
+
+    def initSpineUI(self):
+        self.spineGroupBox = QtWidgets.QGroupBox()
+        self.spineGroupBox.setFixedSize(185, 80)
+        layout = QtWidgets.QHBoxLayout()
+
+        self.spineCreateBtn = QtWidgets.QPushButton("Create", minimumSize=(QtCore.QSize(self.wSize, self.hSize)), maximumSize=(QtCore.QSize(self.wSize, self.hSize)), parent=self)
         spineSegLb = QtWidgets.QLabel("Segments")
-        self.spineSegInt = QtWidgets.QSpinBox(maximumSize=(QtCore.QSize(45, 50)),value=3, minimum=1)
+        self.spineSegInt = QtWidgets.QSpinBox(maximumSize=(QtCore.QSize(40, 20)),value=3, minimum=1)
 
-        columnSpine = QtWidgets.QVBoxLayout()
-        layout.addLayout(columnSpine)
-        columnSpine.addWidget(spineLabel)
+        layout.addWidget(spineSegLb)
+        layout.addWidget(self.spineSegInt)
+        layout.addWidget(self.spineCreateBtn)
 
-        firstRowSpine = QtWidgets.QHBoxLayout()
-        columnSpine.addLayout(firstRowSpine)
-
-        segmentsColumnSpine = QtWidgets.QVBoxLayout()
-        segmentsColumnSpine.setAlignment(QtCore.Qt.AlignLeft)
-        firstRowSpine.addLayout(segmentsColumnSpine)
-
-        ## Add Widgets
-
-        segmentsColumnSpine.addWidget(spineSegLb)
-        segmentsColumnSpine.addWidget(self.spineSegInt)
-        firstRowSpine.addWidget(self.spineCreateBtn)
         self.spineCreateBtn.clicked.connect(self.createSpine)
 
-        # self.spineCreateBtn.clicked.connect(lambda segs=self.spineSegInt.value : self.initSkeleton.initLimb("spine", whichSide="auto", segments=12))
+        self.spineGroupBox.setLayout(layout)
+        self.spineGroupBox.setHidden(True)
+        self.initBoneslayout.addWidget(self.spineGroupBox)
+        
+    def initNeckUI(self):
+        self.neckGroupBox = QtWidgets.QGroupBox()
+        self.neckGroupBox.setFixedSize(185, 80)
+        layout = QtWidgets.QHBoxLayout()
 
-        #   ___
-        #  | . | _ _ ._ _ _
-        #  |   || '_>| ' ' |
-        #  |_|_||_|  |_|_|_|
-        #
+        self.neckCreateBtn = QtWidgets.QPushButton("Create", minimumSize=(QtCore.QSize(self.wSize, self.hSize)), maximumSize=(QtCore.QSize(self.wSize, self.hSize)), parent=self)
+        neckSegLb = QtWidgets.QLabel("Segments")
+        self.neckSegInt = QtWidgets.QSpinBox(maximumSize=(QtCore.QSize(40, 20)),value=3, minimum=1)
 
-        # ## These are the all Widgets in the Dialog
-        armLabel = QtWidgets.QLabel("Arm", minimumSize=(QtCore.QSize(20, 18)), parent=self)
-        armLabel.setFont(QtGui.QFont("Arial", weight=QtGui.QFont.Bold))
-        armLabel.setAlignment(QtCore.Qt.AlignCenter)
-        armLabel.setFrameStyle(QtWidgets.QFrame.Panel)
-        self.armCreateBtn = QtWidgets.QPushButton("Create", minimumSize=(QtCore.QSize(wSize, hSize)), maximumSize=(QtCore.QSize(wSize, hSize)), parent=self)
+        layout.addWidget(neckSegLb)
+        layout.addWidget(self.neckSegInt)
+        layout.addWidget(self.neckCreateBtn)
+
+        self.neckCreateBtn.clicked.connect(self.createNeck)
+
+        self.neckGroupBox.setLayout(layout)
+        self.neckGroupBox.setHidden(True)
+        self.initBoneslayout.addWidget(self.neckGroupBox)
+
+    def initArmUI(self):
+        self.armGroupBox = QtWidgets.QGroupBox()
+        self.armGroupBox.setFixedSize(185, 80)
+        layout = QtWidgets.QHBoxLayout()
+
+        self.armCreateBtn = QtWidgets.QPushButton("Create", minimumSize=(QtCore.QSize(self.wSize, self.hSize)), maximumSize=(QtCore.QSize(self.wSize, self.hSize)), parent=self)
 
         radioGrpArm = QtWidgets.QButtonGroup(layout)
         self.armSideLeft = QtWidgets.QRadioButton("Left", parent=self)
@@ -156,40 +195,67 @@ class mainUI(QtWidgets.QTabWidget):
         radioGrpArm.addButton(self.armSideAuto)
         self.armSideAuto.setChecked(True)
 
-        columnArm = QtWidgets.QVBoxLayout()
-        layout.addLayout(columnArm)
-        columnArm.addWidget(armLabel)
-
-        firstRowArm = QtWidgets.QHBoxLayout()
-        columnArm.addLayout(firstRowArm)
-
         radioColumnArm = QtWidgets.QVBoxLayout()
         radioColumnArm.setAlignment(QtCore.Qt.AlignLeft)
-        firstRowArm.addLayout(radioColumnArm)
+        layout.addLayout(radioColumnArm)
 
         radioColumnArm.addWidget(self.armSideLeft)
         radioColumnArm.addWidget(self.armSideRight)
         radioColumnArm.addWidget(self.armSideBoth)
         radioColumnArm.addWidget(self.armSideAuto)
 
-        firstRowArm.addWidget(self.armCreateBtn)
+        layout.addWidget(self.armCreateBtn)
 
         self.armCreateBtn.clicked.connect(self.createArm)
 
+        self.armGroupBox.setLayout(layout)
+        self.armGroupBox.setHidden(True)
 
+        self.initBoneslayout.addWidget(self.armGroupBox)
+        
+    def initLegUI(self):
+        self.legGroupBox = QtWidgets.QGroupBox()
+        self.legGroupBox.setFixedSize(185, 80)
+        layout = QtWidgets.QHBoxLayout()
 
-        #   ___  _
-        #  | __><_>._ _  ___  ___  _ _
-        #  | _> | || ' |/ . |/ ._>| '_>
-        #  |_|  |_||_|_|\_. |\___.|_|
-        #               <___'
+        self.legCreateBtn = QtWidgets.QPushButton("Create", minimumSize=(QtCore.QSize(self.wSize, self.hSize)), maximumSize=(QtCore.QSize(self.wSize, self.hSize)), parent=self)
 
-        ## These are the all Widgets in the Dialog
-        fingerLabel = QtWidgets.QLabel("Finger", minimumSize=(QtCore.QSize(20, 18)), parent=self)
-        fingerLabel.setFont(QtGui.QFont("Arial", weight=QtGui.QFont.Bold))
-        fingerLabel.setAlignment(QtCore.Qt.AlignCenter)
-        fingerLabel.setFrameStyle(QtWidgets.QFrame.Panel)
-        self.fingerCreateBtn = QtWidgets.QPushButton("Create", minimumSize=(QtCore.QSize(wSize, hSize)), maximumSize=(QtCore.QSize(wSize, hSize)), parent=self)
+        radioGrpLeg = QtWidgets.QButtonGroup(layout)
+        self.legSideLeft = QtWidgets.QRadioButton("Left", parent=self)
+        self.legSideRight = QtWidgets.QRadioButton("Right", parent=self)
+        self.legSideBoth = QtWidgets.QRadioButton("Both", parent=self)
+        self.legSideAuto = QtWidgets.QRadioButton("Auto", parent=self)
+
+        radioGrpLeg.addButton(self.legSideLeft)
+        radioGrpLeg.addButton(self.legSideRight)
+        radioGrpLeg.addButton(self.legSideBoth)
+        radioGrpLeg.addButton(self.legSideAuto)
+        self.legSideAuto.setChecked(True)
+
+        radioColumnLeg = QtWidgets.QVBoxLayout()
+        radioColumnLeg.setAlignment(QtCore.Qt.AlignLeft)
+        layout.addLayout(radioColumnLeg)
+
+        radioColumnLeg.addWidget(self.legSideLeft)
+        radioColumnLeg.addWidget(self.legSideRight)
+        radioColumnLeg.addWidget(self.legSideBoth)
+        radioColumnLeg.addWidget(self.legSideAuto)
+
+        layout.addWidget(self.legCreateBtn)
+
+        self.legCreateBtn.clicked.connect(self.createLeg)
+
+        self.legGroupBox.setLayout(layout)
+        self.legGroupBox.setHidden(True)
+
+        self.initBoneslayout.addWidget(self.legGroupBox)
+
+    def initFingerUI(self):
+        self.fingerGroupBox = QtWidgets.QGroupBox()
+        self.fingerGroupBox.setFixedSize(185, 100)
+        layout = QtWidgets.QHBoxLayout()
+
+        self.fingerCreateBtn = QtWidgets.QPushButton("Create", minimumSize=(QtCore.QSize(self.wSize, self.hSize)), maximumSize=(QtCore.QSize(self.wSize, self.hSize)), parent=self)
 
         radioGrpFinger = QtWidgets.QButtonGroup(layout)
         self.fingerSideLeft = QtWidgets.QRadioButton("Left", parent=self)
@@ -205,138 +271,80 @@ class mainUI(QtWidgets.QTabWidget):
 
         self.fingerIsThumbChk = QtWidgets.QCheckBox("Thumb", parent=self)
 
-        columnFinger = QtWidgets.QVBoxLayout()
-        layout.addLayout(columnFinger)
-        columnFinger.addWidget(fingerLabel)
-
-        firstRowFinger = QtWidgets.QHBoxLayout()
-        columnFinger.addLayout(firstRowFinger)
-
         radioColumnFinger = QtWidgets.QVBoxLayout()
         radioColumnFinger.setAlignment(QtCore.Qt.AlignLeft)
-        firstRowFinger.addLayout(radioColumnFinger)
+        layout.addLayout(radioColumnFinger)
 
         radioColumnFinger.addWidget(self.fingerSideLeft)
         radioColumnFinger.addWidget(self.fingerSideRight)
         radioColumnFinger.addWidget(self.fingerSideBoth)
         radioColumnFinger.addWidget(self.fingerSideAuto)
         radioColumnFinger.addWidget(self.fingerIsThumbChk)
-        firstRowFinger.addWidget(self.fingerCreateBtn)
+        layout.addWidget(self.fingerCreateBtn)
 
         self.fingerCreateBtn.clicked.connect(self.createFinger)
 
-        #   _
-        #  | |   ___  ___
-        #  | |_ / ._>/ . |
-        #  |___|\___.\_. |
-        #            <___'
+        self.fingerGroupBox.setLayout(layout)
+        self.fingerGroupBox.setHidden(True)
+        self.initBoneslayout.addWidget(self.fingerGroupBox)
 
-        ## These are the all Widgets in the Dialog
-        legLabel = QtWidgets.QLabel("Leg", minimumSize=(QtCore.QSize(20, 18)), parent=self)
-        legLabel.setFont(QtGui.QFont("Arial", weight=QtGui.QFont.Bold))
-        legLabel.setAlignment(QtCore.Qt.AlignCenter)
-        legLabel.setFrameStyle(QtWidgets.QFrame.Panel)
-        self.legCreateBtn = QtWidgets.QPushButton("Create", minimumSize=(QtCore.QSize(wSize, hSize)), maximumSize=(QtCore.QSize(wSize, hSize)), parent=self)
+    def initTailUI(self):
+        self.tailGroupBox = QtWidgets.QGroupBox()
+        self.tailGroupBox.setFixedSize(185,80)
 
-        radioGrpLeg = QtWidgets.QButtonGroup(layout)
-        self.legSideLeft = QtWidgets.QRadioButton("Left", parent=self)
-        self.legSideRight = QtWidgets.QRadioButton("Right", parent=self)
-        self.legSideBoth = QtWidgets.QRadioButton("Both", parent=self)
-        self.legSideAuto = QtWidgets.QRadioButton("Auto", parent=self)
-        radioGrpLeg.addButton(self.legSideLeft)
-        radioGrpLeg.addButton(self.legSideRight)
-        radioGrpLeg.addButton(self.legSideBoth)
-        radioGrpLeg.addButton(self.legSideAuto)
-        self.legSideLeft.setChecked(True)
+        layout = QtWidgets.QHBoxLayout()
 
-        columnLeg = QtWidgets.QVBoxLayout()
-        layout.addLayout(columnLeg)
-        columnLeg.addWidget(legLabel)
-
-        firstRowLeg = QtWidgets.QHBoxLayout()
-        columnLeg.addLayout(firstRowLeg)
-
-        radioColumnLeg = QtWidgets.QVBoxLayout()
-        radioColumnLeg.setAlignment(QtCore.Qt.AlignLeft)
-        firstRowLeg.addLayout(radioColumnLeg)
-
-        radioColumnLeg.addWidget(self.legSideLeft)
-        radioColumnLeg.addWidget(self.legSideRight)
-        radioColumnLeg.addWidget(self.legSideBoth)
-        radioColumnLeg.addWidget(self.legSideAuto)
-        firstRowLeg.addWidget(self.legCreateBtn)
-
-        self.legCreateBtn.clicked.connect(self.createLeg)
-
-
-        #   ___      _  _
-        #  |_ _|___ <_>| |
-        #   | |<_> || || |
-        #   |_|<___||_||_|
-        #
-
-        tailLabel = QtWidgets.QLabel("Tail", minimumSize=(QtCore.QSize(20, 18)), parent=self)
-        tailLabel.setFont(QtGui.QFont("Arial", weight=QtGui.QFont.Bold))
-        tailLabel.setAlignment(QtCore.Qt.AlignCenter)
-        tailLabel.setFrameStyle(QtWidgets.QFrame.Panel)
-        self.tailCreateBtn = QtWidgets.QPushButton("Create", minimumSize=(QtCore.QSize(wSize, hSize)), maximumSize=(QtCore.QSize(wSize, hSize)), parent=self)
+        self.tailCreateBtn = QtWidgets.QPushButton("Create", minimumSize=(QtCore.QSize(self.wSize, self.hSize)), maximumSize=(QtCore.QSize(self.wSize, self.hSize)), parent=self)
         tailSegLb = QtWidgets.QLabel("Segments")
-        self.tailSegInt = QtWidgets.QSpinBox(maximumSize=(QtCore.QSize(45, 50)),value=8, minimum=2)
+        self.tailSegInt = QtWidgets.QSpinBox(maximumSize=(QtCore.QSize(40, 20)),value=3, minimum=1)
 
-        columntail = QtWidgets.QVBoxLayout()
-        layout.addLayout(columntail)
-        columntail.addWidget(tailLabel)
-
-        firstRowtail = QtWidgets.QHBoxLayout()
-        columntail.addLayout(firstRowtail)
-
-        segmentsColumntail = QtWidgets.QVBoxLayout()
-        segmentsColumntail.setAlignment(QtCore.Qt.AlignLeft)
-        firstRowtail.addLayout(segmentsColumntail)
-
-        ## Add Widgets
-
-        segmentsColumntail.addWidget(tailSegLb)
-        segmentsColumntail.addWidget(self.tailSegInt)
-        firstRowtail.addWidget(self.tailCreateBtn)
+        layout.addWidget(tailSegLb)
+        layout.addWidget(self.tailSegInt)
+        layout.addWidget(self.tailCreateBtn)
 
         self.tailCreateBtn.clicked.connect(self.createTail)
 
+        self.tailGroupBox.setLayout(layout)
+        self.tailGroupBox.setHidden(True)
+        self.initBoneslayout.addWidget(self.tailGroupBox)
+        
+    def initBipedUI(self):
+        self.bipedGroupBox = QtWidgets.QGroupBox()
+        self.bipedGroupBox.setFixedSize(185,80)
 
-        #   _ _            _     _    _ _              _
-        #  | \ | ___  ___ | |__ < >  | | | ___  ___  _| |
-        #  |   |/ ._>/ | '| / / /.\/ |   |/ ._><_> |/ . |
-        #  |_\_|\___.\_|_.|_\_\ \_/\ |_|_|\___.<___|\___|
-        #
+        layout = QtWidgets.QHBoxLayout()
 
-        neckLabel = QtWidgets.QLabel("Neck And Head", minimumSize=(QtCore.QSize(20, 18)), parent=self)
-        neckLabel.setFont(QtGui.QFont("Arial", weight=QtGui.QFont.Bold))
-        neckLabel.setAlignment(QtCore.Qt.AlignCenter)
-        neckLabel.setFrameStyle(QtWidgets.QFrame.Panel)
-        self.neckCreateBtn = QtWidgets.QPushButton("Create", minimumSize=(QtCore.QSize(wSize, hSize)), maximumSize=(QtCore.QSize(wSize, hSize)), parent=self)
-        neckSegLb = QtWidgets.QLabel("Segments")
-        self.neckSegInt = QtWidgets.QSpinBox(maximumSize=(QtCore.QSize(45, 50)), value=3, minimum=1)
+        self.bipedCreateBtn = QtWidgets.QPushButton("Create", minimumSize=(QtCore.QSize(self.wSize, self.hSize)), maximumSize=(QtCore.QSize(self.wSize, self.hSize)), parent=self)
+        bipedSegLb = QtWidgets.QLabel("Fingers")
+        self.fingerSegInt = QtWidgets.QSpinBox(maximumSize=(QtCore.QSize(40, 20)),value=5, minimum=1, maximum=5)
 
-        columnneck = QtWidgets.QVBoxLayout()
-        layout.addLayout(columnneck)
-        columnneck.addWidget(neckLabel)
+        layout.addWidget(bipedSegLb)
+        layout.addWidget(self.fingerSegInt)
+        layout.addWidget(self.bipedCreateBtn)
 
-        firstRowneck = QtWidgets.QHBoxLayout()
-        columnneck.addLayout(firstRowneck)
+        self.bipedCreateBtn.clicked.connect(self.createBiped)
 
-        segmentsColumnneck = QtWidgets.QVBoxLayout()
-        segmentsColumnneck.setAlignment(QtCore.Qt.AlignLeft)
-        firstRowneck.addLayout(segmentsColumnneck)
+        self.bipedGroupBox.setLayout(layout)
+        self.initBoneslayout.addWidget(self.bipedGroupBox)
 
-        ## Add Widgets
+    def hideToggle(self, UI):
+        # print UI
 
-        segmentsColumnneck.addWidget(neckSegLb)
-        segmentsColumnneck.addWidget(self.neckSegInt)
-        firstRowneck.addWidget(self.neckCreateBtn)
+        if UI.isVisible():
+            UI.setHidden(True)
+        else:
+            UI.setHidden(False)
 
-        self.neckCreateBtn.clicked.connect(self.createNeckAndHead)
+    def rig(self):
+        # pm.undoInfo(openChunk=True)
+        rigger = scratch.LimbBuilder()
+        rigger.startBuilding(createAnchors=True)
+        # pm.undoInfo(closeChunk=True)
 
-
+    def createBiped(self):
+        pm.undoInfo(openChunk=True)
+        self.initSkeleton.initHumanoid(fingers=self.fingerSegInt.value())
+        pm.undoInfo(closeChunk=True)
 
     def createArm(self):
         pm.undoInfo(openChunk=True)
@@ -394,11 +402,10 @@ class mainUI(QtWidgets.QTabWidget):
         self.initSkeleton.initLimb("tail", segments=self.tailSegInt.value())
         pm.undoInfo(closeChunk=True)
 
-    def createNeckAndHead(self):
+    def createNeck(self):
         pm.undoInfo(openChunk=True)
         self.initSkeleton.initLimb("neck", segments=self.neckSegInt.value())
         pm.undoInfo(closeChunk=True)
-
 
     def testPop(self):
         exportWindow, ok = QtWidgets.QInputDialog.getItem(self, 'Text Input Dialog',

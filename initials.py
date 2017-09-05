@@ -87,7 +87,6 @@ class initialJoints():
 
     def initLimb (self, limb, whichSide="left", segments=3, fingerCount=5, thumb=False, constrainedTo = None, parentNode=None):
 
-
         ## skip side related stuff for no-side related limbs
         nonSidedLimbs = ["spine", "neck", "tail"]
         if limb in nonSidedLimbs:
@@ -129,14 +128,14 @@ class initialJoints():
             masterParent = parentNode
 
         if whichSide == "both":
-            constLocs = self.initLimb(limb, "left")
-            self.initLimb(limb, "right", constrainedTo=constLocs)
+            constLocs = self.initLimb(limb, "left", segments=segments, fingerCount=fingerCount, thumb=thumb)
+            self.initLimb(limb, "right", constrainedTo=constLocs, segments=segments, fingerCount=fingerCount, thumb=thumb)
             return
         if whichSide == "auto":
             mirrorParent, givenAlignment, returnAlignment = self.autoGet(masterParent)
-            constLocs = self.initLimb(limb, givenAlignment)
+            constLocs = self.initLimb(limb, givenAlignment, segments=segments, fingerCount=fingerCount, thumb=thumb)
             if mirrorParent:
-                self.initLimb(limb, returnAlignment, constrainedTo=constLocs, parentNode=mirrorParent)
+                self.initLimb(limb, returnAlignment, constrainedTo=constLocs, parentNode=mirrorParent, segments=segments, fingerCount=fingerCount, thumb=thumb)
             return
 
         limbGroup = pm.group(em=True, name="%sGrp_%s" %(limb,suffix))
@@ -627,8 +626,8 @@ class initialJoints():
         self.tailJointsList.append(jointList)
         return jointList, offsetVector
 
-    def initHumanoid(self):
-        self.initLimb("spine", "auto", segments=3)
+    def initHumanoid(self, spineSegments=3, neckSegments=3, fingers=5):
+        self.initLimb("spine", "auto", segments=spineSegments)
         root = self.spineJointsList[-1][0]
         chest = self.spineJointsList[-1][-1]
         pm.select(root)
@@ -636,11 +635,11 @@ class initialJoints():
 
         pm.select(chest)
         self.initLimb("arm", "auto")
-        self.initLimb("neck", "auto", segments=2)
+        self.initLimb("neck", "auto", segments=neckSegments)
         rHand =  self.armJointsList[-1][-1]
 
         pm.select(rHand)
-        self.initLimb("hand", "auto")
+        self.initLimb("hand", "auto", fingerCount=fingers)
 
 
 

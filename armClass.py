@@ -34,7 +34,7 @@ class arm():
     scaleConstraints = []
     anchors = []
     anchorLocations = []
-
+    print "HERERERERER"
     ## This is a joint node and should be parented to another joint.
     def createArm(self, armInits, suffix="", side="L", mirrorAxis="X"):
 
