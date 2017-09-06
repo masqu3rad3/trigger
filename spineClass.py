@@ -13,20 +13,20 @@ reload(twistSpline)
 
 class spine(object):
 
-    # socketDict = {}
-    scaleConstraints = []
-    scaleGrp = None
-    cont_body = None
-    cont_hips = None
-    cont_chest = None
-    cont_IK_OFF = None
-    nonScaleGrp = None
-    # startSocket = None
-    # endSocket = None
-    sockets = []
-    connectsTo = None
-    anchors = []
-    anchorLocations = []
+    def __init__(self):
+        self.scaleConstraints = []
+        self.scaleGrp = None
+        self.cont_body = None
+        self.cont_hips = None
+        self.cont_chest = None
+        self.cont_IK_OFF = None
+        self.nonScaleGrp = None
+        self.sockets = []
+        self.connectsTo = None
+        self.anchors = []
+        self.anchorLocations = []
+        self.endSocket = None
+        self.startSocket = None
 
     def createSpine(self, inits, suffix=""):
         if not isinstance(inits, list):

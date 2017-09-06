@@ -18,23 +18,23 @@ reload(mFingers)
 ######### IK ARM ##########
 ###########################
 class arm():
-
-    sockets = []
-    # startSocket = None
-    # endSocket = None
-    scaleGrp = None
-    nonScaleGrp = None
-    cont_IK_hand = None
-    # cont_IK_hand_OFF = None
-    cont_IK_OFF = None
-    rootSocket = None
-    cont_Pole = None
-    nodesContVis = None
-    limbPlug = None
-    scaleConstraints = []
-    anchors = []
-    anchorLocations = []
-    print "HERERERERER"
+    def __init__(self):
+        self.sockets = []
+        # startSocket = None
+        # endSocket = None
+        self.scaleGrp = None
+        self.nonScaleGrp = None
+        self.cont_IK_hand = None
+        # cont_IK_hand_OFF = None
+        self.cont_IK_OFF = None
+        self.rootSocket = None
+        self.cont_Pole = None
+        self.nodesContVis = None
+        self.limbPlug = None
+        self.scaleConstraints = []
+        self.anchors = []
+        self.anchorLocations = []
+        self.jDef_Collar = None
     ## This is a joint node and should be parented to another joint.
     def createArm(self, armInits, suffix="", side="L", mirrorAxis="X"):
 
@@ -80,8 +80,8 @@ class arm():
 
         # Shoulder Joints
         pm.select(d=True)
-        jDef_Collar = pm.joint(name="jDef_Collar_" + suffix, p=collarPos, radius=1.5)
-        self.sockets.append(jDef_Collar)
+        self.jDef_Collar = pm.joint(name="jDef_Collar_" + suffix, p=collarPos, radius=1.5)
+        self.sockets.append(self.jDef_Collar)
         j_CollarEnd = pm.joint(name="j_CollarEnd_" + suffix, p=shoulderPos, radius=1.5)
 
         pm.select(d=True)
@@ -104,7 +104,7 @@ class arm():
 
         pm.select(d=True)
 
-        pm.joint(jDef_Collar, e=True, zso=True, oj="xyz", sao="yup")
+        pm.joint(self.jDef_Collar, e=True, zso=True, oj="xyz", sao="yup")
         pm.joint(j_CollarEnd, e=True, zso=True, oj="xyz", sao="yup")
 
         pm.joint(jIK_orig_Up, e=True, zso=True, oj="xyz", sao="yup")
@@ -334,7 +334,7 @@ class arm():
 
         pm.makeIdentity(a=True, t=True, r=True, s=False)
 
-        jDef_paCon = pm.parentConstraint(cont_Shoulder, jDef_Collar, mo=True)
+        jDef_paCon = pm.parentConstraint(cont_Shoulder, self.jDef_Collar, mo=True)
 
         ###########################
         ######### FK ARM ##########
@@ -637,7 +637,7 @@ class arm():
         pm.parent(ribbonLowerArm.scaleGrp, self.nonScaleGrp)
         pm.parent(ribbonLowerArm.nonScaleGrp, self.nonScaleGrp)
 
-        pm.parent(jDef_Collar, self.scaleGrp)
+        pm.parent(self.jDef_Collar, self.scaleGrp)
 
         pm.parent(handLock, self.scaleGrp)
         pm.parent(masterRoot, self.scaleGrp)
@@ -668,7 +668,7 @@ class arm():
 
         self.nodesContVis = [cont_Pole_OFF, cont_Shoulder_OFF, cont_IK_hand_OFF, cont_FK_Hand_OFF, cont_FK_IK_POS,
                         cont_FK_LowArm_OFF, cont_FK_UpArm_OFF, ribbonLowerArm.scaleGrp, ribbonUpperArm.scaleGrp, cont_midLock_POS]
-        nodesJointVis = [jDef_elbow, jDef_paCon, jDef_Collar, jDef_Hand]
+        nodesJointVis = [jDef_elbow, jDef_paCon, self.jDef_Collar, jDef_Hand]
         nodesJointVisLists = [ribbonLowerArm.deformerJoints, ribbonUpperArm.deformerJoints, nodesJointVis]
         nodesRigVis = [endLock_Twist, startLock_Ore, armStart, armEnd, IK_parentGRP, midLock, masterRoot, jFK_Up, handLock, rootMaster.getShape()]
         # global Cont visibilities

@@ -15,21 +15,23 @@ reload(icon)
 
 # whichLeg="l_leg"
 class leg():
-    none = None
-    scaleGrp = None
-    cont_IK_foot = None
-    cont_Pole = None
-    nonScaleGrp = None
-    # cont_IK_foot_OFF = None
-    cont_IK_OFF = None
-    sockets = []
-    # startSocket = None
-    # endSocket = None
-    limbPlug = None
-    connectsTo = None
-    scaleConstraints = []
-    anchors = []
-    anchorLocations = []
+    def __init__(self):
+        # none = None
+        self.scaleGrp = None
+        self.cont_IK_foot = None
+        self.cont_Pole = None
+        self.nonScaleGrp = None
+        # cont_IK_foot_OFF = None
+        self.cont_IK_OFF = None
+        self.sockets = []
+        # startSocket = None
+        # endSocket = None
+        self.limbPlug = None
+        self.connectsTo = None
+        self.scaleConstraints = []
+        self.anchors = []
+        self.anchorLocations = []
+        self.jDef_legRoot = None
 
     def createLeg(self, legInits, suffix="", side="L", mirrorAxis="X"):
         idCounter = 0
@@ -82,12 +84,12 @@ class leg():
         pm.select(d=True)
         jDef_midLeg = pm.joint(name="jDef_knee_" + suffix, p=kneePos, radius=1.5)
         pm.select(d=True)
-        jDef_legRoot = pm.joint(name="jDef_legRoot_" + suffix, p=legRootPos, radius=1.5)
-        self.sockets.append(jDef_legRoot)
+        self.jDef_legRoot = pm.joint(name="jDef_legRoot_" + suffix, p=legRootPos, radius=1.5)
+        self.sockets.append(self.jDef_legRoot)
         jDef_hip = pm.joint(name="jDef_hip_" + suffix, p=hipPos, radius=1.5)
-        pm.joint(jDef_legRoot, e=True, zso=True, oj="xyz")
+        pm.joint(self.jDef_legRoot, e=True, zso=True, oj="xyz")
         pm.joint(jDef_hip, e=True, zso=True, oj="xyz")
-        pm.parent(jDef_legRoot, self.scaleGrp)
+        pm.parent(self.jDef_legRoot, self.scaleGrp)
 
         ###########################
         ######### IK LEG ##########
@@ -444,7 +446,7 @@ class leg():
         pm.makeIdentity(cont_Thigh, a=True)
         pm.xform(cont_Thigh, piv=legRootPos, ws=True)
         pm.makeIdentity(cont_Thigh, a=True, t=True, r=False, s=True)
-        pm.parentConstraint(cont_Thigh, jDef_legRoot, mo=True, st=("x", "y", "z"))
+        pm.parentConstraint(cont_Thigh, self.jDef_legRoot, mo=True, st=("x", "y", "z"))
         pm.pointConstraint(cont_Thigh, jDef_hip, mo=True)
 
         ###########################
@@ -783,7 +785,7 @@ class leg():
 
         nodesContVis = [cont_Pole_OFF, cont_Thigh_OFF, cont_IK_foot_OFF, cont_FK_Foot_OFF, cont_midLock_POS, cont_FK_IK_POS,
                         cont_FK_Ball_OFF, cont_FK_LowLeg_OFF, cont_FK_UpLeg_OFF, ribbonUpperLeg.scaleGrp, ribbonLowerLeg.scaleGrp]
-        nodesJointVis = [jDef_midLeg, jDef_Ball, jDef_Foot, jDef_legRoot, jDef_Toe, jDef_hip]
+        nodesJointVis = [jDef_midLeg, jDef_Ball, jDef_Foot, self.jDef_legRoot, jDef_Toe, jDef_hip]
         nodesJointVisLists = [ribbonUpperLeg.deformerJoints, ribbonLowerLeg.deformerJoints, nodesJointVis]
         nodesRigVis = [endLock_Ore, startLock_Ore, legStart, legEnd, IK_parentGRP, midLock]
 

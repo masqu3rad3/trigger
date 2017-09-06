@@ -35,9 +35,11 @@ class LimbBuilder():
         self.allSocketsList=[]
         self.limbCreationList = []
         self.riggedLimbList = []
+        self.rootGroup = None
 
 
-    def startBuilding(self, createAnchors=True):
+    def startBuilding(self, createAnchors=True, segments=3):
+        self.__init__()
         selection = pm.ls(sl=True, type="joint")
         if len(selection) != 1 or extra.identifyMaster(selection[0])[0] not in self.validRootList :
             pm.warning("select a single root joint")
@@ -252,12 +254,15 @@ class LimbBuilder():
             parentInitJoint=x[3]
             #
             # print "parentInitJoint:", parentInitJoint
+
             if parentInitJoint:
-                parentSocket = self.getNearestSocket(parentInitJoint, self.allSocketsList)
+                parentSocket = self.getNearestSocket(parentInitJoint, self.allSocketsList, excluding=limb.sockets)
                 # print "parentSocket", parentSocket
 
             else:
                 parentSocket = self.cont_placement
+
+            print "parentSocket", parentSocket
             pm.parent(limb.limbPlug, parentSocket)
 
             ## Good parenting / scale connections
@@ -265,6 +270,7 @@ class LimbBuilder():
             scaleGrpPiv = limb.limbPlug.getTranslation(space="world")
             pm.xform(limb.scaleGrp, piv=scaleGrpPiv, ws=True)
             ## pass the attributes
+
             extra.attrPass(limb.scaleGrp, self.cont_master, values=True, daisyChain=True, overrideEx=False)
 
             if limb.nonScaleGrp:
@@ -274,7 +280,8 @@ class LimbBuilder():
             for sCon in limb.scaleConstraints:
                 pm.scaleConstraint(self.cont_master, sCon)
 
-    def getNearestSocket(self, initJoint, limbSockets):
+
+    def getNearestSocket(self, initJoint, limbSockets, excluding=[]):
         """
         searches through limbSockets list and gets the nearest socket to the initJoint.
         Args:
@@ -286,7 +293,8 @@ class LimbBuilder():
         """
         distanceList=[]
         for socket in limbSockets:
-            distanceList.append(extra.getDistance(socket, initJoint))
+            if not socket in excluding:
+                distanceList.append(extra.getDistance(socket, initJoint))
         index = distanceList.index(min(distanceList))
         return limbSockets[index]
 

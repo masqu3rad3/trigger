@@ -10,18 +10,17 @@ reload(icon)
 
 class simpleTail(object):
 
-    scaleGrp = None
-    cont_body = None
-    cont_hips = None
-    limbPlug = None
-    # rootSocket = None
-    nonScaleGrp = None
-    # connectsTo = None
-    cont_IK_OFF = None
-    sockets = []
-    scaleConstraints = []
-    anchors = []
-    anchorLocations = []
+    def __init__(self):
+        self.scaleGrp = None
+        self.cont_body = None
+        self.cont_hips = None
+        self.limbPlug = None
+        self.nonScaleGrp = None
+        self.cont_IK_OFF = None
+        self.sockets = []
+        self.scaleConstraints = []
+        self.anchors = []
+        self.anchorLocations = []
 
     def createSimpleTail(self, inits, suffix="", conts="cube"):
         if not isinstance(inits, list):
@@ -63,9 +62,10 @@ class simpleTail(object):
 
         for j in range (0,len(inits)):
             location = inits[j].getTranslation(space="world")
-            bone = pm.joint(name="jDef_" + suffix, p=location)
-            if j == 0 or j == len(inits):
-                self.sockets.append(bone)
+            bone = pm.joint(name="jDef_{0}_{1}".format(j, suffix), p=location)
+            self.sockets.append(bone)
+            # if j == 0 or j == len(inits):
+            #     self.sockets.append(bone)
             deformerJoints.append(bone)
 
         for j in deformerJoints:
@@ -76,7 +76,6 @@ class simpleTail(object):
         contList=[]
         cont_OREList=[]
         for j in range (0,len(deformerJoints)):
-            print "defj", deformerJoints[j]
             if j != len(deformerJoints)-1:
                 scaleDis = extra.getDistance(deformerJoints[j], deformerJoints[j+1])/2
                 cont = icon.cube(name="cont_%s_%s" %(suffix, str(j)), scale=(scaleDis,scaleDis,scaleDis))

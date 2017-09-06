@@ -101,17 +101,63 @@ class mainUI(QtWidgets.QTabWidget):
         self.rigUI()
 
     def rigUI(self):
-        label = QtWidgets.QLabel("Select a Root Joint \nand Press the Rig Button")
-        labelLayout = QtWidgets.QVBoxLayout()
-        rigBtn = QtWidgets.QPushButton("RIG")
+
+        ## Create a groupbox
+        rigGrpBox = QtWidgets.QGroupBox("Rig From Roots")
+        ## Create a Layout for the groupbox
+        rigGrpLayout = QtWidgets.QVBoxLayout()
+        ## Put the layout under groupbox
+        rigGrpBox.setLayout(rigGrpLayout)
+
+        ## Create widgets
+        label = QtWidgets.QLabel("Select a Root Joint -> hit Rig Button")
+        rigBtn = QtWidgets.QPushButton("RIG from Root")
+        self.isCreateAnchorsChk = QtWidgets.QCheckBox("Create Anchors Automatically", parent=self)
+        self.isCreateAnchorsChk.setLayoutDirection(QtCore.Qt.RightToLeft)
+        self.isCreateAnchorsChk.setChecked(True)
+        segmentsLayout = QtWidgets.QHBoxLayout()
+        rigSegLbl = QtWidgets.QLabel("Segments")
+        self.rigSegInt = QtWidgets.QSpinBox(maximumSize=(QtCore.QSize(40, 20)), value=3, minimum=1, )
+        segmentsLayout.setAlignment(QtCore.Qt.AlignRight)
+
+        ## Add widgets to the group layout
+        rigGrpLayout.addWidget(label)
+        rigGrpLayout.addWidget(self.isCreateAnchorsChk)
+        rigGrpLayout.addLayout(segmentsLayout)
+        segmentsLayout.addWidget(rigSegLbl)
+        segmentsLayout.addWidget(self.rigSegInt)
+        rigGrpLayout.addWidget(rigBtn)
 
 
-        labelLayout.addWidget(label)
-        labelLayout.addWidget(rigBtn)
-        self.riglayout.addLayout(labelLayout)
+
+        ## Connect the button signal to the rig creation
         rigBtn.clicked.connect(self.rig)
+        ## Add groupbox under the tabs main layout
+        self.riglayout.addWidget(rigGrpBox)
 
-        # (lambda state, x=idx: self.button_pushed(x))
+
+        # ## Create a groupbox
+        # anchorGrpBox = QtWidgets.QGroupBox("Rig From Roots")
+        # ## Create a Layout for the groupbox
+        # rigGrpLayout = QtWidgets.QVBoxLayout()
+        # ## Put the layout under groupbox
+        # rigGrpBox.setLayout(rigGrpLayout)
+        #
+        # ## Create widgets
+        # label = QtWidgets.QLabel("Select a Root Joint -> hit Rig Button")
+        # rigBtn = QtWidgets.QPushButton("RIG from Root")
+        # self.isCreateAnchorsChk = QtWidgets.QCheckBox("Create Anchors Automatically", parent=self)
+        # self.isCreateAnchorsChk.setChecked(True)
+        # ## Add widgets to the group layout
+        # rigGrpLayout.addWidget(label)
+        # rigGrpLayout.addWidget(self.isCreateAnchorsChk)
+        # rigGrpLayout.addWidget(rigBtn)
+        #
+        # ## Connect the button signal to the rig creation
+        # rigBtn.clicked.connect(self.rig)
+        # ## Add groupbox under the tabs main layout
+        # self.riglayout.addWidget(rigGrpBox)
+
 
     def initBonesUI(self):
 
@@ -144,8 +190,9 @@ class mainUI(QtWidgets.QTabWidget):
         layout = QtWidgets.QHBoxLayout()
 
         self.spineCreateBtn = QtWidgets.QPushButton("Create", minimumSize=(QtCore.QSize(self.wSize, self.hSize)), maximumSize=(QtCore.QSize(self.wSize, self.hSize)), parent=self)
-        spineSegLb = QtWidgets.QLabel("Segments")
+        spineSegLb = QtWidgets.QLabel("Spine Resolution")
         self.spineSegInt = QtWidgets.QSpinBox(maximumSize=(QtCore.QSize(40, 20)),value=3, minimum=1)
+
 
         layout.addWidget(spineSegLb)
         layout.addWidget(self.spineSegInt)
@@ -336,10 +383,11 @@ class mainUI(QtWidgets.QTabWidget):
             UI.setHidden(False)
 
     def rig(self):
-        # pm.undoInfo(openChunk=True)
+        pm.undoInfo(openChunk=True)
         rigger = scratch.LimbBuilder()
-        rigger.startBuilding(createAnchors=True)
-        # pm.undoInfo(closeChunk=True)
+        # self.rigger.__init__()
+        rigger.startBuilding(createAnchors=self.isCreateAnchorsChk.isChecked())
+        pm.undoInfo(closeChunk=True)
 
     def createBiped(self):
         pm.undoInfo(openChunk=True)
