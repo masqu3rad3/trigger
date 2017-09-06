@@ -38,7 +38,7 @@ class LimbBuilder():
         self.rootGroup = None
 
 
-    def startBuilding(self, createAnchors=True, segments=3):
+    def startBuilding(self, createAnchors=True, spineRes=10, neckRes=3):
         self.__init__()
         selection = pm.ls(sl=True, type="joint")
         if len(selection) != 1 or extra.identifyMaster(selection[0])[0] not in self.validRootList :
@@ -49,7 +49,7 @@ class LimbBuilder():
         self.getLimbProperties(selection[0])
         self.createMasters()
         # Create limbs and make connection to the parents
-        self.createLimbs(self.limbCreationList)
+        self.createLimbs(self.limbCreationList, spineRes=spineRes, neckRes=neckRes)
 
         ## Create anchors (spaceswithcers)
         if createAnchors:
@@ -185,7 +185,7 @@ class LimbBuilder():
         extra.lockAndHide(self.rootGroup, ["tx", "ty", "tz", "rx", "ry", "rz", "sx", "sy", "sz"])
         pm.parent(self.cont_master, self.rootGroup)
 
-    def createLimbs(self, limbCreationList):
+    def createLimbs(self, limbCreationList, spineRes=3, neckRes=3):
         """
         Creates limb with the order defined in the limbCreationList (which created with getLimbProperties)
         Args:
@@ -216,11 +216,11 @@ class LimbBuilder():
 
             elif x[1] == "neck":
                 limb = neckAndHead.neckAndHead()
-                limb.createNeckAndHead(x[0], suffix="n")
+                limb.createNeckAndHead(x[0], suffix="n", resolution=neckRes)
 
             elif x[1] == "spine":
                 limb = spine.spine()
-                limb.createSpine(x[0], suffix="s")  # s for spine...
+                limb.createSpine(x[0], suffix="s", resolution=spineRes)  # s for spine...
 
             elif x[1] == "tail":
                 limb = simpleTail.simpleTail()

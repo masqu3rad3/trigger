@@ -28,7 +28,7 @@ class spine(object):
         self.endSocket = None
         self.startSocket = None
 
-    def createSpine(self, inits, suffix=""):
+    def createSpine(self, inits, suffix="", resolution=4):
         if not isinstance(inits, list):
             ## parse the dictionary inits into a list
             sRoot=inits.get("Root")
@@ -74,6 +74,7 @@ class spine(object):
         self.cont_body = icon.square("cont_Body", contBodyScale)
         extra.alignTo(self.cont_body, inits[0],2)
         cont_Body_POS = extra.createUpGrp(self.cont_body, "POS")
+        self.cont_IK_OFF = cont_Body_POS
         pm.parentConstraint(self.limbPlug, cont_Body_POS, mo=True)
 
         self.cont_chest = icon.cube("cont_Chest", (iconSize*0.5, iconSize*0.35, iconSize*0.2))
@@ -86,7 +87,7 @@ class spine(object):
         pm.move(self.cont_chest, chestPoint, rpr=True)
 
         spine = twistSpline.twistSpline()
-        spine.createTspline(inits, "spine" + suffix, 4, dropoff=2)
+        spine.createTspline(inits, "spine" + suffix, resolution, dropoff=2)
 
         midConnection = spine.contCurves_ORE[(len(spine.contCurves_ORE)/2)]
 

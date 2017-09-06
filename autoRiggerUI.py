@@ -115,20 +115,31 @@ class mainUI(QtWidgets.QTabWidget):
         self.isCreateAnchorsChk = QtWidgets.QCheckBox("Create Anchors Automatically", parent=self)
         self.isCreateAnchorsChk.setLayoutDirection(QtCore.Qt.RightToLeft)
         self.isCreateAnchorsChk.setChecked(True)
-        segmentsLayout = QtWidgets.QHBoxLayout()
-        rigSegLbl = QtWidgets.QLabel("Segments")
-        self.rigSegInt = QtWidgets.QSpinBox(maximumSize=(QtCore.QSize(40, 20)), value=3, minimum=1, )
-        segmentsLayout.setAlignment(QtCore.Qt.AlignRight)
+        spineResLayout = QtWidgets.QHBoxLayout()
+        spineResLayout.setAlignment(QtCore.Qt.AlignRight)
+        spineResLbl = QtWidgets.QLabel("Spine Res./Dropoff")
+        self.spineResInt = QtWidgets.QSpinBox(maximumSize=(QtCore.QSize(40, 20)), value=3, minimum=1)
+        self.spineDropoff = QtWidgets.QDoubleSpinBox(maximumSize=(QtCore.QSize(50, 20)), value=2.0, minimum=0.1, maximum=10 )
+
+        neckResLayout = QtWidgets.QHBoxLayout()
+        neckResLayout.setAlignment(QtCore.Qt.AlignRight)
+        neckResLbl = QtWidgets.QLabel("Neck Res./Dropoff")
+        self.neckResInt = QtWidgets.QSpinBox(maximumSize=(QtCore.QSize(40, 20)), value=3, minimum=1)
+        self.neckDropoff = QtWidgets.QDoubleSpinBox(maximumSize=(QtCore.QSize(50, 20)), value=2.0, minimum=0.1, maximum=10)
+
 
         ## Add widgets to the group layout
         rigGrpLayout.addWidget(label)
         rigGrpLayout.addWidget(self.isCreateAnchorsChk)
-        rigGrpLayout.addLayout(segmentsLayout)
-        segmentsLayout.addWidget(rigSegLbl)
-        segmentsLayout.addWidget(self.rigSegInt)
+        rigGrpLayout.addLayout(spineResLayout)
+        rigGrpLayout.addLayout(neckResLayout)
+        spineResLayout.addWidget(spineResLbl)
+        spineResLayout.addWidget(self.spineResInt)
+        spineResLayout.addWidget(self.spineDropoff)
+        neckResLayout.addWidget(neckResLbl)
+        neckResLayout.addWidget(self.neckResInt)
+        neckResLayout.addWidget(self.neckDropoff)
         rigGrpLayout.addWidget(rigBtn)
-
-
 
         ## Connect the button signal to the rig creation
         rigBtn.clicked.connect(self.rig)
@@ -386,7 +397,7 @@ class mainUI(QtWidgets.QTabWidget):
         pm.undoInfo(openChunk=True)
         rigger = scratch.LimbBuilder()
         # self.rigger.__init__()
-        rigger.startBuilding(createAnchors=self.isCreateAnchorsChk.isChecked())
+        rigger.startBuilding(createAnchors=self.isCreateAnchorsChk.isChecked(), spineRes=self.spineResInt.value(), neckRes=self.neckResInt.value())
         pm.undoInfo(closeChunk=True)
 
     def createBiped(self):

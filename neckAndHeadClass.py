@@ -31,7 +31,7 @@ class neckAndHead():
     anchors = []
     anchorLocations = []
 
-    def createNeckAndHead(self, inits, suffix=""):
+    def createNeckAndHead(self, inits, suffix="", resolution=3):
         idCounter = 0
         ## create an unique suffix
         while pm.objExists("scaleGrp_" + suffix):
@@ -112,8 +112,7 @@ class neckAndHead():
         extra.alignTo(self.neckRootLoc, neckNodes[0])
 
         neckSpline = twistSpline.twistSpline()
-
-        neckSpline.createTspline(neckNodes+[headStart], "neckSplineIK_"+suffix, 3, dropoff=1)
+        neckSpline.createTspline(neckNodes+[headStart], "neckSplineIK_"+suffix, resolution, dropoff=1)
         # # Connect neck start to the neck controller
         pm.orientConstraint(self.cont_neck, neckSpline.contCurve_Start, mo=True)  # This will be position constrained to the spine(or similar)
         self.cont_neck.rotateY >> neckSpline.twistNode.input1X

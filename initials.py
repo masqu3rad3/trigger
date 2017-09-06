@@ -17,6 +17,9 @@ class initialJoints():
         self.legJointsList=[]
         self.fingerJointsList=[]
         self.tailJointsList=[]
+        self.projectName = "tikAutoRig"
+
+
 
     def transformator (self, inputVector, transKey):
         ## convert the input tuple to an actual vector:
@@ -86,6 +89,11 @@ class initialJoints():
         self.mirrorAxis = "xyz".strip(lookAxis + upAxis)
 
     def initLimb (self, limb, whichSide="left", segments=3, fingerCount=5, thumb=False, constrainedTo = None, parentNode=None):
+        ## Create the holder group if it does not exist
+        if not pm.objExists("{0}_refBones".format(self.projectName)):
+            holderGroup = pm.group(name=("{0}_refBones".format(self.projectName)))
+        else:
+            holderGroup = pm.PyNode("{0}_refBones".format(self.projectName))
 
         ## skip side related stuff for no-side related limbs
         nonSidedLimbs = ["spine", "neck", "tail"]
@@ -139,6 +147,7 @@ class initialJoints():
             return
 
         limbGroup = pm.group(em=True, name="%sGrp_%s" %(limb,suffix))
+        pm.parent(limbGroup, holderGroup)
         pm.select(d=True)
 
         if self.lookAxis == "z" and self.upAxis == "y":
