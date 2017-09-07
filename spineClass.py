@@ -28,7 +28,7 @@ class spine(object):
         self.endSocket = None
         self.startSocket = None
 
-    def createSpine(self, inits, suffix="", resolution=4):
+    def createSpine(self, inits, suffix="", resolution=4, dropoff=2.0):
         if not isinstance(inits, list):
             ## parse the dictionary inits into a list
             sRoot=inits.get("Root")
@@ -87,7 +87,8 @@ class spine(object):
         pm.move(self.cont_chest, chestPoint, rpr=True)
 
         spine = twistSpline.twistSpline()
-        spine.createTspline(inits, "spine" + suffix, resolution, dropoff=2)
+        # print "RESonSPINECLASS", resolution
+        spine.createTspline(inits, "spine" + suffix, resolution, dropoff=dropoff)
 
         midConnection = spine.contCurves_ORE[(len(spine.contCurves_ORE)/2)]
 

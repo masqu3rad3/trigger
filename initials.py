@@ -270,6 +270,12 @@ class initialJoints():
             if i == 0:
                 type = 1
                 pm.setAttr(spine + ".type", type)
+                pm.addAttr(shortName="resolution", longName="Resolution", defaultValue=4, minValue=1,
+                           at="long", k=True)
+                pm.addAttr(shortName="dropoff", longName="DropOff", defaultValue=1.0, minValue=0.1,
+                           at="float", k=True)
+                pm.setAttr(spine.radius, 3)
+
             elif i == (segments):
                 type = 18
                 pm.setAttr(spine + ".type", type)
@@ -293,6 +299,7 @@ class initialJoints():
 
         pm.select(d=True)
         collar = pm.joint(p=collarVec, name=("jInit_collar_" + suffix))
+        pm.setAttr(collar.radius, 3)
         shoulder = pm.joint(p=shoulderVec, name=("jInit_shoulder_" + suffix))
         elbow = pm.joint(p=elbowVec, name=("jInit_elbow_" + suffix))
         hand = pm.joint(p=handVec, name=("jInit_hand_" + suffix))
@@ -337,6 +344,7 @@ class initialJoints():
         heelpvVec = self.transformator((5,0,-0.2), transformKey)
         
         root = pm.joint(p=rootVec, name=("jInit_LegRoot_" + suffix))
+        pm.setAttr(root.radius, 3)
         hip = pm.joint(p=hipVec, name=("jInit_Hip_" + suffix))
         knee = pm.joint(p=kneeVec, name=("jInit_Knee_" + suffix))
         foot = pm.joint(p=footVec, name=("jInit_Foot_" + suffix))
@@ -540,11 +548,13 @@ class initialJoints():
             self.fingerJointsList.append(pinkyJoints)
             jointList.extend(pinkyJoints)
             fingerRoots.append(pinky00)
-
+        
         if fingerCount > 5:
             for x in range(0, (fingerCount - 5)):
                 ##//TODO put extra fingers
                 pass
+        for r in fingerRoots:
+            pm.setAttr(r.radius, 2)
         return jointList, fingerRoots
 
     def initialNeck(self, transformKey, segments, suffix):
@@ -562,6 +572,12 @@ class initialJoints():
                 if i == 0:
                     pm.setAttr(neck + ".type", 18)
                     pm.setAttr(neck + ".otherType", "NeckRoot")
+                    pm.addAttr(shortName="resolution", longName="Resolution", defaultValue=4, minValue=1,
+                               at="long", k=True)
+                    pm.addAttr(shortName="dropoff", longName="DropOff", defaultValue=1.0, minValue=0.1,
+                               at="float", k=True)
+                    pm.setAttr(neck.radius, 3)
+
                 else:
                     pm.setAttr(neck + ".type", 7)
 
@@ -594,6 +610,7 @@ class initialJoints():
             if i == 0:
                 pm.setAttr(tail + ".type", 18)
                 pm.setAttr(tail + ".otherType", "TailRoot")
+                pm.setAttr(tail.radius, 3)
             else:
                 pm.setAttr(tail + ".type", 18)
                 pm.setAttr(tail + ".otherType", "Tail")
@@ -619,20 +636,21 @@ class initialJoints():
 
         jointList = []
         for i in range(0, (segments + 1)):
-            tail = pm.joint(p=(rPointFinger + (addFinger * i)), name="jInit_tail_%s_%s" %(suffix, str(i)))
-            pm.setAttr(tail + ".side", 0)
+            finger = pm.joint(p=(rPointFinger + (addFinger * i)), name="jInit_finger_%s_%s" %(suffix, str(i)))
+            pm.setAttr(finger + ".side", 0)
 
             if i == 0:
-                pm.setAttr(tail + ".type", 18)
-                pm.setAttr(tail + ".otherType", "FingerRoot")
-                pm.setAttr(tail + ".drawLabel", 1)
+                pm.setAttr(finger + ".type", 18)
+                pm.setAttr(finger + ".otherType", "FingerRoot")
+                pm.setAttr(finger + ".drawLabel", 1)
+                pm.setAttr(finger.radius, 2)
             else:
-                pm.setAttr(tail + ".type", 23)
+                pm.setAttr(finger + ".type", 23)
 
 
-            jointList.append(tail)
+            jointList.append(finger)
 
-        self.tailJointsList.append(jointList)
+        self.fingerJointsList.append(jointList)
         return jointList, offsetVector
 
     def initHumanoid(self, spineSegments=3, neckSegments=3, fingers=5):

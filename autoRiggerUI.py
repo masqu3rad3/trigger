@@ -67,11 +67,11 @@ class mainUI(QtWidgets.QTabWidget):
 
         self.setWindowTitle(windowName)
         self.setObjectName(windowName)
-        self.buffer.setMinimumSize(220, 100)
-        self.buffer.resize(240, 300)
+        self.buffer.setMinimumSize(250, 100)
+        self.buffer.resize(250, 500)
 
         self.initSkeleton = init.initialJoints()
-        # self.rigger = scratch.LimbBuilder()
+        self.rigger = scratch.LimbBuilder()
 
 
         self.tabDialog()
@@ -84,6 +84,7 @@ class mainUI(QtWidgets.QTabWidget):
         self.initBonesTab.setWidget(QtWidgets.QWidget())
 
         self.initBoneslayout = QtWidgets.QVBoxLayout(self.initBonesTab.widget())
+
         self.initBoneslayout.setAlignment(QtCore.Qt.AlignTop)
         self.initBonesTab.setWidgetResizable(True)
 
@@ -106,39 +107,39 @@ class mainUI(QtWidgets.QTabWidget):
         rigGrpBox = QtWidgets.QGroupBox("Rig From Roots")
         ## Create a Layout for the groupbox
         rigGrpLayout = QtWidgets.QVBoxLayout()
-        ## Put the layout under groupbox
+        # ## set layout for the groupbox
         rigGrpBox.setLayout(rigGrpLayout)
 
         ## Create widgets
         label = QtWidgets.QLabel("Select a Root Joint -> hit Rig Button")
         rigBtn = QtWidgets.QPushButton("RIG from Root")
         self.isCreateAnchorsChk = QtWidgets.QCheckBox("Create Anchors Automatically", parent=self)
-        self.isCreateAnchorsChk.setLayoutDirection(QtCore.Qt.RightToLeft)
+        # self.isCreateAnchorsChk.setLayoutDirection(QtCore.Qt.RightToLeft)
         self.isCreateAnchorsChk.setChecked(True)
-        spineResLayout = QtWidgets.QHBoxLayout()
-        spineResLayout.setAlignment(QtCore.Qt.AlignRight)
-        spineResLbl = QtWidgets.QLabel("Spine Res./Dropoff")
-        self.spineResInt = QtWidgets.QSpinBox(maximumSize=(QtCore.QSize(40, 20)), value=3, minimum=1)
-        self.spineDropoff = QtWidgets.QDoubleSpinBox(maximumSize=(QtCore.QSize(50, 20)), value=2.0, minimum=0.1, maximum=10 )
+        # spineResLayout = QtWidgets.QHBoxLayout()
+        # spineResLayout.setAlignment(QtCore.Qt.AlignRight)
+        # spineResLbl = QtWidgets.QLabel("Spine Res./Dropoff")
+        # self.spineResInt = QtWidgets.QSpinBox(maximumSize=(QtCore.QSize(40, 20)), value=3, minimum=1)
+        # self.spineDropoff = QtWidgets.QDoubleSpinBox(maximumSize=(QtCore.QSize(50, 20)), value=2.0, minimum=0.1, maximum=10 )
 
-        neckResLayout = QtWidgets.QHBoxLayout()
-        neckResLayout.setAlignment(QtCore.Qt.AlignRight)
-        neckResLbl = QtWidgets.QLabel("Neck Res./Dropoff")
-        self.neckResInt = QtWidgets.QSpinBox(maximumSize=(QtCore.QSize(40, 20)), value=3, minimum=1)
-        self.neckDropoff = QtWidgets.QDoubleSpinBox(maximumSize=(QtCore.QSize(50, 20)), value=2.0, minimum=0.1, maximum=10)
+        # neckResLayout = QtWidgets.QHBoxLayout()
+        # neckResLayout.setAlignment(QtCore.Qt.AlignRight)
+        # neckResLbl = QtWidgets.QLabel("Neck Res./Dropoff")
+        # self.neckResInt = QtWidgets.QSpinBox(maximumSize=(QtCore.QSize(40, 20)), value=3, minimum=1)
+        # self.neckDropoff = QtWidgets.QDoubleSpinBox(maximumSize=(QtCore.QSize(50, 20)), value=2.0, minimum=0.1, maximum=10)
 
 
         ## Add widgets to the group layout
         rigGrpLayout.addWidget(label)
         rigGrpLayout.addWidget(self.isCreateAnchorsChk)
-        rigGrpLayout.addLayout(spineResLayout)
-        rigGrpLayout.addLayout(neckResLayout)
-        spineResLayout.addWidget(spineResLbl)
-        spineResLayout.addWidget(self.spineResInt)
-        spineResLayout.addWidget(self.spineDropoff)
-        neckResLayout.addWidget(neckResLbl)
-        neckResLayout.addWidget(self.neckResInt)
-        neckResLayout.addWidget(self.neckDropoff)
+        # rigGrpLayout.addLayout(spineResLayout)
+        # rigGrpLayout.addLayout(neckResLayout)
+        # spineResLayout.addWidget(spineResLbl)
+        # spineResLayout.addWidget(self.spineResInt)
+        # spineResLayout.addWidget(self.spineDropoff)
+        # neckResLayout.addWidget(neckResLbl)
+        # neckResLayout.addWidget(self.neckResInt)
+        # neckResLayout.addWidget(self.neckDropoff)
         rigGrpLayout.addWidget(rigBtn)
 
         ## Connect the button signal to the rig creation
@@ -148,27 +149,26 @@ class mainUI(QtWidgets.QTabWidget):
 
 
         # ## Create a groupbox
-        # anchorGrpBox = QtWidgets.QGroupBox("Rig From Roots")
-        # ## Create a Layout for the groupbox
-        # rigGrpLayout = QtWidgets.QVBoxLayout()
-        # ## Put the layout under groupbox
-        # rigGrpBox.setLayout(rigGrpLayout)
+        addLimbGrpBox = QtWidgets.QGroupBox("Add Limb to the Rig")
+        ## Create a Layout for the groupbox
+        addGrpLayout = QtWidgets.QVBoxLayout()
+        # ## set layout for the groupbox
+        addLimbGrpBox.setLayout(addGrpLayout)
         #
         # ## Create widgets
-        # label = QtWidgets.QLabel("Select a Root Joint -> hit Rig Button")
-        # rigBtn = QtWidgets.QPushButton("RIG from Root")
+        addlabel = QtWidgets.QLabel("Select in order:\n <Root Reference> - <Parent Node> \n <Master Controller>")
+        addToRigBtn = QtWidgets.QPushButton("Add To Rig")
         # self.isCreateAnchorsChk = QtWidgets.QCheckBox("Create Anchors Automatically", parent=self)
         # self.isCreateAnchorsChk.setChecked(True)
         # ## Add widgets to the group layout
-        # rigGrpLayout.addWidget(label)
-        # rigGrpLayout.addWidget(self.isCreateAnchorsChk)
-        # rigGrpLayout.addWidget(rigBtn)
+        addGrpLayout.addWidget(addlabel)
+        addGrpLayout.addWidget(addToRigBtn)
+
         #
         # ## Connect the button signal to the rig creation
-        # rigBtn.clicked.connect(self.rig)
-        # ## Add groupbox under the tabs main layout
-        # self.riglayout.addWidget(rigGrpBox)
-
+        addToRigBtn.clicked.connect(self.addRig)
+        ## Add groupbox under the tabs main layout
+        self.riglayout.addWidget(addLimbGrpBox)
 
     def initBonesUI(self):
 
@@ -176,7 +176,7 @@ class mainUI(QtWidgets.QTabWidget):
         pressEvents = []
         for labelName in labels:
             label = QtWidgets.QLabel(labelName, parent=self)
-            label.setFixedSize(QtCore.QSize(185, 18))
+            label.setFixedSize(QtCore.QSize(220, 18))
             label.setFont(QtGui.QFont("Arial", weight=QtGui.QFont.Bold))
             label.setAlignment(QtCore.Qt.AlignCenter)
             label.setFrameStyle(QtWidgets.QFrame.Panel)
@@ -185,7 +185,6 @@ class mainUI(QtWidgets.QTabWidget):
             column.addWidget(label)
             eval("self.init{0}UI()".format(labelName))
             pressEvents.append(label)
-
 
         pressEvents[0].mousePressEvent = lambda x: self.hideToggle(self.spineGroupBox)
         pressEvents[1].mousePressEvent = lambda x: self.hideToggle(self.neckGroupBox)
@@ -197,11 +196,12 @@ class mainUI(QtWidgets.QTabWidget):
 
     def initSpineUI(self):
         self.spineGroupBox = QtWidgets.QGroupBox()
-        self.spineGroupBox.setFixedSize(185, 80)
+        self.spineGroupBox.setFixedSize(210, 80)
+
         layout = QtWidgets.QHBoxLayout()
 
         self.spineCreateBtn = QtWidgets.QPushButton("Create", minimumSize=(QtCore.QSize(self.wSize, self.hSize)), maximumSize=(QtCore.QSize(self.wSize, self.hSize)), parent=self)
-        spineSegLb = QtWidgets.QLabel("Spine Resolution")
+        spineSegLb = QtWidgets.QLabel("Segments")
         self.spineSegInt = QtWidgets.QSpinBox(maximumSize=(QtCore.QSize(40, 20)),value=3, minimum=1)
 
 
@@ -214,10 +214,10 @@ class mainUI(QtWidgets.QTabWidget):
         self.spineGroupBox.setLayout(layout)
         self.spineGroupBox.setHidden(True)
         self.initBoneslayout.addWidget(self.spineGroupBox)
-        
+
     def initNeckUI(self):
         self.neckGroupBox = QtWidgets.QGroupBox()
-        self.neckGroupBox.setFixedSize(185, 80)
+        self.neckGroupBox.setFixedSize(210, 80)
         layout = QtWidgets.QHBoxLayout()
 
         self.neckCreateBtn = QtWidgets.QPushButton("Create", minimumSize=(QtCore.QSize(self.wSize, self.hSize)), maximumSize=(QtCore.QSize(self.wSize, self.hSize)), parent=self)
@@ -236,7 +236,7 @@ class mainUI(QtWidgets.QTabWidget):
 
     def initArmUI(self):
         self.armGroupBox = QtWidgets.QGroupBox()
-        self.armGroupBox.setFixedSize(185, 80)
+        self.armGroupBox.setFixedSize(210, 80)
         layout = QtWidgets.QHBoxLayout()
 
         self.armCreateBtn = QtWidgets.QPushButton("Create", minimumSize=(QtCore.QSize(self.wSize, self.hSize)), maximumSize=(QtCore.QSize(self.wSize, self.hSize)), parent=self)
@@ -273,7 +273,7 @@ class mainUI(QtWidgets.QTabWidget):
         
     def initLegUI(self):
         self.legGroupBox = QtWidgets.QGroupBox()
-        self.legGroupBox.setFixedSize(185, 80)
+        self.legGroupBox.setFixedSize(210, 80)
         layout = QtWidgets.QHBoxLayout()
 
         self.legCreateBtn = QtWidgets.QPushButton("Create", minimumSize=(QtCore.QSize(self.wSize, self.hSize)), maximumSize=(QtCore.QSize(self.wSize, self.hSize)), parent=self)
@@ -310,7 +310,7 @@ class mainUI(QtWidgets.QTabWidget):
 
     def initFingerUI(self):
         self.fingerGroupBox = QtWidgets.QGroupBox()
-        self.fingerGroupBox.setFixedSize(185, 100)
+        self.fingerGroupBox.setFixedSize(210, 100)
         layout = QtWidgets.QHBoxLayout()
 
         self.fingerCreateBtn = QtWidgets.QPushButton("Create", minimumSize=(QtCore.QSize(self.wSize, self.hSize)), maximumSize=(QtCore.QSize(self.wSize, self.hSize)), parent=self)
@@ -348,7 +348,7 @@ class mainUI(QtWidgets.QTabWidget):
 
     def initTailUI(self):
         self.tailGroupBox = QtWidgets.QGroupBox()
-        self.tailGroupBox.setFixedSize(185,80)
+        self.tailGroupBox.setFixedSize(210,80)
 
         layout = QtWidgets.QHBoxLayout()
 
@@ -368,16 +368,39 @@ class mainUI(QtWidgets.QTabWidget):
         
     def initBipedUI(self):
         self.bipedGroupBox = QtWidgets.QGroupBox()
-        self.bipedGroupBox.setFixedSize(185,80)
+        self.bipedGroupBox.setFixedSize(210,100)
 
         layout = QtWidgets.QHBoxLayout()
 
         self.bipedCreateBtn = QtWidgets.QPushButton("Create", minimumSize=(QtCore.QSize(self.wSize, self.hSize)), maximumSize=(QtCore.QSize(self.wSize, self.hSize)), parent=self)
-        bipedSegLb = QtWidgets.QLabel("Fingers")
-        self.fingerSegInt = QtWidgets.QSpinBox(maximumSize=(QtCore.QSize(40, 20)),value=5, minimum=1, maximum=5)
 
-        layout.addWidget(bipedSegLb)
-        layout.addWidget(self.fingerSegInt)
+        bipedFingerLb = QtWidgets.QLabel("Fingers")
+        self.fingerSegInt = QtWidgets.QSpinBox(maximumSize=(QtCore.QSize(40, 20)),value=5, minimum=1, maximum=5)
+        bipedSpineLb = QtWidgets.QLabel("Spine Segs")
+        self.bipedSpineSegsInt = QtWidgets.QSpinBox(maximumSize=(QtCore.QSize(40, 20)),value=3, minimum=1)
+        bipedNeckLb = QtWidgets.QLabel("Neck Segs")
+        self.bipedNeckSegsInt = QtWidgets.QSpinBox(maximumSize=(QtCore.QSize(40, 20)),value=1, minimum=1)
+
+        spinLayout = QtWidgets.QVBoxLayout()
+        spinLayout.setAlignment(QtCore.Qt.AlignLeft)
+        layout.addLayout(spinLayout)
+
+        spinSubA = QtWidgets.QHBoxLayout()
+        spinLayout.addLayout(spinSubA)
+
+        spinSubB = QtWidgets.QHBoxLayout()
+        spinLayout.addLayout(spinSubB)
+
+        spinSubC = QtWidgets.QHBoxLayout()
+        spinLayout.addLayout(spinSubC)
+
+        spinSubA.addWidget(bipedFingerLb)
+        spinSubA.addWidget(self.fingerSegInt)
+        spinSubB.addWidget(bipedSpineLb)
+        spinSubB.addWidget(self.bipedSpineSegsInt)
+        spinSubC.addWidget(bipedNeckLb)
+        spinSubC.addWidget(self.bipedNeckSegsInt)
+
         layout.addWidget(self.bipedCreateBtn)
 
         self.bipedCreateBtn.clicked.connect(self.createBiped)
@@ -395,14 +418,19 @@ class mainUI(QtWidgets.QTabWidget):
 
     def rig(self):
         pm.undoInfo(openChunk=True)
-        rigger = scratch.LimbBuilder()
+        self.rigger.__init__()
+        self.rigger.startBuilding(createAnchors=self.isCreateAnchorsChk.isChecked())
+        pm.undoInfo(closeChunk=True)
+
+    def addRig(self):
+        pm.undoInfo(openChunk=True)
         # self.rigger.__init__()
-        rigger.startBuilding(createAnchors=self.isCreateAnchorsChk.isChecked(), spineRes=self.spineResInt.value(), neckRes=self.neckResInt.value())
+        self.rigger.addLimb()
         pm.undoInfo(closeChunk=True)
 
     def createBiped(self):
         pm.undoInfo(openChunk=True)
-        self.initSkeleton.initHumanoid(fingers=self.fingerSegInt.value())
+        self.initSkeleton.initHumanoid(fingers=self.fingerSegInt.value(), spineSegments=self.bipedSpineSegsInt.value(), neckSegments=self.bipedNeckSegsInt.value())
         pm.undoInfo(closeChunk=True)
 
     def createArm(self):
@@ -465,6 +493,15 @@ class mainUI(QtWidgets.QTabWidget):
         pm.undoInfo(openChunk=True)
         self.initSkeleton.initLimb("neck", segments=self.neckSegInt.value())
         pm.undoInfo(closeChunk=True)
+
+    # def updateRigAttr(self):
+    #     self.rigger.__init__()
+    #     self.rigger.createAnchors = self.isCreateAnchorsChk.isChecked()
+    #     self.rigger.spineRes = self.spineResInt.value()
+    #     self.rigger.spineDropoff = self.spineDropoff.value()
+    #     self.rigger.neckRes = self.neckResInt.value()
+    #     self.rigger.neckDropoff = self.neckDropoff.value()
+
 
     def testPop(self):
         exportWindow, ok = QtWidgets.QInputDialog.getItem(self, 'Text Input Dialog',

@@ -35,23 +35,37 @@ class LimbBuilder():
         self.allSocketsList=[]
         self.limbCreationList = []
         self.riggedLimbList = []
+        self.projectName = "tikAutoRig"
         self.rootGroup = None
+        self.spineRes = 4
+        self.neckRes = 3
+        # self.spineDropoff = 2.0
+        # self.neckDropoff = 2.0
+        # self.createAnchors = True
+
+    def startBuilding(self, createAnchors=False):
+        # self.__init__()
 
 
-    def startBuilding(self, createAnchors=True, spineRes=10, neckRes=3):
-        self.__init__()
         selection = pm.ls(sl=True, type="joint")
         if len(selection) != 1 or extra.identifyMaster(selection[0])[0] not in self.validRootList :
             pm.warning("select a single root joint")
             return
+
+        ## Create the holder group if it does not exist
+        if not pm.objExists("{0}_rig".format(self.projectName)):
+            self.rootGroup = pm.group(name=("{0}_rig".format(self.projectName)), em=True)
+        else:
+            self.rootGroup = pm.PyNode("{0}_rig".format(self.projectName))
+
         # first initialize the dimensions for icon creation
         self.hipDistance, self.shoulderDistance = self.getDimensions(selection[0])
         self.getLimbProperties(selection[0])
         self.createMasters()
         # Create limbs and make connection to the parents
-        self.createLimbs(self.limbCreationList, spineRes=spineRes, neckRes=neckRes)
+        self.createLimbs(self.limbCreationList)
 
-        ## Create anchors (spaceswithcers)
+        # Create anchors (spaceswithcers)
         if createAnchors:
             for anchor in (self.anchors):
                 extra.spaceSwitcher(anchor[0], self.anchorLocations, mode=anchor[1], defaultVal=anchor[2], listException=anchor[3])
@@ -61,6 +75,73 @@ class LimbBuilder():
             socket = self.getNearestSocket(x[1],self.allSocketsList)
             pm.parentConstraint(socket, contPos, mo=True)
             pm.scaleConstraint(self.cont_master, contPos)
+            pm.parent(contPos, self.rootGroup)
+
+
+    def addLimb(self):
+        selection = pm.ls(sl=True)
+        if len(selection) > 3:
+            pm.error("Select exactly three nodes. First reference root node then target parent and finally master controller")
+            return
+        referenceRoot = selection[0]
+        parentSocket = selection[1]
+        masterController = selection[2]
+        if extra.identifyMaster(referenceRoot)[0] not in self.validRootList:
+            pm.error("First selection must be a valid root joint node")
+            return
+        limbProperties = self.getWholeLimb(referenceRoot)
+
+        if limbProperties[1] == "arm":
+            limb = arm.arm()
+            limb.createArm(limbProperties[0], suffix="%s_arm" % limbProperties[2], side=limbProperties[2])
+
+        elif limbProperties[1] == "leg":
+            limb = leg.leg()
+            limb.createLeg(limbProperties[0], suffix="%s_leg" % limbProperties[2], side=limbProperties[2])
+
+        elif limbProperties[1] == "neck":
+            limb = neckAndHead.neckAndHead()
+            limb.createNeckAndHead(limbProperties[0], suffix="n", resolution=limbProperties[0]["resolution"], dropoff=limbProperties[0]["dropoff"])
+
+        elif limbProperties[1] == "spine":
+            limb = spine.spine()
+            limb.createSpine(limbProperties[0], suffix="s", resolution=limbProperties[0]["resolution"], dropoff=limbProperties[0]["dropoff"])  # s for spine...
+
+        elif limbProperties[1] == "tail":
+            limb = simpleTail.simpleTail()
+            limb.createSimpleTail(limbProperties[0], suffix="tail")
+
+        elif limbProperties[1] == "finger":
+            limb = finger.Fingers()
+            limb.createFinger(limbProperties[0], suffix="%s_finger" % limbProperties[2])
+
+        else:
+            pm.error("limb creation failed.")
+            return
+
+        pm.parent(limb.limbPlug, parentSocket)
+
+        ## Good parenting / scale connections
+        ## Create the holder group if it does not exist
+        if not pm.objExists("{0}_rig".format(self.projectName)):
+            self.rootGroup = pm.group(name=("{0}_rig".format(self.projectName)),em=True)
+        else:
+            self.rootGroup = pm.PyNode("{0}_rig".format(self.projectName))
+
+        pm.parent(limb.scaleGrp, self.rootGroup)
+        scaleGrpPiv = limb.limbPlug.getTranslation(space="world")
+        pm.xform(limb.scaleGrp, piv=scaleGrpPiv, ws=True)
+        ## pass the attributes
+
+        extra.attrPass(limb.scaleGrp, masterController, values=True, daisyChain=True, overrideEx=False)
+
+        if limb.nonScaleGrp:
+            pm.parent(limb.nonScaleGrp, self.rootGroup)
+        if limb.cont_IK_OFF:
+            pm.parent(limb.cont_IK_OFF, self.rootGroup)
+        for sCon in limb.scaleConstraints:
+            pm.scaleConstraint(masterController, sCon)
+
 
     def getDimensions(self, rootNode):
         """
@@ -126,9 +207,9 @@ class LimbBuilder():
         """
 
         if isRoot:
-            limbDict = self.getWholeLimb(node)
-            limbDict.append(parentIndex)
-            self.limbCreationList.append(limbDict)
+            limbProps = self.getWholeLimb(node)
+            limbProps.append(parentIndex)
+            self.limbCreationList.append(limbProps)
 
         # Do the same for all children recursively
         children = node.getChildren(type="joint")
@@ -139,13 +220,14 @@ class LimbBuilder():
             else:
                 self.getLimbProperties(c, isRoot=False)
 
-
     def createMasters(self):
         """
         This method creates master controllers (Placement and Master)
         Returns: None
 
         """
+
+
         self.cont_placement = icon.circle("cont_Placement", (self.hipDistance, self.hipDistance, self.hipDistance))
         self.cont_master = icon.triCircle("cont_Master", (self.hipDistance * 1.5, self.hipDistance * 1.5, self.hipDistance * 1.5))
         pm.addAttr(self.cont_master, at="bool", ln="Control_Visibility", sn="contVis", defaultValue=True)
@@ -180,12 +262,14 @@ class LimbBuilder():
         extra.colorize(self.cont_master, index)
         extra.colorize(self.cont_placement, index)
 
+
+
         # # GOOD PARENTING
-        self.rootGroup = pm.group(name="tik_autoRig", em=True)
+
         extra.lockAndHide(self.rootGroup, ["tx", "ty", "tz", "rx", "ry", "rz", "sx", "sy", "sz"])
         pm.parent(self.cont_master, self.rootGroup)
 
-    def createLimbs(self, limbCreationList, spineRes=3, neckRes=3):
+    def createLimbs(self, limbCreationList):
         """
         Creates limb with the order defined in the limbCreationList (which created with getLimbProperties)
         Args:
@@ -216,11 +300,14 @@ class LimbBuilder():
 
             elif x[1] == "neck":
                 limb = neckAndHead.neckAndHead()
-                limb.createNeckAndHead(x[0], suffix="n", resolution=neckRes)
+                # limb.createNeckAndHead(x[0], suffix="n", resolution=x[3], dropoff=x[4])
+                limb.createNeckAndHead(x[0], suffix="n", resolution=x[0]["resolution"], dropoff=x[0]["dropoff"])
 
             elif x[1] == "spine":
                 limb = spine.spine()
-                limb.createSpine(x[0], suffix="s", resolution=spineRes)  # s for spine...
+                # limb.createSpine(x[0], suffix="s", resolution=x[3], dropoff=x[4])  # s for spine...
+                limb.createSpine(x[0], suffix="s", resolution=x[0]["resolution"], dropoff=x[0]["dropoff"])  # s for spine...
+
 
             elif x[1] == "tail":
                 limb = simpleTail.simpleTail()
@@ -241,7 +328,7 @@ class LimbBuilder():
                 pm.error("limb creation failed.")
                 return
 
-            self.riggedLimbList.append(limb)
+            # self.riggedLimbList.append(limb)
             self.anchorLocations += limb.anchorLocations
             self.anchors += limb.anchors
 
@@ -262,7 +349,6 @@ class LimbBuilder():
             else:
                 parentSocket = self.cont_placement
 
-            print "parentSocket", parentSocket
             pm.parent(limb.limbPlug, parentSocket)
 
             ## Good parenting / scale connections
@@ -293,15 +379,22 @@ class LimbBuilder():
         """
         distanceList=[]
         for socket in limbSockets:
+            print "socket", socket
             if not socket in excluding:
                 distanceList.append(extra.getDistance(socket, initJoint))
+        print "distanceList", distanceList
         index = distanceList.index(min(distanceList))
         return limbSockets[index]
 
     def getWholeLimb(self, node):
         limbDict = {}
         multiList = []
+        segments = None
+        dropoff = None
         limbName, limbType, limbSide = extra.identifyMaster(node)
+        if limbType == "spine" or limbType == "neck":
+            limbDict["resolution"] = pm.getAttr(node.resolution)
+            limbDict["dropoff"] = pm.getAttr(node.dropoff)
         limbDict[limbName] = node
         nextNode = node
         z=True
@@ -323,6 +416,7 @@ class LimbBuilder():
                     failedChildren += 1
             if len(children) == failedChildren:
                 z=False
+        # return [limbDict, limbType, limbSide, segments, dropoff]
         return [limbDict, limbType, limbSide]
 
 
