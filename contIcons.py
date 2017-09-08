@@ -1,6 +1,5 @@
 import pymel.core as pm
 
-
 def circle(name="cont_circle", scale=(1,1,1), location=None, normal=(0, 1, 0)):
     """
     Creates a circle controller. Nothing Fancy...

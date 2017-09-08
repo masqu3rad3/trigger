@@ -235,8 +235,15 @@ class LimbBuilder():
         pm.addAttr(self.cont_master, at="bool", ln="Rig_Visibility", sn="rigVis")
 
         for f in self.fingerMatchList:
+            fName, fType, fSide = extra.identifyMaster(f[0])
+            if "_left" in f[0].name():
+                iconName = f[0].name().replace("_left", "_L")
+            elif "_right" in f[0].name():
+                iconName = f[0].name().replace("_right", "_R")
+            else:
+                iconName = f[0].name()
             iconSize = extra.getDistance(f[0], f[-1])
-            cont_fGroup = icon.square(name="cont_Fgrp_%s" %f[0].name(), scale=(iconSize/6, iconSize/4, iconSize/2))
+            cont_fGroup = icon.square(name="cont_Fgrp_{0}".format(iconName), scale=(iconSize/6, iconSize/4, iconSize/2))
             tempPA = pm.parentConstraint(f, cont_fGroup)
             # f.append(cont_fGroup)
             pm.delete(tempPA)
