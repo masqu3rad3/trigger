@@ -5,12 +5,13 @@ import extraProcedures as extra
 class initialJoints():
 
     def __init__(self):
-        self.lookAxis = "z"
-        self.lookAxisMult = 1
-        self.upAxis = "y"
-        self.upAxisMult = 1
-        self.mirrorAxis = "x"
 
+        self.axisOrder = "zyx"
+        self.mirrorAxis = self.axisOrder[0]
+        self.upAxis = self.axisOrder[1]
+        self.lookAxis = self.axisOrder[2]
+        self.lookAxisMult = 1
+        self.upAxisMult = 1
         self.spineJointsList=[]
         self.neckJointsList=[]
         self.armJointsList=[]
