@@ -262,6 +262,8 @@ class leg():
 
         pm.poleVectorConstraint(self.cont_Pole, "ikHandle_RP_" + suffix)
 
+        #########################################################
+
         ### Create and constrain Distance Locators
 
         legStart = pm.spaceLocator(name="legStart_loc_" + suffix)
@@ -334,6 +336,8 @@ class leg():
         stretchyness_SC.outputG >> jIK_SC_End.translateX
         stretchyness_SC.outputR >> jIK_RP_Knee.translateX
         stretchyness_SC.outputG >> jIK_RP_End.translateX
+
+        ###########################################################
 
         self.cont_IK_foot.rotate >> jIK_RP_End.rotate
 
