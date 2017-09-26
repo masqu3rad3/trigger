@@ -10,8 +10,9 @@ def createStretchyIK(nodeList, suffix = "strIK", solver="ikSCsolver", controller
         nodeList: (List) list of joint which the IK will be build on.
         suffix: (String) A unique suffix for naming the nodes and joints. Optional, default is "strIK"
         solver: (String) Valid solvers are ikRPsolver, ikSCSolver and ikSpringSolver. Default is ikSCsolver
+        controllerNode: (Pymel Node) If defined, the attributes will be created on this controller, else a new one will be created. Default: None
 
-    Returns: None
+    Returns: [IK Handle, jointController Start, joint Controller End]
 
     """
     if not controllerNode:
@@ -38,14 +39,19 @@ def createStretchyIK(nodeList, suffix = "strIK", solver="ikSCsolver", controller
         distance = extra.getDistance(nodeList[j-1], nodeList[j])
         distanceList.append(distance)
 
+
     ### these joints will move the system
     pm.select(d=True)
     startJo = pm.joint(p=startNode.getTranslation(space="world"), name="startJo_" + suffix, radius=4)
     pm.select(d=True)
     endJo = pm.joint(p=endNode.getTranslation(space="world"), name="endJo_" + suffix, radius=4)
+
+
+
     ### constrain the existing joints to the new created control joints
     pm.parentConstraint(startJo, startNode, mo=True)
 
+    ## you need the mel command to activate the spring solver option before creating the solver.
     if solver == "ikSpringSolver":
         mel.eval("ikSpringSolver;")
 
@@ -124,3 +130,6 @@ def createStretchyIK(nodeList, suffix = "strIK", solver="ikSCsolver", controller
         initLengthMult_n.outputX >> totalLengthSum_n.input1D[j-1]
         initLengthMult_n.outputX >> nearMultList[j-1].input1X
         initLengthMultList.append(initLengthMult_n)
+
+    ## return IK Handle, jointController Start, joint Controller End
+    return [ikHandle[0], startJo, endJo]

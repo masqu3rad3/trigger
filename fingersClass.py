@@ -80,17 +80,21 @@ class Fingers(object):
         for i in inits:
             # jPos = i.getTranslation(space="world")
             # jOri = pm.joint(i, q=True, o=True)
-            j = pm.joint(name="jDef_{0}{1}_{2}".format(side, iter, suffix), radius=1.0)
+            j = pm.joint(name="jDef_{0}{1}_{2}".format(side, inits.index(i), suffix), radius=1.0)
             extra.alignTo(j, i, 2)
-            if inits.index(i) == (len(inits)): # if it is the last joint dont add it to the deformers
+
+            if i == inits[-1]: # if it is the last joint dont add it to the deformers
+
                 replacedName = (j.name()).replace("jDef", "j")
                 pm.rename(j, replacedName)
-                self.sockets.append(i)
-                continue
+                self.sockets.append(j)
+
+                pass
             if inits.index(i) == 0:
                 self.sockets.append(i)
             self.defJoints.append(j)
 
+        # print "SOCKETS", self.sockets
         ## Create Controllers
 
         self.conts = []
@@ -157,6 +161,7 @@ class Fingers(object):
 
         # pm.parent(conts_OFF[0], self.limbPlug)
         pm.parentConstraint(self.limbPlug, conts_OFF[0], mo=True)
+        print "SOCKETS", self.sockets
 
 
 

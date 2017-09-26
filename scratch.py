@@ -347,15 +347,15 @@ class LimbBuilder():
 
             parentInitJoint=x[3]
             #
-            # print "parentInitJoint:", parentInitJoint
+
 
             if parentInitJoint:
                 parentSocket = self.getNearestSocket(parentInitJoint, self.allSocketsList, excluding=limb.sockets)
-                # print "parentSocket", parentSocket
 
             else:
                 parentSocket = self.cont_placement
 
+            print "parentSocket, limbplug", parentSocket, limb.limbPlug
             pm.parent(limb.limbPlug, parentSocket)
 
             ## Good parenting / scale connections
