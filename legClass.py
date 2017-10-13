@@ -142,12 +142,14 @@ class leg():
 
 
         Pv_BankIn = pm.group(name="Pv_BankIn_" + suffix, em=True)
-        extra.alignTo(Pv_BankIn, bankInRef, 0)
+        extra.alignTo(Pv_BankIn, bankInRef, 2)
         pm.makeIdentity(Pv_BankIn, a=True, t=False, r=True, s=True)
+        # pm.setAttr(Pv_BankIn.rotateY, pm.getAttr(bankInRef.rotateY))
 
         Pv_BankOut = pm.group(name="Pv_BankOut_" + suffix, em=True)
-        extra.alignTo(Pv_BankOut, bankOutRef, 0)
+        extra.alignTo(Pv_BankOut, bankOutRef, 2)
         pm.makeIdentity(Pv_BankOut, a=True, t=False, r=True, s=True)
+        # pm.setAttr(Pv_BankOut.rotateY, pm.getAttr(bankOutRef.rotateY))
 
         Pv_Toe = pm.group(name="Pv_Toe_" + suffix, em=True)
         extra.alignTo(Pv_Toe, toePvRef, 0)
@@ -159,7 +161,9 @@ class leg():
 
         jSocketBall = pm.joint(name="jBallSocket_" + suffix, radius=3)
         pm.parentConstraint(Pv_Ball, jSocketBall)
+        # TODO // SOCKETBALL NEEDS A IK/FK Switch
         self.sockets.append(jSocketBall)
+
 
         Pv_Heel = pm.group(name="Pv_Heel_" + suffix, em=True)
         extra.alignTo(Pv_Heel, heelPvRef, 0)
@@ -488,9 +492,9 @@ class leg():
         cont_FK_UpLeg_OFF = extra.createUpGrp(cont_FK_UpLeg, "OFF")
         cont_FK_UpLeg_ORE = extra.createUpGrp(cont_FK_UpLeg, "ORE")
 
-        if side == "R":
-            # pm.setAttr("%s.rotate%s" % (cont_FK_UpLeg_ORE, mirrorAxis), -180)
-            pm.setAttr("%s.scale%s" % (cont_FK_UpLeg_ORE, mirrorAxis), -1)
+        # if side == "R":
+        #     # pm.setAttr("%s.rotate%s" % (cont_FK_UpLeg_ORE, mirrorAxis), -180)
+        #     pm.setAttr("%s.scale%s" % (cont_FK_UpLeg_ORE, mirrorAxis), -1)
 
 
         cont_FK_UpLeg.scaleY >> jFK_Root.scaleX  ## WILL BE ADDED TO ARM
@@ -507,9 +511,9 @@ class leg():
         # pm.rotate(cont_FK_LowLeg, (0, 0, 0), os=True, r=True)
         cont_FK_LowLeg_OFF = extra.createUpGrp(cont_FK_LowLeg, "OFF")
         cont_FK_LowLeg_ORE = extra.createUpGrp(cont_FK_LowLeg, "ORE")
-        if side == "R":
-        #     pm.setAttr("%s.rotate%s" % (cont_FK_LowLeg_ORE, mirrorAxis), -180)
-            pm.setAttr("%s.scale%s" % (cont_FK_LowLeg_ORE, mirrorAxis), -1)
+        # if side == "R":
+        # #     pm.setAttr("%s.rotate%s" % (cont_FK_LowLeg_ORE, mirrorAxis), -180)
+        #     pm.setAttr("%s.scale%s" % (cont_FK_LowLeg_ORE, mirrorAxis), -1)
 
         cont_FK_LowLeg.scaleY >> jFK_Knee.scaleX  ## WILL BE ADDED TO ARM
 
@@ -524,9 +528,9 @@ class leg():
         # pm.rotate(cont_FK_Foot, (0, 0, -90), os=True, r=True)
         cont_FK_Foot_OFF = extra.createUpGrp(cont_FK_Foot, "OFF")
         cont_FK_Foot_ORE = extra.createUpGrp(cont_FK_Foot, "ORE")
-        if side == "R":
-        #     pm.setAttr("%s.rotate%s" % (cont_FK_Foot_ORE, mirrorAxis), -180)
-            pm.setAttr("%s.scale%s" % (cont_FK_Foot_ORE, mirrorAxis), -1)
+        # if side == "R":
+        # #     pm.setAttr("%s.rotate%s" % (cont_FK_Foot_ORE, mirrorAxis), -180)
+        #     pm.setAttr("%s.scale%s" % (cont_FK_Foot_ORE, mirrorAxis), -1)
 
         cont_FK_Foot.scaleY >> jFK_Foot.scaleX  ## WILL BE ADDED TO ARM
 
@@ -542,9 +546,9 @@ class leg():
         cont_FK_Ball_OFF = extra.createUpGrp(cont_FK_Ball, "OFF")
         cont_FK_Ball_ORE = extra.createUpGrp(cont_FK_Ball, "ORE")
 
-        if side == "R":
-        #     pm.setAttr("%s.rotate%s" % (cont_FK_Ball_ORE, mirrorAxis), -180)
-            pm.setAttr("%s.scale%s" % (cont_FK_Ball_ORE, mirrorAxis), -1)
+        # if side == "R":
+        # #     pm.setAttr("%s.rotate%s" % (cont_FK_Ball_ORE, mirrorAxis), -180)
+        #     pm.setAttr("%s.scale%s" % (cont_FK_Ball_ORE, mirrorAxis), -1)
 
 
         cont_FK_Ball.scaleY >> jFK_Ball.scaleX  ## WILL BE ADDED TO ARM
@@ -824,7 +828,7 @@ class leg():
 
         # # COLOR CODING
 
-        if side == "L":
+        if side == "R":
             index = 13  ##Red color index
             indexMin = 9  ##Magenta color index
         else:

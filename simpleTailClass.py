@@ -26,7 +26,7 @@ class simpleTail(object):
         if not isinstance(inits, list):
             tailRoot = inits.get("TailRoot")
             tails = (inits.get("Tail"))
-            inits = [tailRoot] + sorted(tails)
+            inits = [tailRoot] + (tails)
 
 
         idCounter = 0
@@ -39,6 +39,12 @@ class simpleTail(object):
         if (len(inits) < 2):
             pm.error("Insufficient Tail Initialization Joints")
             return
+
+        # refTailRoot = inits["TailRoot"]
+        # refTails = inits["Tail"]
+        # print "refTailRoot", refTailRoot
+        # print "refTails", refTails
+        print "finger inits", inits
 
         self.scaleGrp = pm.group(name="scaleGrp_" + suffix, em=True)
         self.scaleConstraints.append(self.scaleGrp)

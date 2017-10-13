@@ -89,12 +89,15 @@ class initialJoints():
         self.upAxisMult = upAxisMult
         self.mirrorAxis = "xyz".strip(lookAxis + upAxis)
 
-    def initLimb (self, limb, whichSide="left", segments=3, fingerCount=5, thumb=False, constrainedTo = None, parentNode=None):
+    def initLimb (self, limb, whichSide="left", segments=3, fingerCount=5, thumb=False, constrainedTo = None, parentNode=None, defineAs=False):
+        
+        currentselection = pm.ls(sl=True)
+        
         ## Create the holder group if it does not exist
         if not pm.objExists("{0}_refBones".format(self.projectName)):
-            holderGroup = pm.group(name=("{0}_refBones".format(self.projectName)))
+            holderGroup = pm.group(name=("{0}_refBones".format(self.projectName)), em=True)
         else:
-            holderGroup = pm.PyNode("{0}_refBones".format(self.projectName))
+            holderGroup = pm.PyNode("{0}_refBones".format(self.projectName), em=True)
 
         ## skip side related stuff for no-side related limbs
         nonSidedLimbs = ["spine", "neck", "tail"]
@@ -119,7 +122,7 @@ class initialJoints():
             pm.error("Define at least 2 segments")
             return
 
-        currentselection = pm.ls(sl=True)
+
 
         ID = 0
         suffix = whichSide
@@ -127,6 +130,12 @@ class initialJoints():
         while pm.objExists("%sGrp_%s" %(limb,suffix)):
             ID += 1
             suffix = "%s_%s" % (str(ID), whichSide)
+
+        ## if defineAs is True, define the selected joints as the given limb instead creating new ones.
+        if defineAs:
+            self.convertSelectionToInits(limb, jointList=currentselection, whichside=whichSide, suffix=suffix)
+            return
+
 
         if not parentNode:
             if pm.ls(sl=True, type="joint"):
@@ -668,6 +677,154 @@ class initialJoints():
 
         pm.select(rHand)
         self.initLimb("hand", "auto", fingerCount=fingers)
+
+    def convertSelectionToInits(self, limbType, jointList=[], suffix="", whichside=""):
+        ##
+        ## get the selection
+        if whichside == "left":
+            side = 1
+        elif whichside == "right":
+            side = 2
+        else:
+            side = 0
+
+        if limbType == "spine":
+            if len(jointList) < 2:
+                pm.warning("You need to select at least 2 joints for spine conversion\nNothing Changed")
+                return
+            for j in range (len(jointList)):
+                # newName = "jInit_spine_%s_%s" % (suffix, str(j))
+                pm.select(jointList[j])
+                # pm.rename(jointList[j], newName)
+                pm.setAttr(jointList[j]+".side",0)
+                pm.setAttr(jointList[j] + ".drawLabel", 1)
+                ## if it is the first jointList
+                if j == 0:
+                    type =1
+                    pm.setAttr(jointList[j] + ".type", type)
+                    pm.addAttr(shortName="resolution", longName="Resolution", defaultValue=4, minValue=1,
+                               at="long", k=True)
+                    pm.addAttr(shortName="dropoff", longName="DropOff", defaultValue=1.0, minValue=0.1,
+                               at="float", k=True)
+                    # pm.setAttr(jointList[j].radius, 3)
+
+                elif jointList[j] == jointList[-1]:
+                    type = 18
+                    pm.setAttr(jointList[j] + ".type", type)
+                    pm.setAttr(jointList[j] + ".otherType", "SpineEnd")
+
+                else:
+                    type = 6
+                    pm.setAttr(jointList[j] + ".type", type)
+
+        if limbType == "tail":
+            if len(jointList) < 2:
+                pm.warning("You need to select at least 2 joints for tail conversion\nNothing Changed")
+                return
+            for j in range(len(jointList)):
+                # newName = "jInit_tail_%s_%s" % (suffix, str(j))
+                pm.select(jointList[j])
+                # pm.rename(jointList[j], newName)
+                pm.setAttr(jointList[j] + ".side", 0)
+                pm.setAttr(jointList[j] + ".drawLabel", 1)
+                ## if it is the first selection
+                if j == 0:
+                    pm.setAttr(jointList[j] + ".type", 18)
+                    pm.setAttr(jointList[j] + ".otherType", "TailRoot")
+                    # pm.setAttr(jointList[j].radius, 3)
+                else:
+                    pm.setAttr(jointList[j] + ".type", 18)
+                    pm.setAttr(jointList[j] + ".otherType", "Tail")
+
+        if limbType == "arm":
+            if not len(jointList) == 4:
+                pm.warning("You must select exactly 4 joints to define the chain as Arm\nNothing Changed")
+                return
+            pm.setAttr(jointList[0] + ".side", side)
+            pm.setAttr(jointList[0] + ".type", 9)
+            pm.setAttr(jointList[1] + ".side", side)
+            pm.setAttr(jointList[1] + ".type", 10)
+            pm.setAttr(jointList[2] + ".side", side)
+            pm.setAttr(jointList[2] + ".type", 11)
+            pm.setAttr(jointList[3] + ".side", side)
+            pm.setAttr(jointList[3] + ".type", 12)
+
+        if limbType == "leg":
+            if not len(jointList) == 10:
+                pm.warning("You must select exactly 10 joints to define the chain as Leg\nNothing Changed\nCorrect jointList order is Root -> Hip -> Knee -> Foot -> Ball -> Heel Pivot -> Toe Pivot -> Bank In Pivot -> Bank Out Pivot")
+                return
+            pm.setAttr(jointList[0] + ".side", side)
+            pm.setAttr(jointList[0] + ".type", 18)
+            pm.setAttr(jointList[0] + ".otherType", "LegRoot")
+            pm.setAttr(jointList[1] + ".side", side)
+            pm.setAttr(jointList[1] + ".type", 2)
+            pm.setAttr(jointList[2] + ".side", side)
+            pm.setAttr(jointList[2] + ".type", 3)
+            pm.setAttr(jointList[3] + ".side", side)
+            pm.setAttr(jointList[3] + ".type", 4)
+
+            pm.setAttr(jointList[4] + ".side", side)
+            pm.setAttr(jointList[4] + ".type", 18)
+            pm.setAttr(jointList[4] + ".otherType", "Ball")
+
+            pm.setAttr(jointList[5] + ".side", side)
+            pm.setAttr(jointList[5] + ".type", 5)
+
+            pm.setAttr(jointList[6] + ".side", side)
+            pm.setAttr(jointList[6] + ".type", 18)
+            pm.setAttr(jointList[6] + ".otherType", "HeelPV")
+            pm.setAttr(jointList[7] + ".side", side)
+            pm.setAttr(jointList[7] + ".type", 18)
+            pm.setAttr(jointList[7] + ".otherType", "ToePV")
+            pm.setAttr(jointList[8] + ".side", side)
+            pm.setAttr(jointList[8] + ".type", 18)
+            pm.setAttr(jointList[8] + ".otherType", "BankIN")
+            pm.setAttr(jointList[9] + ".side", side)
+            pm.setAttr(jointList[9] + ".type", 18)
+            pm.setAttr(jointList[9] + ".otherType", "BankOUT")
+
+        if limbType == "neck":
+            if not len(jointList) == 3:
+                pm.warning("You must select exactly 3 joints to define the chain as Neck and Head\nNothing Changed")
+                return
+            for i in range(len(jointList)):
+                if i == 0:
+                    pm.setAttr(jointList[i] + ".type", 18)
+                    pm.setAttr(jointList[i] + ".otherType", "NeckRoot")
+                    pm.select(jointList[i])
+                    pm.addAttr(shortName="resolution", longName="Resolution", defaultValue=4, minValue=1,
+                               at="long", k=True)
+                    pm.addAttr(shortName="dropoff", longName="DropOff", defaultValue=1.0, minValue=0.1,
+                               at="float", k=True)
+                elif jointList[i] == jointList[-2]:
+                    pm.setAttr(jointList[i] + ".type", 8)
+                elif jointList[i] == jointList[-1]:
+                    pm.setAttr(jointList[i] + ".side", 0)
+                    pm.setAttr(jointList[i] + ".type", 18)
+                    pm.setAttr(jointList[i] + ".otherType", "HeadEnd")
+                    pm.setAttr(jointList[i] + ".drawLabel", 1)
+                else:
+                    pm.setAttr(jointList[i] + ".type", 7)
+                pm.setAttr(jointList[i] + ".drawLabel", 1)
+
+        if limbType == "finger":
+            if not len(jointList) > 1:
+                pm.warning("You must at least 2 joints to define the chain as Finger\nNothing Changed")
+                return
+            for i in range (len(jointList)):
+                pm.setAttr(jointList[i] + ".side", 0)
+
+                if i == 0:
+                    pm.setAttr(jointList[i] + ".type", 18)
+                    pm.setAttr(jointList[i] + ".otherType", "FingerRoot")
+                    pm.setAttr(jointList[i] + ".drawLabel", 1)
+                else:
+                    pm.setAttr(jointList[i] + ".type", 23)
+
+
+
+
+
 
 
 

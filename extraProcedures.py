@@ -464,116 +464,6 @@ def spaceSwitcher (node, targetList, overrideExisting=False, mode="parent", defa
                 value = 0
             pm.setDrivenKeyframe(con, cd=driver, at=attr , dv=dPos+1, v=value )
 
-# def jointTypeID(jNode, idBy="idByLabel"):
-#     if type(jNode) == str:
-#         jNode = pm.PyNode(jNode)
-#
-#     # acceptable type keys to use.
-#
-#     # // TODO: FIX DICTIONARY for ALL JOINTS or vice-versa
-#
-#     typeDict = {
-#         1: 'Root',
-#         2: 'Hip',
-#         3: 'Knee',
-#         4: 'Foot',
-#         5: 'Toe',
-#         6: 'Spine',
-#         7: 'Neck',
-#         8: 'Head',
-#         9: 'Collar',
-#         10: 'Shoulder',
-#         11: 'Elbow',
-#         12: 'Hand',
-#         13: 'Finger',
-#         14: 'Thumb',
-#         18: 'Other',
-#         19: 'Index Finger',
-#         20: 'Middle Finger',
-#         21: 'Ring Finger',
-#         22: 'Pinky Finger',
-#         23: 'Extra Finger',
-#         24: 'Big Toe',
-#         25: 'Index Toe',
-#         26: 'Middle Toe',
-#         27: 'Ring Toe',
-#         28: 'Pinky Toe',
-#         29: 'Extra Toe'
-#     }
-#     if idBy == "idByLabel":
-#             typeNum = pm.getAttr(jNode+".type") # object oriented approach is not working in pymel
-#
-#             if typeNum not in typeDict.keys():
-#                 pm.error("Joint Type is not detected with idByLabel method")
-#
-#             if typeNum == 18: # if type is in the 'other' category:
-#                 typeName = pm.getAttr(jNode.otherType)
-#             else:
-#                 typeName = typeDict[typeNum]
-#             return typeName
-#
-#     if idBy == "idByName":
-#         if "arm" in jNode.name():
-#             typeName = "arm"
-#         elif "leg" in jNode.name():
-#             typeName = "leg"
-#         elif "spine" in jNode.name():
-#             typeName = "spine"
-#         elif "neck" in jNode.name():
-#             typeName = "neck"
-#         elif "indexF" in jNode.name():
-#             typeName = "Index Finger"
-#         elif "thumb" in jNode.name():
-#             typeName = "Thumb"
-#         elif "middleF" in jNode.name():
-#             typeName = "Middle Finger"
-#         elif "ringF" in jNode.name():
-#             typeName = "Ring Finger"
-#         elif "pinkyF" in jNode.name():
-#             typeName = "Pinky Finger"
-#         elif "indexT" in jNode.name():
-#             typeName = "Index Toe"
-#         elif "bigT" in jNode.name():
-#             typeName = "Big Toe"
-#         elif "middleT" in jNode.name():
-#             typeName = "Middle Toe"
-#         elif "ringT" in jNode.name():
-#             typeName = "Ring Toe"
-#         elif "pinkyT" in jNode.name():
-#             typeName = "Pinky Toe"
-#         else:
-#             pm.error("Joint Type is not detected with idByName method")
-#         return typeName
-
-# def jointSideID(jNode, idBy="idByLabel"):
-#     if type(jNode) == str:
-#         jNode = pm.PyNode(jNode)
-#     # acceptable side keys to use.
-#     sideDict = {
-#         0: 'C',
-#         1: 'L',
-#         2: 'R',
-#     }
-#
-#     if idBy == "idByLabel":
-#             sideNum = pm.getAttr(jNode.side)
-#
-#             if sideNum not in sideDict.keys():
-#                 pm.error("Joint Side is not detected with idByLabel method")
-#             side = sideDict[sideNum]
-#             return side
-#
-#     if idBy == "idByName":
-#         # identify the side
-#         if "_R_" in jNode.name():
-#             side = sideDict[2]
-#         elif "_L_" in jNode.name():
-#             side = sideDict[1]
-#         elif "_C_" in jNode.name():
-#             side = sideDict[0]
-#         else:
-#             pm.error("Joint Side is not detected with idByName method")
-#         return side
 
 def identifyMaster(node, idBy="idByLabel"):
     validIdByValues = ("idByLabel, idByName")
@@ -679,27 +569,38 @@ def replaceController(mirror=True, mirrorAxis="X"):
     # duplicate the new controller for possible further use
     newContDup = pm.duplicate(newCont)[0]
 
+    pm.makeIdentity(newContDup, a=True)
+
     #Make sure the new controllers transform are zeroed at the (0,0,0)
     offset = pm.xform(newContDup, q=True, ws=True, rp=True)
     rvOffset = [x * -1 for x in offset]
     pm.xform(newContDup, ws=True, t=rvOffset)
-    pm.makeIdentity(newContDup, apply=True, t=True, r=True, s=True, n=False, pn=True)
+
+
+    pm.makeIdentity(newContDup, apply=True, t=True, r=False, s=True, n=False, pn=True)
+
+    ## get the same color code
+    pm.setAttr(newContDup.getShape()+".overrideEnabled", pm.getAttr(oldCont.getShape()+".overrideEnabled"))
+    pm.setAttr(newContDup.getShape()+".overrideColor", pm.getAttr(oldCont.getShape()+".overrideColor"))
 
     #move the new controller to the old controllers place
-    alignToAlter(newContDup, oldCont, mode=2)
+    alignToAlter(newContDup, oldCont, mode=0)
     pm.parent(newContDup.getShape(), oldCont, r=True, s=True)
+
+
 
     if mirror:
         # find the mirror of the oldController
-        if "_L" in oldCont.name():
-            mirrorName = oldCont.name().replace("_L", "_R")
-        elif "_R" in oldCont.name():
-            mirrorName = oldCont.name().replace("_R", "_L")
+        if "_LEFT_" in oldCont.name():
+            mirrorName = oldCont.name().replace("_LEFT_", "_RIGHT_")
+        elif "_RIGHT_" in oldCont.name():
+            mirrorName = oldCont.name().replace("_RIGHT_", "_LEFT_")
         else:
             pm.warning("Cannot find the mirror controller, skipping mirror part")
             return
         oldContMirror = pm.PyNode(mirrorName)
         newContDupMirror = pm.duplicate(newCont)[0]
+        pm.makeIdentity(newContDupMirror, a=True)
         # Make sure the new controllers transform are zeroed at the (0,0,0)
         offset = pm.xform(newContDupMirror, q=True, ws=True, rp=True)
         rvOffset = [x * -1 for x in offset]
@@ -708,8 +609,12 @@ def replaceController(mirror=True, mirrorAxis="X"):
         pm.setAttr("{0}.scale{1}".format(newContDupMirror, mirrorAxis), -1)
         pm.makeIdentity(newContDupMirror, apply=True, s=True)
 
+        ## get the same color code
+        pm.setAttr(newContDupMirror.getShape() + ".overrideEnabled", pm.getAttr(oldContMirror.getShape() + ".overrideEnabled"))
+        pm.setAttr(newContDupMirror.getShape() + ".overrideColor", pm.getAttr(oldContMirror.getShape() + ".overrideColor"))
+
         # move the new controller to the old controllers place
-        alignToAlter(newContDupMirror, oldContMirror, mode=2)
+        alignToAlter(newContDupMirror, oldContMirror, mode=0)
         pm.parent(newContDupMirror.getShape(), oldContMirror, r=True, s=True)
 
         pm.delete(oldContMirror.getShape())

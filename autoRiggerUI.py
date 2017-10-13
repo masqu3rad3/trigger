@@ -69,6 +69,7 @@ class mainUI(QtWidgets.QTabWidget):
         self.setObjectName(windowName)
         self.buffer.setMinimumSize(250, 100)
         self.buffer.resize(250, 500)
+        self.defineAs=False
 
         self.initSkeleton = init.initialJoints()
         self.rigger = scratch.LimbBuilder()
@@ -444,12 +445,12 @@ class mainUI(QtWidgets.QTabWidget):
             side = "both"
         elif self.armSideAuto.isChecked():
             side = "auto"
-        self.initSkeleton.initLimb("arm", whichSide=side)
+        self.initSkeleton.initLimb("arm", whichSide=side, defineAs=self.defineAs)
         pm.undoInfo(closeChunk=True)
 
     def createSpine(self):
         pm.undoInfo(openChunk=True)
-        self.initSkeleton.initLimb("spine", segments=self.spineSegInt.value())
+        self.initSkeleton.initLimb("spine", segments=self.spineSegInt.value(), defineAs=self.defineAs)
         pm.undoInfo(closeChunk=True)
 
     def createFinger(self):
@@ -465,7 +466,7 @@ class mainUI(QtWidgets.QTabWidget):
         elif self.fingerSideAuto.isChecked():
             side = "auto"
 
-        self.initSkeleton.initLimb("finger", whichSide=side, thumb=self.fingerIsThumbChk.isChecked())
+        self.initSkeleton.initLimb("finger", whichSide=side, thumb=self.fingerIsThumbChk.isChecked(), defineAs=self.defineAs)
         pm.undoInfo(closeChunk=True)
 
     def createLeg(self):
@@ -481,17 +482,17 @@ class mainUI(QtWidgets.QTabWidget):
         elif self.legSideAuto.isChecked():
             side = "auto"
 
-        self.initSkeleton.initLimb("leg", whichSide=side)
+        self.initSkeleton.initLimb("leg", whichSide=side, defineAs=self.defineAs)
         pm.undoInfo(closeChunk=True)
 
     def createTail(self):
         pm.undoInfo(openChunk=True)
-        self.initSkeleton.initLimb("tail", segments=self.tailSegInt.value())
+        self.initSkeleton.initLimb("tail", segments=self.tailSegInt.value(), defineAs=self.defineAs)
         pm.undoInfo(closeChunk=True)
 
     def createNeck(self):
         pm.undoInfo(openChunk=True)
-        self.initSkeleton.initLimb("neck", segments=self.neckSegInt.value())
+        self.initSkeleton.initLimb("neck", segments=self.neckSegInt.value(), defineAs=self.defineAs)
         pm.undoInfo(closeChunk=True)
 
     # def updateRigAttr(self):
@@ -501,6 +502,30 @@ class mainUI(QtWidgets.QTabWidget):
     #     self.rigger.spineDropoff = self.spineDropoff.value()
     #     self.rigger.neckRes = self.neckResInt.value()
     #     self.rigger.neckDropoff = self.neckDropoff.value()
+
+    def keyPressEvent(self, event):
+        ## If Ctrl is pressed, change the button labels
+        if event.key() == 16777249:
+            self.defineAs=True
+            text="Define As"
+            self.spineCreateBtn.setText(text)
+            self.neckCreateBtn.setText(text)
+            self.armCreateBtn.setText(text)
+            self.fingerCreateBtn.setText(text)
+            self.legCreateBtn.setText(text)
+            self.tailCreateBtn.setText(text)
+
+
+    def keyReleaseEvent(self, event):
+        if event.key() == 16777249:
+            text="Create"
+            self.defineAs=False
+            self.spineCreateBtn.setText(text)
+            self.neckCreateBtn.setText(text)
+            self.armCreateBtn.setText(text)
+            self.fingerCreateBtn.setText(text)
+            self.legCreateBtn.setText(text)
+            self.tailCreateBtn.setText(text)
 
 
     def testPop(self):
