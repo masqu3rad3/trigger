@@ -237,9 +237,9 @@ class LimbBuilder():
         for f in self.fingerMatchList:
             fName, fType, fSide = extra.identifyMaster(f[0])
             if "_left" in f[0].name():
-                iconName = f[0].name().replace("_left", "_L")
+                iconName = f[0].name().replace("_left", "_LEFT")
             elif "_right" in f[0].name():
-                iconName = f[0].name().replace("_right", "_R")
+                iconName = f[0].name().replace("_right", "_RIGHT")
             else:
                 iconName = f[0].name()
             iconSize = extra.getDistance(f[0], f[-1])
@@ -328,6 +328,7 @@ class LimbBuilder():
                 limb.createSimpleTail(x[0], suffix="tail")
 
             elif x[1] == "finger":
+
                 parentController = None
                 for matching in self.fingerMatchList:
                     for f in matching:
@@ -336,7 +337,7 @@ class LimbBuilder():
                             parentController = self.fingerMatchConts[index][0]
 
                 limb = finger.Fingers()
-                limb.createFinger(x[0], suffix="%s_finger" %sideVal, parentController=parentController)
+                limb.createFinger(x[0], suffix=sideVal, side=x[2], parentController=parentController)
 
             else:
                 pm.error("limb creation failed.")
@@ -362,7 +363,7 @@ class LimbBuilder():
             else:
                 parentSocket = self.cont_placement
 
-            print "parentSocket, limbplug", parentSocket, limb.limbPlug
+            # print "parentSocket, limbplug", parentSocket, limb.limbPlug
             pm.parent(limb.limbPlug, parentSocket)
 
             ## Good parenting / scale connections
@@ -393,10 +394,10 @@ class LimbBuilder():
         """
         distanceList=[]
         for socket in limbSockets:
-            print "socket", socket
+            # print "socket", socket
             if not socket in excluding:
                 distanceList.append(extra.getDistance(socket, initJoint))
-        print "distanceList", distanceList
+        # print "distanceList", distanceList
         index = distanceList.index(min(distanceList))
         return limbSockets[index]
 

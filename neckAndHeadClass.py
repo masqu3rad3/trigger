@@ -115,12 +115,12 @@ class neckAndHead():
         neckSpline.createTspline(neckNodes+[headStart], "neckSplineIK_"+suffix, resolution, dropoff=dropoff)
         # # Connect neck start to the neck controller
         pm.orientConstraint(self.cont_neck, neckSpline.contCurve_Start, mo=True)  # This will be position constrained to the spine(or similar)
-        self.cont_neck.rotateY >> neckSpline.twistNode.input1X
+        # self.cont_neck.rotateY >> neckSpline.twistNode.input1X
 
         pm.pointConstraint(neckSpline.contCurve_Start, cont_neck_ORE)
         # # Connect neck end to the head controller
         pm.parentConstraint(self.cont_head, neckSpline.contCurve_End, mo=True)
-        self.cont_head.rotateY >> neckSpline.twistNode.input1Y
+        # self.cont_head.rotateY >> neckSpline.twistNode.input1Y
 
         # # pass Stretch controls from the splineIK to neck controller
         extra.attrPass(neckSpline.attPassCont, self.cont_neck)
@@ -138,10 +138,10 @@ class neckAndHead():
         pm.pointConstraint(neckSpline.endLock, headSpline.contCurve_Start, mo=True)
         # # orient the head spline to the head controller
         pm.orientConstraint(self.cont_head, headSpline.contCurve_Start, mo=True)
-        self.cont_head.rotateY >> headSpline.twistNode.input1X
+        # self.cont_head.rotateY >> headSpline.twistNode.input1X
 
         pm.parentConstraint(cont_headSquash, headSpline.contCurve_End, mo=True)
-        cont_headSquash.rotateY >> headSpline.twistNode.input1Y
+        # cont_headSquash.rotateY >> headSpline.twistNode.input1Y
         # # pass Stretch controls from the splineIK to neck controller
         extra.attrPass(headSpline.attPassCont, cont_headSquash)
 

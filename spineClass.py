@@ -96,11 +96,11 @@ class spine(object):
         self.nonScaleGrp = spine.nonScaleGrp
         # # connect the spine root to the master root
         pm.parentConstraint(self.startSocket, spine.contCurve_Start, mo=True)
-        self.startSocket.rotateY >> spine.twistNode.input1X
+        # self.startSocket.rotateY >> spine.twistNode.input1X
 
         # # connect the spine end
         pm.parentConstraint(self.cont_chest, spine.contCurve_End, mo=True)
-        self.cont_chest.rotateY >> spine.twistNode.input1Y
+        # self.cont_chest.rotateY >> spine.twistNode.input1Y
 
         # # connect the master root to the hips controller
         pm.parentConstraint(self.cont_hips, self.startSocket, mo=True)

@@ -41,7 +41,7 @@ class Fingers(object):
             for finger in validFingers:
                 if inits.get(finger):
                     fingers = inits.get(finger)
-                    suffix = "%s_%s" %(finger, side)
+                    suffix = "%s_%s" %(finger, suffix)
 
             if inits.get("Thumb") or inits.get("ThumbRoot"):
                 thumb = True
@@ -52,10 +52,22 @@ class Fingers(object):
             else:
                 pm.error("fingers must have at least one root and one other joint")
 
-        idCounter = 0
-        ## create an unique suffix
-        while pm.objExists("scaleGrp_" + suffix):
-            suffix = "%s%s" % (suffix, str(idCounter + 1))
+        if pm.objExists("scaleGrp_" + suffix):
+            self.idCounter = 1
+
+            newSuffix = "%s%s" %(suffix, str(self.idCounter))
+            while pm.objExists("scaleGrp_" + newSuffix):
+                self.idCounter += 1
+                newSuffix = "%s%s" %(suffix, str(self.idCounter))
+            suffix = newSuffix
+
+        # idCounter = 0
+        # ## create an unique suffix
+        # self.crossName = "scaleGrp_" + suffix
+        # while pm.objExists(self.crossName):
+        #     idCounter += 1
+        #     newSuffix = "%s%s" % (suffix, str(idCounter))
+        #     self.crossName = "scaleGrp_" + newSuffix
 
         print "Creating Finger %s" %suffix
 
@@ -80,7 +92,7 @@ class Fingers(object):
         for i in inits:
             # jPos = i.getTranslation(space="world")
             # jOri = pm.joint(i, q=True, o=True)
-            j = pm.joint(name="jDef_{0}{1}_{2}".format(side, inits.index(i), suffix), radius=1.0)
+            j = pm.joint(name="jDef_{0}_{1}".format(suffix, inits.index(i)), radius=1.0)
             extra.alignTo(j, i, 2)
 
             if i == inits[-1]: # if it is the last joint dont add it to the deformers
@@ -104,7 +116,7 @@ class Fingers(object):
 
         for i in range(0, len(self.defJoints)-1):
             contScl = (pm.getAttr(self.defJoints[1].tx) / 2)
-            contName = ("cont_{0}{1}_{2}".format(side, i, suffix))
+            contName = ("cont_{0}_{1}".format(suffix, i))
             cont = icon.circle(contName,(contScl,contScl,contScl), normal=(1,0,0))
             cont_OFF=extra.createUpGrp(cont,"OFF", mi=False)
             conts_OFF.append([cont_OFF])

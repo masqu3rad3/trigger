@@ -14,15 +14,17 @@ reload(icon)
 # cuts = 5
 # dropoff = 2
 class twistSpline(object):
-    contCurves_ORE = None
-    contCurve_Start = None
-    contCurve_End = None
-    endLock = None
-    scaleGrp = None
-    nonScaleGrp = None
-    attPassCont = None
-    defJoints = None
-    noTouchData = None
+
+    def __init__(self):
+        self.contCurves_ORE = None
+        self.contCurve_Start = None
+        self.contCurve_End = None
+        self.endLock = None
+        self.scaleGrp = None
+        self.nonScaleGrp = None
+        self.attPassCont = None
+        self.defJoints = None
+        self.noTouchData = None
 
     def createTspline(self, refJoints, name, cuts, dropoff=2, mode="equalDistance"):
 
@@ -167,22 +169,7 @@ class twistSpline(object):
 
         # connect rotations of locator groups
 
-        ## CREATE A TWIST NODE TO BE PASSED. this is the twist driver, connect it to rotation or attributes
-        self.twistNode = pm.createNode("multiplyDivide", name="twistNode")
-        for i in range(0, len(poleGroups)):
-            blender = pm.createNode("blendTwoAttr", name="tSplineX_blend" + str(i))
 
-            self.twistNode.outputX >> blender.input[0]
-            self.twistNode.outputY >> blender.input[1]
-
-            # self.attPassCont.testXdown >> blender.input[0]
-            # self.attPassCont.testXup >> blender.input[1]
-
-            # contJoints[0].rotateX >> blender.input[0]
-            # contJoints[len(contJoints) - 1].rotateX >> blender.input[1]
-            blender.output >> poleGroups[i].rotateY
-            blendRatio = (i + 0.0) / (cuts - 1.0)
-            pm.setAttr(blender.attributesBlender, blendRatio)
 
         # CONTROL CURVES
 
@@ -204,6 +191,31 @@ class twistSpline(object):
 
         self.contCurve_Start = contCurves[0]
         self.contCurve_End = contCurves[len(contCurves) - 1]
+
+        ## CREATE A TWIST NODE TO BE PASSED. this is the twist driver, connect it to rotation or attributes
+
+        # self.twistNode = pm.createNode("multiplyDivide", name="twistNode")
+        for i in range(0, len(poleGroups)):
+            ## make a weighted orientation constraint between the polegroup and  up/down controller
+
+            # midLock_paConWeight = pm.parentConstraint(jIK_orig_Root, jFK_Root, cont_midLock_POS, mo=True)
+            # cont_FK_IK.fk_ik >> (midLock_paConWeight + "." + jIK_orig_Root + "W0")
+            # fk_ik_rvs.outputX >> (midLock_paConWeight + "." + jFK_Root + "W1")
+
+            weightedCon = pm.orientConstraint(self.contCurve_Start, self.contCurve_End, poleGroups[i], mo=True)
+            # blender = pm.createNode("blendTwoAttr", name="tSplineX_blend" + str(i))
+
+            # self.twistNode.outputX >> blender.input[0]
+            # self.twistNode.outputY >> blender.input[1]
+
+
+            # blender.output >> poleGroups[i].rotateY
+            blendRatio = (i + 0.0) / (cuts - 1.0)
+            pm.setAttr("{0}.{1}W0".format(weightedCon, self.contCurve_Start), 1-blendRatio)
+            pm.setAttr("{0}.{1}W1".format(weightedCon, self.contCurve_End), blendRatio)
+            # pm.setAttr(blender.attributesBlender, blendRatio)
+
+
         # STRETCH and SQUASH
         #
         # Create Stretch and Squash Nodes

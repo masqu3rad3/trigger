@@ -422,6 +422,7 @@ class initialJoints():
         return jointList, offsetAxis
 
     def initialHand(self, fingerCount, transformKey, side, suffix):
+        print "hede", side
         jointList = []
         fingerRoots = []
         if fingerCount > 0:
@@ -443,8 +444,8 @@ class initialJoints():
                     pm.setAttr(i + ".otherType", "ThumbRoot")
                 else:
                     pm.joint(i, e=True, zso=True, oj="xyz", sao="yup")
-                    pm.setAttr(i + ".side", side)
                     pm.setAttr(i + ".type", 14)
+                pm.setAttr(i + ".side", side)
             pm.setAttr(thumb01 + ".drawLabel", 1)
             self.fingerJointsList.append(thumbJoints)
             jointList.extend(thumbJoints)
@@ -470,8 +471,8 @@ class initialJoints():
                     pm.setAttr(i + ".otherType", "IndexRoot")
                 else:
                     pm.joint(i, e=True, zso=True, oj="xyz", sao="yup")
-                    pm.setAttr(i + ".side", side)
                     pm.setAttr(i + ".type", 19)
+                pm.setAttr(i + ".side", side)
             pm.setAttr(index01 + ".drawLabel", 1)
             self.fingerJointsList.append(indexJoints)
             jointList.extend(indexJoints)
@@ -497,8 +498,8 @@ class initialJoints():
                     pm.setAttr(i + ".otherType", "MiddleRoot")
                 else:
                     pm.joint(i, e=True, zso=True, oj="xyz", sao="yup")
-                    pm.setAttr(i + ".side", side)
                     pm.setAttr(i + ".type", 20)
+                pm.setAttr(i + ".side", side)
             pm.setAttr(middle01 + ".drawLabel", 1)
             self.fingerJointsList.append(middleJoints)
             jointList.extend(middleJoints)
@@ -524,8 +525,8 @@ class initialJoints():
                     pm.setAttr(i + ".otherType", "RingRoot")
                 else:
                     pm.joint(i, e=True, zso=True, oj="xyz", sao="yup")
-                    pm.setAttr(i + ".side", side)
                     pm.setAttr(i + ".type", 21)
+                pm.setAttr(i + ".side", side)
             pm.setAttr(ring01 + ".drawLabel", 1)
             self.fingerJointsList.append(ringJoints)
             jointList.extend(ringJoints)
@@ -552,8 +553,8 @@ class initialJoints():
                     pm.setAttr(i + ".otherType", "PinkyRoot")
                 else:
                     pm.joint(i, e=True, zso=True, oj="xyz", sao="yup")
-                    pm.setAttr(i + ".side", side)
                     pm.setAttr(i + ".type", 22)
+                pm.setAttr(i + ".side", side)
             pm.setAttr(pinky01 + ".drawLabel", 1)
             self.fingerJointsList.append(pinkyJoints)
             jointList.extend(pinkyJoints)
@@ -647,7 +648,7 @@ class initialJoints():
         jointList = []
         for i in range(0, (segments + 1)):
             finger = pm.joint(p=(rPointFinger + (addFinger * i)), name="jInit_finger_%s_%s" %(suffix, str(i)))
-            pm.setAttr(finger + ".side", 0)
+            pm.setAttr(finger + ".side", side)
 
             if i == 0:
                 pm.setAttr(finger + ".type", 18)
