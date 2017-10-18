@@ -462,96 +462,127 @@ class leg():
         ###########################
 
         pm.select(d=True)
-        jFK_Root = pm.joint(name="jFK_Root_" + suffix, radius=1.0)
-        extra.alignTo(jFK_Root, hipRef, 0)
-        jFK_Knee = pm.joint(name="jFK_Knee_" + suffix, radius=1.0)
-        extra.alignTo(jFK_Knee, kneeRef, 0)
-        jFK_Foot = pm.joint(name="jFK_Foot_" + suffix, radius=1.0)
-        extra.alignTo(jFK_Foot, footRef, 0)
-        jFK_Ball = pm.joint(name="jFK_Ball_" + suffix, radius=1.0)
-        extra.alignTo(jFK_Ball, ballRef, 0)
-        jFK_Toe = pm.joint(name="jFK_Toe_" + suffix, radius=1.0)
-        extra.alignTo(jFK_Toe, toePvRef, 0)
+        jFK_Root = pm.joint(name="jFK_UpLeg_" + suffix, p=hipPos, radius=1.0)
+        # extra.alignTo(jFK_Root, hipRef, 0)
+        jFK_Knee = pm.joint(name="jFK_Knee_" + suffix, p=kneePos, radius=1.0)
+        # extra.alignTo(jFK_Knee, kneeRef, 0)
+        jFK_Foot = pm.joint(name="jFK_Foot_" + suffix, p=footPos, radius=1.0)
+        # extra.alignTo(jFK_Foot, footRef, 0)
+        jFK_Ball = pm.joint(name="jFK_Ball_" + suffix, p=ballPos, radius=1.0)
+        # extra.alignTo(jFK_Ball, ballRef, 0)
+        jFK_Toe = pm.joint(name="jFK_Toe_" + suffix, p=toePvPos, radius=1.0)
+        # extra.alignTo(jFK_Toe, toePvRef, 0)
 
-        pm.joint(jFK_Root,e=True, zso=True, oj="yzx", sao="zup")
-        pm.joint(jFK_Knee,e=True, zso=True, oj="yzx", sao="zup")
-        pm.joint(jFK_Foot,e=True, zso=True, oj="yzx", sao="zup")
-        pm.joint(jFK_Ball,e=True, zso=True, oj="yzx", sao="zup")
-        pm.joint(jFK_Toe, e=True, zso=True, oj="yzx", sao="zup")
+        pm.joint(jFK_Root,e=True, zso=True, oj="xyz", sao="yup")
+        pm.joint(jFK_Knee,e=True, zso=True, oj="xyz", sao="yup")
+        pm.joint(jFK_Foot,e=True, zso=True, oj="xyz", sao="yup")
+        pm.joint(jFK_Ball,e=True, zso=True, oj="xyz", sao="yup")
+        pm.joint(jFK_Toe, e=True, zso=True, oj="xyz", sao="yup")
+
+
+
+        # pm.joint(jFK_Root,e=True, zso=True, oj="yzx", sao="zup")
+        # pm.joint(jFK_Knee,e=True, zso=True, oj="yzx", sao="zup")
+        # pm.joint(jFK_Foot,e=True, zso=True, oj="yzx", sao="zup")
+        # pm.joint(jFK_Ball,e=True, zso=True, oj="yzx", sao="zup")
+        # pm.joint(jFK_Toe, e=True, zso=True, oj="yzx", sao="zup")
 
         ### Create Controller Curves
 
-        ########################################
-        scaleDisUL = extra.getDistance(hipRef,kneeRef)/2
-        cont_FK_UpLeg = icon.cube(name="cont_FK_UpLeg_" + suffix, scale=(scaleDisUL/3,scaleDisUL,scaleDisUL/3))
-        pm.xform(cont_FK_UpLeg, piv=(0,-scaleDisUL,0))
-        extra.alignToAlter(cont_FK_UpLeg, jFK_Root, 2)
+        ## Up Leg Controller
 
-        ########################################
-        # pm.rotate(cont_FK_UpLeg, (0, 0, -90), os=True, r=True)
+        scaleDisUL = extra.getDistance(hipRef, kneeRef) / 2
+        scalecontFkUpLeg = (scaleDisUL/3,scaleDisUL,scaleDisUL/3)
+        cont_FK_UpLeg = icon.cube("cont_FK_Upleg_" + suffix, scalecontFkUpLeg)
+
         cont_FK_UpLeg_OFF = extra.createUpGrp(cont_FK_UpLeg, "OFF")
         cont_FK_UpLeg_ORE = extra.createUpGrp(cont_FK_UpLeg, "ORE")
 
-        # if side == "R":
-        #     # pm.setAttr("%s.rotate%s" % (cont_FK_UpLeg_ORE, mirrorAxis), -180)
-        #     pm.setAttr("%s.scale%s" % (cont_FK_UpLeg_ORE, mirrorAxis), -1)
+        if side == "R":
+            pm.setAttr("%s.rotate%s" % (cont_FK_UpLeg_ORE, mirrorAxis), -180)
+
+        temp_PoCon = pm.pointConstraint(jFK_Root, jFK_Knee, cont_FK_UpLeg_OFF)
+        pm.delete(temp_PoCon)
+        temp_AimCon = pm.aimConstraint(jFK_Knee, cont_FK_UpLeg_OFF, o=(90, 90, 0), u=(0, 1, 0))
+        pm.delete(temp_AimCon)
 
 
-        cont_FK_UpLeg.scaleY >> jFK_Root.scaleX  ## WILL BE ADDED TO ARM
+        PvTarget = hipPos
+        pm.xform(cont_FK_UpLeg, piv=PvTarget, ws=True)
+        pm.xform(cont_FK_UpLeg_ORE, piv=PvTarget, ws=True)
+        pm.xform(cont_FK_UpLeg_OFF, piv=PvTarget, ws=True)
 
-        # LowLeg Cont
+        cont_FK_UpLeg.scaleY >> jFK_Root.scaleX
 
-        ########################################
-        scaleDisLL = extra.getDistance(kneeRef,footRef)/2
-        cont_FK_LowLeg = icon.cube(name="cont_FK_LowLeg_" + suffix, scale=(scaleDisLL/3,scaleDisLL,scaleDisLL/3))
-        pm.xform(cont_FK_LowLeg, piv=(0,-scaleDisLL,0))
-        extra.alignToAlter(cont_FK_LowLeg, jFK_Knee, 2)
+        ## Low Leg Controller
 
-        ########################################
-        # pm.rotate(cont_FK_LowLeg, (0, 0, 0), os=True, r=True)
+        scaleDisLL = extra.getDistance(kneeRef, footRef) / 2
+        scalecontFkLowLeg = (scaleDisLL / 3, scaleDisLL, scaleDisLL / 3)
+        cont_FK_LowLeg = icon.cube(name="cont_FK_LowLeg_" + suffix, scale=scalecontFkLowLeg)
+
         cont_FK_LowLeg_OFF = extra.createUpGrp(cont_FK_LowLeg, "OFF")
         cont_FK_LowLeg_ORE = extra.createUpGrp(cont_FK_LowLeg, "ORE")
-        # if side == "R":
-        # #     pm.setAttr("%s.rotate%s" % (cont_FK_LowLeg_ORE, mirrorAxis), -180)
-        #     pm.setAttr("%s.scale%s" % (cont_FK_LowLeg_ORE, mirrorAxis), -1)
 
-        cont_FK_LowLeg.scaleY >> jFK_Knee.scaleX  ## WILL BE ADDED TO ARM
+        if side == "R":
+            pm.setAttr("%s.rotate%s" % (cont_FK_LowLeg_ORE, mirrorAxis), -180)
 
-        # Foot Cont
+        temp_PoCon = pm.pointConstraint(jFK_Knee, jFK_Foot, cont_FK_LowLeg_OFF)
+        pm.delete(temp_PoCon)
+        temp_AimCon = pm.aimConstraint(jFK_Foot, cont_FK_LowLeg_OFF, o=(90, 90, 0), u=(0, 1, 0))
+        pm.delete(temp_AimCon)
 
-        ########################################
-        scaleDisF = extra.getDistance(footRef,ballRef)/2
-        cont_FK_Foot = icon.cube(name="cont_FK_Foot_" + suffix, scale=(scaleDisF/3,scaleDisF,scaleDisF/3))
-        pm.xform(cont_FK_Foot, piv=(0,-scaleDisF,0))
-        extra.alignToAlter(cont_FK_Foot, jFK_Foot, 2)
+        PvTarget = kneePos
+        pm.xform(cont_FK_LowLeg, piv=PvTarget, ws=True)
+        pm.xform(cont_FK_LowLeg_ORE, piv=PvTarget, ws=True)
+        pm.xform(cont_FK_LowLeg_OFF, piv=PvTarget, ws=True)
 
-        # pm.rotate(cont_FK_Foot, (0, 0, -90), os=True, r=True)
+        cont_FK_LowLeg.scaleY >> jFK_Knee.scaleX
+
+        ## Foot Controller
+        scaleDisF = extra.getDistance(footRef, ballRef) / 2
+        scalecontFkFoot = (scaleDisF/3,scaleDisF,scaleDisF/3)
+        cont_FK_Foot = icon.cube(name="cont_FK_Foot_" + suffix, scale=scalecontFkFoot)
+
         cont_FK_Foot_OFF = extra.createUpGrp(cont_FK_Foot, "OFF")
         cont_FK_Foot_ORE = extra.createUpGrp(cont_FK_Foot, "ORE")
-        # if side == "R":
-        # #     pm.setAttr("%s.rotate%s" % (cont_FK_Foot_ORE, mirrorAxis), -180)
-        #     pm.setAttr("%s.scale%s" % (cont_FK_Foot_ORE, mirrorAxis), -1)
 
-        cont_FK_Foot.scaleY >> jFK_Foot.scaleX  ## WILL BE ADDED TO ARM
+        if side == "R":
+            pm.setAttr("%s.rotate%s" % (cont_FK_Foot_ORE, mirrorAxis), -180)
 
-        # Ball Cont
+        temp_PoCon = pm.pointConstraint(jFK_Foot, jFK_Ball, cont_FK_Foot_OFF)
+        pm.delete(temp_PoCon)
+        temp_AimCon = pm.aimConstraint(jFK_Ball, cont_FK_Foot_OFF, o=(90, 90, 0), u=(0, 1, 0))
+        pm.delete(temp_AimCon)
 
-        ########################################
-        scaleDisB = extra.getDistance(ballRef,toePvRef)/2
-        cont_FK_Ball = icon.cube(name="cont_FK_Ball_" + suffix, scale=(scaleDisB/3,scaleDisB,scaleDisB/3))
-        pm.xform(cont_FK_Ball, piv=(0,-scaleDisB,0))
-        extra.alignToAlter(cont_FK_Ball, jFK_Ball, 2)
+        PvTarget = footPos
+        pm.xform(cont_FK_Foot, piv=PvTarget, ws=True)
+        pm.xform(cont_FK_Foot_ORE, piv=PvTarget, ws=True)
+        pm.xform(cont_FK_Foot_OFF, piv=PvTarget, ws=True)
 
-        # pm.rotate(cont_FK_Ball, (0, 0, -90), os=True, r=True)
+        cont_FK_Foot.scaleY >> jFK_Foot.scaleX
+
+        ## Ball Controller
+        scaleDisB = extra.getDistance(ballRef, toePvRef) / 2
+        scalecontFkBall = (scaleDisB/3,scaleDisB,scaleDisB/3)
+        cont_FK_Ball = icon.cube(name="cont_FK_Ball_" + suffix, scale=scalecontFkBall)
+
         cont_FK_Ball_OFF = extra.createUpGrp(cont_FK_Ball, "OFF")
         cont_FK_Ball_ORE = extra.createUpGrp(cont_FK_Ball, "ORE")
 
-        # if side == "R":
-        # #     pm.setAttr("%s.rotate%s" % (cont_FK_Ball_ORE, mirrorAxis), -180)
-        #     pm.setAttr("%s.scale%s" % (cont_FK_Ball_ORE, mirrorAxis), -1)
+        if side == "R":
+            pm.setAttr("%s.rotate%s" % (cont_FK_Ball_ORE, mirrorAxis), -180)
 
+        temp_PoCon = pm.pointConstraint(jFK_Ball, jFK_Toe, cont_FK_Ball_OFF)
+        pm.delete(temp_PoCon)
+        temp_AimCon = pm.aimConstraint(jFK_Toe, cont_FK_Ball_OFF, o=(90, 90, 0), u=(0, 1, 0))
+        pm.delete(temp_AimCon)
 
-        cont_FK_Ball.scaleY >> jFK_Ball.scaleX  ## WILL BE ADDED TO ARM
+        PvTarget = ballPos
+        pm.xform(cont_FK_Ball, piv=PvTarget, ws=True)
+        pm.xform(cont_FK_Ball_OFF, piv=PvTarget, ws=True)
+        pm.xform(cont_FK_Ball_ORE, piv=PvTarget, ws=True)
+
+        cont_FK_Ball.scaleY >> jFK_Ball.scaleX
 
         ### CReate Constraints and Hierarchy
         pm.orientConstraint(cont_FK_UpLeg, jFK_Root, mo=True)
@@ -561,7 +592,7 @@ class leg():
         pm.orientConstraint(cont_FK_Foot, jFK_Foot, mo=True)
         pm.orientConstraint(cont_FK_Ball, jFK_Ball, mo=True)
 
-        pm.parentConstraint(cont_Thigh, cont_FK_UpLeg_OFF, mo=True)
+        pm.parentConstraint(cont_Thigh, cont_FK_UpLeg_OFF, sr=("x", "y", "z"), mo=True)
         pm.parentConstraint(cont_FK_UpLeg, cont_FK_LowLeg_OFF, mo=True)
         pm.parentConstraint(cont_FK_LowLeg, cont_FK_Foot_OFF, mo=True)
         pm.parentConstraint(cont_FK_Foot, cont_FK_Ball_OFF, mo=True)
