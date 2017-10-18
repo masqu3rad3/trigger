@@ -106,7 +106,6 @@ class Fingers(object):
                 self.sockets.append(i)
             self.defJoints.append(j)
 
-        # print "SOCKETS", self.sockets
         ## Create Controllers
 
         self.conts = []
@@ -173,7 +172,6 @@ class Fingers(object):
 
         # pm.parent(conts_OFF[0], self.limbPlug)
         pm.parentConstraint(self.limbPlug, conts_OFF[0], mo=True)
-        print "SOCKETS", self.sockets
 
 
 

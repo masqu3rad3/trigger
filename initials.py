@@ -6,7 +6,7 @@ class initialJoints():
 
     def __init__(self):
 
-        self.axisOrder = "xyz"
+        self.axisOrder = "zyx"
         self.mirrorAxis = self.axisOrder[0]
         self.upAxis = self.axisOrder[1]
         self.lookAxis = self.axisOrder[2]
@@ -422,7 +422,6 @@ class initialJoints():
         return jointList, offsetAxis
 
     def initialHand(self, fingerCount, transformKey, side, suffix):
-        print "hede", side
         jointList = []
         fingerRoots = []
         if fingerCount > 0:

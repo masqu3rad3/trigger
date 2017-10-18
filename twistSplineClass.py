@@ -28,12 +28,7 @@ class twistSpline(object):
 
     def createTspline(self, refJoints, name, cuts, dropoff=2, mode="equalDistance"):
 
-        # idCounter=0
-        # ## create an unique suffix
-        # while pm.objExists("scaleGrp_" + name):
-        #     name = "%s%s" % (name, str(idCounter + 1))
-        # tempRefs = pm.duplicate(refJoints)
-        print "name", name
+
         self.scaleGrp = pm.group(name="scaleGrp_" + name, em=True)
         self.nonScaleGrp = pm.group(name="nonScaleGrp_" + name, em=True)
         rootVc = refJoints[0].getTranslation(space="world")  # Root Vector

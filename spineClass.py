@@ -41,7 +41,6 @@ class spine(object):
         ## create an unique suffix
         while pm.objExists("scaleGrp_" + "spine" + suffix):
             suffix = "%s%s" %(suffix, str(idCounter + 1))
-        print "suffix", suffix
 
         if (len(inits) < 2):
             pm.error("Insufficient Spine Initialization Joints")
@@ -87,7 +86,6 @@ class spine(object):
         pm.move(self.cont_chest, chestPoint, rpr=True)
 
         spine = twistSpline.twistSpline()
-        # print "RESonSPINECLASS", resolution
         spine.createTspline(inits, "spine" + suffix, resolution, dropoff=dropoff)
 
         midConnection = spine.contCurves_ORE[(len(spine.contCurves_ORE)/2)]
@@ -122,7 +120,6 @@ class spine(object):
             pos = spine.contCurves_ORE[m].getTranslation(space="world")
 
             if m > 0 and m < (spine.contCurves_ORE):
-                print "suffix", suffix
                 midSpineLocA = pm.spaceLocator(name="midSpineLocA_%s_%s" %(str(m), suffix), p=pos)
                 midSpineLocA_List.append(midSpineLocA)
                 midSpineLocB = pm.spaceLocator(name="midSpineLocB_%s_%s" % (str(m), suffix), p=pos)

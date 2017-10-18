@@ -363,7 +363,6 @@ class LimbBuilder():
             else:
                 parentSocket = self.cont_placement
 
-            # print "parentSocket, limbplug", parentSocket, limb.limbPlug
             pm.parent(limb.limbPlug, parentSocket)
 
             ## Good parenting / scale connections
@@ -394,10 +393,8 @@ class LimbBuilder():
         """
         distanceList=[]
         for socket in limbSockets:
-            # print "socket", socket
             if not socket in excluding:
                 distanceList.append(extra.getDistance(socket, initJoint))
-        # print "distanceList", distanceList
         index = distanceList.index(min(distanceList))
         return limbSockets[index]
 

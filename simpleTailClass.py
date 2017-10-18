@@ -40,11 +40,7 @@ class simpleTail(object):
             pm.error("Insufficient Tail Initialization Joints")
             return
 
-        # refTailRoot = inits["TailRoot"]
-        # refTails = inits["Tail"]
-        # print "refTailRoot", refTailRoot
-        # print "refTails", refTails
-        print "finger inits", inits
+
 
         self.scaleGrp = pm.group(name="scaleGrp_" + suffix, em=True)
         self.scaleConstraints.append(self.scaleGrp)
