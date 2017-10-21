@@ -72,8 +72,6 @@ class leg():
         footPlane = pm.spaceLocator(name="testLocator")
         pm.setAttr(footPlane.rotateOrder, 0)
         pm.pointConstraint(heelPvRef, toePvRef, footPlane)
-        # pm.aimConstraint(toePvRef, testLocator, o=(90, 90, 0), u=(0, 1, 0))
-        # pm.aimConstraint(toePvRef, footPlane, wuo = footRef, wut="object", o=(90, 90, 0))
         pm.aimConstraint(toePvRef, footPlane, wuo=footRef, wut="object")
         ########
         ########
@@ -107,8 +105,6 @@ class leg():
 
 
         masterIK = pm.spaceLocator(name="masterIK_" + suffix)
-        # tempPoCon = pm.pointConstraint("jInit_Foot_" + side, masterIK)
-        # pm.delete(tempPoCon)
         extra.alignTo(masterIK, footRef)
 
         initUpperLegDist = extra.getDistance(hipRef, kneeRef)
@@ -160,14 +156,10 @@ class leg():
 
 
         Pv_Toe = pm.group(name="Pv_Toe_" + suffix, em=True)
-        # extra.alignTo(Pv_Toe, toePvRef, 0)
-        # pm.makeIdentity(Pv_Toe, a=True, t=False, r=True, s=True)
         extra.alignTo(Pv_Toe, ballRef, 2)
         Pv_Toe_ORE = extra.createUpGrp(Pv_Toe, "ORE")
 
         Pv_Ball = pm.group(name="Pv_Ball_" + suffix, em=True)
-        # extra.alignTo(Pv_Ball, ballRef, 0)
-        # pm.makeIdentity(Pv_Ball, a=True, t=False, r=True, s=True)
         extra.alignTo(Pv_Ball, ballRef, 2)
         Pv_Ball_ORE = extra.createUpGrp(Pv_Ball, "ORE")
 
@@ -179,27 +171,18 @@ class leg():
 
         Pv_Heel = pm.group(name="Pv_Heel_" + suffix, em=True)
         extra.alignTo(Pv_Heel, heelPvRef, 2)
-        # pm.makeIdentity(Pv_Heel, a=True, t=False, r=True, s=True)
-        ## Create an upper group for heel to zero out passing rotations
         Pv_Heel_ORE = extra.createUpGrp(Pv_Heel, "ORE")
-        # extra.alignToAlter(Pv_Heel_ORE, footPlane, 1)
 
         Pv_BallSpin = pm.group(name="Pv_BallSpin_" + suffix, em=True)
-        # extra.alignTo(Pv_BallSpin, ballRef, 0)
-        # pm.makeIdentity(Pv_BallSpin, a=True, t=False, r=True, s=True)
         extra.alignTo(Pv_BallSpin, ballRef, 2)
         Pv_BallSpin_ORE = extra.createUpGrp(Pv_BallSpin, "ORE")
 
 
         Pv_BallRoll = pm.group(name="Pv_BallRoll_" + suffix, em=True)
-        # extra.alignTo(Pv_BallRoll, ballRef, 0)
-        # pm.makeIdentity(Pv_BallRoll, a=True, t=False, r=True, s=True)
         extra.alignTo(Pv_BallRoll, ballRef, 2)
         Pv_BallRoll_ORE = extra.createUpGrp(Pv_BallRoll, "ORE")
 
         Pv_BallLean = pm.group(name="Pv_BallLean_" + suffix, em=True)
-        # extra.alignTo(Pv_BallLean, ballRef, 0)
-        # pm.makeIdentity(Pv_BallLean, a=True, t=False, r=True, s=True)
         extra.alignTo(Pv_BallLean, ballRef, 2)
         Pv_BallLean_ORE = extra.createUpGrp(Pv_BallLean, "ORE")
 
@@ -213,7 +196,6 @@ class leg():
         startLock_Twist = extra.createUpGrp(startLock, "_AutoTwist")
 
         startLockRot = pm.parentConstraint(jDef_hip, startLock, mo=True)
-        # pm.setAttr(startLockRot.interpType, 0)
 
         pm.parentConstraint(startLock, jIK_SC_Root, mo=True)
         pm.parentConstraint(startLock, jIK_RP_Root, mo=True)

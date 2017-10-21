@@ -13,7 +13,7 @@ reload(icon)
 import multiFingersClass as mFingers
 reload(mFingers)
 
-
+import pymel.core.datatypes as dt
 ###########################
 ######### IK ARM ##########
 ###########################
@@ -73,6 +73,15 @@ class arm():
         initShoulderDist = extra.getDistance(collarRef, shoulderRef)
         initUpperArmDist = extra.getDistance(shoulderRef, elbowRef)
         initLowerArmDist = extra.getDistance(elbowRef, handRef)
+
+        ########
+        ########
+        # handPlane = pm.spaceLocator(name="testLocator")
+        # pm.setAttr(handPlane.rotateOrder, 0)
+        # pm.pointConstraint(handRef, handPlane)
+        # pm.aimConstraint(elbowRef, handPlane, wuo=collarRef, wut="object")
+        ########
+        ########
 
         # Create Limb Plug
         pm.select(d=True)
@@ -142,7 +151,12 @@ class arm():
         ###Create Control Curve - IK
         IKcontScale = (initLowerArmDist / 3, initLowerArmDist / 3, initLowerArmDist / 3)
         self.cont_IK_hand = icon.circle("cont_IK_hand_" + suffix, IKcontScale, normal=(1, 0, 0))
-        extra.alignTo(self.cont_IK_hand, handRef, 2)
+        # handPlane = pm.spaceLocator(name="testLocator")
+        # pm.setAttr(handPlane.rotateOrder, 0)
+        # pm.pointConstraint(handRef, handPlane)
+        # pm.aimConstraint(elbowRef, handPlane, wuo=collarRef, wut="object")
+        # extra.alignTo(self.cont_IK_hand, handRef, 2)
+        extra.alignAndAim(self.cont_IK_hand, handRef, elbowRef, upObject=collarRef)
 
         cont_IK_hand_OFF = extra.createUpGrp(self.cont_IK_hand, "OFF")
         cont_IK_hand_ORE = extra.createUpGrp(self.cont_IK_hand, "ORE")
@@ -157,18 +171,30 @@ class arm():
 
         ###Create Pole Vector Curve - IK
 
+        ## get the position for pole vector:
+        ##
+        pVecA = dt.Vector(dt.Vector(elbowPos) - dt.Vector(shoulderPos)).normal()
+        pVecB = dt.Vector(dt.Vector(elbowPos) - dt.Vector(handPos)).normal()
+        offsetVector = dt.Vector((pVecA + pVecB)).normal()
+        offsetMag = (((initUpperArmDist + initLowerArmDist) / 4))
+
+
+
         polecontS = (((initUpperArmDist + initLowerArmDist) / 2) / 10)
         polecontScale = (polecontS, polecontS, polecontS)
         self.cont_Pole = icon.plus("cont_Pole_" + suffix, polecontScale)
-        pm.rotate(self.cont_Pole, (90, 0, 0))
-        pm.makeIdentity(a=True)
-        extra.alignTo(self.cont_Pole, elbowRef, 0)
+        pm.rotate(self.cont_Pole, (0, 0, 90))
+        pm.makeIdentity(self.cont_Pole, a=True)
+        # extra.alignTo(self.cont_Pole, elbowRef, 0)
+        extra.alignAndAim(self.cont_Pole, elbowRef, shoulderRef, secondTarget=handRef, upObject=collarRef)
+        pm.move(self.cont_Pole, (offsetVector*offsetMag), r=True)
 
-        pm.move(self.cont_Pole, (0, 0, (-polecontS*5)), r=True)
-        pm.makeIdentity(a=True)
+        # pm.move(self.cont_Pole, (0, 0, (-polecontS*5)), r=True)
+        # pm.makeIdentity(self.cont_Pole, a=True)
         cont_Pole_OFF = extra.createUpGrp(self.cont_Pole, "OFF")
 
-        pm.poleVectorConstraint(self.cont_Pole, "ikHandle_RP_" + suffix)
+        pm.poleVectorConstraint(self.cont_Pole, ikHandle_RP[0])
+        pm.aimConstraint(jIK_RP_Low, self.cont_Pole)
 
         ### Create and constrain Distance Locators
 
@@ -309,12 +335,16 @@ class arm():
         shouldercontScale = (initShoulderDist / 2, initShoulderDist / 2, initShoulderDist / 2,)
         cont_Shoulder = icon.shoulder("cont_Shoulder_" + suffix, shouldercontScale)
 
+        if side == "R":
+            rotateOff = (90,0,0)
+        else:
+            rotateOff = (-90,0,0)
+        extra.alignAndAim(cont_Shoulder, collarRef, shoulderRef, upObject=shoulderRef, rotateOff=rotateOff, translateOff=False, freezeTransform=False )
 
         cont_Shoulder_OFF = extra.createUpGrp(cont_Shoulder, "OFF")
         cont_Shoulder_ORE = extra.createUpGrp(cont_Shoulder, "ORE")
         cont_Shoulder_POS = extra.createUpGrp(cont_Shoulder, "POS")
 
-        extra.alignTo(cont_Shoulder_OFF, collarRef, 2)
 
         if side == "R":
             pm.setAttr("%s.rotate%s" % (cont_Shoulder_ORE, mirrorAxis), -180)
@@ -704,6 +734,7 @@ class arm():
         # FOOL PROOFING
 
         extra.lockAndHide(self.cont_IK_hand, ["v"])
+        extra.lockAndHide(self.cont_Pole, ["rx", "ry", "rz", "sx", "sy", "sz", "v"])
         extra.lockAndHide(cont_midLock, ["sx", "sy", "sz", "v"])
         extra.lockAndHide(cont_FK_IK, ["sx", "sy", "sz", "v"])
         extra.lockAndHide(cont_FK_Hand, ["tx", "ty", "tz", "v"])

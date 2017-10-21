@@ -79,59 +79,41 @@ def alignToAlter(node1, node2, mode=0, o=(0,0,0)):
         tempPacon = pm.parentConstraint(node2, node1, mo=False)
         pm.delete(tempPacon)
 
-        # targetLoc = node2.getRotatePivot(space="world")
-        # pm.move(node1, targetLoc, a=True, ws=True)
-        # if node2.type() == "joint":
-        #     tempOri = pm.orientConstraint(node2, node1, o=o, mo=False)
-        #     pm.delete(tempOri)
-        # else:
-        #     targetRot = node2.getRotation()
-        #     pm.rotate(node1, targetRot, a=True, ws=True)
+def alignAndAim(node, target, aimTarget, secondTarget=None, upObject=None, rotateOff=None, translateOff=None, freezeTransform=False):
+    """
+    Aligns the position of the node to the target and rotation to the aimTarget object.
+    Args:
+        node: Node to be aligned
+        target: Target node for position
+        aimTarget: Target node for aiming
+        secondTarget: (Optional) if defined, uses this node as the second target and make the alingment inbetween
+        upObject: (Optional) if defined the up node will be up axis of this object
+        rotateOff: (Optional) rotation offset with given value (tuple)
+        translateOff: (Optional) translate offset with given value (tuple)
+        freezeTransform: (Optional) if set True, freezes transforms of the node at the end
 
-#
-# def alignToOld(node1, node2, mode=0, o=(0,0,0)):
-#     """
-#     Aligns the first node to the second.
-#     Args:
-#         node1: Node to be aligned.
-#         node2: Target Node.
-#         mode: Specifies the alignment Mode. Valid Values: 0=position only, 1=Rotation Only, 2=Position and Rotation
-#         o: Offset Value. Default: (0,0,0)
-#
-#     Returns:None
-#
-#     """
-#     if type(node1) == str:
-#         node1 = pm.PyNode(node1)
-#
-#     if type(node2) == str:
-#         node2 = pm.PyNode(node2)
-#
-#     if mode==0:
-#         ##Position Only
-#         targetLoc = node2.getRotatePivot(space="world")
-#         pm.move(node1, targetLoc, a=True, ws=True)
-#
-#     elif mode==1:
-#         ##Rotation Only
-#         if node2.type() == "joint":
-#             tempOri = pm.orientConstraint(node2, node1, o=o, mo=False)
-#             pm.delete(tempOri)
-#         else:
-#             targetRot = node2.getRotation()
-#             pm.rotate(node1, targetRot, a=True, ws=True)
-#
-#     elif mode==2:
-#         ##Position and Rotation
-#         targetLoc = node2.getRotatePivot(space="world")
-#         pm.move(node1, targetLoc, a=True, ws=True)
-#         if node2.type() == "joint":
-#             tempOri = pm.orientConstraint(node2, node1, o=o, mo=False)
-#             pm.delete(tempOri)
-#         else:
-#             targetRot = node2.getRotation()
-#             pm.rotate(node1, targetRot, a=True, ws=True)
-#
+    Returns:
+        None
+
+    """
+
+    tempPo = pm.pointConstraint(target, node)
+    if upObject:
+        wut="object"
+    else:
+        wut="scene"
+    if secondTarget:
+        tempAim = pm.aimConstraint(aimTarget, secondTarget, node, wuo=upObject, wut=wut)
+    else:
+        tempAim = pm.aimConstraint(aimTarget, node, wuo=upObject, wut=wut)
+    pm.delete(tempPo)
+    pm.delete(tempAim)
+    if translateOff:
+        pm.move(node, translateOff, r=True, os=True)
+    if rotateOff:
+        pm.rotate(node, rotateOff, r=True, os=True)
+    if freezeTransform:
+        pm.makeIdentity(node, a=True, t=True)
 
 def createUpGrp(obj, suffix, mi=True):
     """

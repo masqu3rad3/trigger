@@ -234,21 +234,35 @@ class LimbBuilder():
         pm.addAttr(self.cont_master, at="bool", ln="Joints_Visibility", sn="jointVis")
         pm.addAttr(self.cont_master, at="bool", ln="Rig_Visibility", sn="rigVis")
 
+######### //TODO WIP
         for f in self.fingerMatchList:
             fName, fType, fSide = extra.identifyMaster(f[0])
+            # print "parentCheck", f[0].getParent()
+
+            iconSize = extra.getDistance(f[0], f[-1])
+            translateOff = (iconSize / 2, 0, iconSize / 2)
+            rotateOff=(0,0,0)
             if "_left" in f[0].name():
                 iconName = f[0].name().replace("_left", "_LEFT")
             elif "_right" in f[0].name():
                 iconName = f[0].name().replace("_right", "_RIGHT")
+                rotateOff = (0, 180, 0)
+                translateOff = (iconSize / 2, 0, -iconSize / 2)
             else:
                 iconName = f[0].name()
-            iconSize = extra.getDistance(f[0], f[-1])
+
+
             cont_fGroup = icon.square(name="cont_Fgrp_{0}".format(iconName), scale=(iconSize/6, iconSize/4, iconSize/2))
-            tempPA = pm.parentConstraint(f, cont_fGroup)
-            # f.append(cont_fGroup)
-            pm.delete(tempPA)
-            pm.move(cont_fGroup, (0,iconSize/2,0), r=True)
+            pm.rotate(cont_fGroup, (90,0,0))
             pm.makeIdentity(cont_fGroup, a=True)
+            extra.alignAndAim(cont_fGroup, f[0].getParent(), f[0], secondTarget=f[-1], upObject=f[0], rotateOff=rotateOff, translateOff=(iconSize/2,0,iconSize/2))
+
+
+
+            # tempPA = pm.parentConstraint(f, cont_fGroup)
+            # pm.delete(tempPA)
+            # pm.move(cont_fGroup, (0,iconSize/2,0), r=True)
+            # pm.makeIdentity(cont_fGroup, a=True)
             self.fingerMatchConts.append([cont_fGroup, f[0].getParent()])
 
 

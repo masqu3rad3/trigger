@@ -6,7 +6,7 @@ class initialJoints():
 
     def __init__(self):
 
-        self.axisOrder = "xyz"
+        self.axisOrder = "xzy"
         self.mirrorAxis = self.axisOrder[0]
         self.upAxis = self.axisOrder[1]
         self.lookAxis = self.axisOrder[2]
@@ -19,8 +19,6 @@ class initialJoints():
         self.fingerJointsList=[]
         self.tailJointsList=[]
         self.projectName = "tikAutoRig"
-
-
 
     def transformator (self, inputVector, transKey):
         ## convert the input tuple to an actual vector:
@@ -226,6 +224,8 @@ class initialJoints():
         # hand and foot limbs are actually just a collection of fingers.
         # # That is why they need a temporary group to be moved together
         if limb == "hand" or limb == "foot":
+            # print "RootJoint", limbJoints[0]
+            # print "parentJoint", masterParent
             if masterParent:
                 if not constrainedTo:
                     tempGroup = pm.group(em=True)
@@ -302,10 +302,13 @@ class initialJoints():
         return jointList, offsetVector
 
     def initialArm(self, transformKey, side, suffix):
+
         collarVec = self.transformator((2, 0, 0), transformKey)
         shoulderVec = self.transformator((5, 0, 0), transformKey)
         elbowVec = self.transformator((9, 0, -1), transformKey)
         handVec = self.transformator((14, 0, 0 ), transformKey)
+
+        offsetVector = -(dt.normal(dt.Vector(collarVec) - dt.Vector(shoulderVec)))
 
         pm.select(d=True)
         collar = pm.joint(p=collarVec, name=("jInit_collar_" + suffix))
@@ -332,14 +335,8 @@ class initialJoints():
         for i in jointList:
             pm.setAttr(i + ".drawLabel", 1)
         self.armJointsList.append(jointList)
-        if self.mirrorAxis == "x":
-            offsetAxis = dt.Vector(1,0,0)
-        if self.mirrorAxis == "y":
-            offsetAxis = dt.Vector(0,1,0)
-        if self.mirrorAxis == "z":
-            offsetAxis = dt.Vector(0, 0, 1)
 
-        return jointList, offsetAxis
+        return jointList, offsetVector
     
     def initialLeg(self, transformKey, side, suffix):
         rootVec = self.transformator((2,14,0), transformKey)
@@ -352,6 +349,8 @@ class initialJoints():
         bankinVec = self.transformator((6,0,2), transformKey)
         toepvVec = self.transformator((5,0,4.3), transformKey)
         heelpvVec = self.transformator((5,0,-0.2), transformKey)
+
+        offsetVector = -(dt.normal(dt.Vector(rootVec) - dt.Vector(hipVec)))
         
         root = pm.joint(p=rootVec, name=("jInit_LegRoot_" + suffix))
         pm.setAttr(root.radius, 3)
@@ -411,15 +410,8 @@ class initialJoints():
         jointList = [root, hip, knee, foot, ball, toe, bankout, bankin, toepv, heelpv]
         for i in jointList:
             pm.setAttr(i + ".drawLabel", 1)
-        self.legJointsList.append(jointList)
-        if self.mirrorAxis == "x":
-            offsetAxis = dt.Vector(1,0,0)
-        if self.mirrorAxis == "y":
-            offsetAxis = dt.Vector(0,1,0)
-        if self.mirrorAxis == "z":
-            offsetAxis = dt.Vector(0, 0, 1)
 
-        return jointList, offsetAxis
+        return jointList, offsetVector
 
     def initialHand(self, fingerCount, transformKey, side, suffix):
         jointList = []
@@ -673,7 +665,8 @@ class initialJoints():
         pm.select(chest)
         self.initLimb("arm", "auto")
         self.initLimb("neck", "auto", segments=neckSegments)
-        rHand =  self.armJointsList[-1][-1]
+        print "jList", self.armJointsList
+        rHand =  self.armJointsList[0][-1]
 
         pm.select(rHand)
         self.initLimb("hand", "auto", fingerCount=fingers)
