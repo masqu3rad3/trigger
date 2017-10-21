@@ -619,9 +619,10 @@ class leg():
         ### Create FK IK Icon
         iconScale = (extra.getDistance(footRef, kneeRef)) / 4
 
-        cont_FK_IKList = icon.fkikSwitch(("cont_FK_IK_" + suffix), (iconScale, iconScale, iconScale))
-        cont_FK_IK = cont_FK_IKList[0]
-        fk_ik_rvs = cont_FK_IKList[1]
+        # cont_FK_IKList = icon.fkikSwitch(("cont_FK_IK_" + suffix), (iconScale, iconScale, iconScale))
+        # cont_FK_IK = cont_FK_IKList[0]
+        # fk_ik_rvs = cont_FK_IKList[1]
+        cont_FK_IK, fk_ik_rvs = icon.fkikSwitch(("cont_FK_IK_" + suffix), (iconScale, iconScale, iconScale))
 
         pm.addAttr(cont_FK_IK, shortName="autoTwist", longName="Auto_Twist", defaultValue=1.0, minValue=0.0, maxValue=1.0,
                    at="float", k=True)

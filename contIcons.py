@@ -133,8 +133,9 @@ def fkikSwitch(name="cont_fkik", scale=(1,1,1), location=None):
     if location:
         pm.move(cont_FK_IK, location)
     pm.makeIdentity(a=True)
-    return [cont_FK_IK, fk_ik_rvs]
-    
+    # return [cont_FK_IK, fk_ik_rvs]
+    return cont_FK_IK, fk_ik_rvs
+
 def shoulder(name="cont_shoulder", scale=(1,1,1), location=None):
     """
     Creates a bended Eliptical controller for shoulders.

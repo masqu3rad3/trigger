@@ -238,7 +238,7 @@ class LimbBuilder():
         for f in self.fingerMatchList:
             fName, fType, fSide = extra.identifyMaster(f[0])
             # print "parentCheck", f[0].getParent()
-
+            offsetVector = extra.getBetweenVector(f[0].getParent(),f)
             iconSize = extra.getDistance(f[0], f[-1])
             translateOff = (iconSize / 2, 0, iconSize / 2)
             rotateOff=(0,0,0)
@@ -255,8 +255,8 @@ class LimbBuilder():
             cont_fGroup = icon.square(name="cont_Fgrp_{0}".format(iconName), scale=(iconSize/6, iconSize/4, iconSize/2))
             pm.rotate(cont_fGroup, (90,0,0))
             pm.makeIdentity(cont_fGroup, a=True)
-            extra.alignAndAim(cont_fGroup, f[0].getParent(), f[0], secondTarget=f[-1], upObject=f[0], rotateOff=rotateOff, translateOff=(iconSize/2,0,iconSize/2))
-
+            extra.alignAndAim(cont_fGroup, f[0].getParent(), f[0], secondTarget=f[-1], upObject=f[0], rotateOff=rotateOff, translateOff=(-offsetVector * (iconSize/2)))
+            pm.move(cont_fGroup, (0,0,(-iconSize / 2)),r=True,os=True)
 
 
             # tempPA = pm.parentConstraint(f, cont_fGroup)

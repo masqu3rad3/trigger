@@ -109,11 +109,27 @@ def alignAndAim(node, target, aimTarget, secondTarget=None, upObject=None, rotat
     pm.delete(tempPo)
     pm.delete(tempAim)
     if translateOff:
-        pm.move(node, translateOff, r=True, os=True)
+        pm.move(node, translateOff, r=True)
     if rotateOff:
         pm.rotate(node, rotateOff, r=True, os=True)
     if freezeTransform:
         pm.makeIdentity(node, a=True, t=True)
+
+
+def getBetweenVector(node, targetPointNodeList):
+    # get center vector
+    nodePos = node.getTranslation(space="world")
+    sumVectors = dt.Vector(0,0,0)
+    for p in targetPointNodeList:
+        pVector = p.getTranslation(space="world")
+        addVector = dt.Vector(dt.Vector(nodePos) - dt.Vector(pVector)).normal()
+        sumVectors = sumVectors + addVector
+    return sumVectors.normal()
+
+    # pVecA = dt.Vector(dt.Vector(elbowPos) - dt.Vector(shoulderPos)).normal()
+    # pVecB = dt.Vector(dt.Vector(elbowPos) - dt.Vector(handPos)).normal()
+    # offsetVector = dt.Vector((pVecA + pVecB)).normal()
+    # offsetMag = (((initUpperArmDist + initLowerArmDist) / 4))
 
 def createUpGrp(obj, suffix, mi=True):
     """

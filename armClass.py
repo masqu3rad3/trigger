@@ -171,14 +171,8 @@ class arm():
 
         ###Create Pole Vector Curve - IK
 
-        ## get the position for pole vector:
-        ##
-        pVecA = dt.Vector(dt.Vector(elbowPos) - dt.Vector(shoulderPos)).normal()
-        pVecB = dt.Vector(dt.Vector(elbowPos) - dt.Vector(handPos)).normal()
-        offsetVector = dt.Vector((pVecA + pVecB)).normal()
         offsetMag = (((initUpperArmDist + initLowerArmDist) / 4))
-
-
+        offsetVector = extra.getBetweenVector(elbowRef, [shoulderRef,handRef])
 
         polecontS = (((initUpperArmDist + initLowerArmDist) / 2) / 10)
         polecontScale = (polecontS, polecontS, polecontS)
@@ -186,8 +180,8 @@ class arm():
         pm.rotate(self.cont_Pole, (0, 0, 90))
         pm.makeIdentity(self.cont_Pole, a=True)
         # extra.alignTo(self.cont_Pole, elbowRef, 0)
-        extra.alignAndAim(self.cont_Pole, elbowRef, shoulderRef, secondTarget=handRef, upObject=collarRef)
-        pm.move(self.cont_Pole, (offsetVector*offsetMag), r=True)
+        extra.alignAndAim(self.cont_Pole, elbowRef, shoulderRef, secondTarget=handRef, upObject=collarRef, translateOff=(offsetVector*offsetMag))
+        # pm.move(self.cont_Pole, (offsetVector*offsetMag), r=True)
 
         # pm.move(self.cont_Pole, (0, 0, (-polecontS*5)), r=True)
         # pm.makeIdentity(self.cont_Pole, a=True)
@@ -333,13 +327,17 @@ class arm():
 
         ### Shoulder Controller
         shouldercontScale = (initShoulderDist / 2, initShoulderDist / 2, initShoulderDist / 2,)
-        cont_Shoulder = icon.shoulder("cont_Shoulder_" + suffix, shouldercontScale)
+
 
         if side == "R":
             rotateOff = (90,0,0)
+            shouldercontScale = (initShoulderDist / 2, -initShoulderDist / 2, initShoulderDist / 2,)
         else:
             rotateOff = (-90,0,0)
-        extra.alignAndAim(cont_Shoulder, collarRef, shoulderRef, upObject=shoulderRef, rotateOff=rotateOff, translateOff=False, freezeTransform=False )
+        cont_Shoulder = icon.shoulder("cont_Shoulder_" + suffix, shouldercontScale)
+        pm.rotate(cont_Shoulder, rotateOff)
+        pm.makeIdentity(cont_Shoulder, a=True)
+        extra.alignAndAim(cont_Shoulder, collarRef, shoulderRef, upObject=shoulderRef, rotateOff=(0,0,0), translateOff=False, freezeTransform=False )
 
         cont_Shoulder_OFF = extra.createUpGrp(cont_Shoulder, "OFF")
         cont_Shoulder_ORE = extra.createUpGrp(cont_Shoulder, "ORE")
@@ -441,10 +439,11 @@ class arm():
         ### Create FK IK Icon
 
         iconScale = initUpperArmDist / 4
+        sideScale = -iconScale
+        if side == "R":
+            sideScale = iconScale
 
-        cont_FK_IKList = icon.fkikSwitch(("cont_FK_IK_" + suffix), (iconScale, iconScale, iconScale))
-        cont_FK_IK = cont_FK_IKList[0]
-        fk_ik_rvs = cont_FK_IKList[1]
+        cont_FK_IK, fk_ik_rvs = icon.fkikSwitch(("cont_FK_IK_" + suffix), (sideScale, iconScale , iconScale))
 
         ## FK-IK ICON Attributes
 
@@ -461,9 +460,9 @@ class arm():
 
         cont_FK_IK.fk_ik >> self.cont_IK_hand.visibility
 
-        extra.alignTo(cont_FK_IK, handRef, 2)
-
-        pm.move(cont_FK_IK, (0, iconScale * 2, 0), r=True)
+        # extra.alignTo(cont_FK_IK, handRef, 2)
+        extra.alignAndAim(cont_FK_IK, handRef, elbowRef, upObject=collarRef, rotateOff=(rotateOff))
+        pm.move(cont_FK_IK, (0, -iconScale * 2, 0), r=True, os=True)
 
         cont_FK_IK_POS = extra.createUpGrp(cont_FK_IK, "POS")
 
