@@ -79,7 +79,7 @@ def alignToAlter(node1, node2, mode=0, o=(0,0,0)):
         tempPacon = pm.parentConstraint(node2, node1, mo=False)
         pm.delete(tempPacon)
 
-def alignAndAim(node, target, aimTarget, secondTarget=None, upObject=None, rotateOff=None, translateOff=None, freezeTransform=False):
+def alignAndAim(node, target, aimTarget, secondTarget=None, upObject=None, upVector=None, rotateOff=None, translateOff=None, freezeTransform=False):
     """
     Aligns the position of the node to the target and rotation to the aimTarget object.
     Args:
@@ -96,16 +96,33 @@ def alignAndAim(node, target, aimTarget, secondTarget=None, upObject=None, rotat
         None
 
     """
+    if upObject and upVector:
+        pm.error("In alignAndAim function both upObject and upVector parameters cannot be used")
+        return
+    flags = "aimTarget"
+    if secondTarget:
+        flags += ", secondTarget"
+    flags += ", node"
+    if upObject:
+        flags += ", wuo=upObject, wut='object'"
+    if upVector:
+        flags += ", wu=upVector, wut='vector'"
+    aimCommand = "pm.aimConstraint({0})".format(flags)
+    print node, aimCommand
+
 
     tempPo = pm.pointConstraint(target, node)
-    if upObject:
-        wut="object"
-    else:
-        wut="scene"
-    if secondTarget:
-        tempAim = pm.aimConstraint(aimTarget, secondTarget, node, wuo=upObject, wut=wut)
-    else:
-        tempAim = pm.aimConstraint(aimTarget, node, wuo=upObject, wut=wut)
+    # if upObject:
+    #     wut="object"
+    # elif upVector:
+    #     wut="vector"
+    # else:
+    #     wut="scene"
+    # if secondTarget:
+    #     tempAim = pm.aimConstraint(aimTarget, secondTarget, node, wuo=upObject, wu=upVector, wut=wut)
+    # else:
+    #     tempAim = pm.aimConstraint(aimTarget, node, wuo=upObject, wu=upVector, wut=wut)
+    tempAim = eval(aimCommand)
     pm.delete(tempPo)
     pm.delete(tempAim)
     if translateOff:

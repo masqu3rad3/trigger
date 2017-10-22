@@ -6,7 +6,7 @@ class initialJoints():
 
     def __init__(self):
 
-        self.axisOrder = "zxy"
+        self.axisOrder = "yzx"
         self.mirrorAxis = self.axisOrder[0]
         self.upAxis = self.axisOrder[1]
         self.lookAxis = self.axisOrder[2]
@@ -202,6 +202,9 @@ class initialJoints():
         if limb == "finger":
             limbJoints, offsetVector = self.initialFinger(segments=segments, transformKey=a, side=side, suffix=suffix)
 
+        ## grave the up axis to the root initJoints
+        pm.addAttr(limbJoints[0], longName="upAxis", dt="string")
+        pm.setAttr(limbJoints[0].upAxis, self.upAxis)
 
         ### Constrain locating
 
@@ -681,6 +684,13 @@ class initialJoints():
         else:
             side = 0
 
+        if pm.attributeQuery("upAxis", node=jointList[0], exists=True):
+            pm.setAttr(jointList[0].upAxis, self.upAxis)
+        else:
+            pm.addAttr(jointList[0], longName="upAxis", dt="string")
+            pm.setAttr(jointList[0].upAxis, self.upAxis)
+
+
         if limbType == "spine":
             if len(jointList) < 2:
                 pm.warning("You need to select at least 2 joints for spine conversion\nNothing Changed")
@@ -695,9 +705,12 @@ class initialJoints():
                 if j == 0:
                     type =1
                     pm.setAttr(jointList[j] + ".type", type)
-                    pm.addAttr(shortName="resolution", longName="Resolution", defaultValue=4, minValue=1,
+
+                    if pm.attributeQuery("resolution", node=jointList[j], exists=True):
+                        pm.addAttr(shortName="resolution", longName="Resolution", defaultValue=4, minValue=1,
                                at="long", k=True)
-                    pm.addAttr(shortName="dropoff", longName="DropOff", defaultValue=1.0, minValue=0.1,
+                    if pm.attributeQuery("dropoff", node=jointList[j], exists=True):
+                        pm.addAttr(shortName="dropoff", longName="DropOff", defaultValue=1.0, minValue=0.1,
                                at="float", k=True)
                     # pm.setAttr(jointList[j].radius, 3)
 
@@ -785,9 +798,12 @@ class initialJoints():
                     pm.setAttr(jointList[i] + ".type", 18)
                     pm.setAttr(jointList[i] + ".otherType", "NeckRoot")
                     pm.select(jointList[i])
-                    pm.addAttr(shortName="resolution", longName="Resolution", defaultValue=4, minValue=1,
+
+                    if pm.attributeQuery("resolution", node=jointList[j], exists=True):
+                        pm.addAttr(shortName="resolution", longName="Resolution", defaultValue=4, minValue=1,
                                at="long", k=True)
-                    pm.addAttr(shortName="dropoff", longName="DropOff", defaultValue=1.0, minValue=0.1,
+                    if pm.attributeQuery("dropoff", node=jointList[j], exists=True):
+                        pm.addAttr(shortName="dropoff", longName="DropOff", defaultValue=1.0, minValue=0.1,
                                at="float", k=True)
                 elif jointList[i] == jointList[-2]:
                     pm.setAttr(jointList[i] + ".type", 8)

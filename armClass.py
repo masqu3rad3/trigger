@@ -35,9 +35,10 @@ class arm():
         self.anchors = []
         self.anchorLocations = []
         self.jDef_Collar = None
+        self.upAxis = None
+        ## get the up axis
     ## This is a joint node and should be parented to another joint.
     def createArm(self, armInits, suffix="", side="L", mirrorAxis="X"):
-
         idCounter=0
         ## create an unique suffix
         while pm.objExists("scaleGrp_" + suffix):
@@ -53,6 +54,27 @@ class arm():
         shoulderRef = armInits["Shoulder"]
         elbowRef = armInits["Elbow"]
         handRef = armInits["Hand"]
+
+        ## get the up axis
+        if pm.attributeQuery("upAxis", node=collarRef, exists=True):
+            if pm.getAttr(collarRef.upAxis) == "x":
+                self.upAxis = (1.0,0.0,0.0)
+            elif pm.getAttr(collarRef.upAxis) == "y":
+                self.upAxis = (0.0, 1.0, 0.0)
+            elif pm.getAttr(collarRef.upAxis) == "z":
+                self.upAxis = (0.0, 0.0, 1.0)
+            elif pm.getAttr(collarRef.upAxis) == "-x":
+                self.upAxis = (-1.0, 0.0, 0.0)
+            elif pm.getAttr(collarRef.upAxis) == "-y":
+                self.upAxis = (0.0, -1.0, 0.0)
+            elif pm.getAttr(collarRef.upAxis) == "-z":
+                self.upAxis = (0.0, 0.0, -1.0)
+        else:
+            pm.warning("upAxis attribute of the root node does not exist. Using default value (y up)")
+            self.upAxis = (0.0, 1.0, 0.0)
+
+        # print "self.upAxis", self.upAxis
+
 
         ##Groups
         self.scaleGrp = pm.group(name="scaleGrp_" + suffix, em=True)
@@ -180,6 +202,7 @@ class arm():
         pm.rotate(self.cont_Pole, (0, 0, 90))
         pm.makeIdentity(self.cont_Pole, a=True)
         # extra.alignTo(self.cont_Pole, elbowRef, 0)
+
         extra.alignAndAim(self.cont_Pole, elbowRef, shoulderRef, secondTarget=handRef, upObject=collarRef, translateOff=(offsetVector*offsetMag))
         # pm.move(self.cont_Pole, (offsetVector*offsetMag), r=True)
 
@@ -330,14 +353,17 @@ class arm():
 
 
         if side == "R":
-            rotateOff = (90,0,0)
+            rotateOff = (0,0,0)
             shouldercontScale = (initShoulderDist / 2, -initShoulderDist / 2, initShoulderDist / 2,)
         else:
             rotateOff = (-90,0,0)
         cont_Shoulder = icon.shoulder("cont_Shoulder_" + suffix, shouldercontScale)
-        pm.rotate(cont_Shoulder, rotateOff)
-        pm.makeIdentity(cont_Shoulder, a=True)
-        extra.alignAndAim(cont_Shoulder, collarRef, shoulderRef, upObject=shoulderRef, rotateOff=(0,0,0), translateOff=False, freezeTransform=False )
+        # extra.alignTo(cont_Shoulder, collarRef, 1)
+        # pm.rotate(cont_Shoulder, rotateOff, r=True, os=True)
+        # pm.rotate(cont_Shoulder, rotateOff)
+        # pm.makeIdentity(cont_Shoulder, a=True)
+
+        extra.alignAndAim(cont_Shoulder, collarRef, shoulderRef, upVector=self.upAxis)
 
         cont_Shoulder_OFF = extra.createUpGrp(cont_Shoulder, "OFF")
         cont_Shoulder_ORE = extra.createUpGrp(cont_Shoulder, "ORE")
@@ -345,8 +371,9 @@ class arm():
 
 
         if side == "R":
-            pm.setAttr("%s.rotate%s" % (cont_Shoulder_ORE, mirrorAxis), -180)
-            pm.setAttr(cont_Shoulder.scaleY, -1)
+            pm.setAttr(cont_Shoulder_ORE.rotateZ, -180)
+            # pm.setAttr("%s.rotate%s" % (cont_Shoulder_ORE, mirrorAxis), -180)
+            # pm.setAttr(cont_Shoulder.scaleX, -1)
 
         pm.select(cont_Shoulder)
         pm.addAttr(shortName="autoTwist", longName="Auto_Twist", defaultValue=1.0, minValue=0.0, maxValue=1.0, at="float",
@@ -360,7 +387,7 @@ class arm():
 
         pm.select(cont_Shoulder)
 
-        pm.makeIdentity(a=True, t=True, r=True, s=False)
+        # pm.makeIdentity(a=True, t=True, r=True, s=False)
 
         jDef_paCon = pm.parentConstraint(cont_Shoulder, self.jDef_Collar, mo=True)
 
@@ -439,11 +466,11 @@ class arm():
         ### Create FK IK Icon
 
         iconScale = initUpperArmDist / 4
-        sideScale = -iconScale
+        sideScale = iconScale
         if side == "R":
-            sideScale = iconScale
+            sideScale = -iconScale
 
-        cont_FK_IK, fk_ik_rvs = icon.fkikSwitch(("cont_FK_IK_" + suffix), (sideScale, iconScale , iconScale))
+        cont_FK_IK, fk_ik_rvs = icon.fkikSwitch(("cont_FK_IK_" + suffix), (sideScale, iconScale, iconScale))
 
         ## FK-IK ICON Attributes
 
@@ -461,8 +488,12 @@ class arm():
         cont_FK_IK.fk_ik >> self.cont_IK_hand.visibility
 
         # extra.alignTo(cont_FK_IK, handRef, 2)
-        extra.alignAndAim(cont_FK_IK, handRef, elbowRef, upObject=collarRef, rotateOff=(rotateOff))
-        pm.move(cont_FK_IK, (0, -iconScale * 2, 0), r=True, os=True)
+        # extra.alignAndAim(cont_FK_IK, handRef, elbowRef, upObject=collarRef, rotateOff=(rotateOff))
+        # pm.move(cont_FK_IK, (0, -iconScale * 2, 0), r=True, os=True)
+        extra.alignAndAim(cont_FK_IK, handRef, elbowRef, upVector=self.upAxis, rotateOff=(0,180,0))
+
+        # extra.alignAndAim(cont_FK_IK, handRef, elbowRef, upObject=collarRef, rotateOff=(-90,180,0))
+        pm.move(cont_FK_IK, (dt.Vector(self.upAxis) *(iconScale*2)), r=True)
 
         cont_FK_IK_POS = extra.createUpGrp(cont_FK_IK, "POS")
 

@@ -32,6 +32,7 @@ class leg():
         self.anchors = []
         self.anchorLocations = []
         self.jDef_legRoot = None
+        self.upAxis = None
 
     def createLeg(self, legInits, suffix="", side="L", mirrorAxis="X"):
         idCounter = 0
@@ -53,6 +54,24 @@ class leg():
         toePvRef = legInits["ToePV"]
         bankInRef = legInits["BankIN"]
         bankOutRef = legInits["BankOUT"]
+
+        ## get the up axis
+        if pm.attributeQuery("upAxis", node=legRootRef, exists=True):
+            if pm.getAttr(legRootRef.upAxis) == "x":
+                self.upAxis = (1.0,0.0,0.0)
+            elif pm.getAttr(legRootRef.upAxis) == "y":
+                self.upAxis = (0.0, 1.0, 0.0)
+            elif pm.getAttr(legRootRef.upAxis) == "z":
+                self.upAxis = (0.0, 0.0, 1.0)
+            elif pm.getAttr(legRootRef.upAxis) == "-x":
+                self.upAxis = (-1.0, 0.0, 0.0)
+            elif pm.getAttr(legRootRef.upAxis) == "-y":
+                self.upAxis = (0.0, -1.0, 0.0)
+            elif pm.getAttr(legRootRef.upAxis) == "-z":
+                self.upAxis = (0.0, 0.0, -1.0)
+        else:
+            pm.warning("upAxis attribute of the root node does not exist. Using default value (y up)")
+            self.upAxis = (0.0, 1.0, 0.0)
 
         # find the Socket
         self.connectsTo = legRootRef.getParent()
@@ -261,17 +280,27 @@ class leg():
 
         ###Create Pole Vector Curve - IK
 
+        offsetMag = (((initUpperLegDist + initLowerLegDist) / 4))
+        offsetVector = extra.getBetweenVector(kneeRef, [hipRef, footRef])
+
         polecontS = (((initUpperLegDist + initLowerLegDist) / 2) / 10)
         polecontScale = (polecontS, polecontS, polecontS)
         self.cont_Pole = icon.plus("cont_Pole_" + suffix, polecontScale)
-        pm.rotate(self.cont_Pole, (90, 0, 0))
-        pm.makeIdentity(a=True)
-        extra.alignTo(self.cont_Pole, kneeRef, 0)
-        pm.move(self.cont_Pole, (0, 0, polecontS * 5), r=True)
-        pm.makeIdentity(a=True)
+        pm.rotate(self.cont_Pole, (0, 0, 90))
+        pm.makeIdentity(self.cont_Pole, a=True)
+        extra.alignAndAim(self.cont_Pole, kneeRef, hipRef, secondTarget=footRef, upObject=hipRef, translateOff=(offsetVector*offsetMag))
+
+        # pm.rotate(self.cont_Pole, (90, 0, 0))
+        # pm.makeIdentity(a=True)
+        # extra.alignTo(self.cont_Pole, kneeRef, 0)
+        # pm.move(self.cont_Pole, (0, 0, polecontS * 5), r=True)
+        # pm.makeIdentity(a=True)
+
+
         cont_Pole_OFF = extra.createUpGrp(self.cont_Pole, "OFF")
 
         pm.poleVectorConstraint(self.cont_Pole, "ikHandle_RP_" + suffix)
+        pm.aimConstraint(jIK_RP_Knee, self.cont_Pole)
 
         #########################################################
 
@@ -445,26 +474,24 @@ class leg():
         pm.setAttr(cont_Thigh.scale, (thighContScale, thighContScale / 4, thighContScale))
         pm.makeIdentity(cont_Thigh, a=True)
 
+        extra.alignAndAim(cont_Thigh, hipRef, kneeRef, upObject=legRootRef)
+        pm.move(cont_Thigh, (0, -thighContScale * 2, 0), r=True, os=True)
+
         cont_Thigh_OFF = extra.createUpGrp(cont_Thigh, "OFF")
         cont_Thigh_ORE = extra.createUpGrp(cont_Thigh, "ORE")
         if side == "R":
-            # pm.setAttr("%s.scale%s" % (cont_Thigh_ORE, mirrorAxis), -1)
-            pm.setAttr("%s.rotate%s" % (cont_Thigh_ORE, mirrorAxis), -180)
-            # pm.setAttr(cont_Thigh_ORE.rotateX, -180)
+            # pm.setAttr("%s.rotate%s" % (cont_Thigh_ORE, mirrorAxis), -180)
+            pm.setAttr(cont_Thigh_ORE.rotateZ, -180)
 
         pm.addAttr(shortName="autoTwist", longName="Auto_Twist", defaultValue=1.0, minValue=0.0, maxValue=1.0, at="float",
                    k=True)
         pm.addAttr(shortName="manualTwist", longName="Manual_Twist", defaultValue=0.0, at="float", k=True)
 
-        extra.alignTo(cont_Thigh_OFF, hipRef, 0)
+        # extra.alignTo(cont_Thigh_OFF, hipRef, 0)
 
-        # pm.move(cont_Thigh, (0, thighContScale * 2, 0), r=True)
-        # temp_AimCon = pm.aimConstraint(hipRef, cont_Thigh, o=(0, 0, 0))
+        # temp_AimCon = pm.aimConstraint(kneeRef, cont_Thigh, wuo=legRootRef, wut="object", o=(0, 0, 0), mo=False)
         # pm.delete(temp_AimCon)
-
-        temp_AimCon = pm.aimConstraint(kneeRef, cont_Thigh, wuo=legRootRef, wut="object", o=(0, 0, 0), mo=False)
-        pm.delete(temp_AimCon)
-        pm.move(cont_Thigh, (0, thighContScale * 2, 0), r=True)
+        # pm.move(cont_Thigh, (0, thighContScale * 2, 0), r=True, os=True)
 
         pm.makeIdentity(cont_Thigh, a=True)
         pm.xform(cont_Thigh, piv=legRootPos, ws=True)
@@ -619,9 +646,6 @@ class leg():
         ### Create FK IK Icon
         iconScale = (extra.getDistance(footRef, kneeRef)) / 4
 
-        # cont_FK_IKList = icon.fkikSwitch(("cont_FK_IK_" + suffix), (iconScale, iconScale, iconScale))
-        # cont_FK_IK = cont_FK_IKList[0]
-        # fk_ik_rvs = cont_FK_IKList[1]
         cont_FK_IK, fk_ik_rvs = icon.fkikSwitch(("cont_FK_IK_" + suffix), (iconScale, iconScale, iconScale))
 
         pm.addAttr(cont_FK_IK, shortName="autoTwist", longName="Auto_Twist", defaultValue=1.0, minValue=0.0, maxValue=1.0,
@@ -638,12 +662,15 @@ class leg():
         fk_ik_rvs.outputX >> cont_FK_Ball_ORE.visibility
         cont_FK_IK.fk_ik >> self.cont_IK_foot.visibility
 
-        extra.alignTo(cont_FK_IK, footRef)
+        extra.alignAndAim(cont_FK_IK, footRef, kneeRef, upVector=self.upAxis, rotateOff=(90,90,0))
+
+
+        # extra.alignTo(cont_FK_IK, footRef)
 
         if side == "R":
-            pm.move(cont_FK_IK, (-(iconScale * 2), 0, 0), r=True)
+            pm.move(cont_FK_IK, (-(iconScale * 2), 0, 0), r=True, os=True)
         else:
-            pm.move(cont_FK_IK, (iconScale * 2, 0, 0), r=True)
+            pm.move(cont_FK_IK, (iconScale * 2, 0, 0), r=True, os=True)
 
         cont_FK_IK_POS = extra.createUpGrp(cont_FK_IK, "_POS")
         pm.parent(cont_FK_IK_POS, self.scaleGrp)
@@ -872,6 +899,7 @@ class leg():
 
         extra.lockAndHide(cont_Thigh, ["sx", "sy", "sz", "v"])
         extra.lockAndHide(self.cont_IK_foot, ["sx", "sy", "sz", "v"])
+        extra.lockAndHide(self.cont_Pole, ["rx", "ry", "rz", "sx", "sy", "sz", "v"])
         extra.lockAndHide(cont_FK_IK, ["sx", "sy", "sz", "v"])
         extra.lockAndHide(cont_FK_UpLeg, ["tx", "ty", "tz", "sx", "sz", "v"])
         extra.lockAndHide(cont_FK_LowLeg, ["tx", "ty", "tz", "sx", "sz", "v"])
