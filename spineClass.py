@@ -27,6 +27,8 @@ class spine(object):
         self.anchorLocations = []
         self.endSocket = None
         self.startSocket = None
+        self.upAxis = None
+
 
     def createSpine(self, inits, suffix="", resolution=4, dropoff=2.0):
         if not isinstance(inits, list):
@@ -50,6 +52,24 @@ class spine(object):
         rootPoint = inits[0].getTranslation(space="world")
         chestPoint = inits[-1].getTranslation(space="world")
 
+        ## get the up axis
+        if pm.attributeQuery("upAxis", node=inits[0], exists=True):
+            if pm.getAttr(inits[0].upAxis) == "x":
+                self.upAxis = (1.0,0.0,0.0)
+            elif pm.getAttr(inits[0].upAxis) == "y":
+                self.upAxis = (0.0, 1.0, 0.0)
+            elif pm.getAttr(inits[0].upAxis) == "z":
+                self.upAxis = (0.0, 0.0, 1.0)
+            elif pm.getAttr(inits[0].upAxis) == "-x":
+                self.upAxis = (-1.0, 0.0, 0.0)
+            elif pm.getAttr(inits[0].upAxis) == "-y":
+                self.upAxis = (0.0, -1.0, 0.0)
+            elif pm.getAttr(inits[0].upAxis) == "-z":
+                self.upAxis = (0.0, 0.0, -1.0)
+        else:
+            pm.warning("upAxis attribute of the root node does not exist. Using default value (y up)")
+            self.upAxis = (0.0, 1.0, 0.0)
+
         # # Create Plug Joints
         pm.select(None)
         self.limbPlug = pm.joint(name="limbPlug_" + suffix, p=rootPoint, radius=3)
@@ -66,17 +86,21 @@ class spine(object):
         contHipsScale = (iconSize / 1.5, iconSize / 1.5, iconSize / 1.5)
         # self.cont_hips = icon.waist("cont_Hips", contHipsScale, location=rootPoint)
         self.cont_hips = icon.waist("cont_Hips", contHipsScale)
-        extra.alignTo(self.cont_hips, inits[0],2)
+        extra.alignAndAim(self.cont_hips, inits[0], inits[1], upVector=self.upAxis, rotateOff=(0,0,90))
+        # extra.alignTo(self.cont_hips, inits[0],2)
+        self.cont_hips_ORE = extra.createUpGrp(self.cont_hips, "ORE")
 
         contBodyScale = (iconSize * 0.75, iconSize * 0.75, iconSize * 0.75)
         # self.cont_body = icon.square("cont_Body", contBodyScale)
         self.cont_body = icon.square("cont_Body", contBodyScale)
-        extra.alignTo(self.cont_body, inits[0],2)
+        extra.alignAndAim(self.cont_body, inits[0], inits[1], upVector=self.upAxis, rotateOff=(0,0,90))
+        # extra.alignTo(self.cont_body, inits[0],2)
         cont_Body_POS = extra.createUpGrp(self.cont_body, "POS")
         self.cont_IK_OFF = cont_Body_POS
         pm.parentConstraint(self.limbPlug, cont_Body_POS, mo=True)
 
         self.cont_chest = icon.cube("cont_Chest", (iconSize*0.5, iconSize*0.35, iconSize*0.2))
+        # extra.alignAndAim(self.cont_chest, inits[-1], inits[-2], upVector=self.upAxis, rotateOff=(0, 90, 90))
         extra.alignTo(self.cont_chest, inits[-1])
         extra.alignTo(self.cont_chest, inits[len(inits)-2],1)
 
@@ -150,7 +174,7 @@ class spine(object):
         pm.parent(spine.contCurves_ORE, spine.scaleGrp)  # contcurve Ore s -> scaleGrp
         pm.parent(self.endSocket, spine.scaleGrp)
 
-        pm.parent(self.cont_hips, cont_spineFK_B_List[0])
+        pm.parent(self.cont_hips_ORE, cont_spineFK_B_List[0])
         pm.parent(cont_spineFK_B_List[-1], self.cont_body)
         pm.parent(spine.endLock, spine.scaleGrp)
 

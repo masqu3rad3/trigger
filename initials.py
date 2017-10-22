@@ -6,7 +6,7 @@ class initialJoints():
 
     def __init__(self):
 
-        self.axisOrder = "yzx"
+        self.axisOrder = "xyz"
         self.mirrorAxis = self.axisOrder[0]
         self.upAxis = self.axisOrder[1]
         self.lookAxis = self.axisOrder[2]
