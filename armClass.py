@@ -276,37 +276,6 @@ class arm():
         ikHandle_SC = pm.ikHandle(sj=jIK_SC_Up, ee=jIK_SC_LowEnd, name="ikHandle_SC_" + suffix)
         ikHandle_RP = pm.ikHandle(sj=jIK_RP_Up, ee=jIK_RP_LowEnd, name="ikHandle_RP_" + suffix, sol="ikRPsolver")
 
-        # ##Create Control Curve - IK
-        # IKcontScale = (initLowerArmDist / 3, initLowerArmDist / 3, initLowerArmDist / 3)
-        # self.cont_IK_hand = icon.circle("cont_IK_hand_" + suffix, IKcontScale, normal=(1, 0, 0))
-        #
-        # extra.alignAndAim(self.cont_IK_hand, targetList=[handRef], aimTargetList=[elbowRef], upObject=collarRef, rotateOff=(-90,-180,0))
-        #
-        # cont_IK_hand_OFF = extra.createUpGrp(self.cont_IK_hand, "OFF")
-        # cont_IK_hand_ORE = extra.createUpGrp(self.cont_IK_hand, "ORE")
-        # ##Add ATTRIBUTES to the IK Hand Controller
-        # pm.addAttr(shortName="polevector", longName="Pole_Vector", defaultValue=0.0, minValue=0.0, maxValue=1.0,
-        #            at="double", k=True)
-        # pm.addAttr(shortName="sUpArm", longName="Scale_Upper_Arm", defaultValue=1.0, minValue=0.0, at="double", k=True)
-        # pm.addAttr(shortName="sLowArm", longName="Scale_Lower_Arm", defaultValue=1.0, minValue=0.0, at="double", k=True)
-        # pm.addAttr(shortName="squash", longName="Squash", defaultValue=0.0, minValue=0.0, maxValue=1.0, at="double", k=True)
-        # pm.addAttr(shortName="stretch", longName="Stretch", defaultValue=100.0, minValue=0.0, maxValue=100.0, at="double",
-        #            k=True)
-
-        ###Create Pole Vector Curve - IK
-
-        # offsetMag = (((initUpperArmDist + initLowerArmDist) / 4))
-        # offsetVector = extra.getBetweenVector(elbowRef, [shoulderRef,handRef])
-        #
-        # polecontS = (((initUpperArmDist + initLowerArmDist) / 2) / 10)
-        # polecontScale = (polecontS, polecontS, polecontS)
-        # self.cont_Pole = icon.plus("cont_Pole_" + suffix, polecontScale)
-        # pm.rotate(self.cont_Pole, (0, 0, 90))
-        # pm.makeIdentity(self.cont_Pole, a=True)
-
-        # extra.alignAndAim(self.cont_Pole, elbowRef, shoulderRef, secondTarget=handRef, upObject=collarRef, translateOff=(offsetVector*offsetMag))
-
-        # cont_Pole_OFF = extra.createUpGrp(self.cont_Pole, "OFF")
 
         pm.poleVectorConstraint(self.cont_Pole, ikHandle_RP[0])
         pm.aimConstraint(jIK_RP_Low, self.cont_Pole, u=self.upAxis, wut="vector")
@@ -404,12 +373,6 @@ class arm():
         pm.parent(masterIK, IK_parentGRP)
         pm.parentConstraint(self.cont_IK_hand, IK_parentGRP, mo=True)
 
-        # paConLocatorHand = pm.spaceLocator(name="paconLocatorHand_" + suffix)
-        # extra.alignTo(paConLocatorHand, handRef)
-        # pm.parentConstraint(self.cont_IK_hand, paConLocatorHand, mo=True)
-
-        # Create Orig Switch (Pole Vector On/Off)
-
         blendORE_IK_Up = pm.createNode("blendColors", name="blendORE_IK_Up_" + suffix)
         jIK_SC_Up.rotate >> blendORE_IK_Up.color2
         jIK_RP_Up.rotate >> blendORE_IK_Up.color1
@@ -450,42 +413,11 @@ class arm():
         self.cont_IK_hand.polevector >> poleVector_Rvs.inputX
         self.cont_IK_hand.polevector >> self.cont_Pole.v
 
-        ### Shoulder Controller
-        shouldercontScale = (initShoulderDist / 2, initShoulderDist / 2, initShoulderDist / 2,)
-
-
-        # if side == "R":
-        #     rotateOff = (0,0,0)
-        #     shouldercontScale = (initShoulderDist / 2, -initShoulderDist / 2, initShoulderDist / 2,)
-        # else:
-        #     rotateOff = (-90,0,0)
-        # cont_Shoulder = icon.shoulder("cont_Shoulder_" + suffix, shouldercontScale)
-
-
-        # extra.alignAndAim(cont_Shoulder, collarRef, shoulderRef, upVector=self.upAxis)
-
-        # cont_Shoulder_OFF = extra.createUpGrp(cont_Shoulder, "OFF")
-        # cont_Shoulder_ORE = extra.createUpGrp(cont_Shoulder, "ORE")
-        # cont_Shoulder_POS = extra.createUpGrp(cont_Shoulder, "POS")
-
-
-        # if side == "R":
-        #     pm.setAttr(cont_Shoulder_ORE.rotateZ, -180)
-
-
-        # pm.select(cont_Shoulder)
-        # pm.addAttr(shortName="autoTwist", longName="Auto_Twist", defaultValue=1.0, minValue=0.0, maxValue=1.0, at="float",
-        #            k=True)
-        # pm.addAttr(shortName="manualTwist", longName="Manual_Twist", defaultValue=0.0, at="float", k=True)
-        # pm.select(d=True)
-
         pm.parent(jIK_orig_Up, masterRoot)
         pm.parent(jIK_SC_Up, masterRoot)
         pm.parent(jIK_RP_Up, masterRoot)
 
         pm.select(cont_Shoulder)
-
-        # pm.makeIdentity(a=True, t=True, r=True, s=False)
 
         paconLocatorShou = pm.spaceLocator(name="paConLoc_" + suffix)
         extra.alignTo(paconLocatorShou, self.jDef_Collar)
@@ -505,54 +437,9 @@ class arm():
         pm.joint(jFK_Low, e=True, zso=True, oj="xyz", sao="yup")
         pm.joint(jFK_LowEnd, e=True, zso=True, oj="xyz", sao="yup")
 
-        ### Create Controller Curves
-        # scalecontFkUpArm = (initUpperArmDist / 8, initUpperArmDist / 2, initUpperArmDist / 8)
-        # cont_FK_UpArm = icon.cube("cont_FK_UpArm_" + suffix, scalecontFkUpArm)
-        #
-        # cont_FK_UpArm_OFF = extra.createUpGrp(cont_FK_UpArm, "OFF")
-        # cont_FK_UpArm_ORE = extra.createUpGrp(cont_FK_UpArm, "ORE")
-        # if side == "R":
-        #     pm.setAttr("%s.rotate%s" % (cont_FK_UpArm_ORE, mirrorAxis), -180)
-        #
-        # temp_PoCon = pm.pointConstraint(jFK_Up, jFK_Low, cont_FK_UpArm_OFF)
-        # pm.delete(temp_PoCon)
-        # temp_AimCon = pm.aimConstraint(jFK_Low, cont_FK_UpArm_OFF, o=(90, 90, 0), u=(0, 1, 0))
-        # pm.delete(temp_AimCon)
-        #
-        # PvTarget = shoulderPos
-        # pm.xform(cont_FK_UpArm, piv=PvTarget, ws=True)
-        # pm.xform(cont_FK_UpArm_ORE, piv=PvTarget, ws=True)
-        # pm.xform(cont_FK_UpArm_OFF, piv=PvTarget, ws=True)
-        #
-        # pm.makeIdentity(a=True, t=True, r=False, s=True)
-        # pm.parent(cont_FK_UpArm, cont_FK_UpArm_ORE)
-
         cont_FK_UpArm.scaleY >> jFK_Up.scaleX
 
-        # scalecontFkLowArm = (initLowerArmDist / 8, initLowerArmDist / 2, initLowerArmDist / 8)
-        #
-        # cont_FK_LowArm = icon.cube("cont_FK_LowArm_" + suffix, scalecontFkLowArm)
-        #
-        # cont_FK_LowArm_OFF = extra.createUpGrp(cont_FK_LowArm, "OFF")
-        # cont_FK_LowArm_ORE = extra.createUpGrp(cont_FK_LowArm, "ORE")
-        # if side == "R":
-        #     pm.setAttr("%s.rotate%s" %(cont_FK_LowArm_ORE,mirrorAxis), -180)
-        #
-        # temp_PoCon = pm.pointConstraint(jFK_Low, jFK_LowEnd, cont_FK_LowArm_OFF)
-        # pm.delete(temp_PoCon)
-        # temp_AimCon = pm.aimConstraint(jFK_LowEnd, cont_FK_LowArm_OFF, o=(90, 90, 0), u=(0, 1, 0))
-        # pm.delete(temp_AimCon)
-        #
-        # pm.makeIdentity(a=True, t=True, r=False, s=True)
-        #
-        # PvTarget = elbowPos
-        # pm.xform(cont_FK_LowArm, piv=PvTarget, ws=True)
-        # pm.xform(cont_FK_LowArm_ORE, piv=PvTarget, ws=True)
-        # pm.xform(cont_FK_LowArm_OFF, piv=PvTarget, ws=True)
-
         cont_FK_LowArm.scaleY >> jFK_Low.scaleX
-
-        ################## // END of mod
 
         ### Create Midlock - FK
 
@@ -564,35 +451,10 @@ class arm():
         pm.parentConstraint(cont_Shoulder, cont_FK_UpArm_OFF, sr=("x", "y", "z"), mo=True)
         pm.parentConstraint(cont_FK_UpArm, cont_FK_LowArm_OFF, mo=True)
 
-        ### Create FK IK Icon
-
-        # iconScale = initUpperArmDist / 4
-        # sideScale = iconScale
-        # if side == "R":
-        #     sideScale = -iconScale
-
-        # cont_FK_IK, fk_ik_rvs = icon.fkikSwitch(("cont_FK_IK_" + suffix), (sideScale, iconScale, iconScale))
-
-        ## FK-IK ICON Attributes
-
-        # pm.addAttr(cont_FK_IK, shortName="autoTwist", longName="Auto_Twist", defaultValue=1.0, minValue=0.0, maxValue=1.0,
-        #            at="float", k=True)
-        # pm.addAttr(cont_FK_IK, shortName="manualTwist", longName="Manual_Twist", defaultValue=0.0, at="float", k=True)
-        # pm.addAttr(cont_FK_IK, shortName="tweakControls", longName="Tweak_Controls", defaultValue=0, at="bool")
-        # pm.setAttr(cont_FK_IK.tweakControls, cb=True)
-        # pm.addAttr(cont_FK_IK, shortName="fingerControls", longName="Finger_Controls", defaultValue=1, at="bool")
-        # pm.setAttr(cont_FK_IK.fingerControls, cb=True)
-
         fk_ik_rvs.outputX >> cont_FK_UpArm_ORE.visibility
         fk_ik_rvs.outputX >> cont_FK_LowArm_ORE.visibility
 
         cont_FK_IK.fk_ik >> self.cont_IK_hand.visibility
-
-        # extra.alignAndAim(cont_FK_IK, targetList = [handRef], aimTargetList = [elbowRef], upVector=self.upAxis, rotateOff=(0,180,0))
-
-        # pm.move(cont_FK_IK, (dt.Vector(self.upAxis) *(iconScale*2)), r=True)
-
-        # cont_FK_IK_POS = extra.createUpGrp(cont_FK_IK, "POS")
 
         ### Create MidLock controller
 
@@ -644,10 +506,6 @@ class arm():
 
         pm.parentConstraint(endLock, cont_FK_IK_POS, mo=True)
         pm.parent(endLock_Ore, self.scaleGrp)
-
-        # endLockRot = pm.parentConstraint(IK_parentGRP, jFK_Low, endLock_Twist, st=("x", "y", "z"), mo=True)
-        # cont_FK_IK.fk_ik >> (endLockRot + "." + IK_parentGRP + "W0")
-        # fk_ik_rvs.outputX >> (endLockRot + "." + jFK_Low + "W1")
 
         endLockRot = pm.parentConstraint(IK_parentGRP, cont_FK_Hand, endLock_Twist, st=("x", "y", "z"), mo=True)
         cont_FK_IK.fk_ik >> (endLockRot + "." + IK_parentGRP + "W0")
@@ -717,25 +575,9 @@ class arm():
         ################### HAND ######################
         ###############################################
 
-        ### Hand Controllers
-
-        # FKcontScale = (initLowerArmDist / 5, initLowerArmDist / 5, initLowerArmDist / 5)
-        # cont_FK_Hand = icon.cube("cont_FK_Hand_" + suffix, FKcontScale)
-        # # extra.alignTo(cont_FK_Hand, endLock_Ore, 2)
-        # extra.alignAndAim(cont_FK_Hand, targetList = [handRef], aimTargetList = [elbowRef], upObject=collarRef, rotateOff=(-90,-180,0))
-        #
-        #
-        # cont_FK_Hand_OFF = extra.createUpGrp(cont_FK_Hand, "OFF")
-        # cont_FK_Hand_POS = extra.createUpGrp(cont_FK_Hand, "POS")
-        # cont_FK_Hand_ORE = extra.createUpGrp(cont_FK_Hand, "ORE")
-        #
         handLock = pm.spaceLocator(
             name="handLock_" + suffix)  ## Bu iki satir r arm mirror posing icin dondurulse bile dogru bir weighted constraint yapilmasi icin araya bir node olusturuyor.
         extra.alignTo(handLock, cont_FK_Hand_OFF, 2)
-        #
-        # if side == "R":
-        #     pm.setAttr("%s.rotate%s" % (cont_FK_Hand_ORE, mirrorAxis), -180)
-        #
         pm.parentConstraint(cont_FK_Hand, handLock, mo=True)  ## Olusturulan ara node baglanir
 
         ####################
@@ -759,8 +601,6 @@ class arm():
         pm.parent(jDef_Hand, rootMaster)
 
         handRoot = handRef
-        # handFingers = mFingers.multiFingers()
-        # handFingers.rigFingers(handRoot, cont_FK_IK, suffix, mirror)
 
         pm.pointConstraint(endLock, rootMaster, mo=True)
         pm.parentConstraint(cont_FK_LowArm, cont_FK_Hand_POS, mo=True)
@@ -769,7 +609,6 @@ class arm():
         cont_FK_IK.fk_ik >> (handOriCon + "." + self.cont_IK_hand + "W0")
         fk_ik_rvs.outputX >> (handOriCon + "." + handLock + "W1")
         fk_ik_rvs.outputX >> cont_FK_Hand.v
-
 
         handScaCon = pm.createNode("blendColors", name="handScaCon_" + suffix)
         self.cont_IK_hand.scale >> handScaCon.color1
@@ -791,8 +630,6 @@ class arm():
         pm.parent(cont_FK_LowArm_OFF, self.scaleGrp)
 
         pm.parent(IK_parentGRP, self.scaleGrp)
-        # pm.parent(paConLocatorHand, self.scaleGrp)
-        # pm.parent(IK_parentGRP, paConLocatorHand)
         pm.parent(cont_FK_Hand_OFF, self.scaleGrp)
         pm.parent(midLock, self.scaleGrp)
         pm.parent(cont_midLock_POS, self.scaleGrp)
@@ -822,11 +659,6 @@ class arm():
         for i in tweakControls:
             cont_FK_IK.tweakControls >> i.v
 
-        # Hand controls
-        # for finger in handFingers.allControllers:
-        #     for i in finger:
-        #         cont_FK_IK.fingerControls >> i.v
-
         pm.addAttr(self.scaleGrp, at="bool", ln="Control_Visibility", sn="contVis", defaultValue=True)
         pm.addAttr(self.scaleGrp, at="bool", ln="Joints_Visibility", sn="jointVis", defaultValue=True)
         pm.addAttr(self.scaleGrp, at="bool", ln="Rig_Visibility", sn="rigVis", defaultValue=False)
@@ -845,19 +677,11 @@ class arm():
 
         for i in self.nodesContVis:
             self.scaleGrp.contVis >> i.v
-        # for finger in handFingers.allControllers:
-        #     for i in finger:
-                # reserve the controllers visibility for finger controls visibility on FK_IK switch
-                # ek = i.getParent()
-                # self.scaleGrp.contVis >> ek.v
 
         # global Joint visibilities
         for lst in nodesJointVisLists:
             for j in lst:
                 self.scaleGrp.jointVis >> j.v
-        # for lst in handFingers.defJoints:
-        #     for j in lst:
-        #         self.scaleGrp.jointVis >> j.v
 
         # global Rig visibilities
 
@@ -880,9 +704,6 @@ class arm():
         extra.lockAndHide(cont_FK_LowArm, ["tx", "ty", "tz", "sx", "sz", "v"])
         extra.lockAndHide(cont_FK_UpArm, ["tx", "ty", "tz", "sx", "sz", "v"])
         extra.lockAndHide(cont_Shoulder, ["sx", "sy", "sz", "v"])
-        # for finger in handFingers.allControllers:
-        #     for eklem in finger:
-        #         extra.lockAndHide(eklem, ["sx", "sy", "sz"])
 
         # COLOR CODING
 
@@ -900,13 +721,9 @@ class arm():
         extra.colorize(cont_FK_UpArm, index)
         extra.colorize(cont_FK_LowArm, index)
         extra.colorize(cont_FK_Hand, index)
-        # for i in handFingers.allControllers:
-        #     extra.colorize(i, indexMin)
-
         extra.colorize(cont_midLock, indexMin)
         extra.colorize(ribbonUpperArm.middleCont, indexMin)
         extra.colorize(ribbonLowerArm.middleCont, indexMin)
-
 
         self.scaleConstraints = [self.scaleGrp, cont_IK_hand_OFF]
         self.anchors = [(self.cont_IK_hand, "parent", 1, None),(self.cont_Pole, "parent", 1, None)]

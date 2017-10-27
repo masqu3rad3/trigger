@@ -86,6 +86,9 @@ class leg():
         bankInPos = bankInRef.getTranslation(space="world")
         bankOutPos = bankOutRef.getTranslation(space="world")
 
+        initUpperLegDist = extra.getDistance(hipRef, kneeRef)
+        initLowerLegDist = extra.getDistance(kneeRef, footRef)
+
         ########
         ########
         footPlane = pm.spaceLocator(name="testLocator")
@@ -94,6 +97,31 @@ class leg():
         pm.aimConstraint(toePvRef, footPlane, wuo=footRef, wut="object")
         ########
         ########
+
+        #     _____            _             _ _
+        #    / ____|          | |           | | |
+        #   | |     ___  _ __ | |_ _ __ ___ | | | ___ _ __ ___
+        #   | |    / _ \| '_ \| __| '__/ _ \| | |/ _ \ '__/ __|
+        #   | |___| (_) | | | | |_| | | (_) | | |  __/ |  \__ \
+        #    \_____\___/|_| |_|\__|_|  \___/|_|_|\___|_|  |___/
+        #
+        #
+
+        # Thigh Controller
+
+        thighContScale = (initUpperLegDist / 4, initUpperLegDist / 16, initUpperLegDist / 4)
+        t_cont_Thigh = icon.cube("t_cont_Thigh_" + suffix, thighContScale )
+        extra.alignAndAim(t_cont_Thigh, targetList=[hipRef], aimTargetList=[kneeRef], upObject=legRootRef)
+        pm.move(t_cont_Thigh, (0, -thighContScale[0] * 2, 0), r=True, os=True)
+        t_cont_Thigh_OFF = extra.createUpGrp(t_cont_Thigh, "OFF")
+        t_cont_Thigh_ORE = extra.createUpGrp(t_cont_Thigh, "ORE")
+
+        if side == "R":
+            pm.setAttr(t_cont_Thigh_ORE.rotateZ, -180)
+
+        pm.addAttr(shortName="autoTwist", longName="Auto_Twist", defaultValue=1.0, minValue=0.0, maxValue=1.0, at="float",
+                   k=True)
+        pm.addAttr(shortName="manualTwist", longName="Manual_Twist", defaultValue=0.0, at="float", k=True)
 
 
         ##Groups
@@ -126,8 +154,7 @@ class leg():
         masterIK = pm.spaceLocator(name="masterIK_" + suffix)
         extra.alignTo(masterIK, footRef)
 
-        initUpperLegDist = extra.getDistance(hipRef, kneeRef)
-        initLowerLegDist = extra.getDistance(kneeRef, footRef)
+
 
         pm.select(d=True)
         jIK_orig_Root = pm.joint(name="jIK_orig_Root_" + suffix, p=hipPos, radius=1.5)
@@ -487,11 +514,6 @@ class leg():
                    k=True)
         pm.addAttr(shortName="manualTwist", longName="Manual_Twist", defaultValue=0.0, at="float", k=True)
 
-        # extra.alignTo(cont_Thigh_OFF, hipRef, 0)
-
-        # temp_AimCon = pm.aimConstraint(kneeRef, cont_Thigh, wuo=legRootRef, wut="object", o=(0, 0, 0), mo=False)
-        # pm.delete(temp_AimCon)
-        # pm.move(cont_Thigh, (0, thighContScale * 2, 0), r=True, os=True)
 
         pm.makeIdentity(cont_Thigh, a=True)
         pm.xform(cont_Thigh, piv=legRootPos, ws=True)
