@@ -255,7 +255,7 @@ class LimbBuilder():
             cont_fGroup = icon.square(name="cont_Fgrp_{0}".format(iconName), scale=(iconSize/6, iconSize/4, iconSize/2))
             pm.rotate(cont_fGroup, (90,0,0))
             pm.makeIdentity(cont_fGroup, a=True)
-            extra.alignAndAim(cont_fGroup, f[0].getParent(), f[0], secondTarget=f[-1], upObject=f[0], rotateOff=rotateOff, translateOff=(-offsetVector * (iconSize/2)))
+            extra.alignAndAim(cont_fGroup, targetList=[f[0].getParent()], aimTargetList= [f[0], f[-1]], upObject=f[0], rotateOff=rotateOff, translateOff=(-offsetVector * (iconSize/2)))
             pm.move(cont_fGroup, (0,0,(-iconSize / 2)),r=True,os=True)
 
 

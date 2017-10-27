@@ -34,9 +34,13 @@ class spine(object):
         if not isinstance(inits, list):
             ## parse the dictionary inits into a list
             sRoot=inits.get("Root")
-            spines=reversed(inits.get("Spine"))
-            spineEnd = inits.get("SpineEnd")
-            inits = [sRoot] + sorted(spines) + [spineEnd]
+            try:
+                spines=reversed(inits.get("Spine"))
+                spineEnd = inits.get("SpineEnd")
+                inits = [sRoot] + sorted(spines) + [spineEnd]
+            except:
+                spineEnd = inits.get("SpineEnd")
+                inits = [sRoot] + [spineEnd]
 
 
         idCounter = 0
@@ -86,23 +90,23 @@ class spine(object):
         contHipsScale = (iconSize / 1.5, iconSize / 1.5, iconSize / 1.5)
         # self.cont_hips = icon.waist("cont_Hips", contHipsScale, location=rootPoint)
         self.cont_hips = icon.waist("cont_Hips", contHipsScale)
-        extra.alignAndAim(self.cont_hips, inits[0], inits[1], upVector=self.upAxis, rotateOff=(0,0,90))
+        extra.alignAndAim(self.cont_hips, targetList=[inits[0]], aimTargetList=[inits[1]], upVector=self.upAxis, rotateOff=(0,0,-90))
         # extra.alignTo(self.cont_hips, inits[0],2)
         self.cont_hips_ORE = extra.createUpGrp(self.cont_hips, "ORE")
 
         contBodyScale = (iconSize * 0.75, iconSize * 0.75, iconSize * 0.75)
         # self.cont_body = icon.square("cont_Body", contBodyScale)
         self.cont_body = icon.square("cont_Body", contBodyScale)
-        extra.alignAndAim(self.cont_body, inits[0], inits[1], upVector=self.upAxis, rotateOff=(0,0,90))
+        extra.alignAndAim(self.cont_body, targetList=[inits[0]], aimTargetList=[inits[1]], upVector=self.upAxis, rotateOff=(0,0,-90))
         # extra.alignTo(self.cont_body, inits[0],2)
         cont_Body_POS = extra.createUpGrp(self.cont_body, "POS")
         self.cont_IK_OFF = cont_Body_POS
         pm.parentConstraint(self.limbPlug, cont_Body_POS, mo=True)
 
         self.cont_chest = icon.cube("cont_Chest", (iconSize*0.5, iconSize*0.35, iconSize*0.2))
-        # extra.alignAndAim(self.cont_chest, inits[-1], inits[-2], upVector=self.upAxis, rotateOff=(0, 90, 90))
-        extra.alignTo(self.cont_chest, inits[-1])
-        extra.alignTo(self.cont_chest, inits[len(inits)-2],1)
+        extra.alignAndAim(self.cont_chest, targetList=[inits[-1]], aimTargetList=[inits[-2]], upVector=self.upAxis,  rotateOff=(0,0,-90))
+        # extra.alignTo(self.cont_chest, inits[-1])
+        # extra.alignTo(self.cont_chest, inits[len(inits)-2],1)
 
 
         # move the pivot to its base
@@ -144,9 +148,13 @@ class spine(object):
             pos = spine.contCurves_ORE[m].getTranslation(space="world")
 
             if m > 0 and m < (spine.contCurves_ORE):
-                midSpineLocA = pm.spaceLocator(name="midSpineLocA_%s_%s" %(str(m), suffix), p=pos)
+                # midSpineLocA = pm.spaceLocator(name="midSpineLocA_%s_%s" %(str(m), suffix), p=pos)
+                midSpineLocA = pm.spaceLocator(name="midSpineLocA_%s_%s" % (str(m), suffix))
+                extra.alignTo(midSpineLocA, spine.contCurves_ORE[m], 2)
                 midSpineLocA_List.append(midSpineLocA)
-                midSpineLocB = pm.spaceLocator(name="midSpineLocB_%s_%s" % (str(m), suffix), p=pos)
+                # midSpineLocB = pm.spaceLocator(name="midSpineLocB_%s_%s" % (str(m), suffix), p=pos)
+                midSpineLocB = pm.spaceLocator(name="midSpineLocB_%s_%s" % (str(m), suffix))
+                extra.alignTo(midSpineLocB, spine.contCurves_ORE[m], 2)
                 midSpineLocB_List.append(midSpineLocB)
                 pm.parentConstraint(midSpineLocA, midSpineLocB, spine.contCurves_ORE[m], mo=True)
 

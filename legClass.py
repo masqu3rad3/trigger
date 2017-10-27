@@ -288,7 +288,7 @@ class leg():
         self.cont_Pole = icon.plus("cont_Pole_" + suffix, polecontScale)
         pm.rotate(self.cont_Pole, (0, 0, 90))
         pm.makeIdentity(self.cont_Pole, a=True)
-        extra.alignAndAim(self.cont_Pole, kneeRef, hipRef, secondTarget=footRef, upObject=hipRef, translateOff=(offsetVector*offsetMag))
+        extra.alignAndAim(self.cont_Pole, targetList=[kneeRef], aimTargetList=[hipRef, footRef], upObject=hipRef, translateOff=(offsetVector*offsetMag))
 
         # pm.rotate(self.cont_Pole, (90, 0, 0))
         # pm.makeIdentity(a=True)
@@ -474,7 +474,7 @@ class leg():
         pm.setAttr(cont_Thigh.scale, (thighContScale, thighContScale / 4, thighContScale))
         pm.makeIdentity(cont_Thigh, a=True)
 
-        extra.alignAndAim(cont_Thigh, hipRef, kneeRef, upObject=legRootRef)
+        extra.alignAndAim(cont_Thigh, targetList=[hipRef], aimTargetList=[kneeRef], upObject=legRootRef)
         pm.move(cont_Thigh, (0, -thighContScale * 2, 0), r=True, os=True)
 
         cont_Thigh_OFF = extra.createUpGrp(cont_Thigh, "OFF")
@@ -662,7 +662,7 @@ class leg():
         fk_ik_rvs.outputX >> cont_FK_Ball_ORE.visibility
         cont_FK_IK.fk_ik >> self.cont_IK_foot.visibility
 
-        extra.alignAndAim(cont_FK_IK, footRef, kneeRef, upVector=self.upAxis, rotateOff=(90,90,0))
+        extra.alignAndAim(cont_FK_IK, targetList=[footRef], aimTargetList=[kneeRef], upVector=self.upAxis, rotateOff=(90,90,0))
 
 
         # extra.alignTo(cont_FK_IK, footRef)

@@ -136,7 +136,7 @@ def fkikSwitch(name="cont_fkik", scale=(1,1,1), location=None):
     # return [cont_FK_IK, fk_ik_rvs]
     return cont_FK_IK, fk_ik_rvs
 
-def shoulder(name="cont_shoulder", scale=(1,1,1), location=None):
+def shoulder(name="cont_shoulder", scale=(1,1,1), location=None, normal=(0,1,0)):
     """
     Creates a bended Eliptical controller for shoulders.
     Args:
@@ -155,14 +155,19 @@ def shoulder(name="cont_shoulder", scale=(1,1,1), location=None):
     pm.rotate(cont_shoulder, (0,90,0))
     if location:
         pm.move(cont_shoulder, location)
+    if not normal == (0, 1, 0):
+        pm.rotate(-normal[0]*90, normal[1]*180, normal[1]*90 )
+        pm.makeIdentity(cont_shoulder, a=True, t=False, r=True, s=False)
+
     pm.makeIdentity(cont_shoulder, a=True)
+
 
     pm.closeCurve(cont_shoulder, ch=0, ps=0, rpo=1, bb=0.5, bki=0, p=0.1)
     pm.delete(cont_shoulder, ch=True)
 
     return cont_shoulder
 
-def plus(name="cont_plus", scale=(1,1,1), location=None):
+def plus(name="cont_plus", scale=(1,1,1), location=None, normal=(1,0,0)):
     """
     Creates a plus controller. Usually for pole vector
     Args:
@@ -180,7 +185,13 @@ def plus(name="cont_plus", scale=(1,1,1), location=None):
     if location:
         pm.move(cont_Pole, location)
     pm.makeIdentity(cont_Pole, a=True)
+    if not normal == (1, 0, 0):
+        pm.rotate(cont_Pole, normal[0]*90, normal[1]*90, normal[2]*90)
+        # pm.rotate(cont_Pole, (0,0,90))
+        pm.makeIdentity(cont_Pole, a=True)
     return cont_Pole
+
+
     
 def waist(name="cont_waist", scale=(1,1,1), location=None):
     """
