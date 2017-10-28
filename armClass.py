@@ -163,22 +163,29 @@ class arm():
         FKupArmScale = (initUpperArmDist / 2, initUpperArmDist / 8, initUpperArmDist / 8)
 
         cont_FK_UpArm = icon.cube("cont_FK_UpArm_" + suffix, FKupArmScale)
-        pm.xform(cont_FK_UpArm, piv=(-(initUpperArmDist/2), 0,0), ws=True)
-        extra.alignAndAim(cont_FK_UpArm, targetList= [shoulderRef], aimTargetList=[elbowRef], upVector=self.upAxis)
+        extra.alignAndAim(cont_FK_UpArm, targetList= [shoulderRef, elbowRef], aimTargetList=[elbowRef], upVector=self.upAxis)
         cont_FK_UpArm_OFF = extra.createUpGrp(cont_FK_UpArm, "OFF")
         cont_FK_UpArm_ORE = extra.createUpGrp(cont_FK_UpArm, "ORE")
         if side == "R":
             pm.setAttr("%s.r%s" % (cont_FK_UpArm_ORE, "z"), -180)
 
+        pm.xform(cont_FK_UpArm, piv=shoulderPos, ws=True)
+        pm.xform(cont_FK_UpArm_ORE, piv=shoulderPos, ws=True)
+        pm.xform(cont_FK_UpArm_OFF, piv=shoulderPos, ws=True)
+
         ## FK LOW Arm Controller
         FKlowArmScale = (initLowerArmDist / 2, initLowerArmDist / 8, initLowerArmDist / 8)
         cont_FK_LowArm = icon.cube("cont_FK_LowArm_" + suffix, FKlowArmScale)
-        pm.xform(cont_FK_LowArm, piv=(-(initLowerArmDist / 2), 0, 0), ws=True)
-        extra.alignAndAim(cont_FK_LowArm, targetList= [elbowRef], aimTargetList=[handRef], upVector=self.upAxis)
+        # pm.xform(cont_FK_LowArm, piv=(-(initLowerArmDist / 2), 0, 0), ws=True)
+        extra.alignAndAim(cont_FK_LowArm, targetList= [elbowRef, handRef], aimTargetList=[handRef], upVector=self.upAxis)
         cont_FK_LowArm_OFF = extra.createUpGrp(cont_FK_LowArm, "OFF")
         cont_FK_LowArm_ORE = extra.createUpGrp(cont_FK_LowArm, "ORE")
         if side == "R":
             pm.setAttr("%s.r%s" % (cont_FK_LowArm_ORE, "z"), -180)
+
+        pm.xform(cont_FK_LowArm, piv=elbowPos, ws=True)
+        pm.xform(cont_FK_LowArm_ORE, piv=elbowPos, ws=True)
+        pm.xform(cont_FK_LowArm_OFF, piv=elbowPos, ws=True)
 
         ## FK HAND Controller
         FKcontScale = (initLowerArmDist / 5, initLowerArmDist / 5, initLowerArmDist / 5)
@@ -191,7 +198,7 @@ class arm():
         if side == "R":
             pm.setAttr("%s.r%s" % (cont_FK_Hand_ORE, "z"), -180)
 
-        ## FK-IK SWITCH Controller
+        # FK-IK SWITCH Controller
         iconScale = initUpperArmDist / 4
         cont_FK_IK, fk_ik_rvs = icon.fkikSwitch(("cont_FK_IK_" + suffix), (iconScale, iconScale, iconScale))
         extra.alignAndAim(cont_FK_IK, targetList = [handRef], aimTargetList = [elbowRef], upVector=self.upAxis, rotateOff=(0,180,0))
