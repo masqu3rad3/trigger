@@ -229,8 +229,6 @@ class initialJoints():
         # hand and foot limbs are actually just a collection of fingers.
         # # That is why they need a temporary group to be moved together
         if limb == "hand" or limb == "foot":
-            # print "RootJoint", limbJoints[0]
-            # print "parentJoint", masterParent
             if masterParent:
                 if not constrainedTo:
                     tempGroup = pm.group(em=True)
@@ -755,12 +753,21 @@ class initialJoints():
                     type =1
                     pm.setAttr(jointList[j] + ".type", type)
 
-                    if pm.attributeQuery("resolution", node=jointList[j], exists=True):
+                    if not pm.attributeQuery("resolution", node=jointList[j], exists=True):
                         pm.addAttr(shortName="resolution", longName="Resolution", defaultValue=4, minValue=1,
                                at="long", k=True)
-                    if pm.attributeQuery("dropoff", node=jointList[j], exists=True):
+                    if not pm.attributeQuery("dropoff", node=jointList[j], exists=True):
                         pm.addAttr(shortName="dropoff", longName="DropOff", defaultValue=1.0, minValue=0.1,
                                at="float", k=True)
+                    if not pm.attributeQuery("upAxis", node=jointList[j], exists=True):
+                        pm.addAttr(jointList[j], longName="upAxis", dt="string")
+                    else:
+                        pm.setAttr(jointList[j].upAxis, self.upAxis)
+                    if not pm.attributeQuery("mirrorAxis", node=jointList[j], exists=True):
+                        pm.addAttr(jointList[j], longName="mirrorAxis", dt="string")
+                    else:
+                        pm.setAttr(jointList[j].mirrorAxis, self.mirrorAxis)
+                    pm.setAttr(jointList[j].radius, 3)
                     # pm.setAttr(jointList[j].radius, 3)
 
                 elif jointList[j] == jointList[-1]:

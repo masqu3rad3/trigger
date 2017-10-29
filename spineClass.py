@@ -74,6 +74,36 @@ class spine(object):
             pm.warning("upAxis attribute of the root node does not exist. Using default value (y up)")
             self.upAxis = (0.0, 1.0, 0.0)
 
+        #     _____            _             _ _
+        #    / ____|          | |           | | |
+        #   | |     ___  _ __ | |_ _ __ ___ | | | ___ _ __ ___
+        #   | |    / _ \| '_ \| __| '__/ _ \| | |/ _ \ '__/ __|
+        #   | |___| (_) | | | | |_| | | (_) | | |  __/ |  \__ \
+        #    \_____\___/|_| |_|\__|_|  \___/|_|_|\___|_|  |___/
+        #
+        #
+
+        ## Hips Controller
+        contHipsScale = (iconSize / 1.5, iconSize / 1.5, iconSize / 1.5)
+        self.cont_hips = icon.waist("cont_Hips", contHipsScale)
+        extra.alignAndAim(self.cont_hips, targetList=[inits[0]], aimTargetList=[inits[1]], upVector=self.upAxis, rotateOff=(0,0,-90))
+        self.cont_hips_ORE = extra.createUpGrp(self.cont_hips, "ORE")
+
+        ## Body Controller
+        contBodyScale = (iconSize * 0.75, iconSize * 0.75, iconSize * 0.75)
+        self.cont_body = icon.square("cont_Body", contBodyScale)
+        extra.alignAndAim(self.cont_body, targetList=[inits[0]], aimTargetList=[inits[1]], upVector=self.upAxis, rotateOff=(0,0,-90))
+        cont_Body_POS = extra.createUpGrp(self.cont_body, "POS")
+
+        ## Chest Controller
+        # self.cont_chest = icon.cube("cont_Chest", (iconSize*0.5, iconSize*0.35, iconSize*0.2))
+        # extra.alignAndAim(self.cont_chest, targetList=[inits[-1]], aimTargetList=[inits[-2]], upVector=self.upAxis,  rotateOff=(0,0,90))
+
+
+
+
+
+
         # # Create Plug Joints
         pm.select(None)
         self.limbPlug = pm.joint(name="limbPlug_" + suffix, p=rootPoint, radius=3)
@@ -87,31 +117,27 @@ class spine(object):
 
         # self.socketDict[inits[0]]=self.startSocket
         self.sockets.append(self.startSocket)
-        contHipsScale = (iconSize / 1.5, iconSize / 1.5, iconSize / 1.5)
-        # self.cont_hips = icon.waist("cont_Hips", contHipsScale, location=rootPoint)
-        self.cont_hips = icon.waist("cont_Hips", contHipsScale)
-        extra.alignAndAim(self.cont_hips, targetList=[inits[0]], aimTargetList=[inits[1]], upVector=self.upAxis, rotateOff=(0,0,-90))
-        # extra.alignTo(self.cont_hips, inits[0],2)
-        self.cont_hips_ORE = extra.createUpGrp(self.cont_hips, "ORE")
+        # contHipsScale = (iconSize / 1.5, iconSize / 1.5, iconSize / 1.5)
+        # self.cont_hips = icon.waist("cont_Hips", contHipsScale)
+        # extra.alignAndAim(self.cont_hips, targetList=[inits[0]], aimTargetList=[inits[1]], upVector=self.upAxis, rotateOff=(0,0,-90))
+        # self.cont_hips_ORE = extra.createUpGrp(self.cont_hips, "ORE")
 
-        contBodyScale = (iconSize * 0.75, iconSize * 0.75, iconSize * 0.75)
+        # contBodyScale = (iconSize * 0.75, iconSize * 0.75, iconSize * 0.75)
         # self.cont_body = icon.square("cont_Body", contBodyScale)
-        self.cont_body = icon.square("cont_Body", contBodyScale)
-        extra.alignAndAim(self.cont_body, targetList=[inits[0]], aimTargetList=[inits[1]], upVector=self.upAxis, rotateOff=(0,0,-90))
-        # extra.alignTo(self.cont_body, inits[0],2)
-        cont_Body_POS = extra.createUpGrp(self.cont_body, "POS")
+        # extra.alignAndAim(self.cont_body, targetList=[inits[0]], aimTargetList=[inits[1]], upVector=self.upAxis, rotateOff=(0,0,-90))
+        # cont_Body_POS = extra.createUpGrp(self.cont_body, "POS")
         self.cont_IK_OFF = cont_Body_POS
         pm.parentConstraint(self.limbPlug, cont_Body_POS, mo=True)
 
         self.cont_chest = icon.cube("cont_Chest", (iconSize*0.5, iconSize*0.35, iconSize*0.2))
-        extra.alignAndAim(self.cont_chest, targetList=[inits[-1]], aimTargetList=[inits[-2]], upVector=self.upAxis,  rotateOff=(0,0,-90))
-        # extra.alignTo(self.cont_chest, inits[-1])
-        # extra.alignTo(self.cont_chest, inits[len(inits)-2],1)
+        extra.alignAndAim(self.cont_chest, targetList=[inits[-1]], aimTargetList=[inits[-2]], upVector=self.upAxis,  rotateOff=(180,0,-90))
+        ## extra.alignTo(self.cont_chest, inits[-1])
+        ## extra.alignTo(self.cont_chest, inits[len(inits)-2],1)
 
 
         # move the pivot to its base
-        pm.xform(self.cont_chest, piv=(0,-iconSize/2,0))
-        pm.move(self.cont_chest, chestPoint, rpr=True)
+        # pm.xform(self.cont_chest, piv=(0,-iconSize/2,0))
+        # pm.move(self.cont_chest, chestPoint, rpr=True)
 
         spine = twistSpline.twistSpline()
         spine.createTspline(inits, "spine" + suffix, resolution, dropoff=dropoff)
