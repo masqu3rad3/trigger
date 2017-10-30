@@ -61,28 +61,22 @@ class arm():
         if pm.attributeQuery("upAxis", node=collarRef, exists=True):
             try:
                 self.upAxis=axisDict[pm.getAttr(collarRef.upAxis).lower()]
-                # upAxisStr = pm.getAttr(collarRef.upAxis).replace("-","").lower()
             except:
                 pm.warning("upAxis attribute is not valid, proceeding with default value (y up)")
                 self.upAxis = (0.0, 1.0, 0.0)
-                # upAxisStr = "y"
         else:
             pm.warning("upAxis attribute of the root node does not exist. Using default value (y up)")
             self.upAxis = (0.0, 1.0, 0.0)
-            # upAxisStr = "y"
         ## get the mirror axis
         if pm.attributeQuery("mirrorAxis", node=collarRef, exists=True):
             try:
                 self.mirrorAxis=axisDict[pm.getAttr(collarRef.mirrorAxis).lower()]
-                # mirrorAxisStr=pm.getAttr(collarRef.mirrorAxis).replace("-","").lower()
             except:
                 pm.warning("mirrorAxis attribute is not valid, proceeding with default value (scene x)")
                 self.mirrorAxis= (1.0, 0.0, 0.0)
-                # mirrorAxisStr="x"
         else:
             pm.warning("mirrorAxis attribute of the root node does not exist. Using default value (scene x)")
             self.mirrorAxis = (1.0, 0.0, 0.0)
-            # mirrorAxisStr = "x"
 
         # mirrorRotateAxis = "xyz".replace(upAxisStr, "")
         # mirrorRotateAxis =  mirrorRotateAxis.replace(mirrorAxisStr, "")

@@ -28,6 +28,7 @@ class spine(object):
         self.endSocket = None
         self.startSocket = None
         self.upAxis = None
+        self.spineDir = None
 
 
     def createSpine(self, inits, suffix="", resolution=4, dropoff=2.0):
@@ -57,22 +58,38 @@ class spine(object):
         chestPoint = inits[-1].getTranslation(space="world")
 
         ## get the up axis
+        axisDict={"x":(1.0,0.0,0.0),"y":(0.0,1.0,0.0),"z":(0.0,0.0,1.0),"-x":(-1.0,0.0,0.0),"-y":(0.0,-1.0,0.0),"-z":(0.0,0.0,-1.0)}
+        spineDir = {"x": (-1.0, 0.0, 0.0), "y": (0.0, -1.0, 0.0), "z": (0.0, 0.0, 1.0), "-x": (1.0, 0.0, 0.0), "-y": (0.0, 1.0, 0.0), "-z": (0.0, 0.0, 1.0)}
         if pm.attributeQuery("upAxis", node=inits[0], exists=True):
-            if pm.getAttr(inits[0].upAxis) == "x":
-                self.upAxis = (1.0,0.0,0.0)
-            elif pm.getAttr(inits[0].upAxis) == "y":
+            try:
+                self.upAxis=axisDict[pm.getAttr(inits[0].upAxis).lower()]
+            except:
+                pm.warning("upAxis attribute is not valid, proceeding with default value (y up)")
                 self.upAxis = (0.0, 1.0, 0.0)
-            elif pm.getAttr(inits[0].upAxis) == "z":
-                self.upAxis = (0.0, 0.0, 1.0)
-            elif pm.getAttr(inits[0].upAxis) == "-x":
-                self.upAxis = (-1.0, 0.0, 0.0)
-            elif pm.getAttr(inits[0].upAxis) == "-y":
-                self.upAxis = (0.0, -1.0, 0.0)
-            elif pm.getAttr(inits[0].upAxis) == "-z":
-                self.upAxis = (0.0, 0.0, -1.0)
         else:
             pm.warning("upAxis attribute of the root node does not exist. Using default value (y up)")
             self.upAxis = (0.0, 1.0, 0.0)
+        ## get the mirror axis
+        if pm.attributeQuery("mirrorAxis", node=inits[0], exists=True):
+            try:
+                self.mirrorAxis=axisDict[pm.getAttr(inits[0].mirrorAxis).lower()]
+            except:
+                pm.warning("mirrorAxis attribute is not valid, proceeding with default value (scene x)")
+                self.mirrorAxis= (1.0, 0.0, 0.0)
+        else:
+            pm.warning("mirrorAxis attribute of the root node does not exist. Using default value (scene x)")
+            self.mirrorAxis = (1.0, 0.0, 0.0)
+
+        ## get spine Direction
+        if pm.attributeQuery("lookAxis", node=inits[0], exists=True):
+            try:
+                self.spineDir = spineDir[pm.getAttr(inits[0].lookAxis).lower()]
+            except:
+                pm.warning("Cannot get spine direction from lookAxis attribute, proceeding with default value (-x)")
+                self.spineDir = (-1.0, 0.0, 0.0)
+        else:
+            pm.warning("lookAxis attribute of the root node does not exist. Using default value (-x) for spine direction")
+            self.spineDir = (1.0, 0.0, 0.0)
 
         #     _____            _             _ _
         #    / ____|          | |           | | |
@@ -83,26 +100,39 @@ class spine(object):
         #
         #
 
+        print "spineDir", self.spineDir
         ## Hips Controller
         contHipsScale = (iconSize / 1.5, iconSize / 1.5, iconSize / 1.5)
         self.cont_hips = icon.waist("cont_Hips", contHipsScale)
-        extra.alignAndAim(self.cont_hips, targetList=[inits[0]], aimTargetList=[inits[1]], upVector=self.upAxis, rotateOff=(0,0,-90))
+        extra.alignAndAim(self.cont_hips, targetList=[inits[0]], aimTargetList=[inits[1]], upVector=self.spineDir, rotateOff=(-90,-90,0))
         self.cont_hips_ORE = extra.createUpGrp(self.cont_hips, "ORE")
 
         ## Body Controller
         contBodyScale = (iconSize * 0.75, iconSize * 0.75, iconSize * 0.75)
         self.cont_body = icon.square("cont_Body", contBodyScale)
-        extra.alignAndAim(self.cont_body, targetList=[inits[0]], aimTargetList=[inits[1]], upVector=self.upAxis, rotateOff=(0,0,-90))
+        extra.alignAndAim(self.cont_body, targetList=[inits[0]], aimTargetList=[inits[1]], upVector=self.spineDir, rotateOff=(-90, -90,0))
         cont_Body_POS = extra.createUpGrp(self.cont_body, "POS")
 
         ## Chest Controller
         # self.cont_chest = icon.cube("cont_Chest", (iconSize*0.5, iconSize*0.35, iconSize*0.2))
         # extra.alignAndAim(self.cont_chest, targetList=[inits[-1]], aimTargetList=[inits[-2]], upVector=self.upAxis,  rotateOff=(0,0,90))
+        self.cont_chest = icon.cube("cont_Chest", (iconSize*0.5, iconSize*0.35, iconSize*0.2))
+        extra.alignAndAim(self.cont_chest, targetList=[inits[-1]], aimTargetList=[inits[-2]], upVector=self.spineDir,  rotateOff=(-90, 90,0))
+        cont_Chest_ORE = extra.createUpGrp(self.cont_chest, "ORE")
 
-
-
-
-
+        ## FK-A/B Controllers
+        # contSpineFKAScale = (iconSize / 2, iconSize / 2, iconSize / 2)
+        # contSpineFKBScale = (iconSize / 2.5, iconSize / 2.5, iconSize / 2.5)
+        # for i in range (0, len(inits)):
+        #     contA = icon.circle("t_cont_SpineFK_A" + str(i) + suffix, contSpineFKAScale)
+        #     contB = icon.ngon("t_cont_SpineFK_B" + str(i) + suffix, contSpineFKBScale)
+        #     if i == 0:
+        #         extra.alignAndAim(contA, targetList=[inits[i]], aimTargetList=[inits[i + 1]], upVector=self.spineDir, rotateOff=(0,90,90))
+        #         extra.alignAndAim(contB, targetList=[inits[i]], aimTargetList=[inits[i + 1]], upVector=self.spineDir, rotateOff=(0,90,90))
+        #
+        #     else:
+        #         extra.alignAndAim(contA, targetList=[inits[i]], aimTargetList=[inits[i - 1]], upVector=self.spineDir, rotateOff=(0,90,90))
+        #         extra.alignAndAim(contB, targetList=[inits[i]], aimTargetList=[inits[i - 1]], upVector=self.spineDir, rotateOff=(0,90,90))
 
         # # Create Plug Joints
         pm.select(None)
@@ -110,49 +140,28 @@ class spine(object):
         pm.select(None)
         self.endSocket = pm.joint(name="jDef_ChestSocket", p=chestPoint)
         self.sockets.append(self.endSocket)
-        # self.socketDict[inits[-1]]=self.endSocket
         # parent upper plug joints
         pm.select(None)
         self.startSocket = pm.joint(p=rootPoint, name="jDef_RootSocket", radius=3)
 
-        # self.socketDict[inits[0]]=self.startSocket
         self.sockets.append(self.startSocket)
-        # contHipsScale = (iconSize / 1.5, iconSize / 1.5, iconSize / 1.5)
-        # self.cont_hips = icon.waist("cont_Hips", contHipsScale)
-        # extra.alignAndAim(self.cont_hips, targetList=[inits[0]], aimTargetList=[inits[1]], upVector=self.upAxis, rotateOff=(0,0,-90))
-        # self.cont_hips_ORE = extra.createUpGrp(self.cont_hips, "ORE")
 
-        # contBodyScale = (iconSize * 0.75, iconSize * 0.75, iconSize * 0.75)
-        # self.cont_body = icon.square("cont_Body", contBodyScale)
-        # extra.alignAndAim(self.cont_body, targetList=[inits[0]], aimTargetList=[inits[1]], upVector=self.upAxis, rotateOff=(0,0,-90))
-        # cont_Body_POS = extra.createUpGrp(self.cont_body, "POS")
         self.cont_IK_OFF = cont_Body_POS
         pm.parentConstraint(self.limbPlug, cont_Body_POS, mo=True)
 
-        self.cont_chest = icon.cube("cont_Chest", (iconSize*0.5, iconSize*0.35, iconSize*0.2))
-        extra.alignAndAim(self.cont_chest, targetList=[inits[-1]], aimTargetList=[inits[-2]], upVector=self.upAxis,  rotateOff=(180,0,-90))
-        ## extra.alignTo(self.cont_chest, inits[-1])
-        ## extra.alignTo(self.cont_chest, inits[len(inits)-2],1)
-
 
         # move the pivot to its base
-        # pm.xform(self.cont_chest, piv=(0,-iconSize/2,0))
-        # pm.move(self.cont_chest, chestPoint, rpr=True)
-
         spine = twistSpline.twistSpline()
         spine.createTspline(inits, "spine" + suffix, resolution, dropoff=dropoff)
 
         midConnection = spine.contCurves_ORE[(len(spine.contCurves_ORE)/2)]
 
-
         self.nonScaleGrp = spine.nonScaleGrp
         # # connect the spine root to the master root
         pm.parentConstraint(self.startSocket, spine.contCurve_Start, mo=True)
-        # self.startSocket.rotateY >> spine.twistNode.input1X
 
         # # connect the spine end
         pm.parentConstraint(self.cont_chest, spine.contCurve_End, mo=True)
-        # self.cont_chest.rotateY >> spine.twistNode.input1Y
 
         # # connect the master root to the hips controller
         pm.parentConstraint(self.cont_hips, self.startSocket, mo=True)
@@ -182,6 +191,8 @@ class spine(object):
                 midSpineLocB = pm.spaceLocator(name="midSpineLocB_%s_%s" % (str(m), suffix))
                 extra.alignTo(midSpineLocB, spine.contCurves_ORE[m], 2)
                 midSpineLocB_List.append(midSpineLocB)
+                # con = extra.createUpGrp(spine.contCurves_ORE[m],"CON")
+                # pm.parentConstraint(midSpineLocA, midSpineLocB, con, mo=True)
                 pm.parentConstraint(midSpineLocA, midSpineLocB, spine.contCurves_ORE[m], mo=True)
 
                 pm.parent(midSpineLocA, self.cont_chest)
@@ -203,7 +214,7 @@ class spine(object):
                 pm.parent(cont_spineFK_A_List[m], cont_spineFK_A_List[m - 1])
                 pm.parent(cont_spineFK_B_List[m - 1], cont_spineFK_B_List[m])
 
-        pm.parent(self.cont_chest, cont_spineFK_A_List[-1])
+        pm.parent(cont_Chest_ORE, cont_spineFK_A_List[-1])
         pm.parent(cont_spineFK_A_List[0], self.cont_body)
         pm.parent(spine.contCurves_ORE, spine.scaleGrp)  # contcurve Ore s -> scaleGrp
         pm.parent(self.endSocket, spine.scaleGrp)

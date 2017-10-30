@@ -6,7 +6,7 @@ class initialJoints():
 
     def __init__(self):
 
-        self.axisOrder = "zxy"
+        self.axisOrder = "yxz"
         self.mirrorAxis = self.axisOrder[0]
         self.upAxis = self.axisOrder[1]
         self.lookAxis = self.axisOrder[2]
@@ -287,10 +287,8 @@ class initialJoints():
                            at="long", k=True)
                 pm.addAttr(shortName="dropoff", longName="DropOff", defaultValue=1.0, minValue=0.1,
                            at="float", k=True)
-                pm.addAttr(spine, longName="upAxis", dt="string")
-                pm.setAttr(spine.upAxis, self.upAxis)
-                pm.addAttr(spine, longName="mirrorAxis", dt="string")
-                pm.setAttr(spine.mirrorAxis, self.mirrorAxis)
+
+                self.createAxisAttributes(spine)
                 pm.setAttr(spine.radius, 3)
 
             elif i == (segments):
@@ -339,10 +337,7 @@ class initialJoints():
         pm.setAttr(hand + ".type", 12)
 
         # custom Attributes
-        pm.addAttr(collar, longName="upAxis", dt="string")
-        pm.setAttr(collar.upAxis, self.upAxis)
-        pm.addAttr(collar, longName="mirrorAxis", dt="string")
-        pm.setAttr(collar.mirrorAxis, self.mirrorAxis)
+        self.createAxisAttributes(collar)
 
         jointList=[collar, shoulder, elbow, hand]
         for i in jointList:
@@ -422,10 +417,7 @@ class initialJoints():
         pm.setAttr(bankout + ".otherType", "BankOUT")
 
         ## custom attributes
-        pm.addAttr(root, longName="upAxis", dt="string")
-        pm.setAttr(root.upAxis, self.upAxis)
-        pm.addAttr(root, longName="mirrorAxis", dt="string")
-        pm.setAttr(root.mirrorAxis, self.mirrorAxis)
+        self.createAxisAttributes(root)
 
         jointList = [root, hip, knee, foot, ball, toe, bankout, bankin, toepv, heelpv]
         for i in jointList:
@@ -458,6 +450,7 @@ class initialJoints():
                     pm.setAttr(i + ".type", 14)
                 pm.setAttr(i + ".side", side)
             pm.setAttr(thumb01 + ".drawLabel", 1)
+            self.createAxisAttributes(thumbJoints[0])
             self.fingerJointsList.append(thumbJoints)
             jointList.extend(thumbJoints)
             fingerRoots.append(thumb00)
@@ -480,16 +473,12 @@ class initialJoints():
                 if i==indexJoints[0]:
                     pm.setAttr(i + ".type", 18)
                     pm.setAttr(i + ".otherType", "IndexRoot")
-                    ## custom attributes
-                    pm.addAttr(i, longName="upAxis", dt="string")
-                    pm.setAttr(i.upAxis, self.upAxis)
-                    pm.addAttr(i, longName="mirrorAxis", dt="string")
-                    pm.setAttr(i.mirrorAxis, self.mirrorAxis)
                 else:
                     pm.joint(i, e=True, zso=True, oj="xyz", sao="yup")
                     pm.setAttr(i + ".type", 19)
                 pm.setAttr(i + ".side", side)
             pm.setAttr(index01 + ".drawLabel", 1)
+            self.createAxisAttributes(indexJoints[0])
             self.fingerJointsList.append(indexJoints)
             jointList.extend(indexJoints)
             fingerRoots.append(index00)
@@ -512,16 +501,13 @@ class initialJoints():
                 if i==middleJoints[0]:
                     pm.setAttr(i + ".type", 18)
                     pm.setAttr(i + ".otherType", "MiddleRoot")
-                    ## custom attributes
-                    pm.addAttr(i, longName="upAxis", dt="string")
-                    pm.setAttr(i.upAxis, self.upAxis)
-                    pm.addAttr(i, longName="mirrorAxis", dt="string")
-                    pm.setAttr(i.mirrorAxis, self.mirrorAxis)
+
                 else:
                     pm.joint(i, e=True, zso=True, oj="xyz", sao="yup")
                     pm.setAttr(i + ".type", 20)
                 pm.setAttr(i + ".side", side)
             pm.setAttr(middle01 + ".drawLabel", 1)
+            self.createAxisAttributes(middleJoints[0])
             self.fingerJointsList.append(middleJoints)
             jointList.extend(middleJoints)
             fingerRoots.append(middle00)
@@ -544,16 +530,13 @@ class initialJoints():
                 if i==ringJoints[0]:
                     pm.setAttr(i + ".type", 18)
                     pm.setAttr(i + ".otherType", "RingRoot")
-                    ## custom attributes
-                    pm.addAttr(i, longName="upAxis", dt="string")
-                    pm.setAttr(i.upAxis, self.upAxis)
-                    pm.addAttr(i, longName="mirrorAxis", dt="string")
-                    pm.setAttr(i.mirrorAxis, self.mirrorAxis)
+
                 else:
                     pm.joint(i, e=True, zso=True, oj="xyz", sao="yup")
                     pm.setAttr(i + ".type", 21)
                 pm.setAttr(i + ".side", side)
             pm.setAttr(ring01 + ".drawLabel", 1)
+            self.createAxisAttributes(ringJoints[0])
             self.fingerJointsList.append(ringJoints)
             jointList.extend(ringJoints)
             fingerRoots.append(ring00)
@@ -577,16 +560,12 @@ class initialJoints():
                 if i==pinkyJoints[0]:
                     pm.setAttr(i + ".type", 18)
                     pm.setAttr(i + ".otherType", "PinkyRoot")
-                    ## custom attributes
-                    pm.addAttr(i, longName="upAxis", dt="string")
-                    pm.setAttr(i.upAxis, self.upAxis)
-                    pm.addAttr(i, longName="mirrorAxis", dt="string")
-                    pm.setAttr(i.mirrorAxis, self.mirrorAxis)
                 else:
                     pm.joint(i, e=True, zso=True, oj="xyz", sao="yup")
                     pm.setAttr(i + ".type", 22)
                 pm.setAttr(i + ".side", side)
             pm.setAttr(pinky01 + ".drawLabel", 1)
+            self.createAxisAttributes(pinkyJoints[0])
             self.fingerJointsList.append(pinkyJoints)
             jointList.extend(pinkyJoints)
             fingerRoots.append(pinky00)
@@ -618,11 +597,7 @@ class initialJoints():
                                at="long", k=True)
                     pm.addAttr(shortName="dropoff", longName="DropOff", defaultValue=1.0, minValue=0.1,
                                at="float", k=True)
-                    ## custom attributes
-                    pm.addAttr(neck, longName="upAxis", dt="string")
-                    pm.setAttr(neck.upAxis, self.upAxis)
-                    pm.addAttr(neck, longName="mirrorAxis", dt="string")
-                    pm.setAttr(neck.mirrorAxis, self.mirrorAxis)
+                    self.createAxisAttributes(neck)
                     pm.setAttr(neck.radius, 3)
 
                 else:
@@ -631,11 +606,7 @@ class initialJoints():
             else:
                 neck= pm.joint(p=(rPointNeck + (addNeck * i)), name="jInit_head_%s_%s" %(suffix, str(i)))
                 pm.setAttr(neck + ".type", 8)
-                ## custom attributes
-                pm.addAttr(neck, longName="upAxis", dt="string")
-                pm.setAttr(neck.upAxis, self.upAxis)
-                pm.addAttr(neck, longName="mirrorAxis", dt="string")
-                pm.setAttr(neck.mirrorAxis, self.mirrorAxis)
+                self.createAxisAttributes(neck)
             pm.setAttr(neck + ".drawLabel", 1)
             jointList.append(neck)
         headEnd = pm.joint(p=pointHead, name="jInit_headEnd_%s_%s" %(suffix, str(i)))
@@ -662,6 +633,7 @@ class initialJoints():
             if i == 0:
                 pm.setAttr(tail + ".type", 18)
                 pm.setAttr(tail + ".otherType", "TailRoot")
+                self.createAxisAttributes(tail)
                 pm.setAttr(tail.radius, 3)
             else:
                 pm.setAttr(tail + ".type", 18)
@@ -695,6 +667,7 @@ class initialJoints():
                 pm.setAttr(finger + ".type", 18)
                 pm.setAttr(finger + ".otherType", "FingerRoot")
                 pm.setAttr(finger + ".drawLabel", 1)
+                self.createAxisAttributes(finger)
                 pm.setAttr(finger.radius, 2)
             else:
                 pm.setAttr(finger + ".type", 23)
@@ -731,12 +704,7 @@ class initialJoints():
         else:
             side = 0
 
-        if pm.attributeQuery("upAxis", node=jointList[0], exists=True):
-            pm.setAttr(jointList[0].upAxis, self.upAxis)
-        else:
-            pm.addAttr(jointList[0], longName="upAxis", dt="string")
-            pm.setAttr(jointList[0].upAxis, self.upAxis)
-
+        self.createAxisAttributes(jointList[0])
 
         if limbType == "spine":
             if len(jointList) < 2:
@@ -759,14 +727,7 @@ class initialJoints():
                     if not pm.attributeQuery("dropoff", node=jointList[j], exists=True):
                         pm.addAttr(shortName="dropoff", longName="DropOff", defaultValue=1.0, minValue=0.1,
                                at="float", k=True)
-                    if not pm.attributeQuery("upAxis", node=jointList[j], exists=True):
-                        pm.addAttr(jointList[j], longName="upAxis", dt="string")
-                    else:
-                        pm.setAttr(jointList[j].upAxis, self.upAxis)
-                    if not pm.attributeQuery("mirrorAxis", node=jointList[j], exists=True):
-                        pm.addAttr(jointList[j], longName="mirrorAxis", dt="string")
-                    else:
-                        pm.setAttr(jointList[j].mirrorAxis, self.mirrorAxis)
+
                     pm.setAttr(jointList[j].radius, 3)
                     # pm.setAttr(jointList[j].radius, 3)
 
@@ -855,10 +816,10 @@ class initialJoints():
                     pm.setAttr(jointList[i] + ".otherType", "NeckRoot")
                     pm.select(jointList[i])
 
-                    if pm.attributeQuery("resolution", node=jointList[j], exists=True):
+                    if not pm.attributeQuery("resolution", node=jointList[j], exists=True):
                         pm.addAttr(shortName="resolution", longName="Resolution", defaultValue=4, minValue=1,
                                at="long", k=True)
-                    if pm.attributeQuery("dropoff", node=jointList[j], exists=True):
+                    if not pm.attributeQuery("dropoff", node=jointList[j], exists=True):
                         pm.addAttr(shortName="dropoff", longName="DropOff", defaultValue=1.0, minValue=0.1,
                                at="float", k=True)
                 elif jointList[i] == jointList[-2]:
@@ -885,6 +846,17 @@ class initialJoints():
                     pm.setAttr(jointList[i] + ".drawLabel", 1)
                 else:
                     pm.setAttr(jointList[i] + ".type", 23)
+
+    def createAxisAttributes(self, node):
+        axisAttributes=["upAxis", "mirrorAxis", "lookAxis"]
+        for att in axisAttributes:
+            if not pm.attributeQuery(att, node=node, exists=True):
+                pm.addAttr(node, longName=att, dt="string")
+        pm.setAttr(node.upAxis, self.upAxis)
+        pm.setAttr(node.mirrorAxis, self.mirrorAxis)
+        pm.setAttr(node.lookAxis, self.lookAxis)
+        self.lookAxis
+
 
 
 
