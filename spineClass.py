@@ -118,6 +118,8 @@ class spine(object):
         self.cont_chest = icon.cube("cont_Chest", (iconSize*0.5, iconSize*0.35, iconSize*0.2))
         extra.alignAndAim(self.cont_chest, targetList=[inits[-1]], aimTargetList=[inits[-2]], upVector=self.spineDir,  rotateOff=(-90, 90,0))
         cont_Chest_ORE = extra.createUpGrp(self.cont_chest, "ORE")
+        pm.setAttr(self.cont_chest.rotateOrder,3)
+        pm.setAttr(cont_Chest_ORE.rotateOrder, 3)
 
         ## FK-A/B Controllers
         # contSpineFKAScale = (iconSize / 2, iconSize / 2, iconSize / 2)
@@ -318,4 +320,5 @@ class spine(object):
         pm.parent(self.startSocket, self.scaleGrp)
         self.scaleConstraints.extend([self.scaleGrp, cont_Body_POS])
         self.anchorLocations = [self.cont_hips, self.cont_chest]
+
 
