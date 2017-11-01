@@ -233,7 +233,6 @@ class leg():
 
         if side == "R":
             pm.move(cont_FK_IK, (-iconScale * 4, 0, 0), r=True, os=True)
-            # pm.setAttr("{0}.s{1}".format(cont_FK_IK, "x"), -1)
 
         pm.addAttr(cont_FK_IK, shortName="autoTwist", longName="Auto_Twist", defaultValue=1.0, minValue=0.0, maxValue=1.0,
                    at="float", k=True)
@@ -580,7 +579,7 @@ class leg():
         pm.pointConstraint(startLock, jFK_Root, mo=False)
 
         pm.orientConstraint(cont_FK_LowLeg, jFK_Knee, mo=True)
-        pm.orientConstraint(cont_FK_Foot, jFK_Foot, mo=True)
+        pm.orientConstraint(cont_FK_Foot, jFK_Foot, mo=False)
         pm.orientConstraint(cont_FK_Ball, jFK_Ball, mo=True)
 
         pm.parentConstraint(cont_Thigh, cont_FK_UpLeg_OFF, sr=("x", "y", "z"), mo=True)

@@ -75,16 +75,17 @@ def star(name="cont_star", scale=(1,1,1), location=None, normal=(0, 1, 0)):
     Returns:
         Controller node
     """
-    cont_star=pm.circle(name=name, nr=normal, ch=0, radius=1.5)
-    pm.rebuildCurve(cont_star, s=12, ch=0)
-    pm.select(cont_star[0].cv[0], cont_star[0].cv[2], cont_star[0].cv[4], cont_star[0].cv[6], cont_star[0].cv[8], cont_star[0].cv[10])
-    pm.scale(0.5, 0.5, 0.5)
+    cont_star=pm.circle(name=name, nr=normal, ch=0, s=12, radius=1.5)[0]
+    # pm.rebuildCurve(cont_star, s=12, ch=0)
+    # pm.select(cont_star[0].cv[0], cont_star[0].cv[2], cont_star[0].cv[4], cont_star[0].cv[6], cont_star[0].cv[8], cont_star[0].cv[10])
+    pm.scale(cont_star.cv[0,2,4,6,8,10], (0.5, 0.5, 0.5))
+    # pm.scale(0.5, 0.5, 0.5)
     pm.select(d=True)
-    pm.setAttr(cont_star[0].scale, scale)
+    pm.setAttr(cont_star.scale, scale)
     if location:
         pm.move(cont_star, location)
     pm.makeIdentity(cont_star, a=True)
-    return cont_star[0]
+    return cont_star
     
 def fkikSwitch(name="cont_fkik", scale=(1,1,1), location=None):
     """
@@ -264,8 +265,12 @@ def triCircle(name="cont_triCircle", scale=(1,1,1), location=None):
 
     """
     cont_triCircle=pm.circle(name=name, nr=(0,1,0), ch=0)
-    masterTri=pm.curve(bezier=True, d=3, p=[(0, 0, 8), (0, 0, 8), (-5, 0, 0), (-5, 0, 0), (-5, 0, 0), (0, 0, -8), (0, 0, -8), (0, 0, -8), (-1, 0, -1), (-1, 0, 0)], k=[0,0,0,1,1,1,2,2,2,3,3,3])
-    pm.setAttr(masterTri.scale, (0.03,0.03,0.03))
+    masterTri=pm.curve(bezier=True, d=3, p=[(0, 0, 0.240), (0, 0, 0.240), (-0.150, 0, 0), (-0.150, 0, 0), (-0.150, 0, 0), (0, 0, -0.240), (0, 0, -0.240), (0, 0, -0.240), (-0.03, 0, -0.03), (-0.03, 0, 0), (0, 0, 0.240)])
+
+
+    # pm.setAttr(masterTri.scale, (0.03,0.03,0.03))
+    # pm.closeCurve(masterTri, ch=0, ps=0, rpo=1, bb=0.5, bki=0, p=0.1)
+
     pm.move(masterTri,(-1.036, 0, 0))
     pm.xform(masterTri, piv=(0,0,0), ws=True)
     pm.makeIdentity(masterTri, a=True)
@@ -295,19 +300,15 @@ def curvedCircle(name="cont_curvedCircle", scale=(1, 1, 1), location=None):
     Returns:
         Controller node
     """
-    cont_curvedCircle = pm.circle(name=name, nr=(0,1,0), ch=0, radius=1)
-    pm.rebuildCurve(cont_curvedCircle, s=12, ch=0)
-    pm.select(cont_curvedCircle[0].cv[3], cont_curvedCircle[0].cv[4], cont_curvedCircle[0].cv[5], cont_curvedCircle[0].cv[9], cont_curvedCircle[0].cv[10],
-              cont_curvedCircle[0].cv[11])
-    pm.move((0, 0.25, 0), r=True)
-    pm.select(d=True)
-    pm.setAttr(cont_curvedCircle[0].scale, scale)
+    cont_curvedCircle = pm.circle(name=name, nr=(0,1,0), ch=0, s=12, radius=1)[0]
+    pm.move(cont_curvedCircle.cv[3,4,5,9,10,11], (0, 0.25, 0), r=True)
+    pm.setAttr(cont_curvedCircle.scale, scale)
     if location:
-        pm.move(cont_curvedCircle[0], location)
+        pm.move(cont_curvedCircle, location)
     pm.makeIdentity(cont_curvedCircle, a=True)
-    return cont_curvedCircle[0]
+    return cont_curvedCircle
 
-def halfDome(name="cont_halfDome", scale=(1,1,1), location=None):
+def halfDome(name="cont_halfDome", scale=(1,1,1), location=None, normal=(0,1,0)):
     """
     Creates a Half-Dome curve
     Args:
@@ -349,4 +350,8 @@ def halfDome(name="cont_halfDome", scale=(1,1,1), location=None):
         pm.move(halfCurve, location)
     pm.makeIdentity(halfCurve, a=True)
     pm.select(d=True)
+    if not normal == (0, 1, 0):
+        pm.rotate(halfCurve, normal[0]*90, normal[1]*90, normal[2]*90)
+        # pm.rotate(cont_Pole, (0,0,90))
+        pm.makeIdentity(halfCurve, a=True)
     return halfCurve

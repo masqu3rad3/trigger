@@ -6,12 +6,32 @@ class initialJoints():
 
     def __init__(self):
 
-        self.axisOrder = "yxz"
-        self.mirrorAxis = self.axisOrder[0]
-        self.upAxis = self.axisOrder[1]
-        self.lookAxis = self.axisOrder[2]
-        self.lookAxisMult = 1
-        self.upAxisMult = 1
+        self.axisOrder = "zxy"
+        # self.mirrorAxis = self.axisOrder[0]
+        # self.upAxis = self.axisOrder[1]
+        # self.lookAxis = self.axisOrder[2]
+
+        self.mirrorAxis = "x"
+        self.upAxis = "-y"
+        self.lookAxis = "z"
+
+        # self.lookAxisMult = -1
+        # self.upAxisMult = 1
+
+        if "-" in self.mirrorAxis:
+            self.mirrorAxisMult = 1
+            self.mirrorAxis = self.mirrorAxis.replace("-", "")
+        else:
+            self.mirrorAxisMult = 1
+        if "-" in self.upAxis:
+            self.upAxisMult = -1
+        else:
+            self.upAxisMult = 1
+        if "-" in self.lookAxis:
+            self.lookAxisMult = -1
+        else:
+            self.lookAxisMult = 1
+
         self.spineJointsList=[]
         self.neckJointsList=[]
         self.armJointsList=[]
@@ -158,22 +178,22 @@ class initialJoints():
         pm.parent(limbGroup, holderGroup)
         pm.select(d=True)
 
-        if self.lookAxis == "z" and self.upAxis == "y":
+        if self.lookAxis.replace("-","") == "z" and self.upAxis.replace("-","") == "y":
             ## Facing Z Up Y
             a = [("x","y","z"), 1*sideMult*self.lookAxisMult, 1*self.upAxisMult, 1*self.lookAxisMult]
-        elif self.lookAxis == "z" and self.upAxis == "x":
+        elif self.lookAxis.replace("-","") == "z" and self.upAxis.replace("-","") == "x":
             ## Facing Z Up X
             a = [("y", "x", "z"), -1*sideMult*self.lookAxisMult, 1*self.upAxisMult, 1*self.lookAxisMult]
-        elif self.lookAxis == "y" and self.upAxis == "z":
+        elif self.lookAxis.replace("-","") == "y" and self.upAxis.replace("-","") == "z":
             ## Facing Y Up Z
             a = [("x", "z", "y"), -1*sideMult*self.lookAxisMult, 1*self.upAxisMult, 1*self.lookAxisMult]
-        elif self.lookAxis == "y" and self.upAxis == "x":
+        elif self.lookAxis.replace("-","") == "y" and self.upAxis.replace("-","") == "x":
             ## Facing Y Up X
             a = [("y", "z", "x"), 1*sideMult*self.lookAxisMult, 1*self.upAxisMult, 1*self.lookAxisMult]
-        elif self.lookAxis == "x" and self.upAxis == "z":
+        elif self.lookAxis.replace("-","") == "x" and self.upAxis.replace("-","") == "z":
             ## Facing X Up Z
             a = [("z", "x", "y"), 1*sideMult*self.lookAxisMult, 1*self.upAxisMult, 1*self.lookAxisMult]
-        elif self.lookAxis == "x" and self.upAxis == "y":
+        elif self.lookAxis.replace("-","") == "x" and self.upAxis.replace("-","") == "y":
             ## Facing X Up Y
             a = [("z", "y", "x"), -1*sideMult*self.lookAxisMult, 1*self.upAxisMult, 1*self.lookAxisMult]
 
@@ -688,7 +708,6 @@ class initialJoints():
         pm.select(chest)
         self.initLimb("arm", "auto")
         self.initLimb("neck", "auto", segments=neckSegments)
-        print "jList", self.armJointsList
         rHand =  self.armJointsList[0][-1]
 
         pm.select(rHand)

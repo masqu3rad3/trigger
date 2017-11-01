@@ -100,7 +100,6 @@ class spine(object):
         #
         #
 
-        print "spineDir", self.spineDir
         ## Hips Controller
         contHipsScale = (iconSize / 1.5, iconSize / 1.5, iconSize / 1.5)
         self.cont_hips = icon.waist("cont_Hips", contHipsScale)
@@ -172,8 +171,8 @@ class spine(object):
         # # pass Stretch controls from the splineIK to neck controller
         extra.attrPass(spine.attPassCont, self.cont_chest)
 
-        midSpineLocA_List = []
-        midSpineLocB_List = []
+        # midSpineLocA_List = []
+        # midSpineLocB_List = []
         cont_spineFK_A_List = []
         cont_spineFK_B_List = []
         contSpineFKAScale = (iconSize / 2, iconSize / 2, iconSize / 2)
@@ -183,20 +182,29 @@ class spine(object):
             pos = spine.contCurves_ORE[m].getTranslation(space="world")
 
             if m > 0 and m < (spine.contCurves_ORE):
-                # midSpineLocA = pm.spaceLocator(name="midSpineLocA_%s_%s" %(str(m), suffix), p=pos)
-                midSpineLocA = pm.spaceLocator(name="midSpineLocA_%s_%s" % (str(m), suffix))
-                extra.alignTo(midSpineLocA, spine.contCurves_ORE[m], 2)
-                midSpineLocA_List.append(midSpineLocA)
-                # midSpineLocB = pm.spaceLocator(name="midSpineLocB_%s_%s" % (str(m), suffix), p=pos)
-                midSpineLocB = pm.spaceLocator(name="midSpineLocB_%s_%s" % (str(m), suffix))
-                extra.alignTo(midSpineLocB, spine.contCurves_ORE[m], 2)
-                midSpineLocB_List.append(midSpineLocB)
-                # con = extra.createUpGrp(spine.contCurves_ORE[m],"CON")
-                # pm.parentConstraint(midSpineLocA, midSpineLocB, con, mo=True)
-                pm.parentConstraint(midSpineLocA, midSpineLocB, spine.contCurves_ORE[m], mo=True)
+                # midSpineLocA = pm.spaceLocator(name="midSpineLocA_%s_%s" % (str(m), suffix))
+                # extra.alignTo(midSpineLocA, spine.contCurves_ORE[m], 2)
+                # midSpineLocA_List.append(midSpineLocA)
+                # midSpineLocB = pm.spaceLocator(name="midSpineLocB_%s_%s" % (str(m), suffix))
+                # extra.alignTo(midSpineLocB, spine.contCurves_ORE[m], 2)
+                # midSpineLocB_List.append(midSpineLocB)
+                # # con = extra.createUpGrp(spine.contCurves_ORE[m],"CON")
+                # # pm.parentConstraint(midSpineLocA, midSpineLocB, con, mo=True)
+                # # pm.parentConstraint(midSpineLocA, midSpineLocB, spine.contCurves_ORE[m], mo=True)
+                #
+                # # pm.pointConstraint(midSpineLocA, midSpineLocB, spine.contCurves_ORE[m], mo=True)
+                # # pm.orientConstraint(midSpineLocA, midSpineLocB, spine.contCurves_ORE[m], mo=False)
 
-                pm.parent(midSpineLocA, self.cont_chest)
-                pm.parent(midSpineLocB, self.cont_hips)
+                # poCon = pm.pointConstraint(spine.contCurve_End, spine.contCurve_Start, spine.contCurves_ORE[m], mo=True)
+                oCon = pm.parentConstraint(self.cont_chest, self.cont_hips, spine.contCurves_ORE[m], mo=True)
+                blendRatio = (m + 0.0) / len(spine.contCurves_ORE)
+                pm.setAttr("{0}.{1}W0".format(oCon, self.cont_chest), blendRatio)
+                pm.setAttr("{0}.{1}W1".format(oCon, self.cont_hips), 1 - blendRatio)
+                # pm.setAttr("{0}.{1}W0".format(poCon, spine.contCurve_End), blendRatio)
+                # pm.setAttr("{0}.{1}W1".format(poCon, spine.contCurve_Start), 1 - blendRatio)
+
+                # pm.parent(midSpineLocA, self.cont_chest)
+                # pm.parent(midSpineLocB, self.cont_hips)
 
             # contA = icon.circle("cont_SpineFK_A" + str(m), contSpineFKAScale, location=pos)
             contA = icon.circle("cont_SpineFK_A" + str(m) + suffix, contSpineFKAScale)
@@ -273,10 +281,10 @@ class spine(object):
         spine.scaleGrp.rigVis >> spine.contCurves_ORE[0].v
         spine.scaleGrp.rigVis >> spine.contCurves_ORE[len(spine.contCurves_ORE) - 1].v
 
-        for i in midSpineLocA_List:
-            spine.scaleGrp.rigVis >> i.v
-        for i in midSpineLocB_List:
-            spine.scaleGrp.rigVis >> i.v
+        # for i in midSpineLocA_List:
+        #     spine.scaleGrp.rigVis >> i.v
+        # for i in midSpineLocB_List:
+        #     spine.scaleGrp.rigVis >> i.v
 
         for lst in spine.noTouchData:
             for i in lst:
