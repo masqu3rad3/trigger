@@ -24,6 +24,25 @@ class twistSpline(object):
         self.moveAxis = None
 
     def createTspline(self, refJoints, name, cuts, dropoff=2, mode="equalDistance", twistType="infinite"):
+        """
+        
+        Args:
+            refJoints: (PyNode) Reference Joints to be taken as templates for start/end and controller locations 
+            name: (String) Naming convention for newly created nodes.
+            cuts: (Integer) Determines the resolution of joint chain.
+            dropoff: (Float) Drop off value for skin bind between control curve and control joints
+            mode: (String) The mode for joint creation. Valid valuer are 'equalDistance' and 'sameDistance'. 
+                            If 'equalDistance' The chain joints will be seperated evenly. If 'sameDistance'
+                            cuts value will be ignored and reference joint lengths will be used. Default: 'equalDistance'
+            twistType: (String) Valid values are 'infinite', 'regular' and 'simple'. 'infinite' will use the awesomeSpline method
+                        which will allow 360 degree rotations, but will be problematic if many midcontrollers are present.
+                        'regular' mode is better if there are several middle controllers, but the spine cannot turn a full 360
+                        without flipping. 'simple' mode is best for tentacles and terminal limbs which twisting will occur only
+                        one end of the limb.
+
+        Returns: None
+
+        """
 
 
         self.scaleGrp = pm.group(name="scaleGrp_" + name, em=True)
