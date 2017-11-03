@@ -102,20 +102,20 @@ class Spine(object):
 
         ## Hips Controller
         contHipsScale = (iconSize / 1.5, iconSize / 1.5, iconSize / 1.5)
-        self.cont_hips = icon.waist("cont_Hips", contHipsScale)
+        self.cont_hips = icon.waist("cont_Hips_"+suffix, contHipsScale)
         extra.alignAndAim(self.cont_hips, targetList=[inits[0]], aimTargetList=[inits[1]], upVector=self.spineDir, rotateOff=(-90,-90,0))
         self.cont_hips_ORE = extra.createUpGrp(self.cont_hips, "ORE")
 
         ## Body Controller
         contBodyScale = (iconSize * 0.75, iconSize * 0.75, iconSize * 0.75)
-        self.cont_body = icon.square("cont_Body", contBodyScale)
+        self.cont_body = icon.square("cont_Body_"+suffix, contBodyScale)
         extra.alignAndAim(self.cont_body, targetList=[inits[0]], aimTargetList=[inits[1]], upVector=self.spineDir, rotateOff=(-90, -90,0))
         cont_Body_POS = extra.createUpGrp(self.cont_body, "POS")
 
         ## Chest Controller
         # self.cont_chest = icon.cube("cont_Chest", (iconSize*0.5, iconSize*0.35, iconSize*0.2))
         # extra.alignAndAim(self.cont_chest, targetList=[inits[-1]], aimTargetList=[inits[-2]], upVector=self.upAxis,  rotateOff=(0,0,90))
-        self.cont_chest = icon.cube("cont_Chest", (iconSize*0.5, iconSize*0.35, iconSize*0.2))
+        self.cont_chest = icon.cube("cont_Chest_"+suffix, (iconSize*0.5, iconSize*0.35, iconSize*0.2))
         extra.alignAndAim(self.cont_chest, targetList=[inits[-1]], aimTargetList=[inits[-2]], upVector=self.spineDir,  rotateOff=(-90, 90,0))
         cont_Chest_ORE = extra.createUpGrp(self.cont_chest, "ORE")
         pm.setAttr(self.cont_chest.rotateOrder,3)
@@ -180,6 +180,8 @@ class Spine(object):
         contSpineFKAScale = (iconSize / 2, iconSize / 2, iconSize / 2)
         contSpineFKBScale = (iconSize / 2.5, iconSize / 2.5, iconSize / 2.5)
         ## create locators on the mid controller to be used as alignment
+
+
         for m in range (0, len(spine.contCurves_ORE)):
             pos = spine.contCurves_ORE[m].getTranslation(space="world")
 

@@ -127,7 +127,10 @@ class Tentacle(object):
 
         ## Wrap npjDefHolder to the Base Plane
         # npWrap = pm.deformer(type="wrap", g=npJdefHolder)
-        npWrap = self.createWrap(npBase[0], npJdefHolder[0],weightThreshold=0.0, maxDistance=50)
+        npWrap = self.createWrap(npBase[0], npJdefHolder[0],weightThreshold=0.0, maxDistance=50, autoWeightThreshold=False)
+
+        ## Create skin cluster
+        # pm.skinCluster(contJoints, npBase[0], tsb=True, dropoffRate=2.0)
 
         ## Good Parenting
         pm.parent(npBase[0], self.nonScaleGrp)

@@ -338,7 +338,7 @@ class LimbBuilder():
 
 
             elif x[1] == "tail":
-                limb = simpleTail.simpleTail()
+                limb = simpleTail.SimpleTail()
                 limb.createSimpleTail(x[0], suffix="tail")
 
             elif x[1] == "finger":

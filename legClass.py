@@ -318,7 +318,7 @@ class Leg():
 
 
         Pv_Toe = pm.group(name="Pv_Toe_" + suffix, em=True)
-        extra.alignTo(Pv_Toe, ballRef, 2)
+        extra.alignTo(Pv_Toe, toePvRef, 2)
         Pv_Toe_ORE = extra.createUpGrp(Pv_Toe, "ORE")
 
         Pv_Ball = pm.group(name="Pv_Ball_" + suffix, em=True)
@@ -483,7 +483,7 @@ class Leg():
         self.cont_IK_foot.bSpin >> Pv_BallSpin.rotateY
         self.cont_IK_foot.hRoll >> Pv_Heel.rotateX
         self.cont_IK_foot.hSpin >> Pv_Heel.rotateY
-        self.cont_IK_foot.tRoll >> Pv_Toe.rotateZ
+        self.cont_IK_foot.tRoll >> Pv_Toe.rotateX
         self.cont_IK_foot.tSpin >> Pv_Toe.rotateY
         self.cont_IK_foot.tWiggle >> Pv_Ball.rotateZ
         # // TODO: Reduction possible

@@ -11,8 +11,8 @@ class initialJoints():
         # self.upAxis = self.axisOrder[1]
         # self.lookAxis = self.axisOrder[2]
 
-        self.mirrorAxis = "y"
-        self.upAxis = "x"
+        self.mirrorAxis = "x"
+        self.upAxis = "y"
         self.lookAxis = "z"
 
         # self.lookAxisMult = -1

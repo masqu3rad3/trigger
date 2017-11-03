@@ -69,8 +69,6 @@ class Fingers(object):
         #     newSuffix = "%s%s" % (suffix, str(idCounter))
         #     self.crossName = "scaleGrp_" + newSuffix
 
-        print "Creating Finger %s" %suffix
-
         if (len(inits) < 2):
             pm.error("Insufficient Finger Initialization Joints")
             return
