@@ -15,7 +15,7 @@ reload(extra)
 import contIcons as icon
 reload(icon)
 
-class ribbon():
+class Ribbon():
 
     startConnection = None
     endConnection = None
@@ -24,7 +24,7 @@ class ribbon():
     deformerJoints = None
     middleCont = None
     toHide = None
-    def createRibbon(self, startPoint, endPoint, name, orientation, jCount=5.0):
+    def createRibbon(self, startPoint, endPoint, name, orientation, rResolution=5, jResolution=5.0):
         self.nonScaleGrp=pm.group(em=True, name="RBN_nonScaleGrp_"+name)
 
         if type(startPoint) == str:
@@ -32,7 +32,7 @@ class ribbon():
         if type(endPoint) == str:
             endPoint = pm.PyNode(endPoint)
         ribbonLength=extra.getDistance(startPoint, endPoint)
-        nSurfTrans=pm.nurbsPlane(ax=(0,0,1),u=5,v=1, w=ribbonLength, lr=(1.0/ribbonLength), name="nSurf_"+name)
+        nSurfTrans=pm.nurbsPlane(ax=(0,0,1),u=rResolution,v=1, w=ribbonLength, lr=(1.0/ribbonLength), name="nSurf_"+name)
         pm.parent(nSurfTrans[0], self.nonScaleGrp)
         pm.rebuildSurface (nSurfTrans, ch=1, rpo=1, rt=0, end=1, kr=2, kcp=0, kc=0, su=5, du=3, sv=1, dv=1, tol=0, fr=0, dir=1)
         pm.makeIdentity(a=True)
@@ -42,14 +42,14 @@ class ribbon():
         self.deformerJoints=[]
         self.toHide.append(nSurfTrans[0])
 
-        for i in range (0, int(jCount)):
+        for i in range (0, int(jResolution)):
             follicle = pm.createNode('follicle', name="follicle_"+name+str(i))
             nSurf.local.connect(follicle.inputSurface)
             nSurf.worldMatrix[0].connect(follicle.inputWorldMatrix)
             follicle.outRotate.connect(follicle.getParent().rotate)
             follicle.outTranslate.connect(follicle.getParent().translate)
             follicle.parameterV.set(0.5)
-            follicle.parameterU.set(0.1+(i/jCount))
+            follicle.parameterU.set(0.1+(i/jResolution))
             follicle.getParent().t.lock()
             follicle.getParent().r.lock()
             follicleList.append(follicle)

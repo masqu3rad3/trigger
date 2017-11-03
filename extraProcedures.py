@@ -684,7 +684,52 @@ def replaceController(mirror=True, mirrorAxis="X"):
 
     pm.delete(oldCont.getShape())
 
+def getRigAxes(joint):
+    """
+    Gets the axis information from the joint which should be written with initBonesClass when created or defined.
+    Args:
+        joint: The node to look at the attributes
 
+    Returns: upAxis, mirrorAxis, spineDir
+
+    """
+    axisDict = {"x": (1.0, 0.0, 0.0), "y": (0.0, 1.0, 0.0), "z": (0.0, 0.0, 1.0), "-x": (-1.0, 0.0, 0.0), "-y": (0.0, -1.0, 0.0), "-z": (0.0, 0.0, -1.0)}
+    spineDir = {"x": (-1.0, 0.0, 0.0), "y": (0.0, -1.0, 0.0), "z": (0.0, 0.0, 1.0), "-x": (1.0, 0.0, 0.0), "-y": (0.0, 1.0, 0.0), "-z": (0.0, 0.0, 1.0)}
+    upAxis = None
+    mirrorAxis = None
+    spineDir = None
+    if pm.attributeQuery("upAxis", node=joint, exists=True):
+        try:
+            upAxis = axisDict[pm.getAttr(joint.upAxis).lower()]
+        except:
+            pm.warning("upAxis attribute is not valid, proceeding with default value (y up)")
+            upAxis = (0.0, 1.0, 0.0)
+    else:
+        pm.warning("upAxis attribute of the root node does not exist. Using default value (y up)")
+        upAxis = (0.0, 1.0, 0.0)
+    ## get the mirror axis
+    if pm.attributeQuery("mirrorAxis", node=joint, exists=True):
+        try:
+            mirrorAxis = axisDict[pm.getAttr(joint.mirrorAxis).lower()]
+        except:
+            pm.warning("mirrorAxis attribute is not valid, proceeding with default value (scene x)")
+            mirrorAxis = (1.0, 0.0, 0.0)
+    else:
+        pm.warning("mirrorAxis attribute of the root node does not exist. Using default value (scene x)")
+        mirrorAxis = (1.0, 0.0, 0.0)
+
+    ## get spine Direction
+    if pm.attributeQuery("lookAxis", node=joint, exists=True):
+        try:
+            spineDir = spineDir[pm.getAttr(joint.lookAxis).lower()]
+        except:
+            pm.warning("Cannot get spine direction from lookAxis attribute, proceeding with default value (-x)")
+            spineDir = (-1.0, 0.0, 0.0)
+    else:
+        pm.warning("lookAxis attribute of the root node does not exist. Using default value (-x) for spine direction")
+        spineDir = (1.0, 0.0, 0.0)
+
+    return upAxis, mirrorAxis, spineDir
 
 
 

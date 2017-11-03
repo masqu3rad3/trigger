@@ -13,7 +13,7 @@ reload(twistSpline)
 
 ## TODO // NEEDS TO SUPPORT DIFFERENT ORIENTATIONS
 
-class neckAndHead():
+class NeckAndHead():
 
     scaleGrp = None
     nonScaleGrp = None
@@ -184,7 +184,7 @@ class neckAndHead():
         self.neckRootLoc = pm.spaceLocator(name="neckRootLoc_"+suffix)
         extra.alignTo(self.neckRootLoc, neckNodes[0])
 
-        neckSpline = twistSpline.twistSpline()
+        neckSpline = twistSpline.TwistSpline()
         neckSpline.createTspline(neckNodes+[headStart], "neckSplineIK_"+suffix, resolution, dropoff=dropoff)
         # # Connect neck start to the neck controller
         pm.orientConstraint(self.cont_neck, neckSpline.contCurve_Start, mo=True)  # This will be position constrained to the spine(or similar)
@@ -202,7 +202,7 @@ class neckAndHead():
         self.scaleGrp.scale >> neckSpline.scaleGrp.scale
 
         # create spline IK for Head squash
-        headSpline = twistSpline.twistSpline()
+        headSpline = twistSpline.TwistSpline()
         headSpline.createTspline([headStart, headEnd], "headSquashSplineIK_"+suffix, 3, dropoff=2)
 
 

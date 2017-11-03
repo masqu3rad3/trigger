@@ -17,7 +17,7 @@ import pymel.core.datatypes as dt
 ###########################
 ######### IK ARM ##########
 ###########################
-class arm():
+class Arm():
     def __init__(self):
         self.sockets = []
         # startSocket = None
@@ -519,7 +519,7 @@ class arm():
         # UPPERARM RIBBON
 
         # ribbonConnections_upperArm = rc..createRibbon(shoulderRef, elbowRef, "up_" + suffix, 0)
-        ribbonUpperArm = rc.ribbon()
+        ribbonUpperArm = rc.Ribbon()
         ribbonUpperArm.createRibbon(shoulderRef, elbowRef, "up_" + suffix, 0)
         ribbonStart_paCon_upperArm_Start = pm.parentConstraint(startLock, ribbonUpperArm.startConnection, mo=True)
         ribbonStart_paCon_upperArm_End = pm.parentConstraint(midLock, ribbonUpperArm.endConnection, mo=True)
@@ -546,7 +546,7 @@ class arm():
 
         # LOWERARM RIBBON
 
-        ribbonLowerArm = rc.ribbon()
+        ribbonLowerArm = rc.Ribbon()
         ribbonLowerArm.createRibbon(elbowRef, handRef, "low_" + suffix,0)
 
         ribbonStart_paCon_lowerArm_Start = pm.parentConstraint(midLock, ribbonLowerArm.startConnection, mo=True)

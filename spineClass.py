@@ -11,7 +11,7 @@ import twistSplineClass as twistSpline
 
 reload(twistSpline)
 
-class spine(object):
+class Spine(object):
 
     def __init__(self):
         self.scaleConstraints = []
@@ -152,7 +152,7 @@ class spine(object):
 
 
         # move the pivot to its base
-        spine = twistSpline.twistSpline()
+        spine = twistSpline.TwistSpline()
         spine.createTspline(inits, "spine" + suffix, resolution, dropoff=dropoff)
 
         midConnection = spine.contCurves_ORE[(len(spine.contCurves_ORE)/2)]

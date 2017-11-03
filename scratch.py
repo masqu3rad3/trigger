@@ -92,23 +92,23 @@ class LimbBuilder():
         limbProperties = self.getWholeLimb(referenceRoot)
 
         if limbProperties[1] == "arm":
-            limb = arm.arm()
+            limb = arm.Arm()
             limb.createArm(limbProperties[0], suffix="%s_arm" % limbProperties[2], side=limbProperties[2])
 
         elif limbProperties[1] == "leg":
-            limb = leg.leg()
+            limb = leg.Leg()
             limb.createLeg(limbProperties[0], suffix="%s_leg" % limbProperties[2], side=limbProperties[2])
 
         elif limbProperties[1] == "neck":
-            limb = neckAndHead.neckAndHead()
+            limb = neckAndHead.NeckAndHead()
             limb.createNeckAndHead(limbProperties[0], suffix="n", resolution=limbProperties[0]["resolution"], dropoff=limbProperties[0]["dropoff"])
 
         elif limbProperties[1] == "spine":
-            limb = spine.spine()
+            limb = spine.Spine()
             limb.createSpine(limbProperties[0], suffix="s", resolution=limbProperties[0]["resolution"], dropoff=limbProperties[0]["dropoff"])  # s for spine...
 
         elif limbProperties[1] == "tail":
-            limb = simpleTail.simpleTail()
+            limb = simpleTail.SimpleTail()
             limb.createSimpleTail(limbProperties[0], suffix="tail")
 
         elif limbProperties[1] == "finger":
@@ -314,7 +314,7 @@ class LimbBuilder():
                     self.rightShoulder = x[0]["Shoulder"]
                 if x[2] == "R":
                     self.leftShoulder = x[0]["Shoulder"]
-                limb = arm.arm()
+                limb = arm.Arm()
                 limb.createArm(x[0], suffix="%s_arm" %sideVal, side=x[2])
 
             elif x[1] == "leg":
@@ -323,16 +323,16 @@ class LimbBuilder():
                 if x[2] == "R":
                     self.rightHip = x[0]["Hip"]
 
-                limb = leg.leg()
+                limb = leg.Leg()
                 limb.createLeg(x[0], suffix="%s_leg" %sideVal, side=x[2])
 
             elif x[1] == "neck":
-                limb = neckAndHead.neckAndHead()
+                limb = neckAndHead.NeckAndHead()
                 # limb.createNeckAndHead(x[0], suffix="n", resolution=x[3], dropoff=x[4])
                 limb.createNeckAndHead(x[0], suffix="n", resolution=x[0]["resolution"], dropoff=x[0]["dropoff"])
 
             elif x[1] == "spine":
-                limb = spine.spine()
+                limb = spine.Spine()
                 # limb.createSpine(x[0], suffix="s", resolution=x[3], dropoff=x[4])  # s for spine...
                 limb.createSpine(x[0], suffix="s", resolution=x[0]["resolution"], dropoff=x[0]["dropoff"])  # s for spine...
 

@@ -9,7 +9,7 @@ reload(icon)
 
 
 
-class twistSpline(object):
+class TwistSpline(object):
 
     def __init__(self):
         self.contCurves_ORE = None

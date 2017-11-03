@@ -17,7 +17,7 @@ import pymel.core.datatypes as dt
 
 
 # whichLeg="l_leg"
-class leg():
+class Leg():
     def __init__(self):
         # none = None
         self.scaleGrp = None
@@ -678,7 +678,7 @@ class leg():
 
         # UPPERLEG RIBBON
 
-        ribbonUpperLeg = rc.ribbon()
+        ribbonUpperLeg = rc.Ribbon()
         ribbonUpperLeg.createRibbon(hipRef, kneeRef, "up_" + suffix, -90)
 
         ribbonStart_paCon_upperLeg_Start = pm.parentConstraint(startLock, ribbonUpperLeg.startConnection, mo=True)
@@ -706,7 +706,7 @@ class leg():
 
         # LOWERLEG RIBBON
 
-        ribbonLowerLeg = rc.ribbon()
+        ribbonLowerLeg = rc.Ribbon()
         ribbonLowerLeg.createRibbon(kneeRef, footRef, "low_" + suffix, 90)
 
         ribbonStart_paCon_lowerLeg_Start = pm.parentConstraint(midLock, ribbonLowerLeg.startConnection, mo=True)

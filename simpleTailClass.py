@@ -8,7 +8,7 @@ import contIcons as icon
 reload(icon)
 
 
-class simpleTail(object):
+class SimpleTail(object):
 
     def __init__(self):
         self.scaleGrp = None

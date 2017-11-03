@@ -4,7 +4,7 @@ reload(extra)
 import contIcons as icon
 reload(icon)
 
-class finger(object):
+class Finger(object):
 
     fingerRoot = None
     defJoints = None
