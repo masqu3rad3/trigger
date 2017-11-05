@@ -49,42 +49,38 @@ class Tentacle(object):
         ## Get the orientation axises
         upAxis, mirroAxis, spineDir = extra.getRigAxes(inits[0])
 
-        ## Create Controllers
-        ## Tweak Controllers
+        ## Create Controller Curves
+
+        contFK_List = []
+        contTwk_List = []
         for j in range (len(inits)):
-            # if j == 0:
-            #     s = extra.getDistance(inits[j], inits[j+1]) / 3
-            #     contScale = (s, s, s)
-            #     cont = icon.circle("cont_tentacleTweak{0}_{1}".format(str(j), suffix), contScale, normal=(0,1,0))
-            #     extra.alignAndAim(cont, targetList=[inits[j]], aimTargetList=[inits[j+1]], upVector=upAxis, rotateOff=(0,0,0))
-            # elif j == (len(inits)-1):
-            #     s = extra.getDistance(inits[j], inits[j-1]) / 3
-            #     contScale = (s, s, s)
-            #     cont = icon.circle("cont_tentacleTweak{0}_{1}".format(str(j), suffix), contScale)
-            #     extra.alignAndAim(cont, targetList=[inits[j]], aimTargetList=[inits[j-1]], upVector=upAxis, rotateOff=(0,0,0))
-            # else:
-            #     s = extra.getDistance(inits[j], inits[j + 1]) / 3
-            #     contScale = (s, s, s)
-            #     cont = icon.circle("cont_tentacleTweak{0}_{1}".format(str(j), suffix), contScale)
-            #     extra.alignAndAim(cont, targetList=[inits[j]], aimTargetList=[inits[j-1], inits[j+1]], upVector=upAxis,
-            #                       rotateOff=(0, 0, 0))
 
             if not j == (len(inits)-1):
                 targetInit = inits[j+1]
+                rotateOff = (90,90,0)
             else:
                 targetInit = inits[j-1]
+                rotateOff = (-90,-90, 180)
             s = extra.getDistance(inits[j], targetInit)/3
-            contScale = (s, s, s)
-            contTwk = icon.circle("cont_tentacleTweak{0}_{1}".format(str(j), suffix), contScale)
-            extra.alignAndAim(contTwk, targetList=[inits[j]], aimTargetList=[targetInit], upVector=upAxis, rotateOff=(90,90,0))
-            contTwk_ORE = extra.createUpGrp(contTwk, "ORE")
+            contScaleTwk = (s, s, s)
+            contTwk = icon.circle("cont_tentacleTweak{0}_{1}".format(str(j), suffix), contScaleTwk)
+            extra.alignAndAim(contTwk, targetList=[inits[j]], aimTargetList=[targetInit], upVector=upAxis, rotateOff=rotateOff)
             contTwk_OFF = extra.createUpGrp(contTwk, "OFF")
-            contFK = icon.ngon("cont_tentacleFK{0}_{1}".format(str(j), suffix), contScale)
-            extra.alignAndAim(contFK, targetList=[inits[j]], aimTargetList=[targetInit], upVector=upAxis,
-                          rotateOff=(90, 90, 0))
+            contTwk_ORE = extra.createUpGrp(contTwk, "ORE")
+            contTwk_List.append(contTwk)
 
-        ## Create the Control Curves
-        ## //TODO CREATE CONTROL CURVES
+            contScaleFK = (s*1.2, s*1.2, s*1.2)
+            contFK = icon.ngon("cont_tentacleFK{0}_{1}".format(str(j), suffix), contScaleFK)
+            extra.alignAndAim(contFK, targetList=[inits[j]], aimTargetList=[targetInit], upVector=upAxis,
+                          rotateOff=rotateOff)
+            contFK_OFF = extra.createUpGrp(contFK, "OFF")
+            contFK_ORE = extra.createUpGrp(contFK, "ORE")
+            contFK_List.append(contFK)
+
+            pm.parent(contTwk_OFF, contFK)
+            if not j == 0:
+                pm.parent(contFK_OFF, contFK_List[j-1])
+
 
         ## Make a straight line from inits joints (like in the twistSpline)
         # get the root position
@@ -116,7 +112,6 @@ class Tentacle(object):
             contJoints.append(j)
             pm.select(d=True)
 
-
         ## Create the Base Nurbs Plane (npBase)
         ribbonLength = extra.getDistance(contJoints[0], contJoints[-1])
         npBase=pm.nurbsPlane(ax=(0,1,0),u=npResolution,v=1, w=ribbonLength, lr=(1.0/ribbonLength), name="npBase_"+suffix)
@@ -138,7 +133,6 @@ class Tentacle(object):
             follicle.outRotate.connect(follicle.getParent().rotate)
             follicle.outTranslate.connect(follicle.getParent().translate)
             follicle.parameterV.set(0.5)
-            print "T", (i/jResolution)
             follicle.parameterU.set((1/jResolution)+(i/jResolution)-((1/jResolution)/2))
             follicle.getParent().t.lock()
             follicle.getParent().r.lock()
@@ -173,9 +167,24 @@ class Tentacle(object):
         ## EndPoint = -4 degree - length*2
         ## StartPoint = -6 degree - length/2
 
+        ## move the control points back into the place
+        for j in range (len(inits)):
+            if not j == (len(inits)-1):
+                targetInit = inits[j+1]
+                rotateOff = (90,90,0)
+            else:
+                targetInit = inits[j-1]
+                rotateOff = (-90,-90, 180)
+            extra.alignAndAim(contJoints[j], targetList=[inits[j]], aimTargetList=[targetInit], upVector=upAxis, rotateOff=rotateOff)
+
+
+
         ## Good Parenting
         # pm.parent(npBase[0], self.nonScaleGrp)
 
+
+## https://www.youtube.com/watch?v=sQOCfp-VMRU
+## https://www.youtube.com/watch?v=A0thwIfThB4
 
         # if not isinstance(inits, list):
         #     ## parse the dictionary inits into a list
@@ -322,3 +331,4 @@ class Tentacle(object):
         # I do not see the reason to rewrite the code here into pymel.
         # return wrapNode
         return pm.nt.Wrap(wrapNode)
+
