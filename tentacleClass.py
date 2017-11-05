@@ -130,7 +130,13 @@ class Tentacle(object):
         npWrap = self.createWrap(npBase[0], npJdefHolder[0],weightThreshold=0.0, maxDistance=50, autoWeightThreshold=False)
 
         ## Create skin cluster
-        # pm.skinCluster(contJoints, npBase[0], tsb=True, dropoffRate=2.0)
+        pm.skinCluster(contJoints, npBase[0], tsb=True, dropoffRate=2.0)
+
+        ## create the roll(bend) deformer
+        ## test=pm.nonLinear( type='bend', curvature=0.5 )
+        ## Ratio is:
+        ## EndPoint = -4 degree - length*2
+        ## StartPoint = -6 degree - length/2
 
         ## Good Parenting
         pm.parent(npBase[0], self.nonScaleGrp)
