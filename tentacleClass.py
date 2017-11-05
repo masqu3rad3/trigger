@@ -47,9 +47,41 @@ class Tentacle(object):
         self.nonScaleGrp = pm.group(name="NonScaleGrp_" + suffix, em=True)
 
         ## Get the orientation axises
-
-        ## get the up axis
         upAxis, mirroAxis, spineDir = extra.getRigAxes(inits[0])
+
+        ## Create Controllers
+        ## Tweak Controllers
+        for j in range (len(inits)):
+            # if j == 0:
+            #     s = extra.getDistance(inits[j], inits[j+1]) / 3
+            #     contScale = (s, s, s)
+            #     cont = icon.circle("cont_tentacleTweak{0}_{1}".format(str(j), suffix), contScale, normal=(0,1,0))
+            #     extra.alignAndAim(cont, targetList=[inits[j]], aimTargetList=[inits[j+1]], upVector=upAxis, rotateOff=(0,0,0))
+            # elif j == (len(inits)-1):
+            #     s = extra.getDistance(inits[j], inits[j-1]) / 3
+            #     contScale = (s, s, s)
+            #     cont = icon.circle("cont_tentacleTweak{0}_{1}".format(str(j), suffix), contScale)
+            #     extra.alignAndAim(cont, targetList=[inits[j]], aimTargetList=[inits[j-1]], upVector=upAxis, rotateOff=(0,0,0))
+            # else:
+            #     s = extra.getDistance(inits[j], inits[j + 1]) / 3
+            #     contScale = (s, s, s)
+            #     cont = icon.circle("cont_tentacleTweak{0}_{1}".format(str(j), suffix), contScale)
+            #     extra.alignAndAim(cont, targetList=[inits[j]], aimTargetList=[inits[j-1], inits[j+1]], upVector=upAxis,
+            #                       rotateOff=(0, 0, 0))
+
+            if not j == (len(inits)-1):
+                targetInit = inits[j+1]
+            else:
+                targetInit = inits[j-1]
+            s = extra.getDistance(inits[j], targetInit)/3
+            contScale = (s, s, s)
+            contTwk = icon.circle("cont_tentacleTweak{0}_{1}".format(str(j), suffix), contScale)
+            extra.alignAndAim(contTwk, targetList=[inits[j]], aimTargetList=[targetInit], upVector=upAxis, rotateOff=(90,90,0))
+            contTwk_ORE = extra.createUpGrp(contTwk, "ORE")
+            contTwk_OFF = extra.createUpGrp(contTwk, "OFF")
+            contFK = icon.ngon("cont_tentacleFK{0}_{1}".format(str(j), suffix), contScale)
+            extra.alignAndAim(contFK, targetList=[inits[j]], aimTargetList=[targetInit], upVector=upAxis,
+                          rotateOff=(90, 90, 0))
 
         ## Create the Control Curves
         ## //TODO CREATE CONTROL CURVES
@@ -117,13 +149,13 @@ class Tentacle(object):
             pm.parent(follicle.getParent(), self.nonScaleGrp)
             # self.toHide.append(follicle)
 
-        ## Duplicate it 3 more times for deformation targets (np_Roll, np_Twist, np_Sine)
-        npRoll = pm.duplicate(npBase[0], name="npRoll_"+suffix)
+        ## Duplicate it 3 more times for deformation targets (npCurl, npTwist, npSine)
+        npCurl = pm.duplicate(npBase[0], name="npCurl_"+suffix)
         npTwist = pm.duplicate(npBase[0], name="npTwist_" + suffix)
         npSine = pm.duplicate(npBase[0], name="npSine_" + suffix)
 
         ## Create Blendshape node between np_jDefHolder and deformation targets
-        npBlend = pm.blendShape(npRoll, npTwist, npSine, npJdefHolder)
+        npBlend = pm.blendShape(npCurl, npTwist, npSine, npJdefHolder)
 
         ## Wrap npjDefHolder to the Base Plane
         # npWrap = pm.deformer(type="wrap", g=npJdefHolder)
@@ -133,13 +165,16 @@ class Tentacle(object):
         pm.skinCluster(contJoints, npBase[0], tsb=True, dropoffRate=2.0)
 
         ## create the roll(bend) deformer
-        ## test=pm.nonLinear( type='bend', curvature=0.5 )
+        pm.select(npCurl)
+        curlDeformer = pm.nonLinear(type='bend', curvature=1500)
+        # pm.select(curlDeformer)
+        pm.setAttr(curlDeformer[1].rz, 0)
         ## Ratio is:
         ## EndPoint = -4 degree - length*2
         ## StartPoint = -6 degree - length/2
 
         ## Good Parenting
-        pm.parent(npBase[0], self.nonScaleGrp)
+        # pm.parent(npBase[0], self.nonScaleGrp)
 
 
         # if not isinstance(inits, list):
