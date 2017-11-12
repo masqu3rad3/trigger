@@ -433,12 +433,15 @@ def attrPass (sourceNode, targetNode, attributes=[], inConnections=True, outConn
 
         # if an attribute with the same name exists
         if pm.attributeQuery(attr, node=targetNode, exists=True):
+            print "ANAN"
             if overrideEx:
                 pm.deleteAttr("%s.%s" % (targetNode, attr))
+                print "addAttribute", addAttribute
                 exec (addAttribute)
             else:
                 continue
         else:
+
             exec(addAttribute)
 
     if daisyChain==True:
@@ -451,6 +454,7 @@ def attrPass (sourceNode, targetNode, attributes=[], inConnections=True, outConn
                 pm.setAttr(pm.PyNode("%s.%s" % (targetNode, userAttr[i])), value)
             pm.PyNode("%s.%s" % (targetNode, userAttr[i])) >> pm.PyNode("%s.%s" % (sourceNode, userAttr[i]))
     else:
+
         pm.copyAttr(sourceNode, targetNode, inConnections=inConnections, outConnections=outConnections, values=values, attribute=userAttr)
         if keepSourceAttributes==False:
             for i in userAttr:
