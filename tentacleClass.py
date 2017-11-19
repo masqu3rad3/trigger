@@ -30,7 +30,7 @@ class Tentacle(object):
         self.anchors = []
         self.anchorLocations = []
 
-    def createTentacle(self, inits, suffix="", npResolution=5.0, jResolution=5.0, dropoff=2.0):
+    def createTentacle(self, inits, suffix="", npResolution=5.0, jResolution=5.0, blResolution=25.0, dropoff=2.0):
 
         ## Make sure the suffix is unique
         idCounter=0
@@ -131,7 +131,14 @@ class Tentacle(object):
         extra.alignAndAim(npBase, targetList=[contJoints[0], contJoints[-1]], aimTargetList=[contJoints[-1]], upVector=spineDir)
 
         ## Duplicate the Base Nurbs Plane as joint Holder (npJDefHolder)
-        npJdefHolder = pm.duplicate(npBase[0], name="npJDefHolder_"+suffix)
+        npJdefHolder = pm.nurbsPlane(ax=(0, 1, 0), u=blResolution, v=1, w=ribbonLength, lr=(1.0 / ribbonLength),
+                               name="npJDefHolder_" + suffix)
+        pm.rebuildSurface(npJdefHolder, ch=1, rpo=1, rt=0, end=1, kr=2, kcp=0, kc=0, su=5, du=3, sv=1, dv=1, tol=0, fr=0,
+                          dir=1)
+        extra.alignAndAim(npJdefHolder, targetList=[contJoints[0], contJoints[-1]], aimTargetList=[contJoints[-1]],
+                          upVector=spineDir)
+
+        # npJdefHolder = pm.duplicate(npBase[0], name="npJDefHolder_"+suffix)
 
         ## Create the follicles on the npJDefHolder
         npJdefHolderShape = npJdefHolder[0].getShape()
@@ -156,19 +163,22 @@ class Tentacle(object):
             # self.toHide.append(follicle)
 
         ## Duplicate it 3 more times for deformation targets (npCurl, npTwist, npSine)
-        npCurl = pm.duplicate(npBase[0], name="npCurl_"+suffix)
-        npTwist = pm.duplicate(npBase[0], name="npTwist_" + suffix)
-        npSine = pm.duplicate(npBase[0], name="npSine_" + suffix)
 
+        npCurl = pm.duplicate(npJdefHolder[0], name="npCurl_"+suffix)
+        # print "anan", npCurl
+        # pm.setAttr(npCurl[0].getShape().patchesU, 25)
+        npTwist = pm.duplicate(npJdefHolder[0], name="npTwist_" + suffix)
+        npSine = pm.duplicate(npJdefHolder[0], name="npSine_" + suffix)
+        print "ANAN"
         ## Create Blendshape node between np_jDefHolder and deformation targets
-        npBlend = pm.blendShape(npCurl, npTwist, npSine, npJdefHolder, w=[(0,1),(1,1),(2,1)])
+        npBlend = pm.blendShape(npCurl, npTwist, npSine, npJdefHolder[0], w=[(0,1),(1,1),(2,1)])
 
         ## Wrap npjDefHolder to the Base Plane
         # npWrap = pm.deformer(type="wrap", g=npJdefHolder)
         npWrap = self.createWrap(npBase[0], npJdefHolder[0],weightThreshold=0.0, maxDistance=50, autoWeightThreshold=False)
 
         ## Create skin cluster
-        pm.skinCluster(contJoints, npBase[0], tsb=True, dropoffRate=2.0)
+        pm.skinCluster(contJoints, npBase[0], tsb=True, dropoffRate=dropoff)
 
         ## create the roll(bend) deformer
         pm.select(npCurl)
@@ -207,6 +217,10 @@ class Tentacle(object):
                 rotateOff = (-90,-90, 180)
             extra.alignAndAim(contJoints[j], targetList=[inits[j]], aimTargetList=[targetInit], upVector=upAxis, rotateOff=rotateOff)
 
+        ## constrain joints to controllers
+
+        for j in range (len(contJoints)):
+            pm.parentConstraint(contTwk_List[j], contJoints[j], mo=False)
 
 
         ## Good Parenting
