@@ -355,3 +355,19 @@ def halfDome(name="cont_halfDome", scale=(1,1,1), location=None, normal=(0,1,0))
         # pm.rotate(cont_Pole, (0,0,90))
         pm.makeIdentity(halfCurve, a=True)
     return halfCurve
+
+def looper(name="cont_looper", scale=(1,1,1), location=None, normal=(0,1,0)):
+
+    cont_Looper=pm.curve(name=name, d=1, p=[(0,0,-1),(1,0,-1),(1,0,1),(-1,0,1),(-1,0,-2),(2,0,-2),(2,0,2),(-2,0,2),(-2,0,-3),(3,0,-3),(3,0,3),(-3,0,3),(-3,0,-3)],
+             k=[0,1,2,3,4,5,6,7,8,9,10,11,12])
+    pm.setAttr(cont_Looper + ".scale", (0.333, 0.333, 0.333))
+    pm.makeIdentity(cont_Looper, a=True, s=True)
+    pm.setAttr(cont_Looper.scale, scale)
+    if location:
+        pm.move(cont_Looper, location)
+    pm.makeIdentity(cont_Looper, a=True)
+    if not normal == (1, 0, 0):
+        pm.rotate(cont_Looper, normal[0]*90, normal[1]*90, normal[2]*90)
+        # pm.rotate(cont_Pole, (0,0,90))
+        pm.makeIdentity(cont_Looper, a=True)
+    return cont_Looper

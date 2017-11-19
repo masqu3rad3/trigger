@@ -51,6 +51,18 @@ class Tentacle(object):
 
         ## Create Controller Curves
 
+        ## specialController
+        cont_special = icon.looper(name="tentacleSP_" + suffix)
+
+        extra.alignAndAim(cont_special , targetList=[inits[0]], aimTargetList=[inits[1]], upVector=upAxis,
+                          translateOff=(0,0,0), rotateOff=(90,90,0))
+        pm.move(cont_special, (3, 0, 0), r=True, os=True)
+
+        cont_special_ORE = extra.createUpGrp(cont_special,"ORE")
+
+        pm.addAttr(cont_special, shortName="curl", longName="Curl", defaultValue=0.0, minValue=0.0, maxValue=1.0, at="float",
+                   k=True)
+
         contFK_List = []
         contTwk_List = []
         for j in range (len(inits)):
@@ -149,7 +161,7 @@ class Tentacle(object):
         npSine = pm.duplicate(npBase[0], name="npSine_" + suffix)
 
         ## Create Blendshape node between np_jDefHolder and deformation targets
-        npBlend = pm.blendShape(npCurl, npTwist, npSine, npJdefHolder)
+        npBlend = pm.blendShape(npCurl, npTwist, npSine, npJdefHolder, w=[(0,1),(1,1),(2,1)])
 
         ## Wrap npjDefHolder to the Base Plane
         # npWrap = pm.deformer(type="wrap", g=npJdefHolder)
@@ -162,10 +174,28 @@ class Tentacle(object):
         pm.select(npCurl)
         curlDeformer = pm.nonLinear(type='bend', curvature=1500)
         # pm.select(curlDeformer)
-        pm.setAttr(curlDeformer[1].rz, 0)
+        # pm.setAttr(curlDeformer[1].rz, 4)
+        pm.setAttr(curlDeformer[0].lowBound, -1)
+        pm.setAttr(curlDeformer[0].highBound, 0)
         ## Ratio is:
-        ## EndPoint = -4 degree - length*2
+
+        pm.setDrivenKeyframe(curlDeformer[1].ty, cd=cont_special.curl, v=0.0, dv=1.0, itt='linear', ott='linear')
+        pm.setDrivenKeyframe([curlDeformer[1].sx, curlDeformer[1].sy, curlDeformer[1].sz], cd=cont_special.curl, v=(totalLength * 2), dv=1.0, itt='linear', ott='linear')
+        pm.setDrivenKeyframe(curlDeformer[1].rz, cd=cont_special.curl, v=4.0, dv=1.0, itt='linear', ott='linear')
+
+        pm.setDrivenKeyframe(curlDeformer[1].ty, cd=cont_special.curl, v=totalLength, dv=0.0, itt='linear', ott='linear')
+        pm.setDrivenKeyframe([curlDeformer[1].sx, curlDeformer[1].sy, curlDeformer[1].sz], cd=cont_special.curl, v=(totalLength / 2), dv=0.0, itt='linear', ott='linear')
+        pm.setDrivenKeyframe(curlDeformer[1].rz, cd=cont_special.curl, v=6.0, dv=0.0, itt='linear', ott='linear')
+
         ## StartPoint = -6 degree - length/2
+        # pm.setKeyframe(curlDeformer[1], attribute='translateY', v=0 ,t=0)
+        # pm.setKeyframe(curlDeformer[1], attribute=['sx', 'sy', 'sz'], v=(totalLength * 2), t=0)
+        # pm.setKeyframe(curlDeformer[1], attribute='rz', v=(4), t=0)
+
+        ## EndPoint = -4 degree - length*2
+        # pm.setKeyframe(curlDeformer[1], attribute='translateY', v=totalLength,t=10)
+        # pm.setKeyframe(curlDeformer[1], attribute=['sx', 'sy', 'sz'], v=(totalLength / 2), t=10)
+        # pm.setKeyframe(curlDeformer[1], attribute='rz', v=(6), t=10)
 
         ## move the control points back into the place
         for j in range (len(inits)):
