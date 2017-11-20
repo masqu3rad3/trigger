@@ -60,7 +60,46 @@ class Tentacle(object):
 
         cont_special_ORE = extra.createUpGrp(cont_special,"ORE")
 
-        pm.addAttr(cont_special, shortName="curl", longName="Curl", defaultValue=0.0, minValue=0.0, maxValue=1.0, at="float",
+        ## seperator - curl
+        pm.addAttr(cont_special, shortName="curlSeperator", at="enum", en="----------", k=True)
+        pm.setAttr(cont_special.curlSeperator, lock=True)
+
+        pm.addAttr(cont_special, shortName="curl", longName="Curl", defaultValue=0.0, minValue=0.0, maxValue=10.0, at="float",
+                   k=True)
+        pm.addAttr(cont_special, shortName="startDiameter", longName="Start_Diameter", defaultValue=0.0, at="float", k=True)
+        pm.addAttr(cont_special, shortName="endDiameter", longName="End_Diameter", defaultValue=0.0, at="float",
+                   k=True)
+        pm.addAttr(cont_special, shortName="startAngle", longName="Start_Angle", defaultValue=0.0, at="float",
+                   k=True)
+        pm.addAttr(cont_special, shortName="endAngle", longName="End_Angle", defaultValue=0.0, at="float",
+                   k=True)
+
+        ## seperator - twist
+        pm.addAttr(cont_special, shortName="twistSeperator", at="enum", en="----------", k=True)
+        pm.setAttr(cont_special.twistSeperator, lock=True)
+
+        pm.addAttr(cont_special, shortName="twistAngle", longName="Twist_Angle", defaultValue=0.0, at="float",
+                   k=True)
+        pm.addAttr(cont_special, shortName="twistSlide", longName="Twist_Slide", defaultValue=0.0, at="float",
+                   k=True)
+        pm.addAttr(cont_special, shortName="twistArea", longName="Twist_Area", defaultValue=1.0, at="float",
+                   k=True)
+
+        ## seperator - sine
+        pm.addAttr(cont_special, shortName="sineSeperator", at="enum", en="----------", k=True)
+        pm.setAttr(cont_special.sineSeperator, lock=True)
+        pm.addAttr(cont_special, shortName="sineAmplitude", longName="Sine_Amplitude", defaultValue=0.0, at="float",
+                   k=True)
+        pm.addAttr(cont_special, shortName="sineWavelength", longName="Sine_Wavelength", defaultValue=0.0, at="float",
+                   k=True)
+        pm.addAttr(cont_special, shortName="sineDropOff", longName="Sine_Dropoff", defaultValue=0.0, at="float",
+                   k=True)
+        pm.addAttr(cont_special, shortName="sineSlide", longName="Sine_Slide", defaultValue=0.0, at="float",
+                   k=True)
+        pm.addAttr(cont_special, shortName="sineArea", longName="Sine_area", defaultValue=0.0, at="float",
+                   k=True)
+
+        pm.addAttr(cont_special, shortName="sineAnimate", longName="Sine_Animate", defaultValue=0.0, at="float",
                    k=True)
 
         contFK_List = []
@@ -162,16 +201,16 @@ class Tentacle(object):
             pm.parent(follicle.getParent(), self.nonScaleGrp)
             # self.toHide.append(follicle)
 
-        ## Duplicate it 3 more times for deformation targets (npCurl, npTwist, npSine)
+        ## Duplicate it 3 more times for deformation targets (npDeformers, npTwist, npSine)
 
-        npCurl = pm.duplicate(npJdefHolder[0], name="npCurl_"+suffix)
-        # print "anan", npCurl
-        # pm.setAttr(npCurl[0].getShape().patchesU, 25)
-        npTwist = pm.duplicate(npJdefHolder[0], name="npTwist_" + suffix)
-        npSine = pm.duplicate(npJdefHolder[0], name="npSine_" + suffix)
-        print "ANAN"
+        npDeformers = pm.duplicate(npJdefHolder[0], name="npCurl_"+suffix)
+        # print "anan", npDeformers
+        # pm.setAttr(npDeformers[0].getShape().patchesU, 25)
+        # npTwist = pm.duplicate(npJdefHolder[0], name="npTwist_" + suffix)
+        # npSine = pm.duplicate(npJdefHolder[0], name="npSine_" + suffix)
         ## Create Blendshape node between np_jDefHolder and deformation targets
-        npBlend = pm.blendShape(npCurl, npTwist, npSine, npJdefHolder[0], w=[(0,1),(1,1),(2,1)])
+        # npBlend = pm.blendShape(npTwist, npDeformers, npTwist, npSine, npJdefHolder[0], w=[(0,1),(1,1),(2,1)])
+        npBlend = pm.blendShape(npDeformers, npJdefHolder[0], w=(0,1))
 
         ## Wrap npjDefHolder to the Base Plane
         # npWrap = pm.deformer(type="wrap", g=npJdefHolder)
@@ -181,31 +220,29 @@ class Tentacle(object):
         pm.skinCluster(contJoints, npBase[0], tsb=True, dropoffRate=dropoff)
 
         ## create the roll(bend) deformer
-        pm.select(npCurl)
-        curlDeformer = pm.nonLinear(type='bend', curvature=1500)
+        # pm.select(npDeformers)
+        curlDeformer = pm.nonLinear(npDeformers, type='bend', curvature=1500)
         # pm.select(curlDeformer)
         # pm.setAttr(curlDeformer[1].rz, 4)
         pm.setAttr(curlDeformer[0].lowBound, -1)
         pm.setAttr(curlDeformer[0].highBound, 0)
         ## Ratio is:
 
-        pm.setDrivenKeyframe(curlDeformer[1].ty, cd=cont_special.curl, v=0.0, dv=1.0, itt='linear', ott='linear')
-        pm.setDrivenKeyframe([curlDeformer[1].sx, curlDeformer[1].sy, curlDeformer[1].sz], cd=cont_special.curl, v=(totalLength * 2), dv=1.0, itt='linear', ott='linear')
-        pm.setDrivenKeyframe(curlDeformer[1].rz, cd=cont_special.curl, v=4.0, dv=1.0, itt='linear', ott='linear')
+        pm.setDrivenKeyframe(curlDeformer[1].ty, cd=cont_special.curl, v=0.0, dv=10.0, itt='linear', ott='linear')
+        pm.setDrivenKeyframe([curlDeformer[1].sx, curlDeformer[1].sy, curlDeformer[1].sz], cd=cont_special.curl, v=(totalLength * 2), dv=10.0, itt='linear', ott='linear')
+        pm.setDrivenKeyframe(curlDeformer[1].rz, cd=cont_special.curl, v=4.0, dv=10.0, itt='linear', ott='linear')
 
         pm.setDrivenKeyframe(curlDeformer[1].ty, cd=cont_special.curl, v=totalLength, dv=0.0, itt='linear', ott='linear')
         pm.setDrivenKeyframe([curlDeformer[1].sx, curlDeformer[1].sy, curlDeformer[1].sz], cd=cont_special.curl, v=(totalLength / 2), dv=0.0, itt='linear', ott='linear')
         pm.setDrivenKeyframe(curlDeformer[1].rz, cd=cont_special.curl, v=6.0, dv=0.0, itt='linear', ott='linear')
 
-        ## StartPoint = -6 degree - length/2
-        # pm.setKeyframe(curlDeformer[1], attribute='translateY', v=0 ,t=0)
-        # pm.setKeyframe(curlDeformer[1], attribute=['sx', 'sy', 'sz'], v=(totalLength * 2), t=0)
-        # pm.setKeyframe(curlDeformer[1], attribute='rz', v=(4), t=0)
+        ## create twist deformer
+        twistDeformer = pm.nonLinear(npDeformers, type='twist')
+        pm.rotate(twistDeformer[1], (0,0,0))
 
-        ## EndPoint = -4 degree - length*2
-        # pm.setKeyframe(curlDeformer[1], attribute='translateY', v=totalLength,t=10)
-        # pm.setKeyframe(curlDeformer[1], attribute=['sx', 'sy', 'sz'], v=(totalLength / 2), t=10)
-        # pm.setKeyframe(curlDeformer[1], attribute='rz', v=(6), t=10)
+        ## create sine deformer
+        sineDeformer = pm.nonLinear(npDeformers, type='sine')
+        pm.rotate(sineDeformer[1], (0,0,0))
 
         ## move the control points back into the place
         for j in range (len(inits)):
