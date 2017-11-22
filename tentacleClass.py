@@ -64,15 +64,13 @@ class Tentacle(object):
         pm.addAttr(cont_special, shortName="curlSeperator", at="enum", en="----------", k=True)
         pm.setAttr(cont_special.curlSeperator, lock=True)
 
-        pm.addAttr(cont_special, shortName="curl", longName="Curl", defaultValue=0.0, minValue=0.0, maxValue=10.0, at="float",
+        pm.addAttr(cont_special, shortName="curl", longName="Curl", defaultValue=0.0, minValue=-10.0, maxValue=10.0, at="float",
                    k=True)
-        pm.addAttr(cont_special, shortName="startDiameter", longName="Start_Diameter", defaultValue=0.0, at="float", k=True)
-        pm.addAttr(cont_special, shortName="endDiameter", longName="End_Diameter", defaultValue=0.0, at="float",
+        pm.addAttr(cont_special, shortName="curlSize", longName="Curl_Size", defaultValue=1.0, at="float", k=True)
+
+        pm.addAttr(cont_special, shortName="curlAngle", longName="Curl_Angle", defaultValue=1.0, at="float",
                    k=True)
-        pm.addAttr(cont_special, shortName="startAngle", longName="Start_Angle", defaultValue=0.0, at="float",
-                   k=True)
-        pm.addAttr(cont_special, shortName="endAngle", longName="End_Angle", defaultValue=0.0, at="float",
-                   k=True)
+
 
         ## seperator - twist
         pm.addAttr(cont_special, shortName="twistSeperator", at="enum", en="----------", k=True)
@@ -90,13 +88,13 @@ class Tentacle(object):
         pm.setAttr(cont_special.sineSeperator, lock=True)
         pm.addAttr(cont_special, shortName="sineAmplitude", longName="Sine_Amplitude", defaultValue=0.0, at="float",
                    k=True)
-        pm.addAttr(cont_special, shortName="sineWavelength", longName="Sine_Wavelength", defaultValue=0.0, at="float",
+        pm.addAttr(cont_special, shortName="sineWavelength", longName="Sine_Wavelength", defaultValue=1.0, at="float",
                    k=True)
-        pm.addAttr(cont_special, shortName="sineDropOff", longName="Sine_Dropoff", defaultValue=0.0, at="float",
+        pm.addAttr(cont_special, shortName="sineDropoff", longName="Sine_Dropoff", defaultValue=0.0, at="float",
                    k=True)
         pm.addAttr(cont_special, shortName="sineSlide", longName="Sine_Slide", defaultValue=0.0, at="float",
                    k=True)
-        pm.addAttr(cont_special, shortName="sineArea", longName="Sine_area", defaultValue=0.0, at="float",
+        pm.addAttr(cont_special, shortName="sineArea", longName="Sine_area", defaultValue=1.0, at="float",
                    k=True)
 
         pm.addAttr(cont_special, shortName="sineAnimate", longName="Sine_Animate", defaultValue=0.0, at="float",
@@ -219,7 +217,7 @@ class Tentacle(object):
         ## Create skin cluster
         pm.skinCluster(contJoints, npBase[0], tsb=True, dropoffRate=dropoff)
 
-        ## create the roll(bend) deformer
+        ## CURL DEFORMER
         # pm.select(npDeformers)
         curlDeformer = pm.nonLinear(npDeformers, type='bend', curvature=1500)
         # pm.select(curlDeformer)
@@ -228,21 +226,79 @@ class Tentacle(object):
         pm.setAttr(curlDeformer[0].highBound, 0)
         ## Ratio is:
 
+        pm.setDrivenKeyframe(curlDeformer[0].curvature, cd=cont_special.curl, v=0.0, dv=0.0, itt='linear', ott='linear')
+        pm.setDrivenKeyframe(curlDeformer[0].curvature, cd=cont_special.curl, v=1500.0, dv=0.01, itt='linear', ott='linear')
+        pm.setDrivenKeyframe(curlDeformer[0].curvature, cd=cont_special.curl, v=-1500.0, dv=-0.01, itt='linear', ott='linear')
+
         pm.setDrivenKeyframe(curlDeformer[1].ty, cd=cont_special.curl, v=0.0, dv=10.0, itt='linear', ott='linear')
+        pm.setDrivenKeyframe(curlDeformer[1].ty, cd=cont_special.curl, v=0.0, dv=-10.0, itt='linear', ott='linear')
         pm.setDrivenKeyframe([curlDeformer[1].sx, curlDeformer[1].sy, curlDeformer[1].sz], cd=cont_special.curl, v=(totalLength * 2), dv=10.0, itt='linear', ott='linear')
+        pm.setDrivenKeyframe([curlDeformer[1].sx, curlDeformer[1].sy, curlDeformer[1].sz], cd=cont_special.curl, v=(totalLength * 2), dv=-10.0, itt='linear', ott='linear')
         pm.setDrivenKeyframe(curlDeformer[1].rz, cd=cont_special.curl, v=4.0, dv=10.0, itt='linear', ott='linear')
+        pm.setDrivenKeyframe(curlDeformer[1].rz, cd=cont_special.curl, v=-4.0, dv=-10.0, itt='linear', ott='linear')
 
         pm.setDrivenKeyframe(curlDeformer[1].ty, cd=cont_special.curl, v=totalLength, dv=0.0, itt='linear', ott='linear')
         pm.setDrivenKeyframe([curlDeformer[1].sx, curlDeformer[1].sy, curlDeformer[1].sz], cd=cont_special.curl, v=(totalLength / 2), dv=0.0, itt='linear', ott='linear')
-        pm.setDrivenKeyframe(curlDeformer[1].rz, cd=cont_special.curl, v=6.0, dv=0.0, itt='linear', ott='linear')
+        pm.setDrivenKeyframe(curlDeformer[1].rz, cd=cont_special.curl, v=6.0, dv=0.01, itt='linear', ott='linear')
+        pm.setDrivenKeyframe(curlDeformer[1].rz, cd=cont_special.curl, v=-6.0, dv=-0.01, itt='linear', ott='linear')
 
-        ## create twist deformer
+        ## create curl size multipliers
+
+        curlSizeMultX = pm.createNode("multDoubleLinear", name="curlSizeMultX_{0}".format(suffix))
+        curlSizeMultY = pm.createNode("multDoubleLinear", name="curlSizeMultY_{0}".format(suffix))
+        curlSizeMultZ = pm.createNode("multDoubleLinear", name="curlSizeMultZ_{0}".format(suffix))
+
+        curlAngleMultZ = pm.createNode("multDoubleLinear", name="curlAngleMultZ_{0}".format(suffix))
+
+        cont_special.curlSize >> curlSizeMultX.input1
+        cont_special.curlSize >> curlSizeMultY.input1
+        cont_special.curlSize >> curlSizeMultZ.input1
+
+        cont_special.curlAngle >> curlAngleMultZ.input1
+
+        pm.listConnections(curlDeformer[1].sx)[0].output >> curlSizeMultX.input2
+        pm.listConnections(curlDeformer[1].sy)[0].output >> curlSizeMultY.input2
+        pm.listConnections(curlDeformer[1].sz)[0].output >> curlSizeMultZ.input2
+
+        pm.listConnections(curlDeformer[1].rz)[0].output >> curlAngleMultZ.input2
+
+        curlSizeMultX.output >> curlDeformer[1].sx
+        curlSizeMultY.output >> curlDeformer[1].sy
+        curlSizeMultZ.output >> curlDeformer[1].sz
+
+        curlAngleMultZ.output >> curlDeformer[1].rz
+
+        ## TWIST DEFORMER
         twistDeformer = pm.nonLinear(npDeformers, type='twist')
         pm.rotate(twistDeformer[1], (0,0,0))
+        twistLoc = pm.spaceLocator(name="twistLoc_{0}".format(suffix))
+        extra.alignTo(twistLoc, inits[0])
+        pm.parent(twistDeformer[1], twistLoc)
 
-        ## create sine deformer
+        ## make connections:
+        cont_special.twistAngle >> twistDeformer[0].endAngle
+        cont_special.twistSlide >> twistLoc.translateY
+        cont_special.twistArea >> twistLoc.scaleY
+
+
+        ## SINE DEFORMER
         sineDeformer = pm.nonLinear(npDeformers, type='sine')
         pm.rotate(sineDeformer[1], (0,0,0))
+        sineLoc = pm.spaceLocator(name="sineLoc_{0}".format(suffix))
+        extra.alignTo(sineLoc, inits[0])
+        pm.parent(sineDeformer[1], sineLoc)
+
+        ## make connections:
+        cont_special.sineAmplitude >> sineDeformer[0].amplitude
+        cont_special.sineWavelength >> sineDeformer[0].wavelength
+        cont_special.sineDropoff >> sineDeformer[0].dropoff
+        cont_special.sineAnimate >> sineDeformer[0].offset
+
+        cont_special.sineSlide >> sineLoc.translateY
+        cont_special.sineArea >> sineLoc.scaleY
+
+
+
 
         ## move the control points back into the place
         for j in range (len(inits)):

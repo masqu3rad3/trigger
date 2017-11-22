@@ -371,3 +371,17 @@ def looper(name="cont_looper", scale=(1,1,1), location=None, normal=(0,1,0)):
         # pm.rotate(cont_Pole, (0,0,90))
         pm.makeIdentity(cont_Looper, a=True)
     return cont_Looper
+
+def triangle(name="cont_triangle", scale=(1,1,1), location=None, normal=(0,1,0)):
+    cont_Triangle=pm.curve(name=name, d=1, p=[(0,0,-3),(-3,0,2),(3,0,2),(0,0,-3)],k=[0,1,2,3])
+    pm.setAttr(cont_Triangle + ".scale", (0.333, 0.333, 0.333))
+    pm.makeIdentity(cont_Triangle, a=True, s=True)
+    pm.setAttr(cont_Triangle.scale, scale)
+    if location:
+        pm.move(cont_Triangle, location)
+    pm.makeIdentity(cont_Triangle, a=True)
+    if not normal == (1, 0, 0):
+        pm.rotate(cont_Triangle, normal[0]*90, normal[1]*90, normal[2]*90)
+        # pm.rotate(cont_Pole, (0,0,90))
+        pm.makeIdentity(cont_Triangle, a=True)
+    return cont_Triangle
