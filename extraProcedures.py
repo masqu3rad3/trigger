@@ -693,7 +693,7 @@ def replaceController(mirror=True, mirrorAxis="X", keepOld=False, *args, **kwarg
         else:
             pm.warning("Cannot find the mirror controller, skipping mirror part")
             if not keepOld:
-                pm.delete(oldContMirror.getShape())
+                pm.delete(oldCont.getShape())
             return
         oldContMirror = pm.PyNode(mirrorName)
         newContDupMirror = pm.duplicate(newCont)[0]
