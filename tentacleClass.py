@@ -124,7 +124,7 @@ class Tentacle(object):
                           rotateOff=rotateOff)
             contFK_OFF = extra.createUpGrp(contFK, "OFF")
             contFK_ORE = extra.createUpGrp(contFK, "ORE")
-            contFK_List.append(contFK)
+            # contFK_List.append(contFK)
 
             pm.parent(contTwk_OFF, contFK)
             if not j == 0:
@@ -152,27 +152,27 @@ class Tentacle(object):
         splitVc = endVc - rootVc
 
         ## Create Control Joints
-        contJoints = []
+        contJointsList = []
         pm.select(d=True)
         for i in range(0, len(contDistances)):
             ctrlVc = splitVc.normal() * contDistances[i]
             place = rootVc + (ctrlVc)
             j = pm.joint(p=place, name="jCont_tentacle_" + suffix + str(i), radius=5, o=(0, 0, 0))
-            contJoints.append(j)
+            contJointsList.append(j)
             pm.select(d=True)
 
         ## Create the Base Nurbs Plane (npBase)
-        ribbonLength = extra.getDistance(contJoints[0], contJoints[-1])
+        ribbonLength = extra.getDistance(contJointsList[0], contJointsList[-1])
         npBase=pm.nurbsPlane(ax=(0,1,0),u=npResolution,v=1, w=ribbonLength, lr=(1.0/ribbonLength), name="npBase_"+suffix)
         pm.rebuildSurface (npBase, ch=1, rpo=1, rt=0, end=1, kr=2, kcp=0, kc=0, su=5, du=3, sv=1, dv=1, tol=0, fr=0, dir=1)
-        extra.alignAndAim(npBase, targetList=[contJoints[0], contJoints[-1]], aimTargetList=[contJoints[-1]], upVector=spineDir)
+        extra.alignAndAim(npBase, targetList=[contJointsList[0], contJointsList[-1]], aimTargetList=[contJointsList[-1]], upVector=spineDir)
 
         ## Duplicate the Base Nurbs Plane as joint Holder (npJDefHolder)
         npJdefHolder = pm.nurbsPlane(ax=(0, 1, 0), u=blResolution, v=1, w=ribbonLength, lr=(1.0 / ribbonLength),
                                name="npJDefHolder_" + suffix)
         pm.rebuildSurface(npJdefHolder, ch=1, rpo=1, rt=0, end=1, kr=2, kcp=0, kc=0, su=5, du=3, sv=1, dv=1, tol=0, fr=0,
                           dir=1)
-        extra.alignAndAim(npJdefHolder, targetList=[contJoints[0], contJoints[-1]], aimTargetList=[contJoints[-1]],
+        extra.alignAndAim(npJdefHolder, targetList=[contJointsList[0], contJointsList[-1]], aimTargetList=[contJointsList[-1]],
                           upVector=spineDir)
 
         # npJdefHolder = pm.duplicate(npBase[0], name="npJDefHolder_"+suffix)
@@ -196,12 +196,13 @@ class Tentacle(object):
             defJ=pm.joint(name="jDef_{0}{1}".format(suffix,str(i)))
             pm.joint(defJ, e=True, zso=True, oj='zxy')
             self.deformerJoints.append(defJ)
-            pm.parent(follicle.getParent(), self.nonScaleGrp)
+            # pm.parent(follicle.getParent(), self.nonScaleGrp)
+            pm.scaleConstraint(self.scaleGrp, follicle.getParent(), mo=True)
             # self.toHide.append(follicle)
 
         ## Duplicate it 3 more times for deformation targets (npDeformers, npTwist, npSine)
 
-        npDeformers = pm.duplicate(npJdefHolder[0], name="npCurl_"+suffix)
+        npDeformers = pm.duplicate(npJdefHolder[0], name="npDeformers_"+suffix)
         # print "anan", npDeformers
         # pm.setAttr(npDeformers[0].getShape().patchesU, 25)
         # npTwist = pm.duplicate(npJdefHolder[0], name="npTwist_" + suffix)
@@ -215,7 +216,7 @@ class Tentacle(object):
         npWrap = self.createWrap(npBase[0], npJdefHolder[0],weightThreshold=0.0, maxDistance=50, autoWeightThreshold=False)
 
         ## Create skin cluster
-        pm.skinCluster(contJoints, npBase[0], tsb=True, dropoffRate=dropoff)
+        pm.skinCluster(contJointsList, npBase[0], tsb=True, dropoffRate=dropoff)
 
         ## CURL DEFORMER
         # pm.select(npDeformers)
@@ -308,16 +309,30 @@ class Tentacle(object):
             else:
                 targetInit = inits[j-1]
                 rotateOff = (-90,-90, 180)
-            extra.alignAndAim(contJoints[j], targetList=[inits[j]], aimTargetList=[targetInit], upVector=upAxis, rotateOff=rotateOff)
+            extra.alignAndAim(contJointsList[j], targetList=[inits[j]], aimTargetList=[targetInit], upVector=upAxis, rotateOff=rotateOff)
 
         ## constrain joints to controllers
 
-        for j in range (len(contJoints)):
-            pm.parentConstraint(contTwk_List[j], contJoints[j], mo=False)
+        for j in range (len(contJointsList)):
+            pm.parentConstraint(contTwk_List[j], contJointsList[j], mo=False)
 
 
         ## Good Parenting
-        # pm.parent(npBase[0], self.nonScaleGrp)
+        pm.parent(cont_special_ORE, self.contFK_List[0].getParent())
+
+        pm.parent(npBase[0], self.nonScaleGrp)
+        pm.parent(npJdefHolder[0], self.nonScaleGrp)
+        pm.parent(npDeformers[0], self.nonScaleGrp)
+        pm.parent(follicleList, self.nonScaleGrp)
+        pm.parent(curlDeformer[1], self.nonScaleGrp)
+        pm.parent(twistLoc, self.nonScaleGrp)
+        pm.parent(sineLoc,self.nonScaleGrp)
+
+
+        pm.parent(contJointsList, self.scaleGrp)
+        pm.parent(self.contFK_List[0].getParent(), self.scaleGrp)
+
+
 
 
 ## https://www.youtube.com/watch?v=sQOCfp-VMRU

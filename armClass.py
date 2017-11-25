@@ -48,12 +48,22 @@ class Arm():
             pm.error("Missing Joints for Arm Setup")
             return
 
+        if not type(armInits) == dict and not type(armInits) == list:
+            pm.error("Init joints must be list or dictionary")
+            return
 
+        if type(armInits) == dict:
         # reinitialize the dictionary for easy use
-        collarRef = armInits["Collar"]
-        shoulderRef = armInits["Shoulder"]
-        elbowRef = armInits["Elbow"]
-        handRef = armInits["Hand"]
+            collarRef = armInits["Collar"]
+            shoulderRef = armInits["Shoulder"]
+            elbowRef = armInits["Elbow"]
+            handRef = armInits["Hand"]
+        else:
+            collarRef = armInits[0]
+            shoulderRef = armInits[1]
+            elbowRef = armInits[2]
+            handRef = armInits[3]
+
 
         ## get the up axis
         axisDict={"x":(1.0,0.0,0.0),"y":(0.0,1.0,0.0),"z":(0.0,0.0,1.0),"-x":(-1.0,0.0,0.0),"-y":(0.0,-1.0,0.0),"-z":(0.0,0.0,-1.0)}
