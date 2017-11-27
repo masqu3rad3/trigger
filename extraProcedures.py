@@ -574,7 +574,8 @@ def identifyMaster(node, idBy="idByLabel"):
         "spine": ["Spine", "Root", "SpineEnd"],
         "neck": ["NeckRoot", "Neck", "Head", "Jaw", "HeadEnd"],
         "tail": ["TailRoot", "Tail"],
-        "finger": ["Finger", "Thumb", "Index_F", "Middle_F", "Ring_F", "Pinky_F", "Extra_F", "FingerRoot", "ThumbRoot", "IndexRoot", "MiddleRoot", "RingRoot", "PinkyRoot", "ExtraRoot"]
+        "finger": ["Finger", "Thumb", "Index_F", "Middle_F", "Ring_F", "Pinky_F", "Extra_F", "FingerRoot", "ThumbRoot", "IndexRoot", "MiddleRoot", "RingRoot", "PinkyRoot", "ExtraRoot"],
+        "tentacle": ["TentacleRoot", "Tentacle", "TentacleEnd"]
     }
 
     if not idBy in validIdByValues:

@@ -38,6 +38,7 @@ class initialJoints():
         self.legJointsList=[]
         self.fingerJointsList=[]
         self.tailJointsList=[]
+        self.tentacleJointsList=[]
         self.projectName = "tikAutoRig"
 
     def transformator (self, inputVector, transKey):
@@ -108,7 +109,8 @@ class initialJoints():
         self.mirrorAxis = "xyz".strip(lookAxis + upAxis)
 
     def initLimb (self, limb, whichSide="left", segments=3, fingerCount=5, thumb=False, constrainedTo = None, parentNode=None, defineAs=False):
-        
+
+        # print "whichSide", whichSide
         currentselection = pm.ls(sl=True)
         
         ## Create the holder group if it does not exist
@@ -124,7 +126,7 @@ class initialJoints():
 
         else:
         ## check validity of arguments
-            sideValids = ["left", "right", "both", "auto"]
+            sideValids = ["left", "right", "center", "both", "auto"]
             if whichSide not in sideValids:
                 pm.error("side argument '%s' is not valid. Valid arguments are: %s" %(whichSide, sideValids))
             if len(pm.ls(sl=True, type="joint")) != 1 and whichSide == "auto":
@@ -132,9 +134,15 @@ class initialJoints():
                 return
 
             ## get the necessary info from arguments
-            side = 1 if whichSide == "left" else 2
+            if whichSide == "left":
+                side =1
+            elif whichSide == "right":
+                side =2
+            else:
+                side = 0
+            # side = 1 if whichSide == "left" else 2
 
-        sideMult = 1 if whichSide == "left" else -1
+        sideMult = -1 if whichSide == "right" else 1
 
         if (segments + 1) < 2:
             pm.error("Define at least 2 segments")
@@ -221,6 +229,9 @@ class initialJoints():
 
         if limb == "finger":
             limbJoints, offsetVector = self.initialFinger(segments=segments, transformKey=a, side=side, suffix=suffix)
+
+        if limb == "tentacle":
+            limbJoints, offsetVector = self.initialTentacle(transformKey=a, segments=segments, side=side, suffix=suffix)
 
         ## grave the up axis to the root initJoints
         # pm.addAttr(limbJoints[0], longName="upAxis", dt="string")
@@ -696,6 +707,47 @@ class initialJoints():
             jointList.append(finger)
 
         self.fingerJointsList.append(jointList)
+        return jointList, offsetVector
+
+    def initialTentacle(self, transformKey, segments, side, suffix):
+
+        # print "Anan", side
+        if segments < 2:
+            pm.warning("minimum segments required for the tentacle is two. current: %s" %segments)
+            return
+        rPointTentacle = dt.Vector(self.transformator((0, 14, 0), transformKey))
+        if side == 0:
+            nPointTentacle = dt.Vector(self.transformator((0, 14, 10), transformKey))
+        else:
+            nPointTentacle = dt.Vector(self.transformator((10, 14, 0), transformKey))
+        offsetVector = dt.normal(nPointTentacle-rPointTentacle)
+        addTentacle = (nPointTentacle - rPointTentacle) / ((segments + 1) - 1)
+        jointList = []
+        for i in range(0, (segments + 1)):
+            tentacle = pm.joint(p=(rPointTentacle + (addTentacle * i)), name="jInit_tentacle_%s_%s" %(suffix, str(i)))
+            pm.setAttr(tentacle + ".side", side)
+
+            if i == 0:
+                pm.setAttr(tentacle + ".type", 18)
+                pm.setAttr(tentacle + ".otherType", "TentacleRoot")
+                pm.addAttr(shortName="contRes", longName="Cont_Resolution", defaultValue=5, minValue=1,
+                           at="long", k=True)
+                pm.addAttr(shortName="jointRes", longName="Joint_Resolution", defaultValue=25, minValue=1,
+                           at="long", k=True)
+                pm.addAttr(shortName="deformerRes", longName="Deformer_Resolution", defaultValue=25, minValue=1,
+                           at="long", k=True)
+                pm.addAttr(shortName="dropoff", longName="DropOff", defaultValue=2.0, minValue=0.1,
+                           at="float", k=True)
+                self.createAxisAttributes(tentacle)
+                pm.setAttr(tentacle.radius, 3)
+            else:
+                pm.setAttr(tentacle + ".type", 18)
+                pm.setAttr(tentacle + ".otherType", "Tentacle")
+
+            pm.setAttr(tentacle + ".drawLabel", 1)
+            jointList.append(tentacle)
+
+        self.tentacleJointsList.append(jointList)
         return jointList, offsetVector
 
     def initHumanoid(self, spineSegments=3, neckSegments=3, fingers=5):

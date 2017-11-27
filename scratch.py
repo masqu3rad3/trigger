@@ -17,11 +17,14 @@ reload(simpleTail)
 import fingersClass as finger
 reload(finger)
 
+import tentacleClass as tentacle
+reload(tentacle)
+
 class LimbBuilder():
 
     def __init__(self):
         # self.catalogueRoots(pm.ls(sl=True)[0])
-        self.validRootList = ["Collar", "LegRoot", "Root", "NeckRoot", "TailRoot", "FingerRoot", "ThumbRoot", "IndexRoot", "MiddleRoot", "RingRoot", "PinkyRoot"]
+        self.validRootList = ["Collar", "LegRoot", "Root", "NeckRoot", "TailRoot", "FingerRoot", "ThumbRoot", "IndexRoot", "MiddleRoot", "RingRoot", "PinkyRoot", "TentacleRoot"]
         # self.limbList = []
         self.fingerMatchList = []
         self.fingerMatchConts = []
@@ -91,6 +94,7 @@ class LimbBuilder():
             return
         limbProperties = self.getWholeLimb(referenceRoot)
 
+
         if limbProperties[1] == "arm":
             limb = arm.Arm()
             limb.createArm(limbProperties[0], suffix="%s_arm" % limbProperties[2], side=limbProperties[2])
@@ -114,6 +118,10 @@ class LimbBuilder():
         elif limbProperties[1] == "finger":
             limb = finger.Fingers()
             limb.createFinger(limbProperties[0], suffix="%s_finger" % limbProperties[2])
+
+        elif limbProperties[1] == "tentacle":
+            limb = tentacle.Tentacle()
+            limb.createTentacle(limbProperties[0], suffix="%s_leg" % limbProperties[2], side=limbProperties[2])
 
         else:
             pm.error("limb creation failed.")
@@ -353,6 +361,12 @@ class LimbBuilder():
                 limb = finger.Fingers()
                 limb.createFinger(x[0], suffix=sideVal, side=x[2], parentController=parentController)
 
+            elif x[1] == "tentacle":
+                # print "anan", x
+                limb = tentacle.Tentacle()
+                # limb.createTentacle(x[0], suffix="%s_leg" % x[2], side=x[2], npResolution=x[0]["contRes"], jResolution = x[0]["jointRes"],blResolution = x[0]["deformerRes"], dropoff = x[0]["dropoff"])
+                limb.createTentacle(x[0], suffix="%s_leg" % x[2], side=x[2], npResolution=x[0]["contRes"], jResolution = x[0]["jointRes"])
+
             else:
                 pm.error("limb creation failed.")
                 return
@@ -421,6 +435,12 @@ class LimbBuilder():
         if limbType == "spine" or limbType == "neck":
             limbDict["resolution"] = pm.getAttr(node.resolution)
             limbDict["dropoff"] = pm.getAttr(node.dropoff)
+        if limbType == "tentacle":
+            limbDict["contRes"] = pm.getAttr(node.contRes)
+            limbDict["jointRes"] = pm.getAttr(node.jointRes)
+            limbDict["deformerRes"] = pm.getAttr(node.deformerRes)
+            limbDict["dropoff"] = pm.getAttr(node.dropoff)
+
         limbDict[limbName] = node
         nextNode = node
         z=True
@@ -433,7 +453,7 @@ class LimbBuilder():
                 cID = extra.identifyMaster(c)
                 if cID[0] not in self.validRootList and cID[1] == limbType:
                     nextNode = c
-                    if cID[0] == "Spine" or cID[0] == "Neck" or cID[0] == "Tail" or cID[1] == "finger":  ## spine and neck joints are multiple, so put them in a list
+                    if cID[0] == "Spine" or cID[0] == "Neck" or cID[0]== "Tentacle" or cID[0] == "Tail" or cID[1] == "finger":  ## spine and neck joints are multiple, so put them in a list
                         multiList.append(c)
                         limbDict[cID[0]] = multiList
                     else:

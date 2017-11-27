@@ -173,7 +173,7 @@ class mainUI(QtWidgets.QTabWidget):
 
     def initBonesUI(self):
 
-        labels = ["Spine", "Neck", "Arm", "Finger", "Leg", "Tail", "Biped"]
+        labels = ["Spine", "Neck", "Arm", "Finger", "Leg", "Tail", "Tentacle", "Biped"]
         pressEvents = []
         for labelName in labels:
             label = QtWidgets.QLabel(labelName, parent=self)
@@ -193,7 +193,8 @@ class mainUI(QtWidgets.QTabWidget):
         pressEvents[3].mousePressEvent = lambda x: self.hideToggle(self.fingerGroupBox)
         pressEvents[4].mousePressEvent = lambda x: self.hideToggle(self.legGroupBox)
         pressEvents[5].mousePressEvent = lambda x: self.hideToggle(self.tailGroupBox)
-        pressEvents[6].mousePressEvent = lambda x: self.hideToggle(self.bipedGroupBox)
+        pressEvents[6].mousePressEvent = lambda x: self.hideToggle(self.tentacleGroupBox)
+        pressEvents[7].mousePressEvent = lambda x: self.hideToggle(self.bipedGroupBox)
 
     def initSpineUI(self):
         self.spineGroupBox = QtWidgets.QGroupBox()
@@ -237,7 +238,7 @@ class mainUI(QtWidgets.QTabWidget):
 
     def initArmUI(self):
         self.armGroupBox = QtWidgets.QGroupBox()
-        self.armGroupBox.setFixedSize(210, 80)
+        self.armGroupBox.setFixedSize(210, 100)
         layout = QtWidgets.QHBoxLayout()
 
         self.armCreateBtn = QtWidgets.QPushButton("Create", minimumSize=(QtCore.QSize(self.wSize, self.hSize)), maximumSize=(QtCore.QSize(self.wSize, self.hSize)), parent=self)
@@ -245,11 +246,13 @@ class mainUI(QtWidgets.QTabWidget):
         radioGrpArm = QtWidgets.QButtonGroup(layout)
         self.armSideLeft = QtWidgets.QRadioButton("Left", parent=self)
         self.armSideRight = QtWidgets.QRadioButton("Right", parent=self)
+        self.armSideCenter = QtWidgets.QRadioButton("Center", parent=self)
         self.armSideBoth = QtWidgets.QRadioButton("Both", parent=self)
         self.armSideAuto = QtWidgets.QRadioButton("Auto", parent=self)
 
         radioGrpArm.addButton(self.armSideLeft)
         radioGrpArm.addButton(self.armSideRight)
+        radioGrpArm.addButton(self.armSideCenter)
         radioGrpArm.addButton(self.armSideBoth)
         radioGrpArm.addButton(self.armSideAuto)
         self.armSideAuto.setChecked(True)
@@ -260,6 +263,7 @@ class mainUI(QtWidgets.QTabWidget):
 
         radioColumnArm.addWidget(self.armSideLeft)
         radioColumnArm.addWidget(self.armSideRight)
+        radioColumnArm.addWidget(self.armSideCenter)
         radioColumnArm.addWidget(self.armSideBoth)
         radioColumnArm.addWidget(self.armSideAuto)
 
@@ -274,7 +278,7 @@ class mainUI(QtWidgets.QTabWidget):
         
     def initLegUI(self):
         self.legGroupBox = QtWidgets.QGroupBox()
-        self.legGroupBox.setFixedSize(210, 80)
+        self.legGroupBox.setFixedSize(210, 100)
         layout = QtWidgets.QHBoxLayout()
 
         self.legCreateBtn = QtWidgets.QPushButton("Create", minimumSize=(QtCore.QSize(self.wSize, self.hSize)), maximumSize=(QtCore.QSize(self.wSize, self.hSize)), parent=self)
@@ -282,11 +286,13 @@ class mainUI(QtWidgets.QTabWidget):
         radioGrpLeg = QtWidgets.QButtonGroup(layout)
         self.legSideLeft = QtWidgets.QRadioButton("Left", parent=self)
         self.legSideRight = QtWidgets.QRadioButton("Right", parent=self)
+        self.legSideCenter = QtWidgets.QRadioButton("Center", parent=self)
         self.legSideBoth = QtWidgets.QRadioButton("Both", parent=self)
         self.legSideAuto = QtWidgets.QRadioButton("Auto", parent=self)
 
         radioGrpLeg.addButton(self.legSideLeft)
         radioGrpLeg.addButton(self.legSideRight)
+        radioGrpLeg.addButton(self.legSideCenter)
         radioGrpLeg.addButton(self.legSideBoth)
         radioGrpLeg.addButton(self.legSideAuto)
         self.legSideAuto.setChecked(True)
@@ -297,6 +303,7 @@ class mainUI(QtWidgets.QTabWidget):
 
         radioColumnLeg.addWidget(self.legSideLeft)
         radioColumnLeg.addWidget(self.legSideRight)
+        radioColumnLeg.addWidget(self.legSideCenter)
         radioColumnLeg.addWidget(self.legSideBoth)
         radioColumnLeg.addWidget(self.legSideAuto)
 
@@ -357,6 +364,30 @@ class mainUI(QtWidgets.QTabWidget):
         tailSegLb = QtWidgets.QLabel("Segments")
         self.tailSegInt = QtWidgets.QSpinBox(maximumSize=(QtCore.QSize(40, 20)),value=3, minimum=1)
 
+        # radioGrpLeg = QtWidgets.QButtonGroup(layout)
+        # self.legSideLeft = QtWidgets.QRadioButton("Left", parent=self)
+        # self.legSideRight = QtWidgets.QRadioButton("Right", parent=self)
+        # self.legSideCenter = QtWidgets.QRadioButton("Center", parent=self)
+        # self.legSideBoth = QtWidgets.QRadioButton("Both", parent=self)
+        # self.legSideAuto = QtWidgets.QRadioButton("Auto", parent=self)
+        #
+        # radioGrpLeg.addButton(self.legSideLeft)
+        # radioGrpLeg.addButton(self.legSideRight)
+        # radioGrpLeg.addButton(self.legSideCenter)
+        # radioGrpLeg.addButton(self.legSideBoth)
+        # radioGrpLeg.addButton(self.legSideAuto)
+        # self.legSideAuto.setChecked(True)
+        #
+        # radioColumnLeg = QtWidgets.QVBoxLayout()
+        # radioColumnLeg.setAlignment(QtCore.Qt.AlignLeft)
+        # layout.addLayout(radioColumnLeg)
+        #
+        # radioColumnLeg.addWidget(self.legSideLeft)
+        # radioColumnLeg.addWidget(self.legSideRight)
+        # radioColumnLeg.addWidget(self.legSideCenter)
+        # radioColumnLeg.addWidget(self.legSideBoth)
+        # radioColumnLeg.addWidget(self.legSideAuto)
+###############################
         layout.addWidget(tailSegLb)
         layout.addWidget(self.tailSegInt)
         layout.addWidget(self.tailCreateBtn)
@@ -366,6 +397,51 @@ class mainUI(QtWidgets.QTabWidget):
         self.tailGroupBox.setLayout(layout)
         self.tailGroupBox.setHidden(True)
         self.initBoneslayout.addWidget(self.tailGroupBox)
+
+    def initTentacleUI(self):
+        self.tentacleGroupBox = QtWidgets.QGroupBox()
+        self.tentacleGroupBox.setFixedSize(210,130)
+
+        layout = QtWidgets.QHBoxLayout()
+        sgmSubLayout = QtWidgets.QHBoxLayout()
+        self.tentacleCreateBtn = QtWidgets.QPushButton("Create", minimumSize=(QtCore.QSize(self.wSize, self.hSize)), maximumSize=(QtCore.QSize(self.wSize, self.hSize)), parent=self)
+        tentacleSegLb = QtWidgets.QLabel("Seg.")
+        self.tentacleSegInt = QtWidgets.QSpinBox(maximumSize=(QtCore.QSize(40, 20)),value=3, minimum=1)
+
+        radioGrpTentacle = QtWidgets.QButtonGroup(layout)
+        self.tentacleSideLeft = QtWidgets.QRadioButton("Left", parent=self)
+        self.tentacleSideRight = QtWidgets.QRadioButton("Right", parent=self)
+        self.tentacleSideCenter = QtWidgets.QRadioButton("Center", parent=self)
+        self.tentacleSideBoth = QtWidgets.QRadioButton("Both", parent=self)
+        self.tentacleSideAuto = QtWidgets.QRadioButton("Auto", parent=self)
+
+        radioGrpTentacle.addButton(self.tentacleSideLeft)
+        radioGrpTentacle.addButton(self.tentacleSideRight)
+        radioGrpTentacle.addButton(self.tentacleSideCenter)
+        radioGrpTentacle.addButton(self.tentacleSideBoth)
+        radioGrpTentacle.addButton(self.tentacleSideAuto)
+        self.tentacleSideAuto.setChecked(True)
+
+        radioColumnTentacle = QtWidgets.QVBoxLayout()
+        radioColumnTentacle.setAlignment(QtCore.Qt.AlignLeft)
+        layout.addLayout(radioColumnTentacle)
+
+        radioColumnTentacle.addWidget(self.tentacleSideLeft)
+        radioColumnTentacle.addWidget(self.tentacleSideRight)
+        radioColumnTentacle.addWidget(self.tentacleSideCenter)
+        radioColumnTentacle.addWidget(self.tentacleSideBoth)
+        radioColumnTentacle.addWidget(self.tentacleSideAuto)
+
+        sgmSubLayout.addWidget(tentacleSegLb)
+        sgmSubLayout.addWidget(self.tentacleSegInt)
+        radioColumnTentacle.addLayout(sgmSubLayout)
+        layout.addWidget(self.tentacleCreateBtn)
+
+        self.tentacleCreateBtn.clicked.connect(self.createTentacle)
+
+        self.tentacleGroupBox.setLayout(layout)
+        self.tentacleGroupBox.setHidden(True)
+        self.initBoneslayout.addWidget(self.tentacleGroupBox)
         
     def initBipedUI(self):
         self.bipedGroupBox = QtWidgets.QGroupBox()
@@ -493,6 +569,24 @@ class mainUI(QtWidgets.QTabWidget):
     def createNeck(self):
         pm.undoInfo(openChunk=True)
         self.initSkeleton.initLimb("neck", segments=self.neckSegInt.value(), defineAs=self.defineAs)
+        pm.undoInfo(closeChunk=True)
+
+    def createTentacle(self):
+        pm.undoInfo(openChunk=True)
+
+        side = ""
+        if self.tentacleSideLeft.isChecked():
+            side = "left"
+        elif self.tentacleSideRight.isChecked():
+            side = "right"
+        elif self.tentacleSideCenter.isChecked():
+            side = "center"
+        elif self.tentacleSideBoth.isChecked():
+            side = "both"
+        elif self.tentacleSideAuto.isChecked():
+            side = "auto"
+
+        self.initSkeleton.initLimb("tentacle", whichSide=side, segments=self.tailSegInt.value(), defineAs=self.defineAs)
         pm.undoInfo(closeChunk=True)
 
     # def updateRigAttr(self):

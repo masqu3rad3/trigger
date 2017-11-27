@@ -37,7 +37,7 @@ class Leg():
         self.jDef_legRoot = None
         self.upAxis = None
 
-    def createLeg(self, legInits, suffix="", side="L", mirrorAxis="X"):
+    def createLeg(self, legInits, suffix="", side="L"):
         idCounter = 0
         ## create an unique suffix
         while pm.objExists("scaleGrp_" + suffix):
@@ -47,16 +47,31 @@ class Leg():
             pm.error("Some or all Leg Init Bones are missing (or Renamed)")
             return
 
+        if not type(legInits) == dict and not type(legInits) == list:
+            pm.error("Init joints must be list or dictionary")
+            return
+
         # reinitialize the dictionary for easy use
-        legRootRef = legInits["LegRoot"]
-        hipRef = legInits["Hip"]
-        kneeRef = legInits["Knee"]
-        footRef = legInits["Foot"]
-        ballRef = legInits["Ball"]
-        heelPvRef = legInits["HeelPV"]
-        toePvRef = legInits["ToePV"]
-        bankInRef = legInits["BankIN"]
-        bankOutRef = legInits["BankOUT"]
+        if type(legInits) == dict:
+            legRootRef = legInits["LegRoot"]
+            hipRef = legInits["Hip"]
+            kneeRef = legInits["Knee"]
+            footRef = legInits["Foot"]
+            ballRef = legInits["Ball"]
+            heelPvRef = legInits["HeelPV"]
+            toePvRef = legInits["ToePV"]
+            bankInRef = legInits["BankIN"]
+            bankOutRef = legInits["BankOUT"]
+        else:
+            legRootRef = legInits[0]
+            hipRef = legInits[1]
+            kneeRef = legInits[2]
+            footRef = legInits[3]
+            ballRef = legInits[4]
+            heelPvRef = legInits[5]
+            toePvRef = legInits[6]
+            bankInRef = legInits[7]
+            bankOutRef = legInits[8]
 
         ## get the up axis
         if pm.attributeQuery("upAxis", node=legRootRef, exists=True):

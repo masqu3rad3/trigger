@@ -38,7 +38,7 @@ class Arm():
         self.upAxis = None
         ## get the up axis
     ## This is a joint node and should be parented to another joint.
-    def createArm(self, armInits, suffix="", side="L", mirrorAxis="X"):
+    def createArm(self, armInits, suffix="", side="L"):
         idCounter=0
         ## create an unique suffix
         while pm.objExists("scaleGrp_" + suffix):

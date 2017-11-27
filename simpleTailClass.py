@@ -37,7 +37,7 @@ class SimpleTail(object):
         print "Creating Simple Tail %s" %suffix
 
         if (len(inits) < 2):
-            pm.error("Insufficient Tail Initialization Joints")
+            pm.error("Tail setup needs at least 2 initial joints")
             return
 
 

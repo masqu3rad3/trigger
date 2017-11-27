@@ -17,6 +17,7 @@ reload(twistSpline)
 
 import maya.cmds as cmds
 
+import pymel.core.datatypes as dt
 
 class Tentacle(object):
 
@@ -30,7 +31,14 @@ class Tentacle(object):
         self.anchors = []
         self.anchorLocations = []
 
-    def createTentacle(self, inits, suffix="", npResolution=5.0, jResolution=5.0, blResolution=25.0, dropoff=2.0):
+    def createTentacle(self, inits, suffix="", side="C", npResolution=5.0, jResolution=5.0, blResolution=25.0, dropoff=2.0):
+        if not isinstance(inits, list):
+            tentacleRoot = inits.get("TentacleRoot")
+            tentacles = (inits.get("Tentacle"))
+            inits = [tentacleRoot] + (tentacles)
+
+        npResolution=1.0*npResolution
+        jResolution = 1.0 * jResolution
 
         ## Make sure the suffix is unique
         idCounter=0
@@ -40,6 +48,7 @@ class Tentacle(object):
         if len(inits)<2:
             pm.error("Tentacle setup needs at least 2 initial joints")
             return
+        rootPoint = inits[0].getTranslation(space="world")
 
         ## Create Groups
         self.scaleGrp = pm.group(name="scaleGrp_" + suffix, em=True)
@@ -52,11 +61,14 @@ class Tentacle(object):
         ## Create Controller Curves
 
         ## specialController
+        iconScale = extra.getDistance(inits[0], inits[1])/3
         cont_special = icon.looper(name="tentacleSP_" + suffix)
+        extra.alignAndAim(cont_special, targetList = [inits[0]], aimTargetList = [inits[-1]], upVector=upAxis, rotateOff=(90,0,0))
+        pm.move(cont_special, (dt.Vector(upAxis) *(iconScale*2)), r=True)
 
-        extra.alignAndAim(cont_special , targetList=[inits[0]], aimTargetList=[inits[1]], upVector=upAxis,
-                          translateOff=(0,0,0), rotateOff=(90,90,0))
-        pm.move(cont_special, (3, 0, 0), r=True, os=True)
+        # extra.alignAndAim(cont_special , targetList=[inits[0]], aimTargetList=[inits[1]], upVector=upAxis,
+        #                   translateOff=(0,0,0), rotateOff=(90,90,0))
+        # pm.move(cont_special, (3, 0, 0), r=True, os=True)
 
         cont_special_ORE = extra.createUpGrp(cont_special,"ORE")
 
@@ -69,6 +81,9 @@ class Tentacle(object):
         pm.addAttr(cont_special, shortName="curlSize", longName="Curl_Size", defaultValue=1.0, at="float", k=True)
 
         pm.addAttr(cont_special, shortName="curlAngle", longName="Curl_Angle", defaultValue=1.0, at="float",
+                   k=True)
+
+        pm.addAttr(cont_special, shortName="curlShift", longName="Curl_Shift", defaultValue=0.0, at="float",
                    k=True)
 
 
@@ -124,16 +139,17 @@ class Tentacle(object):
                           rotateOff=rotateOff)
             contFK_OFF = extra.createUpGrp(contFK, "OFF")
             contFK_ORE = extra.createUpGrp(contFK, "ORE")
-            # contFK_List.append(contFK)
+            if side == "R":
+                pm.setAttr("{0}.s{1}".format(contFK_ORE, "x"), -1)
+            contFK_List.append(contFK)
 
             pm.parent(contTwk_OFF, contFK)
             if not j == 0:
                 pm.parent(contFK_OFF, contFK_List[j-1])
-
+            else:
+                pm.parent(contFK_OFF, self.scaleGrp)
 
         ## Make a straight line from inits joints (like in the twistSpline)
-        # get the root position
-        rootVc = inits[0].getTranslation(space="world")
         # calculate the necessary distance for the joints
         totalLength = 0
         contDistances = []
@@ -148,15 +164,15 @@ class Tentacle(object):
             totalLength += currentJointLength
             # this list contains distance between each control point
             contDistances.append(ctrlDistance)
-        endVc = (rootVc.x, (rootVc.y + totalLength), rootVc.z)
-        splitVc = endVc - rootVc
+        endVc = (rootPoint.x, (rootPoint.y + totalLength), rootPoint.z)
+        splitVc = endVc - rootPoint
 
         ## Create Control Joints
         contJointsList = []
         pm.select(d=True)
         for i in range(0, len(contDistances)):
             ctrlVc = splitVc.normal() * contDistances[i]
-            place = rootVc + (ctrlVc)
+            place = rootPoint + (ctrlVc)
             j = pm.joint(p=place, name="jCont_tentacle_" + suffix + str(i), radius=5, o=(0, 0, 0))
             contJointsList.append(j)
             pm.select(d=True)
@@ -203,17 +219,14 @@ class Tentacle(object):
         ## Duplicate it 3 more times for deformation targets (npDeformers, npTwist, npSine)
 
         npDeformers = pm.duplicate(npJdefHolder[0], name="npDeformers_"+suffix)
-        # print "anan", npDeformers
-        # pm.setAttr(npDeformers[0].getShape().patchesU, 25)
-        # npTwist = pm.duplicate(npJdefHolder[0], name="npTwist_" + suffix)
-        # npSine = pm.duplicate(npJdefHolder[0], name="npSine_" + suffix)
+        pm.move(npDeformers[0], (0,totalLength/2,0))
+
         ## Create Blendshape node between np_jDefHolder and deformation targets
-        # npBlend = pm.blendShape(npTwist, npDeformers, npTwist, npSine, npJdefHolder[0], w=[(0,1),(1,1),(2,1)])
         npBlend = pm.blendShape(npDeformers, npJdefHolder[0], w=(0,1))
 
         ## Wrap npjDefHolder to the Base Plane
         # npWrap = pm.deformer(type="wrap", g=npJdefHolder)
-        npWrap = self.createWrap(npBase[0], npJdefHolder[0],weightThreshold=0.0, maxDistance=50, autoWeightThreshold=False)
+        npWrap, npWrapGeo = self.createWrap(npBase[0], npJdefHolder[0],weightThreshold=0.0, maxDistance=50, autoWeightThreshold=False)
 
         ## Create skin cluster
         pm.skinCluster(contJointsList, npBase[0], tsb=True, dropoffRate=dropoff)
@@ -226,22 +239,25 @@ class Tentacle(object):
         pm.setAttr(curlDeformer[0].lowBound, -1)
         pm.setAttr(curlDeformer[0].highBound, 0)
         ## Ratio is:
-
+        if side == "R":
+            order=[-1, 1]
+        else:
+            order=[1, -1]
         pm.setDrivenKeyframe(curlDeformer[0].curvature, cd=cont_special.curl, v=0.0, dv=0.0, itt='linear', ott='linear')
-        pm.setDrivenKeyframe(curlDeformer[0].curvature, cd=cont_special.curl, v=1500.0, dv=0.01, itt='linear', ott='linear')
-        pm.setDrivenKeyframe(curlDeformer[0].curvature, cd=cont_special.curl, v=-1500.0, dv=-0.01, itt='linear', ott='linear')
+        pm.setDrivenKeyframe(curlDeformer[0].curvature, cd=cont_special.curl, v=1500.0*order[0], dv=0.01, itt='linear', ott='linear')
+        pm.setDrivenKeyframe(curlDeformer[0].curvature, cd=cont_special.curl, v=1500.0*order[1], dv=-0.01, itt='linear', ott='linear')
 
         pm.setDrivenKeyframe(curlDeformer[1].ty, cd=cont_special.curl, v=0.0, dv=10.0, itt='linear', ott='linear')
         pm.setDrivenKeyframe(curlDeformer[1].ty, cd=cont_special.curl, v=0.0, dv=-10.0, itt='linear', ott='linear')
         pm.setDrivenKeyframe([curlDeformer[1].sx, curlDeformer[1].sy, curlDeformer[1].sz], cd=cont_special.curl, v=(totalLength * 2), dv=10.0, itt='linear', ott='linear')
         pm.setDrivenKeyframe([curlDeformer[1].sx, curlDeformer[1].sy, curlDeformer[1].sz], cd=cont_special.curl, v=(totalLength * 2), dv=-10.0, itt='linear', ott='linear')
-        pm.setDrivenKeyframe(curlDeformer[1].rz, cd=cont_special.curl, v=4.0, dv=10.0, itt='linear', ott='linear')
-        pm.setDrivenKeyframe(curlDeformer[1].rz, cd=cont_special.curl, v=-4.0, dv=-10.0, itt='linear', ott='linear')
+        pm.setDrivenKeyframe(curlDeformer[1].rz, cd=cont_special.curl, v=4.0*order[0], dv=10.0, itt='linear', ott='linear')
+        pm.setDrivenKeyframe(curlDeformer[1].rz, cd=cont_special.curl, v=4.0*order[1], dv=-10.0, itt='linear', ott='linear')
 
         pm.setDrivenKeyframe(curlDeformer[1].ty, cd=cont_special.curl, v=totalLength, dv=0.0, itt='linear', ott='linear')
         pm.setDrivenKeyframe([curlDeformer[1].sx, curlDeformer[1].sy, curlDeformer[1].sz], cd=cont_special.curl, v=(totalLength / 2), dv=0.0, itt='linear', ott='linear')
-        pm.setDrivenKeyframe(curlDeformer[1].rz, cd=cont_special.curl, v=6.0, dv=0.01, itt='linear', ott='linear')
-        pm.setDrivenKeyframe(curlDeformer[1].rz, cd=cont_special.curl, v=-6.0, dv=-0.01, itt='linear', ott='linear')
+        pm.setDrivenKeyframe(curlDeformer[1].rz, cd=cont_special.curl, v=6.0*order[0], dv=0.01, itt='linear', ott='linear')
+        pm.setDrivenKeyframe(curlDeformer[1].rz, cd=cont_special.curl, v=6.0*order[1], dv=-0.01, itt='linear', ott='linear')
 
         ## create curl size multipliers
 
@@ -251,11 +267,17 @@ class Tentacle(object):
 
         curlAngleMultZ = pm.createNode("multDoubleLinear", name="curlAngleMultZ_{0}".format(suffix))
 
+        curlShiftAdd = pm.createNode("plusMinusAverage", name="curlAddShift_{0}".format(suffix))
+        cont_special.curlShift >> curlShiftAdd.input1D[0]
+        pm.setAttr(curlShiftAdd.input1D[1], 180)
+        curlShiftAdd.output1D >> curlDeformer[1].rx
+
         cont_special.curlSize >> curlSizeMultX.input1
         cont_special.curlSize >> curlSizeMultY.input1
         cont_special.curlSize >> curlSizeMultZ.input1
 
         cont_special.curlAngle >> curlAngleMultZ.input1
+
 
         pm.listConnections(curlDeformer[1].sx)[0].output >> curlSizeMultX.input2
         pm.listConnections(curlDeformer[1].sy)[0].output >> curlSizeMultY.input2
@@ -269,11 +291,13 @@ class Tentacle(object):
 
         curlAngleMultZ.output >> curlDeformer[1].rz
 
+        # cont_special.curlShift >> curlDeformer[1].rx
+
         ## TWIST DEFORMER
         twistDeformer = pm.nonLinear(npDeformers, type='twist')
         pm.rotate(twistDeformer[1], (0,0,0))
         twistLoc = pm.spaceLocator(name="twistLoc_{0}".format(suffix))
-        extra.alignTo(twistLoc, inits[0])
+        # extra.alignTo(twistLoc, inits[0])
         pm.parent(twistDeformer[1], twistLoc)
 
         ## make connections:
@@ -286,7 +310,7 @@ class Tentacle(object):
         sineDeformer = pm.nonLinear(npDeformers, type='sine')
         pm.rotate(sineDeformer[1], (0,0,0))
         sineLoc = pm.spaceLocator(name="sineLoc_{0}".format(suffix))
-        extra.alignTo(sineLoc, inits[0])
+        # extra.alignTo(sineLoc, inits[0])
         pm.parent(sineDeformer[1], sineLoc)
 
         ## make connections:
@@ -316,9 +340,13 @@ class Tentacle(object):
         for j in range (len(contJointsList)):
             pm.parentConstraint(contTwk_List[j], contJointsList[j], mo=False)
 
+        ## Create limb plug
+        pm.select(d=True)
+        self.limbPlug = pm.joint(name="limbPlug_" + suffix, p=rootPoint, radius=3)
+        pm.parentConstraint(self.limbPlug, self.scaleGrp, mo=False)
 
         ## Good Parenting
-        pm.parent(cont_special_ORE, self.contFK_List[0].getParent())
+        pm.parent(cont_special_ORE, contFK_List[0])
 
         pm.parent(npBase[0], self.nonScaleGrp)
         pm.parent(npJdefHolder[0], self.nonScaleGrp)
@@ -327,10 +355,72 @@ class Tentacle(object):
         pm.parent(curlDeformer[1], self.nonScaleGrp)
         pm.parent(twistLoc, self.nonScaleGrp)
         pm.parent(sineLoc,self.nonScaleGrp)
+        pm.parent(npWrapGeo, self.nonScaleGrp)
 
 
         pm.parent(contJointsList, self.scaleGrp)
-        pm.parent(self.contFK_List[0].getParent(), self.scaleGrp)
+        # pm.parent(contFK_List[0].getParent(), self.scaleGrp)
+
+        ## CONNECT RIG VISIBILITIES
+
+        pm.addAttr(self.scaleGrp, at="bool", ln="Control_Visibility", sn="contVis", defaultValue=True)
+        pm.addAttr(self.scaleGrp, at="bool", ln="Joints_Visibility", sn="jointVis", defaultValue=True)
+        pm.addAttr(self.scaleGrp, at="bool", ln="Rig_Visibility", sn="rigVis", defaultValue=False)
+        # make the created attributes visible in the channelbox
+        pm.setAttr(self.scaleGrp.contVis, cb=True)
+        pm.setAttr(self.scaleGrp.jointVis, cb=True)
+        pm.setAttr(self.scaleGrp.rigVis, cb=True)
+
+        nodesContVis = [contTwk_List, contFK_List]
+        nodesRigVis = [npBase[0], npJdefHolder[0], npDeformers[0], sineLoc, twistLoc, curlDeformer[1], follicleList, contJointsList]
+
+        # Cont visibilities
+        for i in nodesContVis:
+            if isinstance(i, list):
+                for x in i:
+                    self.scaleGrp.contVis >> x.v
+            else:
+                self.scaleGrp.contVis >> i.v
+
+        for i in self.deformerJoints:
+            self.scaleGrp.jointVis >> i.v
+
+        # Rig Visibilities
+        for i in nodesRigVis:
+            if isinstance(i, list):
+                for x in i:
+                    self.scaleGrp.rigVis >> x.v
+            else:
+                self.scaleGrp.rigVis >> i.v
+
+        ## FOOL PROOFING
+
+        for i in contFK_List:
+            extra.lockAndHide(i, ["sx", "sy", "sz"])
+        for i in contTwk_List:
+            extra.lockAndHide(i, ["sx", "sy", "sz"])
+
+        ## COLOR CODING
+
+        index = 17 ## default yellow color coding for non-sided tentacles
+        if side == "R":
+            index = 13
+            indexMin = 9
+
+        elif side == "L":
+            index = 6
+            indexMin = 18
+
+        for i in contFK_List:
+            extra.colorize(i, index)
+        for i in contTwk_List:
+            extra.colorize(i, index)
+
+        extra.colorize(cont_special, index)
+
+        self.scaleConstraints = [self.scaleGrp]
+
+
 
 
 
@@ -482,5 +572,5 @@ class Tentacle(object):
         # I want to return a pyNode object for the wrap deformer.
         # I do not see the reason to rewrite the code here into pymel.
         # return wrapNode
-        return pm.nt.Wrap(wrapNode)
+        return pm.nt.Wrap(wrapNode), base
 
