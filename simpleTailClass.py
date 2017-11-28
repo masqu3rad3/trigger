@@ -22,7 +22,7 @@ class SimpleTail(object):
         self.anchors = []
         self.anchorLocations = []
 
-    def createSimpleTail(self, inits, suffix="", conts="cube"):
+    def createSimpleTail(self, inits, suffix="", side="C", conts="cube"):
         if not isinstance(inits, list):
             tailRoot = inits.get("TailRoot")
             tails = (inits.get("Tail"))
@@ -57,6 +57,9 @@ class SimpleTail(object):
         # self.scaleConstraints.append(self.limbPlug)
         pm.parentConstraint(self.limbPlug, self.scaleGrp)
 
+        ## Get the orientation axises
+        upAxis, mirroAxis, spineDir = extra.getRigAxes(inits[0])
+
         ## Create Joints
         deformerJoints=[]
 
@@ -78,19 +81,23 @@ class SimpleTail(object):
         contList=[]
         cont_OREList=[]
         for j in range (0,len(deformerJoints)):
-            if j != len(deformerJoints)-1:
+            if not j == len(deformerJoints)-1:
+                targetInit = inits[j+1]
+                rotateOff = (90,90,0)
                 scaleDis = extra.getDistance(deformerJoints[j], deformerJoints[j+1])/2
                 cont = icon.cube(name="cont_%s_%s" %(suffix, str(j)), scale=(scaleDis,scaleDis,scaleDis))
                 contList.append(cont)
-                # extra.alignToAlter(cont, bone, 2)
 
                 pm.xform(cont, piv=(0,-scaleDis,0))
 
-                extra.alignToAlter(cont, deformerJoints[j], 2)
+                # extra.alignToAlter(cont, deformerJoints[j], 2)
+                extra.alignAndAim(cont, targetList=[inits[j]], aimTargetList=[targetInit], upVector=upAxis,
+                                  rotateOff=rotateOff)
 
-                # pm.makeIdentity(cont)
 
                 cont_ORE = extra.createUpGrp(cont, "ORE")
+                if side == "R":
+                    pm.setAttr("{0}.s{1}".format(cont_ORE, "x"), -1)
                 cont_OREList.append(cont_ORE)
                 # extra.alignToAlter(cont_ORE, deformerJoints[j], 2)
                 pm.parentConstraint(cont, deformerJoints[j], mo=True)

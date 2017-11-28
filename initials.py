@@ -109,10 +109,10 @@ class initialJoints():
         self.mirrorAxis = "xyz".strip(lookAxis + upAxis)
 
     def initLimb (self, limb, whichSide="left", segments=3, fingerCount=5, thumb=False, constrainedTo = None, parentNode=None, defineAs=False):
-
+        print "Define as", defineAs
         # print "whichSide", whichSide
         currentselection = pm.ls(sl=True)
-        
+
         ## Create the holder group if it does not exist
         if not pm.objExists("{0}_refBones".format(self.projectName)):
             holderGroup = pm.group(name=("{0}_refBones".format(self.projectName)), em=True)
@@ -129,7 +129,7 @@ class initialJoints():
             sideValids = ["left", "right", "center", "both", "auto"]
             if whichSide not in sideValids:
                 pm.error("side argument '%s' is not valid. Valid arguments are: %s" %(whichSide, sideValids))
-            if len(pm.ls(sl=True, type="joint")) != 1 and whichSide == "auto":
+            if len(pm.ls(sl=True, type="joint")) != 1 and whichSide == "auto" and defineAs == False:
                 pm.warning("You need to select a single joint to use Auto method")
                 return
 
@@ -712,7 +712,7 @@ class initialJoints():
     def initialTentacle(self, transformKey, segments, side, suffix):
 
         # print "Anan", side
-        if segments < 2:
+        if segments < 1:
             pm.warning("minimum segments required for the tentacle is two. current: %s" %segments)
             return
         rPointTentacle = dt.Vector(self.transformator((0, 14, 0), transformKey))
@@ -918,6 +918,41 @@ class initialJoints():
                 else:
                     pm.setAttr(jointList[i] + ".type", 23)
 
+        if limbType == "tentacle":
+            # print "Anan", side
+            if not len(jointList) > 1:
+                pm.warning("minimum segments required for the tentacle is two. current: %s" % len(jointList))
+                return
+
+            for j in range(len(jointList)):
+                # newName = "jInit_tail_%s_%s" % (suffix, str(j))
+                pm.select(jointList[j])
+                # pm.rename(jointList[j], newName)
+                pm.setAttr(jointList[j] + ".side", side)
+                pm.setAttr(jointList[j] + ".drawLabel", 1)
+                ## if it is the first selection
+                if j == 0:
+                    pm.setAttr(jointList[j] + ".type", 18)
+                    pm.setAttr(jointList[j] + ".otherType", "TentacleRoot")
+                    if not pm.attributeQuery("contRes", node=jointList[j], exists=True):
+                        pm.addAttr(shortName="contRes", longName="Cont_Resolution", defaultValue=5, minValue=1,
+                                   at="long", k=True)
+                    if not pm.attributeQuery("jointRes", node=jointList[j], exists=True):
+                        pm.addAttr(shortName="jointRes", longName="Joint_Resolution", defaultValue=25, minValue=1,
+                                   at="long", k=True)
+                    if not pm.attributeQuery("deformerRes", node=jointList[j], exists=True):
+                        pm.addAttr(shortName="deformerRes", longName="Deformer_Resolution", defaultValue=25, minValue=1,
+                                   at="long", k=True)
+                    if not pm.attributeQuery("dropoff", node=jointList[j], exists=True):
+                        pm.addAttr(shortName="dropoff", longName="DropOff", defaultValue=2.0, minValue=0.1,
+                                   at="float", k=True)
+                    # pm.setAttr(jointList[j].radius, 3)
+                else:
+                    pm.setAttr(jointList[j] + ".type", 18)
+                    pm.setAttr(jointList[j] + ".otherType", "Tentacle")
+
+
+
     def createAxisAttributes(self, node):
         axisAttributes=["upAxis", "mirrorAxis", "lookAxis"]
         for att in axisAttributes:
@@ -926,7 +961,7 @@ class initialJoints():
         pm.setAttr(node.upAxis, self.upAxis)
         pm.setAttr(node.mirrorAxis, self.mirrorAxis)
         pm.setAttr(node.lookAxis, self.lookAxis)
-        self.lookAxis
+        # self.lookAxis
 
 
 

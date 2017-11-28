@@ -586,7 +586,8 @@ class mainUI(QtWidgets.QTabWidget):
         elif self.tentacleSideAuto.isChecked():
             side = "auto"
 
-        self.initSkeleton.initLimb("tentacle", whichSide=side, segments=self.tailSegInt.value(), defineAs=self.defineAs)
+        print "anan", self.defineAs
+        self.initSkeleton.initLimb("tentacle", whichSide=side, segments=self.tentacleSegInt.value(), defineAs=self.defineAs)
         pm.undoInfo(closeChunk=True)
 
     # def updateRigAttr(self):
@@ -608,6 +609,7 @@ class mainUI(QtWidgets.QTabWidget):
             self.fingerCreateBtn.setText(text)
             self.legCreateBtn.setText(text)
             self.tailCreateBtn.setText(text)
+            self.tentacleCreateBtn.setText(text)
 
 
     def keyReleaseEvent(self, event):
@@ -620,6 +622,7 @@ class mainUI(QtWidgets.QTabWidget):
             self.fingerCreateBtn.setText(text)
             self.legCreateBtn.setText(text)
             self.tailCreateBtn.setText(text)
+            self.tentacleCreateBtn.setText(text)
 
 
     def testPop(self):

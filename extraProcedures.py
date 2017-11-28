@@ -731,7 +731,7 @@ def getRigAxes(joint):
 
     """
     axisDict = {"x": (1.0, 0.0, 0.0), "y": (0.0, 1.0, 0.0), "z": (0.0, 0.0, 1.0), "-x": (-1.0, 0.0, 0.0), "-y": (0.0, -1.0, 0.0), "-z": (0.0, 0.0, -1.0)}
-    spineDir = {"x": (-1.0, 0.0, 0.0), "y": (0.0, -1.0, 0.0), "z": (0.0, 0.0, 1.0), "-x": (1.0, 0.0, 0.0), "-y": (0.0, 1.0, 0.0), "-z": (0.0, 0.0, 1.0)}
+    spineDict = {"x": (-1.0, 0.0, 0.0), "y": (0.0, -1.0, 0.0), "z": (0.0, 0.0, 1.0), "-x": (1.0, 0.0, 0.0), "-y": (0.0, 1.0, 0.0), "-z": (0.0, 0.0, 1.0)}
     upAxis = None
     mirrorAxis = None
     spineDir = None
@@ -758,7 +758,7 @@ def getRigAxes(joint):
     ## get spine Direction
     if pm.attributeQuery("lookAxis", node=joint, exists=True):
         try:
-            spineDir = spineDir[pm.getAttr(joint.lookAxis).lower()]
+            spineDir = spineDict[pm.getAttr(joint.lookAxis).lower()]
         except:
             pm.warning("Cannot get spine direction from lookAxis attribute, proceeding with default value (-x)")
             spineDir = (-1.0, 0.0, 0.0)

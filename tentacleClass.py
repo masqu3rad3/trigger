@@ -220,6 +220,7 @@ class Tentacle(object):
 
         npDeformers = pm.duplicate(npJdefHolder[0], name="npDeformers_"+suffix)
         pm.move(npDeformers[0], (0,totalLength/2,0))
+        pm.rotate(npDeformers[0], (0,0,90))
 
         ## Create Blendshape node between np_jDefHolder and deformation targets
         npBlend = pm.blendShape(npDeformers, npJdefHolder[0], w=(0,1))
@@ -234,6 +235,7 @@ class Tentacle(object):
         ## CURL DEFORMER
         # pm.select(npDeformers)
         curlDeformer = pm.nonLinear(npDeformers, type='bend', curvature=1500)
+
         # pm.select(curlDeformer)
         # pm.setAttr(curlDeformer[1].rz, 4)
         pm.setAttr(curlDeformer[0].lowBound, -1)
