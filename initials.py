@@ -109,7 +109,6 @@ class initialJoints():
         self.mirrorAxis = "xyz".strip(lookAxis + upAxis)
 
     def initLimb (self, limb, whichSide="left", segments=3, fingerCount=5, thumb=False, constrainedTo = None, parentNode=None, defineAs=False):
-        print "Define as", defineAs
         # print "whichSide", whichSide
         currentselection = pm.ls(sl=True)
 
@@ -120,7 +119,7 @@ class initialJoints():
             holderGroup = pm.PyNode("{0}_refBones".format(self.projectName), em=True)
 
         ## skip side related stuff for no-side related limbs
-        nonSidedLimbs = ["spine", "neck", "tail"]
+        nonSidedLimbs = ["spine", "neck"]
         if limb in nonSidedLimbs:
             whichSide = "c"
 
@@ -225,7 +224,7 @@ class initialJoints():
             limbJoints, offsetVector = self.initialNeck(transformKey=a, segments=segments, suffix=suffix)
 
         if limb == "tail":
-            limbJoints, offsetVector = self.initialTail(transformKey=a, segments=segments, suffix=suffix)
+            limbJoints, offsetVector = self.initialTail(transformKey=a, segments=segments, side=side, suffix=suffix)
 
         if limb == "finger":
             limbJoints, offsetVector = self.initialFinger(segments=segments, transformKey=a, side=side, suffix=suffix)
@@ -650,16 +649,24 @@ class initialJoints():
         self.neckJointsList.append(jointList)
         return jointList, offsetVector
 
-    def initialTail(self, transformKey, segments, suffix):
+    def initialTail(self, transformKey, side, segments, suffix):
+
+        if segments < 1:
+            pm.warning("minimum segments required for the simple tail is two. current: %s" %segments)
+            return
 
         rPointTail = dt.Vector(self.transformator((0, 14, 0), transformKey))
-        nPointTail = dt.Vector(self.transformator((0, 8.075, -7.673), transformKey))
+        if side == 0:
+            nPointTail = dt.Vector(self.transformator((0, 8.075, -7.673), transformKey))
+        else:
+            nPointTail = dt.Vector(self.transformator((7.673, 8.075, 0), transformKey))
+        # nPointTail = dt.Vector(self.transformator((0, 8.075, -7.673), transformKey))
         offsetVector = dt.normal(nPointTail-rPointTail)
         addTail = (nPointTail - rPointTail) / ((segments + 1) - 1)
         jointList = []
         for i in range(0, (segments + 1)):
             tail = pm.joint(p=(rPointTail + (addTail * i)), name="jInit_tail_%s_%s" %(suffix, str(i)))
-            pm.setAttr(tail + ".side", 0)
+            pm.setAttr(tail + ".side", side)
 
             if i == 0:
                 pm.setAttr(tail + ".type", 18)
@@ -711,7 +718,6 @@ class initialJoints():
 
     def initialTentacle(self, transformKey, segments, side, suffix):
 
-        # print "Anan", side
         if segments < 1:
             pm.warning("minimum segments required for the tentacle is two. current: %s" %segments)
             return

@@ -356,40 +356,42 @@ class mainUI(QtWidgets.QTabWidget):
 
     def initTailUI(self):
         self.tailGroupBox = QtWidgets.QGroupBox()
-        self.tailGroupBox.setFixedSize(210,80)
+        self.tailGroupBox.setFixedSize(210,130)
 
         layout = QtWidgets.QHBoxLayout()
+        sgmSubLayout = QtWidgets.QHBoxLayout()
 
         self.tailCreateBtn = QtWidgets.QPushButton("Create", minimumSize=(QtCore.QSize(self.wSize, self.hSize)), maximumSize=(QtCore.QSize(self.wSize, self.hSize)), parent=self)
         tailSegLb = QtWidgets.QLabel("Segments")
         self.tailSegInt = QtWidgets.QSpinBox(maximumSize=(QtCore.QSize(40, 20)),value=3, minimum=1)
 
-        # radioGrpLeg = QtWidgets.QButtonGroup(layout)
-        # self.legSideLeft = QtWidgets.QRadioButton("Left", parent=self)
-        # self.legSideRight = QtWidgets.QRadioButton("Right", parent=self)
-        # self.legSideCenter = QtWidgets.QRadioButton("Center", parent=self)
-        # self.legSideBoth = QtWidgets.QRadioButton("Both", parent=self)
-        # self.legSideAuto = QtWidgets.QRadioButton("Auto", parent=self)
-        #
-        # radioGrpLeg.addButton(self.legSideLeft)
-        # radioGrpLeg.addButton(self.legSideRight)
-        # radioGrpLeg.addButton(self.legSideCenter)
-        # radioGrpLeg.addButton(self.legSideBoth)
-        # radioGrpLeg.addButton(self.legSideAuto)
-        # self.legSideAuto.setChecked(True)
-        #
-        # radioColumnLeg = QtWidgets.QVBoxLayout()
-        # radioColumnLeg.setAlignment(QtCore.Qt.AlignLeft)
-        # layout.addLayout(radioColumnLeg)
-        #
-        # radioColumnLeg.addWidget(self.legSideLeft)
-        # radioColumnLeg.addWidget(self.legSideRight)
-        # radioColumnLeg.addWidget(self.legSideCenter)
-        # radioColumnLeg.addWidget(self.legSideBoth)
-        # radioColumnLeg.addWidget(self.legSideAuto)
-###############################
-        layout.addWidget(tailSegLb)
-        layout.addWidget(self.tailSegInt)
+        radioGrpTail = QtWidgets.QButtonGroup(layout)
+        self.tailSideLeft = QtWidgets.QRadioButton("Left", parent=self)
+        self.tailSideRight = QtWidgets.QRadioButton("Right", parent=self)
+        self.tailSideCenter = QtWidgets.QRadioButton("Center", parent=self)
+        self.tailSideBoth = QtWidgets.QRadioButton("Both", parent=self)
+        self.tailSideAuto = QtWidgets.QRadioButton("Auto", parent=self)
+
+        radioGrpTail.addButton(self.tailSideLeft)
+        radioGrpTail.addButton(self.tailSideRight)
+        radioGrpTail.addButton(self.tailSideCenter)
+        radioGrpTail.addButton(self.tailSideBoth)
+        radioGrpTail.addButton(self.tailSideAuto)
+        self.tailSideAuto.setChecked(True)
+
+        radioColumnTail = QtWidgets.QVBoxLayout()
+        radioColumnTail.setAlignment(QtCore.Qt.AlignLeft)
+        layout.addLayout(radioColumnTail)
+
+        radioColumnTail.addWidget(self.tailSideLeft)
+        radioColumnTail.addWidget(self.tailSideRight)
+        radioColumnTail.addWidget(self.tailSideCenter)
+        radioColumnTail.addWidget(self.tailSideBoth)
+        radioColumnTail.addWidget(self.tailSideAuto)
+
+        sgmSubLayout.addWidget(tailSegLb)
+        sgmSubLayout.addWidget(self.tailSegInt)
+        radioColumnTail.addLayout(sgmSubLayout)
         layout.addWidget(self.tailCreateBtn)
 
         self.tailCreateBtn.clicked.connect(self.createTail)
@@ -397,6 +399,7 @@ class mainUI(QtWidgets.QTabWidget):
         self.tailGroupBox.setLayout(layout)
         self.tailGroupBox.setHidden(True)
         self.initBoneslayout.addWidget(self.tailGroupBox)
+
 
     def initTentacleUI(self):
         self.tentacleGroupBox = QtWidgets.QGroupBox()
@@ -563,7 +566,20 @@ class mainUI(QtWidgets.QTabWidget):
 
     def createTail(self):
         pm.undoInfo(openChunk=True)
-        self.initSkeleton.initLimb("tail", segments=self.tailSegInt.value(), defineAs=self.defineAs)
+
+        side = ""
+        if self.tailSideLeft.isChecked():
+            side = "left"
+        elif self.tailSideRight.isChecked():
+            side = "right"
+        elif self.tailSideCenter.isChecked():
+            side = "center"
+        elif self.tailSideBoth.isChecked():
+            side = "both"
+        elif self.tailSideAuto.isChecked():
+            side = "auto"
+        print "side", side
+        self.initSkeleton.initLimb("tail", whichSide=side, segments=self.tailSegInt.value(), defineAs=self.defineAs)
         pm.undoInfo(closeChunk=True)
 
     def createNeck(self):
@@ -586,7 +602,6 @@ class mainUI(QtWidgets.QTabWidget):
         elif self.tentacleSideAuto.isChecked():
             side = "auto"
 
-        print "anan", self.defineAs
         self.initSkeleton.initLimb("tentacle", whichSide=side, segments=self.tentacleSegInt.value(), defineAs=self.defineAs)
         pm.undoInfo(closeChunk=True)
 

@@ -212,6 +212,7 @@ class Tentacle(object):
             defJ=pm.joint(name="jDef_{0}{1}".format(suffix,str(i)))
             pm.joint(defJ, e=True, zso=True, oj='zxy')
             self.deformerJoints.append(defJ)
+            self.sockets.append(defJ)
             # pm.parent(follicle.getParent(), self.nonScaleGrp)
             pm.scaleConstraint(self.scaleGrp, follicle.getParent(), mo=True)
             # self.toHide.append(follicle)
@@ -241,13 +242,14 @@ class Tentacle(object):
         pm.setAttr(curlDeformer[0].lowBound, -1)
         pm.setAttr(curlDeformer[0].highBound, 0)
         ## Ratio is:
-        if side == "R":
-            order=[-1, 1]
-        else:
-            order=[1, -1]
+        order = [1, -1]
+        # if side == "R":
+        #     order=[-1, 1]
+        # else:
+        #     order=[1, -1]
         pm.setDrivenKeyframe(curlDeformer[0].curvature, cd=cont_special.curl, v=0.0, dv=0.0, itt='linear', ott='linear')
-        pm.setDrivenKeyframe(curlDeformer[0].curvature, cd=cont_special.curl, v=1500.0*order[0], dv=0.01, itt='linear', ott='linear')
-        pm.setDrivenKeyframe(curlDeformer[0].curvature, cd=cont_special.curl, v=1500.0*order[1], dv=-0.01, itt='linear', ott='linear')
+        pm.setDrivenKeyframe(curlDeformer[0].curvature, cd=cont_special.curl, v=1500.0, dv=0.01, itt='linear', ott='linear')
+        pm.setDrivenKeyframe(curlDeformer[0].curvature, cd=cont_special.curl, v=-1500.0, dv=-0.01, itt='linear', ott='linear')
 
         pm.setDrivenKeyframe(curlDeformer[1].ty, cd=cont_special.curl, v=0.0, dv=10.0, itt='linear', ott='linear')
         pm.setDrivenKeyframe(curlDeformer[1].ty, cd=cont_special.curl, v=0.0, dv=-10.0, itt='linear', ott='linear')
@@ -258,8 +260,8 @@ class Tentacle(object):
 
         pm.setDrivenKeyframe(curlDeformer[1].ty, cd=cont_special.curl, v=totalLength, dv=0.0, itt='linear', ott='linear')
         pm.setDrivenKeyframe([curlDeformer[1].sx, curlDeformer[1].sy, curlDeformer[1].sz], cd=cont_special.curl, v=(totalLength / 2), dv=0.0, itt='linear', ott='linear')
-        pm.setDrivenKeyframe(curlDeformer[1].rz, cd=cont_special.curl, v=6.0*order[0], dv=0.01, itt='linear', ott='linear')
-        pm.setDrivenKeyframe(curlDeformer[1].rz, cd=cont_special.curl, v=6.0*order[1], dv=-0.01, itt='linear', ott='linear')
+        pm.setDrivenKeyframe(curlDeformer[1].rz, cd=cont_special.curl, v=6.0, dv=0.01, itt='linear', ott='linear')
+        pm.setDrivenKeyframe(curlDeformer[1].rz, cd=cont_special.curl, v=-6.0, dv=-0.01, itt='linear', ott='linear')
 
         ## create curl size multipliers
 

@@ -117,7 +117,7 @@ class LimbBuilder():
 
         elif limbProperties[1] == "finger":
             limb = finger.Fingers()
-            limb.createFinger(limbProperties[0], suffix="%s_finger" % limbProperties[2])
+            limb.createFinger(limbProperties[0], suffix="%s_finger" % limbProperties[2], side=limbProperties[2])
 
         elif limbProperties[1] == "tentacle":
             limb = tentacle.Tentacle()
@@ -347,7 +347,7 @@ class LimbBuilder():
 
             elif x[1] == "tail":
                 limb = simpleTail.SimpleTail()
-                limb.createSimpleTail(x[0], suffix="tail")
+                limb.createSimpleTail(x[0], suffix="tail", side=x[2])
 
             elif x[1] == "finger":
 

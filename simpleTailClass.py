@@ -94,13 +94,12 @@ class SimpleTail(object):
                 extra.alignAndAim(cont, targetList=[inits[j]], aimTargetList=[targetInit], upVector=upAxis,
                                   rotateOff=rotateOff)
 
-
+                cont_OFF = extra.createUpGrp(cont, "OFF")
                 cont_ORE = extra.createUpGrp(cont, "ORE")
                 if side == "R":
-                    pm.setAttr("{0}.s{1}".format(cont_ORE, "x"), -1)
+                    pm.setAttr("{0}.s{1}".format(cont_OFF, "x"), -1)
                 cont_OREList.append(cont_ORE)
-                # extra.alignToAlter(cont_ORE, deformerJoints[j], 2)
-                pm.parentConstraint(cont, deformerJoints[j], mo=True)
+                pm.parentConstraint(cont, deformerJoints[j], mo=False)
 
                 # create additive scalability
                 sGlobal = pm.createNode("multiplyDivide")
@@ -115,10 +114,15 @@ class SimpleTail(object):
                 else:
                     pm.parent(cont_OREList[j], self.scaleGrp)
             else: ## last joint has no cont, use the previous one to scale that
+                # pass
+                extra.alignTo(deformerJoints[j], inits[-1])
                 sGlobal = pm.createNode("multiplyDivide")
                 self.limbPlug.scale >> sGlobal.input1
                 contList[j-1].scale >> sGlobal.input2
                 sGlobal.output >> deformerJoints[j].scale
+
+            # pm.parentConstraint(cont, deformerJoints[j], mo=False)
+
             # pm.scaleConstraint(cont, deformerJoints[j], mo=False)
         # import mrCubic as mcube
         # mcube.mrCube(deformerJoints)
@@ -144,7 +148,14 @@ class SimpleTail(object):
         self.scaleGrp.rigVis >> self.limbPlug.v
 
         ## COLORIZE
-        index = 17
+        index = 17 ## default yellow color coding for non-sided tentacles
+        if side == "R":
+            index = 13
+            indexMin = 9
+
+        elif side == "L":
+            index = 6
+            indexMin = 18
         for i in contList:
             extra.colorize(i, index)
 

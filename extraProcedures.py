@@ -136,50 +136,6 @@ def alignAndAim(node, targetList, aimTargetList, upObject=None, upVector=None, r
         pm.makeIdentity(node, a=True, t=True)
 
 
-# def alignAndAim(node, target, aimTarget, secondTarget=None, upObject=None, upVector=None, rotateOff=None, translateOff=None, freezeTransform=False):
-#     """
-#     Aligns the position of the node to the target and rotation to the aimTarget object.
-#     Args:
-#         node: Node to be aligned
-#         target: Target node for position
-#         aimTarget: Target node for aiming
-#         secondTarget: (Optional) if defined, uses this node as the second target and make the alingment inbetween
-#         upObject: (Optional) if defined the up node will be up axis of this object
-#         rotateOff: (Optional) rotation offset with given value (tuple)
-#         translateOff: (Optional) translate offset with given value (tuple)
-#         freezeTransform: (Optional) if set True, freezes transforms of the node at the end
-#
-#     Returns:
-#         None
-#
-#     """
-#     if upObject and upVector:
-#         pm.error("In alignAndAim function both upObject and upVector parameters cannot be used")
-#         return
-#     flags = "aimTarget"
-#     if secondTarget:
-#         flags += ", secondTarget"
-#     flags += ", node"
-#     if upObject:
-#         flags += ", wuo=upObject, wut='object'"
-#     if upVector:
-#         flags += ", wu=upVector, wut='vector'"
-#     aimCommand = "pm.aimConstraint({0})".format(flags)
-#
-#
-#
-#     tempPo = pm.pointConstraint(target, node)
-#
-#     tempAim = eval(aimCommand)
-#     pm.delete(tempPo)
-#     pm.delete(tempAim)
-#     if translateOff:
-#         pm.move(node, translateOff, r=True)
-#     if rotateOff:
-#         pm.rotate(node, rotateOff, r=True, os=True)
-#     if freezeTransform:
-#         pm.makeIdentity(node, a=True, t=True)
-
 
 def getBetweenVector(node, targetPointNodeList):
     # get center vector
