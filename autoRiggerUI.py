@@ -173,7 +173,7 @@ class mainUI(QtWidgets.QTabWidget):
 
     def initBonesUI(self):
 
-        labels = ["Spine", "Neck", "Arm", "Finger", "Leg", "Tail", "Tentacle", "Biped"]
+        labels = ["Spine", "Neck", "Arm", "Finger", "Leg", "Tail", "Tentacle", "Root", "Biped"]
         pressEvents = []
         for labelName in labels:
             label = QtWidgets.QLabel(labelName, parent=self)
@@ -194,7 +194,8 @@ class mainUI(QtWidgets.QTabWidget):
         pressEvents[4].mousePressEvent = lambda x: self.hideToggle(self.legGroupBox)
         pressEvents[5].mousePressEvent = lambda x: self.hideToggle(self.tailGroupBox)
         pressEvents[6].mousePressEvent = lambda x: self.hideToggle(self.tentacleGroupBox)
-        pressEvents[7].mousePressEvent = lambda x: self.hideToggle(self.bipedGroupBox)
+        pressEvents[7].mousePressEvent = lambda x: self.hideToggle(self.rootGroupBox)
+        pressEvents[8].mousePressEvent = lambda x: self.hideToggle(self.bipedGroupBox)
 
     def initSpineUI(self):
         self.spineGroupBox = QtWidgets.QGroupBox()
@@ -487,6 +488,21 @@ class mainUI(QtWidgets.QTabWidget):
         self.bipedGroupBox.setLayout(layout)
         self.initBoneslayout.addWidget(self.bipedGroupBox)
 
+    def initRootUI(self):
+        self.rootGroupBox = QtWidgets.QGroupBox()
+        self.rootGroupBox.setFixedSize(210,100)
+        self.rootGroupBox.setAlignment(QtCore.Qt.AlignRight)
+        layout = QtWidgets.QHBoxLayout()
+        self.rootCreateBtn = QtWidgets.QPushButton("Create", minimumSize=(QtCore.QSize(self.wSize, self.hSize)), maximumSize=(QtCore.QSize(self.wSize, self.hSize)), parent=self)
+
+        layout.addWidget(self.rootCreateBtn)
+        layout.setAlignment(QtCore.Qt.AlignRight)
+        self.rootCreateBtn.clicked.connect(self.createRoot)
+
+        self.rootGroupBox.setLayout(layout)
+        self.rootGroupBox.setHidden(True)
+        self.initBoneslayout.addWidget(self.rootGroupBox)
+
     def hideToggle(self, UI):
         # print UI
         if UI.isVisible():
@@ -607,13 +623,10 @@ class mainUI(QtWidgets.QTabWidget):
         self.initSkeleton.initLimb("tentacle", whichSide=side, segments=self.tentacleSegInt.value(), defineAs=self.defineAs)
         pm.undoInfo(closeChunk=True)
 
-    # def updateRigAttr(self):
-    #     self.rigger.__init__()
-    #     self.rigger.createAnchors = self.isCreateAnchorsChk.isChecked()
-    #     self.rigger.spineRes = self.spineResInt.value()
-    #     self.rigger.spineDropoff = self.spineDropoff.value()
-    #     self.rigger.neckRes = self.neckResInt.value()
-    #     self.rigger.neckDropoff = self.neckDropoff.value()
+    def createRoot(self):
+        pm.undoInfo(openChunk=True)
+        self.initSkeleton.initLimb("root", defineAs=self.defineAs)
+        pm.undoInfo(closeChunk=True)
 
     def keyPressEvent(self, event):
         ## If Ctrl is pressed, change the button labels

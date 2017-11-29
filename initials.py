@@ -231,6 +231,9 @@ class initialJoints():
         if limb == "tentacle":
             limbJoints, offsetVector = self.initialTentacle(transformKey=a, segments=segments, side=side, suffix=suffix)
 
+        if limb == "root":
+            limbJoints, offsetVector = self.initialRoot(transformKey=a, suffix=suffix)
+
         ## grave the up axis to the root initJoints
         # pm.addAttr(limbJoints[0], longName="upAxis", dt="string")
         # pm.setAttr(limbJoints[0].upAxis, self.upAxis)
@@ -288,10 +291,31 @@ class initialJoints():
 
         return locatorsList
 
+    def initialRoot(self, transformKey, suffix):
+        """
+        Creates a single simple root joint to connect or bridge limbs
+        Args:
+            transformKey: (List) the keyword for transformation matrix. transformator function will use this key to orienct joint in space
+            suffix: (String) name suffix - must be unique
+
+        Returns: (List) rootJoint
+
+        """
+        pm.select(d=True)
+        rootInit = pm.joint(name="root_{0}".format(suffix))
+        pm.setAttr("{0}.type".format(rootInit), 1)
+        self.createAxisAttributes(rootInit)
+        pm.setAttr(rootInit.radius, 3)
+        pm.setAttr("{0}.drawLabel".format(rootInit), 1)
+        offsetVector = dt.Vector(0,0,0)
+
+        return [rootInit], offsetVector
+
     def initialSpine(self, transformKey, segments, suffix):
         """
         Creates a preset spine hieararchy with given segments
         Args:
+            transformKey: the keyword for transformation matrix. transformator function will use this key to orienct joint in space
             segments: (int) segment count
             suffix: (String) name suffix - must be unique
 
@@ -309,9 +333,12 @@ class initialJoints():
         for i in range(0, (segments + 1)):
             spine = pm.joint(p=(rPoint + (add * i)), name="jInit_spine_%s_%s" %(suffix, str(i)))
             pm.setAttr(spine + ".side", 0)
+            type = 18
             if i == 0:
-                type = 1
+                # type = 1
+                # pm.setAttr(spine + ".type", type)
                 pm.setAttr(spine + ".type", type)
+                pm.setAttr(spine + ".otherType", "SpineRoot")
                 pm.addAttr(shortName="resolution", longName="Resolution", defaultValue=4, minValue=1,
                            at="long", k=True)
                 pm.addAttr(shortName="dropoff", longName="DropOff", defaultValue=1.0, minValue=0.1,
@@ -321,7 +348,7 @@ class initialJoints():
                 pm.setAttr(spine.radius, 3)
 
             elif i == (segments):
-                type = 18
+                # type = 18
                 pm.setAttr(spine + ".type", type)
                 pm.setAttr(spine + ".otherType", "SpineEnd")
 

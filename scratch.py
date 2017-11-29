@@ -17,11 +17,14 @@ import fingersClass as finger
 reload(finger)
 import tentacleClass as tentacle
 reload(tentacle)
+import rootClass as root
+reload(root)
+
 class LimbBuilder():
 
     def __init__(self):
         # self.catalogueRoots(pm.ls(sl=True)[0])
-        self.validRootList = ["Collar", "LegRoot", "Root", "NeckRoot", "TailRoot", "FingerRoot", "ThumbRoot", "IndexRoot", "MiddleRoot", "RingRoot", "PinkyRoot", "TentacleRoot"]
+        self.validRootList = ["Collar", "LegRoot", "Root", "SpineRoot", "NeckRoot", "TailRoot", "FingerRoot", "ThumbRoot", "IndexRoot", "MiddleRoot", "RingRoot", "PinkyRoot", "TentacleRoot"]
         # self.limbList = []
         self.fingerMatchList = []
         self.fingerMatchConts = []
@@ -119,6 +122,10 @@ class LimbBuilder():
         elif limbProperties[1] == "tentacle":
             limb = tentacle.Tentacle()
             limb.createTentacle(limbProperties[0], suffix="%s_leg" % limbProperties[2], side=limbProperties[2], npResolution=limbProperties[0]["contRes"], jResolution=limbProperties[0]["jointRes"], blResolution=limbProperties[0]["deformerRes"], dropoff=limbProperties[0]["dropoff"])
+
+        elif limbProperties[1] == "root":
+            limb = root.Root()
+            limb.createRoot(limbProperties[0], suffix="root")
 
         else:
             pm.error("limb creation failed.")
@@ -361,6 +368,12 @@ class LimbBuilder():
                 limb = tentacle.Tentacle()
                 # limb.createTentacle(x[0], suffix="%s_leg" % x[2], side=x[2], npResolution=x[0]["contRes"], jResolution = x[0]["jointRes"],blResolution = x[0]["deformerRes"], dropoff = x[0]["dropoff"])
                 limb.createTentacle(x[0], suffix="%s_leg" % x[2], side=x[2], npResolution=x[0]["contRes"], jResolution = x[0]["jointRes"], blResolution = x[0]["deformerRes"], dropoff = x[0]["dropoff"])
+
+            elif x[1] == "root":
+                limb = root.Root()
+                print "anan", x
+                limb.createRoot(x[0], suffix="root")
+                # print "limbProperties", x
 
             else:
                 pm.error("limb creation failed.")

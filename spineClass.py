@@ -34,7 +34,7 @@ class Spine(object):
     def createSpine(self, inits, suffix="", resolution=4, dropoff=2.0):
         if not isinstance(inits, list):
             ## parse the dictionary inits into a list
-            sRoot=inits.get("Root")
+            sRoot=inits.get("SpineRoot")
             try:
                 spines=reversed(inits.get("Spine"))
                 spineEnd = inits.get("SpineEnd")
