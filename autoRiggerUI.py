@@ -400,7 +400,6 @@ class mainUI(QtWidgets.QTabWidget):
         self.tailGroupBox.setHidden(True)
         self.initBoneslayout.addWidget(self.tailGroupBox)
 
-
     def initTentacleUI(self):
         self.tentacleGroupBox = QtWidgets.QGroupBox()
         self.tentacleGroupBox.setFixedSize(210,130)
@@ -490,7 +489,6 @@ class mainUI(QtWidgets.QTabWidget):
 
     def hideToggle(self, UI):
         # print UI
-
         if UI.isVisible():
             UI.setHidden(True)
         else:
@@ -520,6 +518,8 @@ class mainUI(QtWidgets.QTabWidget):
             side = "left"
         elif self.armSideRight.isChecked():
             side = "right"
+        elif self.armSideCenter.isChecked():
+            side = "center"
         elif self.armSideBoth.isChecked():
             side = "both"
         elif self.armSideAuto.isChecked():
@@ -556,6 +556,8 @@ class mainUI(QtWidgets.QTabWidget):
             side = "left"
         elif self.legSideRight.isChecked():
             side = "right"
+        elif self.legSideCenter.isChecked():
+            side = "center"
         elif self.legSideBoth.isChecked():
             side = "both"
         elif self.legSideAuto.isChecked():

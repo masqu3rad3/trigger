@@ -855,24 +855,17 @@ class Leg():
 
         # # COLOR CODING
 
-        if side == "R":
-            index = 13  ##Red color index
-            indexMin = 9  ##Magenta color index
-        else:
-            index = 6  ##Blue Color index
-            indexMin = 18
+        extra.colorize(cont_Thigh, side)
+        extra.colorize(self.cont_IK_foot, side)
+        extra.colorize(cont_FK_IK, side)
+        extra.colorize(cont_FK_UpLeg, side)
+        extra.colorize(cont_FK_LowLeg, side)
+        extra.colorize(cont_FK_Foot, side)
+        extra.colorize(cont_FK_Ball, side)
 
-        extra.colorize(cont_Thigh, index)
-        extra.colorize(self.cont_IK_foot, index)
-        extra.colorize(cont_FK_IK, index)
-        extra.colorize(cont_FK_UpLeg, index)
-        extra.colorize(cont_FK_LowLeg, index)
-        extra.colorize(cont_FK_Foot, index)
-        extra.colorize(cont_FK_Ball, index)
-
-        extra.colorize(cont_midLock, indexMin)
-        extra.colorize(ribbonUpperLeg.middleCont, indexMin)
-        extra.colorize(ribbonLowerLeg.middleCont, indexMin)
+        extra.colorize(cont_midLock, side+"MIN")
+        extra.colorize(ribbonUpperLeg.middleCont, side+"MIN")
+        extra.colorize(ribbonLowerLeg.middleCont, side+"MIN")
 
         # # GOOD RIDDANCE
         pm.delete(footPlane)

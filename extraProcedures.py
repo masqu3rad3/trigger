@@ -251,11 +251,26 @@ def colorize (node, index):
     Returns:None
 
     """
-    #shape=node.getShape()
-    shapes=pm.listRelatives(node, s=True)
-    for i in shapes:
-        pm.setAttr(i.overrideEnabled, True)
-        pm.setAttr(i.overrideColor, index)
+    if not isinstance(node, list):
+        node=[node]
+    for z in node:
+        if isinstance(index, int):
+            pass
+        elif isinstance(index, str):
+            sidesDict={"L":6, "R":13, "C":17, "RMIN":9, "LMIN":18, "CMIN":20}
+            if index.upper() in sidesDict.keys():
+                index = sidesDict[index.upper()]
+            else:
+                pm.error("Colorize error... Unknown index command")
+                return
+        else:
+            pm.error("Colorize error... Index flag must be integer or string('L', 'R', 'C')")
+            return
+        #shape=node.getShape()
+        shapes=pm.listRelatives(z, s=True)
+        for i in shapes:
+            pm.setAttr(i.overrideEnabled, True)
+            pm.setAttr(i.overrideColor, index)
 
 def lockAndHide (node, channelArray):
     """
@@ -391,7 +406,6 @@ def attrPass (sourceNode, targetNode, attributes=[], inConnections=True, outConn
         if pm.attributeQuery(attr, node=targetNode, exists=True):
             if overrideEx:
                 pm.deleteAttr("%s.%s" % (targetNode, attr))
-                print "addAttribute", addAttribute
                 exec (addAttribute)
             else:
                 continue
@@ -526,7 +540,7 @@ def identifyMaster(node, idBy="idByLabel"):
     limbDictionary = {
         "arm": ["Collar", "Shoulder", "Elbow", "Hand"],
         "leg": ["LegRoot", "Hip", "Knee", "Foot", "Ball", "HeelPV", "ToePV", "BankIN", "BankOUT"],
-        "hand": ["Finger", "Thumb", "Index_F", "Middle_F", "Ring_F", "Pinky_F", "Extra_F"],
+        # "hand": ["Finger", "Thumb", "Index_F", "Middle_F", "Ring_F", "Pinky_F", "Extra_F"],
         "spine": ["Spine", "Root", "SpineEnd"],
         "neck": ["NeckRoot", "Neck", "Head", "Jaw", "HeadEnd"],
         "tail": ["TailRoot", "Tail"],
@@ -588,7 +602,6 @@ def replaceController(mirror=True, mirrorAxis="X", keepOld=False, *args, **kwarg
         if kwargs["oldController"] and kwargs["newController"]:
             oldCont = kwargs["oldController"]
             newCont = kwargs["newController"]
-            print "type", type(oldCont)
             if type(oldCont) == str:
                 oldCont=pm.PyNode(oldCont)
             if type(newCont) == str:

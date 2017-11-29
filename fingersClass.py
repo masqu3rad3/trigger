@@ -3,7 +3,6 @@ import extraProcedures as extra
 
 reload(extra)
 import contIcons as icon
-
 reload(icon)
 
 class Fingers(object):
@@ -34,7 +33,7 @@ class Fingers(object):
             validRoots=["FingerRoot",
                        "ThumbRoot", "IndexRoot", "MiddleRoot", "RingRoot", "PinkyRoot", "ExtraRoot"]
             validFingers=["Finger", "Thumb", "Index_F", "Middle_F", "Ring_F", "Pinky_F", "Extra_F"]
-
+            fingers = None
             for root in validRoots:
                 if inits.get(root):
                     fingerRoot=[inits.get(root)]
@@ -60,14 +59,6 @@ class Fingers(object):
                 self.idCounter += 1
                 newSuffix = "%s%s" %(suffix, str(self.idCounter))
             suffix = newSuffix
-
-        # idCounter = 0
-        # ## create an unique suffix
-        # self.crossName = "scaleGrp_" + suffix
-        # while pm.objExists(self.crossName):
-        #     idCounter += 1
-        #     newSuffix = "%s%s" % (suffix, str(idCounter))
-        #     self.crossName = "scaleGrp_" + newSuffix
 
         if (len(inits) < 2):
             pm.error("Insufficient Finger Initialization Joints")
@@ -109,7 +100,7 @@ class Fingers(object):
         self.conts = []
         conts_OFF = []
         conts_ORE = []
-        conts_con = []
+        contList = []
 
         for i in range(0, len(self.defJoints)-1):
             contScl = (pm.getAttr(self.defJoints[1].tx) / 2)
@@ -129,7 +120,7 @@ class Fingers(object):
                 pm.parent(cont_OFF, self.conts[len(self.conts)-1])
                 pm.makeIdentity(cont, a=True)
             self.conts.append(cont)
-            conts_con.append(cont_con)
+            contList.append(cont_con)
 
             pm.parentConstraint(cont, self.defJoints[i], mo=True)
 
@@ -153,9 +144,9 @@ class Fingers(object):
         pm.connectAttr("%s.%s" %(parentController,spreadAttr), sprMult.input2Y)
         # pm.PyNode("{0}.{1}{2}".format(parentController, side, "Spread")) >> sprMult.input2Y
 
-        sprMult.outputY >> conts_con[0].rotateY
-        # pm.PyNode("{0}.{1}{2}".format(parentController, side, "Spread")) >> conts_con[1].rotateY
-        pm.connectAttr("%s.%s" % (parentController, spreadAttr), conts_con[1].rotateY)
+        sprMult.outputY >> contList[0].rotateY
+        # pm.PyNode("{0}.{1}{2}".format(parentController, side, "Spread")) >> contList[1].rotateY
+        pm.connectAttr("%s.%s" % (parentController, spreadAttr), contList[1].rotateY)
 
         # Bend
         # add bend attributes for each joint (except the end joint)
@@ -166,9 +157,11 @@ class Fingers(object):
                 bendAttr = "{0}{1}{2}".format(suffix, "Bend", f)
 
             pm.addAttr(parentController, shortName=bendAttr, defaultValue=0.0, at="float", k=True)
-            pm.PyNode("{0}.{1}".format(parentController, bendAttr)) >> conts_con[f].rotateZ
+            pm.PyNode("{0}.{1}".format(parentController, bendAttr)) >> contList[f].rotateZ
 
         # pm.parent(conts_OFF[0], self.limbPlug)
+
+        extra.colorize(contList, side)
         pm.parentConstraint(self.limbPlug, conts_OFF[0], mo=True)
 
 

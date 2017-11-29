@@ -148,16 +148,16 @@ class SimpleTail(object):
         self.scaleGrp.rigVis >> self.limbPlug.v
 
         ## COLORIZE
-        index = 17 ## default yellow color coding for non-sided tentacles
-        if side == "R":
-            index = 13
-            indexMin = 9
-
-        elif side == "L":
-            index = 6
-            indexMin = 18
+        # index = 17 ## default yellow color coding for non-sided tentacles
+        # if side == "R":
+        #     index = 13
+        #     indexMin = 9
+        #
+        # elif side == "L":
+        #     index = 6
+        #     indexMin = 18
         for i in contList:
-            extra.colorize(i, index)
+            extra.colorize(i, side)
 
 
 

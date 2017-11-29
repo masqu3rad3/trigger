@@ -10,8 +10,8 @@ reload(rc)
 import contIcons as icon
 
 reload(icon)
-import multiFingersClass as mFingers
-reload(mFingers)
+# import multiFingersClass as mFingers
+# reload(mFingers)
 
 import pymel.core.datatypes as dt
 ###########################
@@ -88,10 +88,6 @@ class Arm():
             pm.warning("mirrorAxis attribute of the root node does not exist. Using default value (scene x)")
             self.mirrorAxis = (1.0, 0.0, 0.0)
 
-        # mirrorRotateAxis = "xyz".replace(upAxisStr, "")
-        # mirrorRotateAxis =  mirrorRotateAxis.replace(mirrorAxisStr, "")
-
-        # print "self.upAxis", self.upAxis
 
 
         ##Groups
@@ -718,23 +714,23 @@ class Arm():
 
         # COLOR CODING
 
-        if side == "R":
-            index = 13  ##Red color index
-            indexMin = 9  ##Magenta color index
-        else:
-            index = 6  ##Blue Color index
-            indexMin = 18
+        # if side == "R":
+        #     index = 13  ##Red color index
+        #     indexMin = 9  ##Magenta color index
+        # else:
+        #     index = 6  ##Blue Color index
+        #     indexMin = 18
 
-        extra.colorize(cont_Shoulder, index)
-        extra.colorize(self.cont_IK_hand, index)
-        extra.colorize(self.cont_Pole, index)
-        extra.colorize(cont_FK_IK, index)
-        extra.colorize(cont_FK_UpArm, index)
-        extra.colorize(cont_FK_LowArm, index)
-        extra.colorize(cont_FK_Hand, index)
-        extra.colorize(cont_midLock, indexMin)
-        extra.colorize(ribbonUpperArm.middleCont, indexMin)
-        extra.colorize(ribbonLowerArm.middleCont, indexMin)
+        extra.colorize(cont_Shoulder, side)
+        extra.colorize(self.cont_IK_hand, side)
+        extra.colorize(self.cont_Pole, side)
+        extra.colorize(cont_FK_IK, side)
+        extra.colorize(cont_FK_UpArm, side)
+        extra.colorize(cont_FK_LowArm, side)
+        extra.colorize(cont_FK_Hand, side)
+        extra.colorize(cont_midLock, side+"MIN")
+        extra.colorize(ribbonUpperArm.middleCont, side+"MIN")
+        extra.colorize(ribbonLowerArm.middleCont, side+"MIN")
 
         self.scaleConstraints = [self.scaleGrp, cont_IK_hand_OFF]
         self.anchors = [(self.cont_IK_hand, "parent", 1, None),(self.cont_Pole, "parent", 1, None)]

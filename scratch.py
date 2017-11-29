@@ -2,7 +2,7 @@ import pymel.core as pm
 import extraProcedures as extra
 reload(extra)
 import contIcons as icon
-
+reload(icon)
 import armClass as arm
 reload(arm)
 import legClass as leg
@@ -13,13 +13,10 @@ import spineClass as spine
 reload(spine)
 import simpleTailClass as simpleTail
 reload(simpleTail)
-
 import fingersClass as finger
 reload(finger)
-
 import tentacleClass as tentacle
 reload(tentacle)
-
 class LimbBuilder():
 
     def __init__(self):
@@ -121,7 +118,7 @@ class LimbBuilder():
 
         elif limbProperties[1] == "tentacle":
             limb = tentacle.Tentacle()
-            limb.createTentacle(limbProperties[0], suffix="%s_leg" % limbProperties[2], side=limbProperties[2])
+            limb.createTentacle(limbProperties[0], suffix="%s_leg" % limbProperties[2], side=limbProperties[2], npResolution=limbProperties[0]["contRes"], jResolution=limbProperties[0]["jointRes"], blResolution=limbProperties[0]["deformerRes"], dropoff=limbProperties[0]["dropoff"])
 
         else:
             pm.error("limb creation failed.")
@@ -245,7 +242,6 @@ class LimbBuilder():
 ######### //TODO WIP
         for f in self.fingerMatchList:
             fName, fType, fSide = extra.identifyMaster(f[0])
-            # print "parentCheck", f[0].getParent()
             offsetVector = extra.getBetweenVector(f[0].getParent(),f)
             iconSize = extra.getDistance(f[0], f[-1])
             translateOff = (iconSize / 2, 0, iconSize / 2)
@@ -362,10 +358,9 @@ class LimbBuilder():
                 limb.createFinger(x[0], suffix=sideVal, side=x[2], parentController=parentController)
 
             elif x[1] == "tentacle":
-                # print "anan", x
                 limb = tentacle.Tentacle()
                 # limb.createTentacle(x[0], suffix="%s_leg" % x[2], side=x[2], npResolution=x[0]["contRes"], jResolution = x[0]["jointRes"],blResolution = x[0]["deformerRes"], dropoff = x[0]["dropoff"])
-                limb.createTentacle(x[0], suffix="%s_leg" % x[2], side=x[2], npResolution=x[0]["contRes"], jResolution = x[0]["jointRes"])
+                limb.createTentacle(x[0], suffix="%s_leg" % x[2], side=x[2], npResolution=x[0]["contRes"], jResolution = x[0]["jointRes"], blResolution = x[0]["deformerRes"], dropoff = x[0]["dropoff"])
 
             else:
                 pm.error("limb creation failed.")

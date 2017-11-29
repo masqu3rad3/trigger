@@ -109,7 +109,6 @@ class initialJoints():
         self.mirrorAxis = "xyz".strip(lookAxis + upAxis)
 
     def initLimb (self, limb, whichSide="left", segments=3, fingerCount=5, thumb=False, constrainedTo = None, parentNode=None, defineAs=False):
-        # print "whichSide", whichSide
         currentselection = pm.ls(sl=True)
 
         ## Create the holder group if it does not exist
@@ -337,11 +336,16 @@ class initialJoints():
         return jointList, offsetVector
 
     def initialArm(self, transformKey, side, suffix):
-
-        collarVec = self.transformator((2, 0, 0), transformKey)
-        shoulderVec = self.transformator((5, 0, 0), transformKey)
-        elbowVec = self.transformator((9, 0, -1), transformKey)
-        handVec = self.transformator((14, 0, 0 ), transformKey)
+        if side == 0:
+            collarVec = self.transformator((0, 0, 2), transformKey)
+            shoulderVec = self.transformator((0, 0, 5), transformKey)
+            elbowVec = self.transformator((0, -1, 9), transformKey)
+            handVec = self.transformator((0, 0, 14 ), transformKey)
+        else:
+            collarVec = self.transformator((2, 0, 0), transformKey)
+            shoulderVec = self.transformator((5, 0, 0), transformKey)
+            elbowVec = self.transformator((9, 0, -1), transformKey)
+            handVec = self.transformator((14, 0, 0 ), transformKey)
 
         offsetVector = -(dt.normal(dt.Vector(collarVec) - dt.Vector(shoulderVec)))
 
@@ -377,16 +381,29 @@ class initialJoints():
         return jointList, offsetVector
     
     def initialLeg(self, transformKey, side, suffix):
-        rootVec = self.transformator((2,14,0), transformKey)
-        hipVec = self.transformator((5,10,0), transformKey)
-        kneeVec = self.transformator((5,5,1), transformKey)
-        footVec = self.transformator((5,1,0), transformKey)
-        ballVec = self.transformator((5,0,2), transformKey)
-        toeVec = self.transformator((5,0,4), transformKey)
-        bankoutVec = self.transformator((4,0,2), transformKey)
-        bankinVec = self.transformator((6,0,2), transformKey)
-        toepvVec = self.transformator((5,0,4.3), transformKey)
-        heelpvVec = self.transformator((5,0,-0.2), transformKey)
+        if side == 0:
+            rootVec = self.transformator((0, 14, 0), transformKey)
+            hipVec = self.transformator((0, 10, 0), transformKey)
+            kneeVec = self.transformator((0, 5, 1), transformKey)
+            footVec = self.transformator((0, 1, 0), transformKey)
+            ballVec = self.transformator((0, 0, 2), transformKey)
+            toeVec = self.transformator((0, 0, 4), transformKey)
+            bankoutVec = self.transformator((-1, 0, 2), transformKey)
+            bankinVec = self.transformator((1, 0, 2), transformKey)
+            toepvVec = self.transformator((0, 0, 4.3), transformKey)
+            heelpvVec = self.transformator((0, 0, -0.2), transformKey)
+
+        else:
+            rootVec = self.transformator((2,14,0), transformKey)
+            hipVec = self.transformator((5,10,0), transformKey)
+            kneeVec = self.transformator((5,5,1), transformKey)
+            footVec = self.transformator((5,1,0), transformKey)
+            ballVec = self.transformator((5,0,2), transformKey)
+            toeVec = self.transformator((5,0,4), transformKey)
+            bankoutVec = self.transformator((4,0,2), transformKey)
+            bankinVec = self.transformator((6,0,2), transformKey)
+            toepvVec = self.transformator((5,0,4.3), transformKey)
+            heelpvVec = self.transformator((5,0,-0.2), transformKey)
 
         offsetVector = -(dt.normal(dt.Vector(rootVec) - dt.Vector(hipVec)))
         
@@ -925,7 +942,6 @@ class initialJoints():
                     pm.setAttr(jointList[i] + ".type", 23)
 
         if limbType == "tentacle":
-            # print "Anan", side
             if not len(jointList) > 1:
                 pm.warning("minimum segments required for the tentacle is two. current: %s" % len(jointList))
                 return
