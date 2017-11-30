@@ -14,12 +14,12 @@ class Root(object):
 
     def createRoot(self, inits, suffix=""):
         """
-        This 
+        This will create a 'mid node' called root. This single joint will act as a socket for other limbs to connect to.
         Args:
-            inits: 
-            suffix: 
+            inits: (dictionary or list) This is plural for naming convention only. In fact, the function accepts only one joint. If it is a dictionary, the key must be 'Root' and if it is a list it must contain only a single element
+            suffix: (string) Name suffix for the nodes will be created
 
-        Returns:
+        Returns: None
 
         """
         if isinstance(inits, dict):
