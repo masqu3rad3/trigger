@@ -121,7 +121,7 @@ class LimbBuilder():
 
         elif limbProperties[1] == "tentacle":
             limb = tentacle.Tentacle()
-            limb.createTentacle(limbProperties[0], suffix="%s_leg" % limbProperties[2], side=limbProperties[2], npResolution=limbProperties[0]["contRes"], jResolution=limbProperties[0]["jointRes"], blResolution=limbProperties[0]["deformerRes"], dropoff=limbProperties[0]["dropoff"])
+            limb.createTentacle(limbProperties[0], suffix="%s_tentacle" % limbProperties[2], side=limbProperties[2], npResolution=limbProperties[0]["contRes"], jResolution=limbProperties[0]["jointRes"], blResolution=limbProperties[0]["deformerRes"], dropoff=limbProperties[0]["dropoff"])
 
         elif limbProperties[1] == "root":
             limb = root.Root()
@@ -367,11 +367,10 @@ class LimbBuilder():
             elif x[1] == "tentacle":
                 limb = tentacle.Tentacle()
                 # limb.createTentacle(x[0], suffix="%s_leg" % x[2], side=x[2], npResolution=x[0]["contRes"], jResolution = x[0]["jointRes"],blResolution = x[0]["deformerRes"], dropoff = x[0]["dropoff"])
-                limb.createTentacle(x[0], suffix="%s_leg" % x[2], side=x[2], npResolution=x[0]["contRes"], jResolution = x[0]["jointRes"], blResolution = x[0]["deformerRes"], dropoff = x[0]["dropoff"])
+                limb.createTentacle(x[0], suffix="%s_tentacle" % x[2], side=x[2], npResolution=x[0]["contRes"], jResolution = x[0]["jointRes"], blResolution = x[0]["deformerRes"], dropoff = x[0]["dropoff"])
 
             elif x[1] == "root":
                 limb = root.Root()
-                print "anan", x
                 limb.createRoot(x[0], suffix="root")
                 # print "limbProperties", x
 

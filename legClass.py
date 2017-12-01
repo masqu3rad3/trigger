@@ -272,6 +272,7 @@ class Leg():
         ###Create common Joints
         pm.select(d=True)
         jDef_midLeg = pm.joint(name="jDef_knee_" + suffix, p=kneePos, radius=1.5)
+        self.sockets.append(jDef_midLeg)
         pm.select(d=True)
         self.jDef_legRoot = pm.joint(name="jDef_legRoot_" + suffix, p=legRootPos, radius=1.5)
         self.sockets.append(self.jDef_legRoot)
@@ -751,9 +752,11 @@ class Leg():
 
         pm.select(d=True)
         jDef_Foot = pm.joint(name="jDef_Foot_" + suffix, p=footPos, radius=1.0)
+        self.sockets.append(jDef_Foot)
         jDef_Ball = pm.joint(name="jDef_Ball_" + suffix, p=ballPos, radius=1.0)
-
+        self.sockets.append(jDef_Ball)
         jDef_Toe = pm.joint(name="jDef_Toe_" + suffix, p=toePvPos, radius=1.0)  ## POSSIBLE PROBLEM
+        self.sockets.append(jDef_Toe)
 
         foot_paCon = pm.parentConstraint(jIK_Foot, jFK_Foot, jDef_Foot, mo=True)
         ball_paCon = pm.parentConstraint(jIK_Ball, jFK_Ball, jDef_Ball, mo=True)

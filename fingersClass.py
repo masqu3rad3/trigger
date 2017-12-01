@@ -88,11 +88,11 @@ class Fingers(object):
 
                 replacedName = (j.name()).replace("jDef", "j")
                 pm.rename(j, replacedName)
-                self.sockets.append(j)
+                # self.sockets.append(j)
 
-                pass
-            if inits.index(i) == 0:
-                self.sockets.append(i)
+            # if inits.index(i) == 0:
+            #     self.sockets.append(i)
+            self.sockets.append(j)
             self.defJoints.append(j)
 
         ## Create Controllers

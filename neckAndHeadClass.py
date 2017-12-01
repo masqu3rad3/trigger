@@ -15,21 +15,23 @@ reload(twistSpline)
 
 class NeckAndHead():
 
-    scaleGrp = None
-    nonScaleGrp = None
-    neckRootLoc = None
-    cont_neck = None
-    cont_head = None
-    # cont_head_OFF = None
-    cont_IK_OFF = None
-    sockets = []
-    # startSocket = None
-    # endSocket = None
-    limbPlug = None
-    connectsTo = None
-    scaleConstraints = []
-    anchors = []
-    anchorLocations = []
+    def __init__(self):
+        # super(NeckAndHead, self).__init__()
+        self.scaleGrp = None
+        self.nonScaleGrp = None
+        self.neckRootLoc = None
+        self.cont_neck = None
+        self.cont_head = None
+        # cont_head_OFF = None
+        self.cont_IK_OFF = None
+        self.sockets = []
+        # startSocket = None
+        # endSocket = None
+        self.limbPlug = None
+        self.connectsTo = None
+        self.scaleConstraints = []
+        self.anchors = []
+        self.anchorLocations = []
 
     def createNeckAndHead(self, inits, suffix="", resolution=3, dropoff=1):
         idCounter = 0
@@ -186,6 +188,8 @@ class NeckAndHead():
 
         neckSpline = twistSpline.TwistSpline()
         neckSpline.createTspline(neckNodes+[headStart], "neckSplineIK_"+suffix, resolution, dropoff=dropoff)
+        for i in neckSpline.defJoints:
+            self.sockets.append(i)
         # # Connect neck start to the neck controller
         pm.orientConstraint(self.cont_neck, neckSpline.contCurve_Start, mo=True)  # This will be position constrained to the spine(or similar)
         # self.cont_neck.rotateY >> neckSpline.twistNode.input1X
@@ -204,6 +208,8 @@ class NeckAndHead():
         # create spline IK for Head squash
         headSpline = twistSpline.TwistSpline()
         headSpline.createTspline([headStart, headEnd], "headSquashSplineIK_"+suffix, 3, dropoff=2)
+        for i in headSpline.defJoints:
+            self.sockets.append(i)
 
 
 

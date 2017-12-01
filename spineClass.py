@@ -154,6 +154,8 @@ class Spine(object):
         # move the pivot to its base
         spine = twistSpline.TwistSpline()
         spine.createTspline(inits, "spine" + suffix, resolution, dropoff=dropoff)
+        for i in spine.defJoints:
+            self.sockets.append(i)
 
         midConnection = spine.contCurves_ORE[(len(spine.contCurves_ORE)/2)]
 

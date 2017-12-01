@@ -227,9 +227,12 @@ class Arm():
         self.jDef_Collar = pm.joint(name="jDef_Collar_" + suffix, p=collarPos, radius=1.5)
         self.sockets.append(self.jDef_Collar)
         j_CollarEnd = pm.joint(name="j_CollarEnd_" + suffix, p=shoulderPos, radius=1.5)
+        self.sockets.append(j_CollarEnd)
 
         pm.select(d=True)
         jDef_elbow = pm.joint(name="jDef_elbow_" + suffix, p=elbowPos, radius=1.5)
+        self.sockets.append(jDef_elbow)
+
 
         pm.select(d=True)
         jIK_orig_Up = pm.joint(name="jIK_orig_Up_" + suffix, p=shoulderPos, radius=1.5)

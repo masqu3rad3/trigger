@@ -235,7 +235,7 @@ class testUI(QtWidgets.QMainWindow):
 
     def help(self, item):
 
-        msg = QtWidgets.QMessageBox.about()
+        msg = QtWidgets.QMessageBox()
         # msg.setIcon(QtWidgets.QMessageBox.Help)
 
         title = ""
@@ -247,9 +247,7 @@ class testUI(QtWidgets.QMainWindow):
             Spine initial:
             Create button will place a set of initial joints defined as 'Spine'
             
-            The count of the initial joints are defined by 'Segments' value.
-            These 'segments' are not the resolution of the spine. This will simply
-             tell the rig module where the controller curves will be.
+            The count of the initial joints are defined by 'Segments' value. These 'segments' are not the resolution of the spine. This will simply tell the rig module where the controller curves will be.
             In short, 'segments' value will define how many controllers will be along the spine.
             
             """
