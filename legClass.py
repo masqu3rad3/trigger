@@ -135,11 +135,13 @@ class Leg():
         cont_Thigh = icon.cube("cont_Thigh_" + suffix, thighContScale )
         extra.alignAndAim(cont_Thigh, targetList=[hipRef], aimTargetList=[kneeRef], upObject=legRootRef)
         pm.move(cont_Thigh, (0, -thighContScale[0] * 2, 0), r=True, os=True)
-        pm.xform(cont_Thigh, piv=legRootPos, ws=True)
+
         cont_Thigh_OFF = extra.createUpGrp(cont_Thigh, "OFF")
         cont_Thigh_ORE = extra.createUpGrp(cont_Thigh, "ORE")
         if side == "R":
             pm.setAttr(cont_Thigh_ORE.rotateZ, -180)
+
+        pm.xform(cont_Thigh, piv=legRootPos, ws=True)
         pm.addAttr(shortName="autoTwist", longName="Auto_Twist", defaultValue=1.0, minValue=0.0, maxValue=1.0, at="float",
                    k=True)
         pm.addAttr(shortName="manualTwist", longName="Manual_Twist", defaultValue=0.0, at="float", k=True)
@@ -211,6 +213,7 @@ class Leg():
         ## FK Foot Controller
         scalecontFkFoot = (initBallDist/2, initBallDist/3, initFootWidth/2)
         cont_FK_Foot = icon.cube(name="cont_FK_Foot_" + suffix, scale=scalecontFkFoot)
+        # extra.alignAndAim(cont_FK_Foot, targetList=[footRef,ballRef], aimTargetList=[ballRef], upVector=self.upAxis)
         extra.alignAndAim(cont_FK_Foot, targetList=[footRef,ballRef], aimTargetList=[ballRef], upVector=self.upAxis)
 
         cont_FK_Foot_OFF = extra.createUpGrp(cont_FK_Foot, "OFF")
@@ -248,6 +251,7 @@ class Leg():
 
         if side == "R":
             pm.move(cont_FK_IK, (-iconScale * 4, 0, 0), r=True, os=True)
+            pm.makeIdentity(cont_FK_IK, a=True)
 
         pm.addAttr(cont_FK_IK, shortName="autoTwist", longName="Auto_Twist", defaultValue=1.0, minValue=0.0, maxValue=1.0,
                    at="float", k=True)
@@ -494,24 +498,82 @@ class Leg():
         self.cont_IK_foot.stretch >> stretchOffset.input1D[2]
 
         # Bind Foot Attributes to the controller
-        self.cont_IK_foot.bLean >> Pv_BallLean.rotateY
-        self.cont_IK_foot.bRoll >> Pv_BallRoll.rotateZ
-        self.cont_IK_foot.bSpin >> Pv_BallSpin.rotateY
-        self.cont_IK_foot.hRoll >> Pv_Heel.rotateX
-        self.cont_IK_foot.hSpin >> Pv_Heel.rotateY
-        self.cont_IK_foot.tRoll >> Pv_Toe.rotateX
-        self.cont_IK_foot.tSpin >> Pv_Toe.rotateY
-        self.cont_IK_foot.tWiggle >> Pv_Ball.rotateZ
+        # create multiply nodes for alignment fix
+        multAlFix_bLean = pm.createNode("multDoubleLinear", name="multAlFix_bLean_{0}".format(suffix))
+        multAlFix_bRoll = pm.createNode("multDoubleLinear", name="multAlFix_bRoll_{0}".format(suffix))
+        multAlFix_bSpin = pm.createNode("multDoubleLinear", name="multAlFix_bSpin_{0}".format(suffix))
+        multAlFix_hRoll = pm.createNode("multDoubleLinear", name="multAlFix_hRoll_{0}".format(suffix))
+        multAlFix_hSpin = pm.createNode("multDoubleLinear", name="multAlFix_hSpin_{0}".format(suffix))
+        multAlFix_tRoll = pm.createNode("multDoubleLinear", name="multAlFix_tRoll_{0}".format(suffix))
+        multAlFix_tSpin= pm.createNode("multDoubleLinear", name="multAlFix_tSpin_{0}".format(suffix))
+        multAlFix_tWiggle = pm.createNode("multDoubleLinear", name="multAlFix_tWiggle_{0}".format(suffix))
+
+        if side == "R":
+            mult = -1
+        else:
+            mult = 1
+
+        pm.setAttr(multAlFix_bLean.input2, mult)
+        pm.setAttr(multAlFix_bRoll.input2, mult)
+        pm.setAttr(multAlFix_bSpin.input2, mult)
+        # heel roll is an exception. It should be same for each side
+        pm.setAttr(multAlFix_hRoll.input2, 1)
+        pm.setAttr(multAlFix_hSpin.input2, mult)
+        # toe roll is an exception too.
+        pm.setAttr(multAlFix_tRoll.input2, 1)
+        pm.setAttr(multAlFix_tSpin.input2, mult)
+        pm.setAttr(multAlFix_tWiggle.input2, mult)
+
+
+        self.cont_IK_foot.bLean >> multAlFix_bLean.input1
+        self.cont_IK_foot.bRoll >> multAlFix_bRoll.input1
+        self.cont_IK_foot.bSpin >> multAlFix_bSpin.input1
+        self.cont_IK_foot.hRoll >> multAlFix_hRoll.input1
+        self.cont_IK_foot.hSpin >> multAlFix_hSpin.input1
+        self.cont_IK_foot.tRoll >> multAlFix_tRoll.input1
+        self.cont_IK_foot.tSpin >> multAlFix_tSpin.input1
+        self.cont_IK_foot.tWiggle >> multAlFix_tWiggle.input1
+
+        multAlFix_bLean.output >> Pv_BallLean.rotateY
+        multAlFix_bRoll.output >> Pv_BallRoll.rotateZ
+        multAlFix_bSpin.output >> Pv_BallSpin.rotateY
+        multAlFix_hRoll.output >> Pv_Heel.rotateX
+        multAlFix_hSpin.output >> Pv_Heel.rotateY
+        multAlFix_tRoll.output >> Pv_Toe.rotateX
+        multAlFix_tSpin.output >> Pv_Toe.rotateY
+        multAlFix_tWiggle.output >> Pv_Ball.rotateZ
+
+        # self.cont_IK_foot.bLean >> Pv_BallLean.rotateY
+        # self.cont_IK_foot.bRoll >> Pv_BallRoll.rotateZ
+        # self.cont_IK_foot.bSpin >> Pv_BallSpin.rotateY
+        # self.cont_IK_foot.hRoll >> Pv_Heel.rotateX
+        # self.cont_IK_foot.hSpin >> Pv_Heel.rotateY
+        # self.cont_IK_foot.tRoll >> Pv_Toe.rotateX
+        # self.cont_IK_foot.tSpin >> Pv_Toe.rotateY
+        # self.cont_IK_foot.tWiggle >> Pv_Ball.rotateZ
         # // TODO: Reduction possible
         ## create an upper group for bank in to zero out rotations
         Pv_BankIn_ORE = extra.createUpGrp(Pv_BankIn, "ORE")
 
-        pm.select(Pv_BankOut)
-        pm.setDrivenKeyframe(cd=self.cont_IK_foot.bank, at="rotateX", dv=0, v=0)
-        pm.setDrivenKeyframe(cd=self.cont_IK_foot.bank, at="rotateX", dv=-90, v=90)
-        pm.select(Pv_BankIn)
-        pm.setDrivenKeyframe(cd=self.cont_IK_foot.bank, at="rotateX", dv=0, v=0)
-        pm.setDrivenKeyframe(cd=self.cont_IK_foot.bank, at="rotateX", dv=90, v=-90)
+        if side == "R":
+            order = [1, -1]
+        else:
+            order = [-1, 1]
+
+
+        pm.setDrivenKeyframe(Pv_BankOut.rotateX, cd=self.cont_IK_foot.bank, dv=0, v=0, itt='linear', ott='linear')
+        pm.setDrivenKeyframe(Pv_BankOut.rotateX, cd=self.cont_IK_foot.bank, dv=90, v=90*order[1], itt='linear', ott='linear')
+
+        pm.setDrivenKeyframe(Pv_BankIn.rotateX, cd=self.cont_IK_foot.bank, dv=0, v=0, itt='linear', ott='linear')
+        pm.setDrivenKeyframe(Pv_BankIn.rotateX, cd=self.cont_IK_foot.bank, dv=-90, v=90*order[0], itt='linear', ott='linear')
+
+        #
+        # pm.select(Pv_BankOut)
+        # pm.setDrivenKeyframe(cd=self.cont_IK_foot.bank, at="rotateX", dv=0, v=0)
+        # pm.setDrivenKeyframe(cd=self.cont_IK_foot.bank, at="rotateX", dv=-90, v=90)
+        # pm.select(Pv_BankIn)
+        # pm.setDrivenKeyframe(cd=self.cont_IK_foot.bank, at="rotateX", dv=0, v=0)
+        # pm.setDrivenKeyframe(cd=self.cont_IK_foot.bank, at="rotateX", dv=90, v=-90)
 
         IK_parentGRP = pm.group(name="IK_parentGRP_" + suffix, em=True)
         extra.alignTo(IK_parentGRP, footRef, 0)
@@ -596,7 +658,8 @@ class Leg():
 
         pm.orientConstraint(cont_FK_LowLeg, jFK_Knee, mo=True)
         pm.orientConstraint(cont_FK_Foot, jFK_Foot, mo=False)
-        pm.orientConstraint(cont_FK_Ball, jFK_Ball, mo=True)
+        # pm.orientConstraint(cont_FK_Ball, jFK_Ball, mo=True)
+        pm.parentConstraint(cont_FK_Ball, jFK_Ball, mo=True)
 
         pm.parentConstraint(cont_Thigh, cont_FK_UpLeg_OFF, sr=("x", "y", "z"), mo=True)
         pm.parentConstraint(cont_FK_UpLeg, cont_FK_LowLeg_OFF, mo=True)

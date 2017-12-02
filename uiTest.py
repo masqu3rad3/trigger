@@ -235,33 +235,68 @@ class testUI(QtWidgets.QMainWindow):
 
     def help(self, item):
 
-        msg = QtWidgets.QMessageBox()
-        # msg.setIcon(QtWidgets.QMessageBox.Help)
+        self.messageDialog = QtWidgets.QDialog()
+        self.messageDialog.setWindowTitle("Initial Spine Help")
 
-        title = ""
-        message = ""
-        details = ""
+        self.messageDialog.resize(500,700)
+        self.messageDialog.show()
+        messageLayout = QtWidgets.QVBoxLayout(self.messageDialog)
+        messageLayout.setContentsMargins(0, 0, 0, 0)
+        helpText = QtWidgets.QTextEdit()
+        helpText.setReadOnly(True)
+        helpText.setStyleSheet("background-color: rgb(255, 255, 255);")
+        helpText.setStyleSheet(""
+                               "border: 20px solid black;"
+                               "background-color: black"
+                               "")
+        # testLabel = QtWidgets.QLabel("TESTING")
+        helpText.textCursor().insertHtml("""
+<h1><span style="color: #ff6600;">Creating Initial Spine Joints</span></h1>
+<p><span style="font-weight: 400;">This section is for creating or defining </span><em><span style="font-weight: 400;">Spine Initialization Joints.</span></em></p>
+<p><span style="font-weight: 400;">These joints will inform the rigging module about the locations of spine joints and pass various options through extra attributes.</span></p>
+<h3><strong><span style="color: #ff6600;">How To use?</span></strong></h3>
+<p><span style="font-weight: 400;">Pressing the <em>Create</em>&nbsp;button will create number of joints defined by the </span><span style="font-weight: 400; color: #800080;"><strong>Segments</strong> </span><span style="font-weight: 400;">value.</span></p>
+<p><span style="font-weight: 400;">Pressing the CTRL will change the mode to define mode which allows defining pre-existing joints as spine.</span></p>
+<p><span style="font-weight: 400;">To define existing joints, first select all the joints that you wish to define with the correct order (starting from the root of spine), then CTRL+click <em>Create</em>&nbsp;button.</span></p>
+<p><strong><span style="color: #800080;">Segments</span></strong><span style="font-weight: 400;"> value is </span><strong>not </strong><span style="font-weight: 400;">the final resolution of the spine rig. <strong><span style="color: #800080;">Segments</span> </strong>are used to tell the rig module, where and how many controllers will be on the spine rig.</span></p>
+<h3><span style="color: #ff6600;">What next?</span></h3>
+<p><span style="font-weight: 400;">After creating (or defining) the initial spine joints, various options can be reached through the Spine Root. These options are stored in extra attributes. During the rigging process, these options will be derived by the rigging module.</span></p>
+<p><span style="font-weight: 400;">These extra attributes are:</span></p>
+<p><span style="font-weight: 400;"><span style="color: #3366ff;"><strong>Resolution:</strong></span>&nbsp;</span><span style="font-weight: 400;">This is the actual final joint resolution for the spine deformation joints.</span></p>
+<p><span style="font-weight: 400;"><span style="color: #3366ff;"><strong>DropOff:</strong></span>&nbsp;</span><span style="font-weight: 400;">This value will change the way the controllers are affecting the spline IK chain. Usually the default value is ok. If the rig have too many segments (This means more controllers will be created) then tweaking this value may be necessary.</span></p>
+     
+        """)
+        messageLayout.addWidget(helpText)
 
-        if item == "Spine":
-            message = """
-            Spine initial:
-            Create button will place a set of initial joints defined as 'Spine'
-            
-            The count of the initial joints are defined by 'Segments' value. These 'segments' are not the resolution of the spine. This will simply tell the rig module where the controller curves will be.
-            In short, 'segments' value will define how many controllers will be along the spine.
-            
-            """
-            title = "Spine Initial"
 
-            # print message
 
-        else:
-            return
-
-        msg.setWindowTitle(title)
-        msg.setInformativeText(message)
-        # msg.setDetailedText(details)
-        retval = msg.exec_()
+        # msg = QtWidgets.QMessageBox()
+        # # msg.setIcon(QtWidgets.QMessageBox.Help)
+        #
+        # title = ""
+        # message = ""
+        # details = ""
+        #
+        # if item == "Spine":
+        #     message = """
+        #     Spine initial:
+        #     Create button will place a set of initial joints defined as 'Spine'
+        #
+        #     The count of the initial joints are defined by 'Segments' value. These 'segments' are not the resolution of the spine. This will simply tell the rig module where the controller curves will be.
+        #     In short, 'segments' value will define how many controllers will be along the spine.
+        #
+        #     """
+        #     title = "Spine Initial"
+        #
+        #     # print message
+        #
+        # else:
+        #     return
+        #
+        # msg.setWindowTitle(title)
+        # msg.setInformativeText(message)
+        # # msg.setDetailedText(details)
+        # retval = msg.exec_()
 
     def initArmUI(self):
         self.armGroupBox = QtWidgets.QGroupBox()
