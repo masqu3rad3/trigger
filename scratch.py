@@ -347,7 +347,6 @@ class LimbBuilder():
                 # limb.createSpine(x[0], suffix="s", resolution=x[3], dropoff=x[4])  # s for spine...
                 limb.createSpine(x[0], suffix="s", resolution=x[0]["resolution"], dropoff=x[0]["dropoff"])  # s for spine...
 
-
             elif x[1] == "tail":
                 limb = simpleTail.SimpleTail()
                 limb.createSimpleTail(x[0], suffix="tail", side=x[2])

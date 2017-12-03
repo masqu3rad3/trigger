@@ -6,7 +6,7 @@ class initialJoints():
 
     def __init__(self):
 
-        self.axisOrder = "zxy"
+        # self.axisOrder = "zxy"
         # self.mirrorAxis = self.axisOrder[0]
         # self.upAxis = self.axisOrder[1]
         # self.lookAxis = self.axisOrder[2]
@@ -118,7 +118,7 @@ class initialJoints():
             holderGroup = pm.PyNode("{0}_refBones".format(self.projectName), em=True)
 
         ## skip side related stuff for no-side related limbs
-        nonSidedLimbs = ["spine", "neck"]
+        nonSidedLimbs = ["spine", "neck", "root"]
         if limb in nonSidedLimbs:
             whichSide = "c"
 
