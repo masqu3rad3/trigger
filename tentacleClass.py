@@ -230,6 +230,11 @@ class Tentacle(object):
         # npWrap = pm.deformer(type="wrap", g=npJdefHolder)
         npWrap, npWrapGeo = self.createWrap(npBase[0], npJdefHolder[0],weightThreshold=0.0, maxDistance=50, autoWeightThreshold=False)
 
+        ## make the Wrap node Scale-able with the rig
+        pm.select(d=True)
+        wrapScaleJoint = pm.joint(name="jWrapScale_{0}".format(suffix))
+        pm.skinCluster(wrapScaleJoint, npWrapGeo, tsb=True)
+
         ## Create skin cluster
         pm.skinCluster(contJointsList, npBase[0], tsb=True, dropoffRate=dropoff)
 
@@ -353,7 +358,7 @@ class Tentacle(object):
         pm.parent(cont_special_ORE, contFK_List[0])
 
         pm.parent(npBase[0], self.nonScaleGrp)
-        pm.parent(npJdefHolder[0], self.nonScaleGrp)
+        # pm.parent(npJdefHolder[0], self.nonScaleGrp)
         pm.parent(npDeformers[0], self.nonScaleGrp)
         # pm.parent(follicleList, self.nonScaleGrp)
         pm.parent(curlDeformer[1], self.nonScaleGrp)
@@ -363,6 +368,9 @@ class Tentacle(object):
         #
         #
         pm.parent(contJointsList, self.scaleGrp)
+        pm.parent(wrapScaleJoint, self.scaleGrp)
+
+        pm.parent(npJdefHolder[0], self.scaleGrp)
 
         ## CONNECT RIG VISIBILITIES
 
@@ -375,7 +383,7 @@ class Tentacle(object):
         pm.setAttr(self.scaleGrp.rigVis, cb=True)
 
         nodesContVis = [contTwk_List, contFK_List]
-        nodesRigVis = [npBase[0], npJdefHolder[0], npDeformers[0], sineLoc, twistLoc, curlDeformer[1], follicleList, contJointsList]
+        nodesRigVis = [npBase[0], npJdefHolder[0], npDeformers[0], sineLoc, twistLoc, curlDeformer[1], follicleList, contJointsList, wrapScaleJoint]
 
         # Cont visibilities
         for i in nodesContVis:

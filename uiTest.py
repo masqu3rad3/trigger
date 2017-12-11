@@ -20,7 +20,7 @@ else:
     from shiboken2 import wrapInstance
     from Qt.QtCore import Signal
 
-windowName = "TRigger"
+windowName = "T-Rigger"
 
 def getMayaMainWindow():
     """
@@ -32,13 +32,13 @@ def getMayaMainWindow():
     ptr = wrapInstance(long(win), QtWidgets.QMainWindow)
     return ptr
 
-class testUI(QtWidgets.QMainWindow):
+class mainUI(QtWidgets.QMainWindow):
     def __init__(self):
         for entry in QtWidgets.QApplication.allWidgets():
             if entry.objectName() == windowName:
                 entry.close()
         parent = getMayaMainWindow()
-        super(testUI, self).__init__(parent=parent)
+        super(mainUI, self).__init__(parent=parent)
 
         self.wSize = 60
         self.hSize = 50

@@ -4,11 +4,12 @@ import Qt
 from Qt import QtWidgets, QtCore, QtGui
 from maya import OpenMayaUI as omui
 import initials as init
+
 reload(init)
 import scratch
+
 reload(scratch)
 import math
-
 
 if Qt.__binding__ == "PySide":
     from shiboken import wrapInstance
@@ -20,7 +21,7 @@ else:
     from shiboken2 import wrapInstance
     from Qt.QtCore import Signal
 
-windowName = "Tik_AutoRigger"
+windowName = "T-Rigger"
 
 
 def getMayaMainWindow():
@@ -33,57 +34,53 @@ def getMayaMainWindow():
     ptr = wrapInstance(long(win), QtWidgets.QMainWindow)
     return ptr
 
-class bufferUI(QtWidgets.QDialog):
-    def __init__(self):
-        # for entry in QtWidgets.QApplication.allWidgets():
-        #     if entry.objectName() == windowName:
-        #         entry.close()
-        parent = getMayaMainWindow()
-        super(bufferUI, self).__init__(parent=parent)
-        self.superLayout = QtWidgets.QVBoxLayout(self)
-        self.setWindowTitle(windowName)
-        self.setObjectName(windowName)
-        self.show()
 
-
-class mainUI(QtWidgets.QTabWidget):
-    wSize = 60
-    hSize = 50
+class mainUI(QtWidgets.QMainWindow):
     def __init__(self):
         for entry in QtWidgets.QApplication.allWidgets():
             if entry.objectName() == windowName:
-                # print entry
                 entry.close()
+        parent = getMayaMainWindow()
+        super(mainUI, self).__init__(parent=parent)
 
-        ## I use another QDialog as buffer since Tabs wont work when parented to the Maya Ui.
-        self.buffer=bufferUI()
-        super(mainUI, self).__init__(parent=self.buffer)
-
-        ## This will put the Tab Widget into the buffer layout
-        self.buffer.superLayout.addWidget(self)
-
-        ## This will zero out the margins caused by the bufferUI
-        self.buffer.superLayout.setContentsMargins(0,0,0,0)
+        self.wSize = 60
+        self.hSize = 50
 
         self.setWindowTitle(windowName)
         self.setObjectName(windowName)
-        self.buffer.setMinimumSize(250, 100)
-        self.buffer.resize(250, 500)
-        self.defineAs=False
+
+        self.mainDialog = QtWidgets.QDialog(self)
+
+        # setup the central widget
+        self.centralWidget = QtWidgets.QWidget(self)
+        self.setCentralWidget(self.centralWidget)
+        self.defineAs = False
+
+        bar = self.menuBar()
+        file = bar.addMenu("Settings")
+        file.addAction("Initial Joint Settings")
+        file.addAction("Rig Settings")
+
+        self.layout = QtWidgets.QVBoxLayout(self.mainDialog)
+        self.centralWidget.setLayout(self.layout)
 
         self.initSkeleton = init.initialJoints()
         self.rigger = scratch.LimbBuilder()
 
+        self.layout.setContentsMargins(0, 0, 0, 0)
 
-        self.tabDialog()
+        self.setMinimumSize(250, 100)
+        self.resize(250, 500)
 
+        self.buildUI()
 
-    def tabDialog(self):
+    def buildUI(self):
 
+        self.tabWidget = QtWidgets.QTabWidget()
+        self.layout.addWidget(self.tabWidget)
 
         self.initBonesTab = QtWidgets.QScrollArea()
         self.initBonesTab.setWidget(QtWidgets.QWidget())
-
         self.initBoneslayout = QtWidgets.QVBoxLayout(self.initBonesTab.widget())
 
         self.initBoneslayout.setAlignment(QtCore.Qt.AlignTop)
@@ -96,80 +93,12 @@ class mainUI(QtWidgets.QTabWidget):
         self.riglayout.setAlignment(QtCore.Qt.AlignTop)
         self.rigTab.setWidgetResizable(True)
 
-        self.addTab(self.initBonesTab, "Init Bones")
-        self.addTab(self.rigTab, "Rigging")
+        self.tabWidget.addTab(self.initBonesTab, "Init Bones")
+        self.tabWidget.addTab(self.rigTab, "Rigging")
 
         self.initBonesUI()
         self.rigUI()
-
-    def rigUI(self):
-
-        ## Create a groupbox
-        rigGrpBox = QtWidgets.QGroupBox("Rig From Roots")
-        ## Create a Layout for the groupbox
-        rigGrpLayout = QtWidgets.QVBoxLayout()
-        # ## set layout for the groupbox
-        rigGrpBox.setLayout(rigGrpLayout)
-
-        ## Create widgets
-        label = QtWidgets.QLabel("Select a Root Joint -> hit Rig Button")
-        rigBtn = QtWidgets.QPushButton("RIG from Root")
-        self.isCreateAnchorsChk = QtWidgets.QCheckBox("Create Anchors Automatically", parent=self)
-        # self.isCreateAnchorsChk.setLayoutDirection(QtCore.Qt.RightToLeft)
-        self.isCreateAnchorsChk.setChecked(True)
-        # spineResLayout = QtWidgets.QHBoxLayout()
-        # spineResLayout.setAlignment(QtCore.Qt.AlignRight)
-        # spineResLbl = QtWidgets.QLabel("Spine Res./Dropoff")
-        # self.spineResInt = QtWidgets.QSpinBox(maximumSize=(QtCore.QSize(40, 20)), value=3, minimum=1)
-        # self.spineDropoff = QtWidgets.QDoubleSpinBox(maximumSize=(QtCore.QSize(50, 20)), value=2.0, minimum=0.1, maximum=10 )
-
-        # neckResLayout = QtWidgets.QHBoxLayout()
-        # neckResLayout.setAlignment(QtCore.Qt.AlignRight)
-        # neckResLbl = QtWidgets.QLabel("Neck Res./Dropoff")
-        # self.neckResInt = QtWidgets.QSpinBox(maximumSize=(QtCore.QSize(40, 20)), value=3, minimum=1)
-        # self.neckDropoff = QtWidgets.QDoubleSpinBox(maximumSize=(QtCore.QSize(50, 20)), value=2.0, minimum=0.1, maximum=10)
-
-
-        ## Add widgets to the group layout
-        rigGrpLayout.addWidget(label)
-        rigGrpLayout.addWidget(self.isCreateAnchorsChk)
-        # rigGrpLayout.addLayout(spineResLayout)
-        # rigGrpLayout.addLayout(neckResLayout)
-        # spineResLayout.addWidget(spineResLbl)
-        # spineResLayout.addWidget(self.spineResInt)
-        # spineResLayout.addWidget(self.spineDropoff)
-        # neckResLayout.addWidget(neckResLbl)
-        # neckResLayout.addWidget(self.neckResInt)
-        # neckResLayout.addWidget(self.neckDropoff)
-        rigGrpLayout.addWidget(rigBtn)
-
-        ## Connect the button signal to the rig creation
-        rigBtn.clicked.connect(self.rig)
-        ## Add groupbox under the tabs main layout
-        self.riglayout.addWidget(rigGrpBox)
-
-
-        # ## Create a groupbox
-        addLimbGrpBox = QtWidgets.QGroupBox("Add Limb to the Rig")
-        ## Create a Layout for the groupbox
-        addGrpLayout = QtWidgets.QVBoxLayout()
-        # ## set layout for the groupbox
-        addLimbGrpBox.setLayout(addGrpLayout)
-        #
-        # ## Create widgets
-        addlabel = QtWidgets.QLabel("Select in order:\n <Root Reference> - <Parent Node> \n <Master Controller>")
-        addToRigBtn = QtWidgets.QPushButton("Add To Rig")
-        # self.isCreateAnchorsChk = QtWidgets.QCheckBox("Create Anchors Automatically", parent=self)
-        # self.isCreateAnchorsChk.setChecked(True)
-        # ## Add widgets to the group layout
-        addGrpLayout.addWidget(addlabel)
-        addGrpLayout.addWidget(addToRigBtn)
-
-        #
-        # ## Connect the button signal to the rig creation
-        addToRigBtn.clicked.connect(self.addRig)
-        ## Add groupbox under the tabs main layout
-        self.riglayout.addWidget(addLimbGrpBox)
+        # layout = QtWidgets.QVBoxLayout(self)
 
     def initBonesUI(self):
 
@@ -197,22 +126,80 @@ class mainUI(QtWidgets.QTabWidget):
         pressEvents[7].mousePressEvent = lambda x: self.hideToggle(self.rootGroupBox)
         pressEvents[8].mousePressEvent = lambda x: self.hideToggle(self.bipedGroupBox)
 
+    def rigUI(self):
+
+        ## Create a groupbox
+        rigGrpBox = QtWidgets.QGroupBox("Rig From Roots")
+        ## Create a Layout for the groupbox
+        rigGrpLayout = QtWidgets.QVBoxLayout()
+        # ## set layout for the groupbox
+        rigGrpBox.setLayout(rigGrpLayout)
+
+        ## Create widgets
+        label = QtWidgets.QLabel("Select a Root Joint -> hit Rig Button")
+        rigBtn = QtWidgets.QPushButton("RIG from Root")
+
+        self.isCreateAnchorsChk = QtWidgets.QCheckBox("Create Anchors Automatically", parent=self)
+        # self.isCreateAnchorsChk.setLayoutDirection(QtCore.Qt.RightToLeft)
+        self.isCreateAnchorsChk.setChecked(True)
+
+        ## Add widgets to the group layout
+        rigGrpLayout.addWidget(label)
+        rigGrpLayout.addWidget(self.isCreateAnchorsChk)
+
+        rigGrpLayout.addWidget(rigBtn)
+
+        ## Connect the button signal to the rig creation
+        rigBtn.clicked.connect(self.rig)
+        ## Add groupbox under the tabs main layout
+        self.riglayout.addWidget(rigGrpBox)
+
+        # ## Create a groupbox
+        addLimbGrpBox = QtWidgets.QGroupBox("Add Limb to the Rig")
+        ## Create a Layout for the groupbox
+        addGrpLayout = QtWidgets.QVBoxLayout()
+        # ## set layout for the groupbox
+        addLimbGrpBox.setLayout(addGrpLayout)
+        #
+        # ## Create widgets
+        addlabel = QtWidgets.QLabel("Select in order:\n <Root Reference> - <Parent Node> \n <Master Controller>")
+        addToRigBtn = QtWidgets.QPushButton("Add To Rig")
+
+        # ## Add widgets to the group layout
+        addGrpLayout.addWidget(addlabel)
+        addGrpLayout.addWidget(addToRigBtn)
+        #
+        # ## Connect the button signal to the rig creation
+        addToRigBtn.clicked.connect(self.addRig)
+        ## Add groupbox under the tabs main layout
+        self.riglayout.addWidget(addLimbGrpBox)
+
     def initSpineUI(self):
         self.spineGroupBox = QtWidgets.QGroupBox()
         self.spineGroupBox.setFixedSize(210, 80)
 
         layout = QtWidgets.QHBoxLayout()
+        # layout.setContentsMargins(0,0,0,0)
+        # layout.setSpacing(2)
 
+
+        buttonLay = QtWidgets.QHBoxLayout()
+        buttonLay.setSpacing(0)
+        buttonLay.setAlignment(QtCore.Qt.AlignRight)
         self.spineCreateBtn = QtWidgets.QPushButton("Create", minimumSize=(QtCore.QSize(self.wSize, self.hSize)), maximumSize=(QtCore.QSize(self.wSize, self.hSize)), parent=self)
-        spineSegLb = QtWidgets.QLabel("Segments")
-        self.spineSegInt = QtWidgets.QSpinBox(maximumSize=(QtCore.QSize(40, 20)),value=3, minimum=1)
+        self.spineHelpBtn = QtWidgets.QPushButton("?", minimumSize=(QtCore.QSize(self.wSize / 3, self.hSize)), maximumSize=(QtCore.QSize(self.wSize / 3, self.hSize)), parent=self)
+        buttonLay.addWidget(self.spineCreateBtn)
+        buttonLay.addWidget(self.spineHelpBtn)
 
+        spineSegLb = QtWidgets.QLabel("Segments")
+        self.spineSegInt = QtWidgets.QSpinBox(maximumSize=(QtCore.QSize(40, 20)), value=3, minimum=1)
 
         layout.addWidget(spineSegLb)
         layout.addWidget(self.spineSegInt)
-        layout.addWidget(self.spineCreateBtn)
+        layout.addLayout(buttonLay)
 
         self.spineCreateBtn.clicked.connect(self.createSpine)
+        self.spineHelpBtn.clicked.connect(lambda x="Spine": self.help(x))
 
         self.spineGroupBox.setLayout(layout)
         self.spineGroupBox.setHidden(True)
@@ -223,19 +210,91 @@ class mainUI(QtWidgets.QTabWidget):
         self.neckGroupBox.setFixedSize(210, 80)
         layout = QtWidgets.QHBoxLayout()
 
+        buttonLay = QtWidgets.QHBoxLayout()
+        buttonLay.setSpacing(0)
+        buttonLay.setAlignment(QtCore.Qt.AlignRight)
         self.neckCreateBtn = QtWidgets.QPushButton("Create", minimumSize=(QtCore.QSize(self.wSize, self.hSize)), maximumSize=(QtCore.QSize(self.wSize, self.hSize)), parent=self)
+        self.neckHelpBtn = QtWidgets.QPushButton("?", minimumSize=(QtCore.QSize(self.wSize / 3, self.hSize)), maximumSize=(QtCore.QSize(self.wSize / 3, self.hSize)), parent=self)
+        buttonLay.addWidget(self.neckCreateBtn)
+        buttonLay.addWidget(self.neckHelpBtn)
+
         neckSegLb = QtWidgets.QLabel("Segments")
-        self.neckSegInt = QtWidgets.QSpinBox(maximumSize=(QtCore.QSize(40, 20)),value=3, minimum=1)
+        self.neckSegInt = QtWidgets.QSpinBox(maximumSize=(QtCore.QSize(40, 20)), value=3, minimum=1)
 
         layout.addWidget(neckSegLb)
         layout.addWidget(self.neckSegInt)
-        layout.addWidget(self.neckCreateBtn)
+        layout.addLayout(buttonLay)
 
         self.neckCreateBtn.clicked.connect(self.createNeck)
 
         self.neckGroupBox.setLayout(layout)
         self.neckGroupBox.setHidden(True)
         self.initBoneslayout.addWidget(self.neckGroupBox)
+
+    def help(self, item):
+
+        self.messageDialog = QtWidgets.QDialog()
+        self.messageDialog.setWindowTitle("Initial Spine Help")
+
+        self.messageDialog.resize(500, 700)
+        self.messageDialog.show()
+        messageLayout = QtWidgets.QVBoxLayout(self.messageDialog)
+        messageLayout.setContentsMargins(0, 0, 0, 0)
+        helpText = QtWidgets.QTextEdit()
+        helpText.setReadOnly(True)
+        helpText.setStyleSheet("background-color: rgb(255, 255, 255);")
+        helpText.setStyleSheet(""
+                               "border: 20px solid black;"
+                               "background-color: black"
+                               "")
+        # testLabel = QtWidgets.QLabel("TESTING")
+        helpText.textCursor().insertHtml("""
+<h1><span style="color: #ff6600;">Creating Initial Spine Joints</span></h1>
+<p><span style="font-weight: 400;">This section is for creating or defining </span><em><span style="font-weight: 400;">Spine Initialization Joints.</span></em></p>
+<p><span style="font-weight: 400;">These joints will inform the rigging module about the locations of spine joints and pass various options through extra attributes.</span></p>
+<h3><strong><span style="color: #ff6600;">How To use?</span></strong></h3>
+<p><span style="font-weight: 400;">Pressing the <em>Create</em>&nbsp;button will create number of joints defined by the </span><span style="font-weight: 400; color: #800080;"><strong>Segments</strong> </span><span style="font-weight: 400;">value.</span></p>
+<p><span style="font-weight: 400;">Pressing the CTRL will change the mode to define mode which allows defining pre-existing joints as spine.</span></p>
+<p><span style="font-weight: 400;">To define existing joints, first select all the joints that you wish to define with the correct order (starting from the root of spine), then CTRL+click <em>Create</em>&nbsp;button.</span></p>
+<p><strong><span style="color: #800080;">Segments</span></strong><span style="font-weight: 400;"> value is </span><strong>not </strong><span style="font-weight: 400;">the final resolution of the spine rig. <strong><span style="color: #800080;">Segments</span> </strong>are used to tell the rig module, where and how many controllers will be on the spine rig.</span></p>
+<h3><span style="color: #ff6600;">What next?</span></h3>
+<p><span style="font-weight: 400;">After creating (or defining) the initial spine joints, various options can be reached through the Spine Root. These options are stored in extra attributes. During the rigging process, these options will be derived by the rigging module.</span></p>
+<p><span style="font-weight: 400;">These extra attributes are:</span></p>
+<p><span style="font-weight: 400;"><span style="color: #3366ff;"><strong>Resolution:</strong></span>&nbsp;</span><span style="font-weight: 400;">This is the actual final joint resolution for the spine deformation joints.</span></p>
+<p><span style="font-weight: 400;"><span style="color: #3366ff;"><strong>DropOff:</strong></span>&nbsp;</span><span style="font-weight: 400;">This value will change the way the controllers are affecting the spline IK chain. Usually the default value is ok. If the rig have too many segments (This means more controllers will be created) then tweaking this value may be necessary.</span></p>
+
+        """)
+        messageLayout.addWidget(helpText)
+
+
+
+        # msg = QtWidgets.QMessageBox()
+        # # msg.setIcon(QtWidgets.QMessageBox.Help)
+        #
+        # title = ""
+        # message = ""
+        # details = ""
+        #
+        # if item == "Spine":
+        #     message = """
+        #     Spine initial:
+        #     Create button will place a set of initial joints defined as 'Spine'
+        #
+        #     The count of the initial joints are defined by 'Segments' value. These 'segments' are not the resolution of the spine. This will simply tell the rig module where the controller curves will be.
+        #     In short, 'segments' value will define how many controllers will be along the spine.
+        #
+        #     """
+        #     title = "Spine Initial"
+        #
+        #     # print message
+        #
+        # else:
+        #     return
+        #
+        # msg.setWindowTitle(title)
+        # msg.setInformativeText(message)
+        # # msg.setDetailedText(details)
+        # retval = msg.exec_()
 
     def initArmUI(self):
         self.armGroupBox = QtWidgets.QGroupBox()
@@ -276,7 +335,7 @@ class mainUI(QtWidgets.QTabWidget):
         self.armGroupBox.setHidden(True)
 
         self.initBoneslayout.addWidget(self.armGroupBox)
-        
+
     def initLegUI(self):
         self.legGroupBox = QtWidgets.QGroupBox()
         self.legGroupBox.setFixedSize(210, 100)
@@ -357,14 +416,14 @@ class mainUI(QtWidgets.QTabWidget):
 
     def initTailUI(self):
         self.tailGroupBox = QtWidgets.QGroupBox()
-        self.tailGroupBox.setFixedSize(210,130)
+        self.tailGroupBox.setFixedSize(210, 130)
 
         layout = QtWidgets.QHBoxLayout()
         sgmSubLayout = QtWidgets.QHBoxLayout()
 
         self.tailCreateBtn = QtWidgets.QPushButton("Create", minimumSize=(QtCore.QSize(self.wSize, self.hSize)), maximumSize=(QtCore.QSize(self.wSize, self.hSize)), parent=self)
         tailSegLb = QtWidgets.QLabel("Segments")
-        self.tailSegInt = QtWidgets.QSpinBox(maximumSize=(QtCore.QSize(40, 20)),value=3, minimum=1)
+        self.tailSegInt = QtWidgets.QSpinBox(maximumSize=(QtCore.QSize(40, 20)), value=3, minimum=1)
 
         radioGrpTail = QtWidgets.QButtonGroup(layout)
         self.tailSideLeft = QtWidgets.QRadioButton("Left", parent=self)
@@ -403,13 +462,13 @@ class mainUI(QtWidgets.QTabWidget):
 
     def initTentacleUI(self):
         self.tentacleGroupBox = QtWidgets.QGroupBox()
-        self.tentacleGroupBox.setFixedSize(210,130)
+        self.tentacleGroupBox.setFixedSize(210, 130)
 
         layout = QtWidgets.QHBoxLayout()
         sgmSubLayout = QtWidgets.QHBoxLayout()
         self.tentacleCreateBtn = QtWidgets.QPushButton("Create", minimumSize=(QtCore.QSize(self.wSize, self.hSize)), maximumSize=(QtCore.QSize(self.wSize, self.hSize)), parent=self)
         tentacleSegLb = QtWidgets.QLabel("Seg.")
-        self.tentacleSegInt = QtWidgets.QSpinBox(maximumSize=(QtCore.QSize(40, 20)),value=3, minimum=1)
+        self.tentacleSegInt = QtWidgets.QSpinBox(maximumSize=(QtCore.QSize(40, 20)), value=3, minimum=1)
 
         radioGrpTentacle = QtWidgets.QButtonGroup(layout)
         self.tentacleSideLeft = QtWidgets.QRadioButton("Left", parent=self)
@@ -445,21 +504,21 @@ class mainUI(QtWidgets.QTabWidget):
         self.tentacleGroupBox.setLayout(layout)
         self.tentacleGroupBox.setHidden(True)
         self.initBoneslayout.addWidget(self.tentacleGroupBox)
-        
+
     def initBipedUI(self):
         self.bipedGroupBox = QtWidgets.QGroupBox()
-        self.bipedGroupBox.setFixedSize(210,100)
+        self.bipedGroupBox.setFixedSize(210, 100)
 
         layout = QtWidgets.QHBoxLayout()
 
         self.bipedCreateBtn = QtWidgets.QPushButton("Create", minimumSize=(QtCore.QSize(self.wSize, self.hSize)), maximumSize=(QtCore.QSize(self.wSize, self.hSize)), parent=self)
 
         bipedFingerLb = QtWidgets.QLabel("Fingers")
-        self.fingerSegInt = QtWidgets.QSpinBox(maximumSize=(QtCore.QSize(40, 20)),value=5, minimum=1, maximum=5)
+        self.fingerSegInt = QtWidgets.QSpinBox(maximumSize=(QtCore.QSize(40, 20)), value=5, minimum=1, maximum=5)
         bipedSpineLb = QtWidgets.QLabel("Spine Segs")
-        self.bipedSpineSegsInt = QtWidgets.QSpinBox(maximumSize=(QtCore.QSize(40, 20)),value=3, minimum=1)
+        self.bipedSpineSegsInt = QtWidgets.QSpinBox(maximumSize=(QtCore.QSize(40, 20)), value=3, minimum=1)
         bipedNeckLb = QtWidgets.QLabel("Neck Segs")
-        self.bipedNeckSegsInt = QtWidgets.QSpinBox(maximumSize=(QtCore.QSize(40, 20)),value=1, minimum=1)
+        self.bipedNeckSegsInt = QtWidgets.QSpinBox(maximumSize=(QtCore.QSize(40, 20)), value=1, minimum=1)
 
         spinLayout = QtWidgets.QVBoxLayout()
         spinLayout.setAlignment(QtCore.Qt.AlignLeft)
@@ -490,7 +549,7 @@ class mainUI(QtWidgets.QTabWidget):
 
     def initRootUI(self):
         self.rootGroupBox = QtWidgets.QGroupBox()
-        self.rootGroupBox.setFixedSize(210,100)
+        self.rootGroupBox.setFixedSize(210, 100)
         self.rootGroupBox.setAlignment(QtCore.Qt.AlignRight)
         layout = QtWidgets.QHBoxLayout()
         self.rootCreateBtn = QtWidgets.QPushButton("Create", minimumSize=(QtCore.QSize(self.wSize, self.hSize)), maximumSize=(QtCore.QSize(self.wSize, self.hSize)), parent=self)
@@ -503,25 +562,6 @@ class mainUI(QtWidgets.QTabWidget):
         self.rootGroupBox.setHidden(True)
         self.initBoneslayout.addWidget(self.rootGroupBox)
 
-    def hideToggle(self, UI):
-        # print UI
-        if UI.isVisible():
-            UI.setHidden(True)
-        else:
-            UI.setHidden(False)
-
-    def rig(self):
-        pm.undoInfo(openChunk=True)
-        self.rigger.__init__()
-        self.rigger.startBuilding(createAnchors=self.isCreateAnchorsChk.isChecked())
-        pm.undoInfo(closeChunk=True)
-
-    def addRig(self):
-        pm.undoInfo(openChunk=True)
-        # self.rigger.__init__()
-        self.rigger.addLimb()
-        pm.undoInfo(closeChunk=True)
-
     def createBiped(self):
         pm.undoInfo(openChunk=True)
         self.initSkeleton.initHumanoid(fingers=self.fingerSegInt.value(), spineSegments=self.bipedSpineSegsInt.value(), neckSegments=self.bipedNeckSegsInt.value())
@@ -529,7 +569,7 @@ class mainUI(QtWidgets.QTabWidget):
 
     def createArm(self):
         pm.undoInfo(openChunk=True)
-        side=""
+        side = ""
         if self.armSideLeft.isChecked():
             side = "left"
         elif self.armSideRight.isChecked():
@@ -628,11 +668,23 @@ class mainUI(QtWidgets.QTabWidget):
         self.initSkeleton.initLimb("root", defineAs=self.defineAs)
         pm.undoInfo(closeChunk=True)
 
+    def rig(self):
+        pm.undoInfo(openChunk=True)
+        self.rigger.__init__()
+        self.rigger.startBuilding(createAnchors=self.isCreateAnchorsChk.isChecked())
+        pm.undoInfo(closeChunk=True)
+
+    def addRig(self):
+        pm.undoInfo(openChunk=True)
+        # self.rigger.__init__()
+        self.rigger.addLimb()
+        pm.undoInfo(closeChunk=True)
+
     def keyPressEvent(self, event):
         ## If Ctrl is pressed, change the button labels
         if event.key() == 16777249:
-            self.defineAs=True
-            text="Define As"
+            self.defineAs = True
+            text = "Define As"
             self.spineCreateBtn.setText(text)
             self.neckCreateBtn.setText(text)
             self.armCreateBtn.setText(text)
@@ -640,12 +692,11 @@ class mainUI(QtWidgets.QTabWidget):
             self.legCreateBtn.setText(text)
             self.tailCreateBtn.setText(text)
             self.tentacleCreateBtn.setText(text)
-
 
     def keyReleaseEvent(self, event):
         if event.key() == 16777249:
-            text="Create"
-            self.defineAs=False
+            text = "Create"
+            self.defineAs = False
             self.spineCreateBtn.setText(text)
             self.neckCreateBtn.setText(text)
             self.armCreateBtn.setText(text)
@@ -654,25 +705,12 @@ class mainUI(QtWidgets.QTabWidget):
             self.tailCreateBtn.setText(text)
             self.tentacleCreateBtn.setText(text)
 
-
-    def testPop(self):
-        exportWindow, ok = QtWidgets.QInputDialog.getItem(self, 'Text Input Dialog',
-                                                          'SAVE BEFORE PROCEED\n\nANY UNSAVED WORK WILL BE LOST\n\nEnter Asset Name:')
-        if ok:
-            print "popped"
-
-    def setColor(self):
-        color = QtWidgets.QColorDialog.getColor(QtCore.Qt.green, self)
-        if color.isValid():
-            print(color.name())
-            print(QtGui.QPalette(color))
-            print color
-
-    def wheelEvent(self, event):
-        # print event.delta()
-        t = (math.pow(1.2, event.delta() / 120.0))
-        if event.modifiers() == QtCore.Qt.ControlModifier:
-            print t
+    def hideToggle(self, UI):
+        # print UI
+        if UI.isVisible():
+            UI.setHidden(True)
+        else:
+            UI.setHidden(False)
 
 # testUI().show()
 
