@@ -23,7 +23,7 @@ class TwistSpline(object):
         self.noTouchData = None
         self.moveAxis = None
 
-    def createTspline(self, refJoints, name, cuts, dropoff=2, mode="equalDistance", twistType="infinite"):
+    def createTspline(self, refJoints, name, cuts, dropoff=2, mode="equalDistance", twistType="regular"):
         """
         
         Args:
@@ -43,7 +43,8 @@ class TwistSpline(object):
         Returns: None
 
         """
-
+        print "modeASDF", mode
+        print "twistTypeASDF", twistType
 
         self.scaleGrp = pm.group(name="scaleGrp_" + name, em=True)
         self.nonScaleGrp = pm.group(name="nonScaleGrp_" + name, em=True)
@@ -163,8 +164,8 @@ class TwistSpline(object):
         poleGroups = []
         RPhandles = []
 
-        print "defjoints", self.defJoints
-        print "ikJoints", IKjoints
+        # print "defjoints", self.defJoints
+        # print "ikJoints", IKjoints
 
         if twistType == "infinite":
             for i in range(0, len(self.defJoints)):

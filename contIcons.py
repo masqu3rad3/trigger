@@ -1,4 +1,5 @@
 import pymel.core as pm
+import re
 
 def circle(name="cont_circle", scale=(1,1,1), location=None, normal=(0, 1, 0)):
     """
@@ -385,3 +386,19 @@ def triangle(name="cont_triangle", scale=(1,1,1), location=None, normal=(0,1,0))
         # pm.rotate(cont_Pole, (0,0,90))
         pm.makeIdentity(cont_Triangle, a=True)
     return cont_Triangle
+
+def pyramid(name="cont_pyramid", scale=(1,1,1), location=None, normal=(0,1,0)):
+    cont_Pyramid=pm.curve(name=name, d=1, p=[(-1,0,1),(1,0,1),(1,0,-1),(-1,0,-1),(-1,0,1),(0,2,0),(1,0,-1),(-1,0,-1),(0,2,0),(1,0,1)], k=[0,1,2,3,4,5,6,7,8,9])
+    pm.setAttr(cont_Pyramid + ".scale", (0.333, 0.333, 0.333))
+    pm.makeIdentity(cont_Pyramid, a=True, s=True)
+    pm.setAttr(cont_Pyramid.scale, scale)
+    if location:
+        pm.move(cont_Pyramid, location)
+    pm.makeIdentity(cont_Pyramid, a=True)
+    if not normal == (1, 0, 0):
+        pm.rotate(cont_Pyramid, normal[0]*90, normal[1]*90, normal[2]*90)
+        # pm.rotate(cont_Pole, (0,0,90))
+        pm.makeIdentity(cont_Pyramid, a=True)
+    return cont_Pyramid
+
+

@@ -31,7 +31,13 @@ class Tentacle(object):
         self.anchors = []
         self.anchorLocations = []
 
-    def createTentacle(self, inits, suffix="", side="C", npResolution=5.0, jResolution=5.0, blResolution=25.0, dropoff=2.0):
+    def createTentacle(self, inits,
+                       suffix="",
+                       side="C",
+                       npResolution=5.0,
+                       jResolution=5.0,
+                       blResolution=25.0,
+                       dropoff=2.0):
         if not isinstance(inits, list):
             tentacleRoot = inits.get("TentacleRoot")
             tentacles = (inits.get("Tentacle"))

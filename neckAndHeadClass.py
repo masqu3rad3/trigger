@@ -76,46 +76,52 @@ class NeckAndHead():
         headDist = extra.getDistance(headStart, headEnd)
         headPivPos = headStart.getTranslation(space="world")
 
+        ## Get the orientation axises
+        self.upAxis, self.mirroAxis, self.spineDir = extra.getRigAxes(inits[0])
+        splineMode = pm.getAttr(inits[0].mode, asString=True)
+        # print "splineMode", splineMode
+        twistType = pm.getAttr(inits[0].twistType, asString=True)
+        # print "twistType", twistType
 
-        ## get the up axis
-        axisDict={"x":(1.0,0.0,0.0),"y":(0.0,1.0,0.0),"z":(0.0,0.0,1.0),"-x":(-1.0,0.0,0.0),"-y":(0.0,-1.0,0.0),"-z":(0.0,0.0,-1.0)}
-        spineDir = {"x": (-1.0, 0.0, 0.0), "y": (0.0, -1.0, 0.0), "z": (0.0, 0.0, 1.0), "-x": (1.0, 0.0, 0.0), "-y": (0.0, 1.0, 0.0), "-z": (0.0, 0.0, 1.0)}
-        if pm.attributeQuery("upAxis", node=neckNodes[0], exists=True):
-            try:
-                self.upAxis=axisDict[pm.getAttr(neckNodes[0].upAxis).lower()]
-            except:
-                pm.warning("upAxis attribute is not valid, proceeding with default value (y up)")
-                self.upAxis = (0.0, 1.0, 0.0)
-        else:
-            pm.warning("upAxis attribute of the root node does not exist. Using default value (y up)")
-            self.upAxis = (0.0, 1.0, 0.0)
-        ## get the mirror axis
-        if pm.attributeQuery("mirrorAxis", node=neckNodes[0], exists=True):
-            try:
-                self.mirrorAxis=axisDict[pm.getAttr(neckNodes[0].mirrorAxis).lower()]
-            except:
-                pm.warning("mirrorAxis attribute is not valid, proceeding with default value (scene x)")
-                self.mirrorAxis= (1.0, 0.0, 0.0)
-        else:
-            pm.warning("mirrorAxis attribute of the root node does not exist. Using default value (scene x)")
-            self.mirrorAxis = (1.0, 0.0, 0.0)
-
-        ## get spine Direction
-        if pm.attributeQuery("lookAxis", node=neckNodes[0], exists=True):
-            try:
-                self.spineDir = spineDir[pm.getAttr(neckNodes[0].lookAxis).lower()]
-                if "-" in self.spineDir:
-                    faceDir = 1
-                else:
-                    faceDir = -1
-            except:
-                pm.warning("Cannot get spine direction from lookAxis attribute, proceeding with default value (-x)")
-                self.spineDir = (0.0, 0.0, -1.0)
-                faceDir = -1
-        else:
-            pm.warning("lookAxis attribute of the root node does not exist. Using default value (-x) for spine direction")
-            self.spineDir = (0.0, 0.0, 1.0)
-            faceDir = 1
+        # ## get the up axis
+        # axisDict={"x":(1.0,0.0,0.0),"y":(0.0,1.0,0.0),"z":(0.0,0.0,1.0),"-x":(-1.0,0.0,0.0),"-y":(0.0,-1.0,0.0),"-z":(0.0,0.0,-1.0)}
+        # spineDir = {"x": (-1.0, 0.0, 0.0), "y": (0.0, -1.0, 0.0), "z": (0.0, 0.0, 1.0), "-x": (1.0, 0.0, 0.0), "-y": (0.0, 1.0, 0.0), "-z": (0.0, 0.0, 1.0)}
+        # if pm.attributeQuery("upAxis", node=neckNodes[0], exists=True):
+        #     try:
+        #         self.upAxis=axisDict[pm.getAttr(neckNodes[0].upAxis).lower()]
+        #     except:
+        #         pm.warning("upAxis attribute is not valid, proceeding with default value (y up)")
+        #         self.upAxis = (0.0, 1.0, 0.0)
+        # else:
+        #     pm.warning("upAxis attribute of the root node does not exist. Using default value (y up)")
+        #     self.upAxis = (0.0, 1.0, 0.0)
+        # ## get the mirror axis
+        # if pm.attributeQuery("mirrorAxis", node=neckNodes[0], exists=True):
+        #     try:
+        #         self.mirrorAxis=axisDict[pm.getAttr(neckNodes[0].mirrorAxis).lower()]
+        #     except:
+        #         pm.warning("mirrorAxis attribute is not valid, proceeding with default value (scene x)")
+        #         self.mirrorAxis= (1.0, 0.0, 0.0)
+        # else:
+        #     pm.warning("mirrorAxis attribute of the root node does not exist. Using default value (scene x)")
+        #     self.mirrorAxis = (1.0, 0.0, 0.0)
+        #
+        # ## get spine Direction
+        # if pm.attributeQuery("lookAxis", node=neckNodes[0], exists=True):
+        #     try:
+        #         self.spineDir = spineDir[pm.getAttr(neckNodes[0].lookAxis).lower()]
+        #         if "-" in self.spineDir:
+        #             faceDir = 1
+        #         else:
+        #             faceDir = -1
+        #     except:
+        #         pm.warning("Cannot get spine direction from lookAxis attribute, proceeding with default value (-x)")
+        #         self.spineDir = (0.0, 0.0, -1.0)
+        #         faceDir = -1
+        # else:
+        #     pm.warning("lookAxis attribute of the root node does not exist. Using default value (-x) for spine direction")
+        #     self.spineDir = (0.0, 0.0, 1.0)
+        #     faceDir = 1
 
         #     _____            _             _ _
         #    / ____|          | |           | | |
@@ -187,7 +193,7 @@ class NeckAndHead():
         extra.alignTo(self.neckRootLoc, neckNodes[0])
 
         neckSpline = twistSpline.TwistSpline()
-        neckSpline.createTspline(neckNodes+[headStart], "neckSplineIK_"+suffix, resolution, dropoff=dropoff)
+        neckSpline.createTspline(neckNodes+[headStart], "neckSplineIK_"+suffix, resolution, dropoff=dropoff, mode=splineMode, twistType=twistType)
         for i in neckSpline.defJoints:
             self.sockets.append(i)
         # # Connect neck start to the neck controller
@@ -207,7 +213,7 @@ class NeckAndHead():
 
         # create spline IK for Head squash
         headSpline = twistSpline.TwistSpline()
-        headSpline.createTspline([headStart, headEnd], "headSquashSplineIK_"+suffix, 3, dropoff=2)
+        headSpline.createTspline([headStart, headEnd], "headSquashSplineIK_"+suffix, 3, dropoff=2,  mode=splineMode, twistType=twistType)
         for i in headSpline.defJoints:
             self.sockets.append(i)
 

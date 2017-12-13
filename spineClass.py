@@ -57,39 +57,47 @@ class Spine(object):
         rootPoint = inits[0].getTranslation(space="world")
         chestPoint = inits[-1].getTranslation(space="world")
 
-        ## get the up axis
-        axisDict={"x":(1.0,0.0,0.0),"y":(0.0,1.0,0.0),"z":(0.0,0.0,1.0),"-x":(-1.0,0.0,0.0),"-y":(0.0,-1.0,0.0),"-z":(0.0,0.0,-1.0)}
-        spineDir = {"x": (-1.0, 0.0, 0.0), "y": (0.0, -1.0, 0.0), "z": (0.0, 0.0, 1.0), "-x": (1.0, 0.0, 0.0), "-y": (0.0, 1.0, 0.0), "-z": (0.0, 0.0, 1.0)}
-        if pm.attributeQuery("upAxis", node=inits[0], exists=True):
-            try:
-                self.upAxis=axisDict[pm.getAttr(inits[0].upAxis).lower()]
-            except:
-                pm.warning("upAxis attribute is not valid, proceeding with default value (y up)")
-                self.upAxis = (0.0, 1.0, 0.0)
-        else:
-            pm.warning("upAxis attribute of the root node does not exist. Using default value (y up)")
-            self.upAxis = (0.0, 1.0, 0.0)
-        ## get the mirror axis
-        if pm.attributeQuery("mirrorAxis", node=inits[0], exists=True):
-            try:
-                self.mirrorAxis=axisDict[pm.getAttr(inits[0].mirrorAxis).lower()]
-            except:
-                pm.warning("mirrorAxis attribute is not valid, proceeding with default value (scene x)")
-                self.mirrorAxis= (1.0, 0.0, 0.0)
-        else:
-            pm.warning("mirrorAxis attribute of the root node does not exist. Using default value (scene x)")
-            self.mirrorAxis = (1.0, 0.0, 0.0)
+        ## Get the orientation axises
+        self.upAxis, self.mirroAxis, self.spineDir = extra.getRigAxes(inits[0])
+        splineMode = pm.getAttr(inits[0].mode, asString=True)
+        # print "splineMode", splineMode
+        twistType = pm.getAttr(inits[0].twistType, asString=True)
+        # print "twistType", twistType
 
-        ## get spine Direction
-        if pm.attributeQuery("lookAxis", node=inits[0], exists=True):
-            try:
-                self.spineDir = spineDir[pm.getAttr(inits[0].lookAxis).lower()]
-            except:
-                pm.warning("Cannot get spine direction from lookAxis attribute, proceeding with default value (-x)")
-                self.spineDir = (-1.0, 0.0, 0.0)
-        else:
-            pm.warning("lookAxis attribute of the root node does not exist. Using default value (-x) for spine direction")
-            self.spineDir = (1.0, 0.0, 0.0)
+
+        # ## get the up axis
+        # axisDict={"x":(1.0,0.0,0.0),"y":(0.0,1.0,0.0),"z":(0.0,0.0,1.0),"-x":(-1.0,0.0,0.0),"-y":(0.0,-1.0,0.0),"-z":(0.0,0.0,-1.0)}
+        # spineDir = {"x": (-1.0, 0.0, 0.0), "y": (0.0, -1.0, 0.0), "z": (0.0, 0.0, 1.0), "-x": (1.0, 0.0, 0.0), "-y": (0.0, 1.0, 0.0), "-z": (0.0, 0.0, 1.0)}
+        # if pm.attributeQuery("upAxis", node=inits[0], exists=True):
+        #     try:
+        #         self.upAxis=axisDict[pm.getAttr(inits[0].upAxis).lower()]
+        #     except:
+        #         pm.warning("upAxis attribute is not valid, proceeding with default value (y up)")
+        #         self.upAxis = (0.0, 1.0, 0.0)
+        # else:
+        #     pm.warning("upAxis attribute of the root node does not exist. Using default value (y up)")
+        #     self.upAxis = (0.0, 1.0, 0.0)
+        # ## get the mirror axis
+        # if pm.attributeQuery("mirrorAxis", node=inits[0], exists=True):
+        #     try:
+        #         self.mirrorAxis=axisDict[pm.getAttr(inits[0].mirrorAxis).lower()]
+        #     except:
+        #         pm.warning("mirrorAxis attribute is not valid, proceeding with default value (scene x)")
+        #         self.mirrorAxis= (1.0, 0.0, 0.0)
+        # else:
+        #     pm.warning("mirrorAxis attribute of the root node does not exist. Using default value (scene x)")
+        #     self.mirrorAxis = (1.0, 0.0, 0.0)
+        #
+        # ## get spine Direction
+        # if pm.attributeQuery("lookAxis", node=inits[0], exists=True):
+        #     try:
+        #         self.spineDir = spineDir[pm.getAttr(inits[0].lookAxis).lower()]
+        #     except:
+        #         pm.warning("Cannot get spine direction from lookAxis attribute, proceeding with default value (-x)")
+        #         self.spineDir = (-1.0, 0.0, 0.0)
+        # else:
+        #     pm.warning("lookAxis attribute of the root node does not exist. Using default value (-x) for spine direction")
+        #     self.spineDir = (1.0, 0.0, 0.0)
 
         #     _____            _             _ _
         #    / ____|          | |           | | |
@@ -153,7 +161,7 @@ class Spine(object):
 
         # move the pivot to its base
         spine = twistSpline.TwistSpline()
-        spine.createTspline(inits, "spine" + suffix, resolution, dropoff=dropoff)
+        spine.createTspline(inits, "spine" + suffix, resolution, dropoff=dropoff, mode=splineMode, twistType=twistType)
         for i in spine.defJoints:
             self.sockets.append(i)
 

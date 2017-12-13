@@ -343,6 +343,8 @@ class initialJoints():
                            at="long", k=True)
                 pm.addAttr(shortName="dropoff", longName="DropOff", defaultValue=1.0, minValue=0.1,
                            at="float", k=True)
+                pm.addAttr(at="enum", k=True, shortName="twistType", longName="Twist_Type", en="regular:infinite")
+                pm.addAttr(at="enum", k=True, shortName="mode", longName="Mode", en="equalDistance:sameDistance")
 
                 self.createAxisAttributes(spine)
                 pm.setAttr(spine.radius, 3)
@@ -671,6 +673,8 @@ class initialJoints():
                                at="long", k=True)
                     pm.addAttr(shortName="dropoff", longName="DropOff", defaultValue=1.0, minValue=0.1,
                                at="float", k=True)
+                    pm.addAttr(at="enum", k=True, shortName="twistType", longName="Twist_Type", en="regular:infinite")
+                    pm.addAttr(at="enum", k=True, shortName="mode", longName="Mode", en="equalDistance:sameDistance")
                     self.createAxisAttributes(neck)
                     pm.setAttr(neck.radius, 3)
 
@@ -839,8 +843,9 @@ class initialJoints():
                 pm.setAttr(jointList[j] + ".drawLabel", 1)
                 ## if it is the first jointList
                 if j == 0:
-                    type =1
+                    type =18
                     pm.setAttr(jointList[j] + ".type", type)
+                    pm.setAttr(jointList[j] + ".otherType", "SpineRoot")
 
                     if not pm.attributeQuery("resolution", node=jointList[j], exists=True):
                         pm.addAttr(shortName="resolution", longName="Resolution", defaultValue=4, minValue=1,
@@ -848,6 +853,10 @@ class initialJoints():
                     if not pm.attributeQuery("dropoff", node=jointList[j], exists=True):
                         pm.addAttr(shortName="dropoff", longName="DropOff", defaultValue=1.0, minValue=0.1,
                                at="float", k=True)
+                    if not pm.attributeQuery("twistType", node=jointList[j], exists=True):
+                        pm.addAttr(at="enum", k=True, shortName="twistType", longName="Twist_Type", en="regular:infinite")
+                    if not pm.attributeQuery("mode", node=jointList[j], exists=True):
+                        pm.addAttr(at="enum", k=True, shortName="mode", longName="Mode", en="equalDistance:sameDistance")
 
                     pm.setAttr(jointList[j].radius, 3)
                     # pm.setAttr(jointList[j].radius, 3)
@@ -943,6 +952,11 @@ class initialJoints():
                     if not pm.attributeQuery("dropoff", node=jointList[j], exists=True):
                         pm.addAttr(shortName="dropoff", longName="DropOff", defaultValue=1.0, minValue=0.1,
                                at="float", k=True)
+                    if not pm.attributeQuery("twistType", node=jointList[j], exists=True):
+                        pm.addAttr(at="enum", k=True, shortName="twistType", longName="Twist_Type", en="regular:infinite")
+                    if not pm.attributeQuery("mode", node=jointList[j], exists=True):
+                        pm.addAttr(at="enum", k=True, shortName="mode", longName="Mode", en="equalDistance:sameDistance")
+
                 elif jointList[i] == jointList[-2]:
                     pm.setAttr(jointList[i] + ".type", 8)
                 elif jointList[i] == jointList[-1]:
