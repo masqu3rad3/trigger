@@ -12,6 +12,10 @@ reload(scratch)
 
 import contIcons as icon
 reload(icon)
+
+import mrCubic
+reload(mrCubic)
+
 import math
 
 if Qt.__binding__ == "PySide":
@@ -82,9 +86,17 @@ class mainUI(QtWidgets.QMainWindow):
         replaceController = QtWidgets.QAction("&Replace Controller", self)
         # replaceController.triggered.connect(self.replaceControllerUI)
 
+        selectJDef = QtWidgets.QAction("&Select Deformer Joints", self)
+        selectJDef.triggered.connect(lambda: pm.select(pm.ls("jDef*")))
+
+        MrCubic = QtWidgets.QAction("&Mr Cubic", self)
+        MrCubic.triggered.connect(lambda: mrCubic.mrCube(pm.ls(sl=True)))
+
         tools.addAction(anchorMaker)
         tools.addAction(mirrorPose)
         tools.addAction(replaceController)
+        tools.addAction(selectJDef)
+        tools.addAction(MrCubic)
 
         help = bar.addMenu("Help")
         help.addAction("Getting Started")

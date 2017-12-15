@@ -186,7 +186,7 @@ class TwistSpline(object):
                     pm.setAttr(loc_OFF.rotateOrder, 3)
 
                     extra.alignTo(loc_OFF, self.defJoints[i])
-                    pm.move(loc, (1, 0, 0), r=True)
+                    pm.move(loc, (10, 0, 0), r=True)
                     # parent locator groups, pole vector locators >> RP Solvers, point constraint RP Solver >> IK Joints
                     pm.parent(loc_POS, IKjoints[i])
                     poleGroups.append(loc_OFF)
