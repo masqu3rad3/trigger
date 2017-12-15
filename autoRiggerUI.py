@@ -9,6 +9,9 @@ reload(init)
 import scratch
 
 reload(scratch)
+
+import contIcons as icon
+reload(icon)
 import math
 
 if Qt.__binding__ == "PySide":
@@ -58,8 +61,35 @@ class mainUI(QtWidgets.QMainWindow):
 
         bar = self.menuBar()
         file = bar.addMenu("Settings")
-        file.addAction("Initial Joint Settings")
-        file.addAction("Rig Settings")
+        ### file actions
+        generalSettings = QtWidgets.QAction("&General Settings", self)
+        # generalSettings.triggered.connect(self.generalSettingsUI)
+        initialSettings = QtWidgets.QAction("&Initial Joint Settings", self)
+        # initialSettings.triggered.connect(self.initialSettingsUI)
+        rigSettings = QtWidgets.QAction("&Rig Settings", self)
+        # rigSettings.triggered.connect(self.rigSettingsUI)
+
+        file.addAction(generalSettings)
+        file.addAction(initialSettings)
+        file.addAction(rigSettings)
+
+        ### Tools actions
+        tools = bar.addMenu("Tools")
+        anchorMaker = QtWidgets.QAction("&Anchor Maker", self)
+        anchorMaker.triggered.connect(self.anchorMakerUI)
+        mirrorPose = QtWidgets.QAction("&Mirror Pose", self)
+        mirrorPose.triggered.connect(self.mirrorPoseUI)
+        replaceController = QtWidgets.QAction("&Replace Controller", self)
+        # replaceController.triggered.connect(self.replaceControllerUI)
+
+        tools.addAction(anchorMaker)
+        tools.addAction(mirrorPose)
+        tools.addAction(replaceController)
+
+        help = bar.addMenu("Help")
+        help.addAction("Getting Started")
+        help.addAction("Help")
+        help.addAction("About")
 
         self.layout = QtWidgets.QVBoxLayout(self.mainDialog)
         self.centralWidget.setLayout(self.layout)
@@ -99,6 +129,62 @@ class mainUI(QtWidgets.QMainWindow):
         self.initBonesUI()
         self.rigUI()
         # layout = QtWidgets.QVBoxLayout(self)
+
+
+    def mirrorPoseUI(self):
+        parent = getMayaMainWindow()
+        self.MPDialog = QtWidgets.QDialog(parent=parent)
+        self.MPDialog.setWindowTitle("Mirror Pose")
+
+        MPLayout = QtWidgets.QVBoxLayout(self.MPDialog)
+
+        MPradioGrp = QtWidgets.QButtonGroup(MPLayout)
+        self.MPLeftToRight= QtWidgets.QRadioButton("Left => Right", parent=self)
+        self.MPRightToLeft= QtWidgets.QRadioButton("Right => Left", parent=self)
+
+        MPradioGrp.addButton(self.MPLeftToRight)
+        MPradioGrp.addButton(self.MPRightToLeft)
+        self.MPLeftToRight.setChecked(True)
+
+        # MPradioColumn = QtWidgets.QVBoxLayout()
+        # MPradioColumn.setAlignment(QtCore.Qt.AlignLeft)
+        # MPLayout.addLayout(MPradioColumn)
+
+        MPLayout.addWidget(self.MPLeftToRight)
+        MPLayout.addWidget(self.MPRightToLeft)
+
+        MPcheckbox = QtWidgets.QCheckBox("Selection Only", parent=self)
+        MPLayout.addWidget(MPcheckbox)
+
+        def enDis(self, state):
+            self.MPRightToLeft.setEnabled(state)
+            self.MPLeftToRight.setEnabled(state)
+
+        # MPcheckbox.toggled.connect(lambda:MPradioGrp.setEnabled(not MPcheckbox.isChecked()))
+        MPcheckbox.toggled.connect(lambda:enDis(self, not MPcheckbox.isChecked()))
+
+        MPmirrorBtn = QtWidgets.QPushButton("Mirror Pose", parent=self)
+        MPLayout.addWidget(MPmirrorBtn)
+
+        self.MPDialog.show()
+
+    def anchorMakerUI(self):
+        import anchorMaker
+        reload(anchorMaker)
+        anchorMaker.anchorMaker().show()
+    # def replaceControllerUI(self):
+    #     self.RCDialog = QtWidgets.QDialog(parent=self)
+    #     self.RCDialog.setWindowTitle("Replace Controller")
+    #
+    #     RCLayout = QtWidgets.QVBoxLayout(self)
+    #
+    #     iconNames = [i[0] for i in self.all_iconFunctions]
+    #     self.typeDropDown = QtWidgets.QComboBox(minimumSize = (QtCore.QSize(self.wSize / 3, self.hSize)), maximumSize = (QtCore.QSize(self.wSize / 3, self.hSize)))
+    #
+    #     layout.addWidget(self.typeDropDown)
+    #
+    #     self.typeDropDown.addItems(iconNames)
+
 
     def initBonesUI(self):
 
@@ -677,7 +763,7 @@ class mainUI(QtWidgets.QMainWindow):
     def addRig(self):
         pm.undoInfo(openChunk=True)
         # self.rigger.__init__()
-        self.rigger.addLimb()
+        self.rigger.createLimbs(addLimb=True)
         pm.undoInfo(closeChunk=True)
 
     def keyPressEvent(self, event):

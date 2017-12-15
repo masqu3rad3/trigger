@@ -79,10 +79,12 @@ class TwistSpline(object):
         pm.select(d=True)
 
         # Create IK Joints ORIENTATION - ORIENTATION - ORIENTATION
+        curveType = 3
         if mode == "equalDistance":
 
-
+            curveType = 3
             for i in range(0, cuts + 2):  # iterates one extra to create an additional joint for orientation
+
                 place = rootVc + (segmentVc * (i))
                 j = pm.joint(p=place, name="jIK_" + name + str(i), )
                 # pm.setAttr(j.displayLocalAxis, 1)
@@ -91,6 +93,7 @@ class TwistSpline(object):
                     curvePoints.append(place)
 
         elif mode == "sameDistance":
+            curveType = 1
             for i in range(0, len(contDistances)):
                 ctrlVc = splitVc.normal() * contDistances[i]
                 place = rootVc + (ctrlVc)
@@ -151,7 +154,7 @@ class TwistSpline(object):
 
         # create the splineIK for the IK joints
         # # create the spline curve
-        splineCurve = pm.curve(name="splineCurve_" + name, p=curvePoints)
+        splineCurve = pm.curve(name="splineCurve_" + name, d=curveType, p=curvePoints)
         # # create spline IK
         splineIK = pm.ikHandle(sol="ikSplineSolver", createCurve=False, c=splineCurve, sj=IKjoints[0],
                                ee=IKjoints[len(self.defJoints) - 1], w=1.0)
