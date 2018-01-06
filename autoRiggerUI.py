@@ -128,17 +128,17 @@ class mainUI(QtWidgets.QMainWindow):
         # self.show(dockable=True, floating=False, area='left')
 
     def dock_ui(self):
-        if pm.dockControl('myToolDock', q=1, ex=1):
-            pm.deleteUI('myToolDock')
+        if pm.dockControl('T-RiggerDock', q=1, ex=1):
+            pm.deleteUI('T-RiggerDock')
         allowedAreas = ['right', 'left']
         try:
-            floatingLayout = pm.paneLayout(configuration='single', width=300, height=400)
+            floatingLayout = pm.paneLayout(configuration='single', width=250, height=400)
         except RuntimeError:
             self.m_logger.warning("Skipping docking. Restart to dock.")
             self.show()
             return False
-        pm.dockControl('myToolDock', area='left', allowedArea=allowedAreas,
-                               content=floatingLayout, label='My Tool')
+        pm.dockControl('T-RiggerDock', area='left', allowedArea=allowedAreas,
+                               content=floatingLayout, label='T-Rigger')
         pm.control(windowName, e=True, p=floatingLayout)
 
         return True

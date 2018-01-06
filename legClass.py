@@ -256,6 +256,7 @@ class Leg():
         pm.addAttr(cont_FK_IK, shortName="autoTwist", longName="Auto_Twist", defaultValue=1.0, minValue=0.0, maxValue=1.0,
                    at="float", k=True)
         pm.addAttr(cont_FK_IK, shortName="manualTwist", longName="Manual_Twist", defaultValue=0.0, at="float", k=True)
+        pm.addAttr(cont_FK_IK, at="enum", k=True, shortName="interpType", longName="Interp_Type", en="No_Flip:Average:Shortest:Longest:Cache", defaultValue=0 )
         pm.addAttr(cont_FK_IK, shortName="tweakControls", longName="Tweak_Controls", defaultValue=0, at="bool")
         pm.setAttr(cont_FK_IK.tweakControls, cb=True)
         pm.addAttr(cont_FK_IK, shortName="fingerControls", longName="Finger_Controls", defaultValue=1, at="bool")
@@ -659,7 +660,7 @@ class Leg():
         pm.pointConstraint(startLock, jFK_Root, mo=False)
 
         pm.orientConstraint(cont_FK_LowLeg, jFK_Knee, mo=True)
-        pm.orientConstraint(cont_FK_Foot, jFK_Foot, mo=False)
+        pm.orientConstraint(cont_FK_Foot, jFK_Foot, mo=True)
         # pm.orientConstraint(cont_FK_Ball, jFK_Ball, mo=True)
         pm.parentConstraint(cont_FK_Ball, jFK_Ball, mo=True)
 
@@ -709,6 +710,8 @@ class Leg():
         midLock_paConWeight = pm.parentConstraint(jIK_orig_Root, jFK_Root, cont_midLock_POS, mo=True)
         cont_FK_IK.fk_ik >> (midLock_paConWeight + "." + jIK_orig_Root + "W0")
         fk_ik_rvs.outputX >> (midLock_paConWeight + "." + jFK_Root + "W1")
+        cont_FK_IK.interpType >> midLock_paConWeight.interpType
+
 
         midLock_poConWeight = pm.pointConstraint(jIK_orig_Knee, jFK_Knee, cont_midLock_AVE, mo=False)
         cont_FK_IK.fk_ik >> (midLock_poConWeight + "." + jIK_orig_Knee + "W0")
@@ -751,7 +754,7 @@ class Leg():
         # pm.setAttr(endLockRot.interpType, 0)
         cont_FK_IK.fk_ik >> (endLockRot + "." + IK_parentGRP + "W0")
         fk_ik_rvs.outputX >> (endLockRot + "." + jFK_Foot + "W1")
-
+        cont_FK_IK.interpType >> endLockRot.interpType
         ###################################
         #### CREATE DEFORMATION JOINTS ####
         ###################################
@@ -834,6 +837,10 @@ class Leg():
 
         cont_FK_IK.fk_ik >> (toe_paCon + "." + jIK_Toe + "W0")
         fk_ik_rvs.outputX >> (toe_paCon + "." + jFK_Toe + "W1")
+
+        cont_FK_IK.interpType >> foot_paCon.interpType
+        cont_FK_IK.interpType >> ball_paCon.interpType
+        cont_FK_IK.interpType >> toe_paCon.interpType
 
         # # GOOD PARENTING
 
