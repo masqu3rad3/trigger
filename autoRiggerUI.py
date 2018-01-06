@@ -18,6 +18,11 @@ reload(mrCubic)
 
 import math
 
+# from maya.app.general.mayaMixin import MayaQWidgetDockableMixin
+
+
+# from maya.app.general.mayaMixin import MayaQWidgetDockableMixin
+
 if Qt.__binding__ == "PySide":
     from shiboken import wrapInstance
     from Qt.QtCore import Signal
@@ -42,12 +47,14 @@ def getMayaMainWindow():
     return ptr
 
 
+# class mainUI(MayaQWidgetDockableMixin, QtWidgets.QMainWindow):
 class mainUI(QtWidgets.QMainWindow):
     def __init__(self):
         for entry in QtWidgets.QApplication.allWidgets():
             if entry.objectName() == windowName:
                 entry.close()
         parent = getMayaMainWindow()
+        # parent = None
         super(mainUI, self).__init__(parent=parent)
 
         self.wSize = 60
@@ -115,6 +122,26 @@ class mainUI(QtWidgets.QMainWindow):
         self.resize(250, 500)
 
         self.buildUI()
+
+
+        ### new ###
+        # self.show(dockable=True, floating=False, area='left')
+
+    def dock_ui(self):
+        if pm.dockControl('myToolDock', q=1, ex=1):
+            pm.deleteUI('myToolDock')
+        allowedAreas = ['right', 'left']
+        try:
+            floatingLayout = pm.paneLayout(configuration='single', width=300, height=400)
+        except RuntimeError:
+            self.m_logger.warning("Skipping docking. Restart to dock.")
+            self.show()
+            return False
+        pm.dockControl('myToolDock', area='left', allowedArea=allowedAreas,
+                               content=floatingLayout, label='My Tool')
+        pm.control(windowName, e=True, p=floatingLayout)
+
+        return True
 
     def buildUI(self):
 

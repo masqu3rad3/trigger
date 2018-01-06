@@ -77,10 +77,17 @@ class NeckAndHead():
         headPivPos = headStart.getTranslation(space="world")
 
         ## Get the orientation axises
-        self.upAxis, self.mirroAxis, self.spineDir = extra.getRigAxes(inits[0])
-        splineMode = pm.getAttr(inits[0].mode, asString=True)
+        self.upAxis, self.mirroAxis, self.spineDir = extra.getRigAxes(neckNodes[0])
+        print "spineDir", self.spineDir
+
+        if self.spineDir[0] < 0 or self.spineDir[1] < 0 or self.spineDir[2] < 0:
+            faceDir = 1
+        else:
+            faceDir = -1
+
+        splineMode = pm.getAttr(neckNodes[0].mode, asString=True)
         # print "splineMode", splineMode
-        twistType = pm.getAttr(inits[0].twistType, asString=True)
+        twistType = pm.getAttr(neckNodes[0].twistType, asString=True)
         # print "twistType", twistType
 
         # ## get the up axis

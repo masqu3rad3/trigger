@@ -323,6 +323,8 @@ class Leg():
         pm.joint(jIK_Ball,      e=True, zso=True, oj="xyz", sao="yup")
         pm.joint(jIK_Toe,       e=True, zso=True, oj="xyz", sao="yup")
 
+
+
         ###Create Foot Pivots and Ball Socket
         pm.select(cl=True)
 
@@ -732,7 +734,6 @@ class Leg():
         extra.alignTo(midLock, cont_midLock, 0)
 
         pm.parentConstraint(cont_midLock, midLock, mo=False)
-
         ### Create End Lock
         endLock = pm.spaceLocator(name="endLock_" + suffix)
         extra.alignTo(endLock, footRef, 2)
@@ -889,6 +890,7 @@ class Leg():
         nodesJointVisLists = [ribbonUpperLeg.deformerJoints, ribbonLowerLeg.deformerJoints, nodesJointVis]
         nodesRigVis = [endLock_Ore, startLock_Ore, legStart, legEnd, IK_parentGRP, midLock]
 
+
         # Cont visibilities
         for i in nodesContVis:
             self.scaleGrp.contVis >> i.v
@@ -909,7 +911,6 @@ class Leg():
         # pm.setAttr(cont_FK_IK.rigVis, 0)
 
         # # FOOL PROOFING
-
         extra.lockAndHide(cont_Thigh, ["sx", "sy", "sz", "v"])
         extra.lockAndHide(self.cont_IK_foot, ["sx", "sy", "sz", "v"])
         extra.lockAndHide(self.cont_Pole, ["rx", "ry", "rz", "sx", "sy", "sz", "v"])
