@@ -53,6 +53,7 @@ class mainUI(QtWidgets.QMainWindow):
         for entry in QtWidgets.QApplication.allWidgets():
             if entry.objectName() == windowName:
                 entry.close()
+                # entry.deleteLater()
         parent = getMayaMainWindow()
         # parent = None
         super(mainUI, self).__init__(parent=parent)
@@ -128,16 +129,16 @@ class mainUI(QtWidgets.QMainWindow):
         # self.show(dockable=True, floating=False, area='left')
 
     def dock_ui(self):
-        if pm.dockControl('T-RiggerDock', q=1, ex=1):
-            pm.deleteUI('T-RiggerDock')
+        if pm.dockControl('triggerDock', q=1, ex=1):
+            pm.deleteUI('triggerDock')
         allowedAreas = ['right', 'left']
         try:
             floatingLayout = pm.paneLayout(configuration='single', width=250, height=400)
         except RuntimeError:
-            self.m_logger.warning("Skipping docking. Restart to dock.")
+            pm.warning("Skipping docking. Restart to dock.")
             self.show()
             return False
-        pm.dockControl('T-RiggerDock', area='left', allowedArea=allowedAreas,
+        pm.dockControl('triggerDock', area='left', allowedArea=allowedAreas,
                                content=floatingLayout, label='T-Rigger')
         pm.control(windowName, e=True, p=floatingLayout)
 
