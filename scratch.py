@@ -40,8 +40,8 @@ class LimbBuilder():
         self.riggedLimbList = []
         self.projectName = "tikAutoRig"
         self.rootGroup = None
-        self.spineRes = 4
-        self.neckRes = 3
+        # self.spineRes = 4
+        # self.neckRes = 3
         # self.spineDropoff = 2.0
         # self.neckDropoff = 2.0
         # self.createAnchors = True
@@ -193,7 +193,7 @@ class LimbBuilder():
                 if x[2] == "R":
                     self.leftShoulder = x[0]["Shoulder"]
                 limb = arm.Arm()
-                limb.createArm(x[0], suffix="%s_arm" %sideVal, side=x[2])
+                limb.createarm(x[0], suffix="%s_arm" %sideVal, side=x[2])
 
             elif x[1] == "leg":
                 if x[2] == "L":
