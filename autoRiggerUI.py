@@ -16,7 +16,7 @@ reload(icon)
 import mrCubic
 reload(mrCubic)
 
-import math
+# import math
 
 if Qt.__binding__ == "PySide":
     from shiboken import wrapInstance
@@ -521,7 +521,7 @@ class mainUI(QtWidgets.QMainWindow):
 
         self.tailCreateBtn = QtWidgets.QPushButton("Create", minimumSize=(QtCore.QSize(self.wSize, self.hSize)), maximumSize=(QtCore.QSize(self.wSize, self.hSize)), parent=self)
         tailSegLb = QtWidgets.QLabel("Segments")
-        self.tailSegInt = QtWidgets.QSpinBox(maximumSize=(QtCore.QSize(40, 20)), value=3, minimum=1)
+        self.tailSegInt = QtWidgets.QSpinBox(maximumSize=(QtCore.QSize(40, 20)), value=3, minimum=0)
 
         radioGrpTail = QtWidgets.QButtonGroup(layout)
         self.tailSideLeft = QtWidgets.QRadioButton("Left", parent=self)

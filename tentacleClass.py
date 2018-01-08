@@ -64,6 +64,8 @@ class Tentacle(object):
         ## Get the orientation axises
         upAxis, mirroAxis, spineDir = extra.getRigAxes(inits[0])
 
+        spineDir = upAxis
+
         ## Create Controller Curves
 
         ## specialController
