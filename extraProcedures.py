@@ -599,6 +599,7 @@ def identifyMaster(node, idBy="idByLabel"):
 
 
 def replaceController(mirror=True, mirrorAxis="X", keepOld=False, *args, **kwargs):
+
     if kwargs:
         if kwargs["oldController"] and kwargs["newController"]:
             oldCont = kwargs["oldController"]
@@ -641,19 +642,17 @@ def replaceController(mirror=True, mirrorAxis="X", keepOld=False, *args, **kwarg
 
 
     #move the new controller to the old controllers place
-    alignToAlter(newContDup, oldCont)
+    alignToAlter(newContDup, oldCont, mode=2)
 
     ## put the new controller shape under the same parent with the old first (if there is a parent)
-    if oldCont.getParent():
-        pm.parent(newContDup, oldCont.getParent())
-    pm.makeIdentity(newContDup, apply=True)
+    # if oldCont.getParent():
+    #     pm.parent(newContDup, oldCont.getParent())
+    # pm.makeIdentity(newContDup, apply=True)
     ## move the pivot to the same position
     # pivotPoint = pm.xform(oldCont,q=True, t=True, ws=True)
     # pm.xform(newContDup, piv=pivotPoint, ws=True)
 
     pm.parent(newContDup.getShape(), oldCont, r=True, s=True)
-
-
 
     if mirror:
         # find the mirror of the oldController
@@ -689,7 +688,9 @@ def replaceController(mirror=True, mirrorAxis="X", keepOld=False, *args, **kwarg
             pm.delete(oldContMirror.getShape())
 
     if not keepOld:
-        pm.delete(oldContMirror.getShape())
+        pm.delete(oldCont.getShape())
+
+# TODO // Create a mirrorController method which will mirror the shape to the other side. similar to the replace controller.
 
 def getRigAxes(joint):
     """

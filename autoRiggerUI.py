@@ -4,7 +4,7 @@ import Qt
 from Qt import QtWidgets, QtCore, QtGui
 from maya import OpenMayaUI as omui
 import initials as init
-
+import inspect
 reload(init)
 import scratch
 
@@ -50,10 +50,10 @@ def getMayaMainWindow():
 # class mainUI(MayaQWidgetDockableMixin, QtWidgets.QMainWindow):
 class mainUI(QtWidgets.QMainWindow):
     def __init__(self):
-        for entry in QtWidgets.QApplication.allWidgets():
-            if entry.objectName() == windowName:
-                entry.close()
-                # entry.deleteLater()
+        # for entry in QtWidgets.QApplication.allWidgets():
+        #     if entry.objectName() == windowName:
+        #         entry.close()
+        #         # entry.deleteLater()
         parent = getMayaMainWindow()
         # parent = None
         super(mainUI, self).__init__(parent=parent)
@@ -121,7 +121,6 @@ class mainUI(QtWidgets.QMainWindow):
 
         self.setMinimumSize(250, 100)
         self.resize(250, 500)
-
         self.buildUI()
 
 
@@ -129,6 +128,10 @@ class mainUI(QtWidgets.QMainWindow):
         # self.show(dockable=True, floating=False, area='left')
 
     def dock_ui(self):
+        for entry in QtWidgets.QApplication.allWidgets():
+            if entry.objectName() == windowName:
+                entry.close()
+                # entry.deleteLater()
         if pm.dockControl('triggerDock', q=1, ex=1):
             pm.deleteUI('triggerDock')
         allowedAreas = ['right', 'left']
@@ -163,11 +166,20 @@ class mainUI(QtWidgets.QMainWindow):
         self.riglayout.setAlignment(QtCore.Qt.AlignTop)
         self.rigTab.setWidgetResizable(True)
 
+        self.extra_tab = QtWidgets.QScrollArea()
+        self.extra_tab.setWidget(QtWidgets.QWidget())
+
+        self.extra_layout = QtWidgets.QVBoxLayout(self.extra_tab.widget())
+        self.extra_layout.setAlignment(QtCore.Qt.AlignTop)
+        self.extra_tab.setWidgetResizable(True)
+
         self.tabWidget.addTab(self.initBonesTab, "Init Bones")
         self.tabWidget.addTab(self.rigTab, "Rigging")
+        self.tabWidget.addTab(self.extra_tab, "Extra")
 
         self.initBonesUI()
         self.rigUI()
+        self.extraUI()
         # layout = QtWidgets.QVBoxLayout(self)
 
 
@@ -225,6 +237,8 @@ class mainUI(QtWidgets.QMainWindow):
     #
     #     self.typeDropDown.addItems(iconNames)
 
+    def extraUI(self):
+        pass
 
     def initBonesUI(self):
 
@@ -299,6 +313,30 @@ class mainUI(QtWidgets.QMainWindow):
         addToRigBtn.clicked.connect(self.addRig)
         ## Add groupbox under the tabs main layout
         self.riglayout.addWidget(addLimbGrpBox)
+
+        # create 'EDIT CONTROLLER CURVES' Group
+
+        edit_controllers_grpbox = QtWidgets.QGroupBox("Create / Replace Controller Curves")
+        edit_controllers_layout = QtWidgets.QVBoxLayout()
+        edit_controllers_grpbox.setLayout(edit_controllers_layout)
+
+        controllers_combobox = QtWidgets.QComboBox()
+        all_iconFunctions = inspect.getmembers(icon, inspect.isfunction)
+        iconNames = [i[0] for i in all_iconFunctions]
+        controllers_combobox.addItems(iconNames)
+
+        edit_controllers_layout.addWidget(controllers_combobox)
+
+        edit_controllers_buttons_layout = QtWidgets.QHBoxLayout()
+        edit_controllers_layout.addLayout(edit_controllers_buttons_layout)
+
+        add_controller_pushbutton = QtWidgets.QPushButton("Create")
+        replace_controller_pushbutton = QtWidgets.QPushButton("Replace")
+        edit_controllers_buttons_layout.addWidget(add_controller_pushbutton)
+        edit_controllers_buttons_layout.addWidget(replace_controller_pushbutton)
+
+
+        self.riglayout.addWidget(edit_controllers_grpbox)
 
     def initSpineUI(self):
         self.spineGroupBox = QtWidgets.QGroupBox()
