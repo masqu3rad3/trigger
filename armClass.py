@@ -33,6 +33,7 @@ class Arm(object):
     ## This is a joint node and should be parented to another joint.
     def createarm(self, arminits, suffix="", side="L"):
         idcounter = 0
+        # //TODO Use unique name method in extras. (do that for other classes as well)
         ## create an unique suffix
         while pm.objExists("scaleGrp_" + suffix):
             suffix = "%s%s" % (suffix, str(idcounter + 1))

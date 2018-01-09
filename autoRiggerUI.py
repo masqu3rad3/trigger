@@ -16,6 +16,9 @@ reload(icon)
 import mrCubic
 reload(mrCubic)
 
+import extraProcedures as extra
+reload(extra)
+
 # import math
 
 # from maya.app.general.mayaMixin import MayaQWidgetDockableMixin
@@ -182,7 +185,6 @@ class mainUI(QtWidgets.QMainWindow):
         self.extraUI()
         # layout = QtWidgets.QVBoxLayout(self)
 
-
     def mirrorPoseUI(self):
         parent = getMayaMainWindow()
         self.MPDialog = QtWidgets.QDialog(parent=parent)
@@ -303,6 +305,7 @@ class mainUI(QtWidgets.QMainWindow):
         #
         # ## Create widgets
         addlabel = QtWidgets.QLabel("Select in order:\n <Root Reference> - <Parent Node> \n <Master Controller>")
+        sl_parent_j_button = QtWidgets.QPushButton("Select")
         addToRigBtn = QtWidgets.QPushButton("Add To Rig")
 
         # ## Add widgets to the group layout
@@ -320,23 +323,50 @@ class mainUI(QtWidgets.QMainWindow):
         edit_controllers_layout = QtWidgets.QVBoxLayout()
         edit_controllers_grpbox.setLayout(edit_controllers_layout)
 
-        controllers_combobox = QtWidgets.QComboBox()
-        all_iconFunctions = inspect.getmembers(icon, inspect.isfunction)
-        iconNames = [i[0] for i in all_iconFunctions]
-        controllers_combobox.addItems(iconNames)
+        self.controllers_combobox = QtWidgets.QComboBox()
+        self.all_icon_functions = inspect.getmembers(icon, inspect.isfunction)
+        iconNames = [i[0] for i in self.all_icon_functions]
+        self.controllers_combobox.addItems(iconNames)
 
-        edit_controllers_layout.addWidget(controllers_combobox)
+        edit_controllers_layout.addWidget(self.controllers_combobox)
 
         edit_controllers_buttons_layout = QtWidgets.QHBoxLayout()
         edit_controllers_layout.addLayout(edit_controllers_buttons_layout)
 
         add_controller_pushbutton = QtWidgets.QPushButton("Create")
+        add_controller_pushbutton.setToolTip(("Creates the defined controller shape at <0,0,0>"))
+
         replace_controller_pushbutton = QtWidgets.QPushButton("Replace")
+        replace_controller_pushbutton.setToolTip(("Replaces the selected Controller Curves with the defined controller shape"))
+
         edit_controllers_buttons_layout.addWidget(add_controller_pushbutton)
         edit_controllers_buttons_layout.addWidget(replace_controller_pushbutton)
 
+        add_controller_pushbutton.clicked.connect(self.onAddController)
+        replace_controller_pushbutton.clicked.connect(self.onReplaceController)
+
 
         self.riglayout.addWidget(edit_controllers_grpbox)
+
+    def onAddController(self):
+        pm.undoInfo(openChunk=True)
+        objName=extra.uniqueName("cont_{0}".format(self.controllers_combobox.currentText()))
+        self.all_icon_functions[self.controllers_combobox.currentIndex()][1](name=objName, scale=(1,1,1))
+        pm.undoInfo(closeChunk=True)
+    def onReplaceController(self):
+        pm.undoInfo(openChunk=True)
+        selection = pm.ls(sl=True)
+        if not selection:
+            self.infoPop(textTitle="Skipping action", textHeader="Selection needed", textInfo="You need to select at least one controller node. (transform node)")
+            return
+        for i in selection:
+            oldController = str(i.name())
+            objName=extra.uniqueName("cont_{0}".format(self.controllers_combobox.currentText()))
+            newController = self.all_icon_functions[self.controllers_combobox.currentIndex()][1](name=objName, scale=(1,1,1))
+            extra.replaceController(mirrorAxis=self.initSkeleton.mirrorAxis, mirror=False, oldController=oldController, newController= newController)
+            pm.select(oldController)
+        pm.undoInfo(closeChunk=True)
+
 
     def initSpineUI(self):
         self.spineGroupBox = QtWidgets.QGroupBox()
@@ -876,5 +906,17 @@ class mainUI(QtWidgets.QMainWindow):
         else:
             UI.setHidden(False)
 
+    def infoPop(self, textTitle="info", textHeader="", textInfo="", type="I"):
+        self.msg = QtWidgets.QMessageBox(parent=self)
+        if type == "I":
+            self.msg.setIcon(QtWidgets.QMessageBox.Information)
+        if type == "C":
+            self.msg.setIcon(QtWidgets.QMessageBox.Critical)
+
+        self.msg.setText(textHeader)
+        self.msg.setInformativeText(textInfo)
+        self.msg.setWindowTitle(textTitle)
+        self.msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
+        self.msg.show()
 # testUI().show()
 

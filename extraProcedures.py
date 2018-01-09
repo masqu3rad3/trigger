@@ -598,7 +598,7 @@ def identifyMaster(node, idBy="idByLabel"):
     return limbName, limbType, side
 
 
-def replaceController(mirror=True, mirrorAxis="X", keepOld=False, *args, **kwargs):
+def replaceController(mirror=True, mirrorAxis="X", keepOldShape=False, keepAcopy=False, *args, **kwargs):
 
     if kwargs:
         if kwargs["oldController"] and kwargs["newController"]:
@@ -623,8 +623,10 @@ def replaceController(mirror=True, mirrorAxis="X", keepOld=False, *args, **kwarg
         newCont = selection[0]
         oldCont = selection[1]
 
-
-    newContDup = pm.duplicate(newCont)[0]
+    if keepAcopy:
+        newContDup = pm.duplicate(newCont)[0]
+    else:
+        newContDup = newCont
 
     pm.makeIdentity(newContDup, a=True)
 
@@ -642,13 +644,13 @@ def replaceController(mirror=True, mirrorAxis="X", keepOld=False, *args, **kwarg
 
 
     #move the new controller to the old controllers place
-    alignToAlter(newContDup, oldCont, mode=2)
+    alignTo(newContDup, oldCont, mode=2)
 
     ## put the new controller shape under the same parent with the old first (if there is a parent)
-    # if oldCont.getParent():
-    #     pm.parent(newContDup, oldCont.getParent())
-    # pm.makeIdentity(newContDup, apply=True)
-    ## move the pivot to the same position
+    if oldCont.getParent():
+        pm.parent(newContDup, oldCont.getParent())
+    pm.makeIdentity(newContDup, apply=True)
+    # move the pivot to the same position
     # pivotPoint = pm.xform(oldCont,q=True, t=True, ws=True)
     # pm.xform(newContDup, piv=pivotPoint, ws=True)
 
@@ -684,10 +686,10 @@ def replaceController(mirror=True, mirrorAxis="X", keepOld=False, *args, **kwarg
         alignToAlter(newContDupMirror, oldContMirror, mode=0)
         pm.parent(newContDupMirror.getShape(), oldContMirror, r=True, s=True)
 
-        if not keepOld:
+        if not keepOldShape:
             pm.delete(oldContMirror.getShape())
 
-    if not keepOld:
+    if not keepOldShape:
         pm.delete(oldCont.getShape())
 
 # TODO // Create a mirrorController method which will mirror the shape to the other side. similar to the replace controller.
@@ -739,6 +741,13 @@ def getRigAxes(joint):
 
     return upAxis, mirrorAxis, spineDir
 
+def uniqueName(name):
+    baseName = name
+    idcounter = 0
+    while pm.objExists(name):
+        name = "%s%s" % (baseName, str(idcounter + 1))
+        idcounter = idcounter + 1
+    return name
 
 
 
