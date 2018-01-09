@@ -34,10 +34,11 @@ class NeckAndHead():
         self.anchorLocations = []
 
     def createNeckAndHead(self, inits, suffix="", resolution=3, dropoff=1):
-        idCounter = 0
-        ## create an unique suffix
-        while pm.objExists("scaleGrp_" + suffix):
-            suffix = "%s%s" % (suffix, str(idCounter + 1))
+        # idCounter = 0
+        # ## create an unique suffix
+        # while pm.objExists("scaleGrp_" + suffix):
+        #     suffix = "%s%s" % (suffix, str(idCounter + 1))
+        suffix=(extra.uniqueName("scaleGrp_%s" %(suffix))).replace("scaleGrp_", "")
 
         if (len(inits) < 2):
             pm.error("Some or all Neck and Head Bones are missing (or Renamed)")

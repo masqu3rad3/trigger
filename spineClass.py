@@ -49,6 +49,9 @@ class Spine(object):
         while pm.objExists("scaleGrp_" + "spine" + suffix):
             suffix = "%s%s" %(suffix, str(idCounter + 1))
 
+        suffix=(extra.uniqueName("scaleGrp_%s" %(suffix))).replace("scaleGrp_", "")
+
+
         if (len(inits) < 2):
             pm.error("Insufficient Spine Initialization Joints")
             return

@@ -25,6 +25,9 @@ class Ribbon():
     middleCont = None
     toHide = None
     def createRibbon(self, startPoint, endPoint, name, orientation, rResolution=5, jResolution=5.0):
+
+        name=(extra.uniqueName("RBN_ScaleGrp_" + name)).replace("RBN_ScaleGrp_", "")
+
         self.nonScaleGrp=pm.group(em=True, name="RBN_nonScaleGrp_"+name)
 
         if type(startPoint) == str:

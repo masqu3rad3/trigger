@@ -103,7 +103,8 @@ def fkikSwitch(name="cont_fkik", scale=(1,1,1), location=None):
     """
     letter_fk_f=pm.curve (d= 1, p= [( -8.145734, -5.011799, 0 ), ( -8.145734, 4.99286, 0 ), ( -1.059101, 4.99286, 0 ), ( -1.059101, 2.908556, 0 ), ( -5.227709, 2.908556,0 ), ( -5.227709, 1.241113, 0 ), ( -1.892823, 1.241113, 0 ), ( -1.892823, -0.843191, 0 ), ( -5.227709, -0.843191, 0 ), ( -5.227709, -5.011799, 0 ), ( -8.145734, -5.011799, 0)], k=[ 0 ,  1 ,  2 ,  3 ,  4 ,  5 ,  6 ,  7 ,  8 ,  9 ,  10 ], name="letterFK_F")
     letter_f_k_k=pm.curve (d= 1, p= [(  1.025203, -5.011799, 0 ), (  1.025203, 4.99286, 0 ), (  3.943228, 4.99286, 0 ), (  3.943228, 1.215065, 0 ), (  7.193445, 4.99286, 0 ), (  11.029861, 4.99286, 0 ), (  7.382331, 1.084794, 0 ), (  11.029861, -5.011799, 0 ), (  7.857814, -5.011799, 0 ), (  5.669293, -0.752001, 0 ), (  3.943228, -2.608331, 0 ), (  3.943228, -5.011799, 0 ), (  1.025203, -5.011799, 0)], k= [0 , 1 , 2 , 3 , 4 , 5 , 6 , 7 , 8 , 9 , 10 , 11 , 12], name="letterFK_K")
-    pm.parent(letter_f_k_k+"Shape", letter_fk_f, r=True, s=True)
+    # pm.parent(letter_f_k_k+"Shape", letter_fk_f, r=True, s=True)
+    pm.parent("%sShape" % letter_f_k_k, letter_fk_f, r=True, s=True)
     pm.delete(letter_f_k_k)
     letter_fk=pm.rename(letter_fk_f, "letterFK")
     letter_ik=pm.duplicate(letter_fk, name="letterIK")
@@ -122,7 +123,7 @@ def fkikSwitch(name="cont_fkik", scale=(1,1,1), location=None):
     pm.addAttr( shortName="fk_ik", longName="FK_IK", defaultValue=1.0, minValue=0.0, maxValue=1.0, at="float", k=True)
     
 
-    fk_ik_rvs=pm.createNode("reverse", name="fk_ik_rvs"+name)
+    fk_ik_rvs=pm.createNode("reverse", name="fk_ik_rvs%s" % name)
     cont_FK_IK.fk_ik >> blShape_FKtoIK[0].weight[0]
     cont_FK_IK.fk_ik >> fk_ik_rvs.inputX
 
@@ -181,7 +182,8 @@ def plus(name="cont_plus", scale=(1,1,1), location=None, normal=(1,0,0)):
 
     """
     cont_Pole=pm.curve(name=name, d=1,p=[(-1, 0, -3), (-1, 0, -1),(-3, 0, -1), (-3, 0, 1), (-1, 0, 1), (-1, 0, 3), (1, 0, 3), (1, 0, 1), (3, 0, 1), (3, 0, -1), (1, 0, -1), (1, 0, -3), (-1, 0, -3)], k=[0,1,2,3,4,5,6,7,8,9,10,11,12])
-    pm.setAttr(cont_Pole + ".scale", (0.4, 0.4, 0.4))
+    # pm.setAttr(cont_Pole + ".scale", (0.4, 0.4, 0.4))
+    pm.setAttr("%s.scale" % cont_Pole, (0.4, 0.4, 0.4))
     pm.makeIdentity(cont_Pole, a=True, s=True)
     pm.setAttr(cont_Pole.scale, scale)
     if location:
@@ -207,7 +209,8 @@ def waist(name="cont_waist", scale=(1,1,1), location=None):
 
     """
     cont_waist=pm.curve(name=name, d=1, p=[(-6.086269,0,2.259307), (-7.671805,0,-2.12977e-007),(-6.086269,0,-2.259308),(-6.08099,0,-1.545085),(-4.755284, 0, -1.545085), (-4.045086, 0, -2.938927), (-2.938927, 0, -4.045086), (-1.545086, 0, -4.755285), (-1.545086, 0, -6.080991), (-2.259309, 0, -6.08627), (-1.05973e-006, 0, -7.671805), (2.259307, 0, -6.086271), (1.545086, 0, -6.122436), (1.545086, 0, -4.755285), (2.938928, 0, -4.045087), (4.045088, 0, -2.938928), (4.755286, 0, -1.545086), (6.080994, 0, -1.545086), (6.086271, 0, -2.259301), (7.671804, 0, 3.02757e-006), (6.086267, 0, 2.259305), (6.080992, 0, 1.545085), (4.755283, 0, 1.545085), (4.045085, 0, 2.938926), (2.938926, 0, 4.045085), (1.545085, 0, 4.755283), (1.545085, 0, 6.080991), (2.259307, 0, 6.086268), (6.06841e-007, 0, 7.671803), (-2.259307, 0, 6.086269), (-1.545085, 0, 6.080991), (-1.545085, 0, 4.755283), (-2.938927, 0, 4.045085), (-4.045086, 0, 2.938927), (-4.755284, 0, 1.545085), (-6.08099, 0, 1.545085), (-6.086269, 0, 2.259307)], k=[ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36 ])
-    pm.setAttr(cont_waist + ".scale", (0.2, 0.2, 0.2))
+    # pm.setAttr(cont_waist + ".scale", (0.2, 0.2, 0.2))
+    pm.setAttr("%s.scale" % cont_waist, (0.2, 0.2, 0.2))
     pm.makeIdentity(cont_waist, a=True, s=True)
     pm.setAttr(cont_waist.scale, scale)
     if location:
@@ -246,7 +249,8 @@ def ngon(name="cont_ngon", scale=(1,1,1), location=None):
     """
 
     cont_ngon=pm.curve(name=name, d=1, p=[ (-2, 0, -4), (2, 0, -4), (4, 0, -2), (4, 0, 2), (2, 0, 4), (-2, 0, 4), (-4, 0, 2), (-4, 0, -2), (-2, 0, -4)], k=[0, 1, 2, 3, 4, 5, 6, 7, 8])
-    pm.setAttr(cont_ngon + ".scale", (0.25, 0.25, 0.25))
+    # pm.setAttr(cont_ngon + ".scale", (0.25, 0.25, 0.25))
+    pm.setAttr("%s.scale" % cont_ngon, (0.25, 0.25, 0.25))
     pm.makeIdentity(cont_ngon, a=True, s=True)
     pm.setAttr(cont_ngon.scale, scale)
     if location:
@@ -361,7 +365,8 @@ def looper(name="cont_looper", scale=(1,1,1), location=None, normal=(0,1,0)):
 
     cont_Looper=pm.curve(name=name, d=1, p=[(0,0,-1),(1,0,-1),(1,0,1),(-1,0,1),(-1,0,-2),(2,0,-2),(2,0,2),(-2,0,2),(-2,0,-3),(3,0,-3),(3,0,3),(-3,0,3),(-3,0,-3)],
              k=[0,1,2,3,4,5,6,7,8,9,10,11,12])
-    pm.setAttr(cont_Looper + ".scale", (0.333, 0.333, 0.333))
+    # pm.setAttr(cont_Looper + ".scale", (0.333, 0.333, 0.333))
+    pm.setAttr("%s.scale" % cont_Looper, (0.333, 0.333, 0.333))
     pm.makeIdentity(cont_Looper, a=True, s=True)
     pm.setAttr(cont_Looper.scale, scale)
     if location:
@@ -375,7 +380,8 @@ def looper(name="cont_looper", scale=(1,1,1), location=None, normal=(0,1,0)):
 
 def triangle(name="cont_triangle", scale=(1,1,1), location=None, normal=(0,1,0)):
     cont_Triangle=pm.curve(name=name, d=1, p=[(0,0,-3),(-3,0,2),(3,0,2),(0,0,-3)],k=[0,1,2,3])
-    pm.setAttr(cont_Triangle + ".scale", (0.333, 0.333, 0.333))
+    # pm.setAttr(cont_Triangle + ".scale", (0.333, 0.333, 0.333))
+    pm.setAttr("%s.scale" % cont_Triangle, (0.333, 0.333, 0.333))
     pm.makeIdentity(cont_Triangle, a=True, s=True)
     pm.setAttr(cont_Triangle.scale, scale)
     if location:
@@ -389,7 +395,8 @@ def triangle(name="cont_triangle", scale=(1,1,1), location=None, normal=(0,1,0))
 
 def pyramid(name="cont_pyramid", scale=(1,1,1), location=None, normal=(0,1,0)):
     cont_Pyramid=pm.curve(name=name, d=1, p=[(-1,0,1),(1,0,1),(1,0,-1),(-1,0,-1),(-1,0,1),(0,2,0),(1,0,-1),(-1,0,-1),(0,2,0),(1,0,1)], k=[0,1,2,3,4,5,6,7,8,9])
-    pm.setAttr(cont_Pyramid + ".scale", (0.333, 0.333, 0.333))
+    # pm.setAttr(cont_Pyramid + ".scale", (0.333, 0.333, 0.333))
+    pm.setAttr("%s.scale" % cont_Pyramid, (0.333, 0.333, 0.333))
     pm.makeIdentity(cont_Pyramid, a=True, s=True)
     pm.setAttr(cont_Pyramid.scale, scale)
     if location:

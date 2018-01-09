@@ -28,11 +28,12 @@ class SimpleTail(object):
             tails = (inits.get("Tail"))
             inits = [tailRoot] + (tails)
 
+        # idCounter = 0
+        # ## create an unique suffix
+        # while pm.objExists("scaleGrp_" + suffix):
+        #     suffix = "%s%s" % (suffix, str(idCounter + 1))
 
-        idCounter = 0
-        ## create an unique suffix
-        while pm.objExists("scaleGrp_" + suffix):
-            suffix = "%s%s" % (suffix, str(idCounter + 1))
+        suffix = (extra.uniqueName("scaleGrp_" + suffix)).replace("scaleGrp_", "")
 
         print "Creating Simple Tail %s" %suffix
 

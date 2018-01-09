@@ -106,22 +106,22 @@ def alignAndAim(node, targetList, aimTargetList, upObject=None, upVector=None, r
     pointFlags = ""
     for i in range (len(targetList)):
         if not i == 0:
-            pointFlags += ", "
-        pointFlags += "targetList[{0}]".format(str(i))
-    pointFlags += ", node"
+            pointFlags = "%s, " % pointFlags
+        pointFlags = "{0}targetList[{1}]".format(pointFlags, str(i))
+    pointFlags = "%s, node" % pointFlags
     pointCommand = "pm.pointConstraint({0})".format(pointFlags)
     tempPo = eval(pointCommand)
 
     aimFlags = ""
     for i in range (len(aimTargetList)):
         if not i == 0:
-            aimFlags += ", "
-        aimFlags += "aimTargetList[{0}]".format(str(i))
-    aimFlags += ", node"
+            aimFlags = "%s, " % aimFlags
+        aimFlags = "{0}aimTargetList[{1}]".format(aimFlags, str(i))
+    aimFlags = "%s, node" % aimFlags
     if upObject:
-        aimFlags += ", wuo=upObject, wut='object'"
+        aimFlags = "%s, wuo=upObject, wut='object'" % aimFlags
     if upVector:
-        aimFlags += ", wu=upVector, wut='vector'"
+        aimFlags = "%s, wu=upVector, wut='vector'" % aimFlags
 
     aimCommand = "pm.aimConstraint({0})".format(aimFlags)
     tempAim = eval(aimCommand)
@@ -163,7 +163,8 @@ def createUpGrp(obj, suffix, mi=True):
     Returns: The created group node
 
     """
-    grpName = (obj.nodeName() + "_" + suffix)
+    # grpName = (obj.nodeName() + "_" + suffix)
+    grpName = "%s_%s" % (obj.nodeName(), suffix)
     newGrp = pm.group (em=True,name=grpName)
 
     #align the new created empty group to the selected object
@@ -395,11 +396,12 @@ def attrPass (sourceNode, targetNode, attributes=[], inConnections=True, outConn
         addAttribute="pm.addAttr(pm.PyNode('%s'), " % (targetNode)
         for i in range (0,len(flagBuildList)):
 
-            addAttribute+=flagBuildList[i]
+            # addAttribute+=flagBuildList[i]
+            addAttribute = "%s%s" % (addAttribute, flagBuildList[i])
             if i < len(flagBuildList)-1:
-                addAttribute += ", "
+                addAttribute = "%s, " % addAttribute
             else:
-                addAttribute += ")"
+                addAttribute = "%s)" % addAttribute
 
 
         # if an attribute with the same name exists
@@ -463,18 +465,18 @@ def spaceSwitcher (node, targetList, overrideExisting=False, mode="parent", defa
     for enum in range (0, len(anchorPoses)):
         cur = str(anchorPoses[enum])
         cur = cur.replace("cont_", "")
-        enumFlag += "%s:" % cur
+        enumFlag = "%s%s:" % (enumFlag, cur)
 
     # # check if the attribute exists
-    if pm.attributeQuery(mode+"Switch", node=node, exists=True):
+    if pm.attributeQuery("%sSwitch" % mode, node=node, exists=True):
         if overrideExisting:
             pm.deleteAttr("{0}.{1}Switch".format(node, mode))
         else:
             pm.error("Switch Attribute already exists. Use overrideExisting=True to delete the old")
-    pm.addAttr(node, at="enum", k=True, shortName=mode+"Switch", longName=mode+"_Switch", en=enumFlag, defaultValue=defaultVal)
+    pm.addAttr(node, at="enum", k=True, shortName="%sSwitch" % mode, longName="%s_Switch" % mode, en=enumFlag, defaultValue=defaultVal)
     driver = "%s.%sSwitch" %(node, mode)
 
-    switchGrp=createUpGrp(node, (mode+"SW"))
+    switchGrp=createUpGrp(node, ("%sSW" % mode))
     if mode == "parent":
         con = pm.parentConstraint(anchorPoses, switchGrp, mo=True)
     elif mode == "point":
@@ -639,8 +641,13 @@ def replaceController(mirror=True, mirrorAxis="X", keepOldShape=False, keepAcopy
     pm.makeIdentity(newContDup, apply=True, t=True, r=False, s=True, n=False, pn=True)
 
     ## get the same color code
-    pm.setAttr(newContDup.getShape()+".overrideEnabled", pm.getAttr(oldCont.getShape()+".overrideEnabled"))
-    pm.setAttr(newContDup.getShape()+".overrideColor", pm.getAttr(oldCont.getShape()+".overrideColor"))
+    # pm.setAttr(newContDup.getShape()+".overrideEnabled", pm.getAttr(oldCont.getShape()+".overrideEnabled"))
+    pm.setAttr("%s.overrideEnabled" % newContDup.getShape(), pm.getAttr("%s.overrideEnabled" % oldCont.getShape()))
+
+    # pm.setAttr(newContDup.getShape()+".overrideColor", pm.getAttr(oldCont.getShape()+".overrideColor"))
+    pm.setAttr("%s.overrideColor" % newContDup.getShape(), pm.getAttr("%s.overrideColor" % oldCont.getShape()))
+
+
 
 
     #move the new controller to the old controllers place
@@ -664,7 +671,7 @@ def replaceController(mirror=True, mirrorAxis="X", keepOldShape=False, keepAcopy
             mirrorName = oldCont.name().replace("_RIGHT_", "_LEFT_")
         else:
             pm.warning("Cannot find the mirror controller, skipping mirror part")
-            if not keepOld:
+            if not keepOldShape:
                 pm.delete(oldCont.getShape())
             return
         oldContMirror = pm.PyNode(mirrorName)
@@ -679,8 +686,15 @@ def replaceController(mirror=True, mirrorAxis="X", keepOldShape=False, keepAcopy
         pm.makeIdentity(newContDupMirror, apply=True, s=True)
 
         ## get the same color code
-        pm.setAttr(newContDupMirror.getShape() + ".overrideEnabled", pm.getAttr(oldContMirror.getShape() + ".overrideEnabled"))
-        pm.setAttr(newContDupMirror.getShape() + ".overrideColor", pm.getAttr(oldContMirror.getShape() + ".overrideColor"))
+        # pm.setAttr(newContDupMirror.getShape() + ".overrideEnabled", pm.getAttr(oldContMirror.getShape() + ".overrideEnabled"))
+        pm.setAttr("%s.overrideEnabled" % newContDupMirror.getShape(),
+                   pm.getAttr("%s.overrideEnabled") % oldContMirror.getShape())
+
+
+        # pm.setAttr(newContDupMirror.getShape() + ".overrideColor", pm.getAttr(oldContMirror.getShape() + ".overrideColor"))
+        pm.setAttr("%s.overrideColor" % newContDupMirror.getShape(),
+                   pm.getAttr("%s.overrideColor" % oldContMirror.getShape()))
+
 
         # move the new controller to the old controllers place
         alignToAlter(newContDupMirror, oldContMirror, mode=0)

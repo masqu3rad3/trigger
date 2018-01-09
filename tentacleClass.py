@@ -47,9 +47,12 @@ class Tentacle(object):
         jResolution = 1.0 * jResolution
 
         ## Make sure the suffix is unique
-        idCounter=0
-        while pm.objExists("scaleGrp_" + suffix):
-            suffix = "%s%s" % (suffix, str(idCounter + 1))
+        # idCounter=0
+        # while pm.objExists("scaleGrp_" + suffix):
+        #     suffix = "%s%s" % (suffix, str(idCounter + 1))
+
+        suffix=(extra.uniqueName("scaleGrp_%s" %(suffix))).replace("scaleGrp_", "")
+
 
         if len(inits)<2:
             pm.error("Tentacle setup needs at least 2 initial joints")

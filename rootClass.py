@@ -33,10 +33,13 @@ class Root(object):
                 return
             rootInit = inits[0]
 
-        idCounter = 0
-        ## create an unique suffix
-        while pm.objExists("scaleGrp_" + suffix):
-            suffix = "%s%s" % (suffix, str(idCounter + 1))
+        # idCounter = 0
+        # ## create an unique suffix
+        # while pm.objExists("scaleGrp_" + suffix):
+        #     suffix = "%s%s" % (suffix, str(idCounter + 1))
+
+        suffix=(extra.uniqueName("scaleGrp_%s" %(suffix))).replace("scaleGrp_", "")
+
 
         print "Creating Root %s" %suffix
 

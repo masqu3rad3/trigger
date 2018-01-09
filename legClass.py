@@ -38,10 +38,12 @@ class Leg():
         self.upAxis = None
 
     def createLeg(self, legInits, suffix="", side="L"):
-        idCounter = 0
-        ## create an unique suffix
-        while pm.objExists("scaleGrp_" + suffix):
-            suffix = "%s%s" % (suffix, str(idCounter + 1))
+        # idCounter = 0
+        # ## create an unique suffix
+        # while pm.objExists("scaleGrp_" + suffix):
+        #     suffix = "%s%s" % (suffix, str(idCounter + 1))
+
+        suffix=(extra.uniqueName("scaleGrp_%s" %(suffix))).replace("scaleGrp_", "")
 
         if (len(legInits) < 9):
             pm.error("Some or all Leg Init Bones are missing (or Renamed)")

@@ -51,20 +51,22 @@ class Fingers(object):
             else:
                 pm.error("fingers must have at least one root and one other joint")
 
-        if pm.objExists("scaleGrp_" + suffix):
-            self.idCounter = 1
+        suffix=(extra.uniqueName("scaleGrp_%s" %(suffix))).replace("scaleGrp_", "")
 
-            newSuffix = "%s%s" %(suffix, str(self.idCounter))
-            while pm.objExists("scaleGrp_" + newSuffix):
-                self.idCounter += 1
-                newSuffix = "%s%s" %(suffix, str(self.idCounter))
-            suffix = newSuffix
+        # if pm.objExists("scaleGrp_" + suffix):
+        #     self.idCounter = 1
+        #
+        #     newSuffix = "%s%s" %(suffix, str(self.idCounter))
+        #     while pm.objExists("scaleGrp_" + newSuffix):
+        #         self.idCounter += 1
+        #         newSuffix = "%s%s" %(suffix, str(self.idCounter))
+        #     suffix = newSuffix
 
         if (len(inits) < 2):
             pm.error("Insufficient Finger Initialization Joints")
             return
 
-        self.scaleGrp = pm.group(name="scaleGrp_" + suffix, em=True)
+        self.scaleGrp = pm.group(name="scaleGrp_%s" % suffix, em=True)
         self.scaleConstraints.append(self.scaleGrp)
 
         # self.connectsTo = inits[0].getParent()
@@ -72,7 +74,7 @@ class Fingers(object):
         ## Create LimbPlug
 
         pm.select(d=True)
-        self.limbPlug = pm.joint(name="limbPlug_" + suffix, p=inits[0].getTranslation(space="world"), radius=2)
+        self.limbPlug = pm.joint(name="limbPlug_%s" % suffix, p=inits[0].getTranslation(space="world"), radius=2)
         # self.scaleConstraints.append(self.limbPlug)
         pm.parentConstraint(self.limbPlug, self.scaleGrp)
 

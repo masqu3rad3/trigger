@@ -53,10 +53,10 @@ def getMayaMainWindow():
 # class mainUI(MayaQWidgetDockableMixin, QtWidgets.QMainWindow):
 class mainUI(QtWidgets.QMainWindow):
     def __init__(self):
-        # for entry in QtWidgets.QApplication.allWidgets():
-        #     if entry.objectName() == windowName:
-        #         entry.close()
-        #         # entry.deleteLater()
+        for entry in QtWidgets.QApplication.allWidgets():
+            if entry.objectName() == windowName:
+                entry.close()
+                # entry.deleteLater()
         parent = getMayaMainWindow()
         # parent = None
         super(mainUI, self).__init__(parent=parent)
