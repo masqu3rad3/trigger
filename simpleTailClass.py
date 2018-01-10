@@ -21,6 +21,7 @@ class SimpleTail(object):
         self.scaleConstraints = []
         self.anchors = []
         self.anchorLocations = []
+        self.deformerJoints = []
 
     def createSimpleTail(self, inits, suffix="", side="C", conts="cube"):
         if not isinstance(inits, list):
@@ -62,7 +63,7 @@ class SimpleTail(object):
         upAxis, mirroAxis, spineDir = extra.getRigAxes(inits[0])
 
         ## Create Joints
-        deformerJoints=[]
+        self.deformerJoints=[]
 
         pm.select(d=True)
 
@@ -72,20 +73,20 @@ class SimpleTail(object):
             self.sockets.append(bone)
             # if j == 0 or j == len(inits):
             #     self.sockets.append(bone)
-            deformerJoints.append(bone)
+            self.deformerJoints.append(bone)
 
-        for j in deformerJoints:
+        for j in self.deformerJoints:
             pm.joint(j, e=True, zso=True, oj="yzx", sao="zup")
 
-        pm.parent(deformerJoints[0], self.scaleGrp)
+        pm.parent(self.deformerJoints[0], self.scaleGrp)
 
         contList=[]
-        cont_OREList=[]
-        for j in range (0,len(deformerJoints)):
-            if not j == len(deformerJoints)-1:
+        cont_off_list=[]
+        for j in range (0,len(self.deformerJoints)):
+            if not j == len(self.deformerJoints)-1:
                 targetInit = inits[j+1]
                 rotateOff = (90,90,0)
-                scaleDis = extra.getDistance(deformerJoints[j], deformerJoints[j+1])/2
+                scaleDis = extra.getDistance(self.deformerJoints[j], self.deformerJoints[j+1])/2
                 cont = icon.cube(name="cont_%s_%s" %(suffix, str(j)), scale=(scaleDis,scaleDis,scaleDis))
                 contList.append(cont)
 
@@ -97,30 +98,31 @@ class SimpleTail(object):
 
                 cont_OFF = extra.createUpGrp(cont, "OFF")
                 cont_ORE = extra.createUpGrp(cont, "ORE")
+
                 if side == "R":
                     pm.setAttr("{0}.s{1}".format(cont_OFF, "x"), -1)
-                cont_OREList.append(cont_ORE)
-                pm.parentConstraint(cont, deformerJoints[j], mo=False)
+                cont_off_list.append(cont_OFF)
+                pm.parentConstraint(cont, self.deformerJoints[j], mo=False)
 
                 # create additive scalability
                 sGlobal = pm.createNode("multiplyDivide")
                 self.limbPlug.scale >> sGlobal.input1
                 cont.scale >> sGlobal.input2
-                sGlobal.output >> deformerJoints[j].scale
+                sGlobal.output >> self.deformerJoints[j].scale
 
                 # cont.scale >> deformerJoints[j].scale
 
                 if j != 0:
-                    pm.parent(cont_OREList[j], contList[j-1])
+                    pm.parent(cont_off_list[j], contList[j-1])
                 else:
-                    pm.parent(cont_OREList[j], self.scaleGrp)
+                    pm.parent(cont_off_list[j], self.scaleGrp)
             else: ## last joint has no cont, use the previous one to scale that
                 # pass
-                extra.alignTo(deformerJoints[j], inits[-1])
+                extra.alignTo(self.deformerJoints[j], inits[-1])
                 sGlobal = pm.createNode("multiplyDivide")
                 self.limbPlug.scale >> sGlobal.input1
                 contList[j-1].scale >> sGlobal.input2
-                sGlobal.output >> deformerJoints[j].scale
+                sGlobal.output >> self.deformerJoints[j].scale
 
             # pm.parentConstraint(cont, deformerJoints[j], mo=False)
 
@@ -138,11 +140,11 @@ class SimpleTail(object):
         pm.setAttr(self.scaleGrp.rigVis, cb=True)
 
         ## Cont visibilities
-        for i in cont_OREList:
+        for i in cont_off_list:
             self.scaleGrp.contVis >> i.v
 
         ## global joint visibilities
-        for j in deformerJoints:
+        for j in self.deformerJoints:
             self.scaleGrp.jointVis >> j.v
 
         ## Rig Visibilities

@@ -1,14 +1,14 @@
 import pymel.core as pm
 import extraProcedures as extra
+import contIcons as icon
 
 reload(extra)
-import contIcons as icon
 reload(icon)
 
 class Fingers(object):
     def __init__(self):
         super(Fingers, self).__init__()
-        self.defJoints = []
+        self.deformerJoints = []
         self.sockets = []
         self.conts = []
         self.scaleGrp = None
@@ -24,7 +24,7 @@ class Fingers(object):
 
     rootMaster = None
     allControllers = []
-    defJoints = []
+    deformerJoints = []
 
     def createFinger(self, inits, suffix="", side="L", parentController=None, thumb=False, mirrorAxis="X"):
 
@@ -95,7 +95,7 @@ class Fingers(object):
             # if inits.index(i) == 0:
             #     self.sockets.append(i)
             self.sockets.append(j)
-            self.defJoints.append(j)
+            self.deformerJoints.append(j)
 
         ## Create Controllers
 
@@ -104,8 +104,8 @@ class Fingers(object):
         conts_ORE = []
         contList = []
 
-        for i in range(0, len(self.defJoints)-1):
-            contScl = (pm.getAttr(self.defJoints[1].tx) / 2)
+        for i in range(0, len(self.deformerJoints)-1):
+            contScl = (pm.getAttr(self.deformerJoints[1].tx) / 2)
             contName = ("cont_{0}_{1}".format(suffix, i))
             cont = icon.circle(contName,(contScl,contScl,contScl), normal=(1,0,0))
             cont_OFF=extra.createUpGrp(cont,"OFF", mi=False)
@@ -116,7 +116,7 @@ class Fingers(object):
             if side == "R":
                 pm.setAttr("%s.rotate%s" %(cont_ORE, mirrorAxis), -180)
 
-            extra.alignTo(cont_OFF, self.defJoints[i], 2)
+            extra.alignTo(cont_OFF, self.deformerJoints[i], 2)
 
             if i>0:
                 pm.parent(cont_OFF, self.conts[len(self.conts)-1])
@@ -124,9 +124,9 @@ class Fingers(object):
             self.conts.append(cont)
             contList.append(cont_con)
 
-            pm.parentConstraint(cont, self.defJoints[i], mo=True)
+            pm.parentConstraint(cont, self.deformerJoints[i], mo=True)
 
-        pm.parent(self.defJoints[0], self.scaleGrp)
+        pm.parent(self.deformerJoints[0], self.scaleGrp)
         pm.parent(conts_OFF[0], self.scaleGrp)
 
         ## Controller Attributtes

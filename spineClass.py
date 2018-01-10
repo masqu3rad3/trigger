@@ -29,6 +29,7 @@ class Spine(object):
         self.startSocket = None
         self.upAxis = None
         self.spineDir = None
+        self.deformerJoints = []
 
 
     def createSpine(self, inits, suffix="", resolution=4, dropoff=2.0):
@@ -155,7 +156,6 @@ class Spine(object):
         # parent upper plug joints
         pm.select(None)
         self.startSocket = pm.joint(p=rootPoint, name="jDef_RootSocket", radius=3)
-
         self.sockets.append(self.startSocket)
 
         self.cont_IK_OFF = cont_Body_POS
@@ -259,6 +259,8 @@ class Spine(object):
         pm.setAttr(self.cont_body.fkBvis, cb=True)
         pm.setAttr(self.cont_body.tweakVis, cb=True)
 
+        self.deformerJoints=[self.startSocket, self.endSocket] + spine.defJoints
+
         for i in cont_spineFK_A_List:
             self.cont_body.fkAvis >> i.visibility
         for i in cont_spineFK_B_List:
@@ -288,10 +290,10 @@ class Spine(object):
 
         # global joint visibilities
 
-        for i in spine.defJoints:
+        for i in self.deformerJoints:
             spine.scaleGrp.jointVis >> i.v
-        spine.scaleGrp.jointVis >> self.endSocket.v
-        spine.scaleGrp.jointVis >> self.startSocket.v
+        # spine.scaleGrp.jointVis >> self.endSocket.v
+        # spine.scaleGrp.jointVis >> self.startSocket.v
 
         # global rig visibilities
 

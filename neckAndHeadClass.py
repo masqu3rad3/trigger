@@ -32,6 +32,7 @@ class NeckAndHead():
         self.scaleConstraints = []
         self.anchors = []
         self.anchorLocations = []
+        self.deformerJoints = []
 
     def createNeckAndHead(self, inits, suffix="", resolution=3, dropoff=1):
         # idCounter = 0
@@ -301,7 +302,7 @@ class NeckAndHead():
         pm.parent(neckSpline.nonScaleGrp, self.nonScaleGrp)
         pm.parent(headSpline.nonScaleGrp, self.nonScaleGrp)
 
-
+        self.deformerJoints = headSpline.defJoints + neckSpline.defJoints
         #### RIG VISIBILITY
 
         #### global visibilities attributes
@@ -324,10 +325,7 @@ class NeckAndHead():
 
         # global joint visibilities
 
-        for i in headSpline.defJoints:
-            self.scaleGrp.jointVis >> i.v
-
-        for i in neckSpline.defJoints:
+        for i in self.deformerJoints:
             self.scaleGrp.jointVis >> i.v
 
         #### global rig visibilities

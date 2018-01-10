@@ -11,6 +11,7 @@ class Root(object):
         self.scaleConstraints = []
         self.anchors = []
         self.anchorLocations = []
+        self.deformerJoints = []
 
     def createRoot(self, inits, suffix=""):
         """
@@ -50,3 +51,4 @@ class Root(object):
         extra.alignTo(defJ_root, rootInit)
         self.limbPlug = defJ_root
         self.sockets.append(defJ_root)
+        self.deformerJoints.append(defJ_root)

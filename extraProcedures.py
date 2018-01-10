@@ -600,7 +600,7 @@ def identifyMaster(node, idBy="idByLabel"):
     return limbName, limbType, side
 
 
-def replaceController(mirror=True, mirrorAxis="X", keepOldShape=False, keepAcopy=False, *args, **kwargs):
+def replaceController(mirror=True, mirrorAxis="X", keepOldShape=False, keepAcopy=False, alignToCenter=False, *args, **kwargs):
 
     if kwargs:
         if kwargs["oldController"] and kwargs["newController"]:
@@ -625,10 +625,23 @@ def replaceController(mirror=True, mirrorAxis="X", keepOldShape=False, keepAcopy
         newCont = selection[0]
         oldCont = selection[1]
 
+    # make sure controllers can be freezed
+
+
     if keepAcopy:
         newContDup = pm.duplicate(newCont)[0]
     else:
         newContDup = newCont
+
+    pm.setAttr(newContDup.tx, e=True, k=True, l=False)
+    pm.setAttr(newContDup.ty, e=True, k=True, l=False)
+    pm.setAttr(newContDup.tz, e=True, k=True, l=False)
+    pm.setAttr(newContDup.rx, e=True, k=True, l=False)
+    pm.setAttr(newContDup.ry, e=True, k=True, l=False)
+    pm.setAttr(newContDup.rz, e=True, k=True, l=False)
+    pm.setAttr(newContDup.sx, e=True, k=True, l=False)
+    pm.setAttr(newContDup.sy, e=True, k=True, l=False)
+    pm.setAttr(newContDup.sz, e=True, k=True, l=False)
 
     pm.makeIdentity(newContDup, a=True)
 
@@ -651,7 +664,11 @@ def replaceController(mirror=True, mirrorAxis="X", keepOldShape=False, keepAcopy
 
 
     #move the new controller to the old controllers place
-    alignTo(newContDup, oldCont, mode=2)
+    if alignToCenter:
+        alignTo(newContDup, oldCont, mode=2)
+    else:
+        alignToAlter(newContDup, oldCont, mode=2)
+
 
     ## put the new controller shape under the same parent with the old first (if there is a parent)
     if oldCont.getParent():
@@ -707,6 +724,8 @@ def replaceController(mirror=True, mirrorAxis="X", keepOldShape=False, keepAcopy
         pm.delete(oldCont.getShape())
 
 # TODO // Create a mirrorController method which will mirror the shape to the other side. similar to the replace controller.
+def mirrorController():
+    pass
 
 def getRigAxes(joint):
     """
@@ -763,6 +782,21 @@ def uniqueName(name):
         idcounter = idcounter + 1
     return name
 
+def getMirror(node):
+    # find the mirror of the oldController
+    if "_LEFT_" in node.name():
+        mirrorNode = node.name().replace("_LEFT_", "_RIGHT_")
 
+    elif "_RIGHT_" in node.name():
+        mirrorNode = node.name().replace("_RIGHT_", "_LEFT_")
+    else:
+        mirrorNode = None
+        pm.warning("Cannot find the mirror controller")
+    if mirrorNode:
+        try:
+            return pm.PyNode(mirrorNode)
+        except pm.MayaNodeError:
+            pm.warning("Cannot find the mirror controller (Why?)")
+            return None
 
 

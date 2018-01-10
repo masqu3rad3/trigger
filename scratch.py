@@ -66,7 +66,7 @@ class LimbBuilder():
         self.getLimbProperties(selection[0])
         self.createMasters()
         # Create limbs and make connection to the parents
-        self.createLimbs(self.limbCreationList)
+        self.createlimbs(self.limbCreationList)
 
         # Create anchors (spaceswithcers)
         if createAnchors:
@@ -154,15 +154,24 @@ class LimbBuilder():
     #     for sCon in limb.scaleConstraints:
     #         pm.scaleConstraint(masterController, sCon)
 
-    def createLimbs(self, limbCreationList=[], addLimb=False):
+    def createlimbs(self, limbCreationList=[], addLimb=False, seperateSelectionSets=False, *args, **kwargs):
         """
         Creates limb with the order defined in the limbCreationList (which created with getLimbProperties)
         Args:
-            limbCreationList:
+            limbCreationList: (List) The list of initial limb roots for creation
+            addLimb: (Boolean) If True, it adds the first node in the selection list to the rig. Default False. 
+                        The selection order must be with this order:
+                        initial Limb root => parent joint of the existing rig => master controller of the existing rig (for the extra attributes
+                         and global scaling)
+            seperateSelectionSets: (Boolean) if True, i
 
-        Returns:
+        Returns: None
 
         """
+        if not seperateSelectionSets:
+            pm.select(d=True)
+            j_def_set = pm.sets(name="def_joints_%s" % self.projectName)
+
 
         if addLimb:
             selection = pm.ls(sl=True)
@@ -185,7 +194,6 @@ class LimbBuilder():
             else:
                 sideVal = "c"
 
-            # limb = None
             ### LIMB CREATION HERE #####
             if x[1] == "arm":
                 if x[2] == "L":
@@ -202,7 +210,7 @@ class LimbBuilder():
                     self.rightHip = x[0]["Hip"]
 
                 limb = leg.Leg()
-                limb.createLeg(x[0], suffix="%s_leg" %sideVal, side=x[2])
+                limb.createleg(x[0], suffix="%s_leg" %sideVal, side=x[2])
 
             elif x[1] == "neck":
                 limb = neckAndHead.NeckAndHead()
@@ -214,7 +222,7 @@ class LimbBuilder():
 
             elif x[1] == "tail":
                 limb = simpleTail.SimpleTail()
-                limb.createSimpleTail(x[0], suffix="tail", side=x[2])
+                limb.createSimpleTail(x[0], suffix="%s_tail" %sideVal, side=x[2])
 
             elif x[1] == "finger":
 
@@ -301,6 +309,11 @@ class LimbBuilder():
                     pm.parent(limb.cont_IK_OFF, self.rootGroup)
                 for sCon in limb.scaleConstraints:
                     pm.scaleConstraint(self.cont_master, sCon)
+
+            #
+            if not seperateSelectionSets:
+                pm.sets(j_def_set, add=limb.deformerJoints)
+
 
     def getDimensions(self, rootNode):
         """

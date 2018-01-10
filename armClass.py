@@ -26,7 +26,8 @@ class Arm(object):
         self.scaleConstraints = []
         self.anchors = []
         self.anchorLocations = []
-        self.jDef_Collar = None
+        self.j_def_collar = None
+        self.deformerJoints = []
         ## get the up axis
 
     ## This is a joint node and should be parented to another joint.
@@ -210,10 +211,10 @@ class Arm(object):
 
         # Shoulder Joints
         pm.select(d=True)
-        self.jDef_Collar = pm.joint(name="jDef_Collar_%s" % suffix, p=collar_pos, radius=1.5)
-        self.sockets.append(self.jDef_Collar)
-        j__collar_end = pm.joint(name="j_CollarEnd_%s" % suffix, p=shoulder_pos, radius=1.5)
-        self.sockets.append(j__collar_end)
+        self.j_def_collar = pm.joint(name="jDef_Collar_%s" % suffix, p=collar_pos, radius=1.5)
+        self.sockets.append(self.j_def_collar)
+        j_collar_end = pm.joint(name="j_CollarEnd_%s" % suffix, p=shoulder_pos, radius=1.5)
+        self.sockets.append(j_collar_end)
 
         pm.select(d=True)
         j_def_elbow = pm.joint(name="jDef_elbow_%s" % suffix, p=elbow_pos, radius=1.5)
@@ -236,8 +237,8 @@ class Arm(object):
 
         pm.select(d=True)
 
-        pm.joint(self.jDef_Collar, e=True, zso=True, oj="xyz", sao="yup")
-        pm.joint(j__collar_end, e=True, zso=True, oj="xyz", sao="yup")
+        pm.joint(self.j_def_collar, e=True, zso=True, oj="xyz", sao="yup")
+        pm.joint(j_collar_end, e=True, zso=True, oj="xyz", sao="yup")
 
         pm.joint(j_ik_orig_up, e=True, zso=True, oj="xyz", sao="yup")
         pm.joint(j_ik_orig_low, e=True, zso=True, oj="xyz", sao="yup")
@@ -259,7 +260,7 @@ class Arm(object):
         start_lock_pos = extra.createUpGrp(start_lock, "Pos")
         start_lock_twist = extra.createUpGrp(start_lock, "AutoTwist")
 
-        start_lock_weight = pm.parentConstraint(j__collar_end, start_lock, sr=("y", "z"), mo=True)
+        start_lock_weight = pm.parentConstraint(j_collar_end, start_lock, sr=("y", "z"), mo=True)
 
         # pm.setAttr(start_lock_weight.interpType, 0)
 
@@ -418,7 +419,7 @@ class Arm(object):
         pm.select(cont_shoulder)
 
         pacon_locator_shou = pm.spaceLocator(name="paConLoc_%s" % suffix)
-        extra.alignTo(pacon_locator_shou, self.jDef_Collar)
+        extra.alignTo(pacon_locator_shou, self.j_def_collar)
 
         j_def_pa_con = pm.parentConstraint(cont_shoulder, pacon_locator_shou, mo=True)
 
@@ -536,6 +537,7 @@ class Arm(object):
 
         pm.scaleConstraint(self.scaleGrp, ribbon_upper_arm.scaleGrp)
 
+
         # AUTO AND MANUAL TWIST
 
         # auto
@@ -649,7 +651,7 @@ class Arm(object):
         pm.parent(ribbon_lower_arm.nonScaleGrp, self.nonScaleGrp)
 
         pm.parent(pacon_locator_shou, self.scaleGrp)
-        pm.parent(self.jDef_Collar, pacon_locator_shou)
+        pm.parent(self.j_def_collar, pacon_locator_shou)
 
         pm.parent(hand_lock, self.scaleGrp)
         pm.parent(master_root, self.scaleGrp)
@@ -677,8 +679,8 @@ class Arm(object):
                              cont_fk_low_arm_off, cont_fk_up_arm_off, ribbon_lower_arm.scaleGrp,
                              ribbon_upper_arm.scaleGrp, cont_mid_lock_pos
                              ]
-        nodes_joint_vis = [j_def_elbow, j_def_pa_con, self.jDef_Collar, j_def_hand]
-        nodes_joint_vis_lists = [ribbon_lower_arm.deformerJoints, ribbon_upper_arm.deformerJoints, nodes_joint_vis]
+        nodes_joint_vis = [j_def_elbow, self.j_def_collar, j_def_hand]
+        self.deformerJoints = [ribbon_lower_arm.deformerJoints, ribbon_upper_arm.deformerJoints, nodes_joint_vis]
         nodes_rig_vis = [end_lock_twist, start_lock_ore, arm_start, arm_end, ik_parent_grp, mid_lock, master_root,
                          j_fk_up, hand_lock, root_master.getShape(), pacon_locator_shou.getShape()
                          ]
@@ -687,7 +689,7 @@ class Arm(object):
             self.scaleGrp.contVis >> i.v
 
         # global Joint visibilities
-        for lst in nodes_joint_vis_lists:
+        for lst in self.deformerJoints:
             for j in lst:
                 self.scaleGrp.jointVis >> j.v
 

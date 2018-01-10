@@ -323,12 +323,17 @@ class mainUI(QtWidgets.QMainWindow):
         edit_controllers_layout = QtWidgets.QVBoxLayout()
         edit_controllers_grpbox.setLayout(edit_controllers_layout)
 
+        controllers_layout = QtWidgets.QHBoxLayout()
         self.controllers_combobox = QtWidgets.QComboBox()
         self.all_icon_functions = inspect.getmembers(icon, inspect.isfunction)
         iconNames = [i[0] for i in self.all_icon_functions]
         self.controllers_combobox.addItems(iconNames)
 
-        edit_controllers_layout.addWidget(self.controllers_combobox)
+        self.controllers_checkbox = QtWidgets.QCheckBox("Align To Center", parent=self)
+
+        controllers_layout.addWidget(self.controllers_combobox)
+        controllers_layout.addWidget(self.controllers_checkbox)
+        edit_controllers_layout.addLayout(controllers_layout)
 
         edit_controllers_buttons_layout = QtWidgets.QHBoxLayout()
         edit_controllers_layout.addLayout(edit_controllers_buttons_layout)
@@ -339,11 +344,16 @@ class mainUI(QtWidgets.QMainWindow):
         replace_controller_pushbutton = QtWidgets.QPushButton("Replace")
         replace_controller_pushbutton.setToolTip(("Replaces the selected Controller Curves with the defined controller shape"))
 
+        mirror_controller_pushbutton = QtWidgets.QPushButton("Mirror")
+        mirror_controller_pushbutton.setToolTip(("Replaces other side of the rig with the selected controller"))
+
         edit_controllers_buttons_layout.addWidget(add_controller_pushbutton)
         edit_controllers_buttons_layout.addWidget(replace_controller_pushbutton)
+        edit_controllers_buttons_layout.addWidget(mirror_controller_pushbutton)
 
         add_controller_pushbutton.clicked.connect(self.onAddController)
         replace_controller_pushbutton.clicked.connect(self.onReplaceController)
+        mirror_controller_pushbutton.clicked.connect(self.onMirrorController)
 
 
         self.riglayout.addWidget(edit_controllers_grpbox)
@@ -363,8 +373,48 @@ class mainUI(QtWidgets.QMainWindow):
             oldController = str(i.name())
             objName=extra.uniqueName("cont_{0}".format(self.controllers_combobox.currentText()))
             newController = self.all_icon_functions[self.controllers_combobox.currentIndex()][1](name=objName, scale=(1,1,1))
-            extra.replaceController(mirrorAxis=self.initSkeleton.mirrorAxis, mirror=False, oldController=oldController, newController= newController)
+            extra.replaceController(mirrorAxis=self.initSkeleton.mirrorAxis, mirror=False, oldController=oldController, newController= newController, alignToCenter=self.controllers_checkbox.isChecked())
             pm.select(oldController)
+        pm.undoInfo(closeChunk=True)
+
+    def onMirrorController(self):
+        pm.undoInfo(openChunk=True)
+        selection = pm.ls(sl=True)
+        if not selection:
+            self.infoPop(textTitle="Skipping action", textHeader="Selection needed", textInfo="You need to select at least one controller node. (transform node)")
+            return
+        for i in selection:
+            # oldController = str(i.name())
+            # objName=extra.uniqueName("cont_{0}".format(self.controllers_combobox.currentText()))
+            oldController = extra.getMirror(i)
+
+            if oldController:
+                print "hoyt", oldController
+                newController = pm.duplicate(pm.ls(sl=True))[0]
+
+                pm.setAttr(newController.tx, e=True, k=True, l=False)
+                pm.setAttr(newController.ty, e=True, k=True, l=False)
+                pm.setAttr(newController.tz, e=True, k=True, l=False)
+                pm.setAttr(newController.rx, e=True, k=True, l=False)
+                pm.setAttr(newController.ry, e=True, k=True, l=False)
+                pm.setAttr(newController.rz, e=True, k=True, l=False)
+                pm.setAttr(newController.sx, e=True, k=True, l=False)
+                pm.setAttr(newController.sy, e=True, k=True, l=False)
+                pm.setAttr(newController.sz, e=True, k=True, l=False)
+
+                pm.delete(newController.getChildren(type="transform"))
+                tempGrp = pm.group(em=True)
+                pm.parent(newController, tempGrp)
+
+                pm.setAttr(tempGrp.scaleX, -1)
+                pm.makeIdentity(tempGrp, a=True)
+                pm.parent(newController, world=True)
+                pm.delete(tempGrp)
+
+                # pm.makeIdentity(newController, a=True)
+                pm.parent(newController, oldController)
+                extra.replaceController(mirrorAxis=self.initSkeleton.mirrorAxis, mirror=False, oldController=oldController, newController=newController, alignToCenter=self.controllers_checkbox.isChecked())
+
         pm.undoInfo(closeChunk=True)
 
 
@@ -871,7 +921,7 @@ class mainUI(QtWidgets.QMainWindow):
     def addRig(self):
         pm.undoInfo(openChunk=True)
         # self.rigger.__init__()
-        self.rigger.createLimbs(addLimb=True)
+        self.rigger.createlimbs(addLimb=True)
         pm.undoInfo(closeChunk=True)
 
     def keyPressEvent(self, event):
