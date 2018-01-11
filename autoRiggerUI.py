@@ -278,7 +278,7 @@ class mainUI(QtWidgets.QMainWindow):
         rigGrpBox.setLayout(rigGrpLayout)
 
         ## Create widgets
-        label = QtWidgets.QLabel("Select a Root Joint -> hit Rig Button")
+        label = QtWidgets.QLabel("Select Initial Root Joint -> hit Rig Button")
         rigBtn = QtWidgets.QPushButton("RIG from Root")
 
         self.isCreateAnchorsChk = QtWidgets.QCheckBox("Create Anchors Automatically", parent=self)
@@ -355,8 +355,48 @@ class mainUI(QtWidgets.QMainWindow):
         replace_controller_pushbutton.clicked.connect(self.onReplaceController)
         mirror_controller_pushbutton.clicked.connect(self.onMirrorController)
 
-
         self.riglayout.addWidget(edit_controllers_grpbox)
+
+        # create 'ANCHOR CREATION' Group
+
+        anchor_conts_grpbox = QtWidgets.QGroupBox("Create Anchors for Controllers")
+        anchor_conts_layout = QtWidgets.QVBoxLayout()
+        anchor_conts_grpbox.setLayout(anchor_conts_layout)
+
+        # First Row
+        anchor_conts_first_row = QtWidgets.QHBoxLayout()
+        anchor_conts_type_combobox = QtWidgets.QComboBox()
+        anchor_conts_type_combobox.addItems(["parent", "point", "orient"])
+        anchor_conts_first_row.addWidget(anchor_conts_type_combobox)
+        anchor_conts_layout.addLayout(anchor_conts_first_row)
+
+        # Second Row
+        anchor_conts_second_row = QtWidgets.QHBoxLayout()
+        anchor_conts_label1 = QtWidgets.QLabel("Control Curve")
+        anchor_conts_lineedit1 = QtWidgets.QLineEdit()
+        anchor_conts_lineedit1.setReadOnly(True)
+        anchor_conts_get_pb1 = QtWidgets.QPushButton("Get")
+
+        anchor_conts_second_row.addWidget(anchor_conts_label1)
+        anchor_conts_second_row.addWidget(anchor_conts_lineedit1)
+        anchor_conts_second_row.addWidget(anchor_conts_get_pb1)
+
+        anchor_conts_layout.addLayout(anchor_conts_second_row)
+        
+        # Third Row
+        anchor_conts_third_row = QtWidgets.QHBoxLayout()
+        anchor_conts_label2 = QtWidgets.QLabel("Anchor Locations")
+        anchor_conts_lineedit2 = QtWidgets.QLineEdit()
+        anchor_conts_lineedit2.setReadOnly(True)
+        anchor_conts_get_pb2 = QtWidgets.QPushButton("Get")
+
+        anchor_conts_third_row.addWidget(anchor_conts_label2)
+        anchor_conts_third_row.addWidget(anchor_conts_lineedit2)
+        anchor_conts_third_row.addWidget(anchor_conts_get_pb2)
+
+        anchor_conts_layout.addLayout(anchor_conts_third_row)
+
+        self.riglayout.addWidget(anchor_conts_grpbox)
 
     def onAddController(self):
         pm.undoInfo(openChunk=True)
@@ -384,12 +424,9 @@ class mainUI(QtWidgets.QMainWindow):
             self.infoPop(textTitle="Skipping action", textHeader="Selection needed", textInfo="You need to select at least one controller node. (transform node)")
             return
         for i in selection:
-            # oldController = str(i.name())
-            # objName=extra.uniqueName("cont_{0}".format(self.controllers_combobox.currentText()))
             oldController = extra.getMirror(i)
 
             if oldController:
-                print "hoyt", oldController
                 newController = pm.duplicate(pm.ls(sl=True))[0]
 
                 pm.setAttr(newController.tx, e=True, k=True, l=False)

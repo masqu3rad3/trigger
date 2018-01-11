@@ -45,12 +45,7 @@ class Spine(object):
                 inits = [sRoot] + [spineEnd]
 
 
-        idCounter = 0
-        ## create an unique suffix
-        while pm.objExists("scaleGrp_" + "spine" + suffix):
-            suffix = "%s%s" %(suffix, str(idCounter + 1))
-
-        suffix=(extra.uniqueName("scaleGrp_%s" %(suffix))).replace("scaleGrp_", "")
+        suffix=(extra.uniqueName("scaleGrp_spine%s" %(suffix))).replace("scaleGrp_spine", "")
 
 
         if (len(inits) < 2):
@@ -68,40 +63,6 @@ class Spine(object):
         twistType = pm.getAttr(inits[0].twistType, asString=True)
         # print "twistType", twistType
 
-
-        # ## get the up axis
-        # axisDict={"x":(1.0,0.0,0.0),"y":(0.0,1.0,0.0),"z":(0.0,0.0,1.0),"-x":(-1.0,0.0,0.0),"-y":(0.0,-1.0,0.0),"-z":(0.0,0.0,-1.0)}
-        # spineDir = {"x": (-1.0, 0.0, 0.0), "y": (0.0, -1.0, 0.0), "z": (0.0, 0.0, 1.0), "-x": (1.0, 0.0, 0.0), "-y": (0.0, 1.0, 0.0), "-z": (0.0, 0.0, 1.0)}
-        # if pm.attributeQuery("upAxis", node=inits[0], exists=True):
-        #     try:
-        #         self.upAxis=axisDict[pm.getAttr(inits[0].upAxis).lower()]
-        #     except:
-        #         pm.warning("upAxis attribute is not valid, proceeding with default value (y up)")
-        #         self.upAxis = (0.0, 1.0, 0.0)
-        # else:
-        #     pm.warning("upAxis attribute of the root node does not exist. Using default value (y up)")
-        #     self.upAxis = (0.0, 1.0, 0.0)
-        # ## get the mirror axis
-        # if pm.attributeQuery("mirrorAxis", node=inits[0], exists=True):
-        #     try:
-        #         self.mirrorAxis=axisDict[pm.getAttr(inits[0].mirrorAxis).lower()]
-        #     except:
-        #         pm.warning("mirrorAxis attribute is not valid, proceeding with default value (scene x)")
-        #         self.mirrorAxis= (1.0, 0.0, 0.0)
-        # else:
-        #     pm.warning("mirrorAxis attribute of the root node does not exist. Using default value (scene x)")
-        #     self.mirrorAxis = (1.0, 0.0, 0.0)
-        #
-        # ## get spine Direction
-        # if pm.attributeQuery("lookAxis", node=inits[0], exists=True):
-        #     try:
-        #         self.spineDir = spineDir[pm.getAttr(inits[0].lookAxis).lower()]
-        #     except:
-        #         pm.warning("Cannot get spine direction from lookAxis attribute, proceeding with default value (-x)")
-        #         self.spineDir = (-1.0, 0.0, 0.0)
-        # else:
-        #     pm.warning("lookAxis attribute of the root node does not exist. Using default value (-x) for spine direction")
-        #     self.spineDir = (1.0, 0.0, 0.0)
 
         #     _____            _             _ _
         #    / ____|          | |           | | |
@@ -132,20 +93,6 @@ class Spine(object):
         cont_Chest_ORE = extra.createUpGrp(self.cont_chest, "ORE")
         pm.setAttr(self.cont_chest.rotateOrder,3)
         pm.setAttr(cont_Chest_ORE.rotateOrder, 3)
-
-        ## FK-A/B Controllers
-        # contSpineFKAScale = (iconSize / 2, iconSize / 2, iconSize / 2)
-        # contSpineFKBScale = (iconSize / 2.5, iconSize / 2.5, iconSize / 2.5)
-        # for i in range (0, len(inits)):
-        #     contA = icon.circle("t_cont_SpineFK_A" + str(i) + suffix, contSpineFKAScale)
-        #     contB = icon.ngon("t_cont_SpineFK_B" + str(i) + suffix, contSpineFKBScale)
-        #     if i == 0:
-        #         extra.alignAndAim(contA, targetList=[inits[i]], aimTargetList=[inits[i + 1]], upVector=self.spineDir, rotateOff=(0,90,90))
-        #         extra.alignAndAim(contB, targetList=[inits[i]], aimTargetList=[inits[i + 1]], upVector=self.spineDir, rotateOff=(0,90,90))
-        #
-        #     else:
-        #         extra.alignAndAim(contA, targetList=[inits[i]], aimTargetList=[inits[i - 1]], upVector=self.spineDir, rotateOff=(0,90,90))
-        #         extra.alignAndAim(contB, targetList=[inits[i]], aimTargetList=[inits[i - 1]], upVector=self.spineDir, rotateOff=(0,90,90))
 
         # # Create Plug Joints
         pm.select(None)
@@ -186,8 +133,6 @@ class Spine(object):
         # # pass Stretch controls from the splineIK to neck controller
         extra.attrPass(spine.attPassCont, self.cont_chest)
 
-        # midSpineLocA_List = []
-        # midSpineLocB_List = []
         cont_spineFK_A_List = []
         cont_spineFK_B_List = []
         contSpineFKAScale = (iconSize / 2, iconSize / 2, iconSize / 2)
@@ -199,40 +144,17 @@ class Spine(object):
             pos = spine.contCurves_ORE[m].getTranslation(space="world")
 
             if m > 0 and m < (spine.contCurves_ORE):
-                # midSpineLocA = pm.spaceLocator(name="midSpineLocA_%s_%s" % (str(m), suffix))
-                # extra.alignTo(midSpineLocA, spine.contCurves_ORE[m], 2)
-                # midSpineLocA_List.append(midSpineLocA)
-                # midSpineLocB = pm.spaceLocator(name="midSpineLocB_%s_%s" % (str(m), suffix))
-                # extra.alignTo(midSpineLocB, spine.contCurves_ORE[m], 2)
-                # midSpineLocB_List.append(midSpineLocB)
-                # # con = extra.createUpGrp(spine.contCurves_ORE[m],"CON")
-                # # pm.parentConstraint(midSpineLocA, midSpineLocB, con, mo=True)
-                # # pm.parentConstraint(midSpineLocA, midSpineLocB, spine.contCurves_ORE[m], mo=True)
-                #
-                # # pm.pointConstraint(midSpineLocA, midSpineLocB, spine.contCurves_ORE[m], mo=True)
-                # # pm.orientConstraint(midSpineLocA, midSpineLocB, spine.contCurves_ORE[m], mo=False)
-
-                # poCon = pm.pointConstraint(spine.contCurve_End, spine.contCurve_Start, spine.contCurves_ORE[m], mo=True)
                 oCon = pm.parentConstraint(self.cont_chest, self.cont_hips, spine.contCurves_ORE[m], mo=True)
                 blendRatio = (m + 0.0) / len(spine.contCurves_ORE)
                 pm.setAttr("{0}.{1}W0".format(oCon, self.cont_chest), blendRatio)
                 pm.setAttr("{0}.{1}W1".format(oCon, self.cont_hips), 1 - blendRatio)
-                # pm.setAttr("{0}.{1}W0".format(poCon, spine.contCurve_End), blendRatio)
-                # pm.setAttr("{0}.{1}W1".format(poCon, spine.contCurve_Start), 1 - blendRatio)
 
-                # pm.parent(midSpineLocA, self.cont_chest)
-                # pm.parent(midSpineLocB, self.cont_hips)
-
-            # contA = icon.circle("cont_SpineFK_A" + str(m), contSpineFKAScale, location=pos)
             contA = icon.circle("cont_SpineFK_A" + str(m) + suffix, contSpineFKAScale)
             extra.alignTo(contA, spine.contCurves_ORE[m], 2)
-            # pm.setAttr(contA.rotateAxisZ, 90)
             cont_spineFK_A_List.append(contA)
 
-            # contB = icon.ngon("cont_SpineFK_B" + str(m), contSpineFKBScale, location=pos)
             contB = icon.ngon("cont_SpineFK_B" + str(m) + suffix, contSpineFKBScale)
             extra.alignTo(contB, spine.contCurves_ORE[m], 2)
-            # pm.setAttr(contB.rotateAxisZ, 90)
             cont_spineFK_B_List.append(contB)
 
             if m != 0:
@@ -292,18 +214,11 @@ class Spine(object):
 
         for i in self.deformerJoints:
             spine.scaleGrp.jointVis >> i.v
-        # spine.scaleGrp.jointVis >> self.endSocket.v
-        # spine.scaleGrp.jointVis >> self.startSocket.v
 
         # global rig visibilities
 
         spine.scaleGrp.rigVis >> spine.contCurves_ORE[0].v
         spine.scaleGrp.rigVis >> spine.contCurves_ORE[len(spine.contCurves_ORE) - 1].v
-
-        # for i in midSpineLocA_List:
-        #     spine.scaleGrp.rigVis >> i.v
-        # for i in midSpineLocB_List:
-        #     spine.scaleGrp.rigVis >> i.v
 
         for lst in spine.noTouchData:
             for i in lst:
