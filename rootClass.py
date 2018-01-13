@@ -3,6 +3,7 @@ import extraProcedures as extra
 
 class Root(object):
     def __init__(self):
+        self.limbGrp = None
         self.scaleGrp = None
         self.limbPlug = None
         self.nonScaleGrp = None
@@ -44,7 +45,11 @@ class Root(object):
 
         print "Creating Root %s" %suffix
 
-        self.scaleGrp = pm.group(name="scaleGrp_" + suffix, em=True)
+        # self.scaleGrp = pm.group(name="scaleGrp_" + suffix, em=True)
+        suffix=(extra.uniqueName("limbGrp_%s" % suffix)).replace("limbGrp_", "")
+        self.limbGrp = pm.group(name="limbGrp_%s" % suffix, em=True)
+        pm.parent(self.scaleGrp, self.nonScaleGrp, self.cont_IK_OFF, self.limbGrp)
+
         self.scaleConstraints.append(self.scaleGrp)
 
         defJ_root = pm.joint(name="jDef_{0}".format(suffix))

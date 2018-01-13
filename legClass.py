@@ -10,6 +10,7 @@ reload(icon)
 class Leg(object):
     def __init__(self):
         # none = None
+        self.limbGrp = None
         self.scaleGrp = None
         self.cont_IK_foot = None
         self.cont_Pole = None
@@ -25,11 +26,14 @@ class Leg(object):
         self.anchors = []
         self.anchorLocations = []
         self.jDef_legRoot = None
-        self.upAxis = None
         self.deformerJoints = []
 
     def createleg(self, leginits, suffix="", side="L"):
-        suffix = (extra.uniqueName("scaleGrp_%s" % suffix)).replace("scaleGrp_", "")
+        # suffix = (extra.uniqueName("scaleGrp_%s" % suffix)).replace("scaleGrp_", "")
+        suffix = (extra.uniqueName("limbGrp_%s" % suffix)).replace("limbGrp_", "")
+
+        self.limbGrp = pm.group(name="limbGrp_%s" % suffix, em=True)
+
 
         if len(leginits) < 9:
             pm.error("Some or all Leg Init Bones are missing (or Renamed)")
@@ -61,23 +65,7 @@ class Leg(object):
             bank_in_ref = leginits[7]
             bank_out_ref = leginits[8]
 
-        ## get the up axis
-        if pm.attributeQuery("upAxis", node=leg_root_ref, exists=True):
-            if pm.getAttr(leg_root_ref.upAxis) == "x":
-                self.upAxis = (1.0, 0.0, 0.0)
-            elif pm.getAttr(leg_root_ref.upAxis) == "y":
-                self.upAxis = (0.0, 1.0, 0.0)
-            elif pm.getAttr(leg_root_ref.upAxis) == "z":
-                self.upAxis = (0.0, 0.0, 1.0)
-            elif pm.getAttr(leg_root_ref.upAxis) == "-x":
-                self.upAxis = (-1.0, 0.0, 0.0)
-            elif pm.getAttr(leg_root_ref.upAxis) == "-y":
-                self.upAxis = (0.0, -1.0, 0.0)
-            elif pm.getAttr(leg_root_ref.upAxis) == "-z":
-                self.upAxis = (0.0, 0.0, -1.0)
-        else:
-            pm.warning("upAxis attribute of the root node does not exist. Using default value (y up)")
-            self.upAxis = (0.0, 1.0, 0.0)
+        up_axis = extra.getRigAxes(leg_root_ref)[0]
 
         # find the Socket
         self.connectsTo = leg_root_ref.getParent()
@@ -137,11 +125,12 @@ class Leg(object):
         # IK Foot Controller
 
         foot_cont_scale = (init_foot_length * 0.75, 1, init_foot_width * 0.8)
-        self.cont_IK_foot = icon.circle("self.cont_IK_foot_%s" % suffix, scale=foot_cont_scale, normal=(0, 1, 0))
+        self.cont_IK_foot = icon.circle("cont_IK_foot_%s" % suffix, scale=foot_cont_scale, normal=(0, 1, 0))
         extra.alignAndAim(self.cont_IK_foot, targetList=[bank_out_ref, bank_in_ref, toe_pv_ref, heel_pv_ref], aimTargetList=[toe_pv_ref], upObject=foot_ref)
         pm.xform(self.cont_IK_foot, piv=foot_pos, ws=True)
 
-        cont_ik_foot_off = extra.createUpGrp(self.cont_IK_foot, "OFF")
+        self.cont_IK_OFF  = extra.createUpGrp(self.cont_IK_foot, "OFF")
+
 
         pm.addAttr(self.cont_IK_foot, shortName="polevector", longName="Pole_Vector", defaultValue=0.0, minValue=0.0, maxValue=1.0,
                    at="double", k=True)
@@ -165,13 +154,13 @@ class Leg(object):
         self.cont_Pole = icon.plus("cont_Pole_%s" % suffix, polecont_scale, normal=(0, 0, 1))
         offset_mag_pole = ((init_upper_leg_dist + init_lower_leg_dist) / 4)
         offset_vector_pole = extra.getBetweenVector(knee_ref, [hip_ref, foot_ref])
-        extra.alignAndAim(self.cont_Pole, targetList=[knee_ref], aimTargetList=[hip_ref, foot_ref], upVector=self.upAxis, translateOff=(offset_vector_pole * offset_mag_pole))
+        extra.alignAndAim(self.cont_Pole, targetList=[knee_ref], aimTargetList=[hip_ref, foot_ref], upVector=up_axis, translateOff=(offset_vector_pole * offset_mag_pole))
         cont_pole_off = extra.createUpGrp(self.cont_Pole, "OFF")
 
         # FK Upleg Controller
         scalecont_fk_up_leg = (init_upper_leg_dist / 2, init_upper_leg_dist / 6, init_upper_leg_dist / 6)
         cont_fk_up_leg = icon.cube("cont_FK_Upleg_%s" % suffix, scalecont_fk_up_leg)
-        extra.alignAndAim(cont_fk_up_leg, targetList=[hip_ref, knee_ref], aimTargetList=[knee_ref], upVector=self.upAxis)
+        extra.alignAndAim(cont_fk_up_leg, targetList=[hip_ref, knee_ref], aimTargetList=[knee_ref], upVector=up_axis)
 
         cont_fk_up_leg_off = extra.createUpGrp(cont_fk_up_leg, "OFF")
         cont_fk_up_leg_ore = extra.createUpGrp(cont_fk_up_leg, "ORE")
@@ -186,7 +175,7 @@ class Leg(object):
         # FK Lowleg Controller
         scalecont_fk_low_leg = (init_lower_leg_dist / 2, init_lower_leg_dist / 6, init_lower_leg_dist / 6)
         cont_fk_low_leg = icon.cube("cont_FK_Lowleg_%s" % suffix, scalecont_fk_low_leg)
-        extra.alignAndAim(cont_fk_low_leg, targetList=[knee_ref, foot_ref], aimTargetList=[foot_ref], upVector=self.upAxis)
+        extra.alignAndAim(cont_fk_low_leg, targetList=[knee_ref, foot_ref], aimTargetList=[foot_ref], upVector=up_axis)
 
         cont_fk_low_leg_off = extra.createUpGrp(cont_fk_low_leg, "OFF")
         cont_fk_low_leg_ore = extra.createUpGrp(cont_fk_low_leg, "ORE")
@@ -202,7 +191,7 @@ class Leg(object):
         scalecont_fk_foot = (init_ball_dist / 2, init_ball_dist / 3, init_foot_width / 2)
         cont_fk_foot = icon.cube(name="cont_FK_Foot_%s" % suffix, scale=scalecont_fk_foot)
         # extra.alignAndAim(cont_FK_Foot, targetList=[footRef,ballRef], aimTargetList=[ballRef], upVector=self.upAxis)
-        extra.alignAndAim(cont_fk_foot, targetList=[foot_ref, ball_ref], aimTargetList=[ball_ref], upVector=self.upAxis)
+        extra.alignAndAim(cont_fk_foot, targetList=[foot_ref, ball_ref], aimTargetList=[ball_ref], upVector=up_axis)
 
         cont_fk_foot_off = extra.createUpGrp(cont_fk_foot, "OFF")
         cont_fk_foot_ore = extra.createUpGrp(cont_fk_foot, "ORE")
@@ -217,7 +206,7 @@ class Leg(object):
         # FK Ball Controller
         scalecont_fk_ball = (init_toe_dist / 2, init_toe_dist / 3, init_foot_width / 2)
         cont_fk_ball = icon.cube(name="cont_FK_Ball_%s" % suffix, scale=scalecont_fk_ball)
-        extra.alignAndAim(cont_fk_ball, targetList=[ball_ref, toe_pv_ref], aimTargetList=[toe_pv_ref], upVector=self.upAxis)
+        extra.alignAndAim(cont_fk_ball, targetList=[ball_ref, toe_pv_ref], aimTargetList=[toe_pv_ref], upVector=up_axis)
 
         cont_fk_ball_off = extra.createUpGrp(cont_fk_ball, "OFF")
         cont_fk_ball_ore = extra.createUpGrp(cont_fk_ball, "ORE")
@@ -232,7 +221,7 @@ class Leg(object):
         # FK-IK SWITCH Controller
         icon_scale = init_lower_leg_dist / 4
         cont_fk_ik, fk_ik_rvs = icon.fkikSwitch(("cont_FK_IK_%s" % suffix), (icon_scale, icon_scale, icon_scale))
-        extra.alignAndAim(cont_fk_ik, targetList=[foot_ref], aimTargetList=[knee_ref], upVector=self.upAxis, rotateOff=(90, 90, 0))
+        extra.alignAndAim(cont_fk_ik, targetList=[foot_ref], aimTargetList=[knee_ref], upVector=up_axis, rotateOff=(90, 90, 0))
         # pm.move(cont_FK_IK, (dt.Vector(self.upAxis) *(iconScale*2)), r=True)
         pm.move(cont_fk_ik, (icon_scale * 2, 0, 0), r=True, os=True)
         cont_fk_ik_pos = extra.createUpGrp(cont_fk_ik, "POS")
@@ -876,6 +865,8 @@ class Leg(object):
 
         pm.parent(j_def_foot, self.scaleGrp)
 
+        pm.parent(self.scaleGrp, self.nonScaleGrp, self.cont_IK_OFF, self.limbGrp)
+
         ## CONNECT RIG VISIBILITIES
 
         # Tweak Controls
@@ -892,7 +883,7 @@ class Leg(object):
         pm.setAttr(self.scaleGrp.jointVis, cb=True)
         pm.setAttr(self.scaleGrp.rigVis, cb=True)
 
-        nodes_cont_vis = [cont_pole_off, cont_thigh_off, cont_ik_foot_off, cont_fk_foot_off, cont_midLock_pos, cont_fk_ik_pos,
+        nodes_cont_vis = [cont_pole_off, cont_thigh_off, self.cont_IK_OFF , cont_fk_foot_off, cont_midLock_pos, cont_fk_ik_pos,
                         cont_fk_ball_off, cont_fk_low_leg_off, cont_fk_up_leg_off, ribbon_upper_leg.scaleGrp, ribbon_lower_leg.scaleGrp]
         nodes_joint_vis = [j_def_midLeg, j_def_ball, j_def_foot, self.jDef_legRoot, j_def_toe, j_def_hip]
         self.deformerJoints = [ribbon_upper_leg.deformerJoints, ribbon_lower_leg.deformerJoints, nodes_joint_vis]
@@ -944,6 +935,6 @@ class Leg(object):
         # # GOOD RIDDANCE
         pm.delete(foot_plane)
 
-        self.scaleConstraints = [self.scaleGrp, cont_ik_foot_off]
+        self.scaleConstraints = [self.scaleGrp, self.cont_IK_OFF ]
         self.anchors = [(self.cont_IK_foot, "parent", 1, None), (self.cont_Pole, "parent", 1, None)]
-        self.cont_IK_OFF = cont_ik_foot_off
+        # self.cont_IK_OFF = cont_ik_foot_off

@@ -14,6 +14,7 @@ reload(twistSpline)
 class Spine(object):
 
     def __init__(self):
+        self.limbGrp = None
         self.scaleConstraints = []
         self.scaleGrp = None
         self.cont_body = None
@@ -45,7 +46,10 @@ class Spine(object):
                 inits = [sRoot] + [spineEnd]
 
 
-        suffix=(extra.uniqueName("scaleGrp_spine%s" %(suffix))).replace("scaleGrp_spine", "")
+        # suffix=(extra.uniqueName("scaleGrp_spine%s" %(suffix))).replace("scaleGrp_spine", "")
+
+        suffix=(extra.uniqueName("limbGrp_%s" % suffix)).replace("limbGrp_", "")
+        self.limbGrp = pm.group(name="limbGrp_%s" % suffix, em=True)
 
 
         if (len(inits) < 2):
@@ -169,6 +173,8 @@ class Spine(object):
         pm.parent(self.cont_hips_ORE, cont_spineFK_B_List[0])
         pm.parent(cont_spineFK_B_List[-1], self.cont_body)
         pm.parent(spine.endLock, spine.scaleGrp)
+
+        pm.parent(spine.scaleGrp, self.nonScaleGrp, self.cont_IK_OFF, self.limbGrp)
 
         ## CONNECT RIG VISIBILITES
 

@@ -46,12 +46,9 @@ class Tentacle(object):
         npResolution=1.0*npResolution
         jResolution = 1.0 * jResolution
 
-        ## Make sure the suffix is unique
-        # idCounter=0
-        # while pm.objExists("scaleGrp_" + suffix):
-        #     suffix = "%s%s" % (suffix, str(idCounter + 1))
-
-        suffix=(extra.uniqueName("scaleGrp_%s" %(suffix))).replace("scaleGrp_", "")
+        # suffix=(extra.uniqueName("scaleGrp_%s" %(suffix))).replace("scaleGrp_", "")
+        suffix=(extra.uniqueName("limbGrp_%s" % suffix)).replace("limbGrp_", "")
+        self.limbGrp = pm.group(name="limbGrp_%s" % suffix, em=True)
 
 
         if len(inits)<2:
@@ -382,6 +379,8 @@ class Tentacle(object):
         pm.parent(wrapScaleJoint, self.scaleGrp)
 
         pm.parent(npJdefHolder[0], self.scaleGrp)
+
+        pm.parent(self.scaleGrp, self.nonScaleGrp, self.cont_IK_OFF, self.limbGrp)
 
         ## CONNECT RIG VISIBILITIES
 

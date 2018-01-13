@@ -13,6 +13,7 @@ reload(icon)
 ###########################
 class Arm(object):
     def __init__(self):
+        self.limbGrp = None
         self.sockets = []
         self.scaleGrp = None
         self.nonScaleGrp = None
@@ -33,7 +34,8 @@ class Arm(object):
     ## This is a joint node and should be parented to another joint.
     def createarm(self, arminits, suffix="", side="L"):
         ## create an unique suffix
-        suffix=(extra.uniqueName("scaleGrp_%s" % suffix)).replace("scaleGrp_", "")
+        suffix=(extra.uniqueName("limbGrp_%s" % suffix)).replace("limbGrp_", "")
+        self.limbGrp = pm.group(name="limbGrp_%s" % suffix, em=True)
 
 
         if len(arminits) < 4:
@@ -109,7 +111,7 @@ class Arm(object):
         self.cont_IK_hand = icon.circle("cont_IK_hand_%s" % suffix, ik_cont_scale, normal=(1, 0, 0))
         extra.alignAndAim(self.cont_IK_hand, targetList=[hand_ref], aimTargetList=[elbow_ref], upVector=up_axis,
                           rotateOff=(0, -180, 0))
-        cont_ik_hand_off = extra.createUpGrp(self.cont_IK_hand, "OFF")
+        self.cont_IK_OFF = extra.createUpGrp(self.cont_IK_hand, "OFF")
         cont_ik_hand_ore = extra.createUpGrp(self.cont_IK_hand, "ORE")
         cont_ik_hand_pos = extra.createUpGrp(self.cont_IK_hand, "POS")
 
@@ -659,6 +661,10 @@ class Arm(object):
         pm.parent(cont_fk_ik_pos, self.scaleGrp)
         pm.parent(root_master, self.scaleGrp)
 
+        pm.parent(self.scaleGrp, self.cont_IK_OFF, self.nonScaleGrp, self.limbGrp)
+
+        pm.parent(self.scaleGrp, self.nonScaleGrp, self.cont_IK_OFF, self.limbGrp)
+
         ## CONNECT RIG VISIBILITIES
 
         # Tweak controls
@@ -675,7 +681,7 @@ class Arm(object):
         pm.setAttr(self.scaleGrp.jointVis, cb=True)
         pm.setAttr(self.scaleGrp.rigVis, cb=True)
 
-        self.nodesContVis = [cont_pole_off, cont_shoulder_off, cont_ik_hand_off, cont_fk_hand_off, cont_fk_ik_pos,
+        self.nodesContVis = [cont_pole_off, cont_shoulder_off, self.cont_IK_OFF, cont_fk_hand_off, cont_fk_ik_pos,
                              cont_fk_low_arm_off, cont_fk_up_arm_off, ribbon_lower_arm.scaleGrp,
                              ribbon_upper_arm.scaleGrp, cont_mid_lock_pos
                              ]
@@ -724,6 +730,5 @@ class Arm(object):
         extra.colorize(ribbon_upper_arm.middleCont, "%sMIN" % side)
         extra.colorize(ribbon_lower_arm.middleCont, "%sMIN" % side)
 
-        self.scaleConstraints = [self.scaleGrp, cont_ik_hand_off]
+        self.scaleConstraints = [self.scaleGrp, self.cont_IK_OFF]
         self.anchors = [(self.cont_IK_hand, "parent", 1, None), (self.cont_Pole, "parent", 1, None)]
-        self.cont_IK_OFF = cont_ik_hand_off

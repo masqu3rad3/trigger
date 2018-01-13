@@ -17,6 +17,7 @@ class NeckAndHead():
 
     def __init__(self):
         # super(NeckAndHead, self).__init__()
+        self.limbGrp = None
         self.scaleGrp = None
         self.nonScaleGrp = None
         self.neckRootLoc = None
@@ -35,11 +36,11 @@ class NeckAndHead():
         self.deformerJoints = []
 
     def createNeckAndHead(self, inits, suffix="", resolution=3, dropoff=1):
-        # idCounter = 0
-        # ## create an unique suffix
-        # while pm.objExists("scaleGrp_" + suffix):
-        #     suffix = "%s%s" % (suffix, str(idCounter + 1))
-        suffix=(extra.uniqueName("scaleGrp_%s" %(suffix))).replace("scaleGrp_", "")
+
+        # suffix=(extra.uniqueName("scaleGrp_%s" %(suffix))).replace("scaleGrp_", "")
+        suffix=(extra.uniqueName("limbGrp_%s" % suffix)).replace("limbGrp_", "")
+        self.limbGrp = pm.group(name="limbGrp_%s" % suffix, em=True)
+
 
         if (len(inits) < 2):
             pm.error("Some or all Neck and Head Bones are missing (or Renamed)")
@@ -155,7 +156,7 @@ class NeckAndHead():
         extra.alignAndAim(self.cont_head, targetList=[headStart, headEnd], aimTargetList=[headEnd], upVector=self.spineDir, rotateOff=(faceDir*-90,faceDir*-90,0))
 
         pm.xform(self.cont_head, piv=headPivPos, ws=True)
-        cont_head_OFF = extra.createUpGrp(self.cont_head, "OFF")
+        self.cont_IK_OFF = extra.createUpGrp(self.cont_head, "OFF")
         cont_head_ORE = extra.createUpGrp(self.cont_head, "ORE")
 
         ## Head Squash Controller
@@ -303,6 +304,8 @@ class NeckAndHead():
         pm.parent(headSpline.nonScaleGrp, self.nonScaleGrp)
 
         self.deformerJoints = headSpline.defJoints + neckSpline.defJoints
+
+        pm.parent(self.scaleGrp, self.nonScaleGrp, self.cont_IK_OFF, self.limbGrp)
         #### RIG VISIBILITY
 
         #### global visibilities attributes
@@ -365,11 +368,11 @@ class NeckAndHead():
         extra.colorize(self.cont_neck, index)
         extra.colorize(cont_headSquash, index)
 
-        self.scaleConstraints = [self.scaleGrp, cont_head_OFF]
+        self.scaleConstraints = [self.scaleGrp, self.cont_IK_OFF]
         self.anchorLocations = [self.cont_neck, self.cont_head]
 
         self.anchors = [(self.cont_head, "point", 5, None),
                         (self.cont_head, "orient", 1, None),
                         (self.cont_neck, "orient", 4, [self.cont_head])
                         ]
-        self.cont_IK_OFF = cont_head_OFF
+        # self.cont_IK_OFF = cont_head_OFF

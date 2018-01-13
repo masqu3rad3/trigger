@@ -8,6 +8,7 @@ reload(icon)
 class Fingers(object):
     def __init__(self):
         super(Fingers, self).__init__()
+        self.limbGrp = None
         self.deformerJoints = []
         self.sockets = []
         self.conts = []
@@ -40,7 +41,7 @@ class Fingers(object):
             for finger in validFingers:
                 if inits.get(finger):
                     fingers = inits.get(finger)
-                    suffix = "%s_%s" %(finger, suffix)
+                    suffix = "%s_%s" %(suffix, finger)
 
             if inits.get("Thumb") or inits.get("ThumbRoot"):
                 thumb = True
@@ -51,7 +52,10 @@ class Fingers(object):
             else:
                 pm.error("fingers must have at least one root and one other joint")
 
-        suffix=(extra.uniqueName("scaleGrp_%s" %(suffix))).replace("scaleGrp_", "")
+        # suffix=(extra.uniqueName("scaleGrp_%s" %(suffix))).replace("scaleGrp_", "")
+
+        suffix=(extra.uniqueName("limbGrp_%s" % suffix)).replace("limbGrp_", "")
+        self.limbGrp = pm.group(name="limbGrp_%s" % suffix, em=True)
 
         # if pm.objExists("scaleGrp_" + suffix):
         #     self.idCounter = 1
@@ -162,6 +166,7 @@ class Fingers(object):
             pm.PyNode("{0}.{1}".format(parentController, bendAttr)) >> contList[f].rotateZ
 
         # pm.parent(conts_OFF[0], self.limbPlug)
+        pm.parent(self.scaleGrp, self.nonScaleGrp, self.cont_IK_OFF, self.limbGrp)
 
         extra.colorize(contList, side)
         pm.parentConstraint(self.limbPlug, conts_OFF[0], mo=True)

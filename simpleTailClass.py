@@ -11,6 +11,7 @@ reload(icon)
 class SimpleTail(object):
 
     def __init__(self):
+        self.limbGrp = None
         self.scaleGrp = None
         self.cont_body = None
         self.cont_hips = None
@@ -34,7 +35,9 @@ class SimpleTail(object):
         # while pm.objExists("scaleGrp_" + suffix):
         #     suffix = "%s%s" % (suffix, str(idCounter + 1))
 
-        suffix = (extra.uniqueName("scaleGrp_" + suffix)).replace("scaleGrp_", "")
+        # suffix = (extra.uniqueName("scaleGrp_" + suffix)).replace("scaleGrp_", "")
+        suffix=(extra.uniqueName("limbGrp_%s" % suffix)).replace("limbGrp_", "")
+        self.limbGrp = pm.group(name="limbGrp_%s" % suffix, em=True)
 
         print "Creating Simple Tail %s" %suffix
 
@@ -79,6 +82,8 @@ class SimpleTail(object):
             pm.joint(j, e=True, zso=True, oj="yzx", sao="zup")
 
         pm.parent(self.deformerJoints[0], self.scaleGrp)
+
+        pm.parent(self.scaleGrp, self.nonScaleGrp, self.cont_IK_OFF, self.limbGrp)
 
         contList=[]
         cont_off_list=[]

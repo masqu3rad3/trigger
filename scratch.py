@@ -81,79 +81,6 @@ class LimbBuilder():
             pm.parent(contPos, self.rootGroup)
 
 
-    # def addLimb(self):
-    #     selection = pm.ls(sl=True)
-    #     if len(selection) > 3:
-    #         pm.error("Select exactly three nodes. First reference root node then target parent and finally master controller")
-    #         return
-    #     referenceRoot = selection[0]
-    #     parentSocket = selection[1]
-    #     masterController = selection[2]
-    #     if extra.identifyMaster(referenceRoot)[0] not in self.validRootList:
-    #         pm.error("First selection must be a valid root joint node")
-    #         return
-    #     limbProperties = self.getWholeLimb(referenceRoot)
-    #
-    #
-    #     if limbProperties[1] == "arm":
-    #         limb = arm.Arm()
-    #         limb.createArm(limbProperties[0], suffix="%s_arm" % limbProperties[2], side=limbProperties[2])
-    #
-    #     elif limbProperties[1] == "leg":
-    #         limb = leg.Leg()
-    #         limb.createLeg(limbProperties[0], suffix="%s_leg" % limbProperties[2], side=limbProperties[2])
-    #
-    #     elif limbProperties[1] == "neck":
-    #         limb = neckAndHead.NeckAndHead()
-    #         limb.createNeckAndHead(limbProperties[0], suffix="n", resolution=limbProperties[0]["resolution"], dropoff=limbProperties[0]["dropoff"])
-    #
-    #     elif limbProperties[1] == "spine":
-    #         limb = spine.Spine()
-    #         limb.createSpine(limbProperties[0], suffix="s", resolution=limbProperties[0]["resolution"], dropoff=limbProperties[0]["dropoff"])  # s for spine...
-    #
-    #     elif limbProperties[1] == "tail":
-    #         limb = simpleTail.SimpleTail()
-    #         limb.createSimpleTail(limbProperties[0], suffix="tail")
-    #
-    #     elif limbProperties[1] == "finger":
-    #         limb = finger.Fingers()
-    #         limb.createFinger(limbProperties[0], suffix="%s_finger" % limbProperties[2], side=limbProperties[2])
-    #
-    #     elif limbProperties[1] == "tentacle":
-    #         limb = tentacle.Tentacle()
-    #         limb.createTentacle(limbProperties[0], suffix="%s_tentacle" % limbProperties[2], side=limbProperties[2], npResolution=limbProperties[0]["contRes"], jResolution=limbProperties[0]["jointRes"], blResolution=limbProperties[0]["deformerRes"], dropoff=limbProperties[0]["dropoff"])
-    #
-    #     elif limbProperties[1] == "root":
-    #         limb = root.Root()
-    #         limb.createRoot(limbProperties[0], suffix="root")
-    #
-    #     else:
-    #         pm.error("limb creation failed.")
-    #         return
-    #
-    #     pm.parent(limb.limbPlug, parentSocket)
-    #
-    #     ## Good parenting / scale connections
-    #     ## Create the holder group if it does not exist
-    #     if not pm.objExists("{0}_rig".format(self.projectName)):
-    #         self.rootGroup = pm.group(name=("{0}_rig".format(self.projectName)),em=True)
-    #     else:
-    #         self.rootGroup = pm.PyNode("{0}_rig".format(self.projectName))
-    #
-    #     pm.parent(limb.scaleGrp, self.rootGroup)
-    #     scaleGrpPiv = limb.limbPlug.getTranslation(space="world")
-    #     pm.xform(limb.scaleGrp, piv=scaleGrpPiv, ws=True)
-    #     ## pass the attributes
-    #
-    #     extra.attrPass(limb.scaleGrp, masterController, values=True, daisyChain=True, overrideEx=False)
-    #
-    #     if limb.nonScaleGrp:
-    #         pm.parent(limb.nonScaleGrp, self.rootGroup)
-    #     if limb.cont_IK_OFF:
-    #         pm.parent(limb.cont_IK_OFF, self.rootGroup)
-    #     for sCon in limb.scaleConstraints:
-    #         pm.scaleConstraint(masterController, sCon)
-
     def createlimbs(self, limbCreationList=[], addLimb=False, seperateSelectionSets=False, *args, **kwargs):
         """
         Creates limb with the order defined in the limbCreationList (which created with getLimbProperties)
@@ -168,10 +95,6 @@ class LimbBuilder():
         Returns: None
 
         """
-        if not seperateSelectionSets:
-            pm.select(d=True)
-            j_def_set = pm.sets(name="def_joints_%s" % self.projectName)
-
 
         if addLimb:
             selection = pm.ls(sl=True)
@@ -185,6 +108,13 @@ class LimbBuilder():
                 pm.error("First selection must be a valid root joint node")
                 return
             limbCreationList = [self.getWholeLimb(referenceRoot)]
+
+        if not seperateSelectionSets:
+            pm.select(d=True)
+            if not pm.uniqueObjExists("def_jointsSet_%s" % self.projectName):
+                j_def_set = pm.sets(name="def_jointsSet_%s" % self.projectName)
+            else:
+                j_def_set = pm.PyNode("def_jointsSet_%s" % self.projectName)
 
         for x in limbCreationList:
             if x[2] == "R":
@@ -201,7 +131,7 @@ class LimbBuilder():
                 if x[2] == "R":
                     self.leftShoulder = x[0]["Shoulder"]
                 limb = arm.Arm()
-                limb.createarm(x[0], suffix="%s_arm" %sideVal, side=x[2])
+                limb.createarm(x[0], suffix="%s_Arm" %sideVal, side=x[2])
 
             elif x[1] == "leg":
                 if x[2] == "L":
@@ -210,19 +140,19 @@ class LimbBuilder():
                     self.rightHip = x[0]["Hip"]
 
                 limb = leg.Leg()
-                limb.createleg(x[0], suffix="%s_leg" %sideVal, side=x[2])
+                limb.createleg(x[0], suffix="%s_Leg" %sideVal, side=x[2])
 
             elif x[1] == "neck":
                 limb = neckAndHead.NeckAndHead()
-                limb.createNeckAndHead(x[0], suffix="n", resolution=x[0]["resolution"], dropoff=x[0]["dropoff"])
+                limb.createNeckAndHead(x[0], suffix="NeckAndHead", resolution=x[0]["resolution"], dropoff=x[0]["dropoff"])
 
             elif x[1] == "spine":
                 limb = spine.Spine()
-                limb.createSpine(x[0], suffix="s", resolution=x[0]["resolution"], dropoff=x[0]["dropoff"])  # s for spine...
+                limb.createSpine(x[0], suffix="Spine", resolution=x[0]["resolution"], dropoff=x[0]["dropoff"])  # s for spine...
 
             elif x[1] == "tail":
                 limb = simpleTail.SimpleTail()
-                limb.createSimpleTail(x[0], suffix="%s_tail" %sideVal, side=x[2])
+                limb.createSimpleTail(x[0], suffix="%s_Tail" %sideVal, side=x[2])
 
             elif x[1] == "finger":
 
@@ -238,11 +168,11 @@ class LimbBuilder():
 
             elif x[1] == "tentacle":
                 limb = tentacle.Tentacle()
-                limb.createTentacle(x[0], suffix="%s_tentacle" % x[2], side=x[2], npResolution=x[0]["contRes"], jResolution = x[0]["jointRes"], blResolution = x[0]["deformerRes"], dropoff = x[0]["dropoff"])
+                limb.createTentacle(x[0], suffix="%s_Tentacle" % x[2], side=x[2], npResolution=x[0]["contRes"], jResolution = x[0]["jointRes"], blResolution = x[0]["deformerRes"], dropoff = x[0]["dropoff"])
 
             elif x[1] == "root":
                 limb = root.Root()
-                limb.createRoot(x[0], suffix="root")
+                limb.createRoot(x[0], suffix="Toot")
 
             else:
                 pm.error("limb creation failed.")
@@ -259,17 +189,19 @@ class LimbBuilder():
                 else:
                     self.rootGroup = pm.PyNode("{0}_rig".format(self.projectName))
 
-                pm.parent(limb.scaleGrp, self.rootGroup)
+                # pm.parent(limb.scaleGrp, self.rootGroup)
                 scaleGrpPiv = limb.limbPlug.getTranslation(space="world")
                 pm.xform(limb.scaleGrp, piv=scaleGrpPiv, ws=True)
                 ## pass the attributes
 
                 extra.attrPass(limb.scaleGrp, masterController, values=True, daisyChain=True, overrideEx=False)
 
-                if limb.nonScaleGrp:
-                    pm.parent(limb.nonScaleGrp, self.rootGroup)
-                if limb.cont_IK_OFF:
-                    pm.parent(limb.cont_IK_OFF, self.rootGroup)
+                # if limb.nonScaleGrp:
+                #     pm.parent(limb.nonScaleGrp, self.rootGroup)
+                # if limb.cont_IK_OFF:
+                #     pm.parent(limb.cont_IK_OFF, self.rootGroup)
+                pm.parent(limb.limbGrp, self.rootGroup)
+
                 for sCon in limb.scaleConstraints:
                     pm.scaleConstraint(masterController, sCon)
 
@@ -296,17 +228,18 @@ class LimbBuilder():
                 pm.parent(limb.limbPlug, parentSocket)
 
                 ## Good parenting / scale connections
-                pm.parent(limb.scaleGrp, self.rootGroup)
+                # pm.parent(limb.scaleGrp, self.rootGroup)
                 scaleGrpPiv = limb.limbPlug.getTranslation(space="world")
                 pm.xform(limb.scaleGrp, piv=scaleGrpPiv, ws=True)
                 ## pass the attributes
 
                 extra.attrPass(limb.scaleGrp, self.cont_master, values=True, daisyChain=True, overrideEx=False)
 
-                if limb.nonScaleGrp:
-                    pm.parent(limb.nonScaleGrp, self.rootGroup)
-                if limb.cont_IK_OFF:
-                    pm.parent(limb.cont_IK_OFF, self.rootGroup)
+                # if limb.nonScaleGrp:
+                #     pm.parent(limb.nonScaleGrp, self.rootGroup)
+                # if limb.cont_IK_OFF:
+                #     pm.parent(limb.cont_IK_OFF, self.rootGroup)
+                pm.parent(limb.limbGrp, self.rootGroup)
                 for sCon in limb.scaleConstraints:
                     pm.scaleConstraint(self.cont_master, sCon)
 
