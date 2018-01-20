@@ -29,6 +29,11 @@ class Fingers(object):
 
     def createFinger(self, inits, suffix="", side="L", parentController=None, thumb=False, mirrorAxis="X"):
 
+        # if not isinstance(inits, list):
+        #     fingerRoot = inits.get("FingerRoot")
+        #     tails = (inits.get("Tail"))
+        #     inits = [tailRoot] + (tails)
+
         if not isinstance(inits, list):
 
             validRoots=["FingerRoot",

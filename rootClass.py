@@ -40,13 +40,13 @@ class Root(object):
         # while pm.objExists("scaleGrp_" + suffix):
         #     suffix = "%s%s" % (suffix, str(idCounter + 1))
 
-        suffix=(extra.uniqueName("scaleGrp_%s" %(suffix))).replace("scaleGrp_", "")
+        suffix=(extra.uniqueName("limbGrp_%s" %(suffix))).replace("limbGrp_", "")
 
 
         print "Creating Root %s" %suffix
 
-        # self.scaleGrp = pm.group(name="scaleGrp_" + suffix, em=True)
-        suffix=(extra.uniqueName("limbGrp_%s" % suffix)).replace("limbGrp_", "")
+        self.scaleGrp = pm.group(name="scaleGrp_" + suffix, em=True)
+        # suffix=(extra.uniqueName("limbGrp_%s" % suffix)).replace("limbGrp_", "")
         self.limbGrp = pm.group(name="limbGrp_%s" % suffix, em=True)
         pm.parent(self.scaleGrp, self.nonScaleGrp, self.cont_IK_OFF, self.limbGrp)
 
