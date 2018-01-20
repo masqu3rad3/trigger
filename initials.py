@@ -226,7 +226,7 @@ class initialJoints():
             limbJoints, offsetVector = self.initialTail(transformKey=a, segments=segments, side=side, suffix=suffix)
 
         if limb == "finger":
-            limbJoints, offsetVector = self.initialFinger(segments=segments, transformKey=a, side=side, suffix=suffix)
+            limbJoints, offsetVector = self.initialFinger(segments=segments, transformKey=a, side=side, suffix=suffix, thumb=thumb)
 
         if limb == "tentacle":
             limbJoints, offsetVector = self.initialTentacle(transformKey=a, segments=segments, side=side, suffix=suffix)
@@ -754,6 +754,9 @@ class initialJoints():
                 pm.setAttr("%s.otherType" % finger, "FingerRoot")
                 pm.setAttr("%s.drawLabel" % finger, 1)
                 self.createAxisAttributes(finger)
+                pm.addAttr(finger, shortName="thumb", longName="Thumb",
+                               at="bool", k=True)
+                pm.setAttr(finger.thumb, thumb)
                 pm.setAttr(finger.radius, 2)
             else:
                 pm.setAttr("%s.type" % finger, 23)

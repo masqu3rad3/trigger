@@ -32,8 +32,21 @@ class Fingers(object):
         if not isinstance(inits, list):
 
             validRoots=["FingerRoot",
-                       "ThumbRoot", "IndexRoot", "MiddleRoot", "RingRoot", "PinkyRoot", "ExtraRoot"]
-            validFingers=["Finger", "Thumb", "Index_F", "Middle_F", "Ring_F", "Pinky_F", "Extra_F"]
+                        "ThumbRoot",
+                        "IndexRoot",
+                        "MiddleRoot",
+                        "RingRoot",
+                        "PinkyRoot",
+                        "ExtraRoot"]
+
+            validFingers=["Finger",
+                          "Thumb",
+                          "Index_F",
+                          "Middle_F",
+                          "Ring_F",
+                          "Pinky_F",
+                          "Extra_F"]
+
             fingers = None
             for root in validRoots:
                 if inits.get(root):
@@ -51,6 +64,12 @@ class Fingers(object):
                 inits = fingerRoot + fingers
             else:
                 pm.error("fingers must have at least one root and one other joint")
+
+            # thumb = pm.getAttr(inits[0].thumb)
+            try:
+                thumb = pm.getAttr(inits[0].thumb)
+            except AttributeError:
+                pass
 
         # suffix=(extra.uniqueName("scaleGrp_%s" %(suffix))).replace("scaleGrp_", "")
 
