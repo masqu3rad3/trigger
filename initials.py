@@ -104,7 +104,9 @@ class initialJoints():
         self.upAxisMult = upAxisMult
         self.mirrorAxis = "xyz".strip(lookAxis + upAxis)
 
-    def initLimb (self, limb, whichSide="left", segments=3, fingerCount=5, thumb=False, constrainedTo = None, parentNode=None, defineAs=False):
+    def initLimb (self, limb, whichSide="left",
+                  segments=3, fingerCount=5, thumb=False,
+                  constrainedTo = None, parentNode=None, defineAs=False):
         currentselection = pm.ls(sl=True)
 
         ## Create the holder group if it does not exist
@@ -255,8 +257,12 @@ class initialJoints():
                 extra.alignTo(locator, limbJoints[i], 2)
                 pm.parentConstraint(locator, limbJoints[i], mo=True)
                 extra.connectMirror(constrainedTo[i], locatorsList[i], mirrorAxis=self.mirrorAxis.upper())
+                # constrainedTo[i].translate.lock()
+                # constrainedTo[i].rotate.lock()
+
             else:
                 pm.parentConstraint(limbJoints[i], locator, mo=False)
+
             pm.parent(locator, loc_grp)
             pm.parent(loc_grp, limbGroup)
 
@@ -282,6 +288,10 @@ class initialJoints():
                     # move it a little along the mirrorAxis
                     # move it along offsetvector
                     pm.move(limbJoints[0], offsetVector, relative=True)
+                else:
+                    for x in limbJoints:
+                        x.translate.lock()
+                        x.rotate.lock()
                 pm.parent(limbJoints[0], masterParent)
             else:
                 pm.parent(limbJoints[0], limbGroup)

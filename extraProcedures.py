@@ -241,7 +241,9 @@ def connectMirror (node1, node2, mirrorAxis="X"):
         minusOpR.output3Dy >> node2.ry
         minusOpR.output3Dz >> node2.rz
 
-
+    # node2.translate.lock()
+    # node2.rotate.lock()
+    # pm.setAttr(node2.tx, lock=True)
 def colorize (node, index):
     """
     Changes the wire color of the node to the index
