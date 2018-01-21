@@ -557,10 +557,10 @@ def identifyMaster(node, idBy="idByLabel"):
     ## get the label ID
     if idBy == "idByLabel":
         if node.type() != "joint":
-            pm.error("label identification can only be used for joints")
+            pm.warning("label identification can only be used for joints")
     typeNum = pm.getAttr("%s.type" %node)
     if typeNum not in typeDict.keys():
-        pm.error("Joint Type is not detected with idByLabel method")
+        pm.warning("Joint Type is not detected with idByLabel method")
 
     if typeNum == 18:  # if type is in the 'other' category:
         limbName = pm.getAttr(node.otherType)
@@ -583,7 +583,7 @@ def identifyMaster(node, idBy="idByLabel"):
             sideNum = pm.getAttr(node.side)
 
             if sideNum not in sideDict.keys():
-                pm.error("Joint Side is not detected with idByLabel method")
+                pm.warning("Joint Side is not detected with idByLabel method")
             side = sideDict[sideNum]
 
     if idBy == "idByName":
@@ -595,7 +595,7 @@ def identifyMaster(node, idBy="idByLabel"):
         elif "_C_" in node.name():
             side = sideDict[0]
         else:
-            pm.error("Joint Side is not detected with idByName method")
+            pm.warning("Joint Side is not detected with idByName method")
 
     return limbName, limbType, side
 

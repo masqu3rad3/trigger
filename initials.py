@@ -6,17 +6,9 @@ class initialJoints():
 
     def __init__(self):
 
-        # self.axisOrder = "zxy"
-        # self.mirrorAxis = self.axisOrder[0]
-        # self.upAxis = self.axisOrder[1]
-        # self.lookAxis = self.axisOrder[2]
-
         self.mirrorAxis = "x"
         self.upAxis = "y"
         self.lookAxis = "z"
-
-        # self.lookAxisMult = -1
-        # self.upAxisMult = 1
 
         if "-" in self.mirrorAxis:
             self.mirrorAxisMult = 1
@@ -62,7 +54,11 @@ class initialJoints():
                 alignment of the returned Obj(string)  Ex.: (bone_left, "left", "right") 
 
         """
-        boneName = parentBone.name()
+        try:
+            boneName = parentBone.name()
+        except AttributeError:
+            pm.warning("Bones cannot be identified automatically")
+            return None, None, None
         if "_right" in boneName:
             mirrorBoneName = boneName.replace("_right", "_left")
             alignmentGiven = "right"
@@ -146,13 +142,6 @@ class initialJoints():
             pm.error("Define at least 2 segments")
             return
 
-        # ID = 0
-        # suffix = whichSide
-        # ## make the suffix unique (check the corresponding group name)
-        # while pm.objExists("%sGrp_%s" %(limb,suffix)):
-        #     ID += 1
-        #     suffix = "%s_%s" % (str(ID), whichSide)
-
         suffix = extra.uniqueName("%sGrp_%s" %(limb, whichSide)).replace("%sGrp_" %(limb), "")
 
         ## if defineAs is True, define the selected joints as the given limb instead creating new ones.
@@ -162,8 +151,21 @@ class initialJoints():
 
 
         if not parentNode:
+            # j = pm.ls(sl=True)
+            # print extra.identifyMaster(j)[1]
+            # valid_inits = ["arm", "leg", "spine", "neck", "tail", "finger", "tentacle", "root"]
+            # if extra.identifyMaster(j)[1] in valid_inits:
             if pm.ls(sl=True, type="joint"):
-                masterParent = pm.ls(sl=True)[-1]
+                valid_inits = ["arm", "leg", "spine", "neck", "tail", "finger", "tentacle", "root"]
+                j = pm.ls(sl=True)[-1]
+                try:
+                    if extra.identifyMaster(j)[1] in valid_inits:
+                        masterParent = pm.ls(sl=True)[-1]
+                    else:
+                        masterParent = None
+                except KeyError:
+                    masterParent = None
+
             else:
                 masterParent = None
         else:
@@ -173,7 +175,7 @@ class initialJoints():
             constLocs = self.initLimb(limb, "left", segments=segments, fingerCount=fingerCount, thumb=thumb)
             self.initLimb(limb, "right", constrainedTo=constLocs, segments=segments, fingerCount=fingerCount, thumb=thumb)
             return
-        if whichSide == "auto":
+        if whichSide == "auto" and masterParent:
             mirrorParent, givenAlignment, returnAlignment = self.autoGet(masterParent)
             constLocs = self.initLimb(limb, givenAlignment, segments=segments, fingerCount=fingerCount, thumb=thumb)
             if mirrorParent:
@@ -278,12 +280,8 @@ class initialJoints():
                     # align the none constrained near to the selected joint
                     extra.alignTo(limbJoints[0], masterParent)
                     # move it a little along the mirrorAxis
-
-                    # value = pm.getAttr("%s.t%s" %(limbJoints[0],self.mirrorAxis))
-                    # pm.setAttr("%s.t%s" %(limbJoints[0],self.mirrorAxis), value+3)
                     # move it along offsetvector
                     pm.move(limbJoints[0], offsetVector, relative=True)
-
                 pm.parent(limbJoints[0], masterParent)
             else:
                 pm.parent(limbJoints[0], limbGroup)
