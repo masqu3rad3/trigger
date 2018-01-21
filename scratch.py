@@ -196,10 +196,6 @@ class LimbBuilder():
 
                 extra.attrPass(limb.scaleGrp, masterController, values=True, daisyChain=True, overrideEx=False)
 
-                # if limb.nonScaleGrp:
-                #     pm.parent(limb.nonScaleGrp, self.rootGroup)
-                # if limb.cont_IK_OFF:
-                #     pm.parent(limb.cont_IK_OFF, self.rootGroup)
                 pm.parent(limb.limbGrp, self.rootGroup)
 
                 for sCon in limb.scaleConstraints:
@@ -234,11 +230,6 @@ class LimbBuilder():
                 ## pass the attributes
 
                 extra.attrPass(limb.scaleGrp, self.cont_master, values=True, daisyChain=True, overrideEx=False)
-
-                # if limb.nonScaleGrp:
-                #     pm.parent(limb.nonScaleGrp, self.rootGroup)
-                # if limb.cont_IK_OFF:
-                #     pm.parent(limb.cont_IK_OFF, self.rootGroup)
                 pm.parent(limb.limbGrp, self.rootGroup)
                 for sCon in limb.scaleConstraints:
                     pm.scaleConstraint(self.cont_master, sCon)
@@ -278,12 +269,9 @@ class LimbBuilder():
                 rightShoulder = j
             ## collect fingers
 
-            # allFingerParents = []
-            validFingerRoots = ["FingerRoot", "ThumbRoot", "IndexRoot", "MiddleRoot", "RingRoot", "PinkyRoot"]
-            if jID[0] in validFingerRoots:
+            if jID[0] == "FingerRoot":
                 allFingers.append(j)
-                # if j.getParent():
-                #     allFingerParents.append(j.getParent())
+
         if leftHip and rightHip:
             hipDist = extra.getDistance(leftHip, rightHip)
         if leftShoulder and rightShoulder:
@@ -339,7 +327,6 @@ class LimbBuilder():
         pm.addAttr(self.cont_master, at="bool", ln="Joints_Visibility", sn="jointVis")
         pm.addAttr(self.cont_master, at="bool", ln="Rig_Visibility", sn="rigVis")
 
-######### //TODO WIP
         for f in self.fingerMatchList:
             fName, fType, fSide = extra.identifyMaster(f[0])
             offsetVector = extra.getBetweenVector(f[0].getParent(),f)

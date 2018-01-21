@@ -17,7 +17,6 @@ class Fingers(object):
         self.cont_hips = None
         self.limbPlug = None
         self.nonScaleGrp = None
-        # self.connectsTo = None
         self.cont_IK_OFF = None
         self.scaleConstraints = []
         self.anchors = []
@@ -29,66 +28,17 @@ class Fingers(object):
 
     def createFinger(self, inits, suffix="", side="L", parentController=None, thumb=False, mirrorAxis="X"):
 
-        # if not isinstance(inits, list):
-        #     fingerRoot = inits.get("FingerRoot")
-        #     tails = (inits.get("Tail"))
-        #     inits = [tailRoot] + (tails)
-
         if not isinstance(inits, list):
+            fingerRoot = inits.get("FingerRoot")
+            fingers = (inits.get("Finger"))
+            inits = [fingerRoot] + (fingers)
 
-            validRoots=["FingerRoot",
-                        "ThumbRoot",
-                        "IndexRoot",
-                        "MiddleRoot",
-                        "RingRoot",
-                        "PinkyRoot",
-                        "ExtraRoot"]
-
-            validFingers=["Finger",
-                          "Thumb",
-                          "Index_F",
-                          "Middle_F",
-                          "Ring_F",
-                          "Pinky_F",
-                          "Extra_F"]
-
-            fingers = None
-            for root in validRoots:
-                if inits.get(root):
-                    fingerRoot=[inits.get(root)]
-            for finger in validFingers:
-                if inits.get(finger):
-                    fingers = inits.get(finger)
-                    suffix = "%s_%s" %(suffix, finger)
-
-            if inits.get("Thumb") or inits.get("ThumbRoot"):
-                thumb = True
-
-            ## reinitialize the inits as a list
-            if fingerRoot and fingers:
-                inits = fingerRoot + fingers
-            else:
-                pm.error("fingers must have at least one root and one other joint")
-
-            # thumb = pm.getAttr(inits[0].thumb)
-            try:
-                thumb = pm.getAttr(inits[0].thumb)
-            except AttributeError:
-                pass
-
-        # suffix=(extra.uniqueName("scaleGrp_%s" %(suffix))).replace("scaleGrp_", "")
+            fingerType = pm.getAttr(fingerRoot.fingerType, asString=True)
+            thumb = fingerType == "Thumb"
+            suffix = "%s_%s" %(suffix, pm.getAttr(fingerRoot.fingerType, asString=True))
 
         suffix=(extra.uniqueName("limbGrp_%s" % suffix)).replace("limbGrp_", "")
         self.limbGrp = pm.group(name="limbGrp_%s" % suffix, em=True)
-
-        # if pm.objExists("scaleGrp_" + suffix):
-        #     self.idCounter = 1
-        #
-        #     newSuffix = "%s%s" %(suffix, str(self.idCounter))
-        #     while pm.objExists("scaleGrp_" + newSuffix):
-        #         self.idCounter += 1
-        #         newSuffix = "%s%s" %(suffix, str(self.idCounter))
-        #     suffix = newSuffix
 
         if (len(inits) < 2):
             pm.error("Insufficient Finger Initialization Joints")
@@ -97,20 +47,15 @@ class Fingers(object):
         self.scaleGrp = pm.group(name="scaleGrp_%s" % suffix, em=True)
         self.scaleConstraints.append(self.scaleGrp)
 
-        # self.connectsTo = inits[0].getParent()
-
         ## Create LimbPlug
 
         pm.select(d=True)
         self.limbPlug = pm.joint(name="limbPlug_%s" % suffix, p=inits[0].getTranslation(space="world"), radius=2)
-        # self.scaleConstraints.append(self.limbPlug)
         pm.parentConstraint(self.limbPlug, self.scaleGrp)
 
         pm.select(d=True)
 
         for i in inits:
-            # jPos = i.getTranslation(space="world")
-            # jOri = pm.joint(i, q=True, o=True)
             j = pm.joint(name="jDef_{0}_{1}".format(suffix, inits.index(i)), radius=1.0)
             extra.alignTo(j, i, 2)
 
@@ -118,10 +63,6 @@ class Fingers(object):
 
                 replacedName = (j.name()).replace("jDef", "j")
                 pm.rename(j, replacedName)
-                # self.sockets.append(j)
-
-            # if inits.index(i) == 0:
-            #     self.sockets.append(i)
             self.sockets.append(j)
             self.deformerJoints.append(j)
 
@@ -158,12 +99,9 @@ class Fingers(object):
         pm.parent(conts_OFF[0], self.scaleGrp)
 
         ## Controller Attributtes
-
         ## If there is no parent controller defined, create one. Everyone needs a parent
 
         if not parentController:
-            # parentController = icon.circle(("cont_{0}_{1}_Master".format(side, suffix)),(contScl*2,contScl*2,contScl*2), normal=(1,0,0))
-            # extra.alignTo(parentController, self.defJoints[0], 2)
             parentController=self.scaleGrp
         # Spread
 
@@ -172,10 +110,8 @@ class Fingers(object):
         sprMult=pm.createNode("multiplyDivide", name="sprMult_{0}_{1}".format(side, suffix))
         pm.setAttr(sprMult.input1Y, 0.4)
         pm.connectAttr("%s.%s" %(parentController,spreadAttr), sprMult.input2Y)
-        # pm.PyNode("{0}.{1}{2}".format(parentController, side, "Spread")) >> sprMult.input2Y
 
         sprMult.outputY >> contList[0].rotateY
-        # pm.PyNode("{0}.{1}{2}".format(parentController, side, "Spread")) >> contList[1].rotateY
         pm.connectAttr("%s.%s" % (parentController, spreadAttr), contList[1].rotateY)
 
         # Bend
@@ -189,9 +125,7 @@ class Fingers(object):
             pm.addAttr(parentController, shortName=bendAttr, defaultValue=0.0, at="float", k=True)
             pm.PyNode("{0}.{1}".format(parentController, bendAttr)) >> contList[f].rotateZ
 
-        # pm.parent(conts_OFF[0], self.limbPlug)
         pm.parent(self.scaleGrp, self.nonScaleGrp, self.cont_IK_OFF, self.limbGrp)
-
         extra.colorize(contList, side)
         pm.parentConstraint(self.limbPlug, conts_OFF[0], mo=True)
 

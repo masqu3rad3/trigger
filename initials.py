@@ -501,9 +501,163 @@ class initialJoints():
 
         return jointList, offsetVector
 
+    # def initialHand(self, fingerCount, transformKey, side, suffix):
+    #     jointList = []
+    #     fingerRoots = []
+    #     if fingerCount > 0:
+    #         thumb00vec = self.transformator((0.681, -0.143, 0.733), transformKey)
+    #         thumb01vec = self.transformator((1.192, -0.21, 1.375), transformKey)
+    #
+    #         thumb02vec = self.transformator((1.64, -0.477, 1.885), transformKey)
+    #         thumb03vec = self.transformator((2.053, -0.724, 2.356), transformKey)
+    #
+    #         pm.select(d=True)
+    #         thumb00 = pm.joint(p=thumb00vec, name=("jInit_thumb00_%s" % suffix))
+    #         thumb01 = pm.joint(p=thumb01vec, name=("jInit_thumb01_%s" % suffix))
+    #         thumb02 = pm.joint(p=thumb02vec, name=("jInit_thumb02_%s" % suffix))
+    #         thumb03 = pm.joint(p=thumb03vec, name=("jInit_thumb03_%s" % suffix))
+    #         thumbJoints = [thumb00, thumb01, thumb02, thumb03]
+    #         for i in thumbJoints:
+    #             if i==thumbJoints[0]:
+    #                 pm.setAttr("%s.type" % i, 18)
+    #                 pm.setAttr("%s.otherType" % i, "ThumbRoot")
+    #             else:
+    #                 pm.joint(i, e=True, zso=True, oj="xyz", sao="yup")
+    #                 pm.setAttr("%s.type" % i, 14)
+    #             pm.setAttr("%s.side" % i, side)
+    #         pm.setAttr("%s.drawLabel" % thumb01, 1)
+    #         self.createAxisAttributes(thumbJoints[0])
+    #         self.fingerJointsList.append(thumbJoints)
+    #         jointList.extend(thumbJoints)
+    #         fingerRoots.append(thumb00)
+    #
+    #     if fingerCount > 1:
+    #         index00vec = self.transformator((1.517, 0.05, 0.656), transformKey)
+    #         index01vec = self.transformator((2.494, 0.05, 0.868), transformKey)
+    #         index02vec = self.transformator((3.126, 0.05, 1.005), transformKey)
+    #         index03vec = self.transformator((3.746, 0.05, 1.139), transformKey)
+    #         index04vec = self.transformator((4.278, 0.05, 1.254), transformKey)
+    #
+    #         pm.select(d=True)
+    #         index00 = pm.joint(p=index00vec, name=("jInit_indexF00_%s" % suffix))
+    #         index01 = pm.joint(p=index01vec, name=("jInit_indexF01_%s" % suffix))
+    #         index02 = pm.joint(p=index02vec, name=("jInit_indexF02_%s" % suffix))
+    #         index03 = pm.joint(p=index03vec, name=("jInit_indexF03_%s" % suffix))
+    #         index04 = pm.joint(p=index04vec, name=("jInit_indexF04_%s" % suffix))
+    #         indexJoints = [index00, index01, index02, index03, index04]
+    #         for i in indexJoints:
+    #             if i==indexJoints[0]:
+    #                 pm.setAttr("%s.type" % i, 18)
+    #                 pm.setAttr("%s.otherType" % i, "IndexRoot")
+    #             else:
+    #                 pm.joint(i, e=True, zso=True, oj="xyz", sao="yup")
+    #                 pm.setAttr("%s.type" % i, 19)
+    #             pm.setAttr("%s.side" % i, side)
+    #         pm.setAttr("%s.drawLabel" % index01, 1)
+    #         self.createAxisAttributes(indexJoints[0])
+    #         self.fingerJointsList.append(indexJoints)
+    #         jointList.extend(indexJoints)
+    #         fingerRoots.append(index00)
+    #
+    #     if fingerCount > 2:
+    #         middle00vec = self.transformator((1.597, 0.123, 0.063), transformKey)
+    #         middle01vec = self.transformator((2.594, 0.123, 0.137), transformKey)
+    #         middle02vec = self.transformator((3.312, 0.123, 0.19), transformKey)
+    #         middle03vec = self.transformator((4.012, 0.123, 0.242), transformKey)
+    #         middle04vec = self.transformator((4.588, 0.123, 0.285), transformKey)
+    #
+    #         pm.select(d=True)
+    #         middle00 = pm.joint(p=middle00vec, name=("jInit_middleF00_%s" % suffix))
+    #         middle01 = pm.joint(p=middle01vec, name=("jInit_middleF01_%s" % suffix))
+    #         middle02 = pm.joint(p=middle02vec, name=("jInit_middleF02_%s" % suffix))
+    #         middle03 = pm.joint(p=middle03vec, name=("jInit_middleF03_%s" % suffix))
+    #         middle04 = pm.joint(p=middle04vec, name=("jInit_middleF04_%s" % suffix))
+    #         middleJoints = [middle00, middle01, middle02, middle03, middle04]
+    #         for i in middleJoints:
+    #             if i==middleJoints[0]:
+    #                 pm.setAttr("%s.type" % i, 18)
+    #                 pm.setAttr("%s.otherType" % i, "MiddleRoot")
+    #
+    #             else:
+    #                 pm.joint(i, e=True, zso=True, oj="xyz", sao="yup")
+    #                 pm.setAttr("%s.type" % i, 20)
+    #             pm.setAttr("%s.side" % i, side)
+    #         pm.setAttr("%s.drawLabel" % middle01, 1)
+    #         self.createAxisAttributes(middleJoints[0])
+    #         self.fingerJointsList.append(middleJoints)
+    #         jointList.extend(middleJoints)
+    #         fingerRoots.append(middle00)
+    #
+    #     if fingerCount > 3:
+    #         ring00vec = self.transformator((1.605, 0.123, -0.437), transformKey)
+    #         ring01vec = self.transformator((2.603, 0.123, -0.499), transformKey)
+    #         ring02vec = self.transformator((3.301, 0.123, -0.541), transformKey)
+    #         ring03vec = self.transformator((3.926, 0.123, -0.58), transformKey)
+    #         ring04vec = self.transformator((4.414, 0.123, -0.58), transformKey)
+    #
+    #         pm.select(d=True)
+    #         ring00 = pm.joint(p=ring00vec, name=("jInit_ringF00_%s" % suffix))
+    #         ring01 = pm.joint(p=ring01vec, name=("jInit_ringF01_%s" % suffix))
+    #         ring02 = pm.joint(p=ring02vec, name=("jInit_ringF02_%s" % suffix))
+    #         ring03 = pm.joint(p=ring03vec, name=("jInit_ringF03_%s" % suffix))
+    #         ring04 = pm.joint(p=ring04vec, name=("jInit_ringF04_%s" % suffix))
+    #         ringJoints = [ring00, ring01, ring02, ring03, ring04]
+    #         for i in ringJoints:
+    #             if i==ringJoints[0]:
+    #                 pm.setAttr("%s.type" % i, 18)
+    #                 pm.setAttr("%s.otherType" % i, "RingRoot")
+    #
+    #             else:
+    #                 pm.joint(i, e=True, zso=True, oj="xyz", sao="yup")
+    #                 pm.setAttr("%s.type" % i, 21)
+    #             pm.setAttr("%s.side" % i, side)
+    #         pm.setAttr("%s.drawLabel" % ring01, 1)
+    #         self.createAxisAttributes(ringJoints[0])
+    #         self.fingerJointsList.append(ringJoints)
+    #         jointList.extend(ringJoints)
+    #         fingerRoots.append(ring00)
+    #
+    #     if fingerCount > 4:
+    #         pinky00vec = self.transformator((1.405, 0, -0.909), transformKey)
+    #         pinky01vec = self.transformator((2.387, 0, -1.097), transformKey)
+    #         pinky02vec = self.transformator((2.907, 0, -1.196), transformKey)
+    #         pinky03vec = self.transformator((3.378, 0, -1.286), transformKey)
+    #         pinky04vec = self.transformator((3.767, 0, -1.361), transformKey)
+    #
+    #         pm.select(d=True)
+    #         pinky00 = pm.joint(p=pinky00vec, name=("jInit_pinkyF00_%s" % suffix))
+    #         pinky01 = pm.joint(p=pinky01vec, name=("jInit_pinkyF01_%s" % suffix))
+    #         pinky02 = pm.joint(p=pinky02vec, name=("jInit_pinkyF02_%s" % suffix))
+    #         pinky03 = pm.joint(p=pinky03vec, name=("jInit_pinkyF03_%s" % suffix))
+    #         pinky04 = pm.joint(p=pinky04vec, name=("jInit_pinkyF04_%s" % suffix))
+    #         pinkyJoints = [pinky00, pinky01, pinky02, pinky03, pinky04]
+    #
+    #         for i in pinkyJoints:
+    #             if i==pinkyJoints[0]:
+    #                 pm.setAttr("%s.type" % i, 18)
+    #                 pm.setAttr("%s.otherType" % i, "PinkyRoot")
+    #             else:
+    #                 pm.joint(i, e=True, zso=True, oj="xyz", sao="yup")
+    #                 pm.setAttr("%s.type" % i, 22)
+    #             pm.setAttr("%s.side" % i, side)
+    #         pm.setAttr("%s.drawLabel" % pinky01, 1)
+    #         self.createAxisAttributes(pinkyJoints[0])
+    #         self.fingerJointsList.append(pinkyJoints)
+    #         jointList.extend(pinkyJoints)
+    #         fingerRoots.append(pinky00)
+    #
+    #     if fingerCount > 5:
+    #         for x in range(0, (fingerCount - 5)):
+    #             ##//TODO put extra fingers
+    #             pass
+    #     for r in fingerRoots:
+    #         pm.setAttr(r.radius, 2)
+    #     # return jointList, fingerRoots
+
     def initialHand(self, fingerCount, transformKey, side, suffix):
         jointList = []
         fingerRoots = []
+
         if fingerCount > 0:
             thumb00vec = self.transformator((0.681, -0.143, 0.733), transformKey)
             thumb01vec = self.transformator((1.192, -0.21, 1.375), transformKey)
@@ -518,15 +672,19 @@ class initialJoints():
             thumb03 = pm.joint(p=thumb03vec, name=("jInit_thumb03_%s" % suffix))
             thumbJoints = [thumb00, thumb01, thumb02, thumb03]
             for i in thumbJoints:
-                if i==thumbJoints[0]:
+                if i == thumbJoints[0]:
                     pm.setAttr("%s.type" % i, 18)
-                    pm.setAttr("%s.otherType" % i, "ThumbRoot")
+                    pm.setAttr("%s.otherType" % i, "FingerRoot")
                 else:
                     pm.joint(i, e=True, zso=True, oj="xyz", sao="yup")
-                    pm.setAttr("%s.type" % i, 14)
+                    pm.setAttr("%s.type" % i, 13)
                 pm.setAttr("%s.side" % i, side)
             pm.setAttr("%s.drawLabel" % thumb01, 1)
             self.createAxisAttributes(thumbJoints[0])
+            pm.addAttr(thumbJoints[0], shortName="fingerType", longName="Finger_Type", at="enum",
+                       en="Extra:Thumb:Index:Middle:Ring:Pinky:Toe", k=True)
+            pm.setAttr(thumbJoints[0].fingerType, 1)
+
             self.fingerJointsList.append(thumbJoints)
             jointList.extend(thumbJoints)
             fingerRoots.append(thumb00)
@@ -546,15 +704,18 @@ class initialJoints():
             index04 = pm.joint(p=index04vec, name=("jInit_indexF04_%s" % suffix))
             indexJoints = [index00, index01, index02, index03, index04]
             for i in indexJoints:
-                if i==indexJoints[0]:
+                if i == indexJoints[0]:
                     pm.setAttr("%s.type" % i, 18)
-                    pm.setAttr("%s.otherType" % i, "IndexRoot")
+                    pm.setAttr("%s.otherType" % i, "FingerRoot")
                 else:
                     pm.joint(i, e=True, zso=True, oj="xyz", sao="yup")
-                    pm.setAttr("%s.type" % i, 19)
+                    pm.setAttr("%s.type" % i, 13)
                 pm.setAttr("%s.side" % i, side)
             pm.setAttr("%s.drawLabel" % index01, 1)
             self.createAxisAttributes(indexJoints[0])
+            pm.addAttr(indexJoints[0], shortName="fingerType", longName="Finger_Type", at="enum",
+                       en="Extra:Thumb:Index:Middle:Ring:Pinky:Toe", k=True)
+            pm.setAttr(indexJoints[0].fingerType, 2)
             self.fingerJointsList.append(indexJoints)
             jointList.extend(indexJoints)
             fingerRoots.append(index00)
@@ -574,16 +735,19 @@ class initialJoints():
             middle04 = pm.joint(p=middle04vec, name=("jInit_middleF04_%s" % suffix))
             middleJoints = [middle00, middle01, middle02, middle03, middle04]
             for i in middleJoints:
-                if i==middleJoints[0]:
+                if i == middleJoints[0]:
                     pm.setAttr("%s.type" % i, 18)
-                    pm.setAttr("%s.otherType" % i, "MiddleRoot")
+                    pm.setAttr("%s.otherType" % i, "FingerRoot")
 
                 else:
                     pm.joint(i, e=True, zso=True, oj="xyz", sao="yup")
-                    pm.setAttr("%s.type" % i, 20)
+                    pm.setAttr("%s.type" % i, 13)
                 pm.setAttr("%s.side" % i, side)
             pm.setAttr("%s.drawLabel" % middle01, 1)
             self.createAxisAttributes(middleJoints[0])
+            pm.addAttr(middleJoints[0], shortName="fingerType", longName="Finger_Type", at="enum",
+                       en="Extra:Thumb:Index:Middle:Ring:Pinky:Toe", k=True)
+            pm.setAttr(middleJoints[0].fingerType, 3)
             self.fingerJointsList.append(middleJoints)
             jointList.extend(middleJoints)
             fingerRoots.append(middle00)
@@ -603,16 +767,19 @@ class initialJoints():
             ring04 = pm.joint(p=ring04vec, name=("jInit_ringF04_%s" % suffix))
             ringJoints = [ring00, ring01, ring02, ring03, ring04]
             for i in ringJoints:
-                if i==ringJoints[0]:
+                if i == ringJoints[0]:
                     pm.setAttr("%s.type" % i, 18)
-                    pm.setAttr("%s.otherType" % i, "RingRoot")
+                    pm.setAttr("%s.otherType" % i, "FingerRoot")
 
                 else:
                     pm.joint(i, e=True, zso=True, oj="xyz", sao="yup")
-                    pm.setAttr("%s.type" % i, 21)
+                    pm.setAttr("%s.type" % i, 13)
                 pm.setAttr("%s.side" % i, side)
             pm.setAttr("%s.drawLabel" % ring01, 1)
             self.createAxisAttributes(ringJoints[0])
+            pm.addAttr(ringJoints[0], shortName="fingerType", longName="Finger_Type", at="enum",
+                       en="Extra:Thumb:Index:Middle:Ring:Pinky:Toe", k=True)
+            pm.setAttr(ringJoints[0].fingerType, 4)
             self.fingerJointsList.append(ringJoints)
             jointList.extend(ringJoints)
             fingerRoots.append(ring00)
@@ -633,19 +800,22 @@ class initialJoints():
             pinkyJoints = [pinky00, pinky01, pinky02, pinky03, pinky04]
 
             for i in pinkyJoints:
-                if i==pinkyJoints[0]:
+                if i == pinkyJoints[0]:
                     pm.setAttr("%s.type" % i, 18)
-                    pm.setAttr("%s.otherType" % i, "PinkyRoot")
+                    pm.setAttr("%s.otherType" % i, "FingerRoot")
                 else:
                     pm.joint(i, e=True, zso=True, oj="xyz", sao="yup")
-                    pm.setAttr("%s.type" % i, 22)
+                    pm.setAttr("%s.type" % i, 13)
                 pm.setAttr("%s.side" % i, side)
             pm.setAttr("%s.drawLabel" % pinky01, 1)
             self.createAxisAttributes(pinkyJoints[0])
+            pm.addAttr(pinkyJoints[0], shortName="fingerType", longName="Finger_Type", at="enum",
+                       en="Extra:Thumb:Index:Middle:Ring:Pinky:Toe", k=True)
+            pm.setAttr(pinkyJoints[0].fingerType, 5)
             self.fingerJointsList.append(pinkyJoints)
             jointList.extend(pinkyJoints)
             fingerRoots.append(pinky00)
-        
+
         if fingerCount > 5:
             for x in range(0, (fingerCount - 5)):
                 ##//TODO put extra fingers
@@ -754,12 +924,14 @@ class initialJoints():
                 pm.setAttr("%s.otherType" % finger, "FingerRoot")
                 pm.setAttr("%s.drawLabel" % finger, 1)
                 self.createAxisAttributes(finger)
-                pm.addAttr(finger, shortName="thumb", longName="Thumb",
-                               at="bool", k=True)
-                pm.setAttr(finger.thumb, thumb)
+                # pm.addAttr(finger, shortName="thumb", longName="Thumb",
+                #                at="bool", k=True)
+                # pm.setAttr(finger.thumb, thumb)
+                pm.addAttr(finger, shortName="fingerType", longName="Finger_Type", at="enum", en="Extra:Thumb:Index:Middle:Ring:Pinky:Toe", k=True)
+
                 pm.setAttr(finger.radius, 2)
             else:
-                pm.setAttr("%s.type" % finger, 23)
+                pm.setAttr("%s.type" % finger, 13)
 
 
             jointList.append(finger)
