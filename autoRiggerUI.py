@@ -19,6 +19,9 @@ reload(mrCubic)
 import extraProcedures as extra
 reload(extra)
 
+import os
+import json
+import re
 # import math
 
 # from maya.app.general.mayaMixin import MayaQWidgetDockableMixin
@@ -49,6 +52,28 @@ def getMayaMainWindow():
     ptr = wrapInstance(long(win), QtWidgets.QMainWindow)
     return ptr
 
+def loadJson(file):
+    if os.path.isfile(file):
+        with open(file, 'r') as f:
+            # The JSON module will read our file, and convert it to a python dictionary
+            data = json.load(f)
+            return data
+    else:
+        return None
+
+def dumpJson(data, file):
+    with open(file, "w") as f:
+        json.dump(data, f, indent=4)
+
+def nameCheck(text):
+
+    if re.match("^[A-Za-z0-9_-]*$", text):
+        if text == "":
+            return -1
+        text = text.replace(" ", "_")
+        return text
+    else:
+        return -1
 
 # class mainUI(MayaQWidgetDockableMixin, QtWidgets.QMainWindow):
 class mainUI(QtWidgets.QMainWindow):
@@ -60,6 +85,19 @@ class mainUI(QtWidgets.QMainWindow):
         parent = getMayaMainWindow()
         # parent = None
         super(mainUI, self).__init__(parent=parent)
+
+        # settings
+        self.rigName = "triggerAutoRig"
+        self.majorLeftColor = 6
+        self.minorLeftColor = 18
+        self.majorRightColor = 13
+        self.minorRightColor = 9
+        self.majorCenterColor = 17
+        self.minorCenterColor = 20
+        self.lookAxis = "+z"
+        self.upAxis = "+y"
+        self.afterCreation = "Hide"
+        self.seperateSelectionSets = True
 
         self.wSize = 60
         self.hSize = 50
@@ -75,18 +113,21 @@ class mainUI(QtWidgets.QMainWindow):
         self.defineAs = False
 
         bar = self.menuBar()
-        file = bar.addMenu("Settings")
+        file = bar.addMenu("File")
         ### file actions
-        generalSettings = QtWidgets.QAction("&General Settings", self)
-        # generalSettings.triggered.connect(self.generalSettingsUI)
-        initialSettings = QtWidgets.QAction("&Initial Joint Settings", self)
-        # initialSettings.triggered.connect(self.initialSettingsUI)
-        rigSettings = QtWidgets.QAction("&Rig Settings", self)
-        # rigSettings.triggered.connect(self.rigSettingsUI)
+        generalSettings = QtWidgets.QAction("&Settings", self)
+        generalSettings.triggered.connect(self.settingsUI)
+        test = QtWidgets.QAction("&Test", self)
+        test.triggered.connect(self.colorPickUI)
+        # initialSettings = QtWidgets.QAction("&Initial Joint Settings", self)
+        # # initialSettings.triggered.connect(self.initialSettingsUI)
+        # rigSettings = QtWidgets.QAction("&Rig Settings", self)
+        # # rigSettings.triggered.connect(self.rigSettingsUI)
 
         file.addAction(generalSettings)
-        file.addAction(initialSettings)
-        file.addAction(rigSettings)
+        file.addAction(test)
+        # file.addAction(initialSettings)
+        # file.addAction(rigSettings)
 
         ### Tools actions
         tools = bar.addMenu("Tools")
@@ -185,6 +226,363 @@ class mainUI(QtWidgets.QMainWindow):
         self.extraUI()
         # layout = QtWidgets.QVBoxLayout(self)
 
+    def colorPickUI(self):
+
+        colorIndices = (
+            (0.471, 0.471, 0.471),
+            (0, 0, 0),
+            (0.251, 0.251, 0.251),
+            (0.502, 0.502, 0.502),
+            (0.608, 0, 0.157),
+            (0, 0.016, 0.376),
+            (0, 0, 1),
+            (0, 0.275, 0.098),
+            (0.149, 0, 0.263),
+            (0.784, 0, 0.784),
+            (0.541, 0.282, 0.2),
+            (0.247, 0.137, 0.122),
+            (0.6, 0.149, 0),
+            (1, 0, 0),
+            (0, 1, 0),
+            (0, 0.255, 0.6),
+            (1, 1, 1),
+            (1, 1, 0),
+            (0.392, 0.863, 1),
+            (0.263, 1, 0.639),
+            (1, 0.69, 0.69),
+            (0.894, 0.675, 0.475),
+            (1, 1, 0.388),
+            (0, 0.6, 0.329),
+            (0.631, 0.412, 0.188),
+            (0.624, 0.631, 0.188),
+            (0.408, 0.631, 0.188),
+            (0.188, 0.631, 0.365),
+            (0.188, 0.631, 0.631),
+            (0.188, 0.404, 0.631),
+            (0.435, 0.188, 0.631),
+            (0.631, 0.188, 0.412)
+        )
+
+        edgeSize = 20
+
+        self.colorPick_Dialog = QtWidgets.QDialog(parent=self)
+        self.colorPick_Dialog.setObjectName(("colorPick"))
+        self.colorPick_Dialog.resize(edgeSize*8, edgeSize*4)
+        self.colorPick_Dialog.setWindowTitle(("Color Pick"))
+        self.colorPick_Dialog.setModal(True)
+
+        self.returnvalue = 0
+
+        def buttonAction(dialog, value):
+            dialog.done(1)
+            print value
+            self.returnvalue = value
+
+
+        for i in range (len(colorIndices)):
+            button = QtWidgets.QPushButton(self.colorPick_Dialog)
+
+            r=divmod(edgeSize*(i), edgeSize*8)
+            x = r[1]
+            y = (r[0])*edgeSize
+            button.setGeometry(QtCore.QRect(x, y, edgeSize, edgeSize))
+            button.setText("")
+            cnv_rgb = str((int(colorIndices[i][0]*255), int(colorIndices[i][1]*255), int(colorIndices[i][2]*255)))
+            button.setStyleSheet("background-color:rgb%s" %(cnv_rgb))
+            button.setObjectName("button%s" %i)
+            button.clicked.connect(lambda item=i: buttonAction(self.colorPick_Dialog, item))
+
+        # self.majorleft_pushButton.setFocus()
+
+        # self.colorPick_Dialog.show()
+        ret = self.colorPick_Dialog.exec_()
+        if ret == QtWidgets.QDialog.Accepted:
+            # self.close()
+            # self.deleteLater()
+            return self.returnvalue
+
+
+ ##############################################################
+        # for labelName in labels:
+        #     label = QtWidgets.QLabel(labelName, parent=self)
+        #     label.setFixedSize(QtCore.QSize(220, 18))
+        #     label.setFont(QtGui.QFont("Arial", weight=QtGui.QFont.Bold))
+        #     label.setAlignment(QtCore.Qt.AlignCenter)
+        #     label.setFrameStyle(QtWidgets.QFrame.Panel)
+        #     column = QtWidgets.QVBoxLayout()
+        #     self.initBoneslayout.addLayout(column)
+        #     column.addWidget(label)
+        #     eval("self.init{0}UI()".format(labelName))
+        #     pressEvents.append(label)
+
+    ##############################################################
+
+    def saveSettings(self):
+        self.rigName = self.rigname_lineEdit.text()
+        if nameCheck(self.rigName) == -1:
+            self.infoPop(textHeader="Invalid Characters", textTitle="Naming Error", textInfo="Use Latin Characters without any spaces.")
+            return
+        # self.majorLeftColor = self.majorleft_pushButton
+        # self.minorLeftColor = settingsData["minorLeftColor"]
+        # self.majorRightColor = settingsData["majorRightColor"]
+        # self.minorRightColor = settingsData["minorRightColor"]
+        # self.majorCenterColor = settingsData["majorCenterColor"]
+        # self.minorCenterColor = settingsData["minorCenterColor"]
+        # self.lookAxis = settingsData["lookAxis"]
+        # self.upAxis = settingsData["upAxis"]
+        # self.afterCreation = settingsData["afterCreation"]
+        # self.seperateSelectionSets = settingsData["seperateSelectionSets"]
+
+
+        pass
+
+    def loadSettings(self, loadDefaults=False):
+        homedir = os.path.expanduser("~")
+        settingsFilePath = os.path.join(homedir, "triggerSettings.json")
+
+        settingsData = loadJson(settingsFilePath)
+
+        # If the file is not yet created or deleted/corrupted
+        if not settingsData or loadDefaults:
+            settingsData = {"rigName": "triggerAutoRig",
+                            "majorLeftColor": 6,
+                            "minorLeftColor": 18,
+                            "majorRightColor": 13,
+                            "minorRightColor": 9,
+                            "majorCenterColor": 17,
+                            "minorCenterColor": 20,
+                            "lookAxis": "+z",
+                            "upAxis": "+y",
+                            "afterCreation": "Hide",
+                            "seperateSelectionSets": True
+                            }
+
+        self.rigName = settingsData["rigName"]
+        self.majorLeftColor = settingsData["majorLeftColor"]
+        self.minorLeftColor = settingsData["minorLeftColor"]
+        self.majorRightColor = settingsData["majorRightColor"]
+        self.minorRightColor = settingsData["minorRightColor"]
+        self.majorCenterColor = settingsData["majorCenterColor"]
+        self.minorCenterColor = settingsData["minorCenterColor"]
+        self.lookAxis = settingsData["lookAxis"]
+        self.upAxis = settingsData["upAxis"]
+        self.afterCreation = settingsData["afterCreation"]
+        self.seperateSelectionSets = settingsData["seperateSelectionSets"]
+
+
+        #dumpJson(settingsData, settingsFilePath)
+
+    def settingsUI(self):
+
+        self.trigger_settings_Dialog = QtWidgets.QDialog(parent=self)
+        self.trigger_settings_Dialog.setObjectName(("trigger_settings_Dialog"))
+        self.trigger_settings_Dialog.resize(341, 494)
+        self.trigger_settings_Dialog.setWindowTitle(("T-Rigger Settings"))
+        self.trigger_settings_Dialog.setModal(True)
+
+        self.general_settings_groupBox = QtWidgets.QGroupBox(self.trigger_settings_Dialog)
+
+        self.general_settings_groupBox.setGeometry(QtCore.QRect(20, 20, 301, 191))
+        self.general_settings_groupBox.setTitle(("General Settings"))
+        self.general_settings_groupBox.setObjectName(("general_settings_groupBox"))
+
+        self.rigname_label = QtWidgets.QLabel(self.general_settings_groupBox)
+        self.rigname_label.setGeometry(QtCore.QRect(0, 25, 101, 20))
+        self.rigname_label.setText(("Name"))
+        self.rigname_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
+        self.rigname_label.setObjectName(("rigname_label"))
+
+        self.rigname_lineEdit = QtWidgets.QLineEdit(self.general_settings_groupBox)
+        self.rigname_lineEdit.setGeometry(QtCore.QRect(110, 25, 155, 20))
+        self.rigname_lineEdit.setToolTip((""))
+        self.rigname_lineEdit.setStatusTip((""))
+        self.rigname_lineEdit.setWhatsThis((""))
+        self.rigname_lineEdit.setAccessibleName((""))
+        self.rigname_lineEdit.setAccessibleDescription((""))
+        self.rigname_lineEdit.setText((""))
+        self.rigname_lineEdit.setCursorPosition(0)
+        self.rigname_lineEdit.setPlaceholderText(("Give a name for the rig"))
+        self.rigname_lineEdit.setObjectName(("rigname_lineEdit"))
+
+        self.colorcoding_label = QtWidgets.QLabel(self.general_settings_groupBox)
+        self.colorcoding_label.setGeometry(QtCore.QRect(0, 60, 101, 20))
+        self.colorcoding_label.setText(("Color Codiing"))
+        self.colorcoding_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
+        self.colorcoding_label.setObjectName(("colorcoding_label"))
+
+        self.majorleft_pushButton = QtWidgets.QPushButton(self.general_settings_groupBox)
+        self.majorleft_pushButton.setGeometry(QtCore.QRect(20, 90, 81, 31))
+        self.majorleft_pushButton.setAcceptDrops(False)
+        self.majorleft_pushButton.setToolTip((""))
+        self.majorleft_pushButton.setLayoutDirection(QtCore.Qt.LeftToRight)
+        self.majorleft_pushButton.setText(("Major Left"))
+        self.majorleft_pushButton.setAutoDefault(True)
+        self.majorleft_pushButton.setDefault(False)
+        self.majorleft_pushButton.setFlat(False)
+        self.majorleft_pushButton.setObjectName(("majorleft_pushButton"))
+        self.majorleft_pushButton.setFocus()
+
+        self.minorleft_pushButton = QtWidgets.QPushButton(self.general_settings_groupBox)
+        self.minorleft_pushButton.setGeometry(QtCore.QRect(20, 130, 81, 31))
+        self.minorleft_pushButton.setAcceptDrops(False)
+        self.minorleft_pushButton.setToolTip((""))
+        self.minorleft_pushButton.setLayoutDirection(QtCore.Qt.LeftToRight)
+        self.minorleft_pushButton.setText(("Minor Left"))
+        self.minorleft_pushButton.setAutoDefault(True)
+        self.minorleft_pushButton.setDefault(False)
+        self.minorleft_pushButton.setFlat(False)
+        self.minorleft_pushButton.setObjectName(("minorleft_pushButton"))
+
+        self.minorright_pushButton = QtWidgets.QPushButton(self.general_settings_groupBox)
+        self.minorright_pushButton.setGeometry(QtCore.QRect(200, 130, 81, 31))
+        self.minorright_pushButton.setAcceptDrops(False)
+        self.minorright_pushButton.setToolTip((""))
+        self.minorright_pushButton.setLayoutDirection(QtCore.Qt.LeftToRight)
+        self.minorright_pushButton.setText(("Minor Right"))
+        self.minorright_pushButton.setAutoDefault(True)
+        self.minorright_pushButton.setDefault(False)
+        self.minorright_pushButton.setFlat(False)
+        self.minorright_pushButton.setObjectName(("minorright_pushButton"))
+
+        self.majorright_pushButton = QtWidgets.QPushButton(self.general_settings_groupBox)
+        self.majorright_pushButton.setGeometry(QtCore.QRect(200, 90, 81, 31))
+        self.majorright_pushButton.setAcceptDrops(False)
+        self.majorright_pushButton.setToolTip((""))
+        self.majorright_pushButton.setLayoutDirection(QtCore.Qt.LeftToRight)
+        self.majorright_pushButton.setText(("Major Right"))
+        self.majorright_pushButton.setAutoDefault(True)
+        self.majorright_pushButton.setDefault(False)
+        self.majorright_pushButton.setFlat(False)
+        self.majorright_pushButton.setObjectName(("majorright_pushButton"))
+
+        self.minorcenter_pushButton = QtWidgets.QPushButton(self.general_settings_groupBox)
+        self.minorcenter_pushButton.setGeometry(QtCore.QRect(110, 130, 81, 31))
+        self.minorcenter_pushButton.setAcceptDrops(False)
+        self.minorcenter_pushButton.setToolTip((""))
+        self.minorcenter_pushButton.setLayoutDirection(QtCore.Qt.LeftToRight)
+        self.minorcenter_pushButton.setText(("Minor Center"))
+        self.minorcenter_pushButton.setAutoDefault(True)
+        self.minorcenter_pushButton.setDefault(False)
+        self.minorcenter_pushButton.setFlat(False)
+        self.minorcenter_pushButton.setObjectName(("minorcenter_pushButton"))
+
+        self.majorcenter_pushButton = QtWidgets.QPushButton(self.general_settings_groupBox)
+        self.majorcenter_pushButton.setGeometry(QtCore.QRect(110, 90, 81, 31))
+        self.majorcenter_pushButton.setAcceptDrops(False)
+        self.majorcenter_pushButton.setToolTip((""))
+        self.majorcenter_pushButton.setLayoutDirection(QtCore.Qt.LeftToRight)
+        self.majorcenter_pushButton.setText(("Major Center"))
+        self.majorcenter_pushButton.setAutoDefault(True)
+        self.majorcenter_pushButton.setDefault(False)
+        self.majorcenter_pushButton.setFlat(False)
+        self.majorcenter_pushButton.setObjectName(("majorcenter_pushButton"))
+
+        # self.rigname_lineEdit.raise_()
+        # self.rigname_label.raise_()
+        # self.majorleft_pushButton.raise_()
+        # self.minorleft_pushButton.raise_()
+        # self.minorright_pushButton.raise_()
+        # self.majorright_pushButton.raise_()
+        # self.minorcenter_pushButton.raise_()
+        # self.majorcenter_pushButton.raise_()
+        # self.colorcoding_label.raise_()
+
+        self.initjoint_settings_groupBox = QtWidgets.QGroupBox(self.trigger_settings_Dialog)
+        self.initjoint_settings_groupBox.setGeometry(QtCore.QRect(20, 230, 301, 91))
+        self.initjoint_settings_groupBox.setTitle(("Initial Joint Settings"))
+        self.initjoint_settings_groupBox.setObjectName(("initjoint_settings_groupBox"))
+
+        self.lookaxis_label = QtWidgets.QLabel(self.initjoint_settings_groupBox)
+        self.lookaxis_label.setGeometry(QtCore.QRect(0, 20, 101, 20))
+        self.lookaxis_label.setText(("Look Axis"))
+        self.lookaxis_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
+        self.lookaxis_label.setObjectName(("lookaxis_label"))
+
+        self.lookaxis_comboBox = QtWidgets.QComboBox(self.initjoint_settings_groupBox)
+        self.lookaxis_comboBox.setGeometry(QtCore.QRect(120, 20, 74, 22))
+        self.lookaxis_comboBox.setToolTip((""))
+        self.lookaxis_comboBox.setObjectName(("lookaxis_comboBox"))
+        self.lookaxis_comboBox.addItem((""))
+        self.lookaxis_comboBox.setItemText(0, ("+x"))
+        self.lookaxis_comboBox.addItem((""))
+        self.lookaxis_comboBox.setItemText(1, ("+y"))
+        self.lookaxis_comboBox.addItem((""))
+        self.lookaxis_comboBox.setItemText(2, ("+z"))
+        self.lookaxis_comboBox.addItem((""))
+        self.lookaxis_comboBox.setItemText(3, ("-x"))
+        self.lookaxis_comboBox.addItem((""))
+        self.lookaxis_comboBox.setItemText(4, ("-y"))
+        self.lookaxis_comboBox.addItem((""))
+        self.lookaxis_comboBox.setItemText(5, ("-z"))
+
+        self.upaxis_label = QtWidgets.QLabel(self.initjoint_settings_groupBox)
+        self.upaxis_label.setGeometry(QtCore.QRect(0, 50, 101, 20))
+        self.upaxis_label.setText(("Up Axis"))
+        self.upaxis_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
+        self.upaxis_label.setObjectName(("upaxis_label"))
+
+        self.upaxis_comboBox = QtWidgets.QComboBox(self.initjoint_settings_groupBox)
+        self.upaxis_comboBox.setGeometry(QtCore.QRect(120, 50, 74, 22))
+        self.upaxis_comboBox.setToolTip((""))
+        self.upaxis_comboBox.setObjectName(("upaxis_comboBox"))
+        self.upaxis_comboBox.addItem((""))
+        self.upaxis_comboBox.setItemText(0, ("+x"))
+        self.upaxis_comboBox.addItem((""))
+        self.upaxis_comboBox.setItemText(1, ("+y"))
+        self.upaxis_comboBox.addItem((""))
+        self.upaxis_comboBox.setItemText(2, ("+z"))
+        self.upaxis_comboBox.addItem((""))
+        self.upaxis_comboBox.setItemText(3, ("-x"))
+        self.upaxis_comboBox.addItem((""))
+        self.upaxis_comboBox.setItemText(4, ("-y"))
+        self.upaxis_comboBox.addItem((""))
+        self.upaxis_comboBox.setItemText(5, ("-z"))
+
+        self.rig_settings_groupBox = QtWidgets.QGroupBox(self.trigger_settings_Dialog)
+        self.rig_settings_groupBox.setGeometry(QtCore.QRect(20, 340, 301, 90))
+        self.rig_settings_groupBox.setTitle(("Rig Settings"))
+        self.rig_settings_groupBox.setObjectName(("rig_settings_groupBox"))
+
+        self.aftercreation_label = QtWidgets.QLabel(self.rig_settings_groupBox)
+        self.aftercreation_label.setGeometry(QtCore.QRect(0, 20, 101, 20))
+        self.aftercreation_label.setText(("After Creation"))
+        self.aftercreation_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
+        self.aftercreation_label.setObjectName(("aftercreation_label"))
+
+        self.aftercreation_comboBox = QtWidgets.QComboBox(self.rig_settings_groupBox)
+        self.aftercreation_comboBox.setGeometry(QtCore.QRect(120, 20, 141, 22))
+        self.aftercreation_comboBox.setToolTip((""))
+        self.aftercreation_comboBox.setObjectName(("aftercreation_comboBox"))
+        self.aftercreation_comboBox.addItem((""))
+        self.aftercreation_comboBox.setItemText(0, ("Do Nothing"))
+        self.aftercreation_comboBox.addItem((""))
+        self.aftercreation_comboBox.setItemText(1, ("Hide Initial Joints"))
+        self.aftercreation_comboBox.addItem((""))
+        self.aftercreation_comboBox.setItemText(2, ("Delete Initial Joints"))
+
+        self.selectionsets_label = QtWidgets.QLabel(self.rig_settings_groupBox)
+        self.selectionsets_label.setGeometry(QtCore.QRect(0, 50, 101, 20))
+        self.selectionsets_label.setText(("Joint Selection Sets"))
+        self.selectionsets_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
+        self.selectionsets_label.setObjectName(("selectionsets_label"))
+
+        self.jointselectionsets_comboBox = QtWidgets.QComboBox(self.rig_settings_groupBox)
+        self.jointselectionsets_comboBox.setGeometry(QtCore.QRect(120, 50, 141, 22))
+        self.jointselectionsets_comboBox.setToolTip((""))
+        self.jointselectionsets_comboBox.setObjectName(("jointselectionsets_comboBox"))
+        self.jointselectionsets_comboBox.addItem((""))
+        self.jointselectionsets_comboBox.setItemText(0, ("Seperate for each limb"))
+        self.jointselectionsets_comboBox.addItem((""))
+        self.jointselectionsets_comboBox.setItemText(1, ("One set for everything"))
+
+        self.trigger_buttonBox = QtWidgets.QDialogButtonBox(self.trigger_settings_Dialog)
+        self.trigger_buttonBox.setGeometry(QtCore.QRect(20, 450, 301, 30))
+        self.trigger_buttonBox.setOrientation(QtCore.Qt.Horizontal)
+        self.trigger_buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel | QtWidgets.QDialogButtonBox.RestoreDefaults | QtWidgets.QDialogButtonBox.Save)
+        self.trigger_buttonBox.setObjectName(("trigger_buttonBox"))
+
+        self.trigger_settings_Dialog.show()
+
     def mirrorPoseUI(self):
         parent = getMayaMainWindow()
         self.MPDialog = QtWidgets.QDialog(parent=parent)
@@ -226,18 +624,6 @@ class mainUI(QtWidgets.QMainWindow):
         import anchorMaker
         reload(anchorMaker)
         anchorMaker.anchorMaker().show()
-    # def replaceControllerUI(self):
-    #     self.RCDialog = QtWidgets.QDialog(parent=self)
-    #     self.RCDialog.setWindowTitle("Replace Controller")
-    #
-    #     RCLayout = QtWidgets.QVBoxLayout(self)
-    #
-    #     iconNames = [i[0] for i in self.all_iconFunctions]
-    #     self.typeDropDown = QtWidgets.QComboBox(minimumSize = (QtCore.QSize(self.wSize / 3, self.hSize)), maximumSize = (QtCore.QSize(self.wSize / 3, self.hSize)))
-    #
-    #     layout.addWidget(self.typeDropDown)
-    #
-    #     self.typeDropDown.addItems(iconNames)
 
     def extraUI(self):
         pass
