@@ -98,6 +98,41 @@ class mainUI(QtWidgets.QMainWindow):
         self.upAxis = "+y"
         self.afterCreation = "Hide"
         self.seperateSelectionSets = True
+        self.colorCodeDict={}
+        self.colorCodes = (
+            (120, 120, 120),
+            (0, 0, 0),
+            (64, 64, 64),
+            (128, 128, 128),
+            (155, 0, 40),
+            (0, 4, 95),
+            (0, 0, 255),
+            (0, 70, 24),
+            (37, 0, 67),
+            (199, 0, 199),
+            (137, 71, 51),
+            (62, 34, 31),
+            (153, 37, 0),
+            (255, 0, 0),
+            (0, 255, 0),
+            (0, 65, 153),
+            (255, 255, 255),
+            (255, 255, 0),
+            (99, 220, 255),
+            (67, 255, 162),
+            (255, 175, 175),
+            (227, 172, 121),
+            (255, 255, 98),
+            (0, 153, 83),
+            (160, 105, 47),
+            (159, 160, 47),
+            (104, 160, 47),
+            (47, 160, 93),
+            (47, 160, 160),
+            (47, 103, 160),
+            (110, 47, 160),
+            (160, 47, 105)
+        )
 
         self.wSize = 60
         self.hSize = 50
@@ -228,40 +263,7 @@ class mainUI(QtWidgets.QMainWindow):
 
     def colorPickUI(self):
 
-        colorIndices = (
-            (0.471, 0.471, 0.471),
-            (0, 0, 0),
-            (0.251, 0.251, 0.251),
-            (0.502, 0.502, 0.502),
-            (0.608, 0, 0.157),
-            (0, 0.016, 0.376),
-            (0, 0, 1),
-            (0, 0.275, 0.098),
-            (0.149, 0, 0.263),
-            (0.784, 0, 0.784),
-            (0.541, 0.282, 0.2),
-            (0.247, 0.137, 0.122),
-            (0.6, 0.149, 0),
-            (1, 0, 0),
-            (0, 1, 0),
-            (0, 0.255, 0.6),
-            (1, 1, 1),
-            (1, 1, 0),
-            (0.392, 0.863, 1),
-            (0.263, 1, 0.639),
-            (1, 0.69, 0.69),
-            (0.894, 0.675, 0.475),
-            (1, 1, 0.388),
-            (0, 0.6, 0.329),
-            (0.631, 0.412, 0.188),
-            (0.624, 0.631, 0.188),
-            (0.408, 0.631, 0.188),
-            (0.188, 0.631, 0.365),
-            (0.188, 0.631, 0.631),
-            (0.188, 0.404, 0.631),
-            (0.435, 0.188, 0.631),
-            (0.631, 0.188, 0.412)
-        )
+
 
         edgeSize = 20
 
@@ -278,8 +280,7 @@ class mainUI(QtWidgets.QMainWindow):
             print value
             self.returnvalue = value
 
-
-        for i in range (len(colorIndices)):
+        for i in range (len(self.colorCodes)):
             button = QtWidgets.QPushButton(self.colorPick_Dialog)
 
             r=divmod(edgeSize*(i), edgeSize*8)
@@ -287,10 +288,10 @@ class mainUI(QtWidgets.QMainWindow):
             y = (r[0])*edgeSize
             button.setGeometry(QtCore.QRect(x, y, edgeSize, edgeSize))
             button.setText("")
-            cnv_rgb = str((int(colorIndices[i][0]*255), int(colorIndices[i][1]*255), int(colorIndices[i][2]*255)))
-            button.setStyleSheet("background-color:rgb%s" %(cnv_rgb))
+            # cnv_rgb = str((int(self.colorCodes[i][0]*255), int(self.colorCodes[i][1]*255), int(self.colorCodes[i][2]*255)))
+            button.setStyleSheet("background-color:rgb%s" %(str(self.colorCodes[i])))
             button.setObjectName("button%s" %i)
-            button.clicked.connect(lambda item=i: buttonAction(self.colorPick_Dialog, item))
+            button.clicked.connect(lambda item=(i, self.colorCodes[i]): buttonAction(self.colorPick_Dialog, item))
 
         # self.majorleft_pushButton.setFocus()
 
@@ -319,22 +320,41 @@ class mainUI(QtWidgets.QMainWindow):
 
     def saveSettings(self):
         self.rigName = self.rigname_lineEdit.text()
+        if self.rigName == "":
+            self.rigName = "triggerAutoRig"
         if nameCheck(self.rigName) == -1:
             self.infoPop(textHeader="Invalid Characters", textTitle="Naming Error", textInfo="Use Latin Characters without any spaces.")
             return
-        # self.majorLeftColor = self.majorleft_pushButton
-        # self.minorLeftColor = settingsData["minorLeftColor"]
-        # self.majorRightColor = settingsData["majorRightColor"]
-        # self.minorRightColor = settingsData["minorRightColor"]
-        # self.majorCenterColor = settingsData["majorCenterColor"]
-        # self.minorCenterColor = settingsData["minorCenterColor"]
-        # self.lookAxis = settingsData["lookAxis"]
-        # self.upAxis = settingsData["upAxis"]
-        # self.afterCreation = settingsData["afterCreation"]
-        # self.seperateSelectionSets = settingsData["seperateSelectionSets"]
+        self.majorLeftColor = self.colorCodeDict["majorleftcolor_pushButton"]
+        self.minorLeftColor = self.colorCodeDict["minorleftcolor_pushButton"]
+        self.majorRightColor = self.colorCodeDict["majorrightcolor_pushButton"]
+        self.minorRightColor = self.colorCodeDict["minorrightcolor_pushButton"]
+        self.majorCenterColor = self.colorCodeDict["majorcentercolor_pushButton"]
+        self.minorCenterColor = self.colorCodeDict["minorcentercolor_pushButton"]
 
+        self.lookAxis = self.lookaxis_comboBox.currentText()
+        self.upAxis = self.upaxis_comboBox.currentText()
+        self.afterCreation = self.aftercreation_comboBox.currentText()
+        self.seperateSelectionSets = self.jointselectionsets_comboBox.currentIndex() == 0
 
-        pass
+        settingsData = {
+            "rigName": self.rigName,
+            "majorLeftColor": self.majorLeftColor,
+            "minorLeftColor": self.minorLeftColor,
+            "majorRightColor": self.majorRightColor,
+            "minorRightColor": self.minorRightColor,
+            "majorCenterColor": self.majorCenterColor,
+            "minorCenterColor": self.minorCenterColor,
+            "lookAxis": self.lookAxis,
+            "upAxis": self.upAxis,
+            "afterCreation": 0,
+            "seperateSelectionSets": True
+            }
+
+        homedir = os.path.expanduser("~")
+        settingsFilePath = os.path.join(homedir, "triggerSettings.json")
+        dumpJson(settingsData, settingsFilePath)
+
 
     def loadSettings(self, loadDefaults=False):
         homedir = os.path.expanduser("~")
@@ -353,7 +373,7 @@ class mainUI(QtWidgets.QMainWindow):
                             "minorCenterColor": 20,
                             "lookAxis": "+z",
                             "upAxis": "+y",
-                            "afterCreation": "Hide",
+                            "afterCreation": 0,
                             "seperateSelectionSets": True
                             }
 
@@ -374,11 +394,30 @@ class mainUI(QtWidgets.QMainWindow):
 
     def settingsUI(self):
 
+        self.loadSettings()
+
+        # self.majorLeftColor = self.colorCodeDict["majorleftcolor_pushButton"]
+        # self.minorLeftColor = self.colorCodeDict["minorleftcolor_pushButton"]
+        # self.majorRightColor = self.colorCodeDict["majorrightcolor_pushButton"]
+        # self.minorRightColor = self.colorCodeDict["minorrightcolor_pushButton"]
+        # self.majorCenterColor = self.colorCodeDict["majorcentercolor_pushButton"]
+        # self.minorCenterColor = self.colorCodeDict["minorcentercolor_pushButton"]
+
+        self.colorCodeDict={
+            "majorleftcolor_pushButton": self.majorLeftColor,
+            "minorleftcolor_pushButton": self.minorLeftColor,
+            "majorrightcolor_pushButton": self.majorRightColor,
+            "minorrightcolor_pushButton": self.minorRightColor,
+            "majorcentercolor_pushButton": self.majorCenterColor,
+            "minorcentercolor_pushButton": self.minorCenterColor
+        }
+
+
         self.trigger_settings_Dialog = QtWidgets.QDialog(parent=self)
         self.trigger_settings_Dialog.setObjectName(("trigger_settings_Dialog"))
         self.trigger_settings_Dialog.resize(341, 494)
         self.trigger_settings_Dialog.setWindowTitle(("T-Rigger Settings"))
-        self.trigger_settings_Dialog.setModal(True)
+        self.trigger_settings_Dialog.setModal(False)
 
         self.general_settings_groupBox = QtWidgets.QGroupBox(self.trigger_settings_Dialog)
 
@@ -399,7 +438,7 @@ class mainUI(QtWidgets.QMainWindow):
         self.rigname_lineEdit.setWhatsThis((""))
         self.rigname_lineEdit.setAccessibleName((""))
         self.rigname_lineEdit.setAccessibleDescription((""))
-        self.rigname_lineEdit.setText((""))
+        self.rigname_lineEdit.setText(self.rigName)
         self.rigname_lineEdit.setCursorPosition(0)
         self.rigname_lineEdit.setPlaceholderText(("Give a name for the rig"))
         self.rigname_lineEdit.setObjectName(("rigname_lineEdit"))
@@ -420,6 +459,7 @@ class mainUI(QtWidgets.QMainWindow):
         self.majorleft_pushButton.setDefault(False)
         self.majorleft_pushButton.setFlat(False)
         self.majorleft_pushButton.setObjectName(("majorleft_pushButton"))
+        self.majorleft_pushButton.setStyleSheet("background-color:rgb%s" %(str((self.colorCodes[self.colorCodeDict["majorleftcolor_pushButton"]]))))
         self.majorleft_pushButton.setFocus()
 
         self.minorleft_pushButton = QtWidgets.QPushButton(self.general_settings_groupBox)
@@ -580,6 +620,23 @@ class mainUI(QtWidgets.QMainWindow):
         self.trigger_buttonBox.setOrientation(QtCore.Qt.Horizontal)
         self.trigger_buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel | QtWidgets.QDialogButtonBox.RestoreDefaults | QtWidgets.QDialogButtonBox.Save)
         self.trigger_buttonBox.setObjectName(("trigger_buttonBox"))
+
+        self.trigger_buttonBox.accepted.connect(self.trigger_settings_Dialog.accept)
+        self.trigger_buttonBox.accepted.connect(self.saveSettings)
+        self.trigger_buttonBox.rejected.connect(self.trigger_settings_Dialog.reject)
+        self.trigger_buttonBox.button(QtWidgets.QDialogButtonBox.RestoreDefaults).clicked.connect(self.colorPickUI)
+
+        def colorButtons(button):
+            colorCode = self.colorPickUI()
+            button.setStyleSheet("background-color:rgb%s" %(str((colorCode[1]))))
+            self.colorCodeDict[button.objectName()]=colorCode[0]
+
+        self.majorcenter_pushButton.clicked.connect(lambda: colorButtons(self.majorcenter_pushButton))
+        self.minorcenter_pushButton.clicked.connect(lambda: colorButtons(self.minorcenter_pushButton))
+        self.majorleft_pushButton.clicked.connect(lambda: colorButtons(self.majorleft_pushButton))
+        self.minorleft_pushButton.clicked.connect(lambda: colorButtons(self.minorleft_pushButton))
+        self.majorright_pushButton.clicked.connect(lambda: colorButtons(self.majorright_pushButton))
+        self.minorright_pushButton.clicked.connect(lambda: colorButtons(self.minorright_pushButton))
 
         self.trigger_settings_Dialog.show()
 
