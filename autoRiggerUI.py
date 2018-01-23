@@ -87,17 +87,33 @@ class mainUI(QtWidgets.QMainWindow):
         super(mainUI, self).__init__(parent=parent)
 
         # settings
-        self.rigName = "triggerAutoRig"
-        self.majorLeftColor = 6
-        self.minorLeftColor = 18
-        self.majorRightColor = 13
-        self.minorRightColor = 9
-        self.majorCenterColor = 17
-        self.minorCenterColor = 20
-        self.lookAxis = "+z"
-        self.upAxis = "+y"
-        self.afterCreation = "Hide"
-        self.seperateSelectionSets = True
+        # self.rigName = "triggerAutoRig"
+        # self.majorLeftColor = 6
+        # self.minorLeftColor = 18
+        # self.majorRightColor = 13
+        # self.minorRightColor = 9
+        # self.majorCenterColor = 17
+        # self.minorCenterColor = 20
+        # self.lookAxis = "+z"
+        # self.upAxis = "+y"
+        # self.afterCreation = 0
+        # self.seperateSelectionSets = True
+        self.settingsDefaults={
+            "rigName": "triggerAutoRig",
+            "majorLeftColor": 6,
+            "minorLeftColor": 18,
+            "majorRightColor": 13,
+            "minorRightColor": 9,
+            "majorCenterColor": 17,
+            "minorCenterColor": 20,
+            "lookAxis": "+z",
+            "upAxis": "+y",
+            "afterCreation": 0,
+            "seperateSelectionSets": True
+            }
+        self.loadSettings()
+
+
         self.colorCodeDict={}
         self.colorCodes = (
             (120, 120, 120),
@@ -193,8 +209,8 @@ class mainUI(QtWidgets.QMainWindow):
         self.layout = QtWidgets.QVBoxLayout(self.mainDialog)
         self.centralWidget.setLayout(self.layout)
 
-        self.initSkeleton = init.initialJoints()
-        self.rigger = scratch.LimbBuilder()
+        self.initSkeleton = init.initialJoints(self.settingsData)
+        self.rigger = scratch.LimbBuilder(self.settingsData)
 
         self.layout.setContentsMargins(0, 0, 0, 0)
 
@@ -319,97 +335,117 @@ class mainUI(QtWidgets.QMainWindow):
     ##############################################################
 
     def saveSettings(self):
+
         self.rigName = self.rigname_lineEdit.text()
         if self.rigName == "":
             self.rigName = "triggerAutoRig"
         if nameCheck(self.rigName) == -1:
             self.infoPop(textHeader="Invalid Characters", textTitle="Naming Error", textInfo="Use Latin Characters without any spaces.")
             return
-        self.majorLeftColor = self.colorCodeDict["majorleftcolor_pushButton"]
-        self.minorLeftColor = self.colorCodeDict["minorleftcolor_pushButton"]
-        self.majorRightColor = self.colorCodeDict["majorrightcolor_pushButton"]
-        self.minorRightColor = self.colorCodeDict["minorrightcolor_pushButton"]
-        self.majorCenterColor = self.colorCodeDict["majorcentercolor_pushButton"]
-        self.minorCenterColor = self.colorCodeDict["minorcentercolor_pushButton"]
+        # self.majorLeftColor = self.colorCodeDict["majorleft_pushButton"]
+        # self.minorLeftColor = self.colorCodeDict["minorleft_pushButton"]
+        # self.majorRightColor = self.colorCodeDict["majorright_pushButton"]
+        # self.minorRightColor = self.colorCodeDict["minorright_pushButton"]
+        # self.majorCenterColor = self.colorCodeDict["majorcenter_pushButton"]
+        # self.minorCenterColor = self.colorCodeDict["minorcenter_pushButton"]
 
-        self.lookAxis = self.lookaxis_comboBox.currentText()
-        self.upAxis = self.upaxis_comboBox.currentText()
-        self.afterCreation = self.aftercreation_comboBox.currentText()
-        self.seperateSelectionSets = self.jointselectionsets_comboBox.currentIndex() == 0
+        self.settingsData["majorLeftColor"] = self.colorCodeDict["majorleft_pushButton"]
+        self.settingsData["minorLeftColor"] = self.colorCodeDict["minorleft_pushButton"]
+        self.settingsData["majorRightColor"] = self.colorCodeDict["majorright_pushButton"]
+        self.settingsData["minorRightColor"] = self.colorCodeDict["minorright_pushButton"]
+        self.settingsData["majorCenterColor"] = self.colorCodeDict["majorcenter_pushButton"]
+        self.settingsData["minorCenterColor"] = self.colorCodeDict["minorcenter_pushButton"]
 
-        settingsData = {
-            "rigName": self.rigName,
-            "majorLeftColor": self.majorLeftColor,
-            "minorLeftColor": self.minorLeftColor,
-            "majorRightColor": self.majorRightColor,
-            "minorRightColor": self.minorRightColor,
-            "majorCenterColor": self.majorCenterColor,
-            "minorCenterColor": self.minorCenterColor,
-            "lookAxis": self.lookAxis,
-            "upAxis": self.upAxis,
-            "afterCreation": 0,
-            "seperateSelectionSets": True
-            }
+
+        # self.lookAxis = self.lookaxis_comboBox.currentText()
+        # self.upAxis = self.upaxis_comboBox.currentText()
+        # self.afterCreation = self.aftercreation_comboBox.currentIndex()
+        # self.seperateSelectionSets = self.jointselectionsets_comboBox.currentIndex() == 0
+
+        self.settingsData["lookAxis"] = self.lookaxis_comboBox.currentText()
+        self.settingsData["upAxis"] = self.upaxis_comboBox.currentText()
+        self.settingsData["afterCreation"] = self.aftercreation_comboBox.currentIndex()
+        self.settingsData["seperateSelectionSets"] = self.jointselectionsets_comboBox.currentIndex() == 0
+
+        # settingsData = {
+        #     "rigName": self.rigName,
+        #     "majorLeftColor": self.majorLeftColor,
+        #     "minorLeftColor": self.minorLeftColor,
+        #     "majorRightColor": self.majorRightColor,
+        #     "minorRightColor": self.minorRightColor,
+        #     "majorCenterColor": self.majorCenterColor,
+        #     "minorCenterColor": self.minorCenterColor,
+        #     "lookAxis": self.lookAxis,
+        #     "upAxis": self.upAxis,
+        #     "afterCreation": self.afterCreation,
+        #     "seperateSelectionSets": self.seperateSelectionSets
+        #     }
 
         homedir = os.path.expanduser("~")
         settingsFilePath = os.path.join(homedir, "triggerSettings.json")
-        dumpJson(settingsData, settingsFilePath)
+        dumpJson(self.settingsData, settingsFilePath)
+        self.initSkeleton.__init__(settingsData=self.settingsData)
+        print "hoyt", self.initSkeleton.lookAxis
+        self.rigger.__init__(settingsData=self.settingsData)
 
 
     def loadSettings(self, loadDefaults=False):
+        if loadDefaults:
+            self.settingsData=self.settingsDefaults
+            return
         homedir = os.path.expanduser("~")
         settingsFilePath = os.path.join(homedir, "triggerSettings.json")
 
-        settingsData = loadJson(settingsFilePath)
+        # settingsData = loadJson(settingsFilePath)
+
+        if os.path.isfile(settingsFilePath):
+            self.settingsData = loadJson(settingsFilePath)
+            return
+        else:
+            self.settingsData = self.settingsDefaults
+            dumpJson(self.settingsData, settingsFilePath)
 
         # If the file is not yet created or deleted/corrupted
-        if not settingsData or loadDefaults:
-            settingsData = {"rigName": "triggerAutoRig",
-                            "majorLeftColor": 6,
-                            "minorLeftColor": 18,
-                            "majorRightColor": 13,
-                            "minorRightColor": 9,
-                            "majorCenterColor": 17,
-                            "minorCenterColor": 20,
-                            "lookAxis": "+z",
-                            "upAxis": "+y",
-                            "afterCreation": 0,
-                            "seperateSelectionSets": True
-                            }
+        # if not settingsData or loadDefaults:
+        #     self.settingsData = {"rigName": "triggerAutoRig",
+        #                     "majorLeftColor": 6,
+        #                     "minorLeftColor": 18,
+        #                     "majorRightColor": 13,
+        #                     "minorRightColor": 9,
+        #                     "majorCenterColor": 17,
+        #                     "minorCenterColor": 20,
+        #                     "lookAxis": "+z",
+        #                     "upAxis": "+y",
+        #                     "afterCreation": 0,
+        #                     "seperateSelectionSets": True
+        #                     }
 
-        self.rigName = settingsData["rigName"]
-        self.majorLeftColor = settingsData["majorLeftColor"]
-        self.minorLeftColor = settingsData["minorLeftColor"]
-        self.majorRightColor = settingsData["majorRightColor"]
-        self.minorRightColor = settingsData["minorRightColor"]
-        self.majorCenterColor = settingsData["majorCenterColor"]
-        self.minorCenterColor = settingsData["minorCenterColor"]
-        self.lookAxis = settingsData["lookAxis"]
-        self.upAxis = settingsData["upAxis"]
-        self.afterCreation = settingsData["afterCreation"]
-        self.seperateSelectionSets = settingsData["seperateSelectionSets"]
+        # self.rigName = settingsData["rigName"]
+        # self.majorLeftColor = settingsData["majorLeftColor"]
+        # self.minorLeftColor = settingsData["minorLeftColor"]
+        # self.majorRightColor = settingsData["majorRightColor"]
+        # self.minorRightColor = settingsData["minorRightColor"]
+        # self.majorCenterColor = settingsData["majorCenterColor"]
+        # self.minorCenterColor = settingsData["minorCenterColor"]
+        # self.lookAxis = settingsData["lookAxis"]
+        # self.upAxis = settingsData["upAxis"]
+        # self.afterCreation = settingsData["afterCreation"]
+        # self.seperateSelectionSets = settingsData["seperateSelectionSets"]
 
 
         #dumpJson(settingsData, settingsFilePath)
 
     def settingsUI(self):
 
-        self.loadSettings()
+        axisList=["+x", "+y", "+z", "-x", "-y", "-z"]
 
-        # self.majorLeftColor = self.colorCodeDict["majorleftcolor_pushButton"]
-        # self.minorLeftColor = self.colorCodeDict["minorleftcolor_pushButton"]
-        # self.majorRightColor = self.colorCodeDict["majorrightcolor_pushButton"]
-        # self.minorRightColor = self.colorCodeDict["minorrightcolor_pushButton"]
-        # self.majorCenterColor = self.colorCodeDict["majorcentercolor_pushButton"]
-        # self.minorCenterColor = self.colorCodeDict["minorcentercolor_pushButton"]
-
-        self.colorCodeDict={
-            "majorleftcolor_pushButton": self.majorLeftColor,
-            "minorleftcolor_pushButton": self.minorLeftColor,
-            "majorrightcolor_pushButton": self.majorRightColor,
-            "minorrightcolor_pushButton": self.minorRightColor,
-            "majorcentercolor_pushButton": self.majorCenterColor,
-            "minorcentercolor_pushButton": self.minorCenterColor
+        self.colorCodeDict = {
+            "majorleft_pushButton": self.settingsData["majorLeftColor"],
+            "minorleft_pushButton": self.settingsData["minorLeftColor"],
+            "majorright_pushButton": self.settingsData["majorRightColor"],
+            "minorright_pushButton": self.settingsData["minorRightColor"],
+            "majorcenter_pushButton": self.settingsData["majorCenterColor"],
+            "minorcenter_pushButton": self.settingsData["minorCenterColor"]
         }
 
 
@@ -438,14 +474,13 @@ class mainUI(QtWidgets.QMainWindow):
         self.rigname_lineEdit.setWhatsThis((""))
         self.rigname_lineEdit.setAccessibleName((""))
         self.rigname_lineEdit.setAccessibleDescription((""))
-        self.rigname_lineEdit.setText(self.rigName)
         self.rigname_lineEdit.setCursorPosition(0)
         self.rigname_lineEdit.setPlaceholderText(("Give a name for the rig"))
         self.rigname_lineEdit.setObjectName(("rigname_lineEdit"))
 
         self.colorcoding_label = QtWidgets.QLabel(self.general_settings_groupBox)
         self.colorcoding_label.setGeometry(QtCore.QRect(0, 60, 101, 20))
-        self.colorcoding_label.setText(("Color Codiing"))
+        self.colorcoding_label.setText(("Color Coding"))
         self.colorcoding_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
         self.colorcoding_label.setObjectName(("colorcoding_label"))
 
@@ -459,7 +494,6 @@ class mainUI(QtWidgets.QMainWindow):
         self.majorleft_pushButton.setDefault(False)
         self.majorleft_pushButton.setFlat(False)
         self.majorleft_pushButton.setObjectName(("majorleft_pushButton"))
-        self.majorleft_pushButton.setStyleSheet("background-color:rgb%s" %(str((self.colorCodes[self.colorCodeDict["majorleftcolor_pushButton"]]))))
         self.majorleft_pushButton.setFocus()
 
         self.minorleft_pushButton = QtWidgets.QPushButton(self.general_settings_groupBox)
@@ -517,20 +551,16 @@ class mainUI(QtWidgets.QMainWindow):
         self.majorcenter_pushButton.setFlat(False)
         self.majorcenter_pushButton.setObjectName(("majorcenter_pushButton"))
 
-        # self.rigname_lineEdit.raise_()
-        # self.rigname_label.raise_()
-        # self.majorleft_pushButton.raise_()
-        # self.minorleft_pushButton.raise_()
-        # self.minorright_pushButton.raise_()
-        # self.majorright_pushButton.raise_()
-        # self.minorcenter_pushButton.raise_()
-        # self.majorcenter_pushButton.raise_()
-        # self.colorcoding_label.raise_()
-
         self.initjoint_settings_groupBox = QtWidgets.QGroupBox(self.trigger_settings_Dialog)
         self.initjoint_settings_groupBox.setGeometry(QtCore.QRect(20, 230, 301, 91))
         self.initjoint_settings_groupBox.setTitle(("Initial Joint Settings"))
         self.initjoint_settings_groupBox.setObjectName(("initjoint_settings_groupBox"))
+
+        # This function prevents two comboboxes take the same index value
+        def fixClash(currentAxis, otherAxis):
+            # list number 1 is for skipping the (-) or (+)
+            if currentAxis.currentText()[1] == otherAxis.currentText()[1]:
+                otherAxis.setCurrentIndex(divmod(otherAxis.currentIndex()+1, otherAxis.count())[1])
 
         self.lookaxis_label = QtWidgets.QLabel(self.initjoint_settings_groupBox)
         self.lookaxis_label.setGeometry(QtCore.QRect(0, 20, 101, 20))
@@ -542,18 +572,7 @@ class mainUI(QtWidgets.QMainWindow):
         self.lookaxis_comboBox.setGeometry(QtCore.QRect(120, 20, 74, 22))
         self.lookaxis_comboBox.setToolTip((""))
         self.lookaxis_comboBox.setObjectName(("lookaxis_comboBox"))
-        self.lookaxis_comboBox.addItem((""))
-        self.lookaxis_comboBox.setItemText(0, ("+x"))
-        self.lookaxis_comboBox.addItem((""))
-        self.lookaxis_comboBox.setItemText(1, ("+y"))
-        self.lookaxis_comboBox.addItem((""))
-        self.lookaxis_comboBox.setItemText(2, ("+z"))
-        self.lookaxis_comboBox.addItem((""))
-        self.lookaxis_comboBox.setItemText(3, ("-x"))
-        self.lookaxis_comboBox.addItem((""))
-        self.lookaxis_comboBox.setItemText(4, ("-y"))
-        self.lookaxis_comboBox.addItem((""))
-        self.lookaxis_comboBox.setItemText(5, ("-z"))
+        self.lookaxis_comboBox.addItems(axisList)
 
         self.upaxis_label = QtWidgets.QLabel(self.initjoint_settings_groupBox)
         self.upaxis_label.setGeometry(QtCore.QRect(0, 50, 101, 20))
@@ -565,18 +584,11 @@ class mainUI(QtWidgets.QMainWindow):
         self.upaxis_comboBox.setGeometry(QtCore.QRect(120, 50, 74, 22))
         self.upaxis_comboBox.setToolTip((""))
         self.upaxis_comboBox.setObjectName(("upaxis_comboBox"))
-        self.upaxis_comboBox.addItem((""))
-        self.upaxis_comboBox.setItemText(0, ("+x"))
-        self.upaxis_comboBox.addItem((""))
-        self.upaxis_comboBox.setItemText(1, ("+y"))
-        self.upaxis_comboBox.addItem((""))
-        self.upaxis_comboBox.setItemText(2, ("+z"))
-        self.upaxis_comboBox.addItem((""))
-        self.upaxis_comboBox.setItemText(3, ("-x"))
-        self.upaxis_comboBox.addItem((""))
-        self.upaxis_comboBox.setItemText(4, ("-y"))
-        self.upaxis_comboBox.addItem((""))
-        self.upaxis_comboBox.setItemText(5, ("-z"))
+        self.upaxis_comboBox.addItems(axisList)
+
+        self.lookaxis_comboBox.currentIndexChanged.connect(lambda: fixClash(self.lookaxis_comboBox, self.upaxis_comboBox))
+        self.upaxis_comboBox.currentIndexChanged.connect(lambda: fixClash(self.upaxis_comboBox, self.lookaxis_comboBox))
+
 
         self.rig_settings_groupBox = QtWidgets.QGroupBox(self.trigger_settings_Dialog)
         self.rig_settings_groupBox.setGeometry(QtCore.QRect(20, 340, 301, 90))
@@ -593,12 +605,7 @@ class mainUI(QtWidgets.QMainWindow):
         self.aftercreation_comboBox.setGeometry(QtCore.QRect(120, 20, 141, 22))
         self.aftercreation_comboBox.setToolTip((""))
         self.aftercreation_comboBox.setObjectName(("aftercreation_comboBox"))
-        self.aftercreation_comboBox.addItem((""))
-        self.aftercreation_comboBox.setItemText(0, ("Do Nothing"))
-        self.aftercreation_comboBox.addItem((""))
-        self.aftercreation_comboBox.setItemText(1, ("Hide Initial Joints"))
-        self.aftercreation_comboBox.addItem((""))
-        self.aftercreation_comboBox.setItemText(2, ("Delete Initial Joints"))
+        self.aftercreation_comboBox.addItems(["Do Nothing", "Hide Initial Joints", "Delete Initial Joints"])
 
         self.selectionsets_label = QtWidgets.QLabel(self.rig_settings_groupBox)
         self.selectionsets_label.setGeometry(QtCore.QRect(0, 50, 101, 20))
@@ -608,12 +615,36 @@ class mainUI(QtWidgets.QMainWindow):
 
         self.jointselectionsets_comboBox = QtWidgets.QComboBox(self.rig_settings_groupBox)
         self.jointselectionsets_comboBox.setGeometry(QtCore.QRect(120, 50, 141, 22))
-        self.jointselectionsets_comboBox.setToolTip((""))
-        self.jointselectionsets_comboBox.setObjectName(("jointselectionsets_comboBox"))
-        self.jointselectionsets_comboBox.addItem((""))
-        self.jointselectionsets_comboBox.setItemText(0, ("Seperate for each limb"))
-        self.jointselectionsets_comboBox.addItem((""))
-        self.jointselectionsets_comboBox.setItemText(1, ("One set for everything"))
+        self.jointselectionsets_comboBox.addItems(["Seperate for each limb", "One set for everything"])
+
+        def initDialog(loadDefaults=False):
+            self.loadSettings(loadDefaults=loadDefaults)
+            self.rigname_lineEdit.setText(self.settingsData["rigName"])
+            self.colorCodeDict = {
+                "majorleft_pushButton": self.settingsData["majorLeftColor"],
+                "minorleft_pushButton": self.settingsData["minorLeftColor"],
+                "majorright_pushButton": self.settingsData["majorRightColor"],
+                "minorright_pushButton": self.settingsData["minorRightColor"],
+                "majorcenter_pushButton": self.settingsData["majorCenterColor"],
+                "minorcenter_pushButton": self.settingsData["minorCenterColor"]
+            }
+            cbuttons = [self.majorleft_pushButton, self.minorleft_pushButton, self.majorright_pushButton, self.minorright_pushButton, self.majorcenter_pushButton, self.minorcenter_pushButton]
+            for button in cbuttons:
+                buttoncolor = self.colorCodes[self.colorCodeDict[button.objectName()]]
+                textcolor = (255 - buttoncolor[0], 255 - buttoncolor[1], 255 - buttoncolor[2])
+                button.setStyleSheet("background-color:rgb{}; color:rgb{}".format(buttoncolor, textcolor))
+
+            index = self.lookaxis_comboBox.findText(self.settingsData["lookAxis"], QtCore.Qt.MatchFixedString)
+            if index >= 0:
+                self.lookaxis_comboBox.setCurrentIndex(index)
+
+            index = self.upaxis_comboBox.findText(self.settingsData["upAxis"], QtCore.Qt.MatchFixedString)
+            if index >= 0:
+                self.upaxis_comboBox.setCurrentIndex(index)
+
+            fixClash(self.lookaxis_comboBox, self.upaxis_comboBox)
+            self.aftercreation_comboBox.setCurrentIndex(self.settingsData["afterCreation"])
+            self.jointselectionsets_comboBox.setCurrentIndex(not self.settingsData["seperateSelectionSets"])
 
         self.trigger_buttonBox = QtWidgets.QDialogButtonBox(self.trigger_settings_Dialog)
         self.trigger_buttonBox.setGeometry(QtCore.QRect(20, 450, 301, 30))
@@ -624,11 +655,15 @@ class mainUI(QtWidgets.QMainWindow):
         self.trigger_buttonBox.accepted.connect(self.trigger_settings_Dialog.accept)
         self.trigger_buttonBox.accepted.connect(self.saveSettings)
         self.trigger_buttonBox.rejected.connect(self.trigger_settings_Dialog.reject)
-        self.trigger_buttonBox.button(QtWidgets.QDialogButtonBox.RestoreDefaults).clicked.connect(self.colorPickUI)
+        # self.trigger_buttonBox.button(QtWidgets.QDialogButtonBox.RestoreDefaults).clicked.connect(self.colorPickUI)
+        self.trigger_buttonBox.button(QtWidgets.QDialogButtonBox.RestoreDefaults).clicked.connect(lambda: (initDialog(loadDefaults=True)))
 
         def colorButtons(button):
             colorCode = self.colorPickUI()
-            button.setStyleSheet("background-color:rgb%s" %(str((colorCode[1]))))
+            # text color is the complimentary color
+            textcolor = str((255-colorCode[1][0], 255-colorCode[1][1], 255-colorCode[1][2]))
+            buttoncolor = str(colorCode[1])
+            button.setStyleSheet("background-color:rgb{0}; color:rgb{1}".format(buttoncolor, textcolor))
             self.colorCodeDict[button.objectName()]=colorCode[0]
 
         self.majorcenter_pushButton.clicked.connect(lambda: colorButtons(self.majorcenter_pushButton))
@@ -638,6 +673,7 @@ class mainUI(QtWidgets.QMainWindow):
         self.majorright_pushButton.clicked.connect(lambda: colorButtons(self.majorright_pushButton))
         self.minorright_pushButton.clicked.connect(lambda: colorButtons(self.minorright_pushButton))
 
+        initDialog()
         self.trigger_settings_Dialog.show()
 
     def mirrorPoseUI(self):
@@ -1394,7 +1430,7 @@ class mainUI(QtWidgets.QMainWindow):
 
     def rig(self):
         pm.undoInfo(openChunk=True)
-        self.rigger.__init__()
+        self.rigger.__init__(settingsData=self.settingsData)
         self.rigger.startBuilding(createAnchors=self.isCreateAnchorsChk.isChecked())
         pm.undoInfo(closeChunk=True)
 

@@ -4,25 +4,27 @@ import extraProcedures as extra
 
 class initialJoints():
 
-    def __init__(self):
+    def __init__(self, settingsData):
 
         self.mirrorAxis = "x"
         self.upAxis = "y"
         self.lookAxis = "z"
 
-        if "-" in self.mirrorAxis:
-            self.mirrorAxisMult = 1
-            self.mirrorAxis = self.mirrorAxis.replace("-", "")
-        else:
-            self.mirrorAxisMult = 1
-        if "-" in self.upAxis:
-            self.upAxisMult = -1
-        else:
-            self.upAxisMult = 1
-        if "-" in self.lookAxis:
-            self.lookAxisMult = -1
-        else:
-            self.lookAxisMult = 1
+        self.parseSettings(settingsData)
+
+        # if "-" in self.mirrorAxis:
+        #     self.mirrorAxisMult = 1
+        #     self.mirrorAxis = self.mirrorAxis.replace("-", "")
+        # else:
+        #     self.mirrorAxisMult = 1
+        # if "-" in self.upAxis:
+        #     self.upAxisMult = -1
+        # else:
+        #     self.upAxisMult = 1
+        # if "-" in self.lookAxis:
+        #     self.lookAxisMult = -1
+        # else:
+        #     self.lookAxisMult = 1
 
         self.spineJointsList=[]
         self.neckJointsList=[]
@@ -32,6 +34,32 @@ class initialJoints():
         self.tailJointsList=[]
         self.tentacleJointsList=[]
         self.projectName = "tikAutoRig"
+
+    def parseSettings(self, settingsData):
+        up=settingsData["upAxis"]
+        look=settingsData["lookAxis"]
+        if "-" in up:
+            self.upAxis=up.replace("-", "")
+            self.upAxisMult=-1
+        if "+" in up:
+            self.upAxis=up.replace("+", "")
+            self.upAxisMult=1
+        if "-" in look:
+            self.lookAxis=look.replace("-", "")
+            self.lookAxisMult=-1
+        if "+" in look:
+            self.lookAxis=look.replace("+", "")
+            self.lookAxisMult=1
+        self.mirrorAxis="xyz".replace(self.upAxis,"").replace(self.lookAxis,"")
+        self.mirrorAxisMult=1
+
+        self.majorLeftColor = settingsData["majorLeftColor"]
+        self.minorLeftColor = settingsData["minorLeftColor"]
+        self.majorRightColor = settingsData["majorRightColor"]
+        self.minorRightColor = settingsData["minorRightColor"]
+        self.majorCenterColor = settingsData["majorCenterColor"]
+        self.minorCenterColor = settingsData["minorCenterColor"]
+
 
     def transformator (self, inputVector, transKey):
         ## convert the input tuple to an actual vector:
@@ -132,10 +160,16 @@ class initialJoints():
             ## get the necessary info from arguments
             if whichSide == "left":
                 side =1
+                # majorColor = self.majorLeftColor
+                # minorColor = self.minorLeftColor
             elif whichSide == "right":
                 side =2
+                # majorColor = self.majorRightColor
+                # minorColor = self.minorRightColor
             else:
                 side = 0
+                # majorColor = self.majorCenterColor
+                # minorColor = self.minorCenterColor
             # side = 1 if whichSide == "left" else 2
 
         sideMult = -1 if whichSide == "right" else 1
@@ -316,6 +350,8 @@ class initialJoints():
         pm.setAttr(rootInit.radius, 3)
         pm.setAttr("{0}.drawLabel".format(rootInit), 1)
         offsetVector = dt.Vector(0,0,0)
+        print "ANANsss", self.majorCenterColor
+        extra.colorize(rootInit, self.majorCenterColor, shape=False)
 
         return [rootInit], offsetVector
 
@@ -370,6 +406,7 @@ class initialJoints():
             for i in jointList:
                 pm.setAttr("%s.drawLabel" % i, 1)
         self.spineJointsList.append(jointList)
+        extra.colorize(jointList, self.majorCenterColor, shape=False)
         return jointList, offsetVector
 
     def initialArm(self, transformKey, side, suffix):
@@ -414,6 +451,13 @@ class initialJoints():
         for i in jointList:
             pm.setAttr("%s.drawLabel" % i, 1)
         self.armJointsList.append(jointList)
+
+        if side == 0:
+            extra.colorize(jointList, self.majorCenterColor, shape=False)
+        if side == 1:
+            extra.colorize(jointList, self.majorLeftColor, shape=False)
+        if side == 2:
+            extra.colorize(jointList, self.majorRightColor, shape=False)
 
         return jointList, offsetVector
     
@@ -506,6 +550,13 @@ class initialJoints():
         jointList = [root, hip, knee, foot, ball, toe, bankout, bankin, toepv, heelpv]
         for i in jointList:
             pm.setAttr("%s.drawLabel" % i, 1)
+
+        if side == 0:
+            extra.colorize(jointList, self.majorCenterColor, shape=False)
+        if side == 1:
+            extra.colorize(jointList, self.majorLeftColor, shape=False)
+        if side == 2:
+            extra.colorize(jointList, self.majorRightColor, shape=False)
 
         return jointList, offsetVector
 
@@ -830,6 +881,14 @@ class initialJoints():
                 pass
         for r in fingerRoots:
             pm.setAttr(r.radius, 2)
+
+        if side == 0:
+            extra.colorize(jointList, self.majorCenterColor, shape=False)
+        if side == 1:
+            extra.colorize(jointList, self.majorLeftColor, shape=False)
+        if side == 2:
+            extra.colorize(jointList, self.majorRightColor, shape=False)
+
         return jointList, fingerRoots
 
     def initialNeck(self, transformKey, segments, suffix):
@@ -873,6 +932,8 @@ class initialJoints():
         jointList.append(headEnd)
 
         self.neckJointsList.append(jointList)
+
+        extra.colorize(jointList, self.majorCenterColor, shape=False)
         return jointList, offsetVector
 
     def initialTail(self, transformKey, side, segments, suffix):
@@ -907,6 +968,14 @@ class initialJoints():
             jointList.append(tail)
 
         self.tailJointsList.append(jointList)
+
+        if side == 0:
+            extra.colorize(jointList, self.majorCenterColor, shape=False)
+        if side == 1:
+            extra.colorize(jointList, self.majorLeftColor, shape=False)
+        if side == 2:
+            extra.colorize(jointList, self.majorRightColor, shape=False)
+
         return jointList, offsetVector
 
     def initialFinger(self,segments, transformKey, side, suffix, thumb=False):
@@ -945,6 +1014,14 @@ class initialJoints():
             jointList.append(finger)
 
         self.fingerJointsList.append(jointList)
+
+        if side == 0:
+            extra.colorize(jointList, self.majorCenterColor, shape=False)
+        if side == 1:
+            extra.colorize(jointList, self.majorLeftColor, shape=False)
+        if side == 2:
+            extra.colorize(jointList, self.majorRightColor, shape=False)
+
         return jointList, offsetVector
 
     def initialTentacle(self, transformKey, segments, side, suffix):
@@ -985,6 +1062,14 @@ class initialJoints():
             jointList.append(tentacle)
 
         self.tentacleJointsList.append(jointList)
+
+        if side == 0:
+            extra.colorize(jointList, self.majorCenterColor, shape=False)
+        if side == 1:
+            extra.colorize(jointList, self.majorLeftColor, shape=False)
+        if side == 2:
+            extra.colorize(jointList, self.majorRightColor, shape=False)
+
         return jointList, offsetVector
 
     def initHumanoid(self, spineSegments=3, neckSegments=3, fingers=5):
@@ -1003,6 +1088,9 @@ class initialJoints():
         self.initLimb("hand", "auto", fingerCount=fingers)
 
     def convertSelectionToInits(self, limbType, jointList=[], suffix="", whichside=""):
+
+        ## // TODO PAY ATTENTION HERE: THIS METHOD IS BROKEN
+
         ##
         ## get the selection
         if whichside == "left":

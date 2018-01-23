@@ -22,7 +22,7 @@ reload(root)
 
 class LimbBuilder():
 
-    def __init__(self):
+    def __init__(self, settingsData):
         # self.catalogueRoots(pm.ls(sl=True)[0])
         self.validRootList = ["Collar", "LegRoot", "Root", "SpineRoot", "NeckRoot", "TailRoot", "FingerRoot", "ThumbRoot", "IndexRoot", "MiddleRoot", "RingRoot", "PinkyRoot", "TentacleRoot"]
         # self.limbList = []

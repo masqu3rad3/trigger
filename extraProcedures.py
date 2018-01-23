@@ -244,7 +244,7 @@ def connectMirror (node1, node2, mirrorAxis="X"):
     # node2.translate.lock()
     # node2.rotate.lock()
     # pm.setAttr(node2.tx, lock=True)
-def colorize (node, index):
+def colorize (node, index, shape=True):
     """
     Changes the wire color of the node to the index
     Args:
@@ -270,10 +270,15 @@ def colorize (node, index):
             pm.error("Colorize error... Index flag must be integer or string('L', 'R', 'C')")
             return
         #shape=node.getShape()
-        shapes=pm.listRelatives(z, s=True)
-        for i in shapes:
-            pm.setAttr(i.overrideEnabled, True)
-            pm.setAttr(i.overrideColor, index)
+        if shape:
+            shapes=pm.listRelatives(z, s=True)
+            for i in shapes:
+                pm.setAttr(i.overrideEnabled, True)
+                pm.setAttr(i.overrideColor, index)
+        else:
+            for i in node:
+                pm.setAttr(i.overrideEnabled, True)
+                pm.setAttr(i.overrideColor, index)
 
 def lockAndHide (node, channelArray):
     """
