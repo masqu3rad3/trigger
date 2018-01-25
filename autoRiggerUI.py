@@ -889,10 +889,12 @@ class mainUI(QtWidgets.QMainWindow):
             self.infoPop(textTitle="Skipping action", textHeader="Selection needed", textInfo="You need to select at least one controller node. (transform node)")
             return
         for i in selection:
+            import extraTools as tools
+            reload(tools)
             oldController = str(i.name())
             objName=extra.uniqueName("cont_{0}".format(self.controllers_combobox.currentText()))
             newController = self.all_icon_functions[self.controllers_combobox.currentIndex()][1](name=objName, scale=(1,1,1))
-            extra.replaceController(mirrorAxis=self.initSkeleton.mirrorAxis, mirror=False, oldController=oldController, newController= newController, alignToCenter=self.controllers_checkbox.isChecked())
+            tools.replaceController(mirrorAxis=self.initSkeleton.mirrorAxis, mirror=False, oldController=oldController, newController= newController, alignToCenter=self.controllers_checkbox.isChecked())
             pm.select(oldController)
         pm.undoInfo(closeChunk=True)
 
@@ -906,6 +908,16 @@ class mainUI(QtWidgets.QMainWindow):
             oldController = extra.getMirror(i)
 
             if oldController:
+                tryChannels = ["tx", "ty", "tz", "rx", "ry", "rz"]
+                transformDict = {}
+                for i in tryChannels:
+                    keptdata = pm.getAttr("%s.%s" % (oldController, i))
+                    transformDict[i] = keptdata
+                    try:
+                        pm.setAttr("%s.%s" % (oldController, i), 0)
+                    except RuntimeError:
+                        pass
+
                 newController = pm.duplicate(pm.ls(sl=True))[0]
 
                 pm.setAttr(newController.tx, e=True, k=True, l=False)
@@ -930,6 +942,11 @@ class mainUI(QtWidgets.QMainWindow):
                 # pm.makeIdentity(newController, a=True)
                 pm.parent(newController, oldController)
                 extra.replaceController(mirrorAxis=self.initSkeleton.mirrorAxis, mirror=False, oldController=oldController, newController=newController, alignToCenter=self.controllers_checkbox.isChecked())
+                for i in tryChannels:
+                    try:
+                        pm.setAttr("%s.%s" % (oldController, i), transformDict[i])
+                    except RuntimeError:
+                        pass
 
         pm.undoInfo(closeChunk=True)
 
