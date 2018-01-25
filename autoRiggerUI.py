@@ -888,13 +888,14 @@ class mainUI(QtWidgets.QMainWindow):
         if not selection:
             self.infoPop(textTitle="Skipping action", textHeader="Selection needed", textInfo="You need to select at least one controller node. (transform node)")
             return
+        import extraTools as tools
+        reload(tools)
         for i in selection:
-            import extraTools as tools
-            reload(tools)
             oldController = str(i.name())
             objName=extra.uniqueName("cont_{0}".format(self.controllers_combobox.currentText()))
             newController = self.all_icon_functions[self.controllers_combobox.currentIndex()][1](name=objName, scale=(1,1,1))
-            tools.replaceController(mirrorAxis=self.initSkeleton.mirrorAxis, mirror=False, oldController=oldController, newController= newController, alignToCenter=self.controllers_checkbox.isChecked())
+            tools.replaceController(mirrorAxis=self.initSkeleton.mirrorAxis, mirror=False, oldController=oldController,
+                                    newController= newController, alignToCenter=self.controllers_checkbox.isChecked())
             pm.select(oldController)
         pm.undoInfo(closeChunk=True)
 
@@ -904,8 +905,8 @@ class mainUI(QtWidgets.QMainWindow):
         if not selection:
             self.infoPop(textTitle="Skipping action", textHeader="Selection needed", textInfo="You need to select at least one controller node. (transform node)")
             return
-        for i in selection:
-            oldController = extra.getMirror(i)
+        for sel in selection:
+            oldController = extra.getMirror(sel)
 
             if oldController:
                 tryChannels = ["tx", "ty", "tz", "rx", "ry", "rz"]
@@ -918,7 +919,9 @@ class mainUI(QtWidgets.QMainWindow):
                     except RuntimeError:
                         pass
 
-                newController = pm.duplicate(pm.ls(sl=True))[0]
+                # newController = pm.duplicate(pm.ls(sl=True))[0]
+                newController = pm.duplicate(sel)[0]
+
 
                 pm.setAttr(newController.tx, e=True, k=True, l=False)
                 pm.setAttr(newController.ty, e=True, k=True, l=False)

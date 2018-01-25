@@ -150,7 +150,7 @@ class NeckAndHead():
 
 
         ## Head Controller
-        headScale = (extra.getDistance(headStart, headEnd) / 3)
+        headScale = (extra.getDistance(headStart, headEnd) / 1)
         self.cont_head = icon.halfDome(name="cont_head_" + suffix, scale=(headScale, headScale, headScale), normal=(1,0,0))
         # extra.alignAndAim(self.cont_head, targetList=[headStart, headEnd], aimTargetList=[headEnd], upVector=self.spineDir, rotateOff=(90,-90,180))
         extra.alignAndAim(self.cont_head, targetList=[headStart, headEnd], aimTargetList=[headEnd], upVector=self.spineDir, rotateOff=(faceDir*-90,faceDir*-90,0))

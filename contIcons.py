@@ -313,53 +313,93 @@ def curvedCircle(name="cont_curvedCircle", scale=(1, 1, 1), location=None):
     pm.makeIdentity(cont_curvedCircle, a=True)
     return cont_curvedCircle
 
+# def halfDome(name="cont_halfDome", scale=(1,1,1), location=None, normal=(0,1,0)):
+#     """
+#     Creates a Half-Dome curve
+#     Args:
+#         name: (String) name of the controller
+#         scale: (Vector) Scale value as vector. example (1,1.5,1)
+#         location: (Vector) Optional Location as vector. example (12,0,2)
+#
+#     Returns:
+#         Controller node
+#     """
+#
+#     halfCurve=pm.curve(name=name, bezier=True, d=3, p=[(-2, 0, 0), (-2, 0, 0), (-2, 0, -2), (0, 0, -2), (2, 0, -2), (2, 0, 0), (2, 0, 0)],
+#              k=[0, 0, 0, 1, 1, 1, 2, 2, 2])
+#     halfCurveD1=pm.duplicate(halfCurve)
+#     pm.rotate(halfCurveD1, (90,0,0))
+#     pm.makeIdentity(halfCurveD1, a=True)
+#
+#     halfCurveD2 = pm.duplicate(halfCurve)
+#     pm.rotate(halfCurveD2, (180, 0, 0))
+#     pm.makeIdentity(halfCurveD2, a=True)
+#
+#     halfCurveD3 = pm.duplicate(halfCurveD1)
+#     pm.rotate(halfCurveD3, (0,90,0))
+#     pm.makeIdentity(halfCurveD3, a=True)
+#
+#     halfCurveD1Shape = halfCurveD1[0].getShape()
+#     halfCurveD2Shape = halfCurveD2[0].getShape()
+#     halfCurveD3Shape = halfCurveD3[0].getShape()
+#
+#     pm.parent(halfCurveD1Shape, halfCurve, r=True, s=True)
+#     pm.delete(halfCurveD1)
+#     pm.parent(halfCurveD2Shape, halfCurve, r=True, s=True)
+#     pm.delete(halfCurveD2)
+#     pm.parent(halfCurveD3Shape, halfCurve, r=True, s=True)
+#     pm.delete(halfCurveD3)
+#
+#     pm.setAttr(halfCurve.scale, scale)
+#     if location:
+#         pm.move(halfCurve, location)
+#     pm.makeIdentity(halfCurve, a=True)
+#     pm.select(d=True)
+#     if not normal == (0, 1, 0):
+#         pm.rotate(halfCurve, normal[0]*90, normal[1]*90, normal[2]*90)
+#         # pm.rotate(cont_Pole, (0,0,90))
+#         pm.makeIdentity(halfCurve, a=True)
+#     return halfCurve
+
 def halfDome(name="cont_halfDome", scale=(1,1,1), location=None, normal=(0,1,0)):
-    """
-    Creates a Half-Dome curve
-    Args:
-        name: (String) name of the controller
-        scale: (Vector) Scale value as vector. example (1,1.5,1)
-        location: (Vector) Optional Location as vector. example (12,0,2) 
 
-    Returns:
-        Controller node
-    """
+    cont_halfCurve= pm.curve(d=1, p=[(-2.98023e-008,0,1),(-0.309017,0,0.951057),(-0.587785,0,0.809017),
+                                  (-0.809017,0,0.587785),(-0.951057,0,0.309017),(-1,0,0),(-0.987689,0.156434,0),
+                                  (-0.951057,0.309017,0),(-0.891007,0.453991,0),(-0.809017,0.587785,0),
+                                  (-0.707107,0.707107,0),(-0.587785,0.809017,0),(-0.453991,0.891007,0),
+                                  (-0.309017,0.951057,0),(-0.156435,0.987688,0),(0,1,0),
+                                  (-4.66211e-009,0.987688,0.156434),(-9.20942e-009,0.951057,0.309017),
+                                  (-1.353e-008,0.891007,0.453991),(-1.75174e-008,0.809017,0.587785),
+                                  (-2.10734e-008,0.707107,0.707107),(-2.41106e-008,0.587785,0.809017),
+                                  (-2.65541e-008,0.453991,0.891007),(-2.83437e-008,0.309017,0.951057),
+                                  (-2.94354e-008,0.156434,0.987688),(-2.98023e-008,0,1),(0.309017,0,0.951057),
+                                  (0.587785,0,0.809017),(0.809017,0,0.587785),(0.951057,0,0.309017),(1,0,0),
+                                  (0.987688,0.156434,0),(0.951057,0.309017,0),(0.891007,0.453991,0),
+                                  (0.809017,0.587785,0),(0.707107,0.707107,0),(0.587785,0.809017,0),
+                                  (0.453991,0.891007,0),(0.309017,0.951057,0),(0.156434,0.987688,0),(0,1,0),
+                                  (0,0.987688,-0.156435),(0,0.951057,-0.309017),(0,0.891007,-0.453991),
+                                  (0,0.809017,-0.587786),(0,0.707107,-0.707107),(0,0.587785,-0.809017),
+                                  (0,0.453991,-0.891007),(0,0.309017,-0.951057),(0,0.156434,-0.987689),
+                                  (0,0,-1),(-0.309017,0,-0.951057),(-0.587785,0,-0.809017),(-0.809017,0,-0.587785),
+                                  (-0.951057,0,-0.309017),(-1,0,0),(-0.951057,0,-0.309017),(-0.809017,0,-0.587785),
+                                  (-0.587785,0,-0.809017),(-0.309017,0,-0.951057),(0,0,-1),(0.309017,0,-0.951057),
+                                  (0.587786,0,-0.809017),(0.809018,0,-0.587786),(0.951057,0,-0.309017),(1,0,0)],
+                          k=[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,
+                             31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,
+                             59,60,61,62,63,64,65])
 
-    halfCurve=pm.curve(name=name, bezier=True, d=3, p=[(-2, 0, 0), (-2, 0, 0), (-2, 0, -2), (0, 0, -2), (2, 0, -2), (2, 0, 0), (2, 0, 0)],
-             k=[0, 0, 0, 1, 1, 1, 2, 2, 2])
-    halfCurveD1=pm.duplicate(halfCurve)
-    pm.rotate(halfCurveD1, (90,0,0))
-    pm.makeIdentity(halfCurveD1, a=True)
-
-    halfCurveD2 = pm.duplicate(halfCurve)
-    pm.rotate(halfCurveD2, (180, 0, 0))
-    pm.makeIdentity(halfCurveD2, a=True)
-
-    halfCurveD3 = pm.duplicate(halfCurveD1)
-    pm.rotate(halfCurveD3, (0,90,0))
-    pm.makeIdentity(halfCurveD3, a=True)
-
-    halfCurveD1Shape = halfCurveD1[0].getShape()
-    halfCurveD2Shape = halfCurveD2[0].getShape()
-    halfCurveD3Shape = halfCurveD3[0].getShape()
-
-    pm.parent(halfCurveD1Shape, halfCurve, r=True, s=True)
-    pm.delete(halfCurveD1)
-    pm.parent(halfCurveD2Shape, halfCurve, r=True, s=True)
-    pm.delete(halfCurveD2)
-    pm.parent(halfCurveD3Shape, halfCurve, r=True, s=True)
-    pm.delete(halfCurveD3)
-
-    pm.setAttr(halfCurve.scale, scale)
+    # pm.setAttr(cont_Looper + ".scale", (0.333, 0.333, 0.333))
+    # pm.setAttr("%s.scale" % cont_halfCurve, (0.333, 0.333, 0.333))
+    pm.makeIdentity(cont_halfCurve, a=True, s=True)
+    pm.setAttr(cont_halfCurve.scale, scale)
     if location:
-        pm.move(halfCurve, location)
-    pm.makeIdentity(halfCurve, a=True)
-    pm.select(d=True)
+        pm.move(cont_halfCurve, location)
+    pm.makeIdentity(cont_halfCurve, a=True)
     if not normal == (0, 1, 0):
-        pm.rotate(halfCurve, normal[0]*90, normal[1]*90, normal[2]*90)
+        pm.rotate(cont_halfCurve, normal[0]*90, normal[1]*90, normal[2]*90)
         # pm.rotate(cont_Pole, (0,0,90))
-        pm.makeIdentity(halfCurve, a=True)
-    return halfCurve
+        pm.makeIdentity(cont_halfCurve, a=True)
+    return cont_halfCurve
 
 def looper(name="cont_looper", scale=(1,1,1), location=None, normal=(0,1,0)):
 

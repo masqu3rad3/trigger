@@ -88,6 +88,11 @@ def replaceController(mirror=True, mirrorAxis="X", keepOldShape=False, keepAcopy
     # pivotPoint = pm.xform(oldCont,q=True, t=True, ws=True)
     # pm.xform(newContDup, piv=pivotPoint, ws=True)
 
+
+    if not keepOldShape:
+        # pm.delete(oldCont.getShape())
+        pm.delete(pm.listRelatives(oldCont, shapes=True, children=True))
+
     pm.parent(newContDup.getShape(), oldCont, r=True, s=True)
 
     if mirror:
@@ -136,18 +141,19 @@ def replaceController(mirror=True, mirrorAxis="X", keepOldShape=False, keepAcopy
 
         # move the new controller to the old controllers place
         extra.alignToAlter(newContDupMirror, oldContMirror, mode=0)
-        pm.parent(newContDupMirror.getShape(), oldContMirror, r=True, s=True)
 
         if not keepOldShape:
-            pm.delete(oldContMirror.getShape())
+            # pm.delete(oldContMirror.getShape())
+            pm.delete(pm.listRelatives(oldContMirror, shapes=True, children=True))
+
+        pm.parent(newContDupMirror.getShape(), oldContMirror, r=True, s=True)
+
 
         for i in tryChannels:
             try:
                 pm.setAttr("%s.%s" % (oldContMirror, i), transformDict_mir[i])
             except RuntimeError:
                 pass
-    if not keepOldShape:
-        pm.delete(oldCont.getShape())
 
     for i in tryChannels:
         try:
