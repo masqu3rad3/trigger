@@ -38,13 +38,43 @@ class LimbBuilder():
         self.allSocketsList=[]
         self.limbCreationList = []
         self.riggedLimbList = []
-        self.projectName = "tikAutoRig"
+        self.rigName = "tikAutoRig"
         self.rootGroup = None
         # self.spineRes = 4
         # self.neckRes = 3
         # self.spineDropoff = 2.0
         # self.neckDropoff = 2.0
         # self.createAnchors = True
+        self.parseSettings(settingsData)
+
+    def parseSettings(self, settingsData):
+        # up=settingsData["upAxis"]
+        # look=settingsData["lookAxis"]
+        # if "-" in up:
+        #     self.upAxis=up.replace("-", "")
+        #     self.upAxisMult=-1
+        # if "+" in up:
+        #     self.upAxis=up.replace("+", "")
+        #     self.upAxisMult=1
+        # if "-" in look:
+        #     self.lookAxis=look.replace("-", "")
+        #     self.lookAxisMult=-1
+        # if "+" in look:
+        #     self.lookAxis=look.replace("+", "")
+        #     self.lookAxisMult=1
+        # self.mirrorAxis="xyz".replace(self.upAxis,"").replace(self.lookAxis,"")
+        # self.mirrorAxisMult=1
+
+        self.afterCreation = settingsData["afterCreation"]
+        self.seperateSelectionSets = settingsData["seperateSelectionSets"]
+
+        self.rigName = settingsData["rigName"]
+        self.majorLeftColor = settingsData["majorLeftColor"]
+        self.minorLeftColor = settingsData["minorLeftColor"]
+        self.majorRightColor = settingsData["majorRightColor"]
+        self.minorRightColor = settingsData["minorRightColor"]
+        self.majorCenterColor = settingsData["majorCenterColor"]
+        self.minorCenterColor = settingsData["minorCenterColor"]
 
     def startBuilding(self, createAnchors=False):
         # self.__init__()
@@ -56,10 +86,10 @@ class LimbBuilder():
             return
 
         ## Create the holder group if it does not exist
-        if not pm.objExists("{0}_rig".format(self.projectName)):
-            self.rootGroup = pm.group(name=("{0}_rig".format(self.projectName)), em=True)
+        if not pm.objExists("{0}_rig".format(self.rigName)):
+            self.rootGroup = pm.group(name=("{0}_rig".format(self.rigName)), em=True)
         else:
-            self.rootGroup = pm.PyNode("{0}_rig".format(self.projectName))
+            self.rootGroup = pm.PyNode("{0}_rig".format(self.rigName))
 
         # first initialize the dimensions for icon creation
         self.hipDistance, self.shoulderDistance = self.getDimensions(selection[0])
@@ -81,7 +111,7 @@ class LimbBuilder():
             pm.parent(contPos, self.rootGroup)
 
 
-    def createlimbs(self, limbCreationList=[], addLimb=False, seperateSelectionSets=False, *args, **kwargs):
+    def createlimbs(self, limbCreationList=[], addLimb=False, *args, **kwargs):
         """
         Creates limb with the order defined in the limbCreationList (which created with getLimbProperties)
         Args:
@@ -109,12 +139,16 @@ class LimbBuilder():
                 return
             limbCreationList = [self.getWholeLimb(referenceRoot)]
 
-        if not seperateSelectionSets:
+        j_def_set = None
+
+        if not self.seperateSelectionSets:
+            print "limbCreationList", limbCreationList
             pm.select(d=True)
-            if not pm.uniqueObjExists("def_jointsSet_%s" % self.projectName):
-                j_def_set = pm.sets(name="def_jointsSet_%s" % self.projectName)
+            if not pm.uniqueObjExists("def_jointsSet_%s" % self.rigName):
+                j_def_set = pm.sets(name="def_jointsSet_%s" % self.rigName)
             else:
-                j_def_set = pm.PyNode("def_jointsSet_%s" % self.projectName)
+                j_def_set = pm.PyNode("def_jointsSet_%s" % self.rigName)
+
 
         for x in limbCreationList:
             if x[2] == "R":
@@ -123,6 +157,12 @@ class LimbBuilder():
                 sideVal = "_LEFT_"
             else:
                 sideVal = "c"
+
+            # pm.select(d=True)
+            if self.seperateSelectionSets:
+                set_name = "def_%s_%s_Set" % (x[1], x[2])
+                set_name = extra.uniqueName(set_name)
+                j_def_set = pm.sets(name=set_name)
 
             ### LIMB CREATION HERE #####
             if x[1] == "arm":
@@ -184,10 +224,10 @@ class LimbBuilder():
 
                 ## Good parenting / scale connections
                 ## Create the holder group if it does not exist
-                if not pm.objExists("{0}_rig".format(self.projectName)):
-                    self.rootGroup = pm.group(name=("{0}_rig".format(self.projectName)), em=True)
+                if not pm.objExists("{0}_rig".format(self.rigName)):
+                    self.rootGroup = pm.group(name=("{0}_rig".format(self.rigName)), em=True)
                 else:
-                    self.rootGroup = pm.PyNode("{0}_rig".format(self.projectName))
+                    self.rootGroup = pm.PyNode("{0}_rig".format(self.rigName))
 
                 # pm.parent(limb.scaleGrp, self.rootGroup)
                 scaleGrpPiv = limb.limbPlug.getTranslation(space="world")
@@ -235,7 +275,8 @@ class LimbBuilder():
                     pm.scaleConstraint(self.cont_master, sCon)
 
             #
-            if not seperateSelectionSets:
+            # if not seperateSelectionSets:
+            if j_def_set:
                 pm.sets(j_def_set, add=limb.deformerJoints)
 
 
