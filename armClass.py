@@ -29,6 +29,7 @@ class Arm(object):
         self.anchorLocations = []
         self.j_def_collar = None
         self.deformerJoints = []
+        self.colorCodes = [6, 18]
         ## get the up axis
 
     ## This is a joint node and should be parented to another joint.
@@ -686,7 +687,7 @@ class Arm(object):
                              ribbon_upper_arm.scaleGrp, cont_mid_lock_pos
                              ]
         nodes_joint_vis = [j_def_elbow, self.j_def_collar, j_def_hand]
-        self.deformerJoints = [ribbon_lower_arm.deformerJoints, ribbon_upper_arm.deformerJoints, nodes_joint_vis]
+        self.deformerJoints = ribbon_lower_arm.deformerJoints + ribbon_upper_arm.deformerJoints + nodes_joint_vis
         nodes_rig_vis = [end_lock_twist, start_lock_ore, arm_start, arm_end, ik_parent_grp, mid_lock, master_root,
                          j_fk_up, hand_lock, root_master.getShape(), pacon_locator_shou.getShape()
                          ]
@@ -696,8 +697,7 @@ class Arm(object):
 
         # global Joint visibilities
         for lst in self.deformerJoints:
-            for j in lst:
-                self.scaleGrp.jointVis >> j.v
+            self.scaleGrp.jointVis >> lst.v
 
         # global Rig visibilities
         for i in nodes_rig_vis:
@@ -719,16 +719,18 @@ class Arm(object):
         extra.lockAndHide(cont_fk_up_arm, ["tx", "ty", "tz", "sx", "sz", "v"])
         extra.lockAndHide(cont_shoulder, ["sx", "sy", "sz", "v"])
 
-        extra.colorize(cont_shoulder, side)
-        extra.colorize(self.cont_IK_hand, side)
-        extra.colorize(self.cont_Pole, side)
-        extra.colorize(cont_fk_ik, side)
-        extra.colorize(cont_fk_up_arm, side)
-        extra.colorize(cont_fk_low_arm, side)
-        extra.colorize(cont_fk_hand, side)
-        extra.colorize(cont_mid_lock, "%sMIN" % side)
-        extra.colorize(ribbon_upper_arm.middleCont, "%sMIN" % side)
-        extra.colorize(ribbon_lower_arm.middleCont, "%sMIN" % side)
+        extra.colorize(cont_shoulder, self.colorCodes[0])
+        extra.colorize(self.cont_IK_hand, self.colorCodes[0])
+        extra.colorize(self.cont_Pole, self.colorCodes[0])
+        extra.colorize(cont_fk_ik, self.colorCodes[0])
+        extra.colorize(cont_fk_up_arm, self.colorCodes[0])
+        extra.colorize(cont_fk_low_arm, self.colorCodes[0])
+        extra.colorize(cont_fk_hand, self.colorCodes[0])
+        extra.colorize(cont_mid_lock, self.colorCodes[1])
+        extra.colorize(ribbon_upper_arm.middleCont, self.colorCodes[1])
+        extra.colorize(ribbon_lower_arm.middleCont, self.colorCodes[1])
+
+        extra.colorize(self.deformerJoints, self.colorCodes[0], shape=False)
 
         self.scaleConstraints = [self.scaleGrp, self.cont_IK_OFF]
         self.anchors = [(self.cont_IK_hand, "parent", 1, None), (self.cont_Pole, "parent", 1, None)]

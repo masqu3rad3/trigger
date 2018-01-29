@@ -30,6 +30,7 @@ class Tentacle(object):
         self.scaleConstraints = []
         self.anchors = []
         self.anchorLocations = []
+        self.colorCodes = [6, 18]
 
     def createTentacle(self, inits,
                        suffix="",
@@ -437,9 +438,11 @@ class Tentacle(object):
         # for i in contTwk_List:
         #     extra.colorize(i, side)
 
-        extra.colorize(contFK_List, side)
-        extra.colorize(contTwk_List, side)
-        extra.colorize(cont_special, side)
+        extra.colorize(contFK_List, self.colorCodes[0])
+        extra.colorize(contTwk_List, self.colorCodes[0])
+        extra.colorize(cont_special, self.colorCodes[0])
+
+        extra.colorize(self.deformerJoints, self.colorCodes[0], shape=False)
 
         self.scaleConstraints = [self.scaleGrp]
 

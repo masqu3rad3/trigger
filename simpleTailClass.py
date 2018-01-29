@@ -23,6 +23,7 @@ class SimpleTail(object):
         self.anchors = []
         self.anchorLocations = []
         self.deformerJoints = []
+        self.colorCodes = [6, 18]
 
     def createSimpleTail(self, inits, suffix="", side="C", conts="cube"):
         if not isinstance(inits, list):
@@ -158,8 +159,10 @@ class SimpleTail(object):
         # elif side == "L":
         #     index = 6
         #     indexMin = 18
-        for i in contList:
-            extra.colorize(i, side)
+        # for i in contList:
+        #     extra.colorize(i, self.colorCodes[0])
+        extra.colorize(contList, self.colorCodes[0])
+        extra.colorize(self.deformerJoints, self.colorCodes[0], shape=False)
 
 
 

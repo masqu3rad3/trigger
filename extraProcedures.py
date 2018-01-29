@@ -290,6 +290,7 @@ def lockAndHide (node, channelArray):
     Returns: None
 
     """
+    ## // TODO OPTIMIZE HERE (map function?)
     for i in channelArray:
         attribute=("{0}.{1}".format(node, i))
         pm.setAttr(attribute, lock=True, keyable=False, channelBox=False)

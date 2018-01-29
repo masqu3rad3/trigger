@@ -77,6 +77,16 @@ class LimbBuilder():
         self.minorCenterColor = settingsData["minorCenterColor"]
 
     def startBuilding(self, createAnchors=False):
+        """
+        Main method for rig creation. Using the other methods it builds the rig, make the connections.
+        This is the first and final step at rig creation.
+        Args:
+            createAnchors: (Bool) If true, it attempts to build the anchors based on the limb settings.
+                            Default: False
+
+        Returns: None
+
+        """
         # self.__init__()
 
 
@@ -109,6 +119,13 @@ class LimbBuilder():
             pm.parentConstraint(socket, contPos, mo=True)
             pm.scaleConstraint(self.cont_master, contPos)
             pm.parent(contPos, self.rootGroup)
+
+        if self.afterCreation == 1:
+            # if the After Creation set to 'Hide Initial Joints'
+            pm.hide(selection)
+        if self.afterCreation == 2:
+            # if the After Creation set to 'Delete Initial Joints'
+            pm.delete(selection)
 
 
     def createlimbs(self, limbCreationList=[], addLimb=False, *args, **kwargs):
@@ -153,10 +170,13 @@ class LimbBuilder():
         for x in limbCreationList:
             if x[2] == "R":
                 sideVal = "_RIGHT_"
+                colorCodes = [self.majorRightColor, self.majorLeftColor]
             elif x[2] == "L":
                 sideVal = "_LEFT_"
+                colorCodes = [self.majorLeftColor, self.minorLeftColor]
             else:
                 sideVal = "c"
+                colorCodes = [self.majorCenterColor, self.minorCenterColor]
 
             # pm.select(d=True)
             if self.seperateSelectionSets:
@@ -171,6 +191,7 @@ class LimbBuilder():
                 if x[2] == "R":
                     self.leftShoulder = x[0]["Shoulder"]
                 limb = arm.Arm()
+                limb.colorCodes = colorCodes
                 limb.createarm(x[0], suffix="%s_Arm" %sideVal, side=x[2])
 
             elif x[1] == "leg":
@@ -180,18 +201,22 @@ class LimbBuilder():
                     self.rightHip = x[0]["Hip"]
 
                 limb = leg.Leg()
+                limb.colorCodes = colorCodes
                 limb.createleg(x[0], suffix="%s_Leg" %sideVal, side=x[2])
 
             elif x[1] == "neck":
                 limb = neckAndHead.NeckAndHead()
+                limb.colorCodes = colorCodes
                 limb.createNeckAndHead(x[0], suffix="NeckAndHead", resolution=x[0]["resolution"], dropoff=x[0]["dropoff"])
 
             elif x[1] == "spine":
                 limb = spine.Spine()
+                limb.colorCodes = colorCodes
                 limb.createSpine(x[0], suffix="Spine", resolution=x[0]["resolution"], dropoff=x[0]["dropoff"])  # s for spine...
 
             elif x[1] == "tail":
                 limb = simpleTail.SimpleTail()
+                limb.colorCodes = colorCodes
                 limb.createSimpleTail(x[0], suffix="%s_Tail" %sideVal, side=x[2])
 
             elif x[1] == "finger":
@@ -204,14 +229,17 @@ class LimbBuilder():
                             parentController = self.fingerMatchConts[index][0]
 
                 limb = finger.Fingers()
+                limb.colorCodes = colorCodes
                 limb.createFinger(x[0], suffix=sideVal, side=x[2], parentController=parentController)
 
             elif x[1] == "tentacle":
                 limb = tentacle.Tentacle()
+                limb.colorCodes = colorCodes
                 limb.createTentacle(x[0], suffix="%s_Tentacle" % x[2], side=x[2], npResolution=x[0]["contRes"], jResolution = x[0]["jointRes"], blResolution = x[0]["deformerRes"], dropoff = x[0]["dropoff"])
 
             elif x[1] == "root":
                 limb = root.Root()
+                limb.colorCodes = colorCodes
                 limb.createRoot(x[0], suffix="Toot")
 
             else:

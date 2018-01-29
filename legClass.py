@@ -27,6 +27,7 @@ class Leg(object):
         self.anchorLocations = []
         self.jDef_legRoot = None
         self.deformerJoints = []
+        self.colorCodes = [6, 18]
 
     def createleg(self, leginits, suffix="", side="L"):
         # suffix = (extra.uniqueName("scaleGrp_%s" % suffix)).replace("scaleGrp_", "")
@@ -886,7 +887,7 @@ class Leg(object):
         nodes_cont_vis = [cont_pole_off, cont_thigh_off, self.cont_IK_OFF , cont_fk_foot_off, cont_midLock_pos, cont_fk_ik_pos,
                         cont_fk_ball_off, cont_fk_low_leg_off, cont_fk_up_leg_off, ribbon_upper_leg.scaleGrp, ribbon_lower_leg.scaleGrp]
         nodes_joint_vis = [j_def_midLeg, j_def_ball, j_def_foot, self.jDef_legRoot, j_def_toe, j_def_hip]
-        self.deformerJoints = [ribbon_upper_leg.deformerJoints, ribbon_lower_leg.deformerJoints, nodes_joint_vis]
+        self.deformerJoints = ribbon_upper_leg.deformerJoints + ribbon_lower_leg.deformerJoints + nodes_joint_vis
         nodes_rig_vis = [end_lock_ore, start_lock_ore, leg_start, leg_end, ik_parent_grp, mid_lock]
 
         # Cont visibilities
@@ -895,8 +896,7 @@ class Leg(object):
 
         # global joint visibilities
         for lst in self.deformerJoints:
-            for j in lst:
-                self.scaleGrp.jointVis >> j.v
+            self.scaleGrp.jointVis >> lst.v
 
         # Rig Visibilities
         for i in nodes_rig_vis:
@@ -920,17 +920,19 @@ class Leg(object):
 
         # # COLOR CODING
 
-        extra.colorize(cont_thigh, side)
-        extra.colorize(self.cont_IK_foot, side)
-        extra.colorize(cont_fk_ik, side)
-        extra.colorize(cont_fk_up_leg, side)
-        extra.colorize(cont_fk_low_leg, side)
-        extra.colorize(cont_fk_foot, side)
-        extra.colorize(cont_fk_ball, side)
+        extra.colorize(cont_thigh, self.colorCodes[0])
+        extra.colorize(self.cont_IK_foot, self.colorCodes[0])
+        extra.colorize(cont_fk_ik, self.colorCodes[0])
+        extra.colorize(cont_fk_up_leg, self.colorCodes[0])
+        extra.colorize(cont_fk_low_leg, self.colorCodes[0])
+        extra.colorize(cont_fk_foot, self.colorCodes[0])
+        extra.colorize(cont_fk_ball, self.colorCodes[0])
 
-        extra.colorize(cont_mid_lock, "%sMIN" % side)
-        extra.colorize(ribbon_upper_leg.middleCont, "%sMIN" % side)
-        extra.colorize(ribbon_lower_leg.middleCont, "%sMIN" % side)
+        extra.colorize(cont_mid_lock, self.colorCodes[1])
+        extra.colorize(ribbon_upper_leg.middleCont, self.colorCodes[1])
+        extra.colorize(ribbon_lower_leg.middleCont, self.colorCodes[1])
+
+        extra.colorize(self.deformerJoints, self.colorCodes[0], shape=False)
 
         # # GOOD RIDDANCE
         pm.delete(foot_plane)

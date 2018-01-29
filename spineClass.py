@@ -31,6 +31,7 @@ class Spine(object):
         self.upAxis = None
         self.spineDir = None
         self.deformerJoints = []
+        self.colorCodes = [17, 20]
 
 
     def createSpine(self, inits, suffix="", resolution=4, dropoff=2.0):
@@ -246,13 +247,17 @@ class Spine(object):
         indexIK = 20
         indexFKA = 30
         indexFKB = 31
-        extra.colorize(self.cont_body, index)
-        extra.colorize(self.cont_chest, index)
-        extra.colorize(self.cont_hips, index)
-        for i in cont_spineFK_A_List:
-            extra.colorize(i, indexFKA)
-        for i in cont_spineFK_B_List:
-            extra.colorize(i, indexFKB)
+        extra.colorize(self.cont_body, self.colorCodes[0])
+        extra.colorize(self.cont_chest, self.colorCodes[0])
+        extra.colorize(self.cont_hips, self.colorCodes[0])
+        # for i in cont_spineFK_A_List:
+        #     extra.colorize(i, self.colorCodes[0])
+        # for i in cont_spineFK_B_List:
+        #     extra.colorize(i, self.colorCodes[1])
+        extra.colorize(cont_spineFK_A_List, self.colorCodes[0])
+        extra.colorize(cont_spineFK_B_List, self.colorCodes[1])
+
+        extra.colorize(self.deformerJoints, self.colorCodes[0], shape=False)
 
         self.scaleGrp = spine.scaleGrp
         pm.parent(self.startSocket, self.scaleGrp)

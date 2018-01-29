@@ -34,6 +34,7 @@ class NeckAndHead():
         self.anchors = []
         self.anchorLocations = []
         self.deformerJoints = []
+        self.colorCodes = [17, 20]
 
     def createNeckAndHead(self, inits, suffix="", resolution=3, dropoff=1):
 
@@ -203,7 +204,7 @@ class NeckAndHead():
         extra.alignTo(self.neckRootLoc, neckNodes[0])
 
         neckSpline = twistSpline.TwistSpline()
-        neckSpline.createTspline(neckNodes+[headStart], "neckSplineIK_"+suffix, resolution, dropoff=dropoff, mode=splineMode, twistType=twistType)
+        neckSpline.createTspline(neckNodes+[headStart], "neckSplineIK_"+suffix, resolution, dropoff=dropoff, mode=splineMode, twistType=twistType, colorCode=self.colorCodes[1])
         for i in neckSpline.defJoints:
             self.sockets.append(i)
         # # Connect neck start to the neck controller
@@ -223,7 +224,7 @@ class NeckAndHead():
 
         # create spline IK for Head squash
         headSpline = twistSpline.TwistSpline()
-        headSpline.createTspline([headStart, headEnd], "headSquashSplineIK_"+suffix, 3, dropoff=2,  mode=splineMode, twistType=twistType)
+        headSpline.createTspline([headStart, headEnd], "headSquashSplineIK_"+suffix, 3, dropoff=2,  mode=splineMode, twistType=twistType, colorCode=self.colorCodes[1])
         for i in headSpline.defJoints:
             self.sockets.append(i)
 
@@ -355,7 +356,6 @@ class NeckAndHead():
             for i in lst:
                 self.scaleGrp.rigVis >> i.v
 
-        # //TODO
 
         #### FOOL PROOF
         # extra.lockAndHide(cont_headSquash, ["sx", "sy", "sz", "v"])
@@ -363,10 +363,12 @@ class NeckAndHead():
         # extra.lockAndHide(self.cont_neck, ["tx", "ty", "tz", "v"])
 
         # COLORIZE
-        index = 17
-        extra.colorize(self.cont_head, index)
-        extra.colorize(self.cont_neck, index)
-        extra.colorize(cont_headSquash, index)
+        # index = 17
+        extra.colorize(self.cont_head, self.colorCodes[0])
+        extra.colorize(self.cont_neck, self.colorCodes[0])
+        extra.colorize(cont_headSquash, self.colorCodes[1])
+
+        extra.colorize(self.deformerJoints, self.colorCodes[0], shape=False)
 
         self.scaleConstraints = [self.scaleGrp, self.cont_IK_OFF]
         self.anchorLocations = [self.cont_neck, self.cont_head]

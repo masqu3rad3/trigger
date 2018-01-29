@@ -13,6 +13,7 @@ class Root(object):
         self.anchors = []
         self.anchorLocations = []
         self.deformerJoints = []
+        self.colorCodes = []
 
     def createRoot(self, inits, suffix=""):
         """
@@ -54,6 +55,8 @@ class Root(object):
 
         defJ_root = pm.joint(name="jDef_{0}".format(suffix))
         extra.alignTo(defJ_root, rootInit)
+
+        extra.colorize(defJ_root, self.colorCodes[0])
         self.limbPlug = defJ_root
         self.sockets.append(defJ_root)
         self.deformerJoints.append(defJ_root)

@@ -21,6 +21,7 @@ class Fingers(object):
         self.scaleConstraints = []
         self.anchors = []
         self.anchorLocations = []
+        self.colorCodes = [6, 18]
 
     rootMaster = None
     allControllers = []
@@ -72,6 +73,7 @@ class Fingers(object):
         conts_OFF = []
         conts_ORE = []
         contList = []
+        contConList = []
 
         for i in range(0, len(self.deformerJoints)-1):
             contScl = (pm.getAttr(self.deformerJoints[1].tx) / 2)
@@ -91,7 +93,8 @@ class Fingers(object):
                 pm.parent(cont_OFF, self.conts[len(self.conts)-1])
                 pm.makeIdentity(cont, a=True)
             self.conts.append(cont)
-            contList.append(cont_con)
+            contList.append(cont)
+            contConList.append(cont_con)
 
             pm.parentConstraint(cont, self.deformerJoints[i], mo=True)
 
@@ -111,8 +114,8 @@ class Fingers(object):
         pm.setAttr(sprMult.input1Y, 0.4)
         pm.connectAttr("%s.%s" %(parentController,spreadAttr), sprMult.input2Y)
 
-        sprMult.outputY >> contList[0].rotateY
-        pm.connectAttr("%s.%s" % (parentController, spreadAttr), contList[1].rotateY)
+        sprMult.outputY >> contConList[0].rotateY
+        pm.connectAttr("%s.%s" % (parentController, spreadAttr), contConList[1].rotateY)
 
         # Bend
         # add bend attributes for each joint (except the end joint)
@@ -123,10 +126,11 @@ class Fingers(object):
                 bendAttr = "{0}{1}{2}".format(suffix, "Bend", f)
 
             pm.addAttr(parentController, shortName=bendAttr, defaultValue=0.0, at="float", k=True)
-            pm.PyNode("{0}.{1}".format(parentController, bendAttr)) >> contList[f].rotateZ
+            pm.PyNode("{0}.{1}".format(parentController, bendAttr)) >> contConList[f].rotateZ
 
         pm.parent(self.scaleGrp, self.nonScaleGrp, self.cont_IK_OFF, self.limbGrp)
-        extra.colorize(contList, side)
+        extra.colorize(contList, self.colorCodes[0])
+        extra.colorize(self.deformerJoints, self.colorCodes[0], shape=False)
         pm.parentConstraint(self.limbPlug, conts_OFF[0], mo=True)
 
 
