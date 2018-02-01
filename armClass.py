@@ -534,12 +534,15 @@ class Arm(object):
 
         # ribbonConnections_upperArm = rc..createRibbon(shoulder_ref, elbow_ref, "up_" + suffix, 0)
         ribbon_upper_arm = rc.Ribbon()
-        ribbon_upper_arm.createRibbon(shoulder_ref, elbow_ref, "up_%s" % suffix, 0)
+        ribbon_upper_arm.createRibbon(shoulder_ref, elbow_ref, "up_%s" % suffix, 0, connectStartAim=False)
         ribbon_start_pa_con_upper_arm_start = pm.parentConstraint(start_lock, ribbon_upper_arm.startConnection, mo=True)
         pm.parentConstraint(mid_lock, ribbon_upper_arm.endConnection, mo=True)
 
         pm.scaleConstraint(self.scaleGrp, ribbon_upper_arm.scaleGrp)
 
+        ribbon_start_ori_con = pm.orientConstraint(j_ik_orig_up, j_fk_up, ribbon_upper_arm.startAim, mo=False)
+        cont_fk_ik.fk_ik >> ("%s.%sW0" %(ribbon_start_ori_con, j_ik_orig_up))
+        fk_ik_rvs.outputX >> ("%s.%sW1" %(ribbon_start_ori_con, j_fk_up))
 
         # AUTO AND MANUAL TWIST
 

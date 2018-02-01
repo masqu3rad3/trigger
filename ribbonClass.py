@@ -17,14 +17,17 @@ reload(icon)
 
 class Ribbon():
 
-    startConnection = None
-    endConnection = None
-    scaleGrp = None
-    nonScaleGrp = None
-    deformerJoints = None
-    middleCont = None
-    toHide = None
-    def createRibbon(self, startPoint, endPoint, name, orientation, rResolution=5, jResolution=5.0):
+    def __init__(self):
+        self.startConnection = None
+        self.endConnection = None
+        self.scaleGrp = None
+        self.nonScaleGrp = None
+        self.deformerJoints = None
+        self.middleCont = None
+        self.toHide = None
+        self.startAim = None
+
+    def createRibbon(self, startPoint, endPoint, name, orientation, rResolution=5, jResolution=5.0, connectStartAim=True):
 
         name=(extra.uniqueName("RBN_ScaleGrp_" + name)).replace("RBN_ScaleGrp_", "")
 
@@ -80,8 +83,8 @@ class Ribbon():
         ##
         #Start Upnodes
         pm.select(d=True)
-        start_AIM=pm.group(em=True, name="jRbn_Start_"+name)
-        pm.move(start_AIM, (-(ribbonLength/2.0),0,0))
+        self.startAim=pm.group(em=True, name="jRbn_Start_"+name)
+        pm.move(self.startAim, (-(ribbonLength/2.0),0,0))
         pm.makeIdentity(a=True)
         start_UP=pm.spaceLocator(name="jRbn_Start_"+name)
         self.toHide.append(start_UP.getShape())
@@ -92,10 +95,11 @@ class Ribbon():
         pm.move(self.startConnection, (-(ribbonLength / 2.0), 0, 0))
         pm.makeIdentity(a=True)
 
-        pm.parent(start_AIM, start_UP, self.startConnection)
+        pm.parent(self.startAim, start_UP, self.startConnection)
 
-        pm.parent(startJoint,start_AIM)
-        pm.aimConstraint(middleJoint,start_AIM, aimVector=(1,0,0), upVector=(0,1,0), wut=1, wuo=start_UP, mo=False)
+        pm.parent(startJoint,self.startAim)
+        if connectStartAim:
+            pm.aimConstraint(middleJoint,self.startAim, aimVector=(1,0,0), upVector=(0,1,0), wut=1, wuo=start_UP, mo=False)
 
         #End Upnodes
         pm.select(d=True)

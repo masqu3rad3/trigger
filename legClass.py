@@ -747,12 +747,16 @@ class Leg(object):
         # UPPERLEG RIBBON
 
         ribbon_upper_leg = rc.Ribbon()
-        ribbon_upper_leg.createRibbon(hip_ref, knee_ref, "up_%s" % suffix, -90)
+        ribbon_upper_leg.createRibbon(hip_ref, knee_ref, "up_%s" % suffix, -90, connectStartAim=False)
 
         ribbon_start_pa_con_upper_leg_start = pm.parentConstraint(start_lock, ribbon_upper_leg.startConnection, mo=True)
         ribbon_start_pa_con_upper_leg_end = pm.parentConstraint(mid_lock, ribbon_upper_leg.endConnection, mo=True)
 
         pm.scaleConstraint(self.scaleGrp, ribbon_upper_leg.scaleGrp)
+
+        ribbon_start_ori_con = pm.orientConstraint(j_ik_orig_root, jfk_root, ribbon_upper_leg.startAim, mo=False)
+        cont_fk_ik.fk_ik >> ("%s.%sW0" %(ribbon_start_ori_con, j_ik_orig_root))
+        fk_ik_rvs.outputX >> ("%s.%sW1" %(ribbon_start_ori_con, jfk_root))
 
         # AUTO AND MANUAL TWIST
 
