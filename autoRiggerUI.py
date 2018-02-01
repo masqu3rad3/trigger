@@ -901,6 +901,8 @@ class mainUI(QtWidgets.QMainWindow):
 
     def onMirrorController(self):
         pm.undoInfo(openChunk=True)
+        import extraTools as tools
+        reload(tools)
         selection = pm.ls(sl=True)
         if not selection:
             self.infoPop(textTitle="Skipping action", textHeader="Selection needed", textInfo="You need to select at least one controller node. (transform node)")
@@ -944,7 +946,7 @@ class mainUI(QtWidgets.QMainWindow):
 
                 # pm.makeIdentity(newController, a=True)
                 pm.parent(newController, oldController)
-                extra.replaceController(mirrorAxis=self.initSkeleton.mirrorAxis, mirror=False, oldController=oldController, newController=newController, alignToCenter=self.controllers_checkbox.isChecked())
+                tools.replaceController(mirrorAxis=self.initSkeleton.mirrorAxis, mirror=False, oldController=oldController, newController=newController, alignToCenter=self.controllers_checkbox.isChecked())
                 for i in tryChannels:
                     try:
                         pm.setAttr("%s.%s" % (oldController, i), transformDict[i])

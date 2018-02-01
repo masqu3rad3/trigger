@@ -262,6 +262,6 @@ class Spine(object):
         self.scaleGrp = spine.scaleGrp
         pm.parent(self.startSocket, self.scaleGrp)
         self.scaleConstraints.extend([self.scaleGrp, cont_Body_POS])
-        self.anchorLocations = [self.cont_hips, self.cont_chest]
+        self.anchorLocations = [self.cont_hips, self.cont_body, self.cont_chest]
 
 

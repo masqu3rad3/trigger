@@ -448,4 +448,19 @@ def pyramid(name="cont_pyramid", scale=(1,1,1), location=None, normal=(0,1,0)):
         pm.makeIdentity(cont_Pyramid, a=True)
     return cont_Pyramid
 
+def diamond(name="cont_diamond", scale=(1,1,1), location=None, normal=(0,1,0)):
+    cont_diamond = pm.curve(d=1, p=[(0.341725, 0, 1.051722), (1.105846, 0, 0), (0, 0.962601, 0), (0.341725, 0, 1.051722), (0, -0.962601, 0), (1.105846, 0, 0), (0.341725, 0, -1.051722), (0, 0.962601, 0), (-0.894648, 0, -0.65),
+                     (0, -0.962601, 0), (0.341725, 0, -1.051722), (-0.894648, 0, -0.65), (-0.894648, 0, 0.65), (0.341725, 0, 1.051722), (0, -0.962601, 0), (-0.894648, 0, 0.65), (0, 0.962601, 0)],
+             k=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])
+    pm.makeIdentity(cont_diamond, a=True, s=True)
+    pm.setAttr(cont_diamond.scale, scale)
+    if location:
+        pm.move(cont_diamond, location)
+    pm.makeIdentity(cont_diamond, a=True)
+    if not normal == (1, 0, 0):
+        pm.rotate(cont_diamond, normal[0]*90, normal[1]*90, normal[2]*90)
+        # pm.rotate(cont_Pole, (0,0,90))
+        pm.makeIdentity(cont_diamond, a=True)
+    return cont_diamond
+
 

@@ -629,9 +629,12 @@ class Leg(object):
         pm.pointConstraint(start_lock, jfk_root, mo=False)
 
         pm.orientConstraint(cont_fk_low_leg, jfk_knee, mo=True)
-        # pm.orientConstraint(cont_fk_foot, jfk_foot, mo=True)
-        pm.orientConstraint(cont_fk_foot, jfk_foot, mo=False)
+        pm.orientConstraint(cont_fk_foot, jfk_foot, mo=True)
+        # pm.orientConstraint(cont_fk_foot, jfk_foot, mo=False)
         pm.parentConstraint(cont_fk_ball, jfk_ball, mo=True)
+        # pm.parentConstraint(cont_fk_ball, jfk_ball, mo=False)
+
+        # pm.parentConstraint(tor)
 
         pm.parentConstraint(cont_thigh, cont_fk_up_leg_off, sr=("x", "y", "z"), mo=True)
         pm.parentConstraint(cont_fk_up_leg, cont_fk_low_leg_off, mo=True)
