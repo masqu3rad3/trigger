@@ -1095,10 +1095,13 @@ class initialJoints():
         ## get the selection
         if whichside == "left":
             side = 1
+            extra.colorize(jointList, self.majorLeftColor, shape=False)
         elif whichside == "right":
             side = 2
+            extra.colorize(jointList, self.majorRightColor, shape=False)
         else:
             side = 0
+            extra.colorize(jointList, self.majorCenterColor, shape=False)
 
         self.createAxisAttributes(jointList[0])
 
@@ -1149,11 +1152,13 @@ class initialJoints():
                 # newName = "jInit_tail_%s_%s" % (suffix, str(j))
                 pm.select(jointList[j])
                 # pm.rename(jointList[j], newName)
-                pm.setAttr("%.side" % jointList[j], 0)
+                print "JJ", jointList[j], side
+                pm.setAttr("%s.side" % jointList[j], side)
                 pm.setAttr("%s.drawLabel" % jointList[j], 1)
+
                 ## if it is the first selection
                 if j == 0:
-                    pm.setAttr("%.type" % jointList[j], 18)
+                    pm.setAttr("%s.type" % jointList[j], 18)
                     pm.setAttr("%s.otherType" % jointList[j], "TailRoot")
                     # pm.setAttr(jointList[j].radius, 3)
                 else:
@@ -1250,8 +1255,12 @@ class initialJoints():
                     pm.setAttr("%s.type" % jointList[i], 18)
                     pm.setAttr("%s.otherType" % jointList[i], "FingerRoot")
                     pm.setAttr("%s.drawLabel" % jointList[i], 1)
+                    if not pm.attributeQuery("fingerType", node=jointList[j], exists=True):
+                        pm.addAttr(jointList[i], shortName="fingerType", longName="Finger_Type", at="enum",
+                               en="Extra:Thumb:Index:Middle:Ring:Pinky:Toe", k=True)
                 else:
-                    pm.setAttr("%s.type" % jointList[i], 23)
+                    # pm.setAttr("%s.type" % jointList[i], 23)
+                    pm.setAttr("%s.type" % jointList[i], 13)
 
         if limbType == "tentacle":
             if not len(jointList) > 1:
