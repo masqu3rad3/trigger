@@ -112,9 +112,17 @@ class Arm(object):
         self.cont_IK_hand = icon.circle("cont_IK_hand_%s" % suffix, ik_cont_scale, normal=(1, 0, 0))
         extra.alignAndAim(self.cont_IK_hand, targetList=[hand_ref], aimTargetList=[elbow_ref], upVector=up_axis,
                           rotateOff=(0, -180, 0))
+        # extra.alignAndAim(self.cont_IK_hand, targetList=[hand_ref], aimTargetList=[elbow_ref], upVector=up_axis)
+
+
         self.cont_IK_OFF = extra.createUpGrp(self.cont_IK_hand, "OFF")
         cont_ik_hand_ore = extra.createUpGrp(self.cont_IK_hand, "ORE")
         cont_ik_hand_pos = extra.createUpGrp(self.cont_IK_hand, "POS")
+
+        # EXperimental
+        if side == "R":
+            pm.setAttr("{0}.s{1}".format(cont_ik_hand_pos, "x"), -1)
+        # Experimental
 
         pm.addAttr(shortName="polevector", longName="Pole_Vector", defaultValue=0.0, minValue=0.0, maxValue=1.0,
                    at="double", k=True)
