@@ -540,7 +540,9 @@ class Arm(object):
 
         pm.scaleConstraint(self.scaleGrp, ribbon_upper_arm.scaleGrp)
 
-        ribbon_start_ori_con = pm.orientConstraint(j_ik_orig_up, j_fk_up, ribbon_upper_arm.startAim, mo=False)
+        # ribbon_start_ori_con = pm.orientConstraint(j_ik_orig_up, j_fk_up, ribbon_upper_arm.startAim, mo=False)
+        ribbon_start_ori_con = pm.parentConstraint(j_ik_orig_up, j_fk_up, ribbon_upper_arm.startAim, mo=True,
+                                                   skipTranslate=["x", "y", "z"])
         cont_fk_ik.fk_ik >> ("%s.%sW0" %(ribbon_start_ori_con, j_ik_orig_up))
         fk_ik_rvs.outputX >> ("%s.%sW1" %(ribbon_start_ori_con, j_fk_up))
 
