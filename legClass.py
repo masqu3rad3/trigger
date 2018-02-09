@@ -815,8 +815,8 @@ class Leg(object):
         self.sockets.append(j_def_toe)
 
         foot_pa_con = pm.parentConstraint(j_ik_foot, jfk_foot, j_def_foot, mo=True)
-        ball_pa_con = pm.parentConstraint(j_ik_ball, jfk_ball, j_def_ball, mo=True)
-        toe_pa_con = pm.parentConstraint(j_ik_toe, jfk_toe, j_def_toe, mo=True)
+        ball_pa_con = pm.parentConstraint(j_ik_ball, jfk_ball, j_def_ball, mo=False)
+        toe_pa_con = pm.parentConstraint(j_ik_toe, jfk_toe, j_def_toe, mo=False)
 
         # cont_FK_IK.fk_ik >> (foot_paCon + "." + jIK_Foot + "W0")
         cont_fk_ik.fk_ik >> ("%s.%sW0" % (foot_pa_con, j_ik_foot))
