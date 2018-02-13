@@ -120,8 +120,8 @@ class Arm(object):
         cont_ik_hand_pos = extra.createUpGrp(self.cont_IK_hand, "POS")
 
         # EXperimental
-        if side == "R":
-            pm.setAttr("{0}.s{1}".format(cont_ik_hand_pos, "x"), -1)
+        # if side == "R":
+        #     pm.setAttr("{0}.s{1}".format(cont_ik_hand_pos, "x"), -1)
         # Experimental
 
         pm.addAttr(shortName="polevector", longName="Pole_Vector", defaultValue=0.0, minValue=0.0, maxValue=1.0,
@@ -272,6 +272,7 @@ class Arm(object):
         start_lock_twist = extra.createUpGrp(start_lock, "AutoTwist")
 
         start_lock_weight = pm.parentConstraint(j_collar_end, start_lock, sr=("y", "z"), mo=True)
+        # start_lock_weight = pm.parentConstraint(j_collar_end, start_lock, sr=("y", "z"), mo=False)
 
         # pm.setAttr(start_lock_weight.interpType, 0)
 
@@ -382,6 +383,7 @@ class Arm(object):
         pm.parent(ik_handle_rp[0], ik_parent_grp)
         pm.parent(master_ik, ik_parent_grp)
         pm.parentConstraint(self.cont_IK_hand, ik_parent_grp, mo=True)
+        # pm.parentConstraint(self.cont_IK_hand, ik_parent_grp, mo=False)
 
         blend_ore_ik_up = pm.createNode("blendColors", name="blendORE_IK_Up_%s" % suffix)
         j_ik_sc_up.rotate >> blend_ore_ik_up.color2
@@ -433,6 +435,7 @@ class Arm(object):
         extra.alignTo(pacon_locator_shou, self.j_def_collar)
 
         j_def_pa_con = pm.parentConstraint(cont_shoulder, pacon_locator_shou, mo=True)
+
 
         ###########################
         ######### FK ARM ##########
@@ -626,6 +629,7 @@ class Arm(object):
         pm.pointConstraint(end_lock, root_master, mo=True)
         pm.parentConstraint(cont_fk_low_arm, cont_fk_hand_pos, mo=True)
         hand_ori_con = pm.parentConstraint(self.cont_IK_hand, hand_lock, root_master, st=("x", "y", "z"), mo=True)
+        # hand_ori_con = pm.parentConstraint(self.cont_IK_hand, hand_lock, root_master, st=("x", "y", "z"), mo=False)
         # cont_fk_ik.fk_ik >> (hand_ori_con + "." + self.cont_IK_hand + "W0")
         cont_fk_ik.fk_ik >> ("%s.%sW0" %(hand_ori_con, self.cont_IK_hand))
 

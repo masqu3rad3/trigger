@@ -1506,5 +1506,6 @@ class mainUI(QtWidgets.QMainWindow):
         self.msg.setWindowTitle(textTitle)
         self.msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
         self.msg.show()
+
 # testUI().show()
 
