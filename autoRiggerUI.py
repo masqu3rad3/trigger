@@ -150,6 +150,9 @@ class mainUI(QtWidgets.QMainWindow):
             (160, 47, 105)
         )
 
+        self.anchorController = None
+        self.anchorLocations = None
+
         self.wSize = 60
         self.hSize = 50
 
@@ -169,7 +172,7 @@ class mainUI(QtWidgets.QMainWindow):
         generalSettings = QtWidgets.QAction("&Settings", self)
         generalSettings.triggered.connect(self.settingsUI)
         test = QtWidgets.QAction("&Test", self)
-        test.triggered.connect(self.colorPickUI)
+        test.triggered.connect(self.progressBar)
         # initialSettings = QtWidgets.QAction("&Initial Joint Settings", self)
         # # initialSettings.triggered.connect(self.initialSettingsUI)
         # rigSettings = QtWidgets.QAction("&Rig Settings", self)
@@ -276,6 +279,36 @@ class mainUI(QtWidgets.QMainWindow):
         self.rigUI()
         self.extraUI()
         # layout = QtWidgets.QVBoxLayout(self)
+
+    def progressBar(self):
+
+        self.progress_Dialog = QtWidgets.QDialog(parent=self)
+        self.progress_Dialog.setObjectName(("progress_Dialog"))
+        self.progress_Dialog.setEnabled(True)
+        self.progress_Dialog.resize(290, 40)
+        self.progress_Dialog.setMinimumSize(QtCore.QSize(290, 40))
+        self.progress_Dialog.setMaximumSize(QtCore.QSize(290, 40))
+        self.progress_Dialog.setContextMenuPolicy(QtCore.Qt.DefaultContextMenu)
+        self.progress_Dialog.setWindowTitle(("Progress"))
+        self.progress_Dialog.setWindowOpacity(1.0)
+
+        self.progress_Dialog.setWindowFilePath((""))
+        self.progress_Dialog.setInputMethodHints(QtCore.Qt.ImhNone)
+        self.progress_Dialog.setSizeGripEnabled(False)
+        self.progress_Dialog.setModal(True)
+        self.progress_label = QtWidgets.QLabel(self.progress_Dialog)
+        self.progress_label.setGeometry(QtCore.QRect(10, 10, 51, 21))
+
+        self.progress_label.setText(("Progress:"))
+        self.progress_label.setObjectName(("progress_label"))
+        self.progress_progressBar = QtWidgets.QProgressBar(self.progress_Dialog)
+        self.progress_progressBar.setGeometry(QtCore.QRect(70, 10, 211, 21))
+        self.progress_progressBar.setInputMethodHints(QtCore.Qt.ImhNone)
+        self.progress_progressBar.setProperty("value", 24)
+        self.progress_progressBar.setFormat(("%p%"))
+        self.progress_progressBar.setObjectName(("progress_progressBar"))
+
+        ret = self.progress_Dialog.show()
 
     def colorPickUI(self):
 
@@ -852,12 +885,12 @@ class mainUI(QtWidgets.QMainWindow):
         # Second Row
         anchor_conts_second_row = QtWidgets.QHBoxLayout()
         anchor_conts_label1 = QtWidgets.QLabel("Control Curve")
-        anchor_conts_lineedit1 = QtWidgets.QLineEdit()
-        anchor_conts_lineedit1.setReadOnly(True)
+        self.anchor_conts_lineedit1 = QtWidgets.QLineEdit()
+        self.anchor_conts_lineedit1.setReadOnly(True)
         anchor_conts_get_pb1 = QtWidgets.QPushButton("Get")
 
         anchor_conts_second_row.addWidget(anchor_conts_label1)
-        anchor_conts_second_row.addWidget(anchor_conts_lineedit1)
+        anchor_conts_second_row.addWidget(self.anchor_conts_lineedit1)
         anchor_conts_second_row.addWidget(anchor_conts_get_pb1)
 
         anchor_conts_layout.addLayout(anchor_conts_second_row)
@@ -865,17 +898,42 @@ class mainUI(QtWidgets.QMainWindow):
         # Third Row
         anchor_conts_third_row = QtWidgets.QHBoxLayout()
         anchor_conts_label2 = QtWidgets.QLabel("Anchor Locations")
-        anchor_conts_lineedit2 = QtWidgets.QLineEdit()
-        anchor_conts_lineedit2.setReadOnly(True)
+        self.anchor_conts_lineedit2 = QtWidgets.QLineEdit()
+        self.anchor_conts_lineedit2.setReadOnly(True)
         anchor_conts_get_pb2 = QtWidgets.QPushButton("Get")
 
         anchor_conts_third_row.addWidget(anchor_conts_label2)
-        anchor_conts_third_row.addWidget(anchor_conts_lineedit2)
+        anchor_conts_third_row.addWidget(self.anchor_conts_lineedit2)
         anchor_conts_third_row.addWidget(anchor_conts_get_pb2)
 
         anchor_conts_layout.addLayout(anchor_conts_third_row)
 
+        # Fourth Row
+        anchor_conts_fourth_row = QtWidgets.QHBoxLayout()
+        create_anchors_pb = QtWidgets.QPushButton("Create Anchors")
+        anchor_conts_fourth_row.addWidget(create_anchors_pb )
+        anchor_conts_layout.addLayout(anchor_conts_fourth_row)
+
+
+        anchor_conts_get_pb1.clicked.connect(self.onGetControlCurve)
+        anchor_conts_get_pb2.clicked.connect(self.onGetAnchorLocations)
+        create_anchors_pb.clicked.connect(lambda: extra.spaceSwitcher(self.anchorController, self.anchorLocations, mode=anchor_conts_type_combobox.currentText()))
+
         self.riglayout.addWidget(anchor_conts_grpbox)
+
+    def onGetControlCurve(self):
+        selection = pm.ls(sl=True)
+        if len(selection) > 1:
+            self.infoPop(textTitle="Selection Error", textHeader="Select only one object", textInfo="")
+        else:
+            self.anchorController = selection[0]
+            self.anchor_conts_lineedit1.setText(selection[0].name())
+        pass
+
+    def onGetAnchorLocations(self):
+        self.anchorLocations = pm.ls(sl=True)
+        self.anchor_conts_lineedit2.setText("{0} Docks".format (len(self.anchorLocations)))
+        pass
 
     def onAddController(self):
         pm.undoInfo(openChunk=True)
@@ -1452,14 +1510,20 @@ class mainUI(QtWidgets.QMainWindow):
 
     def rig(self):
         pm.undoInfo(openChunk=True)
-        self.rigger.__init__(settingsData=self.settingsData)
+        self.progressBar()
+        # self.progress_Dialog.show()
+        self.rigger.__init__(settingsData=self.settingsData, progressBar=self.progress_progressBar)
         self.rigger.startBuilding(createAnchors=self.isCreateAnchorsChk.isChecked())
+        self.progress_Dialog.close()
         pm.undoInfo(closeChunk=True)
 
     def addRig(self):
         pm.undoInfo(openChunk=True)
         # self.rigger.__init__()
+        self.progressBar()
+        self.rigger.__init__(settingsData=self.settingsData, progressBar=self.progress_progressBar)
         self.rigger.createlimbs(addLimb=True)
+        self.progress_Dialog.close()
         pm.undoInfo(closeChunk=True)
 
     def keyPressEvent(self, event):

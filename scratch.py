@@ -22,7 +22,9 @@ reload(root)
 
 class LimbBuilder():
 
-    def __init__(self, settingsData):
+    def __init__(self, settingsData, progressBar=None):
+        # super(LimbBuilder, self).__init__()
+        self.progressBar=progressBar
         # self.catalogueRoots(pm.ls(sl=True)[0])
         self.validRootList = ["Collar", "LegRoot", "Root", "SpineRoot", "NeckRoot", "TailRoot", "FingerRoot", "ThumbRoot", "IndexRoot", "MiddleRoot", "RingRoot", "PinkyRoot", "TentacleRoot"]
         # self.limbList = []
@@ -46,6 +48,9 @@ class LimbBuilder():
         # self.neckDropoff = 2.0
         # self.createAnchors = True
         self.parseSettings(settingsData)
+        if self.progressBar:
+            self.progressBar.setProperty("value", 0)
+
 
     def parseSettings(self, settingsData):
         # up=settingsData["upAxis"]
@@ -167,7 +172,15 @@ class LimbBuilder():
                 j_def_set = pm.PyNode("def_jointsSet_%s" % self.rigName)
 
 
+        total_limb_count = len(limbCreationList)
+        limb_counter = 0
+        percent = (100 * limb_counter)/total_limb_count
         for x in limbCreationList:
+            if self.progressBar:
+                limb_counter = limb_counter+1
+                percent = (100 * limb_counter) / total_limb_count
+                self.progressBar.setProperty("value", percent)
+
             if x[2] == "R":
                 sideVal = "_RIGHT_"
                 colorCodes = [self.majorRightColor, self.majorLeftColor]
