@@ -91,6 +91,8 @@ class Tentacle(object):
 
         pm.addAttr(cont_special, shortName="curlAngle", longName="Curl_Angle", defaultValue=1.0, at="float",
                    k=True)
+        pm.addAttr(cont_special, shortName="curlDirection", longName="Curl_Direction", defaultValue=0.0, at="float",
+                   k=True)
 
         pm.addAttr(cont_special, shortName="curlShift", longName="Curl_Shift", defaultValue=0.0, at="float",
                    k=True)
@@ -251,6 +253,10 @@ class Tentacle(object):
         # pm.select(npDeformers)
         curlDeformer = pm.nonLinear(npDeformers, type='bend', curvature=1500)
 
+        curlLoc = pm.spaceLocator(name="curlLoc{0}".format(suffix))
+        # extra.alignTo(twistLoc, inits[0])
+        pm.parent(curlDeformer[1], curlLoc)
+
         # pm.select(curlDeformer)
         # pm.setAttr(curlDeformer[1].rz, 4)
         pm.setAttr(curlDeformer[0].lowBound, -1)
@@ -308,6 +314,8 @@ class Tentacle(object):
         curlSizeMultZ.output >> curlDeformer[1].sz
 
         curlAngleMultZ.output >> curlDeformer[1].rz
+
+        cont_special.curlDirection >> curlLoc.ry
 
         # cont_special.curlShift >> curlDeformer[1].rx
 
@@ -370,7 +378,7 @@ class Tentacle(object):
         # pm.parent(npJdefHolder[0], self.nonScaleGrp)
         pm.parent(npDeformers[0], self.nonScaleGrp)
         # pm.parent(follicleList, self.nonScaleGrp)
-        pm.parent(curlDeformer[1], self.nonScaleGrp)
+        pm.parent(curlLoc, self.nonScaleGrp)
         pm.parent(twistLoc, self.nonScaleGrp)
         pm.parent(sineLoc,self.nonScaleGrp)
         pm.parent(npWrapGeo, self.nonScaleGrp)
@@ -394,7 +402,7 @@ class Tentacle(object):
         pm.setAttr(self.scaleGrp.rigVis, cb=True)
 
         nodesContVis = [contTwk_List, contFK_List]
-        nodesRigVis = [npBase[0], npJdefHolder[0], npDeformers[0], sineLoc, twistLoc, curlDeformer[1], follicleList, contJointsList, wrapScaleJoint]
+        nodesRigVis = [npBase[0], npJdefHolder[0], npDeformers[0], sineLoc, twistLoc, curlLoc, follicleList, contJointsList, wrapScaleJoint]
 
         # Cont visibilities
         for i in nodesContVis:
