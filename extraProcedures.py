@@ -439,76 +439,105 @@ def attrPass (sourceNode, targetNode, attributes=[], inConnections=True, outConn
             for i in userAttr:
                 pm.deleteAttr("%s.%s" % (sourceNode,i))
 
-def spaceSwitcher (node, targetList, overrideExisting=False, mode="parent", defaultVal=1, listException = None):
-    """
-    Creates the space switch attributes between selected node (controller) and targets.
-    Args:
-        node: (single object) Object which anchor space will be switched. Mostly a controller curve.
-        targetList: (list of objects) The node will be anchored between these targets.
-        overrideExisting: (bool) If True, the existing attributes on the node with the same name will be deleted and recreated. Default False
-        mode: (String) The type of the constrain that will be applied to the node. Valid options are "parent", "point and "orient". Default "parent"
-        defaultVal: (integer) Default value for the new Switch attribute. If it is out of range, 1 will be used. default: 1.
-        listException: (List) If this argument is not none, the given elements in the list will be removed from the targetList, in case it is in the list of course.
-    Returns: None
-
-    """
-
-    anchorPoses=list(targetList)
-    if anchorPoses.__contains__(node):
-        # if targetList contains the node itself, remove it
-        anchorPoses.remove(node)
-    if anchorPoses==[]:
-        pm.error("target list is empty or no valid targets")
-    if listException != None:
-        for x in listException:
-            if anchorPoses.__contains__(x):
-                anchorPoses.remove(x)
-    if len(anchorPoses) > defaultVal:
-        defaultVal=1
-    modeList=("parent", "point", "orient")
-    if not modeList.__contains__(mode):
-        pm.error("unknown mode flag. Valid mode flags are 'parent', 'point' and 'orient' ")
-    # create the enumerator list
-    enumFlag = "worldSpace:"
-    for enum in range (0, len(anchorPoses)):
-        cur = str(anchorPoses[enum])
-        cur = cur.replace("cont_", "")
-        enumFlag = "%s%s:" % (enumFlag, cur)
-
-    # # check if the attribute exists
-    if pm.attributeQuery("%sSwitch" % mode, node=node, exists=True):
-        if overrideExisting:
-            pm.deleteAttr("{0}.{1}Switch".format(node, mode))
-        else:
-            pm.error("Switch Attribute already exists. Use overrideExisting=True to delete the old")
-    pm.addAttr(node, at="enum", k=True, shortName="%sSwitch" % mode, longName="%s_Switch" % mode, en=enumFlag, defaultValue=defaultVal)
-    driver = "%s.%sSwitch" %(node, mode)
-
-    switchGrp=createUpGrp(node, ("%sSW" % mode))
-    if mode == "parent":
-        con = pm.parentConstraint(anchorPoses, switchGrp, mo=True)
-    elif mode == "point":
-        con = pm.parentConstraint(anchorPoses, switchGrp, sr=("x","y","z"), mo=True)
-    elif mode == "orient":
-        con = pm.parentConstraint(anchorPoses, switchGrp, st=("x","y","z"), mo=True)
-
-
-    ## make worldSpace driven key (all zero)
-    for i in range (0, len(anchorPoses)):
-        attr="{0}W{1}".format(anchorPoses[i],i)
-        pm.setDrivenKeyframe(con, cd=driver, at=attr, dv=0, v=0)
-
-    # # loop for each DRIVER POSITION
-    for dPos in range (0, len(anchorPoses)):
-        # # loop for each target at parent constraint
-        for t in range (0, len(anchorPoses)):
-            attr = "{0}W{1}".format(anchorPoses[t], t)
-            # # if driver value matches the attribute, make the value 1, else 0
-            if t == (dPos):
-                value = 1
-            else:
-                value = 0
-            pm.setDrivenKeyframe(con, cd=driver, at=attr , dv=dPos+1, v=value )
+# def spaceSwitcher (node, targetList, overrideExisting=False, mode="parent", defaultVal=1, listException = None):
+#     """
+#     Creates the space switch attributes between selected node (controller) and targets.
+#     Args:
+#         node: (single object) Object which anchor space will be switched. Mostly a controller curve.
+#         targetList: (list of objects) The node will be anchored between these targets.
+#         overrideExisting: (bool) If True, the existing attributes on the node with the same name will be deleted and recreated. Default False
+#         mode: (String) The type of the constrain that will be applied to the node. Valid options are "parent", "point and "orient". Default "parent"
+#         defaultVal: (integer) Default value for the new Switch attribute. If it is out of range, 1 will be used. default: 1.
+#         listException: (List) If this argument is not none, the given elements in the list will be removed from the targetList, in case it is in the list of course.
+#     Returns: None
+#
+#     """
+#
+#     anchorPoses=list(targetList)
+#     if anchorPoses.__contains__(node):
+#         # if targetList contains the node itself, remove it
+#         anchorPoses.remove(node)
+#     if anchorPoses==[]:
+#         pm.error("target list is empty or no valid targets")
+#     if listException != None:
+#         for x in listException:
+#             if anchorPoses.__contains__(x):
+#                 anchorPoses.remove(x)
+#     if len(anchorPoses) > defaultVal:
+#         defaultVal=1
+#     modeList=("parent", "point", "orient")
+#     if not modeList.__contains__(mode):
+#         pm.error("unknown mode flag. Valid mode flags are 'parent', 'point' and 'orient' ")
+#     # create the enumerator list
+#     enumFlag = "worldSpace:"
+#     for enum in range (0, len(anchorPoses)):
+#         cur = str(anchorPoses[enum])
+#         cur = cur.replace("cont_", "")
+#         enumFlag = "%s%s:" % (enumFlag, cur)
+#
+#     # # check if the attribute exists
+#     if pm.attributeQuery("%sSwitch" % mode, node=node, exists=True):
+#         if overrideExisting:
+#             pm.deleteAttr("{0}.{1}Switch".format(node, mode))
+#         else:
+#             pm.error("Switch Attribute already exists. Use overrideExisting=True to delete the old")
+#     pm.addAttr(node, at="enum", k=True, shortName="%sSwitch" % mode, longName="%s_Switch" % mode, en=enumFlag, defaultValue=defaultVal)
+#     driver = "%s.%sSwitch" %(node, mode)
+#
+#     switchGrp=createUpGrp(node, ("%sSW" % mode))
+#     if mode == "parent":
+#         con = pm.parentConstraint(anchorPoses, switchGrp, mo=True)
+#     elif mode == "point":
+#         con = pm.parentConstraint(anchorPoses, switchGrp, sr=("x","y","z"), mo=True)
+#     elif mode == "orient":
+#         con = pm.parentConstraint(anchorPoses, switchGrp, st=("x","y","z"), mo=True)
+#
+#
+#     ## make worldSpace driven key (all zero)
+#     for i in range (0, len(anchorPoses)):
+#         attr="{0}W{1}".format(anchorPoses[i],i)
+#         pm.setDrivenKeyframe(con, cd=driver, at=attr, dv=0, v=0)
+#
+#     # # loop for each DRIVER POSITION
+#     for dPos in range (0, len(anchorPoses)):
+#         # # loop for each target at parent constraint
+#         for t in range (0, len(anchorPoses)):
+#             attr = "{0}W{1}".format(anchorPoses[t], t)
+#             # # if driver value matches the attribute, make the value 1, else 0
+#             if t == (dPos):
+#                 value = 1
+#             else:
+#                 value = 0
+#             pm.setDrivenKeyframe(con, cd=driver, at=attr , dv=dPos+1, v=value )
+#
+#
+# def removeAnchor(node):
+#     """
+#     Removes the anchors created with the spaceswitcher method
+#     Args:
+#         node: (PyNode Object) A Single object (mostly a controller curve) which the anchors will be removed
+#
+#     Returns:
+#
+#     """
+#     userAtts = pm.listAttr(node, ud=True)
+#     switchAtts = [att for att in userAtts if "_Switch" in att]
+#     switchDir = {"point": "pointSW", "orient": "orientSW", "parent": "parentSW"}
+#
+#     for switch in switchAtts:
+#
+#         for type in (switchDir.keys()):
+#             if type in switch:
+#                 switchNode = pm.PyNode("{0}_{1}".format(node, switchDir[type]))
+#                 # r = switchNode.getChildren()
+#                 constraint = pm.listRelatives(switchNode, c=True,
+#                                               type=["parentConstraint", "orientConstraint", "pointConstraint"])
+#                 pm.delete(constraint)
+#                 child = pm.listRelatives(switchNode, c=True, type="transform")[0]
+#                 parent = pm.listRelatives(switchNode, p=True, type="transform")[0]
+#                 pm.parent(child, parent)
+#                 pm.delete(switchNode)
+#                 pm.deleteAttr("{0}.{1}".format(node, switch))
 
 
 def identifyMaster(node, idBy="idByLabel"):

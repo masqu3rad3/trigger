@@ -19,6 +19,8 @@ import tentacleClass as tentacle
 reload(tentacle)
 import rootClass as root
 reload(root)
+import anchorMaker
+reload(anchorMaker)
 
 class LimbBuilder():
 
@@ -116,11 +118,17 @@ class LimbBuilder():
         # Create anchors (spaceswithcers)
         if createAnchors:
             for anchor in (self.anchors):
-                extra.spaceSwitcher(anchor[0], self.anchorLocations, mode=anchor[1], defaultVal=anchor[2], listException=anchor[3])
+                # extra.spaceSwitcher(anchor[0], self.anchorLocations, mode=anchor[1], defaultVal=anchor[2], listException=anchor[3])
+                anchorMaker.spaceSwitcher(anchor[0], self.anchorLocations, mode=anchor[1], defaultVal=anchor[2],
+                                    listException=anchor[3])
+
+        else:
+            for anchor in (self.anchors):
+                pm.parent(anchor[0], self.cont_placement)
 
         for x in self.fingerMatchConts:
             contPos = extra.createUpGrp(x[0], "POS", mi=False)
-            socket = self.getNearestSocket(x[1],self.allSocketsList)
+            socket = self.getNearestSocket(x[1], self.allSocketsList)
             pm.parentConstraint(socket, contPos, mo=True)
             pm.scaleConstraint(self.cont_master, contPos)
             pm.parent(contPos, self.rootGroup)
@@ -319,7 +327,6 @@ class LimbBuilder():
             # if not seperateSelectionSets:
             if j_def_set:
                 pm.sets(j_def_set, add=limb.deformerJoints)
-
 
     def getDimensions(self, rootNode):
         """

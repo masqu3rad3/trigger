@@ -869,57 +869,57 @@ class mainUI(QtWidgets.QMainWindow):
 
         self.riglayout.addWidget(edit_controllers_grpbox)
 
-        # create 'ANCHOR CREATION' Group
-
-        anchor_conts_grpbox = QtWidgets.QGroupBox("Create Anchors for Controllers")
-        anchor_conts_layout = QtWidgets.QVBoxLayout()
-        anchor_conts_grpbox.setLayout(anchor_conts_layout)
-
-        # First Row
-        anchor_conts_first_row = QtWidgets.QHBoxLayout()
-        anchor_conts_type_combobox = QtWidgets.QComboBox()
-        anchor_conts_type_combobox.addItems(["parent", "point", "orient"])
-        anchor_conts_first_row.addWidget(anchor_conts_type_combobox)
-        anchor_conts_layout.addLayout(anchor_conts_first_row)
-
-        # Second Row
-        anchor_conts_second_row = QtWidgets.QHBoxLayout()
-        anchor_conts_label1 = QtWidgets.QLabel("Control Curve")
-        self.anchor_conts_lineedit1 = QtWidgets.QLineEdit()
-        self.anchor_conts_lineedit1.setReadOnly(True)
-        anchor_conts_get_pb1 = QtWidgets.QPushButton("Get")
-
-        anchor_conts_second_row.addWidget(anchor_conts_label1)
-        anchor_conts_second_row.addWidget(self.anchor_conts_lineedit1)
-        anchor_conts_second_row.addWidget(anchor_conts_get_pb1)
-
-        anchor_conts_layout.addLayout(anchor_conts_second_row)
-        
-        # Third Row
-        anchor_conts_third_row = QtWidgets.QHBoxLayout()
-        anchor_conts_label2 = QtWidgets.QLabel("Anchor Locations")
-        self.anchor_conts_lineedit2 = QtWidgets.QLineEdit()
-        self.anchor_conts_lineedit2.setReadOnly(True)
-        anchor_conts_get_pb2 = QtWidgets.QPushButton("Get")
-
-        anchor_conts_third_row.addWidget(anchor_conts_label2)
-        anchor_conts_third_row.addWidget(self.anchor_conts_lineedit2)
-        anchor_conts_third_row.addWidget(anchor_conts_get_pb2)
-
-        anchor_conts_layout.addLayout(anchor_conts_third_row)
-
-        # Fourth Row
-        anchor_conts_fourth_row = QtWidgets.QHBoxLayout()
-        create_anchors_pb = QtWidgets.QPushButton("Create Anchors")
-        anchor_conts_fourth_row.addWidget(create_anchors_pb )
-        anchor_conts_layout.addLayout(anchor_conts_fourth_row)
-
-
-        anchor_conts_get_pb1.clicked.connect(self.onGetControlCurve)
-        anchor_conts_get_pb2.clicked.connect(self.onGetAnchorLocations)
-        create_anchors_pb.clicked.connect(lambda: extra.spaceSwitcher(self.anchorController, self.anchorLocations, mode=anchor_conts_type_combobox.currentText()))
-
-        self.riglayout.addWidget(anchor_conts_grpbox)
+        # # create 'ANCHOR CREATION' Group
+        #
+        # anchor_conts_grpbox = QtWidgets.QGroupBox("Create Anchors for Controllers")
+        # anchor_conts_layout = QtWidgets.QVBoxLayout()
+        # anchor_conts_grpbox.setLayout(anchor_conts_layout)
+        #
+        # # First Row
+        # anchor_conts_first_row = QtWidgets.QHBoxLayout()
+        # anchor_conts_type_combobox = QtWidgets.QComboBox()
+        # anchor_conts_type_combobox.addItems(["parent", "point", "orient"])
+        # anchor_conts_first_row.addWidget(anchor_conts_type_combobox)
+        # anchor_conts_layout.addLayout(anchor_conts_first_row)
+        #
+        # # Second Row
+        # anchor_conts_second_row = QtWidgets.QHBoxLayout()
+        # anchor_conts_label1 = QtWidgets.QLabel("Control Curve")
+        # self.anchor_conts_lineedit1 = QtWidgets.QLineEdit()
+        # self.anchor_conts_lineedit1.setReadOnly(True)
+        # anchor_conts_get_pb1 = QtWidgets.QPushButton("Get")
+        #
+        # anchor_conts_second_row.addWidget(anchor_conts_label1)
+        # anchor_conts_second_row.addWidget(self.anchor_conts_lineedit1)
+        # anchor_conts_second_row.addWidget(anchor_conts_get_pb1)
+        #
+        # anchor_conts_layout.addLayout(anchor_conts_second_row)
+        #
+        # # Third Row
+        # anchor_conts_third_row = QtWidgets.QHBoxLayout()
+        # anchor_conts_label2 = QtWidgets.QLabel("Anchor Locations")
+        # self.anchor_conts_lineedit2 = QtWidgets.QLineEdit()
+        # self.anchor_conts_lineedit2.setReadOnly(True)
+        # anchor_conts_get_pb2 = QtWidgets.QPushButton("Get")
+        #
+        # anchor_conts_third_row.addWidget(anchor_conts_label2)
+        # anchor_conts_third_row.addWidget(self.anchor_conts_lineedit2)
+        # anchor_conts_third_row.addWidget(anchor_conts_get_pb2)
+        #
+        # anchor_conts_layout.addLayout(anchor_conts_third_row)
+        #
+        # # Fourth Row
+        # anchor_conts_fourth_row = QtWidgets.QHBoxLayout()
+        # create_anchors_pb = QtWidgets.QPushButton("Create Anchors")
+        # anchor_conts_fourth_row.addWidget(create_anchors_pb )
+        # anchor_conts_layout.addLayout(anchor_conts_fourth_row)
+        #
+        #
+        # anchor_conts_get_pb1.clicked.connect(self.onGetControlCurve)
+        # anchor_conts_get_pb2.clicked.connect(self.onGetAnchorLocations)
+        # create_anchors_pb.clicked.connect(lambda: extra.spaceSwitcher(self.anchorController, self.anchorLocations, mode=anchor_conts_type_combobox.currentText()))
+        #
+        # self.riglayout.addWidget(anchor_conts_grpbox)
 
     def onGetControlCurve(self):
         selection = pm.ls(sl=True)
