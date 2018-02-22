@@ -935,7 +935,7 @@ class Leg(object):
         extra.colorize(cont_fk_low_leg, self.colorCodes[0])
         extra.colorize(cont_fk_foot, self.colorCodes[0])
         extra.colorize(cont_fk_ball, self.colorCodes[0])
-
+        extra.colorize(self.cont_Pole, self.colorCodes[0])
         extra.colorize(cont_mid_lock, self.colorCodes[1])
         extra.colorize(ribbon_upper_leg.middleCont, self.colorCodes[1])
         extra.colorize(ribbon_lower_leg.middleCont, self.colorCodes[1])
