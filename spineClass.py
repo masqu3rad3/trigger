@@ -191,9 +191,9 @@ class Spine(object):
         self.deformerJoints=[self.startSocket, self.endSocket] + spine.defJoints
 
         for i in cont_spineFK_A_List:
-            self.cont_body.fkAvis >> i.visibility
+            self.cont_body.fkAvis >> i.getShape().visibility
         for i in cont_spineFK_B_List:
-            self.cont_body.fkBvis >> i.visibility
+            self.cont_body.fkBvis >> i.getShape().visibility
 
         for i in range(0, len(spine.contCurves_ORE)):
             if i != 0 or i != len(spine.contCurves_ORE):
