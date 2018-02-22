@@ -157,6 +157,7 @@ class Leg(object):
         offset_vector_pole = extra.getBetweenVector(knee_ref, [hip_ref, foot_ref])
         extra.alignAndAim(self.cont_Pole, targetList=[knee_ref], aimTargetList=[hip_ref, foot_ref], upVector=up_axis, translateOff=(offset_vector_pole * offset_mag_pole))
         cont_pole_off = extra.createUpGrp(self.cont_Pole, "OFF")
+        cont_pole_vis = extra.createUpGrp(self.cont_Pole, "VIS")
 
         # FK Upleg Controller
         scalecont_fk_up_leg = (init_upper_leg_dist / 2, init_upper_leg_dist / 6, init_upper_leg_dist / 6)
@@ -659,6 +660,8 @@ class Leg(object):
         fk_ik_rvs.outputX >> cont_fk_foot_ore.visibility
         fk_ik_rvs.outputX >> cont_fk_ball_ore.visibility
         cont_fk_ik.fk_ik >> self.cont_IK_foot.visibility
+
+        cont_fk_ik.fk_ik >> cont_pole_vis.visibility
 
         # extra.alignAndAim(cont_FK_IK, targetList=[footRef], aimTargetList=[kneeRef], upVector=self.upAxis, rotateOff=(90,90,0))
         #

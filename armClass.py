@@ -150,6 +150,7 @@ class Arm(object):
                           translateOff=(offset_vector_pole * offset_mag_pole)
                           )
         cont_pole_off = extra.createUpGrp(self.cont_Pole, "OFF")
+        cont_pole_vis = extra.createUpGrp(self.cont_Pole, "VIS")
 
         ## FK UP Arm Controller
 
@@ -468,6 +469,8 @@ class Arm(object):
         fk_ik_rvs.outputX >> cont_fk_low_arm_ore.visibility
 
         cont_fk_ik.fk_ik >> self.cont_IK_hand.visibility
+
+        cont_fk_ik.fk_ik >> cont_pole_vis.visibility
 
         ### Create MidLock controller
 
