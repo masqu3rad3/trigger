@@ -149,7 +149,8 @@ class Ribbon():
         self.scaleGrp=pm.group(name="RBN_ScaleGrp_"+name)
         tempPoCon=pm.pointConstraint(startPoint, endPoint, self.scaleGrp)
         pm.delete(tempPoCon)
-        tempAimCon=pm.aimConstraint(endPoint, self.scaleGrp, aim=(1,0,0), o=(orientation,0,0))
+        # tempAimCon=pm.aimConstraint(endPoint, self.scaleGrp, aim=(1,0,0), o=(orientation,0,0))
+        tempAimCon=pm.orientConstraint(startPoint, self.scaleGrp, o=(orientation,0,0), mo=False)
         pm.delete(tempAimCon)
 
         ### Create Stretch Squash Nodes

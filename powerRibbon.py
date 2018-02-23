@@ -15,48 +15,195 @@ reload(icon)
 class PowerRibbon():
 
     def __init__(self):
-        self.contCurves_ORE = None
-        self.contCurve_Start = None
-        self.contCurve_End = None
-        self.endLock = None
+        # super(PowerRibbon, self).__init__()
+        self.startConnection = None
+        self.endConnection = None
         self.scaleGrp = None
         self.nonScaleGrp = None
-        self.attPassCont = None
-        self.defJoints = None
-        self.noTouchData = None
-        self.moveAxis = None
+        self.deformerJoints = []
+        self.middleCont = None
+        self.toHide = []
+        self.startAim = None
 
-    def createPowerRibbon(self, inits,
-                          suffix="",
+        # self.contCurves_ORE = None
+        # self.contCurve_Start = None
+        # self.contCurve_End = None
+        # self.endLock = None
+        # self.scaleGrp = None
+        # self.nonScaleGrp = None
+        # self.attPassCont = None
+        # self.defJoints = None
+        # self.noTouchData = None
+        # self.moveAxis = None
+
+    def createPowerRibbon(self, startPoint,
+                          endPoint,
+                          name,
                           side="C",
-                          npResolution=5.0,
-                          jResolution=5.0,
-                          blResolution=25.0,
-                          dropoff=2.0):
-
-        npResolution=1.0*npResolution
-        jResolution = 1.0 * jResolution
-
-        ## Make sure the suffix is unique
-        # idCounter=0
-        # while pm.objExists("scaleGrp_" + suffix):
-        #     suffix = "%s%s" % (suffix, str(idCounter + 1))
-        suffix=(extra.uniqueName("scaleGrp_%s" %(suffix))).replace("scaleGrp_", "")
+                          ribbonRes=5.0,
+                          jointRes=5.0,
+                          controllerCount=1,
+                          controllerList=None,
+                          dropoff=2.0,
+                          connectStartAim=True,
+                          orientation=0):
 
 
-        if len(inits)<2:
-            pm.error("Power Ribbon setup needs at least 2 initial joints")
-            return
 
-        rootPoint = inits[0].getTranslation(space="world")
+        # npResolution=1.0*npResolution
+        # jResolution = 1.0 * jResolution
 
-        ## Create Groups
-        self.scaleGrp = pm.group(name="scaleGrp_" + suffix, em=True)
-        extra.alignTo(self.scaleGrp, inits[0], 0)
-        self.nonScaleGrp = pm.group(name="NonScaleGrp_" + suffix, em=True)
+        # Create groups
+        name=(extra.uniqueName("RBN_ScaleGrp_" + name)).replace("RBN_ScaleGrp_", "")
 
-        ## Get the orientation axises
-        upAxis, mirroAxis, spineDir = extra.getRigAxes(inits[0])
+        self.nonScaleGrp=pm.group(em=True, name="RBN_nonScaleGrp_%s" %name)
+
+        # if type(startPoint) == str:
+        #     startPoint = pm.PyNode(startPoint)
+        # if type(endPoint) == str:
+        #     endPoint = pm.PyNode(endPoint)
+
+        ribbonLength=extra.getDistance(startPoint, endPoint)
+        nSurfTrans=pm.nurbsPlane(ax=(0,0,1),u=ribbonRes,v=1, w=ribbonLength, lr=(1.0/ribbonLength), name="nSurf_"+name)
+        pm.parent(nSurfTrans[0], self.nonScaleGrp)
+        pm.rebuildSurface (nSurfTrans, ch=1, rpo=1, rt=0, end=1, kr=2, kcp=0, kc=0, su=5, du=3, sv=1, dv=1, tol=0, fr=0, dir=1)
+        pm.makeIdentity(a=True)
+        nSurf=nSurfTrans[0].getShape()
+        follicleList=[]
+        self.toHide.append(nSurfTrans[0])
+
+        # create follicles and deformer joints
+        for i in range (0, int(jointRes)):
+            follicle = pm.createNode('follicle', name="follicle_"+name+str(i))
+            nSurf.local.connect(follicle.inputSurface)
+            nSurf.worldMatrix[0].connect(follicle.inputWorldMatrix)
+            follicle.outRotate.connect(follicle.getParent().rotate)
+            follicle.outTranslate.connect(follicle.getParent().translate)
+            follicle.parameterV.set(0.5)
+            follicle.parameterU.set(0.1+(i/jointRes))
+            follicle.getParent().t.lock()
+            follicle.getParent().r.lock()
+            follicleList.append(follicle)
+            defJ=pm.joint(name="jDef_"+name+str(i))
+            pm.joint(defJ, e=True, zso=True, oj='zxy')
+            self.deformerJoints.append(defJ)
+            pm.parent(follicle.getParent(), self.nonScaleGrp)
+            self.toHide.append(follicle)
+
+        # create control joints
+        pm.select(d=True)
+        startJoint=pm.joint(name="jRbn_Start_"+name, radius=2)
+        self.toHide.append(startJoint)
+        pm.move(startJoint, (-(ribbonLength / 2.0), 0, 0))
+
+        pm.select(d=True)
+        endJoint=pm.joint(name="jRbn_End_"+name, radius=2)
+        self.toHide.append(endJoint)
+        pm.move(endJoint, ((ribbonLength/2.0),0,0))
+
+        mid_joint_list=[]
+        counter = 0
+        if controllerList:
+            counter += 1
+            for p in controllerList:
+                pm.select(d=True)
+                midJ = pm.joint(name="jRbn_Mid_{0}_{1}".format(counter, name), radius=2)
+                extra.alignTo(midJ, p)
+                mid_joint_list.append(midJ)
+        else:
+            interval = ribbonLength / (controllerCount+1)
+
+            for i in range (0, controllerCount):
+                counter +=1
+                pm.select(d=True)
+
+                midJ = pm.joint(name="jRbn_Mid_{0}_{1}".format(i, name), p=(-(ribbonLength/2.0)+(interval*counter),0,0), radius=2)
+
+                mid_joint_list.append(midJ)
+
+        pm.skinCluster(startJoint,endJoint, mid_joint_list, nSurf, tsb=True, dropoffRate=dropoff)
+        #Start Upnodes
+        pm.select(d=True)
+        self.startAim=pm.group(em=True, name="jRbn_Start_%s" %name)
+        pm.move(self.startAim, (-(ribbonLength/2.0),0,0))
+        pm.makeIdentity(a=True)
+        start_UP=pm.spaceLocator(name="jRbn_Start_%s" %name)
+        self.toHide.append(start_UP.getShape())
+        pm.move(start_UP, (-(ribbonLength/2.0),0.5,0))
+
+        self.startConnection=pm.spaceLocator(name="jRbn_Start_%s" %name)
+        self.toHide.append(self.startConnection.getShape())
+        pm.move(self.startConnection, (-(ribbonLength / 2.0), 0, 0))
+        pm.makeIdentity(a=True)
+
+        pm.parent(self.startAim, start_UP, self.startConnection)
+
+        pm.parent(startJoint,self.startAim)
+        if connectStartAim:
+            # aim it to the next midjoint after the start
+            pm.aimConstraint(mid_joint_list[0],self.startAim, aimVector=(1,0,0), upVector=(0,1,0), wut=1, wuo=start_UP, mo=False)
+
+        #End Upnodes
+        pm.select(d=True)
+        end_AIM=pm.group(em=True, name="jRbn_End_"+name)
+        pm.move(end_AIM, (-(ribbonLength/-2.0),0,0))
+        pm.makeIdentity(a=True)
+        end_UP=pm.spaceLocator(name="jRbn_End_"+name)
+        self.toHide.append(end_UP.getShape())
+        pm.move(end_UP, (-(ribbonLength/-2.0),0.5,0))
+
+        self.endConnection=pm.spaceLocator(name="jRbn_End_" + name)
+        self.toHide.append(self.endConnection.getShape())
+        pm.move(self.endConnection, (-(ribbonLength / -2.0), 0, 0))
+        pm.makeIdentity(a=True)
+
+        pm.parent(end_AIM, end_UP, self.endConnection)
+        pm.parent(endJoint,end_AIM)
+        pm.aimConstraint(mid_joint_list[-1],end_AIM, aimVector=(1,0,0), upVector=(0,1,0), wut=1, wuo=end_UP, mo=True)
+
+
+
+        middle_POS_list=[]
+        for mid in mid_joint_list:
+            self.middleCont = icon.circle("cont_midRbn_%s" %name, normal=(1, 0, 0))
+            middle_OFF = pm.spaceLocator(name="jRbn_Mid_%s" %name)
+            self.toHide.append(middle_OFF.getShape())
+            middle_AIM = pm.group(em=True, name="jRbn_Mid_%s" %name)
+            extra.alignTo(middle_AIM, mid)
+            # pm.move(middle_AIM, (0, 0, 0))
+            # pm.makeIdentity(a=True)
+            middle_UP = pm.spaceLocator(name="jRbn_Mid_%s" %name)
+            self.toHide.append(middle_UP.getShape())
+
+            extra.alignTo(middle_UP, mid)
+            pm.setAttr(middle_UP.ty, 0.5)
+
+            middle_POS = pm.spaceLocator(name="jRbn_Mid_%s" %name)
+            self.toHide.append(middle_POS.getShape())
+            extra.alignTo(middle_POS, mid)
+            # pm.move(middle_POS, (0, 0, 0))
+            # pm.makeIdentity(a=True)
+
+            pm.parent(mid, self.middleCont)
+            pm.parent(self.middleCont, middle_OFF)
+            pm.parent(middle_OFF, middle_AIM)
+            pm.parent(middle_UP, middle_AIM, middle_POS)
+            pm.aimConstraint(self.startConnection, middle_AIM, aimVector=(0, 0, -1), upVector=(0, 1, 0), wut=1,
+                             wuo=middle_UP, mo=True)
+            pm.pointConstraint(self.startConnection, self.endConnection, middle_POS)
+            pm.pointConstraint(start_UP, end_UP, middle_UP)
+            middle_POS_list.append(middle_POS)
+
+        pm.select(self.startConnection, middle_POS_list, self.endConnection)
+        self.scaleGrp=pm.group(name="RBN_ScaleGrp_"+name)
+        # return
+        ## take a look here
+        tempPoCon=pm.pointConstraint(startPoint, endPoint, self.scaleGrp)
+        pm.delete(tempPoCon)
+
+        tempAimCon=pm.orientConstraint(startPoint, self.scaleGrp, o=(orientation,0,0), mo=False)
+        pm.delete(tempAimCon)
+
 
 
 
