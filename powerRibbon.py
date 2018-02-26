@@ -25,17 +25,6 @@ class PowerRibbon():
         self.toHide = []
         self.startAim = None
 
-        # self.contCurves_ORE = None
-        # self.contCurve_Start = None
-        # self.contCurve_End = None
-        # self.endLock = None
-        # self.scaleGrp = None
-        # self.nonScaleGrp = None
-        # self.attPassCont = None
-        # self.defJoints = None
-        # self.noTouchData = None
-        # self.moveAxis = None
-
     def createPowerRibbon(self, startPoint,
                           endPoint,
                           name,
@@ -46,22 +35,13 @@ class PowerRibbon():
                           controllerList=None,
                           dropoff=2.0,
                           connectStartAim=True,
-                          orientation=0):
-
-
-
-        # npResolution=1.0*npResolution
-        # jResolution = 1.0 * jResolution
+                          orientation=0
+                          ):
 
         # Create groups
         name=(extra.uniqueName("RBN_ScaleGrp_" + name)).replace("RBN_ScaleGrp_", "")
 
         self.nonScaleGrp=pm.group(em=True, name="RBN_nonScaleGrp_%s" %name)
-
-        # if type(startPoint) == str:
-        #     startPoint = pm.PyNode(startPoint)
-        # if type(endPoint) == str:
-        #     endPoint = pm.PyNode(endPoint)
 
         ribbonLength=extra.getDistance(startPoint, endPoint)
         nSurfTrans=pm.nurbsPlane(ax=(0,0,1),u=ribbonRes,v=1, w=ribbonLength, lr=(1.0/ribbonLength), name="nSurf_"+name)
@@ -74,7 +54,7 @@ class PowerRibbon():
 
         # create follicles and deformer joints
         for i in range (0, int(jointRes)):
-            follicle = pm.createNode('follicle', name="follicle_"+name+str(i))
+            follicle = pm.createNode('follicle', name="follicle_{0}{1}".format(name, i))
             nSurf.local.connect(follicle.inputSurface)
             nSurf.worldMatrix[0].connect(follicle.inputWorldMatrix)
             follicle.outRotate.connect(follicle.getParent().rotate)
@@ -89,6 +69,41 @@ class PowerRibbon():
             self.deformerJoints.append(defJ)
             pm.parent(follicle.getParent(), self.nonScaleGrp)
             self.toHide.append(follicle)
+
+        # create follicles for scaling calculations
+        follicle_sca_list = []
+        counter=0
+        for i in range (0, int(jointRes)):
+            s_follicle = pm.createNode('follicle', name="follicleSCA_{0}{1}".format(name, i))
+            nSurf.local.connect(s_follicle.inputSurface)
+            nSurf.worldMatrix[0].connect(s_follicle.inputWorldMatrix)
+            s_follicle.outRotate.connect(s_follicle.getParent().rotate)
+            s_follicle.outTranslate.connect(s_follicle.getParent().translate)
+            s_follicle.parameterV.set(0.0)
+            s_follicle.parameterU.set(0.1+(i/jointRes))
+            s_follicle.getParent().t.lock()
+            s_follicle.getParent().r.lock()
+            follicle_sca_list.append(s_follicle)
+            pm.parent(s_follicle.getParent(), self.nonScaleGrp)
+            self.toHide.append(s_follicle)
+            # create distance node
+            distNode = pm.createNode("distanceBetween", name="fDistance_{0}{1}".format(name, i))
+            follicleList[counter].outTranslate >> distNode.point1
+            s_follicle.outTranslate >> distNode.point2
+
+            multiplier = pm.createNode("multDoubleLinear", name="fMult_{0}{1}".format(name, i))
+            distNode.distance >> multiplier.input1
+            pm.setAttr(multiplier.input2, 2)
+
+
+            # compensationNode = pm.createNode("addDoubleLinear", name="fCompensate_{0}{1}".format(name, i))
+            # multiplier.output >> compensationNode.input1
+            # pm.setAttr(compensationNode.input2, 1)
+
+            multiplier.output >> self.deformerJoints[counter].scaleY
+            multiplier.output >> self.deformerJoints[counter].scaleZ
+
+            counter += 1
 
         # create control joints
         pm.select(d=True)
@@ -161,8 +176,6 @@ class PowerRibbon():
         pm.parent(endJoint,end_AIM)
         pm.aimConstraint(mid_joint_list[-1],end_AIM, aimVector=(1,0,0), upVector=(0,1,0), wut=1, wuo=end_UP, mo=True)
 
-
-
         middle_POS_list=[]
         for mid in mid_joint_list:
             self.middleCont = icon.circle("cont_midRbn_%s" %name, normal=(1, 0, 0))
@@ -196,7 +209,7 @@ class PowerRibbon():
 
         pm.select(self.startConnection, middle_POS_list, self.endConnection)
         self.scaleGrp=pm.group(name="RBN_ScaleGrp_"+name)
-        # return
+        return
         ## take a look here
         tempPoCon=pm.pointConstraint(startPoint, endPoint, self.scaleGrp)
         pm.delete(tempPoCon)
