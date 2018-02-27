@@ -1,6 +1,7 @@
 import pymel.core as pm
 import extraProcedures as extra
-import ribbonClass as rc
+# import ribbonClass as rc
+import powerRibbon as rc
 import contIcons as icon
 
 reload(extra)
@@ -749,8 +750,10 @@ class Leg(object):
 
         # UPPERLEG RIBBON
 
-        ribbon_upper_leg = rc.Ribbon()
-        ribbon_upper_leg.createRibbon(hip_ref, knee_ref, "up_%s" % suffix, -90, connectStartAim=False)
+        # ribbon_upper_leg = rc.Ribbon()
+        ribbon_upper_leg = rc.PowerRibbon()
+        # ribbon_upper_leg.createRibbon(hip_ref, knee_ref, "up_%s" % suffix, -90, connectStartAim=False)
+        ribbon_upper_leg.createPowerRibbon(hip_ref, knee_ref, "up_%s" % suffix, orientation=-90, connectStartAim=False)
 
         ribbon_start_pa_con_upper_leg_start = pm.parentConstraint(start_lock, ribbon_upper_leg.startConnection, mo=True)
         ribbon_start_pa_con_upper_leg_end = pm.parentConstraint(mid_lock, ribbon_upper_leg.endConnection, mo=True)
@@ -782,8 +785,10 @@ class Leg(object):
 
         # LOWERLEG RIBBON
 
-        ribbon_lower_leg = rc.Ribbon()
-        ribbon_lower_leg.createRibbon(knee_ref, foot_ref, "low_%s" % suffix, 90)
+        # ribbon_lower_leg = rc.Ribbon()
+        ribbon_lower_leg = rc.PowerRibbon()
+        # ribbon_lower_leg.createRibbon(knee_ref, foot_ref, "low_%s" % suffix, 90)
+        ribbon_lower_leg.createPowerRibbon(knee_ref, foot_ref, "low_%s" % suffix, orientation=90)
 
         ribbon_start_pa_con_lower_leg_start = pm.parentConstraint(mid_lock, ribbon_lower_leg.startConnection, mo=True)
         ribbon_start_pa_con_lower_leg_end = pm.parentConstraint(end_lock, ribbon_lower_leg.endConnection, mo=True)
@@ -883,7 +888,7 @@ class Leg(object):
 
         # Tweak Controls
 
-        tweak_controls = (ribbon_upper_leg.middleCont, ribbon_lower_leg.middleCont, cont_mid_lock)
+        tweak_controls = ribbon_upper_leg.middleCont + ribbon_lower_leg.middleCont + [cont_mid_lock]
         for i in tweak_controls:
             cont_fk_ik.tweakControls >> i.v
 

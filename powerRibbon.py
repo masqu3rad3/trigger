@@ -21,7 +21,7 @@ class PowerRibbon():
         self.scaleGrp = None
         self.nonScaleGrp = None
         self.deformerJoints = []
-        self.middleCont = None
+        self.middleCont = []
         self.toHide = []
         self.startAim = None
 
@@ -40,7 +40,7 @@ class PowerRibbon():
 
         # Create groups
         name=(extra.uniqueName("RBN_ScaleGrp_" + name)).replace("RBN_ScaleGrp_", "")
-
+        self.scaleGrp=pm.group(name="RBN_ScaleGrp_"+name)
         self.nonScaleGrp=pm.group(em=True, name="RBN_nonScaleGrp_%s" %name)
 
         ribbonLength=extra.getDistance(startPoint, endPoint)
@@ -95,13 +95,17 @@ class PowerRibbon():
             distNode.distance >> multiplier.input1
             pm.setAttr(multiplier.input2, 2)
 
+            global_mult = pm.createNode("multDoubleLinear", name= "fGlobal_{0}{1}".format(name, i))
+            multiplier.output >> global_mult.input1
+            self.scaleGrp.scaleX >> global_mult.input2
+
 
             # compensationNode = pm.createNode("addDoubleLinear", name="fCompensate_{0}{1}".format(name, i))
             # multiplier.output >> compensationNode.input1
             # pm.setAttr(compensationNode.input2, 1)
 
-            multiplier.output >> self.deformerJoints[counter].scaleY
-            multiplier.output >> self.deformerJoints[counter].scaleZ
+            global_mult.output >> self.deformerJoints[counter].scaleY
+            global_mult.output >> self.deformerJoints[counter].scaleZ
 
             counter += 1
 
@@ -178,7 +182,10 @@ class PowerRibbon():
 
         middle_POS_list=[]
         for mid in mid_joint_list:
-            self.middleCont = icon.circle("cont_midRbn_%s" %name, normal=(1, 0, 0))
+
+            # self.middleCont = icon.circle("cont_midRbn_%s" %name, normal=(1, 0, 0))
+            midCon = icon.circle("cont_midRbn_%s" %name, normal=(1, 0, 0))
+            self.middleCont.append(midCon)
             middle_OFF = pm.spaceLocator(name="jRbn_Mid_%s" %name)
             self.toHide.append(middle_OFF.getShape())
             middle_AIM = pm.group(em=True, name="jRbn_Mid_%s" %name)
@@ -197,8 +204,8 @@ class PowerRibbon():
             # pm.move(middle_POS, (0, 0, 0))
             # pm.makeIdentity(a=True)
 
-            pm.parent(mid, self.middleCont)
-            pm.parent(self.middleCont, middle_OFF)
+            pm.parent(mid, midCon)
+            pm.parent(midCon, middle_OFF)
             pm.parent(middle_OFF, middle_AIM)
             pm.parent(middle_UP, middle_AIM, middle_POS)
             pm.aimConstraint(self.startConnection, middle_AIM, aimVector=(0, 0, -1), upVector=(0, 1, 0), wut=1,
@@ -207,9 +214,24 @@ class PowerRibbon():
             pm.pointConstraint(start_UP, end_UP, middle_UP)
             middle_POS_list.append(middle_POS)
 
-        pm.select(self.startConnection, middle_POS_list, self.endConnection)
-        self.scaleGrp=pm.group(name="RBN_ScaleGrp_"+name)
-        return
+        # pm.select(self.startConnection, middle_POS_list, self.endConnection)
+
+        tePo = pm.pointConstraint(self.startConnection, self.endConnection, self.scaleGrp, mo=False)
+        pm.delete(tePo)
+
+
+
+        pm.select(self.scaleGrp)
+        pm.makeIdentity(a=True, t=True)
+
+        print "ANAN", self.scaleGrp
+        # pm.parent([self.startConnection, middle_POS_list, self.endConnection], self.scaleGrp)
+        pm.parent(self.startConnection, self.scaleGrp)
+        pm.parent(self.endConnection, self.scaleGrp)
+        # return
+        pm.parent(middle_POS_list, self.scaleGrp)
+
+        # return
         ## take a look here
         tempPoCon=pm.pointConstraint(startPoint, endPoint, self.scaleGrp)
         pm.delete(tempPoCon)

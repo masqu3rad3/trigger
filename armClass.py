@@ -1,6 +1,7 @@
 import pymel.core as pm
 import extraProcedures as extra
-import ribbonClass as rc
+# import ribbonClass as rc
+import powerRibbon as rc
 import contIcons as icon
 import pymel.core.datatypes as dt
 
@@ -547,8 +548,10 @@ class Arm(object):
         # UPPER ARM RIBBON
 
         # ribbonConnections_upperArm = rc..createRibbon(shoulder_ref, elbow_ref, "up_" + suffix, 0)
-        ribbon_upper_arm = rc.Ribbon()
-        ribbon_upper_arm.createRibbon(shoulder_ref, elbow_ref, "up_%s" % suffix, 0, connectStartAim=False)
+        # ribbon_upper_arm = rc.Ribbon()
+        ribbon_upper_arm = rc.PowerRibbon()
+        # ribbon_upper_arm.createRibbon(shoulder_ref, elbow_ref, "up_%s" % suffix, 0, connectStartAim=False)
+        ribbon_upper_arm.createPowerRibbon(shoulder_ref, elbow_ref, "up_%s" % suffix, orientation=0, connectStartAim=False)
         ribbon_start_pa_con_upper_arm_start = pm.parentConstraint(start_lock, ribbon_upper_arm.startConnection, mo=True)
         pm.parentConstraint(mid_lock, ribbon_upper_arm.endConnection, mo=True)
 
@@ -583,8 +586,10 @@ class Arm(object):
 
         # LOWER ARM RIBBON
 
-        ribbon_lower_arm = rc.Ribbon()
-        ribbon_lower_arm.createRibbon(elbow_ref, hand_ref, "low_%s" % suffix, 0)
+        # ribbon_lower_arm = rc.Ribbon()
+        ribbon_lower_arm = rc.PowerRibbon()
+        # ribbon_lower_arm.createRibbon(elbow_ref, hand_ref, "low_%s" % suffix, 0)
+        ribbon_lower_arm.createPowerRibbon(elbow_ref, hand_ref, "low_%s" % suffix, orientation=0)
 
         pm.parentConstraint(mid_lock, ribbon_lower_arm.startConnection, mo=True)
         ribbon_start_pa_con_lower_arm_end = pm.parentConstraint(end_lock, ribbon_lower_arm.endConnection, mo=True)
@@ -689,7 +694,9 @@ class Arm(object):
         ## CONNECT RIG VISIBILITIES
 
         # Tweak controls
-        tweak_controls = (ribbon_upper_arm.middleCont, ribbon_lower_arm.middleCont, cont_mid_lock)
+        #powerRibbonChange
+        # tweak_controls = (ribbon_upper_arm.middleCont, ribbon_lower_arm.middleCont, cont_mid_lock)
+        tweak_controls = ribbon_upper_arm.middleCont + ribbon_lower_arm.middleCont +[cont_mid_lock]
 
         for i in tweak_controls:
             cont_fk_ik.tweakControls >> i.v
