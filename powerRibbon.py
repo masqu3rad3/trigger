@@ -40,7 +40,7 @@ class PowerRibbon():
 
         # Create groups
         name=(extra.uniqueName("RBN_ScaleGrp_" + name)).replace("RBN_ScaleGrp_", "")
-        self.scaleGrp=pm.group(name="RBN_ScaleGrp_"+name)
+        self.scaleGrp=pm.group(name="RBN_ScaleGrp_"+name, empty=True)
         self.nonScaleGrp=pm.group(em=True, name="RBN_nonScaleGrp_%s" %name)
 
         ribbonLength=extra.getDistance(startPoint, endPoint)
@@ -216,27 +216,30 @@ class PowerRibbon():
 
         # pm.select(self.startConnection, middle_POS_list, self.endConnection)
 
-        tePo = pm.pointConstraint(self.startConnection, self.endConnection, self.scaleGrp, mo=False)
+        tePo = pm.pointConstraint([self.startConnection, self.endConnection], self.scaleGrp, mo=False)
         pm.delete(tePo)
 
+        # pm.select(self.scaleGrp)
+        pm.makeIdentity(self.scaleGrp, a=True, t=True)
 
+        pm.parent([self.startConnection, self.endConnection] + middle_POS_list, self.scaleGrp)
 
-        pm.select(self.scaleGrp)
-        pm.makeIdentity(a=True, t=True)
-
-        print "ANAN", self.scaleGrp
-        # pm.parent([self.startConnection, middle_POS_list, self.endConnection], self.scaleGrp)
-        pm.parent(self.startConnection, self.scaleGrp)
-        pm.parent(self.endConnection, self.scaleGrp)
-        # return
-        pm.parent(middle_POS_list, self.scaleGrp)
 
         # return
         ## take a look here
         tempPoCon=pm.pointConstraint(startPoint, endPoint, self.scaleGrp)
         pm.delete(tempPoCon)
 
-        tempAimCon=pm.orientConstraint(startPoint, self.scaleGrp, o=(orientation,0,0), mo=False)
+        if side == "R":
+            yVal = 180
+        else:
+            yVal = 0
+
+        tempAimCon=pm.orientConstraint(startPoint, self.scaleGrp, o=(orientation, yVal,0), mo=False)
+
+        # tempAimCon=pm.orientConstraint(startPoint, self.scaleGrp, o=(orientation,0,0), mo=False)
+        # tempAimCon = pm.aimConstraint(endPoint, self.scaleGrp, aim=(1, 0, 0), o=(orientation, 0, 0))
+
         pm.delete(tempAimCon)
 
 
