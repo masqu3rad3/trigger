@@ -31,7 +31,7 @@ class PowerRibbon():
                           side="C",
                           ribbonRes=5.0,
                           jointRes=5.0,
-                          controllerCount=1,
+                          controllerCount=3,
                           controllerList=None,
                           dropoff=2.0,
                           connectStartAim=True,
@@ -127,7 +127,7 @@ class PowerRibbon():
             for p in controllerList:
                 pm.select(d=True)
                 midJ = pm.joint(name="jRbn_Mid_{0}_{1}".format(counter, name), radius=2)
-                extra.alignTo(midJ, p)
+                extra.alignToAlter(midJ, p)
                 mid_joint_list.append(midJ)
         else:
             interval = ribbonLength / (controllerCount+1)
@@ -181,24 +181,25 @@ class PowerRibbon():
         pm.aimConstraint(mid_joint_list[-1],end_AIM, aimVector=(1,0,0), upVector=(0,1,0), wut=1, wuo=end_UP, mo=True)
 
         middle_POS_list=[]
+        counter = 0
         for mid in mid_joint_list:
-
+            counter += 1
             # self.middleCont = icon.circle("cont_midRbn_%s" %name, normal=(1, 0, 0))
-            midCon = icon.circle("cont_midRbn_%s" %name, normal=(1, 0, 0))
+            midCon = icon.circle("cont_midRbn_{0}{1}".format (name, counter), normal=(1, 0, 0))
             self.middleCont.append(midCon)
-            middle_OFF = pm.spaceLocator(name="jRbn_Mid_%s" %name)
+            middle_OFF = pm.spaceLocator(name="mid_OFF_{0}{1}".format (name, counter))
             self.toHide.append(middle_OFF.getShape())
-            middle_AIM = pm.group(em=True, name="jRbn_Mid_%s" %name)
+            middle_AIM = pm.group(em=True, name="mid_AIM_{0}{1}".format (name, counter))
             extra.alignTo(middle_AIM, mid)
             # pm.move(middle_AIM, (0, 0, 0))
             # pm.makeIdentity(a=True)
-            middle_UP = pm.spaceLocator(name="jRbn_Mid_%s" %name)
+            middle_UP = pm.spaceLocator(name="mid_UP_{0}{1}".format (name, counter))
             self.toHide.append(middle_UP.getShape())
 
             extra.alignTo(middle_UP, mid)
             pm.setAttr(middle_UP.ty, 0.5)
 
-            middle_POS = pm.spaceLocator(name="jRbn_Mid_%s" %name)
+            middle_POS = pm.spaceLocator(name="mid_POS_{0}{1}".format (name, counter))
             self.toHide.append(middle_POS.getShape())
             extra.alignTo(middle_POS, mid)
             # pm.move(middle_POS, (0, 0, 0))
