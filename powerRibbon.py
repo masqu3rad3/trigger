@@ -135,7 +135,8 @@ class PowerRibbon():
             for i in range (0, controllerCount):
                 counter +=1
                 pm.select(d=True)
-
+                # pos = (-(ribbonLength/2.0)+(interval*counter),0,0)
+                # print "pos", pos
                 midJ = pm.joint(name="jRbn_Mid_{0}_{1}".format(i, name), p=(-(ribbonLength/2.0)+(interval*counter),0,0), radius=2)
 
                 mid_joint_list.append(midJ)
@@ -186,17 +187,26 @@ class PowerRibbon():
             counter += 1
             # self.middleCont = icon.circle("cont_midRbn_%s" %name, normal=(1, 0, 0))
             midCon = icon.circle("cont_midRbn_{0}{1}".format (name, counter), normal=(1, 0, 0))
+            extra.alignTo(midCon, mid)
+            pm.makeIdentity(midCon, a=True)
+
+            # testLoc = pm.spaceLocator(name="test")
+            # extra.alignToAlter(testLoc, mid)
+
             self.middleCont.append(midCon)
             middle_OFF = pm.spaceLocator(name="mid_OFF_{0}{1}".format (name, counter))
             self.toHide.append(middle_OFF.getShape())
-            middle_AIM = pm.group(em=True, name="mid_AIM_{0}{1}".format (name, counter))
-            extra.alignTo(middle_AIM, mid)
+            # middle_AIM = pm.group(em=True, name="mid_AIM_{0}{1}".format (name, counter))
+            # extra.alignTo(middle_AIM, mid)
+            middle_AIM = extra.createUpGrp(mid, "AIM")
+
+
             # pm.move(middle_AIM, (0, 0, 0))
             # pm.makeIdentity(a=True)
             middle_UP = pm.spaceLocator(name="mid_UP_{0}{1}".format (name, counter))
             self.toHide.append(middle_UP.getShape())
 
-            extra.alignTo(middle_UP, mid)
+            extra.alignToAlter(middle_UP, mid)
             pm.setAttr(middle_UP.ty, 0.5)
 
             middle_POS = pm.spaceLocator(name="mid_POS_{0}{1}".format (name, counter))
@@ -205,22 +215,24 @@ class PowerRibbon():
             # pm.move(middle_POS, (0, 0, 0))
             # pm.makeIdentity(a=True)
 
+
             pm.parent(mid, midCon)
             pm.parent(midCon, middle_OFF)
             pm.parent(middle_OFF, middle_AIM)
             pm.parent(middle_UP, middle_AIM, middle_POS)
+
             pm.aimConstraint(self.startConnection, middle_AIM, aimVector=(0, 0, -1), upVector=(0, 1, 0), wut=1,
                              wuo=middle_UP, mo=True)
-            pm.pointConstraint(self.startConnection, self.endConnection, middle_POS)
+            pm.pointConstraint(self.startConnection, self.endConnection, middle_POS, mo=True)
+
             pm.pointConstraint(start_UP, end_UP, middle_UP)
             middle_POS_list.append(middle_POS)
 
-        # pm.select(self.startConnection, middle_POS_list, self.endConnection)
 
         tePo = pm.pointConstraint([self.startConnection, self.endConnection], self.scaleGrp, mo=False)
         pm.delete(tePo)
 
-        # pm.select(self.scaleGrp)
+
         pm.makeIdentity(self.scaleGrp, a=True, t=True)
 
         pm.parent([self.startConnection, self.endConnection] + middle_POS_list, self.scaleGrp)
@@ -237,9 +249,6 @@ class PowerRibbon():
             yVal = 0
 
         tempAimCon=pm.orientConstraint(startPoint, self.scaleGrp, o=(orientation, yVal,0), mo=False)
-
-        # tempAimCon=pm.orientConstraint(startPoint, self.scaleGrp, o=(orientation,0,0), mo=False)
-        # tempAimCon = pm.aimConstraint(endPoint, self.scaleGrp, aim=(1, 0, 0), o=(orientation, 0, 0))
 
         pm.delete(tempAimCon)
 
