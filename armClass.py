@@ -482,6 +482,8 @@ class Arm(object):
         cont_mid_lock_ave = extra.createUpGrp(cont_mid_lock, "AVE")
         extra.alignTo(cont_mid_lock_pos, elbow_ref, 0)
 
+
+
         mid_lock_pa_con_weight = pm.parentConstraint(j_ik_orig_up, j_fk_up, cont_mid_lock_pos, mo=True)
         # cont_fk_ik.fk_ik >> (mid_lock_pa_con_weight + "." + j_ik_orig_up + "W0")
         cont_fk_ik.fk_ik >> ("%s.%sW0" %(mid_lock_pa_con_weight, j_ik_orig_up))
@@ -556,6 +558,10 @@ class Arm(object):
         ribbon_start_pa_con_upper_arm_start = pm.parentConstraint(start_lock, ribbon_upper_arm.startConnection, mo=True)
         pm.parentConstraint(mid_lock, ribbon_upper_arm.endConnection, mo=True)
 
+        # connect the elbow scaling
+        cont_mid_lock.scale >>  ribbon_upper_arm.endConnection.scale
+        cont_mid_lock.scale >> j_def_elbow.scale
+
         pm.scaleConstraint(self.scaleGrp, ribbon_upper_arm.scaleGrp)
 
         # ribbon_start_ori_con = pm.orientConstraint(j_ik_orig_up, j_fk_up, ribbon_upper_arm.startAim, mo=False)
@@ -594,6 +600,9 @@ class Arm(object):
 
         pm.parentConstraint(mid_lock, ribbon_lower_arm.startConnection, mo=True)
         ribbon_start_pa_con_lower_arm_end = pm.parentConstraint(end_lock, ribbon_lower_arm.endConnection, mo=True)
+
+        # connect the elbow scaling
+        cont_mid_lock.scale >>  ribbon_lower_arm.startConnection.scale
 
         pm.scaleConstraint(self.scaleGrp, ribbon_lower_arm.scaleGrp)
 
@@ -740,7 +749,7 @@ class Arm(object):
         # FOOL PROOFING
         extra.lockAndHide(self.cont_IK_hand, ["v"])
         extra.lockAndHide(self.cont_Pole, ["rx", "ry", "rz", "sx", "sy", "sz", "v"])
-        extra.lockAndHide(cont_mid_lock, ["sx", "sy", "sz", "v"])
+        extra.lockAndHide(cont_mid_lock, ["v"])
         extra.lockAndHide(cont_fk_ik, ["sx", "sy", "sz", "v"])
         extra.lockAndHide(cont_fk_hand, ["tx", "ty", "tz", "v"])
         extra.lockAndHide(cont_fk_low_arm, ["tx", "ty", "tz", "sx", "sz", "v"])

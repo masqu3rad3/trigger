@@ -228,6 +228,54 @@ class Tentacle(object):
             pm.scaleConstraint(self.scaleGrp, follicle.getParent(), mo=True)
             # self.toHide.append(follicle)
 
+        # create follicles for scaling calculations
+        follicle_sca_list = []
+        counter=0
+        for i in range (0, int(jResolution)):
+            s_follicle = pm.createNode('follicle', name="follicleSCA_{0}{1}".format(suffix, i))
+            npJdefHolderShape.local.connect(s_follicle.inputSurface)
+            npJdefHolderShape.worldMatrix[0].connect(s_follicle.inputWorldMatrix)
+            s_follicle.outRotate.connect(s_follicle.getParent().rotate)
+            s_follicle.outTranslate.connect(s_follicle.getParent().translate)
+            s_follicle.parameterV.set(0.0)
+            s_follicle.parameterU.set((1/jResolution)+(i/jResolution)-((1/jResolution)/2))
+            s_follicle.getParent().t.lock()
+            s_follicle.getParent().r.lock()
+            follicle_sca_list.append(s_follicle)
+            pm.parent(s_follicle.getParent(), self.nonScaleGrp)
+            # self.toHide.append(s_follicle)
+            # create distance node
+            distNode = pm.createNode("distanceBetween", name="fDistance_{0}{1}".format(suffix, i))
+            follicleList[counter].outTranslate >> distNode.point1
+            s_follicle.outTranslate >> distNode.point2
+
+            multiplier = pm.createNode("multDoubleLinear", name="fMult_{0}{1}".format(suffix, i))
+            distNode.distance >> multiplier.input1
+            pm.setAttr(multiplier.input2, 2)
+
+            # global_mult = pm.createNode("multDoubleLinear", name= "fGlobal_{0}{1}".format(suffix, i))
+            # multiplier.output >> global_mult.input1
+            # self.scaleGrp.scaleX >> global_mult.input2
+
+            global_divide = pm.createNode("multiplyDivide", name= "fGlobDiv_{0}{1}".format(suffix, i))
+            pm.setAttr(global_divide.operation, 2)
+            multiplier.output >> global_divide.input1X
+            self.scaleGrp.scaleX >> global_divide.input2X
+
+
+
+            # compensationNode = pm.createNode("addDoubleLinear", name="fCompensate_{0}{1}".format(name, i))
+            # multiplier.output >> compensationNode.input1
+            # pm.setAttr(compensationNode.input2, 1)
+
+            # global_mult.output >> self.deformerJoints[counter].scaleY
+            # global_mult.output >> self.deformerJoints[counter].scaleZ
+            global_divide.outputX >> self.deformerJoints[counter].scaleX
+            global_divide.outputX >> self.deformerJoints[counter].scaleY
+            global_divide.outputX >> self.deformerJoints[counter].scaleZ
+
+            counter += 1
+
         ## Duplicate it 3 more times for deformation targets (npDeformers, npTwist, npSine)
 
         npDeformers = pm.duplicate(npJdefHolder[0], name="npDeformers_"+suffix)
@@ -240,6 +288,11 @@ class Tentacle(object):
         ## Wrap npjDefHolder to the Base Plane
         # npWrap = pm.deformer(type="wrap", g=npJdefHolder)
         npWrap, npWrapGeo = self.createWrap(npBase[0], npJdefHolder[0],weightThreshold=0.0, maxDistance=50, autoWeightThreshold=False)
+        maxDistanceMult = pm.createNode("multDoubleLinear", name="npWrap_{0}".format(suffix))
+        self.scaleGrp.scaleX >> maxDistanceMult.input1
+        pm.setAttr(maxDistanceMult.input2, 50)
+        maxDistanceMult.output >> npWrap.maxDistance
+        # npWrap.maxDistance >> self.scaleGrp.scaleX
 
         ## make the Wrap node Scale-able with the rig
         pm.select(d=True)
@@ -365,6 +418,7 @@ class Tentacle(object):
 
         for j in range (len(contJointsList)):
             pm.parentConstraint(contTwk_List[j], contJointsList[j], mo=False)
+            pm.scaleConstraint(contTwk_List[j], contJointsList[j], mo=False)
 
         ## Create limb plug
         pm.select(d=True)
@@ -402,7 +456,7 @@ class Tentacle(object):
         pm.setAttr(self.scaleGrp.rigVis, cb=True)
 
         nodesContVis = [contTwk_List, contFK_List]
-        nodesRigVis = [npBase[0], npJdefHolder[0], npDeformers[0], sineLoc, twistLoc, curlLoc, follicleList, contJointsList, wrapScaleJoint]
+        nodesRigVis = [npBase[0], npJdefHolder[0], npDeformers[0], sineLoc, twistLoc, curlLoc, follicleList, follicle_sca_list, contJointsList, wrapScaleJoint]
 
         # Cont visibilities
         for i in nodesContVis:
@@ -428,7 +482,9 @@ class Tentacle(object):
         for i in contFK_List:
             extra.lockAndHide(i, ["sx", "sy", "sz"])
         for i in contTwk_List:
-            extra.lockAndHide(i, ["sx", "sy", "sz"])
+            pass
+            # extra.lockAndHide(i, ["sx", "sy", "sz"])
+            # extra.lockAndHide(i, ["sz"])
 
         ## COLOR CODING
 
