@@ -128,10 +128,14 @@ class Leg(object):
 
         foot_cont_scale = (init_foot_length * 0.75, 1, init_foot_width * 0.8)
         self.cont_IK_foot = icon.circle("cont_IK_foot_%s" % suffix, scale=foot_cont_scale, normal=(0, 1, 0))
+
         extra.alignAndAim(self.cont_IK_foot, targetList=[bank_out_ref, bank_in_ref, toe_pv_ref, heel_pv_ref], aimTargetList=[toe_pv_ref], upObject=foot_ref)
-        pm.xform(self.cont_IK_foot, piv=foot_pos, ws=True)
+        # pm.makeIdentity(self.cont_IK_foot, a=True, t=True, r=False, s=True)
+
+        pm.xform(self.cont_IK_foot, piv=foot_pos, p=True, ws=True)
 
         self.cont_IK_OFF  = extra.createUpGrp(self.cont_IK_foot, "OFF")
+
 
 
         pm.addAttr(self.cont_IK_foot, shortName="polevector", longName="Pole_Vector", defaultValue=0.0, minValue=0.0, maxValue=1.0,
@@ -758,6 +762,10 @@ class Leg(object):
         ribbon_start_pa_con_upper_leg_start = pm.parentConstraint(start_lock, ribbon_upper_leg.startConnection, mo=True)
         ribbon_start_pa_con_upper_leg_end = pm.parentConstraint(mid_lock, ribbon_upper_leg.endConnection, mo=True)
 
+        # connect the midLeg scaling
+        cont_mid_lock.scale >> ribbon_upper_leg.endConnection.scale
+        cont_mid_lock.scale >> j_def_midLeg.scale
+
         pm.scaleConstraint(self.scaleGrp, ribbon_upper_leg.scaleGrp)
 
         # ribbon_start_ori_con = pm.orientConstraint(j_ik_orig_root, jfk_root, ribbon_upper_leg.startAim, mo=False)
@@ -793,6 +801,9 @@ class Leg(object):
         ribbon_start_pa_con_lower_leg_start = pm.parentConstraint(mid_lock, ribbon_lower_leg.startConnection, mo=True)
         ribbon_start_pa_con_lower_leg_end = pm.parentConstraint(end_lock, ribbon_lower_leg.endConnection, mo=True)
 
+        # connect the midLeg scaling
+        cont_mid_lock.scale >>  ribbon_lower_leg.startConnection.scale
+
         pm.scaleConstraint(self.scaleGrp, ribbon_lower_leg.scaleGrp)
 
         # AUTO AND MANUAL TWIST
@@ -824,7 +835,9 @@ class Leg(object):
         self.sockets.append(j_def_toe)
 
         foot_pa_con = pm.parentConstraint(j_ik_foot, jfk_foot, j_def_foot, mo=True)
-        ball_pa_con = pm.parentConstraint(j_ik_ball, jfk_ball, j_def_ball, mo=False)
+        # ball_pa_con = pm.parentConstraint(j_ik_ball, jfk_ball, j_def_ball, mo=False)
+        ball_pa_con = pm.parentConstraint(j_ik_ball, jfk_ball, j_def_ball, mo=True)
+        # toe_pa_con = pm.parentConstraint(j_ik_toe, jfk_toe, j_def_toe, mo=False)
         toe_pa_con = pm.parentConstraint(j_ik_toe, jfk_toe, j_def_toe, mo=False)
 
         # cont_FK_IK.fk_ik >> (foot_paCon + "." + jIK_Foot + "W0")
@@ -953,6 +966,8 @@ class Leg(object):
         # # GOOD RIDDANCE
         pm.delete(foot_plane)
 
+        # return
         self.scaleConstraints = [self.scaleGrp, self.cont_IK_OFF ]
         self.anchors = [(self.cont_IK_foot, "parent", 1, None), (self.cont_Pole, "parent", 1, None)]
         # self.cont_IK_OFF = cont_ik_foot_off
+        pm.makeIdentity(self.cont_IK_foot, a=True, t=True, r=False, s=False)

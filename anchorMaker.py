@@ -1,5 +1,5 @@
 import pymel.core as pm
-
+import extraProcedures as extra
 import Qt
 from Qt import QtWidgets, QtCore, QtGui
 from maya import OpenMayaUI as omui
@@ -74,20 +74,22 @@ def spaceSwitcher(node, targetList, overrideExisting=False, mode="parent", defau
     pm.addAttr(node, at="enum", k=True, shortName=mode + "Switch", longName=mode + "_Switch", en=enumFlag, defaultValue=defaultVal)
     driver = "%s.%sSwitch" % (node, mode)
 
-    # Upgrp
-    grpName = (node.name() + "_" + mode + "SW")
-    switchGrp = pm.group(em=True, name=grpName)
+    switchGrp = extra.createUpGrp(node, "{0}SW".format(mode))
 
-    # align the new created empty group to the selected object
-    pointCon = pm.parentConstraint(node, switchGrp, mo=False)
-    pm.delete(pointCon)
-
-    # check if the target object has a parent
-    originalParent = pm.listRelatives(node, p=True)
-    if (len(originalParent) > 0):
-        pm.parent(switchGrp, originalParent[0])
-
-    pm.parent(node, switchGrp)
+    # # Upgrp
+    # grpName = (node.name() + "_" + mode + "SW")
+    # switchGrp = pm.group(em=True, name=grpName)
+    #
+    # # align the new created empty group to the selected object
+    # pointCon = pm.parentConstraint(node, switchGrp, mo=False)
+    # pm.delete(pointCon)
+    #
+    # # check if the target object has a parent
+    # originalParent = pm.listRelatives(node, p=True)
+    # if (len(originalParent) > 0):
+    #     pm.parent(switchGrp, originalParent[0])
+    #
+    # pm.parent(node, switchGrp)
 
     # switchGrp=createUpGrp(node, (mode+"SW"))
     if mode == "parent":
