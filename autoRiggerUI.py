@@ -381,7 +381,7 @@ class mainUI(QtWidgets.QMainWindow):
         # self.minorRightColor = self.colorCodeDict["minorright_pushButton"]
         # self.majorCenterColor = self.colorCodeDict["majorcenter_pushButton"]
         # self.minorCenterColor = self.colorCodeDict["minorcenter_pushButton"]
-
+        self.settingsData["rigName"] = self.rigName
         self.settingsData["majorLeftColor"] = self.colorCodeDict["majorleft_pushButton"]
         self.settingsData["minorLeftColor"] = self.colorCodeDict["minorleft_pushButton"]
         self.settingsData["majorRightColor"] = self.colorCodeDict["majorright_pushButton"]
@@ -418,7 +418,6 @@ class mainUI(QtWidgets.QMainWindow):
         settingsFilePath = os.path.join(homedir, "triggerSettings.json")
         dumpJson(self.settingsData, settingsFilePath)
         self.initSkeleton.__init__(settingsData=self.settingsData)
-        print "hoyt", self.initSkeleton.lookAxis
         self.rigger.__init__(settingsData=self.settingsData)
 
 
