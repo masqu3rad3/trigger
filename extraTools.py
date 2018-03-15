@@ -160,3 +160,4 @@ def replaceController(mirror=True, mirrorAxis="X", keepOldShape=False, keepAcopy
             pm.setAttr("%s.%s" % (oldCont, i), transformDict[i])
         except RuntimeError:
             pass
+        

@@ -22,6 +22,20 @@ reload(root)
 import anchorMaker
 reload(anchorMaker)
 
+import Qt
+# from Qt import QtWidgets, QtCore, QtGui
+from Qt import QtWidgets
+
+# if Qt.__binding__ == "PySide":
+#     from shiboken import wrapInstance
+#     from Qt.QtCore import Signal
+# elif Qt.__binding__.startswith('PyQt'):
+#     from sip import wrapinstance as wrapInstance
+#     from Qt.Core import pyqtSignal as Signal
+# else:
+#     from shiboken2 import wrapInstance
+#     from Qt.QtCore import Signal
+
 class LimbBuilder():
 
     def __init__(self, settingsData, progressBar=None):
@@ -187,6 +201,7 @@ class LimbBuilder():
                 limb_counter = limb_counter+1
                 percent = (100 * limb_counter) / total_limb_count
                 self.progressBar.setProperty("value", percent)
+                QtWidgets.QApplication.processEvents()
 
             if x[2] == "R":
                 sideVal = "_RIGHT_"
