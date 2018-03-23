@@ -160,4 +160,20 @@ def replaceController(mirror=True, mirrorAxis="X", keepOldShape=False, keepAcopy
             pm.setAttr("%s.%s" % (oldCont, i), transformDict[i])
         except RuntimeError:
             pass
-        
+
+def rigTransfer(oldSkin, newJointList, deleteOld=False):
+
+    #duplicate the old skin
+    newSkin = pm.duplicate(oldSkin)
+
+    #add new joints influences to the skin cluster
+
+    #copy skin weights from the old skin to the dup skin (with closest joint option)
+
+    #delete the old skin(optional)
+    if deleteOld:
+        name = oldSkin.name()
+        pm.delete(oldSkin)
+        pm.rename(newSkin, name)
+
+    pass

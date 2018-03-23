@@ -58,6 +58,8 @@ class LimbBuilder():
         self.riggedLimbList = []
         self.rigName = "tikAutoRig"
         self.rootGroup = None
+        self.skinMeshList = None
+        self.copySkinWeights = False
         # self.spineRes = 4
         # self.neckRes = 3
         # self.spineDropoff = 2.0
@@ -69,22 +71,6 @@ class LimbBuilder():
 
 
     def parseSettings(self, settingsData):
-        # up=settingsData["upAxis"]
-        # look=settingsData["lookAxis"]
-        # if "-" in up:
-        #     self.upAxis=up.replace("-", "")
-        #     self.upAxisMult=-1
-        # if "+" in up:
-        #     self.upAxis=up.replace("+", "")
-        #     self.upAxisMult=1
-        # if "-" in look:
-        #     self.lookAxis=look.replace("-", "")
-        #     self.lookAxisMult=-1
-        # if "+" in look:
-        #     self.lookAxis=look.replace("+", "")
-        #     self.lookAxisMult=1
-        # self.mirrorAxis="xyz".replace(self.upAxis,"").replace(self.lookAxis,"")
-        # self.mirrorAxisMult=1
 
         self.afterCreation = settingsData["afterCreation"]
         self.seperateSelectionSets = settingsData["seperateSelectionSets"]
@@ -152,7 +138,16 @@ class LimbBuilder():
         if self.afterCreation == 2:
             # if the After Creation set to 'Delete Initial Joints'
             pm.delete(selection)
+        if self.skinMeshList:
+            # if there are skin mesh(s) defined, initiate the skinning process
+            self.skinning(copyMode=self.copySkinWeights)
+            pass
 
+    def skinning(self, copyMode):
+        if copyMode:
+            print "copyskins"
+        else:
+            print "dont copy, only initial skinning"
 
     def createlimbs(self, limbCreationList=[], addLimb=False, *args, **kwargs):
         """

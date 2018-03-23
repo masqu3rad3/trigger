@@ -98,6 +98,9 @@ class mainUI(QtWidgets.QMainWindow):
         # self.upAxis = "+y"
         # self.afterCreation = 0
         # self.seperateSelectionSets = True
+
+        self.skinMeshList = None
+
         self.settingsDefaults={
             "rigName": "triggerAutoRig",
             "majorLeftColor": 6,
@@ -796,14 +799,31 @@ class mainUI(QtWidgets.QMainWindow):
         # self.isCreateAnchorsChk.setLayoutDirection(QtCore.Qt.RightToLeft)
         self.isCreateAnchorsChk.setChecked(True)
 
+        skinmeshLayout = QtWidgets.QHBoxLayout()
+        self.skinMesh_linedit = QtWidgets.QLineEdit()
+        self.skinMesh_linedit.setPlaceholderText(("Skin Mesh (Optional)"))
+        self.skinMesh_linedit.setReadOnly(True)
+        self.skinMesh_linedit.setAlignment(QtCore.Qt.AlignCenter)
+        self.skinMesh_pushbutton = QtWidgets.QPushButton("< GET")
+        skinmeshLayout.addWidget(self.skinMesh_linedit)
+        skinmeshLayout.addWidget(self.skinMesh_pushbutton)
+
+        self.copyweights_checkbox = QtWidgets.QCheckBox("Duplicate and copy weights")
+        self.copyweights_checkbox.setEnabled(False)
+
+
+
         ## Add widgets to the group layout
         rigGrpLayout.addWidget(label)
         rigGrpLayout.addWidget(self.isCreateAnchorsChk)
+        rigGrpLayout.addLayout(skinmeshLayout)
+        rigGrpLayout.addWidget(self.copyweights_checkbox)
 
         rigGrpLayout.addWidget(rigBtn)
 
-        ## Connect the button signal to the rig creation
+        ## Connect the signals
         rigBtn.clicked.connect(self.rig)
+        self.skinMesh_pushbutton.clicked.connect(self.onGetSkinMesh)
         ## Add groupbox under the tabs main layout
         self.riglayout.addWidget(rigGrpBox)
 
@@ -920,19 +940,34 @@ class mainUI(QtWidgets.QMainWindow):
         #
         # self.riglayout.addWidget(anchor_conts_grpbox)
 
-    def onGetControlCurve(self):
-        selection = pm.ls(sl=True)
-        if len(selection) > 1:
-            self.infoPop(textTitle="Selection Error", textHeader="Select only one object", textInfo="")
+    def onGetSkinMesh(self):
+        self.skinMeshList = pm.ls(sl=True, type="transform")
+        if len(self.skinMeshList) > 0:
+
+            names = ["%s, " %(obj.name()) for obj in self.skinMeshList]
+            strNames = ""
+            strNames = strNames.join(names)[:-2]
+            self.skinMesh_linedit.setText(strNames)
+            self.copyweights_checkbox.setEnabled(True)
         else:
-            self.anchorController = selection[0]
-            self.anchor_conts_lineedit1.setText(selection[0].name())
+            self.skinMeshList = None
+            self.skinMesh_linedit.setText("")
+            self.copyweights_checkbox.setEnabled(False)
         pass
 
-    def onGetAnchorLocations(self):
-        self.anchorLocations = pm.ls(sl=True)
-        self.anchor_conts_lineedit2.setText("{0} Docks".format (len(self.anchorLocations)))
-        pass
+    # def onGetControlCurve(self):
+    #     selection = pm.ls(sl=True)
+    #     if len(selection) > 1:
+    #         self.infoPop(textTitle="Selection Error", textHeader="Select only one object", textInfo="")
+    #     else:
+    #         self.anchorController = selection[0]
+    #         self.anchor_conts_lineedit1.setText(selection[0].name())
+    #     pass
+    #
+    # def onGetAnchorLocations(self):
+    #     self.anchorLocations = pm.ls(sl=True)
+    #     self.anchor_conts_lineedit2.setText("{0} Docks".format (len(self.anchorLocations)))
+    #     pass
 
     def onAddController(self):
         pm.undoInfo(openChunk=True)
@@ -1512,6 +1547,8 @@ class mainUI(QtWidgets.QMainWindow):
         self.progressBar()
         # self.progress_Dialog.show()
         self.rigger.__init__(settingsData=self.settingsData, progressBar=self.progress_progressBar)
+        self.rigger.skinMeshList = self.skinMeshList
+        self.rigger.copySkinWeights = self.copyweights_checkbox.isChecked()
         self.rigger.startBuilding(createAnchors=self.isCreateAnchorsChk.isChecked())
         self.progress_Dialog.close()
         pm.undoInfo(closeChunk=True)
