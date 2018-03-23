@@ -60,6 +60,7 @@ class LimbBuilder():
         self.rootGroup = None
         self.skinMeshList = None
         self.copySkinWeights = False
+        self.totalDefJoints = []
         # self.spineRes = 4
         # self.neckRes = 3
         # self.spineDropoff = 2.0
@@ -146,8 +147,20 @@ class LimbBuilder():
     def skinning(self, copyMode):
         if copyMode:
             print "copyskins"
+            print self.totalDefJoints
+            for i in self.skinMeshList:
+                dupMesh = pm.duplicate(i)
+                pm.skinCluster(self.totalDefJoints, dupMesh, tsb=True)
+                pm.copySkinWeights(i, dupMesh, noMirror=True, surfaceAssociation="closestPoint",
+                                   influenceAssociation="closestJoint", normalize=True)
+
         else:
             print "dont copy, only initial skinning"
+
+            print self.totalDefJoints
+            for i in self.skinMeshList:
+                pm.skinCluster(self.totalDefJoints, i, tsb=True)
+
 
     def createlimbs(self, limbCreationList=[], addLimb=False, *args, **kwargs):
         """
@@ -334,8 +347,10 @@ class LimbBuilder():
 
             #
             # if not seperateSelectionSets:
+            self.totalDefJoints += limb.deformerJoints
             if j_def_set:
                 pm.sets(j_def_set, add=limb.deformerJoints)
+
 
     def getDimensions(self, rootNode):
         """
