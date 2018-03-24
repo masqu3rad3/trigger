@@ -146,8 +146,8 @@ class LimbBuilder():
 
     def skinning(self, copyMode):
         if copyMode:
-            print "copyskins"
-            print self.totalDefJoints
+            # print "copyskins"
+            # print self.totalDefJoints
             for i in self.skinMeshList:
                 dupMesh = pm.duplicate(i)
                 pm.skinCluster(self.totalDefJoints, dupMesh, tsb=True)
@@ -155,9 +155,8 @@ class LimbBuilder():
                                    influenceAssociation="closestJoint", normalize=True)
 
         else:
-            print "dont copy, only initial skinning"
-
-            print self.totalDefJoints
+            # print "dont copy, only initial skinning"
+            # print self.totalDefJoints
             for i in self.skinMeshList:
                 pm.skinCluster(self.totalDefJoints, i, tsb=True)
 

@@ -122,6 +122,8 @@ class Tentacle(object):
                    k=True)
         pm.addAttr(cont_special, shortName="sineArea", longName="Sine_area", defaultValue=1.0, at="float",
                    k=True)
+        pm.addAttr(cont_special, shortName="sineDirection", longName="Sine_Direction", defaultValue=0.0, at="float",
+                   k=True)
 
         pm.addAttr(cont_special, shortName="sineAnimate", longName="Sine_Animate", defaultValue=0.0, at="float",
                    k=True)
@@ -401,6 +403,7 @@ class Tentacle(object):
         cont_special.sineSlide >> sineLoc.translateY
         cont_special.sineArea >> sineLoc.scaleY
 
+        cont_special.sineDirection >> sineLoc.rotateY
 
 
 
