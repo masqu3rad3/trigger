@@ -35,7 +35,8 @@ class PowerRibbon():
                           controllerList=None,
                           dropoff=2.0,
                           connectStartAim=True,
-                          orientation=0
+                          orientation=0,
+                          upVector=(0, 1, 0)
                           ):
 
         # Create groups
@@ -236,19 +237,19 @@ class PowerRibbon():
 
         # return
         ## take a look here
-        tempPoCon=pm.pointConstraint(startPoint, endPoint, self.scaleGrp)
-        pm.delete(tempPoCon)
+        # tempPoCon=pm.pointConstraint(startPoint, endPoint, self.scaleGrp)
+        # pm.delete(tempPoCon)
+        # 
+        # if side == "R":
+        #     yVal = 180
+        # else:
+        #     yVal = 0
+        # 
+        # tempAimCon=pm.orientConstraint(startPoint, self.scaleGrp, o=(orientation, yVal,0), mo=False)
+        # 
+        # pm.delete(tempAimCon)
 
-        if side == "R":
-            yVal = 180
-        else:
-            yVal = 0
-
-        tempAimCon=pm.orientConstraint(startPoint, self.scaleGrp, o=(orientation, yVal,0), mo=False)
-
-        pm.delete(tempAimCon)
-
-
+        extra.alignAndAim(self.scaleGrp, [startPoint, endPoint], [endPoint], upVector=upVector)
 
 
 

@@ -757,7 +757,7 @@ class Leg(object):
         # ribbon_upper_leg = rc.Ribbon()
         ribbon_upper_leg = rc.PowerRibbon()
         # ribbon_upper_leg.createRibbon(hip_ref, knee_ref, "up_%s" % suffix, -90, connectStartAim=False)
-        ribbon_upper_leg.createPowerRibbon(hip_ref, knee_ref, "up_%s" % suffix,  side=side,  orientation=-90, connectStartAim=False)
+        ribbon_upper_leg.createPowerRibbon(hip_ref, knee_ref, "up_%s" % suffix,  side=side,  orientation=-90, connectStartAim=False, upVector=up_axis)
 
         ribbon_start_pa_con_upper_leg_start = pm.parentConstraint(start_lock, ribbon_upper_leg.startConnection, mo=True)
         ribbon_start_pa_con_upper_leg_end = pm.parentConstraint(mid_lock, ribbon_upper_leg.endConnection, mo=True)
@@ -796,7 +796,7 @@ class Leg(object):
         # ribbon_lower_leg = rc.Ribbon()
         ribbon_lower_leg = rc.PowerRibbon()
         # ribbon_lower_leg.createRibbon(knee_ref, foot_ref, "low_%s" % suffix, 90)
-        ribbon_lower_leg.createPowerRibbon(knee_ref, foot_ref, "low_%s" % suffix, side=side,  orientation=90)
+        ribbon_lower_leg.createPowerRibbon(knee_ref, foot_ref, "low_%s" % suffix, side=side,  orientation=90, upVector=up_axis)
 
         ribbon_start_pa_con_lower_leg_start = pm.parentConstraint(mid_lock, ribbon_lower_leg.startConnection, mo=True)
         ribbon_start_pa_con_lower_leg_end = pm.parentConstraint(end_lock, ribbon_lower_leg.endConnection, mo=True)

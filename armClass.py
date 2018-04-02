@@ -553,7 +553,7 @@ class Arm(object):
         # ribbon_upper_arm = rc.Ribbon()
         ribbon_upper_arm = rc.PowerRibbon()
         # ribbon_upper_arm.createRibbon(shoulder_ref, elbow_ref, "up_%s" % suffix, 0, connectStartAim=False)
-        ribbon_upper_arm.createPowerRibbon(shoulder_ref, elbow_ref, "up_%s" % suffix, side=side,  orientation=0, connectStartAim=False)
+        ribbon_upper_arm.createPowerRibbon(shoulder_ref, elbow_ref, "up_%s" % suffix, side=side,  orientation=0, connectStartAim=False, upVector=up_axis)
         # ribbon_upper_arm.createPowerRibbon(shoulder_ref, elbow_ref, "up_%s" % suffix, orientation=0, connectStartAim=False)
         ribbon_start_pa_con_upper_arm_start = pm.parentConstraint(start_lock, ribbon_upper_arm.startConnection, mo=True)
         pm.parentConstraint(mid_lock, ribbon_upper_arm.endConnection, mo=True)
@@ -596,7 +596,7 @@ class Arm(object):
         # ribbon_lower_arm = rc.Ribbon()
         ribbon_lower_arm = rc.PowerRibbon()
         # ribbon_lower_arm.createRibbon(elbow_ref, hand_ref, "low_%s" % suffix, 0)
-        ribbon_lower_arm.createPowerRibbon(elbow_ref, hand_ref, "low_%s" % suffix,  side=side,  orientation=0)
+        ribbon_lower_arm.createPowerRibbon(elbow_ref, hand_ref, "low_%s" % suffix,  side=side,  orientation=0, upVector=up_axis)
 
         pm.parentConstraint(mid_lock, ribbon_lower_arm.startConnection, mo=True)
         ribbon_start_pa_con_lower_arm_end = pm.parentConstraint(end_lock, ribbon_lower_arm.endConnection, mo=True)
