@@ -579,7 +579,13 @@ class Leg(object):
         blend_ore_ik_knee = pm.createNode("blendColors", name="blendORE_IK_knee_%s" % suffix)
         j_ik_sc_knee.rotate >> blend_ore_ik_knee.color2
         j_ik_rp_knee.rotate >> blend_ore_ik_knee.color1
-        blend_ore_ik_knee.output >> j_ik_orig_knee.rotate
+        # blend_ore_ik_knee.output >> j_ik_orig_knee.rotate
+        # Weird bug with skinned character / use seperate connections
+        # if there is no skincluster, it works ok, but adding a skin cluster misses 2 out of 3 rotation axis
+        # Therefore make SEPERATE CONNECTIONS
+        blend_ore_ik_knee.outputR >> j_ik_orig_knee.rotateX
+        blend_ore_ik_knee.outputG >> j_ik_orig_knee.rotateY
+        blend_ore_ik_knee.outputB >> j_ik_orig_knee.rotateZ
         self.cont_IK_foot.polevector >> blend_ore_ik_knee.blender
 
         blend_pos_ik_knee = pm.createNode("blendColors", name="blendPOS_IK_knee_%s" % suffix)
@@ -591,7 +597,13 @@ class Leg(object):
         blend_ore_ik_end = pm.createNode("blendColors", name="blendORE_IK_end_%s" % suffix)
         j_ik_sc_end.rotate >> blend_ore_ik_end.color2
         j_ik_rp_end.rotate >> blend_ore_ik_end.color1
-        blend_ore_ik_end.output >> j_ik_orig_end.rotate
+        # blend_ore_ik_end.output >> j_ik_orig_end.rotate
+        # Weird bug with skinned character / use seperate connections
+        # if there is no skincluster, it works ok, but adding a skin cluster misses 2 out of 3 rotation axis
+        # Therefore make SEPERATE CONNECTIONS
+        blend_ore_ik_end.outputR >> j_ik_orig_end.rotateX
+        blend_ore_ik_end.outputG >> j_ik_orig_end.rotateY
+        blend_ore_ik_end.outputB >> j_ik_orig_end.rotateZ
         self.cont_IK_foot.polevector >> blend_ore_ik_end.blender
 
         blend_pos_ik_end = pm.createNode("blendColors", name="blendPOS_IK_end_%s" % suffix)
@@ -835,10 +847,10 @@ class Leg(object):
         self.sockets.append(j_def_toe)
 
         foot_pa_con = pm.parentConstraint(j_ik_foot, jfk_foot, j_def_foot, mo=True)
-        # ball_pa_con = pm.parentConstraint(j_ik_ball, jfk_ball, j_def_ball, mo=False)
-        ball_pa_con = pm.parentConstraint(j_ik_ball, jfk_ball, j_def_ball, mo=True)
-        # toe_pa_con = pm.parentConstraint(j_ik_toe, jfk_toe, j_def_toe, mo=False)
+        ball_pa_con = pm.parentConstraint(j_ik_ball, jfk_ball, j_def_ball, mo=False)
+        # ball_pa_con = pm.parentConstraint(j_ik_ball, jfk_ball, j_def_ball, mo=True)
         toe_pa_con = pm.parentConstraint(j_ik_toe, jfk_toe, j_def_toe, mo=False)
+        # toe_pa_con = pm.parentConstraint(j_ik_toe, jfk_toe, j_def_toe, mo=False)
 
         # cont_FK_IK.fk_ik >> (foot_paCon + "." + jIK_Foot + "W0")
         cont_fk_ik.fk_ik >> ("%s.%sW0" % (foot_pa_con, j_ik_foot))
