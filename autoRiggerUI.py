@@ -112,7 +112,9 @@ class mainUI(QtWidgets.QMainWindow):
             "lookAxis": "+z",
             "upAxis": "+y",
             "afterCreation": 0,
-            "seperateSelectionSets": True
+            "seperateSelectionSets": True,
+            "bindMethod": 0,
+            "skinningMethod": 0
             }
         self.loadSettings()
 
@@ -403,6 +405,10 @@ class mainUI(QtWidgets.QMainWindow):
         self.settingsData["afterCreation"] = self.aftercreation_comboBox.currentIndex()
         self.settingsData["seperateSelectionSets"] = self.jointselectionsets_comboBox.currentIndex() == 0
 
+        self.settingsData["bindMethod"] = self.bindmethod_comboBox.currentIndex()
+        print "ANAN", self.bindmethod_comboBox.currentIndex()
+        self.settingsData["skinningMethod"] = self.skinningmethod_comboBox.currentIndex()
+
         # settingsData = {
         #     "rigName": self.rigName,
         #     "majorLeftColor": self.majorLeftColor,
@@ -435,6 +441,10 @@ class mainUI(QtWidgets.QMainWindow):
 
         if os.path.isfile(settingsFilePath):
             self.settingsData = loadJson(settingsFilePath)
+            # If maya version is lower then 2017, dont use geodesic voxel
+            mayaVersion = int(pm.about(version=True))
+            if (self.settingsData["bindMethod"] == 3) and (mayaVersion < 2017):
+                self.settingsData["bindMethod"] = 0
             return
         else:
             self.settingsData = self.settingsDefaults
@@ -486,7 +496,7 @@ class mainUI(QtWidgets.QMainWindow):
 
         self.trigger_settings_Dialog = QtWidgets.QDialog(parent=self)
         self.trigger_settings_Dialog.setObjectName(("trigger_settings_Dialog"))
-        self.trigger_settings_Dialog.resize(341, 494)
+        self.trigger_settings_Dialog.resize(341, 600)
         self.trigger_settings_Dialog.setWindowTitle(("T-Rigger Settings"))
         self.trigger_settings_Dialog.setModal(False)
 
@@ -626,7 +636,7 @@ class mainUI(QtWidgets.QMainWindow):
 
 
         self.rig_settings_groupBox = QtWidgets.QGroupBox(self.trigger_settings_Dialog)
-        self.rig_settings_groupBox.setGeometry(QtCore.QRect(20, 340, 301, 90))
+        self.rig_settings_groupBox.setGeometry(QtCore.QRect(20, 335, 301, 90))
         self.rig_settings_groupBox.setTitle(("Rig Settings"))
         self.rig_settings_groupBox.setObjectName(("rig_settings_groupBox"))
 
@@ -651,6 +661,35 @@ class mainUI(QtWidgets.QMainWindow):
         self.jointselectionsets_comboBox = QtWidgets.QComboBox(self.rig_settings_groupBox)
         self.jointselectionsets_comboBox.setGeometry(QtCore.QRect(120, 50, 141, 22))
         self.jointselectionsets_comboBox.addItems(["Seperate for each limb", "One set for everything"])
+
+        self.skinmesh_settings_groupBox = QtWidgets.QGroupBox(self.trigger_settings_Dialog)
+        self.skinmesh_settings_groupBox.setGeometry(QtCore.QRect(20, 440, 301, 90))
+        self.skinmesh_settings_groupBox.setTitle(("Skin Mesh Settings"))
+        self.skinmesh_settings_groupBox.setObjectName(("skinmesh_settings_groupBox"))
+
+        self.bindmethod_label = QtWidgets.QLabel(self.skinmesh_settings_groupBox)
+        self.bindmethod_label.setGeometry(QtCore.QRect(0, 20, 101, 20))
+        self.bindmethod_label.setText(("Bind Method"))
+        self.bindmethod_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
+        self.bindmethod_label.setObjectName(("bindmethod_label"))
+
+        self.bindmethod_comboBox = QtWidgets.QComboBox(self.skinmesh_settings_groupBox)
+        self.bindmethod_comboBox.setGeometry(QtCore.QRect(120, 20, 141, 22))
+        self.bindmethod_comboBox.setToolTip((""))
+        self.bindmethod_comboBox.setObjectName(("bindmethod_comboBox"))
+        self.bindmethod_comboBox.addItems(["Closest distance", "Closest in hierarchy", "Heat Map"])
+        if int(pm.about(version=True)) >= 2017:
+            self.bindmethod_comboBox.addItems(["Geodesic Voxel"])
+
+        self.skinningmethod_label = QtWidgets.QLabel(self.skinmesh_settings_groupBox)
+        self.skinningmethod_label.setGeometry(QtCore.QRect(0, 50, 101, 20))
+        self.skinningmethod_label.setText(("Skinning Method"))
+        self.skinningmethod_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
+        self.skinningmethod_label.setObjectName(("skinningmethod_label"))
+
+        self.skinningmethod_comboBox = QtWidgets.QComboBox(self.skinmesh_settings_groupBox)
+        self.skinningmethod_comboBox.setGeometry(QtCore.QRect(120, 50, 141, 22))
+        self.skinningmethod_comboBox.addItems(["Clasic Linear", "Dual Quaternion", "Weight Blended"])
 
         def initDialog(loadDefaults=False):
             self.loadSettings(loadDefaults=loadDefaults)
@@ -681,8 +720,11 @@ class mainUI(QtWidgets.QMainWindow):
             self.aftercreation_comboBox.setCurrentIndex(self.settingsData["afterCreation"])
             self.jointselectionsets_comboBox.setCurrentIndex(not self.settingsData["seperateSelectionSets"])
 
+            self.bindmethod_comboBox.setCurrentIndex(self.settingsData["bindMethod"])
+            self.skinningmethod_comboBox.setCurrentIndex(self.settingsData["skinningMethod"])
+
         self.trigger_buttonBox = QtWidgets.QDialogButtonBox(self.trigger_settings_Dialog)
-        self.trigger_buttonBox.setGeometry(QtCore.QRect(20, 450, 301, 30))
+        self.trigger_buttonBox.setGeometry(QtCore.QRect(20, 550, 301, 30))
         self.trigger_buttonBox.setOrientation(QtCore.Qt.Horizontal)
         self.trigger_buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel | QtWidgets.QDialogButtonBox.RestoreDefaults | QtWidgets.QDialogButtonBox.Save)
         self.trigger_buttonBox.setObjectName(("trigger_buttonBox"))
