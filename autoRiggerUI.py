@@ -1590,6 +1590,8 @@ class mainUI(QtWidgets.QMainWindow):
         # self.progress_Dialog.show()
         self.rigger.__init__(settingsData=self.settingsData, progressBar=self.progress_progressBar)
         self.rigger.skinMeshList = self.skinMeshList
+        self.rigger.bindMethod = self.settingsData["bindMethod"]
+        self.rigger.skinMethod = self.settingsData["skinningMethod"]
         self.rigger.copySkinWeights = self.copyweights_checkbox.isChecked()
         self.rigger.startBuilding(createAnchors=self.isCreateAnchorsChk.isChecked())
         self.progress_Dialog.close()

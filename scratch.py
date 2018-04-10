@@ -69,6 +69,8 @@ class LimbBuilder():
         self.parseSettings(settingsData)
         if self.progressBar:
             self.progressBar.setProperty("value", 0)
+        self.bindMethod=0
+        self.skinMethod=0
 
 
     def parseSettings(self, settingsData):
@@ -158,7 +160,7 @@ class LimbBuilder():
             # print "dont copy, only initial skinning"
             # print self.totalDefJoints
             for i in self.skinMeshList:
-                pm.skinCluster(self.totalDefJoints, i, tsb=True)
+                pm.skinCluster(self.totalDefJoints, i, tsb=True, bindMethod=self.bindMethod, skinMethod=self.skinMethod)
 
 
     def createlimbs(self, limbCreationList=[], addLimb=False, *args, **kwargs):
