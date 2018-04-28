@@ -132,6 +132,8 @@ class TwistSpline(object):
         deadBone = pm.listRelatives(IKjoints[len(IKjoints) - 1], c=True)
         pm.delete(deadBone)
 
+        # tempArray = IKjoints[0:-1] ## pop out the last joint
+        # self.defJoints = pm.duplicate(tempArray, name="jDef_%s0" % name)
         self.defJoints = pm.duplicate(IKjoints, name="jDef_%s0" % name)
 
         # create the controller joints
@@ -389,6 +391,7 @@ class TwistSpline(object):
         extra.colorize(contCurves, colorCode)
 
         # RETURN
-
+        # re-initialize the deformation joints (remove the last of it
+        self.defJoints.pop(-1)
         self.noTouchData = ([splineCurve, splineIK[0], self.endLock], IKjoints, contJoints, poleGroups, RPhandles)
 

@@ -265,6 +265,21 @@ class Arm(object):
         pm.joint(j_ik_rp_low, e=True, zso=True, oj="xyz", sao="yup")
         pm.joint(j_ik_rp_low_end, e=True, zso=True, oj="xyz", sao="yup")
 
+        # pm.joint(self.j_def_collar, e=True, zso=True, oj="xyz", sao="zdown")
+        # pm.joint(j_collar_end, e=True, zso=True, oj="xyz", sao="zdown")
+        #
+        # pm.joint(j_ik_orig_up, e=True, zso=True, oj="xyz", sao="zdown")
+        # pm.joint(j_ik_orig_low, e=True, zso=True, oj="xyz", sao="zdown")
+        # pm.joint(j_ik_orig_low_end, e=True, zso=True, oj="xyz", sao="zdown")
+        #
+        # pm.joint(j_ik_sc_up, e=True, zso=True, oj="xyz", sao="zdown")
+        # pm.joint(j_ik_sc_low, e=True, zso=True, oj="xyz", sao="zdown")
+        # pm.joint(j_ik_sc_low_end, e=True, zso=True, oj="xyz", sao="zdown")
+        #
+        # pm.joint(j_ik_rp_up, e=True, zso=True, oj="xyz", sao="zdown")
+        # pm.joint(j_ik_rp_low, e=True, zso=True, oj="xyz", sao="zdown")
+        # pm.joint(j_ik_rp_low_end, e=True, zso=True, oj="xyz", sao="zdown")
+
         # Create Start Lock
 
         start_lock = pm.spaceLocator(name="startLock_%s" % suffix)
@@ -402,7 +417,13 @@ class Arm(object):
         blend_ore_ik_low = pm.createNode("blendColors", name="blendORE_IK_Low_%s" % suffix)
         j_ik_sc_low.rotate >> blend_ore_ik_low.color2
         j_ik_rp_low.rotate >> blend_ore_ik_low.color1
-        blend_ore_ik_low.output >> j_ik_orig_low.rotate
+        # blend_ore_ik_low.output >> j_ik_orig_low.rotate
+        # Weird bug with skinned character / use seperate connections
+        # if there is no skincluster, it works ok, but adding a skin cluster misses 2 out of 3 rotation axis
+        # Therefore make SEPERATE CONNECTIONS
+        blend_ore_ik_low.outputR >> j_ik_orig_low.rotateX
+        blend_ore_ik_low.outputG >> j_ik_orig_low.rotateY
+        blend_ore_ik_low.outputB >> j_ik_orig_low.rotateZ
         self.cont_IK_hand.polevector >> blend_ore_ik_low.blender
 
         blend_pos_ik_low = pm.createNode("blendColors", name="blendPOS_IK_Low_%s" % suffix)
@@ -414,7 +435,13 @@ class Arm(object):
         blend_ore_ik_low_end = pm.createNode("blendColors", name="blendORE_IK_LowEnd_%s" % suffix)
         j_ik_sc_low_end.rotate >> blend_ore_ik_low_end.color2
         j_ik_rp_low_end.rotate >> blend_ore_ik_low_end.color1
-        blend_ore_ik_low_end.output >> j_ik_orig_low_end.rotate
+        # blend_ore_ik_low_end.output >> j_ik_orig_low_end.rotate
+        # Weird bug with skinned character / use seperate connections
+        # if there is no skincluster, it works ok, but adding a skin cluster misses 2 out of 3 rotation axis
+        # Therefore make SEPERATE CONNECTIONS
+        blend_ore_ik_low_end.outputR >> j_ik_orig_low_end.rotateX
+        blend_ore_ik_low_end.outputG >> j_ik_orig_low_end.rotateY
+        blend_ore_ik_low_end.outputB >> j_ik_orig_low_end.rotateZ
         self.cont_IK_hand.polevector >> blend_ore_ik_low_end.blender
 
         blend_pos_ik_low_end = pm.createNode("blendColors", name="blendPOS_IK_LowEnd_%s" % suffix)
