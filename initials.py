@@ -350,7 +350,6 @@ class initialJoints():
         pm.setAttr(rootInit.radius, 3)
         pm.setAttr("{0}.drawLabel".format(rootInit), 1)
         offsetVector = dt.Vector(0,0,0)
-        print "ANANsss", self.majorCenterColor
         extra.colorize(rootInit, self.majorCenterColor, shape=False)
 
         return [rootInit], offsetVector
