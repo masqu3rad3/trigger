@@ -1060,7 +1060,7 @@ class initialJoints():
             pm.setAttr("%s.otherType" % jointList[9], "BankOUT")
 
         if limbType == "neck":
-            if not len(jointList) == 3:
+            if not len(jointList) >= 3:
                 pm.warning("You must select exactly 3 joints to define the chain as Neck and Head\nNothing Changed")
                 return
             for i in range(len(jointList)):
@@ -1069,15 +1069,15 @@ class initialJoints():
                     pm.setAttr("%s.otherType" % jointList[i], "NeckRoot")
                     pm.select(jointList[i])
 
-                    if not pm.attributeQuery("resolution", node=jointList[j], exists=True):
+                    if not pm.attributeQuery("resolution", node=jointList[i], exists=True):
                         pm.addAttr(shortName="resolution", longName="Resolution", defaultValue=4, minValue=1,
                                at="long", k=True)
-                    if not pm.attributeQuery("dropoff", node=jointList[j], exists=True):
+                    if not pm.attributeQuery("dropoff", node=jointList[i], exists=True):
                         pm.addAttr(shortName="dropoff", longName="DropOff", defaultValue=1.0, minValue=0.1,
                                at="float", k=True)
-                    if not pm.attributeQuery("twistType", node=jointList[j], exists=True):
+                    if not pm.attributeQuery("twistType", node=jointList[i], exists=True):
                         pm.addAttr(at="enum", k=True, shortName="twistType", longName="Twist_Type", en="regular:infinite")
-                    if not pm.attributeQuery("mode", node=jointList[j], exists=True):
+                    if not pm.attributeQuery("mode", node=jointList[i], exists=True):
                         pm.addAttr(at="enum", k=True, shortName="mode", longName="Mode", en="equalDistance:sameDistance")
 
                 elif jointList[i] == jointList[-2]:
@@ -1102,7 +1102,7 @@ class initialJoints():
                     pm.setAttr("%s.type" % jointList[i], 18)
                     pm.setAttr("%s.otherType" % jointList[i], "FingerRoot")
                     pm.setAttr("%s.drawLabel" % jointList[i], 1)
-                    if not pm.attributeQuery("fingerType", node=jointList[j], exists=True):
+                    if not pm.attributeQuery("fingerType", node=jointList[i], exists=True):
                         pm.addAttr(jointList[i], shortName="fingerType", longName="Finger_Type", at="enum",
                                en="Extra:Thumb:Index:Middle:Ring:Pinky:Toe", k=True)
                 else:

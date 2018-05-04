@@ -1311,7 +1311,7 @@ class mainUI(QtWidgets.QMainWindow):
         radioGrpFinger.addButton(self.fingerSideAuto)
         self.fingerSideLeft.setChecked(True)
 
-        self.fingerIsThumbChk = QtWidgets.QCheckBox("Thumb", parent=self)
+        # self.fingerIsThumbChk = QtWidgets.QCheckBox("Thumb", parent=self)
 
         radioColumnFinger = QtWidgets.QVBoxLayout()
         radioColumnFinger.setAlignment(QtCore.Qt.AlignLeft)
@@ -1321,7 +1321,7 @@ class mainUI(QtWidgets.QMainWindow):
         radioColumnFinger.addWidget(self.fingerSideRight)
         radioColumnFinger.addWidget(self.fingerSideBoth)
         radioColumnFinger.addWidget(self.fingerSideAuto)
-        radioColumnFinger.addWidget(self.fingerIsThumbChk)
+        # radioColumnFinger.addWidget(self.fingerIsThumbChk)
         layout.addWidget(self.fingerCreateBtn)
 
         self.fingerCreateBtn.clicked.connect(self.createFinger)
@@ -1517,7 +1517,7 @@ class mainUI(QtWidgets.QMainWindow):
         elif self.fingerSideAuto.isChecked():
             side = "auto"
 
-        self.initSkeleton.initLimb("finger", whichSide=side, thumb=self.fingerIsThumbChk.isChecked(), defineAs=self.defineAs)
+        self.initSkeleton.initLimb("finger", whichSide=side, defineAs=self.defineAs)
         pm.undoInfo(closeChunk=True)
 
     def createLeg(self):
