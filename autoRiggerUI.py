@@ -79,9 +79,15 @@ def nameCheck(text):
 class mainUI(QtWidgets.QMainWindow):
     def __init__(self):
         for entry in QtWidgets.QApplication.allWidgets():
-            if entry.objectName() == windowName:
-                entry.close()
-                # entry.deleteLater()
+            try:
+                if entry.objectName() == windowName:
+                    entry.close()
+            except AttributeError:
+                pass
+        # for entry in QtWidgets.QApplication.allWidgets():
+        #     if entry.objectName() == windowName:
+        #         entry.close()
+        #         # entry.deleteLater()
         parent = getMayaMainWindow()
         # parent = None
         super(mainUI, self).__init__(parent=parent)
@@ -232,9 +238,12 @@ class mainUI(QtWidgets.QMainWindow):
 
     def dock_ui(self):
         for entry in QtWidgets.QApplication.allWidgets():
-            if entry.objectName() == windowName:
-                entry.close()
-                # entry.deleteLater()
+            try:
+                if entry.objectName() == windowName:
+                    entry.close()
+            except AttributeError:
+                pass
+
         if pm.dockControl('triggerDock', q=1, ex=1):
             pm.deleteUI('triggerDock')
         allowedAreas = ['right', 'left']

@@ -650,11 +650,17 @@ class Leg(object):
         jfk_ball = pm.joint(name="jFK_Ball_%s" % suffix, p=ball_pos, radius=1.0)
         jfk_toe = pm.joint(name="jFK_Toe_%s" % suffix, p=toe_pv_pos, radius=1.0)
 
-        pm.joint(jfk_root, e=True, zso=True, oj="yzx", sao="yup")
-        pm.joint(jfk_knee, e=True, zso=True, oj="yzx", sao="yup")
-        pm.joint(jfk_foot, e=True, zso=True, oj="yzx", sao="yup")
-        pm.joint(jfk_ball, e=True, zso=True, oj="yzx", sao="yup")
-        pm.joint(jfk_toe, e=True, zso=True, oj="yzx", sao="yup")
+        extra.alignTo(jfk_root, j_ik_orig_root, mode=2)
+        extra.alignTo(jfk_knee, j_ik_orig_knee, mode=2)
+        extra.alignTo(jfk_foot, j_ik_foot, mode=2)
+        extra.alignTo(jfk_ball, j_ik_ball, mode=2)
+        extra.alignTo(jfk_toe, j_ik_toe, mode=2)
+
+        # pm.joint(jfk_root, e=True, zso=True, oj="yzx", sao="yup")
+        # pm.joint(jfk_knee, e=True, zso=True, oj="yzx", sao="yup")
+        # pm.joint(jfk_foot, e=True, zso=True, oj="yzx", sao="yup")
+        # pm.joint(jfk_ball, e=True, zso=True, oj="yzx", sao="yup")
+        # pm.joint(jfk_toe, e=True, zso=True, oj="yzx", sao="yup")
 
         cont_fk_up_leg.scaleX >> jfk_root.scaleX
         cont_fk_low_leg.scaleX >> jfk_knee.scaleX
@@ -668,8 +674,11 @@ class Leg(object):
         pm.orientConstraint(cont_fk_low_leg, jfk_knee, mo=True)
         pm.orientConstraint(cont_fk_foot, jfk_foot, mo=True)
         # pm.orientConstraint(cont_fk_foot, jfk_foot, mo=False)
+
+        ##
         pm.parentConstraint(cont_fk_ball, jfk_ball, mo=True)
         # pm.parentConstraint(cont_fk_ball, jfk_ball, mo=False)
+        # extra.alignTo(jfk_toe, toe_pv_ref)
 
         # pm.parentConstraint(tor)
 

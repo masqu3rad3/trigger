@@ -153,8 +153,11 @@ def removeAnchor(node):
 class anchorMaker(QtWidgets.QDialog):
     def __init__(self):
         for entry in QtWidgets.QApplication.allWidgets():
-            if entry.objectName() == windowName:
-                entry.close()
+            try:
+                if entry.objectName() == windowName:
+                    entry.close()
+            except AttributeError:
+                pass
         parent = getMayaMainWindow()
         super(anchorMaker, self).__init__(parent=parent)
 
