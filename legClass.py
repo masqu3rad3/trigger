@@ -73,7 +73,7 @@ class Leg(object):
         self.connectsTo = leg_root_ref.getParent()
 
         leg_root_pos = leg_root_ref.getTranslation(space="world")
-        hip_pos = hip_ref.getTranslation(space="world")
+        hip_pos = hip_ref.hip_ref.getTranslation(space="world")
         knee_pos = knee_ref.getTranslation(space="world")
         foot_pos = foot_ref.getTranslation(space="world")
         ball_pos = ball_ref.getTranslation(space="world")
