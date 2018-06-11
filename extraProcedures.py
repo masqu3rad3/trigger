@@ -296,28 +296,17 @@ def lockAndHide (node, channelArray):
         attribute=("{0}.{1}".format(node, i))
         pm.setAttr(attribute, lock=True, keyable=False, channelBox=False)
 
-def alignBetween (node, targetA, targetB, pos=True, rot=True, ore=False, o=(0,0,0)):
-    """
-    Alignes the node between target A and target B
-    Args:
-        node: Node to be aligned
-        targetA: Target A
-        targetB: Target B
-        pos: bool. If True, aligns the position between targets. Default True
-        rot: bool. If True, aligns the rotation between targets. Default True
-
-    Returns: None
-
-    """
-    if pos:
-        tempPo=pm.pointConstraint(targetA, targetB, node, mo=False)
-        pm.delete(tempPo)
-    if rot:
-        tempAim=pm.aimConstraint(targetB,node, mo=False, o=o)
-        pm.delete(tempAim)
-    if ore:
-        tempOre=pm.orientConstraint(targetA, targetB, node, mo=False, o=o)
-        pm.delete(tempOre)
+# def alignJoints (sourceJoint, targetJoints):
+#     tempLocs
+#     flags = ""
+#     for i in targetJoints:
+#         temp
+#         flags = "{0}, {1}".format(flags, i)
+#
+#     flags = "{0}, {1}".format(flags, sourceJoint)
+#
+#     command = "pm.orientConstraint({0}, mo=False)".foramt(flags)
+#     eval(command)
 
 def attrPass (sourceNode, targetNode, attributes=[], inConnections=True, outConnections=True, keepSourceAttributes=False, values=True, daisyChain=False, overrideEx=False):
     """
@@ -748,7 +737,7 @@ def orientJoints(jointList, localMoveAxis=(0.0,0.0,1.0), upAxis=(0.0,1.0,0.0)):
             aimCon = pm.aimConstraint(jointList[j+1], jointList[j], wuo=localAimLocator, wut='object', u=localMoveAxis)
             pm.delete(aimCon)
             pm.makeIdentity(jointList[j], a=True)
-        # pm.delete(localAimLocator)
+        pm.delete(localAimLocator)
     #
     # re-parent the hierarchy
     for j in range (1, len(jointList)):

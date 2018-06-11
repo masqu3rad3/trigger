@@ -481,9 +481,10 @@ class Arm(object):
         j_fk_low = pm.joint(name="jFK_Low_%s" % suffix, p=elbow_pos, radius=1.0)
         j_fk_low_end = pm.joint(name="jFK_LowEnd_%s" % suffix, p=hand_pos, radius=1.0)
 
-        pm.joint(j_fk_up, e=True, zso=True, oj="xyz", sao="yup")
-        pm.joint(j_fk_low, e=True, zso=True, oj="xyz", sao="yup")
-        pm.joint(j_fk_low_end, e=True, zso=True, oj="xyz", sao="yup")
+        # pm.joint(j_fk_up, e=True, zso=True, oj="xyz", sao="yup")
+        # pm.joint(j_fk_low, e=True, zso=True, oj="xyz", sao="yup")
+        # pm.joint(j_fk_low_end, e=True, zso=True, oj="xyz", sao="yup")
+        extra.orientJoints([j_fk_up, j_fk_low, j_fk_low_end], localMoveAxis=up_axis, upAxis=up_axis)
 
         cont_fk_up_arm.scaleY >> j_fk_up.scaleX
 
