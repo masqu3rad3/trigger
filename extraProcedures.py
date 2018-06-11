@@ -741,14 +741,14 @@ def orientJoints(jointList, localMoveAxis=(0.0,0.0,1.0), upAxis=(0.0,1.0,0.0)):
         localAimLocator = pm.duplicate(tempAimLocator)[0]
         alignTo(localAimLocator, jointList[j])
 
-        pm.move(localAimLocator, (-dt.Vector(localMoveAxis)), r=True, os=True)
+        pm.move(localAimLocator, (dt.Vector(localMoveAxis)), r=True, os=True)
 
         # do not try to ali
         if not (j == (len(jointList)-1)):
             aimCon = pm.aimConstraint(jointList[j+1], jointList[j], wuo=localAimLocator, wut='object', u=localMoveAxis)
             pm.delete(aimCon)
             pm.makeIdentity(jointList[j], a=True)
-        pm.delete(localAimLocator)
+        # pm.delete(localAimLocator)
     #
     # re-parent the hierarchy
     for j in range (1, len(jointList)):
