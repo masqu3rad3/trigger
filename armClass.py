@@ -60,7 +60,7 @@ class Arm(object):
             elbow_ref = arminits[2]
             hand_ref = arminits[3]
 
-        up_axis = extra.getRigAxes(collar_ref)[0]
+        up_axis, mirror_axis, look_axis = extra.getRigAxes(collar_ref)
 
         # Groups
         self.scaleGrp = pm.group(name="scaleGrp_%s" % suffix, em=True)
@@ -250,20 +250,26 @@ class Arm(object):
 
         pm.select(d=True)
 
+
+        # extra.orientJoints([self.j_def_collar, j_collar_end], localMoveAxis=up_axis, upAxis=mirror_axis)
+        extra.orientJoints([j_ik_orig_up, j_ik_orig_low, j_ik_orig_low_end], localMoveAxis=up_axis, upAxis=up_axis)
+        extra.orientJoints([j_ik_sc_up, j_ik_sc_low, j_ik_sc_low_end], localMoveAxis=up_axis, upAxis=up_axis)
+        extra.orientJoints([j_ik_rp_up, j_ik_rp_low, j_ik_rp_low_end], localMoveAxis=up_axis, upAxis=up_axis)
+
         pm.joint(self.j_def_collar, e=True, zso=True, oj="xyz", sao="yup")
-        pm.joint(j_collar_end, e=True, zso=True, oj="xyz", sao="yup")
-
-        pm.joint(j_ik_orig_up, e=True, zso=True, oj="xyz", sao="yup")
-        pm.joint(j_ik_orig_low, e=True, zso=True, oj="xyz", sao="yup")
-        pm.joint(j_ik_orig_low_end, e=True, zso=True, oj="xyz", sao="yup")
-
-        pm.joint(j_ik_sc_up, e=True, zso=True, oj="xyz", sao="yup")
-        pm.joint(j_ik_sc_low, e=True, zso=True, oj="xyz", sao="yup")
-        pm.joint(j_ik_sc_low_end, e=True, zso=True, oj="xyz", sao="yup")
-
-        pm.joint(j_ik_rp_up, e=True, zso=True, oj="xyz", sao="yup")
-        pm.joint(j_ik_rp_low, e=True, zso=True, oj="xyz", sao="yup")
-        pm.joint(j_ik_rp_low_end, e=True, zso=True, oj="xyz", sao="yup")
+        # pm.joint(j_collar_end, e=True, zso=True, oj="xyz", sao="yup")
+        #
+        # pm.joint(j_ik_orig_up, e=True, zso=True, oj="xyz", sao="yup")
+        # pm.joint(j_ik_orig_low, e=True, zso=True, oj="xyz", sao="yup")
+        # pm.joint(j_ik_orig_low_end, e=True, zso=True, oj="xyz", sao="yup")
+        #
+        # pm.joint(j_ik_sc_up, e=True, zso=True, oj="xyz", sao="yup")
+        # pm.joint(j_ik_sc_low, e=True, zso=True, oj="xyz", sao="yup")
+        # pm.joint(j_ik_sc_low_end, e=True, zso=True, oj="xyz", sao="yup")
+        #
+        # pm.joint(j_ik_rp_up, e=True, zso=True, oj="xyz", sao="yup")
+        # pm.joint(j_ik_rp_low, e=True, zso=True, oj="xyz", sao="yup")
+        # pm.joint(j_ik_rp_low_end, e=True, zso=True, oj="xyz", sao="yup")
 
         # pm.joint(self.j_def_collar, e=True, zso=True, oj="xyz", sao="zdown")
         # pm.joint(j_collar_end, e=True, zso=True, oj="xyz", sao="zdown")

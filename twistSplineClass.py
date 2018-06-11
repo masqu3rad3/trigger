@@ -43,8 +43,6 @@ class TwistSpline(object):
         Returns: None
 
         """
-        print "modeASDF", mode
-        print "twistTypeASDF", twistType
 
         self.scaleGrp = pm.group(name="scaleGrp_" + name, em=True)
         self.nonScaleGrp = pm.group(name="nonScaleGrp_" + name, em=True)
@@ -120,6 +118,7 @@ class TwistSpline(object):
         #       #   #   #     # #       #       #   #   #          #
         #       #    #  #     # #       #       #    #  #          #
         #       #     # ####### #       ####### #     # #######    #
+
 
         for j in IKjoints:
             pm.joint(j, e=True, zso=True, oj="xyz", sao="zup")

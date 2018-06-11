@@ -715,73 +715,49 @@ def getMirror(node):
             pm.warning("Cannot find the mirror controller (Why?)")
             return None
 
-def createOrientedJoints(referenceJoints, prefix="newOri"):
-    # Try to fetch the rig axes
-    rootJoint = referenceJoints[0]
-    upAxis, mirrorAxis, lookAxis = getRigAxes(rootJoint)
-    # print upAxis, mirrorAxis, spineDir
-    # rootJ = pm.joint(name=rootJoint.name().replace("jInit", prefix))
-    # alignTo(rootJ, rootJoint, mode=2)
-    pm.select(d=True)
-
-    # restJoints = referenceJoints[1:-2]
-
-    for j in range (0, len(referenceJoints)-1):
-        print referenceJoints[j]
-        # create a temporary locator for up axis (on the mirror axis)
-        tempAimLocator = pm.spaceLocator(name="tempAimLocator")
-        alignTo(tempAimLocator, referenceJoints[j])
-        pm.move(tempAimLocator, (-dt.Vector(mirrorAxis)), r=True)
-        #
-        pm.select(d=True)
-        # create the new joint
-
-        newJ = pm.joint(name=referenceJoints[j].name().replace("jInit", prefix))
-        alignAndAim(newJ, [referenceJoints[j]], [referenceJoints[j+1]], upObject=tempAimLocator, localUp=lookAxis)
-        # # alignTo(newJ, j)
-
-        pm.select(d=True)
-
-    endJ = pm.joint(name=referenceJoints[-1].name().replace("jInit", prefix))
-    alignTo(endJ, referenceJoints[-1], mode=2)
-    pm.select(d=True)
-
-    pass
-
-def orientJoints(jointList, mirrorAxis=(1.0,0.0,0.0), lookAxis=(0.0,0.0,1.0), upAxis=(0.0,1.0,0.0)):
+def orientJoints(jointList, localMoveAxis=(0.0,0.0,1.0), upAxis=(0.0,1.0,0.0)):
 
     #unparent each
-    print jointList
-    pm.parent(jointList, w=True)
+    # print jointList
+    # try:
+    #     pm.parent(jointList, w=True)
+    # except:
+    #     pass
+
+    # pm.parent(jointList, w=True)
 
 
-    for j in range (0, len(jointList)-1):
+    for j in range(1, len(jointList)):
+        pm.parent(jointList[j], w=True)
 
-        # create a temporary locator for up axis (on the mirror axis)
-        tempAimLocator = pm.spaceLocator(name="tempAimLocator")
-        alignTo(tempAimLocator, jointList[j])
-        if j == 0:
-            alignAndAim(tempAimLocator, [jointList[j]], [jointList[j + 1]], upVector=upAxis)
-        else:
-            alignAndAim(tempAimLocator, [jointList[j]], [jointList[j + 1]], upObject=jointList[j-1])
+    # get the aimVector
+    tempAimLocator = pm.spaceLocator(name="tempAimLocator")
+    alignAndAim(tempAimLocator, [jointList[1]], [jointList[2]], upVector=upAxis)
+
+    for j in range (0, len(jointList)):
 
 
-        # pm.move(tempAimLocator, (-dt.Vector(mirrorAxis)), r=True)
 
-    #     aimCon = pm.aimConstraint(jointList[j+1], jointList[j], wuo=tempAimLocator, wut='object', u=lookAxis)
-    #     pm.delete(aimCon)
-    #     pm.makeIdentity(jointList[j], a=True)
+        localAimLocator = pm.duplicate(tempAimLocator)[0]
+        alignTo(localAimLocator, jointList[j])
+
+        pm.move(localAimLocator, (-dt.Vector(localMoveAxis)), r=True, os=True)
+
+        # do not try to ali
+        if not (j == (len(jointList)-1)):
+            aimCon = pm.aimConstraint(jointList[j+1], jointList[j], wuo=localAimLocator, wut='object', u=localMoveAxis)
+            pm.delete(aimCon)
+            pm.makeIdentity(jointList[j], a=True)
+        pm.delete(localAimLocator)
     #
-    # # re-parent the hierarchy
-    # for j in range (1, len(jointList)):
-    #     pm.parent(jointList[j], jointList[j-1])
-    #
-    #
-    # pm.makeIdentity(jointList[-1], a=True)
-    # pm.setAttr(jointList[-1].jointOrient, (0,0,0))
+    # re-parent the hierarchy
+    for j in range (1, len(jointList)):
+        pm.parent(jointList[j], jointList[j-1])
 
-    # endJ = pm.joint(name=referenceJoints[-1].name().replace("jInit", prefix))
-    # alignTo(endJ, referenceJoints[-1], mode=2)
-    # pm.select(d=True)
+    pm.delete(tempAimLocator)
+    pm.makeIdentity(jointList[-1], a=True)
+    pm.setAttr(jointList[-1].jointOrient, (0,0,0))
+
+
 
     pass
