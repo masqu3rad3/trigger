@@ -125,15 +125,16 @@ class Arm(object):
         #     pm.setAttr("{0}.s{1}".format(cont_ik_hand_pos, "x"), -1)
         # Experimental
 
-        pm.addAttr(shortName="polevector", longName="Pole_Vector", defaultValue=0.0, minValue=0.0, maxValue=1.0,
+        pm.addAttr(self.cont_IK_hand, shortName="polevector", longName="Pole_Vector", defaultValue=0.0, minValue=0.0, maxValue=1.0,
                    at="double", k=True)
-        pm.addAttr(shortName="sUpArm", longName="Scale_Upper_Arm", defaultValue=1.0, minValue=0.0, at="double", k=True)
-        pm.addAttr(shortName="sLowArm", longName="Scale_Lower_Arm", defaultValue=1.0, minValue=0.0, at="double", k=True)
-        pm.addAttr(shortName="squash", longName="Squash", defaultValue=0.0, minValue=0.0, maxValue=1.0, at="double",
+        pm.addAttr(self.cont_IK_hand, shortName="sUpArm", longName="Scale_Upper_Arm", defaultValue=1.0, minValue=0.0, at="double", k=True)
+        pm.addAttr(self.cont_IK_hand, shortName="sLowArm", longName="Scale_Lower_Arm", defaultValue=1.0, minValue=0.0, at="double", k=True)
+        pm.addAttr(self.cont_IK_hand, shortName="squash", longName="Squash", defaultValue=0.0, minValue=0.0, maxValue=1.0, at="double",
                    k=True)
-        pm.addAttr(shortName="stretch", longName="Stretch", defaultValue=100.0, minValue=0.0, maxValue=100.0,
+        pm.addAttr(self.cont_IK_hand, shortName="stretch", longName="Stretch", defaultValue=100.0, minValue=0.0, maxValue=100.0,
                    at="double",
                    k=True)
+        pm.addAttr(self.cont_IK_hand, shortName="volume", longName="Volume_Preserve", defaultValue=0.0, at="double", k=True)
 
         ## Pole Vector Controller
         polecont_scale = (
@@ -485,6 +486,18 @@ class Arm(object):
         # pm.joint(j_fk_low, e=True, zso=True, oj="xyz", sao="yup")
         # pm.joint(j_fk_low_end, e=True, zso=True, oj="xyz", sao="yup")
         extra.orientJoints([j_fk_up, j_fk_low, j_fk_low_end], localMoveAxis=up_axis, upAxis=up_axis)
+
+        if side == "R":
+            # pm.parent(jfk_knee, w=True)
+            # extra.alignTo(jfk_root, j_ik_orig_root, mode=2)
+            # pm.makeIdentity(jfk_root, a=True)
+            # pm.parent(jfk_knee, jfk_root)
+            extra.orientJoints([j_fk_up, j_fk_low, j_fk_low_end], localMoveAxis=-(dt.Vector(up_axis)), upAxis=up_axis)
+        else:
+            extra.orientJoints([j_fk_up, j_fk_low, j_fk_low_end], localMoveAxis=(dt.Vector(up_axis)), upAxis=up_axis)
+
+
+
 
         cont_fk_up_arm.scaleY >> j_fk_up.scaleX
 

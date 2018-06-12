@@ -3,6 +3,7 @@ import extraProcedures as extra
 # import ribbonClass as rc
 import powerRibbon as rc
 import contIcons as icon
+import pymel.core.datatypes as dt
 
 reload(extra)
 reload(rc)
@@ -145,6 +146,7 @@ class Leg(object):
         pm.addAttr(self.cont_IK_foot, shortName="squash", longName="Squash", defaultValue=0.0, minValue=0.0, maxValue=1.0, at="double", k=True)
         pm.addAttr(self.cont_IK_foot, shortName="stretch", longName="Stretch", defaultValue=100.0, minValue=0.0, maxValue=100.0, at="double",
                    k=True)
+        pm.addAttr(self.cont_IK_foot, shortName="volume", longName="Volume_Preserve", defaultValue=0.0, at="double", k=True)
         pm.addAttr(self.cont_IK_foot, shortName="bLean", longName="Ball_Lean", defaultValue=0.0, at="double", k=True)
         pm.addAttr(self.cont_IK_foot, shortName="bRoll", longName="Ball_Roll", defaultValue=0.0, at="double", k=True)
         pm.addAttr(self.cont_IK_foot, shortName="bSpin", longName="Ball_Spin", defaultValue=0.0, at="double", k=True)
@@ -483,6 +485,10 @@ class Leg(object):
 
         ###########################################################
 
+
+
+
+
         self.cont_IK_foot.rotate >> j_ik_rp_end.rotate
 
         # Stretch Attributes Controller connections
@@ -655,7 +661,18 @@ class Leg(object):
         # extra.alignTo(jfk_ball, j_ik_ball, mode=2)
         # extra.alignTo(jfk_toe, j_ik_toe, mode=2)
 
-        extra.orientJoints([jfk_root, jfk_knee, jfk_foot, jfk_ball, jfk_toe], localMoveAxis=up_axis, upAxis=up_axis)
+        # extra.orientJoints([jfk_root, jfk_knee, jfk_foot, jfk_ball, jfk_toe], localMoveAxis=(dt.Vector(up_axis)),
+        #                    upAxis=up_axis)
+
+        if side == "R":
+            pm.parent(jfk_knee, w=True)
+            extra.alignTo(jfk_root, j_ik_orig_root, mode=2)
+            pm.makeIdentity(jfk_root, a=True)
+            pm.parent(jfk_knee, jfk_root)
+            extra.orientJoints([jfk_root, jfk_knee, jfk_foot, jfk_ball, jfk_toe], localMoveAxis=-(dt.Vector(up_axis)), upAxis=up_axis)
+        else:
+            extra.orientJoints([jfk_root, jfk_knee, jfk_foot, jfk_ball, jfk_toe], localMoveAxis=(dt.Vector(up_axis)), upAxis=up_axis)
+
 
 
         # pm.joint(jfk_root, e=True, zso=True, oj="yzx", sao="yup")
@@ -805,8 +822,8 @@ class Leg(object):
         ribbon_start_pa_con_upper_leg_end = pm.parentConstraint(mid_lock, ribbon_upper_leg.endConnection, mo=True)
 
         # connect the midLeg scaling
-        cont_mid_lock.scale >> ribbon_upper_leg.endConnection.scale
-        cont_mid_lock.scale >> j_def_midLeg.scale
+        # cont_mid_lock.scale >> ribbon_upper_leg.endConnection.scale
+        # cont_mid_lock.scale >> j_def_midLeg.scale
 
         pm.scaleConstraint(self.scaleGrp, ribbon_upper_leg.scaleGrp)
 
@@ -844,7 +861,7 @@ class Leg(object):
         ribbon_start_pa_con_lower_leg_end = pm.parentConstraint(end_lock, ribbon_lower_leg.endConnection, mo=True)
 
         # connect the midLeg scaling
-        cont_mid_lock.scale >>  ribbon_lower_leg.startConnection.scale
+        # cont_mid_lock.scale >>  ribbon_lower_leg.startConnection.scale
 
         pm.scaleConstraint(self.scaleGrp, ribbon_lower_leg.scaleGrp)
 
@@ -865,6 +882,71 @@ class Leg(object):
 
         # connect to the joint
         add_manual_twist_ankle.output3D >> ribbon_lower_leg.endConnection.rotate
+
+        # Volume Preservation Stuff
+        vpExtraInput = pm.createNode("multiplyDivide", name="vpExtraInput_%s" % suffix)
+        pm.setAttr(vpExtraInput.operation, 1)
+
+        vpMidAverage = pm.createNode("plusMinusAverage", name="vpMidAverage_%s" % suffix)
+        pm.setAttr(vpMidAverage.operation, 3)
+
+        vpPowerMid = pm.createNode("multiplyDivide", name="vpPowerMid_%s" % suffix)
+        pm.setAttr(vpPowerMid.operation, 3)
+        vpInitLength = pm.createNode("multiplyDivide", name="vpInitLength_%s" % suffix)
+        pm.setAttr(vpInitLength.operation, 2)
+
+        vpPowerUpperLeg = pm.createNode("multiplyDivide", name="vpPowerUpperLeg_%s" % suffix)
+        pm.setAttr(vpPowerUpperLeg.operation, 3)
+
+        vpPowerLowerLeg = pm.createNode("multiplyDivide", name="vpPowerLowerLeg_%s" % suffix)
+        pm.setAttr(vpPowerLowerLeg.operation, 3)
+        #
+        vpUpperLowerReduce = pm.createNode("multDoubleLinear", name="vpUpperLowerReduce_%s" % suffix)
+        pm.setAttr(vpUpperLowerReduce.input2, 0.5)
+        #
+        #vp knee branch
+        vpExtraInput.output >> ribbon_lower_leg.startConnection.scale
+        vpExtraInput.output >> ribbon_upper_leg.endConnection.scale
+        vpExtraInput.output >> j_def_midLeg.scale
+        cont_mid_lock.scale >> vpExtraInput.input1
+
+        vpMidAverage.output1D >> vpExtraInput.input2X
+        vpMidAverage.output1D >> vpExtraInput.input2Y
+        vpMidAverage.output1D >> vpExtraInput.input2Z
+
+        vpPowerMid.outputX >> vpMidAverage.input1D[0]
+        vpPowerMid.outputY >> vpMidAverage.input1D[1]
+
+        vpInitLength.outputX >> vpPowerMid.input1X
+        vpInitLength.outputY >> vpPowerMid.input1Y
+        self.cont_IK_foot.volume >> vpPowerMid.input2X
+        self.cont_IK_foot.volume >> vpPowerMid.input2Y
+        initial_length_multip_sc.outputX >> vpInitLength.input1X
+        initial_length_multip_sc.outputY >> vpInitLength.input1Y
+        stretchyness_sc.color1R >> vpInitLength.input2X
+        stretchyness_sc.color1G >> vpInitLength.input2Y
+
+        #vp upper branch
+        mid_off_up = ribbon_upper_leg.middleCont[0].getParent()
+        vpPowerUpperLeg.outputX >> mid_off_up.scaleX
+        vpPowerUpperLeg.outputX >> mid_off_up.scaleY
+        vpPowerUpperLeg.outputX >> mid_off_up.scaleZ
+
+        vpInitLength.outputX >> vpPowerUpperLeg.input1X
+        vpUpperLowerReduce.output >> vpPowerUpperLeg.input2X
+
+        # vp lower branch
+        mid_off_low = ribbon_lower_leg.middleCont[0].getParent()
+        vpPowerLowerLeg.outputX >> mid_off_low.scaleX
+        vpPowerLowerLeg.outputX >> mid_off_low.scaleY
+        vpPowerLowerLeg.outputX >> mid_off_low.scaleZ
+
+        vpInitLength.outputX >> vpPowerLowerLeg.input1X
+        vpUpperLowerReduce.output >> vpPowerLowerLeg.input2X
+
+        self.cont_IK_foot.volume >> vpUpperLowerReduce.input1
+
+
 
         # Foot Joint
 

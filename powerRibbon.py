@@ -29,8 +29,8 @@ class PowerRibbon():
                           endPoint,
                           name,
                           side="C",
-                          ribbonRes=5.0,
-                          jointRes=5.0,
+                          ribbonRes=5,
+                          jointRes=5,
                           controllerCount=1,
                           controllerList=None,
                           dropoff=2.0,
@@ -45,7 +45,7 @@ class PowerRibbon():
         self.nonScaleGrp=pm.group(em=True, name="RBN_nonScaleGrp_%s" %name)
 
         ribbonLength=extra.getDistance(startPoint, endPoint)
-        nSurfTrans=pm.nurbsPlane(ax=(0,0,1),u=ribbonRes,v=1, w=ribbonLength, lr=(1.0/ribbonLength), name="nSurf_"+name)
+        nSurfTrans=pm.nurbsPlane(ax=(0,0,1),u=float(ribbonRes),v=1, w=ribbonLength, lr=(1.0/ribbonLength), name="nSurf_"+name)
         pm.parent(nSurfTrans[0], self.nonScaleGrp)
         pm.rebuildSurface (nSurfTrans, ch=1, rpo=1, rt=0, end=1, kr=2, kcp=0, kc=0, su=5, du=3, sv=1, dv=1, tol=0, fr=0, dir=1)
         pm.makeIdentity(a=True)
@@ -61,7 +61,7 @@ class PowerRibbon():
             follicle.outRotate.connect(follicle.getParent().rotate)
             follicle.outTranslate.connect(follicle.getParent().translate)
             follicle.parameterV.set(0.5)
-            follicle.parameterU.set(0.1+(i/jointRes))
+            follicle.parameterU.set(0.1+(i/float(jointRes)))
             follicle.getParent().t.lock()
             follicle.getParent().r.lock()
             follicleList.append(follicle)
@@ -81,7 +81,7 @@ class PowerRibbon():
             s_follicle.outRotate.connect(s_follicle.getParent().rotate)
             s_follicle.outTranslate.connect(s_follicle.getParent().translate)
             s_follicle.parameterV.set(0.0)
-            s_follicle.parameterU.set(0.1+(i/jointRes))
+            s_follicle.parameterU.set(0.1+(i/float(jointRes)))
             s_follicle.getParent().t.lock()
             s_follicle.getParent().r.lock()
             follicle_sca_list.append(s_follicle)
@@ -193,6 +193,7 @@ class PowerRibbon():
 
         middle_POS_list=[]
         counter = 0
+
         for mid in mid_joint_list:
             counter += 1
             # self.middleCont = icon.circle("cont_midRbn_%s" %name, normal=(1, 0, 0))
@@ -215,7 +216,7 @@ class PowerRibbon():
             extra.alignTo(middle_POS, mid)
             # pm.move(middle_POS, (0, 0, 0))
             # pm.makeIdentity(a=True)
-
+            #
             pm.parent(mid, midCon)
             pm.parent(midCon, middle_OFF)
             pm.parent(middle_OFF, middle_AIM)
@@ -225,6 +226,8 @@ class PowerRibbon():
             pm.pointConstraint(self.startConnection, self.endConnection, middle_POS)
             pm.pointConstraint(start_UP, end_UP, middle_UP)
             middle_POS_list.append(middle_POS)
+
+
 
         tePo = pm.pointConstraint([self.startConnection, self.endConnection], self.scaleGrp, mo=False)
         pm.delete(tePo)
@@ -239,14 +242,14 @@ class PowerRibbon():
         ## take a look here
         # tempPoCon=pm.pointConstraint(startPoint, endPoint, self.scaleGrp)
         # pm.delete(tempPoCon)
-        # 
+        #
         # if side == "R":
         #     yVal = 180
         # else:
         #     yVal = 0
-        # 
+        #
         # tempAimCon=pm.orientConstraint(startPoint, self.scaleGrp, o=(orientation, yVal,0), mo=False)
-        # 
+        #
         # pm.delete(tempAimCon)
 
         extra.alignAndAim(self.scaleGrp, [startPoint, endPoint], [endPoint], upVector=upVector)
