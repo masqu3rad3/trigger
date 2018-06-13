@@ -485,8 +485,8 @@ class Arm(object):
         # pm.joint(j_fk_up, e=True, zso=True, oj="xyz", sao="yup")
         # pm.joint(j_fk_low, e=True, zso=True, oj="xyz", sao="yup")
         # pm.joint(j_fk_low_end, e=True, zso=True, oj="xyz", sao="yup")
-        extra.orientJoints([j_fk_up, j_fk_low, j_fk_low_end], localMoveAxis=up_axis, upAxis=up_axis)
-
+        # # extra.orientJoints([j_fk_up, j_fk_low, j_fk_low_end], localMoveAxis=up_axis, upAxis=up_axis)
+        #
         if side == "R":
             # pm.parent(jfk_knee, w=True)
             # extra.alignTo(jfk_root, j_ik_orig_root, mode=2)
@@ -671,6 +671,69 @@ class Arm(object):
         # connect to the joint
         add_manual_twist.output3D >> ribbon_lower_arm.endConnection.rotate
 
+        # Volume Preservation Stuff
+        vpExtraInput = pm.createNode("multiplyDivide", name="vpExtraInput_%s" % suffix)
+        pm.setAttr(vpExtraInput.operation, 1)
+
+        vpMidAverage = pm.createNode("plusMinusAverage", name="vpMidAverage_%s" % suffix)
+        pm.setAttr(vpMidAverage.operation, 3)
+
+        vpPowerMid = pm.createNode("multiplyDivide", name="vpPowerMid_%s" % suffix)
+        pm.setAttr(vpPowerMid.operation, 3)
+        vpInitLength = pm.createNode("multiplyDivide", name="vpInitLength_%s" % suffix)
+        pm.setAttr(vpInitLength.operation, 2)
+
+        vpPowerUpperLeg = pm.createNode("multiplyDivide", name="vpPowerUpperLeg_%s" % suffix)
+        pm.setAttr(vpPowerUpperLeg.operation, 3)
+
+        vpPowerLowerLeg = pm.createNode("multiplyDivide", name="vpPowerLowerLeg_%s" % suffix)
+        pm.setAttr(vpPowerLowerLeg.operation, 3)
+        #
+        vpUpperLowerReduce = pm.createNode("multDoubleLinear", name="vpUpperLowerReduce_%s" % suffix)
+        pm.setAttr(vpUpperLowerReduce.input2, 0.5)
+        #
+        #vp knee branch
+        vpExtraInput.output >> ribbon_lower_arm.startConnection.scale
+        vpExtraInput.output >> ribbon_upper_arm.endConnection.scale
+        vpExtraInput.output >> j_def_elbow.scale
+        cont_mid_lock.scale >> vpExtraInput.input1
+
+        vpMidAverage.output1D >> vpExtraInput.input2X
+        vpMidAverage.output1D >> vpExtraInput.input2Y
+        vpMidAverage.output1D >> vpExtraInput.input2Z
+
+        vpPowerMid.outputX >> vpMidAverage.input1D[0]
+        vpPowerMid.outputY >> vpMidAverage.input1D[1]
+
+        vpInitLength.outputX >> vpPowerMid.input1X
+        vpInitLength.outputY >> vpPowerMid.input1Y
+        self.cont_IK_hand.volume >> vpPowerMid.input2X
+        self.cont_IK_hand.volume >> vpPowerMid.input2Y
+        initial_length_multip_sc.outputX >> vpInitLength.input1X
+        initial_length_multip_sc.outputY >> vpInitLength.input1Y
+        stretchiness_sc.color1R >> vpInitLength.input2X
+        stretchiness_sc.color1G >> vpInitLength.input2Y
+
+        #vp upper branch
+        mid_off_up = ribbon_upper_arm.middleCont[0].getParent()
+        vpPowerUpperLeg.outputX >> mid_off_up.scaleX
+        vpPowerUpperLeg.outputX >> mid_off_up.scaleY
+        vpPowerUpperLeg.outputX >> mid_off_up.scaleZ
+
+        vpInitLength.outputX >> vpPowerUpperLeg.input1X
+        vpUpperLowerReduce.output >> vpPowerUpperLeg.input2X
+
+        # vp lower branch
+        mid_off_low = ribbon_lower_arm.middleCont[0].getParent()
+        vpPowerLowerLeg.outputX >> mid_off_low.scaleX
+        vpPowerLowerLeg.outputX >> mid_off_low.scaleY
+        vpPowerLowerLeg.outputX >> mid_off_low.scaleZ
+
+        vpInitLength.outputX >> vpPowerLowerLeg.input1X
+        vpUpperLowerReduce.output >> vpPowerLowerLeg.input2X
+
+        self.cont_IK_hand.volume >> vpUpperLowerReduce.input1
+
         ###############################################
         ################### HAND ######################
         ###############################################
@@ -679,6 +742,8 @@ class Arm(object):
             name="handLock_%s" % suffix)  # Bu iki satir r arm mirror posing icin dondurulse bile dogru bir \
         #  weighted constraint yapilmasi icin araya bir node olusturuyor.
         extra.alignTo(hand_lock, cont_fk_hand_off, 2)
+
+        # pm.makeIdentity(hand_lock, a=True)
         pm.parentConstraint(cont_fk_hand, hand_lock, mo=True)  # Olusturulan ara node baglanir
 
         root_position = hand_ref.getTranslation(space="world")
@@ -694,6 +759,8 @@ class Arm(object):
         pm.pointConstraint(end_lock, root_master, mo=True)
         pm.parentConstraint(cont_fk_low_arm, cont_fk_hand_pos, mo=True)
         hand_ori_con = pm.parentConstraint(self.cont_IK_hand, hand_lock, root_master, st=("x", "y", "z"), mo=True)
+        ## NO Flip
+        pm.setAttr(hand_ori_con.interpType, 0)
         # hand_ori_con = pm.parentConstraint(self.cont_IK_hand, hand_lock, root_master, st=("x", "y", "z"), mo=False)
         # cont_fk_ik.fk_ik >> (hand_ori_con + "." + self.cont_IK_hand + "W0")
         cont_fk_ik.fk_ik >> ("%s.%sW0" %(hand_ori_con, self.cont_IK_hand))
