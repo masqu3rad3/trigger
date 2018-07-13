@@ -128,6 +128,8 @@ class Tentacle(object):
         pm.addAttr(cont_special, shortName="sineAnimate", longName="Sine_Animate", defaultValue=0.0, at="float",
                    k=True)
 
+
+
         contFK_List = []
         contTwk_List = []
         for j in range (len(inits)):
