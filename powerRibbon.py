@@ -28,6 +28,7 @@ class PowerRibbon():
     def createPowerRibbon(self, startPoint,
                           endPoint,
                           name,
+                          side="C",
                           ribbonRes=5,
                           jointRes=5,
                           controllerCount=1,
