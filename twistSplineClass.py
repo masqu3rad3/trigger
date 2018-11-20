@@ -120,8 +120,10 @@ class TwistSpline(object):
         #       #     # ####### #       ####### #     # #######    #
 
 
-        for j in IKjoints:
-            pm.joint(j, e=True, zso=True, oj="xyz", sao="zup")
+        extra.orientJoints(IKjoints)
+        # for j in IKjoints:
+        #     pm.joint(j, e=True, zso=True, oj="xyz", sao="zup")
+            #TODO // Soktumunun infinite versiyonu calismiyor
             # if twistType=="infinite":
             #     pm.joint(j, e=True, zso=True, oj="yzx", sao="zup")
             # if twistType=="regular":
