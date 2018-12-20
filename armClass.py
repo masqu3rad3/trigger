@@ -131,9 +131,12 @@ class Arm(object):
         pm.addAttr(self.cont_IK_hand, shortName="sLowArm", longName="Scale_Lower_Arm", defaultValue=1.0, minValue=0.0, at="double", k=True)
         pm.addAttr(self.cont_IK_hand, shortName="squash", longName="Squash", defaultValue=0.0, minValue=0.0, maxValue=1.0, at="double",
                    k=True)
-        pm.addAttr(self.cont_IK_hand, shortName="stretch", longName="Stretch", defaultValue=100.0, minValue=0.0, maxValue=100.0,
-                   at="double",
+        pm.addAttr(self.cont_IK_hand, shortName="stretch", longName="Stretch", defaultValue=1.0, minValue=0.0, maxValue=1.0, at="double",
                    k=True)
+        pm.addAttr(self.cont_IK_hand, shortName="stretchLimit", longName="StretchLimit", defaultValue=100.0, minValue=0.0,
+                   maxValue=1000.0, at="double",
+                   k=True)
+        pm.addAttr(self.cont_IK_hand, shortName="softIK", longName="SoftIK", defaultValue=0.0, minValue=0.0, maxValue=100.0, k=True)
         pm.addAttr(self.cont_IK_hand, shortName="volume", longName="Volume_Preserve", defaultValue=0.0, at="double", k=True)
 
         ## Pole Vector Controller
@@ -330,7 +333,7 @@ class Arm(object):
         initial_length_multip_sc = pm.createNode("multiplyDivide", name="initialLengthMultip_SC_%s" % suffix)
         stretch_amount_sc = pm.createNode("multiplyDivide", name="stretchAmount_SC_%s" % suffix)
         sum_of_j_lengths_sc = pm.createNode("plusMinusAverage", name="sumOfJLengths_SC_%s" % suffix)
-        stretch_condition_sc = pm.createNode("condition", name="stretchCondition_SC_%s" % suffix)
+        # stretch_condition_sc = pm.createNode("condition", name="stretchCondition_SC_%s" % suffix)
         squashiness_sc = pm.createNode("blendColors", name="squashiness_SC_%s" % suffix)
         stretchiness_sc = pm.createNode("blendColors", name="stretchiness_SC_%s" % suffix)
 
@@ -343,7 +346,42 @@ class Arm(object):
         # pm.setAttr(initial_divide_sc + ".operation", 2)
         pm.setAttr("%s.operation" % initial_divide_sc, 2)
         # pm.setAttr(stretch_condition_sc + ".operation", 2)
-        pm.setAttr("%s.operation" % stretch_condition_sc, 2)
+        # pm.setAttr("%s.operation" % stretch_condition_sc, 2)
+
+        ### IkSoft nodes
+        ik_soft_clamp = pm.createNode("clamp", name="ikSoft_clamp_%s" % suffix)
+        pm.setAttr("%s.minR" % ik_soft_clamp, 0.0001)
+        pm.setAttr("%s.maxR" % ik_soft_clamp, 99999)
+
+        ik_soft_sub1 = pm.createNode("plusMinusAverage", name="ikSoft_Sub1_%s" % suffix)
+        pm.setAttr("%s.operation" % ik_soft_sub1, 2)
+
+        ik_soft_sub2 = pm.createNode("plusMinusAverage", name="ikSoft_Sub2_%s" % suffix)
+        pm.setAttr("%s.operation" % ik_soft_sub2, 2)
+
+        ik_soft_div1 = pm.createNode("multiplyDivide", name="ikSoft_Div1_%s" % suffix)
+        pm.setAttr("%s.operation" % ik_soft_div1, 2)
+
+        ik_soft_mult1 = pm.createNode("multDoubleLinear", name="ikSoft_Mult1_%s" % suffix)
+        pm.setAttr("%s.input1" % ik_soft_mult1, -1)
+
+        ik_soft_pow = pm.createNode("multiplyDivide", name="ikSoft_Pow_%s" % suffix)
+        pm.setAttr("%s.operation" % ik_soft_pow, 3)
+        pm.setAttr("%s.input1X" % ik_soft_pow, 2.718)
+
+        ik_soft_mult2 = pm.createNode("multDoubleLinear", name="ikSoft_Mult2_%s" % suffix)
+
+        ik_soft_sub3 = pm.createNode("plusMinusAverage", name="ikSoft_Sub3_%s" % suffix)
+        pm.setAttr("%s.operation" % ik_soft_sub3, 2)
+
+        ik_soft_condition = pm.createNode("condition", name="ikSoft_Condition_%s" % suffix)
+        pm.setAttr("%s.operation" % ik_soft_condition, 2)
+
+        ik_soft_div2 = pm.createNode("multiplyDivide", name="ikSoft_Div2_%s" % suffix)
+        pm.setAttr("%s.operation" % ik_soft_div2, 2)
+
+        ik_soft_stretch_amount = pm.createNode("multiplyDivide", name="ikSoft_stretchAmount_SC_%s" % suffix)
+        pm.setAttr("%s.operation" % ik_soft_stretch_amount, 1)
 
         ### Bind Attributes and make constraints
 
@@ -352,7 +390,7 @@ class Arm(object):
         arm_end.translate >> distance_sc.point2
         distance_sc.distance >> ik_stretch_distance_clamp.inputR
 
-        ik_stretch_distance_clamp.outputR >> stretch_condition_sc.firstTerm
+        # ik_stretch_distance_clamp.outputR >> stretch_condition_sc.firstTerm
         ik_stretch_distance_clamp.outputR >> initial_divide_sc.input1X
         ik_stretch_stretchiness_clamp.outputR >> stretchiness_sc.blender
 
@@ -368,25 +406,66 @@ class Arm(object):
         extra_scale_mult_sc.outputY >> stretch_amount_sc.input1Y
         extra_scale_mult_sc.outputX >> stretchiness_sc.color2R
         extra_scale_mult_sc.outputY >> stretchiness_sc.color2G
-        extra_scale_mult_sc.outputX >> stretch_condition_sc.colorIfFalseR
-        extra_scale_mult_sc.outputY >> stretch_condition_sc.colorIfFalseG
+        # extra_scale_mult_sc.outputX >> stretch_condition_sc.colorIfFalseR
+        # extra_scale_mult_sc.outputY >> stretch_condition_sc.colorIfFalseG
         extra_scale_mult_sc.outputX >> sum_of_j_lengths_sc.input1D[0]
         extra_scale_mult_sc.outputY >> sum_of_j_lengths_sc.input1D[1]
 
         stretch_amount_sc.outputX >> squashiness_sc.color1R
         stretch_amount_sc.outputY >> squashiness_sc.color1G
-        stretch_amount_sc.outputX >> stretch_condition_sc.colorIfTrueR
-        stretch_amount_sc.outputY >> stretch_condition_sc.colorIfTrueG
+        # stretch_amount_sc.outputX >> stretch_condition_sc.colorIfTrueR
+        # stretch_amount_sc.outputY >> stretch_condition_sc.colorIfTrueG
         sum_of_j_lengths_sc.output1D >> initial_divide_sc.input2X
-        sum_of_j_lengths_sc.output1D >> stretch_condition_sc.secondTerm
-        stretch_condition_sc.outColorR >> squashiness_sc.color2R
-        stretch_condition_sc.outColorG >> squashiness_sc.color2G
+        # sum_of_j_lengths_sc.output1D >> stretch_condition_sc.secondTerm
+        # stretch_condition_sc.outColorR >> squashiness_sc.color2R
+        # stretch_condition_sc.outColorG >> squashiness_sc.color2G
         squashiness_sc.outputR >> stretchiness_sc.color1R
         squashiness_sc.outputG >> stretchiness_sc.color1G
         stretchiness_sc.outputR >> j_ik_sc_low.translateX
         stretchiness_sc.outputG >> j_ik_sc_low_end.translateX
         stretchiness_sc.outputR >> j_ik_rp_low.translateX
         stretchiness_sc.outputG >> j_ik_rp_low_end.translateX
+
+        ## iksoft related
+        self.cont_IK_hand.softIK >> ik_soft_clamp.inputR
+
+        sum_of_j_lengths_sc.output1D >> ik_soft_sub1.input1D[0]
+        ik_soft_clamp.outputR >> ik_soft_sub1.input1D[1]
+
+        ik_stretch_distance_clamp.outputR >> ik_soft_sub2.input1D[0]
+        ik_soft_sub1.output1D >> ik_soft_sub2.input1D[1]
+
+        ik_soft_sub2.output1D >> ik_soft_div1.input1X
+        ik_soft_clamp.outputR >> ik_soft_div1.input2X
+
+        ik_soft_div1.outputX >> ik_soft_mult1.input2
+
+        ik_soft_mult1.output >> ik_soft_pow.input2X
+
+        ik_soft_clamp.outputR >> ik_soft_mult2.input1
+        ik_soft_pow.outputX >> ik_soft_mult2.input2
+
+        sum_of_j_lengths_sc.output1D >> ik_soft_sub3.input1D[0]
+        ik_soft_mult2.output >> ik_soft_sub3.input1D[1]
+
+        ik_stretch_distance_clamp.outputR >> ik_soft_condition.firstTerm
+        ik_soft_sub1.output1D >> ik_soft_condition.secondTerm
+        ik_soft_sub3.output1D >> ik_soft_condition.colorIfTrueR
+        ik_stretch_distance_clamp.outputR >> ik_soft_condition.colorIfFalseR
+
+        ik_stretch_distance_clamp.outputR >> ik_soft_div2.input1X
+        ik_soft_condition.outColorR >> ik_soft_div2.input2X
+
+        extra_scale_mult_sc.outputX >> ik_soft_stretch_amount.input1X
+        extra_scale_mult_sc.outputY >> ik_soft_stretch_amount.input1Y
+        ik_soft_div2.outputX >> ik_soft_stretch_amount.input2X
+        ik_soft_div2.outputX >> ik_soft_stretch_amount.input2Y
+
+        ik_soft_stretch_amount.outputX >> squashiness_sc.color2R
+        ik_soft_stretch_amount.outputY >> squashiness_sc.color2G
+
+
+        ###########################################################
 
         self.cont_IK_hand.rotate >> j_ik_rp_low.rotate
 
@@ -397,8 +476,12 @@ class Arm(object):
         self.cont_IK_hand.squash >> squashiness_sc.blender
 
         stretch_offset.output1D >> ik_stretch_distance_clamp.maxR
+        # self.cont_IK_hand.stretch >> ik_stretch_stretchiness_clamp.inputR
         self.cont_IK_hand.stretch >> ik_stretch_stretchiness_clamp.inputR
-        self.cont_IK_hand.stretch >> stretch_offset.input1D[2]
+
+        # self.cont_IK_hand.stretch >> stretch_offset.input1D[2]
+        self.cont_IK_hand.stretchLimit >> stretch_offset.input1D[2]
+
 
         ik_parent_grp = pm.group(name="IK_parentGRP_%s" % suffix, em=True)
         extra.alignTo(ik_parent_grp, hand_ref, 2)

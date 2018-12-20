@@ -144,8 +144,12 @@ class Leg(object):
         pm.addAttr(self.cont_IK_foot, shortName="sUpLeg", longName="Scale_Upper_Leg", defaultValue=1.0, minValue=0.0, at="double", k=True)
         pm.addAttr(self.cont_IK_foot, shortName="sLowLeg", longName="Scale_Lower_Leg", defaultValue=1.0, minValue=0.0, at="double", k=True)
         pm.addAttr(self.cont_IK_foot, shortName="squash", longName="Squash", defaultValue=0.0, minValue=0.0, maxValue=1.0, at="double", k=True)
-        pm.addAttr(self.cont_IK_foot, shortName="stretch", longName="Stretch", defaultValue=100.0, minValue=0.0, maxValue=100.0, at="double",
+        pm.addAttr(self.cont_IK_foot, shortName="stretch", longName="Stretch", defaultValue=1.0, minValue=0.0, maxValue=1.0, at="double",
                    k=True)
+        pm.addAttr(self.cont_IK_foot, shortName="stretchLimit", longName="StretchLimit", defaultValue=100.0, minValue=0.0,
+                   maxValue=1000.0, at="double",
+                   k=True)
+        pm.addAttr(self.cont_IK_foot, shortName="softIK", longName="SoftIK", defaultValue=0.0, minValue=0.0, maxValue=100.0, k=True)
         pm.addAttr(self.cont_IK_foot, shortName="volume", longName="Volume_Preserve", defaultValue=0.0, at="double", k=True)
         pm.addAttr(self.cont_IK_foot, shortName="bLean", longName="Ball_Lean", defaultValue=0.0, at="double", k=True)
         pm.addAttr(self.cont_IK_foot, shortName="bRoll", longName="Ball_Roll", defaultValue=0.0, at="double", k=True)
@@ -423,22 +427,59 @@ class Leg(object):
         stretch_offset = pm.createNode("plusMinusAverage", name="stretchOffset_%s" % suffix)
         distance_sc = pm.createNode("distanceBetween", name="distance_SC_%s" % suffix)
         ik_stretch_distance_clamp = pm.createNode("clamp", name="IK_stretch_distanceClamp%s" % suffix)
-        ik_stretch_stretchyness_clamp = pm.createNode("clamp", name="IK_stretch_stretchynessClamp%s" % suffix)
+        ik_stretch_stretchiness_clamp = pm.createNode("clamp", name="IK_stretch_stretchynessClamp%s" % suffix)
         extra_scale_mult_sc = pm.createNode("multiplyDivide", name="extraScaleMult_SC%s" % suffix)
         initial_divide_sc = pm.createNode("multiplyDivide", name="initialDivide_SC_%s" % suffix)
         initial_length_multip_sc = pm.createNode("multiplyDivide", name="initialLengthMultip_SC_%s" % suffix)
         stretch_amount_sc = pm.createNode("multiplyDivide", name="stretchAmount_SC_%s" % suffix)
         sum_of_j_lengths_sc = pm.createNode("plusMinusAverage", name="sumOfJLengths_SC_%s" % suffix)
-        stretch_condition_sc = pm.createNode("condition", name="stretchCondition_SC_%s" % suffix)
-        squashyness_sc = pm.createNode("blendColors", name="squashyness_SC_%s" % suffix)
-        stretchyness_sc = pm.createNode("blendColors", name="stretchyness_SC_%s" % suffix)
+        # stretch_condition_sc = pm.createNode("condition", name="stretchCondition_SC_%s" % suffix)
+        squashiness_sc = pm.createNode("blendColors", name="squashyness_SC_%s" % suffix)
+        stretchiness_sc = pm.createNode("blendColors", name="stretchyness_SC_%s" % suffix)
 
-        pm.setAttr("%s.maxR" % ik_stretch_stretchyness_clamp, 1)
+        pm.setAttr("%s.maxR" % ik_stretch_stretchiness_clamp, 1)
         pm.setAttr("%s.input1X" % initial_length_multip_sc, init_upper_leg_dist)
         pm.setAttr("%s.input1Y" % initial_length_multip_sc, init_lower_leg_dist)
 
         pm.setAttr("%s.operation" % initial_divide_sc, 2)
-        pm.setAttr("%s.operation" % stretch_condition_sc, 2)
+        # pm.setAttr("%s.operation" % stretch_condition_sc, 2)
+
+        ### IkSoft nodes
+        ik_soft_clamp = pm.createNode("clamp", name="ikSoft_clamp_%s" % suffix)
+        pm.setAttr("%s.minR" %ik_soft_clamp, 0.0001)
+        pm.setAttr("%s.maxR" % ik_soft_clamp, 99999)
+
+        ik_soft_sub1 = pm.createNode("plusMinusAverage", name="ikSoft_Sub1_%s" % suffix)
+        pm.setAttr("%s.operation" % ik_soft_sub1, 2)
+
+        ik_soft_sub2 = pm.createNode("plusMinusAverage", name="ikSoft_Sub2_%s" % suffix)
+        pm.setAttr("%s.operation" % ik_soft_sub2, 2)
+
+        ik_soft_div1 = pm.createNode("multiplyDivide", name="ikSoft_Div1_%s" % suffix)
+        pm.setAttr("%s.operation" % ik_soft_div1, 2)
+
+        ik_soft_mult1 = pm.createNode("multDoubleLinear", name="ikSoft_Mult1_%s" % suffix)
+        pm.setAttr("%s.input1" % ik_soft_mult1, -1)
+
+
+        ik_soft_pow = pm.createNode("multiplyDivide", name="ikSoft_Pow_%s" % suffix)
+        pm.setAttr("%s.operation" % ik_soft_pow, 3)
+        pm.setAttr("%s.input1X" % ik_soft_pow, 2.718)
+
+        ik_soft_mult2 = pm.createNode("multDoubleLinear", name="ikSoft_Mult2_%s" % suffix)
+
+        ik_soft_sub3 = pm.createNode("plusMinusAverage", name="ikSoft_Sub3_%s" % suffix)
+        pm.setAttr("%s.operation" % ik_soft_sub3, 2)
+
+        ik_soft_condition = pm.createNode("condition", name="ikSoft_Condition_%s" % suffix)
+        pm.setAttr("%s.operation" % ik_soft_condition, 2)
+
+        ik_soft_div2 = pm.createNode("multiplyDivide", name="ikSoft_Div2_%s" % suffix)
+        pm.setAttr("%s.operation" % ik_soft_div2, 2)
+
+        ik_soft_stretch_amount = pm.createNode("multiplyDivide", name="ikSoft_stretchAmount_SC_%s" % suffix)
+        pm.setAttr("%s.operation" % ik_soft_stretch_amount, 1)
+
 
         ### Bind Attributes and make constraints
 
@@ -447,9 +488,9 @@ class Leg(object):
         leg_end.translate >> distance_sc.point2
         distance_sc.distance >> ik_stretch_distance_clamp.inputR
 
-        ik_stretch_distance_clamp.outputR >> stretch_condition_sc.firstTerm
+        # ik_stretch_distance_clamp.outputR >> stretch_condition_sc.firstTerm
         ik_stretch_distance_clamp.outputR >> initial_divide_sc.input1X
-        ik_stretch_stretchyness_clamp.outputR >> stretchyness_sc.blender
+        ik_stretch_stretchiness_clamp.outputR >> stretchiness_sc.blender
 
         initial_divide_sc.outputX >> stretch_amount_sc.input2X
         initial_divide_sc.outputX >> stretch_amount_sc.input2Y
@@ -461,27 +502,66 @@ class Leg(object):
 
         extra_scale_mult_sc.outputX >> stretch_amount_sc.input1X
         extra_scale_mult_sc.outputY >> stretch_amount_sc.input1Y
-        extra_scale_mult_sc.outputX >> stretchyness_sc.color2R
-        extra_scale_mult_sc.outputY >> stretchyness_sc.color2G
-        extra_scale_mult_sc.outputX >> stretch_condition_sc.colorIfFalseR
-        extra_scale_mult_sc.outputY >> stretch_condition_sc.colorIfFalseG
+        extra_scale_mult_sc.outputX >> stretchiness_sc.color2R
+        extra_scale_mult_sc.outputY >> stretchiness_sc.color2G
+        # extra_scale_mult_sc.outputX >> stretch_condition_sc.colorIfFalseR
+        # extra_scale_mult_sc.outputY >> stretch_condition_sc.colorIfFalseG
         extra_scale_mult_sc.outputX >> sum_of_j_lengths_sc.input1D[0]
         extra_scale_mult_sc.outputY >> sum_of_j_lengths_sc.input1D[1]
 
-        stretch_amount_sc.outputX >> squashyness_sc.color1R
-        stretch_amount_sc.outputY >> squashyness_sc.color1G
-        stretch_amount_sc.outputX >> stretch_condition_sc.colorIfTrueR
-        stretch_amount_sc.outputY >> stretch_condition_sc.colorIfTrueG
+        stretch_amount_sc.outputX >> squashiness_sc.color1R
+        stretch_amount_sc.outputY >> squashiness_sc.color1G
+        # stretch_amount_sc.outputX >> stretch_condition_sc.colorIfTrueR
+        # stretch_amount_sc.outputY >> stretch_condition_sc.colorIfTrueG
         sum_of_j_lengths_sc.output1D >> initial_divide_sc.input2X
-        sum_of_j_lengths_sc.output1D >> stretch_condition_sc.secondTerm
-        stretch_condition_sc.outColorR >> squashyness_sc.color2R
-        stretch_condition_sc.outColorG >> squashyness_sc.color2G
-        squashyness_sc.outputR >> stretchyness_sc.color1R
-        squashyness_sc.outputG >> stretchyness_sc.color1G
-        stretchyness_sc.outputR >> j_ik_sc_knee.translateX
-        stretchyness_sc.outputG >> j_ik_sc_end.translateX
-        stretchyness_sc.outputR >> j_ik_rp_knee.translateX
-        stretchyness_sc.outputG >> j_ik_rp_end.translateX
+        # sum_of_j_lengths_sc.output1D >> stretch_condition_sc.secondTerm
+        # stretch_condition_sc.outColorR >> squashyness_sc.color2R
+        # stretch_condition_sc.outColorG >> squashyness_sc.color2G
+        squashiness_sc.outputR >> stretchiness_sc.color1R
+        squashiness_sc.outputG >> stretchiness_sc.color1G
+        stretchiness_sc.outputR >> j_ik_sc_knee.translateX
+        stretchiness_sc.outputG >> j_ik_sc_end.translateX
+        stretchiness_sc.outputR >> j_ik_rp_knee.translateX
+        stretchiness_sc.outputG >> j_ik_rp_end.translateX
+
+        ## iksoft related
+        self.cont_IK_foot.softIK >> ik_soft_clamp.inputR
+
+        sum_of_j_lengths_sc.output1D >> ik_soft_sub1.input1D[0]
+        ik_soft_clamp.outputR >> ik_soft_sub1.input1D[1]
+
+        ik_stretch_distance_clamp.outputR >> ik_soft_sub2.input1D[0]
+        ik_soft_sub1.output1D >> ik_soft_sub2.input1D[1]
+
+        ik_soft_sub2.output1D >> ik_soft_div1.input1X
+        ik_soft_clamp.outputR >> ik_soft_div1.input2X
+
+        ik_soft_div1.outputX >> ik_soft_mult1.input2
+
+        ik_soft_mult1.output >> ik_soft_pow.input2X
+
+        ik_soft_clamp.outputR >> ik_soft_mult2.input1
+        ik_soft_pow.outputX >> ik_soft_mult2.input2
+
+        sum_of_j_lengths_sc.output1D >> ik_soft_sub3.input1D[0]
+        ik_soft_mult2.output >> ik_soft_sub3.input1D[1]
+
+        ik_stretch_distance_clamp.outputR >> ik_soft_condition.firstTerm
+        ik_soft_sub1.output1D >> ik_soft_condition.secondTerm
+        ik_soft_sub3.output1D >> ik_soft_condition.colorIfTrueR
+        ik_stretch_distance_clamp.outputR >> ik_soft_condition.colorIfFalseR
+
+        ik_stretch_distance_clamp.outputR >> ik_soft_div2.input1X
+        ik_soft_condition.outColorR >> ik_soft_div2.input2X
+
+        extra_scale_mult_sc.outputX >> ik_soft_stretch_amount.input1X
+        extra_scale_mult_sc.outputY >> ik_soft_stretch_amount.input1Y
+        ik_soft_div2.outputX >> ik_soft_stretch_amount.input2X
+        ik_soft_div2.outputX >> ik_soft_stretch_amount.input2Y
+
+        ik_soft_stretch_amount.outputX >> squashiness_sc.color2R
+        ik_soft_stretch_amount.outputY >> squashiness_sc.color2G
+
 
         ###########################################################
 
@@ -495,11 +575,13 @@ class Leg(object):
 
         self.cont_IK_foot.sUpLeg >> extra_scale_mult_sc.input2X
         self.cont_IK_foot.sLowLeg >> extra_scale_mult_sc.input2Y
-        self.cont_IK_foot.squash >> squashyness_sc.blender
+        self.cont_IK_foot.squash >> squashiness_sc.blender
 
         stretch_offset.output1D >> ik_stretch_distance_clamp.maxR
-        self.cont_IK_foot.stretch >> ik_stretch_stretchyness_clamp.inputR
-        self.cont_IK_foot.stretch >> stretch_offset.input1D[2]
+        # self.cont_IK_foot.stretch >> ik_stretch_stretchyness_clamp.inputR
+        self.cont_IK_foot.stretch >> ik_stretch_stretchiness_clamp.inputR
+        # self.cont_IK_foot.stretch >> stretch_offset.input1D[2]
+        self.cont_IK_foot.stretchLimit >> stretch_offset.input1D[2]
 
         # Bind Foot Attributes to the controller
         # create multiply nodes for alignment fix
@@ -923,8 +1005,8 @@ class Leg(object):
         self.cont_IK_foot.volume >> vpPowerMid.input2Y
         initial_length_multip_sc.outputX >> vpInitLength.input1X
         initial_length_multip_sc.outputY >> vpInitLength.input1Y
-        stretchyness_sc.color1R >> vpInitLength.input2X
-        stretchyness_sc.color1G >> vpInitLength.input2Y
+        stretchiness_sc.color1R >> vpInitLength.input2X
+        stretchiness_sc.color1G >> vpInitLength.input2Y
 
         #vp upper branch
         mid_off_up = ribbon_upper_leg.middleCont[0].getParent()
