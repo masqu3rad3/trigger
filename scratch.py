@@ -127,7 +127,10 @@ class LimbBuilder():
 
         else:
             for anchor in (self.anchors):
-                pm.parent(anchor[0], self.cont_placement)
+                try:
+                    pm.parent(anchor[0], self.cont_placement)
+                except RuntimeError:
+                    pass
         for x in self.fingerMatchConts:
             contPos = extra.createUpGrp(x[0], "POS", mi=False)
             socket = self.getNearestSocket(x[1], self.allSocketsList)
