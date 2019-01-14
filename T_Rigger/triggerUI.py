@@ -31,13 +31,10 @@ import re
 
 if Qt.__binding__ == "PySide":
     from shiboken import wrapInstance
-    from Qt.QtCore import Signal
 elif Qt.__binding__.startswith('PyQt'):
     from sip import wrapinstance as wrapInstance
-    from Qt.Core import pyqtSignal as Signal
 else:
     from shiboken2 import wrapInstance
-    from Qt.QtCore import Signal
 
 windowName = "T-Rigger"
 

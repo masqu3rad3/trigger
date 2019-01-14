@@ -4,21 +4,18 @@ import pymel.core as pm
 import Qt
 from Qt import QtWidgets, QtCore, QtGui
 from maya import OpenMayaUI as omui
-import initials as init
+
 reload(init)
-import scratch
+from T_Rigger import scratch, initials as init
+
 reload(scratch)
-import math
 
 if Qt.__binding__ == "PySide":
     from shiboken import wrapInstance
-    from Qt.QtCore import Signal
 elif Qt.__binding__.startswith('PyQt'):
     from sip import wrapinstance as wrapInstance
-    from Qt.Core import pyqtSignal as Signal
 else:
     from shiboken2 import wrapInstance
-    from Qt.QtCore import Signal
 
 windowName = "T-Rigger"
 
