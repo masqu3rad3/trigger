@@ -1,779 +1,1072 @@
 import pymel.core as pm
-
 import extraProcedures as extra
+# import ribbonClass as rc
+import powerRibbon as rc
+import contIcons as icon
+import pymel.core.datatypes as dt
 
 reload(extra)
-
-import ribbonClass as rc
-
 reload(rc)
-
-import contIcons as icon
-
 reload(icon)
 
+class Leg(object):
+    def __init__(self):
+        # none = None
+        self.limbGrp = None
+        self.scaleGrp = None
+        self.cont_IK_foot = None
+        self.cont_Pole = None
+        self.nonScaleGrp = None
+        # cont_IK_foot_OFF = None
+        self.cont_IK_OFF = None
+        self.sockets = []
+        # startSocket = None
+        # endSocket = None
+        self.limbPlug = None
+        self.connectsTo = None
+        self.scaleConstraints = []
+        self.anchors = []
+        self.anchorLocations = []
+        self.jDef_legRoot = None
+        self.deformerJoints = []
+        self.colorCodes = [6, 18]
 
-# whichLeg="l_leg"
-class leg():
-    limbID = "leg"
-    none = None
-    scaleGrp = None
-    cont_IK_foot = None
-    cont_Pole = None
-    nonScaleGrp = None
-    # cont_IK_foot_OFF = None
-    cont_IK_OFF = None
-    rootSocket = None
-    limbPlug = None
-    connectsTo = None
-    scaleConstraints = []
-    anchors = []
-    anchorLocations = []
+    def createleg(self, leginits, suffix="", side="L"):
+        # suffix = (extra.uniqueName("scaleGrp_%s" % suffix)).replace("scaleGrp_", "")
+        suffix = (extra.uniqueName("limbGrp_%s" % suffix)).replace("limbGrp_", "")
 
-    def createLeg(self, legInits, suffix="", side="L", mirrorAxis="X"):
-        idCounter = 0
-        ## create an unique suffix
-        while pm.objExists("scaleGrp_" + suffix):
-            suffix = "%s%s" % (suffix, str(idCounter + 1))
+        self.limbGrp = pm.group(name="limbGrp_%s" % suffix, em=True)
 
-        if (len(legInits) < 9):
+
+        if len(leginits) < 9:
             pm.error("Some or all Leg Init Bones are missing (or Renamed)")
             return
 
+        if not type(leginits) == dict and not type(leginits) == list:
+            pm.error("Init joints must be list or dictionary")
+            return
+
         # reinitialize the dictionary for easy use
-        legRootRef = legInits["LegRoot"]
-        hipRef = legInits["Hip"]
-        kneeRef = legInits["Knee"]
-        footRef = legInits["Foot"]
-        ballRef = legInits["Ball"]
-        heelPvRef = legInits["HeelPV"]
-        toePvRef = legInits["ToePV"]
-        bankInRef = legInits["BankIN"]
-        bankOutRef = legInits["BankOUT"]
+        if type(leginits) == dict:
+            leg_root_ref = leginits["LegRoot"]
+            hip_ref = leginits["Hip"]
+            knee_ref = leginits["Knee"]
+            foot_ref = leginits["Foot"]
+            ball_ref = leginits["Ball"]
+            heel_pv_ref = leginits["HeelPV"]
+            toe_pv_ref = leginits["ToePV"]
+            bank_in_ref = leginits["BankIN"]
+            bank_out_ref = leginits["BankOUT"]
+        else:
+            leg_root_ref = leginits[0]
+            hip_ref = leginits[1]
+            knee_ref = leginits[2]
+            foot_ref = leginits[3]
+            ball_ref = leginits[4]
+            heel_pv_ref = leginits[5]
+            toe_pv_ref = leginits[6]
+            bank_in_ref = leginits[7]
+            bank_out_ref = leginits[8]
+
+        up_axis, mirror_axis, look_axis = extra.getRigAxes(leg_root_ref)
 
         # find the Socket
-        self.connectsTo = legRootRef.getParent()
-        # if not legParent == None:
-        #     self.connectsTo = extra.identifyMaster(legParent)[0]
+        self.connectsTo = leg_root_ref.getParent()
 
-        legRootPos = legRootRef.getTranslation(space="world")
-        hipPos = hipRef.getTranslation(space="world")
-        kneePos = kneeRef.getTranslation(space="world")
-        footPos = footRef.getTranslation(space="world")
-        ballPos = ballRef.getTranslation(space="world")
-        heelPvPos = heelPvRef.getTranslation(space="world")
-        toePvPos = toePvRef.getTranslation(space="world")
-        bankInPos = bankInRef.getTranslation(space="world")
-        bankOutPos = bankOutRef.getTranslation(space="world")
+        leg_root_pos = leg_root_ref.getTranslation(space="world")
+        hip_pos = hip_ref.getTranslation(space="world")
+        knee_pos = knee_ref.getTranslation(space="world")
+        foot_pos = foot_ref.getTranslation(space="world")
+        ball_pos = ball_ref.getTranslation(space="world")
+        # heel_pv_pos = heel_pv_ref.getTranslation(space="world")
+        toe_pv_pos = toe_pv_ref.getTranslation(space="world")
+        # bank_in_pos = bank_in_ref.getTranslation(space="world")
+        # bank_out_pos = bank_out_ref.getTranslation(space="world")
 
-        ##Groups
-        self.scaleGrp = pm.group(name="scaleGrp_" + suffix, em=True)
-        extra.alignTo(self.scaleGrp, footRef, 0)
-        self.nonScaleGrp = pm.group(name="NonScaleGrp_" + suffix, em=True)
+        init_upper_leg_dist = extra.getDistance(hip_ref, knee_ref)
+        init_lower_leg_dist = extra.getDistance(knee_ref, foot_ref)
+        init_ball_dist = extra.getDistance(foot_ref, ball_ref)
+        init_toe_dist = extra.getDistance(ball_ref, toe_pv_ref)
+        init_foot_length = extra.getDistance(toe_pv_ref, heel_pv_ref)
+        init_foot_width = extra.getDistance(bank_in_ref, bank_out_ref)
 
-        ## Create Limb Plug
+        ########
+        ########
+        foot_plane = pm.spaceLocator(name="testLocator")
+        pm.setAttr(foot_plane.rotateOrder, 0)
+        pm.pointConstraint(heel_pv_ref, toe_pv_ref, foot_plane)
+        pm.aimConstraint(toe_pv_ref, foot_plane, wuo=foot_ref, wut="object")
+        ########
+        ########
+
+        #     _____            _             _ _
+        #    / ____|          | |           | | |
+        #   | |     ___  _ __ | |_ _ __ ___ | | | ___ _ __ ___
+        #   | |    / _ \| '_ \| __| '__/ _ \| | |/ _ \ '__/ __|
+        #   | |___| (_) | | | | |_| | | (_) | | |  __/ |  \__ \
+        #    \_____\___/|_| |_|\__|_|  \___/|_|_|\___|_|  |___/
+        #
+        #
+
+        # Thigh Controller
+
+        thigh_cont_scale = (init_upper_leg_dist / 4, init_upper_leg_dist / 16, init_upper_leg_dist / 4)
+        cont_thigh = icon.cube("cont_Thigh_%s" % suffix, thigh_cont_scale)
+        extra.alignAndAim(cont_thigh, targetList=[hip_ref], aimTargetList=[knee_ref], upObject=leg_root_ref)
+        pm.move(cont_thigh, (0, -thigh_cont_scale[0] * 2, 0), r=True, os=True)
+
+        cont_thigh_off = extra.createUpGrp(cont_thigh, "OFF")
+        cont_thigh_ore = extra.createUpGrp(cont_thigh, "ORE")
+        if side == "R":
+            pm.setAttr(cont_thigh_ore.rotateZ, -180)
+
+        pm.xform(cont_thigh, piv=leg_root_pos, ws=True)
+        pm.addAttr(shortName="autoTwist", longName="Auto_Twist", defaultValue=1.0, minValue=0.0, maxValue=1.0, at="float",
+                   k=True)
+        pm.addAttr(shortName="manualTwist", longName="Manual_Twist", defaultValue=0.0, at="float", k=True)
+
+        # IK Foot Controller
+
+        foot_cont_scale = (init_foot_length * 0.75, 1, init_foot_width * 0.8)
+        self.cont_IK_foot = icon.circle("cont_IK_foot_%s" % suffix, scale=foot_cont_scale, normal=(0, 1, 0))
+
+        extra.alignAndAim(self.cont_IK_foot, targetList=[bank_out_ref, bank_in_ref, toe_pv_ref, heel_pv_ref], aimTargetList=[toe_pv_ref], upObject=foot_ref)
+        # pm.makeIdentity(self.cont_IK_foot, a=True, t=True, r=False, s=True)
+
+        pm.xform(self.cont_IK_foot, piv=foot_pos, p=True, ws=True)
+
+        self.cont_IK_OFF  = extra.createUpGrp(self.cont_IK_foot, "OFF")
+
+
+
+        pm.addAttr(self.cont_IK_foot, shortName="polevector", longName="Pole_Vector", defaultValue=0.0, minValue=0.0, maxValue=1.0,
+                   at="double", k=True)
+        pm.addAttr(self.cont_IK_foot, shortName="sUpLeg", longName="Scale_Upper_Leg", defaultValue=1.0, minValue=0.0, at="double", k=True)
+        pm.addAttr(self.cont_IK_foot, shortName="sLowLeg", longName="Scale_Lower_Leg", defaultValue=1.0, minValue=0.0, at="double", k=True)
+        pm.addAttr(self.cont_IK_foot, shortName="squash", longName="Squash", defaultValue=0.0, minValue=0.0, maxValue=1.0, at="double", k=True)
+        pm.addAttr(self.cont_IK_foot, shortName="stretch", longName="Stretch", defaultValue=1.0, minValue=0.0, maxValue=1.0, at="double",
+                   k=True)
+        pm.addAttr(self.cont_IK_foot, shortName="stretchLimit", longName="StretchLimit", defaultValue=100.0, minValue=0.0,
+                   maxValue=1000.0, at="double",
+                   k=True)
+        pm.addAttr(self.cont_IK_foot, shortName="softIK", longName="SoftIK", defaultValue=0.0, minValue=0.0, maxValue=100.0, k=True)
+        pm.addAttr(self.cont_IK_foot, shortName="volume", longName="Volume_Preserve", defaultValue=0.0, at="double", k=True)
+        pm.addAttr(self.cont_IK_foot, shortName="bLean", longName="Ball_Lean", defaultValue=0.0, at="double", k=True)
+        pm.addAttr(self.cont_IK_foot, shortName="bRoll", longName="Ball_Roll", defaultValue=0.0, at="double", k=True)
+        pm.addAttr(self.cont_IK_foot, shortName="bSpin", longName="Ball_Spin", defaultValue=0.0, at="double", k=True)
+        pm.addAttr(self.cont_IK_foot, shortName="hRoll", longName="Heel_Roll", defaultValue=0.0, at="double", k=True)
+        pm.addAttr(self.cont_IK_foot, shortName="hSpin", longName="Heel_Spin", defaultValue=0.0, at="double", k=True)
+        pm.addAttr(self.cont_IK_foot, shortName="tRoll", longName="Toes_Roll", defaultValue=0.0, at="double", k=True)
+        pm.addAttr(self.cont_IK_foot, shortName="tSpin", longName="Toes_Spin", defaultValue=0.0, at="double", k=True)
+        pm.addAttr(self.cont_IK_foot, shortName="tWiggle", longName="Toes_Wiggle", defaultValue=0.0, at="double", k=True)
+        pm.addAttr(self.cont_IK_foot, shortName="bank", longName="Bank", defaultValue=0.0, at="double", k=True)
+
+        # Pole Vector Controller
+        polecont_scale = ((((init_upper_leg_dist + init_lower_leg_dist) / 2) / 10), (((init_upper_leg_dist + init_lower_leg_dist) / 2) / 10), (((init_upper_leg_dist + init_lower_leg_dist) / 2) / 10))
+        self.cont_Pole = icon.plus("cont_Pole_%s" % suffix, polecont_scale, normal=(0, 0, 1))
+        offset_mag_pole = ((init_upper_leg_dist + init_lower_leg_dist) / 4)
+        offset_vector_pole = extra.getBetweenVector(knee_ref, [hip_ref, foot_ref])
+        extra.alignAndAim(self.cont_Pole, targetList=[knee_ref], aimTargetList=[hip_ref, foot_ref], upVector=up_axis, translateOff=(offset_vector_pole * offset_mag_pole))
+        cont_pole_off = extra.createUpGrp(self.cont_Pole, "OFF")
+        cont_pole_vis = extra.createUpGrp(self.cont_Pole, "VIS")
+
+        # FK Upleg Controller
+        scalecont_fk_up_leg = (init_upper_leg_dist / 2, init_upper_leg_dist / 6, init_upper_leg_dist / 6)
+        cont_fk_up_leg = icon.cube("cont_FK_Upleg_%s" % suffix, scalecont_fk_up_leg)
+        extra.alignAndAim(cont_fk_up_leg, targetList=[hip_ref, knee_ref], aimTargetList=[knee_ref], upVector=up_axis)
+
+        cont_fk_up_leg_off = extra.createUpGrp(cont_fk_up_leg, "OFF")
+        cont_fk_up_leg_ore = extra.createUpGrp(cont_fk_up_leg, "ORE")
+
+        if side == "R":
+            pm.setAttr("%s.r%s" % (cont_fk_up_leg_ore, "z"), -180)
+
+        pm.xform(cont_fk_up_leg, piv=hip_pos, ws=True)
+        pm.xform(cont_fk_up_leg_ore, piv=hip_pos, ws=True)
+        pm.xform(cont_fk_up_leg_off, piv=hip_pos, ws=True)
+
+        # FK Lowleg Controller
+        scalecont_fk_low_leg = (init_lower_leg_dist / 2, init_lower_leg_dist / 6, init_lower_leg_dist / 6)
+        cont_fk_low_leg = icon.cube("cont_FK_Lowleg_%s" % suffix, scalecont_fk_low_leg)
+        extra.alignAndAim(cont_fk_low_leg, targetList=[knee_ref, foot_ref], aimTargetList=[foot_ref], upVector=up_axis)
+
+        cont_fk_low_leg_off = extra.createUpGrp(cont_fk_low_leg, "OFF")
+        cont_fk_low_leg_ore = extra.createUpGrp(cont_fk_low_leg, "ORE")
+
+        if side == "R":
+            pm.setAttr("%s.r%s" % (cont_fk_low_leg_ore, "z"), -180)
+
+        pm.xform(cont_fk_low_leg, piv=knee_pos, ws=True)
+        pm.xform(cont_fk_low_leg_ore, piv=knee_pos, ws=True)
+        pm.xform(cont_fk_low_leg_off, piv=knee_pos, ws=True)
+
+        # FK Foot Controller
+        scalecont_fk_foot = (init_ball_dist / 2, init_ball_dist / 3, init_foot_width / 2)
+        cont_fk_foot = icon.cube(name="cont_FK_Foot_%s" % suffix, scale=scalecont_fk_foot)
+        # extra.alignAndAim(cont_FK_Foot, targetList=[footRef,ballRef], aimTargetList=[ballRef], upVector=self.upAxis)
+        extra.alignAndAim(cont_fk_foot, targetList=[foot_ref, ball_ref], aimTargetList=[ball_ref], upVector=up_axis)
+
+        cont_fk_foot_off = extra.createUpGrp(cont_fk_foot, "OFF")
+        cont_fk_foot_ore = extra.createUpGrp(cont_fk_foot, "ORE")
+
+        if side == "R":
+            pm.setAttr("%s.r%s" % (cont_fk_foot_ore, "z"), -180)
+
+        pm.xform(cont_fk_foot, piv=foot_pos, ws=True)
+        pm.xform(cont_fk_foot_ore, piv=foot_pos, ws=True)
+        pm.xform(cont_fk_foot_off, piv=foot_pos, ws=True)
+
+        # FK Ball Controller
+        scalecont_fk_ball = (init_toe_dist / 2, init_toe_dist / 3, init_foot_width / 2)
+        cont_fk_ball = icon.cube(name="cont_FK_Ball_%s" % suffix, scale=scalecont_fk_ball)
+        extra.alignAndAim(cont_fk_ball, targetList=[ball_ref, toe_pv_ref], aimTargetList=[toe_pv_ref], upVector=up_axis)
+
+        cont_fk_ball_off = extra.createUpGrp(cont_fk_ball, "OFF")
+        cont_fk_ball_ore = extra.createUpGrp(cont_fk_ball, "ORE")
+
+        if side == "R":
+            pm.setAttr("%s.r%s" % (cont_fk_ball_ore, "z"), -180)
+
+        pm.xform(cont_fk_ball, piv=ball_pos, ws=True)
+        pm.xform(cont_fk_ball_ore, piv=ball_pos, ws=True)
+        pm.xform(cont_fk_ball_off, piv=ball_pos, ws=True)
+
+        # FK-IK SWITCH Controller
+        icon_scale = init_lower_leg_dist / 4
+        cont_fk_ik, fk_ik_rvs = icon.fkikSwitch(("cont_FK_IK_%s" % suffix), (icon_scale, icon_scale, icon_scale))
+        extra.alignAndAim(cont_fk_ik, targetList=[foot_ref], aimTargetList=[knee_ref], upVector=up_axis, rotateOff=(90, 90, 0))
+        # pm.move(cont_FK_IK, (dt.Vector(self.upAxis) *(iconScale*2)), r=True)
+        pm.move(cont_fk_ik, (icon_scale * 2, 0, 0), r=True, os=True)
+        cont_fk_ik_pos = extra.createUpGrp(cont_fk_ik, "POS")
+
+        if side == "R":
+            pm.move(cont_fk_ik, (-icon_scale * 4, 0, 0), r=True, os=True)
+            pm.makeIdentity(cont_fk_ik, a=True)
+
+        pm.addAttr(cont_fk_ik, shortName="autoTwist", longName="Auto_Twist", defaultValue=1.0, minValue=0.0, maxValue=1.0,
+                   at="float", k=True)
+        pm.addAttr(cont_fk_ik, shortName="manualTwist", longName="Manual_Twist", defaultValue=0.0, at="float", k=True)
+        pm.addAttr(cont_fk_ik, at="enum", k=True, shortName="interpType", longName="Interp_Type", en="No_Flip:Average:Shortest:Longest:Cache", defaultValue=0)
+        pm.addAttr(cont_fk_ik, shortName="tweakControls", longName="Tweak_Controls", defaultValue=0, at="bool")
+        pm.setAttr(cont_fk_ik.tweakControls, cb=True)
+        pm.addAttr(cont_fk_ik, shortName="fingerControls", longName="Finger_Controls", defaultValue=1, at="bool")
+        pm.setAttr(cont_fk_ik.fingerControls, cb=True)
+
+        ###########################################################################################################################
+
+        # Groups
+        self.scaleGrp = pm.group(name="scaleGrp_%s" % suffix, em=True)
+        extra.alignTo(self.scaleGrp, leg_root_ref, 0)
+        self.nonScaleGrp = pm.group(name="NonScaleGrp_%s" % suffix, em=True)
+
+        # Create Limb Plug
         pm.select(d=True)
-        self.limbPlug = pm.joint(name="limbPlug_" + suffix, p=legRootPos, radius=3)
+        self.limbPlug = pm.joint(name="limbPlug_%s" % suffix, p=leg_root_pos, radius=3)
 
-
-        ###Create common Joints
+        # Create common Joints
         pm.select(d=True)
-        jDef_midLeg = pm.joint(name="jDef_knee_" + suffix, p=kneePos, radius=1.5)
+        j_def_midLeg = pm.joint(name="jDef_knee_%s" % suffix, p=knee_pos, radius=1.5)
+        self.sockets.append(j_def_midLeg)
         pm.select(d=True)
-        jDef_legRoot = pm.joint(name="jDef_legRoot_" + suffix, p=legRootPos, radius=1.5)
-        jDef_hip = pm.joint(name="jDef_hip_" + suffix, p=hipPos, radius=1.5)
-        pm.joint(jDef_legRoot, e=True, zso=True, oj="xyz")
-        pm.joint(jDef_hip, e=True, zso=True, oj="xyz")
-        pm.parent(jDef_legRoot, self.scaleGrp)
+        self.jDef_legRoot = pm.joint(name="jDef_legRoot_%s" % suffix, p=leg_root_pos, radius=1.5)
+        self.sockets.append(self.jDef_legRoot)
+        j_def_hip = pm.joint(name="jDef_hip_%s" % suffix, p=hip_pos, radius=1.5)
+        pm.joint(self.jDef_legRoot, e=True, zso=True, oj="xyz")
+        pm.joint(j_def_hip, e=True, zso=True, oj="xyz")
+        pm.parent(self.jDef_legRoot, self.scaleGrp)
 
         ###########################
         ######### IK LEG ##########
         ###########################
 
-
-
-        masterIK = pm.spaceLocator(name="masterIK_" + suffix)
-        # tempPoCon = pm.pointConstraint("jInit_Foot_" + side, masterIK)
-        # pm.delete(tempPoCon)
-        extra.alignTo(masterIK, footRef)
-
-        initUpperLegDist = extra.getDistance(hipRef, kneeRef)
-        initLowerLegDist = extra.getDistance(kneeRef, footRef)
+        master_ik = pm.spaceLocator(name="masterIK_" + suffix)
+        extra.alignTo(master_ik, foot_ref)
 
         pm.select(d=True)
-        jIK_orig_Root = pm.joint(name="jIK_orig_Root_" + suffix, p=hipPos, radius=1.5)
-        jIK_orig_Knee = pm.joint(name="jIK_orig_Knee_" + suffix, p=kneePos, radius=1.5)
-        jIK_orig_End = pm.joint(name="jIK_orig_End_" + suffix, p=footPos, radius=1.5)
+        j_ik_orig_root = pm.joint(name="jIK_orig_Root_%s" % suffix, p=hip_pos, radius=1.5)
+        j_ik_orig_knee = pm.joint(name="jIK_orig_Knee_%s" % suffix, p=knee_pos, radius=1.5)
+        j_ik_orig_end = pm.joint(name="jIK_orig_End_%s" % suffix, p=foot_pos, radius=1.5)
+        # j_ik_orig_temp = pm.joint(p=ball_pos)
         pm.select(d=True)
-        jIK_SC_Root = pm.joint(name="jIK_SC_Root_" + suffix, p=hipPos, radius=1)
-        jIK_SC_Knee = pm.joint(name="jIK_SC_Knee_" + suffix, p=kneePos, radius=1)
-        jIK_SC_End = pm.joint(name="jIK_SC_End_" + suffix, p=footPos, radius=1)
+        j_ik_sc_root = pm.joint(name="jIK_SC_Root_%s" % suffix, p=hip_pos, radius=1)
+        j_ik_sc_knee = pm.joint(name="jIK_SC_Knee_%s" % suffix, p=knee_pos, radius=1)
+        j_ik_sc_end = pm.joint(name="jIK_SC_End_%s" % suffix, p=foot_pos, radius=1)
+        # j_ik_sc_temp = pm.joint(p=ball_pos)
         pm.select(d=True)
-        jIK_RP_Root = pm.joint(name="jIK_RP_Root_" + suffix, p=hipPos, radius=0.7)
-        jIK_RP_Knee = pm.joint(name="jIK_RP_Knee_" + suffix, p=kneePos, radius=0.7)
-        jIK_RP_End = pm.joint(name="jIK_RP_End_" + suffix, p=footPos, radius=0.7)
+        j_ik_rp_root = pm.joint(name="jIK_RP_Root_%s" % suffix, p=hip_pos, radius=0.7)
+        j_ik_rp_knee = pm.joint(name="jIK_RP_Knee_%s" % suffix, p=knee_pos, radius=0.7)
+        j_ik_rp_end = pm.joint(name="jIK_RP_End_%s" % suffix, p=foot_pos, radius=0.7)
+        # j_ik_rp_temp = pm.joint(p=ball_pos)
         pm.select(d=True)
-        jIK_Foot = pm.joint(name="jIK_Foot_" + suffix, p=footPos, radius=1.0)
-        jIK_Ball = pm.joint(name="jIK_Ball_" + suffix, p=ballPos, radius=1.0)
-        jIK_Toe = pm.joint(name="jIK_Toe_" + suffix, p=toePvPos,  ## POSSIBLE PROBLEM
+        j_ik_foot = pm.joint(name="jIK_Foot_%s" % suffix, p=foot_pos, radius=1.0)
+        j_ik_ball = pm.joint(name="jIK_Ball_%s" % suffix, p=ball_pos, radius=1.0)
+        j_ik_toe = pm.joint(name="jIK_Toe_%s" % suffix, p=toe_pv_pos,  # POSSIBLE PROBLEM
                            radius=1.0)
 
-        pm.joint(jIK_orig_Root, e=True, zso=True, oj="xyz")
-        pm.joint(jIK_orig_Knee, e=True, zso=True, oj="xyz")
-        pm.joint(jIK_orig_End, e=True, zso=True, oj="xyz")
-        pm.joint(jIK_SC_Root, e=True, zso=True, oj="xyz")
-        pm.joint(jIK_SC_Knee, e=True, zso=True, oj="xyz")
-        pm.joint(jIK_SC_End, e=True, zso=True, oj="xyz")
-        pm.joint(jIK_RP_Root, e=True, zso=True, oj="xyz")
-        pm.joint(jIK_RP_Knee, e=True, zso=True, oj="xyz")
-        pm.joint(jIK_RP_End, e=True, zso=True, oj="xyz")
-        pm.joint(jIK_Foot, e=True, zso=True, oj="xyz")
-        pm.joint(jIK_Ball, e=True, zso=True, oj="xyz")
-        pm.joint(jIK_Toe, e=True, zso=True, oj="xyz")
 
-        ###Create Foot Pivots
+
+        # extra.orientJoints([j_ik_orig_root, j_ik_orig_knee, j_ik_orig_end], localMoveAxis=look_axis, upAxis=up_axis)
+        # extra.orientJoints([j_ik_sc_root, j_ik_sc_knee, j_ik_sc_end], localMoveAxis=look_axis, upAxis=up_axis)
+        # extra.orientJoints([j_ik_rp_root, j_ik_rp_knee, j_ik_rp_end], localMoveAxis=look_axis, upAxis=up_axis)
+        # extra.orientJoints([j_ik_foot, j_ik_ball, j_ik_toe], localMoveAxis=look_axis, upAxis=up_axis)
+        extra.orientJoints([j_ik_orig_root, j_ik_orig_knee, j_ik_orig_end], localMoveAxis=up_axis, upAxis=up_axis)
+        extra.orientJoints([j_ik_sc_root, j_ik_sc_knee, j_ik_sc_end], localMoveAxis=up_axis, upAxis=up_axis)
+        extra.orientJoints([j_ik_rp_root, j_ik_rp_knee, j_ik_rp_end], localMoveAxis=up_axis, upAxis=up_axis)
+        extra.orientJoints([j_ik_foot, j_ik_ball, j_ik_toe], localMoveAxis=up_axis, upAxis=up_axis)
+
+
+        # pm.joint(j_ik_orig_root, e=True, zso=True, oj="xyz", sao="zdown")
+        # pm.joint(j_ik_orig_knee, e=True, zso=True, oj="xyz", sao="zdown")
+        # pm.joint(j_ik_orig_end, e=True, zso=True, oj="xyz", sao="zdown")
+        # pm.joint(j_ik_sc_root, e=True, zso=True, oj="xyz", sao="zdown")
+        # pm.joint(j_ik_sc_knee, e=True, zso=True, oj="xyz", sao="zdown")
+        # pm.joint(j_ik_sc_end, e=True, zso=True, oj="xyz", sao="zdown")
+        # pm.joint(j_ik_rp_root, e=True, zso=True, oj="xyz", sao="zdown")
+        # pm.joint(j_ik_rp_knee, e=True, zso=True, oj="xyz", sao="zdown")
+        # pm.joint(j_ik_rp_end, e=True, zso=True, oj="xyz", sao="zdown")
+        # pm.joint(j_ik_foot, e=True, zso=True, oj="xyz", sao="zdown")
+        # pm.joint(j_ik_ball, e=True, zso=True, oj="xyz", sao="zdown")
+        # pm.joint(j_ik_toe, e=True, zso=True, oj="xyz", sao="zdown")
+
+        # pm.delete(j_ik_orig_temp)
+        # pm.delete(j_ik_sc_temp)
+        # pm.delete(j_ik_rp_temp)
+        # Create Foot Pivots and Ball Socket
         pm.select(cl=True)
 
-        Pv_BankIn = pm.group(name="Pv_BankIn_" + suffix, em=True)
-        extra.alignTo(Pv_BankIn, bankInRef, 0)
-        pm.makeIdentity(Pv_BankIn, a=True, t=False, r=True, s=True)
+        pv_bank_in = pm.group(name="Pv_BankIn_%s" % suffix, em=True)
+        extra.alignTo(pv_bank_in, bank_in_ref, 2)
+        pm.makeIdentity(pv_bank_in, a=True, t=False, r=True, s=True)
+        pm.setAttr(pv_bank_in.rotate, pm.getAttr(foot_plane.rotate))
 
-        Pv_BankOut = pm.group(name="Pv_BankOut_" + suffix, em=True)
-        extra.alignTo(Pv_BankOut, bankOutRef, 0)
-        pm.makeIdentity(Pv_BankOut, a=True, t=False, r=True, s=True)
+        pv_bank_out = pm.group(name="Pv_BankOut_%s" % suffix, em=True)
+        extra.alignTo(pv_bank_out, bank_out_ref, 2)
+        pm.makeIdentity(pv_bank_out, a=True, t=False, r=True, s=True)
+        pm.setAttr(pv_bank_out.rotate, pm.getAttr(foot_plane.rotate))
 
-        Pv_Toe = pm.group(name="Pv_Toe_" + suffix, em=True)
-        extra.alignTo(Pv_Toe, toePvRef, 0)
-        pm.makeIdentity(Pv_Toe, a=True, t=False, r=True, s=True)
+        pv_toe = pm.group(name="Pv_Toe_%s" % suffix, em=True)
+        extra.alignTo(pv_toe, toe_pv_ref, 2)
+        pv_toe_ore = extra.createUpGrp(pv_toe, "ORE")
 
-        Pv_Ball = pm.group(name="Pv_Ball_" + suffix, em=True)
-        extra.alignTo(Pv_Ball, ballRef, 0)
-        pm.makeIdentity(Pv_Ball, a=True, t=False, r=True, s=True)
+        pv_ball = pm.group(name="Pv_Ball_%s" % suffix, em=True)
+        extra.alignTo(pv_ball, ball_ref, 2)
+        pv_ball_ore = extra.createUpGrp(pv_ball, "ORE")
 
-        Pv_Heel = pm.group(name="Pv_Heel_" + suffix, em=True)
-        extra.alignTo(Pv_Heel, heelPvRef, 0)
-        pm.makeIdentity(Pv_Heel, a=True, t=False, r=True, s=True)
+        j_socket_ball = pm.joint(name="jBallSocket_%s" % suffix, radius=3)
+        pm.parentConstraint(pv_ball, j_socket_ball)
+        # TODO // SOCKETBALL NEEDS A IK/FK Switch
+        self.sockets.append(j_socket_ball)
 
-        Pv_BallSpin = pm.group(name="Pv_BallSpin_" + suffix, em=True)
-        extra.alignTo(Pv_BallSpin, ballRef, 0)
-        pm.makeIdentity(Pv_BallSpin, a=True, t=False, r=True, s=True)
+        pv_heel = pm.group(name="Pv_Heel_%s" % suffix, em=True)
+        extra.alignTo(pv_heel, heel_pv_ref, 2)
+        pv_heel_ore = extra.createUpGrp(pv_heel, "ORE")
 
-        Pv_BallRoll = pm.group(name="Pv_BallRoll_" + suffix, em=True)
-        extra.alignTo(Pv_BallRoll, ballRef, 0)
-        pm.makeIdentity(Pv_BallRoll, a=True, t=False, r=True, s=True)
+        pv_ball_spin = pm.group(name="Pv_BallSpin_%s" % suffix, em=True)
+        extra.alignTo(pv_ball_spin, ball_ref, 2)
+        pv_ball_spin_ore = extra.createUpGrp(pv_ball_spin, "ORE")
 
-        Pv_BallLean = pm.group(name="Pv_BallLean_" + suffix, em=True)
-        extra.alignTo(Pv_BallLean, ballRef, 0)
-        pm.makeIdentity(Pv_BallLean, a=True, t=False, r=True, s=True)
+        pv_ball_roll = pm.group(name="Pv_BallRoll_%s" % suffix, em=True)
+        extra.alignTo(pv_ball_roll, ball_ref, 2)
+        pv_ball_roll_ore = extra.createUpGrp(pv_ball_roll, "ORE")
+
+        pv_ball_lean = pm.group(name="Pv_BallLean_%s" % suffix, em=True)
+        extra.alignTo(pv_ball_lean, ball_ref, 2)
+        pv_ball_lean_ore = extra.createUpGrp(pv_ball_lean, "ORE")
 
         ## Create Start Lock
 
-        startLock = pm.spaceLocator(name="startLock_" + suffix)
-        extra.alignTo(startLock, hipRef, 2)
-        startLock_Ore = extra.createUpGrp(startLock, "_Ore")
-        startLock_Pos = extra.createUpGrp(startLock, "_Pos")
-        startLock_Twist = extra.createUpGrp(startLock, "_AutoTwist")
+        start_lock = pm.spaceLocator(name="startLock_%s" % suffix)
+        extra.alignTo(start_lock, hip_ref, 2)
+        start_lock_ore = extra.createUpGrp(start_lock, "_Ore")
+        start_lock_pos = extra.createUpGrp(start_lock, "_Pos")
+        start_lock_twist = extra.createUpGrp(start_lock, "_AutoTwist")
 
-        startLockRot = pm.parentConstraint(jDef_hip, startLock, mo=True)
-        # pm.setAttr(startLockRot.interpType, 0)
+        start_lock_rot = pm.parentConstraint(j_def_hip, start_lock, mo=True)
 
-        pm.parentConstraint(startLock, jIK_SC_Root, mo=True)
-        pm.parentConstraint(startLock, jIK_RP_Root, mo=True)
+        pm.parentConstraint(start_lock, j_ik_sc_root, mo=True)
+        pm.parentConstraint(start_lock, j_ik_rp_root, mo=True)
 
-        ###Create IK handles
+        # Create IK handles
 
-        ikHandle_SC = pm.ikHandle(sj=jIK_SC_Root, ee=jIK_SC_End, name="ikHandle_SC_" + suffix)
-        ikHandle_RP = pm.ikHandle(sj=jIK_RP_Root, ee=jIK_RP_End, name="ikHandle_RP_" + suffix, sol="ikRPsolver")
+        ik_handle_sc = pm.ikHandle(sj=j_ik_sc_root, ee=j_ik_sc_end, name="ikHandle_SC_%s" % suffix)
+        ik_handle_rp = pm.ikHandle(sj=j_ik_rp_root, ee=j_ik_rp_end, name="ikHandle_RP_%s" % suffix, sol="ikRPsolver")
 
-        ikHandle_Ball = pm.ikHandle(sj=jIK_Foot, ee=jIK_Ball, name="ikHandle_Ball_" + suffix)
-        ikHandle_Toe = pm.ikHandle(sj=jIK_Ball, ee=jIK_Toe, name="ikHandle_Toe_" + suffix)
+        pm.poleVectorConstraint(self.cont_Pole, ik_handle_rp[0])
+        pm.aimConstraint(j_ik_rp_knee, self.cont_Pole)
 
-        ###Create Hierarchy for Foot
+        ik_handle_ball = pm.ikHandle(sj=j_ik_foot, ee=j_ik_ball, name="ikHandle_Ball_%s" % suffix)
+        ik_handle_toe = pm.ikHandle(sj=j_ik_ball, ee=j_ik_toe, name="ikHandle_Toe_%s" % suffix)
 
-        pm.parent(ikHandle_Ball[0], Pv_Ball)
-        pm.parent(ikHandle_Toe[0], Pv_Ball)
-        pm.parent(masterIK, Pv_BallLean)
-        pm.parent(ikHandle_SC[0], masterIK)
-        pm.parent(ikHandle_RP[0], masterIK)
-        pm.parent(Pv_BallLean, Pv_BallRoll)
-        pm.parent(Pv_Ball, Pv_Toe)
-        pm.parent(Pv_BallRoll, Pv_Toe)
-        pm.parent(Pv_Toe, Pv_BallSpin)
-        pm.parent(Pv_BallSpin, Pv_Heel)
-        pm.parent(Pv_Heel, Pv_BankOut)
-        pm.parent(Pv_BankOut, Pv_BankIn)
+        # Create Hierarchy for Foot
 
-        ###Create Control Curve - IK
+        pm.parent(ik_handle_ball[0], pv_ball)
+        pm.parent(ik_handle_toe[0], pv_ball)
+        pm.parent(master_ik, pv_ball_lean)
+        pm.parent(ik_handle_sc[0], master_ik)
+        pm.parent(ik_handle_rp[0], master_ik)
+        pm.parent(pv_ball_lean_ore, pv_ball_roll)
+        pm.parent(pv_ball_ore, pv_toe)
+        pm.parent(pv_ball_roll_ore, pv_toe)
+        pm.parent(pv_toe_ore, pv_ball_spin)
+        pm.parent(pv_ball_spin_ore, pv_heel)
+        pm.parent(pv_heel_ore, pv_bank_out)
+        pm.parent(pv_bank_out, pv_bank_in)
 
-        zScale = extra.getDistance(Pv_Toe, Pv_Heel)
-        xScale = extra.getDistance(Pv_BankOut, Pv_BankIn)
-        offset = extra.getDistance(Pv_Ball, Pv_Heel)
-
-        self.cont_IK_foot = icon.circle("cont_IK_foot_" + suffix, scale=(xScale * 0.75, 1, zScale * 0.75), normal=(0, 1, 0))
-        cont_IK_foot_OFF = extra.createUpGrp(self.cont_IK_foot, "OFF")
-
-        tempCons = pm.pointConstraint(Pv_Toe, Pv_Heel, Pv_BankIn, Pv_BankOut, self.cont_IK_foot, w=.1, mo=False)
-        pm.delete(tempCons)
-        pm.makeIdentity(a=True)
-        pm.setAttr(self.cont_IK_foot + ".rotatePivot", (footPos.x, footPos.y, footPos.z))
-
-        ###Add ATTRIBUTES to the IK Foot Controller
-        pm.select(self.cont_IK_foot)
-        pm.addAttr(shortName="polevector", longName="Pole_Vector", defaultValue=0.0, minValue=0.0, maxValue=1.0,
-                   at="double", k=True)
-        pm.addAttr(shortName="sUpLeg", longName="Scale_Upper_Leg", defaultValue=1.0, minValue=0.0, at="double", k=True)
-        pm.addAttr(shortName="sLowLeg", longName="Scale_Lower_Leg", defaultValue=1.0, minValue=0.0, at="double", k=True)
-        pm.addAttr(shortName="squash", longName="Squash", defaultValue=0.0, minValue=0.0, maxValue=1.0, at="double", k=True)
-        pm.addAttr(shortName="stretch", longName="Stretch", defaultValue=100.0, minValue=0.0, maxValue=100.0, at="double",
-                   k=True)
-        pm.addAttr(shortName="bLean", longName="Ball_Lean", defaultValue=0.0, at="double", k=True)
-        pm.addAttr(shortName="bRoll", longName="Ball_Roll", defaultValue=0.0, at="double", k=True)
-        pm.addAttr(shortName="bSpin", longName="Ball_Spin", defaultValue=0.0, at="double", k=True)
-        pm.addAttr(shortName="hRoll", longName="Heel_Roll", defaultValue=0.0, at="double", k=True)
-        pm.addAttr(shortName="hSpin", longName="Heel_Spin", defaultValue=0.0, at="double", k=True)
-        pm.addAttr(shortName="tRoll", longName="Toes_Roll", defaultValue=0.0, at="double", k=True)
-        pm.addAttr(shortName="tSpin", longName="Toes_Spin", defaultValue=0.0, at="double", k=True)
-        pm.addAttr(shortName="tWiggle", longName="Toes_Wiggle", defaultValue=0.0, at="double", k=True)
-        pm.addAttr(shortName="bank", longName="Bank", defaultValue=0.0, at="double", k=True)
-
-        ###Create Pole Vector Curve - IK
-
-        polecontS = (((initUpperLegDist + initLowerLegDist) / 2) / 10)
-        polecontScale = (polecontS, polecontS, polecontS)
-        self.cont_Pole = icon.plus("cont_Pole_" + suffix, polecontScale)
-        pm.rotate(self.cont_Pole, (90, 0, 0))
-        pm.makeIdentity(a=True)
-        extra.alignTo(self.cont_Pole, kneeRef, 0)
-        pm.move(self.cont_Pole, (0, 0, polecontS * 5), r=True)
-        pm.makeIdentity(a=True)
-        cont_Pole_OFF = extra.createUpGrp(self.cont_Pole, "OFF")
-
-        pm.poleVectorConstraint(self.cont_Pole, "ikHandle_RP_" + suffix)
+        #########################################################
 
         ### Create and constrain Distance Locators
 
-        legStart = pm.spaceLocator(name="legStart_loc_" + suffix)
-        pm.pointConstraint(startLock, legStart, mo=False)
+        leg_start = pm.spaceLocator(name="legStart_loc_%s" % suffix)
+        pm.pointConstraint(start_lock, leg_start, mo=False)
 
-        legEnd = pm.spaceLocator(name="legEnd_loc_" + suffix)
-        pm.pointConstraint(masterIK, legEnd, mo=False)
+        leg_end = pm.spaceLocator(name="legEnd_loc_%s" % suffix)
+        pm.pointConstraint(master_ik, leg_end, mo=False)
 
         ### Create Nodes and Connections for Strethchy IK SC
 
-        stretchOffset = pm.createNode("plusMinusAverage", name="stretchOffset_" + suffix)
-        distance_SC = pm.createNode("distanceBetween", name="distance_SC_" + suffix)
-        IK_stretch_distanceClamp = pm.createNode("clamp", name="IK_stretch_distanceClamp" + suffix)
-        IK_stretch_stretchynessClamp = pm.createNode("clamp", name="IK_stretch_stretchynessClamp" + suffix)
-        extraScaleMult_SC = pm.createNode("multiplyDivide", name="extraScaleMult_SC" + suffix)
-        initialDivide_SC = pm.createNode("multiplyDivide", name="initialDivide_SC_" + suffix)
-        initialLengthMultip_SC = pm.createNode("multiplyDivide", name="initialLengthMultip_SC_" + suffix)
-        stretchAmount_SC = pm.createNode("multiplyDivide", name="stretchAmount_SC_" + suffix)
-        sumOfJLengths_SC = pm.createNode("plusMinusAverage", name="sumOfJLengths_SC_" + suffix)
-        stretchCondition_SC = pm.createNode("condition", name="stretchCondition_SC_" + suffix)
-        squashyness_SC = pm.createNode("blendColors", name="squashyness_SC_" + suffix)
-        stretchyness_SC = pm.createNode("blendColors", name="stretchyness_SC_" + suffix)
+        stretch_offset = pm.createNode("plusMinusAverage", name="stretchOffset_%s" % suffix)
+        distance_sc = pm.createNode("distanceBetween", name="distance_SC_%s" % suffix)
+        ik_stretch_distance_clamp = pm.createNode("clamp", name="IK_stretch_distanceClamp%s" % suffix)
+        ik_stretch_stretchiness_clamp = pm.createNode("clamp", name="IK_stretch_stretchynessClamp%s" % suffix)
+        extra_scale_mult_sc = pm.createNode("multiplyDivide", name="extraScaleMult_SC%s" % suffix)
+        initial_divide_sc = pm.createNode("multiplyDivide", name="initialDivide_SC_%s" % suffix)
+        initial_length_multip_sc = pm.createNode("multiplyDivide", name="initialLengthMultip_SC_%s" % suffix)
+        stretch_amount_sc = pm.createNode("multiplyDivide", name="stretchAmount_SC_%s" % suffix)
+        sum_of_j_lengths_sc = pm.createNode("plusMinusAverage", name="sumOfJLengths_SC_%s" % suffix)
+        # stretch_condition_sc = pm.createNode("condition", name="stretchCondition_SC_%s" % suffix)
+        squashiness_sc = pm.createNode("blendColors", name="squashyness_SC_%s" % suffix)
+        stretchiness_sc = pm.createNode("blendColors", name="stretchyness_SC_%s" % suffix)
 
-        pm.setAttr(IK_stretch_stretchynessClamp + ".maxR", 1)
-        pm.setAttr(initialLengthMultip_SC + ".input1X", initUpperLegDist)
-        pm.setAttr(initialLengthMultip_SC + ".input1Y", initLowerLegDist)
+        pm.setAttr("%s.maxR" % ik_stretch_stretchiness_clamp, 1)
+        pm.setAttr("%s.input1X" % initial_length_multip_sc, init_upper_leg_dist)
+        pm.setAttr("%s.input1Y" % initial_length_multip_sc, init_lower_leg_dist)
 
-        pm.setAttr(initialDivide_SC + ".operation", 2)
-        pm.setAttr(stretchCondition_SC + ".operation", 2)
+        pm.setAttr("%s.operation" % initial_divide_sc, 2)
+        # pm.setAttr("%s.operation" % stretch_condition_sc, 2)
+
+        ### IkSoft nodes
+        ik_soft_clamp = pm.createNode("clamp", name="ikSoft_clamp_%s" % suffix)
+        pm.setAttr("%s.minR" %ik_soft_clamp, 0.0001)
+        pm.setAttr("%s.maxR" % ik_soft_clamp, 99999)
+
+        ik_soft_sub1 = pm.createNode("plusMinusAverage", name="ikSoft_Sub1_%s" % suffix)
+        pm.setAttr("%s.operation" % ik_soft_sub1, 2)
+
+        ik_soft_sub2 = pm.createNode("plusMinusAverage", name="ikSoft_Sub2_%s" % suffix)
+        pm.setAttr("%s.operation" % ik_soft_sub2, 2)
+
+        ik_soft_div1 = pm.createNode("multiplyDivide", name="ikSoft_Div1_%s" % suffix)
+        pm.setAttr("%s.operation" % ik_soft_div1, 2)
+
+        ik_soft_mult1 = pm.createNode("multDoubleLinear", name="ikSoft_Mult1_%s" % suffix)
+        pm.setAttr("%s.input1" % ik_soft_mult1, -1)
+
+
+        ik_soft_pow = pm.createNode("multiplyDivide", name="ikSoft_Pow_%s" % suffix)
+        pm.setAttr("%s.operation" % ik_soft_pow, 3)
+        pm.setAttr("%s.input1X" % ik_soft_pow, 2.718)
+
+        ik_soft_mult2 = pm.createNode("multDoubleLinear", name="ikSoft_Mult2_%s" % suffix)
+
+        ik_soft_sub3 = pm.createNode("plusMinusAverage", name="ikSoft_Sub3_%s" % suffix)
+        pm.setAttr("%s.operation" % ik_soft_sub3, 2)
+
+        ik_soft_condition = pm.createNode("condition", name="ikSoft_Condition_%s" % suffix)
+        pm.setAttr("%s.operation" % ik_soft_condition, 2)
+
+        ik_soft_div2 = pm.createNode("multiplyDivide", name="ikSoft_Div2_%s" % suffix)
+        pm.setAttr("%s.operation" % ik_soft_div2, 2)
+
+        ik_soft_stretch_amount = pm.createNode("multiplyDivide", name="ikSoft_stretchAmount_SC_%s" % suffix)
+        pm.setAttr("%s.operation" % ik_soft_stretch_amount, 1)
+
 
         ### Bind Attributes and make constraints
 
         # Bind Stretch Attributes
-        legStart.translate >> distance_SC.point1
-        legEnd.translate >> distance_SC.point2
-        distance_SC.distance >> IK_stretch_distanceClamp.inputR
+        leg_start.translate >> distance_sc.point1
+        leg_end.translate >> distance_sc.point2
+        distance_sc.distance >> ik_stretch_distance_clamp.inputR
 
-        IK_stretch_distanceClamp.outputR >> stretchCondition_SC.firstTerm
-        IK_stretch_distanceClamp.outputR >> initialDivide_SC.input1X
-        IK_stretch_stretchynessClamp.outputR >> stretchyness_SC.blender
+        # ik_stretch_distance_clamp.outputR >> stretch_condition_sc.firstTerm
+        ik_stretch_distance_clamp.outputR >> initial_divide_sc.input1X
+        ik_stretch_stretchiness_clamp.outputR >> stretchiness_sc.blender
 
-        initialDivide_SC.outputX >> stretchAmount_SC.input2X
-        initialDivide_SC.outputX >> stretchAmount_SC.input2Y
+        initial_divide_sc.outputX >> stretch_amount_sc.input2X
+        initial_divide_sc.outputX >> stretch_amount_sc.input2Y
 
-        initialLengthMultip_SC.outputX >> extraScaleMult_SC.input1X
-        initialLengthMultip_SC.outputY >> extraScaleMult_SC.input1Y
-        initialLengthMultip_SC.outputX >> stretchOffset.input1D[0]
-        initialLengthMultip_SC.outputY >> stretchOffset.input1D[1]
+        initial_length_multip_sc.outputX >> extra_scale_mult_sc.input1X
+        initial_length_multip_sc.outputY >> extra_scale_mult_sc.input1Y
+        initial_length_multip_sc.outputX >> stretch_offset.input1D[0]
+        initial_length_multip_sc.outputY >> stretch_offset.input1D[1]
 
-        extraScaleMult_SC.outputX >> stretchAmount_SC.input1X
-        extraScaleMult_SC.outputY >> stretchAmount_SC.input1Y
-        extraScaleMult_SC.outputX >> stretchyness_SC.color2R
-        extraScaleMult_SC.outputY >> stretchyness_SC.color2G
-        extraScaleMult_SC.outputX >> stretchCondition_SC.colorIfFalseR
-        extraScaleMult_SC.outputY >> stretchCondition_SC.colorIfFalseG
-        extraScaleMult_SC.outputX >> sumOfJLengths_SC.input1D[0]
-        extraScaleMult_SC.outputY >> sumOfJLengths_SC.input1D[1]
+        extra_scale_mult_sc.outputX >> stretch_amount_sc.input1X
+        extra_scale_mult_sc.outputY >> stretch_amount_sc.input1Y
+        extra_scale_mult_sc.outputX >> stretchiness_sc.color2R
+        extra_scale_mult_sc.outputY >> stretchiness_sc.color2G
+        # extra_scale_mult_sc.outputX >> stretch_condition_sc.colorIfFalseR
+        # extra_scale_mult_sc.outputY >> stretch_condition_sc.colorIfFalseG
+        extra_scale_mult_sc.outputX >> sum_of_j_lengths_sc.input1D[0]
+        extra_scale_mult_sc.outputY >> sum_of_j_lengths_sc.input1D[1]
 
-        stretchAmount_SC.outputX >> squashyness_SC.color1R
-        stretchAmount_SC.outputY >> squashyness_SC.color1G
-        stretchAmount_SC.outputX >> stretchCondition_SC.colorIfTrueR
-        stretchAmount_SC.outputY >> stretchCondition_SC.colorIfTrueG
-        sumOfJLengths_SC.output1D >> initialDivide_SC.input2X
-        sumOfJLengths_SC.output1D >> stretchCondition_SC.secondTerm
-        stretchCondition_SC.outColorR >> squashyness_SC.color2R
-        stretchCondition_SC.outColorG >> squashyness_SC.color2G
-        squashyness_SC.outputR >> stretchyness_SC.color1R
-        squashyness_SC.outputG >> stretchyness_SC.color1G
-        stretchyness_SC.outputR >> jIK_SC_Knee.translateX
-        stretchyness_SC.outputG >> jIK_SC_End.translateX
-        stretchyness_SC.outputR >> jIK_RP_Knee.translateX
-        stretchyness_SC.outputG >> jIK_RP_End.translateX
+        stretch_amount_sc.outputX >> squashiness_sc.color1R
+        stretch_amount_sc.outputY >> squashiness_sc.color1G
+        # stretch_amount_sc.outputX >> stretch_condition_sc.colorIfTrueR
+        # stretch_amount_sc.outputY >> stretch_condition_sc.colorIfTrueG
+        sum_of_j_lengths_sc.output1D >> initial_divide_sc.input2X
+        # sum_of_j_lengths_sc.output1D >> stretch_condition_sc.secondTerm
+        # stretch_condition_sc.outColorR >> squashyness_sc.color2R
+        # stretch_condition_sc.outColorG >> squashyness_sc.color2G
+        squashiness_sc.outputR >> stretchiness_sc.color1R
+        squashiness_sc.outputG >> stretchiness_sc.color1G
+        stretchiness_sc.outputR >> j_ik_sc_knee.translateX
+        stretchiness_sc.outputG >> j_ik_sc_end.translateX
+        stretchiness_sc.outputR >> j_ik_rp_knee.translateX
+        stretchiness_sc.outputG >> j_ik_rp_end.translateX
 
-        self.cont_IK_foot.rotate >> jIK_RP_End.rotate
+        ## iksoft related
+        self.cont_IK_foot.softIK >> ik_soft_clamp.inputR
+
+        sum_of_j_lengths_sc.output1D >> ik_soft_sub1.input1D[0]
+        ik_soft_clamp.outputR >> ik_soft_sub1.input1D[1]
+
+        ik_stretch_distance_clamp.outputR >> ik_soft_sub2.input1D[0]
+        ik_soft_sub1.output1D >> ik_soft_sub2.input1D[1]
+
+        ik_soft_sub2.output1D >> ik_soft_div1.input1X
+        ik_soft_clamp.outputR >> ik_soft_div1.input2X
+
+        ik_soft_div1.outputX >> ik_soft_mult1.input2
+
+        ik_soft_mult1.output >> ik_soft_pow.input2X
+
+        ik_soft_clamp.outputR >> ik_soft_mult2.input1
+        ik_soft_pow.outputX >> ik_soft_mult2.input2
+
+        sum_of_j_lengths_sc.output1D >> ik_soft_sub3.input1D[0]
+        ik_soft_mult2.output >> ik_soft_sub3.input1D[1]
+
+        ik_stretch_distance_clamp.outputR >> ik_soft_condition.firstTerm
+        ik_soft_sub1.output1D >> ik_soft_condition.secondTerm
+        ik_soft_sub3.output1D >> ik_soft_condition.colorIfTrueR
+        ik_stretch_distance_clamp.outputR >> ik_soft_condition.colorIfFalseR
+
+        ik_stretch_distance_clamp.outputR >> ik_soft_div2.input1X
+        ik_soft_condition.outColorR >> ik_soft_div2.input2X
+
+        extra_scale_mult_sc.outputX >> ik_soft_stretch_amount.input1X
+        extra_scale_mult_sc.outputY >> ik_soft_stretch_amount.input1Y
+        ik_soft_div2.outputX >> ik_soft_stretch_amount.input2X
+        ik_soft_div2.outputX >> ik_soft_stretch_amount.input2Y
+
+        ik_soft_stretch_amount.outputX >> squashiness_sc.color2R
+        ik_soft_stretch_amount.outputY >> squashiness_sc.color2G
+
+
+        ###########################################################
+
+
+
+
+
+        self.cont_IK_foot.rotate >> j_ik_rp_end.rotate
 
         # Stretch Attributes Controller connections
 
-        self.cont_IK_foot.sUpLeg >> extraScaleMult_SC.input2X
-        self.cont_IK_foot.sLowLeg >> extraScaleMult_SC.input2Y
-        self.cont_IK_foot.squash >> squashyness_SC.blender
+        self.cont_IK_foot.sUpLeg >> extra_scale_mult_sc.input2X
+        self.cont_IK_foot.sLowLeg >> extra_scale_mult_sc.input2Y
+        self.cont_IK_foot.squash >> squashiness_sc.blender
 
-        stretchOffset.output1D >> IK_stretch_distanceClamp.maxR
-        self.cont_IK_foot.stretch >> IK_stretch_stretchynessClamp.inputR
-        self.cont_IK_foot.stretch >> stretchOffset.input1D[2]
+        stretch_offset.output1D >> ik_stretch_distance_clamp.maxR
+        # self.cont_IK_foot.stretch >> ik_stretch_stretchyness_clamp.inputR
+        self.cont_IK_foot.stretch >> ik_stretch_stretchiness_clamp.inputR
+        # self.cont_IK_foot.stretch >> stretch_offset.input1D[2]
+        self.cont_IK_foot.stretchLimit >> stretch_offset.input1D[2]
 
         # Bind Foot Attributes to the controller
-        self.cont_IK_foot.bLean >> Pv_BallLean.rotateY
-        self.cont_IK_foot.bRoll >> Pv_BallRoll.rotateX
-        self.cont_IK_foot.bSpin >> Pv_BallSpin.rotateY
-        self.cont_IK_foot.hRoll >> Pv_Heel.rotateX
-        self.cont_IK_foot.hSpin >> Pv_Heel.rotateY
-        self.cont_IK_foot.tRoll >> Pv_Toe.rotateX
-        self.cont_IK_foot.tSpin >> Pv_Toe.rotateY
-        self.cont_IK_foot.tWiggle >> Pv_Ball.rotateX
+        # create multiply nodes for alignment fix
+        mult_al_fix_b_lean = pm.createNode("multDoubleLinear", name="multAlFix_bLean_{0}".format(suffix))
+        mult_al_fix_b_roll = pm.createNode("multDoubleLinear", name="multAlFix_bRoll_{0}".format(suffix))
+        mult_al_fix_b_spin = pm.createNode("multDoubleLinear", name="multAlFix_bSpin_{0}".format(suffix))
+        mult_al_fix_h_roll = pm.createNode("multDoubleLinear", name="multAlFix_hRoll_{0}".format(suffix))
+        mult_al_fix_h_spin = pm.createNode("multDoubleLinear", name="multAlFix_hSpin_{0}".format(suffix))
+        mult_al_fix_t_roll = pm.createNode("multDoubleLinear", name="multAlFix_tRoll_{0}".format(suffix))
+        mult_al_fix_t_spin = pm.createNode("multDoubleLinear", name="multAlFix_tSpin_{0}".format(suffix))
+        mult_al_fix_t_wiggle = pm.createNode("multDoubleLinear", name="multAlFix_tWiggle_{0}".format(suffix))
+
+        if side == "R":
+            mult = -1
+        else:
+            mult = 1
+
+        pm.setAttr(mult_al_fix_b_lean.input2, mult)
+        pm.setAttr(mult_al_fix_b_roll.input2, mult)
+        pm.setAttr(mult_al_fix_b_spin.input2, mult)
+        # heel roll is an exception. It should be same for each side
+        pm.setAttr(mult_al_fix_h_roll.input2, 1)
+        pm.setAttr(mult_al_fix_h_spin.input2, mult)
+        # toe roll is an exception too.
+        pm.setAttr(mult_al_fix_t_roll.input2, 1)
+        pm.setAttr(mult_al_fix_t_spin.input2, mult)
+        pm.setAttr(mult_al_fix_t_wiggle.input2, mult)
+
+        self.cont_IK_foot.bLean >> mult_al_fix_b_lean.input1
+        self.cont_IK_foot.bRoll >> mult_al_fix_b_roll.input1
+        self.cont_IK_foot.bSpin >> mult_al_fix_b_spin.input1
+        self.cont_IK_foot.hRoll >> mult_al_fix_h_roll.input1
+        self.cont_IK_foot.hSpin >> mult_al_fix_h_spin.input1
+        self.cont_IK_foot.tRoll >> mult_al_fix_t_roll.input1
+        self.cont_IK_foot.tSpin >> mult_al_fix_t_spin.input1
+        self.cont_IK_foot.tWiggle >> mult_al_fix_t_wiggle.input1
+
+        mult_al_fix_b_lean.output >> pv_ball_lean.rotateY
+        mult_al_fix_b_roll.output >> pv_ball_roll.rotateZ
+        mult_al_fix_b_spin.output >> pv_ball_spin.rotateY
+        mult_al_fix_h_roll.output >> pv_heel.rotateX
+        mult_al_fix_h_spin.output >> pv_heel.rotateY
+        mult_al_fix_t_roll.output >> pv_toe.rotateX
+        mult_al_fix_t_spin.output >> pv_toe.rotateY
+        mult_al_fix_t_wiggle.output >> pv_ball.rotateZ
+
+        # self.cont_IK_foot.bLean >> Pv_BallLean.rotateY
+        # self.cont_IK_foot.bRoll >> Pv_BallRoll.rotateZ
+        # self.cont_IK_foot.bSpin >> Pv_BallSpin.rotateY
+        # self.cont_IK_foot.hRoll >> Pv_Heel.rotateX
+        # self.cont_IK_foot.hSpin >> Pv_Heel.rotateY
+        # self.cont_IK_foot.tRoll >> Pv_Toe.rotateX
+        # self.cont_IK_foot.tSpin >> Pv_Toe.rotateY
+        # self.cont_IK_foot.tWiggle >> Pv_Ball.rotateZ
         # // TODO: Reduction possible
-        pm.select(Pv_BankOut)
-        pm.setDrivenKeyframe(cd=self.cont_IK_foot.bank, at="rotateZ", dv=0, v=0)
-        pm.setDrivenKeyframe(cd=self.cont_IK_foot.bank, at="rotateZ", dv=-90, v=90)
-        pm.select(Pv_BankIn)
-        pm.setDrivenKeyframe(cd=self.cont_IK_foot.bank, at="rotateZ", dv=0, v=0)
-        pm.setDrivenKeyframe(cd=self.cont_IK_foot.bank, at="rotateZ", dv=90, v=-90)
+        ## create an upper group for bank in to zero out rotations
+        pv_bank_in_ore = extra.createUpGrp(pv_bank_in, "ORE")
 
-        IK_parentGRP = pm.group(name="IK_parentGRP_" + suffix, em=True)
-        extra.alignTo(IK_parentGRP, footRef, 0)
-        pm.parent(Pv_BankIn, IK_parentGRP)
-        pm.parent(jIK_Foot, IK_parentGRP)
+        if side == "R":
+            order = [1, -1]
+        else:
+            order = [-1, 1]
 
-        pm.parentConstraint(jIK_SC_End, jIK_Foot)
+        pm.setDrivenKeyframe(pv_bank_out.rotateX, cd=self.cont_IK_foot.bank, dv=0, v=0, itt='linear', ott='linear')
+        pm.setDrivenKeyframe(pv_bank_out.rotateX, cd=self.cont_IK_foot.bank, dv=90, v=90 * order[1], itt='linear', ott='linear')
 
-        pm.parentConstraint(self.cont_IK_foot, IK_parentGRP, mo=True)
+        pm.setDrivenKeyframe(pv_bank_in.rotateX, cd=self.cont_IK_foot.bank, dv=0, v=0, itt='linear', ott='linear')
+        pm.setDrivenKeyframe(pv_bank_in.rotateX, cd=self.cont_IK_foot.bank, dv=-90, v=90 * order[0], itt='linear', ott='linear')
+
+        #
+        # pm.select(Pv_BankOut)
+        # pm.setDrivenKeyframe(cd=self.cont_IK_foot.bank, at="rotateX", dv=0, v=0)
+        # pm.setDrivenKeyframe(cd=self.cont_IK_foot.bank, at="rotateX", dv=-90, v=90)
+        # pm.select(Pv_BankIn)
+        # pm.setDrivenKeyframe(cd=self.cont_IK_foot.bank, at="rotateX", dv=0, v=0)
+        # pm.setDrivenKeyframe(cd=self.cont_IK_foot.bank, at="rotateX", dv=90, v=-90)
+
+        ik_parent_grp = pm.group(name="IK_parentGRP_%s" % suffix, em=True)
+        extra.alignTo(ik_parent_grp, foot_ref, 0)
+        pm.parent(pv_bank_in_ore, ik_parent_grp)
+        pm.parent(j_ik_foot, ik_parent_grp)
+
+        pm.parentConstraint(j_ik_sc_end, j_ik_foot)
+
+        pm.parentConstraint(self.cont_IK_foot, ik_parent_grp, mo=True)
 
         # Create Orig Switch (Pole Vector On/Off)
 
-        blendORE_IK_root = pm.createNode("blendColors", name="blendORE_IK_root_" + suffix)
-        jIK_SC_Root.rotate >> blendORE_IK_root.color2
-        jIK_RP_Root.rotate >> blendORE_IK_root.color1
-        blendORE_IK_root.output >> jIK_orig_Root.rotate
-        self.cont_IK_foot.polevector >> blendORE_IK_root.blender
+        blend_ore_ik_root = pm.createNode("blendColors", name="blendORE_IK_root_%s" % suffix)
+        j_ik_sc_root.rotate >> blend_ore_ik_root.color2
+        j_ik_rp_root.rotate >> blend_ore_ik_root.color1
+        blend_ore_ik_root.output >> j_ik_orig_root.rotate
+        self.cont_IK_foot.polevector >> blend_ore_ik_root.blender
 
-        blendPOS_IK_root = pm.createNode("blendColors", name="blendPOS_IK_root_" + suffix)
-        jIK_SC_Root.translate >> blendPOS_IK_root.color2
-        jIK_RP_Root.translate >> blendPOS_IK_root.color1
-        blendPOS_IK_root.output >> jIK_orig_Root.translate
-        self.cont_IK_foot.polevector >> blendPOS_IK_root.blender
+        blend_pos_ik_root = pm.createNode("blendColors", name="blendPOS_IK_root_%s" % suffix)
+        j_ik_sc_root.translate >> blend_pos_ik_root.color2
+        j_ik_rp_root.translate >> blend_pos_ik_root.color1
+        blend_pos_ik_root.output >> j_ik_orig_root.translate
+        self.cont_IK_foot.polevector >> blend_pos_ik_root.blender
 
-        blendORE_IK_knee = pm.createNode("blendColors", name="blendORE_IK_knee_" + suffix)
-        jIK_SC_Knee.rotate >> blendORE_IK_knee.color2
-        jIK_RP_Knee.rotate >> blendORE_IK_knee.color1
-        blendORE_IK_knee.output >> jIK_orig_Knee.rotate
-        self.cont_IK_foot.polevector >> blendORE_IK_knee.blender
+        blend_ore_ik_knee = pm.createNode("blendColors", name="blendORE_IK_knee_%s" % suffix)
+        j_ik_sc_knee.rotate >> blend_ore_ik_knee.color2
+        j_ik_rp_knee.rotate >> blend_ore_ik_knee.color1
+        # blend_ore_ik_knee.output >> j_ik_orig_knee.rotate
+        # Weird bug with skinned character / use seperate connections
+        # if there is no skincluster, it works ok, but adding a skin cluster misses 2 out of 3 rotation axis
+        # Therefore make SEPERATE CONNECTIONS
+        blend_ore_ik_knee.outputR >> j_ik_orig_knee.rotateX
+        blend_ore_ik_knee.outputG >> j_ik_orig_knee.rotateY
+        blend_ore_ik_knee.outputB >> j_ik_orig_knee.rotateZ
+        self.cont_IK_foot.polevector >> blend_ore_ik_knee.blender
 
-        blendPOS_IK_knee = pm.createNode("blendColors", name="blendPOS_IK_knee_" + suffix)
-        jIK_SC_Knee.translate >> blendPOS_IK_knee.color2
-        jIK_RP_Knee.translate >> blendPOS_IK_knee.color1
-        blendPOS_IK_knee.output >> jIK_orig_Knee.translate
-        self.cont_IK_foot.polevector >> blendPOS_IK_knee.blender
+        blend_pos_ik_knee = pm.createNode("blendColors", name="blendPOS_IK_knee_%s" % suffix)
+        j_ik_sc_knee.translate >> blend_pos_ik_knee.color2
+        j_ik_rp_knee.translate >> blend_pos_ik_knee.color1
+        blend_pos_ik_knee.output >> j_ik_orig_knee.translate
+        self.cont_IK_foot.polevector >> blend_pos_ik_knee.blender
 
-        blendORE_IK_end = pm.createNode("blendColors", name="blendORE_IK_end_" + suffix)
-        jIK_SC_End.rotate >> blendORE_IK_end.color2
-        jIK_RP_End.rotate >> blendORE_IK_end.color1
-        blendORE_IK_end.output >> jIK_orig_End.rotate
-        self.cont_IK_foot.polevector >> blendORE_IK_end.blender
+        blend_ore_ik_end = pm.createNode("blendColors", name="blendORE_IK_end_%s" % suffix)
+        j_ik_sc_end.rotate >> blend_ore_ik_end.color2
+        j_ik_rp_end.rotate >> blend_ore_ik_end.color1
+        # blend_ore_ik_end.output >> j_ik_orig_end.rotate
+        # Weird bug with skinned character / use seperate connections
+        # if there is no skincluster, it works ok, but adding a skin cluster misses 2 out of 3 rotation axis
+        # Therefore make SEPERATE CONNECTIONS
+        blend_ore_ik_end.outputR >> j_ik_orig_end.rotateX
+        blend_ore_ik_end.outputG >> j_ik_orig_end.rotateY
+        blend_ore_ik_end.outputB >> j_ik_orig_end.rotateZ
+        self.cont_IK_foot.polevector >> blend_ore_ik_end.blender
 
-        blendPOS_IK_end = pm.createNode("blendColors", name="blendPOS_IK_end_" + suffix)
-        jIK_SC_End.translate >> blendPOS_IK_end.color2
-        jIK_RP_End.translate >> blendPOS_IK_end.color1
-        blendPOS_IK_end.output >> jIK_orig_End.translate
-        self.cont_IK_foot.polevector >> blendPOS_IK_end.blender
+        blend_pos_ik_end = pm.createNode("blendColors", name="blendPOS_IK_end_%s" % suffix)
+        j_ik_sc_end.translate >> blend_pos_ik_end.color2
+        j_ik_rp_end.translate >> blend_pos_ik_end.color1
+        blend_pos_ik_end.output >> j_ik_orig_end.translate
+        self.cont_IK_foot.polevector >> blend_pos_ik_end.blender
 
-        poleVector_Rvs = pm.createNode("reverse", name="poleVector_Rvs_" + suffix)
-        self.cont_IK_foot.polevector >> poleVector_Rvs.inputX
+        pole_vector_rvs = pm.createNode("reverse", name="poleVector_Rvs_%s" % suffix)
+        self.cont_IK_foot.polevector >> pole_vector_rvs.inputX
 
         self.cont_IK_foot.polevector >> self.cont_Pole.v
 
-        ### Create Tigh Controller
-
-        thighContScale = initUpperLegDist / 4
-        cont_Thigh = pm.curve(name="cont_Thigh" + suffix, d=1,
-                              p=[(-1, 1, 1), (-1, 1, -1), (1, 1, -1), (1, 1, 1), (-1, 1, 1), (-1, -1, 1), (-1, -1, -1),
-                                 (-1, 1, -1), (-1, 1, 1), (-1, -1, 1), (1, -1, 1), (1, 1, 1), (1, 1, -1), (1, -1, -1),
-                                 (1, -1, 1), (1, -1, -1), (-1, -1, -1)],
-                              k=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])
-        pm.setAttr(cont_Thigh.scale, (thighContScale, thighContScale / 4, thighContScale))
-        pm.makeIdentity(cont_Thigh, a=True)
-
-        cont_Thigh_OFF = extra.createUpGrp(cont_Thigh, "OFF")
-        cont_Thigh_ORE = extra.createUpGrp(cont_Thigh, "ORE")
-        if side == "R":
-            # pm.setAttr("%s.scale%s" % (cont_Thigh_ORE, mirrorAxis), -1)
-            pm.setAttr("%s.rotate%s" % (cont_Thigh_ORE, mirrorAxis), -180)
-            # pm.setAttr(cont_Thigh_ORE.rotateX, -180)
-
-        pm.addAttr(shortName="autoTwist", longName="Auto_Twist", defaultValue=1.0, minValue=0.0, maxValue=1.0, at="float",
-                   k=True)
-        pm.addAttr(shortName="manualTwist", longName="Manual_Twist", defaultValue=0.0, at="float", k=True)
-
-        extra.alignTo(cont_Thigh_OFF, hipRef, 0)
-
-        pm.move(cont_Thigh, (0, thighContScale * 2, 0), r=True)
-        temp_AimCon = pm.aimConstraint(hipRef, cont_Thigh, o=(0, 0, 0))
-        pm.delete(temp_AimCon)
-        pm.makeIdentity(cont_Thigh, a=True)
-        pm.xform(cont_Thigh, piv=legRootPos, ws=True)
-        pm.makeIdentity(cont_Thigh, a=True, t=True, r=False, s=True)
-        pm.parentConstraint(cont_Thigh, jDef_legRoot, mo=True, st=("x", "y", "z"))
-        pm.pointConstraint(cont_Thigh, jDef_hip, mo=True)
+        pm.parentConstraint(cont_thigh, self.jDef_legRoot, mo=True, st=("x", "y", "z"))
+        pm.pointConstraint(cont_thigh, j_def_hip, mo=True)
 
         ###########################
         ######### FK LEG ##########
         ###########################
 
-
         pm.select(d=True)
-        jFK_Root = pm.joint(name="jFK_Root_" + suffix, p=hipPos, radius=1.0)
-        jFK_Knee = pm.joint(name="jFK_Knee_" + suffix, p=kneePos, radius=1.0)
-        jFK_Foot = pm.joint(name="jFK_Foot_" + suffix, p=footPos, radius=1.0)
-        jFK_Ball = pm.joint(name="jFK_Ball_" + suffix, p=ballPos, radius=1.0)
-        jFK_Toe = pm.joint(name="jFK_Toe_" + suffix, p=toePvPos, radius=1.0)  ## POSSIBLE PROBLEM
+        jfk_root = pm.joint(name="jFK_UpLeg_%s" % suffix, p=hip_pos, radius=1.0)
+        jfk_knee = pm.joint(name="jFK_Knee_%s" % suffix, p=knee_pos, radius=1.0)
+        jfk_foot = pm.joint(name="jFK_Foot_%s" % suffix, p=foot_pos, radius=1.0)
+        jfk_ball = pm.joint(name="jFK_Ball_%s" % suffix, p=ball_pos, radius=1.0)
+        jfk_toe = pm.joint(name="jFK_Toe_%s" % suffix, p=toe_pv_pos, radius=1.0)
 
-        pm.joint(jFK_Root, e=True, zso=True, oj="xyz")
-        pm.joint(jFK_Knee, e=True, zso=True, oj="xyz")
-        pm.joint(jFK_Foot, e=True, zso=True, oj="xyz")
-        pm.joint(jFK_Ball, e=True, zso=True, oj="xyz")
-        pm.joint(jFK_Toe, e=True, zso=True, oj="xyz")
+        # extra.alignTo(jfk_root, j_ik_orig_root, mode=2)
+        # extra.alignTo(jfk_knee, j_ik_orig_knee, mode=2)
+        # extra.alignTo(jfk_foot, j_ik_foot, mode=2)
+        # extra.alignTo(jfk_ball, j_ik_ball, mode=2)
+        # extra.alignTo(jfk_toe, j_ik_toe, mode=2)
 
-        ### Create Controller Curves
-
-        # UpLeg Cont
-        cont_FK_UpLeg = pm.curve(name="cont_FK_UpLeg" + suffix, d=1,
-                                 p=[(-1, 1, 1), (-1, 1, -1), (1, 1, -1), (1, 1, 1), (-1, 1, 1), (-1, -1, 1), (-1, -1, -1),
-                                    (-1, 1, -1), (-1, 1, 1), (-1, -1, 1), (1, -1, 1), (1, 1, 1), (1, 1, -1), (1, -1, -1),
-                                    (1, -1, 1), (1, -1, -1), (-1, -1, -1)],
-                                 k=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])
-        pm.setAttr(cont_FK_UpLeg.scale, (
-            pm.getAttr(jFK_Knee.translateX) / 8, pm.getAttr(jFK_Knee.translateX) / 2, pm.getAttr(jFK_Knee.translateX) / 8))
-        pm.makeIdentity(cont_FK_UpLeg, a=True)
-
-        cont_FK_UpLeg_OFF = extra.createUpGrp(cont_FK_UpLeg, "OFF")
-        cont_FK_UpLeg_ORE = extra.createUpGrp(cont_FK_UpLeg, "ORE")
-        if side == "R":
-            # pm.setAttr("%s.scale%s" % (cont_FK_UpLeg_ORE, mirrorAxis), -1)
-            pm.setAttr("%s.rotate%s" % (cont_FK_UpLeg_ORE, mirrorAxis), -180)
-
-            # pm.setAttr(cont_FK_UpLeg_ORE.rotateX, -180)
-
-        temp_PoCon = pm.pointConstraint(jFK_Root, jFK_Knee, cont_FK_UpLeg_OFF)
-        pm.delete(temp_PoCon)
-        temp_AimCon = pm.aimConstraint(jFK_Knee, cont_FK_UpLeg_OFF, o=(90, 90, 0), u=(0, 1, 0))
-        pm.delete(temp_AimCon)
-
-        pm.xform(cont_FK_UpLeg, piv=hipPos, ws=True)
-
-        pm.makeIdentity(a=True, t=True, r=False, s=True)
-        pm.parent(cont_FK_UpLeg, cont_FK_UpLeg_ORE)
-
-        # pm.parentConstraint(startLock, cont_FK_UpLeg_OFF, mo=True)
-
-        cont_FK_UpLeg.scaleY >> jFK_Root.scaleX  ## WILL BE ADDED TO ARM
-
-        # LowLeg Cont
-        cont_FK_LowLeg = pm.curve(name="cont_FK_LowLeg_" + suffix, d=1,
-                                  p=[(-1, 1, 1), (-1, 1, -1), (1, 1, -1), (1, 1, 1), (-1, 1, 1), (-1, -1, 1), (-1, -1, -1),
-                                     (-1, 1, -1), (-1, 1, 1), (-1, -1, 1), (1, -1, 1), (1, 1, 1), (1, 1, -1), (1, -1, -1),
-                                     (1, -1, 1), (1, -1, -1), (-1, -1, -1)],
-                                  k=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])
-        pm.setAttr(cont_FK_LowLeg.scale, (
-            pm.getAttr(jFK_Foot.translateX) / 8, pm.getAttr(jFK_Foot.translateX) / 2, pm.getAttr(jFK_Foot.translateX) / 8))
-        pm.makeIdentity(cont_FK_LowLeg, a=True)
-
-        cont_FK_LowLeg_OFF = extra.createUpGrp(cont_FK_LowLeg, "OFF")
-        cont_FK_LowLeg_ORE = extra.createUpGrp(cont_FK_LowLeg, "ORE")
-        if side == "R":
-            # pm.setAttr("%s.scale%s" % (cont_FK_LowLeg_ORE, mirrorAxis), -1)
-            pm.setAttr("%s.rotate%s" % (cont_FK_LowLeg_ORE, mirrorAxis), -180)
-
-            # pm.setAttr(cont_FK_LowLeg_ORE.rotateX, -180)
-
-        # //TODO : Take care the alignment functions and below lines
-        temp_PoCon = pm.pointConstraint(jFK_Knee, jFK_Foot, cont_FK_LowLeg_OFF)
-        pm.delete(temp_PoCon)
-        temp_AimCon = pm.aimConstraint(jFK_Foot, cont_FK_LowLeg_OFF, o=(90, 90, 0), u=(0, 1, 0))
-        pm.delete(temp_AimCon)
-
-        pm.makeIdentity(a=True, t=True, r=False, s=True)
-
-        pm.xform(cont_FK_LowLeg, piv=kneePos, ws=True)
-        pm.xform(cont_FK_LowLeg_OFF, piv=kneePos, ws=True)  ## WILL BE ADDED TO ARM
-        # pm.pointConstraint(jFK_Knee, cont_FK_LowLeg_OFF)  ## WILL BE ADDED TO ARM
-
-        cont_FK_LowLeg.scaleY >> jFK_Knee.scaleX  ## WILL BE ADDED TO ARM
-
-        # Foot Cont
-        cont_FK_Foot = pm.curve(name="cont_FK_Foot_" + suffix, d=1,
-                                p=[(-1, 1, 1), (-1, 1, -1), (1, 1, -1), (1, 1, 1), (-1, 1, 1), (-1, -1, 1), (-1, -1, -1),
-                                   (-1, 1, -1), (-1, 1, 1), (-1, -1, 1), (1, -1, 1), (1, 1, 1), (1, 1, -1), (1, -1, -1),
-                                   (1, -1, 1), (1, -1, -1), (-1, -1, -1)],
-                                k=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])
-        pm.setAttr(cont_FK_Foot.scale, (
-            pm.getAttr(jFK_Ball.translateX) / 4, pm.getAttr(jFK_Ball.translateX) / 2, pm.getAttr(jFK_Ball.translateX) / 4))
-        pm.makeIdentity(cont_FK_Foot, a=True)
-
-        cont_FK_Foot_OFF = extra.createUpGrp(cont_FK_Foot, "OFF")
-        cont_FK_Foot_ORE = extra.createUpGrp(cont_FK_Foot, "ORE")
-        if side == "R":
-            # pm.setAttr("%s.scale%s" % (cont_FK_Foot_ORE, mirrorAxis), -1)
-            pm.setAttr("%s.rotate%s" % (cont_FK_Foot_ORE, mirrorAxis), -180)
-
-            # pm.setAttr(cont_FK_Foot_ORE.rotateX, -180)
-
-        temp_PoCon = pm.pointConstraint(jFK_Foot, jFK_Ball, cont_FK_Foot_OFF)
-        pm.delete(temp_PoCon);
-        temp_AimCon = pm.aimConstraint(jFK_Ball, cont_FK_Foot_OFF, o=(90, 90, 0), u=(0, 1, 0))
-        pm.delete(temp_AimCon);
-
-        pm.makeIdentity(a=True, t=True, r=False, s=True)
-
-        pm.xform(cont_FK_Foot, piv=footPos, ws=True)
-        pm.xform(cont_FK_Foot_OFF, piv=footPos, ws=True)  ## WILL BE ADDED TO ARM
-        # pm.pointConstraint(jFK_Foot, cont_FK_Foot_OFF)  ## WILL BE ADDED TO ARM
-
-        cont_FK_Foot.scaleY >> jFK_Foot.scaleX  ## WILL BE ADDED TO ARM
-
-        # Ball Cont
-
-        cont_FK_Ball = pm.curve(name="cont_FK_Ball_" + suffix, d=1,
-                                p=[(-1, 1, 1), (-1, 1, -1), (1, 1, -1), (1, 1, 1), (-1, 1, 1), (-1, -1, 1), (-1, -1, -1),
-                                   (-1, 1, -1), (-1, 1, 1), (-1, -1, 1), (1, -1, 1), (1, 1, 1), (1, 1, -1), (1, -1, -1),
-                                   (1, -1, 1), (1, -1, -1), (-1, -1, -1)],
-                                k=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])
-        pm.setAttr(cont_FK_Ball.scale, (
-            pm.getAttr(jFK_Toe.translateX) / 4, pm.getAttr(jFK_Toe.translateX) / 2, pm.getAttr(jFK_Toe.translateX) / 4))
-        pm.makeIdentity(cont_FK_Ball, a=True)
-
-        cont_FK_Ball_OFF = extra.createUpGrp(cont_FK_Ball, "OFF")
-        cont_FK_Ball_ORE = extra.createUpGrp(cont_FK_Ball, "ORE")
+        # extra.orientJoints([jfk_root, jfk_knee, jfk_foot, jfk_ball, jfk_toe], localMoveAxis=(dt.Vector(up_axis)),
+        #                    upAxis=up_axis)
 
         if side == "R":
-            # pm.setAttr("%s.scale%s" % (cont_FK_Ball_ORE, mirrorAxis), -1)
-            pm.setAttr("%s.rotate%s" % (cont_FK_Ball_ORE, mirrorAxis), -180)
+            pm.parent(jfk_knee, w=True)
+            extra.alignTo(jfk_root, j_ik_orig_root, mode=2)
+            pm.makeIdentity(jfk_root, a=True)
+            pm.parent(jfk_knee, jfk_root)
+            extra.orientJoints([jfk_root, jfk_knee, jfk_foot, jfk_ball, jfk_toe], localMoveAxis=-(dt.Vector(up_axis)), upAxis=up_axis)
+        else:
+            extra.orientJoints([jfk_root, jfk_knee, jfk_foot, jfk_ball, jfk_toe], localMoveAxis=(dt.Vector(up_axis)), upAxis=up_axis)
 
-            # pm.setAttr(cont_FK_Ball_ORE.rotateX, -180)
 
-        ## TODO // TAKE a look from here...
-        temp_PoCon = pm.pointConstraint(jFK_Ball, jFK_Toe, cont_FK_Ball)
-        pm.delete(temp_PoCon);
-        temp_AimCon = pm.aimConstraint(jFK_Toe, cont_FK_Ball, o=(90, 90, 0), u=(0, 1, 0))
-        pm.delete(temp_AimCon);
-        ## TODO // ...to here
 
-        pm.makeIdentity(a=True, t=True, r=False, s=True)
+        # pm.joint(jfk_root, e=True, zso=True, oj="yzx", sao="yup")
+        # pm.joint(jfk_knee, e=True, zso=True, oj="yzx", sao="yup")
+        # pm.joint(jfk_foot, e=True, zso=True, oj="yzx", sao="yup")
+        # pm.joint(jfk_ball, e=True, zso=True, oj="yzx", sao="yup")
+        # pm.joint(jfk_toe, e=True, zso=True, oj="yzx", sao="yup")
 
-        pm.xform(cont_FK_Ball, piv=ballPos, ws=True)
-        pm.xform(cont_FK_Ball_OFF, piv=ballPos, ws=True)  ## WILL BE ADDED TO ARM
-        # pm.pointConstraint(jFK_Ball, cont_FK_Ball_OFF)  ## WILL BE ADDED TO ARM
-
-        cont_FK_Ball.scaleY >> jFK_Ball.scaleX  ## WILL BE ADDED TO ARM
+        cont_fk_up_leg.scaleX >> jfk_root.scaleX
+        cont_fk_low_leg.scaleX >> jfk_knee.scaleX
+        cont_fk_foot.scaleX >> jfk_foot.scaleX
+        cont_fk_ball.scaleX >> jfk_ball.scaleX
 
         ### CReate Constraints and Hierarchy
-        pm.orientConstraint(cont_FK_UpLeg, jFK_Root, mo=True)
-        pm.pointConstraint(startLock, jFK_Root, mo=False)
+        pm.orientConstraint(cont_fk_up_leg, jfk_root, mo=True)
+        pm.pointConstraint(start_lock, jfk_root, mo=False)
 
-        pm.orientConstraint(cont_FK_LowLeg, jFK_Knee, mo=True)
-        pm.orientConstraint(cont_FK_Foot, jFK_Foot, mo=True)
-        pm.orientConstraint(cont_FK_Ball, jFK_Ball, mo=True)
+        pm.orientConstraint(cont_fk_low_leg, jfk_knee, mo=True)
+        pm.orientConstraint(cont_fk_foot, jfk_foot, mo=True)
+        # pm.orientConstraint(cont_fk_foot, jfk_foot, mo=False)
 
-        pm.parentConstraint(cont_Thigh, cont_FK_UpLeg_OFF, mo=True)
-        pm.parentConstraint(cont_FK_UpLeg, cont_FK_LowLeg_OFF, mo=True)
-        pm.parentConstraint(cont_FK_LowLeg, cont_FK_Foot_OFF, mo=True)
-        pm.parentConstraint(cont_FK_Foot, cont_FK_Ball_OFF, mo=True)
+        ##
+        pm.parentConstraint(cont_fk_ball, jfk_ball, mo=True)
+        # pm.parentConstraint(cont_fk_ball, jfk_ball, mo=False)
+        # extra.alignTo(jfk_toe, toe_pv_ref)
+
+        # pm.parentConstraint(tor)
+
+        pm.parentConstraint(cont_thigh, cont_fk_up_leg_off, sr=("x", "y", "z"), mo=True)
+        pm.parentConstraint(cont_fk_up_leg, cont_fk_low_leg_off, mo=True)
+        pm.parentConstraint(cont_fk_low_leg, cont_fk_foot_off, mo=True)
+        pm.parentConstraint(cont_fk_foot, cont_fk_ball_off, mo=True)
 
         ### Create FK IK Icon
-        iconScale = (extra.getDistance(footRef, kneeRef)) / 4
+        # iconScale = (extra.getDistance(footRef, kneeRef)) / 4
+        #
+        # cont_FK_IK, fk_ik_rvs = icon.fkikSwitch(("cont_FK_IK_" + suffix), (iconScale, iconScale, iconScale))
+        #
+        # pm.addAttr(cont_FK_IK, shortName="autoTwist", longName="Auto_Twist", defaultValue=1.0, minValue=0.0, maxValue=1.0,
+        #            at="float", k=True)
+        # pm.addAttr(cont_FK_IK, shortName="manualTwist", longName="Manual_Twist", defaultValue=0.0, at="float", k=True)
+        # pm.addAttr(cont_FK_IK, shortName="tweakControls", longName="Tweak_Controls", defaultValue=0, at="bool")
+        # pm.setAttr(cont_FK_IK.tweakControls, cb=True)
+        # pm.addAttr(cont_FK_IK, shortName="fingerControls", longName="Finger_Controls", defaultValue=0, at="bool")
+        # pm.setAttr(cont_FK_IK.fingerControls, cb=True)
 
-        cont_FK_IKList = icon.fkikSwitch(("cont_FK_IK_" + suffix), (iconScale, iconScale, iconScale))
-        cont_FK_IK = cont_FK_IKList[0]
-        fk_ik_rvs = cont_FK_IKList[1]
+        fk_ik_rvs.outputX >> cont_fk_up_leg_ore.visibility
+        fk_ik_rvs.outputX >> cont_fk_low_leg_ore.visibility
+        fk_ik_rvs.outputX >> cont_fk_foot_ore.visibility
+        fk_ik_rvs.outputX >> cont_fk_ball_ore.visibility
+        cont_fk_ik.fk_ik >> self.cont_IK_foot.visibility
 
-        pm.addAttr(cont_FK_IK, shortName="autoTwist", longName="Auto_Twist", defaultValue=1.0, minValue=0.0, maxValue=1.0,
-                   at="float", k=True)
-        pm.addAttr(cont_FK_IK, shortName="manualTwist", longName="Manual_Twist", defaultValue=0.0, at="float", k=True)
-        pm.addAttr(cont_FK_IK, shortName="tweakControls", longName="Tweak_Controls", defaultValue=0, at="bool")
-        pm.setAttr(cont_FK_IK.tweakControls, cb=True)
-        pm.addAttr(cont_FK_IK, shortName="fingerControls", longName="Finger_Controls", defaultValue=0, at="bool")
-        pm.setAttr(cont_FK_IK.fingerControls, cb=True)
+        cont_fk_ik.fk_ik >> cont_pole_vis.visibility
 
-        fk_ik_rvs.outputX >> cont_FK_UpLeg_ORE.visibility
-        fk_ik_rvs.outputX >> cont_FK_LowLeg_ORE.visibility
-        fk_ik_rvs.outputX >> cont_FK_Foot_ORE.visibility
-        fk_ik_rvs.outputX >> cont_FK_Ball_ORE.visibility
-        cont_FK_IK.fk_ik >> self.cont_IK_foot.visibility
-
-        extra.alignTo(cont_FK_IK, footRef)
-
-        if side == "R":
-            pm.move(cont_FK_IK, (-(iconScale * 2), 0, 0), r=True)
-        else:
-            pm.move(cont_FK_IK, (iconScale * 2, 0, 0), r=True)
-
-        cont_FK_IK_POS = extra.createUpGrp(cont_FK_IK, "_POS")
-        pm.parent(cont_FK_IK_POS, self.scaleGrp)
+        # extra.alignAndAim(cont_FK_IK, targetList=[footRef], aimTargetList=[kneeRef], upVector=self.upAxis, rotateOff=(90,90,0))
+        #
+        # if side == "R":
+        #     pm.move(cont_FK_IK, (-(iconScale * 2), 0, 0), r=True, os=True)
+        # else:
+        #     pm.move(cont_FK_IK, (iconScale * 2, 0, 0), r=True, os=True)
+        #
+        # cont_FK_IK_POS = extra.createUpGrp(cont_FK_IK, "_POS")
+        pm.parent(cont_fk_ik_pos, self.scaleGrp)
 
         ### Create MidLock controller
 
-        midcontScale = extra.getDistance(footRef, kneeRef) / 3
-        cont_midLock = icon.star("cont_mid_" + suffix, (midcontScale, midcontScale, midcontScale), normal=(0, 1, 0))
+        midcont_scale = extra.getDistance(foot_ref, knee_ref) / 3
+        cont_mid_lock = icon.star("cont_mid_%s" % suffix, (midcont_scale, midcont_scale, midcont_scale), normal=(0, 1, 0))
 
-        # cont_midLock=pm.circle(name="cont_mid_"+whichLeg, nr=(0,1,0), ch=0)
-        # pm.rebuildCurve(cont_midLock, s=12, ch=0)
-        # pm.select(cont_midLock[0].cv[0],cont_midLock[0].cv[2],cont_midLock[0].cv[4],cont_midLock[0].cv[6],cont_midLock[0].cv[8],cont_midLock[0].cv[10])
-        # pm.scale(0.5, 0.5, 0.5)
-        # pm.select(d=True)
-        # pm.setAttr(cont_midLock[0].scale, (contScale, contScale, contScale))
-        # pm.makeIdentity(cont_midLock, a=True)
+        cont_midLock_pos = extra.createUpGrp(cont_mid_lock, "POS")
+        cont_midLock_ave = extra.createUpGrp(cont_mid_lock, "AVE")
+        extra.alignTo(cont_midLock_pos, knee_ref, 0)
 
-        cont_midLock_POS = extra.createUpGrp(cont_midLock, "POS")
-        cont_midLock_AVE = extra.createUpGrp(cont_midLock, "AVE")
-        extra.alignTo(cont_midLock_POS, kneeRef, 0)
+        mid_lock_pa_con_weight = pm.parentConstraint(j_ik_orig_root, jfk_root, cont_midLock_pos, mo=True)
+        # cont_FK_IK.fk_ik >> (midLock_paConWeight + "." + jIK_orig_Root + "W0")
+        cont_fk_ik.fk_ik >> ("%s.%sW0" % (mid_lock_pa_con_weight, j_ik_orig_root))
 
-        midLock_paConWeight = pm.parentConstraint(jIK_orig_Root, jFK_Root, cont_midLock_POS, mo=True)
-        cont_FK_IK.fk_ik >> (midLock_paConWeight + "." + jIK_orig_Root + "W0")
-        fk_ik_rvs.outputX >> (midLock_paConWeight + "." + jFK_Root + "W1")
+        # fk_ik_rvs.outputX >> (midLock_paConWeight + "." + jFK_Root + "W1")
+        fk_ik_rvs.outputX >> ("%s.%sW1" % (mid_lock_pa_con_weight, jfk_root))
 
-        midLock_poConWeight = pm.pointConstraint(jIK_orig_Knee, jFK_Knee, cont_midLock_AVE, mo=False)
-        cont_FK_IK.fk_ik >> (midLock_poConWeight + "." + jIK_orig_Knee + "W0")
-        fk_ik_rvs.outputX >> (midLock_poConWeight + "." + jFK_Knee + "W1")
+        cont_fk_ik.interpType >> mid_lock_pa_con_weight.interpType
 
-        midLock_xBln = pm.createNode("multiplyDivide", name="midLock_xBln" + suffix)
+        mid_lock_po_con_weight = pm.pointConstraint(j_ik_orig_knee, jfk_knee, cont_midLock_ave, mo=False)
+        # cont_FK_IK.fk_ik >> (midLock_poConWeight + "." + jIK_orig_Knee + "W0")
+        cont_fk_ik.fk_ik >> ("%s.%sW0" % (mid_lock_po_con_weight, j_ik_orig_knee))
 
-        midLock_rotXsw = pm.createNode("blendTwoAttr", name="midLock_rotXsw" + suffix)
-        jIK_orig_Knee.rotateZ >> midLock_rotXsw.input[0]
-        jFK_Knee.rotateZ >> midLock_rotXsw.input[1]
-        fk_ik_rvs.outputX >> midLock_rotXsw.attributesBlender
+        # fk_ik_rvs.outputX >> (midLock_poConWeight + "." + jFK_Knee + "W1")
+        fk_ik_rvs.outputX >> ("%s.%sW1" % (mid_lock_po_con_weight, jfk_knee))
 
-        midLock_rotXsw.output >> midLock_xBln.input1Z
+        mid_lock_x_bln = pm.createNode("multiplyDivide", name="midLock_xBln%s" % suffix)
 
-        pm.setAttr(midLock_xBln.input2Z, 0.5)
-        midLock_xBln.outputZ >> cont_midLock_AVE.rotateX
+        mid_lock_rot_xsw = pm.createNode("blendTwoAttr", name="midLock_rotXsw%s" % suffix)
+        j_ik_orig_knee.rotateZ >> mid_lock_rot_xsw.input[0]
+        jfk_knee.rotateZ >> mid_lock_rot_xsw.input[1]
+        fk_ik_rvs.outputX >> mid_lock_rot_xsw.attributesBlender
+
+        mid_lock_rot_xsw.output >> mid_lock_x_bln.input1Z
+
+        pm.setAttr(mid_lock_x_bln.input2Z, 0.5)
+        mid_lock_x_bln.outputZ >> cont_midLock_ave.rotateX
 
         ### Create Midlock
 
-        midLock = pm.spaceLocator(name="midLock_" + suffix)
-        pm.parentConstraint(midLock, jDef_midLeg)
+        mid_lock = pm.spaceLocator(name="midLock_%s" % suffix)
+        pm.parentConstraint(mid_lock, j_def_midLeg)
         # pm.scaleConstraint(midLock, jDef_midLeg)
-        extra.alignTo(midLock, cont_midLock, 0)
+        extra.alignTo(mid_lock, cont_mid_lock, 0)
 
-        pm.parentConstraint(cont_midLock, midLock, mo=False)
-
+        pm.parentConstraint(cont_mid_lock, mid_lock, mo=False)
         ### Create End Lock
-        endLock = pm.spaceLocator(name="endLock_" + suffix)
-        extra.alignTo(endLock, footRef, 2)
-        endLock_Ore = extra.createUpGrp(endLock, "_Ore")
-        endLock_Pos = extra.createUpGrp(endLock, "_Pos")
-        endLock_Twist = extra.createUpGrp(endLock, "_Twist")
-        endLockWeight = pm.pointConstraint(jIK_orig_End, jFK_Foot, endLock_Pos, mo=False)
-        cont_FK_IK.fk_ik >> (endLockWeight + "." + jIK_orig_End + "W0")
-        fk_ik_rvs.outputX >> (endLockWeight + "." + jFK_Foot + "W1")
+        end_lock = pm.spaceLocator(name="endLock_%s" % suffix)
+        extra.alignTo(end_lock, foot_ref, 2)
+        end_lock_ore = extra.createUpGrp(end_lock, "_Ore")
+        end_lock_pos = extra.createUpGrp(end_lock, "_Pos")
+        end_lock_twist = extra.createUpGrp(end_lock, "_Twist")
+        end_lock_weight = pm.pointConstraint(j_ik_orig_end, jfk_foot, end_lock_pos, mo=False)
+        # cont_FK_IK.fk_ik >> (endLockWeight + "." + jIK_orig_End + "W0")
+        cont_fk_ik.fk_ik >> ("%s.%sW0" % (end_lock_weight, j_ik_orig_end))
 
-        pm.parentConstraint(endLock, cont_FK_IK_POS, mo=True)
-        pm.parent(endLock_Ore, self.scaleGrp)
+        # fk_ik_rvs.outputX >> (endLockWeight + "." + jFK_Foot + "W1")
+        fk_ik_rvs.outputX >> ("%s.%sW1" % (end_lock_weight, jfk_foot))
 
-        endLockRot = pm.parentConstraint(IK_parentGRP, jFK_Foot, endLock, st=("x", "y", "z"), mo=True)
+        pm.parentConstraint(end_lock, cont_fk_ik_pos, mo=True)
+        pm.parent(end_lock_ore, self.scaleGrp)
+
+        end_lock_rot = pm.parentConstraint(ik_parent_grp, jfk_foot, end_lock, st=("x", "y", "z"), mo=True)
         # pm.setAttr(endLockRot.interpType, 0)
-        cont_FK_IK.fk_ik >> (endLockRot + "." + IK_parentGRP + "W0")
-        fk_ik_rvs.outputX >> (endLockRot + "." + jFK_Foot + "W1")
+        # cont_FK_IK.fk_ik >> (endLockRot + "." + IK_parentGRP + "W0")
+        cont_fk_ik.fk_ik >> ("%s.%sW0" % (end_lock_rot, ik_parent_grp))
 
+        # fk_ik_rvs.outputX >> (endLockRot + "." + jFK_Foot + "W1")
+        fk_ik_rvs.outputX >> ("%s.%sW1" % (end_lock_rot, jfk_foot))
+
+        cont_fk_ik.interpType >> end_lock_rot.interpType
         ###################################
         #### CREATE DEFORMATION JOINTS ####
         ###################################
 
         # UPPERLEG RIBBON
 
-        ribbonUpperLeg = rc.ribbon()
-        ribbonUpperLeg.createRibbon(hipRef, kneeRef, "up_" + suffix, -90)
+        # ribbon_upper_leg = rc.Ribbon()
+        ribbon_upper_leg = rc.PowerRibbon()
+        # ribbon_upper_leg.createRibbon(hip_ref, knee_ref, "up_%s" % suffix, -90, connectStartAim=False)
+        ribbon_upper_leg.createPowerRibbon(hip_ref, knee_ref, "up_%s" % suffix,  side=side,  orientation=-90, connectStartAim=False, upVector=up_axis)
 
-        ribbonStart_paCon_upperLeg_Start = pm.parentConstraint(startLock, ribbonUpperLeg.startConnection, mo=True)
-        ribbonStart_paCon_upperLeg_End = pm.parentConstraint(midLock, ribbonUpperLeg.endConnection, mo=True)
+        ribbon_start_pa_con_upper_leg_start = pm.parentConstraint(start_lock, ribbon_upper_leg.startConnection, mo=True)
+        ribbon_start_pa_con_upper_leg_end = pm.parentConstraint(mid_lock, ribbon_upper_leg.endConnection, mo=True)
 
-        pm.scaleConstraint(self.scaleGrp, ribbonUpperLeg.scaleGrp)
+        # connect the midLeg scaling
+        # cont_mid_lock.scale >> ribbon_upper_leg.endConnection.scale
+        # cont_mid_lock.scale >> j_def_midLeg.scale
+
+        pm.scaleConstraint(self.scaleGrp, ribbon_upper_leg.scaleGrp)
+
+        # ribbon_start_ori_con = pm.orientConstraint(j_ik_orig_root, jfk_root, ribbon_upper_leg.startAim, mo=False)
+        ribbon_start_ori_con = pm.parentConstraint(j_ik_orig_root, jfk_root, ribbon_upper_leg.startAim, mo=True, skipTranslate=["x","y","z"] )
+        cont_fk_ik.fk_ik >> ("%s.%sW0" %(ribbon_start_ori_con, j_ik_orig_root))
+        fk_ik_rvs.outputX >> ("%s.%sW1" %(ribbon_start_ori_con, jfk_root))
 
         # AUTO AND MANUAL TWIST
 
         # auto
-        autoTwistThigh = pm.createNode("multiplyDivide", name="autoTwistThigh_" + suffix)
-        cont_Thigh.autoTwist >> autoTwistThigh.input2X
-        ribbonStart_paCon_upperLeg_Start.constraintRotate >> autoTwistThigh.input1
+        auto_twist_thigh = pm.createNode("multiplyDivide", name="autoTwistThigh_%s" % suffix)
+        cont_thigh.autoTwist >> auto_twist_thigh.input2X
+        ribbon_start_pa_con_upper_leg_start.constraintRotate >> auto_twist_thigh.input1
 
-        ###!!! The parent constrain override should be disconnected like this
-        pm.disconnectAttr(ribbonStart_paCon_upperLeg_Start.constraintRotateX, ribbonUpperLeg.startConnection.rotateX)
+        # !!! The parent constrain override should be disconnected like this
+        pm.disconnectAttr(ribbon_start_pa_con_upper_leg_start.constraintRotateX, ribbon_upper_leg.startConnection.rotateX)
 
         # manual
-        AddManualTwistThigh = pm.createNode("plusMinusAverage", name=("AddManualTwist_UpperLeg_" + suffix))
-        autoTwistThigh.output >> AddManualTwistThigh.input3D[0]
-        cont_Thigh.manualTwist >> AddManualTwistThigh.input3D[1].input3Dx
+        add_manual_twist_thigh = pm.createNode("plusMinusAverage", name=("AddManualTwist_UpperLeg_%s" % suffix))
+        auto_twist_thigh.output >> add_manual_twist_thigh.input3D[0]
+        cont_thigh.manualTwist >> add_manual_twist_thigh.input3D[1].input3Dx
 
         # connect to the joint
-        AddManualTwistThigh.output3D >> ribbonUpperLeg.startConnection.rotate
+        add_manual_twist_thigh.output3D >> ribbon_upper_leg.startConnection.rotate
 
         # LOWERLEG RIBBON
 
-        ribbonLowerLeg = rc.ribbon()
-        ribbonLowerLeg.createRibbon(kneeRef, footRef, "low_" + suffix, 90)
+        # ribbon_lower_leg = rc.Ribbon()
+        ribbon_lower_leg = rc.PowerRibbon()
+        # ribbon_lower_leg.createRibbon(knee_ref, foot_ref, "low_%s" % suffix, 90)
+        ribbon_lower_leg.createPowerRibbon(knee_ref, foot_ref, "low_%s" % suffix, side=side,  orientation=90, upVector=up_axis)
 
-        ribbonStart_paCon_lowerLeg_Start = pm.parentConstraint(midLock, ribbonLowerLeg.startConnection, mo=True)
-        ribbonStart_paCon_lowerLeg_End = pm.parentConstraint(endLock, ribbonLowerLeg.endConnection, mo=True)
+        ribbon_start_pa_con_lower_leg_start = pm.parentConstraint(mid_lock, ribbon_lower_leg.startConnection, mo=True)
+        ribbon_start_pa_con_lower_leg_end = pm.parentConstraint(end_lock, ribbon_lower_leg.endConnection, mo=True)
 
-        pm.scaleConstraint(self.scaleGrp, ribbonLowerLeg.scaleGrp)
+        # connect the midLeg scaling
+        # cont_mid_lock.scale >>  ribbon_lower_leg.startConnection.scale
+
+        pm.scaleConstraint(self.scaleGrp, ribbon_lower_leg.scaleGrp)
 
         # AUTO AND MANUAL TWIST
 
         # auto
-        autoTwistAnkle = pm.createNode("multiplyDivide", name="autoTwistAnkle_" + suffix)
-        cont_FK_IK.autoTwist >> autoTwistAnkle.input2X
-        ribbonStart_paCon_lowerLeg_End.constraintRotate >> autoTwistAnkle.input1
+        auto_twist_ankle = pm.createNode("multiplyDivide", name="autoTwistAnkle_%s" % suffix)
+        cont_fk_ik.autoTwist >> auto_twist_ankle.input2X
+        ribbon_start_pa_con_lower_leg_end.constraintRotate >> auto_twist_ankle.input1
 
-        ###!!! The parent constrain override should be disconnected like this
-        pm.disconnectAttr(ribbonStart_paCon_lowerLeg_End.constraintRotateX, ribbonLowerLeg.endConnection.rotateX)
+        # !!! The parent constrain override should be disconnected like this
+        pm.disconnectAttr(ribbon_start_pa_con_lower_leg_end.constraintRotateX, ribbon_lower_leg.endConnection.rotateX)
 
         # manual
-        AddManualTwistAnkle = pm.createNode("plusMinusAverage", name=("AddManualTwist_LowerLeg_" + suffix))
-        autoTwistAnkle.output >> AddManualTwistAnkle.input3D[0]
-        cont_FK_IK.manualTwist >> AddManualTwistAnkle.input3D[1].input3Dx
+        add_manual_twist_ankle = pm.createNode("plusMinusAverage", name=("AddManualTwist_LowerLeg_%s" % suffix))
+        auto_twist_ankle.output >> add_manual_twist_ankle.input3D[0]
+        cont_fk_ik.manualTwist >> add_manual_twist_ankle.input3D[1].input3Dx
 
         # connect to the joint
-        AddManualTwistAnkle.output3D >> ribbonLowerLeg.endConnection.rotate
+        add_manual_twist_ankle.output3D >> ribbon_lower_leg.endConnection.rotate
+
+        # Volume Preservation Stuff
+        vpExtraInput = pm.createNode("multiplyDivide", name="vpExtraInput_%s" % suffix)
+        pm.setAttr(vpExtraInput.operation, 1)
+
+        vpMidAverage = pm.createNode("plusMinusAverage", name="vpMidAverage_%s" % suffix)
+        pm.setAttr(vpMidAverage.operation, 3)
+
+        vpPowerMid = pm.createNode("multiplyDivide", name="vpPowerMid_%s" % suffix)
+        pm.setAttr(vpPowerMid.operation, 3)
+        vpInitLength = pm.createNode("multiplyDivide", name="vpInitLength_%s" % suffix)
+        pm.setAttr(vpInitLength.operation, 2)
+
+        vpPowerUpperLeg = pm.createNode("multiplyDivide", name="vpPowerUpperLeg_%s" % suffix)
+        pm.setAttr(vpPowerUpperLeg.operation, 3)
+
+        vpPowerLowerLeg = pm.createNode("multiplyDivide", name="vpPowerLowerLeg_%s" % suffix)
+        pm.setAttr(vpPowerLowerLeg.operation, 3)
+        #
+        vpUpperLowerReduce = pm.createNode("multDoubleLinear", name="vpUpperLowerReduce_%s" % suffix)
+        pm.setAttr(vpUpperLowerReduce.input2, 0.5)
+        #
+        #vp knee branch
+        vpExtraInput.output >> ribbon_lower_leg.startConnection.scale
+        vpExtraInput.output >> ribbon_upper_leg.endConnection.scale
+        vpExtraInput.output >> j_def_midLeg.scale
+        cont_mid_lock.scale >> vpExtraInput.input1
+
+        vpMidAverage.output1D >> vpExtraInput.input2X
+        vpMidAverage.output1D >> vpExtraInput.input2Y
+        vpMidAverage.output1D >> vpExtraInput.input2Z
+
+        vpPowerMid.outputX >> vpMidAverage.input1D[0]
+        vpPowerMid.outputY >> vpMidAverage.input1D[1]
+
+        vpInitLength.outputX >> vpPowerMid.input1X
+        vpInitLength.outputY >> vpPowerMid.input1Y
+        self.cont_IK_foot.volume >> vpPowerMid.input2X
+        self.cont_IK_foot.volume >> vpPowerMid.input2Y
+        initial_length_multip_sc.outputX >> vpInitLength.input1X
+        initial_length_multip_sc.outputY >> vpInitLength.input1Y
+        stretchiness_sc.color1R >> vpInitLength.input2X
+        stretchiness_sc.color1G >> vpInitLength.input2Y
+
+        #vp upper branch
+        mid_off_up = ribbon_upper_leg.middleCont[0].getParent()
+        vpPowerUpperLeg.outputX >> mid_off_up.scaleX
+        vpPowerUpperLeg.outputX >> mid_off_up.scaleY
+        vpPowerUpperLeg.outputX >> mid_off_up.scaleZ
+
+        vpInitLength.outputX >> vpPowerUpperLeg.input1X
+        vpUpperLowerReduce.output >> vpPowerUpperLeg.input2X
+
+        # vp lower branch
+        mid_off_low = ribbon_lower_leg.middleCont[0].getParent()
+        vpPowerLowerLeg.outputX >> mid_off_low.scaleX
+        vpPowerLowerLeg.outputX >> mid_off_low.scaleY
+        vpPowerLowerLeg.outputX >> mid_off_low.scaleZ
+
+        vpInitLength.outputX >> vpPowerLowerLeg.input1X
+        vpUpperLowerReduce.output >> vpPowerLowerLeg.input2X
+
+        self.cont_IK_foot.volume >> vpUpperLowerReduce.input1
+
+
 
         # Foot Joint
 
         pm.select(d=True)
-        jDef_Foot = pm.joint(name="jDef_Foot_" + suffix, p=footPos, radius=1.0)
-        jDef_Ball = pm.joint(name="jDef_Ball_" + suffix, p=ballPos, radius=1.0)
-        jDef_Toe = pm.joint(name="jDef_Toe_" + suffix, p=toePvPos, radius=1.0)  ## POSSIBLE PROBLEM
+        j_def_foot = pm.joint(name="jDef_Foot_%s" % suffix, p=foot_pos, radius=1.0)
+        self.sockets.append(j_def_foot)
+        j_def_ball = pm.joint(name="jDef_Ball_%s" % suffix, p=ball_pos, radius=1.0)
+        self.sockets.append(j_def_ball)
+        j_def_toe = pm.joint(name="jDef_Toe_%s" % suffix, p=toe_pv_pos, radius=1.0)  # POSSIBLE PROBLEM
+        self.sockets.append(j_def_toe)
 
-        foot_paCon = pm.pointConstraint(jIK_Foot, jFK_Foot, jDef_Foot, mo=True)
-        ball_paCon = pm.pointConstraint(jIK_Ball, jFK_Ball, jDef_Ball, mo=True)
-        toe_paCon = pm.parentConstraint(jIK_Toe, jFK_Toe, jDef_Toe, mo=True)
+        foot_pa_con = pm.parentConstraint(j_ik_foot, jfk_foot, j_def_foot, mo=True)
+        ball_pa_con = pm.parentConstraint(j_ik_ball, jfk_ball, j_def_ball, mo=False)
+        # ball_pa_con = pm.parentConstraint(j_ik_ball, jfk_ball, j_def_ball, mo=True)
+        toe_pa_con = pm.parentConstraint(j_ik_toe, jfk_toe, j_def_toe, mo=False)
+        # toe_pa_con = pm.parentConstraint(j_ik_toe, jfk_toe, j_def_toe, mo=False)
 
-        cont_FK_IK.fk_ik >> (foot_paCon + "." + jIK_Foot + "W0")
-        fk_ik_rvs.outputX >> (foot_paCon + "." + jFK_Foot + "W1")
+        # cont_FK_IK.fk_ik >> (foot_paCon + "." + jIK_Foot + "W0")
+        cont_fk_ik.fk_ik >> ("%s.%sW0" % (foot_pa_con, j_ik_foot))
 
-        cont_FK_IK.fk_ik >> (ball_paCon + "." + jIK_Ball + "W0")
-        fk_ik_rvs.outputX >> (ball_paCon + "." + jFK_Ball + "W1")
+        # fk_ik_rvs.outputX >> (foot_paCon + "." + jFK_Foot + "W1")
+        fk_ik_rvs.outputX >> ("%s.%sW1" % (foot_pa_con, jfk_foot))
 
-        cont_FK_IK.fk_ik >> (toe_paCon + "." + jIK_Toe + "W0")
-        fk_ik_rvs.outputX >> (toe_paCon + "." + jFK_Toe + "W1")
+        # cont_FK_IK.fk_ik >> (ball_paCon + "." + jIK_Ball + "W0")
+        cont_fk_ik.fk_ik >> ("%s.%sW0" % (ball_pa_con, j_ik_ball))
+
+        # fk_ik_rvs.outputX >> (ball_paCon + "." + jFK_Ball + "W1")
+        fk_ik_rvs.outputX >> ("%s.%sW1" % (ball_pa_con, jfk_ball))
+
+        # cont_FK_IK.fk_ik >> (toe_paCon + "." + jIK_Toe + "W0")
+        cont_fk_ik.fk_ik >> ("%s.%sW0" % (toe_pa_con, j_ik_toe))
+
+        # fk_ik_rvs.outputX >> (toe_paCon + "." + jFK_Toe + "W1")
+        fk_ik_rvs.outputX >> ("%s.%sW1" % (toe_pa_con, jfk_toe))
+
+        cont_fk_ik.interpType >> foot_pa_con.interpType
+        cont_fk_ik.interpType >> ball_pa_con.interpType
+        cont_fk_ik.interpType >> toe_pa_con.interpType
 
         # # GOOD PARENTING
 
@@ -781,40 +1074,42 @@ class leg():
 
         # Create Master Root and Scale and nonScale Group
 
-        pm.parent(jIK_SC_Root, startLock)
-        pm.parent(jIK_RP_Root, startLock)
-        pm.parent(jIK_orig_Root, startLock)
-        pm.parent(jFK_Root, startLock)
+        pm.parent(j_ik_sc_root, start_lock)
+        pm.parent(j_ik_rp_root, start_lock)
+        pm.parent(j_ik_orig_root, start_lock)
+        pm.parent(jfk_root, start_lock)
 
-        pm.parent(startLock_Ore, self.scaleGrp)
-        pm.parent(legStart, self.scaleGrp)
-        pm.parent(legEnd, self.scaleGrp)
-        pm.parent(IK_parentGRP, self.scaleGrp)
-        pm.parent(cont_Thigh_OFF, self.scaleGrp)
-        pm.parent(cont_FK_UpLeg_OFF, self.scaleGrp)
-        pm.parent(cont_FK_LowLeg_OFF, self.scaleGrp)
-        pm.parent(cont_FK_Foot_OFF, self.scaleGrp)
-        pm.parent(cont_FK_Ball_OFF, self.scaleGrp)
-        pm.parent(midLock, self.scaleGrp)
-        pm.parent(cont_midLock_POS, self.scaleGrp)
-        pm.parent(cont_Pole_OFF, self.scaleGrp)
-        pm.parent(jDef_midLeg, self.scaleGrp)
+        pm.parent(start_lock_ore, self.scaleGrp)
+        pm.parent(leg_start, self.scaleGrp)
+        pm.parent(leg_end, self.scaleGrp)
+        pm.parent(ik_parent_grp, self.scaleGrp)
+        pm.parent(cont_thigh_off, self.scaleGrp)
+        pm.parent(cont_fk_up_leg_off, self.scaleGrp)
+        pm.parent(cont_fk_low_leg_off, self.scaleGrp)
+        pm.parent(cont_fk_foot_off, self.scaleGrp)
+        pm.parent(cont_fk_ball_off, self.scaleGrp)
+        pm.parent(mid_lock, self.scaleGrp)
+        pm.parent(cont_midLock_pos, self.scaleGrp)
+        pm.parent(cont_pole_off, self.scaleGrp)
+        pm.parent(j_def_midLeg, self.scaleGrp)
 
-        pm.parent(ribbonUpperLeg.scaleGrp, self.nonScaleGrp)
-        pm.parent(ribbonUpperLeg.nonScaleGrp, self.nonScaleGrp)
+        pm.parent(ribbon_upper_leg.scaleGrp, self.nonScaleGrp)
+        pm.parent(ribbon_upper_leg.nonScaleGrp, self.nonScaleGrp)
 
-        pm.parent(ribbonLowerLeg.scaleGrp, self.nonScaleGrp)
-        pm.parent(ribbonLowerLeg.nonScaleGrp, self.nonScaleGrp)
+        pm.parent(ribbon_lower_leg.scaleGrp, self.nonScaleGrp)
+        pm.parent(ribbon_lower_leg.nonScaleGrp, self.nonScaleGrp)
 
-        pm.parent(jDef_Foot, self.scaleGrp)
+        pm.parent(j_def_foot, self.scaleGrp)
+
+        pm.parent(self.scaleGrp, self.nonScaleGrp, self.cont_IK_OFF, self.limbGrp)
 
         ## CONNECT RIG VISIBILITIES
 
         # Tweak Controls
 
-        tweakControls = (ribbonUpperLeg.middleCont, ribbonLowerLeg.middleCont, cont_midLock)
-        for i in tweakControls:
-            cont_FK_IK.tweakControls >> i.v
+        tweak_controls = ribbon_upper_leg.middleCont + ribbon_lower_leg.middleCont + [cont_mid_lock]
+        for i in tweak_controls:
+            cont_fk_ik.tweakControls >> i.v
 
         pm.addAttr(self.scaleGrp, at="bool", ln="Control_Visibility", sn="contVis", defaultValue=True)
         pm.addAttr(self.scaleGrp, at="bool", ln="Joints_Visibility", sn="jointVis", defaultValue=True)
@@ -824,62 +1119,61 @@ class leg():
         pm.setAttr(self.scaleGrp.jointVis, cb=True)
         pm.setAttr(self.scaleGrp.rigVis, cb=True)
 
-        nodesContVis = [cont_Pole_OFF, cont_Thigh_OFF, cont_IK_foot_OFF, cont_FK_Foot_OFF, cont_midLock_POS, cont_FK_IK_POS,
-                        cont_FK_Ball_OFF, cont_FK_LowLeg_OFF, cont_FK_UpLeg_OFF, ribbonUpperLeg.scaleGrp, ribbonLowerLeg.scaleGrp]
-        nodesJointVis = [jDef_midLeg, jDef_Ball, jDef_Foot, jDef_legRoot, jDef_Toe, jDef_hip]
-        nodesJointVisLists = [ribbonUpperLeg.deformerJoints, ribbonLowerLeg.deformerJoints, nodesJointVis]
-        nodesRigVis = [endLock_Ore, startLock_Ore, legStart, legEnd, IK_parentGRP, midLock]
+        nodes_cont_vis = [cont_pole_off, cont_thigh_off, self.cont_IK_OFF , cont_fk_foot_off, cont_midLock_pos, cont_fk_ik_pos,
+                        cont_fk_ball_off, cont_fk_low_leg_off, cont_fk_up_leg_off, ribbon_upper_leg.scaleGrp, ribbon_lower_leg.scaleGrp]
+        nodes_joint_vis = [j_def_midLeg, j_def_ball, j_def_foot, self.jDef_legRoot, j_def_toe, j_def_hip]
+        self.deformerJoints = ribbon_upper_leg.deformerJoints + ribbon_lower_leg.deformerJoints + nodes_joint_vis
+        nodes_rig_vis = [end_lock_ore, start_lock_ore, leg_start, leg_end, ik_parent_grp, mid_lock]
 
         # Cont visibilities
-        for i in nodesContVis:
+        for i in nodes_cont_vis:
             self.scaleGrp.contVis >> i.v
 
         # global joint visibilities
-        for lst in nodesJointVisLists:
-            for j in lst:
-                self.scaleGrp.jointVis >> j.v
+        for lst in self.deformerJoints:
+            self.scaleGrp.jointVis >> lst.v
 
         # Rig Visibilities
-        for i in nodesRigVis:
+        for i in nodes_rig_vis:
             self.scaleGrp.rigVis >> i.v
-        for i in ribbonLowerLeg.toHide:
+        for i in ribbon_lower_leg.toHide:
             self.scaleGrp.rigVis >> i.v
-        for i in ribbonUpperLeg.toHide:
+        for i in ribbon_upper_leg.toHide:
             self.scaleGrp.rigVis >> i.v
 
         # pm.setAttr(cont_FK_IK.rigVis, 0)
 
         # # FOOL PROOFING
-
-        extra.lockAndHide(cont_Thigh, ["sx", "sy", "sz", "v"])
+        extra.lockAndHide(cont_thigh, ["sx", "sy", "sz", "v"])
         extra.lockAndHide(self.cont_IK_foot, ["sx", "sy", "sz", "v"])
-        extra.lockAndHide(cont_FK_IK, ["sx", "sy", "sz", "v"])
-        extra.lockAndHide(cont_FK_UpLeg, ["tx", "ty", "tz", "sx", "sz", "v"])
-        extra.lockAndHide(cont_FK_LowLeg, ["tx", "ty", "tz", "sx", "sz", "v"])
-        extra.lockAndHide(cont_FK_Foot, ["tx", "ty", "tz", "sx", "sz", "v"])
-        extra.lockAndHide(cont_FK_Ball, ["tx", "ty", "tz", "sx", "sz", "v"])
+        extra.lockAndHide(self.cont_Pole, ["rx", "ry", "rz", "sx", "sy", "sz", "v"])
+        extra.lockAndHide(cont_fk_ik, ["sx", "sy", "sz", "v"])
+        extra.lockAndHide(cont_fk_up_leg, ["tx", "ty", "tz", "sy", "sz", "v"])
+        extra.lockAndHide(cont_fk_low_leg, ["tx", "ty", "tz", "sy", "sz", "v"])
+        extra.lockAndHide(cont_fk_foot, ["tx", "ty", "tz", "sy", "sz", "v"])
+        extra.lockAndHide(cont_fk_ball, ["tx", "ty", "tz", "sy", "sz", "v"])
 
         # # COLOR CODING
 
-        if side == "L":
-            index = 13  ##Red color index
-            indexMin = 9  ##Magenta color index
-        else:
-            index = 6  ##Blue Color index
-            indexMin = 18
+        extra.colorize(cont_thigh, self.colorCodes[0])
+        extra.colorize(self.cont_IK_foot, self.colorCodes[0])
+        extra.colorize(cont_fk_ik, self.colorCodes[0])
+        extra.colorize(cont_fk_up_leg, self.colorCodes[0])
+        extra.colorize(cont_fk_low_leg, self.colorCodes[0])
+        extra.colorize(cont_fk_foot, self.colorCodes[0])
+        extra.colorize(cont_fk_ball, self.colorCodes[0])
+        extra.colorize(self.cont_Pole, self.colorCodes[0])
+        extra.colorize(cont_mid_lock, self.colorCodes[1])
+        extra.colorize(ribbon_upper_leg.middleCont, self.colorCodes[1])
+        extra.colorize(ribbon_lower_leg.middleCont, self.colorCodes[1])
 
-        extra.colorize(cont_Thigh, index)
-        extra.colorize(self.cont_IK_foot, index)
-        extra.colorize(cont_FK_IK, index)
-        extra.colorize(cont_FK_UpLeg, index)
-        extra.colorize(cont_FK_LowLeg, index)
-        extra.colorize(cont_FK_Foot, index)
-        extra.colorize(cont_FK_Ball, index)
+        extra.colorize(self.deformerJoints, self.colorCodes[0], shape=False)
 
-        extra.colorize(cont_midLock, indexMin)
-        extra.colorize(ribbonUpperLeg.middleCont, indexMin)
-        extra.colorize(ribbonLowerLeg.middleCont, indexMin)
+        # # GOOD RIDDANCE
+        pm.delete(foot_plane)
 
-        self.scaleConstraints = [self.scaleGrp, cont_IK_foot_OFF]
-        self.anchors = [(self.cont_IK_foot, "parent", 1, None),(self.cont_Pole, "parent", 1, None)]
-        self.cont_IK_OFF = cont_IK_foot_OFF
+        # return
+        self.scaleConstraints = [self.scaleGrp, self.cont_IK_OFF ]
+        self.anchors = [(self.cont_IK_foot, "parent", 1, None), (self.cont_Pole, "parent", 1, None)]
+        # self.cont_IK_OFF = cont_ik_foot_off
+        pm.makeIdentity(self.cont_IK_foot, a=True, t=True, r=False, s=False)

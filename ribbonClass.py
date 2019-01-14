@@ -15,16 +15,22 @@ reload(extra)
 import contIcons as icon
 reload(icon)
 
-class ribbon():
+class Ribbon():
 
-    startConnection = None
-    endConnection = None
-    scaleGrp = None
-    nonScaleGrp = None
-    deformerJoints = None
-    middleCont = None
-    toHide = None
-    def createRibbon(self, startPoint, endPoint, name, orientation, jCount=5.0):
+    def __init__(self):
+        self.startConnection = None
+        self.endConnection = None
+        self.scaleGrp = None
+        self.nonScaleGrp = None
+        self.deformerJoints = None
+        self.middleCont = None
+        self.toHide = None
+        self.startAim = None
+
+    def createRibbon(self, startPoint, endPoint, name, orientation, rResolution=5, jResolution=5.0, connectStartAim=True):
+
+        name=(extra.uniqueName("RBN_ScaleGrp_" + name)).replace("RBN_ScaleGrp_", "")
+
         self.nonScaleGrp=pm.group(em=True, name="RBN_nonScaleGrp_"+name)
 
         if type(startPoint) == str:
@@ -32,7 +38,7 @@ class ribbon():
         if type(endPoint) == str:
             endPoint = pm.PyNode(endPoint)
         ribbonLength=extra.getDistance(startPoint, endPoint)
-        nSurfTrans=pm.nurbsPlane(ax=(0,0,1),u=5,v=1, w=ribbonLength, lr=(1.0/ribbonLength), name="nSurf_"+name)
+        nSurfTrans=pm.nurbsPlane(ax=(0,0,1),u=rResolution,v=1, w=ribbonLength, lr=(1.0/ribbonLength), name="nSurf_"+name)
         pm.parent(nSurfTrans[0], self.nonScaleGrp)
         pm.rebuildSurface (nSurfTrans, ch=1, rpo=1, rt=0, end=1, kr=2, kcp=0, kc=0, su=5, du=3, sv=1, dv=1, tol=0, fr=0, dir=1)
         pm.makeIdentity(a=True)
@@ -42,14 +48,14 @@ class ribbon():
         self.deformerJoints=[]
         self.toHide.append(nSurfTrans[0])
 
-        for i in range (0, int(jCount)):
+        for i in range (0, int(jResolution)):
             follicle = pm.createNode('follicle', name="follicle_"+name+str(i))
             nSurf.local.connect(follicle.inputSurface)
             nSurf.worldMatrix[0].connect(follicle.inputWorldMatrix)
             follicle.outRotate.connect(follicle.getParent().rotate)
             follicle.outTranslate.connect(follicle.getParent().translate)
             follicle.parameterV.set(0.5)
-            follicle.parameterU.set(0.1+(i/jCount))
+            follicle.parameterU.set(0.1+(i/jResolution))
             follicle.getParent().t.lock()
             follicle.getParent().r.lock()
             follicleList.append(follicle)
@@ -77,8 +83,8 @@ class ribbon():
         ##
         #Start Upnodes
         pm.select(d=True)
-        start_AIM=pm.group(em=True, name="jRbn_Start_"+name)
-        pm.move(start_AIM, (-(ribbonLength/2.0),0,0))
+        self.startAim=pm.group(em=True, name="jRbn_Start_"+name)
+        pm.move(self.startAim, (-(ribbonLength/2.0),0,0))
         pm.makeIdentity(a=True)
         start_UP=pm.spaceLocator(name="jRbn_Start_"+name)
         self.toHide.append(start_UP.getShape())
@@ -89,10 +95,11 @@ class ribbon():
         pm.move(self.startConnection, (-(ribbonLength / 2.0), 0, 0))
         pm.makeIdentity(a=True)
 
-        pm.parent(start_AIM, start_UP, self.startConnection)
+        pm.parent(self.startAim, start_UP, self.startConnection)
 
-        pm.parent(startJoint,start_AIM)
-        pm.aimConstraint(middleJoint,start_AIM, aimVector=(1,0,0), upVector=(0,1,0), wut=1, wuo=start_UP, mo=False)
+        pm.parent(startJoint,self.startAim)
+        if connectStartAim:
+            pm.aimConstraint(middleJoint,self.startAim, aimVector=(1,0,0), upVector=(0,1,0), wut=1, wuo=start_UP, mo=False)
 
         #End Upnodes
         pm.select(d=True)
@@ -142,7 +149,8 @@ class ribbon():
         self.scaleGrp=pm.group(name="RBN_ScaleGrp_"+name)
         tempPoCon=pm.pointConstraint(startPoint, endPoint, self.scaleGrp)
         pm.delete(tempPoCon)
-        tempAimCon=pm.aimConstraint(endPoint, self.scaleGrp, aim=(1,0,0), o=(orientation,0,0))
+        # tempAimCon=pm.aimConstraint(endPoint, self.scaleGrp, aim=(1,0,0), o=(orientation,0,0))
+        tempAimCon=pm.orientConstraint(startPoint, self.scaleGrp, o=(orientation,0,0), mo=False)
         pm.delete(tempAimCon)
 
         ### Create Stretch Squash Nodes
