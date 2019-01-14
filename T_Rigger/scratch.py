@@ -22,7 +22,6 @@ reload(root)
 import anchorMaker
 reload(anchorMaker)
 
-import Qt
 # from Qt import QtWidgets, QtCore, QtGui
 from Qt import QtWidgets
 
@@ -123,7 +122,7 @@ class LimbBuilder():
             for anchor in (self.anchors):
                 # extra.spaceSwitcher(anchor[0], self.anchorLocations, mode=anchor[1], defaultVal=anchor[2], listException=anchor[3])
                 anchorMaker.spaceSwitcher(anchor[0], self.anchorLocations, mode=anchor[1], defaultVal=anchor[2],
-                                    listException=anchor[3])
+                                          listException=anchor[3])
 
         else:
             for anchor in (self.anchors):
