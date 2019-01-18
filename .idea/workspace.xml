@@ -2,12 +2,10 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="f9b53f28-a1b0-4f72-a1e8-3ddbbe6e2f68" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-    </list>
-    <list id="29363045-6db9-4922-86a6-ca8b6d1bf40d" name="Revert &quot;ikSoft added to Arm and Leg modules&quot;" comment="Revert &quot;ikSoft added to Arm and Leg modules&quot;&#10;&#10;This reverts commit 484d2ac">
       <change beforePath="$PROJECT_DIR$/T_Rigger/armClass.py" beforeDir="false" afterPath="$PROJECT_DIR$/T_Rigger/armClass.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/T_Rigger/legClass.py" beforeDir="false" afterPath="$PROJECT_DIR$/T_Rigger/legClass.py" afterDir="false" />
     </list>
+    <list id="29363045-6db9-4922-86a6-ca8b6d1bf40d" name="Revert &quot;ikSoft added to Arm and Leg modules&quot;" comment="Revert &quot;ikSoft added to Arm and Leg modules&quot;&#10;&#10;This reverts commit 484d2ac" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -28,56 +26,57 @@
         </counts>
       </usages-collector>
     </session>
+    <session id="-1262031462">
+      <usages-collector id="statistics.lifecycle.project">
+        <counts>
+          <entry key="project.closed" value="1" />
+          <entry key="project.open.time.0" value="1" />
+          <entry key="project.opened" value="1" />
+        </counts>
+      </usages-collector>
+      <usages-collector id="statistics.file.extensions.open">
+        <counts>
+          <entry key="py" value="4" />
+        </counts>
+      </usages-collector>
+      <usages-collector id="statistics.file.types.open">
+        <counts>
+          <entry key="Python" value="4" />
+        </counts>
+      </usages-collector>
+    </session>
   </component>
   <component name="FileEditorManager">
-    <leaf>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/T_Rigger/extraTools.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-2954">
-              <folding>
-                <element signature="e#0#23#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/T_Rigger/initials.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-24638">
-              <folding>
-                <element signature="e#0#23#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/T_Rigger/powerRibbon.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="3234">
-              <caret line="147" column="58" selection-start-line="147" selection-start-column="58" selection-end-line="147" selection-end-column="58" />
-              <folding>
-                <element signature="e#168#191#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
+    <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
       <file pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/T_Rigger/armClass.py">
+        <entry file="file://$PROJECT_DIR$/T_Rigger/legClass.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="88">
-              <caret line="4" column="24" selection-start-line="4" selection-start-column="24" selection-end-line="4" selection-end-column="24" />
+            <state relative-caret-position="260">
+              <caret line="149" column="48" lean-forward="true" selection-start-line="149" selection-start-column="48" selection-end-line="149" selection-end-column="48" />
+              <folding>
+                <element signature="e#0#23#0" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
       </file>
     </leaf>
   </component>
+  <component name="FindInProjectRecents">
+    <findStrings>
+      <find>soft</find>
+    </findStrings>
+  </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="IdeDocumentHistory">
+    <option name="CHANGED_PATHS">
+      <list>
+        <option value="$PROJECT_DIR$/T_Rigger/armClass.py" />
+        <option value="$PROJECT_DIR$/T_Rigger/legClass.py" />
+      </list>
+    </option>
   </component>
   <component name="ProjectFrameBounds" extendedState="6">
     <option name="x" value="3" />
@@ -94,20 +93,14 @@
         <subPane>
           <expand>
             <path>
-              <item name="tik_autorigger" type="b2602c69:ProjectViewProjectNode" />
-              <item name="tik_autorigger" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="tik_autorigger" type="b2602c69:ProjectViewProjectNode" />
-              <item name="tik_autorigger" type="462c0819:PsiDirectoryNode" />
-              <item name="T_Rigger" type="462c0819:PsiDirectoryNode" />
+              <item name="T-Rigger" type="b2602c69:ProjectViewProjectNode" />
+              <item name="T-Rigger" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
           <select />
         </subPane>
       </pane>
       <pane id="Scope" />
-      <pane id="Scratches" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -141,10 +134,10 @@
   <component name="ToolWindowManager">
     <frame x="-8" y="-8" width="2576" height="1586" extended-state="6" />
     <layout>
-      <window_info active="true" id="Repositories" visible="true" weight="0.32978722" />
-      <window_info content_ui="combo" id="Project" order="0" weight="0.13711584" />
-      <window_info id="Structure" order="1" weight="0.25" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.13711584" />
+      <window_info id="Structure" order="1" weight="0.24980299" />
       <window_info id="Favorites" order="2" side_tool="true" />
+      <window_info id="Repositories" order="3" weight="0.32978722" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" />
       <window_info anchor="bottom" id="Run" order="2" />
@@ -197,7 +190,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/T_Rigger/extraTools.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-2954">
+        <state>
           <folding>
             <element signature="e#0#23#0" expanded="true" />
           </folding>
@@ -206,7 +199,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/T_Rigger/initials.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-24638">
+        <state>
           <folding>
             <element signature="e#0#23#0" expanded="true" />
           </folding>
@@ -215,7 +208,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/T_Rigger/powerRibbon.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="3234">
+        <state relative-caret-position="3190">
           <caret line="147" column="58" selection-start-line="147" selection-start-column="58" selection-end-line="147" selection-end-column="58" />
           <folding>
             <element signature="e#168#191#0" expanded="true" />
@@ -225,8 +218,21 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/T_Rigger/armClass.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="88">
-          <caret line="4" column="24" selection-start-line="4" selection-start-column="24" selection-end-line="4" selection-end-column="24" />
+        <state relative-caret-position="238">
+          <caret line="135" column="46" selection-start-line="135" selection-start-column="46" selection-end-line="135" selection-end-column="46" />
+          <folding>
+            <element signature="e#0#23#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/T_Rigger/legClass.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="260">
+          <caret line="149" column="48" lean-forward="true" selection-start-line="149" selection-start-column="48" selection-end-line="149" selection-end-column="48" />
+          <folding>
+            <element signature="e#0#23#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
