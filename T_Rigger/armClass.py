@@ -102,11 +102,11 @@ class Arm(object):
         if side == "R":
             pm.setAttr("{0}.s{1}".format(cont_shoulder_pos, "z"), -1)
 
-        pm.addAttr(cont_shoulder, shortName="autoTwist", longName="Auto_Twist", defaultValue=1.0, minValue=0.0,
-                   maxValue=1.0, at="float",
-                   k=True)
-        pm.addAttr(cont_shoulder, shortName="manualTwist", longName="Manual_Twist", defaultValue=0.0, at="float",
-                   k=True)
+        # pm.addAttr(cont_shoulder, shortName="autoTwist", longName="Auto_Twist", defaultValue=1.0, minValue=0.0,
+        #            maxValue=1.0, at="float",
+        #            k=True)
+        # pm.addAttr(cont_shoulder, shortName="manualTwist", longName="Manual_Twist", defaultValue=0.0, at="float",
+        #            k=True)
 
         ## IK hand controller
         ik_cont_scale = (init_lower_arm_dist / 3, init_lower_arm_dist / 3, init_lower_arm_dist / 3)
@@ -213,10 +213,23 @@ class Arm(object):
         if side == "R":
             pm.setAttr("{0}.s{1}".format(cont_fk_ik, "x"), -1)
 
-        pm.addAttr(cont_fk_ik, shortName="autoTwist", longName="Auto_Twist", defaultValue=1.0, minValue=0.0,
-                   maxValue=1.0,
-                   at="float", k=True)
-        pm.addAttr(cont_fk_ik, shortName="manualTwist", longName="Manual_Twist", defaultValue=0.0, at="float", k=True)
+        # TODO : REF
+        # controller for twist orientation alignment
+        pm.addAttr(cont_fk_ik, shortName="alignShoulder", longName="Align_Shoulder", defaultValue=1.0, at="float", minValue=0.0, maxValue=1.0, k=True)
+        # pm.addAttr(cont_fk_ik, shortName="alignHand", longName="Align Hand", defaultValue=1.0, at="float", minValue=0.0, maxValue=1.0, k=True)
+
+
+        # pm.addAttr(cont_fk_ik, shortName="autoTwist", longName="Auto_Twist", defaultValue=1.0, minValue=0.0, maxValue=1.0, at="float", k=True)
+        # pm.addAttr(cont_fk_ik, shortName="manualTwist", longName="Manual_Twist", defaultValue=0.0, at="float", k=True)
+
+        pm.addAttr(cont_fk_ik, shortName="handAutoTwist", longName="Hand_Auto_Twist", defaultValue=1.0, minValue=0.0, maxValue=1.0, at="float", k=True)
+        pm.addAttr(cont_fk_ik, shortName="handManualTwist", longName="Hand_Manual_Twist", defaultValue=0.0, at="float", k=True)
+
+        pm.addAttr(cont_fk_ik, shortName="shoulderAutoTwist", longName="Shoulder_Auto_Twist", defaultValue=1.0, minValue=0.0, maxValue=1.0, at="float", k=True)
+        pm.addAttr(cont_fk_ik, shortName="shoulderManualTwist", longName="Shoulder_Manual_Twist", defaultValue=0.0, at="float", k=True)
+
+        pm.addAttr(cont_fk_ik, shortName="allowScaling", longName="Allow_Scaling", defaultValue=1.0, minValue=0.0, maxValue=1.0, at="float", k=True)
+
         pm.addAttr(cont_fk_ik, shortName="tweakControls", longName="Tweak_Controls", defaultValue=0, at="bool")
         pm.setAttr(cont_fk_ik.tweakControls, cb=True)
         pm.addAttr(cont_fk_ik, shortName="fingerControls", longName="Finger_Controls", defaultValue=1, at="bool")
@@ -694,17 +707,23 @@ class Arm(object):
 
         pm.scaleConstraint(self.scaleGrp, ribbon_upper_arm.scaleGrp)
 
-        # ribbon_start_ori_con = pm.orientConstraint(j_ik_orig_up, j_fk_up, ribbon_upper_arm.startAim, mo=False)
-        ribbon_start_ori_con = pm.parentConstraint(j_ik_orig_up, j_fk_up, ribbon_upper_arm.startAim, mo=True,
-                                                   skipTranslate=["x", "y", "z"])
+        ribbon_start_ori_con = pm.parentConstraint(j_ik_orig_up, j_fk_up, ribbon_upper_arm.startAim, mo=True, skipTranslate=["x", "y", "z"])
+        # ex = pm.parentConstraint(j_ik_orig_up, j_fk_up, j_collar_end, mo=True, skipTranslate=["x", "y", "z"])
+        ribbon_start_ori_con2 = pm.parentConstraint(j_collar_end, ribbon_upper_arm.startAim, mo=True, skipTranslate=["x", "y", "z"])
+        # ribbon_start_ori_con = pm.parentConstraint(j_ik_orig_up, j_fk_up, twistBridge, mo=True, skipTranslate=["x", "y", "z"])
+
         cont_fk_ik.fk_ik >> ("%s.%sW0" %(ribbon_start_ori_con, j_ik_orig_up))
         fk_ik_rvs.outputX >> ("%s.%sW1" %(ribbon_start_ori_con, j_fk_up))
+
+        cont_fk_ik.alignShoulder >> ribbon_upper_arm.startAim.blendParent2
+
 
         # AUTO AND MANUAL TWIST
 
         # auto
         auto_twist = pm.createNode("multiplyDivide", name="autoTwist_%s" % suffix)
-        cont_shoulder.autoTwist >> auto_twist.input2X
+        # cont_shoulder.autoTwist >> auto_twist.input2X
+        cont_fk_ik.shoulderAutoTwist >> auto_twist.input2X
         ribbon_start_pa_con_upper_arm_start.constraintRotate >> auto_twist.input1
 
         # !!! The parent constrain override should be disconnected like this
@@ -716,10 +735,15 @@ class Arm(object):
         # manual
         add_manual_twist = pm.createNode("plusMinusAverage", name=("AddManualTwist_UpperArm_%s" % suffix))
         auto_twist.output >> add_manual_twist.input3D[0]
-        cont_shoulder.manualTwist >> add_manual_twist.input3D[1].input3Dx
+        # cont_shoulder.manualTwist >> add_manual_twist.input3D[1].input3Dx
+        cont_fk_ik.shoulderAutoTwist >> add_manual_twist.input3D[1].input3Dx
 
         # connect to the joint
         add_manual_twist.output3D >> ribbon_upper_arm.startConnection.rotate
+
+        # TODO : REF
+        # connect allowScaling
+        cont_fk_ik.allowScaling >> ribbon_upper_arm.startConnection.scaleSwitch
 
         # LOWER ARM RIBBON
 
@@ -740,7 +764,8 @@ class Arm(object):
 
         # auto
         auto_twist = pm.createNode("multiplyDivide", name="autoTwist_%s" % suffix)
-        cont_fk_ik.autoTwist >> auto_twist.input2X
+        # cont_fk_ik.autoTwist >> auto_twist.input2X
+        cont_fk_ik.handAutoTwist >> auto_twist.input2X
         ribbon_start_pa_con_lower_arm_end.constraintRotate >> auto_twist.input1
 
         # !!! The parent constrain override should be disconnected like this
@@ -749,10 +774,15 @@ class Arm(object):
         # manual
         add_manual_twist = pm.createNode("plusMinusAverage", name=("AddManualTwist_LowerArm_%s" % suffix))
         auto_twist.output >> add_manual_twist.input3D[0]
-        cont_fk_ik.manualTwist >> add_manual_twist.input3D[1].input3Dx
+        # cont_fk_ik.manualTwist >> add_manual_twist.input3D[1].input3Dx
+        cont_fk_ik.handManualTwist >> add_manual_twist.input3D[1].input3Dx
 
         # connect to the joint
         add_manual_twist.output3D >> ribbon_lower_arm.endConnection.rotate
+
+        # TODO : REF
+        # connect allowScaling
+        cont_fk_ik.allowScaling >> ribbon_lower_arm.startConnection.scaleSwitch
 
         # Volume Preservation Stuff
         vpExtraInput = pm.createNode("multiplyDivide", name="vpExtraInput_%s" % suffix)
