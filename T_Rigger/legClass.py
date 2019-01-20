@@ -121,9 +121,9 @@ class Leg(object):
             pm.setAttr(cont_thigh_ore.rotateZ, -180)
 
         pm.xform(cont_thigh, piv=leg_root_pos, ws=True)
-        pm.addAttr(shortName="autoTwist", longName="Auto_Twist", defaultValue=1.0, minValue=0.0, maxValue=1.0, at="float",
-                   k=True)
-        pm.addAttr(shortName="manualTwist", longName="Manual_Twist", defaultValue=0.0, at="float", k=True)
+        # pm.addAttr(shortName="autoTwist", longName="Auto_Twist", defaultValue=1.0, minValue=0.0, maxValue=1.0, at="float",
+        #            k=True)
+        # pm.addAttr(shortName="manualTwist", longName="Manual_Twist", defaultValue=0.0, at="float", k=True)
 
         # IK Foot Controller
 
@@ -243,9 +243,20 @@ class Leg(object):
             pm.move(cont_fk_ik, (-icon_scale * 4, 0, 0), r=True, os=True)
             pm.makeIdentity(cont_fk_ik, a=True)
 
-        pm.addAttr(cont_fk_ik, shortName="autoTwist", longName="Auto_Twist", defaultValue=1.0, minValue=0.0, maxValue=1.0,
-                   at="float", k=True)
-        pm.addAttr(cont_fk_ik, shortName="manualTwist", longName="Manual_Twist", defaultValue=0.0, at="float", k=True)
+        pm.addAttr(cont_fk_ik, shortName="alignHip", longName="Align_Hip", defaultValue=1.0, at="float", minValue=0.0, maxValue=1.0, k=True)
+
+        pm.addAttr(cont_fk_ik, shortName="footAutoTwist", longName="Foot_Auto_Twist", defaultValue=1.0, minValue=0.0, maxValue=1.0, at="float", k=True)
+        pm.addAttr(cont_fk_ik, shortName="footManualTwist", longName="Foot_Manual_Twist", defaultValue=0.0, at="float", k=True)
+
+        pm.addAttr(cont_fk_ik, shortName="upLegAutoTwist", longName="UpLeg_Auto_Twist", defaultValue=1.0, minValue=0.0, maxValue=1.0, at="float", k=True)
+        pm.addAttr(cont_fk_ik, shortName="upLegManualTwist", longName="UpLeg_Manual_Twist", defaultValue=0.0, at="float", k=True)
+
+        pm.addAttr(cont_fk_ik, shortName="allowScaling", longName="Allow_Scaling", defaultValue=1.0, minValue=0.0, maxValue=1.0, at="float", k=True)
+
+
+        # pm.addAttr(cont_fk_ik, shortName="autoTwist", longName="Auto_Twist", defaultValue=1.0, minValue=0.0, maxValue=1.0,
+        #            at="float", k=True)
+        # pm.addAttr(cont_fk_ik, shortName="manualTwist", longName="Manual_Twist", defaultValue=0.0, at="float", k=True)
         pm.addAttr(cont_fk_ik, at="enum", k=True, shortName="interpType", longName="Interp_Type", en="No_Flip:Average:Shortest:Longest:Cache", defaultValue=0)
         pm.addAttr(cont_fk_ik, shortName="tweakControls", longName="Tweak_Controls", defaultValue=0, at="bool")
         pm.setAttr(cont_fk_ik.tweakControls, cb=True)
@@ -911,14 +922,17 @@ class Leg(object):
 
         # ribbon_start_ori_con = pm.orientConstraint(j_ik_orig_root, jfk_root, ribbon_upper_leg.startAim, mo=False)
         ribbon_start_ori_con = pm.parentConstraint(j_ik_orig_root, jfk_root, ribbon_upper_leg.startAim, mo=True, skipTranslate=["x","y","z"] )
+        ribbon_start_ori_con2 = pm.parentConstraint(j_def_hip, ribbon_upper_leg.startAim, mo=True, skipTranslate=["x","y","z"] )
         cont_fk_ik.fk_ik >> ("%s.%sW0" %(ribbon_start_ori_con, j_ik_orig_root))
         fk_ik_rvs.outputX >> ("%s.%sW1" %(ribbon_start_ori_con, jfk_root))
+
+        cont_fk_ik.alignHip >> ribbon_upper_leg.startAim.blendParent2
 
         # AUTO AND MANUAL TWIST
 
         # auto
         auto_twist_thigh = pm.createNode("multiplyDivide", name="autoTwistThigh_%s" % suffix)
-        cont_thigh.autoTwist >> auto_twist_thigh.input2X
+        cont_fk_ik.upLegAutoTwist >> auto_twist_thigh.input2X
         ribbon_start_pa_con_upper_leg_start.constraintRotate >> auto_twist_thigh.input1
 
         # !!! The parent constrain override should be disconnected like this
@@ -927,10 +941,13 @@ class Leg(object):
         # manual
         add_manual_twist_thigh = pm.createNode("plusMinusAverage", name=("AddManualTwist_UpperLeg_%s" % suffix))
         auto_twist_thigh.output >> add_manual_twist_thigh.input3D[0]
-        cont_thigh.manualTwist >> add_manual_twist_thigh.input3D[1].input3Dx
+        cont_fk_ik.upLegManualTwist >> add_manual_twist_thigh.input3D[1].input3Dx
 
         # connect to the joint
         add_manual_twist_thigh.output3D >> ribbon_upper_leg.startConnection.rotate
+
+        # connect allowScaling
+        cont_fk_ik.allowScaling >> ribbon_upper_leg.startConnection.scaleSwitch
 
         # LOWERLEG RIBBON
 
@@ -951,7 +968,7 @@ class Leg(object):
 
         # auto
         auto_twist_ankle = pm.createNode("multiplyDivide", name="autoTwistAnkle_%s" % suffix)
-        cont_fk_ik.autoTwist >> auto_twist_ankle.input2X
+        cont_fk_ik.footAutoTwist >> auto_twist_ankle.input2X
         ribbon_start_pa_con_lower_leg_end.constraintRotate >> auto_twist_ankle.input1
 
         # !!! The parent constrain override should be disconnected like this
@@ -960,10 +977,13 @@ class Leg(object):
         # manual
         add_manual_twist_ankle = pm.createNode("plusMinusAverage", name=("AddManualTwist_LowerLeg_%s" % suffix))
         auto_twist_ankle.output >> add_manual_twist_ankle.input3D[0]
-        cont_fk_ik.manualTwist >> add_manual_twist_ankle.input3D[1].input3Dx
+        cont_fk_ik.footManualTwist >> add_manual_twist_ankle.input3D[1].input3Dx
 
         # connect to the joint
         add_manual_twist_ankle.output3D >> ribbon_lower_leg.endConnection.rotate
+
+        # connect allowScaling
+        cont_fk_ik.allowScaling >> ribbon_lower_leg.startConnection.scaleSwitch
 
         # Volume Preservation Stuff
         vpExtraInput = pm.createNode("multiplyDivide", name="vpExtraInput_%s" % suffix)
