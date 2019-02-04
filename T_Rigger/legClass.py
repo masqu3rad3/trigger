@@ -926,7 +926,13 @@ class Leg(object):
         cont_fk_ik.fk_ik >> ("%s.%sW0" %(ribbon_start_ori_con, j_ik_orig_root))
         fk_ik_rvs.outputX >> ("%s.%sW1" %(ribbon_start_ori_con, jfk_root))
 
-        cont_fk_ik.alignHip >> ribbon_upper_leg.startAim.blendParent2
+        # cont_fk_ik.alignHip >> ribbon_upper_leg.startAim.blendParent2
+        pairBlendNode = pm.listConnections(ribbon_start_ori_con, d=True, t="pairBlend")[0]
+        # disconnect the existing weight connection
+        pm.disconnectAttr(pairBlendNode.w)
+        # re-connect to the custom attribute
+        cont_fk_ik.alignHip >> pairBlendNode.w
+
 
         # AUTO AND MANUAL TWIST
 
