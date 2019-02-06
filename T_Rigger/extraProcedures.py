@@ -704,7 +704,7 @@ def getMirror(node):
             pm.warning("Cannot find the mirror controller (Why?)")
             return None
 
-def orientJoints(jointList, localMoveAxis=(0.0,0.0,1.0), upAxis=(0.0,1.0,0.0)):
+def orientJoints(jointList, localMoveAxis=(0.0,0.0,1.0), upAxis=(0.0,1.0,0.0), mirrorAxis=(1.0, 0.0, 0.0)):
 
     #unparent each
     # print jointList
@@ -714,6 +714,9 @@ def orientJoints(jointList, localMoveAxis=(0.0,0.0,1.0), upAxis=(0.0,1.0,0.0)):
     #     pass
 
     # pm.parent(jointList, w=True)
+    if len(jointList) == 1:
+        pass
+        return
 
 
     for j in range(1, len(jointList)):
@@ -721,7 +724,8 @@ def orientJoints(jointList, localMoveAxis=(0.0,0.0,1.0), upAxis=(0.0,1.0,0.0)):
 
     # get the aimVector
     tempAimLocator = pm.spaceLocator(name="tempAimLocator")
-    alignAndAim(tempAimLocator, [jointList[1]], [jointList[2]], upVector=upAxis)
+    # alignAndAim(tempAimLocator, [jointList[1]], [jointList[2]], upVector=upAxis)
+    alignAndAim(tempAimLocator, [jointList[0]], [jointList[1]], upVector=upAxis)
 
     for j in range (0, len(jointList)):
 
@@ -734,7 +738,7 @@ def orientJoints(jointList, localMoveAxis=(0.0,0.0,1.0), upAxis=(0.0,1.0,0.0)):
 
         # do not try to ali
         if not (j == (len(jointList)-1)):
-            aimCon = pm.aimConstraint(jointList[j+1], jointList[j], wuo=localAimLocator, wut='object', u=localMoveAxis)
+            aimCon = pm.aimConstraint(jointList[j+1], jointList[j], aim=mirrorAxis, wuo=localAimLocator, wut='object', u=localMoveAxis)
             pm.delete(aimCon)
             pm.makeIdentity(jointList[j], a=True)
         pm.delete(localAimLocator)
@@ -747,6 +751,3 @@ def orientJoints(jointList, localMoveAxis=(0.0,0.0,1.0), upAxis=(0.0,1.0,0.0)):
     pm.makeIdentity(jointList[-1], a=True)
     pm.setAttr(jointList[-1].jointOrient, (0,0,0))
 
-
-
-    pass
