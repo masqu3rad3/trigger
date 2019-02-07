@@ -74,7 +74,7 @@ class Arm(object):
 
         master_root = pm.group(em=True, name="masterRoot_%s" % suffix)
         extra.alignTo(master_root, collar_ref, 0)
-        pm.makeIdentity(a=True)
+        pm.makeIdentity(master_root, a=True)
 
         master_ik = pm.spaceLocator(name="masterIK_%s" % suffix)
         extra.alignTo(master_ik, hand_ref, 0)
@@ -184,10 +184,13 @@ class Arm(object):
         # re-orient single joints
 
         extra.alignToAlter(j_collar_end, j_fk_up, mode=2)
+        pm.makeIdentity(j_collar_end, a=True)
         # pm.setAttr(j_collar_end.jointOrient, jOrShoulder)
         extra.alignToAlter(j_def_elbow, j_fk_low, mode=2)
+        pm.makeIdentity(j_def_elbow, a=True)
 
         extra.alignToAlter(j_def_hand, j_fk_low_end, mode=2)
+        pm.makeIdentity(j_def_hand, a=True)
 
         #     _____            _             _ _
         #    / ____|          | |           | | |
@@ -632,8 +635,9 @@ class Arm(object):
         # pm.orientConstraint(cont_fk_low_arm, j_fk_low, mo=True)
         pm.orientConstraint(cont_fk_low_arm, j_fk_low, mo=False)
 
-        pm.parentConstraint(cont_shoulder, cont_fk_up_arm_off, sr=("x", "y", "z"), mo=True)
-        # pm.orientConstraint(cont_shoulder, cont_fk_up_arm_ore, mo=False)
+        # pm.parentConstraint(cont_shoulder, cont_fk_up_arm_off, sr=("x", "y", "z"), mo=True)
+        pm.parentConstraint(j_collar_end, cont_fk_up_arm_off, sr=("x", "y", "z"), mo=False)
+
         pm.parentConstraint(cont_fk_up_arm, cont_fk_low_arm_off, mo=True)
         # pm.parentConstraint(cont_fk_up_arm, cont_fk_low_arm_off, mo=False)
 
