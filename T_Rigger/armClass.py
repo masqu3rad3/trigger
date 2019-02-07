@@ -118,47 +118,56 @@ class Arm(object):
         # Follow IK Chain
 
         pm.select(d=True)
-        j_ik_orig_up = pm.joint(name="jIK_orig_Up_%s" % suffix, p=shoulder_pos, radius=1.5)
-        j_ik_orig_low = pm.joint(name="jIK_orig_Low_%s" % suffix, p=elbow_pos, radius=1.5)
-        j_ik_orig_low_end = pm.joint(name="jIK_orig_LowEnd_%s" % suffix, p=hand_pos, radius=1.5)
+        j_ik_orig_up = pm.joint(name="jIK_orig_Up_%s" % suffix, p=shoulder_pos, radius=0.5)
+        j_ik_orig_low = pm.joint(name="jIK_orig_Low_%s" % suffix, p=elbow_pos, radius=0.5)
+        j_ik_orig_low_end = pm.joint(name="jIK_orig_LowEnd_%s" % suffix, p=hand_pos, radius=0.5)
 
         # Single Chain IK
 
         pm.select(d=True)
-        j_ik_sc_up = pm.joint(name="jIK_SC_Up_%s" % suffix, p=shoulder_pos, radius=1)
-        j_ik_sc_low = pm.joint(name="jIK_SC_Low_%s" % suffix, p=elbow_pos, radius=1)
+        j_ik_sc_up = pm.joint(name="jIK_SC_Up_%s" % suffix, p=shoulder_pos, radius=1.0)
+        j_ik_sc_low = pm.joint(name="jIK_SC_Low_%s" % suffix, p=elbow_pos, radius=1.0)
         j_ik_sc_low_end = pm.joint(name="jIK_SC_LowEnd_%s" % suffix, p=hand_pos, radius=1)
 
         # Rotate Plane IK
 
         pm.select(d=True)
-        j_ik_rp_up = pm.joint(name="jIK_RP_Up_%s" % suffix, p=shoulder_pos, radius=0.7)
-        j_ik_rp_low = pm.joint(name="jIK_RP_Low_%s" % suffix, p=elbow_pos, radius=0.7)
-        j_ik_rp_low_end = pm.joint(name="jIK_RP_LowEnd_%s" % suffix, p=hand_pos, radius=0.7)
+        j_ik_rp_up = pm.joint(name="jIK_RP_Up_%s" % suffix, p=shoulder_pos, radius=1.5)
+        j_ik_rp_low = pm.joint(name="jIK_RP_Low_%s" % suffix, p=elbow_pos, radius=1.5)
+        j_ik_rp_low_end = pm.joint(name="jIK_RP_LowEnd_%s" % suffix, p=hand_pos, radius=1.5)
 
         pm.select(d=True)
 
         # orientations
 
-        # extra.orientJoints([j_ik_orig_up, j_ik_orig_low, j_ik_orig_low_end], localMoveAxis=(dt.Vector(up_axis)),  mirrorAxis=(sideMult, 0.0, 0.0), upAxis=sideMult*(dt.Vector(up_axis)))
-        # extra.orientJoints([j_ik_sc_up, j_ik_sc_low, j_ik_sc_low_end], localMoveAxis=(dt.Vector(up_axis)),  mirrorAxis=(sideMult, 0.0, 0.0), upAxis=sideMult*(dt.Vector(up_axis)))
-        # extra.orientJoints([j_ik_rp_up, j_ik_rp_low, j_ik_rp_low_end], localMoveAxis=(dt.Vector(up_axis)),  mirrorAxis=(sideMult, 0.0, 0.0), upAxis=sideMult*(dt.Vector(up_axis)))
-
         extra.orientJoints([j_ik_orig_up, j_ik_orig_low, j_ik_orig_low_end], localMoveAxis=(dt.Vector(up_axis)),
-                           mirrorAxis=(1.0, 0.0, 0.0), upAxis=(dt.Vector(up_axis)))
+                           mirrorAxis=(sideMult, 0.0, 0.0), upAxis=sideMult*(dt.Vector(up_axis)))
+
         extra.orientJoints([j_ik_sc_up, j_ik_sc_low, j_ik_sc_low_end], localMoveAxis=(dt.Vector(up_axis)),
-                           mirrorAxis=(1.0, 0.0, 0.0), upAxis=(dt.Vector(up_axis)))
+                           mirrorAxis=(sideMult, 0.0, 0.0), upAxis=sideMult*(dt.Vector(up_axis)))
+
         extra.orientJoints([j_ik_rp_up, j_ik_rp_low, j_ik_rp_low_end], localMoveAxis=(dt.Vector(up_axis)),
-                           mirrorAxis=(1.0, 0.0, 0.0), upAxis=(dt.Vector(up_axis)))
+                           mirrorAxis=(sideMult, 0.0, 0.0), upAxis=sideMult*(dt.Vector(up_axis)))
+
+        # extra.orientJoints([j_ik_orig_up, j_ik_orig_low, j_ik_orig_low_end], localMoveAxis=(dt.Vector(up_axis)),
+        #                    mirrorAxis=(1.0, 0.0, 0.0), upAxis=(dt.Vector(up_axis)))
+        # extra.orientJoints([j_ik_sc_up, j_ik_sc_low, j_ik_sc_low_end], localMoveAxis=(dt.Vector(up_axis)),
+        #                    mirrorAxis=(1.0, 0.0, 0.0), upAxis=(dt.Vector(up_axis)))
+        # extra.orientJoints([j_ik_rp_up, j_ik_rp_low, j_ik_rp_low_end], localMoveAxis=(dt.Vector(up_axis)),
+        #                    mirrorAxis=(1.0, 0.0, 0.0), upAxis=(dt.Vector(up_axis)))
 
         # pm.joint(self.j_def_collar, e=True, zso=True, oj="xyz", sao="yup")
+
+        #test dup
+        # pm.select(d=True)
+        # pm.duplicate(j_ik_rp_up, name="TEST")
 
         # FK Joints
 
         pm.select(d=True)
-        j_fk_up = pm.joint(name="jFK_Up_%s" % suffix, p=shoulder_pos, radius=1.0)
-        j_fk_low = pm.joint(name="jFK_Low_%s" % suffix, p=elbow_pos, radius=1.0)
-        j_fk_low_end = pm.joint(name="jFK_LowEnd_%s" % suffix, p=hand_pos, radius=1.0)
+        j_fk_up = pm.joint(name="jFK_Up_%s" % suffix, p=shoulder_pos, radius=2.0)
+        j_fk_low = pm.joint(name="jFK_Low_%s" % suffix, p=elbow_pos, radius=2.0)
+        j_fk_low_end = pm.joint(name="jFK_LowEnd_%s" % suffix, p=hand_pos, radius=2.0)
 
         # if side == "R":
         #     extra.orientJoints([j_fk_up, j_fk_low, j_fk_low_end], localMoveAxis=(dt.Vector(up_axis)), mirrorAxis=(-1.0, 0.0, 0.0), upAxis=-(dt.Vector(up_axis)))
@@ -172,11 +181,13 @@ class Arm(object):
 
         j_def_hand = pm.joint(name="jDef_Hand_%s" % suffix, p=root_position, radius=1.0)
 
-        # re-orient collar end
+        # re-orient single joints
 
-        # extra.alignToAlter(j_collar_end, j_fk_up, mode=2)
+        extra.alignToAlter(j_collar_end, j_fk_up, mode=2)
         # pm.setAttr(j_collar_end.jointOrient, jOrShoulder)
         extra.alignToAlter(j_def_elbow, j_fk_low, mode=2)
+
+        extra.alignToAlter(j_def_hand, j_fk_low_end, mode=2)
 
         #     _____            _             _ _
         #    / ____|          | |           | | |
@@ -201,9 +212,11 @@ class Arm(object):
         ## IK hand controller
         ik_cont_scale = (init_lower_arm_dist / 3, init_lower_arm_dist / 3, init_lower_arm_dist / 3)
         self.cont_IK_hand = icon.circle("cont_IK_hand_%s" % suffix, ik_cont_scale, normal=(1, 0, 0))
-        extra.alignAndAim(self.cont_IK_hand, targetList=[hand_ref], aimTargetList=[elbow_ref], upVector=up_axis,
-                          rotateOff=(0, -180, 0))
+        # extra.alignAndAim(self.cont_IK_hand, targetList=[hand_ref], aimTargetList=[elbow_ref], upVector=up_axis,
+        #                   rotateOff=(0, -180, 0))
         # extra.alignAndAim(self.cont_IK_hand, targetList=[hand_ref], aimTargetList=[elbow_ref], upVector=up_axis)
+
+        extra.alignToAlter(self.cont_IK_hand, j_fk_low_end, mode=2)
 
         self.cont_IK_OFF = extra.createUpGrp(self.cont_IK_hand, "OFF")
         cont_ik_hand_ore = extra.createUpGrp(self.cont_IK_hand, "ORE")
@@ -265,6 +278,8 @@ class Arm(object):
 
         cont_fk_up_arm_off = extra.createUpGrp(cont_fk_up_arm, "OFF")
         cont_fk_up_arm_ore = extra.createUpGrp(cont_fk_up_arm, "ORE")
+        pm.xform(cont_fk_up_arm_off, piv=shoulder_pos, ws=True)
+        pm.xform(cont_fk_up_arm_ore, piv=shoulder_pos, ws=True)
 
         ## FK LOW Arm Controller
         fk_low_arm_scale = (init_lower_arm_dist / 2, init_lower_arm_dist / 8, init_lower_arm_dist / 8)
@@ -279,6 +294,8 @@ class Arm(object):
 
         cont_fk_low_arm_off = extra.createUpGrp(cont_fk_low_arm, "OFF")
         cont_fk_low_arm_ore = extra.createUpGrp(cont_fk_low_arm, "ORE")
+        pm.xform(cont_fk_low_arm_off, piv=elbow_pos, ws=True)
+        pm.xform(cont_fk_low_arm_ore, piv=elbow_pos, ws=True)
 
         ## FK HAND Controller
         fk_cont_scale = (init_lower_arm_dist / 5, init_lower_arm_dist / 5, init_lower_arm_dist / 5)
@@ -331,20 +348,20 @@ class Arm(object):
 
         start_lock = pm.spaceLocator(name="startLock_%s" % suffix)
         # extra.alignTo(start_lock, shoulder_ref, 2)
-        extra.alignTo(start_lock, j_fk_up, 2)
+        extra.alignToAlter(start_lock, j_ik_orig_up, 2)
         start_lock_ore = extra.createUpGrp(start_lock, "Ore")
         start_lock_pos = extra.createUpGrp(start_lock, "Pos")
         start_lock_twist = extra.createUpGrp(start_lock, "AutoTwist")
 
-        start_lock_weight = pm.parentConstraint(j_collar_end, start_lock, sr=("y", "z"), mo=True)
-        # start_lock_weight = pm.parentConstraint(j_collar_end, start_lock, sr=("y", "z"), mo=False)
+        # start_lock_weight = pm.parentConstraint(j_collar_end, start_lock, sr=("y", "z"), mo=True)
+        start_lock_weight = pm.parentConstraint(j_collar_end, start_lock, sr=("y", "z"), mo=False)
 
         # pm.setAttr(start_lock_weight.interpType, 0)
 
-        pm.parentConstraint(start_lock, j_ik_sc_up, mo=True)
-        # pm.parentConstraint(start_lock, j_ik_sc_up, mo=False)
-        pm.parentConstraint(start_lock, j_ik_rp_up, mo=True)
-        # pm.parentConstraint(start_lock, j_ik_rp_up, mo=False)
+        # pm.parentConstraint(start_lock, j_ik_sc_up, mo=True)
+        pm.parentConstraint(start_lock, j_ik_sc_up, mo=False)
+        # pm.parentConstraint(start_lock, j_ik_rp_up, mo=True)
+        pm.parentConstraint(start_lock, j_ik_rp_up, mo=False)
 
         # Create IK handles
 
@@ -523,12 +540,15 @@ class Arm(object):
 
         ik_parent_grp = pm.group(name="IK_parentGRP_%s" % suffix, em=True)
         extra.alignTo(ik_parent_grp, hand_ref, 2)
+        # extra.alignToAlter(ik_parent_grp, j_def_hand, 2)
 
+        # pm.parentConstraint(self.cont_IK_hand, ik_parent_grp, mo=True)
+        pm.parentConstraint(self.cont_IK_hand, ik_parent_grp, mo=False)
+
+        # parenting should be after the constraint
         pm.parent(ik_handle_sc[0], ik_parent_grp)
         pm.parent(ik_handle_rp[0], ik_parent_grp)
         pm.parent(master_ik, ik_parent_grp)
-        pm.parentConstraint(self.cont_IK_hand, ik_parent_grp, mo=True)
-        # pm.parentConstraint(self.cont_IK_hand, ik_parent_grp, mo=False)
 
         blend_ore_ik_up = pm.createNode("blendColors", name="blendORE_IK_Up_%s" % suffix)
         j_ik_sc_up.rotate >> blend_ore_ik_up.color2
@@ -589,9 +609,11 @@ class Arm(object):
         pm.select(cont_shoulder)
 
         pacon_locator_shou = pm.spaceLocator(name="paConLoc_%s" % suffix)
-        extra.alignTo(pacon_locator_shou, self.j_def_collar)
+        # extra.alignTo(pacon_locator_shou, self.j_def_collar)
+        extra.alignTo(pacon_locator_shou, self.j_def_collar, mode=2)
 
-        j_def_pa_con = pm.parentConstraint(cont_shoulder, pacon_locator_shou, mo=True)
+        # j_def_pa_con = pm.parentConstraint(cont_shoulder, pacon_locator_shou, mo=True)
+        j_def_pa_con = pm.parentConstraint(cont_shoulder, pacon_locator_shou, mo=False)
 
         ###########################
         ######### FK ARM ##########
@@ -603,13 +625,17 @@ class Arm(object):
 
         ### Create Midlock - FK
 
-        pm.orientConstraint(cont_fk_up_arm, j_fk_up, mo=True)
+        # pm.orientConstraint(cont_fk_up_arm, j_fk_up, mo=True)
+        pm.orientConstraint(cont_fk_up_arm, j_fk_up, mo=False)
         pm.pointConstraint(start_lock, j_fk_up, mo=False)
 
-        pm.orientConstraint(cont_fk_low_arm, j_fk_low, mo=True)
+        # pm.orientConstraint(cont_fk_low_arm, j_fk_low, mo=True)
+        pm.orientConstraint(cont_fk_low_arm, j_fk_low, mo=False)
 
         pm.parentConstraint(cont_shoulder, cont_fk_up_arm_off, sr=("x", "y", "z"), mo=True)
+        # pm.orientConstraint(cont_shoulder, cont_fk_up_arm_ore, mo=False)
         pm.parentConstraint(cont_fk_up_arm, cont_fk_low_arm_off, mo=True)
+        # pm.parentConstraint(cont_fk_up_arm, cont_fk_low_arm_off, mo=False)
 
         fk_ik_rvs.outputX >> cont_fk_up_arm_ore.visibility
         fk_ik_rvs.outputX >> cont_fk_low_arm_ore.visibility
@@ -951,7 +977,7 @@ class Arm(object):
 
         pm.addAttr(self.scaleGrp, at="bool", ln="Control_Visibility", sn="contVis", defaultValue=True)
         pm.addAttr(self.scaleGrp, at="bool", ln="Joints_Visibility", sn="jointVis", defaultValue=True)
-        pm.addAttr(self.scaleGrp, at="bool", ln="Rig_Visibility", sn="rigVis", defaultValue=False)
+        pm.addAttr(self.scaleGrp, at="bool", ln="Rig_Visibility", sn="rigVis", defaultValue=True)
         # make the created attributes visible in the channelbox
         pm.setAttr(self.scaleGrp.contVis, cb=True)
         pm.setAttr(self.scaleGrp.jointVis, cb=True)
@@ -982,7 +1008,7 @@ class Arm(object):
         for i in ribbon_upper_arm.toHide:
             self.scaleGrp.rigVis >> i.v
 
-        pm.setAttr(self.scaleGrp.rigVis, 0)
+        pm.setAttr(self.scaleGrp.rigVis, 1)
 
         # FOOL PROOFING
         extra.lockAndHide(self.cont_IK_hand, ["v"])
@@ -1009,3 +1035,4 @@ class Arm(object):
 
         self.scaleConstraints = [self.scaleGrp, self.cont_IK_OFF]
         self.anchors = [(self.cont_IK_hand, "parent", 1, None), (self.cont_Pole, "parent", 1, None)]
+
