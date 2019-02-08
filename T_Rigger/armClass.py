@@ -149,6 +149,7 @@ class Arm(object):
         extra.orientJoints([j_ik_rp_up, j_ik_rp_low, j_ik_rp_low_end], localMoveAxis=(dt.Vector(up_axis)),
                            mirrorAxis=(sideMult, 0.0, 0.0), upAxis=sideMult*(dt.Vector(up_axis)))
 
+
         # extra.orientJoints([j_ik_orig_up, j_ik_orig_low, j_ik_orig_low_end], localMoveAxis=(dt.Vector(up_axis)),
         #                    mirrorAxis=(1.0, 0.0, 0.0), upAxis=(dt.Vector(up_axis)))
         # extra.orientJoints([j_ik_sc_up, j_ik_sc_low, j_ik_sc_low_end], localMoveAxis=(dt.Vector(up_axis)),
@@ -366,6 +367,7 @@ class Arm(object):
         # pm.parentConstraint(start_lock, j_ik_rp_up, mo=True)
         pm.parentConstraint(start_lock, j_ik_rp_up, mo=False)
 
+
         # Create IK handles
 
         ik_handle_sc = pm.ikHandle(sj=j_ik_sc_up, ee=j_ik_sc_low_end, name="ikHandle_SC_%s" % suffix)
@@ -481,10 +483,24 @@ class Arm(object):
         # stretch_condition_sc.outColorG >> squashiness_sc.color2G
         squashiness_sc.outputR >> stretchiness_sc.color1R
         squashiness_sc.outputG >> stretchiness_sc.color1G
-        stretchiness_sc.outputR >> j_ik_sc_low.translateX
-        stretchiness_sc.outputG >> j_ik_sc_low_end.translateX
-        stretchiness_sc.outputR >> j_ik_rp_low.translateX
-        stretchiness_sc.outputG >> j_ik_rp_low_end.translateX
+
+        invertedStrSC = pm.createNode("multiplyDivide")
+        pm.setAttr(invertedStrSC.input2X, sideMult)
+        pm.setAttr(invertedStrSC.input2Y, sideMult)
+        stretchiness_sc.outputR >> invertedStrSC.input1X
+        stretchiness_sc.outputG >> invertedStrSC.input1Y
+
+        invertedStrSC.outputX >> j_ik_sc_low.translateX
+        invertedStrSC.outputY >> j_ik_sc_low_end.translateX
+
+        # stretchiness_sc.outputR >> j_ik_sc_low.translateX
+        # stretchiness_sc.outputG >> j_ik_sc_low_end.translateX
+
+        # stretchiness_sc.outputR >> j_ik_rp_low.translateX
+        # stretchiness_sc.outputG >> j_ik_rp_low_end.translateX
+
+        invertedStrSC.outputX >> j_ik_rp_low.translateX
+        invertedStrSC.outputY >> j_ik_rp_low_end.translateX
 
         ## iksoft related
         self.cont_IK_hand.softIK >> ik_soft_clamp.inputR
@@ -622,9 +638,9 @@ class Arm(object):
         ######### FK ARM ##########
         ###########################
 
-        cont_fk_up_arm.scaleY >> j_fk_up.scaleX
+        cont_fk_up_arm.scaleX >> j_fk_up.scaleX
 
-        cont_fk_low_arm.scaleY >> j_fk_low.scaleX
+        cont_fk_low_arm.scaleX >> j_fk_low.scaleX
 
         ### Create Midlock - FK
 
@@ -638,8 +654,9 @@ class Arm(object):
         # pm.parentConstraint(cont_shoulder, cont_fk_up_arm_off, sr=("x", "y", "z"), mo=True)
         pm.parentConstraint(j_collar_end, cont_fk_up_arm_off, sr=("x", "y", "z"), mo=False)
 
+        # TODO : TAKE A LOOK TO THE OFFSET SOLUTION
         pm.parentConstraint(cont_fk_up_arm, cont_fk_low_arm_off, mo=True)
-        # pm.parentConstraint(cont_fk_up_arm, cont_fk_low_arm_off, mo=False)
+        # pm.parentConstraint(j_def_elbow, cont_fk_low_arm_off, mo=False)
 
         fk_ik_rvs.outputX >> cont_fk_up_arm_ore.visibility
         fk_ik_rvs.outputX >> cont_fk_low_arm_ore.visibility
@@ -653,24 +670,26 @@ class Arm(object):
         midcont_scale = (init_lower_arm_dist / 4, init_lower_arm_dist / 4, init_lower_arm_dist / 4)
         cont_mid_lock = icon.star("cont_mid_%s" % suffix, midcont_scale, normal=(1, 0, 0))
 
-        extra.alignToAlter(cont_mid_lock, j_def_elbow, 2)
+        # extra.alignToAlter(cont_mid_lock, j_def_elbow, 2)
+        extra.alignToAlter(cont_mid_lock, j_fk_low, 2)
 
+        cont_mid_lock_ext = extra.createUpGrp(cont_mid_lock, "EXT")
         cont_mid_lock_pos = extra.createUpGrp(cont_mid_lock, "POS")
         cont_mid_lock_ave = extra.createUpGrp(cont_mid_lock, "AVE")
         # extra.alignTo(cont_mid_lock_pos, elbow_ref, 0)
 
-        mid_lock_pa_con_weight = pm.parentConstraint(j_ik_orig_up, j_fk_up, cont_mid_lock_pos, mo=True)
-        # cont_fk_ik.fk_ik >> (mid_lock_pa_con_weight + "." + j_ik_orig_up + "W0")
-        cont_fk_ik.fk_ik >> ("%s.%sW0" % (mid_lock_pa_con_weight, j_ik_orig_up))
+        # TODO : BELOW COMMENTED SECTION MIGHT BE A PROBLEM
+        # mid_lock_pa_con_weight = pm.parentConstraint(j_ik_orig_up, j_fk_up, cont_mid_lock_pos, mo=True)
+        mid_lock_pa_con_weight = pm.orientConstraint(j_ik_orig_low, j_fk_low, cont_mid_lock_pos, mo=False)
+        # cont_fk_ik.fk_ik >> ("%s.%sW0" % (mid_lock_pa_con_weight, j_ik_orig_up))
+        cont_fk_ik.fk_ik >> ("%s.%sW0" % (mid_lock_pa_con_weight, j_ik_orig_low))
 
-        # fk_ik_rvs.outputX >> (mid_lock_pa_con_weight + "." + j_fk_up + "W1")
-        fk_ik_rvs.outputX >> ("%s.%sW1" % (mid_lock_pa_con_weight, j_fk_up))
+        # fk_ik_rvs.outputX >> ("%s.%sW1" % (mid_lock_pa_con_weight, j_fk_up))
+        fk_ik_rvs.outputX >> ("%s.%sW1" % (mid_lock_pa_con_weight, j_fk_low))
 
         mid_lock_po_con_weight = pm.pointConstraint(j_ik_orig_low, j_fk_low, cont_mid_lock_ave, mo=False)
-        # cont_fk_ik.fk_ik >> (mid_lock_po_con_weight + "." + j_ik_orig_low + "W0")
         cont_fk_ik.fk_ik >> ("%s.%sW0" % (mid_lock_po_con_weight, j_ik_orig_low))
 
-        # fk_ik_rvs.outputX >> (mid_lock_po_con_weight + "." + j_fk_low + "W1")
         fk_ik_rvs.outputX >> ("%s.%sW1" % (mid_lock_po_con_weight, j_fk_low))
 
         mid_lock_x_bln = pm.createNode("multiplyDivide", name="midLock_xBln_%s" % suffix)
@@ -707,10 +726,13 @@ class Arm(object):
         # fk_ik_rvs.outputX >> (end_lock_weight + "." + j_fk_low_end + "W1")
         fk_ik_rvs.outputX >> ("%s.%sW1" % (end_lock_weight, j_fk_low_end))
 
+        # the following offset parent constraint is not important and wont cause any trouble since
+        # it only affects the FK/IK icon
         pm.parentConstraint(end_lock, cont_fk_ik_pos, mo=True)
         pm.parent(end_lock_ore, self.scaleGrp)
 
         end_lock_rot = pm.parentConstraint(ik_parent_grp, cont_fk_hand, end_lock_twist, st=("x", "y", "z"), mo=True)
+        # end_lock_rot = pm.parentConstraint(ik_parent_grp, cont_fk_hand, end_lock_twist, st=("x", "y", "z"), mo=False)
         # cont_fk_ik.fk_ik >> (end_lock_rot + "." + ik_parent_grp + "W0")
         cont_fk_ik.fk_ik >> ("%s.%sW0" % (end_lock_rot, ik_parent_grp))
         # fk_ik_rvs.outputX >> (end_lock_rot + "." + cont_fk_hand + "W1")
@@ -946,7 +968,8 @@ class Arm(object):
         pm.parent(ik_parent_grp, self.scaleGrp)
         pm.parent(cont_fk_hand_off, self.scaleGrp)
         pm.parent(mid_lock, self.scaleGrp)
-        pm.parent(cont_mid_lock_pos, self.scaleGrp)
+        # pm.parent(cont_mid_lock_pos, self.scaleGrp)
+        pm.parent(cont_mid_lock_ext, self.scaleGrp)
         pm.parent(cont_pole_off, self.scaleGrp)
         pm.parent(j_def_elbow, self.scaleGrp)
 
@@ -1020,8 +1043,8 @@ class Arm(object):
         extra.lockAndHide(cont_mid_lock, ["v"])
         extra.lockAndHide(cont_fk_ik, ["sx", "sy", "sz", "v"])
         extra.lockAndHide(cont_fk_hand, ["tx", "ty", "tz", "v"])
-        extra.lockAndHide(cont_fk_low_arm, ["tx", "ty", "tz", "sx", "sz", "v"])
-        extra.lockAndHide(cont_fk_up_arm, ["tx", "ty", "tz", "sx", "sz", "v"])
+        extra.lockAndHide(cont_fk_low_arm, ["tx", "ty", "tz", "sy", "sz", "v"])
+        extra.lockAndHide(cont_fk_up_arm, ["tx", "ty", "tz", "sy", "sz", "v"])
         extra.lockAndHide(cont_shoulder, ["sx", "sy", "sz", "v"])
 
         extra.colorize(cont_shoulder, self.colorCodes[0])
