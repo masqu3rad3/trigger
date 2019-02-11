@@ -55,9 +55,13 @@ class PowerRibbon():
 
         #Start Upnodes
         pm.select(d=True)
-        self.startAim=pm.group(em=True, name="jRbn_Start_%s" %name)
+        self.startAim=pm.group(em=True, name="jRbn_Start_CON_%s" %name)
         pm.move(self.startAim, (-(ribbonLength/2.0),0,0))
         pm.makeIdentity(a=True)
+        startORE = pm.duplicate(self.startAim, name="jRbn_Start_ORE_%s" %name)[0]
+        pm.parent(startORE, self.startAim)
+
+
         start_UP=pm.spaceLocator(name="jRbn_Start_%s" %name)
         self.toHide.append(start_UP.getShape())
         pm.move(start_UP, (-(ribbonLength/2.0),0.5,0))
@@ -208,7 +212,8 @@ class PowerRibbon():
         #
         # pm.parent(self.startAim, start_UP, self.startConnection)
         #
-        pm.parent(startJoint,self.startAim)
+        # pm.parent(startJoint,self.startAim)
+        pm.parent(startJoint,startORE)
         if connectStartAim:
             # aim it to the next midjoint after the start
             pm.aimConstraint(mid_joint_list[0],self.startAim, aimVector=(1,0,0), upVector=(0,1,0), wut=1, wuo=start_UP, mo=False)

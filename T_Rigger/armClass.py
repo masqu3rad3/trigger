@@ -714,7 +714,7 @@ class Arm(object):
 
         ### Create End Lock
         end_lock = pm.spaceLocator(name="endLock_%s" % suffix)
-        extra.alignTo(end_lock, hand_ref, 2)
+        extra.alignTo(end_lock, j_def_hand, 2)
         end_lock_ore = extra.createUpGrp(end_lock, "Ore")
         end_lock_pos = extra.createUpGrp(end_lock, "Pos")
         end_lock_twist = extra.createUpGrp(end_lock, "Twist")
@@ -731,12 +731,14 @@ class Arm(object):
         pm.parentConstraint(end_lock, cont_fk_ik_pos, mo=True)
         pm.parent(end_lock_ore, self.scaleGrp)
 
-        end_lock_rot = pm.parentConstraint(ik_parent_grp, cont_fk_hand, end_lock_twist, st=("x", "y", "z"), mo=True)
-        # end_lock_rot = pm.parentConstraint(ik_parent_grp, cont_fk_hand, end_lock_twist, st=("x", "y", "z"), mo=False)
+        # end_lock_rot = pm.parentConstraint(ik_parent_grp, cont_fk_hand, end_lock_twist, st=("x", "y", "z"), mo=True)
+        end_lock_rot = pm.parentConstraint(ik_parent_grp, cont_fk_hand, end_lock_twist, st=("x", "y", "z"), mo=False)
         # cont_fk_ik.fk_ik >> (end_lock_rot + "." + ik_parent_grp + "W0")
         cont_fk_ik.fk_ik >> ("%s.%sW0" % (end_lock_rot, ik_parent_grp))
         # fk_ik_rvs.outputX >> (end_lock_rot + "." + cont_fk_hand + "W1")
         fk_ik_rvs.outputX >> ("%s.%sW1" % (end_lock_rot, cont_fk_hand))
+
+        pm.setAttr(end_lock_rot.interpType, 0)
 
         ###################################
         #### CREATE DEFORMATION JOINTS ####
@@ -744,15 +746,13 @@ class Arm(object):
 
         # UPPER ARM RIBBON
 
-        # ribbonConnections_upperArm = rc..createRibbon(shoulder_ref, elbow_ref, "up_" + suffix, 0)
-        # ribbon_upper_arm = rc.Ribbon()
         ribbon_upper_arm = rc.PowerRibbon()
-        # ribbon_upper_arm.createRibbon(shoulder_ref, elbow_ref, "up_%s" % suffix, 0, connectStartAim=False)
-        ribbon_upper_arm.createPowerRibbon(shoulder_ref, elbow_ref, "up_%s" % suffix, side=side, orientation=0,
-                                           connectStartAim=False, upVector=up_axis)
-        # ribbon_upper_arm.createPowerRibbon(shoulder_ref, elbow_ref, "up_%s" % suffix, orientation=0, connectStartAim=False)
-        ribbon_start_pa_con_upper_arm_start = pm.parentConstraint(start_lock, ribbon_upper_arm.startConnection, mo=True)
-        pm.parentConstraint(mid_lock, ribbon_upper_arm.endConnection, mo=True)
+        ribbon_upper_arm.createPowerRibbon(shoulder_ref, elbow_ref, "up_%s" % suffix, side=side, orientation=0, connectStartAim=False, upVector=up_axis)
+
+        # ribbon_start_pa_con_upper_arm_start = pm.parentConstraint(start_lock, ribbon_upper_arm.startConnection, mo=True)
+        ribbon_start_pa_con_upper_arm_start = pm.parentConstraint(start_lock, ribbon_upper_arm.startConnection, mo=False)
+        # pm.parentConstraint(mid_lock, ribbon_upper_arm.endConnection, mo=True)
+        pm.parentConstraint(mid_lock, ribbon_upper_arm.endConnection, mo=False)
 
         # connect the elbow scaling
         cont_mid_lock.scale >> ribbon_upper_arm.endConnection.scale
@@ -761,10 +761,11 @@ class Arm(object):
         pm.scaleConstraint(self.scaleGrp, ribbon_upper_arm.scaleGrp)
 
         # TODO : REF
-        ribbon_start_ori_con = pm.parentConstraint(j_ik_orig_up, j_fk_up, ribbon_upper_arm.startAim, mo=True,
-                                                   skipTranslate=["x", "y", "z"])
-        ribbon_start_ori_con2 = pm.parentConstraint(j_collar_end, ribbon_upper_arm.startAim, mo=True,
-                                                    skipTranslate=["x", "y", "z"])
+        # ribbon_start_ori_con = pm.parentConstraint(j_ik_orig_up, j_fk_up, ribbon_upper_arm.startAim, mo=True, skipTranslate=["x", "y", "z"])
+        ribbon_start_ori_con = pm.parentConstraint(j_ik_orig_up, j_fk_up, ribbon_upper_arm.startAim, mo=False, skipTranslate=["x", "y", "z"])
+
+        # ribbon_start_ori_con2 = pm.parentConstraint(j_collar_end, ribbon_upper_arm.startAim, mo=True, skipTranslate=["x", "y", "z"])
+        ribbon_start_ori_con2 = pm.parentConstraint(j_collar_end, ribbon_upper_arm.startAim, mo=False, skipTranslate=["x", "y", "z"])
 
         cont_fk_ik.fk_ik >> ("%s.%sW0" % (ribbon_start_ori_con, j_ik_orig_up))
         fk_ik_rvs.outputX >> ("%s.%sW1" % (ribbon_start_ori_con, j_fk_up))
@@ -774,6 +775,13 @@ class Arm(object):
         pm.disconnectAttr(pairBlendNode.w)
         # re-connect to the custom attribute
         cont_fk_ik.alignShoulder >> pairBlendNode.w
+
+        # Rotate the shoulder connection bone 180 degrees for Right Alignment
+        if side == "R":
+            rightRBN_startupORE = pm.listRelatives(ribbon_upper_arm.startAim, children=True, type="transform")[0]
+            pm.setAttr(rightRBN_startupORE.ry, 180)
+
+
 
         # ref ends here
 
@@ -797,7 +805,7 @@ class Arm(object):
         auto_twist.output >> add_manual_twist.input3D[0]
         # cont_shoulder.manualTwist >> add_manual_twist.input3D[1].input3Dx
         # TODO : REF
-        cont_fk_ik.shoulderAutoTwist >> add_manual_twist.input3D[1].input3Dx
+        cont_fk_ik.shoulderManualTwist >> add_manual_twist.input3D[1].input3Dx
 
         # connect to the joint
         add_manual_twist.output3D >> ribbon_upper_arm.startConnection.rotate
@@ -808,14 +816,14 @@ class Arm(object):
 
         # LOWER ARM RIBBON
 
-        # ribbon_lower_arm = rc.Ribbon()
         ribbon_lower_arm = rc.PowerRibbon()
-        # ribbon_lower_arm.createRibbon(elbow_ref, hand_ref, "low_%s" % suffix, 0)
         ribbon_lower_arm.createPowerRibbon(elbow_ref, hand_ref, "low_%s" % suffix, side=side, orientation=0,
                                            upVector=up_axis)
 
-        pm.parentConstraint(mid_lock, ribbon_lower_arm.startConnection, mo=True)
-        ribbon_start_pa_con_lower_arm_end = pm.parentConstraint(end_lock, ribbon_lower_arm.endConnection, mo=True)
+        # pm.parentConstraint(mid_lock, ribbon_lower_arm.startConnection, mo=True)
+        pm.parentConstraint(mid_lock, ribbon_lower_arm.startConnection, mo=False)
+        # ribbon_start_pa_con_lower_arm_end = pm.parentConstraint(end_lock, ribbon_lower_arm.endConnection, mo=True)
+        ribbon_start_pa_con_lower_arm_end = pm.parentConstraint(end_lock, ribbon_lower_arm.endConnection, mo=False)
 
         # connect the elbow scaling
         cont_mid_lock.scale >> ribbon_lower_arm.startConnection.scale
@@ -920,11 +928,13 @@ class Arm(object):
         #  weighted constraint yapilmasi icin araya bir node olusturuyor.
         extra.alignTo(hand_lock, cont_fk_hand_off, 2)
 
+
         # pm.makeIdentity(hand_lock, a=True)
-        pm.parentConstraint(cont_fk_hand, hand_lock, mo=True)  # Olusturulan ara node baglanir
+        # pm.parentConstraint(cont_fk_hand, hand_lock, mo=True)  # Olusturulan ara node baglanir
+        pm.parentConstraint(cont_fk_hand, hand_lock, mo=False)  # Olusturulan ara node baglanir
 
         root_master = pm.spaceLocator(name="handMaster_%s" % suffix)
-        extra.alignTo(root_master, hand_ref, 2)
+        extra.alignTo(root_master, j_def_hand, 2)
         pm.select(d=True)
 
         self.sockets.append(j_def_hand)
@@ -932,9 +942,14 @@ class Arm(object):
         deformer_joints = [[j_def_hand]]
         pm.parent(j_def_hand, root_master)
 
-        pm.pointConstraint(end_lock, root_master, mo=True)
+        # pm.pointConstraint(end_lock, root_master, mo=True)
+        pm.pointConstraint(end_lock, root_master, mo=False)
+
+        # TODO : TAKE A LOOK TO THE OFFSET SOLUTION
         pm.parentConstraint(cont_fk_low_arm, cont_fk_hand_pos, mo=True)
-        hand_ori_con = pm.parentConstraint(self.cont_IK_hand, hand_lock, root_master, st=("x", "y", "z"), mo=True)
+
+        # hand_ori_con = pm.parentConstraint(self.cont_IK_hand, hand_lock, root_master, st=("x", "y", "z"), mo=True)
+        hand_ori_con = pm.parentConstraint(self.cont_IK_hand, hand_lock, root_master, st=("x", "y", "z"), mo=False)
         ## NO Flip
         pm.setAttr(hand_ori_con.interpType, 0)
         # hand_ori_con = pm.parentConstraint(self.cont_IK_hand, hand_lock, root_master, st=("x", "y", "z"), mo=False)
@@ -956,7 +971,8 @@ class Arm(object):
 
         pm.select(arm_start)
 
-        pm.parentConstraint(self.limbPlug, self.scaleGrp, mo=True)
+        # pm.parentConstraint(self.limbPlug, self.scaleGrp, mo=True)
+        pm.parentConstraint(self.limbPlug, self.scaleGrp, mo=False)
         pm.parent(start_lock_ore, self.scaleGrp)
         pm.parent(arm_start, self.scaleGrp)
         pm.parent(arm_end, self.scaleGrp)
