@@ -20,7 +20,6 @@ class Arm(object):
         self.scaleGrp = None
         self.nonScaleGrp = None
         self.cont_IK_hand = None
-        # cont_IK_hand_OFF = None
         self.cont_IK_OFF = None
         self.rootSocket = None
         self.cont_Pole = None
@@ -150,19 +149,6 @@ class Arm(object):
                            mirrorAxis=(sideMult, 0.0, 0.0), upAxis=sideMult*(dt.Vector(up_axis)))
 
 
-        # extra.orientJoints([j_ik_orig_up, j_ik_orig_low, j_ik_orig_low_end], localMoveAxis=(dt.Vector(up_axis)),
-        #                    mirrorAxis=(1.0, 0.0, 0.0), upAxis=(dt.Vector(up_axis)))
-        # extra.orientJoints([j_ik_sc_up, j_ik_sc_low, j_ik_sc_low_end], localMoveAxis=(dt.Vector(up_axis)),
-        #                    mirrorAxis=(1.0, 0.0, 0.0), upAxis=(dt.Vector(up_axis)))
-        # extra.orientJoints([j_ik_rp_up, j_ik_rp_low, j_ik_rp_low_end], localMoveAxis=(dt.Vector(up_axis)),
-        #                    mirrorAxis=(1.0, 0.0, 0.0), upAxis=(dt.Vector(up_axis)))
-
-        # pm.joint(self.j_def_collar, e=True, zso=True, oj="xyz", sao="yup")
-
-        #test dup
-        # pm.select(d=True)
-        # pm.duplicate(j_ik_rp_up, name="TEST")
-
         # FK Joints
 
         pm.select(d=True)
@@ -170,13 +156,7 @@ class Arm(object):
         j_fk_low = pm.joint(name="jFK_Low_%s" % suffix, p=elbow_pos, radius=2.0)
         j_fk_low_end = pm.joint(name="jFK_LowEnd_%s" % suffix, p=hand_pos, radius=2.0)
 
-        # if side == "R":
-        #     extra.orientJoints([j_fk_up, j_fk_low, j_fk_low_end], localMoveAxis=(dt.Vector(up_axis)), mirrorAxis=(-1.0, 0.0, 0.0), upAxis=-(dt.Vector(up_axis)))
-        # else:
-        #     extra.orientJoints([j_fk_up, j_fk_low, j_fk_low_end], localMoveAxis=(dt.Vector(up_axis)), mirrorAxis=(1.0, 0.0, 0.0), upAxis=(dt.Vector(up_axis)))
-
         extra.orientJoints([j_fk_up, j_fk_low, j_fk_low_end], localMoveAxis=(dt.Vector(up_axis)), mirrorAxis=(sideMult, 0.0, 0.0), upAxis=sideMult*(dt.Vector(up_axis)))
-
 
         # Hand joint
 
@@ -186,10 +166,8 @@ class Arm(object):
 
         extra.alignToAlter(j_collar_end, j_fk_up, mode=2)
         pm.makeIdentity(j_collar_end, a=True)
-        # pm.setAttr(j_collar_end.jointOrient, jOrShoulder)
         extra.alignToAlter(j_def_elbow, j_fk_low, mode=2)
         pm.makeIdentity(j_def_elbow, a=True)
-
         extra.alignToAlter(j_def_hand, j_fk_low_end, mode=2)
         pm.makeIdentity(j_def_hand, a=True)
 
@@ -210,8 +188,9 @@ class Arm(object):
         cont_shoulder_ore = extra.createUpGrp(cont_shoulder, "ORE")
         cont_shoulder_pos = extra.createUpGrp(cont_shoulder, "POS")
 
-        if side == "R":
-            pm.setAttr("{0}.s{1}".format(cont_shoulder_pos, "z"), -1)
+        # if side == "R":
+        #     pm.setAttr("{0}.s{1}".format(cont_shoulder_pos, "z"), -1)
+        pm.setAttr("{0}.s{1}".format(cont_shoulder_pos, "z"), sideMult)
 
         ## IK hand controller
         ik_cont_scale = (init_lower_arm_dist / 3, init_lower_arm_dist / 3, init_lower_arm_dist / 3)
@@ -325,10 +304,6 @@ class Arm(object):
         # controller for twist orientation alignment
         pm.addAttr(cont_fk_ik, shortName="alignShoulder", longName="Align_Shoulder", defaultValue=1.0, at="float",
                    minValue=0.0, maxValue=1.0, k=True)
-        # pm.addAttr(cont_fk_ik, shortName="alignHand", longName="Align Hand", defaultValue=1.0, at="float", minValue=0.0, maxValue=1.0, k=True)
-
-        # pm.addAttr(cont_fk_ik, shortName="autoTwist", longName="Auto_Twist", defaultValue=1.0, minValue=0.0, maxValue=1.0, at="float", k=True)
-        # pm.addAttr(cont_fk_ik, shortName="manualTwist", longName="Manual_Twist", defaultValue=0.0, at="float", k=True)
 
         pm.addAttr(cont_fk_ik, shortName="handAutoTwist", longName="Hand_Auto_Twist", defaultValue=1.0, minValue=0.0,
                    maxValue=1.0, at="float", k=True)
@@ -395,20 +370,13 @@ class Arm(object):
         initial_length_multip_sc = pm.createNode("multiplyDivide", name="initialLengthMultip_SC_%s" % suffix)
         stretch_amount_sc = pm.createNode("multiplyDivide", name="stretchAmount_SC_%s" % suffix)
         sum_of_j_lengths_sc = pm.createNode("plusMinusAverage", name="sumOfJLengths_SC_%s" % suffix)
-        # stretch_condition_sc = pm.createNode("condition", name="stretchCondition_SC_%s" % suffix)
         squashiness_sc = pm.createNode("blendColors", name="squashiness_SC_%s" % suffix)
         stretchiness_sc = pm.createNode("blendColors", name="stretchiness_SC_%s" % suffix)
 
-        # pm.setAttr(ik_stretch_stretchiness_clamp + ".maxR", 1)
         pm.setAttr("%s.maxR" % ik_stretch_stretchiness_clamp, 1)
-        # pm.setAttr(initial_length_multip_sc + ".input1X", init_upper_arm_dist)
         pm.setAttr("%s.input1X" % initial_length_multip_sc, init_upper_arm_dist)
-        # pm.setAttr(initial_length_multip_sc + ".input1Y", init_lower_arm_dist)
         pm.setAttr("%s.input1Y" % initial_length_multip_sc, init_lower_arm_dist)
-        # pm.setAttr(initial_divide_sc + ".operation", 2)
         pm.setAttr("%s.operation" % initial_divide_sc, 2)
-        # pm.setAttr(stretch_condition_sc + ".operation", 2)
-        # pm.setAttr("%s.operation" % stretch_condition_sc, 2)
 
         ### IkSoft nodes
         ik_soft_clamp = pm.createNode("clamp", name="ikSoft_clamp_%s" % suffix)
@@ -468,19 +436,12 @@ class Arm(object):
         extra_scale_mult_sc.outputY >> stretch_amount_sc.input1Y
         extra_scale_mult_sc.outputX >> stretchiness_sc.color2R
         extra_scale_mult_sc.outputY >> stretchiness_sc.color2G
-        # extra_scale_mult_sc.outputX >> stretch_condition_sc.colorIfFalseR
-        # extra_scale_mult_sc.outputY >> stretch_condition_sc.colorIfFalseG
         extra_scale_mult_sc.outputX >> sum_of_j_lengths_sc.input1D[0]
         extra_scale_mult_sc.outputY >> sum_of_j_lengths_sc.input1D[1]
 
         stretch_amount_sc.outputX >> squashiness_sc.color1R
         stretch_amount_sc.outputY >> squashiness_sc.color1G
-        # stretch_amount_sc.outputX >> stretch_condition_sc.colorIfTrueR
-        # stretch_amount_sc.outputY >> stretch_condition_sc.colorIfTrueG
         sum_of_j_lengths_sc.output1D >> initial_divide_sc.input2X
-        # sum_of_j_lengths_sc.output1D >> stretch_condition_sc.secondTerm
-        # stretch_condition_sc.outColorR >> squashiness_sc.color2R
-        # stretch_condition_sc.outColorG >> squashiness_sc.color2G
         squashiness_sc.outputR >> stretchiness_sc.color1R
         squashiness_sc.outputG >> stretchiness_sc.color1G
 
@@ -492,12 +453,6 @@ class Arm(object):
 
         invertedStrSC.outputX >> j_ik_sc_low.translateX
         invertedStrSC.outputY >> j_ik_sc_low_end.translateX
-
-        # stretchiness_sc.outputR >> j_ik_sc_low.translateX
-        # stretchiness_sc.outputG >> j_ik_sc_low_end.translateX
-
-        # stretchiness_sc.outputR >> j_ik_rp_low.translateX
-        # stretchiness_sc.outputG >> j_ik_rp_low_end.translateX
 
         invertedStrSC.outputX >> j_ik_rp_low.translateX
         invertedStrSC.outputY >> j_ik_rp_low_end.translateX
@@ -551,10 +506,8 @@ class Arm(object):
         self.cont_IK_hand.squash >> squashiness_sc.blender
 
         stretch_offset.output1D >> ik_stretch_distance_clamp.maxR
-        # self.cont_IK_hand.stretch >> ik_stretch_stretchiness_clamp.inputR
         self.cont_IK_hand.stretch >> ik_stretch_stretchiness_clamp.inputR
 
-        # self.cont_IK_hand.stretch >> stretch_offset.input1D[2]
         self.cont_IK_hand.stretchLimit >> stretch_offset.input1D[2]
 
         ik_parent_grp = pm.group(name="IK_parentGRP_%s" % suffix, em=True)
@@ -584,7 +537,6 @@ class Arm(object):
         blend_ore_ik_low = pm.createNode("blendColors", name="blendORE_IK_Low_%s" % suffix)
         j_ik_sc_low.rotate >> blend_ore_ik_low.color2
         j_ik_rp_low.rotate >> blend_ore_ik_low.color1
-        # blend_ore_ik_low.output >> j_ik_orig_low.rotate
         # Weird bug with skinned character / use seperate connections
         # if there is no skincluster, it works ok, but adding a skin cluster misses 2 out of 3 rotation axis
         # Therefore make SEPERATE CONNECTIONS
@@ -602,7 +554,6 @@ class Arm(object):
         blend_ore_ik_low_end = pm.createNode("blendColors", name="blendORE_IK_LowEnd_%s" % suffix)
         j_ik_sc_low_end.rotate >> blend_ore_ik_low_end.color2
         j_ik_rp_low_end.rotate >> blend_ore_ik_low_end.color1
-        # blend_ore_ik_low_end.output >> j_ik_orig_low_end.rotate
         # Weird bug with skinned character / use seperate connections
         # if there is no skincluster, it works ok, but adding a skin cluster misses 2 out of 3 rotation axis
         # Therefore make SEPERATE CONNECTIONS
@@ -720,10 +671,8 @@ class Arm(object):
         end_lock_twist = extra.createUpGrp(end_lock, "Twist")
 
         end_lock_weight = pm.pointConstraint(j_ik_orig_low_end, j_fk_low_end, end_lock_pos, mo=False)
-        # cont_fk_ik.fk_ik >> (end_lock_weight + "." + j_ik_orig_low_end + "W0")
         cont_fk_ik.fk_ik >> ("%s.%sW0" % (end_lock_weight, j_ik_orig_low_end))
 
-        # fk_ik_rvs.outputX >> (end_lock_weight + "." + j_fk_low_end + "W1")
         fk_ik_rvs.outputX >> ("%s.%sW1" % (end_lock_weight, j_fk_low_end))
 
         # the following offset parent constraint is not important and wont cause any trouble since
@@ -733,9 +682,7 @@ class Arm(object):
 
         # end_lock_rot = pm.parentConstraint(ik_parent_grp, cont_fk_hand, end_lock_twist, st=("x", "y", "z"), mo=True)
         end_lock_rot = pm.parentConstraint(ik_parent_grp, cont_fk_hand, end_lock_twist, st=("x", "y", "z"), mo=False)
-        # cont_fk_ik.fk_ik >> (end_lock_rot + "." + ik_parent_grp + "W0")
         cont_fk_ik.fk_ik >> ("%s.%sW0" % (end_lock_rot, ik_parent_grp))
-        # fk_ik_rvs.outputX >> (end_lock_rot + "." + cont_fk_hand + "W1")
         fk_ik_rvs.outputX >> ("%s.%sW1" % (end_lock_rot, cont_fk_hand))
 
         pm.setAttr(end_lock_rot.interpType, 0)
@@ -803,7 +750,6 @@ class Arm(object):
         # manual
         add_manual_twist = pm.createNode("plusMinusAverage", name=("AddManualTwist_UpperArm_%s" % suffix))
         auto_twist.output >> add_manual_twist.input3D[0]
-        # cont_shoulder.manualTwist >> add_manual_twist.input3D[1].input3Dx
         # TODO : REF
         cont_fk_ik.shoulderManualTwist >> add_manual_twist.input3D[1].input3Dx
 
@@ -845,7 +791,6 @@ class Arm(object):
         # manual
         add_manual_twist = pm.createNode("plusMinusAverage", name=("AddManualTwist_LowerArm_%s" % suffix))
         auto_twist.output >> add_manual_twist.input3D[0]
-        # cont_fk_ik.manualTwist >> add_manual_twist.input3D[1].input3Dx
         # TODO : REF
         cont_fk_ik.handManualTwist >> add_manual_twist.input3D[1].input3Dx
 
@@ -929,8 +874,6 @@ class Arm(object):
         extra.alignTo(hand_lock, cont_fk_hand_off, 2)
 
 
-        # pm.makeIdentity(hand_lock, a=True)
-        # pm.parentConstraint(cont_fk_hand, hand_lock, mo=True)  # Olusturulan ara node baglanir
         pm.parentConstraint(cont_fk_hand, hand_lock, mo=False)  # Olusturulan ara node baglanir
 
         root_master = pm.spaceLocator(name="handMaster_%s" % suffix)
@@ -953,10 +896,8 @@ class Arm(object):
         ## NO Flip
         pm.setAttr(hand_ori_con.interpType, 0)
         # hand_ori_con = pm.parentConstraint(self.cont_IK_hand, hand_lock, root_master, st=("x", "y", "z"), mo=False)
-        # cont_fk_ik.fk_ik >> (hand_ori_con + "." + self.cont_IK_hand + "W0")
         cont_fk_ik.fk_ik >> ("%s.%sW0" % (hand_ori_con, self.cont_IK_hand))
 
-        # fk_ik_rvs.outputX >> (hand_ori_con + "." + hand_lock + "W1")
         fk_ik_rvs.outputX >> ("%s.%sW1" % (hand_ori_con, hand_lock))
 
         fk_ik_rvs.outputX >> cont_fk_hand.v
@@ -971,7 +912,6 @@ class Arm(object):
 
         pm.select(arm_start)
 
-        # pm.parentConstraint(self.limbPlug, self.scaleGrp, mo=True)
         pm.parentConstraint(self.limbPlug, self.scaleGrp, mo=False)
         pm.parent(start_lock_ore, self.scaleGrp)
         pm.parent(arm_start, self.scaleGrp)
@@ -984,7 +924,6 @@ class Arm(object):
         pm.parent(ik_parent_grp, self.scaleGrp)
         pm.parent(cont_fk_hand_off, self.scaleGrp)
         pm.parent(mid_lock, self.scaleGrp)
-        # pm.parent(cont_mid_lock_pos, self.scaleGrp)
         pm.parent(cont_mid_lock_ext, self.scaleGrp)
         pm.parent(cont_pole_off, self.scaleGrp)
         pm.parent(j_def_elbow, self.scaleGrp)
@@ -1012,7 +951,6 @@ class Arm(object):
 
         # Tweak controls
         # powerRibbonChange
-        # tweak_controls = (ribbon_upper_arm.middleCont, ribbon_lower_arm.middleCont, cont_mid_lock)
         tweak_controls = ribbon_upper_arm.middleCont + ribbon_lower_arm.middleCont + [cont_mid_lock]
 
         for i in tweak_controls:
