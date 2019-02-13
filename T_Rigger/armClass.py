@@ -183,7 +183,8 @@ class Arm(object):
         ## shoulder controller
         shouldercont_scale = (init_shoulder_dist / 2, init_shoulder_dist / 2, init_shoulder_dist / 2)
         cont_shoulder = icon.shoulder("cont_Shoulder_%s" % suffix, shouldercont_scale)
-        extra.alignAndAim(cont_shoulder, targetList=[collar_ref], aimTargetList=[shoulder_ref], upVector=up_axis)
+        # extra.alignAndAim(cont_shoulder, targetList=[collar_ref], aimTargetList=[shoulder_ref], upVector=up_axis)
+        extra.alignAndAim(cont_shoulder, targetList=[self.j_def_collar], aimTargetList=[j_collar_end], upVector=up_axis)
         cont_shoulder_off = extra.createUpGrp(cont_shoulder, "OFF")
         cont_shoulder_ore = extra.createUpGrp(cont_shoulder, "ORE")
         cont_shoulder_pos = extra.createUpGrp(cont_shoulder, "POS")
@@ -236,13 +237,21 @@ class Arm(object):
         )
         self.cont_Pole = icon.plus("cont_Pole_%s" % suffix, polecont_scale, normal=(0, 0, 1))
         offset_mag_pole = ((init_upper_arm_dist + init_lower_arm_dist) / 4)
-        offset_vector_pole = extra.getBetweenVector(elbow_ref, [shoulder_ref, hand_ref])
+        # offset_vector_pole = extra.getBetweenVector(elbow_ref, [shoulder_ref, hand_ref])
+        offset_vector_pole = extra.getBetweenVector(j_def_elbow, [j_collar_end, j_def_hand])
+        # extra.alignAndAim(self.cont_Pole,
+        #                   targetList=[elbow_ref],
+        #                   aimTargetList=[shoulder_ref, hand_ref],
+        #                   upVector=up_axis,
+        #                   translateOff=(offset_vector_pole * offset_mag_pole)
+        #                   )
         extra.alignAndAim(self.cont_Pole,
-                          targetList=[elbow_ref],
-                          aimTargetList=[shoulder_ref, hand_ref],
+                          targetList=[j_def_elbow],
+                          aimTargetList=[j_collar_end, j_def_hand],
                           upVector=up_axis,
                           translateOff=(offset_vector_pole * offset_mag_pole)
                           )
+
         cont_pole_off = extra.createUpGrp(self.cont_Pole, "OFF")
         cont_pole_vis = extra.createUpGrp(self.cont_Pole, "VIS")
 
@@ -292,8 +301,8 @@ class Arm(object):
         # FK-IK SWITCH Controller
         icon_scale = init_upper_arm_dist / 4
         cont_fk_ik, fk_ik_rvs = icon.fkikSwitch(("cont_FK_IK_%s" % suffix), (icon_scale, icon_scale, icon_scale))
-        extra.alignAndAim(cont_fk_ik, targetList=[hand_ref], aimTargetList=[elbow_ref], upVector=up_axis,
-                          rotateOff=(0, 180, 0))
+        # extra.alignAndAim(cont_fk_ik, targetList=[hand_ref], aimTargetList=[elbow_ref], upVector=up_axis, rotateOff=(0, 180, 0))
+        extra.alignAndAim(cont_fk_ik, targetList=[j_def_hand], aimTargetList=[j_def_elbow], upVector=up_axis, rotateOff=(0, 180, 0))
         pm.move(cont_fk_ik, (dt.Vector(up_axis) * (icon_scale * 2)), r=True)
         cont_fk_ik_pos = extra.createUpGrp(cont_fk_ik, "POS")
 
@@ -511,7 +520,8 @@ class Arm(object):
         self.cont_IK_hand.stretchLimit >> stretch_offset.input1D[2]
 
         ik_parent_grp = pm.group(name="IK_parentGRP_%s" % suffix, em=True)
-        extra.alignTo(ik_parent_grp, hand_ref, 2)
+        # extra.alignTo(ik_parent_grp, hand_ref, 2)
+        extra.alignTo(ik_parent_grp, j_def_hand, 2)
         # extra.alignToAlter(ik_parent_grp, j_def_hand, 2)
 
         # pm.parentConstraint(self.cont_IK_hand, ik_parent_grp, mo=True)
@@ -694,7 +704,8 @@ class Arm(object):
         # UPPER ARM RIBBON
 
         ribbon_upper_arm = rc.PowerRibbon()
-        ribbon_upper_arm.createPowerRibbon(shoulder_ref, elbow_ref, "up_%s" % suffix, side=side, orientation=0, connectStartAim=False, upVector=up_axis)
+        # ribbon_upper_arm.createPowerRibbon(shoulder_ref, elbow_ref, "up_%s" % suffix, side=side, orientation=0, connectStartAim=False, upVector=up_axis)
+        ribbon_upper_arm.createPowerRibbon(j_collar_end, j_def_elbow, "up_%s" % suffix, side=side, orientation=0, connectStartAim=False, upVector=up_axis)
 
         # ribbon_start_pa_con_upper_arm_start = pm.parentConstraint(start_lock, ribbon_upper_arm.startConnection, mo=True)
         ribbon_start_pa_con_upper_arm_start = pm.parentConstraint(start_lock, ribbon_upper_arm.startConnection, mo=False)
@@ -763,8 +774,8 @@ class Arm(object):
         # LOWER ARM RIBBON
 
         ribbon_lower_arm = rc.PowerRibbon()
-        ribbon_lower_arm.createPowerRibbon(elbow_ref, hand_ref, "low_%s" % suffix, side=side, orientation=0,
-                                           upVector=up_axis)
+        # ribbon_lower_arm.createPowerRibbon(elbow_ref, hand_ref, "low_%s" % suffix, side=side, orientation=0, upVector=up_axis)
+        ribbon_lower_arm.createPowerRibbon(j_def_elbow, j_def_hand, "low_%s" % suffix, side=side, orientation=0, upVector=up_axis)
 
         # pm.parentConstraint(mid_lock, ribbon_lower_arm.startConnection, mo=True)
         pm.parentConstraint(mid_lock, ribbon_lower_arm.startConnection, mo=False)
@@ -881,7 +892,7 @@ class Arm(object):
         pm.select(d=True)
 
         self.sockets.append(j_def_hand)
-        extra.alignTo(j_def_hand, hand_ref, 2)
+        # extra.alignTo(j_def_hand, hand_ref, 2)
         deformer_joints = [[j_def_hand]]
         pm.parent(j_def_hand, root_master)
 
@@ -944,7 +955,6 @@ class Arm(object):
         pm.parent(root_master, self.scaleGrp)
 
         pm.parent(self.scaleGrp, self.cont_IK_OFF, self.nonScaleGrp, self.limbGrp)
-
         pm.parent(self.scaleGrp, self.nonScaleGrp, self.cont_IK_OFF, self.limbGrp)
 
         ## CONNECT RIG VISIBILITIES
