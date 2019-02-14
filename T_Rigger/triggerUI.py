@@ -103,9 +103,22 @@ class mainUI(QtWidgets.QMainWindow):
         # self.seperateSelectionSets = True
 
         self.skinMeshList = None
-
+        # self.settingsDefaults={
+        #     "rigName": "triggerAutoRig",
+        #     "majorLeftColor": 6,
+        #     "minorLeftColor": 18,
+        #     "majorRightColor": 13,
+        #     "minorRightColor": 9,
+        #     "majorCenterColor": 17,
+        #     "minorCenterColor": 20,
+        #     "lookAxis": "+z",
+        #     "upAxis": "+y",
+        #     "afterCreation": 0,
+        #     "seperateSelectionSets": True,
+        #     "bindMethod": 0,
+        #     "skinningMethod": 0
+        #     }
         self.settingsDefaults={
-            "rigName": "triggerAutoRig",
             "majorLeftColor": 6,
             "minorLeftColor": 18,
             "majorRightColor": 13,
@@ -386,13 +399,8 @@ class mainUI(QtWidgets.QMainWindow):
         if nameCheck(self.rigName) == -1:
             self.infoPop(textHeader="Invalid Characters", textTitle="Naming Error", textInfo="Use Latin Characters without any spaces.")
             return
-        # self.majorLeftColor = self.colorCodeDict["majorleft_pushButton"]
-        # self.minorLeftColor = self.colorCodeDict["minorleft_pushButton"]
-        # self.majorRightColor = self.colorCodeDict["majorright_pushButton"]
-        # self.minorRightColor = self.colorCodeDict["minorright_pushButton"]
-        # self.majorCenterColor = self.colorCodeDict["majorcenter_pushButton"]
-        # self.minorCenterColor = self.colorCodeDict["minorcenter_pushButton"]
-        self.settingsData["rigName"] = self.rigName
+
+        # self.settingsData["rigName"] = self.rigName
         self.settingsData["majorLeftColor"] = self.colorCodeDict["majorleft_pushButton"]
         self.settingsData["minorLeftColor"] = self.colorCodeDict["minorleft_pushButton"]
         self.settingsData["majorRightColor"] = self.colorCodeDict["majorright_pushButton"]
@@ -400,34 +408,13 @@ class mainUI(QtWidgets.QMainWindow):
         self.settingsData["majorCenterColor"] = self.colorCodeDict["majorcenter_pushButton"]
         self.settingsData["minorCenterColor"] = self.colorCodeDict["minorcenter_pushButton"]
 
-
-        # self.lookAxis = self.lookaxis_comboBox.currentText()
-        # self.upAxis = self.upaxis_comboBox.currentText()
-        # self.afterCreation = self.aftercreation_comboBox.currentIndex()
-        # self.seperateSelectionSets = self.jointselectionsets_comboBox.currentIndex() == 0
-
         self.settingsData["lookAxis"] = self.lookaxis_comboBox.currentText()
         self.settingsData["upAxis"] = self.upaxis_comboBox.currentText()
         self.settingsData["afterCreation"] = self.aftercreation_comboBox.currentIndex()
         self.settingsData["seperateSelectionSets"] = self.jointselectionsets_comboBox.currentIndex() == 0
 
         self.settingsData["bindMethod"] = self.bindmethod_comboBox.currentIndex()
-        print "ANAN", self.bindmethod_comboBox.currentIndex()
         self.settingsData["skinningMethod"] = self.skinningmethod_comboBox.currentIndex()
-
-        # settingsData = {
-        #     "rigName": self.rigName,
-        #     "majorLeftColor": self.majorLeftColor,
-        #     "minorLeftColor": self.minorLeftColor,
-        #     "majorRightColor": self.majorRightColor,
-        #     "minorRightColor": self.minorRightColor,
-        #     "majorCenterColor": self.majorCenterColor,
-        #     "minorCenterColor": self.minorCenterColor,
-        #     "lookAxis": self.lookAxis,
-        #     "upAxis": self.upAxis,
-        #     "afterCreation": self.afterCreation,
-        #     "seperateSelectionSets": self.seperateSelectionSets
-        #     }
 
         homedir = os.path.expanduser("~")
         settingsFilePath = os.path.join(homedir, "triggerSettings.json")
@@ -443,8 +430,6 @@ class mainUI(QtWidgets.QMainWindow):
         homedir = os.path.expanduser("~")
         settingsFilePath = os.path.join(homedir, "triggerSettings.json")
 
-        # settingsData = loadJson(settingsFilePath)
-
         if os.path.isfile(settingsFilePath):
             self.settingsData = loadJson(settingsFilePath)
             # If maya version is lower then 2017, dont use geodesic voxel
@@ -455,36 +440,6 @@ class mainUI(QtWidgets.QMainWindow):
         else:
             self.settingsData = self.settingsDefaults
             dumpJson(self.settingsData, settingsFilePath)
-
-        # If the file is not yet created or deleted/corrupted
-        # if not settingsData or loadDefaults:
-        #     self.settingsData = {"rigName": "triggerAutoRig",
-        #                     "majorLeftColor": 6,
-        #                     "minorLeftColor": 18,
-        #                     "majorRightColor": 13,
-        #                     "minorRightColor": 9,
-        #                     "majorCenterColor": 17,
-        #                     "minorCenterColor": 20,
-        #                     "lookAxis": "+z",
-        #                     "upAxis": "+y",
-        #                     "afterCreation": 0,
-        #                     "seperateSelectionSets": True
-        #                     }
-
-        # self.rigName = settingsData["rigName"]
-        # self.majorLeftColor = settingsData["majorLeftColor"]
-        # self.minorLeftColor = settingsData["minorLeftColor"]
-        # self.majorRightColor = settingsData["majorRightColor"]
-        # self.minorRightColor = settingsData["minorRightColor"]
-        # self.majorCenterColor = settingsData["majorCenterColor"]
-        # self.minorCenterColor = settingsData["minorCenterColor"]
-        # self.lookAxis = settingsData["lookAxis"]
-        # self.upAxis = settingsData["upAxis"]
-        # self.afterCreation = settingsData["afterCreation"]
-        # self.seperateSelectionSets = settingsData["seperateSelectionSets"]
-
-
-        #dumpJson(settingsData, settingsFilePath)
 
     def settingsUI(self):
 
@@ -512,22 +467,22 @@ class mainUI(QtWidgets.QMainWindow):
         self.general_settings_groupBox.setTitle(("General Settings"))
         self.general_settings_groupBox.setObjectName(("general_settings_groupBox"))
 
-        self.rigname_label = QtWidgets.QLabel(self.general_settings_groupBox)
-        self.rigname_label.setGeometry(QtCore.QRect(0, 25, 101, 20))
-        self.rigname_label.setText(("Name"))
-        self.rigname_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
-        self.rigname_label.setObjectName(("rigname_label"))
-
-        self.rigname_lineEdit = QtWidgets.QLineEdit(self.general_settings_groupBox)
-        self.rigname_lineEdit.setGeometry(QtCore.QRect(110, 25, 155, 20))
-        self.rigname_lineEdit.setToolTip((""))
-        self.rigname_lineEdit.setStatusTip((""))
-        self.rigname_lineEdit.setWhatsThis((""))
-        self.rigname_lineEdit.setAccessibleName((""))
-        self.rigname_lineEdit.setAccessibleDescription((""))
-        self.rigname_lineEdit.setCursorPosition(0)
-        self.rigname_lineEdit.setPlaceholderText(("Give a name for the rig"))
-        self.rigname_lineEdit.setObjectName(("rigname_lineEdit"))
+        # self.rigname_label = QtWidgets.QLabel(self.general_settings_groupBox)
+        # self.rigname_label.setGeometry(QtCore.QRect(0, 25, 101, 20))
+        # self.rigname_label.setText(("Name"))
+        # self.rigname_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
+        # self.rigname_label.setObjectName(("rigname_label"))
+        #
+        # self.rigname_lineEdit = QtWidgets.QLineEdit(self.general_settings_groupBox)
+        # self.rigname_lineEdit.setGeometry(QtCore.QRect(110, 25, 155, 20))
+        # self.rigname_lineEdit.setToolTip((""))
+        # self.rigname_lineEdit.setStatusTip((""))
+        # self.rigname_lineEdit.setWhatsThis((""))
+        # self.rigname_lineEdit.setAccessibleName((""))
+        # self.rigname_lineEdit.setAccessibleDescription((""))
+        # self.rigname_lineEdit.setCursorPosition(0)
+        # self.rigname_lineEdit.setPlaceholderText(("Give a name for the rig"))
+        # self.rigname_lineEdit.setObjectName(("rigname_lineEdit"))
 
         self.colorcoding_label = QtWidgets.QLabel(self.general_settings_groupBox)
         self.colorcoding_label.setGeometry(QtCore.QRect(0, 60, 101, 20))
@@ -843,6 +798,14 @@ class mainUI(QtWidgets.QMainWindow):
         label = QtWidgets.QLabel("Select Initial Root Joint -> hit Rig Button")
         rigBtn = QtWidgets.QPushButton("RIG from Root")
 
+        nameLayout = QtWidgets.QHBoxLayout()
+        self.rigname_label = QtWidgets.QLabel()
+        self.rigname_label.setText(("Name"))
+        self.rigname_lineEdit = QtWidgets.QLineEdit()
+        self.rigname_lineEdit.setText("triggerAutoRig")
+        nameLayout.addWidget(self.rigname_label)
+        nameLayout.addWidget(self.rigname_lineEdit)
+
         self.isCreateAnchorsChk = QtWidgets.QCheckBox("Create Anchors Automatically", parent=self)
         # self.isCreateAnchorsChk.setLayoutDirection(QtCore.Qt.RightToLeft)
         self.isCreateAnchorsChk.setChecked(True)
@@ -859,13 +822,16 @@ class mainUI(QtWidgets.QMainWindow):
         self.copyweights_checkbox = QtWidgets.QCheckBox("Duplicate and copy weights")
         self.copyweights_checkbox.setEnabled(False)
 
-
+        self.replaceExistingRig_checkbox = QtWidgets.QCheckBox("Replace Existing Rig")
+        # self.replaceExistingRig_checkbox.setEnabled(False)
 
         ## Add widgets to the group layout
+        rigGrpLayout.addLayout(nameLayout)
         rigGrpLayout.addWidget(label)
         rigGrpLayout.addWidget(self.isCreateAnchorsChk)
         rigGrpLayout.addLayout(skinmeshLayout)
         rigGrpLayout.addWidget(self.copyweights_checkbox)
+        rigGrpLayout.addWidget(self.replaceExistingRig_checkbox)
 
         rigGrpLayout.addWidget(rigBtn)
 
@@ -1595,10 +1561,12 @@ class mainUI(QtWidgets.QMainWindow):
         self.progressBar()
         # self.progress_Dialog.show()
         self.rigger.__init__(settingsData=self.settingsData, progressBar=self.progress_progressBar)
+        self.rigger.rigName = self.rigname_lineEdit.text()
         self.rigger.skinMeshList = self.skinMeshList
         self.rigger.bindMethod = self.settingsData["bindMethod"]
         self.rigger.skinMethod = self.settingsData["skinningMethod"]
         self.rigger.copySkinWeights = self.copyweights_checkbox.isChecked()
+        self.rigger.replaceExisting = self.replaceExistingRig_checkbox.isChecked()
         self.rigger.startBuilding(createAnchors=self.isCreateAnchorsChk.isChecked())
         self.progress_Dialog.close()
         pm.undoInfo(closeChunk=True)

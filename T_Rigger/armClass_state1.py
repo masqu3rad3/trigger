@@ -52,7 +52,8 @@ class Arm(object):
 
         self.up_axis, self.mirror_axis, self.look_axis = extra.getRigAxes(self.collar_ref)
 
-        self.suffix = (extra.uniqueName("limbGrp_%s" % self.suffix)).replace("limbGrp_", "")
+        self.originalSuffix = suffix
+        self.suffix = (extra.uniqueName("limbGrp_%s" % suffix)).replace("limbGrp_", "")
         # self.limbGrp = pm.group(name="limbGrp_%s" % suffix, em=True)
 
         self.sockets = []
@@ -76,6 +77,14 @@ class Arm(object):
         self.scaleGrp = pm.group(name="scaleGrp_%s" % self.suffix, em=True)
         extra.alignTo(self.scaleGrp, self.collar_ref, 0)
         self.nonScaleGrp = pm.group(name="NonScaleGrp_%s" % self.suffix, em=True)
+
+        pm.addAttr(self.scaleGrp, at="bool", ln="Control_Visibility", sn="contVis", defaultValue=True)
+        pm.addAttr(self.scaleGrp, at="bool", ln="Joints_Visibility", sn="jointVis", defaultValue=True)
+        pm.addAttr(self.scaleGrp, at="bool", ln="Rig_Visibility", sn="rigVis", defaultValue=True)
+        # make the created attributes visible in the channelbox
+        pm.setAttr(self.scaleGrp.contVis, cb=True)
+        pm.setAttr(self.scaleGrp.jointVis, cb=True)
+        pm.setAttr(self.scaleGrp.rigVis, cb=True)
 
         pm.parent(self.scaleGrp, self.limbGrp)
         pm.parent(self.nonScaleGrp, self.limbGrp)
@@ -152,6 +161,14 @@ class Arm(object):
 
         pm.parent(self.j_def_elbow, self.scaleGrp)
         pm.parent(self.j_fk_up, self.scaleGrp)
+
+        self.deformerJoints += [self.j_def_elbow, self.j_def_collar, self.j_def_hand]
+
+        # self.scaleGrp.jointVis >> self.j_def_elbow.v
+        # self.scaleGrp.jointVis >> self.j_def_collar.v
+        # self.scaleGrp.jointVis >> self.j_def_hand.v
+
+        self.scaleGrp.rigVis >> self.j_fk_up.v
 
     def createControllers(self):
 
@@ -310,6 +327,21 @@ class Arm(object):
         pm.parent(self.cont_fk_ik_pos, self.scaleGrp)
         pm.parent(self.cont_IK_OFF, self.limbGrp)
 
+        nodesContVis = [self.cont_pole_off, self.cont_shoulder_off, self.cont_IK_OFF, self.cont_fk_hand_off, self.cont_fk_ik_pos,
+                             self.cont_fk_low_arm_off, self.cont_fk_up_arm_off, self.cont_mid_lock_pos]
+
+        for i in nodesContVis:
+            self.scaleGrp.contVis >> i.v
+
+        extra.colorize(self.cont_shoulder, self.colorCodes[0])
+        extra.colorize(self.cont_IK_hand, self.colorCodes[0])
+        extra.colorize(self.cont_Pole, self.colorCodes[0])
+        extra.colorize(self.cont_fk_ik, self.colorCodes[0])
+        extra.colorize(self.cont_fk_up_arm, self.colorCodes[0])
+        extra.colorize(self.cont_fk_low_arm, self.colorCodes[0])
+        extra.colorize(self.cont_fk_hand, self.colorCodes[0])
+        extra.colorize(self.cont_mid_lock, self.colorCodes[1])
+
     def createRoots(self):
 
         self.master_root = pm.group(em=True, name="masterRoot_%s" % self.suffix)
@@ -364,6 +396,14 @@ class Arm(object):
         pm.parent(self.hand_lock, self.scaleGrp)
         pm.parent(self.master_root, self.scaleGrp)
         pm.parent(self.root_master, self.scaleGrp)
+
+        self.scaleGrp.rigVis >> self.end_lock_twist.v
+        self.scaleGrp.rigVis >> self.start_lock_ore.v
+        self.scaleGrp.rigVis >> self.mid_lock.v
+        self.scaleGrp.rigVis >> self.master_root.v
+        self.scaleGrp.rigVis >> self.hand_lock.v
+        self.scaleGrp.rigVis >> (self.root_master.getShape()).v
+        self.scaleGrp.rigVis >> (self.root_master.getShape()).v
 
     def createIKsetup(self):
 
@@ -449,7 +489,7 @@ class Arm(object):
 
         # ik_stretch_distance_clamp.outputR >> stretch_condition_sc.firstTerm
         ik_stretch_distance_clamp.outputR >> initial_divide_sc.input1X
-        ik_stretch_stretchiness_clamp.outputR >> stretchiness_sc.blender
+        ik_stretch_stretchiness_clamp.outputR >> self.stretchiness_sc.blender
 
         initial_divide_sc.outputX >> stretch_amount_sc.input2X
         initial_divide_sc.outputX >> stretch_amount_sc.input2Y
@@ -614,6 +654,11 @@ class Arm(object):
 
         pm.parent(pacon_locator_shou, self.scaleGrp)
         pm.parent(self.j_def_collar, pacon_locator_shou)
+
+        self.scaleGrp.rigVis >> arm_start.v
+        self.scaleGrp.rigVis >> arm_end.v
+        self.scaleGrp.rigVis >> self.ik_parent_grp.v
+        self.scaleGrp.rigVis >> pacon_locator_shou.getShape().v
 
     def createFKsetup(self):
 
@@ -855,23 +900,62 @@ class Arm(object):
         pm.parent(ribbon_lower_arm.scaleGrp, self.nonScaleGrp)
         pm.parent(ribbon_lower_arm.nonScaleGrp, self.nonScaleGrp)
 
+        self.cont_fk_ik.tweakControls >> self.cont_mid_lock.v
+        tweakConts = ribbon_upper_arm.middleCont + ribbon_lower_arm.middleCont
+        for i in tweakConts:
+            self.cont_fk_ik.tweakControls >> i.v
+
+        self.scaleGrp.contVis >> ribbon_upper_arm.scaleGrp.v
+        self.scaleGrp.contVis >> ribbon_lower_arm.scaleGrp.v
+
+        self.deformerJoints  += ribbon_lower_arm.deformerJoints + ribbon_upper_arm.deformerJoints
+        for i in self.deformerJoints:
+            self.scaleGrp.jointVis >> i.v
+        for i in ribbon_lower_arm.toHide:
+            self.scaleGrp.rigVis >> i.v
+        for i in ribbon_upper_arm.toHide:
+            self.scaleGrp.rigVis >> i.v
+
+        extra.colorize(ribbon_upper_arm.middleCont, self.colorCodes[1])
+        extra.colorize(ribbon_lower_arm.middleCont, self.colorCodes[1])
 
     def roundUp(self):
         pm.parentConstraint(self.limbPlug, self.scaleGrp, mo=False)
         pm.parent(self.start_lock_ore, self.scaleGrp)
 
+        pm.setAttr(self.scaleGrp.rigVis, 0)
 
+        extra.lockAndHide(self.cont_IK_hand, ["v"])
+        extra.lockAndHide(self.cont_Pole, ["rx", "ry", "rz", "sx", "sy", "sz", "v"])
+        extra.lockAndHide(self.cont_mid_lock, ["v"])
+        extra.lockAndHide(self.cont_fk_ik, ["sx", "sy", "sz", "v"])
+        extra.lockAndHide(self.cont_fk_hand, ["tx", "ty", "tz", "v"])
+        extra.lockAndHide(self.cont_fk_low_arm, ["tx", "ty", "tz", "sy", "sz", "v"])
+        extra.lockAndHide(self.cont_fk_up_arm, ["tx", "ty", "tz", "sy", "sz", "v"])
+        extra.lockAndHide(self.cont_shoulder, ["sx", "sy", "sz", "v"])
 
-    def createLimb(self, ik=True, fk=True):
+        self.scaleConstraints = [self.scaleGrp, self.cont_IK_OFF]
+        self.anchors = [(self.cont_IK_hand, "parent", 1, None), (self.cont_Pole, "parent", 1, None)]
+
+    def createLimb(self):
         self.createGrp()
         self.createJoints()
         self.createControllers()
         self.createRoots()
-        if ik == True:
-            self.createIKsetup()
-        if fk == True:
-            self.createFKsetup()
-        if ik == True and fk == True:
-            self.ikfkSwitching()
-
+        self.createIKsetup()
+        self.createFKsetup()
+        self.ikfkSwitching()
         self.createDefJoints()
+        self.roundUp()
+
+    def getExistingControllers(self):
+        existingLimbGrp = ("limbGrp_%s" % self.originalSuffix)
+        if not pm.objExists(existingLimbGrp):
+            msg = "Existing Limb cannot be found, creating a new one"
+            pm.warning(msg)
+            return
+
+
+
+
+        pass

@@ -4,6 +4,7 @@ reload(extra)
 import contIcons as icon
 reload(icon)
 import armClass as arm
+# import armClass_state1 as arm
 reload(arm)
 import legClass as leg
 reload(leg)
@@ -59,6 +60,7 @@ class LimbBuilder():
         self.rootGroup = None
         self.skinMeshList = None
         self.copySkinWeights = False
+        self.replaceExisting = False
         self.totalDefJoints = []
         # self.spineRes = 4
         # self.neckRes = 3
@@ -77,7 +79,7 @@ class LimbBuilder():
         self.afterCreation = settingsData["afterCreation"]
         self.seperateSelectionSets = settingsData["seperateSelectionSets"]
 
-        self.rigName = settingsData["rigName"]
+        # self.rigName = settingsData["rigName"]
         self.majorLeftColor = settingsData["majorLeftColor"]
         self.minorLeftColor = settingsData["minorLeftColor"]
         self.majorRightColor = settingsData["majorRightColor"]
@@ -104,11 +106,21 @@ class LimbBuilder():
             pm.warning("select a single root joint")
             return
 
-        ## Create the holder group if it does not exist
-        if not pm.objExists("{0}_rig".format(self.rigName)):
-            self.rootGroup = pm.group(name=("{0}_rig".format(self.rigName)), em=True)
-        else:
-            self.rootGroup = pm.PyNode("{0}_rig".format(self.rigName))
+        # ## Create the holder group if it does not exist
+        # if not pm.objExists("{0}_rig".format(self.rigName)):
+        #     self.rootGroup = pm.group(name=("{0}_rig".format(self.rigName)), em=True)
+        #     # self.allOldCont = []
+        # else:
+        #     self.rootGroup = pm.PyNode("{0}_rig".format(self.rigName))
+        #     # get all controllers under the existing group into a list
+        #     # allTransform = pm.listRelatives(self.rootGroup, ad=True, c=True, typ="nurbsCurve")
+        #     # self.allOldCont = extra.uniqueList([cont.getParent() for cont in allTransform if cont.name().startswith("cont_")])
+        try:
+            oldRootGroup = pm.PyNode("{0}_rig".format(self.rigName))
+        except:
+            oldRootGroup = None
+
+        self.rootGroup = pm.group(name=(extra.uniqueName("{0}_rig".format(self.rigName))), em=True)
 
         # first initialize the dimensions for icon creation
         self.hipDistance, self.shoulderDistance = self.getDimensions(selection[0])
@@ -146,6 +158,15 @@ class LimbBuilder():
         if self.skinMeshList:
             # if there are skin mesh(s) defined, initiate the skinning process
             self.skinning(copyMode=self.copySkinWeights)
+            pass
+
+        replace = True
+        if replace and oldRootGroup:
+            # get every controller under the oldRootGroup
+            # find corresponding new controllers and replace them with the old ones
+            # find old skinned meshes
+            # duplicate them
+            # copy skin weights to new ones
             pass
 
     def skinning(self, copyMode):
@@ -236,9 +257,11 @@ class LimbBuilder():
                     self.rightShoulder = x[0]["Shoulder"]
                 if x[2] == "R":
                     self.leftShoulder = x[0]["Shoulder"]
-                limb = arm.Arm()
+                # limb = arm.Arm()
+                limb = arm.Arm(x[0], suffix="%s_Arm" %sideVal, side=x[2])
                 limb.colorCodes = colorCodes
-                limb.createarm(x[0], suffix="%s_Arm" %sideVal, side=x[2])
+                # limb.createarm(x[0], suffix="%s_Arm" %sideVal, side=x[2])
+                limb.createLimb()
 
             elif x[1] == "leg":
                 if x[2] == "L":
@@ -297,11 +320,16 @@ class LimbBuilder():
                 pm.parent(limb.limbPlug, parentSocket)
 
                 ## Good parenting / scale connections
+
+                ## get the holder group
+                self.rootGroup = masterController.getParent()
+
                 ## Create the holder group if it does not exist
-                if not pm.objExists("{0}_rig".format(self.rigName)):
-                    self.rootGroup = pm.group(name=("{0}_rig".format(self.rigName)), em=True)
-                else:
-                    self.rootGroup = pm.PyNode("{0}_rig".format(self.rigName))
+
+                # if not pm.objExists("{0}_rig".format(self.rigName)):
+                #     self.rootGroup = pm.group(name=("{0}_rig".format(self.rigName)), em=True)
+                # else:
+                #     self.rootGroup = pm.PyNode("{0}_rig".format(self.rigName))
 
                 # pm.parent(limb.scaleGrp, self.rootGroup)
                 scaleGrpPiv = limb.limbPlug.getTranslation(space="world")
@@ -437,8 +465,8 @@ class LimbBuilder():
         """
 
 
-        self.cont_placement = icon.circle("cont_Placement", (self.hipDistance, self.hipDistance, self.hipDistance))
-        self.cont_master = icon.triCircle("cont_Master", (self.hipDistance * 1.5, self.hipDistance * 1.5, self.hipDistance * 1.5))
+        self.cont_placement = icon.circle(extra.uniqueName("cont_Placement"), (self.hipDistance, self.hipDistance, self.hipDistance))
+        self.cont_master = icon.triCircle(extra.uniqueName("cont_Master"), (self.hipDistance * 1.5, self.hipDistance * 1.5, self.hipDistance * 1.5))
         pm.addAttr(self.cont_master, at="bool", ln="Control_Visibility", sn="contVis", defaultValue=True)
         pm.addAttr(self.cont_master, at="bool", ln="Joints_Visibility", sn="jointVis")
         pm.addAttr(self.cont_master, at="bool", ln="Rig_Visibility", sn="rigVis")

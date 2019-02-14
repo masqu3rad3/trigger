@@ -751,3 +751,7 @@ def orientJoints(jointList, localMoveAxis=(0.0,0.0,1.0), upAxis=(0.0,1.0,0.0), m
     pm.makeIdentity(jointList[-1], a=True)
     pm.setAttr(jointList[-1].jointOrient, (0,0,0))
 
+def uniqueList(seq): # Dave Kirby
+    # Order preserving
+    seen = set()
+    return [x for x in seq if x not in seen and not seen.add(x)]
