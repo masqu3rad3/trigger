@@ -178,13 +178,16 @@ class Arm(object):
         ## shoulder controller
         shouldercont_scale = (self.init_shoulder_dist / 2, self.init_shoulder_dist / 2, self.init_shoulder_dist / 2)
         self.cont_shoulder = icon.shoulder("cont_Shoulder_%s" % self.suffix, shouldercont_scale)
+        pm.setAttr("{0}.s{1}".format(self.cont_shoulder, "y"), self.sideMult)
+        pm.makeIdentity(self.cont_shoulder, a=True)
         extra.alignAndAim(self.cont_shoulder, targetList=[self.j_def_collar], aimTargetList=[self.j_collar_end],
                           upVector=self.up_axis)
+
         self.cont_shoulder_off = extra.createUpGrp(self.cont_shoulder, "OFF")
         self.cont_shoulder_ore = extra.createUpGrp(self.cont_shoulder, "ORE")
         self.cont_shoulder_pos = extra.createUpGrp(self.cont_shoulder, "POS")
 
-        pm.setAttr("{0}.s{1}".format(self.cont_shoulder_pos, "z"), self.sideMult)
+        # pm.setAttr("{0}.s{1}".format(self.cont_shoulder_pos, "z"), self.sideMult)
         ## IK hand controller
         ik_cont_scale = (self.init_lower_arm_dist / 3, self.init_lower_arm_dist / 3, self.init_lower_arm_dist / 3)
         self.cont_IK_hand = icon.circle("cont_IK_hand_%s" % self.suffix, ik_cont_scale, normal=(1, 0, 0))

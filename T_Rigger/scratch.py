@@ -184,6 +184,8 @@ class LimbBuilder():
             # find corresponding new controllers and replace them with the old ones
 
             for cont in allOldCont:
+                if "cont_FK_IK" in cont.name():
+                    continue
                 try:
                     new = pm.PyNode(cont.replace("_OLD", ""))
                     # duplicate
@@ -211,9 +213,6 @@ class LimbBuilder():
                     pm.setAttr(old.sy, 1)
                     pm.setAttr(old.sz, 1)
 
-                    print old
-                    print new
-                    print "------------------"
                     tools.replaceController(mirror=False,
                                             oldController=new,
                                             newController=old,
