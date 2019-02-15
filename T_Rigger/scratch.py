@@ -23,6 +23,9 @@ reload(root)
 import anchorMaker
 reload(anchorMaker)
 
+import extraTools as tools
+reload(tools)
+
 # from Qt import QtWidgets, QtCore, QtGui
 from Qt import QtWidgets
 
@@ -115,8 +118,20 @@ class LimbBuilder():
         #     # get all controllers under the existing group into a list
         #     # allTransform = pm.listRelatives(self.rootGroup, ad=True, c=True, typ="nurbsCurve")
         #     # self.allOldCont = extra.uniqueList([cont.getParent() for cont in allTransform if cont.name().startswith("cont_")])
+
+        replace = True
+
         try:
             oldRootGroup = pm.PyNode("{0}_rig".format(self.rigName))
+            if replace:
+                # get all objects under old rig
+                oldGroupMembers = pm.listRelatives(oldRootGroup, ad=True, c=True) + [oldRootGroup]
+                # rename thame (add _OLD as suffix)
+                for i in oldGroupMembers:
+                    try:
+                        i.rename("{0}{1}".format(i.name(), "_OLD"))
+                    except RuntimeError:
+                        pass
         except:
             oldRootGroup = None
 
@@ -160,10 +175,55 @@ class LimbBuilder():
             self.skinning(copyMode=self.copySkinWeights)
             pass
 
-        replace = True
+
         if replace and oldRootGroup:
             # get every controller under the oldRootGroup
+            allTransform = pm.listRelatives(oldRootGroup, ad=True, c=True, typ="nurbsCurve")
+            allOldCont = extra.uniqueList([cont.getParent() for cont in allTransform if cont.name().startswith("cont_")])
+
             # find corresponding new controllers and replace them with the old ones
+
+            for cont in allOldCont:
+                try:
+                    new = pm.PyNode(cont.replace("_OLD", ""))
+                    # duplicate
+                    old = pm.duplicate(cont)[0]
+                    # unparent
+                    pm.parent(old, w=True)
+                    pm.delete(pm.listRelatives(old, c=True, typ="transform"))
+                    pm.setAttr(old.tx, e=True, k=True, l=False)
+                    pm.setAttr(old.ty, e=True, k=True, l=False)
+                    pm.setAttr(old.tz, e=True, k=True, l=False)
+                    pm.setAttr(old.rx, e=True, k=True, l=False)
+                    pm.setAttr(old.ry, e=True, k=True, l=False)
+                    pm.setAttr(old.rz, e=True, k=True, l=False)
+                    pm.setAttr(old.sx, e=True, k=True, l=False)
+                    pm.setAttr(old.sy, e=True, k=True, l=False)
+                    pm.setAttr(old.sz, e=True, k=True, l=False)
+
+                    pm.setAttr(old.tx, 0)
+                    pm.setAttr(old.ty, 0)
+                    pm.setAttr(old.tz, 0)
+                    pm.setAttr(old.rx, 0)
+                    pm.setAttr(old.ry, 0)
+                    pm.setAttr(old.rz, 0)
+                    pm.setAttr(old.sx, 1)
+                    pm.setAttr(old.sy, 1)
+                    pm.setAttr(old.sz, 1)
+
+                    print old
+                    print new
+                    print "------------------"
+                    tools.replaceController(mirror=False,
+                                            oldController=new,
+                                            newController=old,
+                                            keepAcopy=False
+                                            )
+                except:
+                    pass
+
+
+
             # find old skinned meshes
             # duplicate them
             # copy skin weights to new ones

@@ -19,6 +19,9 @@ reload(mrCubic)
 import extraProcedures as extra
 reload(extra)
 
+import extraTools as tools
+reload(tools)
+
 import os
 import json
 import re
@@ -994,8 +997,7 @@ class mainUI(QtWidgets.QMainWindow):
         if not selection:
             self.infoPop(textTitle="Skipping action", textHeader="Selection needed", textInfo="You need to select at least one controller node. (transform node)")
             return
-        import extraTools as tools
-        reload(tools)
+
         for i in selection:
             oldController = str(i.name())
             objName=extra.uniqueName("cont_{0}".format(self.controllers_combobox.currentText()))

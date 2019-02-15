@@ -156,23 +156,27 @@ class Spine(object):
 
             contA = icon.circle("cont_SpineFK_A" + str(m) + suffix, contSpineFKAScale)
             extra.alignTo(contA, spine.contCurves_ORE[m], 2)
+            contA_ORE = extra.createUpGrp(contA, "ORE")
             cont_spineFK_A_List.append(contA)
 
             contB = icon.ngon("cont_SpineFK_B" + str(m) + suffix, contSpineFKBScale)
             extra.alignTo(contB, spine.contCurves_ORE[m], 2)
+            contB_ORE = extra.createUpGrp(contB, "ORE")
             cont_spineFK_B_List.append(contB)
 
             if m != 0:
-                pm.parent(cont_spineFK_A_List[m], cont_spineFK_A_List[m - 1])
-                pm.parent(cont_spineFK_B_List[m - 1], cont_spineFK_B_List[m])
+                pm.parent(cont_spineFK_A_List[m].getParent(), cont_spineFK_A_List[m - 1])
+                pm.parent(cont_spineFK_B_List[m - 1].getParent(), cont_spineFK_B_List[m])
+
+
 
         pm.parent(cont_Chest_ORE, cont_spineFK_A_List[-1])
-        pm.parent(cont_spineFK_A_List[0], self.cont_body)
+        pm.parent(cont_spineFK_A_List[0].getParent(), self.cont_body)
         pm.parent(spine.contCurves_ORE, spine.scaleGrp)  # contcurve Ore s -> scaleGrp
         pm.parent(self.endSocket, spine.scaleGrp)
 
         pm.parent(self.cont_hips_ORE, cont_spineFK_B_List[0])
-        pm.parent(cont_spineFK_B_List[-1], self.cont_body)
+        pm.parent(cont_spineFK_B_List[-1].getParent(), self.cont_body)
         pm.parent(spine.endLock, spine.scaleGrp)
 
         pm.parent(spine.scaleGrp, self.nonScaleGrp, self.cont_IK_OFF, self.limbGrp)
