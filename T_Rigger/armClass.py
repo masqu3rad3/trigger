@@ -9,10 +9,6 @@ reload(extra)
 reload(rc)
 reload(icon)
 
-
-###########################
-######### IK ARM ##########
-###########################
 class Arm(object):
     def __init__(self, arminits, suffix="", side="L"):
 
@@ -967,37 +963,37 @@ class Arm(object):
         self.createDefJoints()
         self.roundUp()
 
-    def useExistingControllers(self):
-        existingLimbGrp = ("limbGrp_%s" % self.originalSuffix)
-        if not pm.objExists(existingLimbGrp):
-            msg = "Existing Limb %s cannot be found, creating a new one" % self.originalSuffix
-            pm.warning(msg)
-            return
-
-        # shoulder
-        old_cont_shoulder = pm.PyNode("cont_Shoulder_%s" % self.originalSuffix)
-
-
-        # IK hand controller
-        old_cont_IK_hand = pm.PyNode("cont_IK_hand_%s" % self.originalSuffix)
-
-
-        # Pole Vector Controller
-        old_cont_Pole = pm.PyNode("cont_Pole_%s" % self.originalSuffix)
-
-        ## FK UP Arm Controller
-        old_cont_fk_up_arm = pm.PyNode("cont_FK_UpArm_%s" % self.originalSuffix)
-
-        ## FK LOW Arm Controller
-        old_cont_fk_low_arm = pm.PyNode("cont_FK_LowArm_%s" % self.originalSuffix)
-
-        ## FK HAND Controller
-        old_cont_fk_hand = pm.PyNode("cont_FK_Hand_%s" % self.originalSuffix)
-
-        # FK-IK SWITCH Controller
-        old_cont_fk_ik = pm.PyNode("cont_FK_IK_%s" % self.originalSuffix)
-
-        # MidLock controller
-        old_cont_mid_lock = pm.PyNode("cont_mid_%s" % self.originalSuffix)
-        pass
+    # def useExistingControllers(self):
+    #     existingLimbGrp = ("limbGrp_%s" % self.originalSuffix)
+    #     if not pm.objExists(existingLimbGrp):
+    #         msg = "Existing Limb %s cannot be found, creating a new one" % self.originalSuffix
+    #         pm.warning(msg)
+    #         return
+    #
+    #     # shoulder
+    #     old_cont_shoulder = pm.PyNode("cont_Shoulder_%s" % self.originalSuffix)
+    #
+    #
+    #     # IK hand controller
+    #     old_cont_IK_hand = pm.PyNode("cont_IK_hand_%s" % self.originalSuffix)
+    #
+    #
+    #     # Pole Vector Controller
+    #     old_cont_Pole = pm.PyNode("cont_Pole_%s" % self.originalSuffix)
+    #
+    #     ## FK UP Arm Controller
+    #     old_cont_fk_up_arm = pm.PyNode("cont_FK_UpArm_%s" % self.originalSuffix)
+    #
+    #     ## FK LOW Arm Controller
+    #     old_cont_fk_low_arm = pm.PyNode("cont_FK_LowArm_%s" % self.originalSuffix)
+    #
+    #     ## FK HAND Controller
+    #     old_cont_fk_hand = pm.PyNode("cont_FK_Hand_%s" % self.originalSuffix)
+    #
+    #     # FK-IK SWITCH Controller
+    #     old_cont_fk_ik = pm.PyNode("cont_FK_IK_%s" % self.originalSuffix)
+    #
+    #     # MidLock controller
+    #     old_cont_mid_lock = pm.PyNode("cont_mid_%s" % self.originalSuffix)
+    #     pass
 
