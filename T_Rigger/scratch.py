@@ -221,9 +221,16 @@ class LimbBuilder():
                 except:
                     pass
 
-
-
             # find old skinned meshes
+            allJoints = pm.listRelatives(oldRootGroup, ad=True, c=True, typ="joint")
+            allOldDefJoints = extra.uniqueList([j for j in allJoints if j.name().startswith("jDef")])
+            skinList = []
+            for i in allOldDefJoints:
+                skinList += extra.uniqueList(pm.listConnections(i, type="skinCluster"))
+            skinList = extra.uniqueList(skinList)
+
+            skinnedObjects = [pm.listConnections(skinC.outputGeometry)[0] for skinC in skinList]
+
             # duplicate them
             # copy skin weights to new ones
             pass
