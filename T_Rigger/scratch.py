@@ -119,11 +119,11 @@ class LimbBuilder():
         #     # allTransform = pm.listRelatives(self.rootGroup, ad=True, c=True, typ="nurbsCurve")
         #     # self.allOldCont = extra.uniqueList([cont.getParent() for cont in allTransform if cont.name().startswith("cont_")])
 
-        replace = True
+
 
         try:
             oldRootGroup = pm.PyNode("{0}_rig".format(self.rigName))
-            if replace:
+            if self.replaceExisting:
                 # get all objects under old rig
                 oldGroupMembers = pm.listRelatives(oldRootGroup, ad=True, c=True) + [oldRootGroup]
                 # rename thame (add _OLD as suffix)
@@ -170,13 +170,13 @@ class LimbBuilder():
         if self.afterCreation == 2:
             # if the After Creation set to 'Delete Initial Joints'
             pm.delete(selection)
-        if self.skinMeshList:
-            # if there are skin mesh(s) defined, initiate the skinning process
+        if self.skinMeshList and not self.replaceExisting:
+            # if there are skin mesh(s) defined, and replace existing is not checked, initiate the skinning process
             self.skinning(copyMode=self.copySkinWeights)
             pass
 
 
-        if replace and oldRootGroup:
+        if self.replaceExisting and oldRootGroup:
             # get every controller under the oldRootGroup
             allTransform = pm.listRelatives(oldRootGroup, ad=True, c=True, typ="nurbsCurve")
             allOldCont = extra.uniqueList([cont.getParent() for cont in allTransform if cont.name().startswith("cont_")])
@@ -231,8 +231,26 @@ class LimbBuilder():
 
             skinnedObjects = [pm.listConnections(skinC.outputGeometry)[0] for skinC in skinList]
 
-            # duplicate them
-            # copy skin weights to new ones
+            for mesh in skinnedObjects:
+                dupMesh = pm.duplicate(mesh)
+                pm.skinCluster(self.totalDefJoints, dupMesh, tsb=True)
+                pm.copySkinWeights(mesh, dupMesh, noMirror=True, surfaceAssociation="closestPoint",
+                                   influenceAssociation="closestJoint", normalize=True)
+                # delete the skin cluster on old mesh
+                oldSkin = pm.listConnections(mesh.getShape(), type="skinCluster")[0]
+                # oldSkinName = oldSkin.name()
+                pm.delete(oldSkin)
+                # re-create the skin cluster with
+                pm.skinCluster(self.totalDefJoints, mesh, tsb=True)
+                pm.copySkinWeights(dupMesh, mesh, noMirror=True, surfaceAssociation="closestPoint",
+                                   influenceAssociation="closestJoint", normalize=True)
+
+                # delete duplicate
+                pm.delete(dupMesh)
+
+            # delete old group
+            # pm.delete(oldRootGroup)
+
             pass
 
     def skinning(self, copyMode):

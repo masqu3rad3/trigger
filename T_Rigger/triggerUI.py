@@ -903,6 +903,8 @@ class mainUI(QtWidgets.QMainWindow):
         replace_controller_pushbutton.clicked.connect(self.onReplaceController)
         mirror_controller_pushbutton.clicked.connect(self.onMirrorController)
 
+        self.replaceExistingRig_checkbox.stateChanged.connect(self.onReplaceExisting)
+
         self.riglayout.addWidget(edit_controllers_grpbox)
 
         # # create 'ANCHOR CREATION' Group
@@ -956,6 +958,16 @@ class mainUI(QtWidgets.QMainWindow):
         # create_anchors_pb.clicked.connect(lambda: extra.spaceSwitcher(self.anchorController, self.anchorLocations, mode=anchor_conts_type_combobox.currentText()))
         #
         # self.riglayout.addWidget(anchor_conts_grpbox)
+
+    def onReplaceExisting(self):
+        if self.replaceExistingRig_checkbox.isChecked():
+            self.skinMesh_linedit.enabled = False
+            self.skinMesh_pushbutton.enabled = False
+            self.copyweights_checkbox.enabled = False
+        else:
+            self.skinMesh_linedit.enabled = True
+            self.skinMesh_pushbutton.enabled = True
+            self.copyweights_checkbox.enabled = True
 
     def onGetSkinMesh(self):
         self.skinMeshList = pm.ls(sl=True, type="transform")

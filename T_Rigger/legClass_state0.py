@@ -10,7 +10,33 @@ reload(rc)
 reload(icon)
 
 class Leg(object):
-    def __init__(self, leginits, suffix="", side="L"):
+    def __init__(self):
+        # none = None
+        self.limbGrp = None
+        self.scaleGrp = None
+        self.cont_IK_foot = None
+        self.cont_Pole = None
+        self.nonScaleGrp = None
+        # cont_IK_foot_OFF = None
+        self.cont_IK_OFF = None
+        self.sockets = []
+        # startSocket = None
+        # endSocket = None
+        self.limbPlug = None
+        self.connectsTo = None
+        self.scaleConstraints = []
+        self.anchors = []
+        self.anchorLocations = []
+        self.jDef_legRoot = None
+        self.deformerJoints = []
+        self.colorCodes = [6, 18]
+
+    def createleg(self, leginits, suffix="", side="L"):
+        # suffix = (extra.uniqueName("scaleGrp_%s" % suffix)).replace("scaleGrp_", "")
+        suffix = (extra.uniqueName("limbGrp_%s" % suffix)).replace("limbGrp_", "")
+
+        self.limbGrp = pm.group(name="limbGrp_%s" % suffix, em=True)
+
 
         if len(leginits) < 9:
             pm.error("Some or all Leg Init Bones are missing (or Renamed)")
@@ -22,185 +48,96 @@ class Leg(object):
 
         # reinitialize the dictionary for easy use
         if type(leginits) == dict:
-            self.leg_root_ref = leginits["LegRoot"]
-            self.hip_ref = leginits["Hip"]
-            self.knee_ref = leginits["Knee"]
-            self.foot_ref = leginits["Foot"]
-            self.ball_ref = leginits["Ball"]
-            self.heel_pv_ref = leginits["HeelPV"]
-            self.toe_pv_ref = leginits["ToePV"]
-            self.bank_in_ref = leginits["BankIN"]
-            self.bank_out_ref = leginits["BankOUT"]
+            leg_root_ref = leginits["LegRoot"]
+            hip_ref = leginits["Hip"]
+            knee_ref = leginits["Knee"]
+            foot_ref = leginits["Foot"]
+            ball_ref = leginits["Ball"]
+            heel_pv_ref = leginits["HeelPV"]
+            toe_pv_ref = leginits["ToePV"]
+            bank_in_ref = leginits["BankIN"]
+            bank_out_ref = leginits["BankOUT"]
         else:
-            self.leg_root_ref = leginits[0]
-            self.hip_ref = leginits[1]
-            self.knee_ref = leginits[2]
-            self.foot_ref = leginits[3]
-            self.ball_ref = leginits[4]
-            self.heel_pv_ref = leginits[5]
-            self.toe_pv_ref = leginits[6]
-            self.bank_in_ref = leginits[7]
-            self.bank_out_ref = leginits[8]
+            leg_root_ref = leginits[0]
+            hip_ref = leginits[1]
+            knee_ref = leginits[2]
+            foot_ref = leginits[3]
+            ball_ref = leginits[4]
+            heel_pv_ref = leginits[5]
+            toe_pv_ref = leginits[6]
+            bank_in_ref = leginits[7]
+            bank_out_ref = leginits[8]
 
-        self.leg_root_pos = self.leg_root_ref.getTranslation(space="world")
-        self.hip_pos = self.hip_ref.getTranslation(space="world")
-        self.knee_pos = self.knee_ref.getTranslation(space="world")
-        self.foot_pos = self.foot_ref.getTranslation(space="world")
-        self.ball_pos = self.ball_ref.getTranslation(space="world")
-        self.toe_pv_pos = self.toe_pv_ref.getTranslation(space="world")
+        up_axis, mirror_axis, look_axis = extra.getRigAxes(leg_root_ref)
 
-        # get distances
-        self.init_upper_leg_dist = extra.getDistance(self.hip_ref, self.knee_ref)
-        self.init_lower_leg_dist = extra.getDistance(self.knee_ref, self.foot_ref)
-        self.init_ball_dist = extra.getDistance(self.foot_ref, self.ball_ref)
-        self.init_toe_dist = extra.getDistance(self.ball_ref, self.toe_pv_ref)
-        self.init_foot_length = extra.getDistance(self.toe_pv_ref, self.heel_pv_ref)
-        self.init_foot_width = extra.getDistance(self.bank_in_ref, self.bank_out_ref)
+        # find the Socket
+        self.connectsTo = leg_root_ref.getParent()
 
-        self.sideMult = -1 if side == "R" else 1
-        self.side = side
+        leg_root_pos = leg_root_ref.getTranslation(space="world")
+        hip_pos = hip_ref.getTranslation(space="world")
+        knee_pos = knee_ref.getTranslation(space="world")
+        foot_pos = foot_ref.getTranslation(space="world")
+        ball_pos = ball_ref.getTranslation(space="world")
+        # heel_pv_pos = heel_pv_ref.getTranslation(space="world")
+        toe_pv_pos = toe_pv_ref.getTranslation(space="world")
+        # bank_in_pos = bank_in_ref.getTranslation(space="world")
+        # bank_out_pos = bank_out_ref.getTranslation(space="world")
 
-        self.up_axis, self.mirror_axis, self.look_axis = extra.getRigAxes(self.leg_root_ref)
+        init_upper_leg_dist = extra.getDistance(hip_ref, knee_ref)
+        init_lower_leg_dist = extra.getDistance(knee_ref, foot_ref)
+        init_ball_dist = extra.getDistance(foot_ref, ball_ref)
+        init_toe_dist = extra.getDistance(ball_ref, toe_pv_ref)
+        init_foot_length = extra.getDistance(toe_pv_ref, heel_pv_ref)
+        init_foot_width = extra.getDistance(bank_in_ref, bank_out_ref)
 
-        self.originalSuffix = suffix
-        self.suffix = (extra.uniqueName("limbGrp_%s" % suffix)).replace("limbGrp_", "")
+        ########
+        ########
+        foot_plane = pm.spaceLocator(name="testLocator")
+        pm.setAttr(foot_plane.rotateOrder, 0)
+        pm.pointConstraint(heel_pv_ref, toe_pv_ref, foot_plane)
+        pm.aimConstraint(toe_pv_ref, foot_plane, wuo=foot_ref, wut="object")
+        ########
+        ########
 
-        self.sockets = []
-        self.scaleGrp = None
-        self.nonScaleGrp = None
-        self.cont_IK_foot = None
-        self.cont_IK_OFF = None
-        self.cont_Pole = None
-        self.limbPlug = None
-        self.scaleConstraints = []
-        self.anchors = []
-        self.anchorLocations = []
-        self.jDef_legRoot = None
-        self.deformerJoints = []
-        self.colorCodes = [6, 18]
+        #     _____            _             _ _
+        #    / ____|          | |           | | |
+        #   | |     ___  _ __ | |_ _ __ ___ | | | ___ _ __ ___
+        #   | |    / _ \| '_ \| __| '__/ _ \| | |/ _ \ '__/ __|
+        #   | |___| (_) | | | | |_| | | (_) | | |  __/ |  \__ \
+        #    \_____\___/|_| |_|\__|_|  \___/|_|_|\___|_|  |___/
+        #
+        #
 
-    def createGrp(self):
-        self.limbGrp = pm.group(name="limbGrp_%s" % self.suffix, em=True)
-        self.scaleGrp = pm.group(name="scaleGrp_%s" % self.suffix, em=True)
-        extra.alignTo(self.scaleGrp, self.leg_root_ref, 0)
-        self.nonScaleGrp = pm.group(name="NonScaleGrp_%s" % self.suffix, em=True)
-
-        pm.addAttr(self.scaleGrp, at="bool", ln="Control_Visibility", sn="contVis", defaultValue=True)
-        pm.addAttr(self.scaleGrp, at="bool", ln="Joints_Visibility", sn="jointVis", defaultValue=True)
-        pm.addAttr(self.scaleGrp, at="bool", ln="Rig_Visibility", sn="rigVis", defaultValue=False)
-        # make the created attributes visible in the channelbox
-        pm.setAttr(self.scaleGrp.contVis, cb=True)
-        pm.setAttr(self.scaleGrp.jointVis, cb=True)
-        pm.setAttr(self.scaleGrp.rigVis, cb=True)
-
-        pm.parent(self.scaleGrp, self.limbGrp)
-        pm.parent(self.nonScaleGrp, self.limbGrp)
-
-    def createJoints(self):
-        # Create Limb Plug
-        pm.select(d=True)
-        self.limbPlug = pm.joint(name="limbPlug_%s" % self.suffix, p=self.leg_root_pos, radius=3)
-
-        self.jDef_legRoot = pm.joint(name="jDef_legRoot_%s" % self.suffix, p=self.leg_root_pos, radius=1.5)
-        self.sockets.append(self.jDef_legRoot)
-        self.j_def_hip = pm.joint(name="jDef_hip_%s" % self.suffix, p=self.hip_pos, radius=1.5)
-        self.sockets.append(self.j_def_hip)
-
-        extra.orientJoints([self.jDef_legRoot, self.j_def_hip], localMoveAxis=(dt.Vector(self.up_axis)),
-                           mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.up_axis)))
-
-        pm.select(d=True)
-        self.j_def_midLeg = pm.joint(name="jDef_knee_%s" % self.suffix, p=self.knee_pos, radius=1.5)
-        self.sockets.append(self.j_def_midLeg)
-
-        # IK Joints
-        # Follow IK Chain
-        pm.select(d=True)
-        self.j_ik_orig_root = pm.joint(name="jIK_orig_Root_%s" % self.suffix, p=self.hip_pos, radius=1.5)
-        self.j_ik_orig_knee = pm.joint(name="jIK_orig_Knee_%s" % self.suffix, p=self.knee_pos, radius=1.5)
-        self.j_ik_orig_end = pm.joint(name="jIK_orig_End_%s" % self.suffix, p=self.foot_pos, radius=1.5)
-
-        # Single Chain IK
-        pm.select(d=True)
-        self.j_ik_sc_root = pm.joint(name="jIK_SC_Root_%s" % self.suffix, p=self.hip_pos, radius=1)
-        self.j_ik_sc_knee = pm.joint(name="jIK_SC_Knee_%s" % self.suffix, p=self.knee_pos, radius=1)
-        self.j_ik_sc_end = pm.joint(name="jIK_SC_End_%s" % self.suffix, p=self.foot_pos, radius=1)
-
-        # Rotate Plane IK
-        pm.select(d=True)
-        self.j_ik_rp_root = pm.joint(name="jIK_RP_Root_%s" % self.suffix, p=self.hip_pos, radius=0.7)
-        self.j_ik_rp_knee = pm.joint(name="jIK_RP_Knee_%s" % self.suffix, p=self.knee_pos, radius=0.7)
-        self.j_ik_rp_end = pm.joint(name="jIK_RP_End_%s" % self.suffix, p=self.foot_pos, radius=0.7)
-
-        pm.select(d=True)
-        self.j_ik_foot = pm.joint(name="jIK_Foot_%s" % self.suffix, p=self.foot_pos, radius=1.0)
-        self.j_ik_ball = pm.joint(name="jIK_Ball_%s" % self.suffix, p=self.ball_pos, radius=1.0)
-        self.j_ik_toe = pm.joint(name="jIK_Toe_%s" % self.suffix, p=self.toe_pv_pos, radius=1.0)
-
-        pm.select(d=True)
-
-        # orientations
-        extra.orientJoints([self.j_ik_orig_root, self.j_ik_orig_knee, self.j_ik_orig_end],
-                           localMoveAxis=(dt.Vector(self.up_axis)),
-                           mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.up_axis)))
-
-        extra.orientJoints([self.j_ik_sc_root, self.j_ik_sc_knee, self.j_ik_sc_end],
-                           localMoveAxis=(dt.Vector(self.up_axis)),
-                           mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.up_axis)))
-
-        extra.orientJoints([self.j_ik_rp_root, self.j_ik_rp_knee, self.j_ik_rp_end],
-                           localMoveAxis=(dt.Vector(self.up_axis)),
-                           mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.up_axis)))
-
-        extra.orientJoints([self.j_ik_foot, self.j_ik_ball, self.j_ik_toe],
-                           localMoveAxis=(dt.Vector(self.up_axis)),
-                           mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.up_axis)))
-
-        # FK Joints
-        pm.select(d=True)
-        self.jfk_root = pm.joint(name="jFK_UpLeg_%s" % self.suffix, p=self.hip_pos, radius=1.0)
-        self.jfk_knee = pm.joint(name="jFK_Knee_%s" % self.suffix, p=self.knee_pos, radius=1.0)
-        self.jfk_foot = pm.joint(name="jFK_Foot_%s" % self.suffix, p=self.foot_pos, radius=1.0)
-        self.jfk_ball = pm.joint(name="jFK_Ball_%s" % self.suffix, p=self.ball_pos, radius=1.0)
-        self.jfk_toe = pm.joint(name="jFK_Toe_%s" % self.suffix, p=self.toe_pv_pos, radius=1.0)
-
-        extra.orientJoints([self.jfk_root, self.jfk_knee, self.jfk_foot, self.jfk_ball, self.jfk_toe], localMoveAxis=(dt.Vector(self.up_axis)),
-                           mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.up_axis)))
-
-        # re-orient single joints
-        extra.alignToAlter(self.j_def_hip, self.jfk_root, mode=2)
-        pm.makeIdentity(self.j_def_hip, a=True)
-        extra.alignToAlter(self.j_def_midLeg, self.jfk_knee, mode=2)
-        pm.makeIdentity(self.j_def_midLeg, a=True)
-
-        pm.parent(self.j_def_midLeg, self.scaleGrp)
-        pm.parent(self.jfk_root, self.scaleGrp)
-
-        self.deformerJoints += [self.j_def_midLeg, self.j_def_hip, self.jDef_legRoot]
-
-        self.scaleGrp.rigVis >> self.jfk_root.v
-
-    def createControllers(self):
         # Thigh Controller
-        thigh_cont_scale = (self.init_upper_leg_dist / 4, self.init_upper_leg_dist / 16, self.init_upper_leg_dist / 4)
-        self.cont_thigh = icon.cube("cont_Thigh_%s" % self.suffix, thigh_cont_scale)
-        pm.setAttr("{0}.s{1}".format(self.cont_thigh, "y"), self.sideMult)
-        pm.makeIdentity(self.cont_thigh, a=True)
-        extra.alignAndAim(self.cont_thigh, targetList=[self.jDef_legRoot], aimTargetList=[self.j_def_hip],
-                          upVector=self.up_axis)
 
-        self.cont_thigh_off = extra.createUpGrp(self.cont_thigh, "OFF")
-        self.cont_thigh_ore = extra.createUpGrp(self.cont_thigh, "ORE")
-        self.cont_thigh_pos = extra.createUpGrp(self.cont_thigh, "POS")
+        thigh_cont_scale = (init_upper_leg_dist / 4, init_upper_leg_dist / 16, init_upper_leg_dist / 4)
+        cont_thigh = icon.cube("cont_Thigh_%s" % suffix, thigh_cont_scale)
+        extra.alignAndAim(cont_thigh, targetList=[hip_ref], aimTargetList=[knee_ref], upObject=leg_root_ref)
+        pm.move(cont_thigh, (0, -thigh_cont_scale[0] * 2, 0), r=True, os=True)
+
+        cont_thigh_off = extra.createUpGrp(cont_thigh, "OFF")
+        cont_thigh_ore = extra.createUpGrp(cont_thigh, "ORE")
+        if side == "R":
+            pm.setAttr(cont_thigh_ore.rotateZ, -180)
+
+        pm.xform(cont_thigh, piv=leg_root_pos, ws=True)
+        # pm.addAttr(shortName="autoTwist", longName="Auto_Twist", defaultValue=1.0, minValue=0.0, maxValue=1.0, at="float",
+        #            k=True)
+        # pm.addAttr(shortName="manualTwist", longName="Manual_Twist", defaultValue=0.0, at="float", k=True)
 
         # IK Foot Controller
-        foot_cont_scale = (self.init_foot_length * 0.75, 1, self.init_foot_width * 0.8)
-        self.cont_IK_foot = icon.circle("cont_IK_foot_%s" % self.suffix, scale=foot_cont_scale, normal=(0, 1, 0))
-        extra.alignToAlter(self.cont_IK_foot, self.jfk_foot, mode=2)
 
-        self.cont_IK_OFF = extra.createUpGrp(self.cont_IK_foot, "OFF")
-        cont_ik_hand_ore = extra.createUpGrp(self.cont_IK_foot, "ORE")
-        cont_ik_hand_pos = extra.createUpGrp(self.cont_IK_foot, "POS")
+        foot_cont_scale = (init_foot_length * 0.75, 1, init_foot_width * 0.8)
+        self.cont_IK_foot = icon.circle("cont_IK_foot_%s" % suffix, scale=foot_cont_scale, normal=(0, 1, 0))
+
+        extra.alignAndAim(self.cont_IK_foot, targetList=[bank_out_ref, bank_in_ref, toe_pv_ref, heel_pv_ref], aimTargetList=[toe_pv_ref], upObject=foot_ref)
+        # pm.makeIdentity(self.cont_IK_foot, a=True, t=True, r=False, s=True)
+
+        pm.xform(self.cont_IK_foot, piv=foot_pos, p=True, ws=True)
+
+        self.cont_IK_OFF  = extra.createUpGrp(self.cont_IK_foot, "OFF")
+
+
 
         pm.addAttr(self.cont_IK_foot, shortName="polevector", longName="Pole_Vector", defaultValue=0.0, minValue=0.0, maxValue=1.0,
                    at="double", k=True)
@@ -225,75 +162,13 @@ class Leg(object):
         pm.addAttr(self.cont_IK_foot, shortName="bank", longName="Bank", defaultValue=0.0, at="double", k=True)
 
         # Pole Vector Controller
-        polecont_scale = ((((self.init_upper_leg_dist + self.init_lower_leg_dist) / 2) / 10), (((self.init_upper_leg_dist + self.init_lower_leg_dist) / 2) / 10), (((self.init_upper_leg_dist + self.init_lower_leg_dist) / 2) / 10))
-        self.cont_Pole = icon.plus("cont_Pole_%s" % self.suffix, polecont_scale, normal=(0, 0, 1))
-        offset_mag_pole = ((self.init_upper_leg_dist + self.init_lower_leg_dist) / 4)
-        offset_vector_pole = extra.getBetweenVector(self.j_def_midLeg, [self.j_def_hip, self.jfk_foot])
-
-        extra.alignAndAim(self.cont_Pole,
-                          targetList=[self.j_def_midLeg],
-                          aimTargetList=[self.j_def_hip, self.jfk_foot],
-                          upVector=self.up_axis,
-                          translateOff=(offset_vector_pole * offset_mag_pole)
-                          )
-
-        self.cont_pole_off = extra.createUpGrp(self.cont_Pole, "OFF")
-        self.cont_pole_vis = extra.createUpGrp(self.cont_Pole, "VIS")
-
-
-    def createleg(self, leginits, suffix="", side="L"):
-        # suffix = (extra.uniqueName("scaleGrp_%s" % suffix)).replace("scaleGrp_", "")
-        suffix = (extra.uniqueName("limbGrp_%s" % suffix)).replace("limbGrp_", "")
-
-
-
-
-
-
-
-
-        up_axis, mirror_axis, look_axis = extra.getRigAxes(leg_root_ref)
-
-
-
-
-
-
-
-        ########
-        ########
-        foot_plane = pm.spaceLocator(name="testLocator")
-        pm.setAttr(foot_plane.rotateOrder, 0)
-        pm.pointConstraint(heel_pv_ref, toe_pv_ref, foot_plane)
-        pm.aimConstraint(toe_pv_ref, foot_plane, wuo=foot_ref, wut="object")
-        ########
-        ########
-
-        #     _____            _             _ _
-        #    / ____|          | |           | | |
-        #   | |     ___  _ __ | |_ _ __ ___ | | | ___ _ __ ___
-        #   | |    / _ \| '_ \| __| '__/ _ \| | |/ _ \ '__/ __|
-        #   | |___| (_) | | | | |_| | | (_) | | |  __/ |  \__ \
-        #    \_____\___/|_| |_|\__|_|  \___/|_|_|\___|_|  |___/
-        #
-        #
-
-
-        extra.alignAndAim(cont_thigh, targetList=[hip_ref], aimTargetList=[knee_ref], upObject=leg_root_ref)
-        pm.move(cont_thigh, (0, -thigh_cont_scale[0] * 2, 0), r=True, os=True)
-
-        cont_thigh_off = extra.createUpGrp(cont_thigh, "OFF")
-        cont_thigh_ore = extra.createUpGrp(cont_thigh, "ORE")
-        if side == "R":
-            pm.setAttr(cont_thigh_ore.rotateZ, -180)
-
-        pm.xform(cont_thigh, piv=leg_root_pos, ws=True)
-        # pm.addAttr(shortName="autoTwist", longName="Auto_Twist", defaultValue=1.0, minValue=0.0, maxValue=1.0, at="float",
-        #            k=True)
-        # pm.addAttr(shortName="manualTwist", longName="Manual_Twist", defaultValue=0.0, at="float", k=True)
-
-
-
+        polecont_scale = ((((init_upper_leg_dist + init_lower_leg_dist) / 2) / 10), (((init_upper_leg_dist + init_lower_leg_dist) / 2) / 10), (((init_upper_leg_dist + init_lower_leg_dist) / 2) / 10))
+        self.cont_Pole = icon.plus("cont_Pole_%s" % suffix, polecont_scale, normal=(0, 0, 1))
+        offset_mag_pole = ((init_upper_leg_dist + init_lower_leg_dist) / 4)
+        offset_vector_pole = extra.getBetweenVector(knee_ref, [hip_ref, foot_ref])
+        extra.alignAndAim(self.cont_Pole, targetList=[knee_ref], aimTargetList=[hip_ref, foot_ref], upVector=up_axis, translateOff=(offset_vector_pole * offset_mag_pole))
+        cont_pole_off = extra.createUpGrp(self.cont_Pole, "OFF")
+        cont_pole_vis = extra.createUpGrp(self.cont_Pole, "VIS")
 
         # FK Upleg Controller
         scalecont_fk_up_leg = (init_upper_leg_dist / 2, init_upper_leg_dist / 6, init_upper_leg_dist / 6)
@@ -391,11 +266,25 @@ class Leg(object):
         ###########################################################################################################################
 
         # Groups
+        self.scaleGrp = pm.group(name="scaleGrp_%s" % suffix, em=True)
+        extra.alignTo(self.scaleGrp, leg_root_ref, 0)
+        self.nonScaleGrp = pm.group(name="NonScaleGrp_%s" % suffix, em=True)
 
+        # Create Limb Plug
+        pm.select(d=True)
+        self.limbPlug = pm.joint(name="limbPlug_%s" % suffix, p=leg_root_pos, radius=3)
 
-
-
-
+        # Create common Joints
+        pm.select(d=True)
+        j_def_midLeg = pm.joint(name="jDef_knee_%s" % suffix, p=knee_pos, radius=1.5)
+        self.sockets.append(j_def_midLeg)
+        pm.select(d=True)
+        self.jDef_legRoot = pm.joint(name="jDef_legRoot_%s" % suffix, p=leg_root_pos, radius=1.5)
+        self.sockets.append(self.jDef_legRoot)
+        j_def_hip = pm.joint(name="jDef_hip_%s" % suffix, p=hip_pos, radius=1.5)
+        pm.joint(self.jDef_legRoot, e=True, zso=True, oj="xyz")
+        pm.joint(j_def_hip, e=True, zso=True, oj="xyz")
+        pm.parent(self.jDef_legRoot, self.scaleGrp)
 
         ###########################
         ######### IK LEG ##########
@@ -403,6 +292,27 @@ class Leg(object):
 
         master_ik = pm.spaceLocator(name="masterIK_" + suffix)
         extra.alignTo(master_ik, foot_ref)
+
+        pm.select(d=True)
+        j_ik_orig_root = pm.joint(name="jIK_orig_Root_%s" % suffix, p=hip_pos, radius=1.5)
+        j_ik_orig_knee = pm.joint(name="jIK_orig_Knee_%s" % suffix, p=knee_pos, radius=1.5)
+        j_ik_orig_end = pm.joint(name="jIK_orig_End_%s" % suffix, p=foot_pos, radius=1.5)
+        # j_ik_orig_temp = pm.joint(p=ball_pos)
+        pm.select(d=True)
+        j_ik_sc_root = pm.joint(name="jIK_SC_Root_%s" % suffix, p=hip_pos, radius=1)
+        j_ik_sc_knee = pm.joint(name="jIK_SC_Knee_%s" % suffix, p=knee_pos, radius=1)
+        j_ik_sc_end = pm.joint(name="jIK_SC_End_%s" % suffix, p=foot_pos, radius=1)
+        # j_ik_sc_temp = pm.joint(p=ball_pos)
+        pm.select(d=True)
+        j_ik_rp_root = pm.joint(name="jIK_RP_Root_%s" % suffix, p=hip_pos, radius=0.7)
+        j_ik_rp_knee = pm.joint(name="jIK_RP_Knee_%s" % suffix, p=knee_pos, radius=0.7)
+        j_ik_rp_end = pm.joint(name="jIK_RP_End_%s" % suffix, p=foot_pos, radius=0.7)
+        # j_ik_rp_temp = pm.joint(p=ball_pos)
+        pm.select(d=True)
+        j_ik_foot = pm.joint(name="jIK_Foot_%s" % suffix, p=foot_pos, radius=1.0)
+        j_ik_ball = pm.joint(name="jIK_Ball_%s" % suffix, p=ball_pos, radius=1.0)
+        j_ik_toe = pm.joint(name="jIK_Toe_%s" % suffix, p=toe_pv_pos,  # POSSIBLE PROBLEM
+                           radius=1.0)
 
 
 
@@ -831,7 +741,12 @@ class Leg(object):
         ######### FK LEG ##########
         ###########################
 
-
+        pm.select(d=True)
+        jfk_root = pm.joint(name="jFK_UpLeg_%s" % suffix, p=hip_pos, radius=1.0)
+        jfk_knee = pm.joint(name="jFK_Knee_%s" % suffix, p=knee_pos, radius=1.0)
+        jfk_foot = pm.joint(name="jFK_Foot_%s" % suffix, p=foot_pos, radius=1.0)
+        jfk_ball = pm.joint(name="jFK_Ball_%s" % suffix, p=ball_pos, radius=1.0)
+        jfk_toe = pm.joint(name="jFK_Toe_%s" % suffix, p=toe_pv_pos, radius=1.0)
 
         # extra.alignTo(jfk_root, j_ik_orig_root, mode=2)
         # extra.alignTo(jfk_knee, j_ik_orig_knee, mode=2)
@@ -1222,7 +1137,13 @@ class Leg(object):
         for i in tweak_controls:
             cont_fk_ik.tweakControls >> i.v
 
-
+        pm.addAttr(self.scaleGrp, at="bool", ln="Control_Visibility", sn="contVis", defaultValue=True)
+        pm.addAttr(self.scaleGrp, at="bool", ln="Joints_Visibility", sn="jointVis", defaultValue=True)
+        pm.addAttr(self.scaleGrp, at="bool", ln="Rig_Visibility", sn="rigVis", defaultValue=False)
+        # make the created attributes visible in the channelbox
+        pm.setAttr(self.scaleGrp.contVis, cb=True)
+        pm.setAttr(self.scaleGrp.jointVis, cb=True)
+        pm.setAttr(self.scaleGrp.rigVis, cb=True)
 
         nodes_cont_vis = [cont_pole_off, cont_thigh_off, self.cont_IK_OFF , cont_fk_foot_off, cont_midLock_pos, cont_fk_ik_pos,
                         cont_fk_ball_off, cont_fk_low_leg_off, cont_fk_up_leg_off, ribbon_upper_leg.scaleGrp, ribbon_lower_leg.scaleGrp]

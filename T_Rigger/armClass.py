@@ -57,9 +57,9 @@ class Arm(object):
         self.nonScaleGrp = None
         self.cont_IK_hand = None
         self.cont_IK_OFF = None
-        self.rootSocket = None
+        # self.rootSocket = None
         self.cont_Pole = None
-        self.nodesContVis = None
+        # self.nodesContVis = None
         self.limbPlug = None
         self.scaleConstraints = []
         self.anchors = []
