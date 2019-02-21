@@ -353,9 +353,10 @@ class LimbBuilder():
                 if x[2] == "R":
                     self.rightHip = x[0]["Hip"]
 
-                limb = leg.Leg()
+                limb = leg.Leg(x[0], suffix="%s_Arm" %sideVal, side=x[2])
                 limb.colorCodes = colorCodes
-                limb.createleg(x[0], suffix="%s_Leg" %sideVal, side=x[2])
+                # limb.createleg(x[0], suffix="%s_Leg" %sideVal, side=x[2])
+                limb.createLimb()
 
             elif x[1] == "neck":
                 limb = neckAndHead.NeckAndHead()

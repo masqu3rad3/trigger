@@ -36,7 +36,7 @@ class Arm(object):
         self.shoulder_pos = self.shoulder_ref.getTranslation(space="world")
         self.elbow_pos = self.elbow_ref.getTranslation(space="world")
         self.hand_pos = self.hand_ref.getTranslation(space="world")
-        self.root_pos = self.hand_ref.getTranslation(space="world")
+        # self.root_pos = self.hand_ref.getTranslation(space="world")
 
         # get distances
         self.init_shoulder_dist = extra.getDistance(self.collar_ref, self.shoulder_ref)
@@ -148,7 +148,8 @@ class Arm(object):
                            mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.up_axis)))
 
         # Hand joint
-        self.j_def_hand = pm.joint(name="jDef_Hand_%s" % self.suffix, p=self.root_pos, radius=1.0)
+        self.j_def_hand = pm.joint(name="jDef_Hand_%s" % self.suffix, p=self.hand_pos, radius=1.0)
+        self.sockets.append(self.j_def_hand)
 
         # re-orient single joints
         extra.alignToAlter(self.j_collar_end, self.j_fk_up, mode=2)
@@ -392,8 +393,6 @@ class Arm(object):
 
         self.root_master = pm.spaceLocator(name="handMaster_%s" % self.suffix)
         extra.alignTo(self.root_master, self.j_def_hand, 2)
-
-        self.sockets.append(self.j_def_hand)
 
         pm.parent(self.j_def_hand, self.root_master)
 
@@ -952,7 +951,7 @@ class Arm(object):
         self.scaleConstraints = [self.scaleGrp, self.cont_IK_OFF]
         self.anchors = [(self.cont_IK_hand, "parent", 1, None), (self.cont_Pole, "parent", 1, None)]
 
-    def createLimb(self, replaceOld=True):
+    def createLimb(self):
         self.createGrp()
         self.createJoints()
         self.createControllers()
