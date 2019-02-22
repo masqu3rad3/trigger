@@ -193,10 +193,12 @@ class Leg(object):
 
         extra.alignToAlter(self.j_socket_ball, self.jfk_ball, mode=2)
         pm.makeIdentity(self.j_socket_ball, a=True)
+        pm.parent(self.j_socket_ball, self.j_def_ball)
 
 
         pm.parent(self.j_def_midLeg, self.scaleGrp)
         pm.parent(self.jfk_root, self.scaleGrp)
+        pm.parent(self.j_def_foot, self.scaleGrp)
 
         self.deformerJoints += [self.j_def_midLeg, self.j_def_hip, self.jDef_legRoot, self.j_def_foot, self.j_def_ball]
 
@@ -371,6 +373,7 @@ class Leg(object):
         pm.parent(self.cont_mid_lock_ext, self.scaleGrp)
         pm.parent(self.cont_pole_off, self.scaleGrp)
         pm.parent(self.cont_fk_ik_pos, self.scaleGrp)
+        pm.parent(self.cont_fk_ball_off, self.scaleGrp)
         pm.parent(self.cont_IK_OFF, self.limbGrp)
 
         nodesContVis = [self.cont_pole_off, self.cont_thigh_off, self.cont_IK_OFF, self.cont_fk_foot_off,
@@ -391,6 +394,11 @@ class Leg(object):
         extra.colorize(self.cont_mid_lock, self.colorCodes[1])
 
     def createRoots(self):
+
+        self.master_root = pm.group(em=True, name="masterRoot_%s" % self.suffix)
+        extra.alignTo(self.master_root, self.leg_root_ref, 0)
+        pm.makeIdentity(self.master_root, a=True)
+
         ## Create Start Lock
 
         self.start_lock = pm.spaceLocator(name="startLock_%s" % self.suffix)
@@ -418,12 +426,13 @@ class Leg(object):
         self.end_lock_pos = extra.createUpGrp(self.end_lock, "Pos")
         self.end_lock_twist = extra.createUpGrp(self.end_lock, "Twist")
 
-
-
+        pm.parent(self.mid_lock, self.scaleGrp)
+        pm.parent(self.master_root, self.scaleGrp)
 
         self.scaleGrp.rigVis >> self.end_lock_twist.v
         self.scaleGrp.rigVis >> self.start_lock_ore.v
         self.scaleGrp.rigVis >> self.mid_lock.v
+        self.scaleGrp.rigVis >> self.master_root.v
 
 
     def createIKsetup(self):
@@ -781,27 +790,33 @@ class Leg(object):
         self.cont_IK_foot.polevector >> pole_vector_rvs.inputX
         self.cont_IK_foot.polevector >> self.cont_Pole.v
 
-        # pm.parent(self.j_ik_orig_up, self.master_root)
-        # pm.parent(self.j_ik_sc_up, self.master_root)
-        # pm.parent(self.j_ik_rp_up, self.master_root)
-        # #
-        #
+        pm.parent(self.j_ik_orig_root, self.master_root)
+        pm.parent(self.j_ik_sc_root, self.master_root)
+        pm.parent(self.j_ik_rp_root, self.master_root)
+
+        # pm.parentConstraint(self.cont_thigh, self.jDef_legRoot, mo=False, st=("x", "y", "z"))
+        # pm.pointConstraint(self.cont_thigh, j_def_hip, mo=True)
+
         # pacon_locator_shou = pm.spaceLocator(name="paConLoc_%s" % self.suffix)
         # extra.alignTo(pacon_locator_shou, self.j_def_collar, mode=2)
         #
         # j_def_pa_con = pm.parentConstraint(self.cont_shoulder, pacon_locator_shou, mo=False)
         #
-        # pm.parent(arm_start, self.scaleGrp)
-        # pm.parent(arm_end, self.scaleGrp)
-        # pm.parent(self.ik_parent_grp, self.scaleGrp)
+        pm.parent(leg_start, self.scaleGrp)
+        pm.parent(leg_end, self.scaleGrp)
+        pm.parent(self.ik_parent_grp, self.scaleGrp)
+        pm.parent(self.start_lock_ore, self.scaleGrp)
+        pm.parent(self.end_lock_ore, self.scaleGrp)
         #
         # pm.parent(pacon_locator_shou, self.scaleGrp)
         # pm.parent(self.j_def_collar, pacon_locator_shou)
         #
-        # self.scaleGrp.rigVis >> arm_start.v
-        # self.scaleGrp.rigVis >> arm_end.v
-        # self.scaleGrp.rigVis >> self.ik_parent_grp.v
+        self.scaleGrp.rigVis >> leg_start.v
+        self.scaleGrp.rigVis >> leg_end.v
+        self.scaleGrp.rigVis >> self.ik_parent_grp.v
         # self.scaleGrp.rigVis >> pacon_locator_shou.getShape().v
+
+        pm.delete(foot_plane)
 
     def createFKsetup(self):
         pass

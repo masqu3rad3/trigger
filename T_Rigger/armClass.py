@@ -658,6 +658,8 @@ class Arm(object):
         pm.parent(arm_start, self.scaleGrp)
         pm.parent(arm_end, self.scaleGrp)
         pm.parent(self.ik_parent_grp, self.scaleGrp)
+        pm.parent(self.start_lock_ore, self.scaleGrp)
+        pm.parent(self.end_lock_ore, self.scaleGrp)
 
         pm.parent(pacon_locator_shou, self.scaleGrp)
         pm.parent(self.j_def_collar, pacon_locator_shou)
@@ -724,7 +726,7 @@ class Arm(object):
         # the following offset parent constraint is not important and wont cause any trouble since
         # it only affects the FK/IK icon
         pm.parentConstraint(self.end_lock, self.cont_fk_ik_pos, mo=True)
-        pm.parent(self.end_lock_ore, self.scaleGrp)
+        # pm.parent(self.end_lock_ore, self.scaleGrp)
 
         # end_lock_rot = pm.parentConstraint(ik_parent_grp, cont_fk_hand, end_lock_twist, st=("x", "y", "z"), mo=True)
         end_lock_rot = pm.parentConstraint(self.ik_parent_grp, self.cont_fk_hand, self.end_lock_twist,
@@ -935,7 +937,7 @@ class Arm(object):
 
     def roundUp(self):
         pm.parentConstraint(self.limbPlug, self.scaleGrp, mo=False)
-        pm.parent(self.start_lock_ore, self.scaleGrp)
+        # pm.parent(self.start_lock_ore, self.scaleGrp)
 
         pm.setAttr(self.scaleGrp.rigVis, 0)
 
