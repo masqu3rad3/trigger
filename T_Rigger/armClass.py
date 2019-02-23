@@ -307,6 +307,7 @@ class Arm(object):
 
         pm.addAttr(self.cont_fk_ik, shortName="allowScaling", longName="Allow_Scaling", defaultValue=1.0, minValue=0.0,
                    maxValue=1.0, at="float", k=True)
+        pm.addAttr(self.cont_fk_ik, at="enum", k=True, shortName="interpType", longName="Interp_Type", en="No_Flip:Average:Shortest:Longest:Cache", defaultValue=0)
 
         pm.addAttr(self.cont_fk_ik, shortName="tweakControls", longName="Tweak_Controls", defaultValue=0, at="bool")
         pm.setAttr(self.cont_fk_ik.tweakControls, cb=True)
@@ -701,6 +702,8 @@ class Arm(object):
 
         self.fk_ik_rvs.outputX >> ("%s.%sW1" % (mid_lock_pa_con_weight, self.j_fk_low))
 
+        self.cont_fk_ik.interpType >> mid_lock_pa_con_weight.interpType
+
         mid_lock_po_con_weight = pm.pointConstraint(self.j_ik_orig_low, self.j_fk_low, self.cont_mid_lock_ave, mo=False)
         self.cont_fk_ik.fk_ik >> ("%s.%sW0" % (mid_lock_po_con_weight, self.j_ik_orig_low))
 
@@ -733,7 +736,8 @@ class Arm(object):
                                            st=("x", "y", "z"), mo=False)
         self.cont_fk_ik.fk_ik >> ("%s.%sW0" % (end_lock_rot, self.ik_parent_grp))
         self.fk_ik_rvs.outputX >> ("%s.%sW1" % (end_lock_rot, self.cont_fk_hand))
-        pm.setAttr(end_lock_rot.interpType, 0)
+        # pm.setAttr(end_lock_rot.interpType, 0)
+        self.cont_fk_ik.interpType >> end_lock_rot.interpType
 
         hand_ori_con = pm.parentConstraint(self.cont_IK_hand, self.hand_lock, self.root_master, st=("x", "y", "z"),
                                            mo=False)
