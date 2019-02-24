@@ -289,7 +289,7 @@ class Leg(object):
 
         ## FK LOW Leg Controller
         scalecont_fk_low_leg = (self.init_lower_leg_dist / 2, self.init_lower_leg_dist / 6, self.init_lower_leg_dist / 6)
-        self.cont_fk_low_leg = icon.cube("cont_FK_LowArm_%s" % self.suffix, scalecont_fk_low_leg)
+        self.cont_fk_low_leg = icon.cube("cont_FK_LowLeg_%s" % self.suffix, scalecont_fk_low_leg)
 
         # move the pivot to the bottom
         pm.xform(self.cont_fk_low_leg, piv=(self.sideMult * -(self.init_lower_leg_dist / 2), 0, 0), ws=True)
