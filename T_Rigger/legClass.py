@@ -466,7 +466,7 @@ class Leg(object):
         extra.alignTo(self.pv_ball, self.ball_ref, 2)
         self.pv_ball_ore = extra.createUpGrp(self.pv_ball, "ORE")
 
-        pm.parentConstraint(self.pv_ball, self.j_socket_ball)
+        # pm.parentConstraint(self.pv_ball, self.j_socket_ball)
         # TODO // SOCKETBALL NEEDS A IK/FK Switch
 
         self.pv_heel = pm.group(name="Pv_Heel_%s" % self.suffix, em=True)
@@ -833,9 +833,8 @@ class Leg(object):
 
         pm.parentConstraint(self.cont_fk_ball, self.jfk_ball, mo=False)
 
-        pm.parentConstraint(self.cont_thigh, self.cont_fk_up_leg_off, sr=("x", "y", "z"), mo=False)
-
         # TODO : TAKE A LOOK TO THE OFFSET SOLUTION
+        pm.parentConstraint(self.cont_thigh, self.cont_fk_up_leg_off, sr=("x", "y", "z"), mo=True)
         pm.parentConstraint(self.cont_fk_up_leg, self.cont_fk_low_leg_off, mo=True)
         pm.parentConstraint(self.cont_fk_low_leg, self.cont_fk_foot_off, mo=True)
         pm.parentConstraint(self.cont_fk_foot, self.cont_fk_ball_off, mo=True)
@@ -872,6 +871,14 @@ class Leg(object):
         pm.setAttr(mid_lock_x_bln.input2Z, 0.5)
         mid_lock_x_bln.outputZ >> self.cont_mid_lock_ave.rotateX
 
+        end_lock_weight = pm.pointConstraint(self.j_ik_orig_end, self.jfk_foot, self.end_lock_pos, mo=False)
+        self.cont_fk_ik.fk_ik >> ("%s.%sW0" % (end_lock_weight, self.j_ik_orig_end))
+        self.fk_ik_rvs.outputX >> ("%s.%sW1" % (end_lock_weight, self.jfk_foot))
+
+        # the following offset parent constraint is not important and wont cause any trouble since
+        # it only affects the FK/IK icon
+        pm.parentConstraint(self.end_lock, self.cont_fk_ik_pos, mo=True)
+
         # ######
         end_lock_rot = pm.parentConstraint(self.ik_parent_grp, self.jfk_foot, self.end_lock, st=("x", "y", "z"), mo=True)
 
@@ -880,11 +887,213 @@ class Leg(object):
 
         self.cont_fk_ik.interpType >> end_lock_rot.interpType
 
+        foot_pa_con = pm.parentConstraint(self.j_ik_foot, self.jfk_foot, self.j_def_foot, mo=False)
+        ball_pa_con = pm.parentConstraint(self.j_ik_ball, self.jfk_ball, self.j_def_ball, mo=False)
+        toe_pa_con = pm.parentConstraint(self.j_ik_toe, self.jfk_toe, self.j_toe, mo=False)
+
+        self.cont_fk_ik.fk_ik >> ("%s.%sW0" % (foot_pa_con, self.j_ik_foot))
+        self.fk_ik_rvs.outputX >> ("%s.%sW1" % (foot_pa_con, self.jfk_foot))
+        self.cont_fk_ik.fk_ik >> ("%s.%sW0" % (ball_pa_con, self.j_ik_ball))
+        self.fk_ik_rvs.outputX >> ("%s.%sW1" % (ball_pa_con, self.jfk_ball))
+        self.cont_fk_ik.fk_ik >> ("%s.%sW0" % (toe_pa_con, self.j_ik_toe))
+        self.fk_ik_rvs.outputX >> ("%s.%sW1" % (toe_pa_con, self.jfk_toe))
+
+        self.cont_fk_ik.interpType >> foot_pa_con.interpType
+        self.cont_fk_ik.interpType >> ball_pa_con.interpType
+        self.cont_fk_ik.interpType >> toe_pa_con.interpType
+
     def createDefJoints(self):
-        pass
+        # UPPERLEG RIBBON
+
+        ribbon_upper_leg = rc.PowerRibbon()
+        ribbon_upper_leg.createPowerRibbon(self.j_def_hip, self.j_def_midLeg, "up_%s" % self.suffix,  side=self.side,  orientation=-90, connectStartAim=False, upVector=self.up_axis)
+        # ribbon_upper_leg.createPowerRibbon(self.j_def_hip, self.j_def_midLeg, "up_%s" % self.suffix,  side=self.side, connectStartAim=False, upVector=self.up_axis)
+        ribbon_start_pa_con_upper_leg_start = pm.parentConstraint(self.start_lock, ribbon_upper_leg.startConnection, mo=False)
+        pm.parentConstraint(self.mid_lock, ribbon_upper_leg.endConnection, mo=False)
+
+        # connect the knee scaling
+        self.cont_mid_lock.scale >> ribbon_upper_leg.endConnection.scale
+        self.cont_mid_lock.scale >> self.j_def_midLeg.scale
+
+        pm.scaleConstraint(self.scaleGrp, ribbon_upper_leg.scaleGrp)
+
+        ribbon_start_ori_con = pm.parentConstraint(self.j_ik_orig_root, self.jfk_root, ribbon_upper_leg.startAim, mo=False, skipTranslate=["x","y","z"] )
+        ribbon_start_ori_con2 = pm.parentConstraint(self.j_def_hip, ribbon_upper_leg.startAim, mo=True, skipTranslate=["x","y","z"] )
+        self.cont_fk_ik.fk_ik >> ("%s.%sW0" %(ribbon_start_ori_con, self.j_ik_orig_root))
+        self.fk_ik_rvs.outputX >> ("%s.%sW1" %(ribbon_start_ori_con, self.jfk_root))
+
+        pairBlendNode = pm.listConnections(ribbon_start_ori_con, d=True, t="pairBlend")[0]
+        # disconnect the existing weight connection
+        pm.disconnectAttr(pairBlendNode.w)
+        # re-connect to the custom attribute
+        self.cont_fk_ik.alignHip >> pairBlendNode.w
+
+        # Rotate the shoulder connection bone 180 degrees for Right Alignment
+        if self.side == "R":
+            rightRBN_startupORE = pm.listRelatives(ribbon_upper_leg.startAim, children=True, type="transform")[0]
+            pm.setAttr(rightRBN_startupORE.ry, 180)
+
+        # AUTO AND MANUAL TWIST
+
+        # auto
+        auto_twist_thigh = pm.createNode("multiplyDivide", name="autoTwistThigh_%s" % self.suffix)
+        self.cont_fk_ik.upLegAutoTwist >> auto_twist_thigh.input2X
+        ribbon_start_pa_con_upper_leg_start.constraintRotate >> auto_twist_thigh.input1
+
+        # !!! The parent constrain override should be disconnected like this
+        pm.disconnectAttr(
+            ribbon_start_pa_con_upper_leg_start.constraintRotateX,
+            ribbon_upper_leg.startConnection.rotateX
+        )
+
+        # manual
+        add_manual_twist_thigh = pm.createNode("plusMinusAverage", name=("AddManualTwist_UpperLeg_%s" % self.suffix))
+        auto_twist_thigh.output >> add_manual_twist_thigh.input3D[0]
+        self.cont_fk_ik.upLegManualTwist >> add_manual_twist_thigh.input3D[1].input3Dx
+
+        # connect to the joint
+        add_manual_twist_thigh.output3D >> ribbon_upper_leg.startConnection.rotate
+
+        # connect allowScaling
+        self.cont_fk_ik.allowScaling >> ribbon_upper_leg.startConnection.scaleSwitch
+
+        # LOWERLEG RIBBON
+
+        ribbon_lower_leg = rc.PowerRibbon()
+        ribbon_lower_leg.createPowerRibbon(self.j_def_midLeg, self.j_def_foot, "low_%s" % self.suffix, side=self.side,  orientation=90, upVector=self.up_axis)
+        # ribbon_lower_leg.createPowerRibbon(self.j_def_midLeg, self.j_def_foot, "low_%s" % self.suffix, side=self.side, upVector=self.up_axis)
+
+        pm.parentConstraint(self.mid_lock, ribbon_lower_leg.startConnection, mo=False)
+        ribbon_start_pa_con_lower_leg_end = pm.parentConstraint(self.end_lock, ribbon_lower_leg.endConnection, mo=False)
+
+        # connect the midLeg scaling
+        self.cont_mid_lock.scale >>  ribbon_lower_leg.startConnection.scale
+
+        pm.scaleConstraint(self.scaleGrp, ribbon_lower_leg.scaleGrp)
+
+        # AUTO AND MANUAL TWIST
+
+        # auto
+        auto_twist_ankle = pm.createNode("multiplyDivide", name="autoTwistAnkle_%s" % self.suffix)
+        self.cont_fk_ik.footAutoTwist >> auto_twist_ankle.input2X
+        ribbon_start_pa_con_lower_leg_end.constraintRotate >> auto_twist_ankle.input1
+
+        # !!! The parent constrain override should be disconnected like this
+        pm.disconnectAttr(ribbon_start_pa_con_lower_leg_end.constraintRotateX, ribbon_lower_leg.endConnection.rotateX)
+
+        # manual
+        add_manual_twist_ankle = pm.createNode("plusMinusAverage", name=("AddManualTwist_LowerLeg_%s" % self.suffix))
+        auto_twist_ankle.output >> add_manual_twist_ankle.input3D[0]
+        self.cont_fk_ik.footManualTwist >> add_manual_twist_ankle.input3D[1].input3Dx
+
+        # connect to the joint
+        add_manual_twist_ankle.output3D >> ribbon_lower_leg.endConnection.rotate
+
+        # connect allowScaling
+        self.cont_fk_ik.allowScaling >> ribbon_lower_leg.startConnection.scaleSwitch
+
+        # Volume Preservation Stuff
+        vpExtraInput = pm.createNode("multiplyDivide", name="vpExtraInput_%s" % self.suffix)
+        pm.setAttr(vpExtraInput.operation, 1)
+
+        vpMidAverage = pm.createNode("plusMinusAverage", name="vpMidAverage_%s" % self.suffix)
+        pm.setAttr(vpMidAverage.operation, 3)
+
+        vpPowerMid = pm.createNode("multiplyDivide", name="vpPowerMid_%s" % self.suffix)
+        pm.setAttr(vpPowerMid.operation, 3)
+        vpInitLength = pm.createNode("multiplyDivide", name="vpInitLength_%s" % self.suffix)
+        pm.setAttr(vpInitLength.operation, 2)
+
+        vpPowerUpperLeg = pm.createNode("multiplyDivide", name="vpPowerUpperLeg_%s" % self.suffix)
+        pm.setAttr(vpPowerUpperLeg.operation, 3)
+
+        vpPowerLowerLeg = pm.createNode("multiplyDivide", name="vpPowerLowerLeg_%s" % self.suffix)
+        pm.setAttr(vpPowerLowerLeg.operation, 3)
+
+        vpUpperLowerReduce = pm.createNode("multDoubleLinear", name="vpUpperLowerReduce_%s" % self.suffix)
+        pm.setAttr(vpUpperLowerReduce.input2, 0.5)
+
+        # vp knee branch
+        vpExtraInput.output >> ribbon_lower_leg.startConnection.scale
+        vpExtraInput.output >> ribbon_upper_leg.endConnection.scale
+        vpExtraInput.output >> self.j_def_midLeg.scale
+        self.cont_mid_lock.scale >> vpExtraInput.input1
+
+        vpMidAverage.output1D >> vpExtraInput.input2X
+        vpMidAverage.output1D >> vpExtraInput.input2Y
+        vpMidAverage.output1D >> vpExtraInput.input2Z
+
+        vpPowerMid.outputX >> vpMidAverage.input1D[0]
+        vpPowerMid.outputY >> vpMidAverage.input1D[1]
+
+        vpInitLength.outputX >> vpPowerMid.input1X
+        vpInitLength.outputY >> vpPowerMid.input1Y
+        self.cont_IK_foot.volume >> vpPowerMid.input2X
+        self.cont_IK_foot.volume >> vpPowerMid.input2Y
+        self.initial_length_multip_sc.outputX >> vpInitLength.input1X
+        self.initial_length_multip_sc.outputY >> vpInitLength.input1Y
+        self.stretchiness_sc.color1R >> vpInitLength.input2X
+        self.stretchiness_sc.color1G >> vpInitLength.input2Y
+
+        # vp upper branch
+        mid_off_up = ribbon_upper_leg.middleCont[0].getParent()
+        vpPowerUpperLeg.outputX >> mid_off_up.scaleX
+        vpPowerUpperLeg.outputX >> mid_off_up.scaleY
+        vpPowerUpperLeg.outputX >> mid_off_up.scaleZ
+
+        vpInitLength.outputX >> vpPowerUpperLeg.input1X
+        vpUpperLowerReduce.output >> vpPowerUpperLeg.input2X
+
+        # vp lower branch
+        mid_off_low = ribbon_lower_leg.middleCont[0].getParent()
+        vpPowerLowerLeg.outputX >> mid_off_low.scaleX
+        vpPowerLowerLeg.outputX >> mid_off_low.scaleY
+        vpPowerLowerLeg.outputX >> mid_off_low.scaleZ
+
+        vpInitLength.outputX >> vpPowerLowerLeg.input1X
+        vpUpperLowerReduce.output >> vpPowerLowerLeg.input2X
+
+        self.cont_IK_foot.volume >> vpUpperLowerReduce.input1
+
+        pm.parent(ribbon_upper_leg.scaleGrp, self.nonScaleGrp)
+        pm.parent(ribbon_upper_leg.nonScaleGrp, self.nonScaleGrp)
+        pm.parent(ribbon_lower_leg.scaleGrp, self.nonScaleGrp)
+        pm.parent(ribbon_lower_leg.nonScaleGrp, self.nonScaleGrp)
+
+        self.cont_fk_ik.tweakControls >> self.cont_mid_lock.v
+        tweakConts = ribbon_upper_leg.middleCont + ribbon_lower_leg.middleCont
+        for i in tweakConts:
+            self.cont_fk_ik.tweakControls >> i.v
+
+        self.scaleGrp.contVis >> ribbon_upper_leg.scaleGrp.v
+        self.scaleGrp.contVis >> ribbon_lower_leg.scaleGrp.v
+
+        self.deformerJoints += ribbon_lower_leg.deformerJoints + ribbon_upper_leg.deformerJoints
+        for i in self.deformerJoints:
+            self.scaleGrp.jointVis >> i.v
+        for i in ribbon_lower_leg.toHide:
+            self.scaleGrp.rigVis >> i.v
+        for i in ribbon_upper_leg.toHide:
+            self.scaleGrp.rigVis >> i.v
+
+        extra.colorize(ribbon_upper_leg.middleCont, self.colorCodes[1])
+        extra.colorize(ribbon_lower_leg.middleCont, self.colorCodes[1])
 
     def roundUp(self):
-        pass
+        pm.parentConstraint(self.limbPlug, self.scaleGrp, mo=False)
+        pm.setAttr(self.scaleGrp.rigVis, 0)
+
+        extra.lockAndHide(self.cont_IK_foot, ["v"])
+        extra.lockAndHide(self.cont_Pole, ["rx", "ry", "rz", "sx", "sy", "sz", "v"])
+        extra.lockAndHide(self.cont_mid_lock, ["v"])
+        extra.lockAndHide(self.cont_fk_ik, ["sx", "sy", "sz", "v"])
+        extra.lockAndHide(self.cont_fk_foot, ["tx", "ty", "tz", "v"])
+        extra.lockAndHide(self.cont_fk_low_leg, ["tx", "ty", "tz", "sy", "sz", "v"])
+        extra.lockAndHide(self.cont_fk_up_leg, ["tx", "ty", "tz", "sy", "sz", "v"])
+        extra.lockAndHide(self.cont_thigh, ["sx", "sy", "sz", "v"])
+
+        self.scaleConstraints = [self.scaleGrp, self.cont_IK_OFF]
+        self.anchors = [(self.cont_IK_foot, "parent", 1, None), (self.cont_Pole, "parent", 1, None)]
 
     def createLimb(self):
         self.createGrp()

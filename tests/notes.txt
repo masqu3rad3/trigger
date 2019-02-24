@@ -8,6 +8,7 @@ self.j_def_collar => self.jDef_legRoot
 self.j_collar_end => self.j_def_hip
 
 self.j_def_elbow => self.j_def_midLeg
+self.j_def_hand => self.j_def_foot
 
 
 self.j_ik_orig_up => self.j_ik_orig_root
