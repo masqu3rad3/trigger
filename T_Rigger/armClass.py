@@ -182,7 +182,7 @@ class Arm(object):
 
         self.cont_shoulder_off = extra.createUpGrp(self.cont_shoulder, "OFF")
         self.cont_shoulder_ore = extra.createUpGrp(self.cont_shoulder, "ORE")
-        self.cont_shoulder_pos = extra.createUpGrp(self.cont_shoulder, "POS")
+        self.cont_shoulder_auto = extra.createUpGrp(self.cont_shoulder, "Auto")
 
         # pm.setAttr("{0}.s{1}".format(self.cont_shoulder_pos, "z"), self.sideMult)
         ## IK hand controller
@@ -290,6 +290,8 @@ class Arm(object):
         pm.setAttr("{0}.s{1}".format(self.cont_fk_ik, "x"), self.sideMult)
 
         # controller for twist orientation alignment
+        pm.addAttr(self.cont_fk_ik, shortName="autoShoulder", longName="Auto_Shoulder", defaultValue=1.0, at="float",
+                   minValue=0.0, maxValue=1.0, k=True)
         pm.addAttr(self.cont_fk_ik, shortName="alignShoulder", longName="Align_Shoulder", defaultValue=1.0, at="float",
                    minValue=0.0, maxValue=1.0, k=True)
 
@@ -948,18 +950,55 @@ class Arm(object):
 
         pm.parentConstraint(self.limbPlug, angleExt_Root_IK, mo=False)
         pm.parentConstraint(self.cont_IK_hand, angleExt_Fixed_IK, mo=False)
-        pm.setAttr(angleExt_Float_IK.ty, 5)
+        extra.alignToAlter(angleExt_Float_IK, self.j_def_collar, 2)
+        pm.move(angleExt_Float_IK, (0,self.sideMult*5,0), objectSpace=True)
+
+        angleNodeIK = pm.createNode("angleBetween", name="angleBetweenIK_%s" % self.suffix)
+        angleRemapIK = pm.createNode("remapValue", name="angleRemapIK_%s" % self.suffix)
+        angleMultIK = pm.createNode("multDoubleLinear", name="angleMultIK_%s" % self.suffix)
+
+        angleExt_Fixed_IK.translate >> angleNodeIK.vector1
+        angleExt_Float_IK.translate >> angleNodeIK.vector2
+
+        angleNodeIK.angle >> angleRemapIK.inputValue
+        pm.setAttr(angleRemapIK.inputMin, pm.getAttr(angleNodeIK.angle))
+        pm.setAttr(angleRemapIK.inputMax, 0)
+        pm.setAttr(angleRemapIK.outputMin, 0)
+        pm.setAttr(angleRemapIK.outputMax, pm.getAttr(angleNodeIK.angle))
+
+        angleRemapIK.outValue >> angleMultIK.input1
+        pm.setAttr(angleMultIK.input2, 0.5)
 
         # FK Angle Extractor
-        angleExt_Root_FK = pm.spaceLocator(name="angleExt_Root_FK_%s" % self.suffix)
-        angleExt_Fixed_FK = pm.spaceLocator(name="angleExt_Fixed_FK_%s" % self.suffix)
-        angleExt_Float_FK = pm.spaceLocator(name="angleExt_Float_FK_%s" % self.suffix)
-        pm.parent(angleExt_Fixed_FK, angleExt_Float_FK, angleExt_Root_FK)
+        angleRemapFK = pm.createNode("remapValue", name="angleRemapFK_%s" % self.suffix)
+        angleMultFK = pm.createNode("multDoubleLinear", name="angleMultFK_%s" % self.suffix)
 
-        pm.pointConstraint(self.j_collar_end, angleExt_Root_FK, mo=False)
-        pm.orientConstraint(self.limbPlug, angleExt_Root_FK, mo=False)
-        pm.pointConstraint(self.j_def_elbow, angleExt_Fixed_FK, mo=False)
-        pm.setAttr(angleExt_Float_FK.ty, 5)
+        self.j_fk_up.rotateZ >> angleRemapFK.inputValue
+        pm.setAttr(angleRemapFK.inputMin, 0)
+        pm.setAttr(angleRemapFK.inputMax, 90)
+        pm.setAttr(angleRemapFK.outputMin, 0)
+        pm.setAttr(angleRemapFK.outputMax, 90)
+
+        angleRemapFK.outValue >> angleMultFK.input1
+        pm.setAttr(angleMultFK.input2, 0.5)
+
+
+        # create blend attribute and global Mult
+        angleExt_blend = pm.createNode("blendTwoAttr", name="angleExt_blend_%s" % self.suffix)
+        angleGlobal = pm.createNode("multDoubleLinear", name="angleGlobal_mult_%s" % self.suffix)
+
+        self.cont_fk_ik.fk_ik >> angleExt_blend.attributesBlender
+        angleMultFK.output >> angleExt_blend.input[0]
+        angleMultIK.output >> angleExt_blend.input[1]
+
+        angleExt_blend.output >> angleGlobal.input1
+        self.cont_fk_ik.autoShoulder >> angleGlobal.input2
+
+        angleGlobal.output >> self.cont_shoulder_auto.rotateZ
+
+        pm.parent(angleExt_Root_IK, self.scaleGrp)
+        self.scaleGrp.rigVis >> angleExt_Root_IK.v
+
 
 
 
