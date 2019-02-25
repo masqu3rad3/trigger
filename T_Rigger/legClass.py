@@ -211,12 +211,18 @@ class Leg(object):
         pm.setAttr("{0}.s{1}".format(self.cont_thigh, "y"), self.sideMult)
         pm.makeIdentity(self.cont_thigh, a=True)
         # extra.alignAndAim(self.cont_thigh, targetList=[self.jDef_legRoot], aimTargetList=[self.j_def_hip], upVector=self.up_axis)
-        extra.alignAndAim(self.cont_thigh, targetList=[self.hip_ref], aimTargetList=[self.knee_ref], upObject=self.leg_root_ref)
-        pm.move(self.cont_thigh, (0, -thigh_cont_scale[0] * 2, 0), r=True, os=True)
+        # extra.alignAndAim(self.cont_thigh, targetList=[self.hip_ref], aimTargetList=[self.knee_ref], upObject=self.leg_root_ref)
+        extra.alignToAlter(self.cont_thigh, self.jfk_root, mode=2)
+        pm.move(self.cont_thigh, (0, 0, self.sideMult*(-thigh_cont_scale[0] * 2)), r=True, os=True)
+        pm.xform(self.cont_thigh, piv=self.leg_root_pos, ws=True)
 
         self.cont_thigh_off = extra.createUpGrp(self.cont_thigh, "OFF")
         self.cont_thigh_ore = extra.createUpGrp(self.cont_thigh, "ORE")
-        self.cont_thigh_pos = extra.createUpGrp(self.cont_thigh, "POS")
+        self.cont_thigh_auto = extra.createUpGrp(self.cont_thigh, "Auto")
+
+        pm.xform(self.cont_thigh_off, piv=self.leg_root_pos, ws=True)
+        pm.xform(self.cont_thigh_ore, piv=self.leg_root_pos, ws=True)
+        pm.xform(self.cont_thigh_auto, piv=self.leg_root_pos, ws=True)
 
         # IK Foot Controller
         foot_cont_scale = (self.init_foot_length * 0.75, 1, self.init_foot_width * 0.8)
@@ -332,6 +338,8 @@ class Leg(object):
         pm.setAttr("{0}.s{1}".format(self.cont_fk_ik, "x"), self.sideMult)
 
         # controller for twist orientation alignment
+        pm.addAttr(self.cont_fk_ik, shortName="autoHip", longName="Auto_Hip", defaultValue=1.0, at="float",
+                   minValue=0.0, maxValue=1.0, k=True)
         pm.addAttr(self.cont_fk_ik, shortName="alignHip", longName="Align_Hip", defaultValue=1.0, at="float",
                    minValue=0.0, maxValue=1.0, k=True)
 
@@ -798,10 +806,10 @@ class Leg(object):
         # pm.parentConstraint(self.cont_thigh, self.jDef_legRoot, mo=False, st=("x", "y", "z"))
         # pm.pointConstraint(self.cont_thigh, j_def_hip, mo=True)
 
-        # pacon_locator_shou = pm.spaceLocator(name="paConLoc_%s" % self.suffix)
-        # extra.alignTo(pacon_locator_shou, self.j_def_collar, mode=2)
+        pacon_locator_hip = pm.spaceLocator(name="paConLoc_%s" % self.suffix)
+        extra.alignTo(pacon_locator_hip, self.jDef_legRoot, mode=2)
         #
-        # j_def_pa_con = pm.parentConstraint(self.cont_shoulder, pacon_locator_shou, mo=False)
+        j_def_pa_con = pm.parentConstraint(self.cont_thigh, pacon_locator_hip, mo=False)
         #
         pm.parent(leg_start, self.scaleGrp)
         pm.parent(leg_end, self.scaleGrp)
@@ -809,8 +817,8 @@ class Leg(object):
         pm.parent(self.start_lock_ore, self.scaleGrp)
         pm.parent(self.end_lock_ore, self.scaleGrp)
         #
-        # pm.parent(pacon_locator_shou, self.scaleGrp)
-        # pm.parent(self.j_def_collar, pacon_locator_shou)
+        pm.parent(pacon_locator_hip, self.scaleGrp)
+        pm.parent(self.jDef_legRoot, pacon_locator_hip)
         #
         self.scaleGrp.rigVis >> leg_start.v
         self.scaleGrp.rigVis >> leg_end.v
@@ -1079,6 +1087,65 @@ class Leg(object):
         extra.colorize(ribbon_upper_leg.middleCont, self.colorCodes[1])
         extra.colorize(ribbon_lower_leg.middleCont, self.colorCodes[1])
 
+    def createAngleExtractors(self):
+        # IK Angle Extractor
+        angleExt_Root_IK = pm.spaceLocator(name="angleExt_Root_IK_%s" % self.suffix)
+        angleExt_Fixed_IK = pm.spaceLocator(name="angleExt_Fixed_IK_%s" % self.suffix)
+        angleExt_Float_IK = pm.spaceLocator(name="angleExt_Float_IK_%s" % self.suffix)
+        pm.parent(angleExt_Fixed_IK, angleExt_Float_IK, angleExt_Root_IK)
+
+        pm.parentConstraint(self.limbPlug, angleExt_Root_IK, mo=False)
+        pm.parentConstraint(self.cont_IK_foot, angleExt_Fixed_IK, mo=False)
+        extra.alignToAlter(angleExt_Float_IK, self.jDef_legRoot, 2)
+        pm.move(angleExt_Float_IK, (0,self.sideMult*5,0), objectSpace=True)
+
+        angleNodeIK = pm.createNode("angleBetween", name="angleBetweenIK_%s" % self.suffix)
+        angleRemapIK = pm.createNode("remapValue", name="angleRemapIK_%s" % self.suffix)
+        angleMultIK = pm.createNode("multDoubleLinear", name="angleMultIK_%s" % self.suffix)
+
+        angleExt_Fixed_IK.translate >> angleNodeIK.vector1
+        angleExt_Float_IK.translate >> angleNodeIK.vector2
+
+        angleNodeIK.angle >> angleRemapIK.inputValue
+        pm.setAttr(angleRemapIK.inputMin, pm.getAttr(angleNodeIK.angle))
+        pm.setAttr(angleRemapIK.inputMax, 0)
+        pm.setAttr(angleRemapIK.outputMin, 0)
+        pm.setAttr(angleRemapIK.outputMax, pm.getAttr(angleNodeIK.angle))
+
+        angleRemapIK.outValue >> angleMultIK.input1
+        pm.setAttr(angleMultIK.input2, 0.5)
+
+        # FK Angle Extractor
+        angleRemapFK = pm.createNode("remapValue", name="angleRemapFK_%s" % self.suffix)
+        angleMultFK = pm.createNode("multDoubleLinear", name="angleMultFK_%s" % self.suffix)
+
+        self.jfk_root.rotateZ >> angleRemapFK.inputValue
+        pm.setAttr(angleRemapFK.inputMin, 0)
+        pm.setAttr(angleRemapFK.inputMax, 90)
+        pm.setAttr(angleRemapFK.outputMin, 0)
+        pm.setAttr(angleRemapFK.outputMax, 90)
+
+        angleRemapFK.outValue >> angleMultFK.input1
+        pm.setAttr(angleMultFK.input2, 0.5)
+
+
+        # create blend attribute and global Mult
+        angleExt_blend = pm.createNode("blendTwoAttr", name="angleExt_blend_%s" % self.suffix)
+        angleGlobal = pm.createNode("multDoubleLinear", name="angleGlobal_mult_%s" % self.suffix)
+
+        self.cont_fk_ik.fk_ik >> angleExt_blend.attributesBlender
+        angleMultFK.output >> angleExt_blend.input[0]
+        angleMultIK.output >> angleExt_blend.input[1]
+
+        angleExt_blend.output >> angleGlobal.input1
+        self.cont_fk_ik.autoHip >> angleGlobal.input2
+
+        angleGlobal.output >> self.cont_thigh_auto.rotateZ
+
+        pm.parent(angleExt_Root_IK, self.scaleGrp)
+        self.scaleGrp.rigVis >> angleExt_Root_IK.v
+
+
     def roundUp(self):
         pm.parentConstraint(self.limbPlug, self.scaleGrp, mo=False)
         pm.setAttr(self.scaleGrp.rigVis, 0)
@@ -1104,4 +1171,5 @@ class Leg(object):
         self.createFKsetup()
         self.ikfkSwitching()
         self.createDefJoints()
+        self.createAngleExtractors()
         self.roundUp()
