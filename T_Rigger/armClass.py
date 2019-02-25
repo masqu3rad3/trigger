@@ -939,6 +939,30 @@ class Arm(object):
         extra.colorize(ribbon_upper_arm.middleCont, self.colorCodes[1])
         extra.colorize(ribbon_lower_arm.middleCont, self.colorCodes[1])
 
+    def createAngleExtractors(self):
+        # IK Angle Extractor
+        angleExt_Root_IK = pm.spaceLocator(name="angleExt_Root_IK_%s" % self.suffix)
+        angleExt_Fixed_IK = pm.spaceLocator(name="angleExt_Fixed_IK_%s" % self.suffix)
+        angleExt_Float_IK = pm.spaceLocator(name="angleExt_Float_IK_%s" % self.suffix)
+        pm.parent(angleExt_Fixed_IK, angleExt_Float_IK, angleExt_Root_IK)
+
+        pm.parentConstraint(self.limbPlug, angleExt_Root_IK, mo=False)
+        pm.parentConstraint(self.cont_IK_hand, angleExt_Fixed_IK, mo=False)
+        pm.setAttr(angleExt_Float_IK.ty, 5)
+
+        # FK Angle Extractor
+        angleExt_Root_FK = pm.spaceLocator(name="angleExt_Root_FK_%s" % self.suffix)
+        angleExt_Fixed_FK = pm.spaceLocator(name="angleExt_Fixed_FK_%s" % self.suffix)
+        angleExt_Float_FK = pm.spaceLocator(name="angleExt_Float_FK_%s" % self.suffix)
+        pm.parent(angleExt_Fixed_FK, angleExt_Float_FK, angleExt_Root_FK)
+
+        pm.pointConstraint(self.j_collar_end, angleExt_Root_FK, mo=False)
+        pm.orientConstraint(self.limbPlug, angleExt_Root_FK, mo=False)
+        pm.pointConstraint(self.j_def_elbow, angleExt_Fixed_FK, mo=False)
+        pm.setAttr(angleExt_Float_FK.ty, 5)
+
+
+
     def roundUp(self):
         pm.parentConstraint(self.limbPlug, self.scaleGrp, mo=False)
         # pm.parent(self.start_lock_ore, self.scaleGrp)
@@ -966,6 +990,7 @@ class Arm(object):
         self.createFKsetup()
         self.ikfkSwitching()
         self.createDefJoints()
+        self.createAngleExtractors()
         self.roundUp()
 
     # def useExistingControllers(self):
