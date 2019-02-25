@@ -221,6 +221,9 @@ class NeckAndHead():
 
         # # Connect the scale to the scaleGrp
         self.scaleGrp.scale >> neckSpline.scaleGrp.scale
+        # bring out contents.
+        for x in pm.listRelatives(neckSpline.scaleGrp, type="transform"):
+            pm.parent(x, self.scaleGrp)
 
         # create spline IK for Head squash
         headSpline = twistSpline.TwistSpline()
@@ -243,6 +246,9 @@ class NeckAndHead():
 
         # # Connect the scale to the scaleGrp
         self.scaleGrp.scale >> headSpline.scaleGrp.scale
+        # bring out contents.
+        for x in pm.listRelatives(headSpline.scaleGrp, type="transform"):
+            pm.parent(x, self.scaleGrp)
 
         pm.parentConstraint(self.limbPlug, self.neckRootLoc, mo=True)
 
