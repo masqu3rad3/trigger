@@ -973,7 +973,7 @@ class Arm(object):
         angleRemapFK = pm.createNode("remapValue", name="angleRemapFK_%s" % self.suffix)
         angleMultFK = pm.createNode("multDoubleLinear", name="angleMultFK_%s" % self.suffix)
 
-        self.j_fk_up.rotateZ >> angleRemapFK.inputValue
+        self.cont_fk_up_arm.rotateZ >> angleRemapFK.inputValue
         pm.setAttr(angleRemapFK.inputMin, 0)
         pm.setAttr(angleRemapFK.inputMax, 90)
         pm.setAttr(angleRemapFK.outputMin, 0)

@@ -206,7 +206,7 @@ class Leg(object):
 
     def createControllers(self):
         # Thigh Controller
-        thigh_cont_scale = (self.init_upper_leg_dist / 4, self.init_upper_leg_dist / 16, self.init_upper_leg_dist / 4)
+        thigh_cont_scale = (self.init_upper_leg_dist / 4, self.init_upper_leg_dist / 4, self.init_upper_leg_dist / 16)
         self.cont_thigh = icon.cube("cont_Thigh_%s" % self.suffix, thigh_cont_scale)
         pm.setAttr("{0}.s{1}".format(self.cont_thigh, "y"), self.sideMult)
         pm.makeIdentity(self.cont_thigh, a=True)
@@ -1119,7 +1119,7 @@ class Leg(object):
         angleRemapFK = pm.createNode("remapValue", name="angleRemapFK_%s" % self.suffix)
         angleMultFK = pm.createNode("multDoubleLinear", name="angleMultFK_%s" % self.suffix)
 
-        self.jfk_root.rotateZ >> angleRemapFK.inputValue
+        self.cont_fk_up_leg.rotateY >> angleRemapFK.inputValue
         pm.setAttr(angleRemapFK.inputMin, 0)
         pm.setAttr(angleRemapFK.inputMax, 90)
         pm.setAttr(angleRemapFK.outputMin, 0)
@@ -1140,10 +1140,10 @@ class Leg(object):
         angleExt_blend.output >> angleGlobal.input1
         self.cont_fk_ik.autoHip >> angleGlobal.input2
 
-        angleGlobal.output >> self.cont_thigh_auto.rotateZ
+        angleGlobal.output >> self.cont_thigh_auto.rotateY
 
-        pm.parent(angleExt_Root_IK, self.scaleGrp)
-        self.scaleGrp.rigVis >> angleExt_Root_IK.v
+        # pm.parent(angleExt_Root_IK, self.scaleGrp)
+        # self.scaleGrp.rigVis >> angleExt_Root_IK.v
 
 
     def roundUp(self):
