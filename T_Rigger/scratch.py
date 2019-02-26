@@ -391,9 +391,11 @@ class LimbBuilder():
                 limb.createFinger(x[0], suffix=sideVal, side=x[2], parentController=parentController)
 
             elif x[1] == "tentacle":
-                limb = tentacle.Tentacle()
+                # limb = tentacle.Tentacle()
+                limb = tentacle.Tentacle(x[0], suffix="%s_Tentacle" % x[2], side=x[2], npResolution=x[0]["contRes"], jResolution = x[0]["jointRes"], blResolution = x[0]["deformerRes"], dropoff = x[0]["dropoff"])
                 limb.colorCodes = colorCodes
-                limb.createTentacle(x[0], suffix="%s_Tentacle" % x[2], side=x[2], npResolution=x[0]["contRes"], jResolution = x[0]["jointRes"], blResolution = x[0]["deformerRes"], dropoff = x[0]["dropoff"])
+                # limb.createTentacle(x[0], suffix="%s_Tentacle" % x[2], side=x[2], npResolution=x[0]["contRes"], jResolution = x[0]["jointRes"], blResolution = x[0]["deformerRes"], dropoff = x[0]["dropoff"])
+                limb.createLimb()
 
             elif x[1] == "root":
                 limb = root.Root()
