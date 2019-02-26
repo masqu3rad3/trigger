@@ -359,9 +359,11 @@ class LimbBuilder():
                 limb.createLimb()
 
             elif x[1] == "neck":
-                limb = neckAndHead.NeckAndHead()
+                # limb = neckAndHead.NeckAndHead()
+                limb = neckAndHead.NeckAndHead(x[0], suffix="NeckAndHead", resolution=x[0]["resolution"], dropoff=x[0]["dropoff"])
                 limb.colorCodes = colorCodes
-                limb.createNeckAndHead(x[0], suffix="NeckAndHead", resolution=x[0]["resolution"], dropoff=x[0]["dropoff"])
+                # limb.createNeckAndHead(x[0], suffix="NeckAndHead", resolution=x[0]["resolution"], dropoff=x[0]["dropoff"])
+                limb.createLimb()
 
             elif x[1] == "spine":
                 limb = spine.Spine()
@@ -369,9 +371,11 @@ class LimbBuilder():
                 limb.createSpine(x[0], suffix="Spine", resolution=x[0]["resolution"], dropoff=x[0]["dropoff"])  # s for spine...
 
             elif x[1] == "tail":
-                limb = simpleTail.SimpleTail()
+                # limb = simpleTail.SimpleTail()
+                limb = simpleTail.SimpleTail(x[0], suffix="%s_Tail" %sideVal, side=x[2])
                 limb.colorCodes = colorCodes
-                limb.createSimpleTail(x[0], suffix="%s_Tail" %sideVal, side=x[2])
+                # limb.createSimpleTail(x[0], suffix="%s_Tail" %sideVal, side=x[2])
+                limb.createLimb()
 
             elif x[1] == "finger":
 

@@ -36,7 +36,6 @@ class Arm(object):
         self.shoulder_pos = self.shoulder_ref.getTranslation(space="world")
         self.elbow_pos = self.elbow_ref.getTranslation(space="world")
         self.hand_pos = self.hand_ref.getTranslation(space="world")
-        # self.root_pos = self.hand_ref.getTranslation(space="world")
 
         # get distances
         self.init_shoulder_dist = extra.getDistance(self.collar_ref, self.shoulder_ref)
@@ -48,23 +47,18 @@ class Arm(object):
 
         self.up_axis, self.mirror_axis, self.look_axis = extra.getRigAxes(self.collar_ref)
 
-        self.originalSuffix = suffix
+        # self.originalSuffix = suffix
         self.suffix = (extra.uniqueName("limbGrp_%s" % suffix)).replace("limbGrp_", "")
-        # self.limbGrp = pm.group(name="limbGrp_%s" % suffix, em=True)
 
+        # scratch variables
         self.sockets = []
+        self.limbGrp = None
         self.scaleGrp = None
         self.nonScaleGrp = None
-        self.cont_IK_hand = None
-        self.cont_IK_OFF = None
-        # self.rootSocket = None
-        self.cont_Pole = None
-        # self.nodesContVis = None
         self.limbPlug = None
         self.scaleConstraints = []
         self.anchors = []
         self.anchorLocations = []
-        self.j_def_collar = None
         self.deformerJoints = []
         self.colorCodes = [6, 18]
 
@@ -341,8 +335,9 @@ class Arm(object):
                         self.cont_fk_ik_pos,
                         self.cont_fk_low_arm_off, self.cont_fk_up_arm_off, self.cont_mid_lock_pos]
 
-        for i in nodesContVis:
-            self.scaleGrp.contVis >> i.v
+        # for i in nodesContVis:
+        #     self.scaleGrp.contVis >> i.v
+        map(lambda x: pm.connectAttr(self.scaleGrp.contVis, x.v), nodesContVis)
 
         extra.colorize(self.cont_shoulder, self.colorCodes[0])
         extra.colorize(self.cont_IK_hand, self.colorCodes[0])
@@ -924,19 +919,25 @@ class Arm(object):
 
         self.cont_fk_ik.tweakControls >> self.cont_mid_lock.v
         tweakConts = ribbon_upper_arm.middleCont + ribbon_lower_arm.middleCont
-        for i in tweakConts:
-            self.cont_fk_ik.tweakControls >> i.v
+        # for i in tweakConts:
+        #     self.cont_fk_ik.tweakControls >> i.v
+        map(lambda x: pm.connectAttr(self.cont_fk_ik.tweakControls, x.v), tweakConts)
 
         self.scaleGrp.contVis >> ribbon_upper_arm.scaleGrp.v
         self.scaleGrp.contVis >> ribbon_lower_arm.scaleGrp.v
 
         self.deformerJoints += ribbon_lower_arm.deformerJoints + ribbon_upper_arm.deformerJoints
-        for i in self.deformerJoints:
-            self.scaleGrp.jointVis >> i.v
-        for i in ribbon_lower_arm.toHide:
-            self.scaleGrp.rigVis >> i.v
-        for i in ribbon_upper_arm.toHide:
-            self.scaleGrp.rigVis >> i.v
+
+        map(lambda x: pm.connectAttr(self.scaleGrp.jointVis, x.v), self.deformerJoints)
+        map(lambda x: pm.connectAttr(self.scaleGrp.rigVis, x.v), ribbon_lower_arm.toHide)
+        map(lambda x: pm.connectAttr(self.scaleGrp.rigVis, x.v), ribbon_upper_arm.toHide)
+
+        # for i in self.deformerJoints:
+        #     self.scaleGrp.jointVis >> i.v
+        # for i in ribbon_lower_arm.toHide:
+        #     self.scaleGrp.rigVis >> i.v
+        # for i in ribbon_upper_arm.toHide:
+        #     self.scaleGrp.rigVis >> i.v
 
         extra.colorize(ribbon_upper_arm.middleCont, self.colorCodes[1])
         extra.colorize(ribbon_lower_arm.middleCont, self.colorCodes[1])
@@ -998,13 +999,11 @@ class Arm(object):
 
         pm.parent(angleExt_Root_IK, self.scaleGrp)
         self.scaleGrp.rigVis >> angleExt_Root_IK.v
-
-
+        return
 
 
     def roundUp(self):
         pm.parentConstraint(self.limbPlug, self.scaleGrp, mo=False)
-        # pm.parent(self.start_lock_ore, self.scaleGrp)
 
         pm.setAttr(self.scaleGrp.rigVis, 0)
 
@@ -1031,38 +1030,4 @@ class Arm(object):
         self.createDefJoints()
         self.createAngleExtractors()
         self.roundUp()
-
-    # def useExistingControllers(self):
-    #     existingLimbGrp = ("limbGrp_%s" % self.originalSuffix)
-    #     if not pm.objExists(existingLimbGrp):
-    #         msg = "Existing Limb %s cannot be found, creating a new one" % self.originalSuffix
-    #         pm.warning(msg)
-    #         return
-    #
-    #     # shoulder
-    #     old_cont_shoulder = pm.PyNode("cont_Shoulder_%s" % self.originalSuffix)
-    #
-    #
-    #     # IK hand controller
-    #     old_cont_IK_hand = pm.PyNode("cont_IK_hand_%s" % self.originalSuffix)
-    #
-    #
-    #     # Pole Vector Controller
-    #     old_cont_Pole = pm.PyNode("cont_Pole_%s" % self.originalSuffix)
-    #
-    #     ## FK UP Arm Controller
-    #     old_cont_fk_up_arm = pm.PyNode("cont_FK_UpArm_%s" % self.originalSuffix)
-    #
-    #     ## FK LOW Arm Controller
-    #     old_cont_fk_low_arm = pm.PyNode("cont_FK_LowArm_%s" % self.originalSuffix)
-    #
-    #     ## FK HAND Controller
-    #     old_cont_fk_hand = pm.PyNode("cont_FK_Hand_%s" % self.originalSuffix)
-    #
-    #     # FK-IK SWITCH Controller
-    #     old_cont_fk_ik = pm.PyNode("cont_FK_IK_%s" % self.originalSuffix)
-    #
-    #     # MidLock controller
-    #     old_cont_mid_lock = pm.PyNode("cont_mid_%s" % self.originalSuffix)
-    #     pass
 

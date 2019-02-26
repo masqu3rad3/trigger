@@ -42,6 +42,7 @@ class Leg(object):
             self.bank_in_ref = leginits[7]
             self.bank_out_ref = leginits[8]
 
+        # get positions
         self.leg_root_pos = self.leg_root_ref.getTranslation(space="world")
         self.hip_pos = self.hip_ref.getTranslation(space="world")
         self.knee_pos = self.knee_ref.getTranslation(space="world")
@@ -62,20 +63,18 @@ class Leg(object):
 
         self.up_axis, self.mirror_axis, self.look_axis = extra.getRigAxes(self.leg_root_ref)
 
-        self.originalSuffix = suffix
+        # self.originalSuffix = suffix
         self.suffix = (extra.uniqueName("limbGrp_%s" % suffix)).replace("limbGrp_", "")
 
+        # scratch variables
         self.sockets = []
+        self.limbGrp = None
         self.scaleGrp = None
         self.nonScaleGrp = None
-        self.cont_IK_foot = None
-        self.cont_IK_OFF = None
-        self.cont_Pole = None
         self.limbPlug = None
         self.scaleConstraints = []
         self.anchors = []
         self.anchorLocations = []
-        self.jDef_legRoot = None
         self.deformerJoints = []
         self.colorCodes = [6, 18]
 
@@ -389,8 +388,9 @@ class Leg(object):
                         self.cont_fk_ik_pos,
                         self.cont_fk_low_leg_off, self.cont_fk_up_leg_off, self.cont_mid_lock_pos]
 
-        for i in nodesContVis:
-            self.scaleGrp.contVis >> i.v
+        map(lambda x: pm.connectAttr(self.scaleGrp.contVis, x.v), nodesContVis)
+        # for i in nodesContVis:
+        #     self.scaleGrp.contVis >> i.v
 
         extra.colorize(self.cont_thigh, self.colorCodes[0])
         extra.colorize(self.cont_IK_foot, self.colorCodes[0])
@@ -823,7 +823,7 @@ class Leg(object):
         self.scaleGrp.rigVis >> leg_start.v
         self.scaleGrp.rigVis >> leg_end.v
         self.scaleGrp.rigVis >> self.ik_parent_grp.v
-        # self.scaleGrp.rigVis >> pacon_locator_shou.getShape().v
+        self.scaleGrp.rigVis >> pacon_locator_hip.getShape().v
 
         pm.delete(foot_plane)
 
@@ -1070,19 +1070,23 @@ class Leg(object):
 
         self.cont_fk_ik.tweakControls >> self.cont_mid_lock.v
         tweakConts = ribbon_upper_leg.middleCont + ribbon_lower_leg.middleCont
-        for i in tweakConts:
-            self.cont_fk_ik.tweakControls >> i.v
+        # for i in tweakConts:
+        #     self.cont_fk_ik.tweakControls >> i.v
+        map(lambda x: pm.connectAttr(self.cont_fk_ik.tweakControls, x.v), tweakConts)
 
         self.scaleGrp.contVis >> ribbon_upper_leg.scaleGrp.v
         self.scaleGrp.contVis >> ribbon_lower_leg.scaleGrp.v
 
         self.deformerJoints += ribbon_lower_leg.deformerJoints + ribbon_upper_leg.deformerJoints
-        for i in self.deformerJoints:
-            self.scaleGrp.jointVis >> i.v
-        for i in ribbon_lower_leg.toHide:
-            self.scaleGrp.rigVis >> i.v
-        for i in ribbon_upper_leg.toHide:
-            self.scaleGrp.rigVis >> i.v
+        map(lambda x: pm.connectAttr(self.scaleGrp.jointVis, x.v), self.deformerJoints)
+        map(lambda x: pm.connectAttr(self.scaleGrp.rigVis, x.v), ribbon_lower_leg.toHide)
+        map(lambda x: pm.connectAttr(self.scaleGrp.rigVis, x.v), ribbon_upper_leg.toHide)
+        # for i in self.deformerJoints:
+        #     self.scaleGrp.jointVis >> i.v
+        # for i in ribbon_lower_leg.toHide:
+        #     self.scaleGrp.rigVis >> i.v
+        # for i in ribbon_upper_leg.toHide:
+        #     self.scaleGrp.rigVis >> i.v
 
         extra.colorize(ribbon_upper_leg.middleCont, self.colorCodes[1])
         extra.colorize(ribbon_lower_leg.middleCont, self.colorCodes[1])
@@ -1142,8 +1146,8 @@ class Leg(object):
 
         angleGlobal.output >> self.cont_thigh_auto.rotateY
 
-        # pm.parent(angleExt_Root_IK, self.scaleGrp)
-        # self.scaleGrp.rigVis >> angleExt_Root_IK.v
+        pm.parent(angleExt_Root_IK, self.scaleGrp)
+        self.scaleGrp.rigVis >> angleExt_Root_IK.v
 
 
     def roundUp(self):
