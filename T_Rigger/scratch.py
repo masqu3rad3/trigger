@@ -366,9 +366,11 @@ class LimbBuilder():
                 limb.createLimb()
 
             elif x[1] == "spine":
-                limb = spine.Spine()
+                # limb = spine.Spine()
+                limb = spine.Spine(x[0], suffix="Spine", resolution=x[0]["resolution"], dropoff=x[0]["dropoff"])
                 limb.colorCodes = colorCodes
-                limb.createSpine(x[0], suffix="Spine", resolution=x[0]["resolution"], dropoff=x[0]["dropoff"])  # s for spine...
+                # limb.createSpine(x[0], suffix="Spine", resolution=x[0]["resolution"], dropoff=x[0]["dropoff"])  # s for spine...
+                limb.createLimb()
 
             elif x[1] == "tail":
                 # limb = simpleTail.SimpleTail()

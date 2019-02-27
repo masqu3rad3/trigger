@@ -22,7 +22,7 @@ def circle(name="cont_circle", scale=(1,1,1), location=None, normal=(0, 1, 0)):
     return cont_circle[0]
 
 
-def cube(name="cont_cube", scale=(1,1,1), location=None):
+def cube(name="cont_cube", scale=(1,1,1), location=None, normal=(0,1,0)):
     """
     Creates a cube controller as a single shape
     Args:
@@ -41,10 +41,12 @@ def cube(name="cont_cube", scale=(1,1,1), location=None):
     pm.setAttr(cont_cube.scale, scale)
     if location:
         pm.move(cont_cube, location)
+    if not normal == (0, 1, 0):
+        pm.rotate(cont_cube, normal[0]*90, normal[1]*90, normal[2]*90)
     pm.makeIdentity(cont_cube, a=True)
     return cont_cube
 
-def thigh(name="cont_thigh", scale=(1,1,1), location=None):
+def thigh(name="cont_thigh", scale=(1,1,1), location=None, normal=(0,1,0)):
     """
     Creates a cube controller as a single shape
     Args:
@@ -61,6 +63,8 @@ def thigh(name="cont_thigh", scale=(1,1,1), location=None):
     pm.setAttr(cont_thigh.scale, scale)
     if location:
         pm.move(cont_thigh, location)
+    if not normal == (0, 1, 0):
+        pm.rotate(cont_thigh, normal[0]*90, normal[1]*90, normal[2]*90)
     pm.makeIdentity(cont_thigh, a=True)
     return cont_thigh
     
@@ -85,6 +89,8 @@ def star(name="cont_star", scale=(1,1,1), location=None, normal=(0, 1, 0)):
     pm.setAttr(cont_star.scale, scale)
     if location:
         pm.move(cont_star, location)
+    if not normal == (0, 1, 0):
+        pm.rotate(cont_star, normal[0]*90, normal[1]*90, normal[2]*90)
     pm.makeIdentity(cont_star, a=True)
     return cont_star
     
@@ -188,16 +194,14 @@ def plus(name="cont_plus", scale=(1,1,1), location=None, normal=(1,0,0)):
     pm.setAttr(cont_Pole.scale, scale)
     if location:
         pm.move(cont_Pole, location)
-    pm.makeIdentity(cont_Pole, a=True)
     if not normal == (1, 0, 0):
         pm.rotate(cont_Pole, normal[0]*90, normal[1]*90, normal[2]*90)
-        # pm.rotate(cont_Pole, (0,0,90))
-        pm.makeIdentity(cont_Pole, a=True)
+    pm.makeIdentity(cont_Pole, a=True)
     return cont_Pole
 
 
     
-def waist(name="cont_waist", scale=(1,1,1), location=None):
+def waist(name="cont_waist", scale=(1,1,1), location=None, normal=(0,1,0)):
     """
     Creates a plus controller. Usually for pole vector
     Args:
@@ -215,10 +219,12 @@ def waist(name="cont_waist", scale=(1,1,1), location=None):
     pm.setAttr(cont_waist.scale, scale)
     if location:
         pm.move(cont_waist, location)
+    if not normal == (0, 1, 0):
+        pm.rotate(cont_waist, normal[0]*90, normal[1]*90, normal[2]*90)
     pm.makeIdentity(cont_waist, a=True)
     return cont_waist
 
-def square(name="cont_square", scale=(1,1,1), location=None):
+def square(name="cont_square", scale=(1,1,1), location=None, normal=(0,1,0)):
     """
     Creates a square controller. 
     Args:
@@ -234,9 +240,12 @@ def square(name="cont_square", scale=(1,1,1), location=None):
     if location:
         pm.move(cont_square, location)
     pm.makeIdentity(cont_square, a=True)
+    if not normal == (0, 1, 0):
+        pm.rotate(cont_square, normal[0]*90, normal[1]*90, normal[2]*90)
+        pm.makeIdentity(cont_square, a=True)
     return cont_square
 
-def ngon(name="cont_ngon", scale=(1,1,1), location=None):
+def ngon(name="cont_ngon", scale=(1,1,1), location=None, normal=(0,1,0)):
     """
     Creates a ngon controller. 
     Args:
@@ -255,10 +264,12 @@ def ngon(name="cont_ngon", scale=(1,1,1), location=None):
     pm.setAttr(cont_ngon.scale, scale)
     if location:
         pm.move(cont_ngon, location)
+    if not normal == (0, 1, 0):
+        pm.rotate(cont_ngon, normal[0]*90, normal[1]*90, normal[2]*90)
     pm.makeIdentity(cont_ngon, a=True)
     return cont_ngon
 
-def triCircle(name="cont_triCircle", scale=(1,1,1), location=None):
+def triCircle(name="cont_triCircle", scale=(1,1,1), location=None, normal=(0,1,0)):
     """
     Creates a circle controller with triangles on each direction. 
     Args:
@@ -290,11 +301,13 @@ def triCircle(name="cont_triCircle", scale=(1,1,1), location=None):
     pm.setAttr(cont_triCircle[0].scale, scale)
     if location:
         pm.move(cont_triCircle[0], location)
+    if not normal == (0, 1, 0):
+        pm.rotate(cont_triCircle, normal[0]*90, normal[1]*90, normal[2]*90)
     pm.makeIdentity(cont_triCircle, a=True)
     return cont_triCircle[0]
 
 
-def curvedCircle(name="cont_curvedCircle", scale=(1, 1, 1), location=None):
+def curvedCircle(name="cont_curvedCircle", scale=(1, 1, 1), location=None, normal=(0,1,0)):
     """
     Creates a slightly curved circle controller
     Args:
@@ -310,6 +323,8 @@ def curvedCircle(name="cont_curvedCircle", scale=(1, 1, 1), location=None):
     pm.setAttr(cont_curvedCircle.scale, scale)
     if location:
         pm.move(cont_curvedCircle, location)
+    if not normal == (0, 1, 0):
+        pm.rotate(cont_curvedCircle, normal[0]*90, normal[1]*90, normal[2]*90)
     pm.makeIdentity(cont_curvedCircle, a=True)
     return cont_curvedCircle
 
@@ -411,11 +426,9 @@ def looper(name="cont_looper", scale=(1,1,1), location=None, normal=(0,1,0)):
     pm.setAttr(cont_Looper.scale, scale)
     if location:
         pm.move(cont_Looper, location)
-    pm.makeIdentity(cont_Looper, a=True)
     if not normal == (1, 0, 0):
         pm.rotate(cont_Looper, normal[0]*90, normal[1]*90, normal[2]*90)
-        # pm.rotate(cont_Pole, (0,0,90))
-        pm.makeIdentity(cont_Looper, a=True)
+    pm.makeIdentity(cont_Looper, a=True)
     return cont_Looper
 
 def triangle(name="cont_triangle", scale=(1,1,1), location=None, normal=(0,1,0)):
@@ -426,11 +439,10 @@ def triangle(name="cont_triangle", scale=(1,1,1), location=None, normal=(0,1,0))
     pm.setAttr(cont_Triangle.scale, scale)
     if location:
         pm.move(cont_Triangle, location)
-    pm.makeIdentity(cont_Triangle, a=True)
     if not normal == (1, 0, 0):
         pm.rotate(cont_Triangle, normal[0]*90, normal[1]*90, normal[2]*90)
         # pm.rotate(cont_Pole, (0,0,90))
-        pm.makeIdentity(cont_Triangle, a=True)
+    pm.makeIdentity(cont_Triangle, a=True)
     return cont_Triangle
 
 def pyramid(name="cont_pyramid", scale=(1,1,1), location=None, normal=(0,1,0)):
@@ -441,26 +453,23 @@ def pyramid(name="cont_pyramid", scale=(1,1,1), location=None, normal=(0,1,0)):
     pm.setAttr(cont_Pyramid.scale, scale)
     if location:
         pm.move(cont_Pyramid, location)
-    pm.makeIdentity(cont_Pyramid, a=True)
     if not normal == (1, 0, 0):
         pm.rotate(cont_Pyramid, normal[0]*90, normal[1]*90, normal[2]*90)
         # pm.rotate(cont_Pole, (0,0,90))
-        pm.makeIdentity(cont_Pyramid, a=True)
+    pm.makeIdentity(cont_Pyramid, a=True)
     return cont_Pyramid
 
 def diamond(name="cont_diamond", scale=(1,1,1), location=None, normal=(0,1,0)):
-    cont_diamond = pm.curve(d=1, p=[(0.341725, 0, 1.051722), (1.105846, 0, 0), (0, 0.962601, 0), (0.341725, 0, 1.051722), (0, -0.962601, 0), (1.105846, 0, 0), (0.341725, 0, -1.051722), (0, 0.962601, 0), (-0.894648, 0, -0.65),
+    cont_diamond = pm.curve(name=name, d=1, p=[(0.341725, 0, 1.051722), (1.105846, 0, 0), (0, 0.962601, 0), (0.341725, 0, 1.051722), (0, -0.962601, 0), (1.105846, 0, 0), (0.341725, 0, -1.051722), (0, 0.962601, 0), (-0.894648, 0, -0.65),
                      (0, -0.962601, 0), (0.341725, 0, -1.051722), (-0.894648, 0, -0.65), (-0.894648, 0, 0.65), (0.341725, 0, 1.051722), (0, -0.962601, 0), (-0.894648, 0, 0.65), (0, 0.962601, 0)],
              k=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])
     pm.makeIdentity(cont_diamond, a=True, s=True)
     pm.setAttr(cont_diamond.scale, scale)
     if location:
         pm.move(cont_diamond, location)
-    pm.makeIdentity(cont_diamond, a=True)
     if not normal == (1, 0, 0):
         pm.rotate(cont_diamond, normal[0]*90, normal[1]*90, normal[2]*90)
-        # pm.rotate(cont_Pole, (0,0,90))
-        pm.makeIdentity(cont_diamond, a=True)
+    pm.makeIdentity(cont_diamond, a=True)
     return cont_diamond
 
 

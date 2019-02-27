@@ -87,6 +87,7 @@ class NAME_OF_THE_LIMB(object):
         pm.parentConstraint(self.limbPlug, self.scaleGrp, mo=False)
         pm.setAttr(self.scaleGrp.rigVis, 0)
 
+        self.scaleConstraints.append(self.scaleGrp)
         # lock and hide
 
     def createLimb(self):

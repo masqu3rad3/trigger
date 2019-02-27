@@ -513,7 +513,7 @@ class Tentacle(object):
 
         extra.colorize(self.deformerJoints, self.colorCodes[0], shape=False)
 
-        self.scaleConstraints = [self.scaleGrp]
+        self.scaleConstraints.append(self.scaleGrp)
 
 
 ## https://www.youtube.com/watch?v=sQOCfp-VMRU

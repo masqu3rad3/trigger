@@ -38,6 +38,8 @@ class Tentacle(object):
 
         self.npResolution = 1.0 * npResolution
         self.jResolution = 1.0 * jResolution
+        self.blResolution = 1.0 * blResolution
+        self.dropoff = 1.0 * dropoff
 
         # fool proofing
         if len(inits)<2:
@@ -90,12 +92,15 @@ class Tentacle(object):
         pm.parent(self.scaleGrp, self.limbGrp)
         pm.parent(self.nonScaleGrp, self.limbGrp)
 
-    def createJoints(self):
-        # draw Joints
 
+    def createJoints(self):
+
+        pm.select(d=True)
+        self.limbPlug = pm.joint(name="limbPlug_%s" % self.suffix, p=self.rootPos, radius=3)
         ## Make a straight line from inits joints (like in the twistSpline)
         # calculate the necessary distance for the joints
-        totalLength = 0
+
+        self.totalLength = 0
         contDistances = []
         ctrlDistance = 0
         for i in range(0, len(self.inits)):
@@ -105,122 +110,334 @@ class Tentacle(object):
                 tmin = i - 1
             currentJointLength = extra.getDistance(self.inits[i], self.inits[tmin])
             ctrlDistance = currentJointLength + ctrlDistance
-            totalLength += currentJointLength
+            self.totalLength += currentJointLength
             # this list contains distance between each control point
             contDistances.append(ctrlDistance)
-        endVc = (self.rootPos.x, (self.rootPos.y + totalLength), self.rootPos.z)
+        endVc = (self.rootPos.x, (self.rootPos.y + self.totalLength), self.rootPos.z)
         splitVc = endVc - self.rootPos
 
         ## Create Control Joints
-        contJointsList = []
+        self.contJointsList = []
         pm.select(d=True)
         for i in range(0, len(contDistances)):
             ctrlVc = splitVc.normal() * contDistances[i]
             place = self.rootPos + (ctrlVc)
-            j = pm.joint(p=place, name="jCont_tentacle_%s%s" %(self.suffix , str(i)), radius=5, o=(0, 0, 0))
-            contJointsList.append(j)
+            j = pm.joint(p=place, name="jCont_tentacle_%s%s" %(self.suffix , str(i)), radius=5, o=(90, 0, 90))
+            self.contJointsList.append(j)
             pm.select(d=True)
 
-
-
+        ## Create temporaray Guide Joints
+        pm.select(d=True)
+        self.guideJoints = [pm.joint(p=i.getTranslation(space="world")) for i in self.inits]
         # orientations
+        extra.orientJoints(self.guideJoints,
+                           localMoveAxis=(dt.Vector(self.up_axis)),
+                           mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.up_axis)))
+
+        pm.select(d=True)
+        self.wrapScaleJoint = pm.joint(name="jWrapScale_{0}".format(self.suffix))
+
+        pm.parent(self.contJointsList, self.scaleGrp)
+        pm.parent(self.wrapScaleJoint, self.scaleGrp)
+
+        map(lambda x: pm.connectAttr(self.scaleGrp.rigVis, x.v), self.contJointsList)
+        self.scaleGrp.rigVis >> self.wrapScaleJoint.v
+
         pass
 
     def createControllers(self):
         ## specialController
-        iconScale = extra.getDistance(inits[0], inits[1])/3
-        cont_special = icon.looper(name="tentacleSP_" + suffix)
-        extra.alignAndAim(cont_special, targetList = [inits[0]], aimTargetList = [inits[-1]], upVector=upAxis, rotateOff=(90,0,0))
-        pm.move(cont_special, (dt.Vector(upAxis) *(iconScale*2)), r=True)
+        iconScale = extra.getDistance(self.inits[0], self.inits[1])/3
+        self.cont_special = icon.looper(name="tentacleSP_%s" % self.suffix)
+        extra.alignAndAim(self.cont_special, targetList = [self.inits[0]], aimTargetList=[self.inits[-1]], upVector=self.up_axis, rotateOff=(90,0,0))
+        pm.move(self.cont_special, (dt.Vector(self.up_axis) *(iconScale*2)), r=True)
 
-        cont_special_ORE = extra.createUpGrp(cont_special,"ORE")
+        cont_special_ORE = extra.createUpGrp(self.cont_special,"ORE")
 
         ## seperator - curl
-        pm.addAttr(cont_special, shortName="curlSeperator", at="enum", en="----------", k=True)
-        pm.setAttr(cont_special.curlSeperator, lock=True)
+        pm.addAttr(self.cont_special, shortName="curlSeperator", at="enum", en="----------", k=True)
+        pm.setAttr(self.cont_special.curlSeperator, lock=True)
 
-        pm.addAttr(cont_special, shortName="curl", longName="Curl", defaultValue=0.0, minValue=-10.0, maxValue=10.0, at="float",
+        pm.addAttr(self.cont_special, shortName="curl", longName="Curl", defaultValue=0.0, minValue=-10.0, maxValue=10.0, at="float",
                    k=True)
-        pm.addAttr(cont_special, shortName="curlSize", longName="Curl_Size", defaultValue=1.0, at="float", k=True)
+        pm.addAttr(self.cont_special, shortName="curlSize", longName="Curl_Size", defaultValue=1.0, at="float", k=True)
 
-        pm.addAttr(cont_special, shortName="curlAngle", longName="Curl_Angle", defaultValue=1.0, at="float",
+        pm.addAttr(self.cont_special, shortName="curlAngle", longName="Curl_Angle", defaultValue=1.0, at="float",
                    k=True)
-        pm.addAttr(cont_special, shortName="curlDirection", longName="Curl_Direction", defaultValue=0.0, at="float",
+        pm.addAttr(self.cont_special, shortName="curlDirection", longName="Curl_Direction", defaultValue=0.0, at="float",
                    k=True)
 
-        pm.addAttr(cont_special, shortName="curlShift", longName="Curl_Shift", defaultValue=0.0, at="float",
+        pm.addAttr(self.cont_special, shortName="curlShift", longName="Curl_Shift", defaultValue=0.0, at="float",
                    k=True)
 
 
         ## seperator - twist
-        pm.addAttr(cont_special, shortName="twistSeperator", at="enum", en="----------", k=True)
-        pm.setAttr(cont_special.twistSeperator, lock=True)
+        pm.addAttr(self.cont_special, shortName="twistSeperator", at="enum", en="----------", k=True)
+        pm.setAttr(self.cont_special.twistSeperator, lock=True)
 
-        pm.addAttr(cont_special, shortName="twistAngle", longName="Twist_Angle", defaultValue=0.0, at="float",
+        pm.addAttr(self.cont_special, shortName="twistAngle", longName="Twist_Angle", defaultValue=0.0, at="float",
                    k=True)
-        pm.addAttr(cont_special, shortName="twistSlide", longName="Twist_Slide", defaultValue=0.0, at="float",
+        pm.addAttr(self.cont_special, shortName="twistSlide", longName="Twist_Slide", defaultValue=0.0, at="float",
                    k=True)
-        pm.addAttr(cont_special, shortName="twistArea", longName="Twist_Area", defaultValue=1.0, at="float",
+        pm.addAttr(self.cont_special, shortName="twistArea", longName="Twist_Area", defaultValue=1.0, at="float",
                    k=True)
 
         ## seperator - sine
-        pm.addAttr(cont_special, shortName="sineSeperator", at="enum", en="----------", k=True)
-        pm.setAttr(cont_special.sineSeperator, lock=True)
-        pm.addAttr(cont_special, shortName="sineAmplitude", longName="Sine_Amplitude", defaultValue=0.0, at="float",
+        pm.addAttr(self.cont_special, shortName="sineSeperator", at="enum", en="----------", k=True)
+        pm.setAttr(self.cont_special.sineSeperator, lock=True)
+        pm.addAttr(self.cont_special, shortName="sineAmplitude", longName="Sine_Amplitude", defaultValue=0.0, at="float",
                    k=True)
-        pm.addAttr(cont_special, shortName="sineWavelength", longName="Sine_Wavelength", defaultValue=1.0, at="float",
+        pm.addAttr(self.cont_special, shortName="sineWavelength", longName="Sine_Wavelength", defaultValue=1.0, at="float",
                    k=True)
-        pm.addAttr(cont_special, shortName="sineDropoff", longName="Sine_Dropoff", defaultValue=0.0, at="float",
+        pm.addAttr(self.cont_special, shortName="sineDropoff", longName="Sine_Dropoff", defaultValue=0.0, at="float",
                    k=True)
-        pm.addAttr(cont_special, shortName="sineSlide", longName="Sine_Slide", defaultValue=0.0, at="float",
+        pm.addAttr(self.cont_special, shortName="sineSlide", longName="Sine_Slide", defaultValue=0.0, at="float",
                    k=True)
-        pm.addAttr(cont_special, shortName="sineArea", longName="Sine_area", defaultValue=1.0, at="float",
+        pm.addAttr(self.cont_special, shortName="sineArea", longName="Sine_area", defaultValue=1.0, at="float",
                    k=True)
-        pm.addAttr(cont_special, shortName="sineDirection", longName="Sine_Direction", defaultValue=0.0, at="float",
-                   k=True)
-
-        pm.addAttr(cont_special, shortName="sineAnimate", longName="Sine_Animate", defaultValue=0.0, at="float",
+        pm.addAttr(self.cont_special, shortName="sineDirection", longName="Sine_Direction", defaultValue=0.0, at="float",
                    k=True)
 
-        contFK_List = []
-        contTwk_List = []
-        for j in range (len(inits)):
+        pm.addAttr(self.cont_special, shortName="sineAnimate", longName="Sine_Animate", defaultValue=0.0, at="float",
+                   k=True)
 
-            if not j == (len(inits)-1):
-                targetInit = inits[j+1]
-                rotateOff = (90,90,0)
-            else:
-                targetInit = inits[j-1]
-                rotateOff = (-90,-90, 180)
-            s = extra.getDistance(inits[j], targetInit)/3
-            contScaleTwk = (s, s, s)
-            contTwk = icon.circle("cont_tentacleTweak{0}_{1}".format(str(j), suffix), contScaleTwk)
-            extra.alignAndAim(contTwk, targetList=[inits[j]], aimTargetList=[targetInit], upVector=upAxis, rotateOff=rotateOff)
+        self.contFK_List = []
+        self.contTwk_List = []
+
+        for j in range (len(self.guideJoints)):
+            s = pm.getAttr(self.guideJoints[j].tx)/3
+            s = iconScale if s == 0 else s
+            scaleTwk = (s, s, s)
+            contTwk = icon.circle("cont_tentacleTweak{0}_{1}".format(str(j), self.suffix), scaleTwk, normal=(0,0,1))
+            extra.alignToAlter(contTwk, self.guideJoints[j], mode=2)
             contTwk_OFF = extra.createUpGrp(contTwk, "OFF")
             contTwk_ORE = extra.createUpGrp(contTwk, "ORE")
-            contTwk_List.append(contTwk)
+            self.contTwk_List.append(contTwk)
 
-            contScaleFK = (s*1.2, s*1.2, s*1.2)
-            contFK = icon.ngon("cont_tentacleFK{0}_{1}".format(str(j), suffix), contScaleFK)
-            extra.alignAndAim(contFK, targetList=[inits[j]], aimTargetList=[targetInit], upVector=upAxis,
-                          rotateOff=rotateOff)
+            scaleFK = (s*1.2, s*1.2, s*1.2)
+            contFK = icon.ngon("cont_tentacleFK{0}_{1}".format(str(j), self.suffix), scaleFK, normal=(0,0,1))
+            extra.alignToAlter(contFK, self.guideJoints[j], mode=2)
             contFK_OFF = extra.createUpGrp(contFK, "OFF")
             contFK_ORE = extra.createUpGrp(contFK, "ORE")
-            if side == "R":
-                pm.setAttr("{0}.s{1}".format(contFK_ORE, "x"), -1)
-            contFK_List.append(contFK)
+            self.contFK_List.append(contFK)
 
             pm.parent(contTwk_OFF, contFK)
             if not j == 0:
-                pm.parent(contFK_OFF, contFK_List[j-1])
+                pm.parent(contFK_OFF, self.contFK_List[j - 1])
             else:
                 pm.parent(contFK_OFF, self.scaleGrp)
+
+        pm.parent(cont_special_ORE, self.contFK_List[0])
+
+        extra.colorize(self.contFK_List, self.colorCodes[0])
+        extra.colorize(self.contTwk_List, self.colorCodes[0])
+        extra.colorize(self.cont_special, self.colorCodes[0])
+
+        map(lambda x: pm.connectAttr(self.scaleGrp.contVis, x.v), self.contTwk_List)
+        map(lambda x: pm.connectAttr(self.scaleGrp.contVis, x.v), self.contFK_List)
 
     def createRoots(self):
         pass
 
     def createIKsetup(self):
-        pass
+        ## Create the Base Nurbs Plane (npBase)
+        ribbonLength = extra.getDistance(self.contJointsList[0], self.contJointsList[-1])
+        npBase=pm.nurbsPlane(ax=(0,1,0),u=self.npResolution,v=1, w=ribbonLength, lr=(1.0/ribbonLength), name="npBase_%s" % self.suffix)
+        pm.rebuildSurface (npBase, ch=1, rpo=1, rt=0, end=1, kr=2, kcp=0, kc=0, su=5, du=3, sv=1, dv=1, tol=0, fr=0, dir=1)
+        extra.alignAndAim(npBase, targetList=[self.contJointsList[0], self.contJointsList[-1]], aimTargetList=[self.contJointsList[-1]], upVector=self.up_axis)
+
+        ## Duplicate the Base Nurbs Plane as joint Holder (npJDefHolder)
+        npJdefHolder = pm.nurbsPlane(ax=(0, 1, 0), u=self.blResolution, v=1, w=ribbonLength, lr=(1.0 / ribbonLength),
+                               name="npJDefHolder_%s" % self.suffix)
+        pm.rebuildSurface(npJdefHolder, ch=1, rpo=1, rt=0, end=1, kr=2, kcp=0, kc=0, su=5, du=3, sv=1, dv=1, tol=0, fr=0,
+                          dir=1)
+        extra.alignAndAim(npJdefHolder, targetList=[self.contJointsList[0], self.contJointsList[-1]], aimTargetList=[self.contJointsList[-1]],
+                          upVector=self.up_axis)
+
+        ## Create the follicles on the npJDefHolder
+        npJdefHolderShape = npJdefHolder[0].getShape()
+        # self.toHide.append(npJdefHolder[0])
+        follicleList = []
+        for i in range (0, int(self.jResolution)):
+            follicle = pm.createNode('follicle', name="follicle_{0}{1}".format(self.suffix, str(i)))
+            npJdefHolderShape.local.connect(follicle.inputSurface)
+            npJdefHolderShape.worldMatrix[0].connect(follicle.inputWorldMatrix)
+            follicle.outRotate.connect(follicle.getParent().rotate)
+            follicle.outTranslate.connect(follicle.getParent().translate)
+            follicle.parameterV.set(0.5)
+            follicle.parameterU.set((1/self.jResolution)+(i/self.jResolution)-((1/self.jResolution)/2))
+            follicle.getParent().t.lock()
+            follicle.getParent().r.lock()
+            follicleList.append(follicle)
+            defJ=pm.joint(name="jDef_{0}{1}".format(self.suffix,str(i)))
+            pm.joint(defJ, e=True, zso=True, oj='zxy')
+            self.deformerJoints.append(defJ)
+            self.sockets.append(defJ)
+            pm.parent(follicle.getParent(), self.nonScaleGrp)
+            pm.scaleConstraint(self.scaleGrp, follicle.getParent(), mo=True)
+
+        # create follicles for scaling calculations
+        follicle_sca_list = []
+        counter=0
+        for i in range (0, int(self.jResolution)):
+            s_follicle = pm.createNode('follicle', name="follicleSCA_{0}{1}".format(self.suffix, i))
+            npJdefHolderShape.local.connect(s_follicle.inputSurface)
+            npJdefHolderShape.worldMatrix[0].connect(s_follicle.inputWorldMatrix)
+            s_follicle.outRotate.connect(s_follicle.getParent().rotate)
+            s_follicle.outTranslate.connect(s_follicle.getParent().translate)
+            s_follicle.parameterV.set(0.0)
+            s_follicle.parameterU.set((1/self.jResolution)+(i/self.jResolution)-((1/self.jResolution)/2))
+            s_follicle.getParent().t.lock()
+            s_follicle.getParent().r.lock()
+            follicle_sca_list.append(s_follicle)
+            pm.parent(s_follicle.getParent(), self.nonScaleGrp)
+            # self.toHide.append(s_follicle)
+            # create distance node
+            distNode = pm.createNode("distanceBetween", name="fDistance_{0}{1}".format(self.suffix, i))
+            follicleList[counter].outTranslate >> distNode.point1
+            s_follicle.outTranslate >> distNode.point2
+
+            multiplier = pm.createNode("multDoubleLinear", name="fMult_{0}{1}".format(self.suffix, i))
+            distNode.distance >> multiplier.input1
+            pm.setAttr(multiplier.input2, 2)
+
+            global_divide = pm.createNode("multiplyDivide", name= "fGlobDiv_{0}{1}".format(self.suffix, i))
+            pm.setAttr(global_divide.operation, 2)
+            multiplier.output >> global_divide.input1X
+            self.scaleGrp.scaleX >> global_divide.input2X
+
+            global_divide.outputX >> self.deformerJoints[counter].scaleX
+            global_divide.outputX >> self.deformerJoints[counter].scaleY
+            global_divide.outputX >> self.deformerJoints[counter].scaleZ
+
+            counter += 1
+
+        ## Duplicate it 3 more times for deformation targets (npDeformers, npTwist, npSine)
+
+        npDeformers = pm.duplicate(npJdefHolder[0], name="npDeformers_%s" % self.suffix)
+        pm.move(npDeformers[0], (0, self.totalLength/2, 0))
+        pm.rotate(npDeformers[0], (0, 0, 90))
+
+        ## Create Blendshape node between np_jDefHolder and deformation targets
+        npBlend = pm.blendShape(npDeformers, npJdefHolder[0], w=(0,1))
+
+        ## Wrap npjDefHolder to the Base Plane
+        npWrap, npWrapGeo = self.createWrap(npBase[0], npJdefHolder[0],weightThreshold=0.0, maxDistance=50, autoWeightThreshold=False)
+        maxDistanceMult = pm.createNode("multDoubleLinear", name="npWrap_{0}".format(self.suffix))
+        self.scaleGrp.scaleX >> maxDistanceMult.input1
+        pm.setAttr(maxDistanceMult.input2, 50)
+        maxDistanceMult.output >> npWrap.maxDistance
+
+        ## make the Wrap node Scale-able with the rig
+        pm.skinCluster(self.wrapScaleJoint, npWrapGeo, tsb=True)
+
+        ## Create skin cluster
+        pm.skinCluster(self.contJointsList, npBase[0], tsb=True, dropoffRate=self.dropoff)
+
+        ## CURL DEFORMER
+        curlDeformer = pm.nonLinear(npDeformers, type='bend', curvature=1500)
+        curlLoc = pm.spaceLocator(name="curlLoc{0}".format(self.suffix))
+        pm.parent(curlDeformer[1], curlLoc)
+        pm.setAttr(curlDeformer[0].lowBound, -1)
+        pm.setAttr(curlDeformer[0].highBound, 0)
+
+        pm.setDrivenKeyframe(curlDeformer[0].curvature, cd=self.cont_special.curl, v=0.0, dv=0.0, itt='linear', ott='linear')
+        pm.setDrivenKeyframe(curlDeformer[0].curvature, cd=self.cont_special.curl, v=1500.0, dv=0.01, itt='linear', ott='linear')
+        pm.setDrivenKeyframe(curlDeformer[0].curvature, cd=self.cont_special.curl, v=-1500.0, dv=-0.01, itt='linear', ott='linear')
+
+        pm.setDrivenKeyframe(curlDeformer[1].ty, cd=self.cont_special.curl, v=0.0, dv=10.0, itt='linear', ott='linear')
+        pm.setDrivenKeyframe(curlDeformer[1].ty, cd=self.cont_special.curl, v=0.0, dv=-10.0, itt='linear', ott='linear')
+        pm.setDrivenKeyframe([curlDeformer[1].sx, curlDeformer[1].sy, curlDeformer[1].sz], cd=self.cont_special.curl, v=(self.totalLength * 2), dv=10.0, itt='linear', ott='linear')
+        pm.setDrivenKeyframe([curlDeformer[1].sx, curlDeformer[1].sy, curlDeformer[1].sz], cd=self.cont_special.curl, v=(self.totalLength * 2), dv=-10.0, itt='linear', ott='linear')
+        pm.setDrivenKeyframe(curlDeformer[1].rz, cd=self.cont_special.curl, v=4.0, dv=10.0, itt='linear', ott='linear')
+        pm.setDrivenKeyframe(curlDeformer[1].rz, cd=self.cont_special.curl, v=-4.0, dv=-10.0, itt='linear', ott='linear')
+
+        pm.setDrivenKeyframe(curlDeformer[1].ty, cd=self.cont_special.curl, v=self.totalLength, dv=0.0, itt='linear', ott='linear')
+        pm.setDrivenKeyframe([curlDeformer[1].sx, curlDeformer[1].sy, curlDeformer[1].sz], cd=self.cont_special.curl, v=(self.totalLength / 2), dv=0.0, itt='linear', ott='linear')
+        pm.setDrivenKeyframe(curlDeformer[1].rz, cd=self.cont_special.curl, v=6.0, dv=0.01, itt='linear', ott='linear')
+        pm.setDrivenKeyframe(curlDeformer[1].rz, cd=self.cont_special.curl, v=-6.0, dv=-0.01, itt='linear', ott='linear')
+
+        ## create curl size multipliers
+
+        curlSizeMultX = pm.createNode("multDoubleLinear", name="curlSizeMultX_{0}".format(self.suffix))
+        curlSizeMultY = pm.createNode("multDoubleLinear", name="curlSizeMultY_{0}".format(self.suffix))
+        curlSizeMultZ = pm.createNode("multDoubleLinear", name="curlSizeMultZ_{0}".format(self.suffix))
+
+        curlAngleMultZ = pm.createNode("multDoubleLinear", name="curlAngleMultZ_{0}".format(self.suffix))
+
+        curlShiftAdd = pm.createNode("plusMinusAverage", name="curlAddShift_{0}".format(self.suffix))
+        self.cont_special.curlShift >> curlShiftAdd.input1D[0]
+        pm.setAttr(curlShiftAdd.input1D[1], 180)
+        curlShiftAdd.output1D >> curlDeformer[1].rx
+
+        self.cont_special.curlSize >> curlSizeMultX.input1
+        self.cont_special.curlSize >> curlSizeMultY.input1
+        self.cont_special.curlSize >> curlSizeMultZ.input1
+
+        self.cont_special.curlAngle >> curlAngleMultZ.input1
+
+
+        pm.listConnections(curlDeformer[1].sx)[0].output >> curlSizeMultX.input2
+        pm.listConnections(curlDeformer[1].sy)[0].output >> curlSizeMultY.input2
+        pm.listConnections(curlDeformer[1].sz)[0].output >> curlSizeMultZ.input2
+
+        pm.listConnections(curlDeformer[1].rz)[0].output >> curlAngleMultZ.input2
+
+        curlSizeMultX.output >> curlDeformer[1].sx
+        curlSizeMultY.output >> curlDeformer[1].sy
+        curlSizeMultZ.output >> curlDeformer[1].sz
+
+        curlAngleMultZ.output >> curlDeformer[1].rz
+
+        self.cont_special.curlDirection >> curlLoc.ry
+
+        ## TWIST DEFORMER
+        twistDeformer = pm.nonLinear(npDeformers, type='twist')
+        pm.rotate(twistDeformer[1], (0,0,0))
+        twistLoc = pm.spaceLocator(name="twistLoc_{0}".format(self.suffix))
+        pm.parent(twistDeformer[1], twistLoc)
+
+        ## make connections:
+        self.cont_special.twistAngle >> twistDeformer[0].endAngle
+        self.cont_special.twistSlide >> twistLoc.translateY
+        self.cont_special.twistArea >> twistLoc.scaleY
+
+        ## SINE DEFORMER
+        sineDeformer = pm.nonLinear(npDeformers, type='sine')
+        pm.rotate(sineDeformer[1], (0,0,0))
+        sineLoc = pm.spaceLocator(name="sineLoc_{0}".format(self.suffix))
+        pm.parent(sineDeformer[1], sineLoc)
+
+        ## make connections:
+        self.cont_special.sineAmplitude >> sineDeformer[0].amplitude
+        self.cont_special.sineWavelength >> sineDeformer[0].wavelength
+        self.cont_special.sineDropoff >> sineDeformer[0].dropoff
+        self.cont_special.sineAnimate >> sineDeformer[0].offset
+
+        self.cont_special.sineSlide >> sineLoc.translateY
+        self.cont_special.sineArea >> sineLoc.scaleY
+
+        self.cont_special.sineDirection >> sineLoc.rotateY
+
+        for j in range(len(self.guideJoints)):
+            extra.alignToAlter(self.contJointsList[j], self.guideJoints[j], mode=2)
+            pm.parentConstraint(self.contTwk_List[j], self.contJointsList[j], mo=False)
+            pm.scaleConstraint(self.contTwk_List[j], self.contJointsList[j], mo=False)
+
+        pm.parent(npBase[0], self.nonScaleGrp)
+        pm.parent(npDeformers[0], self.nonScaleGrp)
+        pm.parent(curlLoc, self.nonScaleGrp)
+        pm.parent(twistLoc, self.nonScaleGrp)
+        pm.parent(sineLoc,self.nonScaleGrp)
+        pm.parent(npWrapGeo, self.nonScaleGrp)
+        pm.parent(npJdefHolder[0], self.scaleGrp)
+
+        nodesRigVis = [npBase[0], npJdefHolder[0], npDeformers[0], sineLoc, twistLoc, curlLoc]
+        map(lambda x: pm.connectAttr(self.scaleGrp.rigVis, x.v), nodesRigVis)
+        map(lambda x: pm.connectAttr(self.scaleGrp.rigVis, x.v), follicle_sca_list)
+        map(lambda x: pm.connectAttr(self.scaleGrp.rigVis, x.v), follicleList)
+
+        extra.colorize(self.deformerJoints, self.colorCodes[0], shape=False)
 
     def createFKsetup(self):
         pass
@@ -241,508 +458,25 @@ class Tentacle(object):
         pm.parentConstraint(self.limbPlug, self.scaleGrp, mo=False)
         pm.setAttr(self.scaleGrp.rigVis, 0)
 
-        # lock and hide
+        map(lambda x: extra.lockAndHide(x, ["sx", "sy", "sz"]), self.contFK_List)
+        self.scaleConstraints = [self.scaleGrp]
+
+        pm.delete(self.guideJoints)
 
     def createLimb(self):
         self.createGrp()
         self.createJoints()
-        # self.createControllers()
-        # self.createRoots()
-        # self.createIKsetup()
+        self.createControllers()
+        self.createRoots()
+        self.createIKsetup()
+
+
         # self.createFKsetup()
         # self.ikfkSwitching()
         # self.createRibbons()
         # self.createTwistSplines()
         # self.createAngleExtractors()
-        # self.roundUp()
-
-    def createTentacle(self, inits,
-                       suffix="",
-                       side="C",
-                       npResolution=5.0,
-                       jResolution=5.0,
-                       blResolution=25.0,
-                       dropoff=2.0):
-        if not isinstance(inits, list):
-            tentacleRoot = inits.get("TentacleRoot")
-            tentacles = (inits.get("Tentacle"))
-            inits = [tentacleRoot] + (tentacles)
-
-        npResolution=1.0*npResolution
-        jResolution = 1.0 * jResolution
-
-        # suffix=(extra.uniqueName("scaleGrp_%s" %(suffix))).replace("scaleGrp_", "")
-        suffix=(extra.uniqueName("limbGrp_%s" % suffix)).replace("limbGrp_", "")
-        self.limbGrp = pm.group(name="limbGrp_%s" % suffix, em=True)
-
-
-        if len(inits)<2:
-            pm.error("Tentacle setup needs at least 2 initial joints")
-            return
-        rootPoint = inits[0].getTranslation(space="world")
-
-        ## Create Groups
-        self.scaleGrp = pm.group(name="scaleGrp_" + suffix, em=True)
-        extra.alignTo(self.scaleGrp, inits[0], 0)
-        self.nonScaleGrp = pm.group(name="NonScaleGrp_" + suffix, em=True)
-
-        ## Get the orientation axises
-        upAxis, mirroAxis, spineDir = extra.getRigAxes(inits[0])
-
-        spineDir = upAxis
-
-        ## Create Controller Curves
-
-        ## specialController
-        iconScale = extra.getDistance(inits[0], inits[1])/3
-        cont_special = icon.looper(name="tentacleSP_" + suffix)
-        extra.alignAndAim(cont_special, targetList = [inits[0]], aimTargetList = [inits[-1]], upVector=upAxis, rotateOff=(90,0,0))
-        pm.move(cont_special, (dt.Vector(upAxis) *(iconScale*2)), r=True)
-
-        # extra.alignAndAim(cont_special , targetList=[inits[0]], aimTargetList=[inits[1]], upVector=upAxis,
-        #                   translateOff=(0,0,0), rotateOff=(90,90,0))
-        # pm.move(cont_special, (3, 0, 0), r=True, os=True)
-
-        cont_special_ORE = extra.createUpGrp(cont_special,"ORE")
-
-        ## seperator - curl
-        pm.addAttr(cont_special, shortName="curlSeperator", at="enum", en="----------", k=True)
-        pm.setAttr(cont_special.curlSeperator, lock=True)
-
-        pm.addAttr(cont_special, shortName="curl", longName="Curl", defaultValue=0.0, minValue=-10.0, maxValue=10.0, at="float",
-                   k=True)
-        pm.addAttr(cont_special, shortName="curlSize", longName="Curl_Size", defaultValue=1.0, at="float", k=True)
-
-        pm.addAttr(cont_special, shortName="curlAngle", longName="Curl_Angle", defaultValue=1.0, at="float",
-                   k=True)
-        pm.addAttr(cont_special, shortName="curlDirection", longName="Curl_Direction", defaultValue=0.0, at="float",
-                   k=True)
-
-        pm.addAttr(cont_special, shortName="curlShift", longName="Curl_Shift", defaultValue=0.0, at="float",
-                   k=True)
-
-
-        ## seperator - twist
-        pm.addAttr(cont_special, shortName="twistSeperator", at="enum", en="----------", k=True)
-        pm.setAttr(cont_special.twistSeperator, lock=True)
-
-        pm.addAttr(cont_special, shortName="twistAngle", longName="Twist_Angle", defaultValue=0.0, at="float",
-                   k=True)
-        pm.addAttr(cont_special, shortName="twistSlide", longName="Twist_Slide", defaultValue=0.0, at="float",
-                   k=True)
-        pm.addAttr(cont_special, shortName="twistArea", longName="Twist_Area", defaultValue=1.0, at="float",
-                   k=True)
-
-        ## seperator - sine
-        pm.addAttr(cont_special, shortName="sineSeperator", at="enum", en="----------", k=True)
-        pm.setAttr(cont_special.sineSeperator, lock=True)
-        pm.addAttr(cont_special, shortName="sineAmplitude", longName="Sine_Amplitude", defaultValue=0.0, at="float",
-                   k=True)
-        pm.addAttr(cont_special, shortName="sineWavelength", longName="Sine_Wavelength", defaultValue=1.0, at="float",
-                   k=True)
-        pm.addAttr(cont_special, shortName="sineDropoff", longName="Sine_Dropoff", defaultValue=0.0, at="float",
-                   k=True)
-        pm.addAttr(cont_special, shortName="sineSlide", longName="Sine_Slide", defaultValue=0.0, at="float",
-                   k=True)
-        pm.addAttr(cont_special, shortName="sineArea", longName="Sine_area", defaultValue=1.0, at="float",
-                   k=True)
-        pm.addAttr(cont_special, shortName="sineDirection", longName="Sine_Direction", defaultValue=0.0, at="float",
-                   k=True)
-
-        pm.addAttr(cont_special, shortName="sineAnimate", longName="Sine_Animate", defaultValue=0.0, at="float",
-                   k=True)
-
-
-
-        contFK_List = []
-        contTwk_List = []
-        for j in range (len(inits)):
-
-            if not j == (len(inits)-1):
-                targetInit = inits[j+1]
-                rotateOff = (90,90,0)
-            else:
-                targetInit = inits[j-1]
-                rotateOff = (-90,-90, 180)
-            s = extra.getDistance(inits[j], targetInit)/3
-            contScaleTwk = (s, s, s)
-            contTwk = icon.circle("cont_tentacleTweak{0}_{1}".format(str(j), suffix), contScaleTwk)
-            extra.alignAndAim(contTwk, targetList=[inits[j]], aimTargetList=[targetInit], upVector=upAxis, rotateOff=rotateOff)
-            contTwk_OFF = extra.createUpGrp(contTwk, "OFF")
-            contTwk_ORE = extra.createUpGrp(contTwk, "ORE")
-            contTwk_List.append(contTwk)
-
-            contScaleFK = (s*1.2, s*1.2, s*1.2)
-            contFK = icon.ngon("cont_tentacleFK{0}_{1}".format(str(j), suffix), contScaleFK)
-            extra.alignAndAim(contFK, targetList=[inits[j]], aimTargetList=[targetInit], upVector=upAxis,
-                          rotateOff=rotateOff)
-            contFK_OFF = extra.createUpGrp(contFK, "OFF")
-            contFK_ORE = extra.createUpGrp(contFK, "ORE")
-            if side == "R":
-                pm.setAttr("{0}.s{1}".format(contFK_ORE, "x"), -1)
-            contFK_List.append(contFK)
-
-            pm.parent(contTwk_OFF, contFK)
-            if not j == 0:
-                pm.parent(contFK_OFF, contFK_List[j-1])
-            else:
-                pm.parent(contFK_OFF, self.scaleGrp)
-
-        ## Make a straight line from inits joints (like in the twistSpline)
-        # calculate the necessary distance for the joints
-        totalLength = 0
-        contDistances = []
-        ctrlDistance = 0
-        for i in range(0, len(inits)):
-            if i == 0:
-                tmin = 0
-            else:
-                tmin = i - 1
-            currentJointLength = extra.getDistance(inits[i], inits[tmin])
-            ctrlDistance = currentJointLength + ctrlDistance
-            totalLength += currentJointLength
-            # this list contains distance between each control point
-            contDistances.append(ctrlDistance)
-        endVc = (rootPoint.x, (rootPoint.y + totalLength), rootPoint.z)
-        splitVc = endVc - rootPoint
-
-        ## Create Control Joints
-        contJointsList = []
-        pm.select(d=True)
-        for i in range(0, len(contDistances)):
-            ctrlVc = splitVc.normal() * contDistances[i]
-            place = rootPoint + (ctrlVc)
-            j = pm.joint(p=place, name="jCont_tentacle_" + suffix + str(i), radius=5, o=(0, 0, 0))
-            contJointsList.append(j)
-            pm.select(d=True)
-
-        ## Create the Base Nurbs Plane (npBase)
-        ribbonLength = extra.getDistance(contJointsList[0], contJointsList[-1])
-        npBase=pm.nurbsPlane(ax=(0,1,0),u=npResolution,v=1, w=ribbonLength, lr=(1.0/ribbonLength), name="npBase_"+suffix)
-        pm.rebuildSurface (npBase, ch=1, rpo=1, rt=0, end=1, kr=2, kcp=0, kc=0, su=5, du=3, sv=1, dv=1, tol=0, fr=0, dir=1)
-        extra.alignAndAim(npBase, targetList=[contJointsList[0], contJointsList[-1]], aimTargetList=[contJointsList[-1]], upVector=spineDir)
-
-        ## Duplicate the Base Nurbs Plane as joint Holder (npJDefHolder)
-        npJdefHolder = pm.nurbsPlane(ax=(0, 1, 0), u=blResolution, v=1, w=ribbonLength, lr=(1.0 / ribbonLength),
-                               name="npJDefHolder_" + suffix)
-        pm.rebuildSurface(npJdefHolder, ch=1, rpo=1, rt=0, end=1, kr=2, kcp=0, kc=0, su=5, du=3, sv=1, dv=1, tol=0, fr=0,
-                          dir=1)
-        extra.alignAndAim(npJdefHolder, targetList=[contJointsList[0], contJointsList[-1]], aimTargetList=[contJointsList[-1]],
-                          upVector=spineDir)
-
-        # npJdefHolder = pm.duplicate(npBase[0], name="npJDefHolder_"+suffix)
-
-        ## Create the follicles on the npJDefHolder
-        npJdefHolderShape = npJdefHolder[0].getShape()
-        self.deformerJoints = []
-        # self.toHide.append(npJdefHolder[0])
-        follicleList = []
-        for i in range (0, int(jResolution)):
-            follicle = pm.createNode('follicle', name="follicle_{0}{1}".format(suffix, str(i)))
-            npJdefHolderShape.local.connect(follicle.inputSurface)
-            npJdefHolderShape.worldMatrix[0].connect(follicle.inputWorldMatrix)
-            follicle.outRotate.connect(follicle.getParent().rotate)
-            follicle.outTranslate.connect(follicle.getParent().translate)
-            follicle.parameterV.set(0.5)
-            follicle.parameterU.set((1/jResolution)+(i/jResolution)-((1/jResolution)/2))
-            follicle.getParent().t.lock()
-            follicle.getParent().r.lock()
-            follicleList.append(follicle)
-            defJ=pm.joint(name="jDef_{0}{1}".format(suffix,str(i)))
-            pm.joint(defJ, e=True, zso=True, oj='zxy')
-            self.deformerJoints.append(defJ)
-            self.sockets.append(defJ)
-            pm.parent(follicle.getParent(), self.nonScaleGrp)
-            pm.scaleConstraint(self.scaleGrp, follicle.getParent(), mo=True)
-            # self.toHide.append(follicle)
-
-        # create follicles for scaling calculations
-        follicle_sca_list = []
-        counter=0
-        for i in range (0, int(jResolution)):
-            s_follicle = pm.createNode('follicle', name="follicleSCA_{0}{1}".format(suffix, i))
-            npJdefHolderShape.local.connect(s_follicle.inputSurface)
-            npJdefHolderShape.worldMatrix[0].connect(s_follicle.inputWorldMatrix)
-            s_follicle.outRotate.connect(s_follicle.getParent().rotate)
-            s_follicle.outTranslate.connect(s_follicle.getParent().translate)
-            s_follicle.parameterV.set(0.0)
-            s_follicle.parameterU.set((1/jResolution)+(i/jResolution)-((1/jResolution)/2))
-            s_follicle.getParent().t.lock()
-            s_follicle.getParent().r.lock()
-            follicle_sca_list.append(s_follicle)
-            pm.parent(s_follicle.getParent(), self.nonScaleGrp)
-            # self.toHide.append(s_follicle)
-            # create distance node
-            distNode = pm.createNode("distanceBetween", name="fDistance_{0}{1}".format(suffix, i))
-            follicleList[counter].outTranslate >> distNode.point1
-            s_follicle.outTranslate >> distNode.point2
-
-            multiplier = pm.createNode("multDoubleLinear", name="fMult_{0}{1}".format(suffix, i))
-            distNode.distance >> multiplier.input1
-            pm.setAttr(multiplier.input2, 2)
-
-            # global_mult = pm.createNode("multDoubleLinear", name= "fGlobal_{0}{1}".format(suffix, i))
-            # multiplier.output >> global_mult.input1
-            # self.scaleGrp.scaleX >> global_mult.input2
-
-            global_divide = pm.createNode("multiplyDivide", name= "fGlobDiv_{0}{1}".format(suffix, i))
-            pm.setAttr(global_divide.operation, 2)
-            multiplier.output >> global_divide.input1X
-            self.scaleGrp.scaleX >> global_divide.input2X
-
-
-
-            # compensationNode = pm.createNode("addDoubleLinear", name="fCompensate_{0}{1}".format(name, i))
-            # multiplier.output >> compensationNode.input1
-            # pm.setAttr(compensationNode.input2, 1)
-
-            # global_mult.output >> self.deformerJoints[counter].scaleY
-            # global_mult.output >> self.deformerJoints[counter].scaleZ
-            global_divide.outputX >> self.deformerJoints[counter].scaleX
-            global_divide.outputX >> self.deformerJoints[counter].scaleY
-            global_divide.outputX >> self.deformerJoints[counter].scaleZ
-
-            counter += 1
-
-        ## Duplicate it 3 more times for deformation targets (npDeformers, npTwist, npSine)
-
-        npDeformers = pm.duplicate(npJdefHolder[0], name="npDeformers_"+suffix)
-        pm.move(npDeformers[0], (0,totalLength/2,0))
-        pm.rotate(npDeformers[0], (0,0,90))
-
-        ## Create Blendshape node between np_jDefHolder and deformation targets
-        npBlend = pm.blendShape(npDeformers, npJdefHolder[0], w=(0,1))
-
-        ## Wrap npjDefHolder to the Base Plane
-        # npWrap = pm.deformer(type="wrap", g=npJdefHolder)
-        npWrap, npWrapGeo = self.createWrap(npBase[0], npJdefHolder[0],weightThreshold=0.0, maxDistance=50, autoWeightThreshold=False)
-        maxDistanceMult = pm.createNode("multDoubleLinear", name="npWrap_{0}".format(suffix))
-        self.scaleGrp.scaleX >> maxDistanceMult.input1
-        pm.setAttr(maxDistanceMult.input2, 50)
-        maxDistanceMult.output >> npWrap.maxDistance
-        # npWrap.maxDistance >> self.scaleGrp.scaleX
-
-        ## make the Wrap node Scale-able with the rig
-        pm.select(d=True)
-        wrapScaleJoint = pm.joint(name="jWrapScale_{0}".format(suffix))
-        pm.skinCluster(wrapScaleJoint, npWrapGeo, tsb=True)
-
-        ## Create skin cluster
-        pm.skinCluster(contJointsList, npBase[0], tsb=True, dropoffRate=dropoff)
-
-        ## CURL DEFORMER
-        # pm.select(npDeformers)
-        curlDeformer = pm.nonLinear(npDeformers, type='bend', curvature=1500)
-
-        curlLoc = pm.spaceLocator(name="curlLoc{0}".format(suffix))
-        # extra.alignTo(twistLoc, inits[0])
-        pm.parent(curlDeformer[1], curlLoc)
-
-        # pm.select(curlDeformer)
-        # pm.setAttr(curlDeformer[1].rz, 4)
-        pm.setAttr(curlDeformer[0].lowBound, -1)
-        pm.setAttr(curlDeformer[0].highBound, 0)
-        ## Ratio is:
-        order = [1, -1]
-        # if side == "R":
-        #     order=[-1, 1]
-        # else:
-        #     order=[1, -1]
-        pm.setDrivenKeyframe(curlDeformer[0].curvature, cd=cont_special.curl, v=0.0, dv=0.0, itt='linear', ott='linear')
-        pm.setDrivenKeyframe(curlDeformer[0].curvature, cd=cont_special.curl, v=1500.0, dv=0.01, itt='linear', ott='linear')
-        pm.setDrivenKeyframe(curlDeformer[0].curvature, cd=cont_special.curl, v=-1500.0, dv=-0.01, itt='linear', ott='linear')
-
-        pm.setDrivenKeyframe(curlDeformer[1].ty, cd=cont_special.curl, v=0.0, dv=10.0, itt='linear', ott='linear')
-        pm.setDrivenKeyframe(curlDeformer[1].ty, cd=cont_special.curl, v=0.0, dv=-10.0, itt='linear', ott='linear')
-        pm.setDrivenKeyframe([curlDeformer[1].sx, curlDeformer[1].sy, curlDeformer[1].sz], cd=cont_special.curl, v=(totalLength * 2), dv=10.0, itt='linear', ott='linear')
-        pm.setDrivenKeyframe([curlDeformer[1].sx, curlDeformer[1].sy, curlDeformer[1].sz], cd=cont_special.curl, v=(totalLength * 2), dv=-10.0, itt='linear', ott='linear')
-        pm.setDrivenKeyframe(curlDeformer[1].rz, cd=cont_special.curl, v=4.0*order[0], dv=10.0, itt='linear', ott='linear')
-        pm.setDrivenKeyframe(curlDeformer[1].rz, cd=cont_special.curl, v=4.0*order[1], dv=-10.0, itt='linear', ott='linear')
-
-        pm.setDrivenKeyframe(curlDeformer[1].ty, cd=cont_special.curl, v=totalLength, dv=0.0, itt='linear', ott='linear')
-        pm.setDrivenKeyframe([curlDeformer[1].sx, curlDeformer[1].sy, curlDeformer[1].sz], cd=cont_special.curl, v=(totalLength / 2), dv=0.0, itt='linear', ott='linear')
-        pm.setDrivenKeyframe(curlDeformer[1].rz, cd=cont_special.curl, v=6.0, dv=0.01, itt='linear', ott='linear')
-        pm.setDrivenKeyframe(curlDeformer[1].rz, cd=cont_special.curl, v=-6.0, dv=-0.01, itt='linear', ott='linear')
-
-        ## create curl size multipliers
-
-        curlSizeMultX = pm.createNode("multDoubleLinear", name="curlSizeMultX_{0}".format(suffix))
-        curlSizeMultY = pm.createNode("multDoubleLinear", name="curlSizeMultY_{0}".format(suffix))
-        curlSizeMultZ = pm.createNode("multDoubleLinear", name="curlSizeMultZ_{0}".format(suffix))
-
-        curlAngleMultZ = pm.createNode("multDoubleLinear", name="curlAngleMultZ_{0}".format(suffix))
-
-        curlShiftAdd = pm.createNode("plusMinusAverage", name="curlAddShift_{0}".format(suffix))
-        cont_special.curlShift >> curlShiftAdd.input1D[0]
-        pm.setAttr(curlShiftAdd.input1D[1], 180)
-        curlShiftAdd.output1D >> curlDeformer[1].rx
-
-        cont_special.curlSize >> curlSizeMultX.input1
-        cont_special.curlSize >> curlSizeMultY.input1
-        cont_special.curlSize >> curlSizeMultZ.input1
-
-        cont_special.curlAngle >> curlAngleMultZ.input1
-
-
-        pm.listConnections(curlDeformer[1].sx)[0].output >> curlSizeMultX.input2
-        pm.listConnections(curlDeformer[1].sy)[0].output >> curlSizeMultY.input2
-        pm.listConnections(curlDeformer[1].sz)[0].output >> curlSizeMultZ.input2
-
-        pm.listConnections(curlDeformer[1].rz)[0].output >> curlAngleMultZ.input2
-
-        curlSizeMultX.output >> curlDeformer[1].sx
-        curlSizeMultY.output >> curlDeformer[1].sy
-        curlSizeMultZ.output >> curlDeformer[1].sz
-
-        curlAngleMultZ.output >> curlDeformer[1].rz
-
-        cont_special.curlDirection >> curlLoc.ry
-
-        # cont_special.curlShift >> curlDeformer[1].rx
-
-        ## TWIST DEFORMER
-        twistDeformer = pm.nonLinear(npDeformers, type='twist')
-        pm.rotate(twistDeformer[1], (0,0,0))
-        twistLoc = pm.spaceLocator(name="twistLoc_{0}".format(suffix))
-        # extra.alignTo(twistLoc, inits[0])
-        pm.parent(twistDeformer[1], twistLoc)
-
-        ## make connections:
-        cont_special.twistAngle >> twistDeformer[0].endAngle
-        cont_special.twistSlide >> twistLoc.translateY
-        cont_special.twistArea >> twistLoc.scaleY
-
-
-        ## SINE DEFORMER
-        sineDeformer = pm.nonLinear(npDeformers, type='sine')
-        pm.rotate(sineDeformer[1], (0,0,0))
-        sineLoc = pm.spaceLocator(name="sineLoc_{0}".format(suffix))
-        # extra.alignTo(sineLoc, inits[0])
-        pm.parent(sineDeformer[1], sineLoc)
-
-        ## make connections:
-        cont_special.sineAmplitude >> sineDeformer[0].amplitude
-        cont_special.sineWavelength >> sineDeformer[0].wavelength
-        cont_special.sineDropoff >> sineDeformer[0].dropoff
-        cont_special.sineAnimate >> sineDeformer[0].offset
-
-        cont_special.sineSlide >> sineLoc.translateY
-        cont_special.sineArea >> sineLoc.scaleY
-
-        cont_special.sineDirection >> sineLoc.rotateY
-
-
-
-        ## move the control points back into the place
-        for j in range (len(inits)):
-            if not j == (len(inits)-1):
-                targetInit = inits[j+1]
-                rotateOff = (90,90,0)
-            else:
-                targetInit = inits[j-1]
-                rotateOff = (-90,-90, 180)
-            extra.alignAndAim(contJointsList[j], targetList=[inits[j]], aimTargetList=[targetInit], upVector=upAxis, rotateOff=rotateOff)
-
-        ## constrain joints to controllers
-
-        for j in range (len(contJointsList)):
-            pm.parentConstraint(contTwk_List[j], contJointsList[j], mo=False)
-            pm.scaleConstraint(contTwk_List[j], contJointsList[j], mo=False)
-
-        ## Create limb plug
-        pm.select(d=True)
-        self.limbPlug = pm.joint(name="limbPlug_" + suffix, p=rootPoint, radius=3)
-        pm.parentConstraint(self.limbPlug, self.scaleGrp, mo=False)
-
-        ## Good Parenting
-        pm.parent(cont_special_ORE, contFK_List[0])
-
-        pm.parent(npBase[0], self.nonScaleGrp)
-        # pm.parent(npJdefHolder[0], self.nonScaleGrp)
-        pm.parent(npDeformers[0], self.nonScaleGrp)
-        # pm.parent(follicleList, self.nonScaleGrp)
-        pm.parent(curlLoc, self.nonScaleGrp)
-        pm.parent(twistLoc, self.nonScaleGrp)
-        pm.parent(sineLoc,self.nonScaleGrp)
-        pm.parent(npWrapGeo, self.nonScaleGrp)
-        #
-        #
-        pm.parent(contJointsList, self.scaleGrp)
-        pm.parent(wrapScaleJoint, self.scaleGrp)
-
-        pm.parent(npJdefHolder[0], self.scaleGrp)
-
-        pm.parent(self.scaleGrp, self.nonScaleGrp, self.cont_IK_OFF, self.limbGrp)
-
-        ## CONNECT RIG VISIBILITIES
-
-        pm.addAttr(self.scaleGrp, at="bool", ln="Control_Visibility", sn="contVis", defaultValue=True)
-        pm.addAttr(self.scaleGrp, at="bool", ln="Joints_Visibility", sn="jointVis", defaultValue=True)
-        pm.addAttr(self.scaleGrp, at="bool", ln="Rig_Visibility", sn="rigVis", defaultValue=False)
-        # make the created attributes visible in the channelbox
-        pm.setAttr(self.scaleGrp.contVis, cb=True)
-        pm.setAttr(self.scaleGrp.jointVis, cb=True)
-        pm.setAttr(self.scaleGrp.rigVis, cb=True)
-
-        nodesContVis = [contTwk_List, contFK_List]
-        nodesRigVis = [npBase[0], npJdefHolder[0], npDeformers[0], sineLoc, twistLoc, curlLoc, follicleList, follicle_sca_list, contJointsList, wrapScaleJoint]
-
-        # Cont visibilities
-        for i in nodesContVis:
-            if isinstance(i, list):
-                for x in i:
-                    self.scaleGrp.contVis >> x.v
-            else:
-                self.scaleGrp.contVis >> i.v
-
-        for i in self.deformerJoints:
-            self.scaleGrp.jointVis >> i.v
-
-        # Rig Visibilities
-        for i in nodesRigVis:
-            if isinstance(i, list):
-                for x in i:
-                    self.scaleGrp.rigVis >> x.v
-            else:
-                self.scaleGrp.rigVis >> i.v
-
-        ## FOOL PROOFING
-
-        for i in contFK_List:
-            extra.lockAndHide(i, ["sx", "sy", "sz"])
-        for i in contTwk_List:
-            pass
-            # extra.lockAndHide(i, ["sx", "sy", "sz"])
-            # extra.lockAndHide(i, ["sz"])
-
-        ## COLOR CODING
-
-        # index = 17 ## default yellow color coding for non-sided tentacles
-        # if side == "R":
-        #     index = 13
-        #     indexMin = 9
-        #
-        # elif side == "L":
-        #     index = 6
-        #     indexMin = 18
-
-        # for i in contFK_List:
-        #     extra.colorize(i, side)
-        # for i in contTwk_List:
-        #     extra.colorize(i, side)
-
-        extra.colorize(contFK_List, self.colorCodes[0])
-        extra.colorize(contTwk_List, self.colorCodes[0])
-        extra.colorize(cont_special, self.colorCodes[0])
-
-        extra.colorize(self.deformerJoints, self.colorCodes[0], shape=False)
-
-        self.scaleConstraints = [self.scaleGrp]
-
-
-## https://www.youtube.com/watch?v=sQOCfp-VMRU
-## https://www.youtube.com/watch?v=A0thwIfThB4
-
+        self.roundUp()
 
     def createWrap(self, *args, **kwargs):
 
@@ -817,4 +551,5 @@ class Tentacle(object):
         # I do not see the reason to rewrite the code here into pymel.
         # return wrapNode
         return pm.nt.Wrap(wrapNode), base
+
 
