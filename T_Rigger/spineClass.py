@@ -107,6 +107,10 @@ class Spine(object):
         self.deformerJoints.append(self.startSocket)
         self.deformerJoints.append(self.endSocket)
 
+        extra.alignToAlter(self.limbPlug, self.guideJoints[0], mode=2)
+
+        pm.parent(self.startSocket, self.scaleGrp)
+        self.scaleGrp.rigVis >> self.limbPlug.v
 
         pass
 
@@ -169,7 +173,7 @@ class Spine(object):
         pm.parent(self.cont_body_ORE, self.limbGrp)
 
 
-        pm.parentConstraint(self.limbPlug, self.cont_body_ORE, mo=True)
+        pm.parentConstraint(self.limbPlug, self.cont_body_ORE, mo=False)
 
         map(lambda x: pm.connectAttr(self.cont_body.fkAvis, x.getShape().v), self.cont_spineFK_A_List)
         map(lambda x: pm.connectAttr(self.cont_body.fkBvis, x.getShape().v), self.cont_spineFK_B_List)

@@ -1,5 +1,5 @@
 import pymel.core as pm
-
+import pymel.core.datatypes as dt
 import extraProcedures as extra
 
 reload(extra)
@@ -15,7 +15,7 @@ reload(twistSpline)
 
 class NeckAndHead():
 
-    def __init__(self, inits, suffix="", resolution=3, dropoff=1):
+    def __init__(self, inits, suffix="", side="C", resolution=3, dropoff=1):
 
 
         # fool proofing
@@ -47,6 +47,11 @@ class NeckAndHead():
         # get positions
         self.root_pos = self.neckNodes[0].getTranslation(space="world")
         self.headPivPos = self.headStart.getTranslation(space="world")
+        self.headEndPivPos = self.headEnd.getTranslation(space="world")
+
+        # initialize sides
+        self.sideMult = -1 if side == "R" else 1
+        self.side = side
 
         # initialize coordinates
         self.up_axis, self.mirror_axis, self.look_axis = extra.getRigAxes(self.neckNodes[0])
@@ -89,26 +94,38 @@ class NeckAndHead():
         pm.select(d=True)
         self.limbPlug = pm.joint(name="jPlug_%s" % self.suffix, p=self.root_pos, radius=3)
 
+        ## Create temporaray Guide Joints
+        pm.select(d=True)
+        self.guideJoints = [pm.joint(name="jTemp_%s" %i, p=i.getTranslation(space="world")) for i in self.neckNodes]
+        self.guideJoints.append(pm.joint(name="jTemp_Head", p=self.headPivPos))
+        self.guideJoints.append(pm.joint(name="jTemp_HeadEnd", p=self.headEndPivPos))
+        ## orientations
+        extra.orientJoints(self.guideJoints,
+                           localMoveAxis=(dt.Vector(self.up_axis)),
+                           mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.up_axis)))
+
 
     def createControllers(self):
         ## Neck Controller
         neckScale = (self.neckDist / 2, self.neckDist / 2, self.neckDist / 2)
         self.cont_neck = icon.curvedCircle(name="cont_neck_%s" % self.suffix, scale=neckScale)
-        extra.alignAndAim(self.cont_neck, targetList=[self.neckNodes[0]], aimTargetList=[self.headStart], upVector=self.look_axis, rotateOff=(-90,-90,0))
+        # extra.alignAndAim(self.cont_neck, targetList=[self.neckNodes[0]], aimTargetList=[self.headStart], upVector=self.look_axis, rotateOff=(-90,-90,0))
+        extra.alignToAlter(self.cont_neck, self.guideJoints[0], mode=2)
         self.cont_neck_ORE = extra.createUpGrp(self.cont_neck, "ORE")
 
         ## Head Controller
         faceDir = 1 if self.look_axis[0] < 0 or self.look_axis[1] < 0 or self.look_axis[2] < 0 else -1
         self.cont_head = icon.halfDome(name="cont_head_%s" % self.suffix, scale=(self.headDist, self.headDist, self.headDist), normal=(1,0,0))
-        extra.alignAndAim(self.cont_head, targetList=[self.headStart, self.headEnd], aimTargetList=[self.headEnd], upVector=self.look_axis, rotateOff=(faceDir*-90,faceDir*-90,0))
-
+        # extra.alignAndAim(self.cont_head, targetList=[self.headStart, self.headEnd], aimTargetList=[self.headEnd], upVector=self.look_axis, rotateOff=(faceDir*-90,faceDir*-90,0))
+        extra.alignToAlter(self.cont_head, self.guideJoints[-2], mode=2)
         pm.xform(self.cont_head, piv=self.headPivPos, ws=True)
         self.cont_IK_OFF = extra.createUpGrp(self.cont_head, "OFF")
         self.cont_head_ORE = extra.createUpGrp(self.cont_head, "ORE")
 
         ## Head Squash Controller
         self.cont_headSquash = icon.circle(name="cont_headSquash_%s" % self.suffix, scale=((self.headDist / 2), (self.headDist / 2), (self.headDist / 2)), normal=(0, 0, 1))
-        extra.alignAndAim(self.cont_headSquash, targetList=[self.headEnd], aimTargetList=[self.headStart], upVector=self.look_axis, rotateOff=(90,0,0))
+        # extra.alignAndAim(self.cont_headSquash, targetList=[self.headEnd], aimTargetList=[self.headStart], upVector=self.look_axis, rotateOff=(90,0,0))
+        extra.alignToAlter(self.cont_headSquash, self.guideJoints[-1])
         cont_headSquash_ORE = extra.createUpGrp(self.cont_headSquash, "ORE")
 
         pm.parent(cont_headSquash_ORE, self.cont_head)
