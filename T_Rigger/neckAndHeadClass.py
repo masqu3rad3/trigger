@@ -101,30 +101,31 @@ class NeckAndHead():
         self.guideJoints.append(pm.joint(name="jTemp_HeadEnd", p=self.headEndPivPos))
         ## orientations
         extra.orientJoints(self.guideJoints,
-                           localMoveAxis=(dt.Vector(self.up_axis)),
+                           localMoveAxis=-(dt.Vector(self.up_axis)),
                            mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.up_axis)))
 
 
     def createControllers(self):
         ## Neck Controller
         neckScale = (self.neckDist / 2, self.neckDist / 2, self.neckDist / 2)
-        self.cont_neck = icon.curvedCircle(name="cont_neck_%s" % self.suffix, scale=neckScale)
+        self.cont_neck = icon.curvedCircle(name="cont_neck_%s" % self.suffix, scale=neckScale, normal=(0,0,1))
         # extra.alignAndAim(self.cont_neck, targetList=[self.neckNodes[0]], aimTargetList=[self.headStart], upVector=self.look_axis, rotateOff=(-90,-90,0))
         extra.alignToAlter(self.cont_neck, self.guideJoints[0], mode=2)
         self.cont_neck_ORE = extra.createUpGrp(self.cont_neck, "ORE")
 
         ## Head Controller
-        faceDir = 1 if self.look_axis[0] < 0 or self.look_axis[1] < 0 or self.look_axis[2] < 0 else -1
-        self.cont_head = icon.halfDome(name="cont_head_%s" % self.suffix, scale=(self.headDist, self.headDist, self.headDist), normal=(1,0,0))
+        # faceDir = 1 if self.look_axis[0] < 0 or self.look_axis[1] < 0 or self.look_axis[2] < 0 else -1
+        self.cont_head = icon.halfDome(name="cont_head_%s" % self.suffix, scale=(self.headDist, self.headDist, self.headDist), normal=(0,1,0))
         # extra.alignAndAim(self.cont_head, targetList=[self.headStart, self.headEnd], aimTargetList=[self.headEnd], upVector=self.look_axis, rotateOff=(faceDir*-90,faceDir*-90,0))
         extra.alignToAlter(self.cont_head, self.guideJoints[-2], mode=2)
-        pm.xform(self.cont_head, piv=self.headPivPos, ws=True)
+        # pm.xform(self.cont_head, piv=self.headPivPos, ws=True)
         self.cont_IK_OFF = extra.createUpGrp(self.cont_head, "OFF")
         self.cont_head_ORE = extra.createUpGrp(self.cont_head, "ORE")
 
         ## Head Squash Controller
         self.cont_headSquash = icon.circle(name="cont_headSquash_%s" % self.suffix, scale=((self.headDist / 2), (self.headDist / 2), (self.headDist / 2)), normal=(0, 0, 1))
         # extra.alignAndAim(self.cont_headSquash, targetList=[self.headEnd], aimTargetList=[self.headStart], upVector=self.look_axis, rotateOff=(90,0,0))
+        # extra.alignToAlter(self.cont_headSquash, self.guideJoints[-1])
         extra.alignToAlter(self.cont_headSquash, self.guideJoints[-1])
         cont_headSquash_ORE = extra.createUpGrp(self.cont_headSquash, "ORE")
 
@@ -144,7 +145,7 @@ class NeckAndHead():
 
     def createRoots(self):
         self.neckRootLoc = pm.spaceLocator(name="neckRootLoc_%s" % self.suffix)
-        extra.alignTo(self.neckRootLoc, self.neckNodes[0])
+        extra.alignToAlter(self.neckRootLoc, self.guideJoints[0])
 
         pm.parent(self.neckRootLoc, self.scaleGrp)
 
@@ -162,7 +163,7 @@ class NeckAndHead():
 
         # # Connect neck start to the neck controller
         pm.orientConstraint(self.cont_neck, neckSpline.contCurve_Start, mo=False)
-        pm.pointConstraint(neckSpline.contCurve_Start, self.cont_neck_ORE)
+        pm.pointConstraint(neckSpline.contCurve_Start, self.cont_neck_ORE, mo=False)
         # # Connect neck end to the head controller
         pm.parentConstraint(self.cont_head, neckSpline.contCurve_End, mo=False)
         # # pass Stretch controls from the splineIK to neck controller
