@@ -100,9 +100,13 @@ class NeckAndHead():
         self.guideJoints.append(pm.joint(name="jTemp_Head", p=self.headPivPos))
         self.guideJoints.append(pm.joint(name="jTemp_HeadEnd", p=self.headEndPivPos))
         ## orientations
+        # extra.orientJoints(self.guideJoints,
+        #                    localMoveAxis=-(dt.Vector(self.up_axis)),
+        #                    mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.up_axis)))
+
         extra.orientJoints(self.guideJoints,
                            localMoveAxis=-(dt.Vector(self.up_axis)),
-                           mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.up_axis)))
+                           mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.look_axis)))
 
 
     def createControllers(self):
@@ -115,7 +119,7 @@ class NeckAndHead():
 
         ## Head Controller
         # faceDir = 1 if self.look_axis[0] < 0 or self.look_axis[1] < 0 or self.look_axis[2] < 0 else -1
-        self.cont_head = icon.halfDome(name="cont_head_%s" % self.suffix, scale=(self.headDist, self.headDist, self.headDist), normal=(0,1,0))
+        self.cont_head = icon.halfDome(name="cont_head_%s" % self.suffix, scale=(self.headDist, self.headDist, self.headDist), normal=(0,-1,0))
         # extra.alignAndAim(self.cont_head, targetList=[self.headStart, self.headEnd], aimTargetList=[self.headEnd], upVector=self.look_axis, rotateOff=(faceDir*-90,faceDir*-90,0))
         extra.alignToAlter(self.cont_head, self.guideJoints[-2], mode=2)
         # pm.xform(self.cont_head, piv=self.headPivPos, ws=True)
@@ -158,14 +162,31 @@ class NeckAndHead():
 
         # create spline IK for neck
         neckSpline = twistSpline.TwistSpline()
-        neckSpline.createTspline(self.neckNodes+[self.headStart], "neckSplineIK_%s" % self.suffix, self.resolution, dropoff=self.dropoff, mode=splineMode, twistType=twistType, colorCode=self.colorCodes[1])
+        # print self.neckNodes+[self.headStart]
+        # print list(self.guideJoints[:-1])
+        # neckSpline.createTspline(self.neckNodes+[self.headStart], "neckSplineIK_%s" % self.suffix, self.resolution, dropoff=self.dropoff, mode=splineMode, twistType=twistType, colorCode=self.colorCodes[1])
+        neckSpline.localMoveAxis = -(dt.Vector(self.up_axis))
+        neckSpline.upAxis = self.sideMult * (dt.Vector(self.look_axis))
+        neckSpline.mirrorAxis = (self.sideMult, 0.0, 0.0)
+
+        print "-----------"
+        print neckSpline.localMoveAxis, neckSpline.upAxis, neckSpline.mirrorAxis
+
+        extra.orientJoints(self.guideJoints,
+                           localMoveAxis=-(dt.Vector(self.up_axis)),
+                           mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.up_axis)))
+
+
+        neckSpline.createTspline(list(self.guideJoints[:-1]), "neckSplineIK_%s" % self.suffix, self.resolution, dropoff=self.dropoff, mode=splineMode, twistType=twistType, colorCode=self.colorCodes[1])
         map(self.sockets.append, neckSpline.defJoints)
 
         # # Connect neck start to the neck controller
+        # TODO // FIX HERE
         pm.orientConstraint(self.cont_neck, neckSpline.contCurve_Start, mo=False)
         pm.pointConstraint(neckSpline.contCurve_Start, self.cont_neck_ORE, mo=False)
         # # Connect neck end to the head controller
-        pm.parentConstraint(self.cont_head, neckSpline.contCurve_End, mo=False)
+        # TODO // FIX HERE
+        pm.parentConstraint(self.cont_head, neckSpline.contCurve_End, mo=True)
         # # pass Stretch controls from the splineIK to neck controller
         extra.attrPass(neckSpline.attPassCont, self.cont_neck)
 
@@ -179,17 +200,21 @@ class NeckAndHead():
 
         # create spline IK for Head squash
         headSpline = twistSpline.TwistSpline()
-        headSpline.createTspline([self.headStart, self.headEnd], "headSquashSplineIK_%s" % self.suffix, 3, dropoff=2,  mode=splineMode, twistType=twistType, colorCode=self.colorCodes[1])
+        # headSpline.createTspline([self.headStart, self.headEnd], "headSquashSplineIK_%s" % self.suffix, 3, dropoff=2,  mode=splineMode, twistType=twistType, colorCode=self.colorCodes[1])
+        # print
+        headSpline.createTspline(list(self.guideJoints[-2:]), "headSquashSplineIK_%s" % self.suffix, 3, dropoff=2,  mode=splineMode, twistType=twistType, colorCode=self.colorCodes[1])
         map(self.sockets.append, headSpline.defJoints)
 
         # # Position the head spline IK to end of the neck
         pm.pointConstraint(neckSpline.endLock, headSpline.contCurve_Start, mo=False)
 
         # # orient the head spline to the head controller
-        pm.orientConstraint(self.cont_head, headSpline.contCurve_Start, mo=False)
+        # TODO // FIX HERE
+        pm.orientConstraint(self.cont_head, headSpline.contCurve_Start, mo=True)
 
         extra.alignToAlter(self.cont_headSquash, headSpline.contCurve_End, mode=2)
-        pm.parentConstraint(self.cont_headSquash, headSpline.contCurve_End, mo=False)
+        # TODO // FIX HERE
+        pm.parentConstraint(self.cont_headSquash, headSpline.contCurve_End, mo=True)
         extra.attrPass(headSpline.attPassCont, self.cont_headSquash)
 
         # # Connect the scale to the scaleGrp

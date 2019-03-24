@@ -704,6 +704,10 @@ def getMirror(node):
             pm.warning("Cannot find the mirror controller (Why?)")
             return None
 
+def alignNormal(node, normalVector):
+    # TODO // Writa a normal alignment tool mainly for icon orientations
+    pass
+
 def orientJoints(jointList, localMoveAxis=(0.0,0.0,1.0), upAxis=(0.0,1.0,0.0), mirrorAxis=(1.0, 0.0, 0.0)):
 
     #unparent each
@@ -725,7 +729,7 @@ def orientJoints(jointList, localMoveAxis=(0.0,0.0,1.0), upAxis=(0.0,1.0,0.0), m
     # get the aimVector
     tempAimLocator = pm.spaceLocator(name="tempAimLocator")
     # alignAndAim(tempAimLocator, [jointList[1]], [jointList[2]], upVector=upAxis)
-    alignAndAim(tempAimLocator, [jointList[0]], [jointList[1]], upVector=upAxis)
+    alignAndAim(tempAimLocator, [jointList[0]], [jointList[1]], upVector=localMoveAxis)
 
     for j in range (0, len(jointList)):
 

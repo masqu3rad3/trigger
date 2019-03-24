@@ -22,6 +22,10 @@ class TwistSpline(object):
         self.defJoints = None
         self.noTouchData = None
         self.moveAxis = None
+        self.localMoveAxis = (0.0, 0.0, 1.0)
+        self.upAxis = (0.0, 1.0, 0.0)
+        self.mirrorAxis = (1.0, 0.0, 0.0)
+
 
     def createTspline(self, refJoints, name, cuts, dropoff=2, mode="equalDistance", twistType="regular", colorCode=17):
         """
@@ -68,6 +72,7 @@ class TwistSpline(object):
         #     pm.joint(j, e=True, zso=True, oj="xyz", sao="yup")
 
         endVc = (rootVc.x, (rootVc.y + totalLength), rootVc.z)
+        # endVc = ((rootVc.x + totalLength), rootVc.y, rootVc.z)
 
         splitVc = endVc - rootVc
         segmentVc = (splitVc / (cuts))
@@ -85,7 +90,8 @@ class TwistSpline(object):
 
                 place = rootVc + (segmentVc * (i))
                 j = pm.joint(p=place, name="jIK_" + name + str(i), )
-                # pm.setAttr(j.displayLocalAxis, 1)
+                # extra.alignToAlter(j, refJoints[0], mode=1)
+                # pm.makeIdentity(j, a=True)
                 if i < (cuts + 1):  # if it is not the extra bone, update the lists
                     IKjoints.append(j)
                     curvePoints.append(place)
@@ -96,10 +102,9 @@ class TwistSpline(object):
                 ctrlVc = splitVc.normal() * contDistances[i]
                 place = rootVc + (ctrlVc)
                 j = pm.joint(p=place, name="jIK_" + name + str(i), radius=2, o=(0, 0, 0))
-                # j = pm.joint(p=place, name="jIK_" + name + str(i), radius=2, o=(0, 90, 0))
+                # extra.alignToAlter(j, refJoints[0], mode=1)
+                # pm.makeIdentity(j, a=True)
 
-
-                #extra.alignTo(j, refJoints[i], 2)
 
                 IKjoints.append(j)
                 curvePoints.append(place)
@@ -120,7 +125,9 @@ class TwistSpline(object):
         #       #     # ####### #       ####### #     # #######    #
 
 
-        extra.orientJoints(IKjoints)
+        extra.orientJoints(IKjoints, localMoveAxis=self.localMoveAxis, upAxis=self.upAxis, mirrorAxis=self.mirrorAxis)
+
+
         # for j in IKjoints:
         #     pm.joint(j, e=True, zso=True, oj="xyz", sao="zup")
             #TODO // Soktumunun infinite versiyonu calismiyor
@@ -139,21 +146,36 @@ class TwistSpline(object):
 
         # create the controller joints
 
+#         contJoints = []
+#         pm.select(d=True)
+#         for i in range(0, len(contDistances)):
+#             ctrlVc = splitVc.normal() * contDistances[i]
+#             place = rootVc + (ctrlVc)
+#             j = pm.joint(p=place, name="jCont_spline_" + name + str(i), radius=5, o=(0, 0, 0))
+#             #pm.setAttr(j.rotateZ, 90)
+# #############################################################
+#             # extra.alignTo(j, refJoints[i], 1)
+# #############################################################
+#             contJoints.append(j)
+#             pm.select(d=True)
+
         contJoints = []
         pm.select(d=True)
         for i in range(0, len(contDistances)):
             ctrlVc = splitVc.normal() * contDistances[i]
             place = rootVc + (ctrlVc)
             j = pm.joint(p=place, name="jCont_spline_" + name + str(i), radius=5, o=(0, 0, 0))
-            #pm.setAttr(j.rotateZ, 90)
-#############################################################
+            # pm.setAttr(j.rotateZ, 90)
+            #############################################################
             # extra.alignTo(j, refJoints[i], 1)
-#############################################################
+            #############################################################
             contJoints.append(j)
-            pm.select(d=True)
 
+        extra.orientJoints(contJoints, localMoveAxis=self.localMoveAxis, upAxis=self.upAxis, mirrorAxis=self.mirrorAxis)
+        pm.select(d=True)
+        pm.parent(contJoints[1:], w=True)
 
-
+        #############################################
 
         # create the splineIK for the IK joints
         # # create the spline curve
@@ -226,21 +248,40 @@ class TwistSpline(object):
 
         # CONTROL CURVES
 
+        # for i in range(0, len(contJoints)):
+        #     #extra.alignTo(contJoints[i], refJoints[i], 0)
+        #     scaleRatio = (totalLength / len(contJoints))
+        #     if i != 0 and i != (len(contJoints) - 1):
+        #         ## Create control Curve if it is not the first or last control joint
+        #         cont_Curve = icon.star("cont_spline_" + name + str(i), (scaleRatio, scaleRatio, scaleRatio))
+        #     else:
+        #         cont_Curve = pm.spaceLocator(name="lockPoint_" + name + str(i))
+        #     pm.setAttr(cont_Curve.rotateOrder,3)
+        #     # cont_Curve_OFF = extra.createUpGrp(cont_Curve, "OFF")
+        #     cont_Curve_ORE = extra.createUpGrp(cont_Curve, "ORE")
+        #     pm.setAttr(cont_Curve_ORE.rotateOrder, 3)
+        #     extra.alignTo(cont_Curve_ORE, contJoints[i], 2, o=(0, 0, 0))
+        #     pm.parentConstraint(cont_Curve, contJoints[i], mo=False)
+        #     #extra.alignTo(cont_Curve_ORE, refJoints[i], 2)
+        #     contCurves.append(cont_Curve)
+        #     self.contCurves_ORE.append(cont_Curve_ORE)
+        #
+        # self.contCurve_Start = contCurves[0]
+        # self.contCurve_End = contCurves[len(contCurves) - 1]
+
         for i in range(0, len(contJoints)):
-            #extra.alignTo(contJoints[i], refJoints[i], 0)
             scaleRatio = (totalLength / len(contJoints))
             if i != 0 and i != (len(contJoints) - 1):
                 ## Create control Curve if it is not the first or last control joint
-                cont_Curve = icon.star("cont_spline_" + name + str(i), (scaleRatio, scaleRatio, scaleRatio))
+                cont_Curve = icon.star("cont_spline_" + name + str(i), (scaleRatio, scaleRatio, scaleRatio), normal=self.mirrorAxis)
             else:
                 cont_Curve = pm.spaceLocator(name="lockPoint_" + name + str(i))
             pm.setAttr(cont_Curve.rotateOrder,3)
             # cont_Curve_OFF = extra.createUpGrp(cont_Curve, "OFF")
+            extra.alignToAlter(cont_Curve, contJoints[i], mode=2)
             cont_Curve_ORE = extra.createUpGrp(cont_Curve, "ORE")
-            pm.setAttr(cont_Curve_ORE.rotateOrder, 3)
-            extra.alignTo(cont_Curve_ORE, contJoints[i], 2, o=(0, 0, 0))
-            pm.parentConstraint(cont_Curve, contJoints[i], mo=True)
-            #extra.alignTo(cont_Curve_ORE, refJoints[i], 2)
+            # pm.setAttr(cont_Curve_ORE.rotateOrder, 3)
+            pm.parentConstraint(cont_Curve, contJoints[i], mo=False)
             contCurves.append(cont_Curve)
             self.contCurves_ORE.append(cont_Curve_ORE)
 
@@ -268,7 +309,6 @@ class TwistSpline(object):
                     pm.setAttr(blender.blender, blendRatio)
         else:
             pass
-
 
 
 
@@ -364,14 +404,21 @@ class TwistSpline(object):
 
         ## Move them to original Positions
 
-        for o in range (0,len(self.contCurves_ORE)):
+        # for o in range (0,len(self.contCurves_ORE)):
+        #
+        #     extra.alignToAlter(self.contCurves_ORE[o], refJoints[o])
+        #     if not o == (len(self.contCurves_ORE)-1):
+        #         tempAim = pm.aimConstraint(refJoints[o+1], self.contCurves_ORE[o], aimVector=(0,1,0), upVector=(0,1,0), mo=False)
+        #     else:
+        #         tempAim = pm.aimConstraint(refJoints[o-1], self.contCurves_ORE[o], aimVector=(0, -1, 0), upVector=(0, -1, 0), mo=False)
+        #     pm.delete(tempAim)
 
-            extra.alignTo(self.contCurves_ORE[o], refJoints[o])
-            if not o == (len(self.contCurves_ORE)-1):
-                tempAim = pm.aimConstraint(refJoints[o+1], self.contCurves_ORE[o], aimVector=(0,1,0), upVector=(0,1,0), mo=False)
+        for o in range (0,len(self.contCurves_ORE)):
+            if o == 0:
+                extra.alignToAlter(self.contCurves_ORE[o], refJoints[o], mode=2)
             else:
-                tempAim = pm.aimConstraint(refJoints[o-1], self.contCurves_ORE[o], aimVector=(0, -1, 0), upVector=(0, -1, 0), mo=False)
-            pm.delete(tempAim)
+                extra.alignToAlter(self.contCurves_ORE[o], refJoints[o], mode=0)
+                extra.alignToAlter(self.contCurves_ORE[o], refJoints[o-1], mode=1)
 
 
         # GOOD PARENTING

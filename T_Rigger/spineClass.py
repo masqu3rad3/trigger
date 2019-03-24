@@ -102,7 +102,7 @@ class Spine(object):
         # orientations
         extra.orientJoints(self.guideJoints,
                            localMoveAxis=(dt.Vector(self.up_axis)),
-                           mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.up_axis)))
+                           mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.look_axis)))
 
         self.deformerJoints.append(self.startSocket)
         self.deformerJoints.append(self.endSocket)
