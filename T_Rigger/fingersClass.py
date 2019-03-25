@@ -1,10 +1,10 @@
 import pymel.core as pm
 import extraProcedures as extra
 # import contIcons as icon
+# reload(icon)
 import icons as ic
 
 reload(extra)
-reload(icon)
 reload(ic)
 
 class Fingers(object):

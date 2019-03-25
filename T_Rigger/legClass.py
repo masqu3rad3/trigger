@@ -107,8 +107,10 @@ class Leg(object):
         self.j_def_hip = pm.joint(name="jDef_hip_%s" % self.suffix, p=self.hip_pos, radius=1.5)
         self.sockets.append(self.j_def_hip)
 
-        extra.orientJoints([self.jDef_legRoot, self.j_def_hip], localMoveAxis=(dt.Vector(self.up_axis)),
-                           mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.up_axis)))
+        extra.orientJoints([self.jDef_legRoot, self.j_def_hip], localMoveAxis=self.sideMult * (dt.Vector(self.up_axis)),
+                           mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.look_axis)))
+
+
 
         pm.select(d=True)
         self.j_def_midLeg = pm.joint(name="jDef_knee_%s" % self.suffix, p=self.knee_pos, radius=1.5)
@@ -153,20 +155,20 @@ class Leg(object):
 
         # orientations
         extra.orientJoints([self.j_ik_orig_root, self.j_ik_orig_knee, self.j_ik_orig_end],
-                           localMoveAxis=(dt.Vector(self.up_axis)),
-                           mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.up_axis)))
+                           localMoveAxis=self.sideMult * (dt.Vector(self.up_axis)),
+                           mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.look_axis)))
 
         extra.orientJoints([self.j_ik_sc_root, self.j_ik_sc_knee, self.j_ik_sc_end],
-                           localMoveAxis=(dt.Vector(self.up_axis)),
-                           mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.up_axis)))
+                           localMoveAxis=self.sideMult * (dt.Vector(self.up_axis)),
+                           mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.look_axis)))
 
         extra.orientJoints([self.j_ik_rp_root, self.j_ik_rp_knee, self.j_ik_rp_end],
-                           localMoveAxis=(dt.Vector(self.up_axis)),
-                           mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.up_axis)))
+                           localMoveAxis=self.sideMult * (dt.Vector(self.up_axis)),
+                           mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.look_axis)))
 
         extra.orientJoints([self.j_ik_foot, self.j_ik_ball, self.j_ik_toe],
-                           localMoveAxis=(dt.Vector(self.up_axis)),
-                           mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.up_axis)))
+                           localMoveAxis=self.sideMult * (dt.Vector(self.up_axis)),
+                           mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.look_axis)))
 
         # FK Joints
         pm.select(d=True)
@@ -176,8 +178,8 @@ class Leg(object):
         self.jfk_ball = pm.joint(name="jFK_Ball_%s" % self.suffix, p=self.ball_pos, radius=1.0)
         self.jfk_toe = pm.joint(name="jFK_Toe_%s" % self.suffix, p=self.toe_pv_pos, radius=1.0)
 
-        extra.orientJoints([self.jfk_root, self.jfk_knee, self.jfk_foot, self.jfk_ball, self.jfk_toe], localMoveAxis=(dt.Vector(self.up_axis)),
-                           mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.up_axis)))
+        extra.orientJoints([self.jfk_root, self.jfk_knee, self.jfk_foot, self.jfk_ball, self.jfk_toe], localMoveAxis=self.sideMult * (dt.Vector(self.up_axis)),
+                           mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.look_axis)))
 
         # re-orient single joints
         extra.alignToAlter(self.j_def_hip, self.jfk_root, mode=2)
