@@ -747,6 +747,7 @@ def orientJoints(jointList, localMoveAxis=(0.0,0.0,1.0), upAxis=(0.0,1.0,0.0), m
     tempAimLocator = pm.spaceLocator(name="tempAimLocator")
     # alignAndAim(tempAimLocator, [jointList[1]], [jointList[2]], upVector=upAxis)
     alignAndAim(tempAimLocator, [jointList[0]], [jointList[1]], upVector=localMoveAxis)
+    # alignAndAim(tempAimLocator, [jointList[0]], [jointList[1]], upVector=upAxis)
 
     for j in range (0, len(jointList)):
 

@@ -93,8 +93,8 @@ class Arm(object):
         self.j_collar_end = pm.joint(name="j_CollarEnd_%s" % self.suffix, p=self.shoulder_pos, radius=1.5)
         self.sockets.append(self.j_collar_end)
 
-        extra.orientJoints([self.j_def_collar, self.j_collar_end], localMoveAxis=(dt.Vector(self.up_axis)),
-                           mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.up_axis)))
+        extra.orientJoints([self.j_def_collar, self.j_collar_end], localMoveAxis=self.sideMult * (dt.Vector(self.up_axis)),
+                           mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.look_axis)))
 
         pm.select(d=True)
         self.j_def_elbow = pm.joint(name="jDef_elbow_%s" % self.suffix, p=self.elbow_pos, radius=1.5)
@@ -123,16 +123,16 @@ class Arm(object):
 
         # orientations
         extra.orientJoints([self.j_ik_orig_up, self.j_ik_orig_low, self.j_ik_orig_low_end],
-                           localMoveAxis=(dt.Vector(self.up_axis)),
-                           mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.up_axis)))
+                           localMoveAxis=self.sideMult * (dt.Vector(self.up_axis)),
+                           mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.look_axis)))
 
         extra.orientJoints([self.j_ik_sc_up, self.j_ik_sc_low, self.j_ik_sc_low_end],
-                           localMoveAxis=(dt.Vector(self.up_axis)),
-                           mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.up_axis)))
+                           localMoveAxis=self.sideMult * (dt.Vector(self.up_axis)),
+                           mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.look_axis)))
 
         extra.orientJoints([self.j_ik_rp_up, self.j_ik_rp_low, self.j_ik_rp_low_end],
-                           localMoveAxis=(dt.Vector(self.up_axis)),
-                           mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.up_axis)))
+                           localMoveAxis=self.sideMult * (dt.Vector(self.up_axis)),
+                           mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.look_axis)))
 
         # FK Joints
         pm.select(d=True)
@@ -140,8 +140,8 @@ class Arm(object):
         self.j_fk_low = pm.joint(name="jFK_Low_%s" % self.suffix, p=self.elbow_pos, radius=2.0)
         self.j_fk_low_end = pm.joint(name="jFK_LowEnd_%s" % self.suffix, p=self.hand_pos, radius=2.0)
 
-        extra.orientJoints([self.j_fk_up, self.j_fk_low, self.j_fk_low_end], localMoveAxis=(dt.Vector(self.up_axis)),
-                           mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.up_axis)))
+        extra.orientJoints([self.j_fk_up, self.j_fk_low, self.j_fk_low_end], localMoveAxis=self.sideMult * (dt.Vector(self.up_axis)),
+                           mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.look_axis)))
 
         # Hand joint
         self.j_def_hand = pm.joint(name="jDef_Hand_%s" % self.suffix, p=self.hand_pos, radius=1.0)
@@ -175,8 +175,9 @@ class Arm(object):
         self.cont_shoulder, dmp = icon.createIcon("Shoulder", iconName="cont_Shoulder_%s" % self.suffix, scale=shouldercont_scale, normal=self.up_axis)
         pm.setAttr("{0}.s{1}".format(self.cont_shoulder, "y"), self.sideMult)
         pm.makeIdentity(self.cont_shoulder, a=True)
-        extra.alignAndAim(self.cont_shoulder, targetList=[self.j_def_collar], aimTargetList=[self.j_collar_end],
-                          upVector=self.up_axis)
+        # extra.alignAndAim(self.cont_shoulder, targetList=[self.j_def_collar], aimTargetList=[self.j_collar_end],
+        #                   upVector=self.up_axis)
+        extra.alignToAlter(self.cont_shoulder, self.j_def_collar, mode=2)
 
         self.cont_shoulder_off = extra.createUpGrp(self.cont_shoulder, "OFF")
         self.cont_shoulder_ore = extra.createUpGrp(self.cont_shoulder, "ORE")
@@ -1033,11 +1034,11 @@ class Arm(object):
         self.createGrp()
         self.createJoints()
         self.createControllers()
-        self.createRoots()
-        self.createIKsetup()
-        self.createFKsetup()
-        self.ikfkSwitching()
-        self.createDefJoints()
-        self.createAngleExtractors()
-        self.roundUp()
+        # self.createRoots()
+        # self.createIKsetup()
+        # self.createFKsetup()
+        # self.ikfkSwitching()
+        # self.createDefJoints()
+        # self.createAngleExtractors()
+        # self.roundUp()
 
