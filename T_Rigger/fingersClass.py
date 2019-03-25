@@ -1,9 +1,11 @@
 import pymel.core as pm
 import extraProcedures as extra
-import contIcons as icon
+# import contIcons as icon
+import icons as ic
 
 reload(extra)
 reload(icon)
+reload(ic)
 
 class Fingers(object):
     def __init__(self):
@@ -75,10 +77,15 @@ class Fingers(object):
         contList = []
         contConList = []
 
+        icon = ic.Icon()
+
         for i in range(0, len(self.deformerJoints)-1):
             contScl = (pm.getAttr(self.deformerJoints[1].tx) / 2)
             contName = ("cont_{0}_{1}".format(suffix, i))
-            cont = icon.circle(contName,(contScl,contScl,contScl), normal=(1,0,0))
+            # cont = icon.circle(contName,(contScl,contScl,contScl), normal=(1,0,0))
+
+            cont, dmp = icon.createIcon("Circle", iconName=contName,scale=(contScl,contScl,contScl), normal=(1,0,0))
+
             cont_OFF=extra.createUpGrp(cont,"OFF", mi=False)
             conts_OFF.append([cont_OFF])
             cont_ORE = extra.createUpGrp(cont, "ORE", mi=False)

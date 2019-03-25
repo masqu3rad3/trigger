@@ -10,8 +10,11 @@ import scratch
 
 reload(scratch)
 
-import contIcons as icon
-reload(icon)
+# import contIcons as icon
+# reload(icon)
+
+import icons as ic
+reload(ic)
 
 import mrCubic
 reload(mrCubic)
@@ -84,43 +87,15 @@ class mainUI(QtWidgets.QMainWindow):
                     entry.close()
             except AttributeError:
                 pass
-        # for entry in QtWidgets.QApplication.allWidgets():
-        #     if entry.objectName() == windowName:
-        #         entry.close()
-        #         # entry.deleteLater()
+
         parent = getMayaMainWindow()
-        # parent = None
+
         super(mainUI, self).__init__(parent=parent)
 
-        # settings
-        # self.rigName = "triggerAutoRig"
-        # self.majorLeftColor = 6
-        # self.minorLeftColor = 18
-        # self.majorRightColor = 13
-        # self.minorRightColor = 9
-        # self.majorCenterColor = 17
-        # self.minorCenterColor = 20
-        # self.lookAxis = "+z"
-        # self.upAxis = "+y"
-        # self.afterCreation = 0
-        # self.seperateSelectionSets = True
+        self.icon = ic.Icon()
 
         self.skinMeshList = None
-        # self.settingsDefaults={
-        #     "rigName": "triggerAutoRig",
-        #     "majorLeftColor": 6,
-        #     "minorLeftColor": 18,
-        #     "majorRightColor": 13,
-        #     "minorRightColor": 9,
-        #     "majorCenterColor": 17,
-        #     "minorCenterColor": 20,
-        #     "lookAxis": "+z",
-        #     "upAxis": "+y",
-        #     "afterCreation": 0,
-        #     "seperateSelectionSets": True,
-        #     "bindMethod": 0,
-        #     "skinningMethod": 0
-        #     }
+
         self.settingsDefaults={
             "majorLeftColor": 6,
             "minorLeftColor": 18,
@@ -873,9 +848,10 @@ class mainUI(QtWidgets.QMainWindow):
 
         controllers_layout = QtWidgets.QHBoxLayout()
         self.controllers_combobox = QtWidgets.QComboBox()
-        self.all_icon_functions = inspect.getmembers(icon, inspect.isfunction)
-        iconNames = [i[0] for i in self.all_icon_functions]
-        self.controllers_combobox.addItems(iconNames)
+        # self.all_icon_functions = inspect.getmembers(icon, inspect.isfunction)
+        # iconNames = [i[0] for i in self.all_icon_functions]
+        # self.controllers_combobox.addItems(iconNames)
+        self.controllers_combobox.addItems(self.icon.getIconsList())
 
         self.controllers_checkbox = QtWidgets.QCheckBox("Align To Center", parent=self)
 
@@ -1001,7 +977,9 @@ class mainUI(QtWidgets.QMainWindow):
     def onAddController(self):
         pm.undoInfo(openChunk=True)
         objName=extra.uniqueName("cont_{0}".format(self.controllers_combobox.currentText()))
-        self.all_icon_functions[self.controllers_combobox.currentIndex()][1](name=objName, scale=(1,1,1))
+        # self.all_icon_functions[self.controllers_combobox.currentIndex()][1](name=objName, scale=(1,1,1))
+        self.icon.createIcon(self.controllers_combobox.currentText(), iconName=objName, scale=(1,1,1))
+
         pm.undoInfo(closeChunk=True)
     def onReplaceController(self):
         pm.undoInfo(openChunk=True)
@@ -1013,7 +991,8 @@ class mainUI(QtWidgets.QMainWindow):
         for i in selection:
             oldController = str(i.name())
             objName=extra.uniqueName("cont_{0}".format(self.controllers_combobox.currentText()))
-            newController = self.all_icon_functions[self.controllers_combobox.currentIndex()][1](name=objName, scale=(1,1,1))
+            # newController = self.all_icon_functions[self.controllers_combobox.currentIndex()][1](name=objName, scale=(1,1,1))
+            newController, dmp = self.icon.createIcon(self.controllers_combobox.currentText(), iconName=objName, scale=(1,1,1))
             tools.replaceController(mirrorAxis=self.initSkeleton.mirrorAxis, mirror=False, oldController=oldController,
                                     newController= newController, alignToCenter=self.controllers_checkbox.isChecked())
             pm.select(oldController)

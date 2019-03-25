@@ -4,10 +4,11 @@ import pymel.core.datatypes as dt
 
 reload(extra)
 
-import contIcons as icon
+# import contIcons as icon
+# reload(icon)
 
-reload(icon)
-
+import icons as ic
+reload(ic)
 
 class SimpleTail(object):
 
@@ -91,12 +92,16 @@ class SimpleTail(object):
         pass
 
     def createControllers(self):
+
+        icon = ic.Icon()
+
         self.contList=[]
         self.cont_off_list=[]
 
         for j in range (len(self.deformerJoints)-1):
             scaleDis = extra.getDistance(self.deformerJoints[j], self.deformerJoints[j + 1]) / 2
-            cont = icon.cube(name="cont_%s_%s" % (self.suffix, str(j)), scale=(scaleDis, scaleDis, scaleDis))
+            # cont = icon.cube(name="cont_%s_%s" % (self.suffix, str(j)), scale=(scaleDis, scaleDis, scaleDis))
+            cont, dmp = icon.createIcon("Cube", iconName="cont_%s_%s" % (self.suffix, str(j)), scale=(scaleDis, scaleDis, scaleDis))
 
             pm.xform(cont, piv=(self.sideMult * (-scaleDis), 0, 0))
             extra.alignToAlter(cont, self.deformerJoints[j], 2)

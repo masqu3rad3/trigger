@@ -3,9 +3,11 @@ import extraProcedures as extra
 
 reload(extra)
 
-import contIcons as icon
+# import contIcons as icon
+# reload(icon)
 
-reload(icon)
+import icons as ic
+reload(ic)
 
 import ribbonClass as rc
 
@@ -146,9 +148,12 @@ class Tentacle(object):
         pass
 
     def createControllers(self):
+
+        icon = ic.Icon()
         ## specialController
         iconScale = extra.getDistance(self.inits[0], self.inits[1])/3
-        self.cont_special = icon.looper(name="tentacleSP_%s" % self.suffix)
+        # self.cont_special = icon.looper(name="tentacleSP_%s" % self.suffix)
+        self.cont_special, dmp = icon.createIcon("Looper", iconName="tentacleSP_%s" % self.suffix, scale=(iconScale, iconScale, iconScale))
         extra.alignAndAim(self.cont_special, targetList = [self.inits[0]], aimTargetList=[self.inits[-1]], upVector=self.up_axis, rotateOff=(90,0,0))
         pm.move(self.cont_special, (dt.Vector(self.up_axis) *(iconScale*2)), r=True)
 
@@ -208,14 +213,16 @@ class Tentacle(object):
             s = pm.getAttr(self.guideJoints[j].tx)/3
             s = iconScale if s == 0 else s
             scaleTwk = (s, s, s)
-            contTwk = icon.circle("cont_tentacleTweak{0}_{1}".format(str(j), self.suffix), scaleTwk, normal=(0,0,1))
+            # contTwk = icon.circle("cont_tentacleTweak{0}_{1}".format(str(j), self.suffix), scaleTwk, normal=(0,0,1))
+            contTwk, dmp = icon.createIcon("Circle", iconName="cont_tentacleTweak{0}_{1}".format(str(j), self.suffix), scale=scaleTwk, normal=self.look_axis)
             extra.alignToAlter(contTwk, self.guideJoints[j], mode=2)
             contTwk_OFF = extra.createUpGrp(contTwk, "OFF")
             contTwk_ORE = extra.createUpGrp(contTwk, "ORE")
             self.contTwk_List.append(contTwk)
 
             scaleFK = (s*1.2, s*1.2, s*1.2)
-            contFK = icon.ngon("cont_tentacleFK{0}_{1}".format(str(j), self.suffix), scaleFK, normal=(0,0,1))
+            # contFK = icon.ngon("cont_tentacleFK{0}_{1}".format(str(j), self.suffix), scaleFK, normal=(0,0,1))
+            contFK, dmp = icon.createIcon("Ngon", iconName="cont_tentacleFK{0}_{1}".format(str(j), self.suffix), scale=scaleFK, normal=self.look_axis)
             extra.alignToAlter(contFK, self.guideJoints[j], mode=2)
             contFK_OFF = extra.createUpGrp(contFK, "OFF")
             contFK_ORE = extra.createUpGrp(contFK, "ORE")

@@ -1,5 +1,4 @@
 import pymel.core as pm
-import re
 
 def circle(name="cont_circle", scale=(1,1,1), location=None, normal=(0, 1, 0)):
     """
@@ -41,8 +40,10 @@ def cube(name="cont_cube", scale=(1,1,1), location=None, normal=(0,1,0)):
     pm.setAttr(cont_cube.scale, scale)
     if location:
         pm.move(cont_cube, location)
-    if not normal == (0, 1, 0):
-        pm.rotate(cont_cube, normal[0]*90, normal[1]*90, normal[2]*90)
+
+
+    # if not normal == (0, 1, 0):
+    #     pm.rotate(cont_cube, normal[0]*90, normal[1]*90, normal[2]*90)
     pm.makeIdentity(cont_cube, a=True)
     return cont_cube
 
@@ -199,8 +200,6 @@ def plus(name="cont_plus", scale=(1,1,1), location=None, normal=(1,0,0)):
     pm.makeIdentity(cont_Pole, a=True)
     return cont_Pole
 
-
-    
 def waist(name="cont_waist", scale=(1,1,1), location=None, normal=(0,1,0)):
     """
     Creates a plus controller. Usually for pole vector
@@ -305,7 +304,6 @@ def triCircle(name="cont_triCircle", scale=(1,1,1), location=None, normal=(0,1,0
         pm.rotate(cont_triCircle, normal[0]*90, normal[1]*90, normal[2]*90)
     pm.makeIdentity(cont_triCircle, a=True)
     return cont_triCircle[0]
-
 
 def curvedCircle(name="cont_curvedCircle", scale=(1, 1, 1), location=None, normal=(0,1,0)):
     """

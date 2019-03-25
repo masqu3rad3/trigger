@@ -9,8 +9,11 @@ import pymel.core as pm
 import extraProcedures as extra
 reload(extra)
 
-import contIcons as icon
-reload(icon)
+# import contIcons as icon
+# reload(icon)
+
+import icons as ic
+reload(ic)
 
 class PowerRibbon():
 
@@ -239,10 +242,12 @@ class PowerRibbon():
         middle_POS_list=[]
         counter = 0
 
+        icon = ic.Icon()
         for mid in mid_joint_list:
             counter += 1
             # self.middleCont = icon.circle("cont_midRbn_%s" %name, normal=(1, 0, 0))
-            midCon = icon.circle("cont_midRbn_{0}{1}".format (name, counter), normal=(1, 0, 0))
+            # midCon = icon.circle("cont_midRbn_{0}{1}".format (name, counter), normal=(1, 0, 0))
+            midCon, dmp = icon.createIcon("Circle", iconName="cont_midRbn_{0}{1}".format (name, counter), normal=(1, 0, 0))
             self.middleCont.append(midCon)
             middle_OFF = pm.spaceLocator(name="mid_OFF_{0}{1}".format (name, counter))
             self.toHide.append(middle_OFF.getShape())

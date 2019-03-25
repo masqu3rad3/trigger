@@ -705,7 +705,24 @@ def getMirror(node):
             return None
 
 def alignNormal(node, normalVector):
-    # TODO // Writa a normal alignment tool mainly for icon orientations
+    """
+    Aligns the object according to the given normal vector
+    Args:
+        node: The node to be aligned
+        normalVector: Alignment vector
+
+    Returns: None
+
+    """
+    # create a temporary alignment locator
+    tempTarget = pm.spaceLocator("tempAlign")
+    alignTo(tempTarget, node, mode=0)
+    pm.makeIdentity(tempTarget, a=True)
+    pm.move(tempTarget, normalVector)
+    tempAC = pm.aimConstraint(tempTarget, node, aim=(0,1,0), mo=False)
+    pm.delete(tempAC)
+    pm.delete(tempTarget)
+
     pass
 
 def orientJoints(jointList, localMoveAxis=(0.0,0.0,1.0), upAxis=(0.0,1.0,0.0), mirrorAxis=(1.0, 0.0, 0.0)):

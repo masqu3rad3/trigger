@@ -2,12 +2,14 @@ import pymel.core as pm
 import extraProcedures as extra
 # import ribbonClass as rc
 import powerRibbon as rc
-import contIcons as icon
+# import contIcons as icon
+import icons as ic
 import pymel.core.datatypes as dt
 
 reload(extra)
 reload(rc)
-reload(icon)
+# reload(icon)
+reload(ic)
 
 class Arm(object):
     def __init__(self, arminits, suffix="", side="L"):
@@ -165,10 +167,12 @@ class Arm(object):
         self.scaleGrp.rigVis >> self.j_fk_up.v
 
     def createControllers(self):
+        icon = ic.Icon()
 
         ## shoulder controller
         shouldercont_scale = (self.init_shoulder_dist / 2, self.init_shoulder_dist / 2, self.init_shoulder_dist / 2)
-        self.cont_shoulder = icon.shoulder("cont_Shoulder_%s" % self.suffix, shouldercont_scale)
+        # self.cont_shoulder = icon.shoulder("cont_Shoulder_%s" % self.suffix, shouldercont_scale)
+        self.cont_shoulder, dmp = icon.createIcon("Shoulder", iconName="cont_Shoulder_%s" % self.suffix, scale=shouldercont_scale, normal=self.up_axis)
         pm.setAttr("{0}.s{1}".format(self.cont_shoulder, "y"), self.sideMult)
         pm.makeIdentity(self.cont_shoulder, a=True)
         extra.alignAndAim(self.cont_shoulder, targetList=[self.j_def_collar], aimTargetList=[self.j_collar_end],
@@ -181,7 +185,8 @@ class Arm(object):
         # pm.setAttr("{0}.s{1}".format(self.cont_shoulder_pos, "z"), self.sideMult)
         ## IK hand controller
         ik_cont_scale = (self.init_lower_arm_dist / 3, self.init_lower_arm_dist / 3, self.init_lower_arm_dist / 3)
-        self.cont_IK_hand = icon.circle("cont_IK_hand_%s" % self.suffix, ik_cont_scale, normal=(1, 0, 0))
+        # self.cont_IK_hand = icon.circle("cont_IK_hand_%s" % self.suffix, ik_cont_scale, normal=(1, 0, 0))
+        self.cont_IK_hand, dmp = icon.createIcon("Circle", iconName="cont_IK_hand_%s" % self.suffix, scale=ik_cont_scale, normal=self.mirror_axis)
         extra.alignToAlter(self.cont_IK_hand, self.j_fk_low_end, mode=2)
 
         self.cont_IK_OFF = extra.createUpGrp(self.cont_IK_hand, "OFF")
@@ -216,7 +221,8 @@ class Arm(object):
             (((self.init_upper_arm_dist + self.init_lower_arm_dist) / 2) / 10),
             (((self.init_upper_arm_dist + self.init_lower_arm_dist) / 2) / 10)
         )
-        self.cont_Pole = icon.plus("cont_Pole_%s" % self.suffix, polecont_scale, normal=(0, 0, 1))
+        # self.cont_Pole = icon.plus("cont_Pole_%s" % self.suffix, polecont_scale, normal=(0, 0, 1))
+        self.cont_Pole, dmp = icon.createIcon("Plus", iconName="cont_Pole_%s" % self.suffix, scale=polecont_scale, normal=self.mirror_axis)
         offset_mag_pole = ((self.init_upper_arm_dist + self.init_lower_arm_dist) / 4)
         # offset_vector_pole = extra.getBetweenVector(elbow_ref, [shoulder_ref, hand_ref])
         offset_vector_pole = extra.getBetweenVector(self.j_def_elbow, [self.j_collar_end, self.j_def_hand])
@@ -235,7 +241,8 @@ class Arm(object):
 
         fk_up_arm_scale = (self.init_upper_arm_dist / 2, self.init_upper_arm_dist / 8, self.init_upper_arm_dist / 8)
 
-        self.cont_fk_up_arm = icon.cube("cont_FK_UpArm_%s" % self.suffix, fk_up_arm_scale)
+        # self.cont_fk_up_arm = icon.cube("cont_FK_UpArm_%s" % self.suffix, fk_up_arm_scale)
+        self.cont_fk_up_arm, dmp = icon.createIcon("Cube", iconName="cont_FK_UpArm_%s" % self.suffix, scale=fk_up_arm_scale)
 
         # move the pivot to the bottom
         pm.xform(self.cont_fk_up_arm, piv=(self.sideMult * -(self.init_upper_arm_dist / 2), 0, 0), ws=True)
@@ -250,7 +257,8 @@ class Arm(object):
 
         ## FK LOW Arm Controller
         fk_low_arm_scale = (self.init_lower_arm_dist / 2, self.init_lower_arm_dist / 8, self.init_lower_arm_dist / 8)
-        self.cont_fk_low_arm = icon.cube("cont_FK_LowArm_%s" % self.suffix, fk_low_arm_scale)
+        # self.cont_fk_low_arm = icon.cube("cont_FK_LowArm_%s" % self.suffix, fk_low_arm_scale)
+        self.cont_fk_low_arm, dmp = icon.createIcon("Cube", iconName="cont_FK_LowArm_%s" % self.suffix, scale=fk_low_arm_scale)
 
         # move the pivot to the bottom
         pm.xform(self.cont_fk_low_arm, piv=(self.sideMult * -(self.init_lower_arm_dist / 2), 0, 0), ws=True)
@@ -265,7 +273,8 @@ class Arm(object):
 
         ## FK HAND Controller
         fk_cont_scale = (self.init_lower_arm_dist / 5, self.init_lower_arm_dist / 5, self.init_lower_arm_dist / 5)
-        self.cont_fk_hand = icon.cube("cont_FK_Hand_%s" % self.suffix, fk_cont_scale)
+        # self.cont_fk_hand = icon.cube("cont_FK_Hand_%s" % self.suffix, fk_cont_scale)
+        self.cont_fk_hand, dmp = icon.createIcon("Cube", iconName="cont_FK_Hand_%s" % self.suffix, scale=fk_cont_scale)
         extra.alignToAlter(self.cont_fk_hand, self.j_def_hand, mode=2)
 
         self.cont_fk_hand_off = extra.createUpGrp(self.cont_fk_hand, "OFF")
@@ -274,8 +283,8 @@ class Arm(object):
 
         # FK-IK SWITCH Controller
         icon_scale = self.init_upper_arm_dist / 4
-        self.cont_fk_ik, self.fk_ik_rvs = icon.fkikSwitch(("cont_FK_IK_%s" % self.suffix),
-                                                          (icon_scale, icon_scale, icon_scale))
+        # self.cont_fk_ik, self.fk_ik_rvs = icon.fkikSwitch(("cont_FK_IK_%s" % self.suffix), (icon_scale, icon_scale, icon_scale))
+        self.cont_fk_ik, self.fk_ik_rvs = icon.createIcon("FkikSwitch", iconName="cont_FK_IK_%s" % self.suffix, scale=(icon_scale, icon_scale, icon_scale))
         extra.alignAndAim(self.cont_fk_ik, targetList=[self.j_def_hand], aimTargetList=[self.j_def_elbow],
                           upVector=self.up_axis, rotateOff=(0, 180, 0))
         pm.move(self.cont_fk_ik, (dt.Vector(self.up_axis) * (icon_scale * 2)), r=True)
@@ -313,7 +322,8 @@ class Arm(object):
         ### Create MidLock controller
 
         midcont_scale = (self.init_lower_arm_dist / 4, self.init_lower_arm_dist / 4, self.init_lower_arm_dist / 4)
-        self.cont_mid_lock = icon.star("cont_mid_%s" % self.suffix, midcont_scale, normal=(1, 0, 0))
+        # self.cont_mid_lock = icon.star("cont_mid_%s" % self.suffix, midcont_scale, normal=(1, 0, 0))
+        self.cont_mid_lock, dmp = icon.createIcon("Star", iconName="cont_mid_%s" % self.suffix, scale=midcont_scale, normal=self.mirror_axis)
 
         # extra.alignToAlter(cont_mid_lock, j_def_elbow, 2)
         extra.alignToAlter(self.cont_mid_lock, self.j_fk_low, 2)

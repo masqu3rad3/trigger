@@ -1,8 +1,11 @@
 import pymel.core as pm
 import extraProcedures as extra
 reload(extra)
-import contIcons as icon
-reload(icon)
+# import contIcons as icon
+# reload(icon)
+import icons as ic
+reload(ic)
+
 import armClass as arm
 # import armClass_state1 as arm
 reload(arm)
@@ -557,9 +560,12 @@ class LimbBuilder():
 
         """
 
+        icon = ic.Icon()
 
-        self.cont_placement = icon.circle(extra.uniqueName("cont_Placement"), (self.hipDistance, self.hipDistance, self.hipDistance))
-        self.cont_master = icon.triCircle(extra.uniqueName("cont_Master"), (self.hipDistance * 1.5, self.hipDistance * 1.5, self.hipDistance * 1.5))
+        # self.cont_placement = icon.circle(extra.uniqueName("cont_Placement"), (self.hipDistance, self.hipDistance, self.hipDistance))
+        self.cont_placement, dmp = icon.createIcon("Circle", iconName=extra.uniqueName("cont_Placement"), scale=(self.hipDistance, self.hipDistance, self.hipDistance))
+        # self.cont_master = icon.triCircle(extra.uniqueName("cont_Master"), (self.hipDistance * 1.5, self.hipDistance * 1.5, self.hipDistance * 1.5))
+        self.cont_master, dmp = icon.createIcon("TriCircle", iconName=extra.uniqueName("cont_Master"), scale=(self.hipDistance * 1.5, self.hipDistance * 1.5, self.hipDistance * 1.5))
         pm.addAttr(self.cont_master, at="bool", ln="Control_Visibility", sn="contVis", defaultValue=True)
         pm.addAttr(self.cont_master, at="bool", ln="Joints_Visibility", sn="jointVis")
         pm.addAttr(self.cont_master, at="bool", ln="Rig_Visibility", sn="rigVis")
@@ -580,7 +586,8 @@ class LimbBuilder():
                 iconName = f[0].name()
 
 
-            cont_fGroup = icon.square(name="cont_Fgrp_{0}".format(iconName), scale=(iconSize/6, iconSize/4, iconSize/2))
+            # cont_fGroup = icon.square(name="cont_Fgrp_{0}".format(iconName), scale=(iconSize/6, iconSize/4, iconSize/2))
+            cont_fGroup, dmp = icon.createIcon("Square", iconName="cont_Fgrp_{0}".format(iconName), scale=(iconSize/6, iconSize/4, iconSize/2))
             pm.rotate(cont_fGroup, (90,0,0))
             pm.makeIdentity(cont_fGroup, a=True)
             extra.alignAndAim(cont_fGroup, targetList=[f[0].getParent()], aimTargetList= [f[0], f[-1]], upObject=f[0], rotateOff=rotateOff, translateOff=(-offsetVector * (iconSize/2)))

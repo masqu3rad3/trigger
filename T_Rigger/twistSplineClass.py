@@ -3,10 +3,11 @@ import pymel.core as pm
 import extraProcedures as extra
 
 reload(extra)
-import contIcons as icon
+# import contIcons as icon
+# reload(icon)
 
-reload(icon)
-
+import icons as ic
+reload(ic)
 
 
 class TwistSpline(object):
@@ -269,11 +270,14 @@ class TwistSpline(object):
         # self.contCurve_Start = contCurves[0]
         # self.contCurve_End = contCurves[len(contCurves) - 1]
 
+        icon = ic.Icon()
+
         for i in range(0, len(contJoints)):
             scaleRatio = (totalLength / len(contJoints))
             if i != 0 and i != (len(contJoints) - 1):
                 ## Create control Curve if it is not the first or last control joint
-                cont_Curve = icon.star("cont_spline_" + name + str(i), (scaleRatio, scaleRatio, scaleRatio), normal=self.mirrorAxis)
+                # cont_Curve = icon.star("cont_spline_" + name + str(i), (scaleRatio, scaleRatio, scaleRatio), normal=self.mirrorAxis)
+                cont_Curve, dmp = icon.createIcon("Star", iconName="cont_spline_" + name + str(i), scale=(scaleRatio, scaleRatio, scaleRatio), normal=self.mirrorAxis)
             else:
                 cont_Curve = pm.spaceLocator(name="lockPoint_" + name + str(i))
             pm.setAttr(cont_Curve.rotateOrder,3)

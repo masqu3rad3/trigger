@@ -4,9 +4,11 @@ import extraProcedures as extra
 
 reload(extra)
 
-import contIcons as icon
+# import contIcons as icon
+import icons as ic
 
-reload(icon)
+# reload(icon)
+reload(ic)
 
 import twistSplineClass as twistSpline
 reload(twistSpline)
@@ -110,16 +112,20 @@ class NeckAndHead():
 
 
     def createControllers(self):
+        icon = ic.Icon()
         ## Neck Controller
         neckScale = (self.neckDist / 2, self.neckDist / 2, self.neckDist / 2)
-        self.cont_neck = icon.curvedCircle(name="cont_neck_%s" % self.suffix, scale=neckScale, normal=(0,0,1))
+        # self.cont_neck = icon.curvedCircle(name="cont_neck_%s" % self.suffix, scale=neckScale, normal=(0,0,1))
+        self.cont_neck, dmp = icon.createIcon("CurvedCircle", iconName="cont_neck_%s" % self.suffix, scale=neckScale, normal=self.mirror_axis)
         # extra.alignAndAim(self.cont_neck, targetList=[self.neckNodes[0]], aimTargetList=[self.headStart], upVector=self.look_axis, rotateOff=(-90,-90,0))
         extra.alignToAlter(self.cont_neck, self.guideJoints[0], mode=2)
         self.cont_neck_ORE = extra.createUpGrp(self.cont_neck, "ORE")
 
         ## Head Controller
         # faceDir = 1 if self.look_axis[0] < 0 or self.look_axis[1] < 0 or self.look_axis[2] < 0 else -1
-        self.cont_head = icon.halfDome(name="cont_head_%s" % self.suffix, scale=(self.headDist, self.headDist, self.headDist), normal=(0,-1,0))
+        # self.cont_head = icon.halfDome(name="cont_head_%s" % self.suffix, scale=(self.headDist, self.headDist, self.headDist), normal=(0,-1,0))
+        self.cont_head, dmp = icon.createIcon("HalfDome", iconName="cont_head_%s" % self.suffix, scale=(self.headDist, self.headDist, self.headDist), normal=-dt.Vector(self.up_axis))
+
         # extra.alignAndAim(self.cont_head, targetList=[self.headStart, self.headEnd], aimTargetList=[self.headEnd], upVector=self.look_axis, rotateOff=(faceDir*-90,faceDir*-90,0))
         extra.alignToAlter(self.cont_head, self.guideJoints[-2], mode=2)
         # pm.xform(self.cont_head, piv=self.headPivPos, ws=True)
@@ -127,7 +133,8 @@ class NeckAndHead():
         self.cont_head_ORE = extra.createUpGrp(self.cont_head, "ORE")
 
         ## Head Squash Controller
-        self.cont_headSquash = icon.circle(name="cont_headSquash_%s" % self.suffix, scale=((self.headDist / 2), (self.headDist / 2), (self.headDist / 2)), normal=(0, 0, 1))
+        # self.cont_headSquash = icon.circle(name="cont_headSquash_%s" % self.suffix, scale=((self.headDist / 2), (self.headDist / 2), (self.headDist / 2)), normal=(0, 0, 1))
+        self.cont_headSquash, dmp = icon.createIcon("Circle", iconName="cont_headSquash_%s" % self.suffix, scale=((self.headDist / 2), (self.headDist / 2), (self.headDist / 2)), normal=self.up_axis)
         # extra.alignAndAim(self.cont_headSquash, targetList=[self.headEnd], aimTargetList=[self.headStart], upVector=self.look_axis, rotateOff=(90,0,0))
         # extra.alignToAlter(self.cont_headSquash, self.guideJoints[-1])
         extra.alignToAlter(self.cont_headSquash, self.guideJoints[-1])

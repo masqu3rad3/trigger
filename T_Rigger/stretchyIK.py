@@ -1,7 +1,9 @@
 import pymel.core as pm
 import maya.mel as mel
 import extraProcedures as extra
-import contIcons as icon
+# import contIcons as icon
+import icons as ic
+reload(ic)
 
 def createStretchyIK(nodeList, suffix = "strIK", solver="ikSCsolver", controllerNode=None):
     """
@@ -15,10 +17,12 @@ def createStretchyIK(nodeList, suffix = "strIK", solver="ikSCsolver", controller
     Returns: [IK Handle, jointController Start, joint Controller End]
 
     """
+    icon = ic.Icon()
     if not controllerNode:
         ## get the controller icon scale:
         contScale = extra.getDistance(nodeList[-1], nodeList[-2])
-        controllerNode = icon.circle(name="cont_"+suffix, scale=(contScale,contScale,contScale))
+        # controllerNode = icon.circle(name="cont_"+suffix, scale=(contScale,contScale,contScale))
+        controllerNode, dmp = icon.createIcon("Circle", iconName="cont_"+suffix, scale=(contScale,contScale,contScale))
         extra.alignTo(controllerNode, nodeList[-1])
         controllerNode_ORE = extra.createUpGrp(controllerNode,"ORE")
 
