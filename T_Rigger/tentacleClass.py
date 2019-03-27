@@ -133,8 +133,9 @@ class Tentacle(object):
         self.guideJoints = [pm.joint(p=i.getTranslation(space="world")) for i in self.inits]
         # orientations
         extra.orientJoints(self.guideJoints,
-                           localMoveAxis=(dt.Vector(self.up_axis)),
-                           mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.up_axis)))
+                           localMoveAxis=self.sideMult * (dt.Vector(self.up_axis)),
+                           mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.look_axis)))
+
 
         pm.select(d=True)
         self.wrapScaleJoint = pm.joint(name="jWrapScale_{0}".format(self.suffix))
@@ -214,7 +215,7 @@ class Tentacle(object):
             s = iconScale if s == 0 else s
             scaleTwk = (s, s, s)
             # contTwk = icon.circle("cont_tentacleTweak{0}_{1}".format(str(j), self.suffix), scaleTwk, normal=(0,0,1))
-            contTwk, dmp = icon.createIcon("Circle", iconName="cont_tentacleTweak{0}_{1}".format(str(j), self.suffix), scale=scaleTwk, normal=self.look_axis)
+            contTwk, dmp = icon.createIcon("Circle", iconName="cont_tentacleTweak{0}_{1}".format(str(j), self.suffix), scale=scaleTwk, normal=self.mirror_axis)
             extra.alignToAlter(contTwk, self.guideJoints[j], mode=2)
             contTwk_OFF = extra.createUpGrp(contTwk, "OFF")
             contTwk_ORE = extra.createUpGrp(contTwk, "ORE")
@@ -222,7 +223,7 @@ class Tentacle(object):
 
             scaleFK = (s*1.2, s*1.2, s*1.2)
             # contFK = icon.ngon("cont_tentacleFK{0}_{1}".format(str(j), self.suffix), scaleFK, normal=(0,0,1))
-            contFK, dmp = icon.createIcon("Ngon", iconName="cont_tentacleFK{0}_{1}".format(str(j), self.suffix), scale=scaleFK, normal=self.look_axis)
+            contFK, dmp = icon.createIcon("Ngon", iconName="cont_tentacleFK{0}_{1}".format(str(j), self.suffix), scale=scaleFK, normal=self.mirror_axis)
             extra.alignToAlter(contFK, self.guideJoints[j], mode=2)
             contFK_OFF = extra.createUpGrp(contFK, "OFF")
             contFK_ORE = extra.createUpGrp(contFK, "ORE")
@@ -476,13 +477,6 @@ class Tentacle(object):
         self.createControllers()
         self.createRoots()
         self.createIKsetup()
-
-
-        # self.createFKsetup()
-        # self.ikfkSwitching()
-        # self.createRibbons()
-        # self.createTwistSplines()
-        # self.createAngleExtractors()
         self.roundUp()
 
     def createWrap(self, *args, **kwargs):

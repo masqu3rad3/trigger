@@ -77,8 +77,8 @@ class SimpleTail(object):
             self.deformerJoints.append(bone)
 
         extra.orientJoints(self.deformerJoints,
-                           localMoveAxis=(dt.Vector(self.up_axis)),
-                           mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.up_axis)))
+                           localMoveAxis=self.sideMult * (dt.Vector(self.up_axis)),
+                           mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.look_axis)))
 
 
         pm.parent(self.deformerJoints[0], self.scaleGrp)

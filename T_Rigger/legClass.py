@@ -212,15 +212,15 @@ class Leg(object):
         # Thigh Controller
         thigh_cont_scale = (self.init_upper_leg_dist / 4, self.init_upper_leg_dist / 4, self.init_upper_leg_dist / 16)
         # self.cont_thigh = icon.cube("cont_Thigh_%s" % self.suffix, thigh_cont_scale)
-        self.cont_thigh, dmp = icon.createIcon("Cube", iconName="cont_Thigh_%s" % self.suffix, scale=thigh_cont_scale, normal=self.up_axis)
-        pm.setAttr("{0}.s{1}".format(self.cont_thigh, "y"), self.sideMult)
-        pm.makeIdentity(self.cont_thigh, a=True)
+        self.cont_thigh, dmp = icon.createIcon("Cube", iconName="cont_Thigh_%s" % self.suffix, scale=thigh_cont_scale, normal=self.sideMult* dt.Vector(self.up_axis))
+        # pm.setAttr("{0}.s{1}".format(self.cont_thigh, "y"), self.sideMult)
+        # pm.makeIdentity(self.cont_thigh, a=True)
 
         # extra.alignAndAim(self.cont_thigh, targetList=[self.jDef_legRoot], aimTargetList=[self.j_def_hip], upVector=self.up_axis)
         # extra.alignAndAim(self.cont_thigh, targetList=[self.hip_ref], aimTargetList=[self.knee_ref], upObject=self.leg_root_ref)
         extra.alignToAlter(self.cont_thigh, self.jfk_root, mode=2)
-        # pm.move(self.cont_thigh, (0, 0, self.sideMult*(-thigh_cont_scale[0] * 2)), r=True, os=True)
-        pm.move(self.cont_thigh, (0, 0, (-thigh_cont_scale[0] * 2)), r=True, os=True)
+        pm.move(self.cont_thigh, (0, 0, self.sideMult*(-thigh_cont_scale[0] * 2)), r=True, os=True)
+        # pm.move(self.cont_thigh, (0, 0, (-thigh_cont_scale[0] * 2)), r=True, os=True)
         pm.xform(self.cont_thigh, piv=self.leg_root_pos, ws=True)
 
         self.cont_thigh_off = extra.createUpGrp(self.cont_thigh, "OFF")
@@ -236,7 +236,10 @@ class Leg(object):
         # self.cont_IK_foot = icon.circle("cont_IK_foot_%s" % self.suffix, scale=foot_cont_scale, normal=(0, 1, 0))
         self.cont_IK_foot, dmp = icon.createIcon("Circle", iconName="cont_IK_foot_%s" % self.suffix, scale=foot_cont_scale, normal=self.up_axis)
 
-        extra.alignAndAim(self.cont_IK_foot, targetList=[self.bank_out_ref, self.bank_in_ref, self.toe_pv_ref, self.heel_pv_ref], aimTargetList=[self.toe_pv_ref], upObject=self.foot_ref)
+        # align it to the ball socket
+        extra.alignToAlter(self.cont_IK_foot, self.j_socket_ball, mode=2)
+
+        # extra.alignAndAim(self.cont_IK_foot, targetList=[self.bank_out_ref, self.bank_in_ref, self.toe_pv_ref, self.heel_pv_ref], aimTargetList=[self.toe_pv_ref], upObject=self.foot_ref)
         pm.xform(self.cont_IK_foot, piv=self.foot_pos, p=True, ws=True)
 
         # extra.alignToAlter(self.cont_IK_foot, self.jfk_foot, mode=2)
