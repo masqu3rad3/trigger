@@ -93,8 +93,8 @@ class Arm(object):
         self.j_collar_end = pm.joint(name="j_CollarEnd_%s" % self.suffix, p=self.shoulder_pos, radius=1.5)
         self.sockets.append(self.j_collar_end)
 
-        extra.orientJoints([self.j_def_collar, self.j_collar_end], localMoveAxis=self.sideMult * (dt.Vector(self.up_axis)),
-                           mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.look_axis)))
+        # extra.orientJoints([self.j_def_collar, self.j_collar_end], localMoveAxis=self.sideMult * (dt.Vector(self.up_axis)), mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.look_axis)))
+        extra.orientJoints([self.j_def_collar, self.j_collar_end], localMoveAxis=self.sideMult * (dt.Vector(self.up_axis)), mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.look_axis)))
 
         pm.select(d=True)
         self.j_def_elbow = pm.joint(name="jDef_elbow_%s" % self.suffix, p=self.elbow_pos, radius=1.5)

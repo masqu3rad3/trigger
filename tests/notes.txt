@@ -15,6 +15,3 @@ self.j_ik_orig_up => self.j_ik_orig_root
 self.j_ik_orig_low => self.j_ik_orig_knee
 self.j_ik_orig_low_end => self.j_ik_orig_end
 
-
-
-

@@ -782,16 +782,9 @@ def alignNormal(node, normalVector):
 #     pm.setAttr(jointList[-1].jointOrient, (0,0,0))
 
 
-def orientJoints(jointList, aimAxis=(0.0,0.0,1.0), upAxis=(0.0,1.0,0.0), mirrorAxis=(1.0, 0.0, 0.0)):
+def orientJoints(jointList, aimAxis=(0.0,0.0,1.0), upAxis=(0.0,1.0,0.0), worldUpAxis=(0.0,1.0,0.0)):
 
-    #unparent each
-    # print jointList
-    # try:
-    #     pm.parent(jointList, w=True)
-    # except:
-    #     pass
 
-    # pm.parent(jointList, w=True)
     if len(jointList) == 1:
         pass
         return
@@ -800,41 +793,18 @@ def orientJoints(jointList, aimAxis=(0.0,0.0,1.0), upAxis=(0.0,1.0,0.0), mirrorA
     for j in range(1, len(jointList)):
         pm.parent(jointList[j], w=True)
 
-    # get the aimVector
-    tempAimLocator = pm.spaceLocator(name="tempAimLocator")
-    # alignAndAim(tempAimLocator, [jointList[1]], [jointList[2]], upVector=upAxis)
-    alignAndAim(tempAimLocator, [jointList[0]], [jointList[1]], upVector=localMoveAxis)
-    # alignAndAim(tempAimLocator, [jointList[0]], [jointList[1]], upVector=upAxis)
 
     for j in range (0, len(jointList)):
 
-
-
-        localAimLocator = pm.duplicate(tempAimLocator)[0]
-        alignTo(localAimLocator, jointList[j])
-
-        pm.move(localAimLocator, (dt.Vector(localMoveAxis)), r=True, os=True)
-
-        # do not try to ali
         if not (j == (len(jointList)-1)):
-
-            print "upaxis", upAxis
-            print "localMoveAxis", localMoveAxis
-
-            aimCon = pm.aimConstraint(jointList[j+1], jointList[j], aim=mirrorAxis, wuo=localAimLocator, wut='object', u=localMoveAxis)
-
-            # aimCon = pm.aimConstraint(jointList[j+1], jointList[j], aim=mirrorAxis, wuo=localAimLocator, wut='object', u=upAxis, mo=False)
-            # aimCon = pm.aimConstraint(jointList[j+1], jointList[j], aim=mirrorAxis, wuo=localAimLocator, wut='object', u=localMoveAxis, mo=False)
-            # aimCon = pm.aimConstraint(jointList[j+1], jointList[j], aim=mirrorAxis, wuo=localAimLocator, wut='object', u=(0, 1, 0), mo=False)
+            aimCon = pm.aimConstraint(jointList[j+1], jointList[j], aim=aimAxis, upVector=upAxis, worldUpVector=worldUpAxis, worldUpType='vector', weight=1.0)
             pm.delete(aimCon)
             pm.makeIdentity(jointList[j], a=True)
-        pm.delete(localAimLocator)
     #
     # re-parent the hierarchy
     for j in range (1, len(jointList)):
         pm.parent(jointList[j], jointList[j-1])
 
-    pm.delete(tempAimLocator)
     pm.makeIdentity(jointList[-1], a=True)
     pm.setAttr(jointList[-1].jointOrient, (0,0,0))
 
