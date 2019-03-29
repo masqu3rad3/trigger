@@ -957,7 +957,7 @@ class Leg(object):
         pm.scaleConstraint(self.scaleGrp, ribbon_upper_leg.scaleGrp)
 
         ribbon_start_ori_con = pm.parentConstraint(self.j_ik_orig_root, self.jfk_root, ribbon_upper_leg.startAim, mo=False, skipTranslate=["x","y","z"] )
-        ribbon_start_ori_con2 = pm.parentConstraint(self.j_def_hip, ribbon_upper_leg.startAim, mo=True, skipTranslate=["x","y","z"] )
+        ribbon_start_ori_con2 = pm.parentConstraint(self.j_def_hip, ribbon_upper_leg.startAim, mo=False, skipTranslate=["x","y","z"] )
         self.cont_fk_ik.fk_ik >> ("%s.%sW0" %(ribbon_start_ori_con, self.j_ik_orig_root))
         self.fk_ik_rvs.outputX >> ("%s.%sW1" %(ribbon_start_ori_con, self.jfk_root))
 
