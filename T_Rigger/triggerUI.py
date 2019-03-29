@@ -631,7 +631,7 @@ class mainUI(QtWidgets.QMainWindow):
 
         def initDialog(loadDefaults=False):
             self.loadSettings(loadDefaults=loadDefaults)
-            self.rigname_lineEdit.setText(self.settingsData["rigName"])
+            # self.rigname_lineEdit.setText(self.settingsData["rigName"])
             self.colorCodeDict = {
                 "majorleft_pushButton": self.settingsData["majorLeftColor"],
                 "minorleft_pushButton": self.settingsData["minorLeftColor"],

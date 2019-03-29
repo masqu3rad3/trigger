@@ -642,7 +642,7 @@ def getRigAxes(joint):
 
     """
     axisDict = {"x": (1.0, 0.0, 0.0), "y": (0.0, 1.0, 0.0), "z": (0.0, 0.0, 1.0), "-x": (-1.0, 0.0, 0.0), "-y": (0.0, -1.0, 0.0), "-z": (0.0, 0.0, -1.0)}
-    spineDict = {"x": (-1.0, 0.0, 0.0), "y": (0.0, -1.0, 0.0), "z": (0.0, 0.0, 1.0), "-x": (1.0, 0.0, 0.0), "-y": (0.0, 1.0, 0.0), "-z": (0.0, 0.0, 1.0)}
+    # spineDict = {"x": (-1.0, 0.0, 0.0), "y": (0.0, -1.0, 0.0), "z": (0.0, 0.0, 1.0), "-x": (1.0, 0.0, 0.0), "-y": (0.0, 1.0, 0.0), "-z": (0.0, 0.0, 1.0)}
     upAxis = None
     mirrorAxis = None
     spineDir = None
@@ -669,13 +669,15 @@ def getRigAxes(joint):
     ## get spine Direction
     if pm.attributeQuery("lookAxis", node=joint, exists=True):
         try:
-            spineDir = spineDict[pm.getAttr(joint.lookAxis).lower()]
+            # spineDir = spineDict[pm.getAttr(joint.lookAxis).lower()]
+            spineDir = axisDict[pm.getAttr(joint.lookAxis).lower()]
         except:
-            pm.warning("Cannot get spine direction from lookAxis attribute, proceeding with default value (-x)")
-            spineDir = (-1.0, 0.0, 0.0)
+            # pm.warning("Cannot get spine direction from lookAxis attribute, proceeding with default value (-x)")
+            pm.warning("Cannot get spine direction from lookAxis attribute, proceeding with default value (z)")
+            spineDir = (0.0, 0.0, 1.0)
     else:
-        pm.warning("lookAxis attribute of the root node does not exist. Using default value (-x) for spine direction")
-        spineDir = (1.0, 0.0, 0.0)
+        pm.warning("lookAxis attribute of the root node does not exist. Using default value (z) for spine direction")
+        spineDir = (0.0, 0.0, 1.0)
 
     return upAxis, mirrorAxis, spineDir
 
@@ -782,8 +784,10 @@ def alignNormal(node, normalVector):
 #     pm.setAttr(jointList[-1].jointOrient, (0,0,0))
 
 
-def orientJoints(jointList, aimAxis=(0.0,0.0,1.0), upAxis=(0.0,1.0,0.0), worldUpAxis=(0.0,1.0,0.0)):
+def orientJoints(jointList, aimAxis=(1.0,0.0,0.0), upAxis=(0.0,1.0,0.0), worldUpAxis=(0.0,1.0,0.0), reverse=1):
 
+    aimAxis = reverse*dt.Vector(aimAxis)
+    upAxis = reverse*dt.Vector(upAxis)
 
     if len(jointList) == 1:
         pass

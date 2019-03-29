@@ -102,10 +102,13 @@ class Spine(object):
         pm.select(d=True)
         self.guideJoints = [pm.joint(p=i.getTranslation(space="world")) for i in self.inits]
         # orientations
-        extra.orientJoints(self.guideJoints,
-                           localMoveAxis=(dt.Vector(self.up_axis)),
-                           mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.look_axis)))
+        # extra.orientJoints(self.guideJoints,
+        #                    localMoveAxis=(dt.Vector(self.up_axis)),
+        #                    mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.look_axis)))
+        # extra.orientJoints(self.guideJoints, upAxis=(0,1,0), worldUpAxis=(self.up_axis), reverse=self.sideMult)
+        extra.orientJoints(self.guideJoints, worldUpAxis=-dt.Vector(self.look_axis), reverse=self.sideMult)
 
+        pm.duplicate(self.guideJoints)
         self.deformerJoints.append(self.startSocket)
         self.deformerJoints.append(self.endSocket)
 
@@ -113,6 +116,9 @@ class Spine(object):
 
         pm.parent(self.startSocket, self.scaleGrp)
         self.scaleGrp.rigVis >> self.limbPlug.v
+
+        # map(lambda x: pm.setAttr(x.displayLocalAxis, True), self.guideJoints)
+
 
         pass
 
@@ -143,9 +149,9 @@ class Spine(object):
         pm.setAttr(self.cont_body.tweakVis, cb=True)
 
         ## Chest Controller
-        contChestScale = (self.iconSize*0.5, self.iconSize*0.35, self.iconSize*0.2)
+        contChestScale = (self.iconSize*0.35, self.iconSize*0.5, self.iconSize*0.2)
         # self.cont_chest = icon.cube("cont_Chest_%s" % self.suffix, contChestScale, normal=(0,0,1))
-        self.cont_chest, dmp = icon.createIcon("Cube", iconName="cont_Chest_%s" % self.suffix, scale=contChestScale, normal=self.mirror_axis)
+        self.cont_chest, dmp = icon.createIcon("Cube", iconName="cont_Chest_%s" % self.suffix, scale=contChestScale, normal=self.look_axis)
         extra.alignToAlter(self.cont_chest, self.guideJoints[-1], mode=2)
         cont_Chest_ORE = extra.createUpGrp(self.cont_chest, "ORE")
         # pm.setAttr(self.cont_chest.rotateOrder,3)
@@ -200,7 +206,9 @@ class Spine(object):
 
     def createIKsetup(self):
         spine = twistSpline.TwistSpline()
+        spine.upAxis =  -(dt.Vector(self.look_axis))
         spine.createTspline(self.guideJoints, "spine_%s" % self.suffix, self.resolution, dropoff=self.dropoff, mode=self.splineMode, twistType=self.twistType)
+
         # self.sockets += spine.defJoints
         self.sockets.extend(spine.defJoints)
 
@@ -296,9 +304,4 @@ class Spine(object):
         self.createControllers()
         self.createRoots()
         self.createIKsetup()
-        # self.createFKsetup()
-        # self.ikfkSwitching()
-        # self.createRibbons()
-        # self.createTwistSplines()
-        # self.createAngleExtractors()
         self.roundUp()

@@ -94,7 +94,8 @@ class Arm(object):
         self.sockets.append(self.j_collar_end)
 
         # extra.orientJoints([self.j_def_collar, self.j_collar_end], localMoveAxis=self.sideMult * (dt.Vector(self.up_axis)), mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.look_axis)))
-        extra.orientJoints([self.j_def_collar, self.j_collar_end], localMoveAxis=self.sideMult * (dt.Vector(self.up_axis)), mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.look_axis)))
+        # extra.orientJoints([self.j_def_collar, self.j_collar_end], localMoveAxis=self.sideMult * (dt.Vector(self.up_axis)), mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.look_axis)))
+        extra.orientJoints([self.j_def_collar, self.j_collar_end], worldUpAxis=(self.up_axis), reverse=self.sideMult)
 
         pm.select(d=True)
         self.j_def_elbow = pm.joint(name="jDef_elbow_%s" % self.suffix, p=self.elbow_pos, radius=1.5)
@@ -122,17 +123,22 @@ class Arm(object):
         pm.select(d=True)
 
         # orientations
-        extra.orientJoints([self.j_ik_orig_up, self.j_ik_orig_low, self.j_ik_orig_low_end],
-                           localMoveAxis=self.sideMult * (dt.Vector(self.up_axis)),
-                           mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.look_axis)))
+        # extra.orientJoints([self.j_ik_orig_up, self.j_ik_orig_low, self.j_ik_orig_low_end],
+        #                    localMoveAxis=self.sideMult * (dt.Vector(self.up_axis)),
+        #                    mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.look_axis)))
+        extra.orientJoints([self.j_ik_orig_up, self.j_ik_orig_low, self.j_ik_orig_low_end], worldUpAxis=(self.up_axis), reverse=self.sideMult)
 
-        extra.orientJoints([self.j_ik_sc_up, self.j_ik_sc_low, self.j_ik_sc_low_end],
-                           localMoveAxis=self.sideMult * (dt.Vector(self.up_axis)),
-                           mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.look_axis)))
+        # extra.orientJoints([self.j_ik_sc_up, self.j_ik_sc_low, self.j_ik_sc_low_end],
+        #                    localMoveAxis=self.sideMult * (dt.Vector(self.up_axis)),
+        #                    mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.look_axis)))
+        extra.orientJoints([self.j_ik_sc_up, self.j_ik_sc_low, self.j_ik_sc_low_end], worldUpAxis=(self.up_axis), reverse=self.sideMult)
 
-        extra.orientJoints([self.j_ik_rp_up, self.j_ik_rp_low, self.j_ik_rp_low_end],
-                           localMoveAxis=self.sideMult * (dt.Vector(self.up_axis)),
-                           mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.look_axis)))
+
+        # extra.orientJoints([self.j_ik_rp_up, self.j_ik_rp_low, self.j_ik_rp_low_end],
+        #                    localMoveAxis=self.sideMult * (dt.Vector(self.up_axis)),
+        #                    mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.look_axis)))
+        extra.orientJoints([self.j_ik_rp_up, self.j_ik_rp_low, self.j_ik_rp_low_end], worldUpAxis=(self.up_axis), reverse=self.sideMult)
+
 
         # FK Joints
         pm.select(d=True)
@@ -140,8 +146,10 @@ class Arm(object):
         self.j_fk_low = pm.joint(name="jFK_Low_%s" % self.suffix, p=self.elbow_pos, radius=2.0)
         self.j_fk_low_end = pm.joint(name="jFK_LowEnd_%s" % self.suffix, p=self.hand_pos, radius=2.0)
 
-        extra.orientJoints([self.j_fk_up, self.j_fk_low, self.j_fk_low_end], localMoveAxis=self.sideMult * (dt.Vector(self.up_axis)),
-                           mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.look_axis)))
+        # extra.orientJoints([self.j_fk_up, self.j_fk_low, self.j_fk_low_end], localMoveAxis=self.sideMult * (dt.Vector(self.up_axis)),
+        #                    mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.look_axis)))
+        extra.orientJoints([self.j_fk_up, self.j_fk_low, self.j_fk_low_end], worldUpAxis=(self.up_axis), reverse=self.sideMult)
+
 
         # Hand joint
         self.j_def_hand = pm.joint(name="jDef_Hand_%s" % self.suffix, p=self.hand_pos, radius=1.0)
@@ -172,7 +180,7 @@ class Arm(object):
         ## shoulder controller
         shouldercont_scale = (self.init_shoulder_dist / 2, self.init_shoulder_dist / 2, self.init_shoulder_dist / 2)
         # self.cont_shoulder = icon.shoulder("cont_Shoulder_%s" % self.suffix, shouldercont_scale)
-        self.cont_shoulder, dmp = icon.createIcon("Shoulder", iconName="cont_Shoulder_%s" % self.suffix, scale=shouldercont_scale, normal=self.sideMult*dt.Vector(self.up_axis))
+        self.cont_shoulder, dmp = icon.createIcon("Shoulder", iconName="cont_Shoulder_%s" % self.suffix, scale=shouldercont_scale, normal=(0,self.sideMult,0))
         # pm.setAttr("{0}.s{1}".format(self.cont_shoulder, "y"), self.sideMult)
         pm.makeIdentity(self.cont_shoulder, a=True)
         # extra.alignAndAim(self.cont_shoulder, targetList=[self.j_def_collar], aimTargetList=[self.j_collar_end],
@@ -187,7 +195,7 @@ class Arm(object):
         ## IK hand controller
         ik_cont_scale = (self.init_lower_arm_dist / 3, self.init_lower_arm_dist / 3, self.init_lower_arm_dist / 3)
         # self.cont_IK_hand = icon.circle("cont_IK_hand_%s" % self.suffix, ik_cont_scale, normal=(1, 0, 0))
-        self.cont_IK_hand, dmp = icon.createIcon("Circle", iconName="cont_IK_hand_%s" % self.suffix, scale=ik_cont_scale, normal=self.mirror_axis)
+        self.cont_IK_hand, dmp = icon.createIcon("Circle", iconName="cont_IK_hand_%s" % self.suffix, scale=ik_cont_scale, normal=(self.sideMult, 0, 0))
         extra.alignToAlter(self.cont_IK_hand, self.j_fk_low_end, mode=2)
 
         self.cont_IK_OFF = extra.createUpGrp(self.cont_IK_hand, "OFF")
@@ -223,7 +231,7 @@ class Arm(object):
             (((self.init_upper_arm_dist + self.init_lower_arm_dist) / 2) / 10)
         )
         # self.cont_Pole = icon.plus("cont_Pole_%s" % self.suffix, polecont_scale, normal=(0, 0, 1))
-        self.cont_Pole, dmp = icon.createIcon("Plus", iconName="cont_Pole_%s" % self.suffix, scale=polecont_scale, normal=self.mirror_axis)
+        self.cont_Pole, dmp = icon.createIcon("Plus", iconName="cont_Pole_%s" % self.suffix, scale=polecont_scale, normal=(self.sideMult, 0, 0))
         offset_mag_pole = ((self.init_upper_arm_dist + self.init_lower_arm_dist) / 4)
         # offset_vector_pole = extra.getBetweenVector(elbow_ref, [shoulder_ref, hand_ref])
         offset_vector_pole = extra.getBetweenVector(self.j_def_elbow, [self.j_collar_end, self.j_def_hand])
@@ -324,7 +332,7 @@ class Arm(object):
 
         midcont_scale = (self.init_lower_arm_dist / 4, self.init_lower_arm_dist / 4, self.init_lower_arm_dist / 4)
         # self.cont_mid_lock = icon.star("cont_mid_%s" % self.suffix, midcont_scale, normal=(1, 0, 0))
-        self.cont_mid_lock, dmp = icon.createIcon("Star", iconName="cont_mid_%s" % self.suffix, scale=midcont_scale, normal=self.mirror_axis)
+        self.cont_mid_lock, dmp = icon.createIcon("Star", iconName="cont_mid_%s" % self.suffix, scale=midcont_scale, normal=(self.sideMult, 0, 0))
 
         # extra.alignToAlter(cont_mid_lock, j_def_elbow, 2)
         extra.alignToAlter(self.cont_mid_lock, self.j_fk_low, 2)
