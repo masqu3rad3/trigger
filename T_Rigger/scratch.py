@@ -391,9 +391,11 @@ class LimbBuilder():
                             index = self.fingerMatchList.index(matching)
                             parentController = self.fingerMatchConts[index][0]
 
-                limb = finger.Fingers()
+                # limb = finger.Fingers()
+                limb = finger.Fingers(x[0], suffix=sideVal, side=x[2], parentController=parentController)
                 limb.colorCodes = colorCodes
-                limb.createFinger(x[0], suffix=sideVal, side=x[2], parentController=parentController)
+                # limb.createFinger(x[0], suffix=sideVal, side=x[2], parentController=parentController)
+                limb.createLimb()
 
             elif x[1] == "tentacle":
                 # limb = tentacle.Tentacle()

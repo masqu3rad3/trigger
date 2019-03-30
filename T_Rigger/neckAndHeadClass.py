@@ -110,7 +110,7 @@ class NeckAndHead():
         #                    localMoveAxis=-(dt.Vector(self.up_axis)),
         #                    mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.look_axis)))
 
-        extra.orientJoints(self.guideJoints, worldUpAxis=(self.up_axis), reverse=self.sideMult)
+        extra.orientJoints(self.guideJoints, worldUpAxis=-dt.Vector(self.look_axis), reverse=self.sideMult)
 
 
 
@@ -127,7 +127,7 @@ class NeckAndHead():
         ## Head Controller
         # faceDir = 1 if self.look_axis[0] < 0 or self.look_axis[1] < 0 or self.look_axis[2] < 0 else -1
         # self.cont_head = icon.halfDome(name="cont_head_%s" % self.suffix, scale=(self.headDist, self.headDist, self.headDist), normal=(0,-1,0))
-        self.cont_head, dmp = icon.createIcon("HalfDome", iconName="cont_head_%s" % self.suffix, scale=(self.headDist, self.headDist, self.headDist), normal=(0,0,-1))
+        self.cont_head, dmp = icon.createIcon("HalfDome", iconName="cont_head_%s" % self.suffix, scale=(self.headDist, self.headDist, self.headDist), normal=(0,1,0))
 
         # extra.alignAndAim(self.cont_head, targetList=[self.headStart, self.headEnd], aimTargetList=[self.headEnd], upVector=self.look_axis, rotateOff=(faceDir*-90,faceDir*-90,0))
         extra.alignToAlter(self.cont_head, self.guideJoints[-2], mode=2)
@@ -137,7 +137,7 @@ class NeckAndHead():
 
         ## Head Squash Controller
         # self.cont_headSquash = icon.circle(name="cont_headSquash_%s" % self.suffix, scale=((self.headDist / 2), (self.headDist / 2), (self.headDist / 2)), normal=(0, 0, 1))
-        self.cont_headSquash, dmp = icon.createIcon("Circle", iconName="cont_headSquash_%s" % self.suffix, scale=((self.headDist / 2), (self.headDist / 2), (self.headDist / 2)), normal=(0,0,1))
+        self.cont_headSquash, dmp = icon.createIcon("Circle", iconName="cont_headSquash_%s" % self.suffix, scale=((self.headDist / 2), (self.headDist / 2), (self.headDist / 2)), normal=(0,1,0))
         # extra.alignAndAim(self.cont_headSquash, targetList=[self.headEnd], aimTargetList=[self.headStart], upVector=self.look_axis, rotateOff=(90,0,0))
         # extra.alignToAlter(self.cont_headSquash, self.guideJoints[-1])
         extra.alignToAlter(self.cont_headSquash, self.guideJoints[-1])
@@ -176,7 +176,8 @@ class NeckAndHead():
         # print list(self.guideJoints[:-1])
         # neckSpline.createTspline(self.neckNodes+[self.headStart], "neckSplineIK_%s" % self.suffix, self.resolution, dropoff=self.dropoff, mode=splineMode, twistType=twistType, colorCode=self.colorCodes[1])
         # neckSpline.localMoveAxis = -(dt.Vector(self.up_axis))
-        neckSpline.upAxis = self.sideMult * (dt.Vector(self.up_axis))
+        # neckSpline.upAxis = self.sideMult * (dt.Vector(self.up_axis))
+        neckSpline.upAxis = -(dt.Vector(self.look_axis))
         # neckSpline.mirrorAxis = (self.sideMult, 0.0, 0.0)
 
 
@@ -208,7 +209,8 @@ class NeckAndHead():
 
         # create spline IK for Head squash
         headSpline = twistSpline.TwistSpline()
-        headSpline.upAxis = self.sideMult * (dt.Vector(self.up_axis))
+        # headSpline.upAxis = self.sideMult * (dt.Vector(self.up_axis))
+        headSpline.upAxis = -(dt.Vector(self.look_axis))
         # headSpline.createTspline([self.headStart, self.headEnd], "headSquashSplineIK_%s" % self.suffix, 3, dropoff=2,  mode=splineMode, twistType=twistType, colorCode=self.colorCodes[1])
         # print
         headSpline.createTspline(list(self.guideJoints[-2:]), "headSquashSplineIK_%s" % self.suffix, 3, dropoff=2,  mode=splineMode, twistType=twistType, colorCode=self.colorCodes[1])

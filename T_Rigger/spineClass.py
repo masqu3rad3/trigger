@@ -108,7 +108,6 @@ class Spine(object):
         # extra.orientJoints(self.guideJoints, upAxis=(0,1,0), worldUpAxis=(self.up_axis), reverse=self.sideMult)
         extra.orientJoints(self.guideJoints, worldUpAxis=-dt.Vector(self.look_axis), reverse=self.sideMult)
 
-        pm.duplicate(self.guideJoints)
         self.deformerJoints.append(self.startSocket)
         self.deformerJoints.append(self.endSocket)
 
