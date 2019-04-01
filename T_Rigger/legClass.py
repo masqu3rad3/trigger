@@ -112,7 +112,7 @@ class Leg(object):
 
         # extra.orientJoints([self.jDef_legRoot, self.j_def_hip], worldUpAxis=(self.up_axis), reverse=self.sideMult)
         # extra.orientJoints([self.jDef_legRoot, self.j_def_hip], worldUpAxis=-dt.Vector(self.look_axis), reverse=self.sideMult)
-        extra.orientJoints([self.jDef_legRoot, self.j_def_hip], worldUpAxis=dt.Vector(self.mirror_axis), reverse=self.sideMult)
+        extra.orientJoints([self.jDef_legRoot, self.j_def_hip], worldUpAxis=dt.Vector(self.mirror_axis), reverseAim=self.sideMult)
 
 
         pm.select(d=True)
@@ -162,7 +162,7 @@ class Leg(object):
         #                    mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.look_axis)))
         # extra.orientJoints([self.j_ik_orig_root, self.j_ik_orig_knee, self.j_ik_orig_end], worldUpAxis=(self.up_axis), reverse=self.sideMult)
         # extra.orientJoints([self.j_ik_orig_root, self.j_ik_orig_knee, self.j_ik_orig_end], worldUpAxis=-dt.Vector(self.look_axis), reverse=self.sideMult)
-        extra.orientJoints([self.j_ik_orig_root, self.j_ik_orig_knee, self.j_ik_orig_end], worldUpAxis=dt.Vector(self.mirror_axis), reverse=self.sideMult)
+        extra.orientJoints([self.j_ik_orig_root, self.j_ik_orig_knee, self.j_ik_orig_end], worldUpAxis=dt.Vector(self.mirror_axis), reverseAim=self.sideMult)
 
 
 
@@ -171,7 +171,7 @@ class Leg(object):
         #                    mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.look_axis)))
         # extra.orientJoints([self.j_ik_sc_root, self.j_ik_sc_knee, self.j_ik_sc_end], worldUpAxis=(self.up_axis), reverse=self.sideMult)
         # extra.orientJoints([self.j_ik_sc_root, self.j_ik_sc_knee, self.j_ik_sc_end], worldUpAxis=-dt.Vector(self.look_axis), reverse=self.sideMult)
-        extra.orientJoints([self.j_ik_sc_root, self.j_ik_sc_knee, self.j_ik_sc_end], worldUpAxis=dt.Vector(self.mirror_axis), reverse=self.sideMult)
+        extra.orientJoints([self.j_ik_sc_root, self.j_ik_sc_knee, self.j_ik_sc_end], worldUpAxis=dt.Vector(self.mirror_axis), reverseAim=self.sideMult)
 
 
         # extra.orientJoints([self.j_ik_rp_root, self.j_ik_rp_knee, self.j_ik_rp_end],
@@ -179,7 +179,7 @@ class Leg(object):
         #                    mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.look_axis)))
         # extra.orientJoints([self.j_ik_rp_root, self.j_ik_rp_knee, self.j_ik_rp_end], worldUpAxis=(self.up_axis), reverse=self.sideMult)
         # extra.orientJoints([self.j_ik_rp_root, self.j_ik_rp_knee, self.j_ik_rp_end], worldUpAxis=-dt.Vector(self.look_axis), reverse=self.sideMult)
-        extra.orientJoints([self.j_ik_rp_root, self.j_ik_rp_knee, self.j_ik_rp_end], worldUpAxis=dt.Vector(self.mirror_axis), reverse=self.sideMult)
+        extra.orientJoints([self.j_ik_rp_root, self.j_ik_rp_knee, self.j_ik_rp_end], worldUpAxis=dt.Vector(self.mirror_axis), reverseAim=self.sideMult)
 
 
         # extra.orientJoints([self.j_ik_foot, self.j_ik_ball, self.j_ik_toe],
@@ -187,7 +187,7 @@ class Leg(object):
         #                    mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.look_axis)))
         # extra.orientJoints([self.j_ik_foot, self.j_ik_ball, self.j_ik_toe], worldUpAxis=(self.up_axis), reverse=self.sideMult)
         # extra.orientJoints([self.j_ik_foot, self.j_ik_ball, self.j_ik_toe], worldUpAxis=-dt.Vector(self.look_axis), reverse=self.sideMult)
-        extra.orientJoints([self.j_ik_foot, self.j_ik_ball, self.j_ik_toe], worldUpAxis=dt.Vector(self.mirror_axis), reverse=self.sideMult)
+        extra.orientJoints([self.j_ik_foot, self.j_ik_ball, self.j_ik_toe], worldUpAxis=dt.Vector(self.mirror_axis), reverseAim=self.sideMult)
 
 
         # FK Joints
@@ -202,7 +202,7 @@ class Leg(object):
         #                    mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.look_axis)))
         # extra.orientJoints([self.jfk_root, self.jfk_knee, self.jfk_foot, self.jfk_ball, self.jfk_toe], worldUpAxis=(self.up_axis), reverse=self.sideMult)
         # extra.orientJoints([self.jfk_root, self.jfk_knee, self.jfk_foot, self.jfk_ball, self.jfk_toe], worldUpAxis=-dt.Vector(self.look_axis), reverse=self.sideMult)
-        extra.orientJoints([self.jfk_root, self.jfk_knee, self.jfk_foot, self.jfk_ball, self.jfk_toe], worldUpAxis=dt.Vector(self.mirror_axis), reverse=self.sideMult)
+        extra.orientJoints([self.jfk_root, self.jfk_knee, self.jfk_foot, self.jfk_ball, self.jfk_toe], worldUpAxis=dt.Vector(self.mirror_axis), reverseAim=self.sideMult)
 
 
         # re-orient single joints
@@ -237,14 +237,14 @@ class Leg(object):
         thigh_cont_scale = (self.init_upper_leg_dist / 4, self.init_upper_leg_dist / 4, self.init_upper_leg_dist / 16)
         # self.cont_thigh = icon.cube("cont_Thigh_%s" % self.suffix, thigh_cont_scale)
         # self.cont_thigh, dmp = icon.createIcon("Cube", iconName="cont_Thigh_%s" % self.suffix, scale=thigh_cont_scale, normal=self.sideMult* dt.Vector(self.up_axis))
-        self.cont_thigh, dmp = icon.createIcon("Cube", iconName="cont_Thigh_%s" % self.suffix, scale=thigh_cont_scale, normal=self.look_axis)
+        self.cont_thigh, dmp = icon.createIcon("Cube", iconName="cont_Thigh_%s" % self.suffix, scale=thigh_cont_scale, normal=(0, 0, self.sideMult))
         # pm.setAttr("{0}.s{1}".format(self.cont_thigh, "y"), self.sideMult)
         # pm.makeIdentity(self.cont_thigh, a=True)
 
         # extra.alignAndAim(self.cont_thigh, targetList=[self.jDef_legRoot], aimTargetList=[self.j_def_hip], upVector=self.up_axis)
         # extra.alignAndAim(self.cont_thigh, targetList=[self.hip_ref], aimTargetList=[self.knee_ref], upObject=self.leg_root_ref)
         extra.alignToAlter(self.cont_thigh, self.jfk_root, mode=2)
-        pm.move(self.cont_thigh, (0, (thigh_cont_scale[0] * 2), 0), r=True, os=True)
+        pm.move(self.cont_thigh, (0, self.sideMult*((thigh_cont_scale[0] * 2)), 0), r=True, os=True)
         # pm.move(self.cont_thigh, (0, 0, (-thigh_cont_scale[0] * 2)), r=True, os=True)
         pm.xform(self.cont_thigh, piv=self.leg_root_pos, ws=True)
 
@@ -259,7 +259,7 @@ class Leg(object):
         # IK Foot Controller
         foot_cont_scale = (self.init_foot_length * 0.75, 1, self.init_foot_width * 0.8)
         # self.cont_IK_foot = icon.circle("cont_IK_foot_%s" % self.suffix, scale=foot_cont_scale, normal=(0, 1, 0))
-        self.cont_IK_foot, dmp = icon.createIcon("Circle", iconName="cont_IK_foot_%s" % self.suffix, scale=foot_cont_scale, normal=self.look_axis)
+        self.cont_IK_foot, dmp = icon.createIcon("Circle", iconName="cont_IK_foot_%s" % self.suffix, scale=foot_cont_scale, normal=(0, 0, self.sideMult))
 
         # align it to the ball socket
         extra.alignToAlter(self.cont_IK_foot, self.j_socket_ball, mode=2)

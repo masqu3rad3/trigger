@@ -641,7 +641,7 @@ def getRigAxes(joint):
     Returns: upAxis, mirrorAxis, spineDir
 
     """
-    axisDict = {"x": (1.0, 0.0, 0.0), "y": (0.0, 1.0, 0.0), "z": (0.0, 0.0, 1.0), "-x": (-1.0, 0.0, 0.0), "-y": (0.0, -1.0, 0.0), "-z": (0.0, 0.0, -1.0)}
+    axisDict = {"+x": (1.0, 0.0, 0.0), "+y": (0.0, 1.0, 0.0), "+z": (0.0, 0.0, 1.0), "x": (1.0, 0.0, 0.0), "y": (0.0, 1.0, 0.0), "z": (0.0, 0.0, 1.0), "-x": (-1.0, 0.0, 0.0), "-y": (0.0, -1.0, 0.0), "-z": (0.0, 0.0, -1.0)}
     # spineDict = {"x": (-1.0, 0.0, 0.0), "y": (0.0, -1.0, 0.0), "z": (0.0, 0.0, 1.0), "-x": (1.0, 0.0, 0.0), "-y": (0.0, 1.0, 0.0), "-z": (0.0, 0.0, 1.0)}
     upAxis = None
     mirrorAxis = None
@@ -784,10 +784,10 @@ def alignNormal(node, normalVector):
 #     pm.setAttr(jointList[-1].jointOrient, (0,0,0))
 
 
-def orientJoints(jointList, aimAxis=(1.0,0.0,0.0), upAxis=(0.0,1.0,0.0), worldUpAxis=(0.0,1.0,0.0), reverse=1):
+def orientJoints(jointList, aimAxis=(1.0,0.0,0.0), upAxis=(0.0,1.0,0.0), worldUpAxis=(0.0,1.0,0.0), reverseAim=1, reverseUp=1):
 
-    aimAxis = reverse*dt.Vector(aimAxis)
-    upAxis = reverse*dt.Vector(upAxis)
+    aimAxis = reverseAim*dt.Vector(aimAxis)
+    upAxis = reverseUp*dt.Vector(upAxis)
 
     if len(jointList) == 1:
         pass
@@ -796,7 +796,6 @@ def orientJoints(jointList, aimAxis=(1.0,0.0,0.0), upAxis=(0.0,1.0,0.0), worldUp
 
     for j in range(1, len(jointList)):
         pm.parent(jointList[j], w=True)
-
 
     for j in range (0, len(jointList)):
 

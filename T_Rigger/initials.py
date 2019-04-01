@@ -6,9 +6,9 @@ class initialJoints():
 
     def __init__(self, settingsData):
 
-        self.mirrorAxis = "x"
-        self.upAxis = "y"
-        self.lookAxis = "z"
+        self.mirrorAxis = "+x"
+        self.upAxis = "+y"
+        self.lookAxis = "+z"
 
         self.parseSettings(settingsData)
 
@@ -36,8 +36,13 @@ class initialJoints():
         self.projectName = "tikAutoRig"
 
     def parseSettings(self, settingsData):
-        up=settingsData["upAxis"]
-        look=settingsData["lookAxis"]
+        # self.upAxis = settingsData["upAxis"]
+        # self.lookAxis = settingsData["lookAxis"]
+        # self.mirrorAxis = settingsData["mirrorAxis"]
+
+        up = settingsData["upAxis"]
+        look = settingsData["lookAxis"]
+        mirror = settingsData["mirrorAxis"]
         if "-" in up:
             self.upAxis=up.replace("-", "")
             self.upAxisMult=-1
@@ -50,8 +55,15 @@ class initialJoints():
         if "+" in look:
             self.lookAxis=look.replace("+", "")
             self.lookAxisMult=1
-        self.mirrorAxis="xyz".replace(self.upAxis,"").replace(self.lookAxis,"")
-        self.mirrorAxisMult=1
+        if "-" in mirror:
+            self.mirrorAxis=mirror.replace("-", "")
+            self.mirrorAxisMult=-1
+        if "+" in mirror:
+            self.mirrorAxis=mirror.replace("+", "")
+            self.mirrorAxisMult=1
+
+        # self.mirrorAxis="xyz".replace(self.upAxis,"").replace(self.lookAxis,"")
+        # self.mirrorAxisMult=1
 
         self.majorLeftColor = settingsData["majorLeftColor"]
         self.minorLeftColor = settingsData["minorLeftColor"]
@@ -1148,9 +1160,10 @@ class initialJoints():
         for att in axisAttributes:
             if not pm.attributeQuery(att, node=node, exists=True):
                 pm.addAttr(node, longName=att, dt="string")
-        pm.setAttr(node.upAxis, self.upAxis)
-        pm.setAttr(node.mirrorAxis, self.mirrorAxis)
-        pm.setAttr(node.lookAxis, self.lookAxis)
+
+        pm.setAttr(node.upAxis, "-%s" %self.upAxis if self.upAxisMult == -1 else "%s" %self.upAxis)
+        pm.setAttr(node.mirrorAxis, "-%s" %self.mirrorAxis if self.mirrorAxisMult == -1 else "%s" %self.mirrorAxis)
+        pm.setAttr(node.lookAxis, "-%s" %self.lookAxis if self.lookAxisMult == -1 else "%s" %self.lookAxis)
         # self.lookAxis
 
 

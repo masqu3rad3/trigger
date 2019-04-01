@@ -104,6 +104,7 @@ class mainUI(QtWidgets.QMainWindow):
             "minorCenterColor": 20,
             "lookAxis": "+z",
             "upAxis": "+y",
+            "mirrorAxis": "+x",
             "afterCreation": 0,
             "seperateSelectionSets": True,
             "bindMethod": 0,
@@ -387,6 +388,7 @@ class mainUI(QtWidgets.QMainWindow):
 
         self.settingsData["lookAxis"] = self.lookaxis_comboBox.currentText()
         self.settingsData["upAxis"] = self.upaxis_comboBox.currentText()
+        self.settingsData["mirrorAxis"] = self.mirroraxis_comboBox.currentText()
         self.settingsData["afterCreation"] = self.aftercreation_comboBox.currentIndex()
         self.settingsData["seperateSelectionSets"] = self.jointselectionsets_comboBox.currentIndex() == 0
 
@@ -470,7 +472,6 @@ class mainUI(QtWidgets.QMainWindow):
         self.majorleft_pushButton = QtWidgets.QPushButton(self.general_settings_groupBox)
         self.majorleft_pushButton.setGeometry(QtCore.QRect(20, 90, 81, 31))
         self.majorleft_pushButton.setAcceptDrops(False)
-        self.majorleft_pushButton.setToolTip((""))
         self.majorleft_pushButton.setLayoutDirection(QtCore.Qt.LeftToRight)
         self.majorleft_pushButton.setText(("Major Left"))
         self.majorleft_pushButton.setAutoDefault(True)
@@ -482,7 +483,6 @@ class mainUI(QtWidgets.QMainWindow):
         self.minorleft_pushButton = QtWidgets.QPushButton(self.general_settings_groupBox)
         self.minorleft_pushButton.setGeometry(QtCore.QRect(20, 130, 81, 31))
         self.minorleft_pushButton.setAcceptDrops(False)
-        self.minorleft_pushButton.setToolTip((""))
         self.minorleft_pushButton.setLayoutDirection(QtCore.Qt.LeftToRight)
         self.minorleft_pushButton.setText(("Minor Left"))
         self.minorleft_pushButton.setAutoDefault(True)
@@ -493,7 +493,6 @@ class mainUI(QtWidgets.QMainWindow):
         self.minorright_pushButton = QtWidgets.QPushButton(self.general_settings_groupBox)
         self.minorright_pushButton.setGeometry(QtCore.QRect(200, 130, 81, 31))
         self.minorright_pushButton.setAcceptDrops(False)
-        self.minorright_pushButton.setToolTip((""))
         self.minorright_pushButton.setLayoutDirection(QtCore.Qt.LeftToRight)
         self.minorright_pushButton.setText(("Minor Right"))
         self.minorright_pushButton.setAutoDefault(True)
@@ -504,7 +503,6 @@ class mainUI(QtWidgets.QMainWindow):
         self.majorright_pushButton = QtWidgets.QPushButton(self.general_settings_groupBox)
         self.majorright_pushButton.setGeometry(QtCore.QRect(200, 90, 81, 31))
         self.majorright_pushButton.setAcceptDrops(False)
-        self.majorright_pushButton.setToolTip((""))
         self.majorright_pushButton.setLayoutDirection(QtCore.Qt.LeftToRight)
         self.majorright_pushButton.setText(("Major Right"))
         self.majorright_pushButton.setAutoDefault(True)
@@ -515,7 +513,6 @@ class mainUI(QtWidgets.QMainWindow):
         self.minorcenter_pushButton = QtWidgets.QPushButton(self.general_settings_groupBox)
         self.minorcenter_pushButton.setGeometry(QtCore.QRect(110, 130, 81, 31))
         self.minorcenter_pushButton.setAcceptDrops(False)
-        self.minorcenter_pushButton.setToolTip((""))
         self.minorcenter_pushButton.setLayoutDirection(QtCore.Qt.LeftToRight)
         self.minorcenter_pushButton.setText(("Minor Center"))
         self.minorcenter_pushButton.setAutoDefault(True)
@@ -526,7 +523,6 @@ class mainUI(QtWidgets.QMainWindow):
         self.majorcenter_pushButton = QtWidgets.QPushButton(self.general_settings_groupBox)
         self.majorcenter_pushButton.setGeometry(QtCore.QRect(110, 90, 81, 31))
         self.majorcenter_pushButton.setAcceptDrops(False)
-        self.majorcenter_pushButton.setToolTip((""))
         self.majorcenter_pushButton.setLayoutDirection(QtCore.Qt.LeftToRight)
         self.majorcenter_pushButton.setText(("Major Center"))
         self.majorcenter_pushButton.setAutoDefault(True)
@@ -535,7 +531,7 @@ class mainUI(QtWidgets.QMainWindow):
         self.majorcenter_pushButton.setObjectName(("majorcenter_pushButton"))
 
         self.initjoint_settings_groupBox = QtWidgets.QGroupBox(self.trigger_settings_Dialog)
-        self.initjoint_settings_groupBox.setGeometry(QtCore.QRect(20, 230, 301, 91))
+        self.initjoint_settings_groupBox.setGeometry(QtCore.QRect(20, 215, 301, 110))
         self.initjoint_settings_groupBox.setTitle(("Initial Joint Settings"))
         self.initjoint_settings_groupBox.setObjectName(("initjoint_settings_groupBox"))
 
@@ -553,7 +549,6 @@ class mainUI(QtWidgets.QMainWindow):
 
         self.lookaxis_comboBox = QtWidgets.QComboBox(self.initjoint_settings_groupBox)
         self.lookaxis_comboBox.setGeometry(QtCore.QRect(120, 20, 74, 22))
-        self.lookaxis_comboBox.setToolTip((""))
         self.lookaxis_comboBox.setObjectName(("lookaxis_comboBox"))
         self.lookaxis_comboBox.addItems(axisList)
 
@@ -565,12 +560,26 @@ class mainUI(QtWidgets.QMainWindow):
 
         self.upaxis_comboBox = QtWidgets.QComboBox(self.initjoint_settings_groupBox)
         self.upaxis_comboBox.setGeometry(QtCore.QRect(120, 50, 74, 22))
-        self.upaxis_comboBox.setToolTip((""))
         self.upaxis_comboBox.setObjectName(("upaxis_comboBox"))
         self.upaxis_comboBox.addItems(axisList)
 
+        self.mirroraxis_label = QtWidgets.QLabel(self.initjoint_settings_groupBox)
+        self.mirroraxis_label.setGeometry(QtCore.QRect(0, 80, 101, 20))
+        self.mirroraxis_label.setText(("Mirror Axis"))
+        self.mirroraxis_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
+        self.mirroraxis_label.setObjectName(("upaxis_label"))
+
+        self.mirroraxis_comboBox = QtWidgets.QComboBox(self.initjoint_settings_groupBox)
+        self.mirroraxis_comboBox.setGeometry(QtCore.QRect(120, 80, 74, 22))
+        self.mirroraxis_comboBox.setObjectName(("mirroraxis_comboBox"))
+        self.mirroraxis_comboBox.addItems(axisList)
+
         self.lookaxis_comboBox.currentIndexChanged.connect(lambda: fixClash(self.lookaxis_comboBox, self.upaxis_comboBox))
+        self.lookaxis_comboBox.currentIndexChanged.connect(lambda: fixClash(self.lookaxis_comboBox, self.mirroraxis_comboBox))
         self.upaxis_comboBox.currentIndexChanged.connect(lambda: fixClash(self.upaxis_comboBox, self.lookaxis_comboBox))
+        self.upaxis_comboBox.currentIndexChanged.connect(lambda: fixClash(self.upaxis_comboBox, self.mirroraxis_comboBox))
+        self.mirroraxis_comboBox.currentIndexChanged.connect(lambda: fixClash(self.mirroraxis_comboBox, self.lookaxis_comboBox))
+        self.mirroraxis_comboBox.currentIndexChanged.connect(lambda: fixClash(self.mirroraxis_comboBox, self.upaxis_comboBox))
 
 
         self.rig_settings_groupBox = QtWidgets.QGroupBox(self.trigger_settings_Dialog)
@@ -586,7 +595,6 @@ class mainUI(QtWidgets.QMainWindow):
 
         self.aftercreation_comboBox = QtWidgets.QComboBox(self.rig_settings_groupBox)
         self.aftercreation_comboBox.setGeometry(QtCore.QRect(120, 20, 141, 22))
-        self.aftercreation_comboBox.setToolTip((""))
         self.aftercreation_comboBox.setObjectName(("aftercreation_comboBox"))
         self.aftercreation_comboBox.addItems(["Do Nothing", "Hide Initial Joints", "Delete Initial Joints"])
 
@@ -613,7 +621,6 @@ class mainUI(QtWidgets.QMainWindow):
 
         self.bindmethod_comboBox = QtWidgets.QComboBox(self.skinmesh_settings_groupBox)
         self.bindmethod_comboBox.setGeometry(QtCore.QRect(120, 20, 141, 22))
-        self.bindmethod_comboBox.setToolTip((""))
         self.bindmethod_comboBox.setObjectName(("bindmethod_comboBox"))
         self.bindmethod_comboBox.addItems(["Closest distance", "Closest in hierarchy", "Heat Map"])
         if int(pm.about(version=True)) >= 2017:
@@ -648,13 +655,25 @@ class mainUI(QtWidgets.QMainWindow):
 
             index = self.lookaxis_comboBox.findText(self.settingsData["lookAxis"], QtCore.Qt.MatchFixedString)
             if index >= 0:
+                self.lookaxis_comboBox.blockSignals(True)
                 self.lookaxis_comboBox.setCurrentIndex(index)
+                self.lookaxis_comboBox.blockSignals(False)
 
             index = self.upaxis_comboBox.findText(self.settingsData["upAxis"], QtCore.Qt.MatchFixedString)
             if index >= 0:
+                self.upaxis_comboBox.blockSignals(True)
                 self.upaxis_comboBox.setCurrentIndex(index)
+                self.upaxis_comboBox.blockSignals(False)
 
-            fixClash(self.lookaxis_comboBox, self.upaxis_comboBox)
+
+            index = self.mirroraxis_comboBox.findText(self.settingsData["mirrorAxis"], QtCore.Qt.MatchFixedString)
+            if index >= 0:
+                self.mirroraxis_comboBox.blockSignals(True)
+                self.mirroraxis_comboBox.setCurrentIndex(index)
+                self.mirroraxis_comboBox.blockSignals(False)
+
+
+            # fixClash(self.lookaxis_comboBox, self.upaxis_comboBox)
             self.aftercreation_comboBox.setCurrentIndex(self.settingsData["afterCreation"])
             self.jointselectionsets_comboBox.setCurrentIndex(not self.settingsData["seperateSelectionSets"])
 
@@ -705,10 +724,6 @@ class mainUI(QtWidgets.QMainWindow):
         MPradioGrp.addButton(self.MPLeftToRight)
         MPradioGrp.addButton(self.MPRightToLeft)
         self.MPLeftToRight.setChecked(True)
-
-        # MPradioColumn = QtWidgets.QVBoxLayout()
-        # MPradioColumn.setAlignment(QtCore.Qt.AlignLeft)
-        # MPLayout.addLayout(MPradioColumn)
 
         MPLayout.addWidget(self.MPLeftToRight)
         MPLayout.addWidget(self.MPRightToLeft)

@@ -95,7 +95,7 @@ class Arm(object):
 
         # extra.orientJoints([self.j_def_collar, self.j_collar_end], localMoveAxis=self.sideMult * (dt.Vector(self.up_axis)), mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.look_axis)))
         # extra.orientJoints([self.j_def_collar, self.j_collar_end], localMoveAxis=self.sideMult * (dt.Vector(self.up_axis)), mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.look_axis)))
-        extra.orientJoints([self.j_def_collar, self.j_collar_end], worldUpAxis=(self.up_axis), reverse=self.sideMult)
+        extra.orientJoints([self.j_def_collar, self.j_collar_end], worldUpAxis=(self.up_axis), reverseAim=self.sideMult, reverseUp=self.sideMult)
 
         pm.select(d=True)
         self.j_def_elbow = pm.joint(name="jDef_elbow_%s" % self.suffix, p=self.elbow_pos, radius=1.5)
@@ -126,18 +126,18 @@ class Arm(object):
         # extra.orientJoints([self.j_ik_orig_up, self.j_ik_orig_low, self.j_ik_orig_low_end],
         #                    localMoveAxis=self.sideMult * (dt.Vector(self.up_axis)),
         #                    mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.look_axis)))
-        extra.orientJoints([self.j_ik_orig_up, self.j_ik_orig_low, self.j_ik_orig_low_end], worldUpAxis=(self.up_axis), reverse=self.sideMult)
+        extra.orientJoints([self.j_ik_orig_up, self.j_ik_orig_low, self.j_ik_orig_low_end], worldUpAxis=(self.up_axis), reverseAim=self.sideMult, reverseUp=self.sideMult)
 
         # extra.orientJoints([self.j_ik_sc_up, self.j_ik_sc_low, self.j_ik_sc_low_end],
         #                    localMoveAxis=self.sideMult * (dt.Vector(self.up_axis)),
         #                    mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.look_axis)))
-        extra.orientJoints([self.j_ik_sc_up, self.j_ik_sc_low, self.j_ik_sc_low_end], worldUpAxis=(self.up_axis), reverse=self.sideMult)
+        extra.orientJoints([self.j_ik_sc_up, self.j_ik_sc_low, self.j_ik_sc_low_end], worldUpAxis=(self.up_axis), reverseAim=self.sideMult, reverseUp=self.sideMult)
 
 
         # extra.orientJoints([self.j_ik_rp_up, self.j_ik_rp_low, self.j_ik_rp_low_end],
         #                    localMoveAxis=self.sideMult * (dt.Vector(self.up_axis)),
         #                    mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.look_axis)))
-        extra.orientJoints([self.j_ik_rp_up, self.j_ik_rp_low, self.j_ik_rp_low_end], worldUpAxis=(self.up_axis), reverse=self.sideMult)
+        extra.orientJoints([self.j_ik_rp_up, self.j_ik_rp_low, self.j_ik_rp_low_end], worldUpAxis=(self.up_axis), reverseAim=self.sideMult, reverseUp=self.sideMult)
 
 
         # FK Joints
@@ -148,7 +148,7 @@ class Arm(object):
 
         # extra.orientJoints([self.j_fk_up, self.j_fk_low, self.j_fk_low_end], localMoveAxis=self.sideMult * (dt.Vector(self.up_axis)),
         #                    mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.look_axis)))
-        extra.orientJoints([self.j_fk_up, self.j_fk_low, self.j_fk_low_end], worldUpAxis=(self.up_axis), reverse=self.sideMult)
+        extra.orientJoints([self.j_fk_up, self.j_fk_low, self.j_fk_low_end], worldUpAxis=(self.up_axis), reverseAim=self.sideMult, reverseUp=self.sideMult)
 
 
         # Hand joint

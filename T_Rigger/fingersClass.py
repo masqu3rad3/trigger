@@ -84,7 +84,7 @@ class Fingers(object):
         pm.parent(self.scaleGrp, self.limbGrp)
         pm.parent(self.nonScaleGrp, self.limbGrp)
 
-        pm.parent(self.scaleGrp, self.nonScaleGrp, self.limbGrp)
+        # pm.parent(self.scaleGrp, self.nonScaleGrp, self.limbGrp)
 
     def createJoints(self):
 

@@ -128,7 +128,7 @@ class TwistSpline(object):
 
 
         # extra.orientJoints(IKjoints, localMoveAxis=self.localMoveAxis, upAxis=self.upAxis, mirrorAxis=self.mirrorAxis)
-        extra.orientJoints(IKjoints, worldUpAxis=(self.upAxis), reverse=1)
+        extra.orientJoints(IKjoints, worldUpAxis=(self.upAxis))
 
         map(lambda x: pm.setAttr(x.displayLocalAxis, True), IKjoints)
         # for j in IKjoints:
@@ -175,7 +175,7 @@ class TwistSpline(object):
             contJoints.append(j)
 
         # extra.orientJoints(contJoints, localMoveAxis=self.localMoveAxis, upAxis=self.upAxis, mirrorAxis=self.mirrorAxis)
-        extra.orientJoints(contJoints, worldUpAxis=(self.upAxis), reverse=1)
+        extra.orientJoints(contJoints, worldUpAxis=(self.upAxis))
 
         pm.select(d=True)
         pm.parent(contJoints[1:], w=True)

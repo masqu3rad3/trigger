@@ -135,7 +135,7 @@ class Tentacle(object):
         # extra.orientJoints(self.guideJoints,
         #                    localMoveAxis=self.sideMult * (dt.Vector(self.up_axis)),
         #                    mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.look_axis)))
-        extra.orientJoints(self.guideJoints, worldUpAxis=(self.up_axis), reverse=self.sideMult)
+        extra.orientJoints(self.guideJoints, worldUpAxis=(self.up_axis), reverseAim=self.sideMult, reverseUp=self.sideMult)
 
 
         pm.select(d=True)

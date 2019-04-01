@@ -79,7 +79,7 @@ class SimpleTail(object):
         # extra.orientJoints(self.deformerJoints,
         #                    localMoveAxis=self.sideMult * (dt.Vector(self.up_axis)),
         #                    mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.look_axis)))
-        extra.orientJoints(self.deformerJoints, worldUpAxis=(self.up_axis), reverse=self.sideMult)
+        extra.orientJoints(self.deformerJoints, worldUpAxis=(self.up_axis), reverseAim=self.sideMult, reverseUp=self.sideMult)
 
 
         pm.parent(self.deformerJoints[0], self.scaleGrp)
