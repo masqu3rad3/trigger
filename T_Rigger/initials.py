@@ -440,11 +440,25 @@ class initialJoints():
         shoulder = pm.joint(p=shoulderVec, name=("jInit_shoulder_%s" % suffix))
         elbow = pm.joint(p=elbowVec, name=("jInit_elbow_%s" % suffix))
         hand = pm.joint(p=handVec, name=("jInit_hand_%s" % suffix))
+
+        pm.setAttr(collar.displayLocalAxis, 1)
+        pm.setAttr(shoulder.displayLocalAxis, 1)
+        pm.setAttr(elbow.displayLocalAxis, 1)
+        pm.setAttr(hand.displayLocalAxis, 1)
+
         # Orientation
-        pm.joint(collar, e=True, zso=True, oj="xyz", sao="yup")
-        pm.joint(shoulder, e=True, zso=True, oj="xyz", sao="yup")
-        pm.joint(elbow, e=True, zso=True, oj="xyz", sao="yup")
-        pm.joint(hand, e=True, zso=True, oj="xyz", sao="yup")
+        # pm.joint(collar, e=True, zso=True, oj="xyz", sao="yup")
+        # pm.joint(shoulder, e=True, zso=True, oj="xyz", sao="yup")
+        # pm.joint(elbow, e=True, zso=True, oj="xyz", sao="yup")
+        # pm.joint(hand, e=True, zso=True, oj="xyz", sao="yup")
+
+        if side == 0 or side ==1:
+            direction = 1
+        else:
+            direction = -1
+
+        extra.orientJoints([collar, shoulder, elbow, hand], worldUpAxis=(0.0,1.0,0.0), reverseAim=direction, reverseUp=direction)
+
         # Joint Labeling
         pm.setAttr("%s.side" % collar, side)
         pm.setAttr("%s.type" % collar, 9)

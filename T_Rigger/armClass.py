@@ -49,6 +49,14 @@ class Arm(object):
 
         self.up_axis, self.mirror_axis, self.look_axis = extra.getRigAxes(self.collar_ref)
 
+        # get if orientation should be derived from the initial Joints
+        try:
+            self.useRefOrientation = self.collar_ref.useRefOri
+        except:
+            self.useRefOrientation = False
+
+
+
         # self.originalSuffix = suffix
         self.suffix = (extra.uniqueName("limbGrp_%s" % suffix)).replace("limbGrp_", "")
 
@@ -95,7 +103,16 @@ class Arm(object):
 
         # extra.orientJoints([self.j_def_collar, self.j_collar_end], localMoveAxis=self.sideMult * (dt.Vector(self.up_axis)), mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.look_axis)))
         # extra.orientJoints([self.j_def_collar, self.j_collar_end], localMoveAxis=self.sideMult * (dt.Vector(self.up_axis)), mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.look_axis)))
-        extra.orientJoints([self.j_def_collar, self.j_collar_end], worldUpAxis=(self.up_axis), reverseAim=self.sideMult, reverseUp=self.sideMult)
+        # extra.orientJoints([self.j_def_collar, self.j_collar_end], worldUpAxis=(self.up_axis), reverseAim=self.sideMult, reverseUp=self.sideMult)
+
+        if not self.useRefOrientation:
+            extra.orientJoints([self.j_def_collar, self.j_collar_end], worldUpAxis=(self.look_axis), reverseAim=self.sideMult, reverseUp=self.sideMult)
+        else:
+            extra.alignTo(self.j_def_collar, self.collar_ref, mode=2)
+            pm.makeIdentity(self.j_def_collar, a=True)
+            extra.alignTo(self.j_collar_end, self.shoulder_ref, mode=2)
+            pm.makeIdentity(self.j_collar_end, a=True)
+
 
         pm.select(d=True)
         self.j_def_elbow = pm.joint(name="jDef_elbow_%s" % self.suffix, p=self.elbow_pos, radius=1.5)
@@ -126,19 +143,54 @@ class Arm(object):
         # extra.orientJoints([self.j_ik_orig_up, self.j_ik_orig_low, self.j_ik_orig_low_end],
         #                    localMoveAxis=self.sideMult * (dt.Vector(self.up_axis)),
         #                    mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.look_axis)))
-        extra.orientJoints([self.j_ik_orig_up, self.j_ik_orig_low, self.j_ik_orig_low_end], worldUpAxis=(self.up_axis), reverseAim=self.sideMult, reverseUp=self.sideMult)
+        # extra.orientJoints([self.j_ik_orig_up, self.j_ik_orig_low, self.j_ik_orig_low_end], worldUpAxis=(self.up_axis), reverseAim=self.sideMult, reverseUp=self.sideMult)
+
+        if not self.useRefOrientation:
+            extra.orientJoints([self.j_ik_orig_up, self.j_ik_orig_low, self.j_ik_orig_low_end], worldUpAxis=(self.look_axis), reverseAim=self.sideMult, reverseUp=self.sideMult)
+        else:
+            extra.alignTo(self.j_ik_orig_up, self.shoulder_ref, mode=2)
+            pm.makeIdentity(self.j_ik_orig_up, a=True)
+
+            extra.alignTo(self.j_ik_orig_low, self.elbow_ref, mode=2)
+            pm.makeIdentity(self.j_ik_orig_low, a=True)
+
+            extra.alignTo(self.j_ik_orig_low_end, self.hand_ref, mode=2)
+            pm.makeIdentity(self.j_ik_orig_low_end, a=True)
+
 
         # extra.orientJoints([self.j_ik_sc_up, self.j_ik_sc_low, self.j_ik_sc_low_end],
         #                    localMoveAxis=self.sideMult * (dt.Vector(self.up_axis)),
         #                    mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.look_axis)))
-        extra.orientJoints([self.j_ik_sc_up, self.j_ik_sc_low, self.j_ik_sc_low_end], worldUpAxis=(self.up_axis), reverseAim=self.sideMult, reverseUp=self.sideMult)
+        # extra.orientJoints([self.j_ik_sc_up, self.j_ik_sc_low, self.j_ik_sc_low_end], worldUpAxis=(self.up_axis), reverseAim=self.sideMult, reverseUp=self.sideMult)
 
+        if not self.useRefOrientation:
+            extra.orientJoints([self.j_ik_sc_up, self.j_ik_sc_low, self.j_ik_sc_low_end], worldUpAxis=(self.look_axis), reverseAim=self.sideMult, reverseUp=self.sideMult)
+        else:
+            extra.alignTo(self.j_ik_sc_up, self.shoulder_ref, mode=2)
+            pm.makeIdentity(self.j_ik_sc_up, a=True)
+
+            extra.alignTo(self.j_ik_sc_low, self.elbow_ref, mode=2)
+            pm.makeIdentity(self.j_ik_sc_low, a=True)
+
+            extra.alignTo(self.j_ik_sc_low_end, self.hand_ref, mode=2)
+            pm.makeIdentity(self.j_ik_sc_low_end, a=True)
 
         # extra.orientJoints([self.j_ik_rp_up, self.j_ik_rp_low, self.j_ik_rp_low_end],
         #                    localMoveAxis=self.sideMult * (dt.Vector(self.up_axis)),
         #                    mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.look_axis)))
-        extra.orientJoints([self.j_ik_rp_up, self.j_ik_rp_low, self.j_ik_rp_low_end], worldUpAxis=(self.up_axis), reverseAim=self.sideMult, reverseUp=self.sideMult)
+        # extra.orientJoints([self.j_ik_rp_up, self.j_ik_rp_low, self.j_ik_rp_low_end], worldUpAxis=(self.up_axis), reverseAim=self.sideMult, reverseUp=self.sideMult)
 
+        if not self.useRefOrientation:
+            extra.orientJoints([self.j_ik_rp_up, self.j_ik_rp_low, self.j_ik_rp_low_end], worldUpAxis=(self.look_axis), reverseAim=self.sideMult, reverseUp=self.sideMult)
+        else:
+            extra.alignTo(self.j_ik_rp_up, self.shoulder_ref, mode=2)
+            pm.makeIdentity(self.j_ik_rp_up, a=True)
+
+            extra.alignTo(self.j_ik_rp_low, self.elbow_ref, mode=2)
+            pm.makeIdentity(self.j_ik_rp_low, a=True)
+
+            extra.alignTo(self.j_ik_rp_low_end, self.hand_ref, mode=2)
+            pm.makeIdentity(self.j_ik_rp_low_end, a=True)
 
         # FK Joints
         pm.select(d=True)
@@ -148,8 +200,19 @@ class Arm(object):
 
         # extra.orientJoints([self.j_fk_up, self.j_fk_low, self.j_fk_low_end], localMoveAxis=self.sideMult * (dt.Vector(self.up_axis)),
         #                    mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.look_axis)))
-        extra.orientJoints([self.j_fk_up, self.j_fk_low, self.j_fk_low_end], worldUpAxis=(self.up_axis), reverseAim=self.sideMult, reverseUp=self.sideMult)
+        # extra.orientJoints([self.j_fk_up, self.j_fk_low, self.j_fk_low_end], worldUpAxis=(self.up_axis), reverseAim=self.sideMult, reverseUp=self.sideMult)
 
+        if not self.useRefOrientation:
+            extra.orientJoints([self.j_fk_up, self.j_fk_low, self.j_fk_low_end], worldUpAxis=(self.look_axis), reverseAim=self.sideMult, reverseUp=self.sideMult)
+        else:
+            extra.alignTo(self.j_fk_up, self.shoulder_ref, mode=2)
+            pm.makeIdentity(self.j_fk_up, a=True)
+
+            extra.alignTo(self.j_fk_low, self.elbow_ref, mode=2)
+            pm.makeIdentity(self.j_fk_low, a=True)
+
+            extra.alignTo(self.j_fk_low_end, self.hand_ref, mode=2)
+            pm.makeIdentity(self.j_fk_low_end, a=True)
 
         # Hand joint
         self.j_def_hand = pm.joint(name="jDef_Hand_%s" % self.suffix, p=self.hand_pos, radius=1.0)
@@ -180,7 +243,7 @@ class Arm(object):
         ## shoulder controller
         shouldercont_scale = (self.init_shoulder_dist / 2, self.init_shoulder_dist / 2, self.init_shoulder_dist / 2)
         # self.cont_shoulder = icon.shoulder("cont_Shoulder_%s" % self.suffix, shouldercont_scale)
-        self.cont_shoulder, dmp = icon.createIcon("Shoulder", iconName="cont_Shoulder_%s" % self.suffix, scale=shouldercont_scale, normal=(0,self.sideMult,0))
+        self.cont_shoulder, dmp = icon.createIcon("Shoulder", iconName="cont_Shoulder_%s" % self.suffix, scale=shouldercont_scale, normal=(0,0,-self.sideMult))
         # pm.setAttr("{0}.s{1}".format(self.cont_shoulder, "y"), self.sideMult)
         pm.makeIdentity(self.cont_shoulder, a=True)
         # extra.alignAndAim(self.cont_shoulder, targetList=[self.j_def_collar], aimTargetList=[self.j_collar_end],
@@ -774,13 +837,14 @@ class Arm(object):
     def createDefJoints(self):
         # UPPER ARM RIBBON
 
+        # Constraint offsets cannot be False because of the orientation mismatches with PowerRibbon class
+
         ribbon_upper_arm = rc.PowerRibbon()
         ribbon_upper_arm.createPowerRibbon(self.j_collar_end, self.j_def_elbow, "up_%s" % self.suffix, side=self.side,
                                            orientation=0, connectStartAim=False, upVector=self.up_axis)
 
-        ribbon_start_pa_con_upper_arm_start = pm.parentConstraint(self.start_lock, ribbon_upper_arm.startConnection,
-                                                                  mo=False)
-        pm.parentConstraint(self.mid_lock, ribbon_upper_arm.endConnection, mo=False)
+        ribbon_start_pa_con_upper_arm_start = pm.parentConstraint(self.start_lock, ribbon_upper_arm.startConnection, mo=True)
+        pm.parentConstraint(self.mid_lock, ribbon_upper_arm.endConnection, mo=True)
 
         # connect the elbow scaling
         self.cont_mid_lock.scale >> ribbon_upper_arm.endConnection.scale
@@ -788,10 +852,10 @@ class Arm(object):
 
         pm.scaleConstraint(self.scaleGrp, ribbon_upper_arm.scaleGrp)
 
-        ribbon_start_ori_con = pm.parentConstraint(self.j_ik_orig_up, self.j_fk_up, ribbon_upper_arm.startAim, mo=False,
+        ribbon_start_ori_con = pm.parentConstraint(self.j_ik_orig_up, self.j_fk_up, ribbon_upper_arm.startAim, mo=True,
                                                    skipTranslate=["x", "y", "z"])
 
-        ribbon_start_ori_con2 = pm.parentConstraint(self.j_collar_end, ribbon_upper_arm.startAim, mo=False,
+        ribbon_start_ori_con2 = pm.parentConstraint(self.j_collar_end, ribbon_upper_arm.startAim, mo=True,
                                                     skipTranslate=["x", "y", "z"])
 
         self.cont_fk_ik.fk_ik >> ("%s.%sW0" % (ribbon_start_ori_con, self.j_ik_orig_up))
@@ -839,8 +903,8 @@ class Arm(object):
         ribbon_lower_arm.createPowerRibbon(self.j_def_elbow, self.j_def_hand, "low_%s" % self.suffix, side=self.side,
                                            orientation=0, upVector=self.up_axis)
 
-        pm.parentConstraint(self.mid_lock, ribbon_lower_arm.startConnection, mo=False)
-        ribbon_start_pa_con_lower_arm_end = pm.parentConstraint(self.end_lock, ribbon_lower_arm.endConnection, mo=False)
+        pm.parentConstraint(self.mid_lock, ribbon_lower_arm.startConnection, mo=True)
+        ribbon_start_pa_con_lower_arm_end = pm.parentConstraint(self.end_lock, ribbon_lower_arm.endConnection, mo=True)
 
         # connect the elbow scaling
         self.cont_mid_lock.scale >> ribbon_lower_arm.startConnection.scale
@@ -971,7 +1035,7 @@ class Arm(object):
         pm.parentConstraint(self.limbPlug, angleExt_Root_IK, mo=False)
         pm.parentConstraint(self.cont_IK_hand, angleExt_Fixed_IK, mo=False)
         extra.alignToAlter(angleExt_Float_IK, self.j_def_collar, 2)
-        pm.move(angleExt_Float_IK, (0,self.sideMult*5,0), objectSpace=True)
+        pm.move(angleExt_Float_IK, (0,0,-self.sideMult*5), objectSpace=True)
 
         angleNodeIK = pm.createNode("angleBetween", name="angleBetweenIK_%s" % self.suffix)
         angleRemapIK = pm.createNode("remapValue", name="angleRemapIK_%s" % self.suffix)
@@ -1014,7 +1078,7 @@ class Arm(object):
         angleExt_blend.output >> angleGlobal.input1
         self.cont_fk_ik.autoShoulder >> angleGlobal.input2
 
-        angleGlobal.output >> self.cont_shoulder_auto.rotateZ
+        angleGlobal.output >> self.cont_shoulder_auto.rotateY
 
         pm.parent(angleExt_Root_IK, self.scaleGrp)
         self.scaleGrp.rigVis >> angleExt_Root_IK.v
