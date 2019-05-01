@@ -300,7 +300,7 @@ class initialJoints():
             locator = pm.spaceLocator(name="loc_%s" % limbJoints[i].name())
             locatorsList.append(locator)
             if constrainedTo:
-                extra.alignTo(locator, limbJoints[i], 2)
+                extra.alignTo(locator, limbJoints[i], mode=0)
                 pm.parentConstraint(locator, limbJoints[i], mo=True)
                 extra.connectMirror(constrainedTo[i], locatorsList[i], mirrorAxis=self.mirrorAxis.upper())
                 # constrainedTo[i].translate.lock()
@@ -1178,6 +1178,9 @@ class initialJoints():
         pm.setAttr(node.upAxis, "-%s" %self.upAxis if self.upAxisMult == -1 else "%s" %self.upAxis)
         pm.setAttr(node.mirrorAxis, "-%s" %self.mirrorAxis if self.mirrorAxisMult == -1 else "%s" %self.mirrorAxis)
         pm.setAttr(node.lookAxis, "-%s" %self.lookAxis if self.lookAxisMult == -1 else "%s" %self.lookAxis)
+
+        pm.addAttr(node, longName=att, dt="string")
+        # pm.setAttr(node.lookAxis, "-%s" %self.lookAxis if self.lookAxisMult == -1 else "%s" %self.lookAxis)
         # self.lookAxis
 
 
