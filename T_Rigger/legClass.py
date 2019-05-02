@@ -65,6 +65,10 @@ class Leg(object):
 
         self.up_axis, self.mirror_axis, self.look_axis = extra.getRigAxes(self.leg_root_ref)
 
+        # get if orientation should be derived from the initial Joints
+        try: self.useRefOrientation = pm.getAttr(self.collar_ref.useRefOri)
+        except: self.useRefOrientation = False
+
         # self.originalSuffix = suffix
         self.suffix = (extra.uniqueName("limbGrp_%s" % suffix)).replace("limbGrp_", "")
 
@@ -112,7 +116,17 @@ class Leg(object):
 
         # extra.orientJoints([self.jDef_legRoot, self.j_def_hip], worldUpAxis=(self.up_axis), reverse=self.sideMult)
         # extra.orientJoints([self.jDef_legRoot, self.j_def_hip], worldUpAxis=-dt.Vector(self.look_axis), reverse=self.sideMult)
-        extra.orientJoints([self.jDef_legRoot, self.j_def_hip], worldUpAxis=dt.Vector(self.mirror_axis), reverseAim=self.sideMult)
+
+        if not self.useRefOrientation:
+            extra.orientJoints([self.jDef_legRoot, self.j_def_hip], worldUpAxis=dt.Vector(self.mirror_axis),
+                               reverseAim=self.sideMult)
+        else:
+            extra.alignTo(self.jDef_legRoot, self.leg_root_ref, mode=2)
+            pm.makeIdentity(self.jDef_legRoot, a=True)
+            extra.alignTo(self.j_def_hip, self.hip_ref, mode=2)
+            pm.makeIdentity(self.j_def_hip, a=True)
+
+        # extra.orientJoints([self.jDef_legRoot, self.j_def_hip], worldUpAxis=dt.Vector(self.mirror_axis), reverseAim=self.sideMult)
 
 
         pm.select(d=True)
@@ -162,24 +176,59 @@ class Leg(object):
         #                    mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.look_axis)))
         # extra.orientJoints([self.j_ik_orig_root, self.j_ik_orig_knee, self.j_ik_orig_end], worldUpAxis=(self.up_axis), reverse=self.sideMult)
         # extra.orientJoints([self.j_ik_orig_root, self.j_ik_orig_knee, self.j_ik_orig_end], worldUpAxis=-dt.Vector(self.look_axis), reverse=self.sideMult)
-        extra.orientJoints([self.j_ik_orig_root, self.j_ik_orig_knee, self.j_ik_orig_end], worldUpAxis=dt.Vector(self.mirror_axis), reverseAim=self.sideMult)
 
+        # extra.orientJoints([self.j_ik_orig_root, self.j_ik_orig_knee, self.j_ik_orig_end], worldUpAxis=dt.Vector(self.mirror_axis), reverseAim=self.sideMult)
 
+        if not self.useRefOrientation:
+            extra.orientJoints([self.j_ik_orig_root, self.j_ik_orig_knee, self.j_ik_orig_end],
+                               worldUpAxis=dt.Vector(self.mirror_axis), reverseAim=self.sideMult)
+
+        else:
+            extra.alignTo(self.j_ik_orig_root, self.leg_root_ref, mode=2)
+            pm.makeIdentity(self.j_ik_orig_root, a=True)
+            extra.alignTo(self.j_ik_orig_knee, self.knee_ref, mode=2)
+            pm.makeIdentity(self.j_ik_orig_knee, a=True)
+            extra.alignTo(self.j_ik_orig_end, self.foot_ref, mode=2)
+            pm.makeIdentity(self.j_ik_orig_end, a=True)
 
         # extra.orientJoints([self.j_ik_sc_root, self.j_ik_sc_knee, self.j_ik_sc_end],
         #                    localMoveAxis=self.sideMult * (dt.Vector(self.up_axis)),
         #                    mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.look_axis)))
         # extra.orientJoints([self.j_ik_sc_root, self.j_ik_sc_knee, self.j_ik_sc_end], worldUpAxis=(self.up_axis), reverse=self.sideMult)
         # extra.orientJoints([self.j_ik_sc_root, self.j_ik_sc_knee, self.j_ik_sc_end], worldUpAxis=-dt.Vector(self.look_axis), reverse=self.sideMult)
-        extra.orientJoints([self.j_ik_sc_root, self.j_ik_sc_knee, self.j_ik_sc_end], worldUpAxis=dt.Vector(self.mirror_axis), reverseAim=self.sideMult)
+        # extra.orientJoints([self.j_ik_sc_root, self.j_ik_sc_knee, self.j_ik_sc_end], worldUpAxis=dt.Vector(self.mirror_axis), reverseAim=self.sideMult)
 
+        if not self.useRefOrientation:
+            extra.orientJoints([self.j_ik_sc_root, self.j_ik_sc_knee, self.j_ik_sc_end],
+                               worldUpAxis=dt.Vector(self.mirror_axis), reverseAim=self.sideMult)
+
+
+        else:
+            extra.alignTo(self.j_ik_sc_root, self.leg_root_ref, mode=2)
+            pm.makeIdentity(self.j_ik_sc_root, a=True)
+            extra.alignTo(self.j_ik_sc_knee, self.knee_ref, mode=2)
+            pm.makeIdentity(self.j_ik_sc_knee, a=True)
+            extra.alignTo(self.j_ik_sc_end, self.foot_ref, mode=2)
+            pm.makeIdentity(self.j_ik_sc_end, a=True)
 
         # extra.orientJoints([self.j_ik_rp_root, self.j_ik_rp_knee, self.j_ik_rp_end],
         #                    localMoveAxis=self.sideMult * (dt.Vector(self.up_axis)),
         #                    mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.look_axis)))
         # extra.orientJoints([self.j_ik_rp_root, self.j_ik_rp_knee, self.j_ik_rp_end], worldUpAxis=(self.up_axis), reverse=self.sideMult)
         # extra.orientJoints([self.j_ik_rp_root, self.j_ik_rp_knee, self.j_ik_rp_end], worldUpAxis=-dt.Vector(self.look_axis), reverse=self.sideMult)
-        extra.orientJoints([self.j_ik_rp_root, self.j_ik_rp_knee, self.j_ik_rp_end], worldUpAxis=dt.Vector(self.mirror_axis), reverseAim=self.sideMult)
+        # extra.orientJoints([self.j_ik_rp_root, self.j_ik_rp_knee, self.j_ik_rp_end], worldUpAxis=dt.Vector(self.mirror_axis), reverseAim=self.sideMult)
+
+        if not self.useRefOrientation:
+            extra.orientJoints([self.j_ik_rp_root, self.j_ik_rp_knee, self.j_ik_rp_end], worldUpAxis=dt.Vector(self.mirror_axis), reverseAim=self.sideMult)
+
+
+        else:
+            extra.alignTo(self.j_ik_rp_root, self.leg_root_ref, mode=2)
+            pm.makeIdentity(self.j_ik_rp_root, a=True)
+            extra.alignTo(self.j_ik_rp_knee, self.knee_ref, mode=2)
+            pm.makeIdentity(self.j_ik_rp_knee, a=True)
+            extra.alignTo(self.j_ik_rp_end, self.foot_ref, mode=2)
+            pm.makeIdentity(self.j_ik_rp_end, a=True)
 
 
         # extra.orientJoints([self.j_ik_foot, self.j_ik_ball, self.j_ik_toe],
@@ -187,8 +236,20 @@ class Leg(object):
         #                    mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.look_axis)))
         # extra.orientJoints([self.j_ik_foot, self.j_ik_ball, self.j_ik_toe], worldUpAxis=(self.up_axis), reverse=self.sideMult)
         # extra.orientJoints([self.j_ik_foot, self.j_ik_ball, self.j_ik_toe], worldUpAxis=-dt.Vector(self.look_axis), reverse=self.sideMult)
-        extra.orientJoints([self.j_ik_foot, self.j_ik_ball, self.j_ik_toe], worldUpAxis=dt.Vector(self.mirror_axis), reverseAim=self.sideMult)
+        # extra.orientJoints([self.j_ik_foot, self.j_ik_ball, self.j_ik_toe], worldUpAxis=dt.Vector(self.mirror_axis), reverseAim=self.sideMult)
 
+        if not self.useRefOrientation:
+            extra.orientJoints([self.j_ik_foot, self.j_ik_ball, self.j_ik_toe], worldUpAxis=dt.Vector(self.mirror_axis),
+                               reverseAim=self.sideMult)
+
+
+        else:
+            extra.alignTo(self.j_ik_foot, self.foot_ref, mode=2)
+            pm.makeIdentity(self.j_ik_foot, a=True)
+            extra.alignTo(self.j_ik_ball, self.ball_ref, mode=2)
+            pm.makeIdentity(self.j_ik_ball, a=True)
+            extra.alignTo(self.j_ik_toe, self.toe_pv_ref, mode=2)
+            pm.makeIdentity(self.j_ik_toe, a=True)
 
         # FK Joints
         pm.select(d=True)
@@ -202,8 +263,24 @@ class Leg(object):
         #                    mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.look_axis)))
         # extra.orientJoints([self.jfk_root, self.jfk_knee, self.jfk_foot, self.jfk_ball, self.jfk_toe], worldUpAxis=(self.up_axis), reverse=self.sideMult)
         # extra.orientJoints([self.jfk_root, self.jfk_knee, self.jfk_foot, self.jfk_ball, self.jfk_toe], worldUpAxis=-dt.Vector(self.look_axis), reverse=self.sideMult)
-        extra.orientJoints([self.jfk_root, self.jfk_knee, self.jfk_foot, self.jfk_ball, self.jfk_toe], worldUpAxis=dt.Vector(self.mirror_axis), reverseAim=self.sideMult)
+        # extra.orientJoints([self.jfk_root, self.jfk_knee, self.jfk_foot, self.jfk_ball, self.jfk_toe], worldUpAxis=dt.Vector(self.mirror_axis), reverseAim=self.sideMult)
 
+
+        if not self.useRefOrientation:
+            extra.orientJoints([self.jfk_root, self.jfk_knee, self.jfk_foot, self.jfk_ball, self.jfk_toe],
+                               worldUpAxis=dt.Vector(self.mirror_axis), reverseAim=self.sideMult)
+
+        else:
+            extra.alignTo(self.jfk_root, self.leg_root_ref, mode=2)
+            pm.makeIdentity(self.jfk_root, a=True)
+            extra.alignTo(self.jfk_knee, self.knee_ref, mode=2)
+            pm.makeIdentity(self.jfk_knee, a=True)
+            extra.alignTo(self.jfk_foot, self.foot_ref, mode=2)
+            pm.makeIdentity(self.jfk_foot, a=True)
+            extra.alignTo(self.jfk_ball, self.ball_ref, mode=2)
+            pm.makeIdentity(self.jfk_ball, a=True)
+            extra.alignTo(self.jfk_toe, self.toe_pv_ref, mode=2)
+            pm.makeIdentity(self.jfk_toe, a=True)
 
         # re-orient single joints
         extra.alignToAlter(self.j_def_hip, self.jfk_root, mode=2)

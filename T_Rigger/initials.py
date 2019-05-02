@@ -302,6 +302,8 @@ class initialJoints():
             if constrainedTo:
                 extra.alignTo(locator, limbJoints[i], mode=0)
                 extra.connectMirror(constrainedTo[i], locatorsList[i], mirrorAxis=self.mirrorAxis.upper())
+
+                extra.alignTo(limbJoints[i], locator, mode=0)
                 pm.parentConstraint(locator, limbJoints[i], mo=True)
                 # constrainedTo[i].translate.lock()
                 # constrainedTo[i].rotate.lock()
@@ -416,6 +418,8 @@ class initialJoints():
             jointList.append(spine)
             for i in jointList:
                 pm.setAttr("%s.drawLabel" % i, 1)
+                pm.setAttr(i.displayLocalAxis, 1)
+
         self.spineJointsList.append(jointList)
         extra.colorize(jointList, self.majorCenterColor, shape=False)
         return jointList, offsetVector
@@ -511,6 +515,11 @@ class initialJoints():
             toepvVec = self.transformator((5,0,4.3), transformKey)
             heelpvVec = self.transformator((5,0,-0.2), transformKey)
 
+        if side == 0 or side ==1:
+            direction = 1
+        else:
+            direction = -1
+
         offsetVector = -(dt.normal(dt.Vector(rootVec) - dt.Vector(hipVec)))
         
         root = pm.joint(p=rootVec, name=("jInit_LegRoot_%s" % suffix))
@@ -518,6 +527,10 @@ class initialJoints():
         hip = pm.joint(p=hipVec, name=("jInit_Hip_%s" % suffix))
         knee = pm.joint(p=kneeVec, name=("jInit_Knee_%s" % suffix))
         foot = pm.joint(p=footVec, name=("jInit_Foot_%s" % suffix))
+
+        extra.orientJoints([root, hip, knee, foot], worldUpAxis=(1.0,0.0,0.0), reverseAim=direction)
+        # return
+
         ball = pm.joint(p=ballVec, name=("jInit_Ball_%s" % suffix))
         toe = pm.joint(p=toeVec, name=("jInit_Toe_%s" % suffix))
         pm.select(d=True)
@@ -528,33 +541,51 @@ class initialJoints():
         toepv = pm.joint(p=toepvVec, name=("jInit_ToePv_%s" % suffix))
         pm.select(d=True)
         heelpv = pm.joint(p=heelpvVec, name=("jInit_HeelPv_%s" % suffix))
-        pm.joint(root, e=True, zso=True, oj="xyz", sao="yup")
-        pm.joint(hip, e=True, zso=True, oj="xyz", sao="yup")
-        pm.joint(knee, e=True, zso=True, oj="xyz", sao="yup")
-        pm.joint(foot, e=True, zso=True, oj="xyz", sao="yup")
-        pm.joint(ball, e=True, zso=True, oj="xyz", sao="yup")
-        pm.joint(toe, e=True, zso=True, oj="xyz", sao="yup")
+        # pm.joint(root, e=True, zso=True, oj="xyz", sao="yup")
+        # pm.joint(hip, e=True, zso=True, oj="xyz", sao="yup")
+        # pm.joint(knee, e=True, zso=True, oj="xyz", sao="yup")
+        # pm.joint(foot, e=True, zso=True, oj="xyz", sao="yup")
+        # pm.joint(ball, e=True, zso=True, oj="xyz", sao="yup")
+        # pm.joint(toe, e=True, zso=True, oj="xyz", sao="yup")
         pm.parent(heelpv, foot)
         pm.parent(toepv, foot)
         pm.parent(bankin, foot)
         pm.parent(bankout, foot)
 
+        extra.orientJoints([ball, toe], worldUpAxis=(1.0,0.0,0.0), reverseAim=direction)
+
+
+        # extra.orientJoints([root, hip, knee, foot, ball, toe], worldUpAxis=(0.0,1.0,0.0), upAxis=(1.0,0.0,0.0), reverseAim=direction)
+
+
+        # extra.orientJoints([collar, shoulder, elbow, hand], worldUpAxis=(0.0,1.0,0.0), upAxis=(0.0,0.0,-1.0), reverseAim=direction, reverseUp=direction)
+
+
         pm.setAttr("%s.side" % root, side)
         pm.setAttr("%s.type" % root, 18)
         pm.setAttr("%s.otherType" % root, "LegRoot")
+        pm.setAttr(root.displayLocalAxis, 1)
+
         pm.setAttr("%s.side" % hip, side)
         pm.setAttr("%s.type" % hip, 2)
+        pm.setAttr(hip.displayLocalAxis, 1)
+
         pm.setAttr("%s.side" % knee, side)
         pm.setAttr("%s.type" % knee, 3)
+        pm.setAttr(knee.displayLocalAxis, 1)
+
         pm.setAttr("%s.side" % foot, side)
         pm.setAttr("%s.type" % foot, 4)
+        pm.setAttr(foot.displayLocalAxis, 1)
 
         pm.setAttr("%s.side" % ball, side)
         pm.setAttr("%s.type" % ball, 18)
         pm.setAttr("%s.otherType" % ball, "Ball")
+        pm.setAttr(ball.displayLocalAxis, 1)
 
         pm.setAttr("%s.side" % toe, side)
         pm.setAttr("%s.type" % toe, 5)
+        pm.setAttr(toe.displayLocalAxis, 1)
 
         pm.setAttr("%s.side" % heelpv, side)
         pm.setAttr("%s.type" % heelpv, 18)
@@ -583,6 +614,8 @@ class initialJoints():
         if side == 2:
             extra.colorize(jointList, self.majorRightColor, shape=False)
 
+        # extra.orientJoints([ball, toe], worldUpAxis=(0.0,1.0,0.0), upAxis=(1.0,0.0,0.0), reverseAim=direction)
+
         return jointList, offsetVector
 
 
@@ -598,6 +631,8 @@ class initialJoints():
             thumb03vec = self.transformator((2.053, -0.724, 2.356), transformKey)
 
             pm.select(d=True)
+
+            # thumbJoints = [pm.joint(p=thumb00vec, name=("jInit_thumb%s_%s" % (x, suffix))) for x in range(4)]
             thumb00 = pm.joint(p=thumb00vec, name=("jInit_thumb00_%s" % suffix))
             thumb01 = pm.joint(p=thumb01vec, name=("jInit_thumb01_%s" % suffix))
             thumb02 = pm.joint(p=thumb02vec, name=("jInit_thumb02_%s" % suffix))
@@ -611,7 +646,8 @@ class initialJoints():
                     pm.joint(i, e=True, zso=True, oj="xyz", sao="yup")
                     pm.setAttr("%s.type" % i, 13)
                 pm.setAttr("%s.side" % i, side)
-            pm.setAttr("%s.drawLabel" % thumb01, 1)
+            # draw label on knuckles
+            pm.setAttr("%s.drawLabel" % thumbJoints[1], 1)
             self.createAxisAttributes(thumbJoints[0])
             pm.addAttr(thumbJoints[0], shortName="fingerType", longName="Finger_Type", at="enum",
                        en="Extra:Thumb:Index:Middle:Ring:Pinky:Toe", k=True)
@@ -619,7 +655,7 @@ class initialJoints():
 
             self.fingerJointsList.append(thumbJoints)
             jointList.extend(thumbJoints)
-            fingerRoots.append(thumb00)
+            fingerRoots.append(thumbJoints[0])
 
         if fingerCount > 1:
             index00vec = self.transformator((1.517, 0.05, 0.656), transformKey)

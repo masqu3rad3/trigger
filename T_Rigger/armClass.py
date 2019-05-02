@@ -50,10 +50,8 @@ class Arm(object):
         self.up_axis, self.mirror_axis, self.look_axis = extra.getRigAxes(self.collar_ref)
 
         # get if orientation should be derived from the initial Joints
-        try:
-            self.useRefOrientation = pm.getAttr(self.collar_ref.useRefOri)
-        except:
-            self.useRefOrientation = False
+        try: self.useRefOrientation = pm.getAttr(self.collar_ref.useRefOri)
+        except: self.useRefOrientation = False
 
 
 
