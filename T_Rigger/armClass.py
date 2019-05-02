@@ -51,9 +51,10 @@ class Arm(object):
 
         # get if orientation should be derived from the initial Joints
         try:
-            self.useRefOrientation = self.collar_ref.useRefOri
+            self.useRefOrientation = pm.getAttr(self.collar_ref.useRefOri)
         except:
             self.useRefOrientation = False
+
 
 
 
@@ -867,10 +868,10 @@ class Arm(object):
         # re-connect to the custom attribute
         self.cont_fk_ik.alignShoulder >> pairBlendNode.w
 
-        # Rotate the shoulder connection bone 180 degrees for Right Alignment
-        if self.side == "R":
-            rightRBN_startupORE = pm.listRelatives(ribbon_upper_arm.startAim, children=True, type="transform")[0]
-            pm.setAttr(rightRBN_startupORE.ry, 180)
+        # # Rotate the shoulder connection bone 180 degrees for Right Alignment
+        # if self.side == "R":
+        #     rightRBN_startupORE = pm.listRelatives(ribbon_upper_arm.startAim, children=True, type="transform")[0]
+        #     pm.setAttr(rightRBN_startupORE.ry, 180)
 
         # AUTO AND MANUAL TWIST
 

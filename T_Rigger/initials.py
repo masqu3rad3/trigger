@@ -301,8 +301,8 @@ class initialJoints():
             locatorsList.append(locator)
             if constrainedTo:
                 extra.alignTo(locator, limbJoints[i], mode=0)
-                pm.parentConstraint(locator, limbJoints[i], mo=True)
                 extra.connectMirror(constrainedTo[i], locatorsList[i], mirrorAxis=self.mirrorAxis.upper())
+                pm.parentConstraint(locator, limbJoints[i], mo=True)
                 # constrainedTo[i].translate.lock()
                 # constrainedTo[i].rotate.lock()
 
@@ -457,7 +457,7 @@ class initialJoints():
         else:
             direction = -1
 
-        extra.orientJoints([collar, shoulder, elbow, hand], worldUpAxis=(0.0,1.0,0.0), reverseAim=direction, reverseUp=direction)
+        extra.orientJoints([collar, shoulder, elbow, hand], worldUpAxis=(0.0,1.0,0.0), upAxis=(0.0,0.0,-1.0), reverseAim=direction, reverseUp=direction)
 
         # Joint Labeling
         pm.setAttr("%s.side" % collar, side)
@@ -1179,7 +1179,8 @@ class initialJoints():
         pm.setAttr(node.mirrorAxis, "-%s" %self.mirrorAxis if self.mirrorAxisMult == -1 else "%s" %self.mirrorAxis)
         pm.setAttr(node.lookAxis, "-%s" %self.lookAxis if self.lookAxisMult == -1 else "%s" %self.lookAxis)
 
-        pm.addAttr(node, longName=att, dt="string")
+        pm.addAttr(node, longName="useRefOri", niceName="Inherit_Orientation", at="bool", keyable=True)
+        pm.setAttr(node.useRefOri, False)
         # pm.setAttr(node.lookAxis, "-%s" %self.lookAxis if self.lookAxisMult == -1 else "%s" %self.lookAxis)
         # self.lookAxis
 
