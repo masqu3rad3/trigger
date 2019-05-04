@@ -10,12 +10,7 @@ class initialJoints():
         self.upAxis = "+y"
         self.lookAxis = "+z"
 
-        # default vectors
-
         self.parseSettings(settingsData)
-        self.upVector = dt.Vector(0,1,0)
-        self.lookVector = dt.Vector(0,0,1)
-        self.mirrorVector = dt.Vector(1,0,0)
 
         # if "-" in self.mirrorAxis:
         #     self.mirrorAxisMult = 1
@@ -41,42 +36,34 @@ class initialJoints():
         self.projectName = "tikAutoRig"
 
     def parseSettings(self, settingsData):
-
-        parsingDictionary = {u'+x':(1,0,0),
-                             u'+y':(0,1,0),
-                             u'+z':(0,0,1),
-                             u'-x': (-1, 0, 0),
-                             u'-y': (0, -1, 0),
-                             u'-z': (0, 0, -1)
-                             }
         # self.upAxis = settingsData["upAxis"]
         # self.lookAxis = settingsData["lookAxis"]
         # self.mirrorAxis = settingsData["mirrorAxis"]
 
-        self.upVector_asString = settingsData["upAxis"]
-        self.lookVector_asString = settingsData["lookAxis"]
-        self.mirrorVector_asString = settingsData["mirrorAxis"]
+        up = settingsData["upAxis"]
+        look = settingsData["lookAxis"]
+        mirror = settingsData["mirrorAxis"]
+        if "-" in up:
+            self.upAxis=up.replace("-", "")
+            self.upAxisMult=-1
+        if "+" in up:
+            self.upAxis=up.replace("+", "")
+            self.upAxisMult=1
+        if "-" in look:
+            self.lookAxis=look.replace("-", "")
+            self.lookAxisMult=-1
+        if "+" in look:
+            self.lookAxis=look.replace("+", "")
+            self.lookAxisMult=1
+        if "-" in mirror:
+            self.mirrorAxis=mirror.replace("-", "")
+            self.mirrorAxisMult=-1
+        if "+" in mirror:
+            self.mirrorAxis=mirror.replace("+", "")
+            self.mirrorAxisMult=1
 
-
-        self.upVector = dt.Vector(parsingDictionary[settingsData["upAxis"]])
-        self.lookVector = dt.Vector(parsingDictionary[settingsData["lookAxis"]])
-        self.mirrorVector = dt.Vector(parsingDictionary[settingsData["mirrorAxis"]])
-
-
-        # get transformation matrix:
-        self.upVector.normalize()
-        self.lookVector.normalize()
-        # get the third axis with the cross vector
-        side_vect = dt.Vector.cross(self.upVector, self.lookVector)
-        # recross in case up and front were not originally orthoganl:
-        front_vect = dt.Vector.cross(side_vect, self.upVector)
-        # the new matrix is
-        self.tMatrix = dt.Matrix(
-            side_vect.x, side_vect.y, side_vect.z, 0,
-            self.upVector.x,  self.upVector.y,  self.upVector.z, 0,
-            front_vect.x, front_vect.y, front_vect.z, 0,
-            0, 0, 0, 1)
-
+        # self.mirrorAxis="xyz".replace(self.upAxis,"").replace(self.lookAxis,"")
+        # self.mirrorAxisMult=1
 
         self.majorLeftColor = settingsData["majorLeftColor"]
         self.minorLeftColor = settingsData["minorLeftColor"]
@@ -86,17 +73,16 @@ class initialJoints():
         self.minorCenterColor = settingsData["minorCenterColor"]
 
 
-
-    # def transformator (self, inputVector, transKey):
-    #     ## convert the input tuple to an actual vector:
-    #     inputVector = dt.Vector(inputVector)
-    #     order = transKey[0]
-    #     dirX = (transKey[1])
-    #     dirY = (transKey[2])
-    #     dirZ = (transKey[3])
-    #     newVector = dt.Vector(inputVector.x*dirX, inputVector.y*dirY, inputVector.z*dirZ)
-    #     newOrder = eval("newVector.{0},newVector.{1},newVector.{2}".format(order[0],order[1],order[2]))
-    #     return newOrder
+    def transformator (self, inputVector, transKey):
+        ## convert the input tuple to an actual vector:
+        inputVector = dt.Vector(inputVector)
+        order = transKey[0]
+        dirX = (transKey[1])
+        dirY = (transKey[2])
+        dirZ = (transKey[3])
+        newVector = dt.Vector(inputVector.x*dirX, inputVector.y*dirY, inputVector.z*dirZ)
+        newOrder = eval("newVector.{0},newVector.{1},newVector.{2}".format(order[0],order[1],order[2]))
+        return newOrder
 
     def autoGet (self, parentBone):
         """
@@ -133,30 +119,30 @@ class initialJoints():
             return None, alignmentGiven, None
         return returnBone, alignmentGiven, alignmentReturn
 
-    # def changeOrientation(self, faceDir, upDir):
-    #     dirValids = ["+x", "+y", "+z", "-x", "-y", "-z", "+X", "+Y", "+Z", "-X", "-Y", "-Z"]
-    #     if faceDir not in dirValids:
-    #         pm.error("faceDir argument is not valid. Valid arguments are: %s" % dirValids)
-    #     if upDir not in dirValids:
-    #         pm.error("upDir argument is not valid. Valid arguments are: %s" % dirValids)
-    #     # make sure the imputs are lowercase:
-    #     faceDir = faceDir.lower()
-    #     upDir = upDir.lower()
-    #
-    #     lookAxis = faceDir.strip("+-")
-    #     lookAxisMult = -1 if faceDir.strip(lookAxis) == "-" else 1
-    #
-    #     upAxis = upDir.strip("+-")
-    #     upAxisMult = -1 if upDir.strip(upAxis) == "-" else 1
-    #
-    #     if lookAxis == upAxis:
-    #         pm.warning("faceDir and upDir cannot be the same axis, cancelling")
-    #         return
-    #     self.lookAxis = lookAxis
-    #     self.lookAxisMult = lookAxisMult
-    #     self.upAxis = upAxis
-    #     self.upAxisMult = upAxisMult
-    #     self.mirrorAxis = "xyz".strip(lookAxis + upAxis)
+    def changeOrientation(self, faceDir, upDir):
+        dirValids = ["+x", "+y", "+z", "-x", "-y", "-z", "+X", "+Y", "+Z", "-X", "-Y", "-Z"]
+        if faceDir not in dirValids:
+            pm.error("faceDir argument is not valid. Valid arguments are: %s" % dirValids)
+        if upDir not in dirValids:
+            pm.error("upDir argument is not valid. Valid arguments are: %s" % dirValids)
+        # make sure the imputs are lowercase:
+        faceDir = faceDir.lower()
+        upDir = upDir.lower()
+
+        lookAxis = faceDir.strip("+-")
+        lookAxisMult = -1 if faceDir.strip(lookAxis) == "-" else 1
+
+        upAxis = upDir.strip("+-")
+        upAxisMult = -1 if upDir.strip(upAxis) == "-" else 1
+
+        if lookAxis == upAxis:
+            pm.warning("faceDir and upDir cannot be the same axis, cancelling")
+            return
+        self.lookAxis = lookAxis
+        self.lookAxisMult = lookAxisMult
+        self.upAxis = upAxis
+        self.upAxisMult = upAxisMult
+        self.mirrorAxis = "xyz".strip(lookAxis + upAxis)
 
     def initLimb (self, limb, whichSide="left",
                   segments=3, fingerCount=5, thumb=False,
@@ -186,12 +172,19 @@ class initialJoints():
             ## get the necessary info from arguments
             if whichSide == "left":
                 side =1
+                # majorColor = self.majorLeftColor
+                # minorColor = self.minorLeftColor
             elif whichSide == "right":
                 side =2
+                # majorColor = self.majorRightColor
+                # minorColor = self.minorRightColor
             else:
                 side = 0
+                # majorColor = self.majorCenterColor
+                # minorColor = self.minorCenterColor
+            # side = 1 if whichSide == "left" else 2
 
-        # sideMult = -1 if whichSide == "right" else 1
+        sideMult = -1 if whichSide == "right" else 1
 
         if (segments + 1) < 2:
             pm.error("Define at least 2 segments")
@@ -206,6 +199,10 @@ class initialJoints():
 
 
         if not parentNode:
+            # j = pm.ls(sl=True)
+            # print extra.identifyMaster(j)[1]
+            # valid_inits = ["arm", "leg", "spine", "neck", "tail", "finger", "tentacle", "root"]
+            # if extra.identifyMaster(j)[1] in valid_inits:
             if pm.ls(sl=True, type="joint"):
                 valid_inits = ["arm", "leg", "spine", "neck", "tail", "finger", "tentacle", "root"]
                 j = pm.ls(sl=True)[-1]
@@ -237,55 +234,55 @@ class initialJoints():
         pm.parent(limbGroup, holderGroup)
         pm.select(d=True)
 
-        # if self.lookAxis.replace("-","") == "z" and self.upAxis.replace("-","") == "y":
-        #     ## Facing Z Up Y
-        #     a = [("x","y","z"), 1*sideMult*self.lookAxisMult, 1*self.upAxisMult, 1*self.lookAxisMult]
-        # elif self.lookAxis.replace("-","") == "z" and self.upAxis.replace("-","") == "x":
-        #     ## Facing Z Up X
-        #     a = [("y", "x", "z"), -1*sideMult*self.lookAxisMult, 1*self.upAxisMult, 1*self.lookAxisMult]
-        # elif self.lookAxis.replace("-","") == "y" and self.upAxis.replace("-","") == "z":
-        #     ## Facing Y Up Z
-        #     a = [("x", "z", "y"), -1*sideMult*self.lookAxisMult, 1*self.upAxisMult, 1*self.lookAxisMult]
-        # elif self.lookAxis.replace("-","") == "y" and self.upAxis.replace("-","") == "x":
-        #     ## Facing Y Up X
-        #     a = [("y", "z", "x"), 1*sideMult*self.lookAxisMult, 1*self.upAxisMult, 1*self.lookAxisMult]
-        # elif self.lookAxis.replace("-","") == "x" and self.upAxis.replace("-","") == "z":
-        #     ## Facing X Up Z
-        #     a = [("z", "x", "y"), 1*sideMult*self.lookAxisMult, 1*self.upAxisMult, 1*self.lookAxisMult]
-        # elif self.lookAxis.replace("-","") == "x" and self.upAxis.replace("-","") == "y":
-        #     ## Facing X Up Y
-        #     a = [("z", "y", "x"), -1*sideMult*self.lookAxisMult, 1*self.upAxisMult, 1*self.lookAxisMult]
+        if self.lookAxis.replace("-","") == "z" and self.upAxis.replace("-","") == "y":
+            ## Facing Z Up Y
+            a = [("x","y","z"), 1*sideMult*self.lookAxisMult, 1*self.upAxisMult, 1*self.lookAxisMult]
+        elif self.lookAxis.replace("-","") == "z" and self.upAxis.replace("-","") == "x":
+            ## Facing Z Up X
+            a = [("y", "x", "z"), -1*sideMult*self.lookAxisMult, 1*self.upAxisMult, 1*self.lookAxisMult]
+        elif self.lookAxis.replace("-","") == "y" and self.upAxis.replace("-","") == "z":
+            ## Facing Y Up Z
+            a = [("x", "z", "y"), -1*sideMult*self.lookAxisMult, 1*self.upAxisMult, 1*self.lookAxisMult]
+        elif self.lookAxis.replace("-","") == "y" and self.upAxis.replace("-","") == "x":
+            ## Facing Y Up X
+            a = [("y", "z", "x"), 1*sideMult*self.lookAxisMult, 1*self.upAxisMult, 1*self.lookAxisMult]
+        elif self.lookAxis.replace("-","") == "x" and self.upAxis.replace("-","") == "z":
+            ## Facing X Up Z
+            a = [("z", "x", "y"), 1*sideMult*self.lookAxisMult, 1*self.upAxisMult, 1*self.lookAxisMult]
+        elif self.lookAxis.replace("-","") == "x" and self.upAxis.replace("-","") == "y":
+            ## Facing X Up Y
+            a = [("z", "y", "x"), -1*sideMult*self.lookAxisMult, 1*self.upAxisMult, 1*self.lookAxisMult]
 
         ### FROM HERE IT WILL BE LIMB SPECIFIC ###
 
         if limb == "spine":
-            limbJoints, offsetVector = self.initialSpine(segments=segments, suffix=suffix)
+            limbJoints, offsetVector = self.initialSpine(transformKey=a, segments=segments, suffix=suffix)
 
         if limb == "arm":
-            limbJoints, offsetVector = self.initialArm(side=side, suffix=suffix)
-            # offsetVector = offsetVector * sideMult
+            limbJoints, offsetVector = self.initialArm(transformKey=a, side=side, suffix=suffix)
+            offsetVector = offsetVector * sideMult
 
         if limb == "leg":
-            limbJoints, offsetVector = self.initialLeg(side=side, suffix=suffix)
+            limbJoints, offsetVector = self.initialLeg(transformKey=a, side=side, suffix=suffix)
             # offsetVector = offsetVector * sideMult
 
         if limb == "hand":
-            limbJoints, jRoots = self.initialHand(fingerCount=fingerCount, side=side, suffix=suffix)
+            limbJoints, jRoots = self.initialHand(fingerCount=fingerCount, transformKey=a, side=side, suffix=suffix)
 
         if limb == "neck":
-            limbJoints, offsetVector = self.initialNeck(segments=segments, suffix=suffix)
+            limbJoints, offsetVector = self.initialNeck(transformKey=a, segments=segments, suffix=suffix)
 
         if limb == "tail":
-            limbJoints, offsetVector = self.initialTail(segments=segments, side=side, suffix=suffix)
+            limbJoints, offsetVector = self.initialTail(transformKey=a, segments=segments, side=side, suffix=suffix)
 
         if limb == "finger":
-            limbJoints, offsetVector = self.initialFinger(segments=segments, side=side, suffix=suffix, thumb=thumb)
+            limbJoints, offsetVector = self.initialFinger(segments=segments, transformKey=a, side=side, suffix=suffix, thumb=thumb)
 
         if limb == "tentacle":
-            limbJoints, offsetVector = self.initialTentacle(segments=segments, side=side, suffix=suffix)
+            limbJoints, offsetVector = self.initialTentacle(transformKey=a, segments=segments, side=side, suffix=suffix)
 
         if limb == "root":
-            limbJoints, offsetVector = self.initialRoot(suffix=suffix)
+            limbJoints, offsetVector = self.initialRoot(transformKey=a, suffix=suffix)
 
         ## grave the up axis to the root initJoints
         # pm.addAttr(limbJoints[0], longName="upAxis", dt="string")
@@ -308,7 +305,8 @@ class initialJoints():
 
                 extra.alignTo(limbJoints[i], locator, mode=0)
                 pm.parentConstraint(locator, limbJoints[i], mo=True)
-
+                # constrainedTo[i].translate.lock()
+                # constrainedTo[i].rotate.lock()
 
             else:
                 pm.parentConstraint(limbJoints[i], locator, mo=False)
@@ -349,15 +347,7 @@ class initialJoints():
 
         return locatorsList
 
-    def _getVector(self, vector, side):
-        """Returns the vector according to the side"""
-        pass
-
-    def _getMirror(self, vector):
-        """Returns reflection of the vector along the mirror axis"""
-        return vector-2*(vector * self.mirrorVector)*self.mirrorVector
-
-    def initialRoot(self, suffix):
+    def initialRoot(self, transformKey, suffix):
         """
         Creates a single simple root joint to connect or bridge limbs
         Args:
@@ -378,7 +368,7 @@ class initialJoints():
 
         return [rootInit], offsetVector
 
-    def initialSpine(self, segments, suffix):
+    def initialSpine(self, transformKey, segments, suffix):
         """
         Creates a preset spine hieararchy with given segments
         Args:
@@ -390,10 +380,8 @@ class initialJoints():
 
         """
 
-        # rPoint = dt.Vector(self.transformator((0, 14.0, 0), transformKey))
-        rPoint = dt.Vector(0, 14.0, 0) * self.tMatrix
-        # nPoint = dt.Vector(self.transformator((0, 21.0, 0), transformKey))
-        nPoint = dt.Vector(0, 21.0, 0) * self.tMatrix
+        rPoint = dt.Vector(self.transformator((0, 14.0, 0), transformKey))
+        nPoint = dt.Vector(self.transformator((0, 21.0, 0), transformKey))
         # rPoint = 14.0
         # nPoint = 21.0
         offsetVector = dt.normal(nPoint - rPoint)
@@ -439,21 +427,17 @@ class initialJoints():
         extra.colorize(jointList, self.majorCenterColor, shape=False)
         return jointList, offsetVector
 
-    def initialArm(self, side, suffix):
-        sideMult = -1 if side == 2 else 1
-        # Initial Joint positions for centered arm
+    def initialArm(self, transformKey, side, suffix):
         if side == 0:
-            collarVec = dt.Vector(0, 0, 2) * self.tMatrix
-            shoulderVec = dt.Vector(0, 0, 5) * self.tMatrix
-            elbowVec =  dt.Vector(0, -1, 9) * self.tMatrix
-            handVec =  dt.Vector(0, 0, 14 ) * self.tMatrix
-        # Initial Joint positions for left arm
+            collarVec = self.transformator((0, 0, 2), transformKey)
+            shoulderVec = self.transformator((0, 0, 5), transformKey)
+            elbowVec = self.transformator((0, -1, 9), transformKey)
+            handVec = self.transformator((0, 0, 14 ), transformKey)
         else:
-            collarVec =  dt.Vector(2*sideMult, 0, 0) * self.tMatrix
-            shoulderVec =  dt.Vector(5*sideMult, 0, 0) * self.tMatrix
-            elbowVec =  dt.Vector(9*sideMult, 0, -1) * self.tMatrix
-            handVec =  dt.Vector(14*sideMult, 0, 0 ) * self.tMatrix
-
+            collarVec = self.transformator((2, 0, 0), transformKey)
+            shoulderVec = self.transformator((5, 0, 0), transformKey)
+            elbowVec = self.transformator((9, 0, -1), transformKey)
+            handVec = self.transformator((14, 0, 0 ), transformKey)
 
         offsetVector = -(dt.normal(dt.Vector(collarVec) - dt.Vector(shoulderVec)))
 
@@ -475,8 +459,12 @@ class initialJoints():
         # pm.joint(elbow, e=True, zso=True, oj="xyz", sao="yup")
         # pm.joint(hand, e=True, zso=True, oj="xyz", sao="yup")
 
+        if side == 0 or side ==1:
+            direction = 1
+        else:
+            direction = -1
 
-        extra.orientJoints([collar, shoulder, elbow, hand], worldUpAxis=(0.0,1.0,0.0), upAxis=(0.0,0.0,-1.0), reverseAim=sideMult, reverseUp=sideMult)
+        extra.orientJoints([collar, shoulder, elbow, hand], worldUpAxis=(0.0,1.0,0.0), upAxis=(0.0,0.0,-1.0), reverseAim=direction, reverseUp=direction)
 
         # Joint Labeling
         pm.setAttr("%s.side" % collar, side)
@@ -505,32 +493,35 @@ class initialJoints():
 
         return jointList, offsetVector
     
-    def initialLeg(self, side, suffix):
-        sideMult = -1 if side == 2 else 1
+    def initialLeg(self, transformKey, side, suffix):
         if side == 0:
-            rootVec = dt.Vector(0, 14, 0) * self.tMatrix
-            hipVec = dt.Vector(0, 10, 0) * self.tMatrix
-            kneeVec = dt.Vector(0, 5, 1) * self.tMatrix
-            footVec = dt.Vector(0, 1, 0) * self.tMatrix
-            ballVec = dt.Vector(0, 0, 2) * self.tMatrix
-            toeVec = dt.Vector(0, 0, 4) * self.tMatrix
-            bankoutVec = dt.Vector(-1, 0, 2) * self.tMatrix
-            bankinVec = dt.Vector(1, 0, 2) * self.tMatrix
-            toepvVec = dt.Vector(0, 0, 4.3) * self.tMatrix
-            heelpvVec = dt.Vector(0, 0, -0.2) * self.tMatrix
+            rootVec = self.transformator((0, 14, 0), transformKey)
+            hipVec = self.transformator((0, 10, 0), transformKey)
+            kneeVec = self.transformator((0, 5, 1), transformKey)
+            footVec = self.transformator((0, 1, 0), transformKey)
+            ballVec = self.transformator((0, 0, 2), transformKey)
+            toeVec = self.transformator((0, 0, 4), transformKey)
+            bankoutVec = self.transformator((-1, 0, 2), transformKey)
+            bankinVec = self.transformator((1, 0, 2), transformKey)
+            toepvVec = self.transformator((0, 0, 4.3), transformKey)
+            heelpvVec = self.transformator((0, 0, -0.2), transformKey)
 
         else:
-            rootVec = dt.Vector(2*sideMult,14,0) * self.tMatrix
-            hipVec = dt.Vector(5*sideMult,10,0) * self.tMatrix
-            kneeVec = dt.Vector(5*sideMult,5,1) * self.tMatrix
-            footVec = dt.Vector(5*sideMult,1,0) * self.tMatrix
-            ballVec = dt.Vector(5*sideMult,0,2) * self.tMatrix
-            toeVec = dt.Vector(5*sideMult,0,4) * self.tMatrix
-            bankoutVec = dt.Vector(4*sideMult,0,2) * self.tMatrix
-            bankinVec = dt.Vector(6*sideMult,0,2) * self.tMatrix
-            toepvVec = dt.Vector(5*sideMult,0,4.3) * self.tMatrix
-            heelpvVec = dt.Vector(5*sideMult,0,-0.2) * self.tMatrix
+            rootVec = self.transformator((2,14,0), transformKey)
+            hipVec = self.transformator((5,10,0), transformKey)
+            kneeVec = self.transformator((5,5,1), transformKey)
+            footVec = self.transformator((5,1,0), transformKey)
+            ballVec = self.transformator((5,0,2), transformKey)
+            toeVec = self.transformator((5,0,4), transformKey)
+            bankoutVec = self.transformator((4,0,2), transformKey)
+            bankinVec = self.transformator((6,0,2), transformKey)
+            toepvVec = self.transformator((5,0,4.3), transformKey)
+            heelpvVec = self.transformator((5,0,-0.2), transformKey)
 
+        if side == 0 or side ==1:
+            direction = 1
+        else:
+            direction = -1
 
         offsetVector = -(dt.normal(dt.Vector(rootVec) - dt.Vector(hipVec)))
         
@@ -540,7 +531,7 @@ class initialJoints():
         knee = pm.joint(p=kneeVec, name=("jInit_Knee_%s" % suffix))
         foot = pm.joint(p=footVec, name=("jInit_Foot_%s" % suffix))
 
-        extra.orientJoints([root, hip, knee, foot], worldUpAxis=(1.0,0.0,0.0), reverseAim=sideMult)
+        extra.orientJoints([root, hip, knee, foot], worldUpAxis=(1.0,0.0,0.0), reverseAim=direction)
         # return
 
         ball = pm.joint(p=ballVec, name=("jInit_Ball_%s" % suffix))
@@ -564,7 +555,7 @@ class initialJoints():
         pm.parent(bankin, foot)
         pm.parent(bankout, foot)
 
-        extra.orientJoints([ball, toe], worldUpAxis=(1.0,0.0,0.0), reverseAim=sideMult)
+        extra.orientJoints([ball, toe], worldUpAxis=(1.0,0.0,0.0), reverseAim=direction)
 
 
         # extra.orientJoints([root, hip, knee, foot, ball, toe], worldUpAxis=(0.0,1.0,0.0), upAxis=(1.0,0.0,0.0), reverseAim=direction)
@@ -628,21 +619,19 @@ class initialJoints():
 
         # extra.orientJoints([ball, toe], worldUpAxis=(0.0,1.0,0.0), upAxis=(1.0,0.0,0.0), reverseAim=direction)
 
-        # print "OFFSET VECTOR", sideMult, offsetVector
         return jointList, offsetVector
 
 
-    def initialHand(self, fingerCount, side, suffix):
-        sideMult = -1 if side == 2 else 1
-
+    def initialHand(self, fingerCount, transformKey, side, suffix):
         jointList = []
         fingerRoots = []
 
         if fingerCount > 0:
-            thumb00vec = dt.Vector(0.681*sideMult, -0.143, 0.733) * self.tMatrix
-            thumb01vec = dt.Vector(1.192*sideMult, -0.21, 1.375) * self.tMatrix
-            thumb02vec = dt.Vector(1.64*sideMult, -0.477, 1.885) * self.tMatrix
-            thumb03vec = dt.Vector(2.053*sideMult, -0.724, 2.356) * self.tMatrix
+            thumb00vec = self.transformator((0.681, -0.143, 0.733), transformKey)
+            thumb01vec = self.transformator((1.192, -0.21, 1.375), transformKey)
+
+            thumb02vec = self.transformator((1.64, -0.477, 1.885), transformKey)
+            thumb03vec = self.transformator((2.053, -0.724, 2.356), transformKey)
 
             pm.select(d=True)
 
@@ -672,11 +661,11 @@ class initialJoints():
             fingerRoots.append(thumbJoints[0])
 
         if fingerCount > 1:
-            index00vec = dt.Vector(1.517*sideMult, 0.05, 0.656) * self.tMatrix
-            index01vec = dt.Vector(2.494*sideMult, 0.05, 0.868) * self.tMatrix
-            index02vec = dt.Vector(3.126*sideMult, 0.05, 1.005) * self.tMatrix
-            index03vec = dt.Vector(3.746*sideMult, 0.05, 1.139) * self.tMatrix
-            index04vec = dt.Vector(4.278*sideMult, 0.05, 1.254) * self.tMatrix
+            index00vec = self.transformator((1.517, 0.05, 0.656), transformKey)
+            index01vec = self.transformator((2.494, 0.05, 0.868), transformKey)
+            index02vec = self.transformator((3.126, 0.05, 1.005), transformKey)
+            index03vec = self.transformator((3.746, 0.05, 1.139), transformKey)
+            index04vec = self.transformator((4.278, 0.05, 1.254), transformKey)
 
             pm.select(d=True)
             index00 = pm.joint(p=index00vec, name=("jInit_indexF00_%s" % suffix))
@@ -703,11 +692,11 @@ class initialJoints():
             fingerRoots.append(index00)
 
         if fingerCount > 2:
-            middle00vec = dt.Vector(1.597*sideMult, 0.123, 0.063) * self.tMatrix
-            middle01vec = dt.Vector(2.594*sideMult, 0.123, 0.137) * self.tMatrix
-            middle02vec = dt.Vector(3.312*sideMult, 0.123, 0.19) * self.tMatrix
-            middle03vec = dt.Vector(4.012*sideMult, 0.123, 0.242) * self.tMatrix
-            middle04vec = dt.Vector(4.588*sideMult, 0.123, 0.285) * self.tMatrix
+            middle00vec = self.transformator((1.597, 0.123, 0.063), transformKey)
+            middle01vec = self.transformator((2.594, 0.123, 0.137), transformKey)
+            middle02vec = self.transformator((3.312, 0.123, 0.19), transformKey)
+            middle03vec = self.transformator((4.012, 0.123, 0.242), transformKey)
+            middle04vec = self.transformator((4.588, 0.123, 0.285), transformKey)
 
             pm.select(d=True)
             middle00 = pm.joint(p=middle00vec, name=("jInit_middleF00_%s" % suffix))
@@ -735,11 +724,11 @@ class initialJoints():
             fingerRoots.append(middle00)
 
         if fingerCount > 3:
-            ring00vec = dt.Vector(1.605*sideMult, 0.123, -0.437) * self.tMatrix
-            ring01vec = dt.Vector(2.603*sideMult, 0.123, -0.499) * self.tMatrix
-            ring02vec = dt.Vector(3.301*sideMult, 0.123, -0.541) * self.tMatrix
-            ring03vec = dt.Vector(3.926*sideMult, 0.123, -0.58) * self.tMatrix
-            ring04vec = dt.Vector(4.414*sideMult, 0.123, -0.58) * self.tMatrix
+            ring00vec = self.transformator((1.605, 0.123, -0.437), transformKey)
+            ring01vec = self.transformator((2.603, 0.123, -0.499), transformKey)
+            ring02vec = self.transformator((3.301, 0.123, -0.541), transformKey)
+            ring03vec = self.transformator((3.926, 0.123, -0.58), transformKey)
+            ring04vec = self.transformator((4.414, 0.123, -0.58), transformKey)
 
             pm.select(d=True)
             ring00 = pm.joint(p=ring00vec, name=("jInit_ringF00_%s" % suffix))
@@ -767,11 +756,11 @@ class initialJoints():
             fingerRoots.append(ring00)
 
         if fingerCount > 4:
-            pinky00vec = dt.Vector(1.405*sideMult, 0, -0.909) * self.tMatrix
-            pinky01vec = dt.Vector(2.387*sideMult, 0, -1.097) * self.tMatrix
-            pinky02vec = dt.Vector(2.907*sideMult, 0, -1.196) * self.tMatrix
-            pinky03vec = dt.Vector(3.378*sideMult, 0, -1.286) * self.tMatrix
-            pinky04vec = dt.Vector(3.767*sideMult, 0, -1.361) * self.tMatrix
+            pinky00vec = self.transformator((1.405, 0, -0.909), transformKey)
+            pinky01vec = self.transformator((2.387, 0, -1.097), transformKey)
+            pinky02vec = self.transformator((2.907, 0, -1.196), transformKey)
+            pinky03vec = self.transformator((3.378, 0, -1.286), transformKey)
+            pinky04vec = self.transformator((3.767, 0, -1.361), transformKey)
 
             pm.select(d=True)
             pinky00 = pm.joint(p=pinky00vec, name=("jInit_pinkyF00_%s" % suffix))
@@ -814,10 +803,10 @@ class initialJoints():
 
         return jointList, fingerRoots
 
-    def initialNeck(self, segments, suffix):
-        rPointNeck =  dt.Vector(0, 25.757, 0) * self.tMatrix
-        nPointNeck =  dt.Vector(0, 29.418, 0.817) * self.tMatrix
-        pointHead =  dt.Vector(0, 32,0.817) * self.tMatrix
+    def initialNeck(self, transformKey, segments, suffix):
+        rPointNeck = dt.Vector(self.transformator((0, 25.757, 0), transformKey))
+        nPointNeck = dt.Vector(self.transformator((0, 29.418, 0.817), transformKey))
+        pointHead = dt.Vector(self.transformator((0, 32,0.817), transformKey))
         offsetVector = dt.normal(nPointNeck-rPointNeck)
         addNeck = (nPointNeck - rPointNeck) / ((segments + 1) - 1)
         jointList = []
@@ -859,17 +848,17 @@ class initialJoints():
         extra.colorize(jointList, self.majorCenterColor, shape=False)
         return jointList, offsetVector
 
-    def initialTail(self,  side, segments, suffix):
-        sideMult = -1 if side == 2 else 1
+    def initialTail(self, transformKey, side, segments, suffix):
+
         if segments < 1:
             pm.warning("minimum segments required for the simple tail is two. current: %s" %segments)
             return
 
-        rPointTail = dt.Vector(0, 14, 0) * self.tMatrix
+        rPointTail = dt.Vector(self.transformator((0, 14, 0), transformKey))
         if side == 0:
-            nPointTail = dt.Vector(0, 8.075, -7.673) * self.tMatrix
+            nPointTail = dt.Vector(self.transformator((0, 8.075, -7.673), transformKey))
         else:
-            nPointTail = dt.Vector(7.673*sideMult, 8.075, 0) * self.tMatrix
+            nPointTail = dt.Vector(self.transformator((7.673, 8.075, 0), transformKey))
         # nPointTail = dt.Vector(self.transformator((0, 8.075, -7.673), transformKey))
         offsetVector = dt.normal(nPointTail-rPointTail)
         addTail = (nPointTail - rPointTail) / ((segments + 1) - 1)
@@ -901,16 +890,14 @@ class initialJoints():
 
         return jointList, offsetVector
 
-    def initialFinger(self,segments,  side, suffix, thumb=False):
-        sideMult = -1 if side == 2 else 1
-
+    def initialFinger(self,segments, transformKey, side, suffix, thumb=False):
         if segments < 2:
             pm.warning("minimum segments for the fingers are two. current: %s" %segments)
             return
 
 
-        rPointFinger = dt.Vector(0, 0, 0) * self.tMatrix
-        nPointFinger = dt.Vector(5*sideMult, 0, 0) * self.tMatrix
+        rPointFinger = dt.Vector(self.transformator((0, 0, 0), transformKey))
+        nPointFinger = dt.Vector(self.transformator((5, 0, 0), transformKey))
 
 
         offsetVector = dt.normal(nPointFinger-rPointFinger)
@@ -949,17 +936,16 @@ class initialJoints():
 
         return jointList, offsetVector
 
-    def initialTentacle(self,  segments, side, suffix):
-        sideMult = -1 if side == 2 else 1
+    def initialTentacle(self, transformKey, segments, side, suffix):
 
         if segments < 1:
             pm.warning("minimum segments required for the tentacle is two. current: %s" %segments)
             return
-        rPointTentacle = dt.Vector(0, 14, 0) * self.tMatrix
+        rPointTentacle = dt.Vector(self.transformator((0, 14, 0), transformKey))
         if side == 0:
-            nPointTentacle = dt.Vector(0, 14, 10) * self.tMatrix
+            nPointTentacle = dt.Vector(self.transformator((0, 14, 10), transformKey))
         else:
-            nPointTentacle = dt.Vector(10*sideMult, 14, 0) * self.tMatrix
+            nPointTentacle = dt.Vector(self.transformator((10, 14, 0), transformKey))
         offsetVector = dt.normal(nPointTentacle-rPointTentacle)
         addTentacle = (nPointTentacle - rPointTentacle) / ((segments + 1) - 1)
         jointList = []
@@ -1228,30 +1214,9 @@ class initialJoints():
             if not pm.attributeQuery(att, node=node, exists=True):
                 pm.addAttr(node, longName=att, dt="string")
 
-        # R_parsingDict = { dt.Vector(1, 0, 0):u'+x',
-        #                   dt.Vector(0, 1, 0):u'+y',
-        #                   dt.Vector(0, 0, 1):u'+z',
-        #                   dt.Vector(-1, 0, 0):u'-x',
-        #                   dt.Vector(0, -1, 0):u'-y',
-        #                   dt.Vector(0, 0, -1):u'-z'
-        #                  }
-
-        # upAxis_asString = R_parsingDict[self.upVector]
-        # looAxis_asString = R_parsingDict[self.lookAxis]
-        # mirrorAxis_asString = R_parsingDict[self.mirrorAxis]
-
-
-        # pm.setAttr(node.upAxis, "-%s" %self.upAxis if self.upAxisMult == -1 else "%s" %self.upAxis)
-        # pm.setAttr(node.mirrorAxis, "-%s" %self.mirrorAxis if self.mirrorAxisMult == -1 else "%s" %self.mirrorAxis)
-        # pm.setAttr(node.lookAxis, "-%s" %self.lookAxis if self.lookAxisMult == -1 else "%s" %self.lookAxis)
-
-        print self.upVector_asString
-        print self.mirrorVector_asString
-        print self.lookVector_asString
-        pm.setAttr(node.upAxis, self.upVector_asString)
-        pm.setAttr(node.mirrorAxis, self.mirrorVector_asString)
-        pm.setAttr(node.lookAxis, self.lookVector_asString)
-
+        pm.setAttr(node.upAxis, "-%s" %self.upAxis if self.upAxisMult == -1 else "%s" %self.upAxis)
+        pm.setAttr(node.mirrorAxis, "-%s" %self.mirrorAxis if self.mirrorAxisMult == -1 else "%s" %self.mirrorAxis)
+        pm.setAttr(node.lookAxis, "-%s" %self.lookAxis if self.lookAxisMult == -1 else "%s" %self.lookAxis)
 
         pm.addAttr(node, longName="useRefOri", niceName="Inherit_Orientation", at="bool", keyable=True)
         pm.setAttr(node.useRefOri, False)
