@@ -173,6 +173,7 @@ class initialJoints():
         nonSidedLimbs = ["spine", "neck", "root"]
         if limb in nonSidedLimbs:
             whichSide = "c"
+            side = 0
 
         else:
         ## check validity of arguments
@@ -287,12 +288,6 @@ class initialJoints():
         if limb == "root":
             limbJoints, offsetVector = self.initialRoot(suffix=suffix)
 
-        ## grave the up axis to the root initJoints
-        # pm.addAttr(limbJoints[0], longName="upAxis", dt="string")
-        # pm.setAttr(limbJoints[0].upAxis, self.upAxis)
-        # pm.addAttr(limbJoints[0], longName="mirrorAxis", dt="string")
-        # pm.setAttr(limbJoints[0].mirrorAxis, self.mirrorAxis)
-
         ### Constrain locating
 
         loc_grp = pm.group(name=("locGrp_%s" %suffix), em=True)
@@ -349,10 +344,6 @@ class initialJoints():
 
         return locatorsList
 
-    def _getVector(self, vector, side):
-        """Returns the vector according to the side"""
-        pass
-
     def _getMirror(self, vector):
         """Returns reflection of the vector along the mirror axis"""
         return vector-2*(vector * self.mirrorVector)*self.mirrorVector
@@ -378,7 +369,7 @@ class initialJoints():
 
         return [rootInit], offsetVector
 
-    def initialSpine(self, segments, suffix):
+    def initialSpine(self, segments, suffix, side=0):
         """
         Creates a preset spine hieararchy with given segments
         Args:
@@ -389,7 +380,7 @@ class initialJoints():
         Returns: (List) jointList
 
         """
-
+        sideMult = -1 if side == 2 else 1
         # rPoint = dt.Vector(self.transformator((0, 14.0, 0), transformKey))
         rPoint = dt.Vector(0, 14.0, 0) * self.tMatrix
         # nPoint = dt.Vector(self.transformator((0, 21.0, 0), transformKey))
@@ -433,7 +424,7 @@ class initialJoints():
                 pm.setAttr(i.displayLocalAxis, 1)
 
 
-        # extra.orientJoints(jointList, worldUpAxis=-dt.Vector(self.look_axis), reverseAim=self.sideMult, reverseUp=self.sideMult)
+        extra.orientJoints(jointList, worldUpAxis=-self.lookVector, reverseAim=sideMult, reverseUp=sideMult)
 
         self.spineJointsList.append(jointList)
         extra.colorize(jointList, self.majorCenterColor, shape=False)
@@ -475,8 +466,8 @@ class initialJoints():
         # pm.joint(elbow, e=True, zso=True, oj="xyz", sao="yup")
         # pm.joint(hand, e=True, zso=True, oj="xyz", sao="yup")
 
-
-        extra.orientJoints([collar, shoulder, elbow, hand], worldUpAxis=(0.0,1.0,0.0), upAxis=(0.0,0.0,-1.0), reverseAim=sideMult, reverseUp=sideMult)
+        extra.orientJoints([collar, shoulder, elbow, hand], worldUpAxis=self.upVector, upAxis=-self.lookVector, reverseAim=sideMult, reverseUp=sideMult)
+        # extra.orientJoints([collar, shoulder, elbow, hand], worldUpAxis=(0, 1, 0), upAxis=(0, 0, -1), reverseAim=sideMult, reverseUp=sideMult)
 
         # Joint Labeling
         pm.setAttr("%s.side" % collar, side)
@@ -564,7 +555,7 @@ class initialJoints():
         pm.parent(bankin, foot)
         pm.parent(bankout, foot)
 
-        extra.orientJoints([ball, toe], worldUpAxis=(1.0,0.0,0.0), reverseAim=sideMult)
+        extra.orientJoints([ball, toe], worldUpAxis=self.mirrorVector, reverseAim=sideMult)
 
 
         # extra.orientJoints([root, hip, knee, foot, ball, toe], worldUpAxis=(0.0,1.0,0.0), upAxis=(1.0,0.0,0.0), reverseAim=direction)
@@ -652,7 +643,12 @@ class initialJoints():
             thumb02 = pm.joint(p=thumb02vec, name=("jInit_thumb02_%s" % suffix))
             thumb03 = pm.joint(p=thumb03vec, name=("jInit_thumb03_%s" % suffix))
             thumbJoints = [thumb00, thumb01, thumb02, thumb03]
+
+            extra.orientJoints(thumbJoints, worldUpAxis=self.upVector, upAxis=-self.mirrorVector, reverseAim=sideMult,
+                               reverseUp=sideMult)
+
             for i in thumbJoints:
+                pm.setAttr(i.displayLocalAxis, 1)
                 if i == thumbJoints[0]:
                     pm.setAttr("%s.type" % i, 18)
                     pm.setAttr("%s.otherType" % i, "FingerRoot")
@@ -685,7 +681,11 @@ class initialJoints():
             index03 = pm.joint(p=index03vec, name=("jInit_indexF03_%s" % suffix))
             index04 = pm.joint(p=index04vec, name=("jInit_indexF04_%s" % suffix))
             indexJoints = [index00, index01, index02, index03, index04]
+            extra.orientJoints(indexJoints, worldUpAxis=self.upVector, upAxis=-self.mirrorVector, reverseAim=sideMult,
+                               reverseUp=sideMult)
             for i in indexJoints:
+                pm.setAttr(i.displayLocalAxis, 1)
+
                 if i == indexJoints[0]:
                     pm.setAttr("%s.type" % i, 18)
                     pm.setAttr("%s.otherType" % i, "FingerRoot")
@@ -716,7 +716,11 @@ class initialJoints():
             middle03 = pm.joint(p=middle03vec, name=("jInit_middleF03_%s" % suffix))
             middle04 = pm.joint(p=middle04vec, name=("jInit_middleF04_%s" % suffix))
             middleJoints = [middle00, middle01, middle02, middle03, middle04]
+            extra.orientJoints(middleJoints, worldUpAxis=self.upVector, upAxis=-self.mirrorVector, reverseAim=sideMult,
+                               reverseUp=sideMult)
             for i in middleJoints:
+                pm.setAttr(i.displayLocalAxis, 1)
+
                 if i == middleJoints[0]:
                     pm.setAttr("%s.type" % i, 18)
                     pm.setAttr("%s.otherType" % i, "FingerRoot")
@@ -748,7 +752,11 @@ class initialJoints():
             ring03 = pm.joint(p=ring03vec, name=("jInit_ringF03_%s" % suffix))
             ring04 = pm.joint(p=ring04vec, name=("jInit_ringF04_%s" % suffix))
             ringJoints = [ring00, ring01, ring02, ring03, ring04]
+            extra.orientJoints(ringJoints, worldUpAxis=self.upVector, upAxis=-self.mirrorVector, reverseAim=sideMult,
+                               reverseUp=sideMult)
             for i in ringJoints:
+                pm.setAttr(i.displayLocalAxis, 1)
+
                 if i == ringJoints[0]:
                     pm.setAttr("%s.type" % i, 18)
                     pm.setAttr("%s.otherType" % i, "FingerRoot")
@@ -780,8 +788,10 @@ class initialJoints():
             pinky03 = pm.joint(p=pinky03vec, name=("jInit_pinkyF03_%s" % suffix))
             pinky04 = pm.joint(p=pinky04vec, name=("jInit_pinkyF04_%s" % suffix))
             pinkyJoints = [pinky00, pinky01, pinky02, pinky03, pinky04]
-
+            extra.orientJoints(pinkyJoints, worldUpAxis=self.upVector, upAxis=-self.mirrorVector, reverseAim=sideMult,
+                               reverseUp=sideMult)
             for i in pinkyJoints:
+                pm.setAttr(i.displayLocalAxis, 1)
                 if i == pinkyJoints[0]:
                     pm.setAttr("%s.type" % i, 18)
                     pm.setAttr("%s.otherType" % i, "FingerRoot")
@@ -814,7 +824,9 @@ class initialJoints():
 
         return jointList, fingerRoots
 
-    def initialNeck(self, segments, suffix):
+    def initialNeck(self, segments, suffix, side=0):
+        sideMult = -1 if side == 2 else 1
+
         rPointNeck =  dt.Vector(0, 25.757, 0) * self.tMatrix
         nPointNeck =  dt.Vector(0, 29.418, 0.817) * self.tMatrix
         pointHead =  dt.Vector(0, 32,0.817) * self.tMatrix
@@ -854,6 +866,9 @@ class initialJoints():
         pm.setAttr("%s.drawLabel" % headEnd, 1)
         jointList.append(headEnd)
 
+        extra.orientJoints(jointList, worldUpAxis=-self.lookVector, reverseAim=sideMult, reverseUp=sideMult)
+        # lambda x: pm.setAttr(i.displayLocalAxis, 1)
+        map(lambda x: pm.setAttr(x.displayLocalAxis, 1), jointList)
         self.neckJointsList.append(jointList)
 
         extra.colorize(jointList, self.majorCenterColor, shape=False)
@@ -891,6 +906,13 @@ class initialJoints():
             jointList.append(tail)
 
         self.tailJointsList.append(jointList)
+        map(lambda x: pm.setAttr(x.displayLocalAxis, 1), jointList)
+        if side == 0:
+            extra.orientJoints(jointList, worldUpAxis=-self.lookVector, reverseAim=sideMult, reverseUp=sideMult)
+            extra.orientJoints(jointList, worldUpAxis=-self.lookVector, reverseAim=sideMult, reverseUp=sideMult)
+
+        else:
+            extra.orientJoints(jointList, worldUpAxis=self.upVector, upAxis=-self.mirrorVector, reverseAim=sideMult, reverseUp=sideMult)
 
         if side == 0:
             extra.colorize(jointList, self.majorCenterColor, shape=False)
@@ -939,6 +961,10 @@ class initialJoints():
             jointList.append(finger)
 
         self.fingerJointsList.append(jointList)
+        map(lambda x: pm.setAttr(x.displayLocalAxis, 1), jointList)
+
+        extra.orientJoints(jointList, worldUpAxis=self.upVector, upAxis=-self.lookVector, reverseAim=sideMult, reverseUp=sideMult)
+
 
         if side == 0:
             extra.colorize(jointList, self.majorCenterColor, shape=False)
@@ -988,6 +1014,9 @@ class initialJoints():
             jointList.append(tentacle)
 
         self.tentacleJointsList.append(jointList)
+        map(lambda x: pm.setAttr(x.displayLocalAxis, 1), jointList)
+        extra.orientJoints(jointList, worldUpAxis=self.upVector, upAxis=-self.lookVector, reverseAim=sideMult, reverseUp=sideMult)
+
 
         if side == 0:
             extra.colorize(jointList, self.majorCenterColor, shape=False)
@@ -1078,7 +1107,6 @@ class initialJoints():
                 # newName = "jInit_tail_%s_%s" % (suffix, str(j))
                 pm.select(jointList[j])
                 # pm.rename(jointList[j], newName)
-                print "JJ", jointList[j], side
                 pm.setAttr("%s.side" % jointList[j], side)
                 pm.setAttr("%s.drawLabel" % jointList[j], 1)
 
@@ -1245,9 +1273,6 @@ class initialJoints():
         # pm.setAttr(node.mirrorAxis, "-%s" %self.mirrorAxis if self.mirrorAxisMult == -1 else "%s" %self.mirrorAxis)
         # pm.setAttr(node.lookAxis, "-%s" %self.lookAxis if self.lookAxisMult == -1 else "%s" %self.lookAxis)
 
-        print self.upVector_asString
-        print self.mirrorVector_asString
-        print self.lookVector_asString
         pm.setAttr(node.upAxis, self.upVector_asString)
         pm.setAttr(node.mirrorAxis, self.mirrorVector_asString)
         pm.setAttr(node.lookAxis, self.lookVector_asString)

@@ -197,7 +197,7 @@ def connectMirror (node1, node2, mirrorAxis="X"):
     Returns: None
 
     """
-    ## make sure the axis is uppercase:
+    ## make sure the axis is uppercase and not containing '+' or '-'
     mirrorAxis = mirrorAxis.upper()
     #nodes Translate
     rvsNodeT=pm.createNode("reverse")
@@ -216,7 +216,8 @@ def connectMirror (node1, node2, mirrorAxis="X"):
 
     #Translate
 
-    if (mirrorAxis=="X"):
+
+    if "X" in mirrorAxis:
         minusOpT.output3Dx >> node2.tx
         node1.ty >> node2.ty
         node1.tz >> node2.tz
@@ -224,7 +225,7 @@ def connectMirror (node1, node2, mirrorAxis="X"):
         node1.rx >> node2.rx
         minusOpR.output3Dy >> node2.ry
         minusOpR.output3Dz >> node2.rz
-    if (mirrorAxis=="Y"):
+    if "Y" in mirrorAxis:
         node1.tx >> node2.tx
         minusOpT.output3Dy >> node2.ty
         node1.tz >> node2.tz
@@ -233,7 +234,7 @@ def connectMirror (node1, node2, mirrorAxis="X"):
         node1.ry >> node2.ry
         minusOpR.output3Dz >> node2.rz
 
-    if (mirrorAxis=="Z"):
+    if "Z" in mirrorAxis:
         node1.tx >> node2.tx
         node1.ty >> node2.ty
         minusOpT.output3Dz >> node2.tz
