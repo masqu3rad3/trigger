@@ -115,7 +115,8 @@ class Spine(object):
         # extra.orientJoints(self.guideJoints, worldUpAxis=-dt.Vector(self.look_axis), reverseAim=self.sideMult, reverseUp=self.sideMult)
 
         if not self.useRefOrientation:
-            extra.orientJoints(self.guideJoints, worldUpAxis=(self.look_axis), upAxis=(0, 1, 0), reverseAim=self.sideMult, reverseUp=self.sideMult)
+            # extra.orientJoints(self.guideJoints, worldUpAxis=(self.look_axis), upAxis=(0, 1, 0), reverseAim=self.sideMult, reverseUp=self.sideMult)
+            extra.orientJoints(self.guideJoints, worldUpAxis=(self.up_axis), upAxis=(0, 0, -1), reverseAim=self.sideMult, reverseUp=self.sideMult)
         else:
             for x in range (len(self.guideJoints)):
                 extra.alignTo(self.guideJoints[x], self.inits[x], mode=2)
@@ -141,14 +142,15 @@ class Spine(object):
         ## Hips Controller
         contHipsScale = (self.iconSize / 1.5, self.iconSize / 1.5, self.iconSize / 1.5)
         # self.cont_hips = icon.waist("cont_Hips_%s" % self.suffix, contHipsScale, normal=(0,0,1))
-        self.cont_hips, dmp = icon.createIcon("Waist", iconName="cont_Hips_%s" % self.suffix, scale=contHipsScale, normal=self.mirror_axis)
+        self.cont_hips, dmp = icon.createIcon("Waist", iconName="cont_Hips_%s" % self.suffix, scale=contHipsScale, normal=(1,0,0))
         extra.alignToAlter(self.cont_hips, self.guideJoints[0], mode=2)
         self.cont_hips_ORE = extra.createUpGrp(self.cont_hips, "ORE")
+
 
         ## Body Controller
         contBodyScale = (self.iconSize * 0.75, self.iconSize * 0.75, self.iconSize * 0.75)
         # self.cont_body = icon.square("cont_Body_%s" % self.suffix, contBodyScale, normal=(0,0,1))
-        self.cont_body, dmp = icon.createIcon("Square", iconName="cont_Body_%s" % self.suffix, scale=contBodyScale, normal=self.mirror_axis)
+        self.cont_body, dmp = icon.createIcon("Square", iconName="cont_Body_%s" % self.suffix, scale=contBodyScale, normal=(1,0,0))
         extra.alignToAlter(self.cont_body, self.guideJoints[0], mode=2)
         self.cont_body_ORE = extra.createUpGrp(self.cont_body, "POS")
 
@@ -162,9 +164,9 @@ class Spine(object):
         pm.setAttr(self.cont_body.tweakVis, cb=True)
 
         ## Chest Controller
-        contChestScale = (self.iconSize*0.35, self.iconSize*0.5, self.iconSize*0.2)
+        contChestScale = (self.iconSize*0.5, self.iconSize*0.35, self.iconSize*0.2)
         # self.cont_chest = icon.cube("cont_Chest_%s" % self.suffix, contChestScale, normal=(0,0,1))
-        self.cont_chest, dmp = icon.createIcon("Cube", iconName="cont_Chest_%s" % self.suffix, scale=contChestScale, normal=self.look_axis)
+        self.cont_chest, dmp = icon.createIcon("Cube", iconName="cont_Chest_%s" % self.suffix, scale=contChestScale, normal=(0,0,1))
         extra.alignToAlter(self.cont_chest, self.guideJoints[-1], mode=2)
         cont_Chest_ORE = extra.createUpGrp(self.cont_chest, "ORE")
         # pm.setAttr(self.cont_chest.rotateOrder,3)
@@ -178,13 +180,13 @@ class Spine(object):
         for m in range (0, len(self.guideJoints)):
 
             # contA = icon.circle("cont_SpineFK_A_%s%s" %(str(m), self.suffix), contSpineFKAScale, normal=(1,0,0))
-            contA, dmp = icon.createIcon("Circle", iconName="cont_SpineFK_A_%s%s" %(str(m), self.suffix), scale=contSpineFKAScale, normal=self.mirror_axis)
+            contA, dmp = icon.createIcon("Circle", iconName="cont_SpineFK_A_%s%s" %(str(m), self.suffix), scale=contSpineFKAScale, normal=(1,0,0))
             extra.alignToAlter(contA, self.guideJoints[m], 2)
             contA_ORE = extra.createUpGrp(contA, "ORE")
             self.cont_spineFK_A_List.append(contA)
 
             # contB = icon.ngon("cont_SpineFK_B_%s%s" %(str(m), self.suffix), contSpineFKBScale, normal=(0,0,1))
-            contB, dmp = icon.createIcon("Ngon", iconName="cont_SpineFK_B_%s%s" %(str(m), self.suffix), scale=contSpineFKBScale, normal=self.mirror_axis)
+            contB, dmp = icon.createIcon("Ngon", iconName="cont_SpineFK_B_%s%s" %(str(m), self.suffix), scale=contSpineFKBScale, normal=(1,0,0))
             extra.alignTo(contB, self.guideJoints[m], 2)
             contB_ORE = extra.createUpGrp(contB, "ORE")
             self.cont_spineFK_B_List.append(contB)
