@@ -32,6 +32,12 @@ class Fingers(object):
         # initialize coordinates
         self.up_axis, self.mirror_axis, self.look_axis = extra.getRigAxes(self.inits[0])
 
+        # get if orientation should be derived from the initial Joints
+        try: self.useRefOrientation = pm.getAttr(self.inits[0].useRefOri)
+        except:
+            pm.warning("Cannot find Inherit Orientation Attribute on Initial Root Joint %s... Skipping inheriting." %self.inits[0])
+            self.useRefOrientation = False
+
         # initialize suffix
         self.suffix = "%s_%s" %(suffix, pm.getAttr(self.fingerRoot.fingerType, asString=True))
 
@@ -93,16 +99,28 @@ class Fingers(object):
         pm.select(d=True)
         self.limbPlug = pm.joint(name="limbPlug_%s" % self.suffix, p=self.inits[0].getTranslation(space="world"), radius=2)
 
-        jointOrientValue = (-180, 0 ,0) if self.side == "R" else (0, 0, 0)
+        # jointOrientValue = (-180, 0 ,0) if self.side == "R" else (0, 0, 0)
 
         for i in self.inits:
             j = pm.joint(name="jDef_{0}_{1}".format(self.suffix, self.inits.index(i)), radius=1.0)
             extra.alignTo(j, i, mode=2)
-            pm.setAttr(j.jointOrient, jointOrientValue)
+            # pm.setAttr(j.jointOrient, jointOrientValue)
             if i == self.inits[-1]: # if it is the last joint dont add it to the deformers
                 pm.rename(j, (j.name()).replace("jDef", "j"))
             self.sockets.append(j)
             self.deformerJoints.append(j)
+
+        extra.orientJoints(self.deformerJoints, worldUpAxis=self.up_axis, upAxis=(0, -1, 0), reverseAim=self.sideMult,
+                           reverseUp=self.sideMult)
+
+        if not self.useRefOrientation:
+            extra.orientJoints(self.deformerJoints, worldUpAxis=self.up_axis, upAxis=(0, -1, 0),
+                               reverseAim=self.sideMult, reverseUp=self.sideMult)
+        else:
+            for x in range (len(self.deformerJoints)):
+                extra.alignTo(self.deformerJoints[x], self.inits[x], mode=2)
+                pm.makeIdentity(self.deformerJoints[x], a=True)
+
 
         pm.parentConstraint(self.limbPlug, self.scaleGrp)
 

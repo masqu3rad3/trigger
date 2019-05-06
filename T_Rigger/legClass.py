@@ -66,8 +66,10 @@ class Leg(object):
         self.up_axis, self.mirror_axis, self.look_axis = extra.getRigAxes(self.leg_root_ref)
 
         # get if orientation should be derived from the initial Joints
-        try: self.useRefOrientation = pm.getAttr(self.collar_ref.useRefOri)
-        except: self.useRefOrientation = False
+        try: self.useRefOrientation = pm.getAttr(self.leg_root_ref.useRefOri)
+        except:
+            pm.warning("Cannot find Inherit Orientation Attribute on Initial Root Joint %s... Skipping inheriting." %self.leg_root_ref)
+            self.useRefOrientation = False
 
         # self.originalSuffix = suffix
         self.suffix = (extra.uniqueName("limbGrp_%s" % suffix)).replace("limbGrp_", "")
@@ -184,7 +186,7 @@ class Leg(object):
                                worldUpAxis=dt.Vector(self.mirror_axis), reverseAim=self.sideMult)
 
         else:
-            extra.alignTo(self.j_ik_orig_root, self.leg_root_ref, mode=2)
+            extra.alignTo(self.j_ik_orig_root, self.hip_ref, mode=2)
             pm.makeIdentity(self.j_ik_orig_root, a=True)
             extra.alignTo(self.j_ik_orig_knee, self.knee_ref, mode=2)
             pm.makeIdentity(self.j_ik_orig_knee, a=True)
@@ -204,7 +206,7 @@ class Leg(object):
 
 
         else:
-            extra.alignTo(self.j_ik_sc_root, self.leg_root_ref, mode=2)
+            extra.alignTo(self.j_ik_sc_root, self.hip_ref, mode=2)
             pm.makeIdentity(self.j_ik_sc_root, a=True)
             extra.alignTo(self.j_ik_sc_knee, self.knee_ref, mode=2)
             pm.makeIdentity(self.j_ik_sc_knee, a=True)
@@ -223,7 +225,7 @@ class Leg(object):
 
 
         else:
-            extra.alignTo(self.j_ik_rp_root, self.leg_root_ref, mode=2)
+            extra.alignTo(self.j_ik_rp_root, self.hip_ref, mode=2)
             pm.makeIdentity(self.j_ik_rp_root, a=True)
             extra.alignTo(self.j_ik_rp_knee, self.knee_ref, mode=2)
             pm.makeIdentity(self.j_ik_rp_knee, a=True)
@@ -271,7 +273,7 @@ class Leg(object):
                                worldUpAxis=dt.Vector(self.mirror_axis), reverseAim=self.sideMult)
 
         else:
-            extra.alignTo(self.jfk_root, self.leg_root_ref, mode=2)
+            extra.alignTo(self.jfk_root, self.hip_ref, mode=2)
             pm.makeIdentity(self.jfk_root, a=True)
             extra.alignTo(self.jfk_knee, self.knee_ref, mode=2)
             pm.makeIdentity(self.jfk_knee, a=True)
@@ -834,14 +836,14 @@ class Leg(object):
         self.cont_IK_foot.tSpin >> mult_al_fix_t_spin.input1
         self.cont_IK_foot.tWiggle >> mult_al_fix_t_wiggle.input1
 
-        mult_al_fix_b_lean.output >> self.pv_ball_lean.rotateY
-        mult_al_fix_b_roll.output >> self.pv_ball_roll.rotateZ
-        mult_al_fix_b_spin.output >> self.pv_ball_spin.rotateY
+        mult_al_fix_b_lean.output >> self.pv_ball_lean.rotateZ
+        mult_al_fix_b_roll.output >> self.pv_ball_roll.rotateY
+        mult_al_fix_b_spin.output >> self.pv_ball_spin.rotateZ
         mult_al_fix_h_roll.output >> self.pv_heel.rotateX
         mult_al_fix_h_spin.output >> self.pv_heel.rotateY
         mult_al_fix_t_roll.output >> self.pv_toe.rotateX
         mult_al_fix_t_spin.output >> self.pv_toe.rotateY
-        mult_al_fix_t_wiggle.output >> self.pv_ball.rotateZ
+        mult_al_fix_t_wiggle.output >> self.pv_ball.rotateY
 
         pv_bank_in_ore = extra.createUpGrp(self.pv_bank_in, "ORE")
 
@@ -1230,7 +1232,7 @@ class Leg(object):
         pm.parentConstraint(self.limbPlug, angleExt_Root_IK, mo=False)
         pm.parentConstraint(self.cont_IK_foot, angleExt_Fixed_IK, mo=False)
         extra.alignToAlter(angleExt_Float_IK, self.jDef_legRoot, 2)
-        pm.move(angleExt_Float_IK, (0,5,0), objectSpace=True)
+        pm.move(angleExt_Float_IK, (0,self.sideMult*5,0), objectSpace=True)
 
         angleNodeIK = pm.createNode("angleBetween", name="angleBetweenIK_%s" % self.suffix)
         angleRemapIK = pm.createNode("remapValue", name="angleRemapIK_%s" % self.suffix)

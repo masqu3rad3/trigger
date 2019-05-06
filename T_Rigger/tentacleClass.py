@@ -62,6 +62,12 @@ class Tentacle(object):
         # initialize coordinates
         self.up_axis, self.mirror_axis, self.look_axis = extra.getRigAxes(self.inits[0])
 
+        # get if orientation should be derived from the initial Joints
+        try: self.useRefOrientation = pm.getAttr(self.inits[0].useRefOri)
+        except:
+            pm.warning("Cannot find Inherit Orientation Attribute on Initial Root Joint %s... Skipping inheriting." %self.inits[0])
+            self.useRefOrientation = False
+
         # initialize suffix
         self.suffix = (extra.uniqueName("limbGrp_%s" % suffix)).replace("limbGrp_", "")
 
@@ -135,7 +141,15 @@ class Tentacle(object):
         # extra.orientJoints(self.guideJoints,
         #                    localMoveAxis=self.sideMult * (dt.Vector(self.up_axis)),
         #                    mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.look_axis)))
-        extra.orientJoints(self.guideJoints, worldUpAxis=(self.up_axis), reverseAim=self.sideMult, reverseUp=self.sideMult)
+
+        # extra.orientJoints(self.guideJoints, worldUpAxis=(self.up_axis), reverseAim=self.sideMult, reverseUp=self.sideMult)
+        if not self.useRefOrientation:
+            extra.orientJoints(self.guideJoints, worldUpAxis=(self.up_axis), upAxis=(0, 1, 0), reverseAim=self.sideMult, reverseUp=self.sideMult)
+            # extra.orientJoints(self.guideJoints, worldUpAxis=(self.up_axis), upAxis=(0, 1, 0))
+        else:
+            for x in range (len(self.guideJoints)):
+                extra.alignTo(self.guideJoints[x], self.inits[x], mode=2)
+                pm.makeIdentity(self.guideJoints[x], a=True)
 
 
         pm.select(d=True)
@@ -428,9 +442,13 @@ class Tentacle(object):
 
         self.cont_special.sineDirection >> sineLoc.rotateY
 
+        # WHY THIS OFFSET IS NECESSARY? TRY TO GED RID OF
+        offsetVal = (0,180,0) if self.sideMult == -1 else (0,0,0)
         for j in range(len(self.guideJoints)):
             extra.alignToAlter(self.contJointsList[j], self.guideJoints[j], mode=2)
-            pm.parentConstraint(self.contTwk_List[j], self.contJointsList[j], mo=False)
+            pm.pointConstraint(self.contTwk_List[j], self.contJointsList[j], mo=False)
+            pm.orientConstraint(self.contTwk_List[j], self.contJointsList[j], mo=False, offset=offsetVal)
+
             pm.scaleConstraint(self.contTwk_List[j], self.contJointsList[j], mo=False)
 
         pm.parent(npBase[0], self.nonScaleGrp)

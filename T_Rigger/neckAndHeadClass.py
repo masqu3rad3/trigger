@@ -58,6 +58,12 @@ class NeckAndHead():
         # initialize coordinates
         self.up_axis, self.mirror_axis, self.look_axis = extra.getRigAxes(self.neckNodes[0])
 
+        # get if orientation should be derived from the initial Joints
+        try: self.useRefOrientation = pm.getAttr(self.neckNodes[0].useRefOri)
+        except:
+            pm.warning("Cannot find Inherit Orientation Attribute on Initial Root Joint %s... Skipping inheriting." %self.neckNodes[0])
+            self.useRefOrientation = False
+
         # initialize suffix
         self.suffix = (extra.uniqueName("limbGrp_%s" % suffix)).replace("limbGrp_", "")
 
@@ -110,9 +116,18 @@ class NeckAndHead():
         #                    localMoveAxis=-(dt.Vector(self.up_axis)),
         #                    mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.look_axis)))
 
-        extra.orientJoints(self.guideJoints, worldUpAxis=-dt.Vector(self.look_axis), reverseAim=self.sideMult, reverseUp=self.sideMult)
+        # extra.orientJoints(self.guideJoints, worldUpAxis=-dt.Vector(self.look_axis), reverseAim=self.sideMult, reverseUp=self.sideMult)
 
-
+        if not self.useRefOrientation:
+            extra.orientJoints(self.guideJoints, worldUpAxis=(self.look_axis), upAxis=(0, 1, 0), reverseAim=self.sideMult, reverseUp=self.sideMult)
+        else:
+            for x in range (len(self.guideJoints[:-2])):
+                extra.alignTo(self.guideJoints[x], self.neckNodes[x], mode=2)
+                pm.makeIdentity(self.guideJoints[x], a=True)
+            extra.alignTo(self.guideJoints[-2], self.headStart, mode=2)
+            pm.makeIdentity(self.guideJoints[-2], a=True)
+            extra.alignTo(self.guideJoints[-1], self.headEnd, mode=2)
+            pm.makeIdentity(self.guideJoints[-1], a=True)
 
     def createControllers(self):
         icon = ic.Icon()

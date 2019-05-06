@@ -812,6 +812,63 @@ def orientJoints(jointList, aimAxis=(1.0,0.0,0.0), upAxis=(0.0,1.0,0.0), worldUp
     pm.makeIdentity(jointList[-1], a=True)
     pm.setAttr(jointList[-1].jointOrient, (0,0,0))
 
+# def orientJoints(jointList, aimAxis=(1.0,0.0,0.0), upAxis=(0.0,1.0,0.0), worldUpAxis=(0.0,1.0,0.0), reverseAim=1.0, reverseUp=1.0):
+#     resetJoints = []
+#
+#     aimAxis = reverseAim*dt.Vector(aimAxis)
+#     upAxis = reverseUp*dt.Vector(upAxis)
+#
+#     # Loop all selected joints ...
+#     for jnt in reversed(jointList):
+#
+#         # Get child node
+#         childs = pm.listRelatives(jnt, children=True, type=['transform', 'joint'])
+#
+#         # If the joints has direct childs, unparent that childs and store names
+#         if childs:
+#             if len(childs) > 0:
+#                 childs = pm.parent(childs, world=True)
+#
+#         # Get parent of this joints for later use
+#         parent = ''
+#         parents = pm.listRelatives(jnt, parent=True)
+#         if parents:
+#             parent = parents[0]
+#
+#         # Aim to the child
+#         aimTarget = ''
+#         if childs:
+#             for child in childs:
+#                 if pm.nodeType(child) == 'joint':
+#                     aimTarget = child
+#                     break
+#
+#         # print '//DEBUG: JNT=' + jnt + " Parent=" + parent + " AimTarget=" + aimTarget + "//\n"
+#
+#         if aimTarget != '':
+#
+#             # Apply an aim constraint from the joint to its child (target)
+#             pm.delete(pm.aimConstraint(aimTarget, jnt, aim=aimAxis, upVector=upAxis, worldUpVector=worldUpAxis,
+#                                            worldUpType='vector', weight=1.0))
+#
+#             # Clear joint axis
+#             pm.joint(jnt, edit=True, zeroScaleOrient=True)
+#             pm.makeIdentity(jnt, apply=True)
+#
+#         elif parent != '':
+#             resetJoints.append(jnt)
+#
+#         # Reparent child
+#         if childs:
+#             if len(childs) > 0:
+#                 pm.parent(childs, jnt)
+#
+#     for jnt in resetJoints:
+#         # If there is no target, the joint will take its parent orientation
+#         for axis in ['x', 'y', 'z']:
+#             pm.setAttr(jnt + '.jointOrient' + axis.upper(), pm.getAttr(jnt + '.r' + axis))
+#             pm.setAttr(jnt + '.r' + axis, 0)
+
 def uniqueList(seq): # Dave Kirby
     # Order preserving
     seen = set()

@@ -51,7 +51,9 @@ class Arm(object):
 
         # get if orientation should be derived from the initial Joints
         try: self.useRefOrientation = pm.getAttr(self.collar_ref.useRefOri)
-        except: self.useRefOrientation = False
+        except:
+            pm.warning("Cannot find Inherit Orientation Attribute on Initial Root Joint %s... Skipping inheriting." %self.collar_ref)
+            self.useRefOrientation = False
 
 
 
@@ -105,7 +107,7 @@ class Arm(object):
         # extra.orientJoints([self.j_def_collar, self.j_collar_end], worldUpAxis=(self.up_axis), reverseAim=self.sideMult, reverseUp=self.sideMult)
 
         if not self.useRefOrientation:
-            extra.orientJoints([self.j_def_collar, self.j_collar_end], worldUpAxis=(self.look_axis), reverseAim=self.sideMult, reverseUp=self.sideMult)
+            extra.orientJoints([self.j_def_collar, self.j_collar_end], worldUpAxis=(self.look_axis), upAxis=(0, 1, 0), reverseAim=self.sideMult, reverseUp=self.sideMult)
         else:
             extra.alignTo(self.j_def_collar, self.collar_ref, mode=2)
             pm.makeIdentity(self.j_def_collar, a=True)
@@ -145,7 +147,7 @@ class Arm(object):
         # extra.orientJoints([self.j_ik_orig_up, self.j_ik_orig_low, self.j_ik_orig_low_end], worldUpAxis=(self.up_axis), reverseAim=self.sideMult, reverseUp=self.sideMult)
 
         if not self.useRefOrientation:
-            extra.orientJoints([self.j_ik_orig_up, self.j_ik_orig_low, self.j_ik_orig_low_end], worldUpAxis=(self.look_axis), reverseAim=self.sideMult, reverseUp=self.sideMult)
+            extra.orientJoints([self.j_ik_orig_up, self.j_ik_orig_low, self.j_ik_orig_low_end], worldUpAxis=(self.look_axis), upAxis=(0, 1, 0), reverseAim=self.sideMult, reverseUp=self.sideMult)
         else:
             extra.alignTo(self.j_ik_orig_up, self.shoulder_ref, mode=2)
             pm.makeIdentity(self.j_ik_orig_up, a=True)
@@ -163,7 +165,7 @@ class Arm(object):
         # extra.orientJoints([self.j_ik_sc_up, self.j_ik_sc_low, self.j_ik_sc_low_end], worldUpAxis=(self.up_axis), reverseAim=self.sideMult, reverseUp=self.sideMult)
 
         if not self.useRefOrientation:
-            extra.orientJoints([self.j_ik_sc_up, self.j_ik_sc_low, self.j_ik_sc_low_end], worldUpAxis=(self.look_axis), reverseAim=self.sideMult, reverseUp=self.sideMult)
+            extra.orientJoints([self.j_ik_sc_up, self.j_ik_sc_low, self.j_ik_sc_low_end], worldUpAxis=(self.look_axis), upAxis=(0, 1, 0), reverseAim=self.sideMult, reverseUp=self.sideMult)
         else:
             extra.alignTo(self.j_ik_sc_up, self.shoulder_ref, mode=2)
             pm.makeIdentity(self.j_ik_sc_up, a=True)
@@ -180,7 +182,7 @@ class Arm(object):
         # extra.orientJoints([self.j_ik_rp_up, self.j_ik_rp_low, self.j_ik_rp_low_end], worldUpAxis=(self.up_axis), reverseAim=self.sideMult, reverseUp=self.sideMult)
 
         if not self.useRefOrientation:
-            extra.orientJoints([self.j_ik_rp_up, self.j_ik_rp_low, self.j_ik_rp_low_end], worldUpAxis=(self.look_axis), reverseAim=self.sideMult, reverseUp=self.sideMult)
+            extra.orientJoints([self.j_ik_rp_up, self.j_ik_rp_low, self.j_ik_rp_low_end], worldUpAxis=(self.look_axis), upAxis=(0, 1, 0), reverseAim=self.sideMult, reverseUp=self.sideMult)
         else:
             extra.alignTo(self.j_ik_rp_up, self.shoulder_ref, mode=2)
             pm.makeIdentity(self.j_ik_rp_up, a=True)
@@ -202,7 +204,7 @@ class Arm(object):
         # extra.orientJoints([self.j_fk_up, self.j_fk_low, self.j_fk_low_end], worldUpAxis=(self.up_axis), reverseAim=self.sideMult, reverseUp=self.sideMult)
 
         if not self.useRefOrientation:
-            extra.orientJoints([self.j_fk_up, self.j_fk_low, self.j_fk_low_end], worldUpAxis=(self.look_axis), reverseAim=self.sideMult, reverseUp=self.sideMult)
+            extra.orientJoints([self.j_fk_up, self.j_fk_low, self.j_fk_low_end], worldUpAxis=(self.look_axis), upAxis=(0, 1, 0), reverseAim=self.sideMult, reverseUp=self.sideMult)
         else:
             extra.alignTo(self.j_fk_up, self.shoulder_ref, mode=2)
             pm.makeIdentity(self.j_fk_up, a=True)
@@ -1056,7 +1058,7 @@ class Arm(object):
         angleRemapFK = pm.createNode("remapValue", name="angleRemapFK_%s" % self.suffix)
         angleMultFK = pm.createNode("multDoubleLinear", name="angleMultFK_%s" % self.suffix)
 
-        self.cont_fk_up_arm.rotateZ >> angleRemapFK.inputValue
+        self.cont_fk_up_arm.rotateY >> angleRemapFK.inputValue
         pm.setAttr(angleRemapFK.inputMin, 0)
         pm.setAttr(angleRemapFK.inputMax, 90)
         pm.setAttr(angleRemapFK.outputMin, 0)
@@ -1076,6 +1078,13 @@ class Arm(object):
 
         angleExt_blend.output >> angleGlobal.input1
         self.cont_fk_ik.autoShoulder >> angleGlobal.input2
+
+        # upVectorStr = pm.getAttr(self.collar_ref.upAxis)
+        # upVectorStr = upVectorStr.replace("+", "")
+        # upVectorStr = upVectorStr.replace("-", "")
+        # upVectorStr = upVectorStr.upper()
+        #
+        # pm.connectAttr(angleGlobal.output, "%s.rotate%s" %(self.cont_shoulder_auto, lookVectorStr))
 
         angleGlobal.output >> self.cont_shoulder_auto.rotateY
 

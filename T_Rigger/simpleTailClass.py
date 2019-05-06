@@ -32,6 +32,13 @@ class SimpleTail(object):
         # initialize coordinates
         self.up_axis, self.mirror_axis, self.look_axis = extra.getRigAxes(self.inits[0])
 
+        # get if orientation should be derived from the initial Joints
+        try: self.useRefOrientation = pm.getAttr(self.inits[0].useRefOri)
+        except:
+            pm.warning("Cannot find Inherit Orientation Attribute on Initial Root Joint %s... Skipping inheriting." %self.inits[0])
+            self.useRefOrientation = False
+
+
         # initialize suffix
         self.suffix = (extra.uniqueName("limbGrp_%s" % suffix)).replace("limbGrp_", "")
 
@@ -79,7 +86,15 @@ class SimpleTail(object):
         # extra.orientJoints(self.deformerJoints,
         #                    localMoveAxis=self.sideMult * (dt.Vector(self.up_axis)),
         #                    mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.look_axis)))
-        extra.orientJoints(self.deformerJoints, worldUpAxis=(self.up_axis), reverseAim=self.sideMult, reverseUp=self.sideMult)
+        # extra.orientJoints(self.deformerJoints, worldUpAxis=(self.up_axis), reverseAim=self.sideMult, reverseUp=self.sideMult)
+
+        if not self.useRefOrientation:
+            extra.orientJoints(self.deformerJoints, worldUpAxis=(self.look_axis), upAxis=(0, 1, 0), reverseAim=self.sideMult, reverseUp=self.sideMult)
+        else:
+            for x in range (len(self.deformerJoints)):
+                extra.alignTo(self.deformerJoints[x], self.inits[x], mode=2)
+                pm.makeIdentity(self.deformerJoints[x], a=True)
+
 
 
         pm.parent(self.deformerJoints[0], self.scaleGrp)
