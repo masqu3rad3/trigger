@@ -1007,7 +1007,7 @@ class mainUI(QtWidgets.QMainWindow):
             objName=extra.uniqueName("cont_{0}".format(self.controllers_combobox.currentText()))
             # newController = self.all_icon_functions[self.controllers_combobox.currentIndex()][1](name=objName, scale=(1,1,1))
             newController, dmp = self.icon.createIcon(self.controllers_combobox.currentText(), iconName=objName, scale=(1,1,1))
-            tools.replaceController(mirrorAxis=self.initSkeleton.mirrorAxis, mirror=False, oldController=oldController,
+            tools.replaceController(mirrorAxis=self.initSkeleton.mirrorVector_asString, mirror=False, oldController=oldController,
                                     newController= newController, alignToCenter=self.controllers_checkbox.isChecked())
             pm.select(oldController)
         pm.undoInfo(closeChunk=True)
@@ -1059,7 +1059,7 @@ class mainUI(QtWidgets.QMainWindow):
 
                 # pm.makeIdentity(newController, a=True)
                 pm.parent(newController, oldController)
-                tools.replaceController(mirrorAxis=self.initSkeleton.mirrorAxis, mirror=False, oldController=oldController, newController=newController, alignToCenter=self.controllers_checkbox.isChecked())
+                tools.replaceController(mirrorAxis=self.initSkeleton.mirrorVector_asString, mirror=False, oldController=oldController, newController=newController, alignToCenter=self.controllers_checkbox.isChecked())
                 for i in tryChannels:
                     try:
                         pm.setAttr("%s.%s" % (oldController, i), transformDict[i])
