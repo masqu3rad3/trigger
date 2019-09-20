@@ -20,7 +20,8 @@ class Icon(object):
                              "Looper": self.looper,
                              "Triangle": self.triangle,
                              "Pyramid": self.pyramid,
-                             "Diamond": self.diamond
+                             "Diamond": self.diamond,
+                             "Arrow": self.arrow
                              }
 
 
@@ -485,4 +486,13 @@ class Icon(object):
         pm.setAttr(cont_diamond.scale, scale)
         pm.makeIdentity(cont_diamond, a=True)
         return cont_diamond
+
+    def arrow(self, name="cont_arrow", scale=(1, 1, 1)):
+        cont_arrow = pm.curve(name=name, d=1, p=[(0.0335873, 0, 1.055001), (-4.955996, 0, 0.971701), (-4.983113, 0, 2.081272),
+                         (-7.934906, 0, -0.0118149), (-4.93066, 0, -2.06217), (-4.973678, 0, -0.968172),
+                         (0.0696592, 0, -1.018287), (0.0192114, 0, 1.054761)], k=[0, 1, 2, 3, 4, 5, 6, 7])
+        pm.makeIdentity(cont_arrow, a=True, s=True)
+        pm.setAttr(cont_arrow.scale, scale)
+        pm.makeIdentity(cont_arrow, a=True)
+        return cont_arrow
 
