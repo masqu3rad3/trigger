@@ -217,7 +217,7 @@ class mainUI(QtWidgets.QMainWindow):
         self.layout.setContentsMargins(0, 0, 0, 0)
 
         self.setMinimumSize(250, 100)
-        self.resize(250, 500)
+        self.resize(270, 520)
         self.buildUI()
 
 
@@ -867,11 +867,28 @@ class mainUI(QtWidgets.QMainWindow):
         # self.controllers_combobox.addItems(iconNames)
         self.controllers_combobox.addItems(self.icon.getIconsList())
 
+
+
+
         self.controllers_checkbox = QtWidgets.QCheckBox("Align To Center", parent=self)
 
         controllers_layout.addWidget(self.controllers_combobox)
         controllers_layout.addWidget(self.controllers_checkbox)
         edit_controllers_layout.addLayout(controllers_layout)
+
+
+
+        alignVector_layout = QtWidgets.QHBoxLayout(spacing=4)
+        alignVector_label = QtWidgets.QLabel(text="Align Vector:")
+        self.alignVectorX_sb = QtWidgets.QSpinBox(minimum=-1, maximum=1, value=0, buttonSymbols=QtWidgets.QAbstractSpinBox.NoButtons, maximumWidth=(40))
+        self.alignVectorY_sb = QtWidgets.QSpinBox(minimum=-1, maximum=1, value=1, buttonSymbols=QtWidgets.QAbstractSpinBox.NoButtons, maximumWidth=(40))
+        self.alignVectorZ_sb = QtWidgets.QSpinBox(minimum=-1, maximum=1, value=0, buttonSymbols=QtWidgets.QAbstractSpinBox.NoButtons, maximumWidth=(40))
+        alignVector_layout.addWidget(alignVector_label)
+        alignVector_layout.addWidget(self.alignVectorX_sb)
+        alignVector_layout.addWidget(self.alignVectorY_sb)
+        alignVector_layout.addWidget(self.alignVectorZ_sb)
+
+        edit_controllers_layout.addLayout(alignVector_layout)
 
         edit_controllers_buttons_layout = QtWidgets.QHBoxLayout()
         edit_controllers_layout.addLayout(edit_controllers_buttons_layout)
@@ -992,7 +1009,7 @@ class mainUI(QtWidgets.QMainWindow):
         pm.undoInfo(openChunk=True)
         objName=extra.uniqueName("cont_{0}".format(self.controllers_combobox.currentText()))
         # self.all_icon_functions[self.controllers_combobox.currentIndex()][1](name=objName, scale=(1,1,1))
-        self.icon.createIcon(self.controllers_combobox.currentText(), iconName=objName, scale=(1,1,1))
+        self.icon.createIcon(self.controllers_combobox.currentText(), iconName=objName, scale=(1,1,1), normal=(self.alignVectorX_sb.value(), self.alignVectorY_sb.value(), self.alignVectorZ_sb.value()))
 
         pm.undoInfo(closeChunk=True)
     def onReplaceController(self):
@@ -1006,7 +1023,7 @@ class mainUI(QtWidgets.QMainWindow):
             oldController = str(i.name())
             objName=extra.uniqueName("cont_{0}".format(self.controllers_combobox.currentText()))
             # newController = self.all_icon_functions[self.controllers_combobox.currentIndex()][1](name=objName, scale=(1,1,1))
-            newController, dmp = self.icon.createIcon(self.controllers_combobox.currentText(), iconName=objName, scale=(1,1,1))
+            newController, dmp = self.icon.createIcon(self.controllers_combobox.currentText(), iconName=objName, scale=(1,1,1), normal=(self.alignVectorX_sb.value(), self.alignVectorY_sb.value(), self.alignVectorZ_sb.value()))
             tools.replaceController(mirrorAxis=self.initSkeleton.mirrorVector_asString, mirror=False, oldController=oldController,
                                     newController= newController, alignToCenter=self.controllers_checkbox.isChecked())
             pm.select(oldController)

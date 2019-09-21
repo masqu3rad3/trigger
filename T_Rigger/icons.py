@@ -62,6 +62,7 @@ class Icon(object):
 
         """
         # create a temporary alignment locator
+        print("Anan", normalVector)
         tempTarget = pm.spaceLocator("tempAlign")
         targetTranslation = pm.xform(node, query=True, worldSpace=True, translation=True)
         pm.xform(tempTarget, worldSpace=True, translation =targetTranslation)
