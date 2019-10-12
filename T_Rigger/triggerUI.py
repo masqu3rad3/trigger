@@ -84,7 +84,7 @@ class mainUI(QtWidgets.QMainWindow):
             try:
                 if entry.objectName() == windowName:
                     entry.close()
-            except AttributeError:
+            except (AttributeError, TypeError):
                 pass
 
         parent = getMayaMainWindow()
