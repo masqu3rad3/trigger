@@ -1276,8 +1276,10 @@ class initialJoints():
         pm.setAttr(node.mirrorAxis, self.mirrorVector_asString)
         pm.setAttr(node.lookAxis, self.lookVector_asString)
 
+        if not pm.attributeQuery("useRefOri", node=node, exists=True):
+            pm.addAttr(node, longName="useRefOri", niceName="Inherit_Orientation", at="bool", keyable=True)
 
-        pm.addAttr(node, longName="useRefOri", niceName="Inherit_Orientation", at="bool", keyable=True)
+        # pm.addAttr(node, longName="useRefOri", niceName="Inherit_Orientation", at="bool", keyable=True)
         pm.setAttr(node.useRefOri, True)
         # pm.setAttr(node.lookAxis, "-%s" %self.lookAxis if self.lookAxisMult == -1 else "%s" %self.lookAxis)
         # self.lookAxis

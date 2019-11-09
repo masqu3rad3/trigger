@@ -411,7 +411,7 @@ def attrPass (sourceNode, targetNode, attributes=[], inConnections=True, outConn
             else:
                 continue
         else:
-
+            print("HERE", addAttribute)
             exec(addAttribute)
 
     if daisyChain==True:
@@ -593,6 +593,7 @@ def identifyMaster(node, idBy="idByLabel"):
     if typeNum == 18:  # if type is in the 'other' category:
         limbName = pm.getAttr(node.otherType)
     else:
+        print(typeDict, typeNum)
         limbName = typeDict[typeNum]
         # get which limb it is
     for i in limbDictionary.values():

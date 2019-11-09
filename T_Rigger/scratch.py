@@ -499,6 +499,7 @@ class LimbBuilder():
         allJoints = pm.listRelatives(rootNode, type="joint", ad=True)
         allFingers = []
         for j in allJoints:
+            print("tt", j)
             jID = extra.identifyMaster(j)
 
             if jID[0] == "Hip" and jID[2] == "L":
