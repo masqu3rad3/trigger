@@ -2,6 +2,9 @@ import pymel.core as pm
 import pymel.core.datatypes as dt
 import trigger.library.functions as extra
 
+from maya import cmds
+import maya.OpenMaya as om
+
 class initialJoints():
 
     def __init__(self, settingsData):
@@ -68,7 +71,8 @@ class initialJoints():
         dirX = (transKey[1])
         dirY = (transKey[2])
         dirZ = (transKey[3])
-        newVector = dt.Vector(inputVector.x*dirX, inputVector.y*dirY, inputVector.z*dirZ)
+        newVector = om.MVector(inputVector.x*dirX, inputVector.y*dirY, inputVector.z*dirZ)
+        # newVector = dt.Vector(inputVector.x*dirX, inputVector.y*dirY, inputVector.z*dirZ)
         newOrder = eval("newVector.{0},newVector.{1},newVector.{2}".format(order[0],order[1],order[2]))
         return newOrder
 
@@ -82,30 +86,28 @@ class initialJoints():
                 alignment of the returned Obj(string)  Ex.: (bone_left, "left", "right") 
 
         """
-        try:
-            boneName = parentBone.name()
-        except AttributeError:
-            pm.warning("Bones cannot be identified automatically")
-            return None, None, None
-        if "_right" in boneName:
-            mirrorBoneName = boneName.replace("_right", "_left")
+
+        if not cmds.objExists(parentBone):
+            cmds.warning("Guides cannot be identified automatically")
+
+        if "_right" in parentBone:
+            mirrorBoneName = parentBone.replace("_right", "_left")
             alignmentGiven = "right"
             alignmentReturn = "left"
-        elif "_left" in boneName:
-            mirrorBoneName = boneName.replace("_left", "_right")
+        elif "_left" in parentBone:
+            mirrorBoneName = parentBone.replace("_left", "_right")
             alignmentGiven = "left"
             alignmentReturn = "right"
-        elif "_c" in boneName:
+        elif "_c" in parentBone:
             return None, "both", None
         else:
-            pm.warning("Bones cannot be identified automatically")
+            cmds.warning("Bones cannot be identified automatically")
             return None, None, None
-        try:
-            returnBone = pm.PyNode(mirrorBoneName)
-        except:
-            pm.warning("cannot find mirror bone automatically")
+        if cmds.objExists(mirrorBoneName):
+            return mirrorBoneName, alignmentGiven, alignmentReturn
+        else:
+            cmds.warning("cannot find mirror bone automatically")
             return None, alignmentGiven, None
-        return returnBone, alignmentGiven, alignmentReturn
 
     def changeOrientation(self, faceDir, upDir):
         dirValids = ["+x", "+y", "+z", "-x", "-y", "-z", "+X", "+Y", "+Z", "-X", "-Y", "-Z"]
@@ -285,10 +287,11 @@ class initialJoints():
         locatorsList=[]
         
         for i in range (0,len(limbJoints)):
-            locator = pm.spaceLocator(name="loc_%s" % limbJoints[i].name())
+            locator = cmds.spaceLocator(name="loc_%s" % limbJoints[i].name())[0]
             locatorsList.append(locator)
             if constrainedTo:
-                extra.alignTo(locator, limbJoints[i], 2)
+                print "DEBUG", locator, limbJoints[i].name()
+                extra.alignTo(locator, limbJoints[i].name(), position=True, rotation=True)
                 pm.parentConstraint(locator, limbJoints[i], mo=True)
                 extra.connectMirror(constrainedTo[i], locatorsList[i], mirrorAxis=self.mirrorAxis.upper())
                 # constrainedTo[i].translate.lock()

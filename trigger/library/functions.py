@@ -1,43 +1,82 @@
 import pymel.core as pm
 import pymel.core.datatypes as dt
 
-def getDistance( node1, node2):
-    """
-    Calculates the distance between Node 1 and Node 2
-    Args:
-        node1: Node 1. Must be a transform node 
-        node2: Node 2. Must be a transform node
 
-    Returns: Distance value.
+import maya.cmds as cmds
+# import maya.OpenMaya as om
+# USING MAYA API 2.0
+import maya.api.OpenMaya as om
 
-    """
-    Ax, Ay, Az = node1.getTranslation(space="world")
-    Bx, By, Bz = node2.getTranslation(space="world")
+def getMDagPath(node):
+    selList = om.MSelectionList()
+    selList.add(node)
+    return selList.getDagPath(0)
+
+def getWorldTranslation(node):
+    """Returns given nodes world translation of rotate pivot"""
+    targetMTransform = om.MFnTransform(getMDagPath(node))
+    targetRotatePivot = om.MVector(targetMTransform.rotatePivot(om.MSpace.kWorld))
+    return targetRotatePivot
+
+def getDistance(node1, node2):
+    """Returns the distance between two nodes"""
+    Ax, Ay, Az = getWorldTranslation(node1)
+    Bx, By, Bz = getWorldTranslation(node2)
     return ((Ax-Bx)**2 + (Ay-By)**2 + (Az-Bz)**2)**0.5
 
+# def getDistance( node1, node2):
+#     """
+#     Calculates the distance between Node 1 and Node 2
+#     Args:
+#         node1: Node 1. Must be a transform node
+#         node2: Node 2. Must be a transform node
+#
+#     Returns: Distance value.
+#
+#     """
+#     Ax, Ay, Az = node1.getTranslation(space="world")
+#     Bx, By, Bz = node2.getTranslation(space="world")
+#     return ((Ax-Bx)**2 + (Ay-By)**2 + (Az-Bz)**2)**0.5
 
-def alignTo(sourceObj=None, targetObj=None, mode=0, sl=False, o=(0,0,0)):
-    offset=dt.Vector(o)
-    if sl == True:
-        selection = pm.ls(sl=True)
-        if not len(selection) == 2:
-            pm.error("select exactly 2 objects")
-            return
-        sourceObj = selection[0]
-        targetObj = selection[1]
-    if not sourceObj or not targetObj:
-        pm.error("No source and/or target object defined")
-        return
-    if mode == 0:
+def alignTo(node, target, position=True, rotation=True):
+    """
+    This is the fastest align method. May not work in all cases
+    http://www.rihamtoulan.com/blog/2017/12/21/matching-transformation-in-maya-and-mfntransform-pitfalls
+    """
+    nodeMTransform = om.MFnTransform(getMDagPath(node))
+    targetMTransform = om.MFnTransform(getMDagPath(target))
+    if position:
+        targetRotatePivot = om.MVector(targetMTransform.rotatePivot(om.MSpace.kWorld))
+        nodeMTransform.setTranslation(targetRotatePivot, om.MSpace.kWorld)
+    if rotation:
+        targetMTMatrix = om.MTransformationMatrix(om.MMatrix(cmds.xform(target, matrix=True, ws=1, q=True)))
+        # using the target matrix decomposition
+        # Worked on all cases tested
+        nodeMTransform.setRotation(targetMTMatrix.rotation(True), om.MSpace.kWorld)
 
-        targetTranslation = pm.xform(targetObj, query=True, worldSpace=True, translation=True)
-        pm.xform(sourceObj, worldSpace=True, translation =targetTranslation)
-    if mode == 1:
-        targetRotation = pm.xform(targetObj, query=True, worldSpace=True, rotation=True)
-        pm.xform(sourceObj, worldSpace=True, rotation =targetRotation+offset)
-    if mode == 2:
-        targetMatrix = pm.xform(targetObj, query=True, worldSpace=True, matrix=True)
-        pm.xform(sourceObj, worldSpace=True, matrix=targetMatrix)
+# def alignTo(sourceObj=None, targetObj=None, mode=0, sl=False, o=(0,0,0)):
+#     offset=dt.Vector(o)
+#     if sl == True:
+#         selection = pm.ls(sl=True)
+#         if not len(selection) == 2:
+#             pm.error("select exactly 2 objects")
+#             return
+#         sourceObj = selection[0]
+#         targetObj = selection[1]
+#     if not sourceObj or not targetObj:
+#         pm.error("No source and/or target object defined")
+#         return
+#     if mode == 0:
+#
+#         targetTranslation = pm.xform(targetObj, query=True, worldSpace=True, translation=True)
+#         pm.xform(sourceObj, worldSpace=True, translation =targetTranslation)
+#     if mode == 1:
+#         targetRotation = pm.xform(targetObj, query=True, worldSpace=True, rotation=True)
+#         pm.xform(sourceObj, worldSpace=True, rotation =targetRotation+offset)
+#     if mode == 2:
+#         targetMatrix = pm.xform(targetObj, query=True, worldSpace=True, matrix=True)
+#         pm.xform(sourceObj, worldSpace=True, matrix=targetMatrix)
+
 
 
 def alignToAlter(node1, node2, mode=0, o=(0,0,0)):
@@ -203,48 +242,49 @@ def connectMirror (node1, node2, mirrorAxis="X"):
     rvsNodeT=pm.createNode("reverse")
     minusOpT=pm.createNode("plusMinusAverage")
     pm.setAttr(minusOpT.operation, 2)
-    node1.translate >> rvsNodeT.input
-    rvsNodeT.output >> minusOpT.input3D[0]
+    cmds.connectAttr("{0}.translate".format(node1), "{0}.input".format(rvsNodeT))
+    # node1.translate >> rvsNodeT.input
+    # rvsNodeT.output >> minusOpT.input3D[0]
+    cmds.connectAttr("{0}.output".format(rvsNodeT), "{0}.input3D[0]".format(minusOpT))
     pm.setAttr(minusOpT.input3D[1], (1, 1, 1))
     #nodes Rotate
     rvsNodeR=pm.createNode("reverse")
     minusOpR=pm.createNode("plusMinusAverage")
     pm.setAttr(minusOpR.operation, 2)
-    node1.rotate >> rvsNodeR.input
-    rvsNodeR.output >> minusOpR.input3D[0]
+    # node1.rotate >> rvsNodeR.input
+    cmds.connectAttr("{0}.rotate".format(node1), "{0}.input".format(rvsNodeR))
+
+    # rvsNodeR.output >> minusOpR.input3D[0]
+    cmds.connectAttr("{0}.output".format(rvsNodeR), "{0}.input3D[0]".format(minusOpR))
+
     pm.setAttr(minusOpR.input3D[1], (1, 1, 1))
 
     #Translate
 
     if (mirrorAxis=="X"):
-        minusOpT.output3Dx >> node2.tx
-        node1.ty >> node2.ty
-        node1.tz >> node2.tz
+        cmds.connectAttr("{0}.output3Dx".format(minusOpT), "{0}.tx".format(node2))
+        cmds.connectAttr("{0}.ty".format(node1), "{0}.ty".format(node2))
+        cmds.connectAttr("{0}.tz".format(node1), "{0}.tz".format(node2))
+        cmds.connectAttr("{0}.rx".format(node1), "{0}.rx".format(node2))
+        cmds.connectAttr("{0}.output3Dy".format(minusOpR), "{0}.ry".format(node2))
+        cmds.connectAttr("{0}.output3Dz".format(minusOpR), "{0}.rz".format(node2))
 
-        node1.rx >> node2.rx
-        minusOpR.output3Dy >> node2.ry
-        minusOpR.output3Dz >> node2.rz
     if (mirrorAxis=="Y"):
-        node1.tx >> node2.tx
-        minusOpT.output3Dy >> node2.ty
-        node1.tz >> node2.tz
-
-        minusOpR.output3Dx >> node2.rx
-        node1.ry >> node2.ry
-        minusOpR.output3Dz >> node2.rz
+        cmds.connectAttr("{0}.tx".format(node1), "{0}.tx".format(node2))
+        cmds.connectAttr("{0}.output3Dy".format(minusOpT), "{0}.ty".format(node2))
+        cmds.connectAttr("{0}.tz".format(node1), "{0}.tz".format(node2))
+        cmds.connectAttr("{0}.output3Dx".format(minusOpR), "{0}.rx".format(node2))
+        cmds.connectAttr("{0}.ry".format(node1), "{0}.ry".format(node2))
+        cmds.connectAttr("{0}.output3Dz".format(minusOpR), "{0}.rz".format(node2))
 
     if (mirrorAxis=="Z"):
-        node1.tx >> node2.tx
-        node1.ty >> node2.ty
-        minusOpT.output3Dz >> node2.tz
+        cmds.connectAttr("{0}.tx".format(node1), "{0}.tx".format(node2))
+        cmds.connectAttr("{0}.ty".format(node1), "{0}.ty".format(node2))
+        cmds.connectAttr("{0}.output3Dz".format(minusOpT), "{0}.tz".format(node2))
+        cmds.connectAttr("{0}.rx".format(node1), "{0}.rx".format(node2))
+        cmds.connectAttr("{0}.output3Dy".format(minusOpR), "{0}.ry".format(node2))
+        cmds.connectAttr("{0}.output3Dz".format(minusOpR), "{0}.rz".format(node2))
 
-        node1.rx >> node2.rx
-        minusOpR.output3Dy >> node2.ry
-        minusOpR.output3Dz >> node2.rz
-
-    # node2.translate.lock()
-    # node2.rotate.lock()
-    # pm.setAttr(node2.tx, lock=True)
 def colorize (node, index, shape=True):
     """
     Changes the wire color of the node to the index
