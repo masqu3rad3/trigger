@@ -1,130 +1,56 @@
 import pymel.core as pm
-import trigger.library.functions as extra
-
-import trigger.library.controllers as icon
+from trigger.library import functions as extra
+from trigger.library import controllers as ic
 
 class SimpleTail(object):
 
-    def __init__(self):
+    def __init__(self, inits, suffix="", side="C", conts="cube"):
+
+        # reinitialize the initial Joints
+        if not isinstance(inits, list):
+            self.tailRoot = inits.get("TailRoot")
+            self.tails = (inits.get("Tail"))
+            self.inits = [self.tailRoot] + (self.tails)
+
+        # fool proofing
+        if (len(inits) < 2):
+            pm.error("Tail setup needs at least 2 initial joints")
+            return
+
+        # initialize sides
+        self.sideMult = -1 if side == "R" else 1
+        self.side = side
+
+        # initialize coordinates
+        self.up_axis, self.mirror_axis, self.look_axis = extra.getRigAxes(self.inits[0])
+
+        # get if orientation should be derived from the initial Joints
+        try: self.useRefOrientation = pm.getAttr(self.inits[0].useRefOri)
+        except:
+            pm.warning("Cannot find Inherit Orientation Attribute on Initial Root Joint %s... Skipping inheriting." %self.inits[0])
+            self.useRefOrientation = False
+
+
+        # initialize suffix
+        self.suffix = (extra.uniqueName("limbGrp_%s" % suffix)).replace("limbGrp_", "")
+
+        # scratch variables
+        self.sockets = []
         self.limbGrp = None
         self.scaleGrp = None
-        self.cont_body = None
-        self.cont_hips = None
-        self.limbPlug = None
         self.nonScaleGrp = None
-        self.cont_IK_OFF = None
-        self.sockets = []
+        self.limbPlug = None
         self.scaleConstraints = []
         self.anchors = []
         self.anchorLocations = []
         self.deformerJoints = []
         self.colorCodes = [6, 18]
 
-    def createSimpleTail(self, inits, suffix="", side="C", conts="cube"):
-        if not isinstance(inits, list):
-            tailRoot = inits.get("TailRoot")
-            tails = (inits.get("Tail"))
-            inits = [tailRoot] + (tails)
-
-        suffix=(extra.uniqueName("limbGrp_%s" % suffix)).replace("limbGrp_", "")
-        self.limbGrp = pm.group(name="limbGrp_%s" % suffix, em=True)
-
-        print "Creating Simple Tail %s" %suffix
-
-        if (len(inits) < 2):
-            pm.error("Tail setup needs at least 2 initial joints")
-            return
-
-
-
-        self.scaleGrp = pm.group(name="scaleGrp_" + suffix, em=True)
-        self.scaleConstraints.append(self.scaleGrp)
-
-        # find the Socket
-        # self.connectsTo = inits[0].getParent()
-        # if tailParent != None and tailParent.type() == "joint":
-        #     self.connectsTo = extra.identifyMaster(tailParent)[0]
-
-        ## Create LimbPlug
-
-        pm.select(d=True)
-        self.limbPlug = pm.joint(name="limbPlug_" + suffix, p=inits[0].getTranslation(space="world"), radius=3)
-        # self.scaleConstraints.append(self.limbPlug)
-        pm.parentConstraint(self.limbPlug, self.scaleGrp)
-
-        ## Get the orientation axises
-        upAxis, mirroAxis, spineDir = extra.getRigAxes(inits[0])
-
-        ## Create Joints
-        self.deformerJoints=[]
-
-        pm.select(d=True)
-
-        for j in range (0,len(inits)):
-            location = inits[j].getTranslation(space="world")
-            bone = pm.joint(name="jDef_{0}_{1}".format(j, suffix), p=location)
-            self.sockets.append(bone)
-            # if j == 0 or j == len(inits):
-            #     self.sockets.append(bone)
-            self.deformerJoints.append(bone)
-
-        for j in self.deformerJoints:
-            pm.joint(j, e=True, zso=True, oj="yzx", sao="zup")
-
-        pm.parent(self.deformerJoints[0], self.scaleGrp)
-
-        pm.parent(self.scaleGrp, self.nonScaleGrp, self.cont_IK_OFF, self.limbGrp)
-
-        contList=[]
-        cont_off_list=[]
-        for j in range (0,len(self.deformerJoints)):
-            if not j == len(self.deformerJoints)-1:
-                targetInit = inits[j+1]
-                rotateOff = (90,90,0)
-                scaleDis = extra.getDistance(self.deformerJoints[j], self.deformerJoints[j+1])/2
-                cont = icon.cube(name="cont_%s_%s" %(suffix, str(j)), scale=(scaleDis,scaleDis,scaleDis))
-                contList.append(cont)
-
-                pm.xform(cont, piv=(0,-scaleDis,0))
-
-                # extra.alignToAlter(cont, deformerJoints[j], 2)
-                extra.alignAndAim(cont, targetList=[inits[j]], aimTargetList=[targetInit], upVector=upAxis,
-                                  rotateOff=rotateOff)
-
-                cont_OFF = extra.createUpGrp(cont, "OFF")
-                cont_ORE = extra.createUpGrp(cont, "ORE")
-
-                if side == "R":
-                    pm.setAttr("{0}.s{1}".format(cont_OFF, "x"), -1)
-                cont_off_list.append(cont_OFF)
-                pm.parentConstraint(cont, self.deformerJoints[j], mo=False)
-
-                # create additive scalability
-                sGlobal = pm.createNode("multiplyDivide")
-                self.limbPlug.scale >> sGlobal.input1
-                cont.scale >> sGlobal.input2
-                sGlobal.output >> self.deformerJoints[j].scale
-
-                # cont.scale >> deformerJoints[j].scale
-
-                if j != 0:
-                    pm.parent(cont_off_list[j], contList[j-1])
-                else:
-                    pm.parent(cont_off_list[j], self.scaleGrp)
-            else: ## last joint has no cont, use the previous one to scale that
-                # pass
-                extra.alignTo(self.deformerJoints[j], inits[-1])
-                sGlobal = pm.createNode("multiplyDivide")
-                self.limbPlug.scale >> sGlobal.input1
-                contList[j-1].scale >> sGlobal.input2
-                sGlobal.output >> self.deformerJoints[j].scale
-
-            # pm.parentConstraint(cont, deformerJoints[j], mo=False)
-
-            # pm.scaleConstraint(cont, deformerJoints[j], mo=False)
-        # import mrCubic as mcube
-        # mcube.mrCube(deformerJoints)
-
+    def createGrp(self):
+        self.limbGrp = pm.group(name="limbGrp_%s" % self.suffix, em=True)
+        self.scaleGrp = pm.group(name="scaleGrp_%s" % self.suffix, em=True)
+        extra.alignTo(self.scaleGrp, self.tailRoot, 0)
+        self.nonScaleGrp = pm.group(name="NonScaleGrp_%s" % self.suffix, em=True)
 
         pm.addAttr(self.scaleGrp, at="bool", ln="Control_Visibility", sn="contVis", defaultValue=True)
         pm.addAttr(self.scaleGrp, at="bool", ln="Joints_Visibility", sn="jointVis", defaultValue=True)
@@ -134,33 +60,101 @@ class SimpleTail(object):
         pm.setAttr(self.scaleGrp.jointVis, cb=True)
         pm.setAttr(self.scaleGrp.rigVis, cb=True)
 
-        ## Cont visibilities
-        for i in cont_off_list:
-            self.scaleGrp.contVis >> i.v
+        pm.parent(self.scaleGrp, self.limbGrp)
+        pm.parent(self.nonScaleGrp, self.limbGrp)
 
-        ## global joint visibilities
-        for j in self.deformerJoints:
-            self.scaleGrp.jointVis >> j.v
+    def createJoints(self):
+        # draw Joints
+        pm.select(d=True)
+        self.limbPlug = pm.joint(name="limbPlug_%s" % self.suffix, p=self.inits[0].getTranslation(space="world"), radius=3)
 
-        ## Rig Visibilities
+        pm.select(d=True)
+        for j in range (0,len(self.inits)):
+            location = self.inits[j].getTranslation(space="world")
+            bone = pm.joint(name="jDef_{0}_{1}".format(j, self.suffix), p=location)
+            self.sockets.append(bone)
+            self.deformerJoints.append(bone)
+
+        # extra.orientJoints(self.deformerJoints,
+        #                    localMoveAxis=self.sideMult * (dt.Vector(self.up_axis)),
+        #                    mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.look_axis)))
+        # extra.orientJoints(self.deformerJoints, worldUpAxis=(self.up_axis), reverseAim=self.sideMult, reverseUp=self.sideMult)
+
+        if not self.useRefOrientation:
+            extra.orientJoints(self.deformerJoints, worldUpAxis=(self.look_axis), upAxis=(0, 1, 0), reverseAim=self.sideMult, reverseUp=self.sideMult)
+        else:
+            for x in range (len(self.deformerJoints)):
+                extra.alignTo(self.deformerJoints[x], self.inits[x], mode=2)
+                pm.makeIdentity(self.deformerJoints[x], a=True)
+
+
+
+        pm.parent(self.deformerJoints[0], self.scaleGrp)
+
+        map(lambda x: pm.connectAttr(self.scaleGrp.jointVis, x.v), self.deformerJoints)
+
         self.scaleGrp.rigVis >> self.limbPlug.v
 
-        ## COLORIZE
-        # index = 17 ## default yellow color coding for non-sided tentacles
-        # if side == "R":
-        #     index = 13
-        #     indexMin = 9
-        #
-        # elif side == "L":
-        #     index = 6
-        #     indexMin = 18
-        # for i in contList:
-        #     extra.colorize(i, self.colorCodes[0])
-        extra.colorize(contList, self.colorCodes[0])
         extra.colorize(self.deformerJoints, self.colorCodes[0], shape=False)
 
+        pass
+
+    def createControllers(self):
+
+        icon = ic.Icon()
+
+        self.contList=[]
+        self.cont_off_list=[]
+
+        for j in range (len(self.deformerJoints)-1):
+            scaleDis = extra.getDistance(self.deformerJoints[j], self.deformerJoints[j + 1]) / 2
+            # cont = icon.cube(name="cont_%s_%s" % (self.suffix, str(j)), scale=(scaleDis, scaleDis, scaleDis))
+            cont, dmp = icon.createIcon("Cube", iconName="cont_%s_%s" % (self.suffix, str(j)), scale=(scaleDis, scaleDis, scaleDis))
+
+            pm.xform(cont, piv=(self.sideMult * (-scaleDis), 0, 0))
+            extra.alignToAlter(cont, self.deformerJoints[j], 2)
+
+            cont_OFF = extra.createUpGrp(cont, "OFF")
+            cont_ORE = extra.createUpGrp(cont, "ORE")
+
+            self.contList.append(cont)
+            self.cont_off_list.append(cont_OFF)
+
+            if j is not 0:
+                pm.parent(self.cont_off_list[j], self.contList[j - 1])
+            else:
+                pm.parent(self.cont_off_list[j], self.scaleGrp)
+
+        map(lambda x: pm.connectAttr(self.scaleGrp.contVis, x.v), self.cont_off_list)
+        extra.colorize(self.contList, self.colorCodes[0])
+
+    def createFKsetup(self):
+        for x in range (len(self.contList)):
+            pm.parentConstraint(self.contList[x], self.deformerJoints[x], mo=False)
+
+            # additive scalability
+            sGlobal = pm.createNode("multiplyDivide", name="sGlobal_%s_%s" %(x, self.suffix))
+            self.limbPlug.scale >> sGlobal.input1
+            self.contList[x].scale >> sGlobal.input2
+            sGlobal.output >> self.deformerJoints[x].scale
+
+        ## last joint has no cont, use the previous one to scale that
+        sGlobal = pm.createNode("multiplyDivide", name="sGlobal_Last_%s" %(self.suffix))
+        self.limbPlug.scale >> sGlobal.input1
+        self.contList[-1].scale >> sGlobal.input2
+        sGlobal.output >> self.deformerJoints[-1].scale
 
 
+    def roundUp(self):
+        pm.parentConstraint(self.limbPlug, self.scaleGrp, mo=False)
+        pm.setAttr(self.scaleGrp.rigVis, 0)
 
+        self.scaleConstraints.append(self.scaleGrp)
+        # lock and hide
 
-
+    def createLimb(self):
+        self.createGrp()
+        self.createJoints()
+        self.createControllers()
+        self.createFKsetup()
+        self.roundUp()

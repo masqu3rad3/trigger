@@ -8,7 +8,7 @@ import inspect
 from trigger.rig import scratch
 
 
-import trigger.library.controllers as icon
+import trigger.library.controllers as ic
 
 from trigger.utils import mr_cubic as mrCubic
 
@@ -74,33 +74,18 @@ class MainUI(QtWidgets.QMainWindow):
             try:
                 if entry.objectName() == windowName:
                     entry.close()
-            except AttributeError:
+            except (AttributeError, TypeError):
                 pass
-        # for entry in QtWidgets.QApplication.allWidgets():
-        #     if entry.objectName() == windowName:
-        #         entry.close()
-        #         # entry.deleteLater()
+
         parent = getMayaMainWindow()
-        # parent = None
+
         super(MainUI, self).__init__(parent=parent)
 
-        # settings
-        # self.rigName = "triggerAutoRig"
-        # self.majorLeftColor = 6
-        # self.minorLeftColor = 18
-        # self.majorRightColor = 13
-        # self.minorRightColor = 9
-        # self.majorCenterColor = 17
-        # self.minorCenterColor = 20
-        # self.lookAxis = "+z"
-        # self.upAxis = "+y"
-        # self.afterCreation = 0
-        # self.seperateSelectionSets = True
+        self.icon = ic.Icon()
 
         self.skinMeshList = None
 
         self.settingsDefaults={
-            "rigName": "triggerAutoRig",
             "majorLeftColor": 6,
             "minorLeftColor": 18,
             "majorRightColor": 13,
@@ -109,6 +94,7 @@ class MainUI(QtWidgets.QMainWindow):
             "minorCenterColor": 20,
             "lookAxis": "+z",
             "upAxis": "+y",
+            "mirrorAxis": "+x",
             "afterCreation": 0,
             "seperateSelectionSets": True,
             "bindMethod": 0,
@@ -221,7 +207,7 @@ class MainUI(QtWidgets.QMainWindow):
         self.layout.setContentsMargins(0, 0, 0, 0)
 
         self.setMinimumSize(250, 100)
-        self.resize(250, 500)
+        self.resize(270, 520)
         self.buildUI()
 
 
@@ -381,13 +367,8 @@ class MainUI(QtWidgets.QMainWindow):
         if nameCheck(self.rigName) == -1:
             self.infoPop(textHeader="Invalid Characters", textTitle="Naming Error", textInfo="Use Latin Characters without any spaces.")
             return
-        # self.majorLeftColor = self.colorCodeDict["majorleft_pushButton"]
-        # self.minorLeftColor = self.colorCodeDict["minorleft_pushButton"]
-        # self.majorRightColor = self.colorCodeDict["majorright_pushButton"]
-        # self.minorRightColor = self.colorCodeDict["minorright_pushButton"]
-        # self.majorCenterColor = self.colorCodeDict["majorcenter_pushButton"]
-        # self.minorCenterColor = self.colorCodeDict["minorcenter_pushButton"]
-        self.settingsData["rigName"] = self.rigName
+
+        # self.settingsData["rigName"] = self.rigName
         self.settingsData["majorLeftColor"] = self.colorCodeDict["majorleft_pushButton"]
         self.settingsData["minorLeftColor"] = self.colorCodeDict["minorleft_pushButton"]
         self.settingsData["majorRightColor"] = self.colorCodeDict["majorright_pushButton"]
@@ -395,34 +376,14 @@ class MainUI(QtWidgets.QMainWindow):
         self.settingsData["majorCenterColor"] = self.colorCodeDict["majorcenter_pushButton"]
         self.settingsData["minorCenterColor"] = self.colorCodeDict["minorcenter_pushButton"]
 
-
-        # self.lookAxis = self.lookaxis_comboBox.currentText()
-        # self.upAxis = self.upaxis_comboBox.currentText()
-        # self.afterCreation = self.aftercreation_comboBox.currentIndex()
-        # self.seperateSelectionSets = self.jointselectionsets_comboBox.currentIndex() == 0
-
         self.settingsData["lookAxis"] = self.lookaxis_comboBox.currentText()
         self.settingsData["upAxis"] = self.upaxis_comboBox.currentText()
+        self.settingsData["mirrorAxis"] = self.mirroraxis_comboBox.currentText()
         self.settingsData["afterCreation"] = self.aftercreation_comboBox.currentIndex()
         self.settingsData["seperateSelectionSets"] = self.jointselectionsets_comboBox.currentIndex() == 0
 
         self.settingsData["bindMethod"] = self.bindmethod_comboBox.currentIndex()
-        print "ANAN", self.bindmethod_comboBox.currentIndex()
         self.settingsData["skinningMethod"] = self.skinningmethod_comboBox.currentIndex()
-
-        # settingsData = {
-        #     "rigName": self.rigName,
-        #     "majorLeftColor": self.majorLeftColor,
-        #     "minorLeftColor": self.minorLeftColor,
-        #     "majorRightColor": self.majorRightColor,
-        #     "minorRightColor": self.minorRightColor,
-        #     "majorCenterColor": self.majorCenterColor,
-        #     "minorCenterColor": self.minorCenterColor,
-        #     "lookAxis": self.lookAxis,
-        #     "upAxis": self.upAxis,
-        #     "afterCreation": self.afterCreation,
-        #     "seperateSelectionSets": self.seperateSelectionSets
-        #     }
 
         homedir = os.path.expanduser("~")
         settingsFilePath = os.path.join(homedir, "triggerSettings.json")
@@ -438,8 +399,6 @@ class MainUI(QtWidgets.QMainWindow):
         homedir = os.path.expanduser("~")
         settingsFilePath = os.path.join(homedir, "triggerSettings.json")
 
-        # settingsData = loadJson(settingsFilePath)
-
         if os.path.isfile(settingsFilePath):
             self.settingsData = loadJson(settingsFilePath)
             # If maya version is lower then 2017, dont use geodesic voxel
@@ -450,36 +409,6 @@ class MainUI(QtWidgets.QMainWindow):
         else:
             self.settingsData = self.settingsDefaults
             dumpJson(self.settingsData, settingsFilePath)
-
-        # If the file is not yet created or deleted/corrupted
-        # if not settingsData or loadDefaults:
-        #     self.settingsData = {"rigName": "triggerAutoRig",
-        #                     "majorLeftColor": 6,
-        #                     "minorLeftColor": 18,
-        #                     "majorRightColor": 13,
-        #                     "minorRightColor": 9,
-        #                     "majorCenterColor": 17,
-        #                     "minorCenterColor": 20,
-        #                     "lookAxis": "+z",
-        #                     "upAxis": "+y",
-        #                     "afterCreation": 0,
-        #                     "seperateSelectionSets": True
-        #                     }
-
-        # self.rigName = settingsData["rigName"]
-        # self.majorLeftColor = settingsData["majorLeftColor"]
-        # self.minorLeftColor = settingsData["minorLeftColor"]
-        # self.majorRightColor = settingsData["majorRightColor"]
-        # self.minorRightColor = settingsData["minorRightColor"]
-        # self.majorCenterColor = settingsData["majorCenterColor"]
-        # self.minorCenterColor = settingsData["minorCenterColor"]
-        # self.lookAxis = settingsData["lookAxis"]
-        # self.upAxis = settingsData["upAxis"]
-        # self.afterCreation = settingsData["afterCreation"]
-        # self.seperateSelectionSets = settingsData["seperateSelectionSets"]
-
-
-        #dumpJson(settingsData, settingsFilePath)
 
     def settingsUI(self):
 
@@ -507,22 +436,22 @@ class MainUI(QtWidgets.QMainWindow):
         self.general_settings_groupBox.setTitle(("General Settings"))
         self.general_settings_groupBox.setObjectName(("general_settings_groupBox"))
 
-        self.rigname_label = QtWidgets.QLabel(self.general_settings_groupBox)
-        self.rigname_label.setGeometry(QtCore.QRect(0, 25, 101, 20))
-        self.rigname_label.setText(("Name"))
-        self.rigname_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
-        self.rigname_label.setObjectName(("rigname_label"))
-
-        self.rigname_lineEdit = QtWidgets.QLineEdit(self.general_settings_groupBox)
-        self.rigname_lineEdit.setGeometry(QtCore.QRect(110, 25, 155, 20))
-        self.rigname_lineEdit.setToolTip((""))
-        self.rigname_lineEdit.setStatusTip((""))
-        self.rigname_lineEdit.setWhatsThis((""))
-        self.rigname_lineEdit.setAccessibleName((""))
-        self.rigname_lineEdit.setAccessibleDescription((""))
-        self.rigname_lineEdit.setCursorPosition(0)
-        self.rigname_lineEdit.setPlaceholderText(("Give a name for the rig"))
-        self.rigname_lineEdit.setObjectName(("rigname_lineEdit"))
+        # self.rigname_label = QtWidgets.QLabel(self.general_settings_groupBox)
+        # self.rigname_label.setGeometry(QtCore.QRect(0, 25, 101, 20))
+        # self.rigname_label.setText(("Name"))
+        # self.rigname_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
+        # self.rigname_label.setObjectName(("rigname_label"))
+        #
+        # self.rigname_lineEdit = QtWidgets.QLineEdit(self.general_settings_groupBox)
+        # self.rigname_lineEdit.setGeometry(QtCore.QRect(110, 25, 155, 20))
+        # self.rigname_lineEdit.setToolTip((""))
+        # self.rigname_lineEdit.setStatusTip((""))
+        # self.rigname_lineEdit.setWhatsThis((""))
+        # self.rigname_lineEdit.setAccessibleName((""))
+        # self.rigname_lineEdit.setAccessibleDescription((""))
+        # self.rigname_lineEdit.setCursorPosition(0)
+        # self.rigname_lineEdit.setPlaceholderText(("Give a name for the rig"))
+        # self.rigname_lineEdit.setObjectName(("rigname_lineEdit"))
 
         self.colorcoding_label = QtWidgets.QLabel(self.general_settings_groupBox)
         self.colorcoding_label.setGeometry(QtCore.QRect(0, 60, 101, 20))
@@ -533,7 +462,6 @@ class MainUI(QtWidgets.QMainWindow):
         self.majorleft_pushButton = QtWidgets.QPushButton(self.general_settings_groupBox)
         self.majorleft_pushButton.setGeometry(QtCore.QRect(20, 90, 81, 31))
         self.majorleft_pushButton.setAcceptDrops(False)
-        self.majorleft_pushButton.setToolTip((""))
         self.majorleft_pushButton.setLayoutDirection(QtCore.Qt.LeftToRight)
         self.majorleft_pushButton.setText(("Major Left"))
         self.majorleft_pushButton.setAutoDefault(True)
@@ -545,7 +473,6 @@ class MainUI(QtWidgets.QMainWindow):
         self.minorleft_pushButton = QtWidgets.QPushButton(self.general_settings_groupBox)
         self.minorleft_pushButton.setGeometry(QtCore.QRect(20, 130, 81, 31))
         self.minorleft_pushButton.setAcceptDrops(False)
-        self.minorleft_pushButton.setToolTip((""))
         self.minorleft_pushButton.setLayoutDirection(QtCore.Qt.LeftToRight)
         self.minorleft_pushButton.setText(("Minor Left"))
         self.minorleft_pushButton.setAutoDefault(True)
@@ -556,7 +483,6 @@ class MainUI(QtWidgets.QMainWindow):
         self.minorright_pushButton = QtWidgets.QPushButton(self.general_settings_groupBox)
         self.minorright_pushButton.setGeometry(QtCore.QRect(200, 130, 81, 31))
         self.minorright_pushButton.setAcceptDrops(False)
-        self.minorright_pushButton.setToolTip((""))
         self.minorright_pushButton.setLayoutDirection(QtCore.Qt.LeftToRight)
         self.minorright_pushButton.setText(("Minor Right"))
         self.minorright_pushButton.setAutoDefault(True)
@@ -567,7 +493,6 @@ class MainUI(QtWidgets.QMainWindow):
         self.majorright_pushButton = QtWidgets.QPushButton(self.general_settings_groupBox)
         self.majorright_pushButton.setGeometry(QtCore.QRect(200, 90, 81, 31))
         self.majorright_pushButton.setAcceptDrops(False)
-        self.majorright_pushButton.setToolTip((""))
         self.majorright_pushButton.setLayoutDirection(QtCore.Qt.LeftToRight)
         self.majorright_pushButton.setText(("Major Right"))
         self.majorright_pushButton.setAutoDefault(True)
@@ -578,7 +503,6 @@ class MainUI(QtWidgets.QMainWindow):
         self.minorcenter_pushButton = QtWidgets.QPushButton(self.general_settings_groupBox)
         self.minorcenter_pushButton.setGeometry(QtCore.QRect(110, 130, 81, 31))
         self.minorcenter_pushButton.setAcceptDrops(False)
-        self.minorcenter_pushButton.setToolTip((""))
         self.minorcenter_pushButton.setLayoutDirection(QtCore.Qt.LeftToRight)
         self.minorcenter_pushButton.setText(("Minor Center"))
         self.minorcenter_pushButton.setAutoDefault(True)
@@ -589,7 +513,6 @@ class MainUI(QtWidgets.QMainWindow):
         self.majorcenter_pushButton = QtWidgets.QPushButton(self.general_settings_groupBox)
         self.majorcenter_pushButton.setGeometry(QtCore.QRect(110, 90, 81, 31))
         self.majorcenter_pushButton.setAcceptDrops(False)
-        self.majorcenter_pushButton.setToolTip((""))
         self.majorcenter_pushButton.setLayoutDirection(QtCore.Qt.LeftToRight)
         self.majorcenter_pushButton.setText(("Major Center"))
         self.majorcenter_pushButton.setAutoDefault(True)
@@ -598,7 +521,7 @@ class MainUI(QtWidgets.QMainWindow):
         self.majorcenter_pushButton.setObjectName(("majorcenter_pushButton"))
 
         self.initjoint_settings_groupBox = QtWidgets.QGroupBox(self.trigger_settings_Dialog)
-        self.initjoint_settings_groupBox.setGeometry(QtCore.QRect(20, 230, 301, 91))
+        self.initjoint_settings_groupBox.setGeometry(QtCore.QRect(20, 215, 301, 110))
         self.initjoint_settings_groupBox.setTitle(("Initial Joint Settings"))
         self.initjoint_settings_groupBox.setObjectName(("initjoint_settings_groupBox"))
 
@@ -616,7 +539,6 @@ class MainUI(QtWidgets.QMainWindow):
 
         self.lookaxis_comboBox = QtWidgets.QComboBox(self.initjoint_settings_groupBox)
         self.lookaxis_comboBox.setGeometry(QtCore.QRect(120, 20, 74, 22))
-        self.lookaxis_comboBox.setToolTip((""))
         self.lookaxis_comboBox.setObjectName(("lookaxis_comboBox"))
         self.lookaxis_comboBox.addItems(axisList)
 
@@ -628,12 +550,26 @@ class MainUI(QtWidgets.QMainWindow):
 
         self.upaxis_comboBox = QtWidgets.QComboBox(self.initjoint_settings_groupBox)
         self.upaxis_comboBox.setGeometry(QtCore.QRect(120, 50, 74, 22))
-        self.upaxis_comboBox.setToolTip((""))
         self.upaxis_comboBox.setObjectName(("upaxis_comboBox"))
         self.upaxis_comboBox.addItems(axisList)
 
+        self.mirroraxis_label = QtWidgets.QLabel(self.initjoint_settings_groupBox)
+        self.mirroraxis_label.setGeometry(QtCore.QRect(0, 80, 101, 20))
+        self.mirroraxis_label.setText(("Mirror Axis"))
+        self.mirroraxis_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
+        self.mirroraxis_label.setObjectName(("upaxis_label"))
+
+        self.mirroraxis_comboBox = QtWidgets.QComboBox(self.initjoint_settings_groupBox)
+        self.mirroraxis_comboBox.setGeometry(QtCore.QRect(120, 80, 74, 22))
+        self.mirroraxis_comboBox.setObjectName(("mirroraxis_comboBox"))
+        self.mirroraxis_comboBox.addItems(axisList)
+
         self.lookaxis_comboBox.currentIndexChanged.connect(lambda: fixClash(self.lookaxis_comboBox, self.upaxis_comboBox))
+        self.lookaxis_comboBox.currentIndexChanged.connect(lambda: fixClash(self.lookaxis_comboBox, self.mirroraxis_comboBox))
         self.upaxis_comboBox.currentIndexChanged.connect(lambda: fixClash(self.upaxis_comboBox, self.lookaxis_comboBox))
+        self.upaxis_comboBox.currentIndexChanged.connect(lambda: fixClash(self.upaxis_comboBox, self.mirroraxis_comboBox))
+        self.mirroraxis_comboBox.currentIndexChanged.connect(lambda: fixClash(self.mirroraxis_comboBox, self.lookaxis_comboBox))
+        self.mirroraxis_comboBox.currentIndexChanged.connect(lambda: fixClash(self.mirroraxis_comboBox, self.upaxis_comboBox))
 
 
         self.rig_settings_groupBox = QtWidgets.QGroupBox(self.trigger_settings_Dialog)
@@ -649,7 +585,6 @@ class MainUI(QtWidgets.QMainWindow):
 
         self.aftercreation_comboBox = QtWidgets.QComboBox(self.rig_settings_groupBox)
         self.aftercreation_comboBox.setGeometry(QtCore.QRect(120, 20, 141, 22))
-        self.aftercreation_comboBox.setToolTip((""))
         self.aftercreation_comboBox.setObjectName(("aftercreation_comboBox"))
         self.aftercreation_comboBox.addItems(["Do Nothing", "Hide Initial Joints", "Delete Initial Joints"])
 
@@ -676,7 +611,6 @@ class MainUI(QtWidgets.QMainWindow):
 
         self.bindmethod_comboBox = QtWidgets.QComboBox(self.skinmesh_settings_groupBox)
         self.bindmethod_comboBox.setGeometry(QtCore.QRect(120, 20, 141, 22))
-        self.bindmethod_comboBox.setToolTip((""))
         self.bindmethod_comboBox.setObjectName(("bindmethod_comboBox"))
         self.bindmethod_comboBox.addItems(["Closest distance", "Closest in hierarchy", "Heat Map"])
         if int(pm.about(version=True)) >= 2017:
@@ -694,7 +628,7 @@ class MainUI(QtWidgets.QMainWindow):
 
         def initDialog(loadDefaults=False):
             self.loadSettings(loadDefaults=loadDefaults)
-            self.rigname_lineEdit.setText(self.settingsData["rigName"])
+            # self.rigname_lineEdit.setText(self.settingsData["rigName"])
             self.colorCodeDict = {
                 "majorleft_pushButton": self.settingsData["majorLeftColor"],
                 "minorleft_pushButton": self.settingsData["minorLeftColor"],
@@ -711,13 +645,25 @@ class MainUI(QtWidgets.QMainWindow):
 
             index = self.lookaxis_comboBox.findText(self.settingsData["lookAxis"], QtCore.Qt.MatchFixedString)
             if index >= 0:
+                self.lookaxis_comboBox.blockSignals(True)
                 self.lookaxis_comboBox.setCurrentIndex(index)
+                self.lookaxis_comboBox.blockSignals(False)
 
             index = self.upaxis_comboBox.findText(self.settingsData["upAxis"], QtCore.Qt.MatchFixedString)
             if index >= 0:
+                self.upaxis_comboBox.blockSignals(True)
                 self.upaxis_comboBox.setCurrentIndex(index)
+                self.upaxis_comboBox.blockSignals(False)
 
-            fixClash(self.lookaxis_comboBox, self.upaxis_comboBox)
+
+            index = self.mirroraxis_comboBox.findText(self.settingsData["mirrorAxis"], QtCore.Qt.MatchFixedString)
+            if index >= 0:
+                self.mirroraxis_comboBox.blockSignals(True)
+                self.mirroraxis_comboBox.setCurrentIndex(index)
+                self.mirroraxis_comboBox.blockSignals(False)
+
+
+            # fixClash(self.lookaxis_comboBox, self.upaxis_comboBox)
             self.aftercreation_comboBox.setCurrentIndex(self.settingsData["afterCreation"])
             self.jointselectionsets_comboBox.setCurrentIndex(not self.settingsData["seperateSelectionSets"])
 
@@ -768,10 +714,6 @@ class MainUI(QtWidgets.QMainWindow):
         MPradioGrp.addButton(self.MPLeftToRight)
         MPradioGrp.addButton(self.MPRightToLeft)
         self.MPLeftToRight.setChecked(True)
-
-        # MPradioColumn = QtWidgets.QVBoxLayout()
-        # MPradioColumn.setAlignment(QtCore.Qt.AlignLeft)
-        # MPLayout.addLayout(MPradioColumn)
 
         MPLayout.addWidget(self.MPLeftToRight)
         MPLayout.addWidget(self.MPRightToLeft)
@@ -838,6 +780,14 @@ class MainUI(QtWidgets.QMainWindow):
         label = QtWidgets.QLabel("Select Initial Root Joint -> hit Rig Button")
         rigBtn = QtWidgets.QPushButton("RIG from Root")
 
+        nameLayout = QtWidgets.QHBoxLayout()
+        self.rigname_label = QtWidgets.QLabel()
+        self.rigname_label.setText(("Name"))
+        self.rigname_lineEdit = QtWidgets.QLineEdit()
+        self.rigname_lineEdit.setText("triggerAutoRig")
+        nameLayout.addWidget(self.rigname_label)
+        nameLayout.addWidget(self.rigname_lineEdit)
+
         self.isCreateAnchorsChk = QtWidgets.QCheckBox("Create Anchors Automatically", parent=self)
         # self.isCreateAnchorsChk.setLayoutDirection(QtCore.Qt.RightToLeft)
         self.isCreateAnchorsChk.setChecked(True)
@@ -854,13 +804,16 @@ class MainUI(QtWidgets.QMainWindow):
         self.copyweights_checkbox = QtWidgets.QCheckBox("Duplicate and copy weights")
         self.copyweights_checkbox.setEnabled(False)
 
-
+        self.replaceExistingRig_checkbox = QtWidgets.QCheckBox("Replace Existing Rig")
+        # self.replaceExistingRig_checkbox.setEnabled(False)
 
         ## Add widgets to the group layout
+        rigGrpLayout.addLayout(nameLayout)
         rigGrpLayout.addWidget(label)
         rigGrpLayout.addWidget(self.isCreateAnchorsChk)
         rigGrpLayout.addLayout(skinmeshLayout)
         rigGrpLayout.addWidget(self.copyweights_checkbox)
+        rigGrpLayout.addWidget(self.replaceExistingRig_checkbox)
 
         rigGrpLayout.addWidget(rigBtn)
 
@@ -899,15 +852,33 @@ class MainUI(QtWidgets.QMainWindow):
 
         controllers_layout = QtWidgets.QHBoxLayout()
         self.controllers_combobox = QtWidgets.QComboBox()
-        self.all_icon_functions = inspect.getmembers(icon, inspect.isfunction)
-        iconNames = [i[0] for i in self.all_icon_functions]
-        self.controllers_combobox.addItems(iconNames)
+        # self.all_icon_functions = inspect.getmembers(icon, inspect.isfunction)
+        # iconNames = [i[0] for i in self.all_icon_functions]
+        # self.controllers_combobox.addItems(iconNames)
+        self.controllers_combobox.addItems(self.icon.getIconsList())
+
+
+
 
         self.controllers_checkbox = QtWidgets.QCheckBox("Align To Center", parent=self)
 
         controllers_layout.addWidget(self.controllers_combobox)
         controllers_layout.addWidget(self.controllers_checkbox)
         edit_controllers_layout.addLayout(controllers_layout)
+
+
+
+        alignVector_layout = QtWidgets.QHBoxLayout(spacing=4)
+        alignVector_label = QtWidgets.QLabel(text="Align Vector:")
+        self.alignVectorX_sb = QtWidgets.QSpinBox(minimum=-1, maximum=1, value=0, buttonSymbols=QtWidgets.QAbstractSpinBox.NoButtons, maximumWidth=(40))
+        self.alignVectorY_sb = QtWidgets.QSpinBox(minimum=-1, maximum=1, value=1, buttonSymbols=QtWidgets.QAbstractSpinBox.NoButtons, maximumWidth=(40))
+        self.alignVectorZ_sb = QtWidgets.QSpinBox(minimum=-1, maximum=1, value=0, buttonSymbols=QtWidgets.QAbstractSpinBox.NoButtons, maximumWidth=(40))
+        alignVector_layout.addWidget(alignVector_label)
+        alignVector_layout.addWidget(self.alignVectorX_sb)
+        alignVector_layout.addWidget(self.alignVectorY_sb)
+        alignVector_layout.addWidget(self.alignVectorZ_sb)
+
+        edit_controllers_layout.addLayout(alignVector_layout)
 
         edit_controllers_buttons_layout = QtWidgets.QHBoxLayout()
         edit_controllers_layout.addLayout(edit_controllers_buttons_layout)
@@ -928,6 +899,8 @@ class MainUI(QtWidgets.QMainWindow):
         add_controller_pushbutton.clicked.connect(self.onAddController)
         replace_controller_pushbutton.clicked.connect(self.onReplaceController)
         mirror_controller_pushbutton.clicked.connect(self.onMirrorController)
+
+        self.replaceExistingRig_checkbox.stateChanged.connect(self.onReplaceExisting)
 
         self.riglayout.addWidget(edit_controllers_grpbox)
 
@@ -983,6 +956,16 @@ class MainUI(QtWidgets.QMainWindow):
         #
         # self.riglayout.addWidget(anchor_conts_grpbox)
 
+    def onReplaceExisting(self):
+        if self.replaceExistingRig_checkbox.isChecked():
+            self.skinMesh_linedit.enabled = False
+            self.skinMesh_pushbutton.enabled = False
+            self.copyweights_checkbox.enabled = False
+        else:
+            self.skinMesh_linedit.enabled = True
+            self.skinMesh_pushbutton.enabled = True
+            self.copyweights_checkbox.enabled = True
+
     def onGetSkinMesh(self):
         self.skinMeshList = pm.ls(sl=True, type="transform")
         if len(self.skinMeshList) > 0:
@@ -1015,7 +998,9 @@ class MainUI(QtWidgets.QMainWindow):
     def onAddController(self):
         pm.undoInfo(openChunk=True)
         objName=extra.uniqueName("cont_{0}".format(self.controllers_combobox.currentText()))
-        self.all_icon_functions[self.controllers_combobox.currentIndex()][1](name=objName, scale=(1,1,1))
+        # self.all_icon_functions[self.controllers_combobox.currentIndex()][1](name=objName, scale=(1,1,1))
+        self.icon.createIcon(self.controllers_combobox.currentText(), iconName=objName, scale=(1,1,1), normal=(self.alignVectorX_sb.value(), self.alignVectorY_sb.value(), self.alignVectorZ_sb.value()))
+
         pm.undoInfo(closeChunk=True)
     def onReplaceController(self):
         pm.undoInfo(openChunk=True)
@@ -1023,13 +1008,13 @@ class MainUI(QtWidgets.QMainWindow):
         if not selection:
             self.infoPop(textTitle="Skipping action", textHeader="Selection needed", textInfo="You need to select at least one controller node. (transform node)")
             return
-        import extraTools as tools
-        reload(tools)
+
         for i in selection:
             oldController = str(i.name())
             objName=extra.uniqueName("cont_{0}".format(self.controllers_combobox.currentText()))
-            newController = self.all_icon_functions[self.controllers_combobox.currentIndex()][1](name=objName, scale=(1,1,1))
-            tools.replaceController(mirrorAxis=self.initSkeleton.mirrorAxis, mirror=False, oldController=oldController,
+            # newController = self.all_icon_functions[self.controllers_combobox.currentIndex()][1](name=objName, scale=(1,1,1))
+            newController, dmp = self.icon.createIcon(self.controllers_combobox.currentText(), iconName=objName, scale=(1,1,1), normal=(self.alignVectorX_sb.value(), self.alignVectorY_sb.value(), self.alignVectorZ_sb.value()))
+            tools.replaceController(mirrorAxis=self.initSkeleton.mirrorVector_asString, mirror=False, oldController=oldController,
                                     newController= newController, alignToCenter=self.controllers_checkbox.isChecked())
             pm.select(oldController)
         pm.undoInfo(closeChunk=True)
@@ -1081,7 +1066,7 @@ class MainUI(QtWidgets.QMainWindow):
 
                 # pm.makeIdentity(newController, a=True)
                 pm.parent(newController, oldController)
-                tools.replaceController(mirrorAxis=self.initSkeleton.mirrorAxis, mirror=False, oldController=oldController, newController=newController, alignToCenter=self.controllers_checkbox.isChecked())
+                tools.replaceController(mirrorAxis=self.initSkeleton.mirrorVector_asString, mirror=False, oldController=oldController, newController=newController, alignToCenter=self.controllers_checkbox.isChecked())
                 for i in tryChannels:
                     try:
                         pm.setAttr("%s.%s" % (oldController, i), transformDict[i])
@@ -1590,10 +1575,12 @@ class MainUI(QtWidgets.QMainWindow):
         self.progressBar()
         # self.progress_Dialog.show()
         self.rigger.__init__(settingsData=self.settingsData, progressBar=self.progress_progressBar)
+        self.rigger.rigName = self.rigname_lineEdit.text()
         self.rigger.skinMeshList = self.skinMeshList
         self.rigger.bindMethod = self.settingsData["bindMethod"]
         self.rigger.skinMethod = self.settingsData["skinningMethod"]
         self.rigger.copySkinWeights = self.copyweights_checkbox.isChecked()
+        self.rigger.replaceExisting = self.replaceExistingRig_checkbox.isChecked()
         self.rigger.startBuilding(createAnchors=self.isCreateAnchorsChk.isChecked())
         self.progress_Dialog.close()
         pm.undoInfo(closeChunk=True)

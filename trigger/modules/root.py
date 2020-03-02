@@ -1,5 +1,5 @@
 import pymel.core as pm
-import trigger.library.functions as extra
+from trigger.library import functions as extra
 
 class Root(object):
     def __init__(self):

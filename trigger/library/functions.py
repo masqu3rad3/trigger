@@ -238,6 +238,10 @@ def connectMirror (node1, node2, mirrorAxis="X"):
     """
     ## make sure the axis is uppercase:
     mirrorAxis = mirrorAxis.upper()
+    ## strip - and +
+    mirrorAxis = mirrorAxis.replace("+", "")
+    mirrorAxis = mirrorAxis.replace("-", "")
+
     #nodes Translate
     rvsNodeT=pm.createNode("reverse")
     minusOpT=pm.createNode("plusMinusAverage")
@@ -285,19 +289,19 @@ def connectMirror (node1, node2, mirrorAxis="X"):
         cmds.connectAttr("{0}.output3Dy".format(minusOpR), "{0}.ry".format(node2))
         cmds.connectAttr("{0}.output3Dz".format(minusOpR), "{0}.rz".format(node2))
 
-def colorize (node, index, shape=True):
+def colorize (node_list, index, shape=True):
     """
     Changes the wire color of the node to the index
     Args:
-        node: Node
+        node_list: Node
         index: Index Number
 
     Returns:None
 
     """
-    if not isinstance(node, list):
-        node=[node]
-    for z in node:
+    if not isinstance(node_list, list):
+        node_list=[node_list]
+    for node in node_list:
         if isinstance(index, int):
             pass
         elif isinstance(index, str):
@@ -305,21 +309,22 @@ def colorize (node, index, shape=True):
             if index.upper() in sidesDict.keys():
                 index = sidesDict[index.upper()]
             else:
-                pm.error("Colorize error... Unknown index command")
+                cmds.error("Colorize error... Unknown index command")
                 return
         else:
-            pm.error("Colorize error... Index flag must be integer or string('L', 'R', 'C')")
+            cmds.error("Colorize error... Index flag must be integer or string('L', 'R', 'C')")
             return
         #shape=node.getShape()
         if shape:
-            shapes=pm.listRelatives(z, s=True)
-            for i in shapes:
-                pm.setAttr(i.overrideEnabled, True)
-                pm.setAttr(i.overrideColor, index)
+            shapes=cmds.listRelatives(node, s=True)
+            shapes = [] if shapes == None else shapes
+            for shape in shapes:
+                cmds.setAttr("{0}.overrideEnabled".format(shape), True)
+                cmds.setAttr("{0}.overrideColor".format(shape), index)
         else:
-            for i in node:
-                pm.setAttr(i.overrideEnabled, True)
-                pm.setAttr(i.overrideColor, index)
+            for shape in node_list:
+                cmds.setAttr("{0}.overrideEnabled".format(shape), True)
+                cmds.setAttr("{0}.overrideColor".format(shape), index)
 
 def lockAndHide (node, channelArray, hide=True):
     """
@@ -619,24 +624,24 @@ def identifyMaster(node, idBy="idByLabel"):
     }
 
     if not idBy in validIdByValues:
-        pm.error("idBy flag is not valid. Valid Values are:%s" %(validIdByValues))
+        cmds.error("idBy flag is not valid. Valid Values are:%s" %(validIdByValues))
 
     ## get the label ID
     if idBy == "idByLabel":
-        if node.type() != "joint":
-            pm.warning("label identification can only be used for joints")
-    typeNum = pm.getAttr("%s.type" %node)
+        if cmds.objectType(node) != "joint":
+            cmds.warning("label identification can only be used for joints")
+    typeNum = cmds.getAttr("%s.type" %node)
     if typeNum not in typeDict.keys():
-        pm.warning("Joint Type is not detected with idByLabel method")
+        cmds.warning("Joint Type is not detected with idByLabel method")
 
     if typeNum == 18:  # if type is in the 'other' category:
-        limbName = pm.getAttr(node.otherType)
+        limbName = cmds.getAttr("{0}.otherType".format(node))
     else:
         limbName = typeDict[typeNum]
         # get which limb it is
-    for i in limbDictionary.values():
-        if limbName in i:
-            limbType = limbDictionary.keys()[limbDictionary.values().index(i)]
+    for value in limbDictionary.values():
+        if limbName in value:
+            limbType = limbDictionary.keys()[limbDictionary.values().index(value)]
 
     ## Get the Side
 
@@ -647,22 +652,22 @@ def identifyMaster(node, idBy="idByLabel"):
     }
 
     if idBy == "idByLabel":
-            sideNum = pm.getAttr(node.side)
+            sideNum = cmds.getAttr("{0}.side".format(node))
 
             if sideNum not in sideDict.keys():
-                pm.warning("Joint Side is not detected with idByLabel method")
+                cmds.warning("Joint Side is not detected with idByLabel method")
             side = sideDict[sideNum]
 
     if idBy == "idByName":
         # identify the side
-        if "_R_" in node.name():
+        if "_R_" in node:
             side = sideDict[2]
-        elif "_L_" in node.name():
+        elif "_L_" in node:
             side = sideDict[1]
-        elif "_C_" in node.name():
+        elif "_C_" in node:
             side = sideDict[0]
         else:
-            pm.warning("Joint Side is not detected with idByName method")
+            cmds.warning("Joint Side is not detected with idByName method")
 
     return limbName, limbType, side
 
@@ -744,49 +749,58 @@ def getMirror(node):
             pm.warning("Cannot find the mirror controller (Why?)")
             return None
 
-def orientJoints(jointList, localMoveAxis=(0.0,0.0,1.0), upAxis=(0.0,1.0,0.0)):
+def alignNormal(node, normalVector):
+    """
+    Aligns the object according to the given normal vector
+    Args:
+        node: The node to be aligned
+        normalVector: Alignment vector
 
-    #unparent each
-    # print jointList
-    # try:
-    #     pm.parent(jointList, w=True)
-    # except:
-    #     pass
+    Returns: None
 
-    # pm.parent(jointList, w=True)
+    """
+    # create a temporary alignment locator
+    tempTarget = pm.spaceLocator("tempAlign")
+    alignTo(tempTarget, node, mode=0)
+    pm.makeIdentity(tempTarget, a=True)
+    pm.move(tempTarget, normalVector)
+    tempAC = pm.aimConstraint(tempTarget, node, aim=(0,1,0), mo=False)
+    pm.delete(tempAC)
+    pm.delete(tempTarget)
+
+    pass
+
+def orientJoints(jointList, aimAxis=(1.0,0.0,0.0), upAxis=(0.0,1.0,0.0), worldUpAxis=(0.0,1.0,0.0), reverseAim=1, reverseUp=1):
+
+
+    # aimAxis = reverseAim*dt.Vector(aimAxis)
+    aimAxis = reverseAim*om.MVector(aimAxis)
+    # upAxis = reverseUp*dt.Vector(upAxis)
+    upAxis = reverseUp*om.MVector(upAxis)
+
+    if len(jointList) == 1:
+        pass
+        return
 
 
     for j in range(1, len(jointList)):
-        pm.parent(jointList[j], w=True)
-
-    # get the aimVector
-    tempAimLocator = pm.spaceLocator(name="tempAimLocator")
-    alignAndAim(tempAimLocator, [jointList[1]], [jointList[2]], upVector=upAxis)
+        cmds.parent(jointList[j], w=True)
 
     for j in range (0, len(jointList)):
 
-
-
-        localAimLocator = pm.duplicate(tempAimLocator)[0]
-        alignTo(localAimLocator, jointList[j])
-
-        pm.move(localAimLocator, (dt.Vector(localMoveAxis)), r=True, os=True)
-
-        # do not try to ali
         if not (j == (len(jointList)-1)):
-            aimCon = pm.aimConstraint(jointList[j+1], jointList[j], wuo=localAimLocator, wut='object', u=localMoveAxis)
-            pm.delete(aimCon)
-            pm.makeIdentity(jointList[j], a=True)
-        pm.delete(localAimLocator)
+            aimCon = cmds.aimConstraint(jointList[j+1], jointList[j], aim=aimAxis, upVector=upAxis, worldUpVector=worldUpAxis, worldUpType='vector', weight=1.0)
+            cmds.delete(aimCon)
+            cmds.makeIdentity(jointList[j], a=True)
     #
     # re-parent the hierarchy
     for j in range (1, len(jointList)):
-        pm.parent(jointList[j], jointList[j-1])
+        cmds.parent(jointList[j], jointList[j-1])
 
-    pm.delete(tempAimLocator)
-    pm.makeIdentity(jointList[-1], a=True)
-    pm.setAttr(jointList[-1].jointOrient, (0,0,0))
+    cmds.makeIdentity(jointList[-1], a=True)
+    cmds.setAttr("{0}.jointOrient".format(jointList[-1]), 0,0,0)
 
-
-
-    pass
+def uniqueList(seq): # Dave Kirby
+    # Order preserving
+    seen = set()
+    return [x for x in seq if x not in seen and not seen.add(x)]

@@ -3,11 +3,11 @@
 ################################
 ######### POWER RIBBON Func ##########
 ################################
-
+from maya import cmds
 import pymel.core as pm
 
-import trigger.library.functions as extra
-import trigger.library.controllers as icon
+from trigger.library import functions as extra
+from trigger.library import controllers as ic
 
 class PowerRibbon():
 
@@ -49,6 +49,44 @@ class PowerRibbon():
         nSurf=nSurfTrans[0].getShape()
         follicleList=[]
         self.toHide.append(nSurfTrans[0])
+
+        #Start Upnodes
+        pm.select(d=True)
+        self.startAim=pm.group(em=True, name="jRbn_Start_CON_%s" %name)
+        pm.move(self.startAim, (-(ribbonLength/2.0),0,0))
+        pm.makeIdentity(a=True)
+        startORE = pm.duplicate(self.startAim, name="jRbn_Start_ORE_%s" %name)[0]
+        pm.parent(startORE, self.startAim)
+
+
+        start_UP=pm.spaceLocator(name="jRbn_Start_%s" %name)
+        self.toHide.append(start_UP.getShape())
+        pm.move(start_UP, (-(ribbonLength/2.0),0.5,0))
+
+        self.startConnection=pm.spaceLocator(name="jRbn_Start_%s" %name)
+        self.toHide.append(self.startConnection.getShape())
+        pm.move(self.startConnection, (-(ribbonLength / 2.0), 0, 0))
+        pm.makeIdentity(a=True)
+
+        pm.parent(self.startAim, start_UP, self.startConnection)
+
+        pm.addAttr(self.startConnection, shortName="scaleSwitch", longName="Scale_Switch", defaultValue=1.0, at="float", minValue=0.0, maxValue=1.0, k=True)
+
+
+        #End Upnodes
+        pm.select(d=True)
+        end_AIM=pm.group(em=True, name="jRbn_End_"+name)
+        pm.move(end_AIM, (-(ribbonLength/-2.0),0,0))
+        pm.makeIdentity(a=True)
+        end_UP=pm.spaceLocator(name="jRbn_End_"+name)
+        self.toHide.append(end_UP.getShape())
+        pm.move(end_UP, (-(ribbonLength/-2.0),0.5,0))
+
+        self.endConnection=pm.spaceLocator(name="jRbn_End_" + name)
+        self.toHide.append(self.endConnection.getShape())
+        pm.move(self.endConnection, (-(ribbonLength / -2.0), 0, 0))
+        pm.makeIdentity(a=True)
+
 
         # create follicles and deformer joints
         for i in range (0, int(jointRes)):
@@ -102,17 +140,23 @@ class PowerRibbon():
             global_mult.output >> global_divide.input1X
             self.scaleGrp.scaleX >> global_divide.input2X
 
+            global_mixer = pm.createNode("blendColors", name= "fGlobMix_{0}{1}".format(name, i))
 
+            # global_divide.outputX >> self.deformerJoints[counter].scaleX
+            # global_divide.outputX >> self.deformerJoints[counter].scaleY
+            # global_divide.outputX >> self.deformerJoints[counter].scaleZ
 
-            # compensationNode = pm.createNode("addDoubleLinear", name="fCompensate_{0}{1}".format(name, i))
-            # multiplier.output >> compensationNode.input1
-            # pm.setAttr(compensationNode.input2, 1)
+            global_divide.outputX >> global_mixer.color1R
+            global_divide.outputX >> global_mixer.color1G
+            global_divide.outputX >> global_mixer.color1B
 
-            # global_mult.output >> self.deformerJoints[counter].scaleY
-            # global_mult.output >> self.deformerJoints[counter].scaleZ
-            global_divide.outputX >> self.deformerJoints[counter].scaleX
-            global_divide.outputX >> self.deformerJoints[counter].scaleY
-            global_divide.outputX >> self.deformerJoints[counter].scaleZ
+            pm.setAttr(global_mixer.color2R, 1)
+            pm.setAttr(global_mixer.color2G, 1)
+            pm.setAttr(global_mixer.color2B, 1)
+
+            global_mixer.output >> self.deformerJoints[counter].scale
+
+            self.startConnection.scaleSwitch >> global_mixer.blender
 
             counter += 1
 
@@ -149,41 +193,42 @@ class PowerRibbon():
                 mid_joint_list.append(midJ)
 
         pm.skinCluster(startJoint,endJoint, mid_joint_list, nSurf, tsb=True, dropoffRate=dropoff)
-        #Start Upnodes
-        pm.select(d=True)
-        self.startAim=pm.group(em=True, name="jRbn_Start_%s" %name)
-        pm.move(self.startAim, (-(ribbonLength/2.0),0,0))
-        pm.makeIdentity(a=True)
-        start_UP=pm.spaceLocator(name="jRbn_Start_%s" %name)
-        self.toHide.append(start_UP.getShape())
-        pm.move(start_UP, (-(ribbonLength/2.0),0.5,0))
-
-        self.startConnection=pm.spaceLocator(name="jRbn_Start_%s" %name)
-        self.toHide.append(self.startConnection.getShape())
-        pm.move(self.startConnection, (-(ribbonLength / 2.0), 0, 0))
-        pm.makeIdentity(a=True)
-
-        pm.parent(self.startAim, start_UP, self.startConnection)
-
-        pm.parent(startJoint,self.startAim)
+        # #Start Upnodes
+        # pm.select(d=True)
+        # self.startAim=pm.group(em=True, name="jRbn_Start_%s" %name)
+        # pm.move(self.startAim, (-(ribbonLength/2.0),0,0))
+        # pm.makeIdentity(a=True)
+        # start_UP=pm.spaceLocator(name="jRbn_Start_%s" %name)
+        # self.toHide.append(start_UP.getShape())
+        # pm.move(start_UP, (-(ribbonLength/2.0),0.5,0))
+        #
+        # self.startConnection=pm.spaceLocator(name="jRbn_Start_%s" %name)
+        # self.toHide.append(self.startConnection.getShape())
+        # pm.move(self.startConnection, (-(ribbonLength / 2.0), 0, 0))
+        # pm.makeIdentity(a=True)
+        #
+        # pm.parent(self.startAim, start_UP, self.startConnection)
+        #
+        # pm.parent(startJoint,self.startAim)
+        pm.parent(startJoint,startORE)
         if connectStartAim:
             # aim it to the next midjoint after the start
             pm.aimConstraint(mid_joint_list[0],self.startAim, aimVector=(1,0,0), upVector=(0,1,0), wut=1, wuo=start_UP, mo=False)
 
-        #End Upnodes
-        pm.select(d=True)
-        end_AIM=pm.group(em=True, name="jRbn_End_"+name)
-        pm.move(end_AIM, (-(ribbonLength/-2.0),0,0))
-        pm.makeIdentity(a=True)
-        end_UP=pm.spaceLocator(name="jRbn_End_"+name)
-        self.toHide.append(end_UP.getShape())
-        pm.move(end_UP, (-(ribbonLength/-2.0),0.5,0))
-
-        self.endConnection=pm.spaceLocator(name="jRbn_End_" + name)
-        self.toHide.append(self.endConnection.getShape())
-        pm.move(self.endConnection, (-(ribbonLength / -2.0), 0, 0))
-        pm.makeIdentity(a=True)
-
+        # #End Upnodes
+        # pm.select(d=True)
+        # end_AIM=pm.group(em=True, name="jRbn_End_"+name)
+        # pm.move(end_AIM, (-(ribbonLength/-2.0),0,0))
+        # pm.makeIdentity(a=True)
+        # end_UP=pm.spaceLocator(name="jRbn_End_"+name)
+        # self.toHide.append(end_UP.getShape())
+        # pm.move(end_UP, (-(ribbonLength/-2.0),0.5,0))
+        #
+        # self.endConnection=pm.spaceLocator(name="jRbn_End_" + name)
+        # self.toHide.append(self.endConnection.getShape())
+        # pm.move(self.endConnection, (-(ribbonLength / -2.0), 0, 0))
+        # pm.makeIdentity(a=True)
+        #
         pm.parent(end_AIM, end_UP, self.endConnection)
         pm.parent(endJoint,end_AIM)
         pm.aimConstraint(mid_joint_list[-1],end_AIM, aimVector=(1,0,0), upVector=(0,1,0), wut=1, wuo=end_UP, mo=True)
@@ -191,10 +236,12 @@ class PowerRibbon():
         middle_POS_list=[]
         counter = 0
 
+        icon = ic.Icon()
         for mid in mid_joint_list:
             counter += 1
             # self.middleCont = icon.circle("cont_midRbn_%s" %name, normal=(1, 0, 0))
-            midCon = icon.circle("cont_midRbn_{0}{1}".format (name, counter), normal=(1, 0, 0))
+            # midCon = icon.circle("cont_midRbn_{0}{1}".format (name, counter), normal=(1, 0, 0))
+            midCon, dmp = icon.createIcon("Circle", iconName="cont_midRbn_{0}{1}".format (name, counter), normal=(1, 0, 0))
             self.middleCont.append(midCon)
             middle_OFF = pm.spaceLocator(name="mid_OFF_{0}{1}".format (name, counter))
             self.toHide.append(middle_OFF.getShape())
