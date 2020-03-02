@@ -112,9 +112,9 @@ class initialJoints():
     def changeOrientation(self, faceDir, upDir):
         dirValids = ["+x", "+y", "+z", "-x", "-y", "-z", "+X", "+Y", "+Z", "-X", "-Y", "-Z"]
         if faceDir not in dirValids:
-            pm.error("faceDir argument is not valid. Valid arguments are: %s" % dirValids)
+            cmds.error("faceDir argument is not valid. Valid arguments are: %s" % dirValids)
         if upDir not in dirValids:
-            pm.error("upDir argument is not valid. Valid arguments are: %s" % dirValids)
+            cmds.error("upDir argument is not valid. Valid arguments are: %s" % dirValids)
         # make sure the imputs are lowercase:
         faceDir = faceDir.lower()
         upDir = upDir.lower()
@@ -126,7 +126,7 @@ class initialJoints():
         upAxisMult = -1 if upDir.strip(upAxis) == "-" else 1
 
         if lookAxis == upAxis:
-            pm.warning("faceDir and upDir cannot be the same axis, cancelling")
+            cmds.warning("faceDir and upDir cannot be the same axis, cancelling")
             return
         self.lookAxis = lookAxis
         self.lookAxisMult = lookAxisMult
@@ -137,13 +137,14 @@ class initialJoints():
     def initLimb (self, limb, whichSide="left",
                   segments=3, fingerCount=5, thumb=False,
                   constrainedTo = None, parentNode=None, defineAs=False):
-        currentselection = pm.ls(sl=True)
+        currentselection = cmds.ls(sl=True)
 
         ## Create the holder group if it does not exist
-        if not pm.objExists("{0}_refBones".format(self.projectName)):
-            holderGroup = pm.group(name=("{0}_refBones".format(self.projectName)), em=True)
-        else:
-            holderGroup = pm.PyNode("{0}_refBones".format(self.projectName), em=True)
+        holderGroup = "{0}_refBones".format(self.projectName)
+        if not cmds.objExists(holderGroup):
+            holderGroup = cmds.group(name=(holderGroup), em=True)
+        # else:
+        #     holderGroup = pm.PyNode("{0}_refBones".format(self.projectName), em=True)
 
         ## skip side related stuff for no-side related limbs
         nonSidedLimbs = ["spine", "neck", "root"]
@@ -154,9 +155,9 @@ class initialJoints():
         ## check validity of arguments
             sideValids = ["left", "right", "center", "both", "auto"]
             if whichSide not in sideValids:
-                pm.error("side argument '%s' is not valid. Valid arguments are: %s" %(whichSide, sideValids))
-            if len(pm.ls(sl=True, type="joint")) != 1 and whichSide == "auto" and defineAs == False:
-                pm.warning("You need to select a single joint to use Auto method")
+                cmds.error("side argument '%s' is not valid. Valid arguments are: %s" %(whichSide, sideValids))
+            if len(cmds.ls(sl=True, type="joint")) != 1 and whichSide == "auto" and defineAs == False:
+                cmds.warning("You need to select a single joint to use Auto method")
                 return
 
             ## get the necessary info from arguments
@@ -177,7 +178,7 @@ class initialJoints():
         sideMult = -1 if whichSide == "right" else 1
 
         if (segments + 1) < 2:
-            pm.error("Define at least 2 segments")
+            cmds.error("Define at least 2 segments")
             return
 
         suffix = extra.uniqueName("%sGrp_%s" %(limb, whichSide)).replace("%sGrp_" %(limb), "")
@@ -189,16 +190,12 @@ class initialJoints():
 
 
         if not parentNode:
-            # j = pm.ls(sl=True)
-            # print extra.identifyMaster(j)[1]
-            # valid_inits = ["arm", "leg", "spine", "neck", "tail", "finger", "tentacle", "root"]
-            # if extra.identifyMaster(j)[1] in valid_inits:
-            if pm.ls(sl=True, type="joint"):
+            if cmds.ls(sl=True, type="joint"):
                 valid_inits = ["arm", "leg", "spine", "neck", "tail", "finger", "tentacle", "root"]
-                j = pm.ls(sl=True)[-1]
+                j = cmds.ls(sl=True)[-1]
                 try:
                     if extra.identifyMaster(j)[1] in valid_inits:
-                        masterParent = pm.ls(sl=True)[-1]
+                        masterParent = cmds.ls(sl=True)[-1]
                     else:
                         masterParent = None
                 except KeyError:
@@ -220,9 +217,9 @@ class initialJoints():
                 self.initLimb(limb, returnAlignment, constrainedTo=constLocs, parentNode=mirrorParent, segments=segments, fingerCount=fingerCount, thumb=thumb)
             return
 
-        limbGroup = pm.group(em=True, name="%sGrp_%s" %(limb,suffix))
-        pm.parent(limbGroup, holderGroup)
-        pm.select(d=True)
+        limbGroup = cmds.group(em=True, name="%sGrp_%s" %(limb,suffix))
+        cmds.parent(limbGroup, holderGroup)
+        cmds.select(d=True)
 
         if self.lookAxis.replace("-","") == "z" and self.upAxis.replace("-","") == "y":
             ## Facing Z Up Y
@@ -282,39 +279,35 @@ class initialJoints():
 
         ### Constrain locating
 
-        loc_grp = pm.group(name=("locGrp_%s" %suffix), em=True)
-        pm.setAttr(loc_grp.v, 0)
+        loc_grp = cmds.group(name=("locGrp_%s" %suffix), em=True)
+        cmds.setAttr("{0}.v".format(loc_grp), 0)
         locatorsList=[]
-        
         for i in range (0,len(limbJoints)):
             locator = cmds.spaceLocator(name="loc_%s" % limbJoints[i].name())[0]
             locatorsList.append(locator)
             if constrainedTo:
-                print "DEBUG", locator, limbJoints[i].name()
-                extra.alignTo(locator, limbJoints[i].name(), position=True, rotation=True)
+                print "DEBUG", locator, limbJoints[i]
+                extra.alignTo(locator, limbJoints[i], position=True, rotation=True)
                 pm.parentConstraint(locator, limbJoints[i], mo=True)
                 extra.connectMirror(constrainedTo[i], locatorsList[i], mirrorAxis=self.mirrorAxis.upper())
-                # constrainedTo[i].translate.lock()
-                # constrainedTo[i].rotate.lock()
-
             else:
-                pm.parentConstraint(limbJoints[i], locator, mo=False)
+                cmds.parentConstraint(limbJoints[i], locator, mo=False)
 
-            pm.parent(locator, loc_grp)
-            pm.parent(loc_grp, limbGroup)
+            cmds.parent(locator, loc_grp)
+            cmds.parent(loc_grp, limbGroup)
 
         # hand and foot limbs are actually just a collection of fingers.
         # # That is why they need a temporary group to be moved together
         if limb == "hand" or limb == "foot":
             if masterParent:
                 if not constrainedTo:
-                    tempGroup = pm.group(em=True)
-                    pm.parent(jRoots, tempGroup)
+                    tempGroup = cmds.group(em=True)
+                    cmds.parent(jRoots, tempGroup)
                     extra.alignTo(tempGroup, masterParent)
-                    pm.ungroup(tempGroup)
-                pm.parent(jRoots, masterParent)
+                    cmds.ungroup(tempGroup)
+                cmds.parent(jRoots, masterParent)
             else:
-                pm.parent(limbJoints[0], limbGroup)
+                cmds.parent(limbJoints[0], limbGroup)
 
         else:
             ### MOVE THE LIMB TO THE DESIRED LOCATION
@@ -324,15 +317,16 @@ class initialJoints():
                     extra.alignTo(limbJoints[0], masterParent)
                     # move it a little along the mirrorAxis
                     # move it along offsetvector
-                    pm.move(limbJoints[0], offsetVector, relative=True)
+                    cmds.move(limbJoints[0], offsetVector, relative=True)
                 else:
-                    for x in limbJoints:
-                        x.translate.lock()
-                        x.rotate.lock()
-                pm.parent(limbJoints[0], masterParent)
+                    for joint in limbJoints:
+                        extra.lockAndHide(joint, ["tx", "ty", "tz", "rx", "ry", "rz"], hide=False)
+                        # x.translate.lock()
+                        # x.rotate.lock()
+                cmds.parent(limbJoints[0], masterParent)
             else:
-                pm.parent(limbJoints[0], limbGroup)
-        pm.select(currentselection)
+                cmds.parent(limbJoints[0], limbGroup)
+        cmds.select(currentselection)
 
         return locatorsList
 
@@ -346,13 +340,13 @@ class initialJoints():
         Returns: (List) rootJoint
 
         """
-        pm.select(d=True)
-        rootInit = pm.joint(name="root_{0}".format(suffix))
-        pm.setAttr("{0}.type".format(rootInit), 1)
+        cmds.select(d=True)
+        rootInit = cmds.joint(name="root_{0}".format(suffix))
+        cmds.setAttr("{0}.type".format(rootInit), 1)
         self.createAxisAttributes(rootInit)
-        pm.setAttr(rootInit.radius, 3)
-        pm.setAttr("{0}.drawLabel".format(rootInit), 1)
-        offsetVector = dt.Vector(0,0,0)
+        cmds.setAttr("{0}.radius".format(rootInit), 3)
+        cmds.setAttr("{0}.drawLabel".format(rootInit), 1)
+        offsetVector = om.MVector(0,0,0)
         extra.colorize(rootInit, self.majorCenterColor, shape=False)
 
         return [rootInit], offsetVector
@@ -369,44 +363,44 @@ class initialJoints():
 
         """
 
-        rPoint = dt.Vector(self.transformator((0, 14.0, 0), transformKey))
-        nPoint = dt.Vector(self.transformator((0, 21.0, 0), transformKey))
+        rPoint = om.MVector(self.transformator((0, 14.0, 0), transformKey))
+        nPoint = om.MVector(self.transformator((0, 21.0, 0), transformKey))
         # rPoint = 14.0
         # nPoint = 21.0
-        offsetVector = dt.normal(nPoint - rPoint)
+        offsetVector = (nPoint - rPoint).normal()
         add = (nPoint - rPoint) / ((segments + 1) - 1)
         jointList = []
         for i in range(0, (segments + 1)):
             spine = pm.joint(p=(rPoint + (add * i)), name="jInit_spine_%s_%s" %(suffix, str(i)))
-            pm.setAttr("%s.side" % spine, 0)
+            cmds.setAttr("%s.side" % spine, 0)
             type = 18
             if i == 0:
                 # type = 1
                 # pm.setAttr(spine + ".type", type)
-                pm.setAttr("%s.type" % spine, type)
-                pm.setAttr("%s.otherType" % spine, "SpineRoot")
-                pm.addAttr(shortName="resolution", longName="Resolution", defaultValue=4, minValue=1,
+                cmds.setAttr("%s.type" % spine, type)
+                cmds.setAttr("%s.otherType" % spine, "SpineRoot")
+                cmds.addAttr(shortName="resolution", longName="Resolution", defaultValue=4, minValue=1,
                            at="long", k=True)
-                pm.addAttr(shortName="dropoff", longName="DropOff", defaultValue=1.0, minValue=0.1,
+                cmds.addAttr(shortName="dropoff", longName="DropOff", defaultValue=1.0, minValue=0.1,
                            at="float", k=True)
-                pm.addAttr(at="enum", k=True, shortName="twistType", longName="Twist_Type", en="regular:infinite")
-                pm.addAttr(at="enum", k=True, shortName="mode", longName="Mode", en="equalDistance:sameDistance")
+                cmds.addAttr(at="enum", k=True, shortName="twistType", longName="Twist_Type", en="regular:infinite")
+                cmds.addAttr(at="enum", k=True, shortName="mode", longName="Mode", en="equalDistance:sameDistance")
 
                 self.createAxisAttributes(spine)
-                pm.setAttr(spine.radius, 3)
+                cmds.setAttr("{0}.radius".format(spine), 3)
 
             elif i == (segments):
                 # type = 18
-                pm.setAttr("%s.type" % spine, type)
-                pm.setAttr("%s.otherType" % spine, "SpineEnd")
+                cmds.setAttr("%s.type" % spine, type)
+                cmds.setAttr("%s.otherType" % spine, "SpineEnd")
 
             else:
                 type = 6
-                pm.setAttr("%s.type" % spine, type)
+                cmds.setAttr("%s.type" % spine, type)
 
             jointList.append(spine)
             for i in jointList:
-                pm.setAttr("%s.drawLabel" % i, 1)
+                cmds.setAttr("%s.drawLabel" % i, 1)
         self.spineJointsList.append(jointList)
         extra.colorize(jointList, self.majorCenterColor, shape=False)
         return jointList, offsetVector

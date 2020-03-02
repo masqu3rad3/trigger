@@ -321,7 +321,7 @@ def colorize (node, index, shape=True):
                 pm.setAttr(i.overrideEnabled, True)
                 pm.setAttr(i.overrideColor, index)
 
-def lockAndHide (node, channelArray):
+def lockAndHide (node, channelArray, hide=True):
     """
     Locks and hides the channels specified in the channelArray.
     Args:
@@ -334,7 +334,7 @@ def lockAndHide (node, channelArray):
     ## // TODO OPTIMIZE HERE (map function?)
     for i in channelArray:
         attribute=("{0}.{1}".format(node, i))
-        pm.setAttr(attribute, lock=True, keyable=False, channelBox=False)
+        cmds.setAttr(attribute, lock=True, keyable=not hide, channelBox=not hide)
 
 # def alignJoints (sourceJoint, targetJoints):
 #     tempLocs
