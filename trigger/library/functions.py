@@ -38,7 +38,7 @@ def getDistance(node1, node2):
 #     Bx, By, Bz = node2.getTranslation(space="world")
 #     return ((Ax-Bx)**2 + (Ay-By)**2 + (Az-Bz)**2)**0.5
 
-def alignTo(node, target, position=True, rotation=True):
+def alignTo(node, target, position=True, rotation=False):
     """
     This is the fastest align method. May not work in all cases
     http://www.rihamtoulan.com/blog/2017/12/21/matching-transformation-in-maya-and-mfntransform-pitfalls
@@ -53,6 +53,21 @@ def alignTo(node, target, position=True, rotation=True):
         # using the target matrix decomposition
         # Worked on all cases tested
         nodeMTransform.setRotation(targetMTMatrix.rotation(True), om.MSpace.kWorld)
+
+# def alignTo(node, target, position=True, rotation=False):
+#
+#     if rotation and position:
+#         targetMatrix = cmds.xform(target, query=True, worldSpace=True, matrix=True)
+#         cmds.xform(node, worldSpace=True, matrix=targetMatrix)
+#         return
+#     if position:
+#         targetTranslation = cmds.xform(target, query=True, worldSpace=True, translation=True)
+#         cmds.xform(node, worldSpace=True, translation =targetTranslation)
+#     if rotation:
+#         targetRotation = pm.xform(target, query=True, worldSpace=True, rotation=True)
+#         cmds.xform(node, worldSpace=True, rotation = targetRotation)
+
+
 
 # def alignTo(sourceObj=None, targetObj=None, mode=0, sl=False, o=(0,0,0)):
 #     offset=dt.Vector(o)

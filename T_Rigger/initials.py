@@ -525,6 +525,9 @@ class initialJoints():
 
 
         offsetVector = -(dt.normal(dt.Vector(rootVec) - dt.Vector(hipVec)))
+        print "ananinAmi_rootVector", rootVec, hipVec
+        print "ananinAmi", offsetVector
+
         
         root = pm.joint(p=rootVec, name=("jInit_LegRoot_%s" % suffix))
         pm.setAttr(root.radius, 3)
