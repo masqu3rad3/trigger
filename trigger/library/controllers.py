@@ -1,4 +1,7 @@
-import pymel.core as pm
+# import pymel.core as pm
+from maya import cmds
+import trigger.library.functions as extra
+# reload(alignNormal)
 
 class Icon(object):
     def __init__(self):
@@ -25,11 +28,9 @@ class Icon(object):
                              }
 
 
-
-
     def createIcon(self, iconType, iconName=None, scale=(1,1,1), location=None, normal=(0,1,0)):
         if iconType not in (self.getIconsList()):
-            pm.warning("This icon is not available. Valid Icons are:\n  %s" %(self.iconDictionary.keys()))
+            cmds.warning("This icon is not available. Valid Icons are:\n  %s" %(self.iconDictionary.keys()))
             return
 
         if not iconName:
@@ -41,41 +42,42 @@ class Icon(object):
         else:
             cont = self.iconDictionary[iconType](name=iconName, scale=scale)
 
-        self.alignNormal(cont, normal)
-        # pm.makeIdentity(cont, a=True, rotate=True, scale=False, translate=False)
+        cmds.setAttr("%s.scale" % cont, scale[0], scale[1], scale[2])
+        extra.alignNormal(cont, normal)
+        cmds.makeIdentity(cont, a=True)
+
         if location:
-            pm.move(cont, location)
+            cmds.move(location[0], location[1], location[2], cont)
 
         return cont, rvsCon
 
     def getIconsList(self):
         return self.iconDictionary.keys()
 
-    def alignNormal(self, node, normalVector):
-        """
-        Aligns the object according to the given normal vector
-        Args:
-            node: The node to be aligned
-            normalVector: Alignment vector
-
-        Returns: None
-
-        """
-        # create a temporary alignment locator
-        print("Anan", normalVector)
-        tempTarget = pm.spaceLocator("tempAlign")
-        targetTranslation = pm.xform(node, query=True, worldSpace=True, translation=True)
-        pm.xform(tempTarget, worldSpace=True, translation =targetTranslation)
-
-        pm.makeIdentity(tempTarget, a=True)
-        pm.move(tempTarget, normalVector)
-        tempAC = pm.aimConstraint(tempTarget, node, aim=(0, 1, 0), mo=False)
-        pm.delete(tempAC)
-        pm.delete(tempTarget)
-        pm.makeIdentity(node, a=True, rotate=True, scale=False, translate=False)
-
-
-        pass
+    # def alignNormal(self, node, normalVector):
+    #     """
+    #     Aligns the object according to the given normal vector
+    #     Args:
+    #         node: The node to be aligned
+    #         normalVector: Alignment vector
+    #
+    #     Returns: None
+    #
+    #     """
+    #     # create a temporary alignment locator
+    #     tempTarget = pm.spaceLocator("tempAlign")
+    #     targetTranslation = pm.xform(node, query=True, worldSpace=True, translation=True)
+    #     pm.xform(tempTarget, worldSpace=True, translation =targetTranslation)
+    #
+    #     pm.makeIdentity(tempTarget, a=True)
+    #     pm.move(tempTarget, normalVector)
+    #     tempAC = pm.aimConstraint(tempTarget, node, aim=(0, 1, 0), mo=False)
+    #     pm.delete(tempAC)
+    #     pm.delete(tempTarget)
+    #     pm.makeIdentity(node, a=True, rotate=True, scale=False, translate=False)
+    #
+    #
+    #     pass
 
     def circle(self, name="cont_circle", scale=(1, 1, 1)):
         """
@@ -90,9 +92,10 @@ class Icon(object):
 
         """
 
-        cont_circle = pm.circle(name=name, nr=(0, 1, 0), ch=0)
-        pm.setAttr(cont_circle[0].scale, scale)
-        pm.makeIdentity(cont_circle, a=True)
+        cont_circle = cmds.circle(name=name, nr=(0, 1, 0), ch=0)
+        # cmds.setAttr("%s.scale" %cont_circle[0], scale)
+        # self._scale(cont_circle, scale)
+        # cmds.makeIdentity(cont_circle, a=True)
         return cont_circle[0]
 
     def cube(self, name="cont_cube", scale=(1, 1, 1)):
@@ -106,15 +109,15 @@ class Icon(object):
         Returns:
             Controller node
         """
-        cont_cube = pm.curve(name=name, d=1, p=[(-1, 1, 1), (-1, 1, -1), (1, 1, -1), \
+        cont_cube = cmds.curve(name=name, d=1, p=[(-1, 1, 1), (-1, 1, -1), (1, 1, -1), \
                                                 (1, 1, 1), (-1, 1, 1), (-1, -1, 1), (-1, -1, -1), (-1, 1, -1),
                                                 (-1, 1, 1),
                                                 (-1, -1, 1), (1, -1, 1), \
                                                 (1, 1, 1), (1, 1, -1), (1, -1, -1), (1, -1, 1), (1, -1, -1),
                                                 (-1, -1, -1)],
                              k=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])
-        pm.setAttr(cont_cube.scale, scale)
-        pm.makeIdentity(cont_cube, a=True)
+        # self._scale(cont_cube, scale)
+        # cmds.makeIdentity(cont_cube, a=True)
         return cont_cube
 
     def thigh(self, name="cont_thigh", scale=(1, 1, 1)):
@@ -128,14 +131,14 @@ class Icon(object):
         Returns:
             Controller node
         """
-        cont_thigh = pm.curve(name=name, d=1, p=[(-1, 1, 1), (-1, 1, -1), (1, 1, -1), \
+        cont_thigh = cmds.curve(name=name, d=1, p=[(-1, 1, 1), (-1, 1, -1), (1, 1, -1), \
                                                  (1, 1, 1), (-1, 1, 1), (-1, -1, 1), (-1, -1, -1), (-1, 1, -1),
                                                  (-1, 1, 1), (-1, -1, 1), (1, -1, 1), \
                                                  (1, 1, 1), (1, 1, -1), (1, -1, -1), (1, -1, 1), (1, -1, -1),
                                                  (-1, -1, -1)],
                               k=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])
-        pm.setAttr(cont_thigh.scale, scale)
-        pm.makeIdentity(cont_thigh, a=True)
+        # cmds.setAttr("%s.scale" %cont_thigh, scale)
+        # cmds.makeIdentity(cont_thigh, a=True)
         return cont_thigh
 
     def star(self, name="cont_star", scale=(1, 1, 1)):
@@ -150,11 +153,17 @@ class Icon(object):
         Returns:
             Controller node
         """
-        cont_star = pm.circle(name=name, nr=(0,1,0), ch=0, s=12, radius=1.5)[0]
-        pm.scale(cont_star.cv[0, 2, 4, 6, 8, 10], (0.5, 0.5, 0.5))
-        pm.select(d=True)
-        pm.setAttr(cont_star.scale, scale)
-        pm.makeIdentity(cont_star, a=True)
+        cont_star = cmds.circle(name=name, nr=(0,1,0), ch=0, s=12, radius=1.5)[0]
+        cmds.scale(0.5, 0.5, 0.5, "%s.cv[0]" %cont_star)
+        cmds.scale(0.5, 0.5, 0.5, "%s.cv[2]" %cont_star)
+        cmds.scale(0.5, 0.5, 0.5, "%s.cv[4]" %cont_star)
+        cmds.scale(0.5, 0.5, 0.5, "%s.cv[6]" %cont_star)
+        cmds.scale(0.5, 0.5, 0.5, "%s.cv[8]" %cont_star)
+        cmds.scale(0.5, 0.5, 0.5, "%s.cv[10]" %cont_star)
+
+        cmds.select(d=True)
+        # cmds.setAttr("%s.scale" %cont_star, scale)
+        # cmds.makeIdentity(cont_star, a=True)
         return cont_star
 
     def fkikSwitch(self, name="cont_fkik", scale=(1, 1, 1)):
@@ -170,49 +179,50 @@ class Icon(object):
             in conjunction with fk_ik attribute.
             [Controller Node, Reverse Node for connections]
         """
-        letter_fk_f = pm.curve(d=1, p=[(-8.145734, -5.011799, 0), (-8.145734, 4.99286, 0), (-1.059101, 4.99286, 0),
+        letter_fk_f = cmds.curve(d=1, p=[(-8.145734, -5.011799, 0), (-8.145734, 4.99286, 0), (-1.059101, 4.99286, 0),
                                        (-1.059101, 2.908556, 0), (-5.227709, 2.908556, 0), (-5.227709, 1.241113, 0),
                                        (-1.892823, 1.241113, 0), (-1.892823, -0.843191, 0), (-5.227709, -0.843191, 0),
                                        (-5.227709, -5.011799, 0), (-8.145734, -5.011799, 0)],
                                k=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10], name="letterFK_F")
-        letter_f_k_k = pm.curve(d=1, p=[(1.025203, -5.011799, 0), (1.025203, 4.99286, 0), (3.943228, 4.99286, 0),
+        letter_f_k_k = cmds.curve(d=1, p=[(1.025203, -5.011799, 0), (1.025203, 4.99286, 0), (3.943228, 4.99286, 0),
                                         (3.943228, 1.215065, 0), (7.193445, 4.99286, 0), (11.029861, 4.99286, 0),
                                         (7.382331, 1.084794, 0), (11.029861, -5.011799, 0), (7.857814, -5.011799, 0),
                                         (5.669293, -0.752001, 0), (3.943228, -2.608331, 0), (3.943228, -5.011799, 0),
                                         (1.025203, -5.011799, 0)], k=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
                                 name="letterFK_K")
         # pm.parent(letter_f_k_k+"Shape", letter_fk_f, r=True, s=True)
-        pm.parent("%sShape" % letter_f_k_k, letter_fk_f, r=True, s=True)
-        pm.delete(letter_f_k_k)
-        letter_fk = pm.rename(letter_fk_f, "letterFK")
-        letter_ik = pm.duplicate(letter_fk, name="letterIK")
+        cmds.parent("%sShape" % letter_f_k_k, letter_fk_f, r=True, s=True)
+        cmds.delete(letter_f_k_k)
+        letter_fk = cmds.rename(letter_fk_f, "letterFK")
+        letter_ik = cmds.duplicate(letter_fk, name="letterIK")
 
-        pm.move(-4.168608, 0, 0, "letterIKShape.cv[2]", r=True, os=True, wd=True)
-        pm.move(-4.168608, 0, 0, "letterIKShape.cv[3]", r=True, os=True, wd=True)
-        pm.move(-3.334886, 0, 0, "letterIKShape.cv[6]", r=True, os=True, wd=True)
-        pm.move(-3.334886, 0, 0, "letterIKShape.cv[7]", r=True, os=True, wd=True)
-        pm.move(2.897946, 0, 0, "letterIKShape.cv[0:10]", r=True, os=True, wd=True)
-        pm.move(-1.505933, 0, 0, "letterIK_KShape.cv[0:12]", r=True, os=True, wd=True)
+        cmds.move(-4.168608, 0, 0, "letterIKShape.cv[2]", r=True, os=True, wd=True)
+        cmds.move(-4.168608, 0, 0, "letterIKShape.cv[3]", r=True, os=True, wd=True)
+        cmds.move(-3.334886, 0, 0, "letterIKShape.cv[6]", r=True, os=True, wd=True)
+        cmds.move(-3.334886, 0, 0, "letterIKShape.cv[7]", r=True, os=True, wd=True)
+        cmds.move(2.897946, 0, 0, "letterIKShape.cv[0:10]", r=True, os=True, wd=True)
+        cmds.move(-1.505933, 0, 0, "letterIK_KShape.cv[0:12]", r=True, os=True, wd=True)
 
-        blShape_FKtoIK = pm.blendShape(letter_ik, letter_fk)
+        blShape_FKtoIK = cmds.blendShape(letter_ik, letter_fk)
 
-        cont_FK_IK = pm.rename(letter_fk, name)
-        pm.select(cont_FK_IK)
-        pm.addAttr(shortName="fk_ik", longName="FK_IK", defaultValue=1.0, minValue=0.0, maxValue=1.0, at="float",
+        cont_FK_IK = cmds.rename(letter_fk, name)
+        cmds.select(cont_FK_IK)
+        cmds.addAttr(shortName="fk_ik", longName="FK_IK", defaultValue=1.0, minValue=0.0, maxValue=1.0, at="float",
                    k=True)
 
-        fk_ik_rvs = pm.createNode("reverse", name="fk_ik_rvs%s" % name)
-        cont_FK_IK.fk_ik >> blShape_FKtoIK[0].weight[0]
-        cont_FK_IK.fk_ik >> fk_ik_rvs.inputX
+        fk_ik_rvs = cmds.createNode("reverse", name="fk_ik_rvs%s" % name)
+        cmds.connectAttr("%s.fk_ik" %cont_FK_IK, "%.weight[0]" %blShape_FKtoIK[0])
+        cmds.connectAttr("%s.fk_ik" %cont_FK_IK, "%.inputX" %fk_ik_rvs)
+        # cont_FK_IK.fk_ik >> blShape_FKtoIK[0].weight[0]
+        # cont_FK_IK.fk_ik >> fk_ik_rvs.inputX
 
-        pm.setAttr(cont_FK_IK.scale, (0.1, 0.1, 0.1))
-        pm.delete(letter_ik)
-        pm.select(cont_FK_IK)
-        pm.makeIdentity(a=True)
+        cmds.setAttr("%.scale" %cont_FK_IK, (0.1, 0.1, 0.1))
+        cmds.delete(letter_ik)
+        cmds.select(cont_FK_IK)
+        cmds.makeIdentity(a=True)
 
-        pm.setAttr(cont_FK_IK.scale, scale)
-        pm.makeIdentity(a=True)
-        # return [cont_FK_IK, fk_ik_rvs]
+        # cmds.setAttr("%s.scale" %cont_FK_IK, scale)
+        # cmds.makeIdentity(a=True)
         return cont_FK_IK, fk_ik_rvs
 
     def shoulder(self, name="cont_shoulder", scale=(1, 1, 1)):
@@ -226,11 +236,8 @@ class Icon(object):
         Returns:
             Controller node
         """
-        # cont_shoulder = pm.curve(d=3, p=(
-        # (-3, 0, 1), (-1, 2, 1), (1, 2, 1), (3, 0, 1), (3, 0, 0), (3, 0, -1), (1, 2, -1), (-1, 2, -1), (-3, 0, -1),
-        # (-3, 0, 0), (-3, 0, 1)), k=(0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 7, 7, 1), name=name)
 
-        cont_shoulder = pm.curve(d=3,
+        cont_shoulder = cmds.curve(d=3,
                  p=[(0, 0, 5), (1, 0, 5), (2, 0, 5), (2, 1, 4), (2, 2, 3), (2, 3, 2), (2, 3, 1), (2, 3, 0), (2, 3, -1),
                     (2, 3, -2), (2, 2, -3), (2, 1, -4), (2, 0, -5), (1, 0, -5), (0, 0, -5), (-1, 0, -5), (-2, 0, -5),
                     (-2, 1, -4), (-2, 2, -3), (-2, 3, -2), (-2, 3, -1), (-2, 3, 0), (-2, 3, 1), (-2, 3, 2), (-2, 2, 3),
@@ -238,15 +245,11 @@ class Icon(object):
                  k=[0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,
                     26, 26, 26], name=name)
 
-        pm.setAttr(cont_shoulder.scale, (0.5, 0.5, 0.5))
-        pm.makeIdentity(cont_shoulder, a=True)
-        pm.setAttr(cont_shoulder.scale, scale)
+        cmds.setAttr("%s.scale" %cont_shoulder, (0.5, 0.5, 0.5))
+        cmds.makeIdentity(cont_shoulder, a=True)
+        # cmds.setAttr("%s.scale" %cont_shoulder, scale)
 
-        pm.makeIdentity(cont_shoulder, a=True)
-
-        # pm.closeCurve(cont_shoulder, ch=0, ps=0, rpo=1, bb=0.5, bki=0, p=0.1)
-        # pm.delete(cont_shoulder, ch=True)
-
+        cmds.makeIdentity(cont_shoulder, a=True)
 
         return cont_shoulder
 
@@ -261,16 +264,15 @@ class Icon(object):
             Controller node
 
         """
-        cont_Pole = pm.curve(name=name, d=1,
+        cont_Pole = cmds.curve(name=name, d=1,
                              p=[(-1, 0, -3), (-1, 0, -1), (-3, 0, -1), (-3, 0, 1), (-1, 0, 1), (-1, 0, 3), (1, 0, 3),
                                 (1, 0, 1), (3, 0, 1), (3, 0, -1), (1, 0, -1), (1, 0, -3), (-1, 0, -3)],
                              k=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
-        # pm.setAttr(cont_Pole + ".scale", (0.4, 0.4, 0.4))
-        pm.setAttr("%s.scale" % cont_Pole, (0.4, 0.4, 0.4))
-        pm.makeIdentity(cont_Pole, a=True, s=True)
-        pm.setAttr(cont_Pole.scale, scale)
+        cmds.setAttr("%s.scale" % cont_Pole, (0.4, 0.4, 0.4))
+        cmds.makeIdentity(cont_Pole, a=True, s=True)
+        # cmds.setAttr("%s.scale" %cont_Pole, scale)
 
-        pm.makeIdentity(cont_Pole, a=True)
+        # cmds.makeIdentity(cont_Pole, a=True)
         return cont_Pole
 
     def waist(self, name="cont_waist", scale=(1, 1, 1)):
@@ -284,7 +286,7 @@ class Icon(object):
             Controller node
 
         """
-        cont_waist = pm.curve(name=name, d=1,
+        cont_waist = cmds.curve(name=name, d=1,
                               p=[(-6.086269, 0, 2.259307), (-7.671805, 0, -2.12977e-007), (-6.086269, 0, -2.259308),
                                  (-6.08099, 0, -1.545085), (-4.755284, 0, -1.545085), (-4.045086, 0, -2.938927),
                                  (-2.938927, 0, -4.045086), (-1.545086, 0, -4.755285), (-1.545086, 0, -6.080991),
@@ -301,11 +303,11 @@ class Icon(object):
                               k=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23,
                                  24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36])
         # pm.setAttr(cont_waist + ".scale", (0.2, 0.2, 0.2))
-        pm.setAttr("%s.scale" % cont_waist, (0.2, 0.2, 0.2))
-        pm.makeIdentity(cont_waist, a=True, s=True)
-        pm.setAttr(cont_waist.scale, scale)
+        cmds.setAttr("%s.scale" % cont_waist, 0.2, 0.2, 0.2)
+        cmds.makeIdentity(cont_waist, a=True, s=True)
+        # cmds.setAttr("%s.scale" %cont_waist, scale)
 
-        pm.makeIdentity(cont_waist, a=True)
+        # cmds.makeIdentity(cont_waist, a=True)
         return cont_waist
 
     def square(self, name="cont_square", scale=(1, 1, 1)):
@@ -319,10 +321,10 @@ class Icon(object):
             Controller node
 
         """
-        cont_square = pm.curve(name=name, d=1, p=[(1, 0, 1), (-1, 0, 1), (-1, 0, -1), (1, 0, -1), (1, 0, 1)],
+        cont_square = cmds.curve(name=name, d=1, p=[(1, 0, 1), (-1, 0, 1), (-1, 0, -1), (1, 0, -1), (1, 0, 1)],
                                k=[0, 1, 2, 3, 4])
-        pm.setAttr(cont_square.scale, scale)
-        pm.makeIdentity(cont_square, a=True)
+        # cmds.setAttr("%s.scale" %cont_square, scale)
+        # cmds.makeIdentity(cont_square, a=True)
         return cont_square
 
     def ngon(self, name="cont_ngon", scale=(1, 1, 1)):
@@ -337,14 +339,14 @@ class Icon(object):
 
         """
 
-        cont_ngon = pm.curve(name=name, d=1,
+        cont_ngon = cmds.curve(name=name, d=1,
                              p=[(-2, 0, -4), (2, 0, -4), (4, 0, -2), (4, 0, 2), (2, 0, 4), (-2, 0, 4), (-4, 0, 2),
                                 (-4, 0, -2), (-2, 0, -4)], k=[0, 1, 2, 3, 4, 5, 6, 7, 8])
         # pm.setAttr(cont_ngon + ".scale", (0.25, 0.25, 0.25))
-        pm.setAttr("%s.scale" % cont_ngon, (0.25, 0.25, 0.25))
-        pm.makeIdentity(cont_ngon, a=True, s=True)
-        pm.setAttr(cont_ngon.scale, scale)
-        pm.makeIdentity(cont_ngon, a=True)
+        cmds.setAttr("%s.scale" % cont_ngon, 0.25, 0.25, 0.25)
+        cmds.makeIdentity(cont_ngon, a=True, s=True)
+        # cmds.setAttr("%s.scale" %cont_ngon, scale)
+        # cmds.makeIdentity(cont_ngon, a=True)
         return cont_ngon
 
     def triCircle(self, name="cont_triCircle", scale=(1, 1, 1)):
@@ -358,27 +360,29 @@ class Icon(object):
             Controller node
 
         """
-        cont_triCircle = pm.circle(name=name, nr=(0, 1, 0), ch=0)
-        masterTri = pm.curve(bezier=True, d=3,
+        cont_triCircle = cmds.circle(name=name, nr=(0, 1, 0), ch=0)[0]
+        masterTri = cmds.curve(bezier=True, d=3,
                              p=[(0, 0, 0.240), (0, 0, 0.240), (-0.150, 0, 0), (-0.150, 0, 0), (-0.150, 0, 0),
                                 (0, 0, -0.240), (0, 0, -0.240), (0, 0, -0.240), (-0.03, 0, -0.03), (-0.03, 0, 0),
                                 (0, 0, 0.240)])
 
 
-        pm.move(masterTri, (-1.036, 0, 0))
-        pm.xform(masterTri, piv=(0, 0, 0), ws=True)
-        pm.makeIdentity(masterTri, a=True)
+        # cmds.move(masterTri, (-1.036, 0, 0))
+        cmds.move(-1.036, 0, 0, masterTri)
+        cmds.xform(masterTri, piv=(0, 0, 0), ws=True)
+        cmds.makeIdentity(masterTri, a=True)
         for i in range(0, 4):
-            newTri = pm.duplicate(masterTri)
-            pm.makeIdentity(newTri, a=True)
-            newTriShape = newTri[0].getShape()
-            pm.rotate(masterTri, (0, 90, 0), r=True)
-            pm.parent(newTriShape, cont_triCircle[0], r=True, s=True)
-            pm.delete(newTri)
-        pm.delete(masterTri)
-        pm.setAttr(cont_triCircle[0].scale, scale)
-        pm.makeIdentity(cont_triCircle, a=True)
-        return cont_triCircle[0]
+            newTri = cmds.duplicate(masterTri, name="arrow_%i" %i)[0]
+            cmds.makeIdentity(newTri, a=True)
+            newTriShape = cmds.listRelatives(newTri, s=True)[0]
+            # newTriShape = newTri[0].getShape()
+            cmds.rotate(0, 90, 0, masterTri, r=True)
+            cmds.parent(newTriShape, cont_triCircle, r=True, s=True)
+            cmds.delete(newTri)
+        cmds.delete(masterTri)
+        # cmds.setAttr("%s.scale" %cont_triCircle[0], scale)
+        # cmds.makeIdentity(cont_triCircle, a=True)
+        return cont_triCircle
 
     def curvedCircle(self, name="cont_curvedCircle", scale=(1, 1, 1)):
         """
@@ -391,15 +395,15 @@ class Icon(object):
         Returns:
             Controller node
         """
-        cont_curvedCircle = pm.circle(name=name, nr=(0, 1, 0), ch=0, s=12, radius=1)[0]
-        pm.move(cont_curvedCircle.cv[3, 4, 5, 9, 10, 11], (0, 0.25, 0), r=True)
-        pm.setAttr(cont_curvedCircle.scale, scale)
-        pm.makeIdentity(cont_curvedCircle, a=True)
+        cont_curvedCircle = cmds.circle(name=name, nr=(0, 1, 0), ch=0, s=12, radius=1)[0]
+        cmds.move(0, 0.25, 0, cont_curvedCircle.cv[3, 4, 5, 9, 10, 11], r=True)
+        # cmds.setAttr("%.scale" %cont_curvedCircle, scale)
+        # cmds.makeIdentity(cont_curvedCircle, a=True)
         return cont_curvedCircle
 
     def halfDome(self, name="cont_halfDome", scale=(1, 1, 1)):
 
-        cont_halfCurve = pm.curve(name=name, d=1,
+        cont_halfCurve = cmds.curve(name=name, d=1,
                                   p=[(-2.98023e-008, 0, 1), (-0.309017, 0, 0.951057), (-0.587785, 0, 0.809017),
                                      (-0.809017, 0, 0.587785), (-0.951057, 0, 0.309017), (-1, 0, 0),
                                      (-0.987689, 0.156434, 0),
@@ -436,46 +440,46 @@ class Icon(object):
                                      59, 60, 61, 62, 63, 64, 65])
 
 
-        pm.makeIdentity(cont_halfCurve, a=True, s=True)
-        pm.setAttr(cont_halfCurve.scale, scale)
+        cmds.makeIdentity(cont_halfCurve, a=True, s=True)
+        # cmds.setAttr("%s.scale" %cont_halfCurve, scale)
 
-        pm.makeIdentity(cont_halfCurve, a=True)
+        # cmds.makeIdentity(cont_halfCurve, a=True)
         return cont_halfCurve
 
     def looper(self, name="cont_looper", scale=(1, 1, 1)):
 
-        cont_Looper = pm.curve(name=name, d=1,
+        cont_Looper = cmds.curve(name=name, d=1,
                                p=[(0, 0, -1), (1, 0, -1), (1, 0, 1), (-1, 0, 1), (-1, 0, -2), (2, 0, -2), (2, 0, 2),
                                   (-2, 0, 2), (-2, 0, -3), (3, 0, -3), (3, 0, 3), (-3, 0, 3), (-3, 0, -3)],
                                k=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
-        pm.setAttr("%s.scale" % cont_Looper, (0.333, 0.333, 0.333))
-        pm.makeIdentity(cont_Looper, a=True, s=True)
-        pm.setAttr(cont_Looper.scale, scale)
-        pm.makeIdentity(cont_Looper, a=True)
+        cmds.setAttr("%s.scale" % cont_Looper, (0.333, 0.333, 0.333))
+        cmds.makeIdentity(cont_Looper, a=True, s=True)
+        # cmds.setAttr("%.scale" %cont_Looper, scale)
+        # cmds.makeIdentity(cont_Looper, a=True)
         return cont_Looper
 
     def triangle(self, name="cont_triangle", scale=(1, 1, 1)):
-        cont_Triangle = pm.curve(name=name, d=1, p=[(0, 0, -3), (-3, 0, 2), (3, 0, 2), (0, 0, -3)], k=[0, 1, 2, 3])
+        cont_Triangle = cmds.curve(name=name, d=1, p=[(0, 0, -3), (-3, 0, 2), (3, 0, 2), (0, 0, -3)], k=[0, 1, 2, 3])
         # pm.setAttr(cont_Triangle + ".scale", (0.333, 0.333, 0.333))
-        pm.setAttr("%s.scale" % cont_Triangle, (0.333, 0.333, 0.333))
-        pm.makeIdentity(cont_Triangle, a=True, s=True)
-        pm.setAttr(cont_Triangle.scale, scale)
-        pm.makeIdentity(cont_Triangle, a=True)
+        cmds.setAttr("%s.scale" % cont_Triangle, (0.333, 0.333, 0.333))
+        cmds.makeIdentity(cont_Triangle, a=True, s=True)
+        # cmds.setAttr("%s.scale" %cont_Triangle, scale)
+        # cmds.makeIdentity(cont_Triangle, a=True)
         return cont_Triangle
 
     def pyramid(self, name="cont_pyramid", scale=(1, 1, 1)):
-        cont_Pyramid = pm.curve(name=name, d=1,
+        cont_Pyramid = cmds.curve(name=name, d=1,
                                 p=[(-1, 0, 1), (1, 0, 1), (1, 0, -1), (-1, 0, -1), (-1, 0, 1), (0, 2, 0), (1, 0, -1),
                                    (-1, 0, -1), (0, 2, 0), (1, 0, 1)], k=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
         # pm.setAttr(cont_Pyramid + ".scale", (0.333, 0.333, 0.333))
-        pm.setAttr("%s.scale" % cont_Pyramid, (0.333, 0.333, 0.333))
-        pm.makeIdentity(cont_Pyramid, a=True, s=True)
-        pm.setAttr(cont_Pyramid.scale, scale)
-        pm.makeIdentity(cont_Pyramid, a=True)
+        cmds.setAttr("%s.scale" %cont_Pyramid, (0.333, 0.333, 0.333))
+        cmds.makeIdentity(cont_Pyramid, a=True, s=True)
+        # cmds.setAttr("%s.scale" %cont_Pyramid, scale)
+        # cmds.makeIdentity(cont_Pyramid, a=True)
         return cont_Pyramid
 
     def diamond(self, name="cont_diamond", scale=(1, 1, 1)):
-        cont_diamond = pm.curve(name=name, d=1,
+        cont_diamond = cmds.curve(name=name, d=1,
                                 p=[(0.341725, 0, 1.051722), (1.105846, 0, 0), (0, 0.962601, 0), (0.341725, 0, 1.051722),
                                    (0, -0.962601, 0), (1.105846, 0, 0), (0.341725, 0, -1.051722), (0, 0.962601, 0),
                                    (-0.894648, 0, -0.65),
@@ -483,17 +487,17 @@ class Icon(object):
                                    (-0.894648, 0, 0.65), (0.341725, 0, 1.051722), (0, -0.962601, 0),
                                    (-0.894648, 0, 0.65), (0, 0.962601, 0)],
                                 k=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])
-        pm.makeIdentity(cont_diamond, a=True, s=True)
-        pm.setAttr(cont_diamond.scale, scale)
-        pm.makeIdentity(cont_diamond, a=True)
+        cmds.makeIdentity(cont_diamond, a=True, s=True)
+        # cmds.setAttr("%s.scale" %cont_diamond, scale)
+        # cmds.makeIdentity(cont_diamond, a=True)
         return cont_diamond
 
     def arrow(self, name="cont_arrow", scale=(1, 1, 1)):
-        cont_arrow = pm.curve(name=name, d=1, p=[(0.0335873, 0, 1.055001), (-4.955996, 0, 0.971701), (-4.983113, 0, 2.081272),
+        cont_arrow = cmds.curve(name=name, d=1, p=[(0.0335873, 0, 1.055001), (-4.955996, 0, 0.971701), (-4.983113, 0, 2.081272),
                          (-7.934906, 0, -0.0118149), (-4.93066, 0, -2.06217), (-4.973678, 0, -0.968172),
                          (0.0696592, 0, -1.018287), (0.0192114, 0, 1.054761)], k=[0, 1, 2, 3, 4, 5, 6, 7])
-        pm.makeIdentity(cont_arrow, a=True, s=True)
-        pm.setAttr(cont_arrow.scale, scale)
-        pm.makeIdentity(cont_arrow, a=True)
+        cmds.makeIdentity(cont_arrow, a=True, s=True)
+        # cmds.setAttr("%s.scale" %cont_arrow, scale)
+        # cmds.makeIdentity(cont_arrow, a=True)
         return cont_arrow
 

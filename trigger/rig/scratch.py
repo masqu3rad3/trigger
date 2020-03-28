@@ -1,4 +1,6 @@
-import pymel.core as pm
+# import pymel.core as pm
+
+from maya import cmds
 import trigger.library.functions as extra
 import trigger.library.controllers as ic
 import trigger.modules.arm as arm
@@ -10,7 +12,18 @@ import trigger.modules.digits as finger
 import trigger.modules.tentacle as tentacle
 import trigger.modules.root as root
 import trigger.utils.space_switcher as anchorMaker
+import trigger.library.tools as tools
 
+reload(arm)
+reload(leg)
+reload(neckAndHead)
+reload(spine)
+reload(simpleTail)
+reload(finger)
+reload(tentacle)
+reload(root)
+reload(anchorMaker)
+reload(tools)
 
 # from Qt import QtWidgets, QtCore, QtGui
 from trigger.Qt import QtWidgets
@@ -20,7 +33,6 @@ class LimbBuilder():
     def __init__(self, settingsData, progressBar=None):
         # super(LimbBuilder, self).__init__()
         self.progressBar = progressBar
-        # self.catalogueRoots(pm.ls(sl=True)[0])
         self.validRootList = ["Collar", "LegRoot", "Root", "SpineRoot", "NeckRoot", "TailRoot", "FingerRoot",
                               "ThumbRoot", "IndexRoot", "MiddleRoot", "RingRoot", "PinkyRoot", "TentacleRoot"]
         # self.limbList = []
@@ -79,36 +91,28 @@ class LimbBuilder():
         """
         # self.__init__()
 
-        selection = pm.ls(sl=True, type="joint")
+        selection = cmds.ls(sl=True, type="joint")
         if len(selection) != 1 or extra.identifyMaster(selection[0])[0] not in self.validRootList:
-            pm.warning("select a single root joint")
+            cmds.warning("select a single root joint")
             return
 
         # ## Create the holder group if it does not exist
-        # if not pm.objExists("{0}_rig".format(self.rigName)):
-        #     self.rootGroup = pm.group(name=("{0}_rig".format(self.rigName)), em=True)
-        #     # self.allOldCont = []
-        # else:
-        #     self.rootGroup = pm.PyNode("{0}_rig".format(self.rigName))
-        #     # get all controllers under the existing group into a list
-        #     # allTransform = pm.listRelatives(self.rootGroup, ad=True, c=True, typ="nurbsCurve")
-        #     # self.allOldCont = extra.uniqueList([cont.getParent() for cont in allTransform if cont.name().startswith("cont_")])
 
         try:
-            oldRootGroup = pm.PyNode("{0}_rig".format(self.rigName))
+            oldRootGroup = "{0}_rig".format(self.rigName)
             if self.replaceExisting:
                 # get all objects under old rig
-                oldGroupMembers = pm.listRelatives(oldRootGroup, ad=True, c=True) + [oldRootGroup]
+                oldGroupMembers = cmds.listRelatives(oldRootGroup, ad=True, c=True) + [oldRootGroup]
                 # rename thame (add _OLD as suffix)
-                for i in oldGroupMembers:
+                for old_member in oldGroupMembers:
                     try:
-                        i.rename("{0}{1}".format(i.name(), "_OLD"))
+                        cmds.rename(old_member, "{0}{1}".format(old_member, "_OLD"))
                     except RuntimeError:
                         pass
         except:
             oldRootGroup = None
 
-        self.rootGroup = pm.group(name=(extra.uniqueName("{0}_rig".format(self.rigName))), em=True)
+        self.rootGroup = cmds.group(name=(extra.uniqueName("{0}_rig".format(self.rigName))), em=True)
 
         # first initialize the dimensions for icon creation
         self.hipDistance, self.shoulderDistance = self.getDimensions(selection[0])
@@ -127,22 +131,22 @@ class LimbBuilder():
         else:
             for anchor in (self.anchors):
                 try:
-                    pm.parent(anchor[0], self.cont_placement)
+                    cmds.parent(anchor[0], self.cont_placement)
                 except RuntimeError:
                     pass
         for x in self.fingerMatchConts:
             contPos = extra.createUpGrp(x[0], "POS", mi=False)
             socket = self.getNearestSocket(x[1], self.allSocketsList)
-            pm.parentConstraint(socket, contPos, mo=True)
-            pm.scaleConstraint(self.cont_master, contPos)
-            pm.parent(contPos, self.rootGroup)
+            cmds.parentConstraint(socket, contPos, mo=True)
+            cmds.scaleConstraint(self.cont_master, contPos)
+            cmds.parent(contPos, self.rootGroup)
 
         if self.afterCreation == 1:
             # if the After Creation set to 'Hide Initial Joints'
-            pm.hide(selection)
+            cmds.hide(selection)
         if self.afterCreation == 2:
             # if the After Creation set to 'Delete Initial Joints'
-            pm.delete(selection)
+            cmds.delete(selection)
         if self.skinMeshList and not self.replaceExisting:
             # if there are skin mesh(s) defined, and replace existing is not checked, initiate the skinning process
             self.skinning(copyMode=self.copySkinWeights)
@@ -150,41 +154,42 @@ class LimbBuilder():
 
         if self.replaceExisting and oldRootGroup:
             # get every controller under the oldRootGroup
-            allTransform = pm.listRelatives(oldRootGroup, ad=True, c=True, typ="nurbsCurve")
+            allTransform = cmds.listRelatives(oldRootGroup, ad=True, c=True, typ="nurbsCurve")
+
             allOldCont = extra.uniqueList(
-                [cont.getParent() for cont in allTransform if cont.name().startswith("cont_")])
+                [cmds.listRelatives(cont, parent=True)[0] for cont in allTransform if cont.startswith("cont_")])
 
             # find corresponding new controllers and replace them with the old ones
 
             for cont in allOldCont:
-                if "cont_FK_IK" in cont.name():
+                if "cont_FK_IK" in cont:
                     continue
                 try:
-                    new = pm.PyNode(cont.replace("_OLD", ""))
+                    new = cont.replace("_OLD", "")
                     # duplicate
-                    old = pm.duplicate(cont)[0]
+                    old = cmds.duplicate(cont)[0]
                     # unparent
-                    pm.parent(old, w=True)
-                    pm.delete(pm.listRelatives(old, c=True, typ="transform"))
-                    pm.setAttr(old.tx, e=True, k=True, l=False)
-                    pm.setAttr(old.ty, e=True, k=True, l=False)
-                    pm.setAttr(old.tz, e=True, k=True, l=False)
-                    pm.setAttr(old.rx, e=True, k=True, l=False)
-                    pm.setAttr(old.ry, e=True, k=True, l=False)
-                    pm.setAttr(old.rz, e=True, k=True, l=False)
-                    pm.setAttr(old.sx, e=True, k=True, l=False)
-                    pm.setAttr(old.sy, e=True, k=True, l=False)
-                    pm.setAttr(old.sz, e=True, k=True, l=False)
+                    cmds.parent(old, w=True)
+                    cmds.delete(cmds.listRelatives(old, c=True, typ="transform"))
+                    cmds.setAttr("%s.tx" %old, e=True, k=True, l=False)
+                    cmds.setAttr("%s.ty" %old, e=True, k=True, l=False)
+                    cmds.setAttr("%s.tz" %old, e=True, k=True, l=False)
+                    cmds.setAttr("%s.rx" %old, e=True, k=True, l=False)
+                    cmds.setAttr("%s.ry" %old, e=True, k=True, l=False)
+                    cmds.setAttr("%s.rz" %old, e=True, k=True, l=False)
+                    cmds.setAttr("%s.sx" %old, e=True, k=True, l=False)
+                    cmds.setAttr("%s.sy" %old, e=True, k=True, l=False)
+                    cmds.setAttr("%s.sz" %old, e=True, k=True, l=False)
 
-                    pm.setAttr(old.tx, 0)
-                    pm.setAttr(old.ty, 0)
-                    pm.setAttr(old.tz, 0)
-                    pm.setAttr(old.rx, 0)
-                    pm.setAttr(old.ry, 0)
-                    pm.setAttr(old.rz, 0)
-                    pm.setAttr(old.sx, 1)
-                    pm.setAttr(old.sy, 1)
-                    pm.setAttr(old.sz, 1)
+                    cmds.setAttr("%s.tx" %old, 0)
+                    cmds.setAttr("%s.ty" %old, 0)
+                    cmds.setAttr("%s.tz" %old, 0)
+                    cmds.setAttr("%s.rx" %old, 0)
+                    cmds.setAttr("%s.ry" %old, 0)
+                    cmds.setAttr("%s.rz" %old, 0)
+                    cmds.setAttr("%s.sx" %old, 1)
+                    cmds.setAttr("%s.sy" %old, 1)
+                    cmds.setAttr("%s.sz" %old, 1)
 
                     tools.replaceController(mirror=False,
                                             oldController=new,
@@ -195,52 +200,45 @@ class LimbBuilder():
                     pass
 
             # find old skinned meshes
-            allJoints = pm.listRelatives(oldRootGroup, ad=True, c=True, typ="joint")
-            allOldDefJoints = extra.uniqueList([j for j in allJoints if j.name().startswith("jDef")])
+            allJoints = cmds.listRelatives(oldRootGroup, ad=True, c=True, typ="joint")
+            allOldDefJoints = extra.uniqueList([j for j in allJoints if j.startswith("jDef")])
             skinList = []
             for i in allOldDefJoints:
-                skinList += extra.uniqueList(pm.listConnections(i, type="skinCluster"))
+                skinList += extra.uniqueList(cmds.listConnections(i, type="skinCluster"))
             skinList = extra.uniqueList(skinList)
 
-            skinnedObjects = [pm.listConnections(skinC.outputGeometry)[0] for skinC in skinList]
+            skinnedObjects = [cmds.listConnections(skinC.outputGeometry)[0] for skinC in skinList]
 
             for mesh in skinnedObjects:
-                dupMesh = pm.duplicate(mesh)
-                pm.skinCluster(self.totalDefJoints, dupMesh, tsb=True)
-                pm.copySkinWeights(mesh, dupMesh, noMirror=True, surfaceAssociation="closestPoint",
+                dupMesh = cmds.duplicate(mesh)[0]
+                cmds.skinCluster(self.totalDefJoints, dupMesh, tsb=True)
+                cmds.copySkinWeights(mesh, dupMesh, noMirror=True, surfaceAssociation="closestPoint",
                                    influenceAssociation="closestJoint", normalize=True)
                 # delete the skin cluster on old mesh
-                oldSkin = pm.listConnections(mesh.getShape(), type="skinCluster")[0]
-                # oldSkinName = oldSkin.name()
-                pm.delete(oldSkin)
+                # oldSkin = cmds.listConnections(mesh.getShape(), type="skinCluster")[0]
+                oldSkin = cmds.listConnections(cmds.listRelatives(mesh, s=True), type="skinCluster")[0]
+
+                cmds.delete(oldSkin)
                 # re-create the skin cluster with
-                pm.skinCluster(self.totalDefJoints, mesh, tsb=True)
-                pm.copySkinWeights(dupMesh, mesh, noMirror=True, surfaceAssociation="closestPoint",
+                cmds.skinCluster(self.totalDefJoints, mesh, tsb=True)
+                cmds.copySkinWeights(dupMesh, mesh, noMirror=True, surfaceAssociation="closestPoint",
                                    influenceAssociation="closestJoint", normalize=True)
 
                 # delete duplicate
-                pm.delete(dupMesh)
+                cmds.delete(dupMesh)
 
-            # delete old group
-            # pm.delete(oldRootGroup)
-
-            pass
 
     def skinning(self, copyMode):
         if copyMode:
-            # print "copyskins"
-            # print self.totalDefJoints
             for i in self.skinMeshList:
-                dupMesh = pm.duplicate(i)
-                pm.skinCluster(self.totalDefJoints, dupMesh, tsb=True)
-                pm.copySkinWeights(i, dupMesh, noMirror=True, surfaceAssociation="closestPoint",
+                dupMesh = cmds.duplicate(i)[0]
+                cmds.skinCluster(self.totalDefJoints, dupMesh, tsb=True)
+                cmds.copySkinWeights(i, dupMesh, noMirror=True, surfaceAssociation="closestPoint",
                                    influenceAssociation="closestJoint", normalize=True)
 
         else:
-            # print "dont copy, only initial skinning"
-            # print self.totalDefJoints
             for i in self.skinMeshList:
-                pm.skinCluster(self.totalDefJoints, i, tsb=True, bindMethod=self.bindMethod, skinMethod=self.skinMethod)
+                cmds.skinCluster(self.totalDefJoints, i, tsb=True, bindMethod=self.bindMethod, skinMethod=self.skinMethod)
 
     def createlimbs(self, limbCreationList=[], addLimb=False, *args, **kwargs):
         """
@@ -258,16 +256,16 @@ class LimbBuilder():
         """
 
         if addLimb:
-            selection = pm.ls(sl=True)
+            selection = cmds.ls(sl=True)
             if len(selection) > 3:
-                pm.error(
+                cmds.error(
                     "Select exactly three nodes. First reference root node then target parent and finally master controller")
                 return
             referenceRoot = selection[0]
             parentSocket = selection[1]
             masterController = selection[2]
             if extra.identifyMaster(referenceRoot)[0] not in self.validRootList:
-                pm.error("First selection must be a valid root joint node")
+                cmds.error("First selection must be a valid root joint node")
                 return
             limbCreationList = [self.getWholeLimb(referenceRoot)]
 
@@ -275,11 +273,12 @@ class LimbBuilder():
 
         if not self.seperateSelectionSets:
             print "limbCreationList", limbCreationList
-            pm.select(d=True)
-            if not pm.uniqueObjExists("def_jointsSet_%s" % self.rigName):
-                j_def_set = pm.sets(name="def_jointsSet_%s" % self.rigName)
+            cmds.select(d=True)
+            # if not pm.uniqueObjExists("def_jointsSet_%s" % self.rigName):
+            if not cmds.objExists("def_jointsSet_%s" % self.rigName):
+                j_def_set = cmds.sets(name="def_jointsSet_%s" % self.rigName)
             else:
-                j_def_set = pm.PyNode("def_jointsSet_%s" % self.rigName)
+                j_def_set = "def_jointsSet_%s" % self.rigName
 
         total_limb_count = len(limbCreationList)
         limb_counter = 0
@@ -305,7 +304,7 @@ class LimbBuilder():
             if self.seperateSelectionSets:
                 set_name = "def_%s_%s_Set" % (x[1], x[2])
                 set_name = extra.uniqueName(set_name)
-                j_def_set = pm.sets(name=set_name)
+                j_def_set = cmds.sets(name=set_name)
 
             ### LIMB CREATION HERE #####
             if x[1] == "arm":
@@ -382,17 +381,18 @@ class LimbBuilder():
                 limb.createRoot(x[0], suffix="Toot")
 
             else:
-                pm.error("limb creation failed.")
+                cmds.error("limb creation failed.")
                 return
 
             ##############################################
             if addLimb:
-                pm.parent(limb.limbPlug, parentSocket)
+                cmds.parent(limb.limbPlug, parentSocket)
 
                 ## Good parenting / scale connections
 
                 ## get the holder group
-                self.rootGroup = masterController.getParent()
+                # self.rootGroup = masterController.getParent()
+                self.rootGroup = cmds.listRelatives(masterController, parent=True)
 
                 ## Create the holder group if it does not exist
 
@@ -403,15 +403,15 @@ class LimbBuilder():
 
                 # pm.parent(limb.scaleGrp, self.rootGroup)
                 scaleGrpPiv = limb.limbPlug.getTranslation(space="world")
-                pm.xform(limb.scaleGrp, piv=scaleGrpPiv, ws=True)
+                cmds.xform(limb.scaleGrp, piv=scaleGrpPiv, ws=True)
                 ## pass the attributes
 
                 extra.attrPass(limb.scaleGrp, masterController, values=True, daisyChain=True, overrideEx=False)
 
-                pm.parent(limb.limbGrp, self.rootGroup)
+                cmds.parent(limb.limbGrp, self.rootGroup)
 
                 for sCon in limb.scaleConstraints:
-                    pm.scaleConstraint(masterController, sCon)
+                    cmds.scaleConstraint(masterController, sCon)
 
             ##############################################
             else:
@@ -433,24 +433,29 @@ class LimbBuilder():
                 else:
                     parentSocket = self.cont_placement
 
-                pm.parent(limb.limbPlug, parentSocket)
+                cmds.parent(limb.limbPlug, parentSocket)
 
                 ## Good parenting / scale connections
                 # pm.parent(limb.scaleGrp, self.rootGroup)
-                scaleGrpPiv = limb.limbPlug.getTranslation(space="world")
-                pm.xform(limb.scaleGrp, piv=scaleGrpPiv, ws=True)
+                # scaleGrpPiv = limb.limbPlug.getTranslation(space="world")
+                scaleGrpPiv = extra.getWorldTranslation(limb.limbPlug)
+                cmds.xform(limb.scaleGrp, piv=scaleGrpPiv, ws=True)
                 ## pass the attributes
 
                 extra.attrPass(limb.scaleGrp, self.cont_master, values=True, daisyChain=True, overrideEx=False)
-                pm.parent(limb.limbGrp, self.rootGroup)
+                cmds.parent(limb.limbGrp, self.rootGroup)
                 for sCon in limb.scaleConstraints:
-                    pm.scaleConstraint(self.cont_master, sCon)
+                    cmds.scaleConstraint(self.cont_master, sCon)
 
             #
             # if not seperateSelectionSets:
             self.totalDefJoints += limb.deformerJoints
             if j_def_set:
-                pm.sets(j_def_set, add=limb.deformerJoints)
+                # for element in limb.deformerJoints:
+                #     cmds.sets(j_def_set, add=element)
+                # map(lambda x: cmds.sets(j_def_set, add=x), limb.deformerJoints)
+                # cmds.sets(j_def_set, add=limb.deformerJoints)
+                cmds.sets(limb.deformerJoints, add=j_def_set)
 
     def getDimensions(self, rootNode):
         """
@@ -467,10 +472,9 @@ class LimbBuilder():
         rightHip = None
         leftShoulder = None
         rightShoulder = None
-        allJoints = pm.listRelatives(rootNode, type="joint", ad=True)
+        allJoints = cmds.listRelatives(rootNode, type="joint", ad=True)
         allFingers = []
         for j in allJoints:
-            print("tt", j)
             jID = extra.identifyMaster(j)
 
             if jID[0] == "Hip" and jID[2] == "L":
@@ -495,7 +499,9 @@ class LimbBuilder():
         for x in allFingers:
             tempGrp = []
             for y in allFingers:
-                if x.getParent() == y.getParent():
+                x_parent = cmds.listRelatives(x, parent=True)
+                y_parent = cmds.listRelatives(y, parent=True)
+                if x_parent == y_parent:
                     tempGrp.append(y)
             if len(tempGrp) > 0 and tempGrp not in self.fingerMatchList:
                 self.fingerMatchList.append(tempGrp)
@@ -519,7 +525,9 @@ class LimbBuilder():
             self.limbCreationList.append(limbProps)
 
         # Do the same for all children recursively
-        children = node.getChildren(type="joint")
+        # children = node.getChildren(type="joint")
+        children = cmds.listRelatives(node, children=True, type="joint")
+        children = children if children else []
         for c in children:
             cID = extra.identifyMaster(c)
             if cID[0] in self.validRootList:
@@ -542,48 +550,46 @@ class LimbBuilder():
         # self.cont_master = icon.triCircle(extra.uniqueName("cont_Master"), (self.hipDistance * 1.5, self.hipDistance * 1.5, self.hipDistance * 1.5))
         self.cont_master, dmp = icon.createIcon("TriCircle", iconName=extra.uniqueName("cont_Master"), scale=(
         self.hipDistance * 1.5, self.hipDistance * 1.5, self.hipDistance * 1.5))
-        pm.addAttr(self.cont_master, at="bool", ln="Control_Visibility", sn="contVis", defaultValue=True)
-        pm.addAttr(self.cont_master, at="bool", ln="Joints_Visibility", sn="jointVis")
-        pm.addAttr(self.cont_master, at="bool", ln="Rig_Visibility", sn="rigVis")
+        # cmds.addAttr(self.cont_master, at="bool", ln="Control_Visibility", sn="contVis", defaultValue=True)
+        # cmds.addAttr(self.cont_master, at="bool", ln="Joints_Visibility", sn="jointVis")
+        # cmds.addAttr(self.cont_master, at="bool", ln="Rig_Visibility", sn="rigVis")
+
+        cmds.addAttr(self.cont_master, at="bool", ln="Control_Visibility", sn="contVis", defaultValue=True, keyable=True)
+        cmds.addAttr(self.cont_master, at="bool", ln="Joints_Visibility", sn="jointVis", keyable=True)
+        cmds.addAttr(self.cont_master, at="bool", ln="Rig_Visibility", sn="rigVis", keyable=True)
 
         for f in self.fingerMatchList:
             fName, fType, fSide = extra.identifyMaster(f[0])
-            offsetVector = extra.getBetweenVector(f[0].getParent(), f)
+            f_parent = cmds.listRelatives(f[0], parent=True)[0]
+            offsetVector = extra.getBetweenVector(f_parent, f)
             iconSize = extra.getDistance(f[0], f[-1])
             translateOff = (iconSize / 2, 0, iconSize / 2)
             rotateOff = (0, 0, 0)
-            if "_left" in f[0].name():
-                iconName = f[0].name().replace("_left", "_LEFT")
-            elif "_right" in f[0].name():
-                iconName = f[0].name().replace("_right", "_RIGHT")
+            if "_left" in f[0]:
+                iconName = f[0].replace("_left", "_LEFT")
+            elif "_right" in f[0]:
+                iconName = f[0].replace("_right", "_RIGHT")
                 rotateOff = (0, 180, 0)
                 translateOff = (iconSize / 2, 0, -iconSize / 2)
             else:
-                iconName = f[0].name()
+                iconName = f[0]
 
             # cont_fGroup = icon.square(name="cont_Fgrp_{0}".format(iconName), scale=(iconSize/6, iconSize/4, iconSize/2))
             cont_fGroup, dmp = icon.createIcon("Square", iconName="cont_Fgrp_{0}".format(iconName),
                                                scale=(iconSize / 6, iconSize / 4, iconSize / 2))
-            pm.rotate(cont_fGroup, (90, 0, 0))
-            pm.makeIdentity(cont_fGroup, a=True)
-            extra.alignAndAim(cont_fGroup, targetList=[f[0].getParent()], aimTargetList=[f[0], f[-1]], upObject=f[0],
-                              rotateOff=rotateOff, translateOff=(-offsetVector * (iconSize / 2)))
-            pm.move(cont_fGroup, (0, 0, (-iconSize / 2)), r=True, os=True)
+            cmds.rotate(90, 0, 0, cont_fGroup)
+            cmds.makeIdentity(cont_fGroup, a=True)
 
-            # tempPA = pm.parentConstraint(f, cont_fGroup)
-            # pm.delete(tempPA)
-            # pm.move(cont_fGroup, (0,iconSize/2,0), r=True)
-            # pm.makeIdentity(cont_fGroup, a=True)
-            self.fingerMatchConts.append([cont_fGroup, f[0].getParent()])
+            extra.alignAndAim(cont_fGroup, targetList=[f_parent], aimTargetList=[f[0], f[-1]], upObject=f[0],
+                              rotateOff=rotateOff, translateOff=(-offsetVector * (iconSize / 2)))
+            cmds.move(0, 0, (-iconSize / 2), cont_fGroup, r=True, os=True)
+            self.fingerMatchConts.append([cont_fGroup, f_parent])
 
         # make the created attributes visible in the channelbox
-        pm.setAttr(self.cont_master.contVis, cb=True)
-        pm.setAttr(self.cont_master.jointVis, cb=True)
-        pm.setAttr(self.cont_master.rigVis, cb=True)
-        pm.parent(self.cont_placement, self.cont_master)
-
-        # self.masterSocket = pm.joint(name="jSocket_master", pt=self.cont_placement)
-        # pm.parentConstraint(self.cont_placement, masterSocket)
+        cmds.setAttr("%s.contVis" %self.cont_master, cb=True)
+        cmds.setAttr("%s.jointVis" %self.cont_master, cb=True)
+        cmds.setAttr("%s.rigVis" %self.cont_master, cb=True)
+        cmds.parent(self.cont_placement, self.cont_master)
         # # add these to the anchor locations
         self.anchorLocations.append(self.cont_master)
         self.anchorLocations.append(self.cont_placement)
@@ -596,7 +602,7 @@ class LimbBuilder():
         # # GOOD PARENTING
 
         extra.lockAndHide(self.rootGroup, ["tx", "ty", "tz", "rx", "ry", "rz", "sx", "sy", "sz"])
-        pm.parent(self.cont_master, self.rootGroup)
+        cmds.parent(self.cont_master, self.rootGroup)
 
     def getNearestSocket(self, initJoint, limbSockets, excluding=[]):
         """
@@ -622,19 +628,21 @@ class LimbBuilder():
         dropoff = None
         limbName, limbType, limbSide = extra.identifyMaster(node)
         if limbType == "spine" or limbType == "neck":
-            limbDict["resolution"] = pm.getAttr(node.resolution)
-            limbDict["dropoff"] = pm.getAttr(node.dropoff)
+            limbDict["resolution"] = cmds.getAttr("%s.resolution" %node)
+            limbDict["dropoff"] = cmds.getAttr("%s.dropoff" %node)
         if limbType == "tentacle":
-            limbDict["contRes"] = pm.getAttr(node.contRes)
-            limbDict["jointRes"] = pm.getAttr(node.jointRes)
-            limbDict["deformerRes"] = pm.getAttr(node.deformerRes)
-            limbDict["dropoff"] = pm.getAttr(node.dropoff)
+            limbDict["contRes"] = cmds.getAttr("%s.contRes" %node)
+            limbDict["jointRes"] = cmds.getAttr("%s.jointRes" %node)
+            limbDict["deformerRes"] = cmds.getAttr("%s.deformerRes" %node)
+            limbDict["dropoff"] = cmds.getAttr("%s.dropoff" %node)
 
         limbDict[limbName] = node
         nextNode = node
         z = True
         while z:
-            children = nextNode.getChildren(type="joint")
+            children = cmds.listRelatives(nextNode, children=True, type="joint")
+            # children = nextNode.getChildren(type="joint")
+            children = [] if not children else children
             if len(children) < 1:
                 z = False
             failedChildren = 0

@@ -1,5 +1,8 @@
-import pymel.core as pm
-import pymel.core.datatypes as dt
+# import pymel.core as pm
+# import pymel.core.datatypes as dt
+
+from maya import cmds
+import maya.api.OpenMaya as om
 
 from trigger.library import functions as extra
 from trigger.library import controllers as ic
@@ -28,15 +31,17 @@ class Spine(object):
 
         # fool proofing
         if (len(inits) < 2):
-            pm.error("Insufficient Spine Initialization Joints")
+            cmds.error("Insufficient Spine Initialization Joints")
             return
 
         # get distances
         self.iconSize = extra.getDistance(self.inits[0], self.inits[-1])
 
         # get positions
-        self.rootPoint = self.inits[0].getTranslation(space="world")
-        self.chestPoint = self.inits[-1].getTranslation(space="world")
+        self.rootPoint = extra.getWorldTranslation(self.inits[0])
+        self.chestPoint = extra.getWorldTranslation(self.inits[-1])
+        # self.rootPoint = self.inits[0].getTranslation(space="world")
+        # self.chestPoint = self.inits[-1].getTranslation(space="world")
 
         # initialize sides
         self.sideMult = -1 if side == "R" else 1
@@ -46,13 +51,13 @@ class Spine(object):
         self.up_axis, self.mirror_axis, self.look_axis = extra.getRigAxes(self.inits[0])
 
         # get if orientation should be derived from the initial Joints
-        try: self.useRefOrientation = pm.getAttr(self.inits[0].useRefOri)
+        try: self.useRefOrientation = cmds.getAttr("%s.useRefOri" %self.inits[0])
         except:
-            pm.warning("Cannot find Inherit Orientation Attribute on Initial Root Joint %s... Skipping inheriting." %self.inits[0])
+            cmds.warning("Cannot find Inherit Orientation Attribute on Initial Root Joint %s... Skipping inheriting." %self.inits[0])
             self.useRefOrientation = False
 
-        self.splineMode = pm.getAttr(self.inits[0].mode, asString=True)
-        self.twistType = pm.getAttr(self.inits[0].twistType, asString=True)
+        self.splineMode = cmds.getAttr("%s.mode" %self.inits[0], asString=True)
+        self.twistType = cmds.getAttr("%s.twistType" %self.inits[0], asString=True)
 
         # initialize suffix
         self.suffix = (extra.uniqueName("limbGrp_%s" % suffix)).replace("limbGrp_", "")
@@ -70,37 +75,37 @@ class Spine(object):
         self.colorCodes = [6, 18]
 
     def createGrp(self):
-        self.limbGrp = pm.group(name="limbGrp_%s" % self.suffix, em=True)
-        self.scaleGrp = pm.group(name="scaleGrp_%s" % self.suffix, em=True)
-        extra.alignTo(self.scaleGrp, self.inits[0], 0)
-        self.nonScaleGrp = pm.group(name="NonScaleGrp_%s" % self.suffix, em=True)
+        self.limbGrp = cmds.group(name="limbGrp_%s" % self.suffix, em=True)
+        self.scaleGrp = cmds.group(name="scaleGrp_%s" % self.suffix, em=True)
+        extra.alignTo(self.scaleGrp, self.inits[0], position=True, rotation=False)
+        self.nonScaleGrp = cmds.group(name="NonScaleGrp_%s" % self.suffix, em=True)
 
-        pm.addAttr(self.scaleGrp, at="bool", ln="Control_Visibility", sn="contVis", defaultValue=True)
-        pm.addAttr(self.scaleGrp, at="bool", ln="Joints_Visibility", sn="jointVis", defaultValue=True)
-        pm.addAttr(self.scaleGrp, at="bool", ln="Rig_Visibility", sn="rigVis", defaultValue=False)
+        cmds.addAttr(self.scaleGrp, at="bool", ln="Control_Visibility", sn="contVis", defaultValue=True)
+        cmds.addAttr(self.scaleGrp, at="bool", ln="Joints_Visibility", sn="jointVis", defaultValue=True)
+        cmds.addAttr(self.scaleGrp, at="bool", ln="Rig_Visibility", sn="rigVis", defaultValue=False)
         # make the created attributes visible in the channelbox
-        pm.setAttr(self.scaleGrp.contVis, cb=True)
-        pm.setAttr(self.scaleGrp.jointVis, cb=True)
-        pm.setAttr(self.scaleGrp.rigVis, cb=True)
+        cmds.setAttr("%s.contVis" %self.scaleGrp, cb=True)
+        cmds.setAttr("%s.jointVis" %self.scaleGrp, cb=True)
+        cmds.setAttr("%s.rigVis" %self.scaleGrp, cb=True)
 
-        pm.parent(self.scaleGrp, self.limbGrp)
-        pm.parent(self.nonScaleGrp, self.limbGrp)
+        cmds.parent(self.scaleGrp, self.limbGrp)
+        cmds.parent(self.nonScaleGrp, self.limbGrp)
 
     def createJoints(self):
         # draw Joints
         # # Create Plug Joints
-        pm.select(None)
-        self.limbPlug = pm.joint(name="limbPlug_%s" % self.suffix, p=self.rootPoint, radius=3)
-        pm.select(None)
-        self.endSocket = pm.joint(name="jDef_ChestSocket", p=self.chestPoint)
+        cmds.select(None)
+        self.limbPlug = cmds.joint(name="limbPlug_%s" % self.suffix, p=self.rootPoint, radius=3)
+        cmds.select(None)
+        self.endSocket = cmds.joint(name="jDef_ChestSocket", p=self.chestPoint)
         self.sockets.append(self.endSocket)
-        pm.select(None)
-        self.startSocket = pm.joint(p=self.rootPoint, name="jDef_RootSocket", radius=3)
+        cmds.select(None)
+        self.startSocket = cmds.joint(p=self.rootPoint, name="jDef_RootSocket", radius=3)
         self.sockets.append(self.startSocket)
 
         ## Create temporaray Guide Joints
-        pm.select(d=True)
-        self.guideJoints = [pm.joint(p=i.getTranslation(space="world")) for i in self.inits]
+        cmds.select(d=True)
+        self.guideJoints = [cmds.joint(p=extra.getWorldTranslation(i)) for i in self.inits]
         # orientations
         # extra.orientJoints(self.guideJoints,
         #                    localMoveAxis=(dt.Vector(self.up_axis)),
@@ -113,8 +118,8 @@ class Spine(object):
             extra.orientJoints(self.guideJoints, worldUpAxis=(self.up_axis), upAxis=(0, 0, -1), reverseAim=self.sideMult, reverseUp=self.sideMult)
         else:
             for x in range (len(self.guideJoints)):
-                extra.alignTo(self.guideJoints[x], self.inits[x], mode=2)
-                pm.makeIdentity(self.guideJoints[x], a=True)
+                extra.alignTo(self.guideJoints[x], self.inits[x], position=True, rotation=True)
+                cmds.makeIdentity(self.guideJoints[x], a=True)
 
 
         self.deformerJoints.append(self.startSocket)
@@ -122,8 +127,9 @@ class Spine(object):
 
         extra.alignToAlter(self.limbPlug, self.guideJoints[0], mode=2)
 
-        pm.parent(self.startSocket, self.scaleGrp)
-        self.scaleGrp.rigVis >> self.limbPlug.v
+        cmds.parent(self.startSocket, self.scaleGrp)
+        # self.scaleGrp.rigVis >> self.limbPlug.v
+        cmds.connectAttr("%s.rigVis" %self.scaleGrp, "%s.v" %self.limbPlug)
 
         # map(lambda x: pm.setAttr(x.displayLocalAxis, True), self.guideJoints)
 
@@ -149,13 +155,13 @@ class Spine(object):
         self.cont_body_ORE = extra.createUpGrp(self.cont_body, "POS")
 
         # create visibility attributes for cont_Body
-        pm.addAttr(self.cont_body, at="bool", ln="FK_A_Visibility", sn="fkAvis", defaultValue=True)
-        pm.addAttr(self.cont_body, at="bool", ln="FK_B_Visibility", sn="fkBvis", defaultValue=True)
-        pm.addAttr(self.cont_body, at="bool", ln="Tweaks_Visibility", sn="tweakVis", defaultValue=True)
+        cmds.addAttr(self.cont_body, at="bool", ln="FK_A_Visibility", sn="fkAvis", defaultValue=True)
+        cmds.addAttr(self.cont_body, at="bool", ln="FK_B_Visibility", sn="fkBvis", defaultValue=True)
+        cmds.addAttr(self.cont_body, at="bool", ln="Tweaks_Visibility", sn="tweakVis", defaultValue=True)
         # make the created attributes visible in the channelbox
-        pm.setAttr(self.cont_body.fkAvis, cb=True)
-        pm.setAttr(self.cont_body.fkBvis, cb=True)
-        pm.setAttr(self.cont_body.tweakVis, cb=True)
+        cmds.setAttr("%s.fkAvis" %self.cont_body, cb=True)
+        cmds.setAttr("%s.fkBvis" %self.cont_body, cb=True)
+        cmds.setAttr("%s.tweakVis" %self.cont_body, cb=True)
 
         ## Chest Controller
         contChestScale = (self.iconSize*0.5, self.iconSize*0.35, self.iconSize*0.2)
@@ -181,26 +187,33 @@ class Spine(object):
 
             # contB = icon.ngon("cont_SpineFK_B_%s%s" %(str(m), self.suffix), contSpineFKBScale, normal=(0,0,1))
             contB, dmp = icon.createIcon("Ngon", iconName="cont_SpineFK_B_%s%s" %(str(m), self.suffix), scale=contSpineFKBScale, normal=(1,0,0))
-            extra.alignTo(contB, self.guideJoints[m], 2)
+            extra.alignTo(contB, self.guideJoints[m], position=True, rotation=True)
             contB_ORE = extra.createUpGrp(contB, "ORE")
             self.cont_spineFK_B_List.append(contB)
 
             if m != 0:
-                pm.parent(self.cont_spineFK_A_List[m].getParent(), self.cont_spineFK_A_List[m - 1])
-                pm.parent(self.cont_spineFK_B_List[m - 1].getParent(), self.cont_spineFK_B_List[m])
+                a_start_parent = cmds.listRelatives(self.cont_spineFK_A_List[m], parent=True)[0]
+                b_end_parent = cmds.listRelatives(self.cont_spineFK_B_List[m - 1], parent=True)[0]
+                cmds.parent(a_start_parent, self.cont_spineFK_A_List[m - 1])
+                cmds.parent(b_end_parent, self.cont_spineFK_B_List[m])
 
-        pm.parent(self.cont_hips_ORE, self.cont_spineFK_B_List[0])
-        pm.parent(self.cont_spineFK_B_List[-1].getParent(), self.cont_body)
+        cmds.parent(self.cont_hips_ORE, self.cont_spineFK_B_List[0])
 
-        pm.parent(cont_Chest_ORE, self.cont_spineFK_A_List[-1])
-        pm.parent(self.cont_spineFK_A_List[0].getParent(), self.cont_body)
-        pm.parent(self.cont_body_ORE, self.limbGrp)
+        # cmds.parent(self.cont_spineFK_B_List[-1].getParent(), self.cont_body)
+        cmds.parent(cmds.listRelatives(self.cont_spineFK_B_List[-1], parent=True), self.cont_body)
+
+        cmds.parent(cont_Chest_ORE, self.cont_spineFK_A_List[-1])
+        # cmds.parent(self.cont_spineFK_A_List[0].getParent(), self.cont_body)
+        cmds.parent(cmds.listRelatives(self.cont_spineFK_A_List[0], parent=True), self.cont_body)
+        cmds.parent(self.cont_body_ORE, self.limbGrp)
 
 
-        pm.parentConstraint(self.limbPlug, self.cont_body_ORE, mo=False)
+        cmds.parentConstraint(self.limbPlug, self.cont_body_ORE, mo=False)
 
-        map(lambda x: pm.connectAttr(self.cont_body.fkAvis, x.getShape().v), self.cont_spineFK_A_List)
-        map(lambda x: pm.connectAttr(self.cont_body.fkBvis, x.getShape().v), self.cont_spineFK_B_List)
+        # map(lambda x: cmds.connectAttr(self.cont_body.fkAvis, x.getShape().v), self.cont_spineFK_A_List)
+        map(lambda x: cmds.connectAttr("%s.fkAvis" %self.cont_body, "%s.v" %cmds.listRelatives(x, s=True)[0]), self.cont_spineFK_A_List)
+        # map(lambda x: cmds.connectAttr(self.cont_body.fkBvis, x.getShape().v), self.cont_spineFK_B_List)
+        map(lambda x: cmds.connectAttr("%s.fkBvis" %self.cont_body, "%s.v" %cmds.listRelatives(x, s=True)[0]), self.cont_spineFK_B_List)
 
 
         extra.colorize(self.cont_body, self.colorCodes[0])
@@ -215,63 +228,66 @@ class Spine(object):
 
     def createIKsetup(self):
         spine = twistSpline.TwistSpline()
-        spine.upAxis =  -(dt.Vector(self.look_axis))
+        spine.upAxis =  -(om.MVector(self.look_axis))
         spine.createTspline(self.guideJoints, "spine_%s" % self.suffix, self.resolution, dropoff=self.dropoff, mode=self.splineMode, twistType=self.twistType)
 
         # self.sockets += spine.defJoints
         self.sockets.extend(spine.defJoints)
 
         extra.attrPass(spine.scaleGrp, self.scaleGrp, attributes=["sx", "sy", "sz"], keepSourceAttributes=True)
-        pm.disconnectAttr(spine.scaleGrp.scale)
+        # cmds.disconnectAttr("%s.scale" %spine.scaleGrp)
 
         midConnection = spine.contCurves_ORE[(len(spine.contCurves_ORE) / 2)]
 
 
         # # connect the spine root to the master root
-        pm.parentConstraint(self.startSocket, spine.contCurve_Start, mo=True)
+        cmds.parentConstraint(self.startSocket, spine.contCurve_Start, mo=True)
 
         # # connect the spine end
-        pm.parentConstraint(self.cont_chest, spine.contCurve_End, mo=True)
+        cmds.parentConstraint(self.cont_chest, spine.contCurve_End, mo=True)
 
         # # connect the master root to the hips controller
-        pm.parentConstraint(self.cont_hips, self.startSocket, mo=True)
+        cmds.parentConstraint(self.cont_hips, self.startSocket, mo=True)
         # # connect upper plug points to the spine and orient it to the chest controller
-        pm.pointConstraint(spine.endLock, self.endSocket)
-        pm.orientConstraint(self.cont_chest, self.endSocket)
+        cmds.pointConstraint(spine.endLock, self.endSocket)
+        cmds.orientConstraint(self.cont_chest, self.endSocket)
 
         # # pass Stretch controls from the splineIK to neck controller
         extra.attrPass(spine.attPassCont, self.cont_chest)
 
         for m in range (len(spine.contCurves_ORE)):
             if m > 0 and m < (spine.contCurves_ORE):
-                oCon = pm.parentConstraint(self.cont_chest, self.cont_hips, spine.contCurves_ORE[m], mo=True)
+                oCon = cmds.parentConstraint(self.cont_chest, self.cont_hips, spine.contCurves_ORE[m], mo=True)[0]
                 blendRatio = (m + 0.0) / len(spine.contCurves_ORE)
-                pm.setAttr("{0}.{1}W0".format(oCon, self.cont_chest), blendRatio)
-                pm.setAttr("{0}.{1}W1".format(oCon, self.cont_hips), 1 - blendRatio)
+                cmds.setAttr("{0}.{1}W0".format(oCon, self.cont_chest), blendRatio)
+                cmds.setAttr("{0}.{1}W1".format(oCon, self.cont_hips), 1 - blendRatio)
 
-        pm.parent(spine.contCurves_ORE, spine.scaleGrp)
-        pm.parent(self.endSocket, spine.scaleGrp)
-        pm.parent(spine.endLock, spine.scaleGrp)
-        pm.parent(spine.scaleGrp, self.scaleGrp)
+        cmds.parent(spine.contCurves_ORE, spine.scaleGrp)
+        cmds.parent(self.endSocket, spine.scaleGrp)
+        cmds.parent(spine.endLock, spine.scaleGrp)
+        cmds.parent(spine.scaleGrp, self.scaleGrp)
 
-        pm.parent(spine.nonScaleGrp, self.nonScaleGrp)
+        cmds.parent(spine.nonScaleGrp, self.nonScaleGrp)
 
 
         self.deformerJoints += spine.defJoints
-        map(lambda x: pm.connectAttr(self.scaleGrp.jointVis, x.v), self.deformerJoints)
+        map(lambda x: cmds.connectAttr("%s.jointVis" %self.scaleGrp, "%s.v" %x), self.deformerJoints)
 
         for i in range(0, len(spine.contCurves_ORE)):
             if i != 0 or i != len(spine.contCurves_ORE):
                 node = extra.createUpGrp(spine.contCurves_ORE[i], "OFF")
-                self.cont_body.tweakVis >> node.v
-                self.scaleGrp.contVis >> spine.contCurves_ORE[i].v
-        self.scaleGrp.contVis >> self.cont_body.v
+                cmds.connectAttr("%s.tweakVis" %self.cont_body, "%s.v" %node)
+                # self.cont_body.tweakVis >> node.v
+                cmds.connectAttr("%s.contVis" %self.scaleGrp, "%s.v" %spine.contCurves_ORE[i])
+                # self.scaleGrp.contVis >> spine.contCurves_ORE[i].v
+        # self.scaleGrp.contVis >> self.cont_body.v
+        cmds.connectAttr("%s.contVis" %self.scaleGrp, "%s.v" %self.cont_body)
 
-        self.scaleGrp.rigVis >> spine.contCurves_ORE[0].v
-        self.scaleGrp.rigVis >> spine.contCurves_ORE[len(spine.contCurves_ORE) - 1].v
+        # cmds.connectAttr("%s.rigVis" %self.scaleGrp, "%s.v" %spine.contCurves_ORE[0]) #ETF
+        # cmds.connectAttr("%s.rigVis" %self.scaleGrp, "%s.v" %spine.contCurves_ORE[len(spine.contCurves_ORE) - 1])
 
         for lst in spine.noTouchData:
-            map(lambda x: pm.connectAttr(self.scaleGrp.rigVis, x.v), lst)
+            map(lambda x: cmds.connectAttr("%s.rigVis" %self.scaleGrp, "%s.v" %x), lst)
 
         extra.colorize(self.deformerJoints, self.colorCodes[0], shape=False)
 
@@ -291,13 +307,13 @@ class Spine(object):
         pass
 
     def roundUp(self):
-        pm.parentConstraint(self.limbPlug, self.scaleGrp, mo=False)
-        pm.setAttr(self.scaleGrp.rigVis, 0)
+        cmds.parentConstraint(self.limbPlug, self.scaleGrp, mo=False)
+        cmds.setAttr("%s.rigVis" %self.scaleGrp, 0)
 
         self.scaleConstraints.extend([self.scaleGrp, self.cont_body_ORE])
         self.anchorLocations = [self.cont_hips, self.cont_body, self.cont_chest]
 
-        pm.delete(self.guideJoints)
+        cmds.delete(self.guideJoints)
         # lock and hide
         extra.lockAndHide(self.cont_body, "v")
         extra.lockAndHide(self.cont_hips, ["sx", "sy", "sz", "v"])

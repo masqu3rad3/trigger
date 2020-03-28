@@ -1,5 +1,7 @@
 from maya import cmds
-import pymel.core as pm
+import maya.api.OpenMaya as om
+
+# import pymel.core as pm
 
 from trigger.library import functions as extra
 from trigger.library import controllers as ic
@@ -46,9 +48,11 @@ class TwistSpline(object):
 
         """
 
-        self.scaleGrp = pm.group(name="scaleGrp_" + name, em=True)
-        self.nonScaleGrp = pm.group(name="nonScaleGrp_" + name, em=True)
-        rootVc = refJoints[0].getTranslation(space="world")  # Root Vector
+        self.scaleGrp = cmds.group(name="scaleGrp_" + name, em=True)
+        self.nonScaleGrp = cmds.group(name="nonScaleGrp_" + name, em=True)
+
+        # rootVc = refJoints[0].getTranslation(space="world")  # Root Vector
+        rootVc = extra.getWorldTranslation(refJoints[0])
         totalLength = 0
         contDistances = []
         contCurves = []
@@ -69,7 +73,8 @@ class TwistSpline(object):
         # for j in refJoints:
         #     pm.joint(j, e=True, zso=True, oj="xyz", sao="yup")
 
-        endVc = (rootVc.x, (rootVc.y + totalLength), rootVc.z)
+        # endVc = (rootVc.x, (rootVc.y + totalLength), rootVc.z)
+        endVc = om.MVector(rootVc.x, (rootVc.y + totalLength), rootVc.z)
         # endVc = ((rootVc.x + totalLength), rootVc.y, rootVc.z)
 
         splitVc = endVc - rootVc
@@ -77,7 +82,7 @@ class TwistSpline(object):
         segmentLoc = rootVc + segmentVc
         curvePoints = []  # for curve creation
         IKjoints = []
-        pm.select(d=True)
+        cmds.select(d=True)
 
         # Create IK Joints ORIENTATION - ORIENTATION - ORIENTATION
         curveType = 3
@@ -87,7 +92,7 @@ class TwistSpline(object):
             for i in range(0, cuts + 2):  # iterates one extra to create an additional joint for orientation
 
                 place = rootVc + (segmentVc * (i))
-                j = pm.joint(p=place, name="jIK_" + name + str(i), )
+                j = cmds.joint(p=place, name="jIK_" + name + str(i), )
                 # extra.alignToAlter(j, refJoints[0], mode=1)
                 # pm.makeIdentity(j, a=True)
                 if i < (cuts + 1):  # if it is not the extra bone, update the lists
@@ -99,7 +104,7 @@ class TwistSpline(object):
             for i in range(0, len(contDistances)):
                 ctrlVc = splitVc.normal() * contDistances[i]
                 place = rootVc + (ctrlVc)
-                j = pm.joint(p=place, name="jIK_" + name + str(i), radius=2, o=(0, 0, 0))
+                j = cmds.joint(p=place, name="jIK_" + name + str(i), radius=2, o=(0, 0, 0))
                 # extra.alignToAlter(j, refJoints[0], mode=1)
                 # pm.makeIdentity(j, a=True)
 
@@ -107,10 +112,10 @@ class TwistSpline(object):
                 IKjoints.append(j)
                 curvePoints.append(place)
         else:
-            pm.error ("Mode is not supported - twistSplineClass.py")
+            cmds.error ("Mode is not supported - twistSplineClass.py")
 
 
-        pm.parent(IKjoints[0], self.nonScaleGrp)
+        cmds.parent(IKjoints[0], self.nonScaleGrp)
 
         # ORIENT JOINTS PROPERLY
 
@@ -126,7 +131,7 @@ class TwistSpline(object):
         # extra.orientJoints(IKjoints, localMoveAxis=self.localMoveAxis, upAxis=self.upAxis, mirrorAxis=self.mirrorAxis)
         extra.orientJoints(IKjoints, worldUpAxis=(self.upAxis))
 
-        map(lambda x: pm.setAttr(x.displayLocalAxis, True), IKjoints)
+        map(lambda x: cmds.setAttr("%s.displayLocalAxis" %x, True), IKjoints)
         # for j in IKjoints:
         #     pm.joint(j, e=True, zso=True, oj="xyz", sao="zup")
             #TODO // Soktumunun infinite versiyonu calismiyor
@@ -136,12 +141,12 @@ class TwistSpline(object):
             #     pm.joint(j, e=True, zso=True, oj="xyz", sao="zup")
 
         # get rid of the extra bone
-        deadBone = pm.listRelatives(IKjoints[len(IKjoints) - 1], c=True)
-        pm.delete(deadBone)
+        deadBone = cmds.listRelatives(IKjoints[len(IKjoints) - 1], c=True)
+        cmds.delete(deadBone)
 
         # tempArray = IKjoints[0:-1] ## pop out the last joint
         # self.defJoints = pm.duplicate(tempArray, name="jDef_%s0" % name)
-        self.defJoints = pm.duplicate(IKjoints, name="jDef_%s0" % name)
+        self.defJoints = cmds.duplicate(IKjoints, name="jDef_%s0" % name)
 
         # create the controller joints
 
@@ -159,11 +164,11 @@ class TwistSpline(object):
 #             pm.select(d=True)
 
         contJoints = []
-        pm.select(d=True)
+        cmds.select(d=True)
         for i in range(0, len(contDistances)):
             ctrlVc = splitVc.normal() * contDistances[i]
             place = rootVc + (ctrlVc)
-            j = pm.joint(p=place, name="jCont_spline_" + name + str(i), radius=5, o=(0, 0, 0))
+            j = cmds.joint(p=place, name="jCont_spline_" + name + str(i), radius=5, o=(0, 0, 0))
             # pm.setAttr(j.rotateZ, 90)
             #############################################################
             # extra.alignTo(j, refJoints[i], mode=1)
@@ -173,21 +178,21 @@ class TwistSpline(object):
         # extra.orientJoints(contJoints, localMoveAxis=self.localMoveAxis, upAxis=self.upAxis, mirrorAxis=self.mirrorAxis)
         extra.orientJoints(contJoints, worldUpAxis=(self.upAxis))
 
-        pm.select(d=True)
-        pm.parent(contJoints[1:], w=True)
+        cmds.select(d=True)
+        cmds.parent(contJoints[1:], w=True)
 
         #############################################
 
         # create the splineIK for the IK joints
         # # create the spline curve
-        splineCurve = pm.curve(name="splineCurve_" + name, d=curveType, p=curvePoints)
+        splineCurve = cmds.curve(name="splineCurve_" + name, d=curveType, p=curvePoints)
         # # create spline IK
-        splineIK = pm.ikHandle(sol="ikSplineSolver", createCurve=False, c=splineCurve, sj=IKjoints[0],
+        splineIK = cmds.ikHandle(sol="ikSplineSolver", createCurve=False, c=splineCurve, sj=IKjoints[0],
                                ee=IKjoints[len(self.defJoints) - 1], w=1.0)
         # # skin bind control joints
-        pm.select(contJoints)
-        pm.select(splineCurve, add=True)
-        pm.skinCluster(dr=dropoff, tsb=True)
+        cmds.select(contJoints)
+        cmds.select(splineCurve, add=True)
+        cmds.skinCluster(dr=dropoff, tsb=True)
 
         # create the RP Solver IKs for the jDef joints
         poleGroups = []
@@ -199,12 +204,12 @@ class TwistSpline(object):
         if twistType == "infinite":
             for i in range(0, len(self.defJoints)):
                 if i < len(self.defJoints) - 1:
-                    RP = pm.ikHandle(sj=self.defJoints[i], ee=self.defJoints[i + 1], name="tSpine_RP_%s_%s" % (i, name),
+                    RP = cmds.ikHandle(sj=self.defJoints[i], ee=self.defJoints[i + 1], name="tSpine_RP_%s_%s" % (i, name),
                                      sol="ikRPsolver")
                     RPhandles.append(RP[0])
                     # rpSolvers.append(RP[0])
                     # # create locator and group for each rp
-                    loc = pm.spaceLocator(name="tSpinePoleLoc_%s_%s" % (i, name))
+                    loc = cmds.spaceLocator(name="tSpinePoleLoc_%s_%s" % (i, name))[0]
                     # pm.setAttr(loc.rotateOrder,3)
                     loc_POS = extra.createUpGrp(loc, "POS")
                     # pm.setAttr(loc_POS.rotateOrder, 3)
@@ -214,35 +219,37 @@ class TwistSpline(object):
                     # extra.alignToAlter(loc_OFF, self.defJoints[i], mode=2)
                     extra.alignToAlter(loc_POS, self.defJoints[i], mode=2)
                     # pm.move(loc, (0, 5, 0), r=True)
-                    pm.setAttr(loc.tz, 5)
+                    cmds.setAttr("%s.tz" %loc, 5)
 
                     # parent locator groups, pole vector locators >> RP Solvers, point constraint RP Solver >> IK Joints
-                    pm.parent(loc_POS, IKjoints[i])
+                    cmds.parent(loc_POS, IKjoints[i])
                     poleGroups.append(loc_OFF)
-                    pm.poleVectorConstraint(loc, RP[0])
-                    pm.pointConstraint(IKjoints[i + 1], RP[0])
-                    pm.parent(RP[0], self.nonScaleGrp)
+                    cmds.poleVectorConstraint(loc, RP[0])
+                    cmds.pointConstraint(IKjoints[i + 1], RP[0])
+                    cmds.parent(RP[0], self.nonScaleGrp)
 
             # # connect the roots of two chains
-            pm.pointConstraint(IKjoints[0], self.defJoints[0], mo=False)
+            cmds.pointConstraint(IKjoints[0], self.defJoints[0], mo=False)
 
         else:
             for i in range(0, len(self.defJoints)):
-                pm.parentConstraint(IKjoints[i], self.defJoints[i])
+                cmds.parentConstraint(IKjoints[i], self.defJoints[i])
 
             ## adjust the twist controls for regular IK
-            pm.setAttr(splineIK[0].dTwistControlEnable, 1)
-            pm.setAttr(splineIK[0].dWorldUpType, 4)
-            pm.setAttr(splineIK[0].dWorldUpAxis, 1)
-            pm.setAttr(splineIK[0].dWorldUpVectorX, 0)
-            pm.setAttr(splineIK[0].dWorldUpVectorY, 0)
-            pm.setAttr(splineIK[0].dWorldUpVectorZ, -1)
-            pm.setAttr(splineIK[0].dWorldUpVectorEndX, 0)
-            pm.setAttr(splineIK[0].dWorldUpVectorEndY, 0)
-            pm.setAttr(splineIK[0].dWorldUpVectorEndZ, -1)
+            cmds.setAttr("%s.dTwistControlEnable" %splineIK[0], 1)
+            cmds.setAttr("%s.dWorldUpType" %splineIK[0], 4)
+            cmds.setAttr("%s.dWorldUpAxis" %splineIK[0], 1)
+            cmds.setAttr("%s.dWorldUpVectorX" %splineIK[0], 0)
+            cmds.setAttr("%s.dWorldUpVectorY" %splineIK[0], 0)
+            cmds.setAttr("%s.dWorldUpVectorZ" %splineIK[0], -1)
+            cmds.setAttr("%s.dWorldUpVectorEndX" %splineIK[0], 0)
+            cmds.setAttr("%s.dWorldUpVectorEndY" %splineIK[0], 0)
+            cmds.setAttr("%s.dWorldUpVectorEndZ" %splineIK[0], -1)
 
-            contJoints[0].worldMatrix[0] >> splineIK[0].dWorldUpMatrix
-            contJoints[-1].worldMatrix[0] >> splineIK[0].dWorldUpMatrixEnd
+            cmds.connectAttr("%s.worldMatrix[0]" %contJoints[0], "%s.dWorldUpMatrix" %splineIK[0])
+            cmds.connectAttr("%s.worldMatrix[0]" %contJoints[-1], "%s.dWorldUpMatrixEnd" %splineIK[0])
+            # contJoints[0].worldMatrix[0] >> splineIK[0].dWorldUpMatrix
+            # contJoints[-1].worldMatrix[0] >> splineIK[0].dWorldUpMatrixEnd
 
 
 
@@ -282,13 +289,13 @@ class TwistSpline(object):
                 # cont_Curve = icon.star("cont_spline_" + name + str(i), (scaleRatio, scaleRatio, scaleRatio), normal=self.mirrorAxis)
                 cont_Curve, dmp = icon.createIcon("Star", iconName="cont_spline_" + name + str(i), scale=(scaleRatio, scaleRatio, scaleRatio), normal=(1,0,0))
             else:
-                cont_Curve = pm.spaceLocator(name="lockPoint_" + name + str(i))
+                cont_Curve = cmds.spaceLocator(name="lockPoint_" + name + str(i))[0]
             # pm.setAttr(cont_Curve.rotateOrder,3)
             # cont_Curve_OFF = extra.createUpGrp(cont_Curve, "OFF")
             extra.alignToAlter(cont_Curve, contJoints[i], mode=2)
             cont_Curve_ORE = extra.createUpGrp(cont_Curve, "ORE")
             # pm.setAttr(cont_Curve_ORE.rotateOrder, 3)
-            pm.parentConstraint(cont_Curve, contJoints[i], mo=False)
+            cmds.parentConstraint(cont_Curve, contJoints[i], mo=False)
             contCurves.append(cont_Curve)
             self.contCurves_ORE.append(cont_Curve_ORE)
 
@@ -304,16 +311,16 @@ class TwistSpline(object):
             for i in range(0, len(poleGroups)):
                 ## if it is the first or the last group
                 if i == 0:
-                    bottomCon = pm.orientConstraint(self.contCurve_Start, poleGroups[i], mo=False)
+                    bottomCon = cmds.orientConstraint(self.contCurve_Start, poleGroups[i], mo=False)
                 elif i == len(poleGroups)-1:
-                    topCon = pm.orientConstraint(self.contCurve_End, poleGroups[i], mo=False)
+                    topCon = cmds.orientConstraint(self.contCurve_End, poleGroups[i], mo=False)
                 else:
-                    blender = pm.createNode("blendColors", name="tSplineX_blend" + str(i))
+                    blender = cmds.createNode("blendColors", name="tSplineX_blend" + str(i))
                     poleGroups[-1].rotate >> blender.color1
                     poleGroups[0].rotate >> blender.color2
                     blender.outputR >> poleGroups[i].rotateX
                     blendRatio = (i + 0.0) / (cuts - 1.0)
-                    pm.setAttr(blender.blender, blendRatio)
+                    cmds.setAttr("%s.blender" %blender, blendRatio)
         else:
             pass
 
@@ -326,88 +333,128 @@ class TwistSpline(object):
         # first controller is the one which holds the attributes to be passed
         self.attPassCont = (contCurves[0])
 
-        pm.addAttr(self.attPassCont, shortName='preserveVol', longName='Preserve_Volume', defaultValue=0.0,
+        cmds.addAttr(self.attPassCont, shortName='preserveVol', longName='Preserve_Volume', defaultValue=0.0,
                    minValue=0.0,
                    maxValue=1.0, at="double", k=True)
-        pm.addAttr(self.attPassCont, shortName='volumeFactor', longName='Volume_Factor', defaultValue=1, at="double",
+        cmds.addAttr(self.attPassCont, shortName='volumeFactor', longName='Volume_Factor', defaultValue=1, at="double",
                    k=True)
 
-        pm.addAttr(self.attPassCont, shortName='stretchy', longName='Stretchyness', defaultValue=1, minValue=0.0,
+        cmds.addAttr(self.attPassCont, shortName='stretchy', longName='Stretchyness', defaultValue=1, minValue=0.0,
                    maxValue=1.0,
                    at="double", k=True)
 
 
 
-        curveInfo = pm.arclen(splineCurve, ch=True)
-        initialLength = pm.getAttr(curveInfo.arcLength)
+        curveInfo = cmds.arclen(splineCurve, ch=True)
+        initialLength = cmds.getAttr("%s.arcLength" %curveInfo)
 
         powValue = 0
 
         for i in range(0, len(IKjoints)):
 
-            curveGlobMult = pm.createNode("multiplyDivide", name="curveGlobMult_" + name)
-            pm.setAttr(curveGlobMult.operation, 2)
-            boneGlobMult = pm.createNode("multiplyDivide", name="boneGlobMult_" + name)
+            curveGlobMult = cmds.createNode("multiplyDivide", name="curveGlobMult_" + name)
+            cmds.setAttr("%s.operation" %curveGlobMult, 2)
+            boneGlobMult = cmds.createNode("multiplyDivide", name="boneGlobMult_" + name)
 
-            lengthMult = pm.createNode("multiplyDivide", name="length_Multiplier_" + name)
-            pm.setAttr(lengthMult.operation, 2)
+            lengthMult = cmds.createNode("multiplyDivide", name="length_Multiplier_" + name)
+            cmds.setAttr("%s.operation" %lengthMult, 2)
 
-            volumeSw = pm.createNode("blendColors", name="volumeSw_" + name)
-            stretchSw = pm.createNode("blendTwoAttr", name="stretchSw_" + name)
+            volumeSw = cmds.createNode("blendColors", name="volumeSw_" + name)
+            stretchSw = cmds.createNode("blendTwoAttr", name="stretchSw_" + name)
 
             middlePoint = (len(IKjoints) / 2)
-            volumePow = pm.createNode("multiplyDivide", name="volume_Power_" + name)
-            volumeFactor = pm.createNode("multiplyDivide", name="volume_Factor_" + name)
-            self.attPassCont.volumeFactor >> volumeFactor.input1Y
-            self.attPassCont.volumeFactor >> volumeFactor.input1Z
-            volumeFactor.output >> volumePow.input2
+            volumePow = cmds.createNode("multiplyDivide", name="volume_Power_" + name)
+            volumeFactor = cmds.createNode("multiplyDivide", name="volume_Factor_" + name)
 
-            pm.setAttr(volumePow.operation, 3)
+            cmds.connectAttr("%s.volumeFactor" %self.attPassCont, "%s.input1Y" %volumeFactor)
+            cmds.connectAttr("%s.volumeFactor" %self.attPassCont, "%s.input1Z" %volumeFactor)
+            cmds.connectAttr("%s.output" %volumeFactor, "%s.input2" %volumePow)
+            # self.attPassCont.volumeFactor >> volumeFactor.input1Y
+            # self.attPassCont.volumeFactor >> volumeFactor.input1Z
+            # volumeFactor.output >> volumePow.input2
+
+            cmds.setAttr("%s.operation" %volumePow, 3)
 
             ## make sure first and last joints preserves the full volume
             if i == 0 or i == len(IKjoints) - 1:
-                pm.setAttr(volumeFactor.input2Y, 0)
-                pm.setAttr(volumeFactor.input2Z, 0)
+                cmds.setAttr("%s.input2Y" %volumeFactor, 0)
+                cmds.setAttr("%s.input2Z" %volumeFactor, 0)
 
             elif (i <= middlePoint):
                 powValue = powValue - 1
-                pm.setAttr(volumeFactor.input2Y, powValue)
-                pm.setAttr(volumeFactor.input2Z, powValue)
+                cmds.setAttr("%s.input2Y" %volumeFactor, powValue)
+                cmds.setAttr("%s.input2Z" %volumeFactor, powValue)
 
             else:
                 powValue = powValue + 1
-                pm.setAttr(volumeFactor.input2Y, powValue)
-                pm.setAttr(volumeFactor.input2Z, powValue)
+                cmds.setAttr("%s.input2Y" %volumeFactor, powValue)
+                cmds.setAttr("%s.input2Z" %volumeFactor, powValue)
 
-            curveInfo.arcLength >> curveGlobMult.input1X
-            pm.setAttr(stretchSw.input[0], initialLength)
-            curveGlobMult.outputX >> stretchSw.input[1]
-            self.attPassCont.stretchy >> stretchSw.attributesBlender
+            # curveInfo.arcLength >> curveGlobMult.input1X
+            cmds.connectAttr("%s.arcLength" %curveInfo, "%s.input1X" %curveGlobMult)
+            cmds.setAttr("%s.input[0]" %stretchSw, initialLength)
+            # curveGlobMult.outputX >> stretchSw.input[1]
+            cmds.connectAttr("%s.outputX" %curveGlobMult, "%s.input[1]" %stretchSw)
 
-            self.scaleGrp.sx >> curveGlobMult.input2X
-            stretchSw.output >> lengthMult.input1X
-            pm.setAttr(lengthMult.input2X, initialLength)
-            lengthMult.outputX >> boneGlobMult.input1X
 
-            lengthMult.outputX >> volumePow.input1Y
-            lengthMult.outputX >> volumePow.input1Z
-            pm.setAttr(volumeSw.color2G, 1)
-            pm.setAttr(volumeSw.color2B, 1)
-            volumePow.outputY >> volumeSw.color1G
-            volumePow.outputZ >> volumeSw.color1B
-            volumeSw.outputG >> boneGlobMult.input1Y
-            volumeSw.outputB >> boneGlobMult.input1Z
-            self.scaleGrp.sx >> boneGlobMult.input2X
-            self.scaleGrp.sx >> boneGlobMult.input2Y
-            self.scaleGrp.sx >> boneGlobMult.input2Z
-            self.attPassCont.preserveVol >> volumeSw.blender
+            # self.attPassCont.stretchy >> stretchSw.attributesBlender
+            cmds.connectAttr("%s.stretchy" %self.attPassCont, "%s.attributesBlender" %stretchSw)
 
-            boneGlobMult.output >> IKjoints[i].scale
-            boneGlobMult.output >> self.defJoints[i].scale
+
+            # self.scaleGrp.sx >> curveGlobMult.input2X
+            cmds.connectAttr("%s.sx" %self.scaleGrp, "%s.input2X" %curveGlobMult)
+
+
+            # stretchSw.output >> lengthMult.input1X
+            cmds.connectAttr("%s.output" %stretchSw, "%s.input1X" %lengthMult)
+
+
+            cmds.setAttr("%s.input2X" %lengthMult, initialLength)
+
+            # lengthMult.outputX >> boneGlobMult.input1X
+            cmds.connectAttr("%s.outputX" %lengthMult, "%s.input1X" %boneGlobMult)
+
+            # lengthMult.outputX >> volumePow.input1Y
+            cmds.connectAttr("%s.outputX" %lengthMult, "%s.input1Y" %volumePow)
+
+            # lengthMult.outputX >> volumePow.input1Z
+            cmds.connectAttr("%s.outputX" %lengthMult, "%s.input1Z" %volumePow)
+
+            cmds.setAttr("%s.color2G" %volumeSw, 1)
+            cmds.setAttr("%s.color2B" %volumeSw, 1)
+            # volumePow.outputY >> volumeSw.color1G
+            cmds.connectAttr("%s.outputY" %volumePow, "%s.color1G" %volumeSw)
+
+            # volumePow.outputZ >> volumeSw.color1B
+            cmds.connectAttr("%s.outputZ" %volumePow, "%s.color1B" %volumeSw)
+
+            # volumeSw.outputG >> boneGlobMult.input1Y
+            cmds.connectAttr("%s.outputG" %volumeSw, "%s.input1Y" %boneGlobMult)
+
+            # volumeSw.outputB >> boneGlobMult.input1Z
+            cmds.connectAttr("%s.outputB" %volumeSw, "%s.input1Z" %boneGlobMult)
+
+            # self.scaleGrp.sx >> boneGlobMult.input2X
+            cmds.connectAttr("%s.sx" %self.scaleGrp, "%s.input2X" %boneGlobMult)
+
+            # self.scaleGrp.sx >> boneGlobMult.input2Y
+            cmds.connectAttr("%s.sx" %self.scaleGrp, "%s.input2Y" %boneGlobMult)
+
+            # self.scaleGrp.sx >> boneGlobMult.input2Z
+            cmds.connectAttr("%s.sx" %self.scaleGrp, "%s.input2Z" %boneGlobMult)
+
+            # self.attPassCont.preserveVol >> volumeSw.blender
+            cmds.connectAttr("%s.preserveVol" %self.attPassCont, "%s.blender" %volumeSw)
+
+            # boneGlobMult.output >> IKjoints[i].scale
+            cmds.connectAttr("%s.output" %boneGlobMult, "%s.scale" %IKjoints[i])
+
+            # boneGlobMult.output >> self.defJoints[i].scale
+            cmds.connectAttr("%s.output" %boneGlobMult, "%s.scale" %self.defJoints[i])
 
         # Create endLock
-        self.endLock = pm.spaceLocator(name="endLock_" + name)
-        pm.pointConstraint(self.defJoints[len(self.defJoints) - 1], self.endLock, mo=False)
+        self.endLock = cmds.spaceLocator(name="endLock_%s" %name)[0]
+        cmds.pointConstraint(self.defJoints[len(self.defJoints) - 1], self.endLock, mo=False)
 
         ## Move them to original Positions
 
@@ -430,10 +477,12 @@ class TwistSpline(object):
 
         # GOOD PARENTING
 
-        pm.parent(contJoints, self.scaleGrp)
-        pm.parent(splineIK[0], self.nonScaleGrp)
-        pm.parent(splineCurve, self.nonScaleGrp)
-        pm.parent(self.defJoints[0], self.nonScaleGrp)
+        cmds.parent(contJoints, self.scaleGrp)
+        cmds.parent(splineIK[0], self.nonScaleGrp)
+        # import pdb
+        # pdb.set_trace()
+        # cmds.parent(splineCurve, self.nonScaleGrp)
+        # cmds.parent(self.defJoints[0], self.nonScaleGrp)
 
         # FOOL PROOFING
         for i in contCurves:

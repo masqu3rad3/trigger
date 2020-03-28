@@ -1,5 +1,5 @@
-import pymel.core as pm
-import pymel.core.datatypes as dt
+# import pymel.core as pm
+# import pymel.core.datatypes as dt
 
 
 import maya.cmds as cmds
@@ -106,32 +106,16 @@ def alignToAlter(node1, node2, mode=0, o=(0,0,0)):
     Returns:None
 
     """
-    if type(node1) == str:
-        node1 = pm.PyNode(node1)
-
-    if type(node2) == str:
-        node2 = pm.PyNode(node2)
-
     if mode==0:
         ##Position Only
-        tempPocon = pm.pointConstraint(node2, node1, mo=False)
-        pm.delete(tempPocon)
-        # targetLoc = node2.getRotatePivot(space="world")
-        # pm.move(node1, targetLoc, a=True, ws=True)
+        cmds.delete(cmds.pointConstraint(node2, node1, mo=False))
 
     elif mode==1:
         ##Rotation Only
-        if node2.type() == "joint":
-            tempOri = pm.orientConstraint(node2, node1, o=o, mo=False)
-            pm.delete(tempOri)
-        else:
-            targetRot = node2.getRotation()
-            pm.rotate(node1, targetRot, a=True, ws=True)
-
+        cmds.delete(cmds.orientConstraint(node2, node1, o=o, mo=False))
     elif mode==2:
         ##Position and Rotation
-        tempPacon = pm.parentConstraint(node2, node1, mo=False)
-        pm.delete(tempPacon)
+        cmds.delete(cmds.parentConstraint(node2, node1, mo=False))
 
 def alignAndAim(node, targetList, aimTargetList, upObject=None, upVector=None, localUp=(0.0,1.0,0.0), rotateOff=None, translateOff=None, freezeTransform=False):
     """
@@ -154,7 +138,7 @@ def alignAndAim(node, targetList, aimTargetList, upObject=None, upVector=None, l
 
 
     if upObject and upVector:
-        pm.error("In alignAndAim function both upObject and upVector parameters cannot be used")
+        cmds.error("In alignAndAim function both upObject and upVector parameters cannot be used")
         return
 
     pointFlags = ""
@@ -163,7 +147,7 @@ def alignAndAim(node, targetList, aimTargetList, upObject=None, upVector=None, l
             pointFlags = "%s, " % pointFlags
         pointFlags = "{0}targetList[{1}]".format(pointFlags, str(i))
     pointFlags = "%s, node" % pointFlags
-    pointCommand = "pm.pointConstraint({0})".format(pointFlags)
+    pointCommand = "cmds.pointConstraint({0})".format(pointFlags)
     tempPo = eval(pointCommand)
 
     aimFlags = ""
@@ -178,66 +162,69 @@ def alignAndAim(node, targetList, aimTargetList, upObject=None, upVector=None, l
     if upVector:
         aimFlags = "%s, wu=upVector, wut='vector'" % aimFlags
 
-    aimCommand = "pm.aimConstraint({0})".format(aimFlags)
+    aimCommand = "cmds.aimConstraint({0})".format(aimFlags)
     tempAim = eval(aimCommand)
 
-    pm.delete(tempPo)
-    pm.delete(tempAim)
+    cmds.delete(tempPo)
+    cmds.delete(tempAim)
     if translateOff:
-        pm.move(node, translateOff, r=True)
+        cmds.move(translateOff[0], translateOff[1], translateOff[2], node, r=True)
     if rotateOff:
-        pm.rotate(node, rotateOff, r=True, os=True)
+        cmds.rotate(rotateOff[0], rotateOff[1], rotateOff[2], node, r=True, os=True)
     if freezeTransform:
-        pm.makeIdentity(node, a=True, t=True)
+        cmds.makeIdentity(node, a=True, t=True)
 
+
+
+# def getBetweenVector(node, targetPointNodeList):
+#     # get center vector
+#     nodePos = node.getTranslation(space="world")
+#     sumVectors = dt.Vector(0,0,0)
+#     for p in targetPointNodeList:
+#         pVector = p.getTranslation(space="world")
+#         addVector = dt.Vector(dt.Vector(nodePos) - dt.Vector(pVector)).normal()
+#         sumVectors = sumVectors + addVector
+#     return sumVectors.normal()
 
 
 def getBetweenVector(node, targetPointNodeList):
-    # get center vector
-    nodePos = node.getTranslation(space="world")
-    sumVectors = dt.Vector(0,0,0)
-    for p in targetPointNodeList:
-        pVector = p.getTranslation(space="world")
-        addVector = dt.Vector(dt.Vector(nodePos) - dt.Vector(pVector)).normal()
-        sumVectors = sumVectors + addVector
+    nodePos = getWorldTranslation(node)
+    sumVectors = om.MVector(0,0,0)
+    for point in targetPointNodeList:
+        pVector = getWorldTranslation(point)
+        addVector = om.MVector(om.MVector(nodePos)-om.MVector(pVector)).normal()
+        sumVectors += addVector
     return sumVectors.normal()
 
-    # pVecA = dt.Vector(dt.Vector(elbowPos) - dt.Vector(shoulderPos)).normal()
-    # pVecB = dt.Vector(dt.Vector(elbowPos) - dt.Vector(handPos)).normal()
-    # offsetVector = dt.Vector((pVecA + pVecB)).normal()
-    # offsetMag = (((initUpperArmDist + initLowerArmDist) / 4))
 
-def createUpGrp(obj, suffix, mi=True):
+def createUpGrp(node, suffix, freezeTransform=True):
     """
     Creates an Upper Group for the given object.
     Args:
-        obj: (Pymel Object) Source Object
+        node: (Pymel Object) Source Object
         suffix: (String) Suffix for the group. String.
         mi: (Boolean) Stands for "makeIdentity" If True, freezes the transformations of the new group. Default is True
 
     Returns: The created group node
 
     """
-    # grpName = (obj.nodeName() + "_" + suffix)
-    grpName = "%s_%s" % (obj.nodeName(), suffix)
-    newGrp = pm.group (em=True,name=grpName)
+    grpName = "%s_%s" % (node, suffix)
+    newGrp = cmds.group(em=True, name=grpName)
 
     #align the new created empty group to the selected object
 
-    alignTo(newGrp, obj, mode=2)
-    # pointCon = pm.parentConstraint (obj, newGrp, mo=False)
-    # pm.delete (pointCon)
-    # pm.makeIdentity(newGrp, a=True)
+    alignTo(newGrp, node, position=True, rotation=True)
 
     #check if the target object has a parent
-    originalParent = pm.listRelatives(obj, p=True)
-    if (len(originalParent) > 0):
-        pm.parent(newGrp, originalParent[0], r=False)
-        if mi:
-            pm.makeIdentity(newGrp, a=True)
+    originalParent = cmds.listRelatives(node, p=True)
+    if originalParent:
+        cmds.parent(newGrp, originalParent[0], r=False)
+        if freezeTransform:
+            cmds.makeIdentity(newGrp, a=True)
 
-    pm.parent(obj,newGrp)
+    cmds.parent(node,newGrp)
     return newGrp
+
 
 ## example use: connectMirror(obj1, obj2, "X")
 def connectMirror (node1, node2, mirrorAxis="X"):
@@ -258,25 +245,22 @@ def connectMirror (node1, node2, mirrorAxis="X"):
     mirrorAxis = mirrorAxis.replace("-", "")
 
     #nodes Translate
-    rvsNodeT=pm.createNode("reverse")
-    minusOpT=pm.createNode("plusMinusAverage")
-    pm.setAttr(minusOpT.operation, 2)
+    rvsNodeT=cmds.createNode("reverse")
+    minusOpT=cmds.createNode("plusMinusAverage")
+    cmds.setAttr("%s.operation" %minusOpT, 2)
     cmds.connectAttr("{0}.translate".format(node1), "{0}.input".format(rvsNodeT))
-    # node1.translate >> rvsNodeT.input
-    # rvsNodeT.output >> minusOpT.input3D[0]
     cmds.connectAttr("{0}.output".format(rvsNodeT), "{0}.input3D[0]".format(minusOpT))
-    pm.setAttr(minusOpT.input3D[1], (1, 1, 1))
+    cmds.setAttr("%s.input3D[1]" %minusOpT, 1, 1, 1)
     #nodes Rotate
-    rvsNodeR=pm.createNode("reverse")
-    minusOpR=pm.createNode("plusMinusAverage")
-    pm.setAttr(minusOpR.operation, 2)
-    # node1.rotate >> rvsNodeR.input
+    rvsNodeR = cmds.createNode("reverse")
+    minusOpR = cmds.createNode("plusMinusAverage")
+    cmds.setAttr("%s.operation" %minusOpR, 2)
     cmds.connectAttr("{0}.rotate".format(node1), "{0}.input".format(rvsNodeR))
 
     # rvsNodeR.output >> minusOpR.input3D[0]
     cmds.connectAttr("{0}.output".format(rvsNodeR), "{0}.input3D[0]".format(minusOpR))
 
-    pm.setAttr(minusOpR.input3D[1], (1, 1, 1))
+    cmds.setAttr("%s.input3D[1]" %minusOpR, 1, 1, 1)
 
     #Translate
 
@@ -387,7 +371,7 @@ def attrPass (sourceNode, targetNode, attributes=[], inConnections=True, outConn
 
     # get the user defined attributes:
     if len(attributes)==0:
-        userAttr = pm.listAttr(sourceNode, ud=True)
+        userAttr = cmds.listAttr(sourceNode, ud=True)
     else:
         userAttr = attributes
 
@@ -396,62 +380,62 @@ def attrPass (sourceNode, targetNode, attributes=[], inConnections=True, outConn
 
 
         flagBuildList=[]
-        atType = pm.getAttr("%s.%s" % (sourceNode,attr), type=True)
+        atType = cmds.getAttr("%s.%s" % (sourceNode,attr), type=True)
         atTypeFlag = "at='%s'" % (str(atType))
         flagBuildList.append(atTypeFlag)
 
-        if pm.attributeQuery(attr, node=sourceNode, enum=True)==True:
-            enumList=pm.attributeQuery(attr, node=sourceNode, listEnum=True)
+        if cmds.attributeQuery(attr, node=sourceNode, enum=True)==True:
+            enumList=cmds.attributeQuery(attr, node=sourceNode, listEnum=True)
             enumListFlag="en='%s'" % str(enumList[0])
             flagBuildList.append(enumListFlag)
 
-        hiddenState = pm.attributeQuery(attr, node=sourceNode, hidden=True)
+        hiddenState = cmds.attributeQuery(attr, node=sourceNode, hidden=True)
         hiddenStateFlag = "h=%s" % (str(hiddenState))
         flagBuildList.append(hiddenStateFlag)
 
-        keyableState = pm.attributeQuery(attr, node=sourceNode, keyable=True)
+        keyableState = cmds.attributeQuery(attr, node=sourceNode, keyable=True)
         keyableStateFlag = "k=%s" % (str(keyableState))
         flagBuildList.append(keyableStateFlag)
 
-        longName = pm.attributeQuery(attr, node=sourceNode, longName=True)
+        longName = cmds.attributeQuery(attr, node=sourceNode, longName=True)
         longNameFlag = "ln='%s'" % str(longName)
         flagBuildList.append(longNameFlag)
 
-        if pm.attributeQuery(attr, node=sourceNode, maxExists=True) == True:
-            hardMax=pm.attributeQuery(attr, node=sourceNode, maximum =True)
+        if cmds.attributeQuery(attr, node=sourceNode, maxExists=True) == True:
+            hardMax=cmds.attributeQuery(attr, node=sourceNode, maximum =True)
             hardMaxFlag = "max=%s" % (str(hardMax[0]))
             flagBuildList.append(hardMaxFlag)
 
-        if pm.attributeQuery(attr, node=sourceNode, minExists=True) == True:
-            hardMin = pm.attributeQuery(attr, node=sourceNode, minimum=True)
+        if cmds.attributeQuery(attr, node=sourceNode, minExists=True) == True:
+            hardMin = cmds.attributeQuery(attr, node=sourceNode, minimum=True)
             hardMinFlag = "min=%s" % (str(hardMin[0]))
             flagBuildList.append(hardMinFlag)
 
-        readState = pm.attributeQuery(attr, node=sourceNode, readable=True)
+        readState = cmds.attributeQuery(attr, node=sourceNode, readable=True)
         readStateFlag = "r=%s" % (readState)
         flagBuildList.append(readStateFlag)
 
-        shortName = pm.attributeQuery(attr, node=sourceNode, shortName=True)
+        shortName = cmds.attributeQuery(attr, node=sourceNode, shortName=True)
         shortNameFlag = "sn='%s'" % str(shortName)
         flagBuildList.append(shortNameFlag)
 
-        if pm.attributeQuery(attr, node=sourceNode, softMaxExists=True) == True:
-            softMax=pm.attributeQuery(attr, node=sourceNode, softMax =True)
+        if cmds.attributeQuery(attr, node=sourceNode, softMaxExists=True) == True:
+            softMax = cmds.attributeQuery(attr, node=sourceNode, softMax =True)
             softMaxFlag = "smx=%s" % (str(softMax[0]))
             flagBuildList.append(softMaxFlag)
 
-        if pm.attributeQuery(attr, node=sourceNode, softMinExists=True) == True:
-            softMin=pm.attributeQuery(attr, node=sourceNode, softMin =True)
+        if cmds.attributeQuery(attr, node=sourceNode, softMinExists=True) == True:
+            softMin = cmds.attributeQuery(attr, node=sourceNode, softMin =True)
             softMinFlag = "smn=%s" % (str(softMin[0]))
             flagBuildList.append(softMinFlag)
 
-        writeState = pm.attributeQuery(attr, node=sourceNode, writable=True)
+        writeState = cmds.attributeQuery(attr, node=sourceNode, writable=True)
         writeStateFlag = "w=%s" % (writeState)
         flagBuildList.append(writeStateFlag)
 
 
         # parse the flagBuildList into single string
-        addAttribute="pm.addAttr(pm.PyNode('%s'), " % (targetNode)
+        addAttribute = "cmds.addAttr('%s', " % (targetNode)
         for i in range (0,len(flagBuildList)):
 
             # addAttribute+=flagBuildList[i]
@@ -463,9 +447,9 @@ def attrPass (sourceNode, targetNode, attributes=[], inConnections=True, outConn
 
 
         # if an attribute with the same name exists
-        if pm.attributeQuery(attr, node=targetNode, exists=True):
+        if cmds.attributeQuery(attr, node=targetNode, exists=True):
             if overrideEx:
-                pm.deleteAttr("%s.%s" % (targetNode, attr))
+                cmds.deleteAttr("%s.%s" % (targetNode, attr))
                 exec (addAttribute)
             else:
                 continue
@@ -478,16 +462,16 @@ def attrPass (sourceNode, targetNode, attributes=[], inConnections=True, outConn
         for i in range (0, len(userAttr)):
             if values==True:
                 # get value
-                value=pm.getAttr(pm.PyNode("%s.%s" % (sourceNode, userAttr[i])))
+                value = cmds.getAttr("%s.%s" % (sourceNode, userAttr[i]))
                 # set Value
-                pm.setAttr(pm.PyNode("%s.%s" % (targetNode, userAttr[i])), value)
-            pm.PyNode("%s.%s" % (targetNode, userAttr[i])) >> pm.PyNode("%s.%s" % (sourceNode, userAttr[i]))
+                cmds.setAttr("%s.%s" % (targetNode, userAttr[i]), value)
+            cmds.connectAttr("{0}.{1}".format(targetNode, userAttr[i]), "{0}.{1}".format(sourceNode, userAttr[i]))
+            # pm.PyNode("%s.%s" % (targetNode, userAttr[i])) >> pm.PyNode("%s.%s" % (sourceNode, userAttr[i]))
     else:
-
-        pm.copyAttr(sourceNode, targetNode, inConnections=inConnections, outConnections=outConnections, values=values, attribute=userAttr)
+        cmds.copyAttr(sourceNode, targetNode, inConnections=inConnections, outConnections=outConnections, values=values, attribute=userAttr)
         if keepSourceAttributes==False:
             for i in userAttr:
-                pm.deleteAttr("%s.%s" % (sourceNode,i))
+                cmds.deleteAttr("%s.%s" % (sourceNode,i))
 
 # def spaceSwitcher (node, targetList, overrideExisting=False, mode="parent", defaultVal=1, listException = None):
 #     """
@@ -706,35 +690,35 @@ def getRigAxes(joint):
     upAxis = None
     mirrorAxis = None
     spineDir = None
-    if pm.attributeQuery("upAxis", node=joint, exists=True):
+    if cmds.attributeQuery("upAxis", node=joint, exists=True):
         try:
-            upAxis = axisDict[pm.getAttr(joint.upAxis).lower()]
+            upAxis = axisDict[cmds.getAttr("%s.upAxis" %joint).lower()]
         except:
-            pm.warning("upAxis attribute is not valid, proceeding with default value (y up)")
+            cmds.warning("upAxis attribute is not valid, proceeding with default value (y up)")
             upAxis = (0.0, 1.0, 0.0)
     else:
-        pm.warning("upAxis attribute of the root node does not exist. Using default value (y up)")
+        cmds.warning("upAxis attribute of the root node does not exist. Using default value (y up)")
         upAxis = (0.0, 1.0, 0.0)
     ## get the mirror axis
-    if pm.attributeQuery("mirrorAxis", node=joint, exists=True):
+    if cmds.attributeQuery("mirrorAxis", node=joint, exists=True):
         try:
-            mirrorAxis = axisDict[pm.getAttr(joint.mirrorAxis).lower()]
+            mirrorAxis = axisDict[cmds.getAttr("%s.mirrorAxis" %joint).lower()]
         except:
-            pm.warning("mirrorAxis attribute is not valid, proceeding with default value (scene x)")
+            cmds.warning("mirrorAxis attribute is not valid, proceeding with default value (scene x)")
             mirrorAxis = (1.0, 0.0, 0.0)
     else:
-        pm.warning("mirrorAxis attribute of the root node does not exist. Using default value (scene x)")
+        cmds.warning("mirrorAxis attribute of the root node does not exist. Using default value (scene x)")
         mirrorAxis = (1.0, 0.0, 0.0)
 
     ## get spine Direction
-    if pm.attributeQuery("lookAxis", node=joint, exists=True):
+    if cmds.attributeQuery("lookAxis", node=joint, exists=True):
         try:
-            spineDir = spineDict[pm.getAttr(joint.lookAxis).lower()]
+            spineDir = spineDict[cmds.getAttr("%s.lookAxis" %joint).lower()]
         except:
-            pm.warning("Cannot get spine direction from lookAxis attribute, proceeding with default value (-x)")
+            cmds.warning("Cannot get spine direction from lookAxis attribute, proceeding with default value (-x)")
             spineDir = (-1.0, 0.0, 0.0)
     else:
-        pm.warning("lookAxis attribute of the root node does not exist. Using default value (-x) for spine direction")
+        cmds.warning("lookAxis attribute of the root node does not exist. Using default value (-x) for spine direction")
         spineDir = (1.0, 0.0, 0.0)
 
     return upAxis, mirrorAxis, spineDir
@@ -742,27 +726,23 @@ def getRigAxes(joint):
 def uniqueName(name):
     baseName = name
     idcounter = 0
-    while pm.objExists(name):
+    while cmds.objExists(name):
         name = "%s%s" % (baseName, str(idcounter + 1))
         idcounter = idcounter + 1
     return name
 
 def getMirror(node):
     # find the mirror of the oldController
-    if "_LEFT_" in node.name():
-        mirrorNode = node.name().replace("_LEFT_", "_RIGHT_")
+    if "_LEFT_" in node:
+        mirrorNode = node.replace("_LEFT_", "_RIGHT_")
 
-    elif "_RIGHT_" in node.name():
-        mirrorNode = node.name().replace("_RIGHT_", "_LEFT_")
+    elif "_RIGHT_" in node:
+        mirrorNode = node.replace("_RIGHT_", "_LEFT_")
     else:
         mirrorNode = None
-        pm.warning("Cannot find the mirror controller")
+        cmds.warning("Cannot find the mirror controller")
     if mirrorNode:
-        try:
-            return pm.PyNode(mirrorNode)
-        except pm.MayaNodeError:
-            pm.warning("Cannot find the mirror controller (Why?)")
-            return None
+        return mirrorNode
 
 def alignNormal(node, normalVector):
     """
@@ -775,15 +755,13 @@ def alignNormal(node, normalVector):
 
     """
     # create a temporary alignment locator
-    tempTarget = pm.spaceLocator("tempAlign")
-    alignTo(tempTarget, node, mode=0)
-    pm.makeIdentity(tempTarget, a=True)
-    pm.move(tempTarget, normalVector)
-    tempAC = pm.aimConstraint(tempTarget, node, aim=(0,1,0), mo=False)
-    pm.delete(tempAC)
-    pm.delete(tempTarget)
+    tempTarget = cmds.spaceLocator(name="tempAlignTarget")[0]
+    alignTo(tempTarget, node)
+    cmds.makeIdentity(tempTarget, a=True)
+    cmds.move(normalVector[0], normalVector[1], normalVector[2], tempTarget)
+    cmds.delete(cmds.aimConstraint(tempTarget, node, aim=(0,1,0), mo=False))
+    cmds.delete(tempTarget)
 
-    pass
 
 def orientJoints(jointList, aimAxis=(1.0,0.0,0.0), upAxis=(0.0,1.0,0.0), worldUpAxis=(0.0,1.0,0.0), reverseAim=1, reverseUp=1):
 
