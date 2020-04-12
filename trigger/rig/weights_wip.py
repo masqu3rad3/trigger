@@ -127,8 +127,8 @@ def get_deformer_weights(mesh, source_deformer, source_influence=None, data_type
 
     
 start = time.time()
-# test_skinCluster = get_deformer_weights("base_msh", "blendShape1", source_influence="bs_target1")
-test_skinCluster = get_deformer_weights("base_msh", "bend1")
+test_skinCluster = get_deformer_weights("base_msh", "blendShape1", source_influence="baseWeights")
+# test_skinCluster = get_deformer_weights("base_msh", "bend1")
 # test_skinCluster = get_deformer_weights("base_msh", "skinCluster1", source_influence="joint5")
 end = time.time()
 print end-start

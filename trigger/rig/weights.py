@@ -5,6 +5,35 @@ import time
 from pprint import pprint
 
 
+def get_plug_ids(mesh, source_deformer, source_influence=None):
+    node_type = cmds.nodeType(source_deformer)
+
+    # target_num = 0
+    if node_type == "blendShape":
+        if source_influence == "baseWeights":
+            weight_plug = "{}.inputTarget[0].baseWeights"
+        else:
+            targets = cmds.aliasAttr(source_deformer, query=True)
+            target_names = targets[::2]
+            target_weight = targets[1::2]
+            target_index = target_names.index(source_influence)
+            target_num = (target_weight[target_index].split("[")[1].split("]")[0])
+            weight_plug = "{}.inputTarget[0].inputTargetGroup[%s].targetWeights" %str(target_num)
+    elif node_type == "nonLinear" or node_type == "cluster":
+        weight_plug = "{}.weightList[0].weights"
+    elif node_type == "skinCluster":
+        weight_plug = "{0}.weightList[0].weights"
+    else:
+        raise Exception ("deformer not identified => %s" %source_deformer)
+
+    sel = api.MSelectionList()
+    sel.add(weight_plug.format(source_deformer))
+    plug = sel.getPlug(0)
+
+    vtx_count = cmds.polyEvaluate(mesh, vertex=True)
+    return plug, vtx_count
+
+
 def collect_deformers(mesh):
     """Collects defomers in a dictionary by type
 
@@ -97,8 +126,17 @@ def get_all_weights(mesh, deformer):
         pass
 
     if node_type == "nonLinear" or node_type == "cluster":
+        # these have only single influences
+        weight_dictionary = {"baseWeights": get_influence_weights(mesh, deformer, None, skip_checks=True)}
         pass
+    if node_type == "blendShape":
+        # pass
+        # get all the influences
+        all_influences = ["baseWeights"]
+        all_influences.extend(cmds.aliasAttr(deformer, query=True)[::2])
+        weight_dictionary = {influence: get_influence_weights(mesh, deformer, influence, skip_checks=True) for influence in all_influences}
 
+    return weight_dictionary
 
 #########################################################################
 #########################################################################
@@ -129,39 +167,6 @@ def get_skincluster_influence_index(skin_cluster, influence):
 
     return index
 
-
-def get_plug_ids(mesh, source_deformer, source_influence=None):
-    node_type = cmds.nodeType(source_deformer)
-    
-    target_num = 0
-    if node_type == "blendShape":
-        targets = cmds.aliasAttr(source_deformer, query=True)
-        target_names = targets[::2]
-        target_weight = targets[1::2]
-        target_index = target_names.index(source_influence)
-        target_num = (
-            target_weight[target_index].split("[")[1].split("]")[0]
-        )
-
-    weight_plug = {
-        "blendShape": "{}.inputTarget[0].inputTargetGroup["
-        + str(target_num)
-        + "].targetWeights",
-        "nonLinear": "{}.weightList[0].weights",
-        "cluster": "{}.weightList[0].weights",
-        "skinCluster": "{0}.weightList[1].weights",
-    }
-
-    sel = api.MSelectionList()
-    print "DB", node_type
-    sel.add(weight_plug[node_type].format(source_deformer))
-    plug = sel.getPlug(0)
-
-    vtx_count = cmds.polyEvaluate(mesh, vertex=True)
-    return plug, vtx_count
-
-    # ids = plug.getExistingArrayAttributeIndices()  # this may not safe
-    # return plug, len(ids)
 
 def set_deformer_weights(mesh, target_deformer, list_of_weights, target_influence, data_type="double"):
     plug, vtx_count = get_plug_ids(mesh, target_deformer, target_influence)
