@@ -133,10 +133,6 @@ def alignAndAim(node, targetList, aimTargetList, upObject=None, upVector=None, l
         None
 
     """
-
-
-
-
     if upObject and upVector:
         cmds.error("In alignAndAim function both upObject and upVector parameters cannot be used")
         return
@@ -337,7 +333,7 @@ def lockAndHide (node, channelArray, hide=True):
     """
     ## // TODO OPTIMIZE HERE (map function?)
     for i in channelArray:
-        attribute=("{0}.{1}".format(node, i))
+        attribute=("%s.%s" %(node, i))
         cmds.setAttr(attribute, lock=True, keyable=not hide, channelBox=not hide)
 
 # def alignJoints (sourceJoint, targetJoints):
@@ -692,7 +688,7 @@ def getRigAxes(joint):
     spineDir = None
     if cmds.attributeQuery("upAxis", node=joint, exists=True):
         try:
-            upAxis = axisDict[cmds.getAttr("%s.upAxis" %joint).lower()]
+            upAxis = axisDict[cmds.getAttr("%s.upAxis" %joint).lower().replace("+", "")]
         except:
             cmds.warning("upAxis attribute is not valid, proceeding with default value (y up)")
             upAxis = (0.0, 1.0, 0.0)
@@ -702,7 +698,7 @@ def getRigAxes(joint):
     ## get the mirror axis
     if cmds.attributeQuery("mirrorAxis", node=joint, exists=True):
         try:
-            mirrorAxis = axisDict[cmds.getAttr("%s.mirrorAxis" %joint).lower()]
+            mirrorAxis = axisDict[cmds.getAttr("%s.mirrorAxis" %joint).lower().replace("+", "")]
         except:
             cmds.warning("mirrorAxis attribute is not valid, proceeding with default value (scene x)")
             mirrorAxis = (1.0, 0.0, 0.0)
@@ -713,7 +709,7 @@ def getRigAxes(joint):
     ## get spine Direction
     if cmds.attributeQuery("lookAxis", node=joint, exists=True):
         try:
-            spineDir = spineDict[cmds.getAttr("%s.lookAxis" %joint).lower()]
+            spineDir = spineDict[cmds.getAttr("%s.lookAxis" %joint).lower().replace("+", "")]
         except:
             cmds.warning("Cannot get spine direction from lookAxis attribute, proceeding with default value (-x)")
             spineDir = (-1.0, 0.0, 0.0)
@@ -797,3 +793,9 @@ def uniqueList(seq): # Dave Kirby
     # Order preserving
     seen = set()
     return [x for x in seq if x not in seen and not seen.add(x)]
+
+def getParent(node):
+    return cmds.listRelatives(node, parent=True)[0]
+
+def getShapes(node):
+    return cmds.listRelatives(node, c=True, shapes=True)

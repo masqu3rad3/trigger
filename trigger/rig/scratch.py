@@ -135,7 +135,7 @@ class LimbBuilder():
                 except RuntimeError:
                     pass
         for x in self.fingerMatchConts:
-            contPos = extra.createUpGrp(x[0], "POS", mi=False)
+            contPos = extra.createUpGrp(x[0], "POS", freezeTransform=False)
             socket = self.getNearestSocket(x[1], self.allSocketsList)
             cmds.parentConstraint(socket, contPos, mo=True)
             cmds.scaleConstraint(self.cont_master, contPos)
@@ -291,13 +291,13 @@ class LimbBuilder():
                 QtWidgets.QApplication.processEvents()
 
             if x[2] == "R":
-                sideVal = "_RIGHT_"
+                sideVal = "R"
                 colorCodes = [self.majorRightColor, self.majorLeftColor]
             elif x[2] == "L":
-                sideVal = "_LEFT_"
+                sideVal = "L"
                 colorCodes = [self.majorLeftColor, self.minorLeftColor]
             else:
-                sideVal = "c"
+                sideVal = "C"
                 colorCodes = [self.majorCenterColor, self.minorCenterColor]
 
             # pm.select(d=True)

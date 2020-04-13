@@ -154,19 +154,20 @@ class Icon(object):
                                         (5.669293, -0.752001, 0), (3.943228, -2.608331, 0), (3.943228, -5.011799, 0),
                                         (1.025203, -5.011799, 0)], k=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
                                 name="letterFK_K")
-        letter_f_k_k_shape = cmds.listRelatives(letter_f_k_k, c=True, type="shape")[0]
+
+        letter_f_k_k_shape = extra.getShapes(letter_f_k_k)[0]
         cmds.parent(letter_f_k_k_shape, letter_fk_f, r=True, s=True)
         cmds.delete(letter_f_k_k)
         letter_fk = cmds.rename(letter_fk_f, "letterFK")
-        letter_ik = cmds.duplicate(letter_fk, name="letterIK")
-        letter_ik_shape = cmds.listRelatives(letter_ik, c=True, type="shape")[0]
+        letter_ik = cmds.duplicate(letter_fk, name="letterIK", renameChildren=True)[0]
+        letter_ik_shapes = extra.getShapes(letter_ik)
 
-        cmds.move(-4.168608, 0, 0, "{0}.cv[2]".format(letter_ik_shape), r=True, os=True, wd=True)
-        cmds.move(-4.168608, 0, 0, "{0}.cv[3]".format(letter_ik_shape), r=True, os=True, wd=True)
-        cmds.move(-3.334886, 0, 0, "{0}.cv[6]".format(letter_ik_shape), r=True, os=True, wd=True)
-        cmds.move(-3.334886, 0, 0, "{0}.cv[7]".format(letter_ik_shape), r=True, os=True, wd=True)
-        cmds.move(2.897946, 0, 0, "{0}.cv[0:10]".format(letter_ik_shape), r=True, os=True, wd=True)
-        cmds.move(-1.505933, 0, 0, "{0}.cv[0:12]".format(letter_ik_shape), r=True, os=True, wd=True)
+        cmds.move(-4.168608, 0, 0, "{0}.cv[2]".format(letter_ik_shapes[0]), r=True, os=True, wd=True)
+        cmds.move(-4.168608, 0, 0, "{0}.cv[3]".format(letter_ik_shapes[0]), r=True, os=True, wd=True)
+        cmds.move(-3.334886, 0, 0, "{0}.cv[6]".format(letter_ik_shapes[0]), r=True, os=True, wd=True)
+        cmds.move(-3.334886, 0, 0, "{0}.cv[7]".format(letter_ik_shapes[0]), r=True, os=True, wd=True)
+        cmds.move(2.897946, 0, 0, "{0}.cv[0:10]".format(letter_ik_shapes[0]), r=True, os=True, wd=True)
+        cmds.move(-1.505933, 0, 0, "{0}.cv[0:12]".format(letter_ik_shapes[1]), r=True, os=True, wd=True)
 
         blShape_FKtoIK = cmds.blendShape(letter_ik, letter_fk)
 
@@ -335,7 +336,8 @@ class Icon(object):
             Controller node
         """
         cont_curvedCircle = cmds.circle(name=name, nr=(0, 1, 0), ch=0, s=12, radius=1)[0]
-        cmds.move(0, 0.25, 0, cont_curvedCircle.cv[3, 4, 5, 9, 10, 11], r=True)
+        for cv_num in [3, 4, 5, 9, 10, 11]:
+            cmds.move(0, 0.25, 0, "%s.cv[%i]" % (cont_curvedCircle, cv_num), r=True)
         return cont_curvedCircle
 
     def halfDome(self, name="cont_halfDome"):

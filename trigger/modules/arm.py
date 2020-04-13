@@ -217,7 +217,7 @@ class Arm(object):
         ## shoulder controller
         shouldercont_scale = (self.init_shoulder_dist / 2, self.init_shoulder_dist / 2, self.init_shoulder_dist / 2)
         # self.cont_shoulder = icon.shoulder("cont_Shoulder_%s" % self.suffix, shouldercont_scale)
-        self.cont_shoulder, dmp = icon.createIcon("Shoulder", iconName="cont_Shoulder_%s" % self.suffix, scale=shouldercont_scale, normal=(0,0,-self.sideMult))
+        self.cont_shoulder, dmp = icon.createIcon("Shoulder", iconName="%s_Shoulder_cont" % self.suffix, scale=shouldercont_scale, normal=(0,0,-self.sideMult))
         # cmds.setAttr("{0}.s{1}".format(self.cont_shoulder, "y"), self.sideMult)
         cmds.makeIdentity(self.cont_shoulder, a=True)
         # extra.alignAndAim(self.cont_shoulder, targetList=[self.j_def_collar], aimTargetList=[self.j_collar_end],
@@ -232,7 +232,7 @@ class Arm(object):
         ## IK hand controller
         ik_cont_scale = (self.init_lower_arm_dist / 3, self.init_lower_arm_dist / 3, self.init_lower_arm_dist / 3)
         # self.cont_IK_hand = icon.circle("cont_IK_hand_%s" % self.suffix, ik_cont_scale, normal=(1, 0, 0))
-        self.cont_IK_hand, dmp = icon.createIcon("Circle", iconName="cont_IK_hand_%s" % self.suffix, scale=ik_cont_scale, normal=(self.sideMult, 0, 0))
+        self.cont_IK_hand, dmp = icon.createIcon("Circle", iconName="%s_IK_hand_cont" % self.suffix, scale=ik_cont_scale, normal=(self.sideMult, 0, 0))
         extra.alignToAlter(self.cont_IK_hand, self.j_fk_low_end, mode=2)
 
         self.cont_IK_OFF = extra.createUpGrp(self.cont_IK_hand, "OFF")
@@ -268,7 +268,7 @@ class Arm(object):
             (((self.init_upper_arm_dist + self.init_lower_arm_dist) / 2) / 10)
         )
         # self.cont_Pole = icon.plus("cont_Pole_%s" % self.suffix, polecont_scale, normal=(0, 0, 1))
-        self.cont_Pole, dmp = icon.createIcon("Plus", iconName="cont_Pole_%s" % self.suffix, scale=polecont_scale, normal=(self.sideMult, 0, 0))
+        self.cont_Pole, dmp = icon.createIcon("Plus", iconName="%s_Pole_cont" % self.suffix, scale=polecont_scale, normal=(self.sideMult, 0, 0))
         offset_mag_pole = ((self.init_upper_arm_dist + self.init_lower_arm_dist) / 4)
         # offset_vector_pole = extra.getBetweenVector(elbow_ref, [shoulder_ref, hand_ref])
         offset_vector_pole = extra.getBetweenVector(self.j_def_elbow, [self.j_collar_end, self.j_def_hand])
@@ -288,7 +288,7 @@ class Arm(object):
         fk_up_arm_scale = (self.init_upper_arm_dist / 2, self.init_upper_arm_dist / 8, self.init_upper_arm_dist / 8)
 
         # self.cont_fk_up_arm = icon.cube("cont_FK_UpArm_%s" % self.suffix, fk_up_arm_scale)
-        self.cont_fk_up_arm, dmp = icon.createIcon("Cube", iconName="cont_FK_UpArm_%s" % self.suffix, scale=fk_up_arm_scale)
+        self.cont_fk_up_arm, dmp = icon.createIcon("Cube", iconName="%s_FK_UpArm_cont" % self.suffix, scale=fk_up_arm_scale)
 
         # move the pivot to the bottom
         cmds.xform(self.cont_fk_up_arm, piv=(self.sideMult * -(self.init_upper_arm_dist / 2), 0, 0), ws=True)
@@ -304,7 +304,7 @@ class Arm(object):
         ## FK LOW Arm Controller
         fk_low_arm_scale = (self.init_lower_arm_dist / 2, self.init_lower_arm_dist / 8, self.init_lower_arm_dist / 8)
         # self.cont_fk_low_arm = icon.cube("cont_FK_LowArm_%s" % self.suffix, fk_low_arm_scale)
-        self.cont_fk_low_arm, dmp = icon.createIcon("Cube", iconName="cont_FK_LowArm_%s" % self.suffix, scale=fk_low_arm_scale)
+        self.cont_fk_low_arm, dmp = icon.createIcon("Cube", iconName="%s_FK_LowArm_cont" % self.suffix, scale=fk_low_arm_scale)
 
         # move the pivot to the bottom
         cmds.xform(self.cont_fk_low_arm, piv=(self.sideMult * -(self.init_lower_arm_dist / 2), 0, 0), ws=True)
@@ -320,7 +320,7 @@ class Arm(object):
         ## FK HAND Controller
         fk_cont_scale = (self.init_lower_arm_dist / 5, self.init_lower_arm_dist / 5, self.init_lower_arm_dist / 5)
         # self.cont_fk_hand = icon.cube("cont_FK_Hand_%s" % self.suffix, fk_cont_scale)
-        self.cont_fk_hand, dmp = icon.createIcon("Cube", iconName="cont_FK_Hand_%s" % self.suffix, scale=fk_cont_scale)
+        self.cont_fk_hand, dmp = icon.createIcon("Cube", iconName="%s_FK_Hand_cont" % self.suffix, scale=fk_cont_scale)
         extra.alignToAlter(self.cont_fk_hand, self.j_def_hand, mode=2)
 
         self.cont_fk_hand_off = extra.createUpGrp(self.cont_fk_hand, "OFF")
@@ -330,7 +330,7 @@ class Arm(object):
         # FK-IK SWITCH Controller
         icon_scale = self.init_upper_arm_dist / 4
         # self.cont_fk_ik, self.fk_ik_rvs = icon.fkikSwitch(("cont_FK_IK_%s" % self.suffix), (icon_scale, icon_scale, icon_scale))
-        self.cont_fk_ik, self.fk_ik_rvs = icon.createIcon("FkikSwitch", iconName="cont_FK_IK_%s" % self.suffix, scale=(icon_scale, icon_scale, icon_scale))
+        self.cont_fk_ik, self.fk_ik_rvs = icon.createIcon("FkikSwitch", iconName="%s_FK_IK_cont" % self.suffix, scale=(icon_scale, icon_scale, icon_scale))
         extra.alignAndAim(self.cont_fk_ik, targetList=[self.j_def_hand], aimTargetList=[self.j_def_elbow],
                           upVector=self.up_axis, rotateOff=(0, 180, 0))
         # cmds.move(self.cont_fk_ik, (dt.Vector(self.up_axis) * (icon_scale * 2)), r=True)
@@ -371,7 +371,7 @@ class Arm(object):
 
         midcont_scale = (self.init_lower_arm_dist / 4, self.init_lower_arm_dist / 4, self.init_lower_arm_dist / 4)
         # self.cont_mid_lock = icon.star("cont_mid_%s" % self.suffix, midcont_scale, normal=(1, 0, 0))
-        self.cont_mid_lock, dmp = icon.createIcon("Star", iconName="cont_mid_%s" % self.suffix, scale=midcont_scale, normal=(self.sideMult, 0, 0))
+        self.cont_mid_lock, dmp = icon.createIcon("Star", iconName="%s_mid_cont" % self.suffix, scale=midcont_scale, normal=(self.sideMult, 0, 0))
 
         # extra.alignToAlter(cont_mid_lock, j_def_elbow, 2)
         extra.alignToAlter(self.cont_mid_lock, self.j_fk_low, 2)
@@ -462,7 +462,8 @@ class Arm(object):
         cmds.connectAttr("{0}.rigVis".format(self.scaleGrp), "{0}.v".format(self.mid_lock))
         cmds.connectAttr("{0}.rigVis".format(self.scaleGrp), "{0}.v".format(self.master_root))
         cmds.connectAttr("{0}.rigVis".format(self.scaleGrp), "{0}.v".format(self.hand_lock))
-        cmds.connectAttr("{0}.rigVis".format(self.scaleGrp), "{0}.v".format(cmds.listRelatives(self.root_master, c=True, type="shape")[0]))
+        # cmds.connectAttr("{0}.rigVis".format(self.scaleGrp), "{0}.v".format(cmds.listRelatives(self.root_master, c=True, type="shape")[0]))
+        cmds.connectAttr("{0}.rigVis".format(self.scaleGrp), "{0}.v".format(extra.getShapes(self.root_master)[0]))
 
     def createIKsetup(self):
 
@@ -720,7 +721,8 @@ class Arm(object):
         cmds.connectAttr("{0}.rigVis".format(self.scaleGrp), "{0}.v".format(arm_start))
         cmds.connectAttr("{0}.rigVis".format(self.scaleGrp), "{0}.v".format(arm_end))
         cmds.connectAttr("{0}.rigVis".format(self.scaleGrp), "{0}.v".format(self.ik_parent_grp))
-        cmds.connectAttr("{0}.rigVis".format(self.scaleGrp), "{0}.v".format(cmds.listRelatives(pacon_locator_shou, c=True, type="shape")[0]))
+        # cmds.connectAttr("{0}.rigVis".format(self.scaleGrp), "{0}.v".format(cmds.listRelatives(pacon_locator_shou, c=True, type="shape")[0]))
+        cmds.connectAttr("{0}.rigVis".format(self.scaleGrp), "{0}.v".format(extra.getShapes(pacon_locator_shou)[0]))
 
     def createFKsetup(self):
 
@@ -816,7 +818,7 @@ class Arm(object):
         cmds.parentConstraint(self.mid_lock, ribbon_upper_arm.endConnection, mo=True)
 
         # connect the elbow scaling
-        cmds.connectAttr("{0}.scale".format(self.cont_mid_lock), "{0}.scale".format(ribbon_upper_arm))
+        cmds.connectAttr("{0}.scale".format(self.cont_mid_lock), "{0}.scale".format(ribbon_upper_arm.endConnection))
         cmds.connectAttr("{0}.scale".format(self.cont_mid_lock), "{0}.scale".format(self.j_def_elbow))
 
         cmds.scaleConstraint(self.scaleGrp, ribbon_upper_arm.scaleGrp)
@@ -832,20 +834,15 @@ class Arm(object):
 
         pairBlendNode = cmds.listConnections(ribbon_start_ori_con, d=True, t="pairBlend")[0]
         # disconnect the existing weight connection
-        cmds.disconnectAttr("{0}.w".format(pairBlendNode))
+        # cmds.disconnectAttr("{0}.weight".format(pairBlendNode))
         # re-connect to the custom attribute
-        cmds.connectAttr("{0}.alignShoulder".format(self.cont_fk_ik), "{0}.w".format(pairBlendNode))
-
-        # # Rotate the shoulder connection bone 180 degrees for Right Alignment
-        # if self.side == "R":
-        #     rightRBN_startupORE = pm.listRelatives(ribbon_upper_arm.startAim, children=True, type="transform")[0]
-        #     pm.setAttr(rightRBN_startupORE.ry, 180)
+        cmds.connectAttr("{0}.alignShoulder".format(self.cont_fk_ik), "{0}.weight".format(pairBlendNode), force=True)
 
         # AUTO AND MANUAL TWIST
 
         # auto
         auto_twist = cmds.createNode("multiplyDivide", name="autoTwist_%s" % self.suffix)
-        cmds.connectAttr("{0}.shoulderAutoTwist".format(self.cont_fk_ik), "{0}.input2X".format(self.auto_twist))
+        cmds.connectAttr("{0}.shoulderAutoTwist".format(self.cont_fk_ik), "{0}.input2X".format(auto_twist))
         cmds.connectAttr("{0}.constraintRotate".format(ribbon_start_pa_con_upper_arm_start), "{0}.input1".format(auto_twist))
 
         # !!! The parent constrain override should be disconnected like this
@@ -857,7 +854,7 @@ class Arm(object):
         cmds.connectAttr("{0}.shoulderManualTwist".format(self.cont_fk_ik), "{0}.input3D[1].input3Dx".format(add_manual_twist))
 
         # connect to the joint
-        cmds.connectAttr("{0}.output".format(add_manual_twist), "{0}.rotate".format(ribbon_upper_arm.startConnection))
+        cmds.connectAttr("{0}.output3D".format(add_manual_twist), "{0}.rotate".format(ribbon_upper_arm.startConnection))
 
         # connect allowScaling
         cmds.connectAttr("{0}.allowScaling".format(self.cont_fk_ik), "{0}.scaleSwitch".format(ribbon_upper_arm.startConnection))
@@ -919,9 +916,9 @@ class Arm(object):
         cmds.setAttr("{0}.input2".format(vpUpperLowerReduce), 0.5)
         #
         # vp knee branch
-        cmds.connectAttr("{0}.output".format(vpExtraInput), "{0}.scale".format(ribbon_lower_arm.startConnection))
-        cmds.connectAttr("{0}.output".format(vpExtraInput), "{0}.scale".format(ribbon_upper_arm.endConnection))
-        cmds.connectAttr("{0}.output".format(vpExtraInput), "{0}.scale".format(self.j_def_elbow))
+        cmds.connectAttr("{0}.output".format(vpExtraInput), "{0}.scale".format(ribbon_lower_arm.startConnection), f=True)
+        cmds.connectAttr("{0}.output".format(vpExtraInput), "{0}.scale".format(ribbon_upper_arm.endConnection), f=True)
+        cmds.connectAttr("{0}.output".format(vpExtraInput), "{0}.scale".format(self.j_def_elbow), f=True)
         cmds.connectAttr("{0}.scale".format(self.cont_mid_lock), "{0}.input1".format(vpExtraInput))
 
         cmds.connectAttr("{0}.output1D".format(vpMidAverage), "{0}.input2X".format(vpExtraInput))
@@ -945,7 +942,7 @@ class Arm(object):
 
 
         # vp upper branch
-        mid_off_up = ribbon_upper_arm.middleCont[0].getParent()
+        mid_off_up = extra.getParent(ribbon_upper_arm.middleCont[0])
         cmds.connectAttr("{0}.outputX".format(vpPowerUpperLeg), "{0}.scaleX".format(mid_off_up))
         cmds.connectAttr("{0}.outputX".format(vpPowerUpperLeg), "{0}.scaleY".format(mid_off_up))
         cmds.connectAttr("{0}.outputX".format(vpPowerUpperLeg), "{0}.scaleZ".format(mid_off_up))
@@ -954,7 +951,7 @@ class Arm(object):
         cmds.connectAttr("{0}.output".format(vpUpperLowerReduce), "{0}.input2X".format(vpPowerUpperLeg))
 
         # vp lower branch
-        mid_off_low = ribbon_lower_arm.middleCont[0].getParent()
+        mid_off_low = extra.getParent(ribbon_lower_arm.middleCont[0])
         cmds.connectAttr("{0}.outputX".format(vpPowerLowerLeg), "{0}.scaleX".format(mid_off_low))
         cmds.connectAttr("{0}.outputX".format(vpPowerLowerLeg), "{0}.scaleY".format(mid_off_low))
         cmds.connectAttr("{0}.outputX".format(vpPowerLowerLeg), "{0}.scaleZ".format(mid_off_low))
@@ -1009,7 +1006,7 @@ class Arm(object):
         angleMultIK = cmds.createNode("multDoubleLinear", name="angleMultIK_%s" % self.suffix)
 
         cmds.connectAttr("{0}.translate".format(angleExt_Fixed_IK), "{0}.vector1".format(angleNodeIK))
-        cmds.connectAttr("{0}.translate".format(angleExt_Fixed_IK), "{0}.vector2".format(angleNodeIK))
+        cmds.connectAttr("{0}.translate".format(angleExt_Float_IK), "{0}.vector2".format(angleNodeIK))
 
         cmds.connectAttr("{0}.angle".format(angleNodeIK), "{0}.inputValue".format(angleRemapIK))
         cmds.setAttr("{0}.inputMin".format(angleRemapIK), cmds.getAttr("{0}.angle".format(angleNodeIK)))
@@ -1020,6 +1017,7 @@ class Arm(object):
         cmds.connectAttr("{0}.outValue".format(angleRemapIK), "{0}.input1".format(angleMultIK))
         cmds.setAttr("{0}.input2".format(angleMultIK), 0.5)
 
+        print angleExt_Root_IK, angleExt_Fixed_IK, angleExt_Float_IK
         # FK Angle Extractor
         angleRemapFK = cmds.createNode("remapValue", name="angleRemapFK_%s" % self.suffix)
         angleMultFK = cmds.createNode("multDoubleLinear", name="angleMultFK_%s" % self.suffix)
@@ -1027,8 +1025,8 @@ class Arm(object):
         cmds.connectAttr("{0}.rotateY".format(self.cont_fk_up_arm), "{0}.inputValue".format(angleRemapFK))
         cmds.setAttr("{0}.inputMin".format(angleRemapFK), 0)
         cmds.setAttr("{0}.inputMax".format(angleRemapFK), 90)
-        cmds.setAttr("{0}.outputMin".format, angleRemapFK, 0)
-        cmds.setAttr("{0}.outputMax".format, angleRemapFK, 90)
+        cmds.setAttr("{0}.outputMin".format(angleRemapFK), 0)
+        cmds.setAttr("{0}.outputMax".format(angleRemapFK), 90)
 
         cmds.connectAttr("{0}.outValue".format(angleRemapFK), "{0}.input1".format(angleMultFK))
         cmds.setAttr("{0}.input2".format(angleMultFK), 0.5)
@@ -1056,7 +1054,7 @@ class Arm(object):
     def roundUp(self):
         cmds.parentConstraint(self.limbPlug, self.scaleGrp, mo=False)
 
-        cmds.setAttr(self.scaleGrp.rigVis, 0)
+        cmds.setAttr("%s.rigVis" % self.scaleGrp, 0)
 
         extra.lockAndHide(self.cont_IK_hand, ["v"])
         extra.lockAndHide(self.cont_Pole, ["rx", "ry", "rz", "sx", "sy", "sz", "v"])
