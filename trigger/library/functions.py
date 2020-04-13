@@ -375,10 +375,10 @@ def attrPass (sourceNode, targetNode, attributes=[], inConnections=True, outConn
     else:
         userAttr = attributes
 
+    if not userAttr:
+        return
+
     for attr in userAttr:
-
-
-
         flagBuildList=[]
         atType = cmds.getAttr("%s.%s" % (sourceNode,attr), type=True)
         atTypeFlag = "at='%s'" % (str(atType))

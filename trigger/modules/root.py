@@ -1,4 +1,5 @@
-import pymel.core as pm
+# import pymel.core as pm
+from maya import cmds
 from trigger.library import functions as extra
 
 class Root(object):
@@ -27,34 +28,29 @@ class Root(object):
         """
         if isinstance(inits, dict):
             if len(inits.keys()) > 1:
-                pm.error("Root can only have one initial joint")
+                cmds.error("Root can only have one initial joint")
                 return
             rootInit = inits["Root"]
         elif isinstance(inits, list):
             if len(inits) > 1:
-                pm.error("Root can only have one initial joint")
+                cmds.error("Root can only have one initial joint")
                 return
             rootInit = inits[0]
-
-        # idCounter = 0
-        # ## create an unique suffix
-        # while pm.objExists("scaleGrp_" + suffix):
-        #     suffix = "%s%s" % (suffix, str(idCounter + 1))
 
         suffix=(extra.uniqueName("limbGrp_%s" %(suffix))).replace("limbGrp_", "")
 
 
         print "Creating Root %s" %suffix
 
-        self.scaleGrp = pm.group(name="scaleGrp_" + suffix, em=True)
+        self.scaleGrp = cmds.group(name="scaleGrp_" + suffix, em=True)
         # suffix=(extra.uniqueName("limbGrp_%s" % suffix)).replace("limbGrp_", "")
-        self.limbGrp = pm.group(name="limbGrp_%s" % suffix, em=True)
-        pm.parent(self.scaleGrp, self.nonScaleGrp, self.cont_IK_OFF, self.limbGrp)
+        self.limbGrp = cmds.group(name="limbGrp_%s" % suffix, em=True)
+        cmds.parent(self.scaleGrp, self.nonScaleGrp, self.cont_IK_OFF, self.limbGrp)
 
         self.scaleConstraints.append(self.scaleGrp)
 
-        defJ_root = pm.joint(name="jDef_{0}".format(suffix))
-        extra.alignTo(defJ_root, rootInit)
+        defJ_root = cmds.joint(name="jDef_{0}".format(suffix))
+        extra.alignTo(defJ_root, rootInit, position=True, rotation=False)
 
         extra.colorize(defJ_root, self.colorCodes[0])
         self.limbPlug = defJ_root
