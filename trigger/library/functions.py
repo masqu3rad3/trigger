@@ -1,5 +1,4 @@
-# import pymel.core as pm
-# import pymel.core.datatypes as dt
+
 
 
 import maya.cmds as cmds
@@ -799,3 +798,25 @@ def getParent(node):
 
 def getShapes(node):
     return cmds.listRelatives(node, c=True, shapes=True)
+
+def matrixConstraint(parent, child, translate=True, rotate=True, scale=False, mo=True, prefix=""):
+    mult_matrix = cmds.createNode("multMatrix", name="%s_multMatrix" % prefix)
+    decompose_matrix = cmds.createNode("decomposeMatrix", name="%s_decomposeMatrix" % prefix)
+
+    cmds.connectAttr("%s.worldMatrix[0]" % parent, "%s.matrixIn[1]" % mult_matrix)
+    cmds.connectAttr("%s.matrixSum" % mult_matrix, "%s.inputMatrix" % decompose_matrix)
+
+    if mo:
+        parentWorldMatrix = getMDagPath(parent).inclusiveMatrix()
+        childWorldMatrix = getMDagPath(child).inclusiveMatrix()
+        localOffset = childWorldMatrix * parentWorldMatrix.inverse()
+        cmds.setAttr("%s.matrixIn[0]" % mult_matrix, localOffset, type="matrix")
+
+    if translate:
+        cmds.connectAttr("%s.outputTranslate" % decompose_matrix, "%s.translate" % child)
+    if rotate:
+        cmds.connectAttr("%s.outputRotate" % decompose_matrix, "%s.rotate" % child)
+    if scale:
+        cmds.connectAttr("%s.outputScale" % decompose_matrix, "%s.scale" % child)
+
+    return mult_matrix, decompose_matrix

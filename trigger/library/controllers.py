@@ -386,7 +386,7 @@ class Icon(object):
                                p=[(0, 0, -1), (1, 0, -1), (1, 0, 1), (-1, 0, 1), (-1, 0, -2), (2, 0, -2), (2, 0, 2),
                                   (-2, 0, 2), (-2, 0, -3), (3, 0, -3), (3, 0, 3), (-3, 0, 3), (-3, 0, -3)],
                                k=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
-        cmds.setAttr("%s.scale" % cont_Looper, (0.333, 0.333, 0.333))
+        cmds.setAttr("%s.scale" % cont_Looper, 0.333, 0.333, 0.333)
         cmds.makeIdentity(cont_Looper, a=True, s=True)
         return cont_Looper
 
