@@ -800,6 +800,20 @@ def getShapes(node):
     return cmds.listRelatives(node, c=True, shapes=True)
 
 def matrixConstraint(parent, child, translate=True, rotate=True, scale=False, mo=True, prefix=""):
+    """
+    Alternative for single parent parent constraints. Faster.
+    Args:
+        parent(string): driver node.
+        child(string): driven node.
+        translate(bool): if True constraints translate channels. Default True.
+        rotate(bool): if True constraints rotate channels. Default True.
+        scale(bool): if True constraints scale channels. Default False.
+        mo(bool): Short for Maintain Offset. Default True.
+        prefix(string): Prefix for the nodes will be created.
+
+    Returns(tuple): (<multMatrix node>, <decomposeMatrix node>)
+
+    """
     mult_matrix = cmds.createNode("multMatrix", name="%s_multMatrix" % prefix)
     decompose_matrix = cmds.createNode("decomposeMatrix", name="%s_decomposeMatrix" % prefix)
 
