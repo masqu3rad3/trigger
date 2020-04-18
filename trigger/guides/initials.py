@@ -201,8 +201,10 @@ class initialJoints():
 
                 extra.alignTo(limbJoints[i], locator, position=True, rotation=False)
                 cmds.parentConstraint(locator, limbJoints[i], mo=True)
+                # extra.matrixConstraint(locator, limbJoints[i], mo=True)
             else:
                 cmds.parentConstraint(limbJoints[i], locator, mo=False)
+                # extra.matrixConstraint(limbJoints[i], locator, mo=False)
 
             cmds.parent(locator, loc_grp)
         cmds.parent(loc_grp, limbGroup)

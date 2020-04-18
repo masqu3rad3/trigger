@@ -345,9 +345,9 @@ class initialJoints():
 
         return locatorsList
 
-    def _getMirror(self, vector):
-        """Returns reflection of the vector along the mirror axis"""
-        return vector-2*(vector * self.mirrorVector)*self.mirrorVector
+    # def _getMirror(self, vector):
+    #     """Returns reflection of the vector along the mirror axis"""
+    #     return vector-2*(vector * self.mirrorVector)*self.mirrorVector
 
     def initialRoot(self, suffix):
         """

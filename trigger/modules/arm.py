@@ -418,19 +418,24 @@ class Arm(object):
         self.start_lock_pos = extra.createUpGrp(self.start_lock, "Pos")
         self.start_lock_twist = extra.createUpGrp(self.start_lock, "AutoTwist")
 
-        start_lock_weight = cmds.parentConstraint(self.j_collar_end, self.start_lock, sr=("y", "z"), mo=False)
+        # start_lock_weight = cmds.parentConstraint(self.j_collar_end, self.start_lock, sr=("y", "z"), mo=False)
+        start_lock_weight = extra.matrixConstraint(self.j_collar_end, self.start_lock, sr=("y", "z"), mo=False)
 
         cmds.parentConstraint(self.start_lock, self.j_ik_sc_up, mo=False)
+        # extra.matrixConstraint(self.start_lock, self.j_ik_sc_up, mo=False)
         cmds.parentConstraint(self.start_lock, self.j_ik_rp_up, mo=False)
+        # extra.matrixConstraint(self.start_lock, self.j_ik_rp_up, mo=False)
 
         # Create Midlock
 
         self.mid_lock = cmds.spaceLocator(name="midLock_%s" % self.suffix)[0]
         cmds.parentConstraint(self.mid_lock, self.j_def_elbow)
+        # extra.matrixConstraint(self.mid_lock, self.j_def_elbow)
 
-        # extra.alignTo(self.mid_lock, self.cont_mid_lock, 0)
-
-        cmds.parentConstraint(self.cont_mid_lock, self.mid_lock, mo=False)
+        print "mid_lock:", self.mid_lock
+        print "cont_mid_lock:", self.cont_mid_lock
+        # cmds.parentConstraint(self.cont_mid_lock, self.mid_lock, mo=False)
+        extra.matrixConstraint(self.cont_mid_lock, self.mid_lock, mo=False)
 
         # Create End Lock
         self.end_lock = cmds.spaceLocator(name="endLock_%s" % self.suffix)[0]
@@ -451,7 +456,8 @@ class Arm(object):
 
         cmds.pointConstraint(self.end_lock, self.root_master, mo=False)
 
-        cmds.parent(self.mid_lock, self.scaleGrp)
+        # cmds.parent(self.mid_lock, self.scaleGrp)
+        cmds.parent(self.mid_lock, self.nonScaleGrp)
         cmds.parent(self.hand_lock, self.scaleGrp)
         cmds.parent(self.master_root, self.scaleGrp)
         cmds.parent(self.root_master, self.scaleGrp)
@@ -711,7 +717,8 @@ class Arm(object):
         cmds.parent(arm_start, self.scaleGrp)
         cmds.parent(arm_end, self.scaleGrp)
         cmds.parent(self.ik_parent_grp, self.scaleGrp)
-        cmds.parent(self.start_lock_ore, self.scaleGrp)
+        # cmds.parent(self.start_lock_ore, self.scaleGrp)
+        cmds.parent(self.start_lock_ore, self.nonScaleGrp)
         cmds.parent(self.end_lock_ore, self.scaleGrp)
 
         cmds.parent(pacon_locator_shou, self.scaleGrp)

@@ -169,7 +169,28 @@ def alignAndAim(node, targetList, aimTargetList, upObject=None, upVector=None, l
     if freezeTransform:
         cmds.makeIdentity(node, a=True, t=True)
 
+def alignBetween (node, targetA, targetB, position=True, aim_b=True, orientation=False, o=(0,0,0)):
+    """
+    Alignes the node between target A and target B
+    Args:
+        node(String): Node to be aligned
+        targetA(String): Target A
+        targetB(String): Target B
+        position(bool): If True, aligns the position between targets. Default True
+        aim_b(bool): If True, node aims to the targetB
+        orientation(bool): If true orients between targetA and targetB
+        o(tuple): orientation offset vector
 
+
+    Returns: None
+
+    """
+    if position:
+        cmds.delete(cmds.pointConstraint(targetA, targetB, node, mo=False))
+    if aim_b:
+        cmds.delete(cmds.aimConstraint(targetB,node, mo=False, o=o))
+    if orientation:
+        cmds.delete(cmds.orientConstraint(targetA, targetB, node, mo=False, o=o))
 
 # def getBetweenVector(node, targetPointNodeList):
 #     # get center vector
@@ -794,12 +815,18 @@ def uniqueList(seq): # Dave Kirby
     return [x for x in seq if x not in seen and not seen.add(x)]
 
 def getParent(node):
-    return cmds.listRelatives(node, parent=True)[0]
+    parentList = cmds.listRelatives(node, parent=True)
+    return parentList[0] if parentList else None
 
 def getShapes(node):
     return cmds.listRelatives(node, c=True, shapes=True)
 
-def matrixConstraint(parent, child, translate=True, rotate=True, scale=False, mo=True, prefix=""):
+def matrixConstraint(parent, child, mo=True, prefix="", sr=None, st=None, ss=None):
+    child_parent = getParent(child)
+    # if child_parent:
+    #     cmds.parent(child, w=True)
+
+
     mult_matrix = cmds.createNode("multMatrix", name="%s_multMatrix" % prefix)
     decompose_matrix = cmds.createNode("decomposeMatrix", name="%s_decomposeMatrix" % prefix)
 
@@ -811,12 +838,30 @@ def matrixConstraint(parent, child, translate=True, rotate=True, scale=False, mo
         childWorldMatrix = getMDagPath(child).inclusiveMatrix()
         localOffset = childWorldMatrix * parentWorldMatrix.inverse()
         cmds.setAttr("%s.matrixIn[0]" % mult_matrix, localOffset, type="matrix")
+    if child_parent:
+        child_parentWorldMatrix = getMDagPath(child_parent).inclusiveMatrix().inverse()
+        # childWorldMatrix = getMDagPath(child).inclusiveMatrix()
+        # localOffset = childWorldMatrix * child_parentWorldMatrix.inverse()
+        cmds.setAttr("%s.matrixIn[2]" % mult_matrix, child_parentWorldMatrix, type="matrix")
 
-    if translate:
+
+    if not st:
         cmds.connectAttr("%s.outputTranslate" % decompose_matrix, "%s.translate" % child)
-    if rotate:
+    else:
+        for attr in "XYZ":
+            if attr.lower() not in st and attr.upper() not in st:
+                cmds.connectAttr("%s.outputTranslate%s" % (decompose_matrix, attr), "%s.translate%s" % (child, attr))
+    if not sr:
         cmds.connectAttr("%s.outputRotate" % decompose_matrix, "%s.rotate" % child)
-    if scale:
+    else:
+        for attr in "XYZ":
+            if attr.lower() not in sr and attr.upper() not in sr:
+                cmds.connectAttr("%s.outputRotate%s" % (decompose_matrix, attr), "%s.rotate%s" % (child, attr))
+    if not ss:
         cmds.connectAttr("%s.outputScale" % decompose_matrix, "%s.scale" % child)
+    else:
+        for attr in "XYZ":
+            if attr.lower() not in ss and attr.upper() not in ss:
+                cmds.connectAttr("%s.outputScale%s" % (decompose_matrix, attr), "%s.scale%s" % (child, attr))
 
     return mult_matrix, decompose_matrix

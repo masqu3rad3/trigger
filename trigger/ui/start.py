@@ -1,4 +1,5 @@
-import pymel.core as pm
+# import pymel.core as pm
+from maya import cmds
 
 from trigger import Qt
 from trigger.Qt import QtWidgets, QtCore, QtGui
@@ -13,6 +14,7 @@ import trigger.library.controllers as ic
 from trigger.utils import mr_cubic as mrCubic
 
 import trigger.library.functions as extra
+import trigger.library.tools as tools
 
 import os
 import json
@@ -182,10 +184,10 @@ class MainUI(QtWidgets.QMainWindow):
         # replaceController.triggered.connect(self.replaceControllerUI)
 
         selectJDef = QtWidgets.QAction("&Select Deformer Joints", self)
-        selectJDef.triggered.connect(lambda: pm.select(pm.ls("jDef*")))
+        selectJDef.triggered.connect(lambda: cmds.select(cmds.ls("jDef*")))
 
         MrCubic = QtWidgets.QAction("&Mr Cubic", self)
-        MrCubic.triggered.connect(lambda: mrCubic.mrCube(pm.ls(sl=True)))
+        MrCubic.triggered.connect(lambda: mrCubic.mrCube(cmds.ls(sl=True)))
 
         tools.addAction(anchorMaker)
         tools.addAction(mirrorPose)
@@ -222,18 +224,18 @@ class MainUI(QtWidgets.QMainWindow):
             except AttributeError:
                 pass
 
-        if pm.dockControl('triggerDock', q=1, ex=1):
-            pm.deleteUI('triggerDock')
+        if cmds.dockControl('triggerDock', q=1, ex=1):
+            cmds.deleteUI('triggerDock')
         allowedAreas = ['right', 'left']
         try:
-            floatingLayout = pm.paneLayout(configuration='single', width=250, height=400)
+            floatingLayout = cmds.paneLayout(configuration='single', width=250, height=400)
         except RuntimeError:
-            pm.warning("Skipping docking. Restart to dock.")
+            cmds.warning("Skipping docking. Restart to dock.")
             self.show()
             return False
-        pm.dockControl('triggerDock', area='left', allowedArea=allowedAreas,
+        cmds.dockControl('triggerDock', area='left', allowedArea=allowedAreas,
                                content=floatingLayout, label='T-Rigger')
-        pm.control(windowName, e=True, p=floatingLayout)
+        cmds.control(windowName, e=True, p=floatingLayout)
 
         return True
 
@@ -402,7 +404,7 @@ class MainUI(QtWidgets.QMainWindow):
         if os.path.isfile(settingsFilePath):
             self.settingsData = loadJson(settingsFilePath)
             # If maya version is lower then 2017, dont use geodesic voxel
-            mayaVersion = int(pm.about(version=True))
+            mayaVersion = int(cmds.about(version=True))
             if (self.settingsData["bindMethod"] == 3) and (mayaVersion < 2017):
                 self.settingsData["bindMethod"] = 0
             return
@@ -613,7 +615,7 @@ class MainUI(QtWidgets.QMainWindow):
         self.bindmethod_comboBox.setGeometry(QtCore.QRect(120, 20, 141, 22))
         self.bindmethod_comboBox.setObjectName(("bindmethod_comboBox"))
         self.bindmethod_comboBox.addItems(["Closest distance", "Closest in hierarchy", "Heat Map"])
-        if int(pm.about(version=True)) >= 2017:
+        if int(cmds.about(version=True)) >= 2017:
             self.bindmethod_comboBox.addItems(["Geodesic Voxel"])
 
         self.skinningmethod_label = QtWidgets.QLabel(self.skinmesh_settings_groupBox)
@@ -967,12 +969,10 @@ class MainUI(QtWidgets.QMainWindow):
             self.copyweights_checkbox.enabled = True
 
     def onGetSkinMesh(self):
-        self.skinMeshList = pm.ls(sl=True, type="transform")
+        self.skinMeshList = cmds.ls(sl=True, type="transform")
         if len(self.skinMeshList) > 0:
 
-            names = ["%s, " %(obj.name()) for obj in self.skinMeshList]
-            strNames = ""
-            strNames = strNames.join(names)[:-2]
+            strNames = ", ".join(self.skinMeshList)
             self.skinMesh_linedit.setText(strNames)
             self.copyweights_checkbox.setEnabled(True)
         else:
@@ -996,15 +996,15 @@ class MainUI(QtWidgets.QMainWindow):
     #     pass
 
     def onAddController(self):
-        pm.undoInfo(openChunk=True)
+        cmds.undoInfo(openChunk=True)
         objName=extra.uniqueName("cont_{0}".format(self.controllers_combobox.currentText()))
         # self.all_icon_functions[self.controllers_combobox.currentIndex()][1](name=objName, scale=(1,1,1))
         self.icon.createIcon(self.controllers_combobox.currentText(), iconName=objName, scale=(1,1,1), normal=(self.alignVectorX_sb.value(), self.alignVectorY_sb.value(), self.alignVectorZ_sb.value()))
 
-        pm.undoInfo(closeChunk=True)
+        cmds.undoInfo(closeChunk=True)
     def onReplaceController(self):
-        pm.undoInfo(openChunk=True)
-        selection = pm.ls(sl=True)
+        cmds.undoInfo(openChunk=True)
+        selection = cmds.ls(sl=True)
         if not selection:
             self.infoPop(textTitle="Skipping action", textHeader="Selection needed", textInfo="You need to select at least one controller node. (transform node)")
             return
@@ -1016,14 +1016,14 @@ class MainUI(QtWidgets.QMainWindow):
             newController, dmp = self.icon.createIcon(self.controllers_combobox.currentText(), iconName=objName, scale=(1,1,1), normal=(self.alignVectorX_sb.value(), self.alignVectorY_sb.value(), self.alignVectorZ_sb.value()))
             tools.replaceController(mirrorAxis=self.initSkeleton.mirrorVector_asString, mirror=False, oldController=oldController,
                                     newController= newController, alignToCenter=self.controllers_checkbox.isChecked())
-            pm.select(oldController)
-        pm.undoInfo(closeChunk=True)
+            cmds.select(oldController)
+        cmds.undoInfo(closeChunk=True)
 
     def onMirrorController(self):
-        pm.undoInfo(openChunk=True)
-        import extraTools as tools
+        cmds.undoInfo(openChunk=True)
+        # import extraTools as tools
         reload(tools)
-        selection = pm.ls(sl=True)
+        selection = cmds.ls(sl=True)
         if not selection:
             self.infoPop(textTitle="Skipping action", textHeader="Selection needed", textInfo="You need to select at least one controller node. (transform node)")
             return
@@ -1034,46 +1034,47 @@ class MainUI(QtWidgets.QMainWindow):
                 tryChannels = ["tx", "ty", "tz", "rx", "ry", "rz"]
                 transformDict = {}
                 for i in tryChannels:
-                    keptdata = pm.getAttr("%s.%s" % (oldController, i))
+                    keptdata = cmds.getAttr("%s.%s" % (oldController, i))
                     transformDict[i] = keptdata
                     try:
-                        pm.setAttr("%s.%s" % (oldController, i), 0)
+                        cmds.setAttr("%s.%s" % (oldController, i), 0)
                     except RuntimeError:
                         pass
 
                 # newController = pm.duplicate(pm.ls(sl=True))[0]
-                newController = pm.duplicate(sel)[0]
+                newController = cmds.duplicate(sel)[0]
 
 
-                pm.setAttr(newController.tx, e=True, k=True, l=False)
-                pm.setAttr(newController.ty, e=True, k=True, l=False)
-                pm.setAttr(newController.tz, e=True, k=True, l=False)
-                pm.setAttr(newController.rx, e=True, k=True, l=False)
-                pm.setAttr(newController.ry, e=True, k=True, l=False)
-                pm.setAttr(newController.rz, e=True, k=True, l=False)
-                pm.setAttr(newController.sx, e=True, k=True, l=False)
-                pm.setAttr(newController.sy, e=True, k=True, l=False)
-                pm.setAttr(newController.sz, e=True, k=True, l=False)
+                cmds.setAttr("%s.tx" % newController, e=True, k=True, l=False)
+                cmds.setAttr("%s.ty" % newController, e=True, k=True, l=False)
+                cmds.setAttr("%s.tz" % newController, e=True, k=True, l=False)
+                cmds.setAttr("%s.rx" % newController, e=True, k=True, l=False)
+                cmds.setAttr("%s.ry" % newController, e=True, k=True, l=False)
+                cmds.setAttr("%s.rz" % newController, e=True, k=True, l=False)
+                cmds.setAttr("%s.sx" % newController, e=True, k=True, l=False)
+                cmds.setAttr("%s.sy" % newController, e=True, k=True, l=False)
+                cmds.setAttr("%s.sz" % newController, e=True, k=True, l=False)
 
-                pm.delete(newController.getChildren(type="transform"))
-                tempGrp = pm.group(em=True)
-                pm.parent(newController, tempGrp)
+                # cmds.delete(newController.getChildren(type="transform"))
+                cmds.delete(cmds.listRelatives(newController, children=True, type="transform"))
+                tempGrp = cmds.group(em=True)
+                cmds.parent(newController, tempGrp)
 
-                pm.setAttr(tempGrp.scaleX, -1)
-                pm.makeIdentity(tempGrp, a=True)
-                pm.parent(newController, world=True)
-                pm.delete(tempGrp)
+                cmds.setAttr("%s.scaleX" % tempGrp, -1)
+                cmds.makeIdentity(tempGrp, a=True)
+                cmds.parent(newController, world=True)
+                cmds.delete(tempGrp)
 
                 # pm.makeIdentity(newController, a=True)
-                pm.parent(newController, oldController)
+                cmds.parent(newController, oldController)
                 tools.replaceController(mirrorAxis=self.initSkeleton.mirrorVector_asString, mirror=False, oldController=oldController, newController=newController, alignToCenter=self.controllers_checkbox.isChecked())
                 for i in tryChannels:
                     try:
-                        pm.setAttr("%s.%s" % (oldController, i), transformDict[i])
+                        cmds.setAttr("%s.%s" % (oldController, i), transformDict[i])
                     except RuntimeError:
                         pass
 
-        pm.undoInfo(closeChunk=True)
+        cmds.undoInfo(closeChunk=True)
 
 
     def initSpineUI(self):
@@ -1465,12 +1466,12 @@ class MainUI(QtWidgets.QMainWindow):
         self.initBoneslayout.addWidget(self.rootGroupBox)
 
     def createBiped(self):
-        pm.undoInfo(openChunk=True)
+        cmds.undoInfo(openChunk=True)
         self.initSkeleton.initHumanoid(fingers=self.fingerSegInt.value(), spineSegments=self.bipedSpineSegsInt.value(), neckSegments=self.bipedNeckSegsInt.value())
-        pm.undoInfo(closeChunk=True)
+        cmds.undoInfo(closeChunk=True)
 
     def createArm(self):
-        pm.undoInfo(openChunk=True)
+        cmds.undoInfo(openChunk=True)
         side = ""
         if self.armSideLeft.isChecked():
             side = "left"
@@ -1483,15 +1484,15 @@ class MainUI(QtWidgets.QMainWindow):
         elif self.armSideAuto.isChecked():
             side = "auto"
         self.initSkeleton.initLimb("arm", whichSide=side, defineAs=self.defineAs)
-        pm.undoInfo(closeChunk=True)
+        cmds.undoInfo(closeChunk=True)
 
     def createSpine(self):
-        pm.undoInfo(openChunk=True)
+        cmds.undoInfo(openChunk=True)
         self.initSkeleton.initLimb("spine", segments=self.spineSegInt.value(), defineAs=self.defineAs)
-        pm.undoInfo(closeChunk=True)
+        cmds.undoInfo(closeChunk=True)
 
     def createFinger(self):
-        pm.undoInfo(openChunk=True)
+        cmds.undoInfo(openChunk=True)
 
         side = ""
         if self.fingerSideLeft.isChecked():
@@ -1504,10 +1505,10 @@ class MainUI(QtWidgets.QMainWindow):
             side = "auto"
 
         self.initSkeleton.initLimb("finger", whichSide=side, defineAs=self.defineAs)
-        pm.undoInfo(closeChunk=True)
+        cmds.undoInfo(closeChunk=True)
 
     def createLeg(self):
-        pm.undoInfo(openChunk=True)
+        cmds.undoInfo(openChunk=True)
 
         side = ""
         if self.legSideLeft.isChecked():
@@ -1522,10 +1523,10 @@ class MainUI(QtWidgets.QMainWindow):
             side = "auto"
 
         self.initSkeleton.initLimb("leg", whichSide=side, defineAs=self.defineAs)
-        pm.undoInfo(closeChunk=True)
+        cmds.undoInfo(closeChunk=True)
 
     def createTail(self):
-        pm.undoInfo(openChunk=True)
+        cmds.undoInfo(openChunk=True)
 
         side = ""
         if self.tailSideLeft.isChecked():
@@ -1540,15 +1541,15 @@ class MainUI(QtWidgets.QMainWindow):
             side = "auto"
         print "side", side
         self.initSkeleton.initLimb("tail", whichSide=side, segments=self.tailSegInt.value(), defineAs=self.defineAs)
-        pm.undoInfo(closeChunk=True)
+        cmds.undoInfo(closeChunk=True)
 
     def createNeck(self):
-        pm.undoInfo(openChunk=True)
+        cmds.undoInfo(openChunk=True)
         self.initSkeleton.initLimb("neck", segments=self.neckSegInt.value(), defineAs=self.defineAs)
-        pm.undoInfo(closeChunk=True)
+        cmds.undoInfo(closeChunk=True)
 
     def createTentacle(self):
-        pm.undoInfo(openChunk=True)
+        cmds.undoInfo(openChunk=True)
 
         side = ""
         if self.tentacleSideLeft.isChecked():
@@ -1563,15 +1564,15 @@ class MainUI(QtWidgets.QMainWindow):
             side = "auto"
 
         self.initSkeleton.initLimb("tentacle", whichSide=side, segments=self.tentacleSegInt.value(), defineAs=self.defineAs)
-        pm.undoInfo(closeChunk=True)
+        cmds.undoInfo(closeChunk=True)
 
     def createRoot(self):
-        pm.undoInfo(openChunk=True)
+        cmds.undoInfo(openChunk=True)
         self.initSkeleton.initLimb("root", defineAs=self.defineAs)
-        pm.undoInfo(closeChunk=True)
+        cmds.undoInfo(closeChunk=True)
 
     def rig(self):
-        pm.undoInfo(openChunk=True)
+        cmds.undoInfo(openChunk=True)
         self.progressBar()
         # self.progress_Dialog.show()
         self.rigger.__init__(settingsData=self.settingsData, progressBar=self.progress_progressBar)
@@ -1583,16 +1584,16 @@ class MainUI(QtWidgets.QMainWindow):
         self.rigger.replaceExisting = self.replaceExistingRig_checkbox.isChecked()
         self.rigger.startBuilding(createAnchors=self.isCreateAnchorsChk.isChecked())
         self.progress_Dialog.close()
-        pm.undoInfo(closeChunk=True)
+        cmds.undoInfo(closeChunk=True)
 
     def addRig(self):
-        pm.undoInfo(openChunk=True)
+        cmds.undoInfo(openChunk=True)
         # self.rigger.__init__()
         self.progressBar()
         self.rigger.__init__(settingsData=self.settingsData, progressBar=self.progress_progressBar)
         self.rigger.createlimbs(addLimb=True)
         self.progress_Dialog.close()
-        pm.undoInfo(closeChunk=True)
+        cmds.undoInfo(closeChunk=True)
 
     def keyPressEvent(self, event):
         ## If Ctrl is pressed, change the button labels
