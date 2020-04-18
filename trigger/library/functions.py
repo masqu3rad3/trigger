@@ -345,8 +345,8 @@ def lockAndHide (node, channelArray, hide=True):
     """
     Locks and hides the channels specified in the channelArray.
     Args:
-        node: Node 
-        channelArray: Must be list value containing the channels as string values. eg: ["sx", "sy", "sz"] or ["translateX", "rotateX", "sz"] 
+        node: Node
+        channelArray: Must be list value containing the channels as string values. eg: ["sx", "sy", "sz"] or ["translateX", "rotateX", "sz"]
 
     Returns: None
 
@@ -372,12 +372,12 @@ def attrPass (sourceNode, targetNode, attributes=[], inConnections=True, outConn
     """
     Copies the attributes from source node to the target node.
     Args:
-        sourceNode: (Unicode) Source Object which the attributes will be copied from 
+        sourceNode: (Unicode) Source Object which the attributes will be copied from
         targetNode: (Unicode) Target Object which the attributes will be copied onto.
         attributes: (List of Strings) Optional. If left blank, all user defined custom attributes will be copied. Accepts String list.
         inConnections: (Bool) whether the incoming connections will be copied or not. Default is True. daisyChain overrides this argument.
-        outConnections: (Bool) whether the incoming connections will be copied or not. Default is True. If True, the present out connections of source object will be lost. 
-        keepSourceAttributes: (Bool) If False the copied attributes will be deleted from the source node. Default is False 
+        outConnections: (Bool) whether the incoming connections will be copied or not. Default is True. If True, the present out connections of source object will be lost.
+        keepSourceAttributes: (Bool) If False the copied attributes will be deleted from the source node. Default is False
         values: (Bool) If True the values of the attributes will be copied as well
         daisyChain: (Bool) If true, instead of copyAttr command, it connects the source attributes to the target attributes. Non-destructive. Overrides inConnections and outConnections.
         overrideExisting: (Bool) When this flas set to True, if an Attribute on the target node with the same name exists, it gets deleted and created again to ensure it has the same properties.
@@ -821,30 +821,12 @@ def getParent(node):
 def getShapes(node):
     return cmds.listRelatives(node, c=True, shapes=True)
 
-<<<<<<< HEAD
 def matrixConstraint(parent, child, mo=True, prefix="", sr=None, st=None, ss=None):
     child_parent = getParent(child)
     # if child_parent:
     #     cmds.parent(child, w=True)
 
 
-=======
-def matrixConstraint(parent, child, translate=True, rotate=True, scale=False, mo=True, prefix=""):
-    """
-    Alternative for single parent parent constraints. Faster.
-    Args:
-        parent(string): driver node.
-        child(string): driven node.
-        translate(bool): if True constraints translate channels. Default True.
-        rotate(bool): if True constraints rotate channels. Default True.
-        scale(bool): if True constraints scale channels. Default False.
-        mo(bool): Short for Maintain Offset. Default True.
-        prefix(string): Prefix for the nodes will be created.
-
-    Returns(tuple): (<multMatrix node>, <decomposeMatrix node>)
-
-    """
->>>>>>> 4ee0da78de319ebb99de2b01741f97c5da7a63aa
     mult_matrix = cmds.createNode("multMatrix", name="%s_multMatrix" % prefix)
     decompose_matrix = cmds.createNode("decomposeMatrix", name="%s_decomposeMatrix" % prefix)
 
