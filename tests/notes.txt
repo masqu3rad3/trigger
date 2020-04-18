@@ -15,3 +15,11 @@ self.j_ik_orig_up => self.j_ik_orig_root
 self.j_ik_orig_low => self.j_ik_orig_knee
 self.j_ik_orig_low_end => self.j_ik_orig_end
 
+
+## Matrix Constraint
+
+Matrix constraint should not use be used if:
+- Driven node is a joint
+- Driver or driven has a frozen transform
+- Rotate pivot of the driven has been changed
+- If there are multiple drivers the driver weights will be altered later

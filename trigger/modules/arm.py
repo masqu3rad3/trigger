@@ -380,12 +380,12 @@ class Arm(object):
         self.cont_mid_lock_ave = extra.createUpGrp(self.cont_mid_lock, "AVE")
 
         cmds.parent(self.cont_shoulder_off, self.scaleGrp)
-        cmds.parent(self.cont_fk_up_arm_off, self.scaleGrp)
-        cmds.parent(self.cont_fk_low_arm_off, self.scaleGrp)
-        cmds.parent(self.cont_fk_hand_off, self.scaleGrp)
+        cmds.parent(self.cont_fk_up_arm_off, self.nonScaleGrp)
+        cmds.parent(self.cont_fk_low_arm_off, self.nonScaleGrp)
+        cmds.parent(self.cont_fk_hand_off, self.nonScaleGrp)
         cmds.parent(self.cont_mid_lock_ext, self.scaleGrp)
         cmds.parent(self.cont_pole_off, self.scaleGrp)
-        cmds.parent(self.cont_fk_ik_pos, self.scaleGrp)
+        cmds.parent(self.cont_fk_ik_pos, self.nonScaleGrp)
         cmds.parent(self.cont_IK_OFF, self.limbGrp)
 
         nodesContVis = [self.cont_pole_off, self.cont_shoulder_off, self.cont_IK_OFF, self.cont_fk_hand_off,
@@ -432,8 +432,6 @@ class Arm(object):
         cmds.parentConstraint(self.mid_lock, self.j_def_elbow)
         # extra.matrixConstraint(self.mid_lock, self.j_def_elbow)
 
-        print "mid_lock:", self.mid_lock
-        print "cont_mid_lock:", self.cont_mid_lock
         # cmds.parentConstraint(self.cont_mid_lock, self.mid_lock, mo=False)
         extra.matrixConstraint(self.cont_mid_lock, self.mid_lock, mo=False)
 
@@ -447,7 +445,8 @@ class Arm(object):
         self.hand_lock = cmds.spaceLocator(name="handLock_%s" % self.suffix)[0]
         extra.alignTo(self.hand_lock, self.cont_fk_hand_off, position=True, rotation=True)
 
-        cmds.parentConstraint(self.cont_fk_hand, self.hand_lock, mo=False)
+        # cmds.parentConstraint(self.cont_fk_hand, self.hand_lock, mo=False)
+        extra.matrixConstraint(self.cont_fk_hand, self.hand_lock, mo=False)
 
         self.root_master = cmds.spaceLocator(name="handMaster_%s" % self.suffix)[0]
         extra.alignTo(self.root_master, self.j_def_hand, position=True, rotation=True)
@@ -458,7 +457,7 @@ class Arm(object):
 
         # cmds.parent(self.mid_lock, self.scaleGrp)
         cmds.parent(self.mid_lock, self.nonScaleGrp)
-        cmds.parent(self.hand_lock, self.scaleGrp)
+        cmds.parent(self.hand_lock, self.nonScaleGrp)
         cmds.parent(self.master_root, self.scaleGrp)
         cmds.parent(self.root_master, self.scaleGrp)
 
@@ -646,7 +645,8 @@ class Arm(object):
         self.ik_parent_grp = cmds.group(name="IK_parentGRP_%s" % self.suffix, em=True)
         extra.alignTo(self.ik_parent_grp, self.j_def_hand, position=True, rotation=True)
 
-        cmds.parentConstraint(self.cont_IK_hand, self.ik_parent_grp, mo=False)
+        # cmds.parentConstraint(self.cont_IK_hand, self.ik_parent_grp, mo=False)
+        extra.matrixConstraint(self.cont_IK_hand, self.ik_parent_grp, mo=False)
 
         # parenting should be after the constraint
         cmds.parent(ik_handle_sc[0], self.ik_parent_grp)
@@ -712,16 +712,17 @@ class Arm(object):
         pacon_locator_shou = cmds.spaceLocator(name="paConLoc_%s" % self.suffix)[0]
         extra.alignTo(pacon_locator_shou, self.j_def_collar, position=True, rotation=True)
 
-        j_def_pa_con = cmds.parentConstraint(self.cont_shoulder, pacon_locator_shou, mo=False)
+        # j_def_pa_con = cmds.parentConstraint(self.cont_shoulder, pacon_locator_shou, mo=False)
+        extra.matrixConstraint(self.cont_shoulder, pacon_locator_shou, mo=False)
 
         cmds.parent(arm_start, self.scaleGrp)
         cmds.parent(arm_end, self.scaleGrp)
-        cmds.parent(self.ik_parent_grp, self.scaleGrp)
+        cmds.parent(self.ik_parent_grp, self.nonScaleGrp)
         # cmds.parent(self.start_lock_ore, self.scaleGrp)
         cmds.parent(self.start_lock_ore, self.nonScaleGrp)
         cmds.parent(self.end_lock_ore, self.scaleGrp)
 
-        cmds.parent(pacon_locator_shou, self.scaleGrp)
+        cmds.parent(pacon_locator_shou, self.nonScaleGrp)
         cmds.parent(self.j_def_collar, pacon_locator_shou)
 
         cmds.connectAttr("{0}.rigVis".format(self.scaleGrp), "{0}.v".format(arm_start))
@@ -740,12 +741,15 @@ class Arm(object):
 
         cmds.orientConstraint(self.cont_fk_low_arm, self.j_fk_low, mo=False)
 
-        cmds.parentConstraint(self.j_collar_end, self.cont_fk_up_arm_off, sr=("x", "y", "z"), mo=False)
+        # cmds.parentConstraint(self.j_collar_end, self.cont_fk_up_arm_off, sr=("x", "y", "z"), mo=False)
+        extra.matrixConstraint(self.j_collar_end, self.cont_fk_up_arm_off, sr=("x", "y", "z"), mo=False)
 
         # TODO : TAKE A LOOK TO THE OFFSET SOLUTION
-        cmds.parentConstraint(self.cont_fk_up_arm, self.cont_fk_low_arm_off, mo=True)
+        # cmds.parentConstraint(self.cont_fk_up_arm, self.cont_fk_low_arm_off, mo=True)
+        extra.matrixConstraint(self.cont_fk_up_arm, self.cont_fk_low_arm_off, mo=True)
 
-        cmds.parentConstraint(self.cont_fk_low_arm, self.cont_fk_hand_pos, mo=True)
+        # cmds.parentConstraint(self.cont_fk_low_arm, self.cont_fk_hand_pos, mo=True)
+        extra.matrixConstraint(self.cont_fk_low_arm, self.cont_fk_hand_pos, mo=True)
 
     def ikfkSwitching(self):
 
@@ -784,8 +788,8 @@ class Arm(object):
 
         # the following offset parent constraint is not important and wont cause any trouble since
         # it only affects the FK/IK icon
-        cmds.parentConstraint(self.end_lock, self.cont_fk_ik_pos, mo=True)
-        # pm.parent(self.end_lock_ore, self.scaleGrp)
+        # cmds.parentConstraint(self.end_lock, self.cont_fk_ik_pos, mo=True)
+        extra.matrixConstraint(self.end_lock, self.cont_fk_ik_pos, mo=True)
 
         # end_lock_rot = pm.parentConstraint(ik_parent_grp, cont_fk_hand, end_lock_twist, st=("x", "y", "z"), mo=True)
         end_lock_rot =cmds.parentConstraint(self.ik_parent_grp, self.cont_fk_hand, self.end_lock_twist,
@@ -822,6 +826,7 @@ class Arm(object):
 
         ribbon_start_pa_con_upper_arm_start = cmds.parentConstraint(self.start_lock, ribbon_upper_arm.startConnection, mo=True)[0]
         cmds.parentConstraint(self.mid_lock, ribbon_upper_arm.endConnection, mo=True)
+        # extra.matrixConstraint(self.mid_lock, ribbon_upper_arm.endConnection, mo=True)
 
         # connect the elbow scaling
         cmds.connectAttr("{0}.scale".format(self.cont_mid_lock), "{0}.scale".format(ribbon_upper_arm.endConnection))
@@ -1001,9 +1006,12 @@ class Arm(object):
         angleExt_Fixed_IK = cmds.spaceLocator(name="angleExt_Fixed_IK_%s" % self.suffix)[0]
         angleExt_Float_IK = cmds.spaceLocator(name="angleExt_Float_IK_%s" % self.suffix)[0]
         cmds.parent(angleExt_Fixed_IK, angleExt_Float_IK, angleExt_Root_IK)
-
-        cmds.parentConstraint(self.limbPlug, angleExt_Root_IK, mo=False)
-        cmds.parentConstraint(self.cont_IK_hand, angleExt_Fixed_IK, mo=False)
+        # cmds.error("BREAK")
+        # cmds.parentConstraint(self.limbPlug, angleExt_Root_IK, mo=False)
+        extra.matrixConstraint(self.limbPlug, angleExt_Root_IK, mo=False)
+        # cmds.parentConstraint(self.cont_IK_hand, angleExt_Fixed_IK, mo=False)
+        # extra.matrixConstraint(self.cont_IK_hand, angleExt_Fixed_IK, mo=False, ss=("x","y","z"))
+        cmds.pointConstraint(self.cont_IK_hand, angleExt_Fixed_IK, mo=False)
         extra.alignToAlter(angleExt_Float_IK, self.j_def_collar, 2)
         cmds.move(0, 0, -self.sideMult*5, angleExt_Float_IK, objectSpace=True)
 
@@ -1023,7 +1031,6 @@ class Arm(object):
         cmds.connectAttr("{0}.outValue".format(angleRemapIK), "{0}.input1".format(angleMultIK))
         cmds.setAttr("{0}.input2".format(angleMultIK), 0.5)
 
-        print angleExt_Root_IK, angleExt_Fixed_IK, angleExt_Float_IK
         # FK Angle Extractor
         angleRemapFK = cmds.createNode("remapValue", name="angleRemapFK_%s" % self.suffix)
         angleMultFK = cmds.createNode("multDoubleLinear", name="angleMultFK_%s" % self.suffix)
@@ -1052,13 +1059,14 @@ class Arm(object):
 
         cmds.connectAttr("{0}.output".format(angleGlobal), "{0}.rotateY".format(self.cont_shoulder_auto))
 
-        cmds.parent(angleExt_Root_IK, self.scaleGrp)
-        cmds.connectAttr("{0}.rigVis".format(self.scaleGrp), "{0}.v".format(angleExt_Root_IK))
+        cmds.parent(angleExt_Root_IK, self.nonScaleGrp)
+        # cmds.connectAttr("{0}.rigVis".format(self.scaleGrp), "{0}.v".format(angleExt_Root_IK))
         return
 
 
     def roundUp(self):
-        cmds.parentConstraint(self.limbPlug, self.scaleGrp, mo=False)
+        # cmds.parentConstraint(self.limbPlug, self.scaleGrp, mo=False)
+        extra.matrixConstraint(self.limbPlug, self.scaleGrp, mo=False)
 
         cmds.setAttr("%s.rigVis" % self.scaleGrp, 0)
 

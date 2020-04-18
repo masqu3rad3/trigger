@@ -75,14 +75,14 @@ class PowerRibbon():
 
         #End Upnodes
         cmds.select(d=True)
-        end_AIM = cmds.group(name="jRbn_End_%s" %name, em=True)
+        end_AIM = cmds.group(name="jRbn_End_%s_AIM" %name, em=True)
         cmds.move(-(ribbonLength/-2.0), 0, 0, end_AIM)
         cmds.makeIdentity(end_AIM, a=True)
-        end_UP = cmds.spaceLocator(name="jRbn_End_%s" %name)[0]
+        end_UP = cmds.spaceLocator(name="jRbn_End_%s_UP" %name)[0]
         self.toHide.append(extra.getShapes(end_UP)[0])
         cmds.move(-(ribbonLength/-2.0), 0.5, 0, end_UP)
 
-        self.endConnection = cmds.spaceLocator(name="jRbn_End_%s" %name)[0]
+        self.endConnection = cmds.spaceLocator(name="jRbn_End_%s_endCon" %name)[0]
         self.toHide.append(extra.getShapes(self.endConnection)[0])
         cmds.move(-(ribbonLength / -2.0), 0, 0, self.endConnection)
         cmds.makeIdentity(self.endConnection, a=True)
