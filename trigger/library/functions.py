@@ -2,10 +2,11 @@ import maya.cmds as cmds
 # import maya.OpenMaya as om
 # USING MAYA API 2.0
 import maya.api.OpenMaya as om
+from trigger.modules import all_modules_data
 
 import logging
 LOG = logging.getLogger(__name__)
-LOG.setLevel(logging.INFO)
+LOG.setLevel(logging.DEBUG)
 
 def getMDagPath(node):
     selList = om.MSelectionList()
@@ -639,15 +640,14 @@ def identifyMaster(node):
     ## get the label ID
     typeNum = cmds.getAttr("%s.type" %node)
     if typeNum not in typeDict.keys():
-        cmds.warning("Joint Type cannot be detected (%s)" % node)
+        LOG.warning("Joint Type cannot be detected (%s)" % node)
     if typeNum == 18:  # if type is in the 'other' category:
         limbName = cmds.getAttr("{0}.otherType".format(node))
     else:
         limbName = typeDict[typeNum]
-        # get which limb it is
-    for value in limbDictionary.values():
-        if limbName in value:
-            limbType = limbDictionary.keys()[limbDictionary.values().index(value)]
+
+    for key, value in all_modules_data.MODULE_DICTIONARY.items():
+        limbType = key if limbName in value else limbType
 
     ## Get the Side
     sideDict = {
@@ -658,7 +658,7 @@ def identifyMaster(node):
 
     sideNum = cmds.getAttr("{0}.side".format(node))
     if sideNum not in sideDict.keys():
-        cmds.warning("Joint Side cannot not be detected (%s)" % node)
+        LOG.warning("Joint Side cannot not be detected (%s)" % node)
     side = sideDict[sideNum]
 
     return limbName, limbType, side

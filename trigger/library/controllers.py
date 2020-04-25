@@ -317,7 +317,9 @@ class Icon(object):
         for i in range(0, 4):
             newTri = cmds.duplicate(masterTri, name="arrow_%i" %i)[0]
             cmds.makeIdentity(newTri, a=True)
-            newTriShape = cmds.listRelatives(newTri, s=True)[0]
+            newTriShape = extra.getShapes(newTri)[0]
+            # previously created tricircle shapes clashes with this
+            newTriShape = cmds.rename(newTriShape, extra.uniqueName(newTriShape))
             cmds.rotate(0, 90, 0, masterTri, r=True)
             cmds.parent(newTriShape, cont_triCircle, r=True, s=True)
             cmds.delete(newTri)

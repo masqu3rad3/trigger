@@ -1088,65 +1088,65 @@ class Arm(object):
         self.createAngleExtractors()
         self.roundUp()
 
-    def draw_guides(self, side="L", suffix="arm", tMatrix=None, lookVector=(0,0,1)):
-        if not tMatrix:
-            tMatrix=om.MMatrix()
-
-        sideMult = -1 if side == 2 else 1
-        # Initial Joint positions for centered arm
-        if side == 0:
-            collarVec = om.MVector(0, 0, 2) * tMatrix
-            shoulderVec = om.MVector(0, 0, 5) * tMatrix
-            elbowVec =  om.MVector(0, -1, 9) * tMatrix
-            handVec =  om.MVector(0, 0, 14 ) * tMatrix
-        # Initial Joint positions for left arm
-        else:
-            collarVec =  om.MVector(2*sideMult, 0, 0) * tMatrix
-            shoulderVec =  om.MVector(5*sideMult, 0, 0) * tMatrix
-            elbowVec =  om.MVector(9*sideMult, 0, -1) * tMatrix
-            handVec =  om.MVector(14*sideMult, 0, 0 ) * tMatrix
-
-        offsetVector = -((collarVec-shoulderVec).normalize())
-
-        cmds.select(d=True)
-        collar = cmds.joint(p=collarVec, name=("jInit_collar_%s" % suffix))
-        cmds.setAttr("{0}.radius".format(collar), 3)
-        shoulder = cmds.joint(p=shoulderVec, name=("jInit_shoulder_%s" % suffix))
-        elbow = cmds.joint(p=elbowVec, name=("jInit_elbow_%s" % suffix))
-        hand = cmds.joint(p=handVec, name=("jInit_hand_%s" % suffix))
-
-        cmds.setAttr("{0}.displayLocalAxis".format(collar), 1)
-        cmds.setAttr("{0}.displayLocalAxis".format(shoulder), 1)
-        cmds.setAttr("{0}.displayLocalAxis".format(elbow), 1)
-        cmds.setAttr("{0}.displayLocalAxis".format(hand), 1)
-
-        # Orientation
-        extra.orientJoints([collar, shoulder, elbow, hand], worldUpAxis=lookVector, upAxis=(0, 1, 0), reverseAim=sideMult, reverseUp=sideMult)
-
-        # Joint Labeling
-        cmds.setAttr("%s.side" % collar, side)
-        cmds.setAttr("%s.type" % collar, 9)
-        cmds.setAttr("%s.side" % shoulder, side)
-        cmds.setAttr("%s.type" % shoulder, 10)
-        cmds.setAttr("%s.side" % elbow, side)
-        cmds.setAttr("%s.type" % elbow, 11)
-        cmds.setAttr("%s.side" % hand, side)
-        cmds.setAttr("%s.type" % hand, 12)
-
-        # custom Attributes
-        self.createAxisAttributes(collar)
-
-        jointList=[collar, shoulder, elbow, hand]
-        for joint in jointList:
-            cmds.setAttr("%s.drawLabel" % joint, 1)
-        self.armJointsList.append(jointList)
-
-        if side == 0:
-            extra.colorize(jointList, self.majorCenterColor, shape=False)
-        if side == 1:
-            extra.colorize(jointList, self.majorLeftColor, shape=False)
-        if side == 2:
-            extra.colorize(jointList, self.majorRightColor, shape=False)
-
-        return jointList, offsetVector
+    # def draw_guides(self, side="L", suffix="arm", tMatrix=None, lookVector=(0,0,1)):
+    #     if not tMatrix:
+    #         tMatrix=om.MMatrix()
+    #
+    #     sideMult = -1 if side == 2 else 1
+    #     # Initial Joint positions for centered arm
+    #     if side == 0:
+    #         collarVec = om.MVector(0, 0, 2) * tMatrix
+    #         shoulderVec = om.MVector(0, 0, 5) * tMatrix
+    #         elbowVec =  om.MVector(0, -1, 9) * tMatrix
+    #         handVec =  om.MVector(0, 0, 14 ) * tMatrix
+    #     # Initial Joint positions for left arm
+    #     else:
+    #         collarVec =  om.MVector(2*sideMult, 0, 0) * tMatrix
+    #         shoulderVec =  om.MVector(5*sideMult, 0, 0) * tMatrix
+    #         elbowVec =  om.MVector(9*sideMult, 0, -1) * tMatrix
+    #         handVec =  om.MVector(14*sideMult, 0, 0 ) * tMatrix
+    #
+    #     offsetVector = -((collarVec-shoulderVec).normalize())
+    #
+    #     cmds.select(d=True)
+    #     collar = cmds.joint(p=collarVec, name=("jInit_collar_%s" % suffix))
+    #     cmds.setAttr("{0}.radius".format(collar), 3)
+    #     shoulder = cmds.joint(p=shoulderVec, name=("jInit_shoulder_%s" % suffix))
+    #     elbow = cmds.joint(p=elbowVec, name=("jInit_elbow_%s" % suffix))
+    #     hand = cmds.joint(p=handVec, name=("jInit_hand_%s" % suffix))
+    #
+    #     cmds.setAttr("{0}.displayLocalAxis".format(collar), 1)
+    #     cmds.setAttr("{0}.displayLocalAxis".format(shoulder), 1)
+    #     cmds.setAttr("{0}.displayLocalAxis".format(elbow), 1)
+    #     cmds.setAttr("{0}.displayLocalAxis".format(hand), 1)
+    #
+    #     # Orientation
+    #     extra.orientJoints([collar, shoulder, elbow, hand], worldUpAxis=lookVector, upAxis=(0, 1, 0), reverseAim=sideMult, reverseUp=sideMult)
+    #
+    #     # Joint Labeling
+    #     cmds.setAttr("%s.side" % collar, side)
+    #     cmds.setAttr("%s.type" % collar, 9)
+    #     cmds.setAttr("%s.side" % shoulder, side)
+    #     cmds.setAttr("%s.type" % shoulder, 10)
+    #     cmds.setAttr("%s.side" % elbow, side)
+    #     cmds.setAttr("%s.type" % elbow, 11)
+    #     cmds.setAttr("%s.side" % hand, side)
+    #     cmds.setAttr("%s.type" % hand, 12)
+    #
+    #     # custom Attributes
+    #     self.createAxisAttributes(collar)
+    #
+    #     jointList=[collar, shoulder, elbow, hand]
+    #     for joint in jointList:
+    #         cmds.setAttr("%s.drawLabel" % joint, 1)
+    #     self.armJointsList.append(jointList)
+    #
+    #     if side == 0:
+    #         extra.colorize(jointList, self.majorCenterColor, shape=False)
+    #     if side == 1:
+    #         extra.colorize(jointList, self.majorLeftColor, shape=False)
+    #     if side == 2:
+    #         extra.colorize(jointList, self.majorRightColor, shape=False)
+    #
+    #     return jointList, offsetVector
 

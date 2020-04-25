@@ -1,4 +1,5 @@
 from maya import cmds
+from trigger.modules import all_modules_data
 import trigger.library.functions as extra
 import trigger.library.controllers as ic
 import trigger.modules.arm as arm
@@ -20,8 +21,9 @@ class LimbBuilder():
     def __init__(self, settingsData, progressBar=None):
         # super(LimbBuilder, self).__init__()
         self.progressBar = progressBar
-        self.validRootList = ["Collar", "LegRoot", "Root", "SpineRoot", "NeckRoot", "TailRoot", "FingerRoot",
-                              "ThumbRoot", "IndexRoot", "MiddleRoot", "RingRoot", "PinkyRoot", "TentacleRoot"]
+        self.validRootList = [values[0] for values in all_modules_data.MODULE_DICTIONARY.values()]
+        # self.validRootList = ["Collar", "LegRoot", "Root", "SpineRoot", "NeckRoot", "TailRoot", "FingerRoot",
+        #                       "ThumbRoot", "IndexRoot", "MiddleRoot", "RingRoot", "PinkyRoot", "TentacleRoot"]
         self.fingerMatchList = []
         self.fingerMatchConts = []
         self.hipDistance = 1
