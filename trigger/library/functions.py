@@ -1,10 +1,11 @@
-
-
-
 import maya.cmds as cmds
 # import maya.OpenMaya as om
 # USING MAYA API 2.0
 import maya.api.OpenMaya as om
+
+import logging
+LOG = logging.getLogger(__name__)
+LOG.setLevel(logging.INFO)
 
 def getMDagPath(node):
     selList = om.MSelectionList()
@@ -590,12 +591,9 @@ def attrPass (sourceNode, targetNode, attributes=[], inConnections=True, outConn
 #                 pm.deleteAttr("{0}.{1}".format(node, switch))
 
 
-def identifyMaster(node, idBy="idByLabel"):
-    validIdByValues = ("idByLabel, idByName")
-
+def identifyMaster(node):
     # define values as no
     limbType = "N/A"
-    limbName = "N/A"
 
     typeDict = {
         1: 'Root',
@@ -638,17 +636,10 @@ def identifyMaster(node, idBy="idByLabel"):
         "root": ["Root"]
     }
 
-    if not idBy in validIdByValues:
-        cmds.error("idBy flag is not valid. Valid Values are:%s" %(validIdByValues))
-
     ## get the label ID
-    if idBy == "idByLabel":
-        if cmds.objectType(node) != "joint":
-            cmds.warning("label identification can only be used for joints")
     typeNum = cmds.getAttr("%s.type" %node)
     if typeNum not in typeDict.keys():
-        cmds.warning("Joint Type is not detected with idByLabel method")
-
+        cmds.warning("Joint Type cannot be detected (%s)" % node)
     if typeNum == 18:  # if type is in the 'other' category:
         limbName = cmds.getAttr("{0}.otherType".format(node))
     else:
@@ -659,32 +650,114 @@ def identifyMaster(node, idBy="idByLabel"):
             limbType = limbDictionary.keys()[limbDictionary.values().index(value)]
 
     ## Get the Side
-
     sideDict = {
         0: 'C',
         1: 'L',
         2: 'R',
     }
 
-    if idBy == "idByLabel":
-            sideNum = cmds.getAttr("{0}.side".format(node))
-
-            if sideNum not in sideDict.keys():
-                cmds.warning("Joint Side is not detected with idByLabel method")
-            side = sideDict[sideNum]
-
-    if idBy == "idByName":
-        # identify the side
-        if "_R_" in node:
-            side = sideDict[2]
-        elif "_L_" in node:
-            side = sideDict[1]
-        elif "_C_" in node:
-            side = sideDict[0]
-        else:
-            cmds.warning("Joint Side is not detected with idByName method")
+    sideNum = cmds.getAttr("{0}.side".format(node))
+    if sideNum not in sideDict.keys():
+        cmds.warning("Joint Side cannot not be detected (%s)" % node)
+    side = sideDict[sideNum]
 
     return limbName, limbType, side
+
+# def identifyMaster(node, idBy="idByLabel"):
+#     validIdByValues = ("idByLabel, idByName")
+#
+#     # define values as no
+#     limbType = "N/A"
+#     limbName = "N/A"
+#
+#     typeDict = {
+#         1: 'Root',
+#         2: 'Hip',
+#         3: 'Knee',
+#         4: 'Foot',
+#         5: 'Toe',
+#         6: 'Spine',
+#         7: 'Neck',
+#         8: 'Head',
+#         9: 'Collar',
+#         10: 'Shoulder',
+#         11: 'Elbow',
+#         12: 'Hand',
+#         13: 'Finger',
+#         14: 'Thumb',
+#         18: 'Other',
+#         19: 'Index_F',
+#         20: 'Middle_F',
+#         21: 'Ring_F',
+#         22: 'Pinky_F',
+#         23: 'Extra_F',
+#         24: 'Big_T',
+#         25: 'Index_T',
+#         26: 'Middle_T',
+#         27: 'Ring_T',
+#         28: 'Pinky_T',
+#         29: 'Extra_T'
+#     }
+#
+#     limbDictionary = {
+#         "arm": ["Collar", "Shoulder", "Elbow", "Hand"],
+#         "leg": ["LegRoot", "Hip", "Knee", "Foot", "Ball", "HeelPV", "ToePV", "BankIN", "BankOUT"],
+#         # "hand": ["Finger", "Thumb", "Index_F", "Middle_F", "Ring_F", "Pinky_F", "Extra_F"],
+#         "spine": ["Spine", "SpineRoot", "SpineEnd"],
+#         "neck": ["NeckRoot", "Neck", "Head", "Jaw", "HeadEnd"],
+#         "tail": ["TailRoot", "Tail"],
+#         "finger": ["FingerRoot", "Finger"],
+#         "tentacle": ["TentacleRoot", "Tentacle", "TentacleEnd"],
+#         "root": ["Root"]
+#     }
+#
+#     if not idBy in validIdByValues:
+#         cmds.error("idBy flag is not valid. Valid Values are:%s" %(validIdByValues))
+#
+#     ## get the label ID
+#     if idBy == "idByLabel":
+#         if cmds.objectType(node) != "joint":
+#             cmds.warning("label identification can only be used for joints")
+#     typeNum = cmds.getAttr("%s.type" %node)
+#     if typeNum not in typeDict.keys():
+#         cmds.warning("Joint Type is not detected with idByLabel method")
+#
+#     if typeNum == 18:  # if type is in the 'other' category:
+#         limbName = cmds.getAttr("{0}.otherType".format(node))
+#     else:
+#         limbName = typeDict[typeNum]
+#         # get which limb it is
+#     for value in limbDictionary.values():
+#         if limbName in value:
+#             limbType = limbDictionary.keys()[limbDictionary.values().index(value)]
+#
+#     ## Get the Side
+#
+#     sideDict = {
+#         0: 'C',
+#         1: 'L',
+#         2: 'R',
+#     }
+#
+#     if idBy == "idByLabel":
+#             sideNum = cmds.getAttr("{0}.side".format(node))
+#
+#             if sideNum not in sideDict.keys():
+#                 cmds.warning("Joint Side is not detected with idByLabel method")
+#             side = sideDict[sideNum]
+#
+#     if idBy == "idByName":
+#         # identify the side
+#         if "_R_" in node:
+#             side = sideDict[2]
+#         elif "_L_" in node:
+#             side = sideDict[1]
+#         elif "_C_" in node:
+#             side = sideDict[0]
+#         else:
+#             cmds.warning("Joint Side is not detected with idByName method")
+#
+#     return limbName, limbType, side
 
 
 #
@@ -865,3 +938,4 @@ def matrixConstraint(parent, child, mo=True, prefix="", sr=None, st=None, ss=Non
                 cmds.connectAttr("%s.outputScale%s" % (decompose_matrix, attr), "%s.scale%s" % (child, attr))
 
     return mult_matrix, decompose_matrix
+

@@ -1,4 +1,3 @@
-# import pymel.core as pm
 from maya import cmds
 from trigger.library import functions as extra
 from trigger.library import controllers as ic

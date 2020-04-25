@@ -1,8 +1,5 @@
 ## Mr. Cubic
-
-# import pymel.core as pm
 from maya import cmds
-
 import trigger.library.functions as extra
 
 def mrCube (jointList, width=1):

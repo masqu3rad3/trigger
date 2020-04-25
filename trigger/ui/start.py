@@ -1,6 +1,4 @@
-# import pymel.core as pm
 from maya import cmds
-
 from trigger import Qt
 from trigger.Qt import QtWidgets, QtCore, QtGui
 from maya import OpenMayaUI as omui

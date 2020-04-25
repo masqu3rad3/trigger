@@ -1,5 +1,3 @@
-# import pymel.core as pm
-
 from maya import cmds
 import trigger.library.functions as extra
 import trigger.library.controllers as ic
@@ -11,19 +9,8 @@ import trigger.modules.tail as simpleTail
 import trigger.modules.digits as finger
 import trigger.modules.tentacle as tentacle
 import trigger.modules.root as root
-import trigger.utils.space_switcher as anchorMaker
+import trigger.utils.space_switcher_old as anchorMaker
 import trigger.library.tools as tools
-
-reload(arm)
-reload(leg)
-reload(neckAndHead)
-reload(spine)
-reload(simpleTail)
-reload(finger)
-reload(tentacle)
-reload(root)
-reload(anchorMaker)
-reload(tools)
 
 # from Qt import QtWidgets, QtCore, QtGui
 from trigger.Qt import QtWidgets
@@ -35,7 +22,6 @@ class LimbBuilder():
         self.progressBar = progressBar
         self.validRootList = ["Collar", "LegRoot", "Root", "SpineRoot", "NeckRoot", "TailRoot", "FingerRoot",
                               "ThumbRoot", "IndexRoot", "MiddleRoot", "RingRoot", "PinkyRoot", "TentacleRoot"]
-        # self.limbList = []
         self.fingerMatchList = []
         self.fingerMatchConts = []
         self.hipDistance = 1
@@ -44,7 +30,6 @@ class LimbBuilder():
         self.anchors = []
         self.hipSize = 1.0
         self.chestSize = 1.0
-        # self.socketDictionary={}
         self.allSocketsList = []
         self.limbCreationList = []
         self.riggedLimbList = []
@@ -54,11 +39,6 @@ class LimbBuilder():
         self.copySkinWeights = False
         self.replaceExisting = False
         self.totalDefJoints = []
-        # self.spineRes = 4
-        # self.neckRes = 3
-        # self.spineDropoff = 2.0
-        # self.neckDropoff = 2.0
-        # self.createAnchors = True
         self.parseSettings(settingsData)
         if self.progressBar:
             self.progressBar.setProperty("value", 0)
@@ -69,8 +49,6 @@ class LimbBuilder():
 
         self.afterCreation = settingsData["afterCreation"]
         self.seperateSelectionSets = settingsData["seperateSelectionSets"]
-
-        # self.rigName = settingsData["rigName"]
         self.majorLeftColor = settingsData["majorLeftColor"]
         self.minorLeftColor = settingsData["minorLeftColor"]
         self.majorRightColor = settingsData["majorRightColor"]
@@ -198,7 +176,6 @@ class LimbBuilder():
                                             )
                 except:
                     pass
-
             # find old skinned meshes
             allJoints = cmds.listRelatives(oldRootGroup, ad=True, c=True, typ="joint")
             allOldDefJoints = extra.uniqueList([j for j in allJoints if j.startswith("jDef")])

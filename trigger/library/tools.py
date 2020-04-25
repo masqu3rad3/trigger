@@ -175,3 +175,112 @@ def rigTransfer(oldSkin, newJointList, deleteOld=False):
         # name = oldSkin.name()
         cmds.delete(oldSkin)
         cmds.rename(newSkin, oldSkin)
+
+
+def replace_curve(orig_curve, new_curve, maintain_offset=True):
+    """Replace orig_curve with new_curve.
+
+    Args:
+        orig_curve (str): nurbsCurve to replace.
+        new_curve (str): nurbsCurve to replace with.
+        maintain_offset (bool, optional): Match position. Defaults to True.
+    """
+    if maintain_offset == True:
+        new_curve = cmds.duplicate(new_curve, rc=1)[0]
+        print new_curve, orig_curve
+        cmds.parentConstraint(orig_curve, new_curve)
+
+    if cmds.objectType(orig_curve) == 'transform':
+        orig_shapes = cmds.listRelatives(orig_curve, s=1)
+
+    if cmds.objectType(new_curve) == 'transform':
+        new_shapes = cmds.listRelatives(new_curve, s=1)
+
+    color = None
+    if cmds.getAttr(orig_shapes[0] + ".overrideEnabled"):
+        color = cmds.getAttr(orig_shapes[0] + ".overrideColor")
+
+    # Make amount of shapes equal
+    shape_dif = len(orig_shapes) - len(new_shapes)
+    if shape_dif != 0:
+        # If original curve has less shapes, create new nulls until equal
+        if shape_dif < 0:
+            for shape in range(0, shape_dif * -1):
+                dupe_curve = cmds.duplicate(orig_shapes, rc=1)[0]
+                dupe_shape = cmds.listRelatives(dupe_curve, s=1)[0]
+                if color:
+                    cmds.setAttr(dupe_shape + ".overrideEnabled", 1)
+                    cmds.setAttr(dupe_shape + ".overrideColor", color)
+                orig_shapes.append(dupe_shape)
+                cmds.select(dupe_shape, orig_curve)
+                cmds.parent(r=1, s=1)
+                cmds.delete(dupe_curve)
+        # If original curve has more shapes, delete shapes until equal
+        if shape_dif > 0:
+            for shape in range(0, shape_dif):
+                cmds.delete(orig_shapes[shape])
+
+    orig_shapes = cmds.listRelatives(orig_curve, s=1)
+    # For each shape, transfer from orignal to new.
+    for new_shape, orig_shape in zip(new_shapes, orig_shapes):
+        cmds.connectAttr(new_shape + ".worldSpace", orig_shape + ".create")
+
+        cmds.dgeval(orig_shape + ".worldSpace")
+        cmds.disconnectAttr(new_shape + ".worldSpace", orig_shape + ".create")
+
+        spans = cmds.getAttr(orig_shape + '.degree')
+        degree = cmds.getAttr(orig_shape + '.spans')
+        for i in range(0, spans + degree):
+            cmds.xform(orig_shape + '.cv[' + str(i) + ']', t=cmds.pointPosition(new_shape + '.cv[' + str(i) + ']'),
+                       ws=1)
+
+    if maintain_offset == True:
+        cmds.delete(new_curve)
+
+
+def mirrorController(axis="x", node_list=None, side_flags=("L_", "R_"), side_bias="start"):
+    if not node_list:
+        node_list = cmds.ls(sl=True)
+
+    warnings = []
+
+    bias_dict = {"start": "'{0}'.startswith('{1}')", "end": "'{0}'.endswith('{1}')", "include": "'{1}' in '{0}'"}
+    if not side_bias in bias_dict.keys():
+        cmds.error("Invalid argument: {0}".format(side_bias))
+    for node in node_list:
+        print "-----------"
+        print node
+        print "-----------"
+        if eval(bias_dict[side_bias].format(node, side_flags[0])):
+            other_side = node.replace(side_flags[0], side_flags[1])
+        elif eval(bias_dict[side_bias].format(node, side_flags[1])):
+            other_side = node.replace(side_flags[1], side_flags[0])
+        else:
+            msg = "Cannot find side flags for %s. Skipping" % node
+            cmds.warning(msg)
+            warnings.append(msg)
+            continue
+        if not cmds.objExists(other_side):
+            msg = "Cannot find the other side controller %s. Skipping" % other_side
+            cmds.warning(msg)
+            warnings.append(msg)
+            continue
+
+        tmp_cont = cmds.duplicate(node, name="tmp_{0}".format(node))
+
+        ## create a group for the selected controller
+        node_grp = cmds.group(name="tmpGrp", em=True)
+        cmds.parent(tmp_cont, node_grp)
+        # get rid of the limits
+        cmds.transformLimits(tmp_cont, etx=(0, 0), ety=(0, 0), etz=(0, 0), erx=(0, 0), ery=(0, 0), erz=(0, 0),
+                             esx=(0, 0), esy=(0, 0), esz=(0, 0))
+        # ## mirror it on the given axis
+        cmds.setAttr("%s.s%s" % (node_grp, axis), -1)
+        ## ungroup it
+        cmds.ungroup(node_grp)
+        replace_curve(other_side, tmp_cont, maintain_offset=True)
+        cmds.delete(tmp_cont)
+
+
+# replace_curve(orig_curve=cmds.ls(sl=1)[0], new_curve=cmds.ls(sl=1)[1], maintain_offset=True)
+# mirrorController()

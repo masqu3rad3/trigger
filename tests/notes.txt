@@ -23,3 +23,81 @@ Matrix constraint should not use be used if:
 - Driver or driven has a frozen transform
 - Rotate pivot of the driven has been changed
 - If there are multiple drivers the driver weights will be altered later
+
+
+# Sample Dev Script:
+#######################################################################[START]
+#######################################################################[START]
+#######################################################################[START]
+import sys
+import os
+
+# add the system path new trigger folder exclusively to prevent clashes
+# each new new trigger module uses trigger.<module> paths to acces modules
+
+trigger_path = "C:\\Users\\kutlu\\Documents\\maya\\scripts\\TRigger"
+
+if trigger_path not in sys.path:
+    sys.path.append(trigger_path)
+
+# load reload all modules
+
+# Guides
+from trigger.guides import initials
+reload(initials)
+
+# Library
+from trigger.library import controllers
+reload(controllers)
+from trigger.library import functions
+reload(functions)
+from trigger.library import ribbon
+reload(ribbon)
+from trigger.library import tools
+reload(tools)
+from trigger.library import twist_spline
+reload(twist_spline)
+
+# Modules
+from trigger.modules import arm
+reload(arm)
+from trigger.modules import digits
+reload(digits)
+from trigger.modules import head
+reload(head)
+from trigger.modules import leg
+reload(leg)
+from trigger.modules import root
+reload(root)
+from trigger.modules import spine
+reload(spine)
+from trigger.modules import tail
+reload(tail)
+from trigger.modules import tentacle
+reload(tentacle)
+
+# Rig
+from trigger.rig import connections
+reload(connections)
+from trigger.rig import scratch
+reload(scratch)
+from trigger.rig import weights
+reload(weights)
+
+# Utils
+from trigger.utils import mr_cubic
+reload(mr_cubic)
+from trigger.utils import space_switcher
+reload(space_switcher)
+
+# UI
+from trigger.ui import start
+reload(start)
+
+start.MainUI().show()
+
+#######################################################################[END]
+#######################################################################[END]
+#######################################################################[END]
+
+

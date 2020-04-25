@@ -1,6 +1,6 @@
 from maya import cmds
-import maya.api.OpenMaya as api
-import maya.api.OpenMayaAnim as apiAnim
+import maya.api.OpenMaya as om
+import maya.api.OpenMayaAnim as omAnim
 import time
 from pprint import pprint
 
@@ -26,7 +26,7 @@ def get_plug_ids(mesh, source_deformer, source_influence=None):
     else:
         raise Exception ("deformer not identified => %s" %source_deformer)
 
-    sel = api.MSelectionList()
+    sel = om.MSelectionList()
     sel.add(weight_plug.format(source_deformer))
     plug = sel.getPlug(0)
 
@@ -79,24 +79,24 @@ def get_influence_weights(mesh, deformer, influence, skip_checks=False):
     if node_type == "skinCluster":
         # get nodes
         node_dag = (
-            api.MSelectionList().add(mesh).getDagPath(0).extendToShape()
+            om.MSelectionList().add(mesh).getDagPath(0).extendToShape()
         )
         skin_cluster_obj = (
-            api.MSelectionList().add(deformer).getDependNode(0)
+            om.MSelectionList().add(deformer).getDependNode(0)
         )
-        mfn_skc = apiAnim.MFnSkinCluster(skin_cluster_obj)
+        mfn_skc = omAnim.MFnSkinCluster(skin_cluster_obj)
 
-        components = api.MFnSingleIndexedComponent().create(
-            api.MFn.kMeshVertComponent
+        components = om.MFnSingleIndexedComponent().create(
+            om.MFn.kMeshVertComponent
         )
 
         # get influence index
-        skin_cluster_obj = (api.MSelectionList().add(deformer).getDependNode(0))
-        influence_dag = api.MSelectionList().add(influence).getDagPath(0)
-        index = int(apiAnim.MFnSkinCluster(skin_cluster_obj).indexForInfluenceObject(influence_dag))
+        skin_cluster_obj = (om.MSelectionList().add(deformer).getDependNode(0))
+        influence_dag = om.MSelectionList().add(influence).getDagPath(0)
+        index = int(omAnim.MFnSkinCluster(skin_cluster_obj).indexForInfluenceObject(influence_dag))
 
         # Get weights
-        weights = mfn_skc.getWeights(node_dag, components, api.MIntArray([index]))
+        weights = mfn_skc.getWeights(node_dag, components, om.MIntArray([index]))
 
         return list(weights)
 
@@ -195,24 +195,24 @@ def get_deformer_weights(mesh, source_deformer, source_influence=None, data_type
     if node_type == "skinCluster":
         # get nodes
         node_dag = (
-            api.MSelectionList().add(mesh).getDagPath(0).extendToShape()
+            om.MSelectionList().add(mesh).getDagPath(0).extendToShape()
         )
         skin_cluster_obj = (
-            api.MSelectionList().add(source_deformer).getDependNode(0)
+            om.MSelectionList().add(source_deformer).getDependNode(0)
         )
-        mfn_skc = apiAnim.MFnSkinCluster(skin_cluster_obj)
+        mfn_skc = omAnim.MFnSkinCluster(skin_cluster_obj)
 
-        components = api.MFnSingleIndexedComponent().create(
-            api.MFn.kMeshVertComponent
+        components = om.MFnSingleIndexedComponent().create(
+            om.MFn.kMeshVertComponent
         )
 
         # get influence index
-        skin_cluster_obj = (api.MSelectionList().add(source_deformer).getDependNode(0))
-        influence_dag = api.MSelectionList().add(source_influence).getDagPath(0)
-        index = int(apiAnim.MFnSkinCluster(skin_cluster_obj).indexForInfluenceObject(influence_dag))
+        skin_cluster_obj = (om.MSelectionList().add(source_deformer).getDependNode(0))
+        influence_dag = om.MSelectionList().add(source_influence).getDagPath(0)
+        index = int(omAnim.MFnSkinCluster(skin_cluster_obj).indexForInfluenceObject(influence_dag))
             
         # Get weights
-        weights = mfn_skc.getWeights(node_dag, components, api.MIntArray([index]))
+        weights = mfn_skc.getWeights(node_dag, components, om.MIntArray([index]))
         
         return list(weights)
 

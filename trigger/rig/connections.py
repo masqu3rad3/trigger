@@ -1,18 +1,18 @@
 from maya import cmds
-import maya.api.OpenMaya as api
+import maya.api.OpenMaya as om
 import pdb
 
 
 def get_closest_vert(mayaMesh, pos, threshold=0.001):
     # mVector = api.MVector(pos)#using MVector type to represent position
-    selectionList = api.MSelectionList()
+    selectionList = om.MSelectionList()
     selectionList.add(mayaMesh)
     dPath = selectionList.getDagPath(0)
-    mMesh = api.MFnMesh(dPath)
-    ID = mMesh.getClosestPoint(pos, api.MSpace.kWorld)[1]  # getting closest face ID\
+    mMesh = om.MFnMesh(dPath)
+    ID = mMesh.getClosestPoint(pos, om.MSpace.kWorld)[1]  # getting closest face ID\
     verts = mMesh.getPolygonVertices(ID)
 
-    point_list = mMesh.getPoints(api.MSpace.kTransform)
+    point_list = mMesh.getPoints(om.MSpace.kTransform)
     for vert_index in verts:
         if pos.distanceTo(point_list[vert_index]) < threshold:
             return vert_index
@@ -21,25 +21,25 @@ def get_closest_vert(mayaMesh, pos, threshold=0.001):
 
 def select_intersections(nodeA, nodeB, threshold=0.001):
     # iMeshVerts = getAllVerts(nodeB)
-    selectionLs_nodeB = api.MSelectionList()
+    selectionLs_nodeB = om.MSelectionList()
     selectionLs_nodeB.add(nodeB)
     selObj = selectionLs_nodeB.getDagPath(0)
-    mfnObject = api.MFnMesh(selObj)
+    mfnObject = om.MFnMesh(selObj)
 
-    iMeshVerts = mfnObject.getPoints(api.MSpace.kWorld)
+    iMeshVerts = mfnObject.getPoints(om.MSpace.kWorld)
 
     nodeA_intersectList = [get_closest_vert(nodeA, i, threshold=threshold) for i in iMeshVerts]
     nodeA_intersectList = (filter(lambda a: a, nodeA_intersectList))  # filter out non-intersecting vertices
 
-    selectionList = api.MSelectionList()
+    selectionList = om.MSelectionList()
     selectionList.add(nodeA)
     dPath = selectionList.getDagPath(0)
-    mfn_components = api.MFnSingleIndexedComponent()
-    components = mfn_components.create(api.MFn.kMeshVertComponent)
+    mfn_components = om.MFnSingleIndexedComponent()
+    components = mfn_components.create(om.MFn.kMeshVertComponent)
     map(mfn_components.addElement, nodeA_intersectList)
-    to_sel = api.MSelectionList()
+    to_sel = om.MSelectionList()
     to_sel.add((dPath, components))
-    api.MGlobal.setActiveSelectionList(to_sel)
+    om.MGlobal.setActiveSelectionList(to_sel)
 
 
 def connect_face_to_body(face_mesh, body_mesh, method="wrap", name="connect_face"):
@@ -89,4 +89,4 @@ def connect_face_to_body(face_mesh, body_mesh, method="wrap", name="connect_face
     return wrap_node
 
 
-connect_face_to_body("face_msh", "body_msh", method="wrap")
+# connect_face_to_body("face_msh", "body_msh", method="wrap")
