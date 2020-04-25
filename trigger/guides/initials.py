@@ -2,11 +2,28 @@ from maya import cmds
 import maya.api.OpenMaya as om
 from trigger.library import functions as extra
 
+from trigger.core import io
+
 class initialJoints():
 
-    def __init__(self, settingsData):
-
-        self.parseSettings(settingsData)
+    def __init__(self):
+        default_settings = {
+            "upAxis": "+y",
+            "mirrorAxis": "+x",
+            "lookAxis": "+z",
+            "majorCenterColor": 17,
+            "minorCenterColor": 20,
+            "majorLeftColor": 6,
+            "minorLeftColor": 18,
+            "majorRightColor": 13,
+            "minorRightColor": 9,
+            "seperateSelectionSets": True,
+            "afterCreation": 0,
+            "bindMethod": 0,
+            "skinningMethod": 0
+            }
+        settings = io.Settings("triggerSettings.json", defaults=default_settings)
+        self.parseSettings(settings.currents)
 
         self.spineJointsList=[]
         self.neckJointsList=[]

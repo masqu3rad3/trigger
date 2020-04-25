@@ -20,15 +20,20 @@ class Feedback(object):
             self.logger.setLevel(logging.DEBUG)
 
     def error(self, keep_going=False, *args):
-        msg = ("\n".join(args))
-        self.logger.error(msg)
+        for arg in args:
+            self.logger.error(arg)
         if not keep_going:
             raise Exception
 
     def info(self, *args):
-        msg = ("\n".join(args))
-        self.logger.info(msg)
+        for arg in args:
+            self.logger.info(arg)
 
     def warning(self, *args):
-        msg = ("\n".join(args))
-        self.logger.warning(msg)
+        for arg in args:
+            self.logger.warning(arg)
+
+    def debug(self, *args):
+        for arg in args:
+            self.logger.debug(arg)
+

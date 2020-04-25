@@ -625,17 +625,17 @@ def identifyMaster(node):
         29: 'Extra_T'
     }
 
-    limbDictionary = {
-        "arm": ["Collar", "Shoulder", "Elbow", "Hand"],
-        "leg": ["LegRoot", "Hip", "Knee", "Foot", "Ball", "HeelPV", "ToePV", "BankIN", "BankOUT"],
-        # "hand": ["Finger", "Thumb", "Index_F", "Middle_F", "Ring_F", "Pinky_F", "Extra_F"],
-        "spine": ["Spine", "SpineRoot", "SpineEnd"],
-        "neck": ["NeckRoot", "Neck", "Head", "Jaw", "HeadEnd"],
-        "tail": ["TailRoot", "Tail"],
-        "finger": ["FingerRoot", "Finger"],
-        "tentacle": ["TentacleRoot", "Tentacle", "TentacleEnd"],
-        "root": ["Root"]
-    }
+    # limbDictionary = {
+    #     "arm": ["Collar", "Shoulder", "Elbow", "Hand"],
+    #     "leg": ["LegRoot", "Hip", "Knee", "Foot", "Ball", "HeelPV", "ToePV", "BankIN", "BankOUT"],
+    #     # "hand": ["Finger", "Thumb", "Index_F", "Middle_F", "Ring_F", "Pinky_F", "Extra_F"],
+    #     "spine": ["Spine", "SpineRoot", "SpineEnd"],
+    #     "neck": ["NeckRoot", "Neck", "Head", "Jaw", "HeadEnd"],
+    #     "tail": ["TailRoot", "Tail"],
+    #     "finger": ["FingerRoot", "Finger"],
+    #     "tentacle": ["TentacleRoot", "Tentacle", "TentacleEnd"],
+    #     "root": ["Root"]
+    # }
 
     ## get the label ID
     typeNum = cmds.getAttr("%s.type" %node)
@@ -647,7 +647,7 @@ def identifyMaster(node):
         limbName = typeDict[typeNum]
 
     for key, value in all_modules_data.MODULE_DICTIONARY.items():
-        limbType = key if limbName in value else limbType
+        limbType = key if limbName in value["members"] else limbType
 
     ## Get the Side
     sideDict = {

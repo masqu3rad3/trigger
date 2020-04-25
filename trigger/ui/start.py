@@ -2,6 +2,7 @@ from maya import cmds
 from trigger import Qt
 from trigger.Qt import QtWidgets, QtCore, QtGui
 from maya import OpenMayaUI as omui
+from trigger.core import io
 import trigger.guides.initials as init
 import inspect
 from trigger.rig import scratch
@@ -85,22 +86,38 @@ class MainUI(QtWidgets.QMainWindow):
 
         self.skinMeshList = None
 
-        self.settingsDefaults={
+        # self.settingsDefaults={
+        #         #     "majorLeftColor": 6,
+        #         #     "minorLeftColor": 18,
+        #         #     "majorRightColor": 13,
+        #         #     "minorRightColor": 9,
+        #         #     "majorCenterColor": 17,
+        #         #     "minorCenterColor": 20,
+        #         #     "lookAxis": "+z",
+        #         #     "upAxis": "+y",
+        #         #     "mirrorAxis": "+x",
+        #         #     "afterCreation": 0,
+        #         #     "seperateSelectionSets": True,
+        #         #     "bindMethod": 0,
+        #         #     "skinningMethod": 0
+        #         #     }
+        #         # self.loadSettings()
+        default_settings = {
+            "upAxis": "+y",
+            "mirrorAxis": "+x",
+            "lookAxis": "+z",
+            "majorCenterColor": 17,
+            "minorCenterColor": 20,
             "majorLeftColor": 6,
             "minorLeftColor": 18,
             "majorRightColor": 13,
             "minorRightColor": 9,
-            "majorCenterColor": 17,
-            "minorCenterColor": 20,
-            "lookAxis": "+z",
-            "upAxis": "+y",
-            "mirrorAxis": "+x",
-            "afterCreation": 0,
             "seperateSelectionSets": True,
+            "afterCreation": 0,
             "bindMethod": 0,
             "skinningMethod": 0
             }
-        self.loadSettings()
+        self.settings = io.Settings("triggerSettings.json", defaults=default_settings)
 
 
         self.colorCodeDict={}
@@ -201,8 +218,8 @@ class MainUI(QtWidgets.QMainWindow):
         self.layout = QtWidgets.QVBoxLayout(self.mainDialog)
         self.centralWidget.setLayout(self.layout)
 
-        self.initSkeleton = init.initialJoints(self.settingsData)
-        self.rigger = scratch.LimbBuilder(self.settingsData)
+        self.initSkeleton = init.initialJoints()
+        self.rigger = scratch.LimbBuilder(self.settings.currents)
 
         self.layout.setContentsMargins(0, 0, 0, 0)
 
@@ -368,7 +385,6 @@ class MainUI(QtWidgets.QMainWindow):
             self.infoPop(textHeader="Invalid Characters", textTitle="Naming Error", textInfo="Use Latin Characters without any spaces.")
             return
 
-        # self.settingsData["rigName"] = self.rigName
         self.settingsData["majorLeftColor"] = self.colorCodeDict["majorleft_pushButton"]
         self.settingsData["minorLeftColor"] = self.colorCodeDict["minorleft_pushButton"]
         self.settingsData["majorRightColor"] = self.colorCodeDict["majorright_pushButton"]
@@ -415,12 +431,12 @@ class MainUI(QtWidgets.QMainWindow):
         axisList=["+x", "+y", "+z", "-x", "-y", "-z"]
 
         self.colorCodeDict = {
-            "majorleft_pushButton": self.settingsData["majorLeftColor"],
-            "minorleft_pushButton": self.settingsData["minorLeftColor"],
-            "majorright_pushButton": self.settingsData["majorRightColor"],
-            "minorright_pushButton": self.settingsData["minorRightColor"],
-            "majorcenter_pushButton": self.settingsData["majorCenterColor"],
-            "minorcenter_pushButton": self.settingsData["minorCenterColor"]
+            "majorleft_pushButton": self.settings.currents["majorLeftColor"],
+            "minorleft_pushButton": self.settings.currents["minorLeftColor"],
+            "majorright_pushButton": self.settings.currents["majorRightColor"],
+            "minorright_pushButton": self.settings.currents["minorRightColor"],
+            "majorcenter_pushButton": self.settings.currents["majorCenterColor"],
+            "minorcenter_pushButton": self.settings.currents["minorCenterColor"]
         }
 
 
@@ -630,12 +646,12 @@ class MainUI(QtWidgets.QMainWindow):
             self.loadSettings(loadDefaults=loadDefaults)
             # self.rigname_lineEdit.setText(self.settingsData["rigName"])
             self.colorCodeDict = {
-                "majorleft_pushButton": self.settingsData["majorLeftColor"],
-                "minorleft_pushButton": self.settingsData["minorLeftColor"],
-                "majorright_pushButton": self.settingsData["majorRightColor"],
-                "minorright_pushButton": self.settingsData["minorRightColor"],
-                "majorcenter_pushButton": self.settingsData["majorCenterColor"],
-                "minorcenter_pushButton": self.settingsData["minorCenterColor"]
+                "majorleft_pushButton": self.settings.currents["majorLeftColor"],
+                "minorleft_pushButton": self.settings.currents["minorLeftColor"],
+                "majorright_pushButton": self.settings.currents["majorRightColor"],
+                "minorright_pushButton": self.settings.currents["minorRightColor"],
+                "majorcenter_pushButton": self.settings.currents["majorCenterColor"],
+                "minorcenter_pushButton": self.settings.currents["minorCenterColor"]
             }
             cbuttons = [self.majorleft_pushButton, self.minorleft_pushButton, self.majorright_pushButton, self.minorright_pushButton, self.majorcenter_pushButton, self.minorcenter_pushButton]
             for button in cbuttons:
@@ -643,20 +659,20 @@ class MainUI(QtWidgets.QMainWindow):
                 textcolor = (255 - buttoncolor[0], 255 - buttoncolor[1], 255 - buttoncolor[2])
                 button.setStyleSheet("background-color:rgb{}; color:rgb{}".format(buttoncolor, textcolor))
 
-            index = self.lookaxis_comboBox.findText(self.settingsData["lookAxis"], QtCore.Qt.MatchFixedString)
+            index = self.lookaxis_comboBox.findText(self.settings.currents["lookAxis"], QtCore.Qt.MatchFixedString)
             if index >= 0:
                 self.lookaxis_comboBox.blockSignals(True)
                 self.lookaxis_comboBox.setCurrentIndex(index)
                 self.lookaxis_comboBox.blockSignals(False)
 
-            index = self.upaxis_comboBox.findText(self.settingsData["upAxis"], QtCore.Qt.MatchFixedString)
+            index = self.upaxis_comboBox.findText(self.settings.currents["upAxis"], QtCore.Qt.MatchFixedString)
             if index >= 0:
                 self.upaxis_comboBox.blockSignals(True)
                 self.upaxis_comboBox.setCurrentIndex(index)
                 self.upaxis_comboBox.blockSignals(False)
 
 
-            index = self.mirroraxis_comboBox.findText(self.settingsData["mirrorAxis"], QtCore.Qt.MatchFixedString)
+            index = self.mirroraxis_comboBox.findText(self.settings.currents["mirrorAxis"], QtCore.Qt.MatchFixedString)
             if index >= 0:
                 self.mirroraxis_comboBox.blockSignals(True)
                 self.mirroraxis_comboBox.setCurrentIndex(index)
@@ -664,11 +680,11 @@ class MainUI(QtWidgets.QMainWindow):
 
 
             # fixClash(self.lookaxis_comboBox, self.upaxis_comboBox)
-            self.aftercreation_comboBox.setCurrentIndex(self.settingsData["afterCreation"])
-            self.jointselectionsets_comboBox.setCurrentIndex(not self.settingsData["seperateSelectionSets"])
+            self.aftercreation_comboBox.setCurrentIndex(self.settings.currents["afterCreation"])
+            self.jointselectionsets_comboBox.setCurrentIndex(not self.settings.currents["seperateSelectionSets"])
 
-            self.bindmethod_comboBox.setCurrentIndex(self.settingsData["bindMethod"])
-            self.skinningmethod_comboBox.setCurrentIndex(self.settingsData["skinningMethod"])
+            self.bindmethod_comboBox.setCurrentIndex(self.settings.currents["bindMethod"])
+            self.skinningmethod_comboBox.setCurrentIndex(self.settings.currents["skinningMethod"])
 
         self.trigger_buttonBox = QtWidgets.QDialogButtonBox(self.trigger_settings_Dialog)
         self.trigger_buttonBox.setGeometry(QtCore.QRect(20, 550, 301, 30))
@@ -1573,11 +1589,11 @@ class MainUI(QtWidgets.QMainWindow):
         cmds.undoInfo(openChunk=True)
         self.progressBar()
         # self.progress_Dialog.show()
-        self.rigger.__init__(settingsData=self.settingsData, progressBar=self.progress_progressBar)
+        self.rigger.__init__(settingsData=self.settings.currents, progressBar=self.progress_progressBar)
         self.rigger.rigName = self.rigname_lineEdit.text()
         self.rigger.skinMeshList = self.skinMeshList
-        self.rigger.bindMethod = self.settingsData["bindMethod"]
-        self.rigger.skinMethod = self.settingsData["skinningMethod"]
+        self.rigger.bindMethod = self.settings.currents["bindMethod"]
+        self.rigger.skinMethod = self.settings.currents["skinningMethod"]
         self.rigger.copySkinWeights = self.copyweights_checkbox.isChecked()
         self.rigger.replaceExisting = self.replaceExistingRig_checkbox.isChecked()
         self.rigger.startBuilding(createAnchors=self.isCreateAnchorsChk.isChecked())
@@ -1588,7 +1604,7 @@ class MainUI(QtWidgets.QMainWindow):
         cmds.undoInfo(openChunk=True)
         # self.rigger.__init__()
         self.progressBar()
-        self.rigger.__init__(settingsData=self.settingsData, progressBar=self.progress_progressBar)
+        self.rigger.__init__(settingsData=self.settings.currents, progressBar=self.progress_progressBar)
         self.rigger.createlimbs(addLimb=True)
         self.progress_Dialog.close()
         cmds.undoInfo(closeChunk=True)

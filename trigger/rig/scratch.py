@@ -21,7 +21,7 @@ class LimbBuilder():
     def __init__(self, settingsData, progressBar=None):
         # super(LimbBuilder, self).__init__()
         self.progressBar = progressBar
-        self.validRootList = [values[0] for values in all_modules_data.MODULE_DICTIONARY.values()]
+        self.validRootList = [values["members"][0] for values in all_modules_data.MODULE_DICTIONARY.values()]
         # self.validRootList = ["Collar", "LegRoot", "Root", "SpineRoot", "NeckRoot", "TailRoot", "FingerRoot",
         #                       "ThumbRoot", "IndexRoot", "MiddleRoot", "RingRoot", "PinkyRoot", "TentacleRoot"]
         self.fingerMatchList = []
@@ -96,7 +96,7 @@ class LimbBuilder():
 
         # first initialize the dimensions for icon creation
         self.hipDistance, self.shoulderDistance = self.getDimensions(selection[0])
-        self.getLimbProperties(selection[0])
+        self.limbCreationList = self.getLimbProperties(selection[0])
         self.createMasters()
         # Create limbs and make connection to the parents
         self.createlimbs(self.limbCreationList)
@@ -487,7 +487,7 @@ class LimbBuilder():
 
         return hipDist, shoulderDist
 
-    def getLimbProperties(self, node, isRoot=True, parentIndex=None):
+    def getLimbProperties(self, node, isRoot=True, parentIndex=None, r_list=None):
         """
         Checks the given nodes entire hieararchy for roots, and catalogues the root nodes into dictionaries.
 
@@ -497,22 +497,39 @@ class LimbBuilder():
         Returns: None (Updates limbCreationList attribute of the parent class)
 
         """
-
+        if not r_list:
+            r_list = []
         if isRoot:
             limbProps = self.getWholeLimb(node)
             limbProps.append(parentIndex)
-            self.limbCreationList.append(limbProps)
+            # self.limbCreationList.append(limbProps)
+            r_list.append(limbProps)
 
         # Do the same for all children recursively
-        # children = node.getChildren(type="joint")
         children = cmds.listRelatives(node, children=True, type="joint")
         children = children if children else []
-        for c in children:
-            cID = extra.identifyMaster(c)
+        for jnt in children:
+            cID = extra.identifyMaster(jnt)
             if cID[0] in self.validRootList:
-                self.getLimbProperties(c, isRoot=True, parentIndex=node)
+                self.getLimbProperties(jnt, isRoot=True, parentIndex=node, r_list=r_list)
             else:
-                self.getLimbProperties(c, isRoot=False)
+                self.getLimbProperties(jnt, isRoot=False, r_list=r_list)
+        return r_list
+        # if isRoot:
+        #     limbProps = self.getWholeLimb(node)
+        #     limbProps.append(parentIndex)
+        #     self.limbCreationList.append(limbProps)
+        #
+        # # Do the same for all children recursively
+        # # children = node.getChildren(type="joint")
+        # children = cmds.listRelatives(node, children=True, type="joint")
+        # children = children if children else []
+        # for c in children:
+        #     cID = extra.identifyMaster(c)
+        #     if cID[0] in self.validRootList:
+        #         self.getLimbProperties(c, isRoot=True, parentIndex=node)
+        #     else:
+        #         self.getLimbProperties(c, isRoot=False)
 
     def createMasters(self):
         """
@@ -606,14 +623,16 @@ class LimbBuilder():
         segments = None
         dropoff = None
         limbName, limbType, limbSide = extra.identifyMaster(node)
-        if limbType == "spine" or limbType == "neck":
-            limbDict["resolution"] = cmds.getAttr("%s.resolution" %node)
-            limbDict["dropoff"] = cmds.getAttr("%s.dropoff" %node)
-        if limbType == "tentacle":
-            limbDict["contRes"] = cmds.getAttr("%s.contRes" %node)
-            limbDict["jointRes"] = cmds.getAttr("%s.jointRes" %node)
-            limbDict["deformerRes"] = cmds.getAttr("%s.deformerRes" %node)
-            limbDict["dropoff"] = cmds.getAttr("%s.dropoff" %node)
+        for property in all_modules_data.MODULE_DICTIONARY[limbType]["properties"]:
+            limbDict[property] = cmds.getAttr("%s.%s" %(node, property))
+        # if limbType == "spine" or limbType == "neck":
+        #     limbDict["resolution"] = cmds.getAttr("%s.resolution" %node)
+        #     limbDict["dropoff"] = cmds.getAttr("%s.dropoff" %node)
+        # if limbType == "tentacle":
+        #     limbDict["contRes"] = cmds.getAttr("%s.contRes" %node)
+        #     limbDict["jointRes"] = cmds.getAttr("%s.jointRes" %node)
+        #     limbDict["deformerRes"] = cmds.getAttr("%s.deformerRes" %node)
+        #     limbDict["dropoff"] = cmds.getAttr("%s.dropoff" %node)
 
         limbDict[limbName] = node
         nextNode = node
