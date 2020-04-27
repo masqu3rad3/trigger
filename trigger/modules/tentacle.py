@@ -7,38 +7,43 @@ from trigger.library import twist_spline as twistSpline
 
 reload(twistSpline)
 
+
 import maya.cmds as cmds
 
+from trigger.core import feedback
+FEEDBACK = feedback.Feedback(__name__)
 
-# import pymel.core.datatypes as dt
 
 class Tentacle(object):
 
-    def __init__(self, inits,
-                       suffix="",
-                       side="C",
-                       npResolution=5.0,
-                       jResolution=5.0,
-                       blResolution=25.0,
-                       dropoff=2.0):
+    def __init__(self, build_data=None, inits=None,
+                 suffix="",
+                 side="C",
+                 contRes=5.0,
+                 jointRes=5.0,
+                 deformerRes=25.0,
+                 dropoff=2.0, *args, **kwargs):
 
-
-        # reinitialize the initial Joints
-        if not isinstance(inits, list):
-            self.tentacleRoot = inits.get("TentacleRoot")
-            self.tentacles = (inits.get("Tentacle"))
+        if build_data:
+            self.tentacleRoot = build_data.get("TentacleRoot")
+            self.tentacles = (build_data.get("Tentacle"))
             self.inits = [self.tentacleRoot] + (self.tentacles)
+            contRes = float(build_data.get("contRes"))
+            jointRes = float(build_data.get("jointRes"))
+            deformerRes = float(build_data.get("deformerRes"))
+            dropoff = float(build_data.get("dropoff"))
+        elif inits:
+            if len(inits) < 2:
+                cmds.error("Tentacle setup needs at least 2 initial joints")
+                return
+            self.inits = inits
+        else:
+            FEEDBACK.throw_error("Class needs either build_data or inits to be constructed")
 
-        self.npResolution = 1.0 * npResolution
-        self.jResolution = 1.0 * jResolution
-        self.blResolution = 1.0 * blResolution
+        self.contRes = 1.0 * contRes
+        self.jointRes = 1.0 * jointRes
+        self.deformerRes = 1.0 * deformerRes
         self.dropoff = 1.0 * dropoff
-
-        # fool proofing
-        if len(inits)<2:
-            cmds.error("Tentacle setup needs at least 2 initial joints")
-            return
-
 
         # get distances
 
@@ -248,13 +253,13 @@ class Tentacle(object):
         ## Create the Base Nurbs Plane (npBase)
         ribbonLength = extra.getDistance(self.contJointsList[0], self.contJointsList[-1])
 
-        npBase = cmds.nurbsPlane(ax=(0,1,0),u=self.npResolution,v=1, w=ribbonLength, lr=(1.0/ribbonLength), name="npBase_%s" % self.suffix)[0]
+        npBase = cmds.nurbsPlane(ax=(0,1,0), u=self.contRes, v=1, w=ribbonLength, lr=(1.0 / ribbonLength), name="npBase_%s" % self.suffix)[0]
         cmds.rebuildSurface (npBase, ch=1, rpo=1, rt=0, end=1, kr=2, kcp=0, kc=0, su=5, du=3, sv=1, dv=1, tol=0, fr=0, dir=1)
         extra.alignAndAim(npBase, targetList=[self.contJointsList[0], self.contJointsList[-1]], aimTargetList=[self.contJointsList[-1]], upVector=self.up_axis)
 
         ## Duplicate the Base Nurbs Plane as joint Holder (npJDefHolder)
-        npJdefHolder = cmds.nurbsPlane(ax=(0, 1, 0), u=self.blResolution, v=1, w=ribbonLength, lr=(1.0 / ribbonLength),
-                               name="npJDefHolder_%s" % self.suffix)[0]
+        npJdefHolder = cmds.nurbsPlane(ax=(0, 1, 0), u=self.deformerRes, v=1, w=ribbonLength, lr=(1.0 / ribbonLength),
+                                       name="npJDefHolder_%s" % self.suffix)[0]
         cmds.rebuildSurface(npJdefHolder, ch=1, rpo=1, rt=0, end=1, kr=2, kcp=0, kc=0, su=5, du=3, sv=1, dv=1, tol=0, fr=0,
                           dir=1)
         extra.alignAndAim(npJdefHolder, targetList=[self.contJointsList[0], self.contJointsList[-1]], aimTargetList=[self.contJointsList[-1]],
@@ -263,7 +268,7 @@ class Tentacle(object):
         ## Create the follicles on the npJDefHolder
         npJdefHolderShape = extra.getShapes(npJdefHolder)[0]
         follicleList = []
-        for i in range (0, int(self.jResolution)):
+        for i in range (0, int(self.jointRes)):
             follicle = cmds.createNode('follicle', name="follicle_{0}{1}".format(self.suffix, str(i)))
             follicle_transform = extra.getParent(follicle)
             cmds.connectAttr("%s.local" % npJdefHolderShape,"%s.inputSurface" % follicle)
@@ -271,7 +276,7 @@ class Tentacle(object):
             cmds.connectAttr("%s.outRotate" % follicle,"%s.rotate" % follicle_transform)
             cmds.connectAttr("%s.outTranslate" % follicle,"%s.translate" % follicle_transform)
             cmds.setAttr("%s.parameterV" % follicle, 0.5)
-            cmds.setAttr("%s.parameterU" % follicle, ((1/self.jResolution)+(i/self.jResolution)-((1/self.jResolution)/2)))
+            cmds.setAttr("%s.parameterU" % follicle, ((1 / self.jointRes) + (i / self.jointRes) - ((1 / self.jointRes) / 2)))
             extra.lockAndHide(follicle_transform, ["tx", "ty", "tz", "rx", "ry", "rz"], hide=False)
             follicleList.append(follicle)
             
@@ -285,7 +290,7 @@ class Tentacle(object):
         # create follicles for scaling calculations
         follicle_sca_list = []
         counter=0
-        for index in range (int(self.jResolution)):
+        for index in range (int(self.jointRes)):
             s_follicle = cmds.createNode('follicle', name="follicleSCA_{0}{1}".format(self.suffix, index))
             s_follicle_transform = extra.getParent(s_follicle)
             cmds.connectAttr("%s.local" % npJdefHolderShape,"%s.inputSurface" % s_follicle)
@@ -294,7 +299,7 @@ class Tentacle(object):
             cmds.connectAttr("%s.outTranslate" % s_follicle,"%s.translate" % s_follicle_transform)
 
             cmds.setAttr("%s.parameterV" % s_follicle, 0.0)
-            cmds.setAttr("%s.parameterU" % s_follicle, ((1/self.jResolution)+(index/self.jResolution)-((1/self.jResolution)/2)))
+            cmds.setAttr("%s.parameterU" % s_follicle, ((1 / self.jointRes) + (index / self.jointRes) - ((1 / self.jointRes) / 2)))
             extra.lockAndHide(s_follicle_transform, ["tx", "ty", "tz", "rx", "ry", "rz"], hide=False)
             follicle_sca_list.append(s_follicle)
             cmds.parent(s_follicle_transform, self.nonScaleGrp)

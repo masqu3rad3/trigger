@@ -7,7 +7,7 @@ import trigger.modules.leg as leg
 import trigger.modules.head as neckAndHead
 import trigger.modules.spine as spine
 import trigger.modules.tail as simpleTail
-import trigger.modules.digits as finger
+import trigger.modules.finger as finger
 import trigger.modules.tentacle as tentacle
 import trigger.modules.root as root
 import trigger.utils.space_switcher_old as anchorMaker
@@ -97,6 +97,7 @@ class LimbBuilder():
         # first initialize the dimensions for icon creation
         self.hipDistance, self.shoulderDistance = self.getDimensions(selection[0])
         self.limbCreationList = self.getLimbProperties(selection[0])
+
         self.createMasters()
         # Create limbs and make connection to the parents
         self.createlimbs(self.limbCreationList)
@@ -130,7 +131,7 @@ class LimbBuilder():
         if self.skinMeshList and not self.replaceExisting:
             # if there are skin mesh(s) defined, and replace existing is not checked, initiate the skinning process
             self.skinning(copyMode=self.copySkinWeights)
-            pass
+
 
         if self.replaceExisting and oldRootGroup:
             # get every controller under the oldRootGroup
@@ -310,8 +311,8 @@ class LimbBuilder():
 
             elif x[1] == "neck":
                 # limb = neckAndHead.NeckAndHead()
-                limb = neckAndHead.NeckAndHead(x[0], suffix="NeckAndHead", resolution=x[0]["resolution"],
-                                               dropoff=x[0]["dropoff"])
+                limb = neckAndHead.Head(x[0], suffix="NeckAndHead", resolution=x[0]["resolution"],
+                                        dropoff=x[0]["dropoff"])
                 limb.colorCodes = colorCodes
                 # limb.createNeckAndHead(x[0], suffix="NeckAndHead", resolution=x[0]["resolution"], dropoff=x[0]["dropoff"])
                 limb.createLimb()
@@ -325,7 +326,7 @@ class LimbBuilder():
 
             elif x[1] == "tail":
                 # limb = simpleTail.SimpleTail()
-                limb = simpleTail.SimpleTail(x[0], suffix="%s_Tail" % sideVal, side=x[2])
+                limb = simpleTail.Tail(x[0], suffix="%s_Tail" % sideVal, side=x[2])
                 limb.colorCodes = colorCodes
                 # limb.createSimpleTail(x[0], suffix="%s_Tail" %sideVal, side=x[2])
                 limb.createLimb()
@@ -340,15 +341,19 @@ class LimbBuilder():
                             parentController = self.fingerMatchConts[index][0]
 
                 # limb = finger.Fingers()
-                limb = finger.Fingers(x[0], suffix=sideVal, side=x[2], parentController=parentController)
+                # from pprint import pprint
+                # pprint(x)
+                # cmds.error("ANAN")
+
+                limb = finger.Finger(x[0], suffix=sideVal, side=x[2], parentController=parentController)
                 limb.colorCodes = colorCodes
                 # limb.createFinger(x[0], suffix=sideVal, side=x[2], parentController=parentController)
                 limb.createLimb()
 
             elif x[1] == "tentacle":
                 # limb = tentacle.Tentacle()
-                limb = tentacle.Tentacle(x[0], suffix="%s_Tentacle" % x[2], side=x[2], npResolution=x[0]["contRes"],
-                                         jResolution=x[0]["jointRes"], blResolution=x[0]["deformerRes"],
+                limb = tentacle.Tentacle(x[0], suffix="%s_Tentacle" % x[2], side=x[2], contRes=x[0]["contRes"],
+                                         jointRes=x[0]["jointRes"], deformerRes=x[0]["deformerRes"],
                                          dropoff=x[0]["dropoff"])
                 limb.colorCodes = colorCodes
                 # limb.createTentacle(x[0], suffix="%s_Tentacle" % x[2], side=x[2], npResolution=x[0]["contRes"], jResolution = x[0]["jointRes"], blResolution = x[0]["deformerRes"], dropoff = x[0]["dropoff"])
@@ -484,6 +489,7 @@ class LimbBuilder():
                     tempGrp.append(y)
             if len(tempGrp) > 0 and tempGrp not in self.fingerMatchList:
                 self.fingerMatchList.append(tempGrp)
+
 
         return hipDist, shoulderDist
 

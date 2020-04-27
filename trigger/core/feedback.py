@@ -9,7 +9,7 @@ class Feedback(object):
     def __init__(self,  logger_name=None, log_directory=None, logging_level="debug"):
         super(Feedback, self).__init__()
         self.log_directory = log_directory
-        self.logger = logging.getLogger(__name__)
+        self.logger = logging.getLogger(logger_name)
         if logging_level == "info":
             self.logger.setLevel(logging.INFO)
         elif logging_level == "warning":
@@ -19,11 +19,10 @@ class Feedback(object):
         elif logging_level == "debug":
             self.logger.setLevel(logging.DEBUG)
 
-    def error(self, keep_going=False, *args):
+    def throw_error(self, *args):
         for arg in args:
             self.logger.error(arg)
-        if not keep_going:
-            raise Exception
+        raise Exception
 
     def info(self, *args):
         for arg in args:

@@ -30,6 +30,7 @@ def getMayaMainWindow():
     return ptr
 
 def spaceSwitcher(node, targetList, overrideExisting=False, mode="parent", defaultVal=1, listException=None):
+
     """
     Creates the space switch attributes between selected node (controller) and targets.
     Args:

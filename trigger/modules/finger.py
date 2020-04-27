@@ -1,21 +1,24 @@
 from maya import cmds
 from trigger.library import functions as extra
 from trigger.library import controllers as ic
+from trigger.core import feedback
+FEEDBACK = feedback.Feedback(__name__)
 
-class Fingers(object):
+class Finger(object):
     # def __init__(self, inits, suffix="", side="L", parentController=None, thumb=False, mirrorAxis="X"):
-    def __init__(self, inits, suffix="", side="L", parentController=None, *args, **kwargs):
-
-        # reinitialize the initial Joints
-        if not isinstance(inits, list):
-            self.fingerRoot = inits.get("FingerRoot")
-            self.fingers = (inits.get("Finger"))
+    def __init__(self, build_data=None, inits=None, suffix="", side="L", parentController=None, *args, **kwargs):
+        if build_data:
+            self.fingerRoot = build_data.get("FingerRoot")
+            self.fingers = (build_data.get("Finger"))
             self.inits = [self.fingerRoot] + (self.fingers)
-
-        # fool proofing
-        if (len(inits) < 2):
-            cmds.error("Insufficient Finger Initialization Joints")
-            return
+        elif inits:
+            # fool proofing
+            if (len(inits) < 2):
+                cmds.error("Insufficient Finger Initialization Joints")
+                return
+            self.inits = inits
+        else:
+            FEEDBACK.throw_error("Class needs either build_data or arminits to be constructed")
 
         # initialize sides and fingertype
         self.sideMult = -1 if side == "R" else 1

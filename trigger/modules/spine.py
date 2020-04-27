@@ -6,30 +6,38 @@ from trigger.library import controllers as ic
 from trigger.library import twist_spline as twistSpline
 
 reload(twistSpline)
+from trigger.core import feedback
+FEEDBACK = feedback.Feedback(__name__)
 
 class Spine(object):
 
-    def __init__(self, inits, suffix="", side="C", resolution=4, dropoff=2.0):
+    def __init__(self, build_data=None, inits=None, suffix="", side="C", resolution=4, dropoff=2.0, *args, **kwargs):
 
-        # reinitialize the initial Joints
-        if not isinstance(inits, list):
-            ## parse the dictionary inits into a list
-            sRoot=inits.get("SpineRoot")
+        if build_data:
+            sRoot=build_data.get("SpineRoot")
             try:
-                self.spines=reversed(inits.get("Spine"))
-                self.spineEnd = inits.get("SpineEnd")
+                self.spines=reversed(build_data.get("Spine"))
+                self.spineEnd = build_data.get("SpineEnd")
                 self.inits = [sRoot] + sorted(self.spines) + [self.spineEnd]
             except:
-                self.spineEnd = inits.get("SpineEnd")
+                self.spineEnd = build_data.get("SpineEnd")
                 self.inits = [sRoot] + [self.spineEnd]
+            resolution = build_data.get("resolution")
+            dropoff = build_data.get("dropoff")
+        elif inits:
+            # fool proofing
+            if (len(inits) < 2):
+                cmds.error("Insufficient Spine Initialization Joints")
+                return
+            self.inits = inits
+
+        else:
+            FEEDBACK.throw_error("Class needs either build_data or arminits to be constructed")
+
+        # reinitialize the initial Joints
 
         self.resolution = int(resolution)
-        self.dropoff = 1.0 * dropoff
-
-        # fool proofing
-        if (len(inits) < 2):
-            cmds.error("Insufficient Spine Initialization Joints")
-            return
+        self.dropoff = float(dropoff)
 
         # get distances
         self.iconSize = extra.getDistance(self.inits[0], self.inits[-1])

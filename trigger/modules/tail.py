@@ -1,21 +1,24 @@
 from maya import cmds
 from trigger.library import functions as extra
 from trigger.library import controllers as ic
+from trigger.core import feedback
+FEEDBACK = feedback.Feedback(__name__)
 
-class SimpleTail(object):
+class Tail(object):
 
-    def __init__(self, inits, suffix="", side="C", conts="cube"):
+    def __init__(self, build_data=None, inits=None, suffix="", side="C", *args, **kwargs):
 
-        # reinitialize the initial Joints
-        if not isinstance(inits, list):
-            self.tailRoot = inits.get("TailRoot")
-            self.tails = (inits.get("Tail"))
+        if build_data:
+            self.tailRoot = build_data.get("TailRoot")
+            self.tails = (build_data.get("Tail"))
             self.inits = [self.tailRoot] + (self.tails)
-
-        # fool proofing
-        if (len(inits) < 2):
-            cmds.error("Tail setup needs at least 2 initial joints")
-            return
+        elif inits:
+            if (len(inits) < 2):
+                FEEDBACK.throw_error("Tail setup needs at least 2 initial joints")
+                return
+            self.inits = inits
+        else:
+            FEEDBACK.throw_error("Class needs either build_data or inits to be constructed")
 
         # initialize sides
         self.sideMult = -1 if side == "R" else 1

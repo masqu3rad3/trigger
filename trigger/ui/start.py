@@ -5,7 +5,8 @@ from maya import OpenMayaUI as omui
 from trigger.core import io
 import trigger.guides.initials as init
 import inspect
-from trigger.rig import scratch
+# from trigger.rig import scratch
+from trigger.rig import builder
 
 
 import trigger.library.controllers as ic
@@ -219,7 +220,8 @@ class MainUI(QtWidgets.QMainWindow):
         self.centralWidget.setLayout(self.layout)
 
         self.initSkeleton = init.initialJoints()
-        self.rigger = scratch.LimbBuilder(self.settings.currents)
+        # self.rigger = scratch.LimbBuilder(self.settings.currents)
+        self.rigger = builder.Builder()
 
         self.layout.setContentsMargins(0, 0, 0, 0)
 
@@ -404,8 +406,8 @@ class MainUI(QtWidgets.QMainWindow):
         homedir = os.path.expanduser("~")
         settingsFilePath = os.path.join(homedir, "triggerSettings.json")
         dumpJson(self.settingsData, settingsFilePath)
-        self.initSkeleton.__init__(settingsData=self.settingsData)
-        self.rigger.__init__(settingsData=self.settingsData)
+        self.initSkeleton.settings.currents = self.settingsData
+        self.rigger.settings.currents = self.settingsData
 
 
     def loadSettings(self, loadDefaults=False):
@@ -1589,14 +1591,14 @@ class MainUI(QtWidgets.QMainWindow):
         cmds.undoInfo(openChunk=True)
         self.progressBar()
         # self.progress_Dialog.show()
-        self.rigger.__init__(settingsData=self.settings.currents, progressBar=self.progress_progressBar)
+        self.rigger.__init__(progress_bar=self.progress_progressBar)
         self.rigger.rigName = self.rigname_lineEdit.text()
         self.rigger.skinMeshList = self.skinMeshList
         self.rigger.bindMethod = self.settings.currents["bindMethod"]
         self.rigger.skinMethod = self.settings.currents["skinningMethod"]
         self.rigger.copySkinWeights = self.copyweights_checkbox.isChecked()
         self.rigger.replaceExisting = self.replaceExistingRig_checkbox.isChecked()
-        self.rigger.startBuilding(createAnchors=self.isCreateAnchorsChk.isChecked())
+        self.rigger.start_building(create_switchers=self.isCreateAnchorsChk.isChecked())
         self.progress_Dialog.close()
         cmds.undoInfo(closeChunk=True)
 
@@ -1604,8 +1606,8 @@ class MainUI(QtWidgets.QMainWindow):
         cmds.undoInfo(openChunk=True)
         # self.rigger.__init__()
         self.progressBar()
-        self.rigger.__init__(settingsData=self.settings.currents, progressBar=self.progress_progressBar)
-        self.rigger.createlimbs(addLimb=True)
+        self.rigger.__init__(progress_bar=self.progress_progressBar)
+        self.rigger.createlimbs(add_limb=True, selection_mode=True)
         self.progress_Dialog.close()
         cmds.undoInfo(closeChunk=True)
 

@@ -1,5 +1,7 @@
 from maya import cmds
 from trigger.library import functions as extra
+from trigger.core import feedback
+FEEDBACK = feedback.Feedback(__name__)
 
 class Root(object):
     def __init__(self):
@@ -15,7 +17,7 @@ class Root(object):
         self.deformerJoints = []
         self.colorCodes = []
 
-    def createRoot(self, inits, suffix=""):
+    def createRoot(self, build_data=None, inits=None, suffix="", *args, **kwargs):
         """
         This will create a 'mid node' called root. This single joint will act as a socket for other limbs to connect to.
         Args:
@@ -25,21 +27,23 @@ class Root(object):
         Returns: None
 
         """
-        if isinstance(inits, dict):
-            if len(inits.keys()) > 1:
-                cmds.error("Root can only have one initial joint")
+        if build_data:
+            if len(build_data.keys()) > 1:
+                FEEDBACK.throw_error("Root can only have one initial joint")
                 return
-            rootInit = inits["Root"]
-        elif isinstance(inits, list):
+            rootInit = build_data["Root"]
+        elif inits:
             if len(inits) > 1:
                 cmds.error("Root can only have one initial joint")
                 return
             rootInit = inits[0]
+        else:
+            FEEDBACK.throw_error("Class needs either build_data or arminits to be constructed")
+
 
         suffix=(extra.uniqueName("limbGrp_%s" %(suffix))).replace("limbGrp_", "")
 
-
-        print "Creating Root %s" %suffix
+        print("Creating Root %s" %suffix)
 
         self.scaleGrp = cmds.group(name="scaleGrp_" + suffix, em=True)
         # suffix=(extra.uniqueName("limbGrp_%s" % suffix)).replace("limbGrp_", "")

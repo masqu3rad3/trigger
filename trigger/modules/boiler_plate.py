@@ -2,13 +2,23 @@ from maya import cmds
 from trigger.library import functions as extra
 from trigger.library import controllers as ic
 
+from trigger.core import feedback
+FEEDBACK = feedback.Feedback(__name__)
+
 class Limb(object):
-    def __init__(self, inits, suffix="", side="L"):
+    def __init__(self, build_data=None, inits=None, suffix="", side="L", *args, **kwargs):
 
         # fool proofing
 
         # reinitialize the initial Joints
-        self.inits=inits
+        if build_data:
+            #parse build data
+            pass
+        elif inits:
+            # parse inits
+            pass
+        else:
+            FEEDBACK.throw_error("Class needs either build_data or inits to be constructed")
 
         # get distances
 

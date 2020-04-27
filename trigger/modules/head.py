@@ -3,33 +3,36 @@ import maya.api.OpenMaya as om
 from trigger.library import functions as extra
 from trigger.library import controllers as ic
 from trigger.library import twist_spline as twistSpline
-
+from trigger.core import feedback
+FEEDBACK = feedback.Feedback(__name__)
 
 ## TODO // NEEDS TO SUPPORT DIFFERENT ORIENTATIONS
 
-class NeckAndHead():
+class Head():
 
-    def __init__(self, inits, suffix="", side="C", resolution=3, dropoff=1):
+    def __init__(self, build_data=None, inits=None, suffix="", side="C", resolution=3, dropoff=1, *args, **kwargs):
 
-
-        # fool proofing
-        if (len(inits) < 2):
-            cmds.error("Some or all Neck and Head Bones are missing (or Renamed)")
-            return
-
-        # reinitialize the initial joints and arguments
-        if isinstance(inits, list):
-            self.headEnd = inits.pop(-1)
-            self.headStart = inits.pop(-1)
-            self.neckNodes = list(inits)
-
-        else:
+        if build_data:
             try:
-                self.neckNodes = [inits["NeckRoot"]] + inits["Neck"]
+                self.neckNodes = [build_data["NeckRoot"]] + build_data["Neck"]
             except:
-                self.neckNodes = [inits["NeckRoot"]]
-            self.headStart = inits["Head"]
-            self.headEnd = inits["HeadEnd"]
+                self.neckNodes = [build_data["NeckRoot"]]
+            self.headStart = build_data["Head"]
+            self.headEnd = build_data["HeadEnd"]
+            resolution = build_data.get("resolution")
+            dropoff = build_data.get("dropoff")
+
+        elif inits:
+            if (len(inits) < 2):
+                cmds.error("Some or all Neck and Head Bones are missing (or Renamed)")
+                return
+            if isinstance(inits, list):
+                self.headEnd = inits.pop(-1)
+                self.headStart = inits.pop(-1)
+                self.neckNodes = list(inits)
+        else:
+            FEEDBACK.throw_error("Class needs either build_data or arminits to be constructed")
+
 
         self.resolution = resolution
         self.dropoff = dropoff

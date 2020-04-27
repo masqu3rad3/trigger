@@ -3,13 +3,12 @@
 :author: Arda Kutlu <ardakutlu@gmail.com>
 """
 import os
-import logging
 import json
 import shutil
 from copy import deepcopy
+from trigger.core import feedback
 
-LOG = logging.getLogger(__name__)
-LOG.setLevel(logging.INFO)
+FEEDBACK = feedback.Feedback(logger_name=__name__)
 
 class IO(dict):
     def __init__(self, file_name=None, folder_name=None, root_path=None, file_path=None):
@@ -27,8 +26,7 @@ class IO(dict):
             # self["file_path"] = os.path.join(root_path, folder_name, file_name)
             self.file_path = os.path.join(root_path, folder_name, file_name)
         else:
-            msg = "IO class cannot initialized. At least a file name or file_path must be defined"
-            LOG.error(msg)
+            FEEDBACK.error("IO class cannot initialized. At least a file name or file_path must be defined")
 
         # self._folderCheck(self.file_path)
 
@@ -40,12 +38,10 @@ class IO(dict):
     def file_path(self, new_path):
         name, ext = os.path.splitext(new_path)
         if not ext:
-            msg = "IO module needs to know the extension"
-            LOG.error(msg)
+            FEEDBACK.error("IO module needs to know the extension")
             raise Exception
         if ext not in self.valid_extensions:
-            msg = "IO modules does not support this extension (%s)"
-            LOG.error(msg)
+            FEEDBACK.error("IO modules does not support this extension (%s)" % ext)
             raise Exception
         self["file_path"] = self._folderCheck(new_path)
 
@@ -66,12 +62,10 @@ class IO(dict):
                     data = json.load(f)
                     return data
             except ValueError:
-                msg = "Corrupted JSON file => %s" % file_path
-                LOG.error(msg)
+                FEEDBACK.error("Corrupted JSON file => %s" % file_path)
                 raise Exception
         else:
-            msg = "File cannot be found => %s" % file_path
-            LOG.error(msg)
+            FEEDBACK.error("File cannot be found => %s" % file_path)
 
     def _dump_json(self, data, file_path):
         """Saves the data to the json file"""
@@ -119,8 +113,7 @@ class Settings(dict):
             self.io.write(self.defaults)
             return self.defaults
         else:
-            msg = "default settings not defined. Cannot write defaults"
-            LOG.error(msg)
+            FEEDBACK.error("default settings not defined. Cannot write defaults")
 
     def isChanged(self):
         """Checks for differences between old and new settings"""
@@ -131,8 +124,8 @@ class Settings(dict):
         if self.isChanged():
             self.originals = deepcopy(self.currents)
             self.write_settings(self.originals)
-            LOG.info("Changes saved")
-        LOG.warning("Nothing changed")
+            FEEDBACK.info("Changes saved")
+        FEEDBACK.warning("Nothing changed")
 
 
     def set(self, name, value):
@@ -141,13 +134,13 @@ class Settings(dict):
             self.currents[name] = value
             return True
         else:
-            LOG.warning("'%s' is not in the settings. Use add instead" %name)
+            FEEDBACK.warning("'%s' is not in the settings. Use add instead" % name)
             return False
 
     def add(self, name, value):
         """adds a new item to the settings"""
         if name in self.currents.keys():
-            LOG.warning("'%s' is already in the settings. Use set instead" %name)
+            FEEDBACK.warning("'%s' is already in the settings. Use set instead" % name)
             return False
         else:
             self.currents[name] = value

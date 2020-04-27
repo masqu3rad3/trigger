@@ -3,40 +3,40 @@ from trigger.library import functions as extra
 from trigger.library import controllers as ic
 from trigger.library import ribbon as rc
 
+# TODO GET RId of pymel
 import pymel.core.datatypes as dt
 
+from trigger.core import feedback
+FEEDBACK = feedback.Feedback(__name__)
+
 class Leg(object):
-    def __init__(self, leginits, suffix="", side="L"):
+    def __init__(self, build_data=None, inits=None, suffix="", side="L", *args, **kwargs):
 
-        if len(leginits) < 9:
-            cmds.error("Some or all Leg Init Bones are missing (or Renamed)")
-            return
-
-        if not type(leginits) == dict and not type(leginits) == list:
-            cmds.error("Init joints must be list or dictionary")
-            return
-
-        # reinitialize the dictionary for easy use
-        if type(leginits) == dict:
-            self.leg_root_ref = leginits["LegRoot"]
-            self.hip_ref = leginits["Hip"]
-            self.knee_ref = leginits["Knee"]
-            self.foot_ref = leginits["Foot"]
-            self.ball_ref = leginits["Ball"]
-            self.heel_pv_ref = leginits["HeelPV"]
-            self.toe_pv_ref = leginits["ToePV"]
-            self.bank_in_ref = leginits["BankIN"]
-            self.bank_out_ref = leginits["BankOUT"]
+        if build_data:
+            self.leg_root_ref = build_data["LegRoot"]
+            self.hip_ref = build_data["Hip"]
+            self.knee_ref = build_data["Knee"]
+            self.foot_ref = build_data["Foot"]
+            self.ball_ref = build_data["Ball"]
+            self.heel_pv_ref = build_data["HeelPV"]
+            self.toe_pv_ref = build_data["ToePV"]
+            self.bank_in_ref = build_data["BankIN"]
+            self.bank_out_ref = build_data["BankOUT"]
+        elif inits:
+            if len(inits) < 9:
+                cmds.error("Some or all Leg Init Bones are missing (or Renamed)")
+                return
+            self.leg_root_ref = inits[0]
+            self.hip_ref = inits[1]
+            self.knee_ref = inits[2]
+            self.foot_ref = inits[3]
+            self.ball_ref = inits[4]
+            self.heel_pv_ref = inits[5]
+            self.toe_pv_ref = inits[6]
+            self.bank_in_ref = inits[7]
+            self.bank_out_ref = inits[8]
         else:
-            self.leg_root_ref = leginits[0]
-            self.hip_ref = leginits[1]
-            self.knee_ref = leginits[2]
-            self.foot_ref = leginits[3]
-            self.ball_ref = leginits[4]
-            self.heel_pv_ref = leginits[5]
-            self.toe_pv_ref = leginits[6]
-            self.bank_in_ref = leginits[7]
-            self.bank_out_ref = leginits[8]
+            FEEDBACK.throw_error("Class needs either build_data or arminits to be constructed")
 
         # get positions
         self.leg_root_pos = extra.getWorldTranslation(self.leg_root_ref)
