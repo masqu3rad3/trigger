@@ -4,6 +4,9 @@ from trigger.library import functions as extra
 
 from trigger.core import io
 
+from trigger.core import feedback
+FEEDBACK = feedback.Feedback(logger_name=__name__)
+
 class initialJoints():
 
     def __init__(self):
@@ -79,7 +82,7 @@ class initialJoints():
 
         """
         if not cmds.objExists(parentBone):
-            cmds.warning("Bones cannot be identified automatically")
+            FEEDBACK.warning("Bones cannot be identified automatically")
             return None, None, None
         if "_right" in parentBone:
             mirrorBoneName = parentBone.replace("_right", "_left")
@@ -92,12 +95,12 @@ class initialJoints():
         elif "_c" in parentBone:
             return None, "both", None
         else:
-            cmds.warning("Bones cannot be identified automatically")
+            FEEDBACK.warning("Bones cannot be identified automatically")
             return None, None, None
         if cmds.objExists(mirrorBoneName):
             return mirrorBoneName, alignmentGiven, alignmentReturn
         else:
-            cmds.warning("cannot find mirror bone automatically")
+            FEEDBACK.warning("cannot find mirror bone automatically")
             return None, alignmentGiven, None
 
     def initLimb (self, limb, whichSide="left",
@@ -121,9 +124,9 @@ class initialJoints():
         ## check validity of arguments
             sideValids = ["left", "right", "center", "both", "auto"]
             if whichSide not in sideValids:
-                cmds.error("side argument '%s' is not valid. Valid arguments are: %s" %(whichSide, sideValids))
+                FEEDBACK.throw_error("side argument '%s' is not valid. Valid arguments are: %s" %(whichSide, sideValids))
             if len(cmds.ls(sl=True, type="joint")) != 1 and whichSide == "auto" and defineAs == False:
-                cmds.warning("You need to select a single joint to use Auto method")
+                FEEDBACK.warning("You need to select a single joint to use Auto method")
                 return
 
             ## get the necessary info from arguments
@@ -135,7 +138,7 @@ class initialJoints():
                 side = 0
 
         if (segments + 1) < 2:
-            cmds.error("Define at least 2 segments")
+            FEEDBACK.throw_error("Define at least 2 segments")
             return
 
         suffix = extra.uniqueName("%sGrp_%s" %(limb, whichSide)).replace("%sGrp_" %(limb), "")
@@ -734,7 +737,7 @@ class initialJoints():
     def initialTail(self,  side, segments, suffix):
         sideMult = -1 if side == 2 else 1
         if segments < 1:
-            cmds.warning("minimum segments required for the simple tail is two. current: %s" %segments)
+            FEEDBACK.warning("minimum segments required for the simple tail is two. current: %s" %segments)
             return
 
         rPointTail = om.MVector(0, 14, 0) * self.tMatrix
@@ -778,7 +781,7 @@ class initialJoints():
         sideMult = -1 if side == 2 else 1
 
         if segments < 2:
-            cmds.warning("minimum segments for the fingers are two. current: %s" %segments)
+            FEEDBACK.warning("minimum segments for the fingers are two. current: %s" %segments)
             return
 
         rPointFinger = om.MVector(0, 0, 0) * self.tMatrix
@@ -821,7 +824,7 @@ class initialJoints():
         sideMult = -1 if side == 2 else 1
 
         if segments < 1:
-            cmds.warning("minimum segments required for the tentacle is two. current: %s" %segments)
+            FEEDBACK.warning("minimum segments required for the tentacle is two. current: %s" %segments)
             return
         rPointTentacle = om.MVector(0, 14, 0) * self.tMatrix
         if side == 0:
@@ -900,7 +903,7 @@ class initialJoints():
 
         if limbType == "spine":
             if len(jointList) < 2:
-                cmds.warning("You need to select at least 2 joints for spine conversion\nNothing Changed")
+                FEEDBACK.warning("You need to select at least 2 joints for spine conversion\nNothing Changed")
                 return
             for j in range (len(jointList)):
                 cmds.select(jointList[j])
@@ -936,7 +939,7 @@ class initialJoints():
 
         if limbType == "tail":
             if len(jointList) < 2:
-                cmds.warning("You need to select at least 2 joints for tail conversion\nNothing Changed")
+                FEEDBACK.warning("You need to select at least 2 joints for tail conversion\nNothing Changed")
                 return
             for j in range(len(jointList)):
                 cmds.select(jointList[j])
@@ -953,7 +956,7 @@ class initialJoints():
 
         if limbType == "arm":
             if not len(jointList) == 4:
-                cmds.warning("You must select exactly 4 joints to define the chain as Arm\nNothing Changed")
+                FEEDBACK.warning("You must select exactly 4 joints to define the chain as Arm\nNothing Changed")
                 return
             cmds.setAttr("%s.side" % jointList[0], side)
             cmds.setAttr("%s.type" % jointList[0], 9)
@@ -966,7 +969,7 @@ class initialJoints():
 
         if limbType == "leg":
             if not len(jointList) == 10:
-                cmds.warning("You must select exactly 10 joints to define the chain as Leg\nNothing Changed\nCorrect jointList order is Root -> Hip -> Knee -> Foot -> Ball -> Heel Pivot -> Toe Pivot -> Bank In Pivot -> Bank Out Pivot")
+                FEEDBACK.warning("You must select exactly 10 joints to define the chain as Leg\nNothing Changed\nCorrect jointList order is Root -> Hip -> Knee -> Foot -> Ball -> Heel Pivot -> Toe Pivot -> Bank In Pivot -> Bank Out Pivot")
                 return
             cmds.setAttr("%s.side" % jointList[0], side)
             cmds.setAttr("%s.type" % jointList[0], 18)
@@ -1000,7 +1003,7 @@ class initialJoints():
 
         if limbType == "head":
             if not len(jointList) >= 3:
-                cmds.warning("You must select exactly 3 joints to define the chain as Neck and Head\nNothing Changed")
+                FEEDBACK.warning("You must select exactly 3 joints to define the chain as Neck and Head\nNothing Changed")
                 return
             for i in range(len(jointList)):
                 if i == 0:
@@ -1032,7 +1035,7 @@ class initialJoints():
 
         if limbType == "finger":
             if not len(jointList) > 1:
-                cmds.warning("You must at least 2 joints to define the chain as Finger\nNothing Changed")
+                FEEDBACK.warning("You must at least 2 joints to define the chain as Finger\nNothing Changed")
                 return
             for i in range (len(jointList)):
                 cmds.setAttr("%s.side" % jointList[i], 0)
@@ -1049,7 +1052,7 @@ class initialJoints():
 
         if limbType == "tentacle":
             if not len(jointList) > 1:
-                cmds.warning("minimum segments required for the tentacle is two. current: %s" % len(jointList))
+                FEEDBACK.warning("minimum segments required for the tentacle is two. current: %s" % len(jointList))
                 return
 
             for j in range(len(jointList)):

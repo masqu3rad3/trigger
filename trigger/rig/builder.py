@@ -23,9 +23,6 @@ from trigger.Qt import QtWidgets
 
 import pdb
 
-# import logging
-# LOG = logging.getLogger(__name__)
-# LOG.setLevel(logging.INFO)
 FEEDBACK = feedback.Feedback(logger_name=__name__)
 
 
@@ -84,6 +81,15 @@ class Builder(object):
         self.replaceExisting = False
 
     def start_building(self, root_jnt=None, create_switchers=False):
+        """ Creates the modules for the selected root and for all the roots in the hiearchy and connects them
+
+        Args:
+            root_jnt(string): root guide joint. If not defined, scene selection will be used.
+            create_switchers (bool): If True, the default space switchers will be created.
+
+        Returns: None
+
+        """
         if not root_jnt:
             selection = cmds.ls(sl=True)
             if len(selection) == 1:
@@ -142,16 +148,17 @@ class Builder(object):
             self.skinning(copyMode=self.copySkinWeights)
 
     def get_limb_hierarchy(self, node, isRoot=True, parentIndex=None, r_list=None):
+        """Checks the given nodes entire hieararchy for roots, and catalogues the root nodes into dictionaries.
+
+        Args:
+            node (string): starts checking from this node
+            isRoot(bool): if True, the given joint is considered as true. Default is True. For recursion.
+            parentIndex(string): indicates the parent of the current node. Default is none. For recursion.
+            r_list(list): If a list is provided, it appends the results into this one. For recursion
+
+        Returns (list): list of root guide nodes in the hierarchy
+
         """
-        Checks the given nodes entire hieararchy for roots, and catalogues the root nodes into dictionaries.
-
-        isRoot: if True, the given joint is considered as true. Default is True. For recursion.
-        parentIndex: indicates the parent of the current node. Default is none. For recursion.
-
-        Returns: None (Updates limbCreationList attribute of the parent class)
-
-        """
-
         if not r_list:
             r_list = []
         if isRoot:

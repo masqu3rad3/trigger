@@ -7,6 +7,7 @@ import trigger.guides.initials as init
 import inspect
 # from trigger.rig import scratch
 from trigger.rig import builder
+from trigger.core import feedback
 
 
 import trigger.library.controllers as ic
@@ -19,6 +20,9 @@ import trigger.library.tools as tools
 import os
 import json
 import re
+
+
+FEEDBACK = feedback.Feedback(logger_name=__name__)
 # import math
 
 # from maya.app.general.mayaMixin import MayaQWidgetDockableMixin
@@ -230,9 +234,6 @@ class MainUI(QtWidgets.QMainWindow):
         self.buildUI()
 
 
-        ### new ###
-        # self.show(dockable=True, floating=False, area='left')
-
     def dock_ui(self):
         for entry in QtWidgets.QApplication.allWidgets():
             try:
@@ -247,7 +248,7 @@ class MainUI(QtWidgets.QMainWindow):
         try:
             floatingLayout = cmds.paneLayout(configuration='single', width=250, height=400)
         except RuntimeError:
-            cmds.warning("Skipping docking. Restart to dock.")
+            FEEDBACK.warning("Skipping docking. Restart to dock.")
             self.show()
             return False
         cmds.dockControl('triggerDock', area='left', allowedArea=allowedAreas,
