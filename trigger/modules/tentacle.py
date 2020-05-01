@@ -1,12 +1,11 @@
 from maya import cmds
 import maya.api.OpenMaya as om
+
+from trigger.core import settings
 from trigger.library import functions as extra
 from trigger.library import controllers as ic
-from trigger.library import ribbon as rc
-from trigger.library import twist_spline as twistSpline
-
-reload(twistSpline)
-
+# from trigger.library import ribbon as rc
+# from trigger.library import twist_spline as twistSpline
 
 import maya.cmds as cmds
 
@@ -14,7 +13,7 @@ from trigger.core import feedback
 FEEDBACK = feedback.Feedback(__name__)
 
 
-class Tentacle(object):
+class Tentacle(settings.Settings):
 
     def __init__(self, build_data=None, inits=None,
                  suffix="",
@@ -23,7 +22,7 @@ class Tentacle(object):
                  jointRes=5.0,
                  deformerRes=25.0,
                  dropoff=2.0, *args, **kwargs):
-
+        super(Tentacle, self).__init__()
         if build_data:
             self.tentacleRoot = build_data.get("TentacleRoot")
             self.tentacles = (build_data.get("Tentacle"))
@@ -126,7 +125,7 @@ class Tentacle(object):
         for index in range(0, len(contDistances)):
             ctrlVc = splitVc.normal() * contDistances[index]
             place = self.rootPos + (ctrlVc)
-            jnt = cmds.joint(p=place, name="jCont_tentacle_%s%i" %(self.suffix , index), radius=5, o=(90, 0, 90))
+            jnt = cmds.joint(p=place, name="jCont_tentacle_%s_%i" % (self.suffix , index), radius=5, o=(90, 0, 90))
             self.contJointsList.append(jnt)
             cmds.select(d=True)
 
@@ -158,7 +157,7 @@ class Tentacle(object):
         iconScale = extra.getDistance(self.inits[0], self.inits[1])/3
         self.cont_special, dmp = icon.createIcon("Looper", iconName="tentacleSP_%s" % self.suffix, scale=(iconScale, iconScale, iconScale))
         extra.alignAndAim(self.cont_special, targetList = [self.inits[0]], aimTargetList=[self.inits[-1]], upVector=self.up_axis, rotateOff=(90,0,0))
-        move_pos = om.MVector(self.up_axis) *(iconScale*2.0)
+        move_pos = om.MVector(self.up_axis) * (iconScale*2.0)
         # cmds.move(self.cont_special, om.MVector(self.up_axis) *(iconScale*2), r=True)
         cmds.move(move_pos[0], move_pos[1], move_pos[2], self.cont_special, r=True)
 
@@ -280,7 +279,7 @@ class Tentacle(object):
             extra.lockAndHide(follicle_transform, ["tx", "ty", "tz", "rx", "ry", "rz"], hide=False)
             follicleList.append(follicle)
             
-            defJ = cmds.joint(name="%s%i_jDef" % (self.suffix ,i))
+            defJ = cmds.joint(name="%s_%i_jDef" % (self.suffix ,i))
             cmds.joint(defJ, e=True, zso=True, oj='zxy')
             self.deformerJoints.append(defJ)
             self.sockets.append(defJ)

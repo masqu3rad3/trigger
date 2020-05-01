@@ -2,31 +2,18 @@ from maya import cmds
 import maya.api.OpenMaya as om
 from trigger.library import functions as extra
 
-from trigger.core import io
+from trigger import modules
+from trigger.core import settings
 
 from trigger.core import feedback
 FEEDBACK = feedback.Feedback(logger_name=__name__)
 
-class initialJoints():
+class Initials(settings.Settings):
 
     def __init__(self):
-        default_settings = {
-            "upAxis": "+y",
-            "mirrorAxis": "+x",
-            "lookAxis": "+z",
-            "majorCenterColor": 17,
-            "minorCenterColor": 20,
-            "majorLeftColor": 6,
-            "minorLeftColor": 18,
-            "majorRightColor": 13,
-            "minorRightColor": 9,
-            "seperateSelectionSets": True,
-            "afterCreation": 0,
-            "bindMethod": 0,
-            "skinningMethod": 0
-            }
-        settings = io.Settings("triggerSettings.json", defaults=default_settings)
-        self.parseSettings(settings.currents)
+        super(Initials, self).__init__()
+        # settings = st.Settings("triggerSettings.json")
+        self.parseSettings()
 
         self.spineJointsList=[]
         self.neckJointsList=[]
@@ -36,8 +23,9 @@ class initialJoints():
         self.tailJointsList=[]
         self.tentacleJointsList=[]
         self.projectName = "tikAutoRig"
+        self.module_dict = modules.all_modules_data.MODULE_DICTIONARY
 
-    def parseSettings(self, settingsData):
+    def parseSettings(self):
 
         parsingDictionary = {u'+x':(1,0,0),
                              u'+y':(0,1,0),
@@ -46,13 +34,13 @@ class initialJoints():
                              u'-y': (0, -1, 0),
                              u'-z': (0, 0, -1)
                              }
-        self.upVector_asString = settingsData["upAxis"]
-        self.lookVector_asString = settingsData["lookAxis"]
-        self.mirrorVector_asString = settingsData["mirrorAxis"]
+        self.upVector_asString = self.get("upAxis")
+        self.lookVector_asString = self.get("lookAxis")
+        self.mirrorVector_asString = self.get("mirrorAxis")
 
-        self.upVector = om.MVector(parsingDictionary[settingsData["upAxis"]])
-        self.lookVector = om.MVector(parsingDictionary[settingsData["lookAxis"]])
-        self.mirrorVector = om.MVector(parsingDictionary[settingsData["mirrorAxis"]])
+        self.upVector = om.MVector(parsingDictionary[self.get("upAxis")])
+        self.lookVector = om.MVector(parsingDictionary[self.get("lookAxis")])
+        self.mirrorVector = om.MVector(parsingDictionary[self.get("mirrorAxis")])
 
         # get transformation matrix:
         self.upVector.normalize()
@@ -64,12 +52,12 @@ class initialJoints():
         # the new matrix is
         self.tMatrix  = om.MMatrix(((side_vect.x, side_vect.y, side_vect.z, 0), (self.upVector.x, self.upVector.y, self.upVector.z, 0), (front_vect.x, front_vect.y, front_vect.z, 0), (0, 0, 0, 1)))
 
-        self.majorLeftColor = settingsData["majorLeftColor"]
-        self.minorLeftColor = settingsData["minorLeftColor"]
-        self.majorRightColor = settingsData["majorRightColor"]
-        self.minorRightColor = settingsData["minorRightColor"]
-        self.majorCenterColor = settingsData["majorCenterColor"]
-        self.minorCenterColor = settingsData["minorCenterColor"]
+        self.majorLeftColor = self.get("majorLeftColor")
+        self.minorLeftColor = self.get("minorLeftColor")
+        self.majorRightColor = self.get("majorRightColor")
+        self.minorRightColor = self.get("minorRightColor")
+        self.majorCenterColor = self.get("majorCenterColor")
+        self.minorCenterColor = self.get("minorCenterColor")
 
     def autoGet (self, parentBone):
         """
@@ -115,7 +103,8 @@ class initialJoints():
 
         ## skip side related stuff for no-side related limbs
 
-        nonSidedLimbs = ["spine", "head", "root"]
+        nonSidedLimbs = [x for x in self.module_dict.keys() if not self.module_dict[x]["sided"]]
+        # nonSidedLimbs = ["spine", "head", "root"]
         if limb in nonSidedLimbs:
             whichSide = "c"
             side = 0
@@ -150,7 +139,8 @@ class initialJoints():
 
         if not parentNode:
             if cmds.ls(sl=True, type="joint"):
-                valid_inits = ["arm", "leg", "spine", "head", "tail", "finger", "tentacle", "root"]
+                # valid_inits = ["arm", "leg", "spine", "head", "tail", "finger", "tentacle", "root"]
+                valid_inits = self.module_dict.keys()
                 j = cmds.ls(sl=True)[-1]
                 try:
                     if extra.identifyMaster(j)[1] in valid_inits:

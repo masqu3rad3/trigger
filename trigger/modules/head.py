@@ -1,5 +1,7 @@
 from maya import cmds
 import maya.api.OpenMaya as om
+
+from trigger.core import settings
 from trigger.library import functions as extra
 from trigger.library import controllers as ic
 from trigger.library import twist_spline as twistSpline
@@ -8,10 +10,9 @@ FEEDBACK = feedback.Feedback(__name__)
 
 ## TODO // NEEDS TO SUPPORT DIFFERENT ORIENTATIONS
 
-class Head():
-
+class Head(settings.Settings):
     def __init__(self, build_data=None, inits=None, suffix="", side="C", resolution=3, dropoff=1, *args, **kwargs):
-
+        super(Head, self).__init__()
         if build_data:
             try:
                 self.neckNodes = [build_data["NeckRoot"]] + build_data["Neck"]

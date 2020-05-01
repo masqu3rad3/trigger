@@ -1,7 +1,7 @@
 """New rig builder module"""
 from maya import cmds
 from trigger.core import feedback
-from trigger.modules import all_modules_data
+# from trigger.modules import all_modules_data
 import trigger.library.functions as extra
 import trigger.library.controllers as ic
 
@@ -17,7 +17,7 @@ from trigger import modules
 # import trigger.modules.root as root
 import trigger.utils.space_switcher as anchorMaker
 import trigger.library.tools as tools
-from trigger.core import io
+from trigger.core import settings
 
 from trigger.Qt import QtWidgets
 
@@ -26,40 +26,39 @@ import pdb
 FEEDBACK = feedback.Feedback(logger_name=__name__)
 
 
-class Builder(object):
+class Builder(settings.Settings):
     def __init__(self, name="trigger", progress_bar=None):
+        super(Builder, self).__init__()
         self.progress_bar = progress_bar
         if self.progress_bar:
             self.progress_bar.setProperty("value", 0)
         self.rig_name = name
-        self.validRootList = [values["members"][0] for values in all_modules_data.MODULE_DICTIONARY.values()]
-        default_settings = {
-            "upAxis": "+y",
-            "mirrorAxis": "+x",
-            "lookAxis": "+z",
-            "majorCenterColor": 17,
-            "minorCenterColor": 20,
-            "majorLeftColor": 6,
-            "minorLeftColor": 18,
-            "majorRightColor": 13,
-            "minorRightColor": 9,
-            "seperateSelectionSets": True,
-            "afterCreation": 0,
-            "bindMethod": 0,
-            "skinningMethod": 0
-        }
-        self.settings = io.Settings("triggerSettings.json", defaults=default_settings)
+        self.validRootList = [values["members"][0] for values in modules.all_modules_data.MODULE_DICTIONARY.values()]
+
+        # self.settings = st.Settings("triggerSettings.json")
         # Parse the dictionary settings to variables
-        self.majorCenterColor = self.settings.currents["majorCenterColor"]
-        self.minorCenterColor = self.settings.currents["minorCenterColor"]
-        self.majorLeftColor = self.settings.currents["majorLeftColor"]
-        self.minorLeftColor = self.settings.currents["minorLeftColor"]
-        self.majorRightColor = self.settings.currents["majorRightColor"]
-        self.minorRightColor = self.settings.currents["minorRightColor"]
-        self.seperateSelectionSets = self.settings.currents["seperateSelectionSets"]
-        self.afterCreation = self.settings.currents["afterCreation"]
-        self.bindMethod = self.settings.currents["bindMethod"]
-        self.skinMethod = self.settings.currents["skinningMethod"]
+        # self.majorCenterColor = self.settings.current_settings["majorCenterColor"]
+        # self.minorCenterColor = self.settings.current_settings["minorCenterColor"]
+        # self.majorLeftColor = self.settings.current_settings["majorLeftColor"]
+        # self.minorLeftColor = self.settings.current_settings["minorLeftColor"]
+        # self.majorRightColor = self.settings.current_settings["majorRightColor"]
+        # self.minorRightColor = self.settings.current_settings["minorRightColor"]
+        # self.seperateSelectionSets = self.settings.current_settings["seperateSelectionSets"]
+        # self.afterCreation = self.settings.current_settings["afterCreation"]
+        # self.bindMethod = self.settings.current_settings["bindMethod"]
+        # self.skinMethod = self.settings.current_settings["skinningMethod"]
+
+        # self.majorCenterColor = self.current_settings["majorCenterColor"]
+        # self.minorCenterColor = self.current_settings["minorCenterColor"]
+        # self.majorLeftColor = self.current_settings["majorLeftColor"]
+        # self.minorLeftColor = self.current_settings["minorLeftColor"]
+        # self.majorRightColor = self.current_settings["majorRightColor"]
+        # self.minorRightColor = self.current_settings["minorRightColor"]
+        # self.seperateSelectionSets = self.current_settings["seperateSelectionSets"]
+        # self.afterCreation = self.current_settings["afterCreation"]
+        # self.bindMethod = self.current_settings["bindMethod"]
+        # self.skinMethod = self.current_settings["skinningMethod"]
+
 
         self.limbCreationList = []
 
@@ -107,13 +106,14 @@ class Builder(object):
         # self.get_limb_hierarchy(root_jnt)
         self.limbCreationList = self.get_limb_hierarchy(root_jnt)
 
-        self.createMasters()
+        self.create_masters()
         self.createlimbs(self.limbCreationList)
 
         # create space switchers
         if create_switchers:
             for anchor in (self.anchors):
-                FEEDBACK.warning(anchor)
+                FEEDBACK.warning("anchor:", anchor)
+                FEEDBACK.warning("anchorLocations:", self.anchorLocations)
                 anchorMaker.create_space_switch(anchor[0], self.anchorLocations, mode=anchor[1], defaultVal=anchor[2],
                                                 listException=anchor[3])
 
@@ -135,10 +135,10 @@ class Builder(object):
             cmds.parent(cont_offset, self.rootGroup)
 
         # TODO : tidy up / make settings human readable
-        if self.afterCreation == 1:
+        if self.get("afterCreation") == 1:
             # if the After Creation set to 'Hide Initial Joints'
             cmds.hide(root_jnt)
-        if self.afterCreation == 2:
+        if self.get("afterCreation") == 2:
             # if the After Creation set to 'Delete Initial Joints'
             cmds.delete(root_jnt)
 
@@ -179,7 +179,7 @@ class Builder(object):
                 self.get_limb_hierarchy(jnt, isRoot=False, r_list=r_list)
         return r_list
 
-    def createMasters(self):
+    def create_masters(self):
         """
         This method creates master controllers (Placement and Master)
         Returns: None
@@ -228,8 +228,8 @@ class Builder(object):
         cmds.setAttr("%s.rigVis" % self.cont_master, cb=True)
         cmds.parent(self.cont_placement, self.cont_master)
         # # add these to the anchor locations
-        self.spaceSwitchers.append(self.cont_master)
-        self.spaceSwitchers.append(self.cont_placement)
+        self.anchorLocations.append(self.cont_master)
+        self.anchorLocations.append(self.cont_placement)
 
         # COLOR CODING
         index = 17
@@ -292,15 +292,19 @@ class Builder(object):
         #         self.fingerMatchList.append(tempGrp)
 
     def getWholeLimb(self, node):
-        multi_guide_jnts = [value["multi_guide"] for value in all_modules_data.MODULE_DICTIONARY.values() if
+        multi_guide_jnts = [value["multi_guide"] for value in modules.all_modules_data.MODULE_DICTIONARY.values() if
                             value["multi_guide"]]
         limb_dict = {}
         multiList = []
         segments = None
         dropoff = None
         limb_name, limb_type, limb_side = extra.identifyMaster(node)
-        for property in all_modules_data.MODULE_DICTIONARY[limb_type]["properties"]:
-            limb_dict[property] = cmds.getAttr("%s.%s" % (node, property))
+        # for property in all_modules_data.MODULE_DICTIONARY[limb_type]["properties"]:
+        #     limb_dict[property] = cmds.getAttr("%s.%s" % (node, property))
+        for property in modules.all_modules_data.MODULE_DICTIONARY[limb_type]["properties"]:
+            attr = property["attr_name"]
+            limb_dict[attr] = cmds.getAttr("%s.%s" % (node, attr))
+
 
         limb_dict[limb_name] = node
         nextNode = node
@@ -380,7 +384,7 @@ class Builder(object):
 
         j_def_set = None
 
-        if not self.seperateSelectionSets:
+        if not self.get("seperateSelectionSets"):
             cmds.select(d=True)
             if not cmds.objExists("def_jointsSet_%s" % self.rig_name):
                 j_def_set = cmds.sets(name="def_jointsSet_%s" % self.rig_name)
@@ -400,15 +404,15 @@ class Builder(object):
 
             if x[2] == "R":
                 sideVal = "R"
-                colorCodes = [self.majorRightColor, self.majorLeftColor]
+                colorCodes = [self.get("majorRightColor"), self.get("majorLeftColor")]
             elif x[2] == "L":
                 sideVal = "L"
-                colorCodes = [self.majorLeftColor, self.minorLeftColor]
+                colorCodes = [self.get("majorLeftColor"), self.get("minorLeftColor")]
             else:
                 sideVal = "C"
-                colorCodes = [self.majorCenterColor, self.minorCenterColor]
+                colorCodes = [self.get("majorCenterColor"), self.get("minorCenterColor")]
 
-            if self.seperateSelectionSets:
+            if self.get("seperateSelectionSets"):
                 set_name = "def_%s_%s_Set" % (x[1], x[2])
                 set_name = extra.uniqueName(set_name)
                 j_def_set = cmds.sets(name=set_name)
@@ -484,7 +488,6 @@ class Builder(object):
                 cmds.parent(limb.limbGrp, self.rootGroup)
                 for sCon in limb.scaleConstraints:
                     cmds.scaleConstraint(self.cont_master, sCon)
-            # if not seperateSelectionSets:
             self.totalDefJoints += limb.deformerJoints
             if j_def_set:
                 cmds.sets(limb.deformerJoints, add=j_def_set)
@@ -499,5 +502,5 @@ class Builder(object):
 
         else:
             for i in self.skinMeshList:
-                cmds.skinCluster(self.totalDefJoints, i, tsb=True, bindMethod=self.bindMethod,
-                                 skinMethod=self.skinMethod)
+                cmds.skinCluster(self.totalDefJoints, i, tsb=True, bindMethod=self.get("bindMethod"),
+                                 skinMethod=self.get("skinMethod"))

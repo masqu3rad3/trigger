@@ -1,13 +1,15 @@
 from maya import cmds
+
+from trigger.core import settings
 from trigger.library import functions as extra
 from trigger.library import controllers as ic
 from trigger.core import feedback
 FEEDBACK = feedback.Feedback(__name__)
 
-class Tail(object):
+class Tail(settings.Settings):
 
     def __init__(self, build_data=None, inits=None, suffix="", side="C", *args, **kwargs):
-
+        super(Tail, self).__init__()
         if build_data:
             self.tailRoot = build_data.get("TailRoot")
             self.tails = (build_data.get("Tail"))

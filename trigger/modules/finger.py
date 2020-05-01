@@ -1,12 +1,14 @@
 from maya import cmds
+
+from trigger.core import settings
 from trigger.library import functions as extra
 from trigger.library import controllers as ic
 from trigger.core import feedback
 FEEDBACK = feedback.Feedback(__name__)
 
-class Finger(object):
-    # def __init__(self, inits, suffix="", side="L", parentController=None, thumb=False, mirrorAxis="X"):
+class Finger(settings.Settings):
     def __init__(self, build_data=None, inits=None, suffix="", side="L", parentController=None, *args, **kwargs):
+        super(Finger, self).__init__()
         if build_data:
             self.fingerRoot = build_data.get("FingerRoot")
             self.fingers = (build_data.get("Finger"))

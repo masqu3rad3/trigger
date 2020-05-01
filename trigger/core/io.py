@@ -5,7 +5,7 @@
 import os
 import json
 import shutil
-from copy import deepcopy
+
 from trigger.core import feedback
 
 FEEDBACK = feedback.Feedback(logger_name=__name__)
@@ -26,7 +26,7 @@ class IO(dict):
             # self["file_path"] = os.path.join(root_path, folder_name, file_name)
             self.file_path = os.path.join(root_path, folder_name, file_name)
         else:
-            FEEDBACK.error("IO class cannot initialized. At least a file name or file_path must be defined")
+            FEEDBACK.throw_error("IO class cannot initialized. At least a file name or file_path must be defined")
 
         # self._folderCheck(self.file_path)
 
@@ -38,10 +38,10 @@ class IO(dict):
     def file_path(self, new_path):
         name, ext = os.path.splitext(new_path)
         if not ext:
-            FEEDBACK.error("IO module needs to know the extension")
+            FEEDBACK.throw_error("IO module needs to know the extension")
             raise Exception
         if ext not in self.valid_extensions:
-            FEEDBACK.error("IO modules does not support this extension (%s)" % ext)
+            FEEDBACK.throw_error("IO modules does not support this extension (%s)" % ext)
             raise Exception
         self["file_path"] = self._folderCheck(new_path)
 
@@ -62,10 +62,10 @@ class IO(dict):
                     data = json.load(f)
                     return data
             except ValueError:
-                FEEDBACK.error("Corrupted JSON file => %s" % file_path)
+                FEEDBACK.throw_error("Corrupted JSON file => %s" % file_path)
                 raise Exception
         else:
-            FEEDBACK.error("File cannot be found => %s" % file_path)
+            FEEDBACK.throw_error("File cannot be found => %s" % file_path)
 
     def _dump_json(self, data, file_path):
         """Saves the data to the json file"""
@@ -89,59 +89,59 @@ class IO(dict):
     def _dump_ini(self, file_path):
         pass
 
-class Settings(dict):
-    def __init__(self, filename, folder=None, defaults=None, custom_root_path=None):
-        super(Settings, self).__init__()
-        self.io = IO(file_name=filename, folder_name=folder, root_path=custom_root_path)
-        self.defaults = defaults
-        self.originals = self.read_settings()
-        self.currents = deepcopy(self.originals)
-
-    def read_settings(self):
-        settings = self.io.read()
-        if settings:
-            return settings
-        else:
-            settings = self.write_defaults()
-            return settings
-
-    def write_settings(self, settings):
-        self.io.write(settings)
-
-    def write_defaults(self):
-        if self.defaults:
-            self.io.write(self.defaults)
-            return self.defaults
-        else:
-            FEEDBACK.error("default settings not defined. Cannot write defaults")
-
-    def isChanged(self):
-        """Checks for differences between old and new settings"""
-        return True if self.originals != self.currents else False
-
-    def apply(self):
-        """Equals original settings to the new settings and writes the changes to the file"""
-        if self.isChanged():
-            self.originals = deepcopy(self.currents)
-            self.write_settings(self.originals)
-            FEEDBACK.info("Changes saved")
-        FEEDBACK.warning("Nothing changed")
-
-
-    def set(self, name, value):
-        """sets the value of a setting"""
-        if name in self.currents.keys():
-            self.currents[name] = value
-            return True
-        else:
-            FEEDBACK.warning("'%s' is not in the settings. Use add instead" % name)
-            return False
-
-    def add(self, name, value):
-        """adds a new item to the settings"""
-        if name in self.currents.keys():
-            FEEDBACK.warning("'%s' is already in the settings. Use set instead" % name)
-            return False
-        else:
-            self.currents[name] = value
-            return True
+# class Settings(dict):
+#     def __init__(self, filename, folder=None, defaults=None, custom_root_path=None):
+#         super(Settings, self).__init__()
+#         self.io = IO(file_name=filename, folder_name=folder, root_path=custom_root_path)
+#         self.defaults = defaults
+#         self.originals = self.read_settings()
+#         self.currents = deepcopy(self.originals)
+#
+#     def read_settings(self):
+#         settings = self.io.read()
+#         if settings:
+#             return settings
+#         else:
+#             settings = self.write_defaults()
+#             return settings
+#
+#     def write_settings(self, settings):
+#         self.io.write(settings)
+#
+#     def write_defaults(self):
+#         if self.defaults:
+#             self.io.write(self.defaults)
+#             return self.defaults
+#         else:
+#             FEEDBACK.throw_error("default settings not defined. Cannot write defaults")
+#
+#     def isChanged(self):
+#         """Checks for differences between old and new settings"""
+#         return True if self.originals != self.currents else False
+#
+#     def apply(self):
+#         """Equals original settings to the new settings and writes the changes to the file"""
+#         if self.isChanged():
+#             self.originals = deepcopy(self.currents)
+#             self.write_settings(self.originals)
+#             FEEDBACK.info("Changes saved")
+#         FEEDBACK.warning("Nothing changed")
+#
+#
+#     def set(self, name, value):
+#         """sets the value of a setting"""
+#         if name in self.currents.keys():
+#             self.currents[name] = value
+#             return True
+#         else:
+#             FEEDBACK.warning("'%s' is not in the settings. Use add instead" % name)
+#             return False
+#
+#     def add(self, name, value):
+#         """adds a new item to the settings"""
+#         if name in self.currents.keys():
+#             FEEDBACK.warning("'%s' is already in the settings. Use set instead" % name)
+#             return False
+#         else:
+#             self.currents[name] = value
+#             return True

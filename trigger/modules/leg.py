@@ -1,4 +1,6 @@
 from maya import cmds
+
+from trigger.core import settings
 from trigger.library import functions as extra
 from trigger.library import controllers as ic
 from trigger.library import ribbon as rc
@@ -9,9 +11,9 @@ import pymel.core.datatypes as dt
 from trigger.core import feedback
 FEEDBACK = feedback.Feedback(__name__)
 
-class Leg(object):
+class Leg(settings.Settings):
     def __init__(self, build_data=None, inits=None, suffix="", side="L", *args, **kwargs):
-
+        super(Leg, self).__init__()
         if build_data:
             self.leg_root_ref = build_data["LegRoot"]
             self.hip_ref = build_data["Hip"]

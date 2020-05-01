@@ -69,7 +69,7 @@ WHAT TO DO NEXT
 Start changing the properties value in the MODULE_DICTIONARY into a dictionary. List is not enough for further development.
 Once it is working with the builder, move on to initials an re-write the initials to be procedural with modules.
 
-Each module will need a seperate draw_guides function. Initial joints will be created here. Initials module will parse the
+Each module will need a separate draw_guides function. Initial joints will be created here. Initials module will parse the
 command according to the info gathered from all_modules_data just like builder does.
 
 

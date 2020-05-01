@@ -4,9 +4,8 @@ import maya.cmds as cmds
 import maya.api.OpenMaya as om
 from trigger.modules import all_modules_data
 
-import logging
-LOG = logging.getLogger(__name__)
-LOG.setLevel(logging.DEBUG)
+from trigger.core import feedback
+FEEDBACK = feedback.Feedback(logger_name=__name__)
 
 def getMDagPath(node):
     selList = om.MSelectionList()
@@ -640,7 +639,7 @@ def identifyMaster(node):
     ## get the label ID
     typeNum = cmds.getAttr("%s.type" %node)
     if typeNum not in typeDict.keys():
-        LOG.warning("Joint Type cannot be detected (%s)" % node)
+        FEEDBACK.warning("Joint Type cannot be detected (%s)" % node)
     if typeNum == 18:  # if type is in the 'other' category:
         limbName = cmds.getAttr("{0}.otherType".format(node))
     else:
@@ -658,7 +657,7 @@ def identifyMaster(node):
 
     sideNum = cmds.getAttr("{0}.side".format(node))
     if sideNum not in sideDict.keys():
-        LOG.warning("Joint Side cannot not be detected (%s)" % node)
+        FEEDBACK.warning("Joint Side cannot not be detected (%s)" % node)
     side = sideDict[sideNum]
 
     return limbName, limbType, side

@@ -1,13 +1,14 @@
 from maya import cmds
 from trigger.library import functions as extra
 from trigger.library import controllers as ic
+from trigger.core import settings
 
 from trigger.core import feedback
 FEEDBACK = feedback.Feedback(__name__)
 
-class Limb(object):
+class Limb(settings.Settings):
     def __init__(self, build_data=None, inits=None, suffix="", side="L", *args, **kwargs):
-
+        super(Limb, self).__init__()
         # fool proofing
 
         # reinitialize the initial Joints

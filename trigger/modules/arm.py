@@ -1,14 +1,15 @@
 from maya import cmds
 import maya.api.OpenMaya as om
+from trigger.core import settings
 from trigger.library import functions as extra
 from trigger.library import controllers as ic
 from trigger.library import ribbon as rc
 from trigger.core import feedback
 FEEDBACK = feedback.Feedback(__name__)
 
-class Arm(object):
+class Arm(settings.Settings):
     def __init__(self, build_data=None, inits=None, suffix="", side="L", *args, **kwargs):
-
+        super(Arm, self).__init__()
         if build_data:
             self.collar_ref = build_data["Collar"]
             self.shoulder_ref = build_data["Shoulder"]

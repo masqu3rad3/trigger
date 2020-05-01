@@ -1,18 +1,18 @@
 from maya import cmds
 import maya.api.OpenMaya as om
 
+from trigger.core import settings
 from trigger.library import functions as extra
 from trigger.library import controllers as ic
 from trigger.library import twist_spline as twistSpline
 
-reload(twistSpline)
 from trigger.core import feedback
 FEEDBACK = feedback.Feedback(__name__)
 
-class Spine(object):
+class Spine(settings.Settings):
 
     def __init__(self, build_data=None, inits=None, suffix="", side="C", resolution=4, dropoff=2.0, *args, **kwargs):
-
+        super(Spine, self).__init__()
         if build_data:
             sRoot=build_data.get("SpineRoot")
             try:

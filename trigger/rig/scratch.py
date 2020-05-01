@@ -1,3 +1,5 @@
+"""THIS MODULE IS DEPRECATED USE builder MODULE INSTEAD"""
+
 from maya import cmds
 from trigger.modules import all_modules_data
 import trigger.library.functions as extra
@@ -360,9 +362,9 @@ class LimbBuilder():
                 limb.createLimb()
 
             elif x[1] == "root":
-                limb = root.Root()
+                limb = root.Root(build_data=x[0], suffix="Toot")
                 limb.colorCodes = colorCodes
-                limb.createRoot(x[0], suffix="Toot")
+                limb.createLimb()
 
             else:
                 cmds.error("limb creation failed.")
@@ -629,8 +631,11 @@ class LimbBuilder():
         segments = None
         dropoff = None
         limbName, limbType, limbSide = extra.identifyMaster(node)
+        # for property in all_modules_data.MODULE_DICTIONARY[limbType]["properties"]:
+        #     limbDict[property] = cmds.getAttr("%s.%s" %(node, property))
         for property in all_modules_data.MODULE_DICTIONARY[limbType]["properties"]:
-            limbDict[property] = cmds.getAttr("%s.%s" %(node, property))
+            attr = property["attr_name"]
+            limbDict[attr] = cmds.getAttr("%s.%s" % (node, attr))
         # if limbType == "spine" or limbType == "neck":
         #     limbDict["resolution"] = cmds.getAttr("%s.resolution" %node)
         #     limbDict["dropoff"] = cmds.getAttr("%s.dropoff" %node)
