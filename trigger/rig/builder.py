@@ -433,11 +433,11 @@ class Builder(settings.Settings):
             suffix = "%s_%s" % (sideVal, x[1].capitalize()) if sideVal != "C" else x[1].capitalize()
             module = "modules.{0}.{1}".format(x[1], x[1].capitalize())
             flags = "build_data={0}, suffix='{1}', side='{2}'".format(x[0], suffix, x[2])
-            command = "{0}({1})".format(module, flags)
+            construct_command = "{0}({1})".format(module, flags)
 
             # FEEDBACK.debug("="*30, command, "-"*30)
 
-            limb = eval(command)
+            limb = eval(construct_command)
             limb.colorCodes = colorCodes
             limb.createLimb()
 

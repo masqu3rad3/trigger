@@ -1,4 +1,5 @@
 from maya import cmds
+import maya.api.OpenMaya as om
 from trigger.library import functions as extra
 from trigger.library import controllers as ic
 from trigger.core import settings
@@ -113,3 +114,83 @@ class Limb(settings.Settings):
         self.createTwistSplines()
         self.createAngleExtractors()
         self.roundUp()
+
+class Guides(settings.Settings):
+    def __init__(self, side="L", suffix="LIMBNAME", segments=None, tMatrix=None, lookVector=(0,0,1), *args, **kwargs):
+        super(Guides, self).__init__()
+        # fool check
+
+        #-------Mandatory------[Start]
+        self.side = side
+        if self.side == "L":
+            self.sideMultiplier = 1 # this is the multiplier value to place joints
+            self.sideAttr = 1 # this is attribute value for side identification
+        elif self.side == "R":
+            self.sideMultiplier = -1
+            self.sideAttr = 2
+        else:
+            self.sideMultiplier = 1
+            self.sideAttr = 0
+        self.segments = segments
+        self.suffix = suffix
+        self.tMatrix = om.MMatrix(tMatrix) if tMatrix else om.MMatrix()
+        self.lookVector = lookVector
+        self.offsetVector = None
+        self.guideJoints = []
+        #-------Mandatory------[End]
+
+    def draw_joints(self):
+        if self.side == "C":
+            # Guide joint positions for limbs with no side orientation
+            pass
+        else:
+            # Guide joint positions for limbs with sides
+            pass
+
+        # Define the offset vector
+
+        # Draw the joints
+
+        # Update the guideJoints list
+
+        # set orientation of joints
+
+        # set joint side and type attributes
+
+    def define_attributes(self):
+        # ----------Mandatory---------[Start]
+        root_jnt = self.guideJoints[0]
+        axisAttributes=["upAxis", "mirrorAxis", "lookAxis"]
+        for att in axisAttributes:
+            if not cmds.attributeQuery(att, node=root_jnt, exists=True):
+                cmds.addAttr(root_jnt, longName=att, dt="string")
+
+        cmds.setAttr("{0}.upAxis".format(root_jnt), self.get("upAxis"), type="string")
+        cmds.setAttr("{0}.mirrorAxis".format(root_jnt), self.get("mirrorAxis"), type="string")
+        cmds.setAttr("{0}.lookAxis".format(root_jnt), self.get("lookAxis"), type="string")
+
+        if not cmds.attributeQuery("useRefOri", node=root_jnt, exists=True):
+            cmds.addAttr(root_jnt, longName="useRefOri", niceName="Inherit_Orientation", at="bool", keyable=True)
+
+        cmds.setAttr("{0}.useRefOri".format(root_jnt), True)
+        # ----------Mandatory---------[End]
+
+    def adjust_display(self):
+        # ----------Mandatory---------[Start]
+        # display joint orientation
+        for jnt in self.guideJoints:
+            cmds.setAttr("%s.displayLocalAxis" % jnt, 1)
+            cmds.setAttr("%s.drawLabel" % jnt, 1)
+
+        if self.side == "C":
+            extra.colorize(self.guideJoints, self.get("majorCenterColor"), shape=False)
+        if self.side == "L":
+            extra.colorize(self.guideJoints, self.get("majorLeftColor"), shape=False)
+        if self.side == "R":
+            extra.colorize(self.guideJoints, self.get("majorRightColor"), shape=False)
+        # ----------Mandatory---------[End]
+
+    def createGuides(self):
+        self.draw_joints()
+        self.define_attributes()
+        self.adjust_display()
