@@ -106,7 +106,7 @@ class Initials(settings.Settings):
                 FEEDBACK.throw_error(
                     "side argument '%s' is not valid. Valid arguments are: %s" % (whichSide, valid_sides))
             if len(cmds.ls(sl=True, type="joint")) != 1 and whichSide == "auto" and defineAs == False:
-                FEEDBACK.warning("You need to select a single joint to use Auto method")
+                FEEDBACK.throw_error("You need to select a single joint to use Auto method")
                 return
             ## get the necessary info from arguments
             if whichSide == "left":
@@ -142,16 +142,21 @@ class Initials(settings.Settings):
         else:
             masterParent = parentNode
         if whichSide == "both":
-            constLocs = self.initLimb(limb_name, "left", segments=segments)
-            self.initLimb(limb_name, "right", constrainedTo=constLocs, segments=segments)
-            return
+            locators1, jnt_dict_side1 = self.initLimb(limb_name, "left", segments=segments)
+            locators2, jnt_dict_side2 = self.initLimb(limb_name, "right", constrainedTo=locators1, segments=segments)
+            jnt_dict_side1.update(jnt_dict_side2)
+            return (locators1 + locators2), jnt_dict_side1
         if whichSide == "auto" and masterParent:
             mirrorParent, givenAlignment, returnAlignment = self.autoGet(masterParent)
-            constLocs = self.initLimb(limb_name, givenAlignment, segments=segments)
+            locators1, jnt_dict_side1 = self.initLimb(limb_name, givenAlignment, segments=segments)
             if mirrorParent:
-                self.initLimb(limb_name, returnAlignment, constrainedTo=constLocs, parentNode=mirrorParent,
+                locators2, jnt_dict_side2 = self.initLimb(limb_name, returnAlignment, constrainedTo=locators1, parentNode=mirrorParent,
                               segments=segments)
-            return
+                total_locators = locators1 + locators2
+                jnt_dict_side1.update(jnt_dict_side2)
+            else:
+                total_locators = locators1
+            return total_locators, jnt_dict_side1
 
         limbGroup = cmds.group(em=True, name="%sGrp_%s" % (limb_name, suffix))
         cmds.parent(limbGroup, holderGroup)
@@ -224,7 +229,8 @@ class Initials(settings.Settings):
             cmds.parent(guide.guideJoints[0], limbGroup)
         cmds.select(currentselection)
 
-        return locatorsList
+        FEEDBACK.warning(side)
+        return locatorsList, {side: guide.guideJoints}
 
     def _getMirror(self, vector):
         """Returns reflection of the vector along the mirror axis"""
@@ -417,17 +423,22 @@ class Initials(settings.Settings):
 
 
     def initHumanoid(self, spineSegments=3, neckSegments=3, fingers=5):
-        self.initLimb("spine", "auto", segments=spineSegments)
-        root = self.spineJointsList[-1][0]
-        chest = self.spineJointsList[-1][-1]
+        # spine_guide = modules.spine.Guides(side="C", suffix="humanoid_spine", segments=spineSegments, tMatrix=self.tMatrix, upVector=self.upVector, mirrorVector=self.mirrorVector, lookVector=self.lookVector)
+        # spine_guide.createGuides()
+        # cmds.select(spine_guide.guideJoints[0]) # select pelvis
+        # spine_guide = modules.arm.Guides(side="C", suffix="humanoid_arm", segments=spineSegments, tMatrix=self.tMatrix, upVector=self.upVector, mirrorVector=self.mirrorVector, lookVector=self.lookVector)
+
+        _, spine_dict = self.initLimb("spine", "auto", segments=spineSegments)
+        root = spine_dict["C"][0]
+        chest = spine_dict["C"][-1]
         cmds.select(root)
-        self.initLimb("leg", "auto")
+        _, leg_dict = self.initLimb("leg", "auto")
         cmds.select(chest)
-        self.initLimb("arm", "auto")
-        self.initLimb("head", "auto", segments=neckSegments)
-        rHand = self.armJointsList[0][-1]
-        cmds.select(rHand)
-        self.initLimb("hand", "auto", fingerCount=fingers)
+        _, arm_dict = self.initLimb("arm", "auto")
+        _, head_dict = self.initLimb("head", "auto", segments=neckSegments)
+        left_hand = arm_dict["L"][-1]
+        cmds.select(left_hand)
+        # self.initLimb("hand", "auto", fingerCount=fingers)
 
     def convertSelectionToInits(self, limbType, jointList=[], suffix="", whichside=""):
 
