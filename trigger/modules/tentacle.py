@@ -10,6 +10,7 @@ from trigger.library import controllers as ic
 import maya.cmds as cmds
 
 from trigger.core import feedback
+
 FEEDBACK = feedback.Feedback(__name__)
 
 
@@ -58,9 +59,11 @@ class Tentacle(settings.Settings):
         self.up_axis, self.mirror_axis, self.look_axis = extra.getRigAxes(self.inits[0])
 
         # get if orientation should be derived from the initial Joints
-        try: self.useRefOrientation = cmds.getAttr("%s.useRefOri" % self.inits[0])
+        try:
+            self.useRefOrientation = cmds.getAttr("%s.useRefOri" % self.inits[0])
         except:
-            cmds.warning("Cannot find Inherit Orientation Attribute on Initial Root Joint %s... Skipping inheriting." %self.inits[0])
+            cmds.warning("Cannot find Inherit Orientation Attribute on Initial Root Joint %s... Skipping inheriting." %
+                         self.inits[0])
             self.useRefOrientation = False
 
         # initialize suffix
@@ -95,7 +98,6 @@ class Tentacle(settings.Settings):
         cmds.parent(self.scaleGrp, self.limbGrp)
         cmds.parent(self.nonScaleGrp, self.limbGrp)
 
-
     def createJoints(self):
 
         cmds.select(d=True)
@@ -125,7 +127,7 @@ class Tentacle(settings.Settings):
         for index in range(0, len(contDistances)):
             ctrlVc = splitVc.normal() * contDistances[index]
             place = self.rootPos + (ctrlVc)
-            jnt = cmds.joint(p=place, name="jCont_tentacle_%s_%i" % (self.suffix , index), radius=5, o=(90, 0, 90))
+            jnt = cmds.joint(p=place, name="jCont_tentacle_%s_%i" % (self.suffix, index), radius=5, o=(90, 0, 90))
             self.contJointsList.append(jnt)
             cmds.select(d=True)
 
@@ -134,12 +136,12 @@ class Tentacle(settings.Settings):
         self.guideJoints = [cmds.joint(p=extra.getWorldTranslation(i)) for i in self.inits]
         # orientations
         if not self.useRefOrientation:
-            extra.orientJoints(self.guideJoints, worldUpAxis=(self.up_axis), upAxis=(0, 1, 0), reverseAim=self.sideMult, reverseUp=self.sideMult)
+            extra.orientJoints(self.guideJoints, worldUpAxis=(self.up_axis), upAxis=(0, 1, 0), reverseAim=self.sideMult,
+                               reverseUp=self.sideMult)
         else:
-            for x in range (len(self.guideJoints)):
+            for x in range(len(self.guideJoints)):
                 extra.alignTo(self.guideJoints[x], self.inits[x], position=True, rotation=True)
                 cmds.makeIdentity(self.guideJoints[x], a=True)
-
 
         cmds.select(d=True)
         self.wrapScaleJoint = cmds.joint(name="jWrapScale_{0}".format(self.suffix))
@@ -148,83 +150,92 @@ class Tentacle(settings.Settings):
         cmds.parent(self.wrapScaleJoint, self.scaleGrp)
 
         map(lambda x: cmds.connectAttr("%s.rigVis" % self.scaleGrp, "%s.v" % x), self.contJointsList)
-        cmds.connectAttr("%s.rigVis" % self.scaleGrp,"%s.v" % self.wrapScaleJoint)
+        cmds.connectAttr("%s.rigVis" % self.scaleGrp, "%s.v" % self.wrapScaleJoint)
 
     def createControllers(self):
 
         icon = ic.Icon()
         ## specialController
-        iconScale = extra.getDistance(self.inits[0], self.inits[1])/3
-        self.cont_special, dmp = icon.createIcon("Looper", iconName="tentacleSP_%s" % self.suffix, scale=(iconScale, iconScale, iconScale))
-        extra.alignAndAim(self.cont_special, targetList = [self.inits[0]], aimTargetList=[self.inits[-1]], upVector=self.up_axis, rotateOff=(90,0,0))
-        move_pos = om.MVector(self.up_axis) * (iconScale*2.0)
+        iconScale = extra.getDistance(self.inits[0], self.inits[1]) / 3
+        self.cont_special, dmp = icon.createIcon("Looper", iconName="tentacleSP_%s" % self.suffix,
+                                                 scale=(iconScale, iconScale, iconScale))
+        extra.alignAndAim(self.cont_special, targetList=[self.inits[0]], aimTargetList=[self.inits[-1]],
+                          upVector=self.up_axis, rotateOff=(90, 0, 0))
+        move_pos = om.MVector(self.up_axis) * (iconScale * 2.0)
         # cmds.move(self.cont_special, om.MVector(self.up_axis) *(iconScale*2), r=True)
         cmds.move(move_pos[0], move_pos[1], move_pos[2], self.cont_special, r=True)
 
-        cont_special_ORE = extra.createUpGrp(self.cont_special,"ORE")
+        cont_special_ORE = extra.createUpGrp(self.cont_special, "ORE")
 
         ## seperator - curl
         cmds.addAttr(self.cont_special, shortName="curlSeperator", at="enum", en="----------", k=True)
         cmds.setAttr("%s.curlSeperator" % self.cont_special, lock=True)
 
-        cmds.addAttr(self.cont_special, shortName="curl", longName="Curl", defaultValue=0.0, minValue=-10.0, maxValue=10.0, at="float",
-                   k=True)
-        cmds.addAttr(self.cont_special, shortName="curlSize", longName="Curl_Size", defaultValue=1.0, at="float", k=True)
+        cmds.addAttr(self.cont_special, shortName="curl", longName="Curl", defaultValue=0.0, minValue=-10.0,
+                     maxValue=10.0, at="float",
+                     k=True)
+        cmds.addAttr(self.cont_special, shortName="curlSize", longName="Curl_Size", defaultValue=1.0, at="float",
+                     k=True)
 
         cmds.addAttr(self.cont_special, shortName="curlAngle", longName="Curl_Angle", defaultValue=1.0, at="float",
-                   k=True)
-        cmds.addAttr(self.cont_special, shortName="curlDirection", longName="Curl_Direction", defaultValue=0.0, at="float",
-                   k=True)
+                     k=True)
+        cmds.addAttr(self.cont_special, shortName="curlDirection", longName="Curl_Direction", defaultValue=0.0,
+                     at="float",
+                     k=True)
 
         cmds.addAttr(self.cont_special, shortName="curlShift", longName="Curl_Shift", defaultValue=0.0, at="float",
-                   k=True)
-
+                     k=True)
 
         ## seperator - twist
         cmds.addAttr(self.cont_special, shortName="twistSeperator", at="enum", en="----------", k=True)
         cmds.setAttr("%s.twistSeperator" % self.cont_special, lock=True)
 
         cmds.addAttr(self.cont_special, shortName="twistAngle", longName="Twist_Angle", defaultValue=0.0, at="float",
-                   k=True)
+                     k=True)
         cmds.addAttr(self.cont_special, shortName="twistSlide", longName="Twist_Slide", defaultValue=0.0, at="float",
-                   k=True)
+                     k=True)
         cmds.addAttr(self.cont_special, shortName="twistArea", longName="Twist_Area", defaultValue=1.0, at="float",
-                   k=True)
+                     k=True)
 
         ## seperator - sine
         cmds.addAttr(self.cont_special, shortName="sineSeperator", at="enum", en="----------", k=True)
         cmds.setAttr("%s.sineSeperator" % self.cont_special, lock=True)
-        cmds.addAttr(self.cont_special, shortName="sineAmplitude", longName="Sine_Amplitude", defaultValue=0.0, at="float",
-                   k=True)
-        cmds.addAttr(self.cont_special, shortName="sineWavelength", longName="Sine_Wavelength", defaultValue=1.0, at="float",
-                   k=True)
+        cmds.addAttr(self.cont_special, shortName="sineAmplitude", longName="Sine_Amplitude", defaultValue=0.0,
+                     at="float",
+                     k=True)
+        cmds.addAttr(self.cont_special, shortName="sineWavelength", longName="Sine_Wavelength", defaultValue=1.0,
+                     at="float",
+                     k=True)
         cmds.addAttr(self.cont_special, shortName="sineDropoff", longName="Sine_Dropoff", defaultValue=0.0, at="float",
-                   k=True)
+                     k=True)
         cmds.addAttr(self.cont_special, shortName="sineSlide", longName="Sine_Slide", defaultValue=0.0, at="float",
-                   k=True)
+                     k=True)
         cmds.addAttr(self.cont_special, shortName="sineArea", longName="Sine_area", defaultValue=1.0, at="float",
-                   k=True)
-        cmds.addAttr(self.cont_special, shortName="sineDirection", longName="Sine_Direction", defaultValue=0.0, at="float",
-                   k=True)
+                     k=True)
+        cmds.addAttr(self.cont_special, shortName="sineDirection", longName="Sine_Direction", defaultValue=0.0,
+                     at="float",
+                     k=True)
 
         cmds.addAttr(self.cont_special, shortName="sineAnimate", longName="Sine_Animate", defaultValue=0.0, at="float",
-                   k=True)
+                     k=True)
 
         self.contFK_List = []
         self.contTwk_List = []
 
-        for j in range (len(self.guideJoints)):
-            s = cmds.getAttr("%s.tx" % self.guideJoints[j])/3
+        for j in range(len(self.guideJoints)):
+            s = cmds.getAttr("%s.tx" % self.guideJoints[j]) / 3
             s = iconScale if s == 0 else s
             scaleTwk = (s, s, s)
-            contTwk, dmp = icon.createIcon("Circle", iconName="%s_tentacleTweak%i_cont" % (self.suffix, j), scale=scaleTwk, normal=self.mirror_axis)
+            contTwk, dmp = icon.createIcon("Circle", iconName="%s_tentacleTweak%i_cont" % (self.suffix, j),
+                                           scale=scaleTwk, normal=self.mirror_axis)
             extra.alignToAlter(contTwk, self.guideJoints[j], mode=2)
             contTwk_OFF = extra.createUpGrp(contTwk, "OFF")
             contTwk_ORE = extra.createUpGrp(contTwk, "ORE")
             self.contTwk_List.append(contTwk)
 
-            scaleFK = (s*1.2, s*1.2, s*1.2)
-            contFK, _ = icon.createIcon("Ngon", iconName="%s_tentacleFK%i_cont" % (self.suffix, j), scale=scaleFK, normal=self.mirror_axis)
+            scaleFK = (s * 1.2, s * 1.2, s * 1.2)
+            contFK, _ = icon.createIcon("Ngon", iconName="%s_tentacleFK%i_cont" % (self.suffix, j), scale=scaleFK,
+                                        normal=self.mirror_axis)
             extra.alignToAlter(contFK, self.guideJoints[j], mode=2)
             contFK_OFF = extra.createUpGrp(contFK, "OFF")
             contFK_ORE = extra.createUpGrp(contFK, "ORE")
@@ -252,34 +263,40 @@ class Tentacle(settings.Settings):
         ## Create the Base Nurbs Plane (npBase)
         ribbonLength = extra.getDistance(self.contJointsList[0], self.contJointsList[-1])
 
-        npBase = cmds.nurbsPlane(ax=(0,1,0), u=self.contRes, v=1, w=ribbonLength, lr=(1.0 / ribbonLength), name="npBase_%s" % self.suffix)[0]
-        cmds.rebuildSurface (npBase, ch=1, rpo=1, rt=0, end=1, kr=2, kcp=0, kc=0, su=5, du=3, sv=1, dv=1, tol=0, fr=0, dir=1)
-        extra.alignAndAim(npBase, targetList=[self.contJointsList[0], self.contJointsList[-1]], aimTargetList=[self.contJointsList[-1]], upVector=self.up_axis)
+        npBase = cmds.nurbsPlane(ax=(0, 1, 0), u=self.contRes, v=1, w=ribbonLength, lr=(1.0 / ribbonLength),
+                                 name="npBase_%s" % self.suffix)[0]
+        cmds.rebuildSurface(npBase, ch=1, rpo=1, rt=0, end=1, kr=2, kcp=0, kc=0, su=5, du=3, sv=1, dv=1, tol=0, fr=0,
+                            dir=1)
+        extra.alignAndAim(npBase, targetList=[self.contJointsList[0], self.contJointsList[-1]],
+                          aimTargetList=[self.contJointsList[-1]], upVector=self.up_axis)
 
         ## Duplicate the Base Nurbs Plane as joint Holder (npJDefHolder)
         npJdefHolder = cmds.nurbsPlane(ax=(0, 1, 0), u=self.deformerRes, v=1, w=ribbonLength, lr=(1.0 / ribbonLength),
                                        name="npJDefHolder_%s" % self.suffix)[0]
-        cmds.rebuildSurface(npJdefHolder, ch=1, rpo=1, rt=0, end=1, kr=2, kcp=0, kc=0, su=5, du=3, sv=1, dv=1, tol=0, fr=0,
-                          dir=1)
-        extra.alignAndAim(npJdefHolder, targetList=[self.contJointsList[0], self.contJointsList[-1]], aimTargetList=[self.contJointsList[-1]],
+        cmds.rebuildSurface(npJdefHolder, ch=1, rpo=1, rt=0, end=1, kr=2, kcp=0, kc=0, su=5, du=3, sv=1, dv=1, tol=0,
+                            fr=0,
+                            dir=1)
+        extra.alignAndAim(npJdefHolder, targetList=[self.contJointsList[0], self.contJointsList[-1]],
+                          aimTargetList=[self.contJointsList[-1]],
                           upVector=self.up_axis)
 
         ## Create the follicles on the npJDefHolder
         npJdefHolderShape = extra.getShapes(npJdefHolder)[0]
         follicleList = []
-        for i in range (0, int(self.jointRes)):
+        for i in range(0, int(self.jointRes)):
             follicle = cmds.createNode('follicle', name="follicle_{0}{1}".format(self.suffix, str(i)))
             follicle_transform = extra.getParent(follicle)
-            cmds.connectAttr("%s.local" % npJdefHolderShape,"%s.inputSurface" % follicle)
-            cmds.connectAttr("%s.worldMatrix[0]" % npJdefHolderShape,"%s.inputWorldMatrix" % follicle)
-            cmds.connectAttr("%s.outRotate" % follicle,"%s.rotate" % follicle_transform)
-            cmds.connectAttr("%s.outTranslate" % follicle,"%s.translate" % follicle_transform)
+            cmds.connectAttr("%s.local" % npJdefHolderShape, "%s.inputSurface" % follicle)
+            cmds.connectAttr("%s.worldMatrix[0]" % npJdefHolderShape, "%s.inputWorldMatrix" % follicle)
+            cmds.connectAttr("%s.outRotate" % follicle, "%s.rotate" % follicle_transform)
+            cmds.connectAttr("%s.outTranslate" % follicle, "%s.translate" % follicle_transform)
             cmds.setAttr("%s.parameterV" % follicle, 0.5)
-            cmds.setAttr("%s.parameterU" % follicle, ((1 / self.jointRes) + (i / self.jointRes) - ((1 / self.jointRes) / 2)))
+            cmds.setAttr("%s.parameterU" % follicle,
+                         ((1 / self.jointRes) + (i / self.jointRes) - ((1 / self.jointRes) / 2)))
             extra.lockAndHide(follicle_transform, ["tx", "ty", "tz", "rx", "ry", "rz"], hide=False)
             follicleList.append(follicle)
-            
-            defJ = cmds.joint(name="%s_%i_jDef" % (self.suffix ,i))
+
+            defJ = cmds.joint(name="%s_%i_jDef" % (self.suffix, i))
             cmds.joint(defJ, e=True, zso=True, oj='zxy')
             self.deformerJoints.append(defJ)
             self.sockets.append(defJ)
@@ -288,17 +305,18 @@ class Tentacle(settings.Settings):
 
         # create follicles for scaling calculations
         follicle_sca_list = []
-        counter=0
-        for index in range (int(self.jointRes)):
+        counter = 0
+        for index in range(int(self.jointRes)):
             s_follicle = cmds.createNode('follicle', name="follicleSCA_{0}{1}".format(self.suffix, index))
             s_follicle_transform = extra.getParent(s_follicle)
-            cmds.connectAttr("%s.local" % npJdefHolderShape,"%s.inputSurface" % s_follicle)
-            cmds.connectAttr("%s.worldMatrix[0]" % npJdefHolderShape,"%s.inputWorldMatrix" % s_follicle)
-            cmds.connectAttr("%s.outRotate" % s_follicle,"%s.rotate" % s_follicle_transform)
-            cmds.connectAttr("%s.outTranslate" % s_follicle,"%s.translate" % s_follicle_transform)
+            cmds.connectAttr("%s.local" % npJdefHolderShape, "%s.inputSurface" % s_follicle)
+            cmds.connectAttr("%s.worldMatrix[0]" % npJdefHolderShape, "%s.inputWorldMatrix" % s_follicle)
+            cmds.connectAttr("%s.outRotate" % s_follicle, "%s.rotate" % s_follicle_transform)
+            cmds.connectAttr("%s.outTranslate" % s_follicle, "%s.translate" % s_follicle_transform)
 
             cmds.setAttr("%s.parameterV" % s_follicle, 0.0)
-            cmds.setAttr("%s.parameterU" % s_follicle, ((1 / self.jointRes) + (index / self.jointRes) - ((1 / self.jointRes) / 2)))
+            cmds.setAttr("%s.parameterU" % s_follicle,
+                         ((1 / self.jointRes) + (index / self.jointRes) - ((1 / self.jointRes) / 2)))
             extra.lockAndHide(s_follicle_transform, ["tx", "ty", "tz", "rx", "ry", "rz"], hide=False)
             follicle_sca_list.append(s_follicle)
             cmds.parent(s_follicle_transform, self.nonScaleGrp)
@@ -311,7 +329,7 @@ class Tentacle(settings.Settings):
             cmds.connectAttr("%s.distance" % distNode, "%s.input1" % multiplier)
             cmds.setAttr("%s.input2" % multiplier, 2)
 
-            global_divide = cmds.createNode("multiplyDivide", name= "fGlobDiv_{0}{1}".format(self.suffix, index))
+            global_divide = cmds.createNode("multiplyDivide", name="fGlobDiv_{0}{1}".format(self.suffix, index))
             cmds.setAttr("%s.operation" % global_divide, 2)
             cmds.connectAttr("%s.output" % multiplier, "%s.input1X" % global_divide)
             cmds.connectAttr("%s.scaleX" % self.scaleGrp, "%s.input2X" % global_divide)
@@ -323,18 +341,19 @@ class Tentacle(settings.Settings):
 
         ## Duplicate it 3 more times for deformation targets (npDeformers, npTwist, npSine)
         npDeformers = cmds.duplicate(npJdefHolder, name="npDeformers_%s" % self.suffix)[0]
-        cmds.move(0, self.totalLength/2, 0, npDeformers)
+        cmds.move(0, self.totalLength / 2, 0, npDeformers)
         cmds.rotate(0, 0, 90, npDeformers, )
 
         ## Create Blendshape node between np_jDefHolder and deformation targets
-        npBlend = cmds.blendShape(npDeformers, npJdefHolder, w=(0,1))
+        npBlend = cmds.blendShape(npDeformers, npJdefHolder, w=(0, 1))
 
         ## Wrap npjDefHolder to the Base Plane
-        npWrap, npWrapGeo = self.createWrap(npBase, npJdefHolder,weightThreshold=0.0, maxDistance=50, autoWeightThreshold=False)
+        npWrap, npWrapGeo = self.createWrap(npBase, npJdefHolder, weightThreshold=0.0, maxDistance=50,
+                                            autoWeightThreshold=False)
         maxDistanceMult = cmds.createNode("multDoubleLinear", name="npWrap_{0}".format(self.suffix))
-        cmds.connectAttr("%s.scaleX" % self.scaleGrp,"%s.input1" % maxDistanceMult)
+        cmds.connectAttr("%s.scaleX" % self.scaleGrp, "%s.input1" % maxDistanceMult)
         cmds.setAttr("%s.input2" % maxDistanceMult, 50)
-        cmds.connectAttr("%s.output" % maxDistanceMult,"%s.maxDistance" % npWrap)
+        cmds.connectAttr("%s.output" % maxDistanceMult, "%s.maxDistance" % npWrap)
 
         ## make the Wrap node Scale-able with the rig
         cmds.skinCluster(self.wrapScaleJoint, npWrapGeo, tsb=True)
@@ -349,20 +368,36 @@ class Tentacle(settings.Settings):
         cmds.setAttr("%s.lowBound" % curlDeformer[0], -1)
         cmds.setAttr("%s.highBound" % curlDeformer[0], 0)
 
-        cmds.setDrivenKeyframe("%s.curvature" % curlDeformer[0], cd="%s.curl" % self.cont_special, v=0.0, dv=0.0, itt='linear', ott='linear')
-        cmds.setDrivenKeyframe("%s.curvature" % curlDeformer[0], cd="%s.curl" % self.cont_special, v=1500.0, dv=0.01, itt='linear', ott='linear')
-        cmds.setDrivenKeyframe("%s.curvature" % curlDeformer[0], cd="%s.curl" % self.cont_special, v=-1500.0, dv=-0.01, itt='linear', ott='linear')
+        cmds.setDrivenKeyframe("%s.curvature" % curlDeformer[0], cd="%s.curl" % self.cont_special, v=0.0, dv=0.0,
+                               itt='linear', ott='linear')
+        cmds.setDrivenKeyframe("%s.curvature" % curlDeformer[0], cd="%s.curl" % self.cont_special, v=1500.0, dv=0.01,
+                               itt='linear', ott='linear')
+        cmds.setDrivenKeyframe("%s.curvature" % curlDeformer[0], cd="%s.curl" % self.cont_special, v=-1500.0, dv=-0.01,
+                               itt='linear', ott='linear')
 
-        cmds.setDrivenKeyframe("%s.ty" % curlDeformer[1], cd="%s.curl" % self.cont_special, v=0.0, dv=10.0, itt='linear', ott='linear')
-        cmds.setDrivenKeyframe("%s.ty" % curlDeformer[1], cd="%s.curl" % self.cont_special, v=0.0, dv=-10.0, itt='linear', ott='linear')
-        cmds.setDrivenKeyframe(["%s.sx" % curlDeformer[1], "%s.sy" % curlDeformer[1], "%s.sz" % curlDeformer[1]], cd="%s.curl" % self.cont_special, v=(self.totalLength * 2), dv=10.0, itt='linear', ott='linear')
-        cmds.setDrivenKeyframe(["%s.sx" % curlDeformer[1], "%s.sy" % curlDeformer[1], "%s.sz" % curlDeformer[1]], cd="%s.curl" % self.cont_special, v=(self.totalLength * 2), dv=-10.0, itt='linear', ott='linear')
-        cmds.setDrivenKeyframe("%s.rz" % curlDeformer[1], cd="%s.curl" % self.cont_special, v=4.0, dv=10.0, itt='linear', ott='linear')
-        cmds.setDrivenKeyframe("%s.rz" % curlDeformer[1], cd="%s.curl" % self.cont_special, v=-4.0, dv=-10.0, itt='linear', ott='linear')
-        cmds.setDrivenKeyframe("%s.ty" % curlDeformer[1], cd="%s.curl" % self.cont_special, v=self.totalLength, dv=0.0, itt='linear', ott='linear')
-        cmds.setDrivenKeyframe(["%s.sx" % curlDeformer[1], "%s.sy" % curlDeformer[1], "%s.sz" % curlDeformer[1]], cd="%s.curl" % self.cont_special, v=(self.totalLength / 2), dv=0.0, itt='linear', ott='linear')
-        cmds.setDrivenKeyframe("%s.rz" % curlDeformer[1], cd="%s.curl" % self.cont_special, v=6.0, dv=0.01, itt='linear', ott='linear')
-        cmds.setDrivenKeyframe("%s.rz" % curlDeformer[1], cd="%s.curl" % self.cont_special, v=-6.0, dv=-0.01, itt='linear', ott='linear')
+        cmds.setDrivenKeyframe("%s.ty" % curlDeformer[1], cd="%s.curl" % self.cont_special, v=0.0, dv=10.0,
+                               itt='linear', ott='linear')
+        cmds.setDrivenKeyframe("%s.ty" % curlDeformer[1], cd="%s.curl" % self.cont_special, v=0.0, dv=-10.0,
+                               itt='linear', ott='linear')
+        cmds.setDrivenKeyframe(["%s.sx" % curlDeformer[1], "%s.sy" % curlDeformer[1], "%s.sz" % curlDeformer[1]],
+                               cd="%s.curl" % self.cont_special, v=(self.totalLength * 2), dv=10.0, itt='linear',
+                               ott='linear')
+        cmds.setDrivenKeyframe(["%s.sx" % curlDeformer[1], "%s.sy" % curlDeformer[1], "%s.sz" % curlDeformer[1]],
+                               cd="%s.curl" % self.cont_special, v=(self.totalLength * 2), dv=-10.0, itt='linear',
+                               ott='linear')
+        cmds.setDrivenKeyframe("%s.rz" % curlDeformer[1], cd="%s.curl" % self.cont_special, v=4.0, dv=10.0,
+                               itt='linear', ott='linear')
+        cmds.setDrivenKeyframe("%s.rz" % curlDeformer[1], cd="%s.curl" % self.cont_special, v=-4.0, dv=-10.0,
+                               itt='linear', ott='linear')
+        cmds.setDrivenKeyframe("%s.ty" % curlDeformer[1], cd="%s.curl" % self.cont_special, v=self.totalLength, dv=0.0,
+                               itt='linear', ott='linear')
+        cmds.setDrivenKeyframe(["%s.sx" % curlDeformer[1], "%s.sy" % curlDeformer[1], "%s.sz" % curlDeformer[1]],
+                               cd="%s.curl" % self.cont_special, v=(self.totalLength / 2), dv=0.0, itt='linear',
+                               ott='linear')
+        cmds.setDrivenKeyframe("%s.rz" % curlDeformer[1], cd="%s.curl" % self.cont_special, v=6.0, dv=0.01,
+                               itt='linear', ott='linear')
+        cmds.setDrivenKeyframe("%s.rz" % curlDeformer[1], cd="%s.curl" % self.cont_special, v=-6.0, dv=-0.01,
+                               itt='linear', ott='linear')
 
         ## create curl size multipliers
 
@@ -373,7 +408,7 @@ class Tentacle(settings.Settings):
         curlAngleMultZ = cmds.createNode("multDoubleLinear", name="curlAngleMultZ_{0}".format(self.suffix))
 
         curlShiftAdd = cmds.createNode("plusMinusAverage", name="curlAddShift_{0}".format(self.suffix))
-        cmds.connectAttr("%s.curlShift" % self.cont_special, "%s.input1D[0]" %curlShiftAdd)
+        cmds.connectAttr("%s.curlShift" % self.cont_special, "%s.input1D[0]" % curlShiftAdd)
         cmds.setAttr("%s.input1D[1]" % curlShiftAdd, 180)
 
         cmds.connectAttr("%s.output1D" % curlShiftAdd, "%s.rx" % curlDeformer[1])
@@ -395,7 +430,7 @@ class Tentacle(settings.Settings):
 
         ## TWIST DEFORMER
         twistDeformer = cmds.nonLinear(npDeformers, type='twist')
-        cmds.rotate(0,0,0, twistDeformer[1])
+        cmds.rotate(0, 0, 0, twistDeformer[1])
         twistLoc = cmds.spaceLocator(name="twistLoc_{0}".format(self.suffix))[0]
         cmds.parent(twistDeformer[1], twistLoc)
 
@@ -406,7 +441,7 @@ class Tentacle(settings.Settings):
 
         ## SINE DEFORMER
         sineDeformer = cmds.nonLinear(npDeformers, type='sine')
-        cmds.rotate(0,0,0,sineDeformer[1])
+        cmds.rotate(0, 0, 0, sineDeformer[1])
         sineLoc = cmds.spaceLocator(name="sineLoc_{0}".format(self.suffix))[0]
         cmds.parent(sineDeformer[1], sineLoc)
 
@@ -421,7 +456,7 @@ class Tentacle(settings.Settings):
         cmds.connectAttr("%s.sineDirection" % self.cont_special, "%s.rotateY" % sineLoc)
 
         # WHY THIS OFFSET IS NECESSARY? TRY TO GED RID OF
-        offsetVal = (0,180,0) if self.sideMult == -1 else (0,0,0)
+        offsetVal = (0, 180, 0) if self.sideMult == -1 else (0, 0, 0)
         for j in range(len(self.guideJoints)):
             extra.alignToAlter(self.contJointsList[j], self.guideJoints[j], mode=2)
             cmds.pointConstraint(self.contTwk_List[j], self.contJointsList[j], mo=False)
@@ -433,7 +468,7 @@ class Tentacle(settings.Settings):
         cmds.parent(npDeformers, self.nonScaleGrp)
         cmds.parent(curlLoc, self.nonScaleGrp)
         cmds.parent(twistLoc, self.nonScaleGrp)
-        cmds.parent(sineLoc,self.nonScaleGrp)
+        cmds.parent(sineLoc, self.nonScaleGrp)
         cmds.parent(npWrapGeo, self.nonScaleGrp)
         cmds.parent(npJdefHolder, self.scaleGrp)
 
@@ -550,12 +585,14 @@ class Tentacle(settings.Settings):
         return wrapNode, base
         # return pm.nt.Wrap(wrapNode), base
 
+
 class Guides(object):
-    def __init__(self, side="L", suffix="LIMBNAME", segments=None, tMatrix=None, upVector=(0, 1, 0), mirrorVector=(1, 0, 0), lookVector=(0,0,1), *args, **kwargs):
+    def __init__(self, side="L", suffix="LIMBNAME", segments=None, tMatrix=None, upVector=(0, 1, 0),
+                 mirrorVector=(1, 0, 0), lookVector=(0, 0, 1), *args, **kwargs):
         super(Guides, self).__init__()
         # fool check
 
-        #-------Mandatory------[Start]
+        # -------Mandatory------[Start]
         self.side = side
         self.sideMultiplier = -1 if side == "R" else 1
         self.suffix = suffix
@@ -567,7 +604,7 @@ class Guides(object):
 
         self.offsetVector = None
         self.guideJoints = []
-        #-------Mandatory------[End]
+        # -------Mandatory------[End]
 
     def draw_joints(self):
         rPointTentacle = om.MVector(0, 14, 0) * self.tMatrix
@@ -581,27 +618,29 @@ class Guides(object):
         addTentacle = (nPointTentacle - rPointTentacle) / ((self.segments + 1) - 1)
 
         # Define the offset vector
-        self.offsetVector = (nPointTentacle-rPointTentacle).normal()
+        self.offsetVector = (nPointTentacle - rPointTentacle).normal()
 
         # Draw the joints
         for seg in range(self.segments + 1):
-            tentacle_jnt = cmds.joint(p=(rPointTentacle + (addTentacle * seg)), name="jInit_tentacle_%s_%i" %(self.suffix, seg))
+            tentacle_jnt = cmds.joint(p=(rPointTentacle + (addTentacle * seg)),
+                                      name="jInit_tentacle_%s_%i" % (self.suffix, seg))
             # Update the guideJoints list
             self.guideJoints.append(tentacle_jnt)
 
         # set orientation of joints
-        extra.orientJoints(self.guideJoints, worldUpAxis=self.upVector, upAxis=(0,1,0), reverseAim=self.sideMultiplier, reverseUp=self.sideMultiplier)
+        extra.orientJoints(self.guideJoints, worldUpAxis=self.upVector, upAxis=(0, 1, 0),
+                           reverseAim=self.sideMultiplier, reverseUp=self.sideMultiplier)
 
         # set joint side and type attributes
         extra.set_joint_type(self.guideJoints[0], "TentacleRoot")
         _ = [extra.set_joint_type(jnt, "Tentacle") for jnt in self.guideJoints[1:]]
         _ = [extra.set_joint_side(jnt, self.side) for jnt in self.guideJoints]
 
-
     def define_attributes(self):
         # ----------Mandatory---------[Start]
         root_jnt = self.guideJoints[0]
-        extra.create_global_joint_attrs(root_jnt, upAxis=self.upVector, mirrorAxis=self.mirrorVector, lookAxis=self.lookVector)
+        extra.create_global_joint_attrs(root_jnt, upAxis=self.upVector, mirrorAxis=self.mirrorVector,
+                                        lookAxis=self.lookVector)
         # ----------Mandatory---------[End]
 
         cmds.addAttr(root_jnt, shortName="contRes", longName="Cont_Resolution", defaultValue=5, minValue=1,

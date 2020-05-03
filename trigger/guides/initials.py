@@ -6,7 +6,9 @@ from trigger import modules
 from trigger.core import settings
 
 from trigger.core import feedback
+
 FEEDBACK = feedback.Feedback(logger_name=__name__)
+
 
 class Initials(settings.Settings):
 
@@ -14,22 +16,16 @@ class Initials(settings.Settings):
         super(Initials, self).__init__()
         # settings = st.Settings("triggerSettings.json")
         self.parseSettings()
-
-        self.spineJointsLis t =[]
-        self.neckJointsLis t =[]
-        self.armJointsLis t =[]
-        self.legJointsLis t =[]
-        self.fingerJointsLis t =[]
-        self.tailJointsLis t =[]
-        self.tentacleJointsLis t =[]
         self.projectName = "tikAutoRig"
         self.module_dict = modules.all_modules_data.MODULE_DICTIONARY
+        self.valid_limbs = self.module_dict.keys()
+        self.non_sided_limbs = [limb for limb in self.valid_limbs if not self.module_dict[limb]["sided"]]
 
     def parseSettings(self):
 
-        parsingDictionary = {u'+x' :(1 ,0 ,0),
-                             u'+y' :(0 ,1 ,0),
-                             u'+z' :(0 ,0 ,1),
+        parsingDictionary = {u'+x': (1, 0, 0),
+                             u'+y': (0, 1, 0),
+                             u'+z': (0, 0, 1),
                              u'-x': (-1, 0, 0),
                              u'-y': (0, -1, 0),
                              u'-z': (0, 0, -1)
@@ -50,16 +46,18 @@ class Initials(settings.Settings):
         # recross in case up and front were not originally orthoganl:
         front_vect = side_vect ^ self.upVector
         # the new matrix is
-        self.tMatrix  = om.MMatrix(((side_vect.x, side_vect.y, side_vect.z, 0), (self.upVector.x, self.upVector.y, self.upVector.z, 0), (front_vect.x, front_vect.y, front_vect.z, 0), (0, 0, 0, 1)))
+        self.tMatrix = om.MMatrix(((side_vect.x, side_vect.y, side_vect.z, 0),
+                                   (self.upVector.x, self.upVector.y, self.upVector.z, 0),
+                                   (front_vect.x, front_vect.y, front_vect.z, 0), (0, 0, 0, 1)))
 
-        self.majorLeftColor = self.get("majorLeftColor")
-        self.minorLeftColor = self.get("minorLeftColor")
-        self.majorRightColor = self.get("majorRightColor")
-        self.minorRightColor = self.get("minorRightColor")
-        self.majorCenterColor = self.get("majorCenterColor")
-        self.minorCenterColor = self.get("minorCenterColor")
+        # self.majorLeftColor = self.get("majorLeftColor")
+        # self.minorLeftColor = self.get("minorLeftColor")
+        # self.majorRightColor = self.get("majorRightColor")
+        # self.minorRightColor = self.get("minorRightColor")
+        # self.majorCenterColor = self.get("majorCenterColor")
+        # self.minorCenterColor = self.get("minorCenterColor")
 
-    def autoGet (self, parentBone):
+    def autoGet(self, parentBone):
         """
         Gets the mirror of the given object by its name. Returns the left if it finds right and vice versa
         Args:
@@ -91,41 +89,38 @@ class Initials(settings.Settings):
             FEEDBACK.warning("cannot find mirror bone automatically")
             return None, alignmentGiven, None
 
-    def initLimb (self, limb_name, whichSide="left",
-                  segments=3, fingerCount=5, thumb=False,
-                  constrainedTo = None, parentNode=None, defineAs=False):
+    def initLimb(self, limb_name, whichSide="left",
+                 segments=3, constrainedTo=None, parentNode=None, defineAs=False):
+        if limb_name not in self.valid_limbs:
+            FEEDBACK.throw_error("%s is not a valid limb" % limb_name)
+
         currentselection = cmds.ls(sl=True)
 
         ## Create the holder group if it does not exist
-        holderGroup = "{0}_refBones".format(self.projectName)
+        holderGroup = "{0}_refGuides".format(self.projectName)
         if not cmds.objExists(holderGroup):
             holderGroup = cmds.group(name=holderGroup, em=True)
 
         ## skip side related stuff for no-side related limbs
-
-        nonSidedLimbs = [x for x in self.module_dict.keys() if not self.module_dict[x]["sided"]]
-        # nonSidedLimbs = ["spine", "head", "root"]
-        if limb_name in nonSidedLimbs:
+        if limb_name in self.non_sided_limbs:
             whichSide = "c"
-            side = 0
-
+            side = "C"
         else:
-            ## check validity of arguments
-            sideValids = ["left", "right", "center", "both", "auto"]
-            if whichSide not in sideValids:
-                FEEDBACK.throw_error \
-                    ("side argument '%s' is not valid. Valid arguments are: %s" %(whichSide, sideValids))
+            ## check validity of side arguments
+            valid_sides = ["left", "right", "center", "both", "auto"]
+            if whichSide not in valid_sides:
+                FEEDBACK.throw_error(
+                    "side argument '%s' is not valid. Valid arguments are: %s" % (whichSide, valid_sides))
             if len(cmds.ls(sl=True, type="joint")) != 1 and whichSide == "auto" and defineAs == False:
                 FEEDBACK.warning("You need to select a single joint to use Auto method")
                 return
-
             ## get the necessary info from arguments
             if whichSide == "left":
-                side = 1
+                side = "L"
             elif whichSide == "right":
-                side = 2
+                side = "R"
             else:
-                side = 0
+                side = "C"
 
         if (segments + 1) < 2:
             FEEDBACK.throw_error("Define at least 2 segments")
@@ -140,11 +135,9 @@ class Initials(settings.Settings):
 
         if not parentNode:
             if cmds.ls(sl=True, type="joint"):
-                # valid_inits = ["arm", "leg", "spine", "head", "tail", "finger", "tentacle", "root"]
-                valid_inits = self.module_dict.keys()
                 j = cmds.ls(sl=True)[-1]
                 try:
-                    if extra.identifyMaster(j)[1] in valid_inits:
+                    if extra.identifyMaster(j)[1] in self.valid_limbs:
                         masterParent = cmds.ls(sl=True)[-1]
                     else:
                         masterParent = None
@@ -155,57 +148,75 @@ class Initials(settings.Settings):
         else:
             masterParent = parentNode
         if whichSide == "both":
-            constLocs = self.initLimb(limb_name, "left", segments=segments, fingerCount=fingerCount, thumb=thumb)
-            self.initLimb(limb_name, "right", constrainedTo=constLocs, segments=segments, fingerCount=fingerCount,
-                          thumb=thumb)
+            constLocs = self.initLimb(limb_name, "left", segments=segments)
+            self.initLimb(limb_name, "right", constrainedTo=constLocs, segments=segments)
             return
         if whichSide == "auto" and masterParent:
             mirrorParent, givenAlignment, returnAlignment = self.autoGet(masterParent)
-            constLocs = self.initLimb(limb_name, givenAlignment, segments=segments, fingerCount=fingerCount,
-                                      thumb=thumb)
+            constLocs = self.initLimb(limb_name, givenAlignment, segments=segments)
             if mirrorParent:
                 self.initLimb(limb_name, returnAlignment, constrainedTo=constLocs, parentNode=mirrorParent,
-                              segments=segments, fingerCount=fingerCount, thumb=thumb)
+                              segments=segments)
             return
 
         limbGroup = cmds.group(em=True, name="%sGrp_%s" % (limb_name, suffix))
         cmds.parent(limbGroup, holderGroup)
         cmds.select(d=True)
 
-        # module = "modules.{0}.{1}".format(limb_name, "Guides")
-        # flags = ""
-        # construct_command = "{0}({1})".format(module, flags)
-        # limb = eval(construct_command)
-        # limb.draw_guides(side=side, suffix="arm", tMatrix=self.tMatrix, lookVector=self.lookVector)
+        module = "modules.{0}.{1}".format(limb_name, "Guides")
+        flags = "side='{0}', " \
+                "suffix='{1}', " \
+                "segments={2}, " \
+                "tMatrix={3}, " \
+                "upVector={4}, " \
+                "mirrorVector={5}, " \
+                "lookVector={6}".format(side, suffix, segments, self.tMatrix,
+                                        self.upVector, self.mirrorVector, self.lookVector)
+        construct_command = "{0}({1})".format(module, flags)
+        guide = eval(construct_command)
+        guide.createGuides()
 
-        ### FROM HERE IT WILL BE LIMB SPECIFIC ###
+        for jnt in guide.guideJoints:
+            cmds.setAttr("%s.displayLocalAxis" % jnt, 1)
+            cmds.setAttr("%s.drawLabel" % jnt, 1)
 
-        if limb_name == "spine":
-            limbJoints, offsetVector = self.initialSpine(segments=segments, suffix=suffix)
+        if guide.side == "C":
+            extra.colorize(guide.guideJoints, self.get("majorCenterColor"), shape=False)
+        if guide.side == "L":
+            extra.colorize(guide.guideJoints, self.get("majorLeftColor"), shape=False)
+        if guide.side == "R":
+            extra.colorize(guide.guideJoints, self.get("majorRightColor"), shape=False)
 
-        if limb_name == "arm":
-            limbJoints, offsetVector = self.initialArm(side=side, suffix=suffix)
+        cmds.select(d=True)
 
-        if limb_name == "leg":
-            limbJoints, offsetVector = self.initialLeg(side=side, suffix=suffix)
-
-        if limb_name == "hand":
-            limbJoints, jRoots = self.initialHand(fingerCount=fingerCount, side=side, suffix=suffix)
-
-        if limb_name == "head":
-            limbJoints, offsetVector = self.initialNeck(segments=segments, suffix=suffix)
-
-        if limb_name == "tail":
-            limbJoints, offsetVector = self.initialTail(segments=segments, side=side, suffix=suffix)
-
-        if limb_name == "finger":
-            limbJoints, offsetVector = self.initialFinger(segments=segments, side=side, suffix=suffix, thumb=thumb)
-
-        if limb_name == "tentacle":
-            limbJoints, offsetVector = self.initialTentacle(segments=segments, side=side, suffix=suffix)
-
-        if limb_name == "root":
-            limbJoints, offsetVector = self.initialRoot(suffix=suffix)
+        # ### FROM HERE IT WILL BE LIMB SPECIFIC ###
+        #
+        # if limb_name == "spine":
+        #     limbJoints, offsetVector = self.initialSpine(segments=segments, suffix=suffix)
+        #
+        # if limb_name == "arm":
+        #     limbJoints, offsetVector = self.initialArm(side=side, suffix=suffix)
+        #
+        # if limb_name == "leg":
+        #     limbJoints, offsetVector = self.initialLeg(side=side, suffix=suffix)
+        #
+        # if limb_name == "hand":
+        #     limbJoints, jRoots = self.initialHand(fingerCount=fingerCount, side=side, suffix=suffix)
+        #
+        # if limb_name == "head":
+        #     limbJoints, offsetVector = self.initialNeck(segments=segments, suffix=suffix)
+        #
+        # if limb_name == "tail":
+        #     limbJoints, offsetVector = self.initialTail(segments=segments, side=side, suffix=suffix)
+        #
+        # if limb_name == "finger":
+        #     limbJoints, offsetVector = self.initialFinger(segments=segments, side=side, suffix=suffix, thumb=thumb)
+        #
+        # if limb_name == "tentacle":
+        #     limbJoints, offsetVector = self.initialTentacle(segments=segments, side=side, suffix=suffix)
+        #
+        # if limb_name == "root":
+        #     limbJoints, offsetVector = self.initialRoot(suffix=suffix)
 
         ### Constrain locating
 
@@ -213,50 +224,50 @@ class Initials(settings.Settings):
         cmds.setAttr("{0}.v".format(loc_grp), 0)
         locatorsList = []
 
-        for i in range(0, len(limbJoints)):
-            locator = cmds.spaceLocator(name="loc_%s" % limbJoints[i])[0]
+        # for num, jnt in enumerate(guide.guideJoints):
+        #     locator = cmds.spaceLocator(name="loc_%s" % jnt)[0]
+        #     locatorsList.append(locator)
+        #     if constrainedTo:
+        #         extra.alignTo(locator, jnt, position=True, rotation=False)
+        #         extra.connectMirror(jnt, locatorsList[num], mirrorAxis=self.mirrorVector_asString)
+        #
+        #         extra.alignTo(jnt, locator, position=True, rotation=False)
+        #         cmds.parentConstraint(locator, jnt, mo=True)
+        #     else:
+        #         cmds.parentConstraint(jnt, locator, mo=False)
+
+        for jnt in range(0, len(guide.guideJoints)):
+            locator = cmds.spaceLocator(name="loc_%s" % guide.guideJoints[jnt])[0]
             locatorsList.append(locator)
             if constrainedTo:
-                extra.alignTo(locator, limbJoints[i], position=True, rotation=False)
-                extra.connectMirror(constrainedTo[i], locatorsList[i], mirrorAxis=self.mirrorVector_asString)
+                extra.alignTo(locator, guide.guideJoints[jnt], position=True, rotation=False)
+                extra.connectMirror(constrainedTo[jnt], locatorsList[jnt], mirrorAxis=self.mirrorVector_asString)
 
-                extra.alignTo(limbJoints[i], locator, position=True, rotation=False)
-                cmds.parentConstraint(locator, limbJoints[i], mo=True)
-                # extra.matrixConstraint(locator, limbJoints[i], mo=True)
+                extra.alignTo(guide.guideJoints[jnt], locator, position=True, rotation=False)
+                cmds.parentConstraint(locator, guide.guideJoints[jnt], mo=True)
+                # extra.matrixConstraint(locator, limbJoints[jnt], mo=True)
             else:
-                cmds.parentConstraint(limbJoints[i], locator, mo=False)
-                # extra.matrixConstraint(limbJoints[i], locator, mo=False)
+                cmds.parentConstraint(guide.guideJoints[jnt], locator, mo=False)
+                # extra.matrixConstraint(limbJoints[jnt], locator, mo=False)
 
             cmds.parent(locator, loc_grp)
         cmds.parent(loc_grp, limbGroup)
 
-        # hand and foot limbs are actually just a collection of fingers.
-        # # That is why they need a temporary group to be moved together
-        if limb_name == "hand" or limb_name == "foot":
-            if masterParent:
-                if not constrainedTo:
-                    tempGroup = cmds.group(em=True)
-                    cmds.parent(jRoots, tempGroup)
-                    extra.alignTo(tempGroup, masterParent)
-                    cmds.ungroup(tempGroup)
-                cmds.parent(jRoots, masterParent)
+        ### MOVE THE LIMB TO THE DESIRED LOCATION
+        if masterParent:
+            if not constrainedTo:
+                # align the none constrained near to the selected joint
+                extra.alignTo(guide.guideJoints[0], masterParent)
+                # move it a little along the mirrorAxis
+                # move it along offsetvector
+                cmds.move(guide.offsetVector[0], guide.offsetVector[1], guide.offsetVector[2], guide.guideJoints[0],
+                          relative=True)
             else:
-                cmds.parent(limbJoints[0], limbGroup)
+                for joint in guide.guideJoints:
+                    extra.lockAndHide(joint, ["tx", "ty", "tz", "rx", "ry", "rz"], hide=False)
+            cmds.parent(guide.guideJoints[0], masterParent)
         else:
-            ### MOVE THE LIMB TO THE DESIRED LOCATION
-            if masterParent:
-                if not constrainedTo:
-                    # align the none constrained near to the selected joint
-                    extra.alignTo(limbJoints[0], masterParent)
-                    # move it a little along the mirrorAxis
-                    # move it along offsetvector
-                    cmds.move(offsetVector[0], offsetVector[1], offsetVector[2], limbJoints[0], relative=True)
-                else:
-                    for joint in limbJoints:
-                        extra.lockAndHide(joint, ["tx", "ty", "tz", "rx", "ry", "rz"], hide=False)
-                cmds.parent(limbJoints[0], masterParent)
-            else:
-                cmds.parent(limbJoints[0], limbGroup)
+            cmds.parent(guide.guideJoints[0], limbGroup)
         cmds.select(currentselection)
 
         return locatorsList
@@ -339,68 +350,6 @@ class Initials(settings.Settings):
 
         self.spineJointsList.append(jointList)
         extra.colorize(jointList, self.majorCenterColor, shape=False)
-        return jointList, offsetVector
-
-    def initialArm(self, side, suffix):
-        sideMult = -1 if side == 2 else 1
-        # Initial Joint positions for centered arm
-        if side == 0:
-            collarVec = om.MVector(0, 0, 2) * self.tMatrix
-            shoulderVec = om.MVector(0, 0, 5) * self.tMatrix
-            elbowVec = om.MVector(0, -1, 9) * self.tMatrix
-            handVec = om.MVector(0, 0, 14) * self.tMatrix
-        # Initial Joint positions for left or right arm
-        else:
-            FEEDBACK.debug(om.MVector() * self.tMatrix)
-            FEEDBACK.debug(sideMult, self.tMatrix)
-            collarVec = om.MVector(2 * sideMult, 0, 0) * self.tMatrix
-            shoulderVec = om.MVector(5 * sideMult, 0, 0) * self.tMatrix
-            elbowVec = om.MVector(9 * sideMult, 0, -1) * self.tMatrix
-            handVec = om.MVector(14 * sideMult, 0, 0) * self.tMatrix
-
-        offsetVector = -((collarVec - shoulderVec).normalize())
-
-        cmds.select(d=True)
-        collar = cmds.joint(p=collarVec, name=("jInit_collar_%s" % suffix))
-        cmds.setAttr("{0}.radius".format(collar), 3)
-        shoulder = cmds.joint(p=shoulderVec, name=("jInit_shoulder_%s" % suffix))
-        elbow = cmds.joint(p=elbowVec, name=("jInit_elbow_%s" % suffix))
-        hand = cmds.joint(p=handVec, name=("jInit_hand_%s" % suffix))
-
-        cmds.setAttr("{0}.displayLocalAxis".format(collar), 1)
-        cmds.setAttr("{0}.displayLocalAxis".format(shoulder), 1)
-        cmds.setAttr("{0}.displayLocalAxis".format(elbow), 1)
-        cmds.setAttr("{0}.displayLocalAxis".format(hand), 1)
-
-        # Orientation
-        extra.orientJoints([collar, shoulder, elbow, hand], worldUpAxis=self.lookVector, upAxis=(0, 1, 0),
-                           reverseAim=sideMult, reverseUp=sideMult)
-
-        # Joint Labeling
-        cmds.setAttr("%s.side" % collar, side)
-        cmds.setAttr("%s.type" % collar, 9)
-        cmds.setAttr("%s.side" % shoulder, side)
-        cmds.setAttr("%s.type" % shoulder, 10)
-        cmds.setAttr("%s.side" % elbow, side)
-        cmds.setAttr("%s.type" % elbow, 11)
-        cmds.setAttr("%s.side" % hand, side)
-        cmds.setAttr("%s.type" % hand, 12)
-
-        # custom Attributes
-        self.createAxisAttributes(collar)
-
-        jointList = [collar, shoulder, elbow, hand]
-        for joint in jointList:
-            cmds.setAttr("%s.drawLabel" % joint, 1)
-        self.armJointsList.append(jointList)
-
-        if side == 0:
-            extra.colorize(jointList, self.majorCenterColor, shape=False)
-        if side == 1:
-            extra.colorize(jointList, self.majorLeftColor, shape=False)
-        if side == 2:
-            extra.colorize(jointList, self.majorRightColor, shape=False)
-
         return jointList, offsetVector
 
     def initialLeg(self, side, suffix):

@@ -7,45 +7,6 @@ from trigger.modules import all_modules_data
 from trigger.core import feedback
 FEEDBACK = feedback.Feedback(logger_name=__name__)
 
-JOINT_TYPE_DICT = {
-    1: 'Root',
-    2: 'Hip',
-    3: 'Knee',
-    4: 'Foot',
-    5: 'Toe',
-    6: 'Spine',
-    7: 'Neck',
-    8: 'Head',
-    9: 'Collar',
-    10: 'Shoulder',
-    11: 'Elbow',
-    12: 'Hand',
-    13: 'Finger',
-    14: 'Thumb',
-    18: 'Other',
-    19: 'Index_F',
-    20: 'Middle_F',
-    21: 'Ring_F',
-    22: 'Pinky_F',
-    23: 'Extra_F',
-    24: 'Big_T',
-    25: 'Index_T',
-    26: 'Middle_T',
-    27: 'Ring_T',
-    28: 'Pinky_T',
-    29: 'Extra_T'
-}
-
-JOINT_SIDE_DICT = {
-    0: 'C',
-    1: 'L',
-    2: 'R',
-}
-
-AXIS_CONVERSION_DICT = {
-
-}
-
 def getMDagPath(node):
     selList = om.MSelectionList()
     selList.add(node)
@@ -63,6 +24,20 @@ def getDistance(node1, node2):
     Bx, By, Bz = getWorldTranslation(node2)
     return ((Ax-Bx)**2 + (Ay-By)**2 + (Az-Bz)**2)**0.5
 
+# def getDistance( node1, node2):
+#     """
+#     Calculates the distance between Node 1 and Node 2
+#     Args:
+#         node1: Node 1. Must be a transform node
+#         node2: Node 2. Must be a transform node
+#
+#     Returns: Distance value.
+#
+#     """
+#     Ax, Ay, Az = node1.getTranslation(space="world")
+#     Bx, By, Bz = node2.getTranslation(space="world")
+#     return ((Ax-Bx)**2 + (Ay-By)**2 + (Az-Bz)**2)**0.5
+
 def alignTo(node, target, position=True, rotation=False):
     """
     This is the fastest align method. May not work in all cases
@@ -79,6 +54,46 @@ def alignTo(node, target, position=True, rotation=False):
         # Worked on all cases tested
         nodeMTransform.setRotation(targetMTMatrix.rotation(True), om.MSpace.kWorld)
 
+# def alignTo(node, target, position=True, rotation=False):
+#
+#     if rotation and position:
+#         targetMatrix = cmds.xform(target, query=True, worldSpace=True, matrix=True)
+#         cmds.xform(node, worldSpace=True, matrix=targetMatrix)
+#         return
+#     if position:
+#         targetTranslation = cmds.xform(target, query=True, worldSpace=True, translation=True)
+#         cmds.xform(node, worldSpace=True, translation =targetTranslation)
+#     if rotation:
+#         targetRotation = pm.xform(target, query=True, worldSpace=True, rotation=True)
+#         cmds.xform(node, worldSpace=True, rotation = targetRotation)
+
+
+
+# def alignTo(sourceObj=None, targetObj=None, mode=0, sl=False, o=(0,0,0)):
+#     offset=dt.Vector(o)
+#     if sl == True:
+#         selection = pm.ls(sl=True)
+#         if not len(selection) == 2:
+#             pm.error("select exactly 2 objects")
+#             return
+#         sourceObj = selection[0]
+#         targetObj = selection[1]
+#     if not sourceObj or not targetObj:
+#         pm.error("No source and/or target object defined")
+#         return
+#     if mode == 0:
+#
+#         targetTranslation = pm.xform(targetObj, query=True, worldSpace=True, translation=True)
+#         pm.xform(sourceObj, worldSpace=True, translation =targetTranslation)
+#     if mode == 1:
+#         targetRotation = pm.xform(targetObj, query=True, worldSpace=True, rotation=True)
+#         pm.xform(sourceObj, worldSpace=True, rotation =targetRotation+offset)
+#     if mode == 2:
+#         targetMatrix = pm.xform(targetObj, query=True, worldSpace=True, matrix=True)
+#         pm.xform(sourceObj, worldSpace=True, matrix=targetMatrix)
+
+
+
 def alignToAlter(node1, node2, mode=0, o=(0,0,0)):
     """
     Aligns the first node to the second.
@@ -94,6 +109,7 @@ def alignToAlter(node1, node2, mode=0, o=(0,0,0)):
     if mode==0:
         ##Position Only
         cmds.delete(cmds.pointConstraint(node2, node1, mo=False))
+
     elif mode==1:
         ##Rotation Only
         cmds.delete(cmds.orientConstraint(node2, node1, o=o, mo=False))
@@ -177,6 +193,17 @@ def alignBetween (node, targetA, targetB, position=True, aim_b=True, orientation
     if orientation:
         cmds.delete(cmds.orientConstraint(targetA, targetB, node, mo=False, o=o))
 
+# def getBetweenVector(node, targetPointNodeList):
+#     # get center vector
+#     nodePos = node.getTranslation(space="world")
+#     sumVectors = dt.Vector(0,0,0)
+#     for p in targetPointNodeList:
+#         pVector = p.getTranslation(space="world")
+#         addVector = dt.Vector(dt.Vector(nodePos) - dt.Vector(pVector)).normal()
+#         sumVectors = sumVectors + addVector
+#     return sumVectors.normal()
+
+
 def getBetweenVector(node, targetPointNodeList):
     nodePos = getWorldTranslation(node)
     sumVectors = om.MVector(0,0,0)
@@ -191,7 +218,7 @@ def createUpGrp(node, suffix, freezeTransform=True):
     """
     Creates an Upper Group for the given object.
     Args:
-        node: (String) Source Object
+        node: (Pymel Object) Source Object
         suffix: (String) Suffix for the group. String.
         mi: (Boolean) Stands for "makeIdentity" If True, freezes the transformations of the new group. Default is True
 
@@ -330,6 +357,18 @@ def lockAndHide (node, channelArray, hide=True):
         attribute=("%s.%s" %(node, i))
         cmds.setAttr(attribute, lock=True, keyable=not hide, channelBox=not hide)
 
+# def alignJoints (sourceJoint, targetJoints):
+#     tempLocs
+#     flags = ""
+#     for i in targetJoints:
+#         temp
+#         flags = "{0}, {1}".format(flags, i)
+#
+#     flags = "{0}, {1}".format(flags, sourceJoint)
+#
+#     command = "pm.orientConstraint({0}, mo=False)".foramt(flags)
+#     eval(command)
+
 def attrPass (sourceNode, targetNode, attributes=[], inConnections=True, outConnections=True, keepSourceAttributes=False, values=True, daisyChain=False, overrideEx=False):
     """
     Copies the attributes from source node to the target node.
@@ -451,70 +490,274 @@ def attrPass (sourceNode, targetNode, attributes=[], inConnections=True, outConn
             for i in userAttr:
                 cmds.deleteAttr("%s.%s" % (sourceNode,i))
 
-def create_global_joint_attrs(joint, upAxis=None, mirrorAxis=None, lookAxis=None):
-    axis_attrs = ["upAxis", "mirrorAxis", "lookAxis"]
-    for attr in axis_attrs:
-        if not cmds.attributeQuery(attr, node=joint, exists=True):
-            cmds.addAttr(joint, ln=attr, at="float3")
-            cmds.addAttr(joint, ln="%sX" % attr, at="float", parent=attr)
-            cmds.addAttr(joint, ln="%sY" % attr, at="float", parent=attr)
-            cmds.addAttr(joint, ln="%sZ" % attr, at="float", parent=attr)
-    if upAxis:
-        _ = [cmds.setAttr("%s.upAxis%s" % (joint, axis), upAxis[nmb]) for nmb, axis in enumerate("XYZ")]
-    if mirrorAxis:
-        _ = [cmds.setAttr("%s.mirrorAxis%s" % (joint, axis), mirrorAxis[nmb]) for nmb, axis in enumerate("XYZ")]
-    if lookAxis:
-        _ = [cmds.setAttr("%s.lookAxis%s" % (joint, axis), lookAxis[nmb]) for nmb, axis in enumerate("XYZ")]
+# def spaceSwitcher (node, targetList, overrideExisting=False, mode="parent", defaultVal=1, listException = None):
+#     """
+#     Creates the space switch attributes between selected node (controller) and targets.
+#     Args:
+#         node: (single object) Object which anchor space will be switched. Mostly a controller curve.
+#         targetList: (list of objects) The node will be anchored between these targets.
+#         overrideExisting: (bool) If True, the existing attributes on the node with the same name will be deleted and recreated. Default False
+#         mode: (String) The type of the constrain that will be applied to the node. Valid options are "parent", "point and "orient". Default "parent"
+#         defaultVal: (integer) Default value for the new Switch attribute. If it is out of range, 1 will be used. default: 1.
+#         listException: (List) If this argument is not none, the given elements in the list will be removed from the targetList, in case it is in the list of course.
+#     Returns: None
+#
+#     """
+#
+#     anchorPoses=list(targetList)
+#     if anchorPoses.__contains__(node):
+#         # if targetList contains the node itself, remove it
+#         anchorPoses.remove(node)
+#     if anchorPoses==[]:
+#         pm.error("target list is empty or no valid targets")
+#     if listException != None:
+#         for x in listException:
+#             if anchorPoses.__contains__(x):
+#                 anchorPoses.remove(x)
+#     if len(anchorPoses) > defaultVal:
+#         defaultVal=1
+#     modeList=("parent", "point", "orient")
+#     if not modeList.__contains__(mode):
+#         pm.error("unknown mode flag. Valid mode flags are 'parent', 'point' and 'orient' ")
+#     # create the enumerator list
+#     enumFlag = "worldSpace:"
+#     for enum in range (0, len(anchorPoses)):
+#         cur = str(anchorPoses[enum])
+#         cur = cur.replace("cont_", "")
+#         enumFlag = "%s%s:" % (enumFlag, cur)
+#
+#     # # check if the attribute exists
+#     if pm.attributeQuery("%sSwitch" % mode, node=node, exists=True):
+#         if overrideExisting:
+#             pm.deleteAttr("{0}.{1}Switch".format(node, mode))
+#         else:
+#             pm.error("Switch Attribute already exists. Use overrideExisting=True to delete the old")
+#     pm.addAttr(node, at="enum", k=True, shortName="%sSwitch" % mode, longName="%s_Switch" % mode, en=enumFlag, defaultValue=defaultVal)
+#     driver = "%s.%sSwitch" %(node, mode)
+#
+#     switchGrp=createUpGrp(node, ("%sSW" % mode))
+#     if mode == "parent":
+#         con = pm.parentConstraint(anchorPoses, switchGrp, mo=True)
+#     elif mode == "point":
+#         con = pm.parentConstraint(anchorPoses, switchGrp, sr=("x","y","z"), mo=True)
+#     elif mode == "orient":
+#         con = pm.parentConstraint(anchorPoses, switchGrp, st=("x","y","z"), mo=True)
+#
+#
+#     ## make worldSpace driven key (all zero)
+#     for i in range (0, len(anchorPoses)):
+#         attr="{0}W{1}".format(anchorPoses[i],i)
+#         pm.setDrivenKeyframe(con, cd=driver, at=attr, dv=0, v=0)
+#
+#     # # loop for each DRIVER POSITION
+#     for dPos in range (0, len(anchorPoses)):
+#         # # loop for each target at parent constraint
+#         for t in range (0, len(anchorPoses)):
+#             attr = "{0}W{1}".format(anchorPoses[t], t)
+#             # # if driver value matches the attribute, make the value 1, else 0
+#             if t == (dPos):
+#                 value = 1
+#             else:
+#                 value = 0
+#             pm.setDrivenKeyframe(con, cd=driver, at=attr , dv=dPos+1, v=value )
+#
+#
+# def removeAnchor(node):
+#     """
+#     Removes the anchors created with the spaceswitcher method
+#     Args:
+#         node: (PyNode Object) A Single object (mostly a controller curve) which the anchors will be removed
+#
+#     Returns:
+#
+#     """
+#     userAtts = pm.listAttr(node, ud=True)
+#     switchAtts = [att for att in userAtts if "_Switch" in att]
+#     switchDir = {"point": "pointSW", "orient": "orientSW", "parent": "parentSW"}
+#
+#     for switch in switchAtts:
+#
+#         for type in (switchDir.keys()):
+#             if type in switch:
+#                 switchNode = pm.PyNode("{0}_{1}".format(node, switchDir[type]))
+#                 # r = switchNode.getChildren()
+#                 constraint = pm.listRelatives(switchNode, c=True,
+#                                               type=["parentConstraint", "orientConstraint", "pointConstraint"])
+#                 pm.delete(constraint)
+#                 child = pm.listRelatives(switchNode, c=True, type="transform")[0]
+#                 parent = pm.listRelatives(switchNode, p=True, type="transform")[0]
+#                 pm.parent(child, parent)
+#                 pm.delete(switchNode)
+#                 pm.deleteAttr("{0}.{1}".format(node, switch))
 
-    if not cmds.attributeQuery("useRefOri", node=joint, exists=True):
-        cmds.addAttr(joint, longName="useRefOri", niceName="Inherit_Orientation", at="bool", keyable=True)
-    cmds.setAttr("{0}.useRefOri".format(joint), True)
 
-def set_joint_type(joint, type_name):
-    if type_name in JOINT_TYPE_DICT.values():
-        # get the key from the value
-        type_int = JOINT_TYPE_DICT.keys()[JOINT_TYPE_DICT.values().index(type_name)]
-        cmds.setAttr("%s.type" % joint, type_int)
-    else:
-        cmds.setAttr("%s.type" % joint , 18) # 18 is the other
-        cmds.setAttr("%s.otherType" % joint, type_name, type="string")
-
-def get_joint_type(joint):
-    type_int = cmds.getAttr("%s.type" % joint)
-    if type_int not in JOINT_TYPE_DICT.keys():
-        FEEDBACK.throw_error("Cannot detect joint type => %s" % joint)
-    if type_int == 18:
-        type_name = cmds.getAttr("{0}.otherType".format(joint))
-    else:
-        type_name = JOINT_TYPE_DICT[type_int]
-    return type_name
-
-def set_joint_side(joint, side):
-    if side.lower() == "left" or side.lower() == "l":
-        cmds.setAttr("%s.side" % joint, 1)
-    elif side.lower() == "right" or side.lower() == "r":
-        cmds.setAttr("%s.side" % joint, 2)
-    elif side.lower() == "center" or side.lower() == "c":
-        cmds.setAttr("%s.side" % joint, 0)
-    else:
-        FEEDBACK.throw_error("%s is not a valid side value" % side)
-
-def get_joint_side(joint):
-    side_int = cmds.getAttr("{0}.side".format(joint))
-    if side_int not in JOINT_SIDE_DICT.keys():
-        FEEDBACK.throw_error("Joint Side cannot not be detected (%s)" % joint)
-    return JOINT_SIDE_DICT[side_int]
-
-def identifyMaster(joint):
+def identifyMaster(node):
     # define values as no
     limbType = "N/A"
-    jointType = get_joint_type(joint)
+
+    typeDict = {
+        1: 'Root',
+        2: 'Hip',
+        3: 'Knee',
+        4: 'Foot',
+        5: 'Toe',
+        6: 'Spine',
+        7: 'Neck',
+        8: 'Head',
+        9: 'Collar',
+        10: 'Shoulder',
+        11: 'Elbow',
+        12: 'Hand',
+        13: 'Finger',
+        14: 'Thumb',
+        18: 'Other',
+        19: 'Index_F',
+        20: 'Middle_F',
+        21: 'Ring_F',
+        22: 'Pinky_F',
+        23: 'Extra_F',
+        24: 'Big_T',
+        25: 'Index_T',
+        26: 'Middle_T',
+        27: 'Ring_T',
+        28: 'Pinky_T',
+        29: 'Extra_T'
+    }
+
+    # limbDictionary = {
+    #     "arm": ["Collar", "Shoulder", "Elbow", "Hand"],
+    #     "leg": ["LegRoot", "Hip", "Knee", "Foot", "Ball", "HeelPV", "ToePV", "BankIN", "BankOUT"],
+    #     # "hand": ["Finger", "Thumb", "Index_F", "Middle_F", "Ring_F", "Pinky_F", "Extra_F"],
+    #     "spine": ["Spine", "SpineRoot", "SpineEnd"],
+    #     "neck": ["NeckRoot", "Neck", "Head", "Jaw", "HeadEnd"],
+    #     "tail": ["TailRoot", "Tail"],
+    #     "finger": ["FingerRoot", "Finger"],
+    #     "tentacle": ["TentacleRoot", "Tentacle", "TentacleEnd"],
+    #     "root": ["Root"]
+    # }
+
+    ## get the label ID
+    typeNum = cmds.getAttr("%s.type" %node)
+    if typeNum not in typeDict.keys():
+        FEEDBACK.warning("Joint Type cannot be detected (%s)" % node)
+    if typeNum == 18:  # if type is in the 'other' category:
+        limbName = cmds.getAttr("{0}.otherType".format(node))
+    else:
+        limbName = typeDict[typeNum]
 
     for key, value in all_modules_data.MODULE_DICTIONARY.items():
-        limbType = key if jointType in value["members"] else limbType
+        limbType = key if limbName in value["members"] else limbType
 
-    side = get_joint_side(joint)
-    return jointType, limbType, side
+    ## Get the Side
+    sideDict = {
+        0: 'C',
+        1: 'L',
+        2: 'R',
+    }
+
+    sideNum = cmds.getAttr("{0}.side".format(node))
+    if sideNum not in sideDict.keys():
+        FEEDBACK.warning("Joint Side cannot not be detected (%s)" % node)
+    side = sideDict[sideNum]
+
+    return limbName, limbType, side
+
+# def identifyMaster(node, idBy="idByLabel"):
+#     validIdByValues = ("idByLabel, idByName")
+#
+#     # define values as no
+#     limbType = "N/A"
+#     limbName = "N/A"
+#
+#     typeDict = {
+#         1: 'Root',
+#         2: 'Hip',
+#         3: 'Knee',
+#         4: 'Foot',
+#         5: 'Toe',
+#         6: 'Spine',
+#         7: 'Neck',
+#         8: 'Head',
+#         9: 'Collar',
+#         10: 'Shoulder',
+#         11: 'Elbow',
+#         12: 'Hand',
+#         13: 'Finger',
+#         14: 'Thumb',
+#         18: 'Other',
+#         19: 'Index_F',
+#         20: 'Middle_F',
+#         21: 'Ring_F',
+#         22: 'Pinky_F',
+#         23: 'Extra_F',
+#         24: 'Big_T',
+#         25: 'Index_T',
+#         26: 'Middle_T',
+#         27: 'Ring_T',
+#         28: 'Pinky_T',
+#         29: 'Extra_T'
+#     }
+#
+#     limbDictionary = {
+#         "arm": ["Collar", "Shoulder", "Elbow", "Hand"],
+#         "leg": ["LegRoot", "Hip", "Knee", "Foot", "Ball", "HeelPV", "ToePV", "BankIN", "BankOUT"],
+#         # "hand": ["Finger", "Thumb", "Index_F", "Middle_F", "Ring_F", "Pinky_F", "Extra_F"],
+#         "spine": ["Spine", "SpineRoot", "SpineEnd"],
+#         "neck": ["NeckRoot", "Neck", "Head", "Jaw", "HeadEnd"],
+#         "tail": ["TailRoot", "Tail"],
+#         "finger": ["FingerRoot", "Finger"],
+#         "tentacle": ["TentacleRoot", "Tentacle", "TentacleEnd"],
+#         "root": ["Root"]
+#     }
+#
+#     if not idBy in validIdByValues:
+#         cmds.error("idBy flag is not valid. Valid Values are:%s" %(validIdByValues))
+#
+#     ## get the label ID
+#     if idBy == "idByLabel":
+#         if cmds.objectType(node) != "joint":
+#             cmds.warning("label identification can only be used for joints")
+#     typeNum = cmds.getAttr("%s.type" %node)
+#     if typeNum not in typeDict.keys():
+#         cmds.warning("Joint Type is not detected with idByLabel method")
+#
+#     if typeNum == 18:  # if type is in the 'other' category:
+#         limbName = cmds.getAttr("{0}.otherType".format(node))
+#     else:
+#         limbName = typeDict[typeNum]
+#         # get which limb it is
+#     for value in limbDictionary.values():
+#         if limbName in value:
+#             limbType = limbDictionary.keys()[limbDictionary.values().index(value)]
+#
+#     ## Get the Side
+#
+#     sideDict = {
+#         0: 'C',
+#         1: 'L',
+#         2: 'R',
+#     }
+#
+#     if idBy == "idByLabel":
+#             sideNum = cmds.getAttr("{0}.side".format(node))
+#
+#             if sideNum not in sideDict.keys():
+#                 cmds.warning("Joint Side is not detected with idByLabel method")
+#             side = sideDict[sideNum]
+#
+#     if idBy == "idByName":
+#         # identify the side
+#         if "_R_" in node:
+#             side = sideDict[2]
+#         elif "_L_" in node:
+#             side = sideDict[1]
+#         elif "_C_" in node:
+#             side = sideDict[0]
+#         else:
+#             cmds.warning("Joint Side is not detected with idByName method")
+#
+#     return limbName, limbType, side
+
 
 #
 # # TODO // Create a mirrorController method which will mirror the shape to the other side. similar to the replace controller.
@@ -530,51 +773,43 @@ def getRigAxes(joint):
     Returns: upAxis, mirrorAxis, spineDir
 
     """
-    # get the up axis
+    axisDict = {"x": (1.0, 0.0, 0.0), "y": (0.0, 1.0, 0.0), "z": (0.0, 0.0, 1.0), "-x": (-1.0, 0.0, 0.0), "-y": (0.0, -1.0, 0.0), "-z": (0.0, 0.0, -1.0)}
+    spineDict = {"x": (-1.0, 0.0, 0.0), "y": (0.0, -1.0, 0.0), "z": (0.0, 0.0, 1.0), "-x": (1.0, 0.0, 0.0), "-y": (0.0, 1.0, 0.0), "-z": (0.0, 0.0, 1.0)}
+    upAxis = None
+    mirrorAxis = None
+    spineDir = None
+    if cmds.attributeQuery("upAxis", node=joint, exists=True):
+        try:
+            upAxis = axisDict[cmds.getAttr("%s.upAxis" %joint).lower().replace("+", "")]
+        except:
+            cmds.warning("upAxis attribute is not valid, proceeding with default value (y up)")
+            upAxis = (0.0, 1.0, 0.0)
+    else:
+        cmds.warning("upAxis attribute of the root node does not exist. Using default value (y up)")
+        upAxis = (0.0, 1.0, 0.0)
+    ## get the mirror axis
+    if cmds.attributeQuery("mirrorAxis", node=joint, exists=True):
+        try:
+            mirrorAxis = axisDict[cmds.getAttr("%s.mirrorAxis" %joint).lower().replace("+", "")]
+        except:
+            cmds.warning("mirrorAxis attribute is not valid, proceeding with default value (scene x)")
+            mirrorAxis = (1.0, 0.0, 0.0)
+    else:
+        cmds.warning("mirrorAxis attribute of the root node does not exist. Using default value (scene x)")
+        mirrorAxis = (1.0, 0.0, 0.0)
 
-    upAxis = [cmds.getAttr("%s.upAxis%s" % (joint, dir)) for dir in "XYZ"]
-    mirrorAxis = [cmds.getAttr("%s.mirrorAxis%s" % (joint, dir)) for dir in "XYZ"]
-    lookAxis = [cmds.getAttr("%s.lookAxis%s" % (joint, dir)) for dir in "XYZ"]
+    ## get spine Direction
+    if cmds.attributeQuery("lookAxis", node=joint, exists=True):
+        try:
+            spineDir = spineDict[cmds.getAttr("%s.lookAxis" %joint).lower().replace("+", "")]
+        except:
+            cmds.warning("Cannot get spine direction from lookAxis attribute, proceeding with default value (-x)")
+            spineDir = (-1.0, 0.0, 0.0)
+    else:
+        cmds.warning("lookAxis attribute of the root node does not exist. Using default value (-x) for spine direction")
+        spineDir = (1.0, 0.0, 0.0)
 
-    return tuple(upAxis), tuple(mirrorAxis), tuple(lookAxis)
-
-    # axisDict = {"x": (1.0, 0.0, 0.0), "y": (0.0, 1.0, 0.0), "z": (0.0, 0.0, 1.0), "-x": (-1.0, 0.0, 0.0), "-y": (0.0, -1.0, 0.0), "-z": (0.0, 0.0, -1.0)}
-    # spineDict = {"x": (-1.0, 0.0, 0.0), "y": (0.0, -1.0, 0.0), "z": (0.0, 0.0, 1.0), "-x": (1.0, 0.0, 0.0), "-y": (0.0, 1.0, 0.0), "-z": (0.0, 0.0, 1.0)}
-    # upAxis = None
-    # mirrorAxis = None
-    # spineDir = None
-    # if cmds.attributeQuery("upAxis", node=joint, exists=True):
-    #     try:
-    #         upAxis = axisDict[cmds.getAttr("%s.upAxis" %joint).lower().replace("+", "")]
-    #     except:
-    #         cmds.warning("upAxis attribute is not valid, proceeding with default value (y up)")
-    #         upAxis = (0.0, 1.0, 0.0)
-    # else:
-    #     cmds.warning("upAxis attribute of the root node does not exist. Using default value (y up)")
-    #     upAxis = (0.0, 1.0, 0.0)
-    # ## get the mirror axis
-    # if cmds.attributeQuery("mirrorAxis", node=joint, exists=True):
-    #     try:
-    #         mirrorAxis = axisDict[cmds.getAttr("%s.mirrorAxis" %joint).lower().replace("+", "")]
-    #     except:
-    #         cmds.warning("mirrorAxis attribute is not valid, proceeding with default value (scene x)")
-    #         mirrorAxis = (1.0, 0.0, 0.0)
-    # else:
-    #     cmds.warning("mirrorAxis attribute of the root node does not exist. Using default value (scene x)")
-    #     mirrorAxis = (1.0, 0.0, 0.0)
-    #
-    # ## get spine Direction
-    # if cmds.attributeQuery("lookAxis", node=joint, exists=True):
-    #     try:
-    #         spineDir = spineDict[cmds.getAttr("%s.lookAxis" %joint).lower().replace("+", "")]
-    #     except:
-    #         cmds.warning("Cannot get spine direction from lookAxis attribute, proceeding with default value (-x)")
-    #         spineDir = (-1.0, 0.0, 0.0)
-    # else:
-    #     cmds.warning("lookAxis attribute of the root node does not exist. Using default value (-x) for spine direction")
-    #     spineDir = (1.0, 0.0, 0.0)
-    #
-    # return upAxis, mirrorAxis, spineDir
+    return upAxis, mirrorAxis, spineDir
 
 def uniqueName(name):
     baseName = name
