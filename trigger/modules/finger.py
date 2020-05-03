@@ -1,4 +1,5 @@
 from maya import cmds
+import maya.api.OpenMaya as om
 
 from trigger.core import settings
 from trigger.library import functions as extra
@@ -7,7 +8,7 @@ from trigger.core import feedback
 FEEDBACK = feedback.Feedback(__name__)
 
 class Finger(settings.Settings):
-    def __init__(self, build_data=None, inits=None, suffix="", side="L", parentController=None, *args, **kwargs):
+    def __init__(self, build_data=None, inits=None, suffix="", side="L", *args, **kwargs):
         super(Finger, self).__init__()
         if build_data:
             self.fingerRoot = build_data.get("FingerRoot")
@@ -25,7 +26,16 @@ class Finger(settings.Settings):
         # initialize sides and fingertype
         self.sideMult = -1 if side == "R" else 1
         self.side = side
-        self.parentController=parentController
+
+        hand_controller = cmds.getAttr("%s.handController" % self.inits[0])
+        if hand_controller:
+            if cmds.objExists(hand_controller):
+                self.handController = hand_controller
+            else:
+                FEEDBACK.warning("Hand Control object %s is not exist. Skipping hand controller" % hand_controller)
+                self.handController = None
+        else:
+            self.handController = None
 
         self.fingerType = cmds.getAttr("%s.fingerType" % self.fingerRoot, asString=True)
         self.isThumb = self.fingerType == "Thumb"
@@ -40,7 +50,8 @@ class Finger(settings.Settings):
             self.useRefOrientation = False
 
         # initialize suffix
-        self.suffix = "%s_%s" %(suffix, cmds.getAttr("%s.fingerType" % self.fingerRoot, asString=True))
+        # self.suffix = "%s_%s" %(suffix, cmds.getAttr("%s.fingerType" % self.fingerRoot, asString=True))
+        self.suffix = (extra.uniqueName("limbGrp_%s_%s" % (self.fingerType, suffix))).replace("limbGrp_", "")
 
         # scratch variables
         self.sockets = []
@@ -145,17 +156,17 @@ class Finger(settings.Settings):
         ## Controller Attributtes
         ## If there is no parent controller defined, create one. Everyone needs a parent
 
-        if not self.parentController:
-            self.parentController=self.scaleGrp
+        if not self.handController:
+            self.handController=self.scaleGrp
         # Spread
 
         spreadAttr = "{0}_{1}".format(self.suffix, "Spread")
-        cmds.addAttr(self.parentController, shortName=spreadAttr , defaultValue=0.0, at="float", k=True)
+        cmds.addAttr(self.handController, shortName=spreadAttr, defaultValue=0.0, at="float", k=True)
         sprMult = cmds.createNode("multiplyDivide", name="sprMult_{0}_{1}".format(self.side, self.suffix))
         cmds.setAttr("%s.input1Y" % sprMult, 0.4)
-        cmds.connectAttr("%s.%s" %(self.parentController,spreadAttr), "%s.input2Y" % sprMult)
+        cmds.connectAttr("%s.%s" % (self.handController, spreadAttr), "%s.input2Y" % sprMult)
         cmds.connectAttr("%s.outputY" % sprMult, "%s.rotateY" % self.contConList[0])
-        cmds.connectAttr("%s.%s" % (self.parentController, spreadAttr), "%s.rotateY" % self.contConList[1])
+        cmds.connectAttr("%s.%s" % (self.handController, spreadAttr), "%s.rotateY" % self.contConList[1])
 
         # Bend
         # add bend attributes for each joint (except the end joint)
@@ -165,8 +176,8 @@ class Finger(settings.Settings):
             else:
                 bendAttr = "{0}{1}{2}".format(self.suffix, "Bend", f)
 
-            cmds.addAttr(self.parentController, shortName=bendAttr, defaultValue=0.0, at="float", k=True)
-            cmds.connectAttr("{0}.{1}".format(self.parentController, bendAttr), "%s.rotateZ" % self.contConList[f])
+            cmds.addAttr(self.handController, shortName=bendAttr, defaultValue=0.0, at="float", k=True)
+            cmds.connectAttr("{0}.{1}".format(self.handController, bendAttr), "%s.rotateZ" % self.contConList[f])
 
     def roundUp(self):
         cmds.setAttr("%s.rigVis" % self.scaleGrp, 0)
@@ -181,7 +192,7 @@ class Finger(settings.Settings):
         self.createFKsetup()
         self.roundUp()
 
-    def createFinger(self, inits, suffix="", side="L", parentController=None, thumb=False, mirrorAxis="X"):
+    def createFinger(self, inits, suffix="", side="L", handController=None, thumb=False, mirrorAxis="X"):
 
         if not isinstance(inits, list):
             fingerRoot = inits.get("FingerRoot")
@@ -261,18 +272,18 @@ class Finger(settings.Settings):
         ## Controller Attributtes
         ## If there is no parent controller defined, create one. Everyone needs a parent
 
-        if not parentController:
-            parentController=self.scaleGrp
+        if not handController:
+            handController=self.scaleGrp
         # Spread
 
         spreadAttr = "{0}_{1}".format(suffix, "Spread")
-        cmds.addAttr(parentController, shortName=spreadAttr , defaultValue=0.0, at="float", k=True)
+        cmds.addAttr(handController, shortName=spreadAttr, defaultValue=0.0, at="float", k=True)
         sprMult = cmds.createNode("multiplyDivide", name="sprMult_{0}_{1}".format(side, suffix))
         cmds.setAttr("%s.input1Y" % sprMult, 0.4)
-        cmds.connectAttr("%s.%s" %(parentController,spreadAttr), "%s.input2Y" % sprMult)
+        cmds.connectAttr("%s.%s" % (handController, spreadAttr), "%s.input2Y" % sprMult)
 
         cmds.connectAttr("%s.outputY" % sprMult, "%s.rotateY" % contConList[0])
-        cmds.connectAttr("%s.%s" % (parentController, spreadAttr), "%s.rotateY" % contConList[1])
+        cmds.connectAttr("%s.%s" % (handController, spreadAttr), "%s.rotateY" % contConList[1])
 
         # Bend
         # add bend attributes for each joint (except the end joint)
@@ -282,13 +293,80 @@ class Finger(settings.Settings):
             else:
                 bendAttr = "{0}{1}{2}".format(suffix, "Bend", f)
 
-            cmds.addAttr(parentController, shortName=bendAttr, defaultValue=0.0, at="float", k=True)
-            cmds.connectAttr("{0}.{1}".format(parentController, bendAttr), "%s.rotateZ" % contConList[f])
+            cmds.addAttr(handController, shortName=bendAttr, defaultValue=0.0, at="float", k=True)
+            cmds.connectAttr("{0}.{1}".format(handController, bendAttr), "%s.rotateZ" % contConList[f])
 
         cmds.parent(self.scaleGrp, self.nonScaleGrp, self.cont_IK_OFF, self.limbGrp)
         extra.colorize(contList, self.colorCodes[0])
         extra.colorize(self.deformerJoints, self.colorCodes[0], shape=False)
         cmds.parentConstraint(self.limbPlug, conts_OFF[0], mo=True)
 
+class Guides(object):
+    def __init__(self, side="L", suffix="LIMBNAME", segments=None, tMatrix=None, upVector=(0, 1, 0), mirrorVector=(1, 0, 0), lookVector=(0,0,1), *args, **kwargs):
+        super(Guides, self).__init__()
+        # fool check
 
+        #-------Mandatory------[Start]
+        self.side = side
+        self.sideMultiplier = -1 if side == "R" else 1
+        self.suffix = suffix
+        self.segments = segments
+        self.tMatrix = om.MMatrix(tMatrix) if tMatrix else om.MMatrix()
+        self.upVector = om.MVector(upVector)
+        self.mirrorVector = om.MVector(mirrorVector)
+        self.lookVector = om.MVector(lookVector)
+
+        self.offsetVector = None
+        self.guideJoints = []
+        #-------Mandatory------[End]
+
+    def draw_joints(self):
+        if self.segments < 2:
+            FEEDBACK.warning("minimum segments for the fingers are two. current: %s" % self.segments)
+            return
+        rPointFinger = om.MVector(0, 0, 0) * self.tMatrix
+        nPointFinger = om.MVector(5*self.sideMultiplier, 0, 0) * self.tMatrix
+        addFinger = (nPointFinger - rPointFinger) / ((self.segments + 1) - 1)
+
+        if self.side == "C":
+            # Guide joint positions for limbs with no side orientation
+            pass
+        else:
+            # Guide joint positions for limbs with sides
+            pass
+
+        # Define the offset vector
+        self.offsetVector = (nPointFinger-rPointFinger).normal()
+
+        # Draw the joints
+        for seg in range(self.segments + 1):
+            finger_jnt = cmds.joint(p=(rPointFinger + (addFinger * seg)), name="jInit_finger_%s_%i" %(self.suffix, seg))
+            # Update the guideJoints list
+            cmds.setAttr("%s.radius" % finger_jnt, 0.5)
+            self.guideJoints.append(finger_jnt)
+
+        # set orientation of joints
+        extra.orientJoints(self.guideJoints, worldUpAxis=self.upVector, upAxis=(0, -1, 0), reverseAim=self.sideMultiplier,
+                           reverseUp=self.sideMultiplier)
+
+        # set joint side and type attributes
+        _ = [extra.set_joint_side(jnt, self.side) for jnt in self.guideJoints]
+        extra.set_joint_type(self.guideJoints[0], "FingerRoot")
+        _ = [extra.set_joint_type(jnt, "Finger") for jnt in self.guideJoints[1:]]
+        cmds.setAttr("%s.radius" % self.guideJoints[0], 1)
+
+    def define_attributes(self):
+        # ----------Mandatory---------[Start]
+        root_jnt = self.guideJoints[0]
+        extra.create_global_joint_attrs(root_jnt, upAxis=self.upVector, mirrorAxis=self.mirrorVector, lookAxis=self.lookVector)
+        # ----------Mandatory---------[End]
+
+        cmds.addAttr(root_jnt, shortName="fingerType", longName="Finger_Type", at="enum",
+                     en="Extra:Thumb:Index:Middle:Ring:Pinky:Toe", k=True)
+
+        cmds.addAttr(root_jnt, shortName="handController", longName="Hand_Controller", dataType="string")
+
+    def createGuides(self):
+        self.draw_joints()
+        self.define_attributes()
 

@@ -155,34 +155,31 @@ class Tail(settings.Settings):
         self.createFKsetup()
         self.roundUp()
 
-class Guides(settings.Settings):
-    def __init__(self, side="C", suffix="tail", segments=None, tMatrix=None, lookVector=(0,0,1), *args, **kwargs):
+class Guides(object):
+    def __init__(self, side="C", suffix="tail", segments=None, tMatrix=None, upVector=(0, 1, 0), mirrorVector=(1, 0, 0), lookVector=(0,0,1), *args, **kwargs):
         super(Guides, self).__init__()
-        # fool check
-        if not segments or segments < 1:
-            FEEDBACK.warning("minimum segments required for the simple tail is two. current: %s" %segments)
-            return
+
 
         #-------Mandatory------[Start]
         self.side = side
-        if self.side == "L":
-            self.sideMultiplier = 1 # this is the multiplier value to place joints
-            self.sideAttr = 1 # this is attribute value for side identification
-        elif self.side == "R":
-            self.sideMultiplier = -1
-            self.sideAttr = 2
-        else:
-            self.sideMultiplier = 1
-            self.sideAttr = 0
-        self.segments = segments
+        self.sideMultiplier = -1 if side == "R" else 1
         self.suffix = suffix
+        self.segments = segments
         self.tMatrix = om.MMatrix(tMatrix) if tMatrix else om.MMatrix()
-        self.lookVector = lookVector
+        self.upVector = om.MVector(upVector)
+        self.mirrorVector = om.MVector(mirrorVector)
+        self.lookVector = om.MVector(lookVector)
+
         self.offsetVector = None
         self.guideJoints = []
         #-------Mandatory------[End]
 
     def draw_joints(self):
+        # fool check
+        if not self.segments or self.segments < 1:
+            FEEDBACK.warning("minimum segments required for the simple tail is two. current: %s" % self.segments)
+            return
+
         rPointTail = om.MVector(0, 14, 0) * self.tMatrix
         if self.side == "C":
             # Guide joint positions for limbs with no side orientation
@@ -195,61 +192,27 @@ class Guides(settings.Settings):
         self.offsetVector = (nPointTail - rPointTail).normal()
         addTail = (nPointTail - rPointTail) / ((self.segments + 1) - 1)
 
-        # Draw the joints
-        for i in range(0, (self.segments + 1)):
-            tail = cmds.joint(p=(rPointTail + (addTail * i)), name="jInit_tail_%s_%s" %(self.suffix, str(i)))
-
+        # Draw the joints / set joint side and type attributes
+        for seg in range(self.segments + 1):
+            jnt = cmds.joint(p=(rPointTail + (addTail * seg)), name="jInit_tail_%s_%i" %(self.suffix, seg))
+            if seg == 0:
+                extra.set_joint_type(jnt, "TailRoot")
+            else:
+                extra.set_joint_type(jnt, "Tail")
+            extra.set_joint_side(jnt, self.side)
             # Update the guideJoints list
-            self.guideJoints.append(tail)
+            self.guideJoints.append(jnt)
 
         # set orientation of joints
         extra.orientJoints(self.guideJoints, worldUpAxis=self.lookVector, upAxis=(0, 1, 0), reverseAim=self.sideMultiplier, reverseUp=self.sideMultiplier)
 
-        # set joint side and type attributes
-        for nmb, jnt in enumerate(self.guideJoints):
-            if nmb == 0:
-                cmds.setAttr("%s.type" % jnt, 18)
-                cmds.setAttr("%s.otherType" % jnt, "TailRoot", type="string")
-                cmds.setAttr("%s.radius" % jnt, 2)
-            else:
-                cmds.setAttr("%s.type" % jnt, 18)
-                cmds.setAttr("%s.otherType" % jnt, "Tail", type="string")
-            cmds.setAttr("%s.side" % jnt, self.sideAttr)
-
     def define_attributes(self):
         # ----------Mandatory---------[Start]
         root_jnt = self.guideJoints[0]
-        axisAttributes=["upAxis", "mirrorAxis", "lookAxis"]
-        for att in axisAttributes:
-            if not cmds.attributeQuery(att, node=root_jnt, exists=True):
-                cmds.addAttr(root_jnt, longName=att, dt="string")
-
-        cmds.setAttr("{0}.upAxis".format(root_jnt), self.get("upAxis"), type="string")
-        cmds.setAttr("{0}.mirrorAxis".format(root_jnt), self.get("mirrorAxis"), type="string")
-        cmds.setAttr("{0}.lookAxis".format(root_jnt), self.get("lookAxis"), type="string")
-
-        if not cmds.attributeQuery("useRefOri", node=root_jnt, exists=True):
-            cmds.addAttr(root_jnt, longName="useRefOri", niceName="Inherit_Orientation", at="bool", keyable=True)
-
-        cmds.setAttr("{0}.useRefOri".format(root_jnt), True)
+        extra.create_global_joint_attrs(root_jnt, upAxis=self.upVector, mirrorAxis=self.mirrorVector, lookAxis=self.lookVector)
         # ----------Mandatory---------[End]
 
-    def adjust_display(self):
-        # ----------Mandatory---------[Start]
-        # display joint orientation
-        for jnt in self.guideJoints:
-            cmds.setAttr("%s.displayLocalAxis" % jnt, 1)
-            cmds.setAttr("%s.drawLabel" % jnt, 1)
-
-        if self.side == "C":
-            extra.colorize(self.guideJoints, self.get("majorCenterColor"), shape=False)
-        if self.side == "L":
-            extra.colorize(self.guideJoints, self.get("majorLeftColor"), shape=False)
-        if self.side == "R":
-            extra.colorize(self.guideJoints, self.get("majorRightColor"), shape=False)
-        # ----------Mandatory---------[End]
 
     def createGuides(self):
         self.draw_joints()
         self.define_attributes()
-        self.adjust_display()

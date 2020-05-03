@@ -46,12 +46,12 @@ class Initials(settings.Settings):
         # the new matrix is
         self.tMatrix  = om.MMatrix(((side_vect.x, side_vect.y, side_vect.z, 0), (self.upVector.x, self.upVector.y, self.upVector.z, 0), (front_vect.x, front_vect.y, front_vect.z, 0), (0, 0, 0, 1)))
 
-        self.majorLeftColor = self.get("majorLeftColor")
-        self.minorLeftColor = self.get("minorLeftColor")
-        self.majorRightColor = self.get("majorRightColor")
-        self.minorRightColor = self.get("minorRightColor")
-        self.majorCenterColor = self.get("majorCenterColor")
-        self.minorCenterColor = self.get("minorCenterColor")
+        # self.majorLeftColor = self.get("majorLeftColor")
+        # self.minorLeftColor = self.get("minorLeftColor")
+        # self.majorRightColor = self.get("majorRightColor")
+        # self.minorRightColor = self.get("minorRightColor")
+        # self.majorCenterColor = self.get("majorCenterColor")
+        # self.minorCenterColor = self.get("minorCenterColor")
 
     def autoGet (self, parentBone):
         """
@@ -100,8 +100,7 @@ class Initials(settings.Settings):
         ## skip side related stuff for no-side related limbs
         if limb_name in self.non_sided_limbs:
             whichSide = "c"
-            side_int = 0
-            side_str = "C"
+            side = "C"
         else:
         ## check validity of side arguments
             valid_sides = ["left", "right", "center", "both", "auto"]
@@ -159,11 +158,30 @@ class Initials(settings.Settings):
         cmds.select(d=True)
 
         module = "modules.{0}.{1}".format(limb_name, "Guides")
-        flags = "side='{0}', suffix='{1}', segments={2}, tMatrix={3}, lookVector={4}".format(side, suffix, segments, self.tMatrix, self.lookVector)
+        flags = "side='{0}', " \
+                "suffix='{1}', " \
+                "segments={2}, " \
+                "tMatrix={3}, " \
+                "upVector={4}, " \
+                "mirrorVector={5}, " \
+                "lookVector={6}".format(side, suffix, segments, self.tMatrix,
+                                        self.upVector, self.mirrorVector, self.lookVector)
         construct_command = "{0}({1})".format(module, flags)
         guide = eval(construct_command)
         guide.createGuides()
 
+        for jnt in guide.guideJoints:
+            cmds.setAttr("%s.displayLocalAxis" % jnt, 1)
+            cmds.setAttr("%s.drawLabel" % jnt, 1)
+
+        if guide.side == "C":
+            extra.colorize(guide.guideJoints, self.get("majorCenterColor"), shape=False)
+        if guide.side == "L":
+            extra.colorize(guide.guideJoints, self.get("majorLeftColor"), shape=False)
+        if guide.side == "R":
+            extra.colorize(guide.guideJoints, self.get("majorRightColor"), shape=False)
+
+        cmds.select(d=True)
 
         # ### FROM HERE IT WILL BE LIMB SPECIFIC ###
         # 
@@ -200,32 +218,32 @@ class Initials(settings.Settings):
         cmds.setAttr("{0}.v".format(loc_grp), 0)
         locatorsList=[]
 
-        for num, jnt in enumerate(guide.guideJoints):
-            locator = cmds.spaceLocator(name="loc_%s" % jnt)[0]
-            locatorsList.append(locator)
-            if constrainedTo:
-                extra.alignTo(locator, jnt, position=True, rotation=False)
-                extra.connectMirror(jnt, locatorsList[num], mirrorAxis=self.mirrorVector_asString)
-
-                extra.alignTo(jnt, locator, position=True, rotation=False)
-                cmds.parentConstraint(locator, jnt, mo=True)
-            else:
-                cmds.parentConstraint(jnt, locator, mo=False)
-
-        
-        # for jnt in range (0,len(limbJoints)):
-        #     locator = cmds.spaceLocator(name="loc_%s" % limbJoints[jnt])[0]
+        # for num, jnt in enumerate(guide.guideJoints):
+        #     locator = cmds.spaceLocator(name="loc_%s" % jnt)[0]
         #     locatorsList.append(locator)
         #     if constrainedTo:
-        #         extra.alignTo(locator, limbJoints[jnt], position=True, rotation=False)
-        #         extra.connectMirror(constrainedTo[jnt], locatorsList[jnt], mirrorAxis=self.mirrorVector_asString)
+        #         extra.alignTo(locator, jnt, position=True, rotation=False)
+        #         extra.connectMirror(jnt, locatorsList[num], mirrorAxis=self.mirrorVector_asString)
         #
-        #         extra.alignTo(limbJoints[jnt], locator, position=True, rotation=False)
-        #         cmds.parentConstraint(locator, limbJoints[jnt], mo=True)
-        #         # extra.matrixConstraint(locator, limbJoints[jnt], mo=True)
+        #         extra.alignTo(jnt, locator, position=True, rotation=False)
+        #         cmds.parentConstraint(locator, jnt, mo=True)
         #     else:
-        #         cmds.parentConstraint(limbJoints[jnt], locator, mo=False)
-        #         # extra.matrixConstraint(limbJoints[jnt], locator, mo=False)
+        #         cmds.parentConstraint(jnt, locator, mo=False)
+
+        
+        for jnt in range (0,len(guide.guideJoints)):
+            locator = cmds.spaceLocator(name="loc_%s" % guide.guideJoints[jnt])[0]
+            locatorsList.append(locator)
+            if constrainedTo:
+                extra.alignTo(locator, guide.guideJoints[jnt], position=True, rotation=False)
+                extra.connectMirror(constrainedTo[jnt], locatorsList[jnt], mirrorAxis=self.mirrorVector_asString)
+
+                extra.alignTo(guide.guideJoints[jnt], locator, position=True, rotation=False)
+                cmds.parentConstraint(locator, guide.guideJoints[jnt], mo=True)
+                # extra.matrixConstraint(locator, limbJoints[jnt], mo=True)
+            else:
+                cmds.parentConstraint(guide.guideJoints[jnt], locator, mo=False)
+                # extra.matrixConstraint(limbJoints[jnt], locator, mo=False)
 
             cmds.parent(locator, loc_grp)
         cmds.parent(loc_grp, limbGroup)
@@ -240,7 +258,7 @@ class Initials(settings.Settings):
                 # move it along offsetvector
                 cmds.move(guide.offsetVector[0], guide.offsetVector[1], guide.offsetVector[2], guide.guideJoints[0], relative=True)
             else:
-                for joint in guide.guideJoints[0]:
+                for joint in guide.guideJoints:
                     extra.lockAndHide(joint, ["tx", "ty", "tz", "rx", "ry", "rz"], hide=False)
             cmds.parent(guide.guideJoints[0], masterParent)
         else:

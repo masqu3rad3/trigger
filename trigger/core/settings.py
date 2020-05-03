@@ -23,7 +23,7 @@ DEFAULT_SETTINGS = {
 
 DEFAULT_FILENAME = "triggerSettings.json"
 
-class Settings(dict):
+class Settings(object):
     def __init__(self, filename=None, folder=None, custom_root_path=None):
         super(Settings, self).__init__()
         FEEDBACK.debug("COUNTING")

@@ -1,12 +1,10 @@
 from maya import cmds
+import maya.api.OpenMaya as om
 
 from trigger.core import settings
 from trigger.library import functions as extra
 from trigger.library import controllers as ic
 from trigger.library import ribbon as rc
-
-# TODO GET RId of pymel
-import pymel.core.datatypes as dt
 
 from trigger.core import feedback
 FEEDBACK = feedback.Feedback(__name__)
@@ -110,7 +108,7 @@ class Leg(settings.Settings):
         self.sockets.append(self.j_def_hip)
 
         if not self.useRefOrientation:
-            extra.orientJoints([self.jDef_legRoot, self.j_def_hip], worldUpAxis=dt.Vector(self.mirror_axis),
+            extra.orientJoints([self.jDef_legRoot, self.j_def_hip], worldUpAxis=om.MVector(self.mirror_axis),
                                reverseAim=self.sideMult)
         else:
             extra.alignTo(self.jDef_legRoot, self.leg_root_ref, position=True, rotation=True)
@@ -162,7 +160,7 @@ class Leg(settings.Settings):
         # orientations
         if not self.useRefOrientation:
             extra.orientJoints([self.j_ik_orig_root, self.j_ik_orig_knee, self.j_ik_orig_end],
-                               worldUpAxis=dt.Vector(self.mirror_axis), reverseAim=self.sideMult)
+                               worldUpAxis=om.MVector(self.mirror_axis), reverseAim=self.sideMult)
 
         else:
             extra.alignTo(self.j_ik_orig_root, self.hip_ref, position=True, rotation=True)
@@ -174,7 +172,7 @@ class Leg(settings.Settings):
 
         if not self.useRefOrientation:
             extra.orientJoints([self.j_ik_sc_root, self.j_ik_sc_knee, self.j_ik_sc_end],
-                               worldUpAxis=dt.Vector(self.mirror_axis), reverseAim=self.sideMult)
+                               worldUpAxis=om.MVector(self.mirror_axis), reverseAim=self.sideMult)
         else:
             extra.alignTo(self.j_ik_sc_root, self.hip_ref, position=True, rotation=True)
             cmds.makeIdentity(self.j_ik_sc_root, a=True)
@@ -184,7 +182,7 @@ class Leg(settings.Settings):
             cmds.makeIdentity(self.j_ik_sc_end, a=True)
 
         if not self.useRefOrientation:
-            extra.orientJoints([self.j_ik_rp_root, self.j_ik_rp_knee, self.j_ik_rp_end], worldUpAxis=dt.Vector(self.mirror_axis), reverseAim=self.sideMult)
+            extra.orientJoints([self.j_ik_rp_root, self.j_ik_rp_knee, self.j_ik_rp_end], worldUpAxis=om.MVector(self.mirror_axis), reverseAim=self.sideMult)
 
 
         else:
@@ -196,7 +194,7 @@ class Leg(settings.Settings):
             cmds.makeIdentity(self.j_ik_rp_end, a=True)
 
         if not self.useRefOrientation:
-            extra.orientJoints([self.j_ik_foot, self.j_ik_ball, self.j_ik_toe], worldUpAxis=dt.Vector(self.mirror_axis),
+            extra.orientJoints([self.j_ik_foot, self.j_ik_ball, self.j_ik_toe], worldUpAxis=om.MVector(self.mirror_axis),
                                reverseAim=self.sideMult)
         else:
             extra.alignTo(self.j_ik_foot, self.foot_ref,  position=True, rotation=True)
@@ -216,7 +214,7 @@ class Leg(settings.Settings):
 
         if not self.useRefOrientation:
             extra.orientJoints([self.jfk_root, self.jfk_knee, self.jfk_foot, self.jfk_ball, self.jfk_toe],
-                               worldUpAxis=dt.Vector(self.mirror_axis), reverseAim=self.sideMult)
+                               worldUpAxis=om.MVector(self.mirror_axis), reverseAim=self.sideMult)
         else:
             extra.alignTo(self.jfk_root, self.hip_ref,  position=True, rotation=True)
             cmds.makeIdentity(self.jfk_root, a=True)
@@ -1172,3 +1170,102 @@ class Leg(settings.Settings):
         self.createDefJoints()
         self.createAngleExtractors()
         self.roundUp()
+
+class Guides(settings.Settings):
+    def __init__(self, side="L", suffix="leg", segments=None, tMatrix=None, upVector=(0, 1, 0), mirrorVector=(1, 0, 0), lookVector=(0,0,1), *args, **kwargs):
+        super(Guides, self).__init__()
+        # fool check
+
+        #-------Mandatory------[Start]
+        self.side = side
+        self.sideMultiplier = -1 if side == "R" else 1
+        self.suffix = suffix
+        self.segments = segments
+        self.tMatrix = om.MMatrix(tMatrix) if tMatrix else om.MMatrix()
+        self.upVector = om.MVector(upVector)
+        self.mirrorVector = om.MVector(mirrorVector)
+        self.lookVector = om.MVector(lookVector)
+
+        self.offsetVector = None
+        self.guideJoints = []
+        #-------Mandatory------[End]
+
+    def draw_joints(self):
+        if self.side == "C":
+            # Guide joint positions for limbs with no side orientation
+            rootVec = om.MVector(0, 14, 0) * self.tMatrix
+            hipVec = om.MVector(0, 10, 0) * self.tMatrix
+            kneeVec = om.MVector(0, 5, 1) * self.tMatrix
+            footVec = om.MVector(0, 1, 0) * self.tMatrix
+            ballVec = om.MVector(0, 0, 2) * self.tMatrix
+            toeVec = om.MVector(0, 0, 4) * self.tMatrix
+            bankoutVec = om.MVector(-1, 0, 2) * self.tMatrix
+            bankinVec = om.MVector(1, 0, 2) * self.tMatrix
+            toepvVec = om.MVector(0, 0, 4.3) * self.tMatrix
+            heelpvVec = om.MVector(0, 0, -0.2) * self.tMatrix
+        else:
+            # Guide joint positions for limbs with sides
+            rootVec = om.MVector(2 * self.sideMultiplier, 14 ,0) * self.tMatrix
+            hipVec = om.MVector(5 * self.sideMultiplier, 10 ,0) * self.tMatrix
+            kneeVec = om.MVector(5 * self.sideMultiplier, 5, 1) * self.tMatrix
+            footVec = om.MVector(5 * self.sideMultiplier, 1, 0) * self.tMatrix
+            ballVec = om.MVector(5 * self.sideMultiplier, 0, 2) * self.tMatrix
+            toeVec = om.MVector(5 * self.sideMultiplier, 0, 4) * self.tMatrix
+            bankoutVec = om.MVector(4 * self.sideMultiplier, 0, 2) * self.tMatrix
+            bankinVec = om.MVector(6 * self.sideMultiplier, 0, 2) * self.tMatrix
+            toepvVec = om.MVector(5 * self.sideMultiplier, 0, 4.3) * self.tMatrix
+            heelpvVec = om.MVector(5 * self.sideMultiplier, 0, -0.2) * self.tMatrix
+
+        # Define the offset vector
+        self.offsetVector = -((rootVec - hipVec).normal())
+
+        # Draw the joints & set orientation
+        root = cmds.joint(p=rootVec, name=("jInit_LegRoot_%s" % self.suffix))
+        hip = cmds.joint(p=hipVec, name=("jInit_Hip_%s" % self.suffix))
+        knee = cmds.joint(p=kneeVec, name=("jInit_Knee_%s" % self.suffix))
+        foot = cmds.joint(p=footVec, name=("jInit_Foot_%s" % self.suffix))
+        extra.orientJoints([root, hip, knee, foot], worldUpAxis=self.mirrorVector, upAxis=(0, 1, 0), reverseAim=self.sideMultiplier)
+
+        ball = cmds.joint(p=ballVec, name=("jInit_Ball_%s" % self.suffix))
+        toe = cmds.joint(p=toeVec, name=("jInit_Toe_%s" % self.suffix))
+        cmds.select(d=True)
+        bankout = cmds.joint(p=bankoutVec, name=("jInit_BankOut_%s" % self.suffix))
+        cmds.select(d=True)
+        bankin = cmds.joint(p=bankinVec, name=("jInit_BankIn_%s" % self.suffix))
+        cmds.select(d=True)
+        toepv = cmds.joint(p=toepvVec, name=("jInit_ToePv_%s" % self.suffix))
+        cmds.select(d=True)
+        heelpv = cmds.joint(p=heelpvVec, name=("jInit_HeelPv_%s" % self.suffix))
+
+        cmds.parent(heelpv, foot)
+        cmds.parent(toepv, foot)
+        cmds.parent(bankin, foot)
+        cmds.parent(bankout, foot)
+
+        extra.orientJoints([ball, toe], worldUpAxis=self.mirrorVector, upAxis=(0, 1, 0), reverseAim=self.sideMultiplier)
+
+        # Update the guideJoints list
+        self.guideJoints = [root, hip, knee, foot, ball, toe, bankout, bankin, toepv, heelpv]
+
+        # set joint side and type attributes
+        extra.set_joint_type(root, "LegRoot")
+        extra.set_joint_type(hip, "Hip")
+        extra.set_joint_type(knee, "Knee")
+        extra.set_joint_type(foot, "Foot")
+        extra.set_joint_type(ball, "Ball")
+        extra.set_joint_type(toe, "Toe")
+        extra.set_joint_type(heelpv, "HeelPV")
+        extra.set_joint_type(toepv, "ToePV")
+        extra.set_joint_type(bankin, "BankIN")
+        extra.set_joint_type(bankout, "BankOUT")
+        _ = [extra.set_joint_side(jnt, self.side) for jnt in self.guideJoints]
+
+    def define_attributes(self):
+        # ----------Mandatory---------[Start]
+        root_jnt = self.guideJoints[0]
+        extra.create_global_joint_attrs(root_jnt, upAxis=self.upVector, mirrorAxis=self.mirrorVector, lookAxis=self.lookVector)
+        # ----------Mandatory---------[End]
+
+    def createGuides(self):
+        self.draw_joints()
+        self.define_attributes()

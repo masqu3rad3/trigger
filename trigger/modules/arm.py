@@ -54,10 +54,11 @@ class Arm(object):
         self.up_axis, self.mirror_axis, self.look_axis = extra.getRigAxes(self.collar_ref)
 
         # get if orientation should be derived from the initial Joints
-        try: self.useRefOrientation = cmds.getAttr(self.collar_ref.useRefOri)
-        except:
-            cmds.warning("Cannot find Inherit Orientation Attribute on Initial Root Joint %s... Skipping inheriting." %self.collar_ref)
-            self.useRefOrientation = False
+        self.useRefOrientation = cmds.getAttr("%s.useRefOri" % self.collar_ref)
+        # try: self.useRefOrientation = cmds.getAttr(self.collar_ref.useRefOri)
+        # except:
+        #     cmds.warning("Cannot find Inherit Orientation Attribute on Initial Root Joint %s... Skipping inheriting." %self.collar_ref)
+        #     self.useRefOrientation = False
 
 
 
@@ -1099,27 +1100,24 @@ class Arm(object):
         self.createAngleExtractors()
         self.roundUp()
 
-class Guides(settings.Settings):
-    def __init__(self, side="L", suffix="arm", segments=None, tMatrix=None, lookVector=(0,0,1), *args, **kwargs):
+class Guides(object):
+    def __init__(self, side="L", suffix="arm", segments=None, tMatrix=None, upVector=(0, 1, 0), mirrorVector=(1, 0, 0), lookVector=(0,0,1), *args, **kwargs):
         super(Guides, self).__init__()
+
         self.side = side
-        if self.side == "L":
-            self.sideMultiplier = 1 # this is the multiplier value to place joints
-            self.sideAttr = 1 # this is attribute value for side identification
-        elif self.side == "R":
-            self.sideMultiplier = -1
-            self.sideAttr = 2
-        else:
-            self.sideMultiplier = 1
-            self.sideAttr = 0
-        self.segments = segments
+        self.sideMultiplier = -1 if side == "R" else 1
         self.suffix = suffix
+        self.segments = segments
         self.tMatrix = om.MMatrix(tMatrix) if tMatrix else om.MMatrix()
-        self.lookVector = lookVector
+        self.upVector = om.MVector(upVector)
+        self.mirrorVector = om.MVector(mirrorVector)
+        self.lookVector = om.MVector(lookVector)
+
         self.offsetVector = None
         self.guideJoints = []
 
     def draw_joints(self):
+        self.guideJoints = []
         if self.side == "C":
             collarVec = om.MVector(0, 0, 2) * self.tMatrix
             shoulderVec = om.MVector(0, 0, 5) * self.tMatrix
@@ -1138,7 +1136,7 @@ class Guides(settings.Settings):
 
         cmds.select(d=True)
         collar = cmds.joint(p=collarVec, name=("jInit_collar_%s" % self.suffix))
-        cmds.setAttr("{0}.radius".format(collar), 3)
+        cmds.setAttr("{0}.radius".format(collar), 2)
         shoulder = cmds.joint(p=shoulderVec, name=("jInit_shoulder_%s" % self.suffix))
         elbow = cmds.joint(p=elbowVec, name=("jInit_elbow_%s" % self.suffix))
         hand = cmds.joint(p=handVec, name=("jInit_hand_%s" % self.suffix))
@@ -1148,47 +1146,18 @@ class Guides(settings.Settings):
         # Orientation
         extra.orientJoints(self.guideJoints, worldUpAxis=self.lookVector, upAxis=(0, 1, 0), reverseAim=self.sideMultiplier, reverseUp=self.sideMultiplier)
 
-        cmds.setAttr("%s.side" % collar, self.sideAttr)
-        cmds.setAttr("%s.type" % collar, 9)
-        cmds.setAttr("%s.side" % shoulder, self.sideAttr)
-        cmds.setAttr("%s.type" % shoulder, 10)
-        cmds.setAttr("%s.side" % elbow, self.sideAttr)
-        cmds.setAttr("%s.type" % elbow, 11)
-        cmds.setAttr("%s.side" % hand, self.sideAttr)
-        cmds.setAttr("%s.type" % hand, 12)
+        extra.set_joint_type(collar, "Collar")
+        extra.set_joint_type(shoulder, "Shoulder")
+        extra.set_joint_type(elbow, "Elbow")
+        extra.set_joint_type(hand, "Hand")
+        _ = [extra.set_joint_side(jnt, self.side) for jnt in self.guideJoints]
 
     def define_attributes(self):
         root_jnt = self.guideJoints[0]
-        axisAttributes=["upAxis", "mirrorAxis", "lookAxis"]
-        for att in axisAttributes:
-            if not cmds.attributeQuery(att, node=root_jnt, exists=True):
-                cmds.addAttr(root_jnt, longName=att, dt="string")
-
-        cmds.setAttr("{0}.upAxis".format(root_jnt), self.get("upAxis"), type="string")
-        cmds.setAttr("{0}.mirrorAxis".format(root_jnt), self.get("mirrorAxis"), type="string")
-        cmds.setAttr("{0}.lookAxis".format(root_jnt), self.get("lookAxis"), type="string")
-
-        if not cmds.attributeQuery("useRefOri", node=root_jnt, exists=True):
-            cmds.addAttr(root_jnt, longName="useRefOri", niceName="Inherit_Orientation", at="bool", keyable=True)
-
-        cmds.setAttr("{0}.useRefOri".format(root_jnt), True)
-
-    def adjust_display(self):
-        # display joint orientation
-        for jnt in self.guideJoints:
-            cmds.setAttr("%s.displayLocalAxis" % jnt, 1)
-            cmds.setAttr("%s.drawLabel" % jnt, 1)
-
-        if self.side == "C":
-            extra.colorize(self.guideJoints, self.get("majorCenterColor"), shape=False)
-        if self.side == "L":
-            extra.colorize(self.guideJoints, self.get("majorLeftColor"), shape=False)
-        if self.side == "R":
-            extra.colorize(self.guideJoints, self.get("majorRightColor"), shape=False)
+        extra.create_global_joint_attrs(root_jnt, upAxis=self.upVector, mirrorAxis=self.mirrorVector, lookAxis=self.lookVector)
 
     def createGuides(self):
         self.draw_joints()
         self.define_attributes()
-        self.adjust_display()
 
 

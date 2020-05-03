@@ -102,10 +102,10 @@ class Spine(settings.Settings):
         cmds.select(None)
         self.limbPlug = cmds.joint(name="limbPlug_%s" % self.suffix, p=self.rootPoint, radius=3)
         cmds.select(None)
-        self.endSocket = cmds.joint(name="jDef_ChestSocket", p=self.chestPoint)
+        self.endSocket = cmds.joint(name="jDef_ChestSocket_%s" % self.suffix, p=self.chestPoint)
         self.sockets.append(self.endSocket)
         cmds.select(None)
-        self.startSocket = cmds.joint(p=self.rootPoint, name="jDef_RootSocket", radius=3)
+        self.startSocket = cmds.joint(p=self.rootPoint, name="jDef_RootSocket_%s" % self.suffix, radius=3)
         self.sockets.append(self.startSocket)
 
         ## Create temporaray Guide Joints
@@ -324,3 +324,74 @@ class Spine(settings.Settings):
         self.createRoots()
         self.createIKsetup()
         self.roundUp()
+
+class Guides(settings.Settings):
+    def __init__(self, side="C", suffix="spine", segments=None, tMatrix=None, upVector=(0, 1, 0), mirrorVector=(1, 0, 0), lookVector=(0,0,1), *args, **kwargs):
+        super(Guides, self).__init__()
+        # fool check
+        if not segments or segments < 1:
+            FEEDBACK.warning("minimum segments required for the simple tail is two. current: %s" %segments)
+            return
+
+        #-------Mandatory------[Start]
+        self.side = side
+        self.sideMultiplier = -1 if side == "R" else 1
+        self.suffix = suffix
+        self.segments = segments
+        self.tMatrix = om.MMatrix(tMatrix) if tMatrix else om.MMatrix()
+        self.upVector = om.MVector(upVector)
+        self.mirrorVector = om.MVector(mirrorVector)
+        self.lookVector = om.MVector(lookVector)
+
+        self.offsetVector = None
+        self.guideJoints = []
+        #-------Mandatory------[End]
+
+    def draw_joints(self):
+        rPoint = om.MVector(0, 14.0, 0) * self.tMatrix
+        nPoint = om.MVector(0, 21.0, 0) * self.tMatrix
+        add = (nPoint - rPoint) / ((self.segments + 1) - 1)
+
+        # if self.side == "C":
+        #     # Guide joint positions for limbs with no side orientation
+        #     pass
+        # else:
+        #     # Guide joint positions for limbs with sides
+        #     pass
+
+        # Define the offset vector
+        self.offsetVector = (nPoint - rPoint).normal()
+
+        # Draw the joints & set joint side and type attributes
+        for nmb in range(self.segments + 1):
+            spine_jnt = cmds.joint(p=(rPoint + (add * nmb)), name="jInit_spine_%s_%i" %(self.suffix, nmb))
+            if nmb == 0:
+                extra.set_joint_type(spine_jnt, "SpineRoot")
+                cmds.setAttr("{0}.radius".format(spine_jnt), 2)
+            elif nmb == self.segments:
+                extra.set_joint_type(spine_jnt, "SpineEnd")
+            else:
+                extra.set_joint_type(spine_jnt, "Spine")
+            extra.set_joint_side(spine_jnt, "C")
+            # Update the guideJoints list
+            self.guideJoints.append(spine_jnt)
+
+        # set orientation of joints
+        extra.orientJoints(self.guideJoints, worldUpAxis=-self.lookVector, reverseAim=self.sideMultiplier, reverseUp=self.sideMultiplier)
+
+
+    def define_attributes(self):
+        # ----------Mandatory---------[Start]
+        root_jnt = self.guideJoints[0]
+        extra.create_global_joint_attrs(root_jnt, upAxis=self.upVector, mirrorAxis=self.mirrorVector, lookAxis=self.lookVector)
+        # ----------Mandatory---------[End]
+        cmds.addAttr(root_jnt, shortName="resolution", longName="Resolution", defaultValue=4, minValue=1,
+                     at="long", k=True)
+        cmds.addAttr(root_jnt, shortName="dropoff", longName="DropOff", defaultValue=1.0, minValue=0.1,
+                     at="float", k=True)
+        cmds.addAttr(root_jnt, at="enum", k=True, shortName="twistType", longName="Twist_Type", en="regular:infinite")
+        cmds.addAttr(root_jnt, at="enum", k=True, shortName="mode", longName="Mode", en="equalDistance:sameDistance")
+
+    def createGuides(self):
+        self.draw_joints()
+        self.define_attributes()

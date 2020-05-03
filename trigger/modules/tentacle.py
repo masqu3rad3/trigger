@@ -477,7 +477,7 @@ class Tentacle(settings.Settings):
         self.roundUp()
 
     def createWrap(self, *args, **kwargs):
-
+        ## TODO: refine the function and move to the library
         influence = args[0]
         surface = args[1]
 
@@ -550,4 +550,70 @@ class Tentacle(settings.Settings):
         return wrapNode, base
         # return pm.nt.Wrap(wrapNode), base
 
+class Guides(object):
+    def __init__(self, side="L", suffix="LIMBNAME", segments=None, tMatrix=None, upVector=(0, 1, 0), mirrorVector=(1, 0, 0), lookVector=(0,0,1), *args, **kwargs):
+        super(Guides, self).__init__()
+        # fool check
+
+        #-------Mandatory------[Start]
+        self.side = side
+        self.sideMultiplier = -1 if side == "R" else 1
+        self.suffix = suffix
+        self.segments = segments
+        self.tMatrix = om.MMatrix(tMatrix) if tMatrix else om.MMatrix()
+        self.upVector = om.MVector(upVector)
+        self.mirrorVector = om.MVector(mirrorVector)
+        self.lookVector = om.MVector(lookVector)
+
+        self.offsetVector = None
+        self.guideJoints = []
+        #-------Mandatory------[End]
+
+    def draw_joints(self):
+        rPointTentacle = om.MVector(0, 14, 0) * self.tMatrix
+        if self.side == "C":
+            # Guide joint positions for limbs with no side orientation
+            nPointTentacle = om.MVector(0, 14, 10) * self.tMatrix
+        else:
+            # Guide joint positions for limbs with sides
+            nPointTentacle = om.MVector(10 * self.sideMultiplier, 14, 0) * self.tMatrix
+
+        addTentacle = (nPointTentacle - rPointTentacle) / ((self.segments + 1) - 1)
+
+        # Define the offset vector
+        self.offsetVector = (nPointTentacle-rPointTentacle).normal()
+
+        # Draw the joints
+        for seg in range(self.segments + 1):
+            tentacle_jnt = cmds.joint(p=(rPointTentacle + (addTentacle * seg)), name="jInit_tentacle_%s_%i" %(self.suffix, seg))
+            # Update the guideJoints list
+            self.guideJoints.append(tentacle_jnt)
+
+        # set orientation of joints
+        extra.orientJoints(self.guideJoints, worldUpAxis=self.upVector, upAxis=(0,1,0), reverseAim=self.sideMultiplier, reverseUp=self.sideMultiplier)
+
+        # set joint side and type attributes
+        extra.set_joint_type(self.guideJoints[0], "TentacleRoot")
+        _ = [extra.set_joint_type(jnt, "Tentacle") for jnt in self.guideJoints[1:]]
+        _ = [extra.set_joint_side(jnt, self.side) for jnt in self.guideJoints]
+
+
+    def define_attributes(self):
+        # ----------Mandatory---------[Start]
+        root_jnt = self.guideJoints[0]
+        extra.create_global_joint_attrs(root_jnt, upAxis=self.upVector, mirrorAxis=self.mirrorVector, lookAxis=self.lookVector)
+        # ----------Mandatory---------[End]
+
+        cmds.addAttr(root_jnt, shortName="contRes", longName="Cont_Resolution", defaultValue=5, minValue=1,
+                     at="long", k=True)
+        cmds.addAttr(root_jnt, shortName="jointRes", longName="Joint_Resolution", defaultValue=25, minValue=1,
+                     at="long", k=True)
+        cmds.addAttr(root_jnt, shortName="deformerRes", longName="Deformer_Resolution", defaultValue=25, minValue=1,
+                     at="long", k=True)
+        cmds.addAttr(root_jnt, shortName="dropoff", longName="DropOff", defaultValue=2.0, minValue=0.1,
+                     at="float", k=True)
+
+    def createGuides(self):
+        self.draw_joints()
+        self.define_attributes()
 

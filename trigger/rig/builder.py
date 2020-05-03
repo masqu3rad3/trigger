@@ -112,8 +112,6 @@ class Builder(settings.Settings):
         # create space switchers
         if create_switchers:
             for anchor in (self.anchors):
-                FEEDBACK.warning("anchor:", anchor)
-                FEEDBACK.warning("anchorLocations:", self.anchorLocations)
                 anchorMaker.create_space_switch(anchor[0], self.anchorLocations, mode=anchor[1], defaultVal=anchor[2],
                                                 listException=anchor[3])
 
@@ -196,31 +194,34 @@ class Builder(settings.Settings):
         cmds.addAttr(self.cont_master, at="bool", ln="Joints_Visibility", sn="jointVis", keyable=True)
         cmds.addAttr(self.cont_master, at="bool", ln="Rig_Visibility", sn="rigVis", keyable=True)
 
-        for f in self.fingerMatchList:
-            fName, fType, fSide = extra.identifyMaster(f[0])
-            f_parent = cmds.listRelatives(f[0], parent=True)[0]
-            offsetVector = extra.getBetweenVector(f_parent, f)
-            iconSize = extra.getDistance(f[0], f[-1])
+        for brother_roots in self.fingerMatchList:
+            finger_name, finger_type, finger_side = extra.identifyMaster(brother_roots[0])
+            # finger_parent = cmds.listRelatives(finger_jnt_list[0], parent=True)[0]
+            finger_parent = extra.getParent(brother_roots[0])
+            offsetVector = extra.getBetweenVector(finger_parent, brother_roots)
+            iconSize = extra.getDistance(brother_roots[0], brother_roots[-1])
             translateOff = (iconSize / 2, 0, iconSize / 2)
             rotateOff = (0, 0, 0)
-            if "_left" in f[0]:
-                iconName = f[0].replace("_left", "_LEFT")
-            elif "_right" in f[0]:
-                iconName = f[0].replace("_right", "_RIGHT")
+            if "_left" in brother_roots[0]:
+                iconName = brother_roots[0].replace("_left", "_LEFT")
+            elif "_right" in brother_roots[0]:
+                iconName = brother_roots[0].replace("_right", "_RIGHT")
                 rotateOff = (0, 180, 0)
                 translateOff = (iconSize / 2, 0, -iconSize / 2)
             else:
-                iconName = f[0]
+                iconName = brother_roots[0]
 
             cont_fGroup, dmp = icon.createIcon("Square", iconName="cont_Fgrp_{0}".format(iconName),
                                                scale=(iconSize / 6, iconSize / 4, iconSize / 2))
             cmds.rotate(90, 0, 0, cont_fGroup)
             cmds.makeIdentity(cont_fGroup, a=True)
 
-            extra.alignAndAim(cont_fGroup, targetList=[f_parent], aimTargetList=[f[0], f[-1]], upObject=f[0],
+            extra.alignAndAim(cont_fGroup, targetList=[finger_parent], aimTargetList=[brother_roots[0], brother_roots[-1]], upObject=brother_roots[0],
                               rotateOff=rotateOff, translateOff=(-offsetVector * (iconSize / 2)))
             cmds.move(0, 0, (-iconSize / 2), cont_fGroup, r=True, os=True)
-            self.fingerMatchConts.append([cont_fGroup, f_parent])
+            self.fingerMatchConts.append([cont_fGroup, finger_parent])
+            for finger_root in brother_roots:
+                cmds.setAttr("%s.handController" % finger_root, cont_fGroup, type="string")
 
         # make the created attributes visible in the channelbox
         cmds.setAttr("%s.contVis" % self.cont_master, cb=True)
@@ -394,7 +395,6 @@ class Builder(settings.Settings):
         total_limb_count = len(limbCreationList)
         limb_counter = 0
         # percent = (100 * limb_counter) / total_limb_count
-        FEEDBACK.warning(limbCreationList)
         for x in limbCreationList:
             if self.progress_bar:
                 limb_counter = limb_counter + 1

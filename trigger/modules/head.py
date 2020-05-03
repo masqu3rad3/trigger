@@ -273,3 +273,101 @@ class Head(settings.Settings):
         self.createRoots()
         self.createIKsetup()
         self.roundUp()
+
+class Guides(object):
+    def __init__(self, side="L", suffix="head", segments=None, tMatrix=None, upVector=(0, 1, 0), mirrorVector=(1, 0, 0), lookVector=(0,0,1), *args, **kwargs):
+        super(Guides, self).__init__()
+        # fool check
+
+        #-------Mandatory------[Start]
+        self.side = side
+        self.sideMultiplier = -1 if side == "R" else 1
+        self.suffix = suffix
+        self.segments = segments
+        self.tMatrix = om.MMatrix(tMatrix) if tMatrix else om.MMatrix()
+        self.upVector = om.MVector(upVector)
+        self.mirrorVector = om.MVector(mirrorVector)
+        self.lookVector = om.MVector(lookVector)
+
+        self.offsetVector = None
+        self.guideJoints = []
+        #-------Mandatory------[End]
+
+    def draw_joints(self):
+        if self.side == "C":
+            # Guide joint positions for limbs with no side orientation
+            pass
+        else:
+            # Guide joint positions for limbs with sides
+            pass
+
+        rPointNeck =  om.MVector(0, 25.757, 0) * self.tMatrix
+        nPointNeck =  om.MVector(0, 29.418, 0.817) * self.tMatrix
+        pointHead =  om.MVector(0, 32,0.817) * self.tMatrix
+        addNeck = (nPointNeck - rPointNeck) / ((self.segments + 1) - 1)
+
+        # Define the offset vector
+        self.offsetVector = (nPointNeck-rPointNeck).normal()
+
+        # Draw the joints
+        for seg in range(self.segments):
+            neck_jnt = cmds.joint(p=(rPointNeck + (addNeck * seg)), name="jInit_neck_%s_%i" %(self.suffix, seg))
+            self.guideJoints.append(neck_jnt)
+        for seg in range(1):
+            head_jnt = cmds.joint(p=(rPointNeck + (addNeck * (seg + self.segments))), name="jInit_head_%s_%i" %(self.suffix, seg))
+            self.guideJoints.append(head_jnt)
+        headEnd = cmds.joint(p=pointHead, name="jInit_headEnd_%s" %(self.suffix))
+        self.guideJoints.append(headEnd)
+
+        # for seg in range(self.segments + 1):
+        #     if not seg == (self.segments):
+        #         head = cmds.joint(p=(rPointNeck + (addNeck * seg)), name="jInit_neck_%s_%s" %(self.suffix, str(seg)))
+        #         cmds.setAttr("%s.side" % head, 0)
+        #         if seg == 0:
+        #             cmds.setAttr("%s.type" % head, 18)
+        #             cmds.setAttr("%s.otherType" % head, "NeckRoot", type="string")
+        #             cmds.addAttr(shortName="resolution", longName="Resolution", defaultValue=4, minValue=1,
+        #                        at="long", k=True)
+        #             cmds.addAttr(shortName="dropoff", longName="DropOff", defaultValue=1.0, minValue=0.1,
+        #                        at="float", k=True)
+        #             cmds.addAttr(at="enum", k=True, shortName="twistType", longName="Twist_Type", en="regular:infinite")
+        #             cmds.addAttr(at="enum", k=True, shortName="mode", longName="Mode", en="equalDistance:sameDistance")
+        #             cmds.setAttr("%s.radius" %head, 3)
+        #         else:
+        #             cmds.setAttr("%s.type" % head, 7)
+        #     else:
+        #         head= cmds.joint(p=(rPointNeck + (addNeck * seg)), name="jInit_head_%s_%s" %(suffix, str(seg)))
+        #         cmds.setAttr("%s.type" % head, 8)
+        #     cmds.setAttr("%s.drawLabel" % head, 1)
+        #     jointList.append(head)
+
+
+        # Update the guideJoints list
+        extra.orientJoints(self.guideJoints, worldUpAxis=-self.lookVector, reverseAim=self.sideMultiplier, reverseUp=self.sideMultiplier)
+
+        # set orientation of joints
+
+        # set joint side and type attributes
+        extra.set_joint_type(self.guideJoints[0], "NeckRoot")
+        cmds.setAttr("{0}.radius".format(self.guideJoints[0]), 2)
+        _ = [extra.set_joint_type(jnt, "Neck") for jnt in self.guideJoints[1:-2]]
+        extra.set_joint_type(self.guideJoints[-2], "Head")
+        extra.set_joint_type(self.guideJoints[-1], "HeadEnd")
+        _ = [extra.set_joint_side(jnt, "C") for jnt in self.guideJoints]
+
+
+    def define_attributes(self):
+        # ----------Mandatory---------[Start]
+        root_jnt = self.guideJoints[0]
+        extra.create_global_joint_attrs(root_jnt, upAxis=self.upVector, mirrorAxis=self.mirrorVector, lookAxis=self.lookVector)
+        # ----------Mandatory---------[End]
+        cmds.addAttr(root_jnt, shortName="resolution", longName="Resolution", defaultValue=4, minValue=1,
+                     at="long", k=True)
+        cmds.addAttr(root_jnt, shortName="dropoff", longName="DropOff", defaultValue=1.0, minValue=0.1,
+                     at="float", k=True)
+        cmds.addAttr(root_jnt, at="enum", k=True, shortName="twistType", longName="Twist_Type", en="regular:infinite")
+        cmds.addAttr(root_jnt, at="enum", k=True, shortName="mode", longName="Mode", en="equalDistance:sameDistance")
+
+    def createGuides(self):
+        self.draw_joints()
+        self.define_attributes()

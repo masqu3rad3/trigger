@@ -1,5 +1,5 @@
 from maya import cmds
-
+import maya.api.OpenMaya as om
 from trigger.core import settings
 from trigger.library import functions as extra
 from trigger.core import feedback
@@ -53,7 +53,6 @@ class Root(settings.Settings):
 
         self.scaleConstraints.append(self.scaleGrp)
 
-        FEEDBACK.warning("ANAN", self.rootInit)
         defJ_root = cmds.joint(name="jDef_%s" % self.suffix)
         extra.alignTo(defJ_root, self.rootInit, position=True, rotation=False)
 
@@ -61,3 +60,57 @@ class Root(settings.Settings):
         self.limbPlug = defJ_root
         self.sockets.append(defJ_root)
         self.deformerJoints.append(defJ_root)
+
+class Guides(object):
+    def __init__(self, side="L", suffix="root", segments=None, tMatrix=None, upVector=(0, 1, 0), mirrorVector=(1, 0, 0), lookVector=(0,0,1), *args, **kwargs):
+        super(Guides, self).__init__()
+        # fool check
+
+        #-------Mandatory------[Start]
+        self.side = side
+        self.sideMultiplier = -1 if side == "R" else 1
+        self.suffix = suffix
+        self.segments = segments
+        self.tMatrix = om.MMatrix(tMatrix) if tMatrix else om.MMatrix()
+        self.upVector = om.MVector(upVector)
+        self.mirrorVector = om.MVector(mirrorVector)
+        self.lookVector = om.MVector(lookVector)
+
+        self.offsetVector = None
+        self.guideJoints = []
+        #-------Mandatory------[End]
+
+    def draw_joints(self):
+        if self.side == "C":
+            # Guide joint positions for limbs with no side orientation
+            pass
+        else:
+            # Guide joint positions for limbs with sides
+            pass
+
+        # Define the offset vector
+        self.offsetVector = om.MVector(0, 0, 0)
+
+        # Draw the joints
+        cmds.select(d=True)
+        root_jnt = cmds.joint(name="root_{0}".format(self.suffix))
+
+        # Update the guideJoints list
+        self.guideJoints.append(root_jnt)
+
+        # set orientation of joints
+
+        # set joint side and type attributes
+        extra.set_joint_type(root_jnt, "Root")
+        cmds.setAttr("{0}.radius".format(root_jnt), 2)
+        _ = [extra.set_joint_side(jnt, self.side) for jnt in self.guideJoints]
+
+    def define_attributes(self):
+        # ----------Mandatory---------[Start]
+        root_jnt = self.guideJoints[0]
+        extra.create_global_joint_attrs(root_jnt, upAxis=self.upVector, mirrorAxis=self.mirrorVector, lookAxis=self.lookVector)
+        # ----------Mandatory---------[End]
+
+    def createGuides(self):
+        self.draw_joints()
+        self.define_attributes()

@@ -5,8 +5,7 @@ from maya import OpenMayaUI as omui
 from trigger.core import io
 from trigger.core import settings
 
-import trigger.guides.initials_zero as init
-# import trigger.guides.initials as init
+import trigger.guides.initials as init
 import inspect
 # from trigger.rig import scratch
 from trigger.rig import builder
@@ -1559,13 +1558,12 @@ class MainUI(QtWidgets.QMainWindow):
             side = "both"
         elif self.tailSideAuto.isChecked():
             side = "auto"
-        print "side", side
         self.initSkeleton.initLimb("tail", whichSide=side, segments=self.tailSegInt.value(), defineAs=self.defineAs)
         cmds.undoInfo(closeChunk=True)
 
     def createNeck(self):
         cmds.undoInfo(openChunk=True)
-        self.initSkeleton.initLimb("neck", segments=self.neckSegInt.value(), defineAs=self.defineAs)
+        self.initSkeleton.initLimb("head", segments=self.neckSegInt.value(), defineAs=self.defineAs)
         cmds.undoInfo(closeChunk=True)
 
     def createTentacle(self):
