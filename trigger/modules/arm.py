@@ -1157,6 +1157,7 @@ class Guides(object):
         extra.create_global_joint_attrs(root_jnt, upAxis=self.upVector, mirrorAxis=self.mirrorVector, lookAxis=self.lookVector)
 
     def createGuides(self):
+        """Main Function to create Guides"""
         self.draw_joints()
         self.define_attributes()
 
