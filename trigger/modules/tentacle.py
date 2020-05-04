@@ -14,7 +14,7 @@ from trigger.core import feedback
 FEEDBACK = feedback.Feedback(__name__)
 
 
-class Tentacle(settings.Settings):
+class Tentacle(object):
 
     def __init__(self, build_data=None, inits=None,
                  suffix="",

@@ -1,4 +1,3 @@
-# import pymel.core as pm
 
 from maya import cmds
 import trigger.library.functions as functions

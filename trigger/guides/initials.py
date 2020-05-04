@@ -1,5 +1,7 @@
 from maya import cmds
 import maya.api.OpenMaya as om
+
+from trigger.core.undo_dec import undo
 from trigger.library import functions as extra
 
 from trigger import modules
@@ -83,8 +85,10 @@ class Initials(settings.Settings):
             FEEDBACK.warning("cannot find mirror bone automatically")
             return None, alignmentGiven, None
 
+    @undo
     def initLimb(self, limb_name, whichSide="left",
-                 segments=3, constrainedTo=None, parentNode=None, defineAs=False):
+                 segments=3, constrainedTo=None, parentNode=None, defineAs=False, *args, **kwargs):
+
         if limb_name not in self.valid_limbs:
             FEEDBACK.throw_error("%s is not a valid limb" % limb_name)
 
@@ -171,7 +175,17 @@ class Initials(settings.Settings):
                 "mirrorVector={5}, " \
                 "lookVector={6}".format(side, suffix, segments, self.tMatrix,
                                         self.upVector, self.mirrorVector, self.lookVector)
-        construct_command = "{0}({1})".format(module, flags)
+
+        extra_arg_list = []
+        for key, value in kwargs.items():
+            if type(value) == str:
+                extra_arg_list.append("%s='%s'" % (key, value))
+            else:
+                extra_arg_list.append("%s=%s" % (key, value))
+
+        # extra_arg_list = ["%s='%s'" %(key, value) for key, value in kwargs.items() if (type(value) == str) else 12]
+        extra_flags = ", ".join(extra_arg_list)
+        construct_command = "{0}({1},{2})".format(module, flags, extra_flags)
         guide = eval(construct_command)
         guide.createGuides()
 
@@ -229,205 +243,15 @@ class Initials(settings.Settings):
             cmds.parent(guide.guideJoints[0], limbGroup)
         cmds.select(currentselection)
 
-        FEEDBACK.warning(side)
+        # cmds.undoInfo(closeChunk=True)
         return locatorsList, {side: guide.guideJoints}
 
     def _getMirror(self, vector):
         """Returns reflection of the vector along the mirror axis"""
         return vector - 2 * (vector * self.mirrorVector) * self.mirrorVector
 
-
-    def initialHand(self, fingerCount, side, suffix):
-        sideMult = -1 if side == 2 else 1
-
-        jointList = []
-        fingerRoots = []
-
-        if fingerCount > 0:
-            thumb00vec = om.MVector(0.681 * sideMult, -0.143, 0.733) * self.tMatrix
-            thumb01vec = om.MVector(1.192 * sideMult, -0.21, 1.375) * self.tMatrix
-            thumb02vec = om.MVector(1.64 * sideMult, -0.477, 1.885) * self.tMatrix
-            thumb03vec = om.MVector(2.053 * sideMult, -0.724, 2.356) * self.tMatrix
-
-            cmds.select(d=True)
-
-            thumb00 = cmds.joint(p=thumb00vec, name=("jInit_thumb00_%s" % suffix))
-            thumb01 = cmds.joint(p=thumb01vec, name=("jInit_thumb01_%s" % suffix))
-            thumb02 = cmds.joint(p=thumb02vec, name=("jInit_thumb02_%s" % suffix))
-            thumb03 = cmds.joint(p=thumb03vec, name=("jInit_thumb03_%s" % suffix))
-            thumbJoints = [thumb00, thumb01, thumb02, thumb03]
-
-            extra.orientJoints(thumbJoints, worldUpAxis=self.upVector, upAxis=(0, -1, 0), reverseAim=sideMult,
-                               reverseUp=sideMult)
-            for i in thumbJoints:
-                cmds.setAttr("%s.displayLocalAxis" % i, 1)
-                if i == thumbJoints[0]:
-                    cmds.setAttr("%s.type" % i, 18)
-                    cmds.setAttr("%s.otherType" % i, "FingerRoot", type="string")
-                else:
-                    cmds.setAttr("%s.type" % i, 13)
-                cmds.setAttr("%s.side" % i, side)
-            # draw label on knuckles
-            cmds.setAttr("%s.drawLabel" % thumbJoints[1], 1)
-            self.createAxisAttributes(thumbJoints[0])
-            cmds.addAttr(thumbJoints[0], shortName="fingerType", longName="Finger_Type", at="enum",
-                         en="Extra:Thumb:Index:Middle:Ring:Pinky:Toe", k=True)
-            cmds.setAttr("%s.fingerType" % thumbJoints[0], 1)
-
-            self.fingerJointsList.append(thumbJoints)
-            jointList.extend(thumbJoints)
-            fingerRoots.append(thumbJoints[0])
-
-        if fingerCount > 1:
-            index00vec = om.MVector(1.517 * sideMult, 0.05, 0.656) * self.tMatrix
-            index01vec = om.MVector(2.494 * sideMult, 0.05, 0.868) * self.tMatrix
-            index02vec = om.MVector(3.126 * sideMult, 0.05, 1.005) * self.tMatrix
-            index03vec = om.MVector(3.746 * sideMult, 0.05, 1.139) * self.tMatrix
-            index04vec = om.MVector(4.278 * sideMult, 0.05, 1.254) * self.tMatrix
-            cmds.select(d=True)
-            index00 = cmds.joint(p=index00vec, name=("jInit_indexF00_%s" % suffix))
-            index01 = cmds.joint(p=index01vec, name=("jInit_indexF01_%s" % suffix))
-            index02 = cmds.joint(p=index02vec, name=("jInit_indexF02_%s" % suffix))
-            index03 = cmds.joint(p=index03vec, name=("jInit_indexF03_%s" % suffix))
-            index04 = cmds.joint(p=index04vec, name=("jInit_indexF04_%s" % suffix))
-            indexJoints = [index00, index01, index02, index03, index04]
-            extra.orientJoints(indexJoints, worldUpAxis=self.upVector, upAxis=(0, -1, 0), reverseAim=sideMult,
-                               reverseUp=sideMult)
-            for i in indexJoints:
-                cmds.setAttr("%s.displayLocalAxis" % i, 1)
-
-                if i == indexJoints[0]:
-                    cmds.setAttr("%s.type" % i, 18)
-                    cmds.setAttr("%s.otherType" % i, "FingerRoot", type="string")
-                else:
-                    cmds.setAttr("%s.type" % i, 13)
-                cmds.setAttr("%s.side" % i, side)
-            cmds.setAttr("%s.drawLabel" % index01, 1)
-            self.createAxisAttributes(indexJoints[0])
-            cmds.addAttr(indexJoints[0], shortName="fingerType", longName="Finger_Type", at="enum",
-                         en="Extra:Thumb:Index:Middle:Ring:Pinky:Toe", k=True)
-            cmds.setAttr("%s.fingerType" % indexJoints[0], 2)
-            self.fingerJointsList.append(indexJoints)
-            jointList.extend(indexJoints)
-            fingerRoots.append(index00)
-
-        if fingerCount > 2:
-            middle00vec = om.MVector(1.597 * sideMult, 0.123, 0.063) * self.tMatrix
-            middle01vec = om.MVector(2.594 * sideMult, 0.123, 0.137) * self.tMatrix
-            middle02vec = om.MVector(3.312 * sideMult, 0.123, 0.19) * self.tMatrix
-            middle03vec = om.MVector(4.012 * sideMult, 0.123, 0.242) * self.tMatrix
-            middle04vec = om.MVector(4.588 * sideMult, 0.123, 0.285) * self.tMatrix
-            cmds.select(d=True)
-            middle00 = cmds.joint(p=middle00vec, name=("jInit_middleF00_%s" % suffix))
-            middle01 = cmds.joint(p=middle01vec, name=("jInit_middleF01_%s" % suffix))
-            middle02 = cmds.joint(p=middle02vec, name=("jInit_middleF02_%s" % suffix))
-            middle03 = cmds.joint(p=middle03vec, name=("jInit_middleF03_%s" % suffix))
-            middle04 = cmds.joint(p=middle04vec, name=("jInit_middleF04_%s" % suffix))
-            middleJoints = [middle00, middle01, middle02, middle03, middle04]
-            extra.orientJoints(middleJoints, worldUpAxis=self.upVector, upAxis=(0, -1, 0), reverseAim=sideMult,
-                               reverseUp=sideMult)
-            for i in middleJoints:
-                cmds.setAttr("%s.displayLocalAxis" % i, 1)
-                if i == middleJoints[0]:
-                    cmds.setAttr("%s.type" % i, 18)
-                    cmds.setAttr("%s.otherType" % i, "FingerRoot", type="string")
-                else:
-                    cmds.setAttr("%s.type" % i, 13)
-                cmds.setAttr("%s.side" % i, side)
-            cmds.setAttr("%s.drawLabel" % middle01, 1)
-            self.createAxisAttributes(middleJoints[0])
-            cmds.addAttr(middleJoints[0], shortName="fingerType", longName="Finger_Type", at="enum",
-                         en="Extra:Thumb:Index:Middle:Ring:Pinky:Toe", k=True)
-            cmds.setAttr("%s.fingerType" % middleJoints[0], 3)
-            self.fingerJointsList.append(middleJoints)
-            jointList.extend(middleJoints)
-            fingerRoots.append(middle00)
-
-        if fingerCount > 3:
-            ring00vec = om.MVector(1.605 * sideMult, 0.123, -0.437) * self.tMatrix
-            ring01vec = om.MVector(2.603 * sideMult, 0.123, -0.499) * self.tMatrix
-            ring02vec = om.MVector(3.301 * sideMult, 0.123, -0.541) * self.tMatrix
-            ring03vec = om.MVector(3.926 * sideMult, 0.123, -0.58) * self.tMatrix
-            ring04vec = om.MVector(4.414 * sideMult, 0.123, -0.58) * self.tMatrix
-            cmds.select(d=True)
-            ring00 = cmds.joint(p=ring00vec, name=("jInit_ringF00_%s" % suffix))
-            ring01 = cmds.joint(p=ring01vec, name=("jInit_ringF01_%s" % suffix))
-            ring02 = cmds.joint(p=ring02vec, name=("jInit_ringF02_%s" % suffix))
-            ring03 = cmds.joint(p=ring03vec, name=("jInit_ringF03_%s" % suffix))
-            ring04 = cmds.joint(p=ring04vec, name=("jInit_ringF04_%s" % suffix))
-            ringJoints = [ring00, ring01, ring02, ring03, ring04]
-            extra.orientJoints(ringJoints, worldUpAxis=self.upVector, upAxis=(0, -1, 0), reverseAim=sideMult,
-                               reverseUp=sideMult)
-            for i in ringJoints:
-                cmds.setAttr("%s.displayLocalAxis" % i, 1)
-                if i == ringJoints[0]:
-                    cmds.setAttr("%s.type" % i, 18)
-                    cmds.setAttr("%s.otherType" % i, "FingerRoot", type="string")
-                else:
-                    cmds.setAttr("%s.type" % i, 13)
-                cmds.setAttr("%s.side" % i, side)
-            cmds.setAttr("%s.drawLabel" % ring01, 1)
-            self.createAxisAttributes(ringJoints[0])
-            cmds.addAttr(ringJoints[0], shortName="fingerType", longName="Finger_Type", at="enum",
-                         en="Extra:Thumb:Index:Middle:Ring:Pinky:Toe", k=True)
-            cmds.setAttr("%s.fingerType" % ringJoints[0], 4)
-            self.fingerJointsList.append(ringJoints)
-            jointList.extend(ringJoints)
-            fingerRoots.append(ring00)
-
-        if fingerCount > 4:
-            pinky00vec = om.MVector(1.405 * sideMult, 0, -0.909) * self.tMatrix
-            pinky01vec = om.MVector(2.387 * sideMult, 0, -1.097) * self.tMatrix
-            pinky02vec = om.MVector(2.907 * sideMult, 0, -1.196) * self.tMatrix
-            pinky03vec = om.MVector(3.378 * sideMult, 0, -1.286) * self.tMatrix
-            pinky04vec = om.MVector(3.767 * sideMult, 0, -1.361) * self.tMatrix
-            cmds.select(d=True)
-            pinky00 = cmds.joint(p=pinky00vec, name=("jInit_pinkyF00_%s" % suffix))
-            pinky01 = cmds.joint(p=pinky01vec, name=("jInit_pinkyF01_%s" % suffix))
-            pinky02 = cmds.joint(p=pinky02vec, name=("jInit_pinkyF02_%s" % suffix))
-            pinky03 = cmds.joint(p=pinky03vec, name=("jInit_pinkyF03_%s" % suffix))
-            pinky04 = cmds.joint(p=pinky04vec, name=("jInit_pinkyF04_%s" % suffix))
-            pinkyJoints = [pinky00, pinky01, pinky02, pinky03, pinky04]
-            extra.orientJoints(pinkyJoints, worldUpAxis=self.upVector, upAxis=(0, -1, 0), reverseAim=sideMult,
-                               reverseUp=sideMult)
-            for i in pinkyJoints:
-                cmds.setAttr("%s.displayLocalAxis" % i, 1)
-                if i == pinkyJoints[0]:
-                    cmds.setAttr("%s.type" % i, 18)
-                    cmds.setAttr("%s.otherType" % i, "FingerRoot", type="string")
-                else:
-                    cmds.setAttr("%s.type" % i, 13)
-                cmds.setAttr("%s.side" % i, side)
-            cmds.setAttr("%s.drawLabel" % pinky01, 1)
-            self.createAxisAttributes(pinkyJoints[0])
-            cmds.addAttr(pinkyJoints[0], shortName="fingerType", longName="Finger_Type", at="enum",
-                         en="Extra:Thumb:Index:Middle:Ring:Pinky:Toe", k=True)
-            cmds.setAttr("%s.fingerType" % pinkyJoints[0], 5)
-            self.fingerJointsList.append(pinkyJoints)
-            jointList.extend(pinkyJoints)
-            fingerRoots.append(pinky00)
-        if fingerCount > 5:
-            for x in range(0, (fingerCount - 5)):
-                ##//TODO put extra fingers
-                pass
-        for r in fingerRoots:
-            cmds.setAttr("%s.radius" % r, 2)
-        if side == 0:
-            extra.colorize(jointList, self.majorCenterColor, shape=False)
-        if side == 1:
-            extra.colorize(jointList, self.majorLeftColor, shape=False)
-        if side == 2:
-            extra.colorize(jointList, self.majorRightColor, shape=False)
-
-        return jointList, fingerRoots
-
-
+    @undo
     def initHumanoid(self, spineSegments=3, neckSegments=3, fingers=5):
-        # spine_guide = modules.spine.Guides(side="C", suffix="humanoid_spine", segments=spineSegments, tMatrix=self.tMatrix, upVector=self.upVector, mirrorVector=self.mirrorVector, lookVector=self.lookVector)
-        # spine_guide.createGuides()
-        # cmds.select(spine_guide.guideJoints[0]) # select pelvis
-        # spine_guide = modules.arm.Guides(side="C", suffix="humanoid_arm", segments=spineSegments, tMatrix=self.tMatrix, upVector=self.upVector, mirrorVector=self.mirrorVector, lookVector=self.lookVector)
-
         _, spine_dict = self.initLimb("spine", "auto", segments=spineSegments)
         root = spine_dict["C"][0]
         chest = spine_dict["C"][-1]
@@ -437,8 +261,43 @@ class Initials(settings.Settings):
         _, arm_dict = self.initLimb("arm", "auto")
         _, head_dict = self.initLimb("head", "auto", segments=neckSegments)
         left_hand = arm_dict["L"][-1]
-        cmds.select(left_hand)
-        # self.initLimb("hand", "auto", fingerCount=fingers)
+        fingers = []
+        for nmb in range(5):
+            cmds.select(left_hand)
+            _, finger_dict = self.initLimb("finger", whichSide="auto")
+            fingers.append(finger_dict["L"])
+
+        thumb_pos_data = [(1.1, 0.9, 0.25), (0.8, 0.0, 0.0), (0.55, 0.0, 0.00012367864829724757), (0.45, 0.0, 0.0)]
+        thumb_rot_data = [(31.0, 45.0, 3.0000000000000004), (-1.0, -2.0, 17.0), (0.0, 0.0, 0.0), (0.0, 0.0, 0.0)]
+        index_pos_data = [(2.0, 0.55, 0.0), (1.0, 0.0, 0.0), (0.65, 0.0, 0.0), (0.6, 0.0, 0.0)]
+        index_rot_data = [(1.0, 17.0, -3.0000000000000004), (0.0, 0.0, 0.0), (0.0, 0.0, 0.0), (0.0, 0.0, 0.0)]
+        middle_pos_data = [(2.0, -0.05, -0.09983537560644819), (0.9997424668383346, 0.0, 0.0), (0.7, 0.0, 0.0), (0.7, 0.0, 0.0)]
+        middle_rot_data = [(0.0, 7.805352401908098, -0.9999999999999998), (0.0, 0.0, 0.0), (0.0, 0.0, 0.0), (0.0, 0.0, 0.0)]
+        ring_pos_data = [(1.8, -0.55, -0.10011550541107042), (0.95, 0.0, 0.0), (0.7, 0.0, 0.0), (0.6, 0.0, 0.0)]
+        ring_rot_data = [(0.0, -5.0, -1.0), (0.0, 0.0, 0.0), (0.0, 0.0, 0.0), (0.0, 0.0, 0.0)]
+        pinky_pos_data = [(1.5, -1.1, 0.0), (0.8, 0.0, 0.0), (0.5, 0.0, 0.0), (0.5, 0.0, 0.0)]
+        pinky_rot_data = [(0.0, -12.000000000000002, 0.0), (0.0, 0.0, 0.0), (0.0, 0.0, 0.0), (0.0, 0.0, 0.0)]
+
+
+        for nmb, member in enumerate(fingers[0]):
+            cmds.xform(member, a=True, t=thumb_pos_data[nmb], ro=thumb_rot_data[nmb])
+        cmds.setAttr("%s.Finger_Type" % fingers[0][0], 1)
+
+        for nmb, member in enumerate(fingers[1]):
+            cmds.xform(member, a=True, t=index_pos_data[nmb], ro=index_rot_data[nmb])
+        cmds.setAttr("%s.Finger_Type" % fingers[1][0], 2)
+
+        for nmb, member in enumerate(fingers[2]):
+            cmds.xform(member, a=True, t=middle_pos_data[nmb], ro=middle_rot_data[nmb])
+        cmds.setAttr("%s.Finger_Type" % fingers[2][0], 3)
+
+        for nmb, member in enumerate(fingers[3]):
+            cmds.xform(member, a=True, t=ring_pos_data[nmb], ro=ring_rot_data[nmb])
+        cmds.setAttr("%s.Finger_Type" % fingers[3][0], 4)
+
+        for nmb, member in enumerate(fingers[4]):
+            cmds.xform(member, a=True, t=pinky_pos_data[nmb], ro=pinky_rot_data[nmb])
+        cmds.setAttr("%s.Finger_Type" % fingers[4][0], 5)
 
     def convertSelectionToInits(self, limbType, jointList=[], suffix="", whichside=""):
 
@@ -447,13 +306,13 @@ class Initials(settings.Settings):
         ## get the selection
         if whichside == "left":
             side = 1
-            extra.colorize(jointList, self.majorLeftColor, shape=False)
+            extra.colorize(jointList, self.get("majorLeftColor"), shape=False)
         elif whichside == "right":
             side = 2
-            extra.colorize(jointList, self.majorRightColor, shape=False)
+            extra.colorize(jointList, self.get("majorRightColor"), shape=False)
         else:
             side = 0
-            extra.colorize(jointList, self.majorCenterColor, shape=False)
+            extra.colorize(jointList, self.get("majorCenterColor"), shape=False)
 
         self.createAxisAttributes(jointList[0])
 
@@ -641,29 +500,5 @@ class Initials(settings.Settings):
                 else:
                     cmds.setAttr("%s.type" % jointList[j], 18)
                     cmds.setAttr("%s.otherType" % jointList[j], "Tentacle", type="string")
-
-    def createAxisAttributes(self, node):
-        axisAttributes = ["upAxis", "mirrorAxis", "lookAxis"]
-        for att in axisAttributes:
-            if not cmds.attributeQuery(att, node=node, exists=True):
-                cmds.addAttr(node, longName=att, dt="string")
-
-        cmds.setAttr("{0}.upAxis".format(node), self.upVector_asString, type="string")
-        cmds.setAttr("{0}.mirrorAxis".format(node), self.mirrorVector_asString, type="string")
-        cmds.setAttr("{0}.lookAxis".format(node), self.lookVector_asString, type="string")
-
-        if not cmds.attributeQuery("useRefOri", node=node, exists=True):
-            cmds.addAttr(node, longName="useRefOri", niceName="Inherit_Orientation", at="bool", keyable=True)
-
-        cmds.setAttr("{0}.useRefOri".format(node), True)
-
-
-
-
-
-
-
-
-
 
 

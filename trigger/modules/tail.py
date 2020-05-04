@@ -7,7 +7,7 @@ from trigger.library import controllers as ic
 from trigger.core import feedback
 FEEDBACK = feedback.Feedback(__name__)
 
-class Tail(settings.Settings):
+class Tail(object):
 
     def __init__(self, build_data=None, inits=None, suffix="", side="C", *args, **kwargs):
         super(Tail, self).__init__()

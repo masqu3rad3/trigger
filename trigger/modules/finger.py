@@ -7,7 +7,7 @@ from trigger.library import controllers as ic
 from trigger.core import feedback
 FEEDBACK = feedback.Feedback(__name__)
 
-class Finger(settings.Settings):
+class Finger(object):
     def __init__(self, build_data=None, inits=None, suffix="", side="L", *args, **kwargs):
         super(Finger, self).__init__()
         if build_data:

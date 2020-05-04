@@ -9,7 +9,7 @@ from trigger.library import twist_spline as twistSpline
 from trigger.core import feedback
 FEEDBACK = feedback.Feedback(__name__)
 
-class Spine(settings.Settings):
+class Spine(object):
 
     def __init__(self, build_data=None, inits=None, suffix="", side="C", resolution=4, dropoff=2.0, *args, **kwargs):
         super(Spine, self).__init__()

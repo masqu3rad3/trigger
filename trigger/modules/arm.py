@@ -1125,8 +1125,6 @@ class Guides(object):
             handVec = om.MVector(0, 0, 14 ) * self.tMatrix
         # Initial Joint positions for left arm
         else:
-            FEEDBACK.debug(self.sideMultiplier, self.tMatrix)
-            FEEDBACK.debug(om.MVector() * self.tMatrix)
             collarVec = om.MVector(2 * self.sideMultiplier, 0, 0) * self.tMatrix
             shoulderVec = om.MVector(5 * self.sideMultiplier, 0, 0) * self.tMatrix
             elbowVec = om.MVector(9 * self.sideMultiplier, 0, -1) * self.tMatrix

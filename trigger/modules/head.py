@@ -10,7 +10,7 @@ FEEDBACK = feedback.Feedback(__name__)
 
 ## TODO // NEEDS TO SUPPORT DIFFERENT ORIENTATIONS
 
-class Head(settings.Settings):
+class Head(object):
     def __init__(self, build_data=None, inits=None, suffix="", side="C", resolution=3, dropoff=1, *args, **kwargs):
         super(Head, self).__init__()
         if build_data:

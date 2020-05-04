@@ -5,7 +5,7 @@ from trigger.library import functions as extra
 from trigger.core import feedback
 FEEDBACK = feedback.Feedback(__name__)
 
-class Root(settings.Settings):
+class Root(object):
     def __init__(self, build_data=None, inits=None, suffix="", *args, **kwargs):
         super(Root, self).__init__()
         if build_data:

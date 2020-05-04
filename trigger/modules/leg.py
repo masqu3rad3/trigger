@@ -9,7 +9,7 @@ from trigger.library import ribbon as rc
 from trigger.core import feedback
 FEEDBACK = feedback.Feedback(__name__)
 
-class Leg(settings.Settings):
+class Leg(object):
     def __init__(self, build_data=None, inits=None, suffix="", side="L", *args, **kwargs):
         super(Leg, self).__init__()
         if build_data:

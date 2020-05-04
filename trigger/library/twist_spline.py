@@ -1,12 +1,8 @@
 from maya import cmds
 import maya.api.OpenMaya as om
 
-# import pymel.core as pm
-
 from trigger.library import functions as extra
 from trigger.library import controllers as ic
-reload(ic)
-
 
 class TwistSpline(object):
 

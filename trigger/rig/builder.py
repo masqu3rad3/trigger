@@ -35,31 +35,6 @@ class Builder(settings.Settings):
         self.rig_name = name
         self.validRootList = [values["members"][0] for values in modules.all_modules_data.MODULE_DICTIONARY.values()]
 
-        # self.settings = st.Settings("triggerSettings.json")
-        # Parse the dictionary settings to variables
-        # self.majorCenterColor = self.settings.current_settings["majorCenterColor"]
-        # self.minorCenterColor = self.settings.current_settings["minorCenterColor"]
-        # self.majorLeftColor = self.settings.current_settings["majorLeftColor"]
-        # self.minorLeftColor = self.settings.current_settings["minorLeftColor"]
-        # self.majorRightColor = self.settings.current_settings["majorRightColor"]
-        # self.minorRightColor = self.settings.current_settings["minorRightColor"]
-        # self.seperateSelectionSets = self.settings.current_settings["seperateSelectionSets"]
-        # self.afterCreation = self.settings.current_settings["afterCreation"]
-        # self.bindMethod = self.settings.current_settings["bindMethod"]
-        # self.skinMethod = self.settings.current_settings["skinningMethod"]
-
-        # self.majorCenterColor = self.current_settings["majorCenterColor"]
-        # self.minorCenterColor = self.current_settings["minorCenterColor"]
-        # self.majorLeftColor = self.current_settings["majorLeftColor"]
-        # self.minorLeftColor = self.current_settings["minorLeftColor"]
-        # self.majorRightColor = self.current_settings["majorRightColor"]
-        # self.minorRightColor = self.current_settings["minorRightColor"]
-        # self.seperateSelectionSets = self.current_settings["seperateSelectionSets"]
-        # self.afterCreation = self.current_settings["afterCreation"]
-        # self.bindMethod = self.current_settings["bindMethod"]
-        # self.skinMethod = self.current_settings["skinningMethod"]
-
-
         self.limbCreationList = []
 
         self.fingerMatchList = []
@@ -196,7 +171,6 @@ class Builder(settings.Settings):
 
         for brother_roots in self.fingerMatchList:
             finger_name, finger_type, finger_side = extra.identifyMaster(brother_roots[0])
-            # finger_parent = cmds.listRelatives(finger_jnt_list[0], parent=True)[0]
             finger_parent = extra.getParent(brother_roots[0])
             offsetVector = extra.getBetweenVector(finger_parent, brother_roots)
             iconSize = extra.getDistance(brother_roots[0], brother_roots[-1])
@@ -394,7 +368,6 @@ class Builder(settings.Settings):
 
         total_limb_count = len(limbCreationList)
         limb_counter = 0
-        # percent = (100 * limb_counter) / total_limb_count
         for x in limbCreationList:
             if self.progress_bar:
                 limb_counter = limb_counter + 1
@@ -417,25 +390,10 @@ class Builder(settings.Settings):
                 set_name = extra.uniqueName(set_name)
                 j_def_set = cmds.sets(name=set_name)
 
-            # # get the shoulders and hips
-            # if x[1] == "arm":
-            #     if x[2] == "L":
-            #         self.rightShoulder = x[0]["Shoulder"]
-            #     if x[2] == "R":
-            #         self.leftShoulder = x[0]["Shoulder"]
-            #
-            # elif x[1] == "leg":
-            #     if x[2] == "L":
-            #         self.leftHip = x[0]["Hip"]
-            #     if x[2] == "R":
-            #         self.rightHip = x[0]["Hip"]
-
             suffix = "%s_%s" % (sideVal, x[1].capitalize()) if sideVal != "C" else x[1].capitalize()
             module = "modules.{0}.{1}".format(x[1], x[1].capitalize())
             flags = "build_data={0}, suffix='{1}', side='{2}'".format(x[0], suffix, x[2])
             construct_command = "{0}({1})".format(module, flags)
-
-            # FEEDBACK.debug("="*30, command, "-"*30)
 
             limb = eval(construct_command)
             limb.colorCodes = colorCodes
@@ -444,12 +402,10 @@ class Builder(settings.Settings):
             ##############################################
             if add_limb:
                 cmds.parent(limb.limbPlug, parent_socket)
-
                 ## Good parenting / scale connections
                 ## get the holder group
                 self.rootGroup = extra.getParent(master_cont)
                 ## Create the holder group if it does not exist
-                # scaleGrpPiv = limb.limbPlug.getTranslation(space="world")
                 scaleGrpPiv = extra.getWorldTranslation(limb.limbPlug)
                 cmds.xform(limb.scaleGrp, piv=scaleGrpPiv, ws=True)
                 ## pass the attributes
@@ -462,10 +418,8 @@ class Builder(settings.Settings):
             else:
                 self.anchorLocations += limb.anchorLocations
                 self.anchors += limb.anchors
-
                 ## gather all sockets in a list
                 self.allSocketsList += limb.sockets
-
                 ## add the rigged limb to the riggedLimbList
                 self.riggedLimbList.append(limb)
 
