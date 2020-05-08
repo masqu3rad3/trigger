@@ -14,7 +14,7 @@ LIMB_DATA = {
     }
 
 class Arm(object):
-    def __init__(self, build_data=None, inits=None, suffix="", side="L", *args, **kwargs):
+    def __init__(self, build_data=None, inits=None, suffix="", *args, **kwargs):
         super(Arm, self).__init__()
         if build_data:
             self.collar_ref = build_data["Collar"]
@@ -42,7 +42,7 @@ class Arm(object):
                 self.elbow_ref = inits[2]
                 self.hand_ref = inits[3]
         else:
-            FEEDBACK.throw_error("Class needs either build_data or arminits to be constructed")
+            FEEDBACK.throw_error("Class needs either build_data or arm inits to be constructed")
 
         self.collar_pos = extra.getWorldTranslation(self.collar_ref)
         self.shoulder_pos = extra.getWorldTranslation(self.shoulder_ref)
@@ -54,20 +54,12 @@ class Arm(object):
         self.init_upper_arm_dist = extra.getDistance(self.shoulder_ref, self.elbow_ref)
         self.init_lower_arm_dist = extra.getDistance(self.elbow_ref, self.hand_ref)
 
-        self.sideMult = -1 if side == "R" else 1
-        self.side = side
-
         self.up_axis, self.mirror_axis, self.look_axis = extra.getRigAxes(self.collar_ref)
 
-        # get if orientation should be derived from the initial Joints
+        # get the properties from the root
         self.useRefOrientation = cmds.getAttr("%s.useRefOri" % self.collar_ref)
-        # try: self.useRefOrientation = cmds.getAttr(self.collar_ref.useRefOri)
-        # except:
-        #     cmds.warning("Cannot find Inherit Orientation Attribute on Initial Root Joint %s... Skipping inheriting." %self.collar_ref)
-        #     self.useRefOrientation = False
-
-
-
+        self.side = extra.get_joint_side(self.collar_ref)
+        self.sideMult = -1 if self.side == "R" else 1
 
         # self.originalSuffix = suffix
         self.suffix = (extra.uniqueName("limbGrp_%s" % suffix)).replace("limbGrp_", "")

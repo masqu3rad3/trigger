@@ -43,7 +43,7 @@ LIMB_DATA = {
 ## TODO // NEEDS TO SUPPORT DIFFERENT ORIENTATIONS
 
 class Head(object):
-    def __init__(self, build_data=None, inits=None, suffix="", side="C", resolution=3, dropoff=1, *args, **kwargs):
+    def __init__(self, build_data=None, inits=None, suffix="", *args, **kwargs):
         super(Head, self).__init__()
         if build_data:
             try:
@@ -52,9 +52,6 @@ class Head(object):
                 self.neckNodes = [build_data["NeckRoot"]]
             self.headStart = build_data["Head"]
             self.headEnd = build_data["HeadEnd"]
-            resolution = build_data.get("resolution")
-            dropoff = build_data.get("dropoff")
-
         elif inits:
             if (len(inits) < 2):
                 cmds.error("Some or all Neck and Head Bones are missing (or Renamed)")
@@ -66,10 +63,6 @@ class Head(object):
         else:
             FEEDBACK.throw_error("Class needs either build_data or arminits to be constructed")
 
-
-        self.resolution = resolution
-        self.dropoff = dropoff
-
         # get distances
         self.neckDist = extra.getDistance(self.neckNodes[0], self.headStart)
         self.headDist = extra.getDistance(self.headStart, self.headEnd)
@@ -79,18 +72,17 @@ class Head(object):
         self.headPivPos = extra.getWorldTranslation(self.headStart)
         self.headEndPivPos = extra.getWorldTranslation(self.headEnd)
 
-        # initialize sides
-        self.sideMult = -1 if side == "R" else 1
-        self.side = side
-
         # initialize coordinates
         self.up_axis, self.mirror_axis, self.look_axis = extra.getRigAxes(self.neckNodes[0])
 
-        # get if orientation should be derived from the initial Joints
-        try: self.useRefOrientation = cmds.getAttr("%s.useRefOri" % self.neckNodes[0])
-        except:
-            cmds.warning("Cannot find Inherit Orientation Attribute on Initial Root Joint %s... Skipping inheriting." %self.neckNodes[0])
-            self.useRefOrientation = False
+        # get properties
+        self.useRefOrientation = cmds.getAttr("%s.useRefOri" % self.neckNodes[0])
+        self.resolution = int(cmds.getAttr("%s.resolution" %self.neckNodes[0]))
+        self.dropoff = float(cmds.getAttr("%s.dropoff" %self.neckNodes[0]))
+        self.splineMode = cmds.getAttr("%s.mode" %self.neckNodes[0], asString=True)
+        self.twistType = cmds.getAttr("%s.twistType" %self.neckNodes[0], asString=True)
+        self.side = extra.get_joint_side(self.neckNodes[0])
+        self.sideMult = -1 if self.side == "R" else 1
 
         # initialize suffix
         self.suffix = (extra.uniqueName("limbGrp_%s" % suffix)).replace("limbGrp_", "")
@@ -155,7 +147,7 @@ class Head(object):
         self.cont_neck_ORE = extra.createUpGrp(self.cont_neck, "ORE")
 
         ## Head Controller
-        self.cont_head, _ = icon.createIcon("HalfDome", iconName="cont_head_%s" % self.suffix, scale=(self.headDist, self.headDist, self.headDist), normal=(0,1,0))
+        self.cont_head, _ = icon.createIcon("HalfDome", iconName="%s_head_cont" % self.suffix, scale=(self.headDist, self.headDist, self.headDist), normal=(0,1,0))
 
         extra.alignToAlter(self.cont_head, self.guideJoints[-2], mode=2)
         self.cont_IK_OFF = extra.createUpGrp(self.cont_head, "OFF")
@@ -185,15 +177,12 @@ class Head(object):
         cmds.parent(self.neckRootLoc, self.scaleGrp)
 
     def createIKsetup(self):
-        # create spline IK for neck
-        splineMode = cmds.getAttr("%s.mode" % self.neckNodes[0], asString=True)
-        twistType = cmds.getAttr("%s.twistType" % self.neckNodes[0], asString=True)
 
         # create spline IK for neck
         neckSpline = twistSpline.TwistSpline()
         neckSpline.upAxis = -(om.MVector(self.look_axis))
 
-        neckSpline.createTspline(list(self.guideJoints[:-1]), "neckSplineIK_%s" % self.suffix, self.resolution, dropoff=self.dropoff, mode=splineMode, twistType=twistType, colorCode=self.colorCodes[1])
+        neckSpline.createTspline(list(self.guideJoints[:-1]), "neckSplineIK_%s" % self.suffix, self.resolution, dropoff=self.dropoff, mode=self.splineMode, twistType=self.twistType, colorCode=self.colorCodes[1])
         map(self.sockets.append, neckSpline.defJoints)
 
         # # Connect neck start to the neck controller
@@ -215,7 +204,7 @@ class Head(object):
         # create spline IK for Head squash
         headSpline = twistSpline.TwistSpline()
         headSpline.upAxis = -(om.MVector(self.look_axis))
-        headSpline.createTspline(list(self.guideJoints[-2:]), "headSquashSplineIK_%s" % self.suffix, 3, dropoff=2,  mode=splineMode, twistType=twistType, colorCode=self.colorCodes[1])
+        headSpline.createTspline(list(self.guideJoints[-2:]), "headSquashSplineIK_%s" % self.suffix, 3, dropoff=2,  mode=self.splineMode, twistType=self.twistType, colorCode=self.colorCodes[1])
         map(self.sockets.append, headSpline.defJoints)
 
         # # Position the head spline IK to end of the neck
@@ -350,29 +339,6 @@ class Guides(object):
             self.guideJoints.append(head_jnt)
         headEnd = cmds.joint(p=pointHead, name="jInit_headEnd_%s" %(self.suffix))
         self.guideJoints.append(headEnd)
-
-        # for seg in range(self.segments + 1):
-        #     if not seg == (self.segments):
-        #         head = cmds.joint(p=(rPointNeck + (addNeck * seg)), name="jInit_neck_%s_%s" %(self.suffix, str(seg)))
-        #         cmds.setAttr("%s.side" % head, 0)
-        #         if seg == 0:
-        #             cmds.setAttr("%s.type" % head, 18)
-        #             cmds.setAttr("%s.otherType" % head, "NeckRoot", type="string")
-        #             cmds.addAttr(shortName="resolution", longName="Resolution", defaultValue=4, minValue=1,
-        #                        at="long", k=True)
-        #             cmds.addAttr(shortName="dropoff", longName="DropOff", defaultValue=1.0, minValue=0.1,
-        #                        at="float", k=True)
-        #             cmds.addAttr(at="enum", k=True, shortName="twistType", longName="Twist_Type", en="regular:infinite")
-        #             cmds.addAttr(at="enum", k=True, shortName="mode", longName="Mode", en="equalDistance:sameDistance")
-        #             cmds.setAttr("%s.radius" %head, 3)
-        #         else:
-        #             cmds.setAttr("%s.type" % head, 7)
-        #     else:
-        #         head= cmds.joint(p=(rPointNeck + (addNeck * seg)), name="jInit_head_%s_%s" %(suffix, str(seg)))
-        #         cmds.setAttr("%s.type" % head, 8)
-        #     cmds.setAttr("%s.drawLabel" % head, 1)
-        #     jointList.append(head)
-
 
         # Update the guideJoints list
         extra.orientJoints(self.guideJoints, worldUpAxis=-self.lookVector, reverseAim=self.sideMultiplier, reverseUp=self.sideMultiplier)

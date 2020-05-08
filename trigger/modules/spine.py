@@ -43,7 +43,7 @@ LIMB_DATA = {
 
 class Spine(object):
 
-    def __init__(self, build_data=None, inits=None, suffix="", side="C", resolution=4, dropoff=2.0, *args, **kwargs):
+    def __init__(self, build_data=None, inits=None, suffix="", *args, **kwargs):
         super(Spine, self).__init__()
         if build_data:
             sRoot=build_data.get("SpineRoot")
@@ -54,8 +54,8 @@ class Spine(object):
             except:
                 self.spineEnd = build_data.get("SpineEnd")
                 self.inits = [sRoot] + [self.spineEnd]
-            resolution = build_data.get("resolution")
-            dropoff = build_data.get("dropoff")
+            # resolution = build_data.get("resolution")
+            # dropoff = build_data.get("dropoff")
         elif inits:
             # fool proofing
             if (len(inits) < 2):
@@ -66,35 +66,24 @@ class Spine(object):
         else:
             FEEDBACK.throw_error("Class needs either build_data or arminits to be constructed")
 
-        # reinitialize the initial Joints
-
-        self.resolution = int(resolution)
-        self.dropoff = float(dropoff)
-
         # get distances
         self.iconSize = extra.getDistance(self.inits[0], self.inits[-1])
 
         # get positions
         self.rootPoint = extra.getWorldTranslation(self.inits[0])
         self.chestPoint = extra.getWorldTranslation(self.inits[-1])
-        # self.rootPoint = self.inits[0].getTranslation(space="world")
-        # self.chestPoint = self.inits[-1].getTranslation(space="world")
-
-        # initialize sides
-        self.sideMult = -1 if side == "R" else 1
-        self.side = side
 
         # initialize coordinates
         self.up_axis, self.mirror_axis, self.look_axis = extra.getRigAxes(self.inits[0])
 
-        # get if orientation should be derived from the initial Joints
-        try: self.useRefOrientation = cmds.getAttr("%s.useRefOri" %self.inits[0])
-        except:
-            cmds.warning("Cannot find Inherit Orientation Attribute on Initial Root Joint %s... Skipping inheriting." %self.inits[0])
-            self.useRefOrientation = False
-
+        # get the properties from the root
+        self.useRefOrientation = cmds.getAttr("%s.useRefOri" %self.inits[0])
+        self.resolution = int(cmds.getAttr("%s.resolution" %self.inits[0]))
+        self.dropoff = float(cmds.getAttr("%s.dropoff" %self.inits[0]))
         self.splineMode = cmds.getAttr("%s.mode" %self.inits[0], asString=True)
         self.twistType = cmds.getAttr("%s.twistType" %self.inits[0], asString=True)
+        self.side = extra.get_joint_side(self.inits[0])
+        self.sideMult = -1 if self.side == "R" else 1
 
         # initialize suffix
         self.suffix = (extra.uniqueName("limbGrp_%s" % suffix)).replace("limbGrp_", "")
@@ -406,7 +395,7 @@ class Guides(object):
 
     def define_attributes(self):
         extra.set_joint_type(self.guideJoints[0], "SpineRoot")
-        _ = [extra.set_joint_type(jnt, "Spine") for jnt in self.guideJoints[1:-2]]
+        _ = [extra.set_joint_type(jnt, "Spine") for jnt in self.guideJoints[1:-1]]
         extra.set_joint_type(self.guideJoints[-1], "SpineEnd")
         cmds.setAttr("{0}.radius".format(self.guideJoints[0]), 2)
         _ = [extra.set_joint_side(jnt, self.side) for jnt in self.guideJoints]

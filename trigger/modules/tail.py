@@ -15,7 +15,7 @@ LIMB_DATA = {
 
 class Tail(object):
 
-    def __init__(self, build_data=None, inits=None, suffix="", side="C", *args, **kwargs):
+    def __init__(self, build_data=None, inits=None, suffix="", *args, **kwargs):
         super(Tail, self).__init__()
         if build_data:
             self.tailRoot = build_data.get("TailRoot")
@@ -29,19 +29,13 @@ class Tail(object):
         else:
             FEEDBACK.throw_error("Class needs either build_data or inits to be constructed")
 
-        # initialize sides
-        self.sideMult = -1 if side == "R" else 1
-        self.side = side
-
         # initialize coordinates
         self.up_axis, self.mirror_axis, self.look_axis = extra.getRigAxes(self.inits[0])
 
-        # get if orientation should be derived from the initial Joints
-        try: self.useRefOrientation = cmds.getAttr("%s.useRefOri" % self.inits[0])
-        except:
-            cmds.warning("Cannot find Inherit Orientation Attribute on Initial Root Joint %s... Skipping inheriting." %self.inits[0])
-            self.useRefOrientation = False
-
+        # get properties
+        self.useRefOrientation = cmds.getAttr("%s.useRefOri" % self.inits[0])
+        self.side = extra.get_joint_side(self.inits[0])
+        self.sideMult = -1 if self.side == "R" else 1
 
         # initialize suffix
         self.suffix = (extra.uniqueName("limbGrp_%s" % suffix)).replace("limbGrp_", "")

@@ -49,22 +49,12 @@ LIMB_DATA = {
 
 class Tentacle(object):
 
-    def __init__(self, build_data=None, inits=None,
-                 suffix="",
-                 side="C",
-                 contRes=5.0,
-                 jointRes=5.0,
-                 deformerRes=25.0,
-                 dropoff=2.0, *args, **kwargs):
+    def __init__(self, build_data=None, inits=None, suffix="", *args, **kwargs):
         super(Tentacle, self).__init__()
         if build_data:
             self.tentacleRoot = build_data.get("TentacleRoot")
             self.tentacles = (build_data.get("Tentacle"))
             self.inits = [self.tentacleRoot] + (self.tentacles)
-            contRes = float(build_data.get("contRes"))
-            jointRes = float(build_data.get("jointRes"))
-            deformerRes = float(build_data.get("deformerRes"))
-            dropoff = float(build_data.get("dropoff"))
         elif inits:
             if len(inits) < 2:
                 cmds.error("Tentacle setup needs at least 2 initial joints")
@@ -73,31 +63,23 @@ class Tentacle(object):
         else:
             FEEDBACK.throw_error("Class needs either build_data or inits to be constructed")
 
-        self.contRes = 1.0 * contRes
-        self.jointRes = 1.0 * jointRes
-        self.deformerRes = 1.0 * deformerRes
-        self.dropoff = 1.0 * dropoff
-
         # get distances
 
         # get positions
 
         self.rootPos = extra.getWorldTranslation(self.inits[0])
 
-        # initialize sides
-        self.sideMult = -1 if side == "R" else 1
-        self.side = side
-
         # initialize coordinates
         self.up_axis, self.mirror_axis, self.look_axis = extra.getRigAxes(self.inits[0])
 
-        # get if orientation should be derived from the initial Joints
-        try:
-            self.useRefOrientation = cmds.getAttr("%s.useRefOri" % self.inits[0])
-        except:
-            cmds.warning("Cannot find Inherit Orientation Attribute on Initial Root Joint %s... Skipping inheriting." %
-                         self.inits[0])
-            self.useRefOrientation = False
+        # get the properties from the root
+        self.useRefOrientation = cmds.getAttr("%s.useRefOri" % self.inits[0])
+        self.contRes = float(cmds.getAttr("%s.contRes" % self.inits[0]))
+        self.jointRes = float(cmds.getAttr("%s.jointRes" % self.inits[0]))
+        self.deformerRes = float(cmds.getAttr("%s.deformerRes" % self.inits[0]))
+        self.dropoff = float(cmds.getAttr("%s.dropoff" % self.inits[0]))
+        self.side = extra.get_joint_side(self.inits[0])
+        self.sideMult = -1 if self.side == "R" else 1
 
         # initialize suffix
         self.suffix = (extra.uniqueName("limbGrp_%s" % suffix)).replace("limbGrp_", "")
@@ -190,7 +172,7 @@ class Tentacle(object):
         icon = ic.Icon()
         ## specialController
         iconScale = extra.getDistance(self.inits[0], self.inits[1]) / 3
-        self.cont_special, dmp = icon.createIcon("Looper", iconName="tentacleSP_%s" % self.suffix,
+        self.cont_special, dmp = icon.createIcon("Looper", iconName="tentacleSP_%s_cont" % self.suffix,
                                                  scale=(iconScale, iconScale, iconScale))
         extra.alignAndAim(self.cont_special, targetList=[self.inits[0]], aimTargetList=[self.inits[-1]],
                           upVector=self.up_axis, rotateOff=(90, 0, 0))

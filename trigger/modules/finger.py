@@ -26,7 +26,7 @@ LIMB_DATA = {
 
 
 class Finger(object):
-    def __init__(self, build_data=None, inits=None, suffix="", side="L", *args, **kwargs):
+    def __init__(self, build_data=None, inits=None, suffix="", *args, **kwargs):
         super(Finger, self).__init__()
         if build_data:
             self.fingerRoot = build_data.get("FingerRoot")
@@ -41,10 +41,6 @@ class Finger(object):
         else:
             FEEDBACK.throw_error("Class needs either build_data or arminits to be constructed")
 
-        # initialize sides and fingertype
-        self.sideMult = -1 if side == "R" else 1
-        self.side = side
-
         hand_controller = cmds.getAttr("%s.handController" % self.inits[0])
         if hand_controller:
             if cmds.objExists(hand_controller):
@@ -55,17 +51,17 @@ class Finger(object):
         else:
             self.handController = None
 
-        self.fingerType = cmds.getAttr("%s.fingerType" % self.fingerRoot, asString=True)
-        self.isThumb = self.fingerType == "Thumb"
+
 
         # initialize coordinates
         self.up_axis, self.mirror_axis, self.look_axis = extra.getRigAxes(self.inits[0])
 
-        # get if orientation should be derived from the initial Joints
-        try: self.useRefOrientation = cmds.getAttr("%s.useRefOri" % self.inits[0])
-        except:
-            cmds.warning("Cannot find Inherit Orientation Attribute on Initial Root Joint %s... Skipping inheriting." %self.inits[0])
-            self.useRefOrientation = False
+        # get the properties from the root
+        self.useRefOrientation = cmds.getAttr("%s.useRefOri" % self.inits[0])
+        self.fingerType = cmds.getAttr("%s.fingerType" % self.fingerRoot, asString=True)
+        self.isThumb = self.fingerType == "Thumb"
+        self.side = extra.get_joint_side(self.inits[0])
+        self.sideMult = -1 if self.side == "R" else 1
 
         # initialize suffix
         # self.suffix = "%s_%s" %(suffix, cmds.getAttr("%s.fingerType" % self.fingerRoot, asString=True))

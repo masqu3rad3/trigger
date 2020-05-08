@@ -16,7 +16,7 @@ LIMB_DATA = {
     }
 
 class Leg(object):
-    def __init__(self, build_data=None, inits=None, suffix="", side="L", *args, **kwargs):
+    def __init__(self, build_data=None, inits=None, suffix="", *args, **kwargs):
         super(Leg, self).__init__()
         if build_data:
             self.leg_root_ref = build_data["LegRoot"]
@@ -60,16 +60,12 @@ class Leg(object):
         self.init_foot_length = extra.getDistance(self.toe_pv_ref, self.heel_pv_ref)
         self.init_foot_width = extra.getDistance(self.bank_in_ref, self.bank_out_ref)
 
-        self.sideMult = -1 if side == "R" else 1
-        self.side = side
-
         self.up_axis, self.mirror_axis, self.look_axis = extra.getRigAxes(self.leg_root_ref)
 
-        # get if orientation should be derived from the initial Joints
-        try: self.useRefOrientation = cmds.getAttr("%s.useRefOri" % self.leg_root_ref)
-        except:
-            cmds.warning("Cannot find Inherit Orientation Attribute on Initial Root Joint %s... Skipping inheriting." %self.leg_root_ref)
-            self.useRefOrientation = False
+        # get properties from the root joint
+        self.useRefOrientation = cmds.getAttr("%s.useRefOri" % self.leg_root_ref)
+        self.side = extra.get_joint_side(self.leg_root_ref)
+        self.sideMult = -1 if self.side == "R" else 1
 
         # self.originalSuffix = suffix
         self.suffix = (extra.uniqueName("limbGrp_%s" % suffix)).replace("limbGrp_", "")
@@ -1262,10 +1258,10 @@ class Guides(object):
         extra.set_joint_type(self.guideJoints[3], "Foot")
         extra.set_joint_type(self.guideJoints[4], "Ball")
         extra.set_joint_type(self.guideJoints[5], "Toe")
-        extra.set_joint_type(self.guideJoints[6], "HeelPV")
-        extra.set_joint_type(self.guideJoints[7], "ToePV")
-        extra.set_joint_type(self.guideJoints[8], "BankIN")
-        extra.set_joint_type(self.guideJoints[9], "BankOUT")
+        extra.set_joint_type(self.guideJoints[6], "BankOUT")
+        extra.set_joint_type(self.guideJoints[7], "BankIN")
+        extra.set_joint_type(self.guideJoints[8], "ToePV")
+        extra.set_joint_type(self.guideJoints[9], "HeelPV")
         _ = [extra.set_joint_side(jnt, self.side) for jnt in self.guideJoints]
 
         # ----------Mandatory---------[Start]

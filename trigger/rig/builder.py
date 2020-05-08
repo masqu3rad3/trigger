@@ -1,20 +1,11 @@
 """New rig builder module"""
 from maya import cmds
 from trigger.core import feedback
-# from trigger.modules import all_modules_data
+from trigger.core.undo_dec import undo
 import trigger.library.functions as extra
 import trigger.library.controllers as ic
 
 from trigger import modules
-
-# import trigger.modules.arm as arm
-# import trigger.modules.leg as leg
-# import trigger.modules.head as neckAndHead
-# import trigger.modules.spine as spine
-# import trigger.modules.tail as simpleTail
-# import trigger.modules.finger as finger
-# import trigger.modules.tentacle as tentacle
-# import trigger.modules.root as root
 import trigger.utils.space_switcher as anchorMaker
 import trigger.library.tools as tools
 from trigger.core import settings
@@ -24,7 +15,6 @@ from trigger.Qt import QtWidgets
 import pdb
 
 FEEDBACK = feedback.Feedback(logger_name=__name__)
-
 
 class Builder(settings.Settings):
     def __init__(self, name="trigger", progress_bar=None):
@@ -56,6 +46,7 @@ class Builder(settings.Settings):
         self.copySkinWeights = False
         self.replaceExisting = False
 
+    # @undo
     def start_building(self, root_jnt=None, create_switchers=False):
         """ Creates the modules for the selected root and for all the roots in the hiearchy and connects them
 
@@ -257,31 +248,13 @@ class Builder(settings.Settings):
                 if digit_brothers and digit_brothers not in self.fingerMatchList:
                     self.fingerMatchList.append(digit_brothers)
 
-        # self.fingerMatchList = []
-        # for x in all_fingers:
-        #     tempGrp = []
-        #     for y in all_fingers:
-        #         x_parent = cmds.listRelatives(x, parent=True)
-        #         y_parent = cmds.listRelatives(y, parent=True)
-        #         if x_parent == y_parent:
-        #             tempGrp.append(y)
-        #     if len(tempGrp) > 0 and tempGrp not in self.fingerMatchList:
-        #         self.fingerMatchList.append(tempGrp)
 
     def getWholeLimb(self, node):
         multi_guide_jnts = [value["multi_guide"] for value in self.module_dict.values() if
                             value["multi_guide"]]
         limb_dict = {}
         multiList = []
-        segments = None
-        dropoff = None
         limb_name, limb_type, limb_side = extra.identifyMaster(node)
-        # for property in all_modules_data.MODULE_DICTIONARY[limb_type]["properties"]:
-        #     limb_dict[property] = cmds.getAttr("%s.%s" % (node, property))
-        for property in self.module_dict[limb_type]["properties"]:
-            attr = property["attr_name"]
-            limb_dict[attr] = cmds.getAttr("%s.%s" % (node, attr))
-
 
         limb_dict[limb_name] = node
         nextNode = node

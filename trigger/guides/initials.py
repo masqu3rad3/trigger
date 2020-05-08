@@ -87,7 +87,7 @@ class Initials(settings.Settings):
             FEEDBACK.warning("cannot find mirror Joint automatically")
             return None, alignmentGiven, None
 
-    # @undo
+    @undo
     def initLimb(self, limb_name, whichSide="left", constrainedTo=None, parentNode=None, defineAs=False, *args, **kwargs):
 
         if limb_name not in self.valid_limbs:
@@ -172,14 +172,6 @@ class Initials(settings.Settings):
         cmds.select(d=True)
 
         module = "modules.{0}.{1}".format(limb_name, "Guides")
-        # flags = "side='{0}', " \
-        #         "suffix='{1}', " \
-        #         "segments={2}, " \
-        #         "tMatrix={3}, " \
-        #         "upVector={4}, " \
-        #         "mirrorVector={5}, " \
-        #         "lookVector={6}".format(side, suffix, segments, self.tMatrix,
-        #                                 self.upVector, self.mirrorVector, self.lookVector)
 
         flags = "side='{0}', " \
                 "suffix='{1}', " \
@@ -203,16 +195,6 @@ class Initials(settings.Settings):
         guide.createGuides()
 
         self.adjust_guide_display(guide)
-        # for jnt in guide.guideJoints:
-        #     cmds.setAttr("%s.displayLocalAxis" % jnt, 1)
-        #     cmds.setAttr("%s.drawLabel" % jnt, 1)
-        #
-        # if guide.side == "C":
-        #     extra.colorize(guide.guideJoints, self.get("majorCenterColor"), shape=False)
-        # if guide.side == "L":
-        #     extra.colorize(guide.guideJoints, self.get("majorLeftColor"), shape=False)
-        # if guide.side == "R":
-        #     extra.colorize(guide.guideJoints, self.get("majorRightColor"), shape=False)
 
         cmds.select(d=True)
 
@@ -264,7 +246,7 @@ class Initials(settings.Settings):
         """Returns reflection of the vector along the mirror axis"""
         return vector - 2 * (vector * self.mirrorVector) * self.mirrorVector
 
-    # @undo
+    @undo
     def initHumanoid(self, spineSegments=3, neckSegments=3, fingers=5):
         _, spine_dict = self.initLimb("spine", "auto", segments=spineSegments)
         root = spine_dict["C"][0]

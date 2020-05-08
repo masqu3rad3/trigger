@@ -37,9 +37,10 @@ class Limb():
 
         # get positions
 
-        # initialize sides
-        self.sideMult = -1 if side == "R" else 1
-        self.side = side
+        # get the properties from the root
+        self.useRefOrientation = cmds.getAttr("%s.useRefOri" % ROOT_JOINT)
+        self.side = extra.get_joint_side(ROOT_JOINT)
+        self.sideMult = -1 if self.side == "R" else 1
 
         # initialize coordinates
         self.up_axis, self.mirror_axis, self.look_axis = extra.getRigAxes(self.inits[0])
