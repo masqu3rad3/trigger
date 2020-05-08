@@ -35,7 +35,7 @@ class Finger(object):
         elif inits:
             # fool proofing
             if (len(inits) < 2):
-                cmds.error("Insufficient Finger Initialization Joints")
+                FEEDBACK.throw_error("Insufficient Finger Initialization Joints")
                 return
             self.inits = inits
         else:
@@ -387,5 +387,8 @@ class Guides(object):
         self.define_attributes()
 
     def convertJoints(self, joints_list):
+        if len(joints_list) < 2:
+            FEEDBACK.warning("Define or select at least 2 joints for Finger Guide conversion. Skipping")
+            return
         self.guideJoints = joints_list
         self.define_attributes()

@@ -401,5 +401,8 @@ class Guides(object):
         self.define_attributes()
 
     def convertJoints(self, joints_list):
+        if len(joints_list) < 3:
+            FEEDBACK.warning("Define or select at least 3 joints for Finger Guide conversion. Skipping")
+            return
         self.guideJoints = joints_list
         self.define_attributes()

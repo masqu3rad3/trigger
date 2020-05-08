@@ -1169,6 +1169,9 @@ class Guides(object):
         self.define_attributes()
 
     def convertJoints(self, joints_list):
+        if len(joints_list) != 4:
+            FEEDBACK.warning("Define or select exactly 5 joints for Arm Guide conversion. Skipping")
+            return
         self.guideJoints = joints_list
         _ = [extra.set_joint_side(jnt, self.side) for jnt in self.guideJoints]
         self.define_attributes()

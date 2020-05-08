@@ -1281,5 +1281,8 @@ class Guides(object):
         self.define_attributes()
 
     def convertJoints(self, joints_list):
+        if len(joints_list) != 8:
+            FEEDBACK.warning("Define or select exactly 8 joints for Leg Guide conversion. Skipping \nSelection Order => LegRoot-Hip-Knee-Foot-Ball-Toe-HeelpPV-ToePV-BankIN-BankOUT")
+            return
         self.guideJoints = joints_list
         self.define_attributes()

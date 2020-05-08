@@ -66,7 +66,7 @@ class Initials(settings.Settings):
 
         """
         if not cmds.objExists(parentBone):
-            FEEDBACK.warning("Bones cannot be identified automatically")
+            FEEDBACK.warning("Joints cannot be identified automatically")
             return None, None, None
         if "_right" in parentBone:
             mirrorBoneName = parentBone.replace("_right", "_left")
@@ -79,12 +79,12 @@ class Initials(settings.Settings):
         elif "_c" in parentBone:
             return None, "both", None
         else:
-            FEEDBACK.warning("Bones cannot be identified automatically")
+            FEEDBACK.warning("Joints cannot be identified automatically")
             return None, None, None
         if cmds.objExists(mirrorBoneName):
             return mirrorBoneName, alignmentGiven, alignmentReturn
         else:
-            FEEDBACK.warning("cannot find mirror bone automatically")
+            FEEDBACK.warning("cannot find mirror Joint automatically")
             return None, alignmentGiven, None
 
     # @undo
@@ -111,7 +111,7 @@ class Initials(settings.Settings):
                 FEEDBACK.throw_error(
                     "side argument '%s' is not valid. Valid arguments are: %s" % (whichSide, valid_sides))
             if len(cmds.ls(sl=True, type="joint")) != 1 and whichSide == "auto" and defineAs == False:
-                FEEDBACK.throw_error("You need to select a single joint to use Auto method")
+                FEEDBACK.warning("You need to select a single joint to use Auto method")
                 return
             ## get the necessary info from arguments
             if whichSide == "left":
@@ -121,9 +121,6 @@ class Initials(settings.Settings):
             else:
                 side = "C"
 
-        # if (segments + 1) < 2:
-        #     FEEDBACK.throw_error("Define at least 2 segments")
-        #     return
 
         suffix = extra.uniqueName("%sGrp_%s" % (limb_name, whichSide)).replace("%sGrp_" % (limb_name), "")
 
@@ -329,208 +326,4 @@ class Initials(settings.Settings):
             extra.colorize(guide_object.guideJoints, self.get("majorLeftColor"), shape=False)
         if guide_object.side == "R":
             extra.colorize(guide_object.guideJoints, self.get("majorRightColor"), shape=False)
-
-
-    def convertSelectionToInits(self, limbType, jointList=[], suffix="", whichside=""):
-
-        ## // TODO PAY ATTENTION HERE: THIS METHOD IS BROKEN
-
-        ## get the selection
-        if whichside == "left":
-            side = 1
-            extra.colorize(jointList, self.get("majorLeftColor"), shape=False)
-        elif whichside == "right":
-            side = 2
-            extra.colorize(jointList, self.get("majorRightColor"), shape=False)
-        else:
-            side = 0
-            extra.colorize(jointList, self.get("majorCenterColor"), shape=False)
-
-        self.createAxisAttributes(jointList[0])
-
-        if limbType == "spine":
-            if len(jointList) < 2:
-                FEEDBACK.warning("You need to select at least 2 joints for spine conversion\nNothing Changed")
-                return
-            for j in range(len(jointList)):
-                cmds.select(jointList[j])
-                cmds.setAttr("%s.side" % jointList[j], 0)
-                cmds.setAttr("%s.drawLabel" % jointList[j], 1)
-                ## if it is the first jointList
-                if j == 0:
-                    type = 18
-                    cmds.setAttr("%s.type" % jointList[j], type)
-                    cmds.setAttr("%s.otherType" % jointList[j], "SpineRoot", type="string")
-
-                    if not cmds.attributeQuery("resolution", node=jointList[j], exists=True):
-                        cmds.addAttr(shortName="resolution", longName="Resolution", defaultValue=4, minValue=1,
-                                     at="long", k=True)
-                    if not cmds.attributeQuery("dropoff", node=jointList[j], exists=True):
-                        cmds.addAttr(shortName="dropoff", longName="DropOff", defaultValue=1.0, minValue=0.1,
-                                     at="float", k=True)
-                    if not cmds.attributeQuery("twistType", node=jointList[j], exists=True):
-                        cmds.addAttr(at="enum", k=True, shortName="twistType", longName="Twist_Type",
-                                     en="regular:infinite")
-                    if not cmds.attributeQuery("mode", node=jointList[j], exists=True):
-                        cmds.addAttr(at="enum", k=True, shortName="mode", longName="Mode",
-                                     en="equalDistance:sameDistance")
-
-                    cmds.setAttr(jointList[j].radius, 3)
-
-                elif jointList[j] == jointList[-1]:
-                    type = 18
-                    cmds.setAttr("%s.type" % jointList[j], type)
-                    cmds.setAttr("%s.otherType" % jointList[j], "SpineEnd", type="string")
-
-                else:
-                    type = 6
-                    cmds.setAttr("%s.type" % jointList[j], type)
-
-        if limbType == "tail":
-            if len(jointList) < 2:
-                FEEDBACK.warning("You need to select at least 2 joints for tail conversion\nNothing Changed")
-                return
-            for j in range(len(jointList)):
-                cmds.select(jointList[j])
-                cmds.setAttr("%s.side" % jointList[j], side)
-                cmds.setAttr("%s.drawLabel" % jointList[j], 1)
-
-                ## if it is the first selection
-                if j == 0:
-                    cmds.setAttr("%s.type" % jointList[j], 18)
-                    cmds.setAttr("%s.otherType" % jointList[j], "TailRoot", type="string")
-                else:
-                    cmds.setAttr("%s.type" % jointList[j], 18)
-                    cmds.setAttr("%s.otherType" % jointList[j], "Tail", type="string")
-
-        if limbType == "arm":
-            if not len(jointList) == 4:
-                FEEDBACK.warning("You must select exactly 4 joints to define the chain as Arm\nNothing Changed")
-                return
-            cmds.setAttr("%s.side" % jointList[0], side)
-            cmds.setAttr("%s.type" % jointList[0], 9)
-            cmds.setAttr("%s.side" % jointList[1], side)
-            cmds.setAttr("%s.type" % jointList[1], 10)
-            cmds.setAttr("%s.side" % jointList[2], side)
-            cmds.setAttr("%s.type" % jointList[2], 11)
-            cmds.setAttr("%s.side" % jointList[3], side)
-            cmds.setAttr("%s.type" % jointList[3], 12)
-
-        if limbType == "leg":
-            if not len(jointList) == 10:
-                FEEDBACK.warning(
-                    "You must select exactly 10 joints to define the chain as Leg\nNothing Changed\nCorrect jointList order is Root -> Hip -> Knee -> Foot -> Ball -> Heel Pivot -> Toe Pivot -> Bank In Pivot -> Bank Out Pivot")
-                return
-            cmds.setAttr("%s.side" % jointList[0], side)
-            cmds.setAttr("%s.type" % jointList[0], 18)
-            cmds.setAttr("%s.otherType" % jointList[0], "LegRoot", type="string")
-            cmds.setAttr("%s.side" % jointList[1], side)
-            cmds.setAttr("%s.type" % jointList[1], 2)
-            cmds.setAttr("%s.side" % jointList[2], side)
-            cmds.setAttr("%s.type" % jointList[2], 3)
-            cmds.setAttr("%s.side" % jointList[3], side)
-            cmds.setAttr("%s.type" % jointList[3], 4)
-
-            cmds.setAttr("%s.side" % jointList[4], side)
-            cmds.setAttr("%s.type" % jointList[4], 18)
-            cmds.setAttr("%s.otherType" % jointList[4], "Ball", type="string")
-
-            cmds.setAttr("%s.side" % jointList[5], side)
-            cmds.setAttr("%s.type" % jointList[5], 5)
-
-            cmds.setAttr("%s.side" % jointList[6], side)
-            cmds.setAttr("%s.type" % jointList[6], 18)
-            cmds.setAttr("%s.otherType" % jointList[6], "HeelPV", type="string")
-            cmds.setAttr("%s.side" % jointList[7], side)
-            cmds.setAttr("%s.type" % jointList[7], 18)
-            cmds.setAttr("%s.otherType" % jointList[7], "ToePV", type="string")
-            cmds.setAttr("%s.side" % jointList[8], side)
-            cmds.setAttr("%s.type" % jointList[8], 18)
-            cmds.setAttr("%s.otherType" % jointList[8], "BankIN", type="string")
-            cmds.setAttr("%s.side" % jointList[9], side)
-            cmds.setAttr("%s.type" % jointList[9], 18)
-            cmds.setAttr("%s.otherType" % jointList[9], "BankOUT", type="string")
-
-        if limbType == "head":
-            if not len(jointList) >= 3:
-                FEEDBACK.warning(
-                    "You must select exactly 3 joints to define the chain as Neck and Head\nNothing Changed")
-                return
-            for i in range(len(jointList)):
-                if i == 0:
-                    cmds.setAttr("%s.type" % jointList[i], 18)
-                    cmds.setAttr("%s.otherType" % jointList[i], "NeckRoot", type="string")
-                    cmds.select(jointList[i])
-
-                    if not cmds.attributeQuery("resolution", node=jointList[i], exists=True):
-                        cmds.addAttr(shortName="resolution", longName="Resolution", defaultValue=4, minValue=1,
-                                     at="long", k=True)
-                    if not cmds.attributeQuery("dropoff", node=jointList[i], exists=True):
-                        cmds.addAttr(shortName="dropoff", longName="DropOff", defaultValue=1.0, minValue=0.1,
-                                     at="float", k=True)
-                    if not cmds.attributeQuery("twistType", node=jointList[i], exists=True):
-                        cmds.addAttr(at="enum", k=True, shortName="twistType", longName="Twist_Type",
-                                     en="regular:infinite")
-                    if not cmds.attributeQuery("mode", node=jointList[i], exists=True):
-                        cmds.addAttr(at="enum", k=True, shortName="mode", longName="Mode",
-                                     en="equalDistance:sameDistance")
-
-                elif jointList[i] == jointList[-2]:
-                    cmds.setAttr("%s.type" % jointList[i], 8)
-                elif jointList[i] == jointList[-1]:
-                    cmds.setAttr("%s.side" % jointList[i], 0)
-                    cmds.setAttr("%s.type" % jointList[i], 18)
-                    cmds.setAttr("%s.otherType" % jointList[i], "HeadEnd", type="string")
-                    cmds.setAttr("%s.drawLabel" % jointList[i], 1)
-                else:
-                    cmds.setAttr("%s.type" % jointList[i], 7)
-                cmds.setAttr("%s.drawLabel" % jointList[i], 1)
-
-        if limbType == "finger":
-            if not len(jointList) > 1:
-                FEEDBACK.warning("You must at least 2 joints to define the chain as Finger\nNothing Changed")
-                return
-            for i in range(len(jointList)):
-                cmds.setAttr("%s.side" % jointList[i], 0)
-
-                if i == 0:
-                    cmds.setAttr("%s.type" % jointList[i], 18)
-                    cmds.setAttr("%s.otherType" % jointList[i], "FingerRoot", type="string")
-                    cmds.setAttr("%s.drawLabel" % jointList[i], 1)
-                    if not cmds.attributeQuery("fingerType", node=jointList[i], exists=True):
-                        cmds.addAttr(jointList[i], shortName="fingerType", longName="Finger_Type", at="enum",
-                                     en="Extra:Thumb:Index:Middle:Ring:Pinky:Toe", k=True)
-                else:
-                    cmds.setAttr("%s.type" % jointList[i], 13)
-
-        if limbType == "tentacle":
-            if not len(jointList) > 1:
-                FEEDBACK.warning("minimum segments required for the tentacle is two. current: %s" % len(jointList))
-                return
-
-            for j in range(len(jointList)):
-                cmds.select(jointList[j])
-                cmds.setAttr("%s.side" % jointList[j], side)
-                cmds.setAttr("%s.drawLabel" % jointList[j], 1)
-                ## if it is the first selection
-                if j == 0:
-                    cmds.setAttr("%s.type" % jointList[j], 18)
-                    cmds.setAttr("%s.otherType" % jointList[j], "TentacleRoot", type="string")
-                    if not cmds.attributeQuery("contRes", node=jointList[j], exists=True):
-                        cmds.addAttr(shortName="contRes", longName="Cont_Resolution", defaultValue=5, minValue=1,
-                                     at="long", k=True)
-                    if not cmds.attributeQuery("jointRes", node=jointList[j], exists=True):
-                        cmds.addAttr(shortName="jointRes", longName="Joint_Resolution", defaultValue=25, minValue=1,
-                                     at="long", k=True)
-                    if not cmds.attributeQuery("deformerRes", node=jointList[j], exists=True):
-                        cmds.addAttr(shortName="deformerRes", longName="Deformer_Resolution", defaultValue=25,
-                                     minValue=1,
-                                     at="long", k=True)
-                    if not cmds.attributeQuery("dropoff", node=jointList[j], exists=True):
-                        cmds.addAttr(shortName="dropoff", longName="DropOff", defaultValue=2.0, minValue=0.1,
-                                     at="float", k=True)
-                else:
-                    cmds.setAttr("%s.type" % jointList[j], 18)
-                    cmds.setAttr("%s.otherType" % jointList[j], "Tentacle", type="string")
-
 
