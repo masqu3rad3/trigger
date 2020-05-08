@@ -1,13 +1,19 @@
 from maya import cmds
 import maya.api.OpenMaya as om
 
-from trigger.core import settings
 from trigger.library import functions as extra
 from trigger.library import controllers as ic
 from trigger.library import ribbon as rc
 
 from trigger.core import feedback
 FEEDBACK = feedback.Feedback(__name__)
+
+LIMB_DATA = {
+        "members": ["LegRoot", "Hip", "Knee", "Foot", "Ball", "HeelPV", "ToePV", "BankIN", "BankOUT"],
+        "properties": [],
+        "multi_guide": None,
+        "sided": True,
+    }
 
 class Leg(object):
     def __init__(self, build_data=None, inits=None, suffix="", side="L", *args, **kwargs):
@@ -1171,7 +1177,7 @@ class Leg(object):
         self.createAngleExtractors()
         self.roundUp()
 
-class Guides(settings.Settings):
+class Guides(object):
     def __init__(self, side="L", suffix="leg", segments=None, tMatrix=None, upVector=(0, 1, 0), mirrorVector=(1, 0, 0), lookVector=(0,0,1), *args, **kwargs):
         super(Guides, self).__init__()
         # fool check
@@ -1247,25 +1253,33 @@ class Guides(settings.Settings):
         # Update the guideJoints list
         self.guideJoints = [root, hip, knee, foot, ball, toe, bankout, bankin, toepv, heelpv]
 
-        # set joint side and type attributes
-        extra.set_joint_type(root, "LegRoot")
-        extra.set_joint_type(hip, "Hip")
-        extra.set_joint_type(knee, "Knee")
-        extra.set_joint_type(foot, "Foot")
-        extra.set_joint_type(ball, "Ball")
-        extra.set_joint_type(toe, "Toe")
-        extra.set_joint_type(heelpv, "HeelPV")
-        extra.set_joint_type(toepv, "ToePV")
-        extra.set_joint_type(bankin, "BankIN")
-        extra.set_joint_type(bankout, "BankOUT")
-        _ = [extra.set_joint_side(jnt, self.side) for jnt in self.guideJoints]
 
     def define_attributes(self):
+        # set joint side and type attributes
+        extra.set_joint_type(self.guideJoints[0], "LegRoot")
+        extra.set_joint_type(self.guideJoints[1], "Hip")
+        extra.set_joint_type(self.guideJoints[2], "Knee")
+        extra.set_joint_type(self.guideJoints[3], "Foot")
+        extra.set_joint_type(self.guideJoints[4], "Ball")
+        extra.set_joint_type(self.guideJoints[5], "Toe")
+        extra.set_joint_type(self.guideJoints[6], "HeelPV")
+        extra.set_joint_type(self.guideJoints[7], "ToePV")
+        extra.set_joint_type(self.guideJoints[8], "BankIN")
+        extra.set_joint_type(self.guideJoints[9], "BankOUT")
+        _ = [extra.set_joint_side(jnt, self.side) for jnt in self.guideJoints]
+
         # ----------Mandatory---------[Start]
         root_jnt = self.guideJoints[0]
         extra.create_global_joint_attrs(root_jnt, upAxis=self.upVector, mirrorAxis=self.mirrorVector, lookAxis=self.lookVector)
         # ----------Mandatory---------[End]
 
+        for attr_dict in LIMB_DATA["properties"]:
+            extra.create_attribute(root_jnt, attr_dict)
+
     def createGuides(self):
         self.draw_joints()
+        self.define_attributes()
+
+    def convertJoints(self, joints_list):
+        self.guideJoints = joints_list
         self.define_attributes()

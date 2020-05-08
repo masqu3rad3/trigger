@@ -33,7 +33,9 @@ class Builder(settings.Settings):
         if self.progress_bar:
             self.progress_bar.setProperty("value", 0)
         self.rig_name = name
-        self.validRootList = [values["members"][0] for values in modules.all_modules_data.MODULE_DICTIONARY.values()]
+
+        self.module_dict = {mod: eval("modules.{0}.LIMB_DATA".format(mod)) for mod in modules.__all__}
+        self.validRootList = [values["members"][0] for values in self.module_dict.values()]
 
         self.limbCreationList = []
 
@@ -267,7 +269,7 @@ class Builder(settings.Settings):
         #         self.fingerMatchList.append(tempGrp)
 
     def getWholeLimb(self, node):
-        multi_guide_jnts = [value["multi_guide"] for value in modules.all_modules_data.MODULE_DICTIONARY.values() if
+        multi_guide_jnts = [value["multi_guide"] for value in self.module_dict.values() if
                             value["multi_guide"]]
         limb_dict = {}
         multiList = []
@@ -276,7 +278,7 @@ class Builder(settings.Settings):
         limb_name, limb_type, limb_side = extra.identifyMaster(node)
         # for property in all_modules_data.MODULE_DICTIONARY[limb_type]["properties"]:
         #     limb_dict[property] = cmds.getAttr("%s.%s" % (node, property))
-        for property in modules.all_modules_data.MODULE_DICTIONARY[limb_type]["properties"]:
+        for property in self.module_dict[limb_type]["properties"]:
             attr = property["attr_name"]
             limb_dict[attr] = cmds.getAttr("%s.%s" % (node, attr))
 

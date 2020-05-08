@@ -1,9 +1,16 @@
 from maya import cmds
 import maya.api.OpenMaya as om
-from trigger.core import settings
+
 from trigger.library import functions as extra
 from trigger.core import feedback
 FEEDBACK = feedback.Feedback(__name__)
+
+LIMB_DATA = {
+        "members": ["Root"],
+        "properties": [],
+        "multi_guide": None,
+        "sided": False,
+    }
 
 class Root(object):
     def __init__(self, build_data=None, inits=None, suffix="", *args, **kwargs):
@@ -100,17 +107,24 @@ class Guides(object):
 
         # set orientation of joints
 
+    def define_attributes(self):
         # set joint side and type attributes
-        extra.set_joint_type(root_jnt, "Root")
-        cmds.setAttr("{0}.radius".format(root_jnt), 2)
+        extra.set_joint_type(self.guideJoints[0], "Root")
+        cmds.setAttr("{0}.radius".format(self.guideJoints[0]), 2)
         _ = [extra.set_joint_side(jnt, self.side) for jnt in self.guideJoints]
 
-    def define_attributes(self):
         # ----------Mandatory---------[Start]
         root_jnt = self.guideJoints[0]
         extra.create_global_joint_attrs(root_jnt, upAxis=self.upVector, mirrorAxis=self.mirrorVector, lookAxis=self.lookVector)
         # ----------Mandatory---------[End]
 
+        for attr_dict in LIMB_DATA["properties"]:
+            extra.create_attribute(root_jnt, attr_dict)
+
     def createGuides(self):
         self.draw_joints()
+        self.define_attributes()
+
+    def convertJoints(self, joints_list):
+        self.guideJoints = joints_list
         self.define_attributes()

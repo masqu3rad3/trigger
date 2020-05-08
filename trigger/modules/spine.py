@@ -1,13 +1,45 @@
 from maya import cmds
 import maya.api.OpenMaya as om
 
-from trigger.core import settings
 from trigger.library import functions as extra
 from trigger.library import controllers as ic
 from trigger.library import twist_spline as twistSpline
 
 from trigger.core import feedback
 FEEDBACK = feedback.Feedback(__name__)
+
+LIMB_DATA = {
+        "members": ["SpineRoot", "Spine", "SpineEnd"],
+        "properties": [{"attr_name": "resolution",
+                        "nice_name": "Resolution",
+                        "attr_type": "long",
+                        "min_value": 1,
+                        "max_value": 9999,
+                        "default_value": 4,
+                        },
+                       {"attr_name": "dropoff",
+                        "nice_name": "Drop_Off",
+                        "attr_type": "float",
+                        "min_value": 0.1,
+                        "max_value": 5.0,
+                        "default_value": 1.0,
+                        },
+                       {"attr_name": "twistType",
+                        "nice_name": "Twist_Type",
+                        "attr_type": "enum",
+                        "enum_list": "regular:infinite",
+                        "default_value": 0,
+                        },
+                       {"attr_name": "mode",
+                        "nice_name": "Mode",
+                        "attr_type": "enum",
+                        "enum_list": "equalDistance:sameDistance",
+                        "default_value": 0,
+                        },
+                       ],
+        "multi_guide": "Spine",
+        "sided": False,
+    }
 
 class Spine(object):
 
@@ -325,7 +357,7 @@ class Spine(object):
         self.createIKsetup()
         self.roundUp()
 
-class Guides(settings.Settings):
+class Guides(object):
     def __init__(self, side="C", suffix="spine", segments=None, tMatrix=None, upVector=(0, 1, 0), mirrorVector=(1, 0, 0), lookVector=(0,0,1), *args, **kwargs):
         super(Guides, self).__init__()
         # fool check
@@ -365,14 +397,6 @@ class Guides(settings.Settings):
         # Draw the joints & set joint side and type attributes
         for nmb in range(self.segments + 1):
             spine_jnt = cmds.joint(p=(rPoint + (add * nmb)), name="jInit_spine_%s_%i" %(self.suffix, nmb))
-            if nmb == 0:
-                extra.set_joint_type(spine_jnt, "SpineRoot")
-                cmds.setAttr("{0}.radius".format(spine_jnt), 2)
-            elif nmb == self.segments:
-                extra.set_joint_type(spine_jnt, "SpineEnd")
-            else:
-                extra.set_joint_type(spine_jnt, "Spine")
-            extra.set_joint_side(spine_jnt, "C")
             # Update the guideJoints list
             self.guideJoints.append(spine_jnt)
 
@@ -381,17 +405,23 @@ class Guides(settings.Settings):
 
 
     def define_attributes(self):
+        extra.set_joint_type(self.guideJoints[0], "SpineRoot")
+        _ = [extra.set_joint_type(jnt, "Spine") for jnt in self.guideJoints[1:-2]]
+        extra.set_joint_type(self.guideJoints[-1], "SpineEnd")
+        cmds.setAttr("{0}.radius".format(self.guideJoints[0]), 2)
+        _ = [extra.set_joint_side(jnt, self.side) for jnt in self.guideJoints]
+
         # ----------Mandatory---------[Start]
         root_jnt = self.guideJoints[0]
         extra.create_global_joint_attrs(root_jnt, upAxis=self.upVector, mirrorAxis=self.mirrorVector, lookAxis=self.lookVector)
         # ----------Mandatory---------[End]
-        cmds.addAttr(root_jnt, shortName="resolution", longName="Resolution", defaultValue=4, minValue=1,
-                     at="long", k=True)
-        cmds.addAttr(root_jnt, shortName="dropoff", longName="DropOff", defaultValue=1.0, minValue=0.1,
-                     at="float", k=True)
-        cmds.addAttr(root_jnt, at="enum", k=True, shortName="twistType", longName="Twist_Type", en="regular:infinite")
-        cmds.addAttr(root_jnt, at="enum", k=True, shortName="mode", longName="Mode", en="equalDistance:sameDistance")
+        for attr_dict in LIMB_DATA["properties"]:
+            extra.create_attribute(root_jnt, attr_dict)
 
     def createGuides(self):
         self.draw_joints()
+        self.define_attributes()
+
+    def convertJoints(self, joints_list):
+        self.guideJoints = joints_list
         self.define_attributes()

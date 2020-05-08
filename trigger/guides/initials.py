@@ -19,7 +19,9 @@ class Initials(settings.Settings):
         # settings = st.Settings("triggerSettings.json")
         self.parseSettings()
         self.projectName = "tikAutoRig"
-        self.module_dict = modules.all_modules_data.MODULE_DICTIONARY
+        self.module_dict = {mod: eval("modules.{0}.LIMB_DATA".format(mod)) for mod in modules.__all__}
+
+        # self.module_dict = modules.all_modules_data.MODULE_DICTIONARY
         self.valid_limbs = self.module_dict.keys()
         self.non_sided_limbs = [limb for limb in self.valid_limbs if not self.module_dict[limb]["sided"]]
 
@@ -85,9 +87,8 @@ class Initials(settings.Settings):
             FEEDBACK.warning("cannot find mirror bone automatically")
             return None, alignmentGiven, None
 
-    @undo
-    def initLimb(self, limb_name, whichSide="left",
-                 segments=3, constrainedTo=None, parentNode=None, defineAs=False, *args, **kwargs):
+    # @undo
+    def initLimb(self, limb_name, whichSide="left", constrainedTo=None, parentNode=None, defineAs=False, *args, **kwargs):
 
         if limb_name not in self.valid_limbs:
             FEEDBACK.throw_error("%s is not a valid limb" % limb_name)
@@ -120,15 +121,19 @@ class Initials(settings.Settings):
             else:
                 side = "C"
 
-        if (segments + 1) < 2:
-            FEEDBACK.throw_error("Define at least 2 segments")
-            return
+        # if (segments + 1) < 2:
+        #     FEEDBACK.throw_error("Define at least 2 segments")
+        #     return
 
         suffix = extra.uniqueName("%sGrp_%s" % (limb_name, whichSide)).replace("%sGrp_" % (limb_name), "")
 
         ## if defineAs is True, define the selected joints as the given limb instead creating new ones.
         if defineAs:
-            self.convertSelectionToInits(limb_name, jointList=currentselection, whichside=whichSide, suffix=suffix)
+            # TODO: AUTO argument can be included by running a seperate method to determine the side of the root joint according to the matrix
+            construct_command = "modules.{0}.Guides(suffix='{1}', side='{2}')".format(limb_name, suffix, side)
+            guide = eval(construct_command)
+            guide.convertJoints(currentselection)
+            self.adjust_guide_display(guide)
             return
 
         if not parentNode:
@@ -146,16 +151,19 @@ class Initials(settings.Settings):
         else:
             masterParent = parentNode
         if whichSide == "both":
-            locators1, jnt_dict_side1 = self.initLimb(limb_name, "left", segments=segments)
-            locators2, jnt_dict_side2 = self.initLimb(limb_name, "right", constrainedTo=locators1, segments=segments)
+            # locators1, jnt_dict_side1 = self.initLimb(limb_name, "left", segments=segments)
+            locators1, jnt_dict_side1 = self.initLimb(limb_name, "left", **kwargs)
+            # locators2, jnt_dict_side2 = self.initLimb(limb_name, "right", constrainedTo=locators1, segments=segments)
+            locators2, jnt_dict_side2 = self.initLimb(limb_name, "right", constrainedTo=locators1, **kwargs)
             jnt_dict_side1.update(jnt_dict_side2)
             return (locators1 + locators2), jnt_dict_side1
         if whichSide == "auto" and masterParent:
             mirrorParent, givenAlignment, returnAlignment = self.autoGet(masterParent)
-            locators1, jnt_dict_side1 = self.initLimb(limb_name, givenAlignment, segments=segments)
+            # locators1, jnt_dict_side1 = self.initLimb(limb_name, givenAlignment, segments=segments)
+            locators1, jnt_dict_side1 = self.initLimb(limb_name, givenAlignment, **kwargs)
             if mirrorParent:
-                locators2, jnt_dict_side2 = self.initLimb(limb_name, returnAlignment, constrainedTo=locators1, parentNode=mirrorParent,
-                              segments=segments)
+                # locators2, jnt_dict_side2 = self.initLimb(limb_name, returnAlignment, constrainedTo=locators1, parentNode=mirrorParent, segments=segments)
+                locators2, jnt_dict_side2 = self.initLimb(limb_name, returnAlignment, constrainedTo=locators1, parentNode=mirrorParent, **kwargs)
                 total_locators = locators1 + locators2
                 jnt_dict_side1.update(jnt_dict_side2)
             else:
@@ -167,13 +175,21 @@ class Initials(settings.Settings):
         cmds.select(d=True)
 
         module = "modules.{0}.{1}".format(limb_name, "Guides")
+        # flags = "side='{0}', " \
+        #         "suffix='{1}', " \
+        #         "segments={2}, " \
+        #         "tMatrix={3}, " \
+        #         "upVector={4}, " \
+        #         "mirrorVector={5}, " \
+        #         "lookVector={6}".format(side, suffix, segments, self.tMatrix,
+        #                                 self.upVector, self.mirrorVector, self.lookVector)
+
         flags = "side='{0}', " \
                 "suffix='{1}', " \
-                "segments={2}, " \
-                "tMatrix={3}, " \
-                "upVector={4}, " \
-                "mirrorVector={5}, " \
-                "lookVector={6}".format(side, suffix, segments, self.tMatrix,
+                "tMatrix={2}, " \
+                "upVector={3}, " \
+                "mirrorVector={4}, " \
+                "lookVector={5}".format(side, suffix, self.tMatrix,
                                         self.upVector, self.mirrorVector, self.lookVector)
 
         extra_arg_list = []
@@ -189,16 +205,17 @@ class Initials(settings.Settings):
         guide = eval(construct_command)
         guide.createGuides()
 
-        for jnt in guide.guideJoints:
-            cmds.setAttr("%s.displayLocalAxis" % jnt, 1)
-            cmds.setAttr("%s.drawLabel" % jnt, 1)
-
-        if guide.side == "C":
-            extra.colorize(guide.guideJoints, self.get("majorCenterColor"), shape=False)
-        if guide.side == "L":
-            extra.colorize(guide.guideJoints, self.get("majorLeftColor"), shape=False)
-        if guide.side == "R":
-            extra.colorize(guide.guideJoints, self.get("majorRightColor"), shape=False)
+        self.adjust_guide_display(guide)
+        # for jnt in guide.guideJoints:
+        #     cmds.setAttr("%s.displayLocalAxis" % jnt, 1)
+        #     cmds.setAttr("%s.drawLabel" % jnt, 1)
+        #
+        # if guide.side == "C":
+        #     extra.colorize(guide.guideJoints, self.get("majorCenterColor"), shape=False)
+        # if guide.side == "L":
+        #     extra.colorize(guide.guideJoints, self.get("majorLeftColor"), shape=False)
+        # if guide.side == "R":
+        #     extra.colorize(guide.guideJoints, self.get("majorRightColor"), shape=False)
 
         cmds.select(d=True)
 
@@ -250,7 +267,7 @@ class Initials(settings.Settings):
         """Returns reflection of the vector along the mirror axis"""
         return vector - 2 * (vector * self.mirrorVector) * self.mirrorVector
 
-    @undo
+    # @undo
     def initHumanoid(self, spineSegments=3, neckSegments=3, fingers=5):
         _, spine_dict = self.initLimb("spine", "auto", segments=spineSegments)
         root = spine_dict["C"][0]
@@ -264,7 +281,7 @@ class Initials(settings.Settings):
         fingers = []
         for nmb in range(5):
             cmds.select(left_hand)
-            _, finger_dict = self.initLimb("finger", whichSide="auto")
+            _, finger_dict = self.initLimb("finger", whichSide="auto", segments=3)
             fingers.append(finger_dict["L"])
 
         thumb_pos_data = [(1.1, 0.9, 0.25), (0.8, 0.0, 0.0), (0.55, 0.0, 0.00012367864829724757), (0.45, 0.0, 0.0)]
@@ -298,6 +315,21 @@ class Initials(settings.Settings):
         for nmb, member in enumerate(fingers[4]):
             cmds.xform(member, a=True, t=pinky_pos_data[nmb], ro=pinky_rot_data[nmb])
         cmds.setAttr("%s.Finger_Type" % fingers[4][0], 5)
+
+    def adjust_guide_display(self, guide_object):
+        """ Adjusts the display proerties of guid joints. Accepts guide object as input"""
+
+        for jnt in guide_object.guideJoints:
+            cmds.setAttr("%s.displayLocalAxis" % jnt, 1)
+            cmds.setAttr("%s.drawLabel" % jnt, 1)
+
+        if guide_object.side == "C":
+            extra.colorize(guide_object.guideJoints, self.get("majorCenterColor"), shape=False)
+        if guide_object.side == "L":
+            extra.colorize(guide_object.guideJoints, self.get("majorLeftColor"), shape=False)
+        if guide_object.side == "R":
+            extra.colorize(guide_object.guideJoints, self.get("majorRightColor"), shape=False)
+
 
     def convertSelectionToInits(self, limbType, jointList=[], suffix="", whichside=""):
 

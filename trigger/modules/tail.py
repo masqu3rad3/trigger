@@ -1,11 +1,17 @@
 from maya import cmds
 import maya.api.OpenMaya as om
 
-from trigger.core import settings
 from trigger.library import functions as extra
 from trigger.library import controllers as ic
 from trigger.core import feedback
 FEEDBACK = feedback.Feedback(__name__)
+
+LIMB_DATA = {
+        "members": ["TailRoot", "Tail"],
+        "properties": [],
+        "multi_guide": "Tail",
+        "sided": True,
+    }
 
 class Tail(object):
 
@@ -195,10 +201,7 @@ class Guides(object):
         # Draw the joints / set joint side and type attributes
         for seg in range(self.segments + 1):
             jnt = cmds.joint(p=(rPointTail + (addTail * seg)), name="jInit_tail_%s_%i" %(self.suffix, seg))
-            if seg == 0:
-                extra.set_joint_type(jnt, "TailRoot")
-            else:
-                extra.set_joint_type(jnt, "Tail")
+
             extra.set_joint_side(jnt, self.side)
             # Update the guideJoints list
             self.guideJoints.append(jnt)
@@ -207,12 +210,21 @@ class Guides(object):
         extra.orientJoints(self.guideJoints, worldUpAxis=self.lookVector, upAxis=(0, 1, 0), reverseAim=self.sideMultiplier, reverseUp=self.sideMultiplier)
 
     def define_attributes(self):
+        extra.set_joint_type(self.guideJoints[0], "TailRoot")
+        _ = [extra.set_joint_type(jnt, "Tail") for jnt in self.guideJoints[1:]]
+        _ = [extra.set_joint_side(jnt, self.side) for jnt in self.guideJoints]
+
         # ----------Mandatory---------[Start]
         root_jnt = self.guideJoints[0]
         extra.create_global_joint_attrs(root_jnt, upAxis=self.upVector, mirrorAxis=self.mirrorVector, lookAxis=self.lookVector)
         # ----------Mandatory---------[End]
-
+        for attr_dict in LIMB_DATA["properties"]:
+            extra.create_attribute(root_jnt, attr_dict)
 
     def createGuides(self):
         self.draw_joints()
+        self.define_attributes()
+
+    def convertJoints(self, joints_list):
+        self.guideJoints = joints_list
         self.define_attributes()

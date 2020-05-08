@@ -1523,7 +1523,7 @@ class MainUI(QtWidgets.QMainWindow):
         elif self.fingerSideAuto.isChecked():
             side = "auto"
 
-        self.initSkeleton.initLimb("finger", whichSide=side, defineAs=self.defineAs)
+        self.initSkeleton.initLimb("finger", whichSide=side, defineAs=self.defineAs, segments=3)
         cmds.undoInfo(closeChunk=True)
 
     def createLeg(self):

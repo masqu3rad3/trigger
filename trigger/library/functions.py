@@ -470,6 +470,52 @@ def create_global_joint_attrs(joint, upAxis=None, mirrorAxis=None, lookAxis=None
         cmds.addAttr(joint, longName="useRefOri", niceName="Inherit_Orientation", at="bool", keyable=True)
     cmds.setAttr("{0}.useRefOri".format(joint), True)
 
+def create_attribute(node, attr_dictionary, keyable=True):
+    supported_attrs = ["long", "short", "bool", "enum", "float", "double", "string"]
+    attr_name = attr_dictionary.get("attr_name")
+    if not attr_name:
+        FEEDBACK.throw_error("The attribute dictionary does not have 'attr_name' value")
+    nice_name = attr_dictionary.get("nice_name") if attr_dictionary.get("nice_name") else attr_name
+    attr_type = attr_dictionary.get("attr_type")
+    if not attr_type:
+        FEEDBACK.throw_error("The attribute dictionary does not have 'attr_type' value")
+    if attr_type not in supported_attrs:
+        FEEDBACK.throw_error("The attribute type (%s) is not supported by this method" % attr_type)
+    # if some attribute with same name exists, quit
+    if cmds.attributeQuery(attr_name, node=node, exists=True):
+        return
+    if attr_type == "bool":
+        default_value = attr_dictionary.get("default_value") if attr_dictionary.get("default_value") else 0
+        cmds.addAttr(node, shortName=attr_name, longName=nice_name, at=attr_type, k=keyable, defaultValue=default_value)
+    elif attr_type == "enum":
+        default_value = attr_dictionary.get("default_value") if attr_dictionary.get("default_value") else 0
+        enum_list = attr_dictionary.get("enum_list")
+        if not enum_list:
+            FEEDBACK.throw_error("Missing 'enum_list'")
+        cmds.addAttr(node, shortName=attr_name, longName=nice_name, at=attr_type, en=enum_list, k=keyable, defaultValue=default_value)
+    elif attr_type == "string":
+        default_value = attr_dictionary.get("string_value") if attr_dictionary.get("string_value") else ""
+        cmds.addAttr(node, shortName=attr_name, longName=nice_name, k=keyable, dataType="string")
+        cmds.setAttr("%s.%s" % (node, attr_name), default_value, type="string")
+    else:
+        min_val = attr_dictionary.get("min_value") if attr_dictionary.get("min_value") else -99999
+        max_val = attr_dictionary.get("max_value") if attr_dictionary.get("max_value") else 99999
+        default_value = attr_dictionary.get("default_value") if attr_dictionary.get("default_value") else 0
+        cmds.addAttr(node,
+                     shortName=attr_name,
+                     longName=nice_name,
+                     at=attr_type,
+                     minValue=min_val,
+                     maxValue=max_val,
+                     defaultValue=default_value,
+                     k=keyable)
+
+
+
+
+
+
+
 def set_joint_type(joint, type_name):
     if type_name in JOINT_TYPE_DICT.values():
         # get the key from the value

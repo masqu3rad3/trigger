@@ -12,6 +12,7 @@
 #     "tentacle": ["TentacleRoot", "Tentacle", "TentacleEnd"],
 #     "root": ["Root"]
 # }
+LIMB_DATA = {}
 
 MODULE_DICTIONARY = {
     "arm": {

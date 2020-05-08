@@ -1,11 +1,17 @@
 from maya import cmds
 import maya.api.OpenMaya as om
-from trigger.core import settings
 from trigger.library import functions as extra
 from trigger.library import controllers as ic
 from trigger.library import ribbon as rc
 from trigger.core import feedback
 FEEDBACK = feedback.Feedback(__name__)
+
+LIMB_DATA = {
+        "members": ["Collar", "Shoulder", "Elbow", "Hand"],
+        "properties": [],
+        "multi_guide": None,
+        "sided": True,
+    }
 
 class Arm(object):
     def __init__(self, build_data=None, inits=None, suffix="", side="L", *args, **kwargs):
@@ -1144,19 +1150,25 @@ class Guides(object):
         # Orientation
         extra.orientJoints(self.guideJoints, worldUpAxis=self.lookVector, upAxis=(0, 1, 0), reverseAim=self.sideMultiplier, reverseUp=self.sideMultiplier)
 
-        extra.set_joint_type(collar, "Collar")
-        extra.set_joint_type(shoulder, "Shoulder")
-        extra.set_joint_type(elbow, "Elbow")
-        extra.set_joint_type(hand, "Hand")
+    def define_attributes(self):
+        extra.set_joint_type(self.guideJoints[0], "Collar")
+        extra.set_joint_type(self.guideJoints[1], "Shoulder")
+        extra.set_joint_type(self.guideJoints[2], "Elbow")
+        extra.set_joint_type(self.guideJoints[3], "Hand")
         _ = [extra.set_joint_side(jnt, self.side) for jnt in self.guideJoints]
 
-    def define_attributes(self):
         root_jnt = self.guideJoints[0]
         extra.create_global_joint_attrs(root_jnt, upAxis=self.upVector, mirrorAxis=self.mirrorVector, lookAxis=self.lookVector)
+
+        for attr_dict in LIMB_DATA["properties"]:
+            extra.create_attribute(root_jnt, attr_dict)
 
     def createGuides(self):
         """Main Function to create Guides"""
         self.draw_joints()
         self.define_attributes()
 
-
+    def convertJoints(self, joints_list):
+        self.guideJoints = joints_list
+        _ = [extra.set_joint_side(jnt, self.side) for jnt in self.guideJoints]
+        self.define_attributes()
