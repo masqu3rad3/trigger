@@ -46,10 +46,14 @@ if trigger_path not in sys.path:
 # load reload all modules
 
 # Core
-from trigger.core import io
-reload(io)
+from trigger.core import undo_dec
+reload(undo_dec)
 from trigger.core import feedback
 reload(feedback)
+from trigger.core import io
+reload(io)
+from trigger.core import settings
+reload(settings)
 
 # Guides
 from trigger.guides import initials
@@ -68,12 +72,12 @@ from trigger.library import twist_spline
 reload(twist_spline)
 
 # Modules
-from trigger.modules import all_modules_data
-reload(all_modules_data)
+from trigger import modules
+reload(modules)
 from trigger.modules import arm
 reload(arm)
-from trigger.modules import digits
-reload(digits)
+from trigger.modules import finger
+reload(finger)
 from trigger.modules import head
 reload(head)
 from trigger.modules import leg
@@ -86,16 +90,18 @@ from trigger.modules import tail
 reload(tail)
 from trigger.modules import tentacle
 reload(tentacle)
+from trigger.modules import all_modules_data
+reload(all_modules_data)
 
 # Rig
-from trigger.rig import builder
-reload(builder)
 from trigger.rig import connections
 reload(connections)
 from trigger.rig import scratch
 reload(scratch)
 from trigger.rig import weights
 reload(weights)
+from trigger.rig import builder
+reload(builder)
 
 # Utils
 from trigger.utils import mr_cubic
@@ -104,10 +110,42 @@ from trigger.utils import space_switcher
 reload(space_switcher)
 
 # UI
-from trigger.ui import start
-reload(start)
+# from trigger.ui import start
+# reload(start)
 
-start.MainUI().show()
+from trigger.ui import main
+reload(main)
+main.MainUI() # show() runs inside the init
+
+# start.MainUI().show()
+
+# import time
+# start=time.time()
+# init=initials.Initials()
+# init.initHumanoid()
+# end = time.time()
+# print "Guide Time: %s" % (end-start)
+
+# cmds.undoInfo(ock=True)
+# start=time.time()
+# b = builder.Builder()
+# b.start_building("jInit_spine_c_0")
+# end = time.time()
+# print "Build Time: %s" % (end-start)
+# cmds.undoInfo(cck=True)
+
+
+# test = init.initLimb("head", whichSide="right", segments=2)
+# from trigger import modules
+# reload(modules)
+
+# module_dictA = {mod: eval("modules.{0}.LIMB_DATA".format(mod)) for mod in modules.__all__}
+
+# module_dictB = modules.all_modules_data.MODULE_DICTIONARY
+
+# valid_limbs = module_dictA.keys()
+# non_sided_limbs = [limb for limb in self.valid_limbs if not self.module_dict[limb]["sided"]]
+
 
 #######################################################################[END]
 #######################################################################[END]
