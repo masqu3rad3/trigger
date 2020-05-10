@@ -16,7 +16,7 @@ import trigger.utils.space_switcher as anchorMaker
 import trigger.library.tools as tools
 
 # from Qt import QtWidgets, QtCore, QtGui
-from trigger.Qt import QtWidgets
+from trigger.ui.Qt import QtWidgets
 
 class LimbBuilder():
 

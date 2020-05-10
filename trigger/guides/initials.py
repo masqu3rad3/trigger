@@ -54,7 +54,6 @@ class Initials(settings.Settings):
                                    (self.upVector.x, self.upVector.y, self.upVector.z, 0),
                                    (front_vect.x, front_vect.y, front_vect.z, 0), (0, 0, 0, 1)))
 
-
     def autoGet(self, parentBone):
         """
         Gets the mirror of the given object by its name. Returns the left if it finds right and vice versa

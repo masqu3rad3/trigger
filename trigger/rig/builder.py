@@ -1,18 +1,14 @@
 """New rig builder module"""
 from maya import cmds
 from trigger.core import feedback
-from trigger.core.undo_dec import undo
 import trigger.library.functions as extra
 import trigger.library.controllers as ic
 
 from trigger import modules
 import trigger.utils.space_switcher as anchorMaker
-import trigger.library.tools as tools
 from trigger.core import settings
 
-from trigger.Qt import QtWidgets
-
-import pdb
+from trigger.ui.Qt import QtWidgets
 
 FEEDBACK = feedback.Feedback(logger_name=__name__)
 

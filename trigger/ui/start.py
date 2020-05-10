@@ -1,12 +1,11 @@
 from maya import cmds
-from trigger import Qt
-from trigger.Qt import QtWidgets, QtCore, QtGui
+from trigger.ui import Qt
+from trigger.ui.Qt import QtWidgets, QtCore, QtGui
 from maya import OpenMayaUI as omui
 # from trigger.core import io
 from trigger.core import settings
 
 import trigger.guides.initials as init
-import inspect
 # from trigger.rig import scratch
 from trigger.rig import builder
 from trigger.core import feedback

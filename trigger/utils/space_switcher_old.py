@@ -1,7 +1,7 @@
 import pymel.core as pm
 import trigger.library.functions as extra
-from trigger import Qt
-from trigger.Qt import QtWidgets, QtCore, QtGui
+from trigger.ui import Qt
+from trigger.ui.Qt import QtWidgets, QtCore
 from maya import OpenMayaUI as omui
 
 
@@ -9,13 +9,10 @@ from maya import OpenMayaUI as omui
 
 if Qt.__binding__ == "PySide":
     from shiboken import wrapInstance
-    from trigger.Qt.QtCore import Signal
 elif Qt.__binding__.startswith('PyQt'):
     from sip import wrapinstance as wrapInstance
-    from trigger.Qt.Core import pyqtSignal as Signal
 else:
     from shiboken2 import wrapInstance
-    from trigger.Qt.QtCore import Signal
 
 windowName = "AnchorMaker"
 
