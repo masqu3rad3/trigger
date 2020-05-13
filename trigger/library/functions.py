@@ -510,12 +510,6 @@ def create_attribute(node, attr_dictionary, keyable=True):
                      defaultValue=default_value,
                      k=keyable)
 
-
-
-
-
-
-
 def set_joint_type(joint, type_name):
     if type_name in JOINT_TYPE_DICT.values():
         # get the key from the value

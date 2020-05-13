@@ -23,6 +23,7 @@ class Initials(settings.Settings):
 
         # self.module_dict = modules.all_modules_data.MODULE_DICTIONARY
         self.valid_limbs = self.module_dict.keys()
+        self.validRootList = [values["members"][0] for values in self.module_dict.values()]
         self.non_sided_limbs = [limb for limb in self.valid_limbs if not self.module_dict[limb]["sided"]]
 
     def parseSettings(self):
@@ -58,9 +59,9 @@ class Initials(settings.Settings):
         """
         Gets the mirror of the given object by its name. Returns the left if it finds right and vice versa
         Args:
-            parentBone: (pymel object) the object which name will be checked
+            parentBone: (string) the object which name will be checked
 
-        Returns: (Tuple) None/pymel object, alignment of the given Obj(string),
+        Returns: (Tuple) None/String, alignment of the given Obj(string),
                 alignment of the returned Obj(string)  Ex.: (bone_left, "left", "right")
 
         """
@@ -308,3 +309,8 @@ class Initials(settings.Settings):
         if guide_object.side == "R":
             extra.colorize(guide_object.guideJoints, self.get("majorRightColor"), shape=False)
 
+    def get_scene_roots(self):
+        """collects the root joints in the scene"""
+        all_joints = cmds.ls(type="joint")
+        guide_roots = [jnt for jnt in all_joints if extra.get_joint_type(jnt) in self.validRootList]
+        return guide_roots

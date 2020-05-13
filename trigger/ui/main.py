@@ -66,6 +66,8 @@ class MainUI(QtWidgets.QMainWindow):
         sizes = self.splitter.sizes()
         self.splitter.setSizes([sizes[0] * 0.7, sizes[1] * 1.3])
 
+        self.populate_guides()
+
 
     def buildBarsUI(self):
         self.menubar = QtWidgets.QMenuBar(self)
@@ -126,6 +128,8 @@ class MainUI(QtWidgets.QMainWindow):
 
         ########################################################################
 
+
+
         self.module_create_splitter = QtWidgets.QSplitter(L_splitter_layoutWidget)
         L_guides_vLay.addWidget(self.module_create_splitter)
         # self.module_create_splitter.setGeometry(QtCore.QRect(30, 30, 473, 192))
@@ -162,79 +166,80 @@ class MainUI(QtWidgets.QMainWindow):
         spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.guides_sides_hLay.addItem(spacerItem)
         self.guides_create_vLay.addLayout(self.guides_sides_hLay)
+        
+        button_scrollArea = QtWidgets.QScrollArea()
+        button_scrollArea.setFrameShape(QtWidgets.QFrame.NoFrame)
+        button_scrollArea.setFrameShadow(QtWidgets.QFrame.Sunken)
+        button_scrollArea.setWidgetResizable(True)
+
+        button_scrollArea_WidgetContents = QtWidgets.QWidget()
+        button_scrollArea_vLay = QtWidgets.QVBoxLayout(button_scrollArea_WidgetContents)
+        button_scrollArea.setWidget(button_scrollArea_WidgetContents)
+        self.guides_create_vLay.addWidget(button_scrollArea)
+
+
+        module_settings_formLayout = QtWidgets.QFormLayout()
+        button_scrollArea_vLay.addLayout(module_settings_formLayout)
 
         self.guide_buttons_vLay = QtWidgets.QVBoxLayout()
+        self.guide_buttons_vLay.setSpacing(2)
 
-        ####### SAMMPLE ########## [START]
-        self.guide_button_sample_hLay1 = QtWidgets.QHBoxLayout()
-        self.guide_button_sample_hLay1.setSpacing(2)
-        self.guide_button_sample_pb1 = QtWidgets.QPushButton(self.verticalLayoutWidget_2)
-        self.guide_button_sample_pb1.setText("Arm")
-        self.guide_button_sample_hLay1.addWidget(self.guide_button_sample_pb1)
-        self.segments_sample_sp1 = QtWidgets.QSpinBox(self.verticalLayoutWidget_2)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Fixed)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.segments_sample_sp1.sizePolicy().hasHeightForWidth())
-        self.segments_sample_sp1.setSizePolicy(sizePolicy)
-        self.guide_button_sample_hLay1.addWidget(self.segments_sample_sp1)
-        self.guide_buttons_vLay.addLayout(self.guide_button_sample_hLay1)
-        self.guide_button_sample_hLay1_2 = QtWidgets.QHBoxLayout()
-        self.guide_button_sample_hLay1_2.setSpacing(2)
-        self.guide_button_sample_pb1_2 = QtWidgets.QPushButton(self.verticalLayoutWidget_2)
-        self.guide_button_sample_pb1_2.setText("Arm")
-        self.guide_button_sample_hLay1_2.addWidget(self.guide_button_sample_pb1_2)
-        self.segments_sample_sp1_2 = QtWidgets.QSpinBox(self.verticalLayoutWidget_2)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Fixed)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.segments_sample_sp1_2.sizePolicy().hasHeightForWidth())
-        self.segments_sample_sp1_2.setSizePolicy(sizePolicy)
-        self.guide_button_sample_hLay1_2.addWidget(self.segments_sample_sp1_2)
-        self.guide_buttons_vLay.addLayout(self.guide_button_sample_hLay1_2)
-        self.guide_button_sample_hLay1_3 = QtWidgets.QHBoxLayout()
-        self.guide_button_sample_hLay1_3.setSpacing(2)
-        self.guide_button_sample_pb1_3 = QtWidgets.QPushButton(self.verticalLayoutWidget_2)
-        self.guide_button_sample_pb1_3.setText("Arm")
-        self.guide_button_sample_hLay1_3.addWidget(self.guide_button_sample_pb1_3)
-        self.segments_sample_sp1_3 = QtWidgets.QSpinBox(self.verticalLayoutWidget_2)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Fixed)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.segments_sample_sp1_3.sizePolicy().hasHeightForWidth())
-        self.segments_sample_sp1_3.setSizePolicy(sizePolicy)
-        self.guide_button_sample_hLay1_3.addWidget(self.segments_sample_sp1_3)
-        self.guide_buttons_vLay.addLayout(self.guide_button_sample_hLay1_3)
+        ####### Module Buttons ########## [START]
+
+        for module in sorted(self.guide.valid_limbs):
+            guide_button_hLay = QtWidgets.QHBoxLayout()
+            guide_button_hLay.setSpacing(2)
+            guide_button_pb = QtWidgets.QPushButton(self.verticalLayoutWidget_2)
+            guide_button_pb.setText(module.capitalize())
+            guide_button_hLay.addWidget(guide_button_pb)
+            segments_sample_sp = QtWidgets.QSpinBox(self.verticalLayoutWidget_2)
+            segments_sample_sp.setMinimum(1)
+            segments_sample_sp.setValue(3)
+            sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Fixed)
+            sizePolicy.setHorizontalStretch(0)
+            sizePolicy.setVerticalStretch(0)
+            sizePolicy.setHeightForWidth(segments_sample_sp.sizePolicy().hasHeightForWidth())
+            segments_sample_sp.setSizePolicy(sizePolicy)
+            guide_button_hLay.addWidget(segments_sample_sp)
+            if not self.guide.module_dict[module].get("multi_guide"):
+                segments_sample_sp.setValue(3)
+                segments_sample_sp.setEnabled(False)
+
+            self.guide_buttons_vLay.addLayout(guide_button_hLay)
+
+        ####### Module Buttons ########## [End]
+
         spacerItem1 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
         self.guide_buttons_vLay.addItem(spacerItem1)
-        self.guides_create_vLay.addLayout(self.guide_buttons_vLay)
+        # self.guides_create_vLay.addLayout(self.guide_buttons_vLay)
+        button_scrollArea_vLay.addLayout(self.guide_buttons_vLay)
 
         ####### SAMMPLE ########## [End]
         self.guides_list_listWidget = QtWidgets.QListWidget(self.module_create_splitter)
-        font = QtGui.QFont()
-        font.setPointSize(12)
-        font.setBold(False)
-        font.setWeight(50)
-        font.setStrikeOut(False)
-        self.guides_list_listWidget.setFont(font)
+        # font = QtGui.QFont()
+        # font.setPointSize(12)
+        # font.setBold(False)
+        # font.setWeight(50)
+        # font.setStrikeOut(False)
+        # self.guides_list_listWidget.setFont(font)
         self.guides_list_listWidget.setMouseTracking(False)
         self.guides_list_listWidget.setFrameShape(QtWidgets.QFrame.StyledPanel)
         self.guides_list_listWidget.setViewMode(QtWidgets.QListView.ListMode)
 
         ############# SAMPLE #################### [START]
 
-        item = QtWidgets.QListWidgetItem()
-        item.setText("Arm")
-        item.setTextAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignVCenter)
-        self.guides_list_listWidget.addItem(item)
-        item = QtWidgets.QListWidgetItem()
-        item.setText("Leg")
-        item.setTextAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignVCenter)
-        self.guides_list_listWidget.addItem(item)
-        item = QtWidgets.QListWidgetItem()
-        item.setText("Tentacle")
-        item.setTextAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignVCenter)
-        self.guides_list_listWidget.addItem(item)
+        # item = QtWidgets.QListWidgetItem()
+        # item.setText("Arm")
+        # item.setTextAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignVCenter)
+        # self.guides_list_listWidget.addItem(item)
+        # item = QtWidgets.QListWidgetItem()
+        # item.setText("Leg")
+        # item.setTextAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignVCenter)
+        # self.guides_list_listWidget.addItem(item)
+        # item = QtWidgets.QListWidgetItem()
+        # item.setText("Tentacle")
+        # item.setTextAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignVCenter)
+        # self.guides_list_listWidget.addItem(item)
 
 
         ############# SAMPLE #################### [End]
@@ -304,8 +309,11 @@ class MainUI(QtWidgets.QMainWindow):
         # splitter.setStretchFactor(0, 0.2)
         # splitter.setStretchFactor(1, 8)
 
-
-
+    def populate_guides(self):
+        self.guides_list_listWidget.clear()
+        guide_roots = self.guide.get_scene_roots()
+        print("asn", guide_roots)
+        self.guides_list_listWidget.addItems(guide_roots)
 
 
 
