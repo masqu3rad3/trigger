@@ -61,12 +61,14 @@ class MainUI(QtWidgets.QMainWindow):
         self.buildGuidesUI()
         self.show()
 
+        self.populate_guides()
         # Splitter size hack
         # this must be done after the show()
         sizes = self.splitter.sizes()
-        self.splitter.setSizes([sizes[0] * 0.7, sizes[1] * 1.3])
+        # print sizes
+        # self.splitter.setSizes([sizes[0] * 0.3, sizes[1] * 1.0])
+        self.splitter.setSizes([sizes[0] * 0.3, sizes[1] * 1.0, sizes[2] * 1.5])
 
-        self.populate_guides()
 
 
     def buildBarsUI(self):
@@ -215,16 +217,35 @@ class MainUI(QtWidgets.QMainWindow):
         button_scrollArea_vLay.addLayout(self.guide_buttons_vLay)
 
         ####### SAMMPLE ########## [End]
-        self.guides_list_listWidget = QtWidgets.QListWidget(self.module_create_splitter)
+
+        # self.guides_list_listWidget = QtWidgets.QListWidget(self.module_create_splitter)
+        # self.guides_list_treeWidget = QtWidgets.QTreeWidget(self.module_create_splitter, sortingEnabled=True, rootIsDecorated=False)
+        self.guides_list_treeWidget = QtWidgets.QTreeWidget(self.splitter, sortingEnabled=True, rootIsDecorated=False)
+        self.guides_list_treeWidget.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
+
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.guides_list_treeWidget.sizePolicy().hasHeightForWidth())
+        self.guides_list_treeWidget.setSizePolicy(sizePolicy)
+
+        # columng for guides list
+        colums = ["Type", "Side", "Root Joint"]
+        header = QtWidgets.QTreeWidgetItem(colums)
+        self.guides_list_treeWidget.setHeaderItem(header)
+        self.guides_list_treeWidget.setColumnWidth(0, 80)
+        self.guides_list_treeWidget.setColumnWidth(1, 20)
+
         # font = QtGui.QFont()
         # font.setPointSize(12)
         # font.setBold(False)
         # font.setWeight(50)
         # font.setStrikeOut(False)
         # self.guides_list_listWidget.setFont(font)
-        self.guides_list_listWidget.setMouseTracking(False)
-        self.guides_list_listWidget.setFrameShape(QtWidgets.QFrame.StyledPanel)
-        self.guides_list_listWidget.setViewMode(QtWidgets.QListView.ListMode)
+
+        # self.guides_list_treeWidget.setMouseTracking(False)
+        # self.guides_list_treeWidget.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        # self.guides_list_treeWidget.setViewMode(QtWidgets.QListView.ListMode)
 
         ############# SAMPLE #################### [START]
 
@@ -287,16 +308,18 @@ class MainUI(QtWidgets.QMainWindow):
 
         ## SAMPLE [End]
 
-        guide_buttons_hLay = QtWidgets.QHBoxLayout()
-        R_guides_scrollArea_vLay.addLayout(guide_buttons_hLay)
-
-        define_selected_pb = QtWidgets.QPushButton(R_guides_WidgetContents)
-        define_selected_pb.setText("Define Selected")
-        guide_buttons_hLay.addWidget(define_selected_pb)
-
-        create_guide_pb = QtWidgets.QPushButton(R_guides_WidgetContents)
-        create_guide_pb.setText("Create Guide")
-        guide_buttons_hLay.addWidget(create_guide_pb)
+        # ## Discarded buttons [Start]
+        # guide_buttons_hLay = QtWidgets.QHBoxLayout()
+        # R_guides_scrollArea_vLay.addLayout(guide_buttons_hLay)
+        #
+        # define_selected_pb = QtWidgets.QPushButton(R_guides_WidgetContents)
+        # define_selected_pb.setText("Define Selected")
+        # guide_buttons_hLay.addWidget(define_selected_pb)
+        #
+        # create_guide_pb = QtWidgets.QPushButton(R_guides_WidgetContents)
+        # create_guide_pb.setText("Create Guide")
+        # guide_buttons_hLay.addWidget(create_guide_pb)
+        # ## Discarded buttons [End]
 
         # sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         # sizePolicy.setHorizontalStretch(1)
@@ -309,16 +332,36 @@ class MainUI(QtWidgets.QMainWindow):
         # splitter.setStretchFactor(0, 0.2)
         # splitter.setStretchFactor(1, 8)
 
+        ## SIGNALS
+        self.guides_list_treeWidget.currentItemChanged.connect(self.on_guide_change)
+
+
+
     def populate_guides(self):
-        self.guides_list_listWidget.clear()
-        guide_roots = self.guide.get_scene_roots()
-        print("asn", guide_roots)
-        self.guides_list_listWidget.addItems(guide_roots)
+        self.guides_list_treeWidget.clear()
+        roots_dict_list = self.guide.get_scene_roots()
+        for item in roots_dict_list:
+            if item["side"] == "C":
+                color = QtGui.QColor(255, 255, 0, 255)
+                # color = self.guide.get("majorCenterColor")
+            elif item["side"] == "L":
+                color = QtGui.QColor(0, 100, 255, 255)
+                # color = self.guide.get("majorLeftColor")
+            elif item["side"] == "R":
+                color = QtGui.QColor(255, 100, 0, 255)
+                # color = self.guide.get("majorRightColor")
+            item = QtWidgets.QTreeWidgetItem(self.guides_list_treeWidget, [item["module_name"], item["side"], item["root_joint"]])
+            item.setForeground(0, color)
+        # self.guides_list_treeWidget.addItems(guide_roots)
 
+    def on_guide_change(self):
 
+        row = self.guides_list_treeWidget.currentIndex().row()
+        if row == -1:
+            return
+        self.guide.select_root(str(self.guides_list_treeWidget.currentItem().text(2)))
+        self.populate_properties()
 
-
-
-
-
+    def populate_properties(self):
+        pass
 

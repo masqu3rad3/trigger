@@ -87,7 +87,7 @@ class Initials(settings.Settings):
             FEEDBACK.warning("cannot find mirror Joint automatically")
             return None, alignmentGiven, None
 
-    @undo
+    # @undo
     def initLimb(self, limb_name, whichSide="left", constrainedTo=None, parentNode=None, defineAs=False, *args, **kwargs):
 
         if limb_name not in self.valid_limbs:
@@ -137,7 +137,7 @@ class Initials(settings.Settings):
             if cmds.ls(sl=True, type="joint"):
                 j = cmds.ls(sl=True)[-1]
                 try:
-                    if extra.identifyMaster(j)[1] in self.valid_limbs:
+                    if extra.identifyMaster(j, self.module_dict)[1] in self.valid_limbs:
                         masterParent = cmds.ls(sl=True)[-1]
                     else:
                         masterParent = None
@@ -246,7 +246,7 @@ class Initials(settings.Settings):
         """Returns reflection of the vector along the mirror axis"""
         return vector - 2 * (vector * self.mirrorVector) * self.mirrorVector
 
-    @undo
+    # @undo
     def initHumanoid(self, spineSegments=3, neckSegments=3, fingers=5):
         _, spine_dict = self.initLimb("spine", "auto", segments=spineSegments)
         root = spine_dict["C"][0]
@@ -310,7 +310,19 @@ class Initials(settings.Settings):
             extra.colorize(guide_object.guideJoints, self.get("majorRightColor"), shape=False)
 
     def get_scene_roots(self):
-        """collects the root joints in the scene"""
+        """collects the root joints in the scene and returns the dictionary with properties"""
         all_joints = cmds.ls(type="joint")
+        # get roots
         guide_roots = [jnt for jnt in all_joints if extra.get_joint_type(jnt) in self.validRootList]
-        return guide_roots
+        roots_dictionary_list = []
+        for jnt in guide_roots:
+            # get module name
+            module_name = cmds.getAttr("%s.moduleName" % jnt)
+            roots_dictionary_list.append({"module_name": module_name,
+                                              "side": extra.get_joint_side(jnt),
+                                              "root_joint": jnt})
+
+        return roots_dictionary_list
+
+    def select_root(self, joint_name):
+        cmds.select(joint_name)

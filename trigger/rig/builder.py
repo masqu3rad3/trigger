@@ -61,7 +61,7 @@ class Builder(settings.Settings):
                 FEEDBACK.warning("Select a single root_jnt joint")
         if not cmds.objectType(root_jnt, isType="joint"):
             FEEDBACK.throw_error("root_jnt is not a joint")
-        root_name, root_type, root_side = extra.identifyMaster(root_jnt)
+        root_name, root_type, root_side = extra.identifyMaster(root_jnt, self.module_dict)
         if root_name not in self.validRootList:
             FEEDBACK.throw_error("selected joint is not in the valid root_jnt list")
 
@@ -134,7 +134,7 @@ class Builder(settings.Settings):
         children = cmds.listRelatives(node, children=True, type="joint")
         children = children if children else []
         for jnt in children:
-            cID = extra.identifyMaster(jnt)
+            cID = extra.identifyMaster(jnt, self.module_dict)
             if cID[0] in self.validRootList:
                 self.get_limb_hierarchy(jnt, isRoot=True, parentIndex=node, r_list=r_list)
             else:
@@ -159,7 +159,7 @@ class Builder(settings.Settings):
         cmds.addAttr(self.cont_master, at="bool", ln="Rig_Visibility", sn="rigVis", keyable=True)
 
         for brother_roots in self.fingerMatchList:
-            finger_name, finger_type, finger_side = extra.identifyMaster(brother_roots[0])
+            finger_name, finger_type, finger_side = extra.identifyMaster(brother_roots[0], self.module_dict)
             finger_parent = extra.getParent(brother_roots[0])
             offsetVector = extra.getBetweenVector(finger_parent, brother_roots)
             iconSize = extra.getDistance(brother_roots[0], brother_roots[-1])
@@ -218,7 +218,7 @@ class Builder(settings.Settings):
         allJoints = cmds.listRelatives(rootNode, type="joint", ad=True)
         all_fingers = []
         for jnt in allJoints:
-            limb_name, limb_type, limb_side = extra.identifyMaster(jnt)
+            limb_name, limb_type, limb_side = extra.identifyMaster(jnt, self.module_dict)
             if limb_name == "Hip" and limb_side == "L":
                 l_hip = jnt
             if limb_name == "Hip" and limb_side == "R":
@@ -250,7 +250,7 @@ class Builder(settings.Settings):
                             value["multi_guide"]]
         limb_dict = {}
         multiList = []
-        limb_name, limb_type, limb_side = extra.identifyMaster(node)
+        limb_name, limb_type, limb_side = extra.identifyMaster(node, self.module_dict)
 
         limb_dict[limb_name] = node
         nextNode = node
@@ -262,7 +262,7 @@ class Builder(settings.Settings):
                 z = False
             failedChildren = 0
             for child in children:
-                child_limb_name, child_limb_type, child_limb_side = extra.identifyMaster(child)
+                child_limb_name, child_limb_type, child_limb_side = extra.identifyMaster(child, self.module_dict)
                 if child_limb_name not in self.validRootList and child_limb_type == limb_type:
                     nextNode = child
                     if child_limb_name in multi_guide_jnts:
@@ -312,7 +312,7 @@ class Builder(settings.Settings):
             if not selection_mode:
                 if root_plug and parent_socket and master_cont:
                     # check the root
-                    if extra.identifyMaster(root_plug)[0] not in self.validRootList:
+                    if extra.identifyMaster(root_plug, self.module_dict)[0] not in self.validRootList:
                         FEEDBACK.throw_error("root must be a valid root guide node")
                     limbCreationList = self.get_limb_hierarchy(root_plug)
                 else:
@@ -323,7 +323,7 @@ class Builder(settings.Settings):
                 else:
                     FEEDBACK.throw_error(
                         "Select exactly three nodes. First reference root node then target parent and finally master controller")
-                if extra.identifyMaster(root_plug)[0] not in self.validRootList:
+                if extra.identifyMaster(root_plug, self.module_dict)[0] not in self.validRootList:
                     FEEDBACK.throw_error("First selection must be a valid root joint node")
 
             limbCreationList = self.get_limb_hierarchy(root_plug)

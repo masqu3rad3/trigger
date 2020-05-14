@@ -2,7 +2,6 @@ import maya.cmds as cmds
 # import maya.OpenMaya as om
 # USING MAYA API 2.0
 import maya.api.OpenMaya as om
-from trigger.modules import all_modules_data
 
 from trigger.core import feedback
 FEEDBACK = feedback.Feedback(logger_name=__name__)
@@ -451,7 +450,12 @@ def attrPass (sourceNode, targetNode, attributes=[], inConnections=True, outConn
             for i in userAttr:
                 cmds.deleteAttr("%s.%s" % (sourceNode,i))
 
-def create_global_joint_attrs(joint, upAxis=None, mirrorAxis=None, lookAxis=None):
+def create_global_joint_attrs(joint, moduleName=None, upAxis=None, mirrorAxis=None, lookAxis=None):
+    moduleName = joint if not moduleName else moduleName
+    if not cmds.attributeQuery("moduleName", node=joint, exists=True):
+        cmds.addAttr(joint, longName="moduleName", dataType="string", k=False)
+        cmds.setAttr("%s.%s" % (joint, "moduleName"), moduleName, type="string")
+
     axis_attrs = ["upAxis", "mirrorAxis", "lookAxis"]
     for attr in axis_attrs:
         if not cmds.attributeQuery(attr, node=joint, exists=True):
@@ -545,12 +549,12 @@ def get_joint_side(joint):
         FEEDBACK.throw_error("Joint Side cannot not be detected (%s)" % joint)
     return JOINT_SIDE_DICT[side_int]
 
-def identifyMaster(joint):
+def identifyMaster(joint, modules_dictionary):
     # define values as no
     limbType = "N/A"
     jointType = get_joint_type(joint)
 
-    for key, value in all_modules_data.MODULE_DICTIONARY.items():
+    for key, value in modules_dictionary.items():
         limbType = key if jointType in value["members"] else limbType
 
     side = get_joint_side(joint)
