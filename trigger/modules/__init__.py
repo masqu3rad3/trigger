@@ -5,3 +5,6 @@ modules = glob.glob(join(dirname(__file__), "*.py"))
 
 exceptions = ['__init__.py', 'boiler_plate.py', 'all_modules_data.py']
 __all__ = [ basename(f)[:-3] for f in modules if isfile(f) and not basename(f) in exceptions]
+
+for mod in __all__:
+    exec("import %s" %mod)

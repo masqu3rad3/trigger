@@ -523,10 +523,13 @@ def set_joint_type(joint, type_name):
         cmds.setAttr("%s.type" % joint , 18) # 18 is the other
         cmds.setAttr("%s.otherType" % joint, type_name, type="string")
 
-def get_joint_type(joint):
+def get_joint_type(joint, skipErrors=True):
     type_int = cmds.getAttr("%s.type" % joint)
     if type_int not in JOINT_TYPE_DICT.keys():
-        FEEDBACK.throw_error("Cannot detect joint type => %s" % joint)
+        if skipErrors:
+            return
+        else:
+            FEEDBACK.throw_error("Cannot detect joint type => %s" % joint)
     if type_int == 18:
         type_name = cmds.getAttr("{0}.otherType".format(joint))
     else:
@@ -543,10 +546,13 @@ def set_joint_side(joint, side):
     else:
         FEEDBACK.throw_error("%s is not a valid side value" % side)
 
-def get_joint_side(joint):
+def get_joint_side(joint, skipErrors=True):
     side_int = cmds.getAttr("{0}.side".format(joint))
     if side_int not in JOINT_SIDE_DICT.keys():
-        FEEDBACK.throw_error("Joint Side cannot not be detected (%s)" % joint)
+        if skipErrors:
+            return
+        else:
+            FEEDBACK.throw_error("Joint Side cannot not be detected (%s)" % joint)
     return JOINT_SIDE_DICT[side_int]
 
 def identifyMaster(joint, modules_dictionary):

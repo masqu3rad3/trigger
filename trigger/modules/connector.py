@@ -12,9 +12,9 @@ LIMB_DATA = {
         "sided": False,
     }
 
-class Root(object):
+class Connector(object):
     def __init__(self, build_data=None, inits=None, suffix="", *args, **kwargs):
-        super(Root, self).__init__()
+        super(Connector, self).__init__()
         if build_data:
             if len(build_data.keys()) > 1:
                 FEEDBACK.throw_error("Root can only have one initial joint")
@@ -96,7 +96,7 @@ class Guides(object):
             pass
 
         # Define the offset vector
-        self.offsetVector = om.MVector(0, 0, 0)
+        self.offsetVector = om.MVector(0, 1, 0)
 
         # Draw the joints
         cmds.select(d=True)

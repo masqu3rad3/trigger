@@ -11,7 +11,7 @@ import trigger.modules.spine as spine
 import trigger.modules.tail as simpleTail
 import trigger.modules.finger as finger
 import trigger.modules.tentacle as tentacle
-import trigger.modules.root as root
+import trigger.modules.connector as root
 import trigger.utils.space_switcher as anchorMaker
 import trigger.library.tools as tools
 
