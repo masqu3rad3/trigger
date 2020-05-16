@@ -22,6 +22,7 @@ class Initials(settings.Settings):
         self.parseSettings()
         self.projectName = "tikAutoRig"
         self.module_dict = {mod: eval("modules.{0}.LIMB_DATA".format(mod)) for mod in modules.__all__}
+        pprint(self.module_dict)
         # self.module_dict = modules.all_modules_data.MODULE_DICTIONARY
         self.valid_limbs = self.module_dict.keys()
         self.validRootList = [values["members"][0] for values in self.module_dict.values()]
@@ -297,7 +298,7 @@ class Initials(settings.Settings):
         cmds.setAttr("%s.Finger_Type" % fingers[4][0], 5)
 
     def adjust_guide_display(self, guide_object):
-        """ Adjusts the display proerties of guid joints. Accepts guide object as input"""
+        """ Adjusts the display proerties of guid joints according to the settings. Accepts guide object as input"""
 
         for jnt in guide_object.guideJoints:
             cmds.setAttr("%s.displayLocalAxis" % jnt, 1)
@@ -319,11 +320,25 @@ class Initials(settings.Settings):
         for jnt in guide_roots:
             # get module name
             module_name = cmds.getAttr("%s.moduleName" % jnt)
+            # get module info
+            j_type, limb, side = extra.identifyMaster(jnt, self.module_dict)
             roots_dictionary_list.append({"module_name": module_name,
-                                              "side": extra.get_joint_side(jnt),
-                                              "root_joint": jnt})
+                                          "side": side,
+                                          "root_joint": jnt,
+                                          "module_type": limb
+                                          })
 
         return roots_dictionary_list
 
     def select_root(self, joint_name):
         cmds.select(joint_name)
+
+    def get_property(self, jnt, attr):
+        return cmds.getAttr("%s.%s" % (jnt, attr))
+        # return self.module_dict[module_type].get("properties")
+
+    def set_property(self, jnt, attr, value):
+        if type(value) == int or type(value) == float:
+            cmds.setAttr("%s.%s" % (jnt, attr), value)
+        else:
+            cmds.setAttr("%s.%s" % (jnt, attr), value, type="string")
