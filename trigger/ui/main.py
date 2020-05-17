@@ -17,6 +17,10 @@ else:
     from shiboken2 import wrapInstance
     from Qt.QtCore import Signal
 
+from trigger.core import feedback
+
+FEEDBACK = feedback.Feedback(logger_name=__name__)
+
 WINDOW_NAME = "TRigger"
 
 
@@ -41,7 +45,9 @@ class MainUI(QtWidgets.QMainWindow):
                 pass
         parent = getMayaMainWindow()
         super(MainUI, self).__init__(parent=parent)
-
+        # self.setFocusPolicy(QtCore.Qt.StrongFocus)
+        self.installEventFilter(self)
+        self.force = False
         # core ui
         self.setWindowTitle(WINDOW_NAME)
         self.setObjectName(WINDOW_NAME)
@@ -108,7 +114,6 @@ class MainUI(QtWidgets.QMainWindow):
         self.menuFile.addAction(self.Settings_action)
         self.menubar.addAction(self.menuFile.menuAction())
 
-
     def  buildTabsUI(self):
         self.centralWidget_vLay = QtWidgets.QVBoxLayout(self.centralwidget)  # this is only to fit the tab widget
         self.centralWidget_vLay.setSpacing(0)
@@ -140,8 +145,6 @@ class MainUI(QtWidgets.QMainWindow):
 
         ########################################################################
 
-
-
         self.module_create_splitter = QtWidgets.QSplitter(L_splitter_layoutWidget)
         L_guides_vLay.addWidget(self.module_create_splitter)
         # self.module_create_splitter.setGeometry(QtCore.QRect(30, 30, 473, 192))
@@ -158,21 +161,26 @@ class MainUI(QtWidgets.QMainWindow):
         self.guides_create_vLay.setContentsMargins(0, 0, 0, 0)
 
         self.guides_sides_hLay = QtWidgets.QHBoxLayout()
+        self.guides_sides_hLay.setSpacing(3)
 
-        self.guides_sides_L_rb = QtWidgets.QRadioButton(self.verticalLayoutWidget_2)
+        self.guides_sides_C_rb = QtWidgets.QRadioButton()
+        self.guides_sides_C_rb.setText("C")
+        self.guides_sides_hLay.addWidget(self.guides_sides_C_rb)
+
+        self.guides_sides_L_rb = QtWidgets.QRadioButton()
         self.guides_sides_L_rb.setText("L")
         self.guides_sides_hLay.addWidget(self.guides_sides_L_rb)
 
-        self.guides_sides_R_rb = QtWidgets.QRadioButton(self.verticalLayoutWidget_2)
+        self.guides_sides_R_rb = QtWidgets.QRadioButton()
         self.guides_sides_R_rb.setText("R")
         self.guides_sides_hLay.addWidget(self.guides_sides_R_rb)
 
-        self.guides_sides_Both_rb = QtWidgets.QRadioButton(self.verticalLayoutWidget_2)
+        self.guides_sides_Both_rb = QtWidgets.QRadioButton()
         self.guides_sides_Both_rb.setText("Both")
         self.guides_sides_hLay.addWidget(self.guides_sides_Both_rb)
         self.guides_sides_Both_rb.setChecked(True)
 
-        self.guides_sides_Auto_rb = QtWidgets.QRadioButton(self.verticalLayoutWidget_2)
+        self.guides_sides_Auto_rb = QtWidgets.QRadioButton()
         self.guides_sides_Auto_rb.setText("Auto")
         self.guides_sides_hLay.addWidget(self.guides_sides_Auto_rb)
 
@@ -241,18 +249,13 @@ class MainUI(QtWidgets.QMainWindow):
         humanoid_button_pb = QtWidgets.QPushButton(self.verticalLayoutWidget_2, text="Humanoid")
         self.guide_buttons_vLay.addWidget(humanoid_button_pb)
 
-        humanoid_button_pb.clicked.connect(lambda: self.guide.initHumanoid())
-
-
+        humanoid_button_pb.clicked.connect(lambda: self.on_create_guide("humanoid"))
 
         spacerItem1 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
         self.guide_buttons_vLay.addItem(spacerItem1)
         # self.guides_create_vLay.addLayout(self.guide_buttons_vLay)
         button_scrollArea_vLay.addLayout(self.guide_buttons_vLay)
 
-
-        # self.guides_list_listWidget = QtWidgets.QListWidget(self.module_create_splitter)
-        # self.guides_list_treeWidget = QtWidgets.QTreeWidget(self.module_create_splitter, sortingEnabled=True, rootIsDecorated=False)
         self.guides_list_treeWidget = QtWidgets.QTreeWidget(self.splitter, sortingEnabled=True, rootIsDecorated=False)
         self.guides_list_treeWidget.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
 
@@ -269,35 +272,6 @@ class MainUI(QtWidgets.QMainWindow):
         self.guides_list_treeWidget.setColumnWidth(0, 80)
         self.guides_list_treeWidget.setColumnWidth(1, 20)
 
-        # font = QtGui.QFont()
-        # font.setPointSize(12)
-        # font.setBold(False)
-        # font.setWeight(50)
-        # font.setStrikeOut(False)
-        # self.guides_list_listWidget.setFont(font)
-
-        # self.guides_list_treeWidget.setMouseTracking(False)
-        # self.guides_list_treeWidget.setFrameShape(QtWidgets.QFrame.StyledPanel)
-        # self.guides_list_treeWidget.setViewMode(QtWidgets.QListView.ListMode)
-
-        ############# SAMPLE #################### [START]
-
-        # item = QtWidgets.QListWidgetItem()
-        # item.setText("Arm")
-        # item.setTextAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignVCenter)
-        # self.guides_list_listWidget.addItem(item)
-        # item = QtWidgets.QListWidgetItem()
-        # item.setText("Leg")
-        # item.setTextAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignVCenter)
-        # self.guides_list_listWidget.addItem(item)
-        # item = QtWidgets.QListWidgetItem()
-        # item.setText("Tentacle")
-        # item.setTextAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignVCenter)
-        # self.guides_list_listWidget.addItem(item)
-
-
-        ############# SAMPLE #################### [End]
-
         # Guides Right Side
         R_splitter_layoutWidget = QtWidgets.QWidget(self.splitter)
         R_guides_vLay = QtWidgets.QVBoxLayout(R_splitter_layoutWidget)
@@ -310,21 +284,22 @@ class MainUI(QtWidgets.QMainWindow):
         guide_properties_lbl.setAlignment(QtCore.Qt.AlignCenter)
         R_guides_vLay.addWidget(guide_properties_lbl)
 
-        self.R_guides_scrollArea = QtWidgets.QScrollArea(R_splitter_layoutWidget)
-        self.R_guides_scrollArea.setFrameShape(QtWidgets.QFrame.NoFrame)
-        self.R_guides_scrollArea.setFrameShadow(QtWidgets.QFrame.Sunken)
-        self.R_guides_scrollArea.setWidgetResizable(True)
+        R_guides_scrollArea = QtWidgets.QScrollArea(R_splitter_layoutWidget)
+        R_guides_scrollArea.setFrameShape(QtWidgets.QFrame.NoFrame)
+        R_guides_scrollArea.setFrameShadow(QtWidgets.QFrame.Sunken)
+        R_guides_scrollArea.setWidgetResizable(True)
 
         self.R_guides_WidgetContents = QtWidgets.QWidget()
 
-        R_guides_scrollArea_vLay = QtWidgets.QVBoxLayout(self.R_guides_WidgetContents)
-        self.R_guides_scrollArea.setWidget(self.R_guides_WidgetContents)
-        R_guides_vLay.addWidget(self.R_guides_scrollArea)
+        self.R_guides_scrollArea_vLay = QtWidgets.QVBoxLayout(self.R_guides_WidgetContents)
+        R_guides_scrollArea.setWidget(self.R_guides_WidgetContents)
+        R_guides_vLay.addWidget(R_guides_scrollArea)
 
 
         self.module_settings_formLayout = QtWidgets.QFormLayout()
-        R_guides_scrollArea_vLay.addLayout(self.module_settings_formLayout)
-
+        self.module_extras_formLayout = QtWidgets.QFormLayout()
+        self.R_guides_scrollArea_vLay.addLayout(self.module_settings_formLayout)
+        self.R_guides_scrollArea_vLay.addLayout(self.module_extras_formLayout)
 
         ## PROPERTIES -General [Start]
         #name
@@ -335,34 +310,23 @@ class MainUI(QtWidgets.QMainWindow):
         #up axis
         up_axis_lbl = QtWidgets.QLabel(self.R_guides_WidgetContents, text="Up Axis")
         up_axis_hLay = QtWidgets.QHBoxLayout(spacing=3)
-        self.up_axis_x_sp = QtWidgets.QSpinBox(self.R_guides_WidgetContents, minimumWidth=40, buttonSymbols=QtWidgets.QAbstractSpinBox.NoButtons)
-        self.up_axis_y_sp = QtWidgets.QSpinBox(self.R_guides_WidgetContents, minimumWidth=40, buttonSymbols=QtWidgets.QAbstractSpinBox.NoButtons)
-        self.up_axis_z_sp = QtWidgets.QSpinBox(self.R_guides_WidgetContents, minimumWidth=40, buttonSymbols=QtWidgets.QAbstractSpinBox.NoButtons)
-        up_axis_hLay.addWidget(self.up_axis_x_sp)
-        up_axis_hLay.addWidget(self.up_axis_y_sp)
-        up_axis_hLay.addWidget(self.up_axis_z_sp)
+
+        self.up_axis_sp_list = [QtWidgets.QDoubleSpinBox(self.R_guides_WidgetContents, minimumWidth=40, buttonSymbols=QtWidgets.QAbstractSpinBox.NoButtons) for axis in "XYZ"]
+        _ = [up_axis_hLay.addWidget(sp) for sp in self.up_axis_sp_list]
         self.module_settings_formLayout.addRow(up_axis_lbl, up_axis_hLay)
         
         #mirror axis
         mirror_axis_lbl = QtWidgets.QLabel(self.R_guides_WidgetContents, text="Mirror Axis")
         mirror_axis_hLay = QtWidgets.QHBoxLayout(spacing=3)
-        self.mirror_axis_x_sp = QtWidgets.QSpinBox(self.R_guides_WidgetContents, minimumWidth=40, buttonSymbols=QtWidgets.QAbstractSpinBox.NoButtons)
-        self.mirror_axis_y_sp = QtWidgets.QSpinBox(self.R_guides_WidgetContents, minimumWidth=40, buttonSymbols=QtWidgets.QAbstractSpinBox.NoButtons)
-        self.mirror_axis_z_sp = QtWidgets.QSpinBox(self.R_guides_WidgetContents, minimumWidth=40, buttonSymbols=QtWidgets.QAbstractSpinBox.NoButtons)
-        mirror_axis_hLay.addWidget(self.mirror_axis_x_sp)
-        mirror_axis_hLay.addWidget(self.mirror_axis_y_sp)
-        mirror_axis_hLay.addWidget(self.mirror_axis_z_sp)
+        self.mirror_axis_sp_list = [QtWidgets.QDoubleSpinBox(self.R_guides_WidgetContents, minimumWidth=40, buttonSymbols=QtWidgets.QAbstractSpinBox.NoButtons) for axis in "XYZ"]
+        _ = [mirror_axis_hLay.addWidget(sp) for sp in self.mirror_axis_sp_list]
         self.module_settings_formLayout.addRow(mirror_axis_lbl, mirror_axis_hLay)
 
         #look axis
         look_axis_lbl = QtWidgets.QLabel(self.R_guides_WidgetContents, text="Look Axis")
         look_axis_hLay = QtWidgets.QHBoxLayout(spacing=3)
-        self.look_axis_x_sp = QtWidgets.QSpinBox(self.R_guides_WidgetContents, minimumWidth=40, buttonSymbols=QtWidgets.QAbstractSpinBox.NoButtons)
-        self.look_axis_y_sp = QtWidgets.QSpinBox(self.R_guides_WidgetContents, minimumWidth=40, buttonSymbols=QtWidgets.QAbstractSpinBox.NoButtons)
-        self.look_axis_z_sp = QtWidgets.QSpinBox(self.R_guides_WidgetContents, minimumWidth=40, buttonSymbols=QtWidgets.QAbstractSpinBox.NoButtons)
-        look_axis_hLay.addWidget(self.look_axis_x_sp)
-        look_axis_hLay.addWidget(self.look_axis_y_sp)
-        look_axis_hLay.addWidget(self.look_axis_z_sp)
+        self.look_axis_sp_list = [QtWidgets.QDoubleSpinBox(self.R_guides_WidgetContents, minimumWidth=40, buttonSymbols=QtWidgets.QAbstractSpinBox.NoButtons) for axis in "XYZ"]
+        _ = [look_axis_hLay.addWidget(sp) for sp in self.look_axis_sp_list]
         self.module_settings_formLayout.addRow(look_axis_lbl, look_axis_hLay)
 
         #inherit orientation
@@ -372,14 +336,37 @@ class MainUI(QtWidgets.QMainWindow):
 
         ## PROPERTIES - General [End]
 
-
         ## SIGNALS
         self.guides_list_treeWidget.currentItemChanged.connect(self.on_guide_change)
-        self.module_name_le.textChanged.connect(lambda text=self.module_name_le.text(): self.update_properties("moduleName", text))
+        # self.module_name_le.textChanged.connect(lambda text=self.module_name_le.text(): self.update_properties("moduleName", text))
+        self.module_name_le.textEdited.connect(lambda text=self.module_name_le.text(): self.update_properties("moduleName", text))
+
+        self.up_axis_sp_list[0].valueChanged.connect(lambda num: self.update_properties("upAxisX", num))
+        self.up_axis_sp_list[1].valueChanged.connect(lambda num: self.update_properties("upAxisY", num))
+        self.up_axis_sp_list[2].valueChanged.connect(lambda num: self.update_properties("upAxisZ", num))
+        self.mirror_axis_sp_list[0].valueChanged.connect(lambda num: self.update_properties("mirrorAxisX", num))
+        self.mirror_axis_sp_list[1].valueChanged.connect(lambda num: self.update_properties("mirrorAxisY", num))
+        self.mirror_axis_sp_list[2].valueChanged.connect(lambda num: self.update_properties("mirrorAxisZ", num))
+        self.look_axis_sp_list[0].valueChanged.connect(lambda num: self.update_properties("lookAxisX", num))
+        self.look_axis_sp_list[1].valueChanged.connect(lambda num: self.update_properties("lookAxisY", num))
+        self.look_axis_sp_list[2].valueChanged.connect(lambda num: self.update_properties("lookAxisZ", num))
+
+        self.inherit_orientation_cb.toggled.connect(lambda state=self.inherit_orientation_cb.isChecked(): self.update_properties("useRefOri", state))
+
+    def block_all_signals(self, state):
+        self.guides_list_treeWidget.blockSignals(state)
+        for sp_up in self.up_axis_sp_list:
+            sp_up.blockSignals(state)
+        for sp_mirror in self.mirror_axis_sp_list:
+            sp_mirror.blockSignals(state)
+        for sp_look in self.look_axis_sp_list:
+            sp_look.blockSignals(state)
+        self.inherit_orientation_cb.blockSignals(state)
+
 
     def populate_guides(self):
+        self.block_all_signals(True)
 
-        self.guides_list_treeWidget.blockSignals(True)
         if self.guides_list_treeWidget.currentItem():
             selected_root_jnt = self.guides_list_treeWidget.currentItem().text(2)
         else:
@@ -399,17 +386,14 @@ class MainUI(QtWidgets.QMainWindow):
                 self.guides_list_treeWidget.setCurrentItem(tree_item)
             tree_item.setForeground(0, color)
 
-        # print(selected_root_jnt)
-        # if selected_root_jnt:
-
-
-        # self.guides_list_treeWidget.setCurrentItem(currentItem)
         self.populate_properties()
 
-        self.guides_list_treeWidget.blockSignals(False)
+        self.block_all_signals(False)
 
     def populate_properties(self):
-        # set general properties
+        self.block_all_signals(True)
+
+        # general properties
         if self.guides_list_treeWidget.currentIndex().row() == -1:
             self.R_guides_WidgetContents.setHidden(True)
             return
@@ -417,22 +401,77 @@ class MainUI(QtWidgets.QMainWindow):
         root_jnt = self.guides_list_treeWidget.currentItem().text(2)
         module_type = self.guides_list_treeWidget.currentItem().text(3)
         self.module_name_le.setText(self.guide.get_property(root_jnt, "moduleName"))
+        for num, axis in enumerate("XYZ"):
+            self.up_axis_sp_list[num].setValue(self.guide.get_property(root_jnt, "upAxis%s" % axis))
+            self.mirror_axis_sp_list[num].setValue(self.guide.get_property(root_jnt, "mirrorAxis%s" % axis))
+            self.look_axis_sp_list[num].setValue(self.guide.get_property(root_jnt, "lookAxis%s" % axis))
 
-
+        self.inherit_orientation_cb.setChecked(self.guide.get_property(root_jnt, "useRefOri"))
 
         self.R_guides_WidgetContents.setHidden(False)
 
-        # print(self.guide.get_properties(module_type))
+        # extra properties
+        extra_properties = self.guide.get_extra_properties(module_type)
+        self.clearLayout(self.module_extras_formLayout)
+        if extra_properties:
+            for property_dict in extra_properties:
+                self.draw_extra_property(property_dict, self.module_extras_formLayout, root_jnt)
+
+        self.block_all_signals(False)
         pass
+
+    def draw_extra_property(self, property_dict, parent_form_layout, root_jnt):
+
+        p_name = property_dict["attr_name"]
+        p_nice_name = property_dict.get("nice_name").replace("_", " ")
+        p_lbl = QtWidgets.QLabel(self.R_guides_WidgetContents, text=p_nice_name)
+        p_type = property_dict.get("attr_type")
+        p_value = self.guide.get_property(root_jnt, p_name)
+
+        if p_type == "long" or p_type == "short":
+            p_widget = QtWidgets.QSpinBox()
+            min_val = property_dict.get("min_value") if property_dict.get("min_value") else -99999
+            max_val = property_dict.get("max_value") if property_dict.get("max_value") else 99999
+            p_widget.setRange(min_val, max_val)
+            p_widget.setValue(p_value)
+            p_widget.valueChanged.connect(lambda num: self.update_properties(p_name, num))
+        elif p_type == "bool":
+            p_widget = QtWidgets.QCheckBox()
+            p_widget.setCheckState(p_value)
+            p_widget.toggled.connect(lambda state=p_widget.isChecked(): self.update_properties(p_name, state))
+        elif p_type == "enum":
+            p_widget = QtWidgets.QComboBox()
+            enum_list_raw = property_dict.get("enum_list")
+            if not enum_list_raw:
+                FEEDBACK.throw_error("Missing 'enum_list'")
+            enum_list = enum_list_raw.split(":")
+            p_widget.addItems(enum_list)
+            p_widget.setCurrentIndex(p_value)
+            p_widget.currentIndexChanged.connect(lambda index: self.update_properties(p_name, index))
+        elif p_type == "float" or p_type == "double":
+            p_widget = QtWidgets.QDoubleSpinBox()
+            min_val = property_dict.get("min_value") if property_dict.get("min_value") else -99999
+            max_val = property_dict.get("max_value") if property_dict.get("max_value") else 99999
+            p_widget.setRange(min_val, max_val)
+            p_widget.setValue(p_value)
+            p_widget.valueChanged.connect(lambda num: self.update_properties(p_name, num))
+        elif p_type == "string":
+            p_widget = QtWidgets.QLineEdit()
+            p_widget.setText(p_value)
+            p_widget.textChanged.connect(lambda text: self.update_properties(p_name, text))
+        else:
+            p_widget = None
+            FEEDBACK.throw_error("Cannot find a proper equivalent for this attribute type %s" % p_type)
+
+        parent_form_layout.addRow(p_lbl, p_widget)
 
     def update_properties(self, property, value):
         root_jnt = self.guides_list_treeWidget.currentItem().text(2)
         self.guide.set_property(root_jnt, property, value)
-
+        if property == "moduleName":
+            self.populate_guides()
 
     def on_create_guide(self, limb_name, *args, **kwargs):
-        # print(limb_name)
-        # print(kwargs)
         if limb_name == "humanoid":
             self.guide.initHumanoid()
         else:
@@ -448,15 +487,37 @@ class MainUI(QtWidgets.QMainWindow):
             else:
                 side="center"
             self.guide.initLimb(limb_name, whichSide= side, **kwargs)
-
         self.populate_guides()
 
-    def on_guide_change(self):
+    def on_guide_change(self, currentItem, previousItem):
         row = self.guides_list_treeWidget.currentIndex().row()
         if row == -1:
             return
-        self.guide.select_root(str(self.guides_list_treeWidget.currentItem().text(2)))
+        self.guide.select_root(str(currentItem.text(2)))
         self.populate_properties()
+
+    def force_update(self):
+        if self.force and self.tabWidget.currentIndex() == 0:
+            self.populate_guides()
+
+
+    def eventFilter(self, object, event):
+        if event.type() == QtCore.QEvent.WindowActivate:
+            self.force = False
+        elif event.type()== QtCore.QEvent.WindowDeactivate:
+            self.force = True
+        # elif event.type()== QtCore.QEvent.FocusIn:
+        #     self.force = False
+        # elif event.type()== QtCore.QEvent.FocusOut:
+        #     self.force = True
+        return False
+
+    def clearLayout(self, layout):
+        while layout.count():
+            child = layout.takeAt(0)
+            if child.widget():
+                child.widget().deleteLater()
+
 
     def progressBar(self):
 
@@ -487,10 +548,3 @@ class MainUI(QtWidgets.QMainWindow):
         self.progress_progressBar.setObjectName(("progress_progressBar"))
 
         ret = self.progress_Dialog.show()
-
-    def force_update(self):
-        # print(self.centralwidget.hasFocus())
-        if self.R_guides_scrollArea.hasFocus() or self.guides_list_treeWidget.hasFocus():
-            return
-        self.populate_guides()
-

@@ -89,7 +89,7 @@ class Initials(settings.Settings):
             FEEDBACK.warning("cannot find mirror Joint automatically")
             return None, alignmentGiven, None
 
-    # @undo
+    @undo
     def initLimb(self, limb_name, whichSide="left", constrainedTo=None, parentNode=None, defineAs=False, *args, **kwargs):
 
         if limb_name not in self.valid_limbs:
@@ -248,7 +248,7 @@ class Initials(settings.Settings):
         """Returns reflection of the vector along the mirror axis"""
         return vector - 2 * (vector * self.mirrorVector) * self.mirrorVector
 
-    # @undo
+    @undo
     def initHumanoid(self, spineSegments=3, neckSegments=3, fingers=5):
         _, spine_dict = self.initLimb("spine", "auto", segments=spineSegments)
         root = spine_dict["C"][0]
@@ -296,6 +296,7 @@ class Initials(settings.Settings):
         for nmb, member in enumerate(fingers[4]):
             cmds.xform(member, a=True, t=pinky_pos_data[nmb], ro=pinky_rot_data[nmb])
         cmds.setAttr("%s.Finger_Type" % fingers[4][0], 5)
+        return True
 
     def adjust_guide_display(self, guide_object):
         """ Adjusts the display proerties of guid joints according to the settings. Accepts guide object as input"""
@@ -338,7 +339,12 @@ class Initials(settings.Settings):
         # return self.module_dict[module_type].get("properties")
 
     def set_property(self, jnt, attr, value):
-        if type(value) == int or type(value) == float:
+        if type(value) == int or type(value) == float or type(value) == bool:
             cmds.setAttr("%s.%s" % (jnt, attr), value)
         else:
             cmds.setAttr("%s.%s" % (jnt, attr), value, type="string")
+
+    def get_extra_properties(self, module_type):
+        module_type_dict = self.module_dict.get(module_type)
+        if module_type_dict:
+            return module_type_dict["properties"]

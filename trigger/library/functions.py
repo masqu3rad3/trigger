@@ -474,13 +474,13 @@ def create_global_joint_attrs(joint, moduleName=None, upAxis=None, mirrorAxis=No
         cmds.addAttr(joint, longName="useRefOri", niceName="Inherit_Orientation", at="bool", keyable=True)
     cmds.setAttr("{0}.useRefOri".format(joint), True)
 
-def create_attribute(node, attr_dictionary, keyable=True):
+def create_attribute(node, property_dict, keyable=True):
     supported_attrs = ["long", "short", "bool", "enum", "float", "double", "string"]
-    attr_name = attr_dictionary.get("attr_name")
+    attr_name = property_dict.get("attr_name")
     if not attr_name:
         FEEDBACK.throw_error("The attribute dictionary does not have 'attr_name' value")
-    nice_name = attr_dictionary.get("nice_name") if attr_dictionary.get("nice_name") else attr_name
-    attr_type = attr_dictionary.get("attr_type")
+    nice_name = property_dict.get("nice_name") if property_dict.get("nice_name") else attr_name
+    attr_type = property_dict.get("attr_type")
     if not attr_type:
         FEEDBACK.throw_error("The attribute dictionary does not have 'attr_type' value")
     if attr_type not in supported_attrs:
@@ -489,22 +489,22 @@ def create_attribute(node, attr_dictionary, keyable=True):
     if cmds.attributeQuery(attr_name, node=node, exists=True):
         return
     if attr_type == "bool":
-        default_value = attr_dictionary.get("default_value") if attr_dictionary.get("default_value") else 0
+        default_value = property_dict.get("default_value") if property_dict.get("default_value") else 0
         cmds.addAttr(node, shortName=attr_name, longName=nice_name, at=attr_type, k=keyable, defaultValue=default_value)
     elif attr_type == "enum":
-        default_value = attr_dictionary.get("default_value") if attr_dictionary.get("default_value") else 0
-        enum_list = attr_dictionary.get("enum_list")
+        default_value = property_dict.get("default_value") if property_dict.get("default_value") else 0
+        enum_list = property_dict.get("enum_list")
         if not enum_list:
             FEEDBACK.throw_error("Missing 'enum_list'")
         cmds.addAttr(node, shortName=attr_name, longName=nice_name, at=attr_type, en=enum_list, k=keyable, defaultValue=default_value)
     elif attr_type == "string":
-        default_value = attr_dictionary.get("string_value") if attr_dictionary.get("string_value") else ""
+        default_value = property_dict.get("string_value") if property_dict.get("string_value") else ""
         cmds.addAttr(node, shortName=attr_name, longName=nice_name, k=keyable, dataType="string")
         cmds.setAttr("%s.%s" % (node, attr_name), default_value, type="string")
     else:
-        min_val = attr_dictionary.get("min_value") if attr_dictionary.get("min_value") else -99999
-        max_val = attr_dictionary.get("max_value") if attr_dictionary.get("max_value") else 99999
-        default_value = attr_dictionary.get("default_value") if attr_dictionary.get("default_value") else 0
+        min_val = property_dict.get("min_value") if property_dict.get("min_value") else -99999
+        max_val = property_dict.get("max_value") if property_dict.get("max_value") else 99999
+        default_value = property_dict.get("default_value") if property_dict.get("default_value") else 0
         cmds.addAttr(node,
                      shortName=attr_name,
                      longName=nice_name,
@@ -587,44 +587,6 @@ def getRigAxes(joint):
     lookAxis = [cmds.getAttr("%s.lookAxis%s" % (joint, dir)) for dir in "XYZ"]
 
     return tuple(upAxis), tuple(mirrorAxis), tuple(lookAxis)
-
-    # axisDict = {"x": (1.0, 0.0, 0.0), "y": (0.0, 1.0, 0.0), "z": (0.0, 0.0, 1.0), "-x": (-1.0, 0.0, 0.0), "-y": (0.0, -1.0, 0.0), "-z": (0.0, 0.0, -1.0)}
-    # spineDict = {"x": (-1.0, 0.0, 0.0), "y": (0.0, -1.0, 0.0), "z": (0.0, 0.0, 1.0), "-x": (1.0, 0.0, 0.0), "-y": (0.0, 1.0, 0.0), "-z": (0.0, 0.0, 1.0)}
-    # upAxis = None
-    # mirrorAxis = None
-    # spineDir = None
-    # if cmds.attributeQuery("upAxis", node=joint, exists=True):
-    #     try:
-    #         upAxis = axisDict[cmds.getAttr("%s.upAxis" %joint).lower().replace("+", "")]
-    #     except:
-    #         cmds.warning("upAxis attribute is not valid, proceeding with default value (y up)")
-    #         upAxis = (0.0, 1.0, 0.0)
-    # else:
-    #     cmds.warning("upAxis attribute of the root node does not exist. Using default value (y up)")
-    #     upAxis = (0.0, 1.0, 0.0)
-    # ## get the mirror axis
-    # if cmds.attributeQuery("mirrorAxis", node=joint, exists=True):
-    #     try:
-    #         mirrorAxis = axisDict[cmds.getAttr("%s.mirrorAxis" %joint).lower().replace("+", "")]
-    #     except:
-    #         cmds.warning("mirrorAxis attribute is not valid, proceeding with default value (scene x)")
-    #         mirrorAxis = (1.0, 0.0, 0.0)
-    # else:
-    #     cmds.warning("mirrorAxis attribute of the root node does not exist. Using default value (scene x)")
-    #     mirrorAxis = (1.0, 0.0, 0.0)
-    #
-    # ## get spine Direction
-    # if cmds.attributeQuery("lookAxis", node=joint, exists=True):
-    #     try:
-    #         spineDir = spineDict[cmds.getAttr("%s.lookAxis" %joint).lower().replace("+", "")]
-    #     except:
-    #         cmds.warning("Cannot get spine direction from lookAxis attribute, proceeding with default value (-x)")
-    #         spineDir = (-1.0, 0.0, 0.0)
-    # else:
-    #     cmds.warning("lookAxis attribute of the root node does not exist. Using default value (-x) for spine direction")
-    #     spineDir = (1.0, 0.0, 0.0)
-    #
-    # return upAxis, mirrorAxis, spineDir
 
 def uniqueName(name):
     baseName = name

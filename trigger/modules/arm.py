@@ -1150,7 +1150,7 @@ class Guides(object):
         _ = [extra.set_joint_side(jnt, self.side) for jnt in self.guideJoints]
 
         root_jnt = self.guideJoints[0]
-        extra.create_global_joint_attrs(root_jnt, moduleName="Arm", upAxis=self.upVector, mirrorAxis=self.mirrorVector, lookAxis=self.lookVector)
+        extra.create_global_joint_attrs(root_jnt, moduleName="%s_Arm" % self.side, upAxis=self.upVector, mirrorAxis=self.mirrorVector, lookAxis=self.lookVector)
 
         for attr_dict in LIMB_DATA["properties"]:
             extra.create_attribute(root_jnt, attr_dict)
