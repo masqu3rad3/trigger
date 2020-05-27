@@ -5,9 +5,9 @@ from maya import OpenMayaUI as omui
 # from trigger.core import io
 from trigger.core import settings
 
-import trigger.guides.initials as init
+import trigger.base.initials as init
 # from trigger.rig import scratch
-from trigger.rig import builder
+from trigger.base import builder
 from trigger.core import feedback
 
 

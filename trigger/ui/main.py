@@ -2,20 +2,16 @@
 from trigger.ui import Qt
 from trigger.ui.Qt import QtWidgets, QtCore, QtGui
 
-from trigger.guides import initials
-from trigger.rig import builder
+from trigger.base import initials, builder
 
 from maya import OpenMayaUI as omui
 
 if Qt.__binding__ == "PySide":
     from shiboken import wrapInstance
-    from Qt.QtCore import Signal
 elif Qt.__binding__.startswith('PyQt'):
     from sip import wrapinstance as wrapInstance
-    from Qt.Core import pyqtSignal as Signal
 else:
     from shiboken2 import wrapInstance
-    from Qt.QtCore import Signal
 
 from trigger.core import feedback
 

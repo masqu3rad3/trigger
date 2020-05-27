@@ -1,20 +1,5 @@
-self.collar_pos => self.leg_root_pos
-self.shoulder_pos => self.hip_pos
-self.elbow_pos => self.knee_pos
-self.hand_pos => self.foot_pos
-
-self.j_def_collar => self.jDef_legRoot
-
-self.j_collar_end => self.j_def_hip
-
-self.j_def_elbow => self.j_def_midLeg
-self.j_def_hand => self.j_def_foot
-
-
-self.j_ik_orig_up => self.j_ik_orig_root
-self.j_ik_orig_low => self.j_ik_orig_knee
-self.j_ik_orig_low_end => self.j_ik_orig_end
-
+Mind Map:
+https://miro.com/app/board/o9J_krrlWig=/
 
 ## Matrix Constraint
 
@@ -36,12 +21,14 @@ import os
 # each new new trigger module uses trigger.<module> paths to acces modules
 
 # windows dev path
-#trigger_path = "C:\\Users\\kutlu\\Documents\\maya\\scripts\\TRigger"
+trigger_path = "C:\\Users\\kutlu\\Documents\\maya\\scripts\\TRigger"
 # linux dev path
-trigger_path = "/home/masqu3rad3/maya/scripts/TRigger"
+# trigger_path = "/home/masqu3rad3/maya/scripts/TRigger"
 
 if trigger_path not in sys.path:
     sys.path.append(trigger_path)
+
+# load reload all modules
 
 # load reload all modules
 
@@ -55,9 +42,15 @@ reload(io)
 from trigger.core import settings
 reload(settings)
 
-# Guides
-from trigger.guides import initials
+# Base
+from trigger.base import initials
 reload(initials)
+from trigger.base import connections
+reload(connections)
+from trigger.base import weights
+reload(weights)
+from trigger.base import builder
+reload(builder)
 
 # Library
 from trigger.library import controllers
@@ -72,6 +65,9 @@ from trigger.library import twist_spline
 reload(twist_spline)
 
 # Modules
+import trigger.modules.__init__
+reload(trigger.modules.__init__)
+
 from trigger import modules
 reload(modules)
 from trigger.modules import arm
@@ -82,26 +78,14 @@ from trigger.modules import head
 reload(head)
 from trigger.modules import leg
 reload(leg)
-from trigger.modules import root
-reload(root)
+from trigger.modules import connector
+reload(connector)
 from trigger.modules import spine
 reload(spine)
 from trigger.modules import tail
 reload(tail)
 from trigger.modules import tentacle
 reload(tentacle)
-from trigger.modules import all_modules_data
-reload(all_modules_data)
-
-# Rig
-from trigger.rig import connections
-reload(connections)
-from trigger.rig import scratch
-reload(scratch)
-from trigger.rig import weights
-reload(weights)
-from trigger.rig import builder
-reload(builder)
 
 # Utils
 from trigger.utils import mr_cubic
@@ -109,15 +93,18 @@ reload(mr_cubic)
 from trigger.utils import space_switcher
 reload(space_switcher)
 
-# UI
+# # old UI
 # from trigger.ui import start
 # reload(start)
-
+# start.MainUI().show()
+# new UI
+from trigger import modules
+reload(modules)
 from trigger.ui import main
 reload(main)
 main.MainUI() # show() runs inside the init
 
-# start.MainUI().show()
+
 
 # import time
 # start=time.time()
