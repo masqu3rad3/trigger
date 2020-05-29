@@ -61,6 +61,7 @@ class MainUI(QtWidgets.QMainWindow):
         self.buildTabsUI()
         self.buildBarsUI()
         self.buildGuidesUI()
+        self.buildRiggingUI()
         self.show()
 
         self.populate_guides()
@@ -348,6 +349,217 @@ class MainUI(QtWidgets.QMainWindow):
         self.look_axis_sp_list[2].valueChanged.connect(lambda num: self.update_properties("lookAxisZ", num))
 
         self.inherit_orientation_cb.toggled.connect(lambda state=self.inherit_orientation_cb.isChecked(): self.update_properties("useRefOri", state))
+
+    def buildRiggingUI(self):
+        rigging_tab_vlay = QtWidgets.QVBoxLayout(self.rigging_tab)
+        self.splitter = QtWidgets.QSplitter(self.rigging_tab)
+        self.splitter.setOrientation(QtCore.Qt.Horizontal)
+        rigging_tab_vlay.addWidget(self.splitter)
+
+        L_splitter_layoutWidget = QtWidgets.QWidget(self.splitter)
+        L_rigging_vLay = QtWidgets.QVBoxLayout(L_splitter_layoutWidget)
+        L_rigging_vLay.setContentsMargins(0, 0, 0, 0)
+
+        module_rigging_lbl = QtWidgets.QLabel(L_splitter_layoutWidget)
+        module_rigging_lbl.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        module_rigging_lbl.setFrameShadow(QtWidgets.QFrame.Plain)
+        module_rigging_lbl.setText("Actions")
+        module_rigging_lbl.setAlignment(QtCore.Qt.AlignCenter)
+        L_rigging_vLay.addWidget(module_rigging_lbl)
+
+        ########################################################################
+
+        self.module_create_splitter = QtWidgets.QSplitter(L_splitter_layoutWidget)
+        L_rigging_vLay.addWidget(self.module_create_splitter)
+        self.module_create_splitter.setOrientation(QtCore.Qt.Horizontal)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.module_create_splitter.sizePolicy().hasHeightForWidth())
+        self.module_create_splitter.setSizePolicy(sizePolicy)
+
+        self.verticalLayoutWidget_2 = QtWidgets.QWidget(self.module_create_splitter)
+
+        self.rigging_create_vLay = QtWidgets.QVBoxLayout(self.verticalLayoutWidget_2)
+        self.rigging_create_vLay.setContentsMargins(0, 0, 0, 0)
+
+        spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+
+        button_scrollArea = QtWidgets.QScrollArea()
+        button_scrollArea.setFrameShape(QtWidgets.QFrame.NoFrame)
+        button_scrollArea.setFrameShadow(QtWidgets.QFrame.Sunken)
+        button_scrollArea.setWidgetResizable(True)
+
+        button_scrollArea_WidgetContents = QtWidgets.QWidget()
+        button_scrollArea_vLay = QtWidgets.QVBoxLayout(button_scrollArea_WidgetContents)
+        button_scrollArea.setWidget(button_scrollArea_WidgetContents)
+        self.rigging_create_vLay.addWidget(button_scrollArea)
+
+        self.module_settings_formLayout = QtWidgets.QFormLayout()
+        button_scrollArea_vLay.addLayout(self.module_settings_formLayout)
+
+        self.rigging_buttons_vLay = QtWidgets.QVBoxLayout()
+        self.rigging_buttons_vLay.setSpacing(2)
+
+        ####### Module Buttons ########## [START]
+
+        # for module in sorted(self.rigging.valid_limbs):
+        #     rigging_button_hLay = QtWidgets.QHBoxLayout()
+        #     rigging_button_hLay.setSpacing(2)
+        #     rigging_button_pb = QtWidgets.QPushButton(self.verticalLayoutWidget_2)
+        #     rigging_button_pb.setText(module.capitalize())
+        #     rigging_button_hLay.addWidget(rigging_button_pb)
+        #     segments_sp = QtWidgets.QSpinBox(self.verticalLayoutWidget_2)
+        #     segments_sp.setObjectName("sp_%s" % module)
+        #     segments_sp.setMinimum(1)
+        #     segments_sp.setValue(3)
+        #     sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Fixed)
+        #     sizePolicy.setHorizontalStretch(0)
+        #     sizePolicy.setVerticalStretch(0)
+        #     sizePolicy.setHeightForWidth(segments_sp.sizePolicy().hasHeightForWidth())
+        #     segments_sp.setSizePolicy(sizePolicy)
+        #     rigging_button_hLay.addWidget(segments_sp)
+        #     if not self.rigging.module_dict[module].get("multi_rigging"):
+        #         segments_sp.setValue(3)
+        #         segments_sp.setEnabled(False)
+        #
+        #     self.rigging_buttons_vLay.addLayout(rigging_button_hLay)
+        #
+        #     ############ SIGNALS ############### [Start]
+        #     # following signal connection finds the related spinbox using the object name
+        #     rigging_button_pb.clicked.connect(lambda ignore=module, limb=module: self.on_create_rigging(limb,
+        #                                                                                             segments=self.verticalLayoutWidget_2.findChild(
+        #                                                                                                 QtWidgets.QSpinBox,
+        #                                                                                                 "sp_%s" % limb).value()))
+        #     ############ SIGNALS ############### [End]
+
+        ####### Module Buttons ########## [End]
+
+        ####### Preset Buttons ########## [Start]
+        preset_spacer = QtWidgets.QSpacerItem(20, 20, QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
+        self.guide_buttons_vLay.addItem(preset_spacer)
+
+        preset_lbl = QtWidgets.QLabel()
+        preset_lbl.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        preset_lbl.setFrameShadow(QtWidgets.QFrame.Plain)
+        preset_lbl.setText("Presets")
+        preset_lbl.setAlignment(QtCore.Qt.AlignCenter)
+        self.guide_buttons_vLay.addWidget(preset_lbl)
+
+        humanoid_button_pb = QtWidgets.QPushButton(self.verticalLayoutWidget_2, text="Humanoid")
+        self.guide_buttons_vLay.addWidget(humanoid_button_pb)
+
+        humanoid_button_pb.clicked.connect(lambda: self.on_create_guide("humanoid"))
+
+        spacerItem1 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.guide_buttons_vLay.addItem(spacerItem1)
+        # self.guides_create_vLay.addLayout(self.guide_buttons_vLay)
+        button_scrollArea_vLay.addLayout(self.guide_buttons_vLay)
+
+        self.guides_list_treeWidget = QtWidgets.QTreeWidget(self.splitter, sortingEnabled=True, rootIsDecorated=False)
+        self.guides_list_treeWidget.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
+
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.guides_list_treeWidget.sizePolicy().hasHeightForWidth())
+        self.guides_list_treeWidget.setSizePolicy(sizePolicy)
+
+        # columng for guides list
+        colums = ["Name", "Side", "Root Joint", "Module"]
+        header = QtWidgets.QTreeWidgetItem(colums)
+        self.guides_list_treeWidget.setHeaderItem(header)
+        self.guides_list_treeWidget.setColumnWidth(0, 80)
+        self.guides_list_treeWidget.setColumnWidth(1, 20)
+
+        # Guides Right Side
+        R_splitter_layoutWidget = QtWidgets.QWidget(self.splitter)
+        R_guides_vLay = QtWidgets.QVBoxLayout(R_splitter_layoutWidget)
+        R_guides_vLay.setContentsMargins(0, 0, 0, 0)
+
+        guide_properties_lbl = QtWidgets.QLabel(R_splitter_layoutWidget)
+        guide_properties_lbl.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        guide_properties_lbl.setFrameShadow(QtWidgets.QFrame.Plain)
+        guide_properties_lbl.setText("Guide Properties")
+        guide_properties_lbl.setAlignment(QtCore.Qt.AlignCenter)
+        R_guides_vLay.addWidget(guide_properties_lbl)
+
+        R_guides_scrollArea = QtWidgets.QScrollArea(R_splitter_layoutWidget)
+        R_guides_scrollArea.setFrameShape(QtWidgets.QFrame.NoFrame)
+        R_guides_scrollArea.setFrameShadow(QtWidgets.QFrame.Sunken)
+        R_guides_scrollArea.setWidgetResizable(True)
+
+        self.R_guides_WidgetContents = QtWidgets.QWidget()
+
+        self.R_guides_scrollArea_vLay = QtWidgets.QVBoxLayout(self.R_guides_WidgetContents)
+        R_guides_scrollArea.setWidget(self.R_guides_WidgetContents)
+        R_guides_vLay.addWidget(R_guides_scrollArea)
+
+        self.module_settings_formLayout = QtWidgets.QFormLayout()
+        self.module_extras_formLayout = QtWidgets.QFormLayout()
+        self.R_guides_scrollArea_vLay.addLayout(self.module_settings_formLayout)
+        self.R_guides_scrollArea_vLay.addLayout(self.module_extras_formLayout)
+
+        ## PROPERTIES -General [Start]
+        # name
+        module_name_lbl = QtWidgets.QLabel(self.R_guides_WidgetContents, text="Module Name")
+        self.module_name_le = QtWidgets.QLineEdit(self.R_guides_WidgetContents)
+        self.module_settings_formLayout.addRow(module_name_lbl, self.module_name_le)
+
+        # up axis
+        up_axis_lbl = QtWidgets.QLabel(self.R_guides_WidgetContents, text="Up Axis")
+        up_axis_hLay = QtWidgets.QHBoxLayout(spacing=3)
+
+        self.up_axis_sp_list = [QtWidgets.QDoubleSpinBox(self.R_guides_WidgetContents, minimumWidth=40,
+                                                         buttonSymbols=QtWidgets.QAbstractSpinBox.NoButtons) for axis in
+                                "XYZ"]
+        _ = [up_axis_hLay.addWidget(sp) for sp in self.up_axis_sp_list]
+        self.module_settings_formLayout.addRow(up_axis_lbl, up_axis_hLay)
+
+        # mirror axis
+        mirror_axis_lbl = QtWidgets.QLabel(self.R_guides_WidgetContents, text="Mirror Axis")
+        mirror_axis_hLay = QtWidgets.QHBoxLayout(spacing=3)
+        self.mirror_axis_sp_list = [QtWidgets.QDoubleSpinBox(self.R_guides_WidgetContents, minimumWidth=40,
+                                                             buttonSymbols=QtWidgets.QAbstractSpinBox.NoButtons) for
+                                    axis in "XYZ"]
+        _ = [mirror_axis_hLay.addWidget(sp) for sp in self.mirror_axis_sp_list]
+        self.module_settings_formLayout.addRow(mirror_axis_lbl, mirror_axis_hLay)
+
+        # look axis
+        look_axis_lbl = QtWidgets.QLabel(self.R_guides_WidgetContents, text="Look Axis")
+        look_axis_hLay = QtWidgets.QHBoxLayout(spacing=3)
+        self.look_axis_sp_list = [QtWidgets.QDoubleSpinBox(self.R_guides_WidgetContents, minimumWidth=40,
+                                                           buttonSymbols=QtWidgets.QAbstractSpinBox.NoButtons) for axis
+                                  in "XYZ"]
+        _ = [look_axis_hLay.addWidget(sp) for sp in self.look_axis_sp_list]
+        self.module_settings_formLayout.addRow(look_axis_lbl, look_axis_hLay)
+
+        # inherit orientation
+        inherit_orientation_lbl = QtWidgets.QLabel(self.R_guides_WidgetContents, text="Inherit Orientation")
+        self.inherit_orientation_cb = QtWidgets.QCheckBox(self.R_guides_WidgetContents, text="", checked=True)
+        self.module_settings_formLayout.addRow(inherit_orientation_lbl, self.inherit_orientation_cb)
+
+        ## PROPERTIES - General [End]
+
+        ## SIGNALS
+        self.guides_list_treeWidget.currentItemChanged.connect(self.on_guide_change)
+        # self.module_name_le.textChanged.connect(lambda text=self.module_name_le.text(): self.update_properties("moduleName", text))
+        self.module_name_le.textEdited.connect(
+            lambda text=self.module_name_le.text(): self.update_properties("moduleName", text))
+
+        self.up_axis_sp_list[0].valueChanged.connect(lambda num: self.update_properties("upAxisX", num))
+        self.up_axis_sp_list[1].valueChanged.connect(lambda num: self.update_properties("upAxisY", num))
+        self.up_axis_sp_list[2].valueChanged.connect(lambda num: self.update_properties("upAxisZ", num))
+        self.mirror_axis_sp_list[0].valueChanged.connect(lambda num: self.update_properties("mirrorAxisX", num))
+        self.mirror_axis_sp_list[1].valueChanged.connect(lambda num: self.update_properties("mirrorAxisY", num))
+        self.mirror_axis_sp_list[2].valueChanged.connect(lambda num: self.update_properties("mirrorAxisZ", num))
+        self.look_axis_sp_list[0].valueChanged.connect(lambda num: self.update_properties("lookAxisX", num))
+        self.look_axis_sp_list[1].valueChanged.connect(lambda num: self.update_properties("lookAxisY", num))
+        self.look_axis_sp_list[2].valueChanged.connect(lambda num: self.update_properties("lookAxisZ", num))
+
+        self.inherit_orientation_cb.toggled.connect(
+            lambda state=self.inherit_orientation_cb.isChecked(): self.update_properties("useRefOri", state))
+
 
     def block_all_signals(self, state):
         self.guides_list_treeWidget.blockSignals(state)
