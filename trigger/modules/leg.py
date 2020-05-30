@@ -472,7 +472,7 @@ class Leg(object):
 
         ### Create End Lock
         self.end_lock = cmds.spaceLocator(name="endLock_%s" % self.suffix)[0]
-        extra.alignTo(self.end_lock, self.jfk_foot, 2)
+        extra.alignTo(self.end_lock, self.jfk_foot, position=True, rotation=True)
         self.end_lock_ore = extra.createUpGrp(self.end_lock, "Ore")
         self.end_lock_pos = extra.createUpGrp(self.end_lock, "Pos")
         self.end_lock_twist = extra.createUpGrp(self.end_lock, "Twist")
@@ -976,7 +976,6 @@ class Leg(object):
 
         ribbon_lower_leg = rc.PowerRibbon()
         ribbon_lower_leg.createPowerRibbon(self.j_def_midLeg, self.j_def_foot, "low_%s" % self.suffix, side=self.side,  orientation=90, upVector=self.look_axis)
-
         cmds.parentConstraint(self.mid_lock, ribbon_lower_leg.startConnection, mo=False)
         ribbon_start_pa_con_lower_leg_end = cmds.parentConstraint(self.end_lock, ribbon_lower_leg.endConnection, mo=False)[0]
 
@@ -984,7 +983,6 @@ class Leg(object):
         cmds.connectAttr("%s.scale" % self.cont_mid_lock, "%s.scale" % ribbon_lower_leg.startConnection)
 
         cmds.scaleConstraint(self.scaleGrp, ribbon_lower_leg.scaleGrp)
-
 
         # AUTO AND MANUAL TWIST
 
@@ -1142,7 +1140,6 @@ class Leg(object):
 
         cmds.parent(angleExt_Root_IK, self.scaleGrp)
         cmds.connectAttr("%s.rigVis" % self.scaleGrp, "%s.v" % angleExt_Root_IK)
-        return
 
 
     def roundUp(self):

@@ -279,23 +279,23 @@ class Initials(settings.Settings):
 
         for nmb, member in enumerate(fingers[0]):
             cmds.xform(member, a=True, t=thumb_pos_data[nmb], ro=thumb_rot_data[nmb])
-        cmds.setAttr("%s.Finger_Type" % fingers[0][0], 1)
+        cmds.setAttr("%s.fingerType" % fingers[0][0], 1)
 
         for nmb, member in enumerate(fingers[1]):
             cmds.xform(member, a=True, t=index_pos_data[nmb], ro=index_rot_data[nmb])
-        cmds.setAttr("%s.Finger_Type" % fingers[1][0], 2)
+        cmds.setAttr("%s.fingerType" % fingers[1][0], 2)
 
         for nmb, member in enumerate(fingers[2]):
             cmds.xform(member, a=True, t=middle_pos_data[nmb], ro=middle_rot_data[nmb])
-        cmds.setAttr("%s.Finger_Type" % fingers[2][0], 3)
+        cmds.setAttr("%s.fingerType" % fingers[2][0], 3)
 
         for nmb, member in enumerate(fingers[3]):
             cmds.xform(member, a=True, t=ring_pos_data[nmb], ro=ring_rot_data[nmb])
-        cmds.setAttr("%s.Finger_Type" % fingers[3][0], 4)
+        cmds.setAttr("%s.fingerType" % fingers[3][0], 4)
 
         for nmb, member in enumerate(fingers[4]):
             cmds.xform(member, a=True, t=pinky_pos_data[nmb], ro=pinky_rot_data[nmb])
-        cmds.setAttr("%s.Finger_Type" % fingers[4][0], 5)
+        cmds.setAttr("%s.fingerType" % fingers[4][0], 5)
         return True
 
     def adjust_guide_display(self, guide_object):

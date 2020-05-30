@@ -22,7 +22,8 @@ class Icon(object):
                              "Triangle": self.triangle,
                              "Pyramid": self.pyramid,
                              "Diamond": self.diamond,
-                             "Arrow": self.arrow
+                             "Arrow": self.arrow,
+                             "Preferences": self.preferences,
                              }
 
 
@@ -52,7 +53,7 @@ class Icon(object):
     def getIconsList(self):
         return self.iconDictionary.keys()
 
-    def circle(self, name="cont_circle"):
+    def circle(self, name="circle_cont"):
         """
         Creates a circle controller. Nothing Fancy...
         Args:
@@ -68,7 +69,7 @@ class Icon(object):
         cont_circle = cmds.circle(name=name, nr=(0, 1, 0), ch=0)
         return cont_circle[0]
 
-    def cube(self, name="cont_cube"):
+    def cube(self, name="cube_cont"):
         """
         Creates a cube controller as a single shape
         Args:
@@ -88,7 +89,7 @@ class Icon(object):
                              k=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])
         return cont_cube
 
-    def thigh(self, name="cont_thigh"):
+    def thigh(self, name="thigh_cont"):
         """
         Creates a cube controller as a single shape
         Args:
@@ -107,7 +108,7 @@ class Icon(object):
                               k=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])
         return cont_thigh
 
-    def star(self, name="cont_star"):
+    def star(self, name="star_cont"):
         """
         Creates a star-ish shaped controller
         Args:
@@ -130,7 +131,7 @@ class Icon(object):
         cmds.select(d=True)
         return cont_star
 
-    def fkikSwitch(self, name="cont_fkik"):
+    def fkikSwitch(self, name="fkik_cont"):
         """
         Creates a FK-IK controller.
         Args:
@@ -185,7 +186,7 @@ class Icon(object):
         cmds.makeIdentity(a=True)
         return cont_FK_IK, fk_ik_rvs
 
-    def shoulder(self, name="cont_shoulder"):
+    def shoulder(self, name="shoulder_cont"):
         """
         Creates a bended Eliptical controller for shoulders.
         Args:
@@ -211,7 +212,7 @@ class Icon(object):
 
         return cont_shoulder
 
-    def plus(self, name="cont_plus"):
+    def plus(self, name="plus_cont"):
         """
         Creates a plus controller. Usually for pole vector
         Args:
@@ -230,7 +231,7 @@ class Icon(object):
         cmds.makeIdentity(cont_Pole, a=True, s=True)
         return cont_Pole
 
-    def waist(self, name="cont_waist"):
+    def waist(self, name="waist_cont"):
         """
         Creates a plus controller. Usually for pole vector
         Args:
@@ -261,7 +262,7 @@ class Icon(object):
         cmds.makeIdentity(cont_waist, a=True, s=True)
         return cont_waist
 
-    def square(self, name="cont_square"):
+    def square(self, name="square_cont"):
         """
         Creates a square controller.
         Args:
@@ -276,7 +277,7 @@ class Icon(object):
                                k=[0, 1, 2, 3, 4])
         return cont_square
 
-    def ngon(self, name="cont_ngon"):
+    def ngon(self, name="ngon_cont"):
         """
         Creates a ngon controller.
         Args:
@@ -295,7 +296,7 @@ class Icon(object):
         cmds.makeIdentity(cont_ngon, a=True, s=True)
         return cont_ngon
 
-    def triCircle(self, name="cont_triCircle"):
+    def triCircle(self, name="triCircle_cont"):
         """
         Creates a circle controller with triangles on each direction.
         Args:
@@ -326,7 +327,7 @@ class Icon(object):
         cmds.delete(masterTri)
         return cont_triCircle
 
-    def curvedCircle(self, name="cont_curvedCircle"):
+    def curvedCircle(self, name="curvedCircle_cont"):
         """
         Creates a slightly curved circle controller
         Args:
@@ -342,7 +343,7 @@ class Icon(object):
             cmds.move(0, 0.25, 0, "%s.cv[%i]" % (cont_curvedCircle, cv_num), r=True)
         return cont_curvedCircle
 
-    def halfDome(self, name="cont_halfDome"):
+    def halfDome(self, name="halfDome_cont"):
 
         cont_halfCurve = cmds.curve(name=name, d=1,
                                   p=[(-2.98023e-008, 0, 1), (-0.309017, 0, 0.951057), (-0.587785, 0, 0.809017),
@@ -382,7 +383,7 @@ class Icon(object):
         cmds.makeIdentity(cont_halfCurve, a=True, s=True)
         return cont_halfCurve
 
-    def looper(self, name="cont_looper"):
+    def looper(self, name="looper_cont"):
 
         cont_Looper = cmds.curve(name=name, d=1,
                                p=[(0, 0, -1), (1, 0, -1), (1, 0, 1), (-1, 0, 1), (-1, 0, -2), (2, 0, -2), (2, 0, 2),
@@ -392,22 +393,22 @@ class Icon(object):
         cmds.makeIdentity(cont_Looper, a=True, s=True)
         return cont_Looper
 
-    def triangle(self, name="cont_triangle"):
+    def triangle(self, name="triangle_cont"):
         cont_Triangle = cmds.curve(name=name, d=1, p=[(0, 0, -3), (-3, 0, 2), (3, 0, 2), (0, 0, -3)], k=[0, 1, 2, 3])
         # pm.setAttr(cont_Triangle + ".scale", (0.333, 0.333, 0.333))
-        cmds.setAttr("%s.scale" % cont_Triangle, (0.333, 0.333, 0.333))
+        cmds.setAttr("%s.scale" % cont_Triangle, 0.333, 0.333, 0.333)
         cmds.makeIdentity(cont_Triangle, a=True, s=True)
         return cont_Triangle
 
-    def pyramid(self, name="cont_pyramid"):
+    def pyramid(self, name="pyramid_cont"):
         cont_Pyramid = cmds.curve(name=name, d=1,
                                 p=[(-1, 0, 1), (1, 0, 1), (1, 0, -1), (-1, 0, -1), (-1, 0, 1), (0, 2, 0), (1, 0, -1),
                                    (-1, 0, -1), (0, 2, 0), (1, 0, 1)], k=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
-        cmds.setAttr("%s.scale" %cont_Pyramid, (0.333, 0.333, 0.333))
+        cmds.setAttr("%s.scale" %cont_Pyramid, 0.333, 0.333, 0.333)
         cmds.makeIdentity(cont_Pyramid, a=True, s=True)
         return cont_Pyramid
 
-    def diamond(self, name="cont_diamond"):
+    def diamond(self, name="diamond_cont"):
         cont_diamond = cmds.curve(name=name, d=1,
                                 p=[(0.341725, 0, 1.051722), (1.105846, 0, 0), (0, 0.962601, 0), (0.341725, 0, 1.051722),
                                    (0, -0.962601, 0), (1.105846, 0, 0), (0.341725, 0, -1.051722), (0, 0.962601, 0),
@@ -419,10 +420,47 @@ class Icon(object):
         cmds.makeIdentity(cont_diamond, a=True, s=True)
         return cont_diamond
 
-    def arrow(self, name="cont_arrow"):
+    def arrow(self, name="arrow_cont"):
         cont_arrow = cmds.curve(name=name, d=1, p=[(0.0335873, 0, 1.055001), (-4.955996, 0, 0.971701), (-4.983113, 0, 2.081272),
                          (-7.934906, 0, -0.0118149), (-4.93066, 0, -2.06217), (-4.973678, 0, -0.968172),
                          (0.0696592, 0, -1.018287), (0.0192114, 0, 1.054761)], k=[0, 1, 2, 3, 4, 5, 6, 7])
         cmds.makeIdentity(cont_arrow, a=True, s=True)
         return cont_arrow
 
+    def preferences(self, name="pref_cont"):
+        cont_pref = cmds.curve(name=name, d=1, p=[(-2.005908, -0.00143437, 2.011916), (-2.005908, -0.00143437, -2.997386),
+                         (0.138344, -0.00143437, -2.997386), (0.364393, -0.00143437, -2.990991),
+                         (0.577802, -0.00143437, -2.971805), (0.778569, -0.00143437, -2.939829),
+                         (0.966696, -0.00143437, -2.895063), (1.142182, -0.00143437, -2.837506),
+                         (1.305028, -0.00143437, -2.767159), (1.455232, -0.00143437, -2.684021),
+                         (1.592796, -0.00143437, -2.588093), (1.715837, -0.00143437, -2.479426),
+                         (1.822472, -0.00143437, -2.358071), (1.912702, -0.00143437, -2.224027),
+                         (1.986526, -0.00143437, -2.077296), (2.043945, -0.00143437, -1.917877),
+                         (2.084959, -0.00143437, -1.745769), (2.109567, -0.00143437, -1.560974),
+                         (2.11777, -0.00143437, -1.363491), (2.109539, -0.00143437, -1.165979),
+                         (2.084849, -0.00143437, -0.981102), (2.043697, -0.00143437, -0.808856),
+                         (1.986085, -0.00143437, -0.649244), (1.912013, -0.00143437, -0.502265),
+                         (1.82148, -0.00143437, -0.367918), (1.714486, -0.00143437, -0.246204),
+                         (1.591032, -0.00143437, -0.137124), (1.45311, -0.00143437, -0.0407822),
+                         (1.302712, -0.00143437, 0.0427137), (1.139839, -0.00143437, 0.113364),
+                         (0.964491, -0.00143437, 0.171169), (0.776667, -0.00143437, 0.216129),
+                         (0.576368, -0.00143437, 0.248242), (0.363594, -0.00143437, 0.267511),
+                         (0.138344, -0.00143437, 0.273934), (-0.479363, -0.00143437, 0.273934),
+                         (-0.479363, -0.00143437, -0.662097), (0.000736963, -0.00143437, -0.662097),
+                         (0.176589, -0.00143437, -0.673313), (0.331649, -0.00143437, -0.706958),
+                         (0.465917, -0.00143437, -0.763035), (0.579392, -0.00143437, -0.841541),
+                         (0.669587, -0.00143437, -0.941439), (0.734012, -0.00143437, -1.061687),
+                         (0.772666, -0.00143437, -1.202287), (0.785551, -0.00143437, -1.363238),
+                         (0.772666, -0.00143437, -1.524095), (0.734012, -0.00143437, -1.664412),
+                         (0.669587, -0.00143437, -1.784188), (0.579392, -0.00143437, -1.883424),
+                         (0.465917, -0.00143437, -1.961269), (0.331649, -0.00143437, -2.016872),
+                         (0.176589, -0.00143437, -2.050235), (0.000736963, -0.00143437, -2.061355),
+                         (-0.714014, -0.00143437, -2.061355), (-0.714014, -0.00143437, 2.011916),
+                         (-2.005908, -0.00143437, 2.011916)],
+                 k=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
+                    27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51,
+                    52, 53, 54, 55, 56])
+        cmds.setAttr("%s.scale" %cont_pref, 0.333, 0.333, 0.333)
+        cmds.setAttr("%s.rotate" % cont_pref, 90, 0, 0)
+        cmds.makeIdentity(cont_pref, a=True)
+        return cont_pref

@@ -314,7 +314,7 @@ def colorize (node_list, index, shape=True):
                 cmds.setAttr("{0}.overrideEnabled".format(shape), True)
                 cmds.setAttr("{0}.overrideColor".format(shape), index)
 
-def lockAndHide (node, channelArray, hide=True):
+def lockAndHide (node, channelArray=None, hide=True):
     """
     Locks and hides the channels specified in the channelArray.
     Args:
@@ -324,6 +324,7 @@ def lockAndHide (node, channelArray, hide=True):
     Returns: None
 
     """
+    channelArray = ["tx", "ty", "tz", "rx", "ry", "rz", "sx", "sy", "sz", "v"] if not channelArray else channelArray
     ## // TODO OPTIMIZE HERE (map function?)
     for i in channelArray:
         attribute=("%s.%s" %(node, i))
@@ -424,6 +425,7 @@ def attrPass (sourceNode, targetNode, attributes=[], inConnections=True, outConn
 
 
         # if an attribute with the same name exists
+        FEEDBACK.warning("BACIN", attr, targetNode)
         if cmds.attributeQuery(attr, node=targetNode, exists=True):
             if overrideEx:
                 cmds.deleteAttr("%s.%s" % (targetNode, attr))
@@ -431,7 +433,7 @@ def attrPass (sourceNode, targetNode, attributes=[], inConnections=True, outConn
             else:
                 continue
         else:
-
+            FEEDBACK.warning("ANAN", addAttribute)
             exec(addAttribute)
 
     if daisyChain==True:
@@ -474,9 +476,10 @@ def create_global_joint_attrs(joint, moduleName=None, upAxis=None, mirrorAxis=No
         cmds.addAttr(joint, longName="useRefOri", niceName="Inherit_Orientation", at="bool", keyable=True)
     cmds.setAttr("{0}.useRefOri".format(joint), True)
 
-def create_attribute(node, property_dict, keyable=True):
+def create_attribute(node, property_dict, keyable=True, display=True):
     supported_attrs = ["long", "short", "bool", "enum", "float", "double", "string"]
     attr_name = property_dict.get("attr_name")
+
     if not attr_name:
         FEEDBACK.throw_error("The attribute dictionary does not have 'attr_name' value")
     nice_name = property_dict.get("nice_name") if property_dict.get("nice_name") else attr_name
@@ -490,29 +493,33 @@ def create_attribute(node, property_dict, keyable=True):
         return
     if attr_type == "bool":
         default_value = property_dict.get("default_value") if property_dict.get("default_value") else 0
-        cmds.addAttr(node, shortName=attr_name, longName=nice_name, at=attr_type, k=keyable, defaultValue=default_value)
+        cmds.addAttr(node, longName=attr_name, niceName=nice_name, at=attr_type, k=keyable, defaultValue=default_value)
     elif attr_type == "enum":
         default_value = property_dict.get("default_value") if property_dict.get("default_value") else 0
         enum_list = property_dict.get("enum_list")
         if not enum_list:
             FEEDBACK.throw_error("Missing 'enum_list'")
-        cmds.addAttr(node, shortName=attr_name, longName=nice_name, at=attr_type, en=enum_list, k=keyable, defaultValue=default_value)
+        cmds.addAttr(node, longName=attr_name, niceName=nice_name, at=attr_type, en=enum_list, k=keyable, defaultValue=default_value)
     elif attr_type == "string":
         default_value = property_dict.get("string_value") if property_dict.get("string_value") else ""
-        cmds.addAttr(node, shortName=attr_name, longName=nice_name, k=keyable, dataType="string")
+        cmds.addAttr(node, longName=attr_name, niceName=nice_name, k=keyable, dataType="string")
         cmds.setAttr("%s.%s" % (node, attr_name), default_value, type="string")
     else:
         min_val = property_dict.get("min_value") if property_dict.get("min_value") else -99999
         max_val = property_dict.get("max_value") if property_dict.get("max_value") else 99999
         default_value = property_dict.get("default_value") if property_dict.get("default_value") else 0
         cmds.addAttr(node,
-                     shortName=attr_name,
-                     longName=nice_name,
+                     longName=attr_name,
+                     niceName=nice_name,
                      at=attr_type,
                      minValue=min_val,
                      maxValue=max_val,
                      defaultValue=default_value,
-                     k=keyable)
+                     k=keyable,
+                     )
+
+    cmds.setAttr("%s.%s" % (node, attr_name), e=True, cb=display)
+
 
 def set_joint_type(joint, type_name):
     if type_name in JOINT_TYPE_DICT.values():

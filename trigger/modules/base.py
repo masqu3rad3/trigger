@@ -1,0 +1,151 @@
+from maya import cmds
+import maya.api.OpenMaya as om
+
+from trigger.library import functions as extra
+from trigger.library import controllers as ic
+from trigger.core import feedback
+FEEDBACK = feedback.Feedback(__name__)
+
+LIMB_DATA = {
+        "members": ["Base"],
+        "properties": [],
+        "multi_guide": None,
+        "sided": False,
+    }
+
+class Base(object):
+    def __init__(self, build_data=None, inits=None, suffix="", *args, **kwargs):
+        super(Base, self).__init__()
+        if build_data:
+            if len(build_data.keys()) > 1:
+                FEEDBACK.throw_error("Base can only have one initial joint")
+                return
+            self.baseInit = build_data["Base"]
+        elif inits:
+            if len(inits) > 1:
+                cmds.error("Root can only have one initial joint")
+                return
+            self.baseInit = inits[0]
+        else:
+            FEEDBACK.throw_error("Class needs either build_data or inits to be constructed")
+
+        self.suffix=(extra.uniqueName("limbGrp_%s" %(suffix))).replace("limbGrp_", "")
+        self.limbGrp = None
+        self.scaleGrp = None
+        self.limbPlug = None
+        self.nonScaleGrp = None
+        self.cont_IK_OFF = None
+        self.sockets = []
+        self.scaleConstraints = []
+        self.anchors = []
+        self.anchorLocations = []
+        self.deformerJoints = []
+        self.colorCodes = []
+
+    def createGrp(self):
+        self.scaleGrp = cmds.group(name="%s_scaleGrp" % self.suffix, em=True)
+        self.limbGrp = cmds.group(name="%s_limbGrp" % self.suffix, em=True)
+        cmds.parent(self.scaleGrp, self.nonScaleGrp, self.cont_IK_OFF, self.limbGrp)
+        self.scaleConstraints.append(self.scaleGrp)
+
+    def createJoints(self):
+        self.base_jnt = cmds.joint(name="%s_jnt" % self.suffix)
+        extra.alignTo(self.base_jnt, self.baseInit, position=True, rotation=False)
+        self.limbPlug = self.base_jnt
+        self.sockets.append(self.base_jnt)
+        if self.colorCodes:
+            extra.colorize(self.base_jnt, self.colorCodes[0])
+        # self.deformerJoints.append(defJ_root)
+
+    def createControllers(self):
+        icon = ic.Icon()
+        placement_cont, _ = icon.createIcon("Circle", iconName=extra.uniqueName("placement_cont"), scale=(10, 10, 10))
+        master_cont, _ = icon.createIcon("TriCircle", iconName=extra.uniqueName("master_cont"), scale=(15, 15, 15))
+
+        placement_off = extra.createUpGrp(placement_cont, "off")
+        master_off = extra.createUpGrp(master_cont, "off")
+        extra.alignTo(placement_off, self.base_jnt)
+        extra.alignTo(master_off, self.base_jnt)
+
+        cmds.parent(placement_off, master_cont)
+
+        # extra.matrixConstraint(placement_cont, self.base_jnt)
+        cmds.parentConstraint(placement_cont, self.base_jnt, mo=False)
+
+        self.anchorLocations.append(placement_cont)
+        self.anchorLocations.append(master_cont)
+
+
+    def createLimb(self):
+        """Creates base joint for master and placement conts"""
+        FEEDBACK.info("Creating Base %s" % self.suffix)
+        self.createGrp()
+        self.createJoints()
+        self.createControllers()
+
+
+
+
+class Guides(object):
+    def __init__(self, side="L", suffix="base", segments=None, tMatrix=None, upVector=(0, 1, 0), mirrorVector=(1, 0, 0), lookVector=(0,0,1), *args, **kwargs):
+        super(Guides, self).__init__()
+        # fool check
+
+        #-------Mandatory------[Start]
+        self.side = side
+        self.sideMultiplier = -1 if side == "R" else 1
+        self.suffix = suffix
+        self.segments = segments
+        self.tMatrix = om.MMatrix(tMatrix) if tMatrix else om.MMatrix()
+        self.upVector = om.MVector(upVector)
+        self.mirrorVector = om.MVector(mirrorVector)
+        self.lookVector = om.MVector(lookVector)
+
+        self.offsetVector = None
+        self.guideJoints = []
+        #-------Mandatory------[End]
+
+    def draw_joints(self):
+        if self.side == "C":
+            # Guide joint positions for limbs with no side orientation
+            pass
+        else:
+            # Guide joint positions for limbs with sides
+            pass
+
+        # Define the offset vector
+        self.offsetVector = om.MVector(0, 1, 0)
+
+        # Draw the joints
+        cmds.select(d=True)
+        root_jnt = cmds.joint(name="base_{0}".format(self.suffix))
+
+        # Update the guideJoints list
+        self.guideJoints.append(root_jnt)
+
+        # set orientation of joints
+
+    def define_attributes(self):
+        # set joint side and type attributes
+        extra.set_joint_type(self.guideJoints[0], "Base")
+        cmds.setAttr("{0}.radius".format(self.guideJoints[0]), 2)
+        _ = [extra.set_joint_side(jnt, self.side) for jnt in self.guideJoints]
+
+        # ----------Mandatory---------[Start]
+        root_jnt = self.guideJoints[0]
+        extra.create_global_joint_attrs(root_jnt, moduleName="Base", upAxis=self.upVector, mirrorAxis=self.mirrorVector, lookAxis=self.lookVector)
+        # ----------Mandatory---------[End]
+
+        for attr_dict in LIMB_DATA["properties"]:
+            extra.create_attribute(root_jnt, attr_dict)
+
+    def createGuides(self):
+        self.draw_joints()
+        self.define_attributes()
+
+    def convertJoints(self, joints_list):
+        if len(joints_list) != 1:
+            FEEDBACK.warning("Define or select a single joint for Root Guide conversion. Skipping")
+            return
+        self.guideJoints = joints_list
+        self.define_attributes()
