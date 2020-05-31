@@ -35,6 +35,11 @@ LIMB_DATA = {
                         "enum_list": "equalDistance:sameDistance",
                         "default_value": 0,
                         },
+                       {"attr_name": "stretchyHead",
+                        "nice_name": "Stretchy_Head",
+                        "attr_type": "bool",
+                        "default_value": False,
+                        },
                        ],
         "multi_guide": "Neck",
         "sided": False,
@@ -43,7 +48,7 @@ LIMB_DATA = {
 ## TODO // NEEDS TO SUPPORT DIFFERENT ORIENTATIONS
 
 class Head(object):
-    def __init__(self, build_data=None, inits=None, suffix="", *args, **kwargs):
+    def __init__(self, build_data=None, inits=None, *args, **kwargs):
         super(Head, self).__init__()
         if build_data:
             try:
@@ -83,9 +88,12 @@ class Head(object):
         self.twistType = cmds.getAttr("%s.twistType" %self.neckNodes[0], asString=True)
         self.side = extra.get_joint_side(self.neckNodes[0])
         self.sideMult = -1 if self.side == "R" else 1
+        self.stretchyHead = cmds.getAttr("%s.stretchyHead" % self.neckNodes[0])
 
         # initialize suffix
-        self.suffix = (extra.uniqueName("limbGrp_%s" % suffix)).replace("limbGrp_", "")
+        # self.suffix = (extra.uniqueName("limbGrp_%s" % suffix)).replace("limbGrp_", "")
+        # self.suffix = (extra.uniqueName(suffix))
+        self.suffix = (extra.uniqueName(cmds.getAttr("%s.moduleName" % self.neckNodes[0])))
 
         # scratch variables
         self.sockets = []
@@ -100,10 +108,10 @@ class Head(object):
         self.colorCodes = [6, 18]
 
     def createGrp(self):
-        self.limbGrp = cmds.group(name="limbGrp_%s" % self.suffix, em=True)
-        self.scaleGrp = cmds.group(name="scaleGrp_%s" % self.suffix, em=True)
+        self.limbGrp = cmds.group(name=self.suffix, em=True)
+        self.scaleGrp = cmds.group(name="%s_scaleGrp" % self.suffix, em=True)
         extra.alignTo(self.scaleGrp, self.neckNodes[0], 0)
-        self.nonScaleGrp = cmds.group(name="nonScaleGrp_%s" % self.suffix, em=True)
+        self.nonScaleGrp = cmds.group(name="%s_nonScaleGrp" % self.suffix, em=True)
 
         cmds.addAttr(self.scaleGrp, at="bool", ln="Control_Visibility", sn="contVis", defaultValue=True)
         cmds.addAttr(self.scaleGrp, at="bool", ln="Joints_Visibility", sn="jointVis", defaultValue=True)
@@ -153,22 +161,23 @@ class Head(object):
         self.cont_IK_OFF = extra.createUpGrp(self.cont_head, "OFF")
         self.cont_head_ORE = extra.createUpGrp(self.cont_head, "ORE")
 
-        ## Head Squash Controller
-        self.cont_headSquash, _ = icon.createIcon("Circle", iconName="%s_headSquash_cont" % self.suffix, scale=((self.headDist / 2), (self.headDist / 2), (self.headDist / 2)), normal=(0,1,0))
-        extra.alignToAlter(self.cont_headSquash, self.guideJoints[-1])
-        cont_headSquash_ORE = extra.createUpGrp(self.cont_headSquash, "ORE")
+        if self.stretchyHead:
+            ## Head Squash Controller
+            self.cont_headSquash, _ = icon.createIcon("Circle", iconName="%s_headSquash_cont" % self.suffix, scale=((self.headDist / 2), (self.headDist / 2), (self.headDist / 2)), normal=(0,1,0))
+            extra.alignToAlter(self.cont_headSquash, self.guideJoints[-1])
+            cont_headSquash_ORE = extra.createUpGrp(self.cont_headSquash, "ORE")
+            extra.colorize(self.cont_headSquash, self.colorCodes[1])
+            cmds.parent(cont_headSquash_ORE, self.cont_head)
+            cmds.connectAttr("%s.contVis" % self.scaleGrp, "%s.v" % self.cont_headSquash)
 
-        cmds.parent(cont_headSquash_ORE, self.cont_head)
         cmds.parent(self.cont_IK_OFF, self.limbGrp)
         cmds.parent(self.cont_neck_ORE, self.scaleGrp)
 
         extra.colorize(self.cont_head, self.colorCodes[0])
         extra.colorize(self.cont_neck, self.colorCodes[0])
-        extra.colorize(self.cont_headSquash, self.colorCodes[1])
 
         cmds.connectAttr("%s.contVis" % self.scaleGrp, "%s.v" % self.cont_head_ORE)
         cmds.connectAttr("%s.contVis" % self.scaleGrp, "%s.v" % self.cont_neck_ORE)
-        cmds.connectAttr("%s.contVis" % self.scaleGrp, "%s.v" % self.cont_headSquash)
 
     def createRoots(self):
         self.neckRootLoc = cmds.spaceLocator(name="neckRootLoc_%s" % self.suffix)[0]
@@ -186,11 +195,9 @@ class Head(object):
         map(self.sockets.append, neckSpline.defJoints)
 
         # # Connect neck start to the neck controller
-        # TODO // FIX HERE
         cmds.orientConstraint(self.cont_neck, neckSpline.contCurve_Start, mo=False)
         cmds.pointConstraint(neckSpline.contCurve_Start, self.cont_neck_ORE, mo=False)
         # # Connect neck end to the head controller
-        # TODO // FIX HERE
         cmds.parentConstraint(self.cont_head, neckSpline.contCurve_End, mo=True)
         # # pass Stretch controls from the splineIK to neck controller
         extra.attrPass(neckSpline.attPassCont, self.cont_neck)
@@ -202,28 +209,39 @@ class Head(object):
         cmds.disconnectAttr(cmds.listConnections(neckSpline.scaleGrp, p=True)[0], "%s.scale" % neckSpline.scaleGrp)
 
         # create spline IK for Head squash
-        headSpline = twistSpline.TwistSpline()
-        headSpline.upAxis = -(om.MVector(self.look_axis))
-        headSpline.createTspline(list(self.guideJoints[-2:]), "headSquashSplineIK_%s" % self.suffix, 3, dropoff=2,  mode=self.splineMode, twistType=self.twistType, colorCode=self.colorCodes[1])
-        map(self.sockets.append, headSpline.defJoints)
+        if self.stretchyHead:
+            headSpline = twistSpline.TwistSpline()
+            headSpline.upAxis = -(om.MVector(self.look_axis))
+            headSpline.createTspline(list(self.guideJoints[-2:]), "headSquashSplineIK_%s" % self.suffix, 3, dropoff=2,  mode=self.splineMode, twistType=self.twistType, colorCode=self.colorCodes[1])
+            map(self.sockets.append, headSpline.defJoints)
 
-        # # Position the head spline IK to end of the neck
-        cmds.pointConstraint(neckSpline.endLock, headSpline.contCurve_Start, mo=False)
+            # # Position the head spline IK to end of the neck
+            cmds.pointConstraint(neckSpline.endLock, headSpline.contCurve_Start, mo=False)
 
-        # # orient the head spline to the head controller
-        # TODO // FIX HERE
-        cmds.orientConstraint(self.cont_head, headSpline.contCurve_Start, mo=True)
+            # # orient the head spline to the head controller
+            # TODO // FIX HERE
+            cmds.orientConstraint(self.cont_head, headSpline.contCurve_Start, mo=True)
 
-        extra.alignToAlter(self.cont_headSquash, headSpline.contCurve_End, mode=2)
-        # TODO // FIX HERE
-        cmds.parentConstraint(self.cont_headSquash, headSpline.contCurve_End, mo=True)
-        extra.attrPass(headSpline.attPassCont, self.cont_headSquash)
+            extra.alignToAlter(self.cont_headSquash, headSpline.contCurve_End, mode=2)
+            # TODO // FIX HERE
+            cmds.parentConstraint(self.cont_headSquash, headSpline.contCurve_End, mo=True)
+            extra.attrPass(headSpline.attPassCont, self.cont_headSquash)
 
-        # # Connect the scale to the scaleGrp
-        cmds.connectAttr("%s.scale" % self.scaleGrp, "%s.scale" % headSpline.scaleGrp)
-        # bring out contents.
-        extra.attrPass(headSpline.scaleGrp, self.scaleGrp, attributes=["sx", "sy", "sz"], keepSourceAttributes=True)
-        cmds.disconnectAttr(cmds.listConnections(headSpline.scaleGrp, p=True)[0], "%s.scale" % headSpline.scaleGrp)
+            # # Connect the scale to the scaleGrp
+            cmds.connectAttr("%s.scale" % self.scaleGrp, "%s.scale" % headSpline.scaleGrp)
+            # bring out contents.
+            extra.attrPass(headSpline.scaleGrp, self.scaleGrp, attributes=["sx", "sy", "sz"], keepSourceAttributes=True)
+            cmds.disconnectAttr(cmds.listConnections(headSpline.scaleGrp, p=True)[0], "%s.scale" % headSpline.scaleGrp)
+            self.deformerJoints.extend(headSpline.defJoints)
+        else:
+            headJoint = cmds.joint(name="jDef_head_%s" % self.suffix, p=self.headPivPos, radius=3)
+            headJoint_end = cmds.joint(name="jDef_headEnd_%s" % self.suffix, p=self.headEndPivPos, radius=3)
+            cmds.parent(headJoint, self.scaleGrp)
+            self.sockets.append(headJoint)
+            self.sockets.append(headJoint_end)
+            cmds.pointConstraint(neckSpline.endLock, headJoint, mo=False)
+            cmds.orientConstraint(self.cont_head, headJoint, mo=True)
+            self.deformerJoints.extend([headJoint, headJoint_end])
 
         cmds.parentConstraint(self.limbPlug, self.neckRootLoc, mo=True)
 
@@ -240,38 +258,44 @@ class Head(object):
                 cmds.setAttr("{0}.{1}W0".format(oCon, self.cont_head), blendRatio)
                 cmds.setAttr("{0}.{1}W1".format(oCon, self.cont_neck), 1 - blendRatio)
 
-        self.deformerJoints = headSpline.defJoints + neckSpline.defJoints
+
+        self.deformerJoints.extend(neckSpline.defJoints)
 
         cmds.parent(neckSpline.contCurves_ORE, self.scaleGrp)
         cmds.parent(neckSpline.contCurves_ORE[0], self.neckRootLoc)
         try:
-            cmds.parent(neckSpline.contCurves_ORE[len(headSpline.contCurves_ORE) - 1], self.scaleGrp)
+            # FEEDBACK.warning("="*30, headSpline.contCurves_ORE)
+            # cmds.parent(neckSpline.contCurves_ORE[len(headSpline.contCurves_ORE) - 1], self.scaleGrp)
+            cmds.parent(neckSpline.contCurves_ORE[len(neckSpline.contCurves_ORE) - 1], self.scaleGrp)
         except RuntimeError:
             pass
         cmds.parent(neckSpline.endLock, self.scaleGrp)
         cmds.parent(neckSpline.scaleGrp, self.scaleGrp)
 
-        cmds.parent(headSpline.contCurves_ORE[0], self.scaleGrp)
-        try:
-            cmds.parent(headSpline.contCurves_ORE[len(headSpline.contCurves_ORE) - 1], self.scaleGrp)
-        except RuntimeError:
-            pass
-        cmds.parent(headSpline.endLock, self.scaleGrp)
-        cmds.parent(headSpline.scaleGrp, self.scaleGrp)
+        if self.stretchyHead:
+            cmds.parent(headSpline.contCurves_ORE[0], self.scaleGrp)
+            try:
+                cmds.parent(headSpline.contCurves_ORE[len(headSpline.contCurves_ORE) - 1], self.scaleGrp)
+            except RuntimeError:
+                pass
+            cmds.parent(headSpline.endLock, self.scaleGrp)
+            cmds.parent(headSpline.scaleGrp, self.scaleGrp)
+            cmds.parent(headSpline.nonScaleGrp, self.nonScaleGrp)
 
         cmds.parent(neckSpline.nonScaleGrp, self.nonScaleGrp)
-        cmds.parent(headSpline.nonScaleGrp, self.nonScaleGrp)
         map(lambda x: cmds.connectAttr("%s.contVis" % self.scaleGrp, "%s.v" % x), midControls)
         map(lambda x: cmds.connectAttr("%s.jointVis" % self.scaleGrp, "%s.v" % x), self.deformerJoints)
 
-        cmds.connectAttr("%s.rigVis" % self.scaleGrp,"%s.v" % headSpline.contCurves_ORE[0], force=True)
-        cmds.connectAttr("%s.rigVis" % self.scaleGrp,"%s.v" % headSpline.contCurves_ORE[-1], force=True)
+        if self.stretchyHead:
+            cmds.connectAttr("%s.rigVis" % self.scaleGrp,"%s.v" % headSpline.contCurves_ORE[0], force=True)
+            cmds.connectAttr("%s.rigVis" % self.scaleGrp,"%s.v" % headSpline.contCurves_ORE[-1], force=True)
         cmds.connectAttr("%s.rigVis" % self.scaleGrp,"%s.v" % neckSpline.contCurves_ORE[0], force=True)
         cmds.connectAttr("%s.rigVis" % self.scaleGrp,"%s.v" % neckSpline.contCurves_ORE[-1], force=True)
         cmds.connectAttr("%s.rigVis" % self.scaleGrp,"%s.v" % self.neckRootLoc, force=True)
 
-        for lst in headSpline.noTouchData:
-            map(lambda x: cmds.connectAttr("%s.rigVis" % self.scaleGrp, "%s.v" % x, force=True), lst)
+        if self.stretchyHead:
+            for lst in headSpline.noTouchData:
+                map(lambda x: cmds.connectAttr("%s.rigVis" % self.scaleGrp, "%s.v" % x, force=True), lst)
 
         for lst in neckSpline.noTouchData:
             map(lambda x: cmds.connectAttr("%s.rigVis" % self.scaleGrp, "%s.v" % x, force=True), lst)

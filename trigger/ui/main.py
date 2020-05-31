@@ -437,7 +437,7 @@ class MainUI(QtWidgets.QMainWindow):
             p_widget.valueChanged.connect(lambda num: self.update_properties(p_name, num))
         elif p_type == "bool":
             p_widget = QtWidgets.QCheckBox()
-            p_widget.setCheckState(p_value)
+            p_widget.setChecked(p_value)
             p_widget.toggled.connect(lambda state=p_widget.isChecked(): self.update_properties(p_name, state))
         elif p_type == "enum":
             p_widget = QtWidgets.QComboBox()

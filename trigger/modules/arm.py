@@ -14,7 +14,7 @@ LIMB_DATA = {
     }
 
 class Arm(object):
-    def __init__(self, build_data=None, inits=None, suffix="", *args, **kwargs):
+    def __init__(self, build_data=None, inits=None, *args, **kwargs):
         super(Arm, self).__init__()
         if build_data:
             self.collar_ref = build_data["Collar"]
@@ -62,7 +62,9 @@ class Arm(object):
         self.sideMult = -1 if self.side == "R" else 1
 
         # self.originalSuffix = suffix
-        self.suffix = (extra.uniqueName("limbGrp_%s" % suffix)).replace("limbGrp_", "")
+        # self.suffix = (extra.uniqueName("limbGrp_%s" % suffix)).replace("limbGrp_", "")
+        # self.suffix = (extra.uniqueName(suffix))
+        self.suffix = (extra.uniqueName(cmds.getAttr("%s.moduleName" % self.collar_ref)))
 
         # scratch variables
         self.sockets = []
@@ -77,10 +79,10 @@ class Arm(object):
         self.colorCodes = [6, 18]
 
     def createGrp(self):
-        self.limbGrp = cmds.group(name="limbGrp_%s" % self.suffix, em=True)
-        self.scaleGrp = cmds.group(name="scaleGrp_%s" % self.suffix, em=True)
+        self.limbGrp = cmds.group(name=self.suffix, em=True)
+        self.scaleGrp = cmds.group(name="%s_scaleGrp" % self.suffix, em=True)
         extra.alignTo(self.scaleGrp, self.collar_ref, position=True, rotation=False)
-        self.nonScaleGrp = cmds.group(name="NonScaleGrp_%s" % self.suffix, em=True)
+        self.nonScaleGrp = cmds.group(name="%s_nonScaleGrp" % self.suffix, em=True)
 
         cmds.addAttr(self.scaleGrp, at="bool", ln="Control_Visibility", sn="contVis", defaultValue=True)
         cmds.addAttr(self.scaleGrp, at="bool", ln="Joints_Visibility", sn="jointVis", defaultValue=True)
@@ -1064,7 +1066,7 @@ class Arm(object):
         cmds.connectAttr("{0}.output".format(angleGlobal), "{0}.rotateY".format(self.cont_shoulder_auto))
 
         cmds.parent(angleExt_Root_IK, self.nonScaleGrp)
-        # cmds.connectAttr("{0}.rigVis".format(self.scaleGrp), "{0}.v".format(angleExt_Root_IK))
+        cmds.connectAttr("{0}.rigVis".format(self.scaleGrp), "{0}.v".format(angleExt_Root_IK))
         return
 
 

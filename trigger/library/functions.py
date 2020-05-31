@@ -425,7 +425,6 @@ def attrPass (sourceNode, targetNode, attributes=[], inConnections=True, outConn
 
 
         # if an attribute with the same name exists
-        FEEDBACK.warning("BACIN", attr, targetNode)
         if cmds.attributeQuery(attr, node=targetNode, exists=True):
             if overrideEx:
                 cmds.deleteAttr("%s.%s" % (targetNode, attr))
@@ -433,7 +432,6 @@ def attrPass (sourceNode, targetNode, attributes=[], inConnections=True, outConn
             else:
                 continue
         else:
-            FEEDBACK.warning("ANAN", addAttribute)
             exec(addAttribute)
 
     if daisyChain==True:
@@ -595,13 +593,16 @@ def getRigAxes(joint):
 
     return tuple(upAxis), tuple(mirrorAxis), tuple(lookAxis)
 
-def uniqueName(name):
+def uniqueName(name, return_counter=False):
     baseName = name
     idcounter = 0
     while cmds.objExists(name):
         name = "%s%s" % (baseName, str(idcounter + 1))
         idcounter = idcounter + 1
-    return name
+    if return_counter:
+        return idcounter
+    else:
+        return name
 
 def getMirror(node):
     # find the mirror of the oldController

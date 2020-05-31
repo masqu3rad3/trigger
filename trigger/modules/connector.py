@@ -13,7 +13,7 @@ LIMB_DATA = {
     }
 
 class Connector(object):
-    def __init__(self, build_data=None, inits=None, suffix="", *args, **kwargs):
+    def __init__(self, build_data=None, inits=None, *args, **kwargs):
         super(Connector, self).__init__()
         if build_data:
             if len(build_data.keys()) > 1:
@@ -28,7 +28,11 @@ class Connector(object):
         else:
             FEEDBACK.throw_error("Class needs either build_data or inits to be constructed")
 
-        self.suffix=(extra.uniqueName("limbGrp_%s" %(suffix))).replace("limbGrp_", "")
+        # self.suffix=(extra.uniqueName("limbGrp_%s" %(suffix))).replace("limbGrp_", "")
+        # self.suffix = (extra.uniqueName(suffix))
+        self.suffix = (extra.uniqueName(cmds.getAttr("%s.moduleName" % self.rootInit)))
+
+
         self.limbGrp = None
         self.scaleGrp = None
         self.limbPlug = None
@@ -53,9 +57,9 @@ class Connector(object):
         """
         FEEDBACK.info("Creating Root %s" %self.suffix)
 
-        self.scaleGrp = cmds.group(name="scaleGrp_%s" % self.suffix, em=True)
+        self.scaleGrp = cmds.group(name="%s_scaleGrp" % self.suffix, em=True)
         # suffix=(extra.uniqueName("limbGrp_%s" % suffix)).replace("limbGrp_", "")
-        self.limbGrp = cmds.group(name="limbGrp_%s" % self.suffix, em=True)
+        self.limbGrp = cmds.group(name=self.suffix, em=True)
         cmds.parent(self.scaleGrp, self.nonScaleGrp, self.cont_IK_OFF, self.limbGrp)
 
         self.scaleConstraints.append(self.scaleGrp)

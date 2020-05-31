@@ -14,7 +14,7 @@ LIMB_DATA = {
     }
 
 class Base(object):
-    def __init__(self, build_data=None, inits=None, suffix="", *args, **kwargs):
+    def __init__(self, build_data=None, inits=None, *args, **kwargs):
         super(Base, self).__init__()
         if build_data:
             if len(build_data.keys()) > 1:
@@ -29,7 +29,10 @@ class Base(object):
         else:
             FEEDBACK.throw_error("Class needs either build_data or inits to be constructed")
 
-        self.suffix=(extra.uniqueName("limbGrp_%s" %(suffix))).replace("limbGrp_", "")
+        # self.suffix=(extra.uniqueName("limbGrp_%s" %(suffix))).replace("limbGrp_", "")
+        # self.suffix = (extra.uniqueName(suffix))
+        self.suffix = (extra.uniqueName(cmds.getAttr("%s.moduleName" % self.baseInit)))
+
         self.limbGrp = None
         self.scaleGrp = None
         self.limbPlug = None
@@ -40,21 +43,30 @@ class Base(object):
         self.anchors = []
         self.anchorLocations = []
         self.deformerJoints = []
-        self.colorCodes = []
+        self.colorCodes = [6, 18]
 
     def createGrp(self):
         self.scaleGrp = cmds.group(name="%s_scaleGrp" % self.suffix, em=True)
-        self.limbGrp = cmds.group(name="%s_limbGrp" % self.suffix, em=True)
+        cmds.addAttr(self.scaleGrp, at="bool", ln="Control_Visibility", sn="contVis", defaultValue=True)
+        cmds.addAttr(self.scaleGrp, at="bool", ln="Joints_Visibility", sn="jointVis", defaultValue=True)
+        cmds.addAttr(self.scaleGrp, at="bool", ln="Rig_Visibility", sn="rigVis", defaultValue=True)
+        # make the created attributes visible in the channelbox
+        cmds.setAttr("{0}.contVis".format(self.scaleGrp), cb=True)
+        cmds.setAttr("{0}.jointVis".format(self.scaleGrp), cb=True)
+        cmds.setAttr("{0}.rigVis".format(self.scaleGrp), cb=True)
+
+        self.limbGrp = cmds.group(name=self.suffix, em=True)
         cmds.parent(self.scaleGrp, self.nonScaleGrp, self.cont_IK_OFF, self.limbGrp)
         self.scaleConstraints.append(self.scaleGrp)
 
     def createJoints(self):
         self.base_jnt = cmds.joint(name="%s_jnt" % self.suffix)
+        cmds.connectAttr("{0}.rigVis".format(self.scaleGrp), "{0}.v".format(self.base_jnt))
+
         extra.alignTo(self.base_jnt, self.baseInit, position=True, rotation=False)
         self.limbPlug = self.base_jnt
         self.sockets.append(self.base_jnt)
-        if self.colorCodes:
-            extra.colorize(self.base_jnt, self.colorCodes[0])
+
         # self.deformerJoints.append(defJ_root)
 
     def createControllers(self):
@@ -68,10 +80,13 @@ class Base(object):
         extra.alignTo(master_off, self.base_jnt)
 
         cmds.parent(placement_off, master_cont)
+        cmds.parent(master_off, self.scaleGrp)
 
         # extra.matrixConstraint(placement_cont, self.base_jnt)
         cmds.parentConstraint(placement_cont, self.base_jnt, mo=False)
 
+        extra.colorize(placement_cont, self.colorCodes[0])
+        extra.colorize(master_cont, self.colorCodes[0])
         self.anchorLocations.append(placement_cont)
         self.anchorLocations.append(master_cont)
 

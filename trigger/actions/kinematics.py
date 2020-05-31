@@ -3,7 +3,6 @@
 from maya import cmds
 from trigger.core import feedback
 import trigger.library.functions as extra
-import trigger.library.controllers as ic
 
 from trigger import modules
 import trigger.utils.space_switcher as anchorMaker
@@ -266,9 +265,9 @@ class Kinematics(settings.Settings):
                 set_name = extra.uniqueName(set_name)
                 j_def_set = cmds.sets(name=set_name)
 
-            suffix = "%s_%s" % (sideVal, x[1].capitalize()) if sideVal != "C" else x[1].capitalize()
+            # suffix = "%s_%s" % (sideVal, x[1].capitalize()) if sideVal != "C" else x[1].capitalize()
             module = "modules.{0}.{1}".format(x[1], x[1].capitalize())
-            flags = "build_data={0}, suffix='{1}', side='{2}'".format(x[0], suffix, x[2])
+            flags = "build_data={0}".format(x[0])
             construct_command = "{0}({1})".format(module, flags)
 
             limb = eval(construct_command)

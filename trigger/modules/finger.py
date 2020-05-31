@@ -26,7 +26,7 @@ LIMB_DATA = {
 
 
 class Finger(object):
-    def __init__(self, build_data=None, inits=None, suffix="", *args, **kwargs):
+    def __init__(self, build_data=None, inits=None, *args, **kwargs):
         super(Finger, self).__init__()
         if build_data:
             self.fingerRoot = build_data.get("FingerRoot")
@@ -65,7 +65,10 @@ class Finger(object):
 
         # initialize suffix
         # self.suffix = "%s_%s" %(suffix, cmds.getAttr("%s.fingerType" % self.fingerRoot, asString=True))
-        self.suffix = (extra.uniqueName("limbGrp_%s_%s" % (self.fingerType, suffix))).replace("limbGrp_", "")
+        # self.suffix = (extra.uniqueName("limbGrp_%s_%s" % (self.fingerType, suffix))).replace("limbGrp_", "")
+        # self.suffix = (extra.uniqueName("%s_%s" % (suffix, self.fingerType)))
+        self.suffix = (extra.uniqueName("%s_%s" % (cmds.getAttr("%s.moduleName" % self.fingerRoot), self.fingerType)))
+
 
         # scratch variables
         self.sockets = []
@@ -80,10 +83,10 @@ class Finger(object):
         self.colorCodes = [6, 18]
 
     def createGrp(self):
-        self.limbGrp = cmds.group(name="limbGrp_%s" % self.suffix, em=True)
-        self.scaleGrp = cmds.group(name="scaleGrp_%s" % self.suffix, em=True)
+        self.limbGrp = cmds.group(name=self.suffix, em=True)
+        self.scaleGrp = cmds.group(name="%s_scaleGrp" % self.suffix, em=True)
         extra.alignTo(self.scaleGrp, self.fingerRoot, 0)
-        self.nonScaleGrp = cmds.group(name="NonScaleGrp_%s" % self.suffix, em=True)
+        self.nonScaleGrp = cmds.group(name="%s_nonScaleGrp" % self.suffix, em=True)
 
         cmds.addAttr(self.scaleGrp, at="bool", ln="Control_Visibility", sn="contVis", defaultValue=True)
         cmds.addAttr(self.scaleGrp, at="bool", ln="Joints_Visibility", sn="jointVis", defaultValue=True)
@@ -125,6 +128,7 @@ class Finger(object):
 
 
         cmds.parentConstraint(self.limbPlug, self.scaleGrp)
+        map(lambda x: cmds.connectAttr("{0}.jointVis".format(self.scaleGrp), "{0}.v".format(x)), self.deformerJoints)
 
         extra.colorize(self.deformerJoints, self.colorCodes[0], shape=False)
 
