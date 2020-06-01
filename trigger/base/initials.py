@@ -22,7 +22,7 @@ class Initials(settings.Settings):
         self.parseSettings()
         self.projectName = "tikAutoRig"
         self.module_dict = {mod: eval("modules.{0}.LIMB_DATA".format(mod)) for mod in modules.__all__}
-        pprint(self.module_dict)
+        # pprint(self.module_dict)
         # self.module_dict = modules.all_modules_data.MODULE_DICTIONARY
         self.valid_limbs = self.module_dict.keys()
         self.validRootList = [values["members"][0] for values in self.module_dict.values()]

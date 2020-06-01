@@ -20,10 +20,7 @@ import os
 # add the system path new trigger folder exclusively to prevent clashes
 # each new new trigger module uses trigger.<module> paths to acces modules
 
-# windows dev path
 trigger_path = "C:\\Users\\kutlu\\Documents\\maya\\scripts\\TRigger"
-# linux dev path
-# trigger_path = "/home/masqu3rad3/maya/scripts/TRigger"
 
 if trigger_path not in sys.path:
     sys.path.append(trigger_path)
@@ -45,12 +42,9 @@ reload(settings)
 # Base
 from trigger.base import initials
 reload(initials)
-from trigger.base import connections
-reload(connections)
-from trigger.base import weights
-reload(weights)
 from trigger.base import builder
 reload(builder)
+from trigger.base import session
 
 # Library
 from trigger.library import controllers
@@ -70,6 +64,8 @@ reload(trigger.modules.__init__)
 
 from trigger import modules
 reload(modules)
+from trigger.modules import base
+reload(base)
 from trigger.modules import arm
 reload(arm)
 from trigger.modules import finger
@@ -86,6 +82,18 @@ from trigger.modules import tail
 reload(tail)
 from trigger.modules import tentacle
 reload(tentacle)
+
+# Actions
+import trigger.actions.__init__
+reload(trigger.actions.__init__)
+from trigger.actions import cleaning
+reload(cleaning)
+from trigger.actions import kinematics
+reload(kinematics)
+from trigger.actions import master
+reload(master)
+from trigger.actions import weights
+reload(weights)
 
 # Utils
 from trigger.utils import mr_cubic
@@ -104,34 +112,6 @@ from trigger.ui import main
 reload(main)
 main.MainUI() # show() runs inside the init
 
-
-
-# import time
-# start=time.time()
-# init=initials.Initials()
-# init.initHumanoid()
-# end = time.time()
-# print "Guide Time: %s" % (end-start)
-
-# cmds.undoInfo(ock=True)
-# start=time.time()
-# b = builder.Builder()
-# b.start_building("jInit_spine_c_0")
-# end = time.time()
-# print "Build Time: %s" % (end-start)
-# cmds.undoInfo(cck=True)
-
-
-# test = init.initLimb("head", whichSide="right", segments=2)
-# from trigger import modules
-# reload(modules)
-
-# module_dictA = {mod: eval("modules.{0}.LIMB_DATA".format(mod)) for mod in modules.__all__}
-
-# module_dictB = modules.all_modules_data.MODULE_DICTIONARY
-
-# valid_limbs = module_dictA.keys()
-# non_sided_limbs = [limb for limb in self.valid_limbs if not self.module_dict[limb]["sided"]]
 
 
 #######################################################################[END]
