@@ -327,7 +327,7 @@ class Leg(object):
         ## FK UP Leg Controller
         scalecont_fk_up_leg = (self.init_upper_leg_dist / 2, self.init_upper_leg_dist / 6, self.init_upper_leg_dist / 6)
 
-        self.cont_fk_up_leg, dmp = icon.createIcon("Cube", iconName="cont_FK_Upleg_%s" % self.suffix, scale=scalecont_fk_up_leg)
+        self.cont_fk_up_leg, dmp = icon.createIcon("Cube", iconName="FK_Upleg_%s_cont" % self.suffix, scale=scalecont_fk_up_leg)
 
         # move the pivot to the bottom
         cmds.xform(self.cont_fk_up_leg, piv=(self.sideMult * -(self.init_upper_leg_dist / 2), 0, 0), ws=True)
@@ -343,7 +343,7 @@ class Leg(object):
         ## FK LOW Leg Controller
         scalecont_fk_low_leg = (self.init_lower_leg_dist / 2, self.init_lower_leg_dist / 6, self.init_lower_leg_dist / 6)
         # self.cont_fk_low_leg = icon.cube("cont_FK_LowLeg_%s" % self.suffix, scalecont_fk_low_leg)
-        self.cont_fk_low_leg, dmp = icon.createIcon("Cube", iconName="cont_FK_LowLeg_%s" % self.suffix, scale=scalecont_fk_low_leg)
+        self.cont_fk_low_leg, dmp = icon.createIcon("Cube", iconName="FK_LowLeg_%s_cont" % self.suffix, scale=scalecont_fk_low_leg)
 
         # move the pivot to the bottom
         cmds.xform(self.cont_fk_low_leg, piv=(self.sideMult * -(self.init_lower_leg_dist / 2), 0, 0), ws=True)
@@ -375,7 +375,7 @@ class Leg(object):
 
         # FK-IK SWITCH Controller
         icon_scale = self.init_upper_leg_dist / 4
-        self.cont_fk_ik, self.fk_ik_rvs = icon.createIcon("FkikSwitch", iconName="cont_FK_IK_%s" % self.suffix, scale=(icon_scale, icon_scale, icon_scale))
+        self.cont_fk_ik, self.fk_ik_rvs = icon.createIcon("FkikSwitch", iconName="%s_FK_IK_cont" % self.suffix, scale=(icon_scale, icon_scale, icon_scale))
 
         extra.alignAndAim(self.cont_fk_ik, targetList=[self.jfk_foot], aimTargetList=[self.j_def_midLeg],
                           upVector=self.up_axis, rotateOff=(self.sideMult*90, self.sideMult*90, 0))

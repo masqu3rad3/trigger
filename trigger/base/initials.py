@@ -348,3 +348,44 @@ class Initials(settings.Settings):
         module_type_dict = self.module_dict.get(module_type)
         if module_type_dict:
             return module_type_dict["properties"]
+
+    def get_user_attrs(self, jnt):
+        """
+        Returns a list of dictionaries for every supported custom attribute
+
+        This is part of guide data collection and this data is going to be used while re-creating guides
+        """
+
+        supported_attrs = ["long", "short", "bool", "enum", "float", "double", "string", "typed"]  # wtf is typed
+        list_of_dicts = []
+        user_attr_list = cmds.listAttr(jnt, userDefined=True)
+        if not user_attr_list:
+            return []
+        for attr in user_attr_list:
+            attr_type = cmds.attributeQuery(attr, node=jnt, at=True)
+            if attr_type not in supported_attrs:
+                continue
+            tmp_dict = {}
+            tmp_dict["attr_name"] = cmds.attributeQuery(attr, node=jnt, ln=True)
+            tmp_dict["attr_type"] = attr_type
+            tmp_dict["nice_name"] = cmds.attributeQuery(attr, node=jnt, nn=True)
+            tmp_dict["default_value"] = cmds.getAttr("%s.%s" % (jnt, attr))
+            if attr_type == "enum":
+                tmp_dict["enum_list"] = cmds.attributeQuery(attr, node=jnt, le=True)[0]
+            elif attr_type == "bool":
+                pass
+            elif attr_type == "typed":
+                ## Wtf is "typed" anyway??
+                tmp_dict["attr_type"] = "string"
+            else:
+                try:
+                    tmp_dict["min_value"] = cmds.attributeQuery(attr, node=jnt, min=True)[0]
+                except RuntimeError:
+                    pass
+                try:
+                    tmp_dict["max_value"] = cmds.attributeQuery(attr, node=jnt, max=True)[0]
+                except RuntimeError:
+                    pass
+
+            list_of_dicts.append(tmp_dict)
+        return list_of_dicts

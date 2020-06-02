@@ -33,13 +33,18 @@ class Icon(object):
             return
 
         if not iconName:
-            iconName = "cont_%s" %iconType
+            iconName = "%s_cont" %iconType
+
 
         rvsCon = None
         if iconType == "FkikSwitch":
             cont, rvsCon = self.iconDictionary[iconType](name=iconName)
         else:
             cont = self.iconDictionary[iconType](name=iconName)
+
+        for shape in extra.getShapes(cont):
+            if shape != "%sShape" % cont:
+                cmds.rename(shape, extra.uniqueName("%sShape" % cont))
 
         cmds.setAttr("%s.scale" % cont, scale[0], scale[1], scale[2])
         extra.alignNormal(cont, normal)

@@ -297,10 +297,10 @@ def colorize (node_list, index, shape=True):
             if index.upper() in sidesDict.keys():
                 index = sidesDict[index.upper()]
             else:
-                cmds.error("Colorize error... Unknown index command")
+                FEEDBACK.throw_error("Colorize error... Unknown index command")
                 return
         else:
-            cmds.error("Colorize error... Index flag must be integer or string('L', 'R', 'C')")
+            FEEDBACK.throw_error("Colorize error... Index flag must be integer or string('L', 'R', 'C')")
             return
         #shape=node.getShape()
         if shape:
@@ -487,25 +487,31 @@ def create_attribute(node, property_dict, keyable=True, display=True):
     if attr_type not in supported_attrs:
         FEEDBACK.throw_error("The attribute type (%s) is not supported by this method" % attr_type)
     # if some attribute with same name exists, quit
+    default_value = property_dict.get("default_value")
     if cmds.attributeQuery(attr_name, node=node, exists=True):
+        if default_value:
+            if type(default_value) == str or type(default_value) == unicode:
+                cmds.setAttr("%s.%s" % (node, attr_name), default_value, type="string")
+            else:
+                cmds.setAttr("%s.%s" % (node, attr_name), default_value)
         return
     if attr_type == "bool":
-        default_value = property_dict.get("default_value") if property_dict.get("default_value") else 0
+        default_value = default_value if default_value else 0
         cmds.addAttr(node, longName=attr_name, niceName=nice_name, at=attr_type, k=keyable, defaultValue=default_value)
     elif attr_type == "enum":
-        default_value = property_dict.get("default_value") if property_dict.get("default_value") else 0
+        default_value = default_value if default_value else 0
         enum_list = property_dict.get("enum_list")
         if not enum_list:
             FEEDBACK.throw_error("Missing 'enum_list'")
         cmds.addAttr(node, longName=attr_name, niceName=nice_name, at=attr_type, en=enum_list, k=keyable, defaultValue=default_value)
     elif attr_type == "string":
-        default_value = property_dict.get("string_value") if property_dict.get("string_value") else ""
+        default_value = default_value if default_value else ""
         cmds.addAttr(node, longName=attr_name, niceName=nice_name, k=keyable, dataType="string")
         cmds.setAttr("%s.%s" % (node, attr_name), default_value, type="string")
     else:
         min_val = property_dict.get("min_value") if property_dict.get("min_value") else -99999
         max_val = property_dict.get("max_value") if property_dict.get("max_value") else 99999
-        default_value = property_dict.get("default_value") if property_dict.get("default_value") else 0
+        default_value = default_value if default_value else 0
         cmds.addAttr(node,
                      longName=attr_name,
                      niceName=nice_name,
