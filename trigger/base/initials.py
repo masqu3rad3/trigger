@@ -13,14 +13,13 @@ from trigger.core import feedback
 
 FEEDBACK = feedback.Feedback(logger_name=__name__)
 
-
 class Initials(settings.Settings):
 
     def __init__(self):
         super(Initials, self).__init__()
         # settings = st.Settings("triggerSettings.json")
         self.parseSettings()
-        self.projectName = "tikAutoRig"
+        self.projectName = "trigger"
         self.module_dict = {mod: eval("modules.{0}.LIMB_DATA".format(mod)) for mod in modules.__all__}
         # pprint(self.module_dict)
         # self.module_dict = modules.all_modules_data.MODULE_DICTIONARY
@@ -250,10 +249,14 @@ class Initials(settings.Settings):
 
     @undo
     def initHumanoid(self, spineSegments=3, neckSegments=3, fingers=5):
+        _, base_dict = self.initLimb("base", "center")
+        base = base_dict["C"][0]
+        cmds.select(base)
         _, spine_dict = self.initLimb("spine", "auto", segments=spineSegments)
-        root = spine_dict["C"][0]
+        pelvis = spine_dict["C"][0]
+        cmds.setAttr("%s.ty" % pelvis, 14)
         chest = spine_dict["C"][-1]
-        cmds.select(root)
+        cmds.select(pelvis)
         _, leg_dict = self.initLimb("leg", "auto")
         cmds.select(chest)
         _, arm_dict = self.initLimb("arm", "auto")

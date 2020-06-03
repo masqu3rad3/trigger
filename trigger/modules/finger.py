@@ -168,6 +168,7 @@ class Finger(object):
         cmds.parent(self.deformerJoints[0], self.scaleGrp)
         cmds.parent(self.conts_OFF[0], self.scaleGrp)
 
+        map(lambda x: cmds.connectAttr("%s.contVis" % self.scaleGrp, "%s.v" % x[0]), self.conts_OFF)
         extra.colorize(contList, self.colorCodes[0])
 
     def createFKsetup(self):

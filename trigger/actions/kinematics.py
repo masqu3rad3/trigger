@@ -3,6 +3,7 @@
 from maya import cmds
 from trigger.core import feedback
 import trigger.library.functions as extra
+import trigger.library.controllers as ic
 
 from trigger import modules
 import trigger.utils.space_switcher as anchorMaker
@@ -45,6 +46,7 @@ class Kinematics(settings.Settings):
             master.Master().action()
         self.collect_guides_info(self.root_joint)
         self.limbCreationList = self.get_limb_hierarchy(self.root_joint)
+        self.match_fingers(self.fingerMatchList)
         self.createlimbs(self.limbCreationList)
 
         if self.createSwithcers and self.anchorLocations:
@@ -67,7 +69,8 @@ class Kinematics(settings.Settings):
             socket = self.getNearestSocket(x[1], self.allSocketsList)
             cmds.parentConstraint(socket, cont_offset, mo=True)
             cmds.scaleConstraint("pref_cont", cont_offset)
-            cmds.parent(cont_offset, self.rootGroup)
+            cmds.parent(cont_offset, root_grp)
+            cmds.connectAttr("pref_cont.Control_Visibility", "%s.v" % cont_offset)
 
         # TODO : tidy up / make settings human readable
         if self.get("afterCreation") == 1:
@@ -76,6 +79,36 @@ class Kinematics(settings.Settings):
         if self.get("afterCreation") == 2:
             # if the After Creation set to 'Delete Initial Joints'
             cmds.delete(self.root_joint)
+
+    def match_fingers(self, finger_match_list):
+        icon = ic.Icon()
+        for brother_roots in finger_match_list:
+            # finger_name, finger_type, finger_side = extra.identifyMaster(brother_roots[0], self.module_dict)
+            finger_parent = extra.getParent(brother_roots[0])
+            offsetVector = extra.getBetweenVector(finger_parent, brother_roots)
+            iconSize = extra.getDistance(brother_roots[0], brother_roots[-1])
+            translateOff = (iconSize / 2, 0, iconSize / 2)
+            rotateOff = (0, 0, 0)
+            if "_left" in brother_roots[0]:
+                iconName = brother_roots[0].replace("_left", "_LEFT")
+            elif "_right" in brother_roots[0]:
+                iconName = brother_roots[0].replace("_right", "_RIGHT")
+                rotateOff = (0, 180, 0)
+                translateOff = (iconSize / 2, 0, -iconSize / 2)
+            else:
+                iconName = brother_roots[0]
+
+            cont_fGroup, dmp = icon.createIcon("Square", iconName="Fgrp_%s_cont" % iconName,
+                                               scale=(iconSize / 6, iconSize / 4, iconSize / 2))
+            cmds.rotate(90, 0, 0, cont_fGroup)
+            cmds.makeIdentity(cont_fGroup, a=True)
+
+            extra.alignAndAim(cont_fGroup, targetList=[finger_parent], aimTargetList=[brother_roots[0], brother_roots[-1]], upObject=brother_roots[0],
+                              rotateOff=rotateOff, translateOff=(-offsetVector * (iconSize / 2)))
+            cmds.move(0, 0, (-iconSize / 2), cont_fGroup, r=True, os=True)
+            self.fingerMatchConts.append([cont_fGroup, finger_parent])
+            for finger_root in brother_roots:
+                cmds.setAttr("%s.handController" % finger_root, cont_fGroup, type="string")
 
     def collect_guides_info(self, rootNode):
         """

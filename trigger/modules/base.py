@@ -90,6 +90,11 @@ class Base(object):
         self.anchorLocations.append(placement_cont)
         self.anchorLocations.append(master_cont)
 
+        cmds.connectAttr("%s.contVis" % self.scaleGrp, "%s.v" % placement_off)
+        cmds.connectAttr("%s.contVis" % self.scaleGrp, "%s.v" % master_off)
+
+        extra.lockAndHide(placement_cont, ["sx", "sy", "sz", "v"])
+        extra.lockAndHide(master_cont, ["sx", "sy", "sz", "v"])
 
     def createLimb(self):
         """Creates base joint for master and placement conts"""
