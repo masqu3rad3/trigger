@@ -1,9 +1,147 @@
+import os
 from maya import cmds
 import maya.api.OpenMaya as om
 import maya.api.OpenMayaAnim as omAnim
+
+from trigger.core import io
+from trigger.core import feedback
+
 import time
 from pprint import pprint
 
+FEEDBACK = feedback.Feedback(__name__)
+
+ACTION_DATA = {}
+
+class Weights(dict):
+    def __init__(self, *args, **kwargs):
+        super(Weights, self).__init__()
+        self.io = io.IO(file_name="tmp_weights.json")
+        self["deformer"] = None
+
+    @property
+    def deformer(self):
+        return self["deformer"]
+
+    @deformer.setter
+    def deformer(self, obj_name):
+        if cmds.objExists(obj_name):
+            self["deformer"] = obj_name
+        else:
+            FEEDBACK.warning("The specified object does not exists")
+            return
+
+    def action(self):
+        """Mandatory method for all action modules"""
+        pass
+
+    def collect_deformers(self, mesh):
+        """Collects defomers in a dictionary by type
+
+        Args:
+            mesh (str): Shape or transform node
+        Return:
+            dictionary: {<type>: [list of deformers]}
+
+        """
+
+        valid_deformers = ["skinCluster", "blendShape", "nonLinear", "cluster"]
+        if int(cmds.about(version=True)) >= 2019:
+            valid_deformers.append("ffd")
+        # get deformer from mesh
+        history = cmds.listHistory(mesh, pruneDagObjects=True)
+
+        deformer_data = {deformer_type: cmds.ls(history, type=deformer_type, shapes=True) for deformer_type in valid_deformers}
+
+        return deformer_data
+
+    def save_weights(self, deformer=None, file_path=None, vertexConnections=False, force=True):
+        if not deformer and not self.deformer:
+            FEEDBACK.throw_error("No Deformer defined. A Deformer needs to be defined either as argument or class variable)")
+        if not deformer:
+            deformer = self.deformer
+        if not force:
+            if os.path.isfile(file_path):
+                FEEDBACK.warning("This file already exists. Skipping")
+                return False
+        # Vertex connections is required for barycentric and bilinear modes when loading
+        if not file_path:
+            file_dir, file_name = os.path.split(self.io.file_path)
+        else:
+            file_dir, file_name = os.path.split(file_path)
+        # default value -1 means export all weights!
+        cmds.deformerWeights(file_name, export=True, deformer=deformer, path=file_dir, defaultValue=-1.0, vc=vertexConnections)
+        FEEDBACK.info("File exported to %s successfully..." % os.path.join(file_dir, file_name))
+        return True
+
+    def load_weights(self, deformer=None, file_path=None, method="index"):
+        if not deformer and not self.deformer:
+            FEEDBACK.throw_error(
+                "No Deformer defined. A Deformer needs to be defined either as argument or class variable)")
+        if not deformer:
+            deformer = self.deformer
+
+        if not file_path:
+            file_dir, file_name = os.path.split(self.io.file_path)
+        else:
+            file_dir, file_name = os.path.split(file_path)
+
+        cmds.deformerWeights(file_name, im=True, deformer=deformer, path=file_dir, method=method)
+        return True
+
+    def save_matching_weights(self, deformer=None, file_path=None, vertexConnections=False, force=True):
+        """
+        Saves the weights AND the negated weights to the disk
+        Args:
+            deformer: Deformer node. If not specified, it will try to use the class variable.
+            file_path: (String) Absolute File path. If not defined the class variable will be used
+            vertexConnections: (Bool) defines whether or not to define Vertex Connections in the file. Required for Barycentric
+            and Bilinear methods while loading
+
+        Returns: (list) file locations for normal and negated weights
+
+        """
+        if not file_path:
+            file_dir, file_name = os.path.split(self.io.file_path)
+        else:
+            file_dir, file_name = os.path.split(file_path)
+
+        state = self.save_weights(deformer=deformer, file_path=os.path.join(file_dir, file_name), vertexConnections=vertexConnections, force=force)
+        if not state:
+            return
+
+        name, extension = os.path.splitext(file_name)
+        f_path = os.path.join(file_dir, extension)
+        cmds.refresh()
+        positive_weights_path = os.path.join(file_dir, file_name)
+        temp_io= io.IO(file_path=positive_weights_path)
+        to_be_negated = temp_io.read()
+        negative_weights_path = "%sN%s" % (os.path.join(file_dir, name), extension)
+        temp_io.file_path = negative_weights_path
+        negated_weights = self.negateWeights(to_be_negated)
+        temp_io.write(negated_weights)
+        return (positive_weights_path, negative_weights_path)
+
+
+    def negateWeights(self, json_data, influencer_name=None):
+        """Negates the weights in json_data"""
+
+        weights_list = None
+        if not influencer_name:
+            weights_list = json_data["deformerWeight"]["weights"]
+        else:
+            # find the influencer weights:
+            for weights in json_data["deformerWeight"]["weights"]:
+                if weights["source"] == influencer_name:
+                    weights_list = [weights]
+        if not weights_list:
+            print("Cannot find the influencer")
+            return
+        for weights in weights_list:
+            weights["defaultValue"] = 1-weights["defaultValue"]
+            for vert in weights["points"]:
+                vert["value"]=1-vert["value"]
+        return json_data
 
 def get_plug_ids(mesh, source_deformer, source_influence=None):
     node_type = cmds.nodeType(source_deformer)
@@ -34,23 +172,7 @@ def get_plug_ids(mesh, source_deformer, source_influence=None):
     return plug, vtx_count
 
 
-def collect_deformers(mesh):
-    """Collects defomers in a dictionary by type
 
-    Args:
-        mesh (str): Shape or transform node
-    Return:
-        dictionary: {<type>: [list of deformers]}
-
-    """
-    # TODO : ADD FFD for Maya 2019+ versions
-    valid_deformers = ["skinCluster", "blendShape", "nonLinear", "cluster"]
-    # get deformer from mesh
-    history = cmds.listHistory(mesh, pruneDagObjects=True)
-
-    deformer_data = {deformer_type: cmds.ls(history, type=deformer_type, shapes=True) for deformer_type in valid_deformers}
-
-    return deformer_data
 
 def get_influence_weights(mesh, deformer, influence, skip_checks=False):
     """Gets the weights for given influence object
