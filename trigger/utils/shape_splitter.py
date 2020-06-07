@@ -1,5 +1,7 @@
 """splits blendshapes with the given maps"""
 import os
+from copy import deepcopy
+
 from maya import cmds
 import itertools
 from trigger.actions import weights
@@ -51,11 +53,12 @@ class Splitter(dict):
         self["matches"][blendshape] = split_maps
 
     def _bs_split(self, mesh, split_map_path, name, grp):
-        splitted_mesh = cmds.duplicate(self.neutral, name=name)
+        splitted_mesh = cmds.duplicate(self.neutral, name=name)[0]
         cmds.blendShape(mesh, splitted_mesh, w=[0, 1], name="tmp_split_blendshape")
         self.weightsHandler.load_weights(deformer="tmp_split_blendshape", file_path=split_map_path)
         cmds.delete(splitted_mesh, ch=True)
         cmds.parent(splitted_mesh, grp)
+        return splitted_mesh
 
     def _resolve_split_name(self, unsplit_name, map_path):
         map_name = os.path.splitext(os.path.basename(map_path))[0]
@@ -83,48 +86,76 @@ class Splitter(dict):
             FEEDBACK.throw_error("Neutral shape is not defined")
         splits_grp = "SPLITTED_SHAPES_grp"
         if not cmds.objExists(splits_grp):
-            cmds.group(name="SPLITTED_SHAPES_grp", em = True)
-        for shape, split_maps in self["matches"].items():
+            cmds.group(name="SPLITTED_SHAPES_grp", em=True)
+
+        mort_list = []
+        expandable_list = deepcopy(self["matches"].items())
+        for shape, split_maps in expandable_list:
             if not split_maps:
                 continue
-            if len(split_maps) > 1:
-                # if there are multiple split maps, required shapes are quadrants, octants etc...
-                work_path_list = []
-                for s_map in split_maps:
-                    work_path_list.append(self["splitMaps"][s_map])
-                pGen = list(itertools.product(*work_path_list))
-                # tmp_name = "tmp"
-                for mult_path_list in pGen:
-                    tmp_name = "tmp"
-                    data_list = []
-                    for mult_path in mult_path_list:
-                        name = os.path.splitext(os.path.basename(mult_path))[0]
-                        tmp_name = "%s_%s" %(tmp_name, name)
-                        # get data
-                        self.weightsHandler.io.file_path = mult_path
-                        data = self.weightsHandler.io.read()
-                        data_list.append(data)
-                    multiplied_weights = self.weightsHandler.multiplyWeights(data_list)
-                    tmp_name = "%s.json" % tmp_name
-                    self.weightsHandler.io.file_path = tmp_name
-                    self.weightsHandler.io.write(multiplied_weights)
-                    map_path = self.weightsHandler.io.file_path
-                    print("="*30)
-                    print(shape, map_path)
-                    print("="*30)
-                    splitted_name = self._resolve_split_name(shape, map_path)
-                    self._bs_split(shape, map_path, splitted_name, splits_grp)
-                pass
-            else:
-                # there is a single map,
-                # so we only require that one and the negative of it
-                map_paths = self["splitMaps"][split_maps[0]]
-                for nmb, map_path in enumerate(map_paths):
-                    # resolve the name suffix
-                    splitted_name = self._resolve_split_name(shape, map_path)
-                    self._bs_split(shape, map_path, splitted_name, splits_grp)
 
+            map_paths = self["splitMaps"][split_maps[0]]
+
+            for nmb, map_path in enumerate(map_paths):
+                # resolve the name suffix
+                splitted_name = self._resolve_split_name(shape, map_path)
+                splitted_mesh = self._bs_split(shape, map_path, splitted_name, splits_grp)
+
+                if len(split_maps) > 1:
+                    mort_list.append(splitted_mesh)
+                    expandable_list.append((splitted_mesh, split_maps[1:]))
+
+        cmds.delete(mort_list)
         return splits_grp
+
+    # def split_shapes(self):
+    #     if not self.neutral:
+    #         FEEDBACK.throw_error("Neutral shape is not defined")
+    #     splits_grp = "SPLITTED_SHAPES_grp"
+    #     if not cmds.objExists(splits_grp):
+    #         cmds.group(name="SPLITTED_SHAPES_grp", em = True)
+    #
+    #     for shape, split_maps in self["matches"].items():
+    #         if not split_maps:
+    #             continue
+    #         if len(split_maps) > 1:
+    #             # if there are multiple split maps, required shapes are quadrants, octants etc...
+    #             work_path_list = []
+    #             for s_map in split_maps:
+    #                 work_path_list.append(self["splitMaps"][s_map])
+    #             pGen = list(itertools.product(*work_path_list))
+    #             # tmp_name = "tmp"
+    #             for mult_path_list in pGen:
+    #                 tmp_name = "tmp"
+    #                 data_list = []
+    #                 for mult_path in mult_path_list:
+    #                     name = os.path.splitext(os.path.basename(mult_path))[0]
+    #                     tmp_name = "%s_%s" %(tmp_name, name)
+    #                     # get data
+    #                     self.weightsHandler.io.file_path = mult_path
+    #                     data = self.weightsHandler.io.read()
+    #                     data_list.append(data)
+    #                 multiplied_weights = self.weightsHandler.multiplyWeights(data_list)
+    #                 tmp_name = "%s.json" % tmp_name
+    #                 self.weightsHandler.io.file_path = tmp_name
+    #                 self.weightsHandler.io.write(multiplied_weights)
+    #                 map_path = self.weightsHandler.io.file_path
+    #                 print("="*30)
+    #                 print(shape, map_path)
+    #                 print("="*30)
+    #                 splitted_name = self._resolve_split_name(shape, map_path)
+    #                 self._bs_split(shape, map_path, splitted_name, splits_grp)
+    #             pass
+    #         else:
+    #             # there is a single map,
+    #             # so we only require that one and the negative of it
+    #             map_paths = self["splitMaps"][split_maps[0]]
+    #             for nmb, map_path in enumerate(map_paths):
+    #                 # resolve the name suffix
+    #                 splitted_name = self._resolve_split_name(shape, map_path)
+    #                 self._bs_split(shape, map_path, splitted_name, splits_grp)
+    #
+    #     return splits_grp
     # getters / cleaners
     def get_blendshapes(self):
         return self["matches"].keys()
