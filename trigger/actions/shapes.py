@@ -45,9 +45,6 @@ class Shapes(object):
             cmds.setAttr("%s.v" % dup_ctrl, 1)
             cmds.parent(dup_ctrl, export_grp)
         return export_grp
-
-    def replace_shapes(self, shape_grp):
-        pass
     
     def export_shapes(self, alembic_file_path):
         """Exports the shapes to the file location as .abc"""

@@ -37,13 +37,14 @@ class IO(dict):
     @file_path.setter
     def file_path(self, new_path):
         name, ext = os.path.splitext(new_path)
+        directory, _ = os.path.split(new_path)
         if not ext:
             FEEDBACK.throw_error("IO module needs to know the extension")
             raise Exception
         if ext not in self.valid_extensions:
             FEEDBACK.throw_error("IO modules does not support this extension (%s)" % ext)
             raise Exception
-        if os.path.isdir(new_path):
+        if directory:
             self["file_path"] = self._folderCheck(new_path)
         else:
             self["file_path"] = os.path.join(self.root_path, self.folder_name, new_path)

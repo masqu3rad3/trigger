@@ -2,6 +2,32 @@
 
 from maya import cmds
 
+
+def get_deformers(mesh):
+    """Collects defomers in a dictionary by type
+
+    Args:
+        mesh (str): Shape or transform node
+    Return:
+        dictionary: {<type>: [list of deformers]}
+
+    """
+
+    valid_deformers = ["skinCluster", "blendShape", "nonLinear", "cluster"]
+    if int(cmds.about(version=True)) >= 2019:
+        valid_deformers.append("ffd")
+    # get deformer from mesh
+    history = cmds.listHistory(mesh, pruneDagObjects=True)
+
+    deformer_data = {deformer_type: cmds.ls(history, type=deformer_type, shapes=True) for deformer_type in
+                     valid_deformers}
+
+    return deformer_data
+
+def get_influencers(deformer):
+    return cmds.aliasAttr(deformer, q=True)[::2]
+
+
 def connect_bs_targets(
         driver_attr,
         targets_dictionary,
@@ -133,5 +159,6 @@ def localize(mesh, blendshape_node, local_target_name="LocalRig"):
     cmds.parent(local_mesh, local_rig_grp)
 
     return local_mesh
+
 
 

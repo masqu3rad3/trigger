@@ -14,6 +14,26 @@ FEEDBACK = feedback.Feedback(__name__)
 
 ACTION_DATA = {}
 
+
+def multiplyList(list_of_values):
+    # Multiply elements one by one
+    result = 1
+    for x in list_of_values:
+        result = result * x
+    return result
+
+def addList(list_of_values):
+    result = 0
+    for x in list_of_values:
+        result += x
+    return result
+
+def subractList(list_of_values):
+    result = list_of_values[0]
+    for x in list_of_values[1:]:
+        result += x
+    return result
+
 class Weights(dict):
     def __init__(self, *args, **kwargs):
         super(Weights, self).__init__()
@@ -39,27 +59,27 @@ class Weights(dict):
         """Mandatory method for all action modules"""
         pass
 
-    def collect_deformers(self, mesh):
-        """Collects defomers in a dictionary by type
+    # def collect_deformers(self, mesh):
+    #     """Collects defomers in a dictionary by type
+    #
+    #     Args:
+    #         mesh (str): Shape or transform node
+    #     Return:
+    #         dictionary: {<type>: [list of deformers]}
+    #
+    #     """
+    #
+    #     valid_deformers = ["skinCluster", "blendShape", "nonLinear", "cluster"]
+    #     if int(cmds.about(version=True)) >= 2019:
+    #         valid_deformers.append("ffd")
+    #     # get deformer from mesh
+    #     history = cmds.listHistory(mesh, pruneDagObjects=True)
+    #
+    #     deformer_data = {deformer_type: cmds.ls(history, type=deformer_type, shapes=True) for deformer_type in valid_deformers}
+    #
+    #     return deformer_data
 
-        Args:
-            mesh (str): Shape or transform node
-        Return:
-            dictionary: {<type>: [list of deformers]}
-
-        """
-
-        valid_deformers = ["skinCluster", "blendShape", "nonLinear", "cluster"]
-        if int(cmds.about(version=True)) >= 2019:
-            valid_deformers.append("ffd")
-        # get deformer from mesh
-        history = cmds.listHistory(mesh, pruneDagObjects=True)
-
-        deformer_data = {deformer_type: cmds.ls(history, type=deformer_type, shapes=True) for deformer_type in valid_deformers}
-
-        return deformer_data
-
-    def save_weights(self, deformer=None, file_path=None, vertexConnections=False, force=True):
+    def save_weights(self, deformer=None, file_path=None, vertexConnections=False, force=True, influencer=None):
         if not deformer and not self.deformer:
             FEEDBACK.throw_error("No Deformer defined. A Deformer needs to be defined either as argument or class variable)")
         if not deformer:
@@ -75,6 +95,21 @@ class Weights(dict):
             file_dir, file_name = os.path.split(file_path)
         # default value -1 means export all weights!
         cmds.deformerWeights(file_name, export=True, deformer=deformer, path=file_dir, defaultValue=-1.0, vc=vertexConnections)
+
+        # there is no argument to define the influencer while exporting.
+        # If a specific influencer needs to be exported, strip the rest after the file exported.
+        if influencer:
+            # read the exported data
+            self.io.file_path = os.path.join(file_dir, file_name)
+            data = self.io.read()
+            operation_data = deepcopy(data)
+            # do the surgery
+            for weight_data_dict in data["deformerWeight"]["weights"]:
+                if weight_data_dict["source"] != influencer:
+                    operation_data["deformerWeight"]["weights"].remove(weight_data_dict)
+            operation_data["deformerWeight"]["weights"][0]["layer"] = 0
+            self.io.write(operation_data)
+
         FEEDBACK.info("File exported to %s successfully..." % os.path.join(file_dir, file_name))
         return True
 
@@ -88,14 +123,22 @@ class Weights(dict):
         if not file_path:
             file_dir, file_name = os.path.split(self.io.file_path)
         else:
-            
-            
             file_dir, file_name = os.path.split(file_path)
 
         cmds.deformerWeights(file_name, im=True, deformer=deformer, path=file_dir, method=method, ignoreName=ignore_name)
+
+        # this is a bug I came across one with one test geo.
+        # Somehow it does not assign the value to index: 0
+        # the following part forces to assign the correct value to index 0
+        self.io.file_path = os.path.join(file_dir, file_name)
+        data = self.io.read()
+        for nmb, weight_dict in enumerate(data["deformerWeight"]["weights"]):
+            index0_val = weight_dict["points"][0]["value"]
+            cmds.setAttr("%s.inputTarget[0].inputTargetGroup[%i].targetWeights[0]" % (deformer, nmb), index0_val)
+            # splitMaps_blendshape.inputTarget[0].inputTargetGroup[X].targetWeights[0]
         return True
 
-    def save_matching_weights(self, deformer=None, file_path=None, vertexConnections=False, force=True):
+    def save_matching_weights(self, deformer=None, file_path=None, vertexConnections=False, force=True, influencer=None):
         """
         Saves the weights AND the negated weights to the disk
         Args:
@@ -112,7 +155,7 @@ class Weights(dict):
         else:
             file_dir, file_name = os.path.split(file_path)
 
-        state = self.save_weights(deformer=deformer, file_path=os.path.join(file_dir, file_name), vertexConnections=vertexConnections, force=force)
+        state = self.save_weights(deformer=deformer, file_path=os.path.join(file_dir, file_name), vertexConnections=vertexConnections, force=force, influencer=influencer)
         if not state:
             return
 
@@ -151,27 +194,50 @@ class Weights(dict):
 
     def multiplyWeights(self, data_list, influencer=None):
         """Multiplies the weights in the data list"""
+        # take a copy of the first data list
         copy_data = deepcopy(data_list[0])
+        # the json_datas in data_list must belong to the same deformer (same point count)
+        for weights_list_nmb, weights in enumerate(copy_data["deformerWeight"]["weights"]):
+            if influencer and weights["source"] != influencer:
+                continue
+            for point_nmb, point in enumerate(weights["points"]):
+                point_values = []
+                for data_list_nmb, json_data in enumerate(data_list):
+                    val = json_data["deformerWeight"]["weights"][weights_list_nmb]["points"][point_nmb]["value"]
+                    point_values.append(val)
+                point["value"] = multiplyList(point_values)
+        return copy_data
 
-        for json_data in data_list[1:]:
-            weights_list = None
-            if not influencer:
-                weights_list = json_data["deformerWeight"]["weights"]
-            else:
-                # find the influencer weights:
-                for weights in json_data["deformerWeight"]["weights"]:
-                    if weights["source"] == influencer:
-                        weights_list = [weights]
-            if not weights_list:
-                print("Cannot find the influencer")
-                return
-            for weights_cpy, weights_mlt in zip(weights_list, copy_data["deformerWeight"]["weights"]):
-                print("=="*30)
-                # print(copy_data["deformerWeight"]["weights"]["points"])
-                # print("=="*30)
-                # print(weights["points"])
-                for vert_cpy, vert_mlt in zip(weights_cpy["points"], weights_mlt["points"]):
-                    vert_cpy["value"] = vert_cpy["value"] * vert_mlt["value"]
+    def addWeights(self, data_list, influencer=None, clamp=True):
+        # TODO : not tested
+        copy_data = deepcopy(data_list[0])
+        for weights_list_nmb, weights in enumerate(copy_data["deformerWeight"]["weights"]):
+            if influencer and weights["source"] != influencer:
+                continue
+            for point_nmb, point in enumerate(weights["points"]):
+                point_values = []
+                for data_list_nmb, json_data in enumerate(data_list):
+                    val = json_data["deformerWeight"]["weights"][weights_list_nmb]["points"][point_nmb]["value"]
+                    point_values.append(val)
+                point["value"] = addList(point_values)
+                if clamp:
+                    point["value"] = max(min(point["value"], 1.0), 0.0)
+        return copy_data
+
+    def subtractWeights(self, data_list, influencer=None, clamp=True):
+        # TODO : not tested
+        copy_data = deepcopy(data_list[0])
+        for weights_list_nmb, weights in enumerate(copy_data["deformerWeight"]["weights"]):
+            if influencer and weights["source"] != influencer:
+                continue
+            for point_nmb, point in enumerate(weights["points"]):
+                point_values = []
+                for data_list_nmb, json_data in enumerate(data_list):
+                    val = json_data["deformerWeight"]["weights"][weights_list_nmb]["points"][point_nmb]["value"]
+                    point_values.append(val)
+                point["value"] = subtractList(point_values)
+                if clamp:
+                    point["value"] = max(min(point["value"], 1.0), 0.0)
         return copy_data
 
 
