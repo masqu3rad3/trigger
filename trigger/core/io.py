@@ -20,11 +20,11 @@ class IO(dict):
             self.file_path = file_path
         elif file_name:
             if not folder_name:
-                folder_name = ""
+                self.folder_name = ""
             if not root_path:
-                root_path = os.path.normpath(os.path.expanduser("~"))
+                self.root_path = os.path.normpath(os.path.expanduser("~"))
             # self["file_path"] = os.path.join(root_path, folder_name, file_name)
-            self.file_path = os.path.join(root_path, folder_name, file_name)
+            self.file_path = os.path.join(self.root_path, self.folder_name, file_name)
         else:
             FEEDBACK.throw_error("IO class cannot initialized. At least a file name or file_path must be defined")
 
@@ -43,7 +43,10 @@ class IO(dict):
         if ext not in self.valid_extensions:
             FEEDBACK.throw_error("IO modules does not support this extension (%s)" % ext)
             raise Exception
-        self["file_path"] = self._folderCheck(new_path)
+        if os.path.isdir(new_path):
+            self["file_path"] = self._folderCheck(new_path)
+        else:
+            self["file_path"] = os.path.join(self.root_path, self.folder_name, new_path)
 
     def read(self):
         if os.path.isfile(self.file_path):
@@ -53,6 +56,7 @@ class IO(dict):
 
     def write(self, data):
         self._dump_json(data, self.file_path)
+        return self.file_path
 
     def _load_json(self, file_path):
         """Loads the given json file"""

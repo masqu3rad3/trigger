@@ -1,4 +1,5 @@
 import os
+from copy import deepcopy
 from maya import cmds
 import maya.api.OpenMaya as om
 import maya.api.OpenMayaAnim as omAnim
@@ -30,6 +31,9 @@ class Weights(dict):
         else:
             FEEDBACK.warning("The specified object does not exists")
             return
+
+    def set_path(self, file_path):
+        self.io.file_path = file_path
 
     def action(self):
         """Mandatory method for all action modules"""
@@ -74,7 +78,7 @@ class Weights(dict):
         FEEDBACK.info("File exported to %s successfully..." % os.path.join(file_dir, file_name))
         return True
 
-    def load_weights(self, deformer=None, file_path=None, method="index"):
+    def load_weights(self, deformer=None, file_path=None, method="index", ignore_name=True):
         if not deformer and not self.deformer:
             FEEDBACK.throw_error(
                 "No Deformer defined. A Deformer needs to be defined either as argument or class variable)")
@@ -84,9 +88,11 @@ class Weights(dict):
         if not file_path:
             file_dir, file_name = os.path.split(self.io.file_path)
         else:
+            
+            
             file_dir, file_name = os.path.split(file_path)
 
-        cmds.deformerWeights(file_name, im=True, deformer=deformer, path=file_dir, method=method)
+        cmds.deformerWeights(file_name, im=True, deformer=deformer, path=file_dir, method=method, ignoreName=ignore_name)
         return True
 
     def save_matching_weights(self, deformer=None, file_path=None, vertexConnections=False, force=True):
@@ -123,25 +129,51 @@ class Weights(dict):
         return (positive_weights_path, negative_weights_path)
 
 
-    def negateWeights(self, json_data, influencer_name=None):
+    def negateWeights(self, json_data, influencer=None):
         """Negates the weights in json_data"""
 
         weights_list = None
-        if not influencer_name:
+        if not influencer:
             weights_list = json_data["deformerWeight"]["weights"]
         else:
             # find the influencer weights:
             for weights in json_data["deformerWeight"]["weights"]:
-                if weights["source"] == influencer_name:
+                if weights["source"] == influencer:
                     weights_list = [weights]
         if not weights_list:
             print("Cannot find the influencer")
             return
         for weights in weights_list:
-            weights["defaultValue"] = 1-weights["defaultValue"]
+            # weights["defaultValue"] = 1-weights["defaultValue"]
             for vert in weights["points"]:
                 vert["value"]=1-vert["value"]
         return json_data
+
+    def multiplyWeights(self, data_list, influencer=None):
+        """Multiplies the weights in the data list"""
+        copy_data = deepcopy(data_list[0])
+
+        for json_data in data_list[1:]:
+            weights_list = None
+            if not influencer:
+                weights_list = json_data["deformerWeight"]["weights"]
+            else:
+                # find the influencer weights:
+                for weights in json_data["deformerWeight"]["weights"]:
+                    if weights["source"] == influencer:
+                        weights_list = [weights]
+            if not weights_list:
+                print("Cannot find the influencer")
+                return
+            for weights_cpy, weights_mlt in zip(weights_list, copy_data["deformerWeight"]["weights"]):
+                print("=="*30)
+                # print(copy_data["deformerWeight"]["weights"]["points"])
+                # print("=="*30)
+                # print(weights["points"])
+                for vert_cpy, vert_mlt in zip(weights_cpy["points"], weights_mlt["points"]):
+                    vert_cpy["value"] = vert_cpy["value"] * vert_mlt["value"]
+        return copy_data
+
 
 def get_plug_ids(mesh, source_deformer, source_influence=None):
     node_type = cmds.nodeType(source_deformer)
