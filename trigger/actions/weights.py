@@ -132,9 +132,18 @@ class Weights(dict):
         # the following part forces to assign the correct value to index 0
         self.io.file_path = os.path.join(file_dir, file_name)
         data = self.io.read()
+        deformer_type = cmds.objectType(deformer)
+        if deformer_type == "blendshape":
+            point_attr_template = "{0}.inputTarget[0].inputTargetGroup[{1}].targetWeights[0]"
+        elif deformer_type == "ffd":
+            point_attr_template = "{0}.weightList[{1}].weights[0]"
+        elif deformer_type == "skincluster":
+            pass
+
         for nmb, weight_dict in enumerate(data["deformerWeight"]["weights"]):
             index0_val = weight_dict["points"][0]["value"]
-            cmds.setAttr("%s.inputTarget[0].inputTargetGroup[%i].targetWeights[0]" % (deformer, nmb), index0_val)
+            # cmds.setAttr("%s.inputTarget[0].inputTargetGroup[%i].targetWeights[0]" % (deformer, nmb), index0_val)
+            cmds.setAttr(point_attr_template.format(deformer, nmb), index0_val)
             # splitMaps_blendshape.inputTarget[0].inputTargetGroup[X].targetWeights[0]
         return True
 

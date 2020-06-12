@@ -35,9 +35,11 @@ def parentToSurface(objects=None, surface=None, mode="parent"):
         if len(shapes) > 0:
             surface = shapes[0]
     nType = pm.nodeType(surface)
-    if nType != "mesh" and nType != "nurbsSurface":
-        pm.warning("ParentToSurface: Last selected item must be a mesh or nurbsSurface.")
-        return
+
+    # For some weird reason, if the mesh is hidden it does not return nodeType!!!
+    # if nType != "mesh" and nType != "nurbsSurface":
+    #     pm.warning("ParentToSurface: Last selected item must be a mesh or nurbsSurface.")
+    #     return
 
     minU, minV, sizeU, sizeV = 0.0, 0.0, 0.0, 0.0
     if nType == "nurbsSurface":

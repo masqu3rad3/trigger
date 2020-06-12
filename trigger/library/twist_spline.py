@@ -362,6 +362,6 @@ class TwistSpline(object):
 
         # RETURN
         # re-initialize the deformation joints (remove the last of it
-        self.defJoints.pop(-1)
+        # self.defJoints.pop(-1)
         self.noTouchData = ([splineCurve, splineIK[0], self.endLock], IKjoints, contJoints, poleGroups, RPhandles)
 

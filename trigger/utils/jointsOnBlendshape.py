@@ -47,15 +47,34 @@ def jointOnBlendshapes(joint=None, controller=None, surface=None):
     if type(surface) == str:
         surface = pm.PyNode(surface)
 
-    master = joint.getParent()
+    # master = joint.getParent()
+
     ## double group the joint
-    rigConnect = pm.group(joint, name="%s_rigConnect" % (joint.name()))
-    contConnect = pm.group(joint, name="%s_contConnect" % (joint.name()))
+    # rigConnect = pm.group(joint, name="%s_rigConnect" % (joint.name()))
+    # contConnect = pm.group(joint, name="%s_contConnect" % (joint.name()))
+
+    rigConnect = pm.group(name="%s_rigConnect" % (joint.name()), em=True)
+    contConnect = pm.group(name="%s_contConnect" % (joint.name()), em=True)
+    extra.alignToAlter(rigConnect, joint, mode=0)
+    extra.alignToAlter(contConnect, joint, mode=0)
+    extra.alignTo(rigConnect, controller, mode=1)
+    extra.alignTo(contConnect, controller, mode=1)
+
+    joint_parent = joint.getParent()
+    ## if the offset has anouther parent, parent the new hierarchy under that
+
+    pm.parent(joint, contConnect)
+    pm.parent(contConnect, rigConnect)
+
+    if joint_parent:
+        pm.parent(rigConnect, joint_parent)
+
 
     cont_surfaceAttach = extra.createUpGrp(controller, "sAttach")
     cont_negative = extra.createUpGrp(controller, "negative")
-    follicleList = parentToSurface.parentToSurface([cont_surfaceAttach], surface, mode="pointConstraint")
-    pm.orientConstraint(master, cont_surfaceAttach, mo=False)
+    # follicleList = parentToSurface.parentToSurface([cont_surfaceAttach], surface, mode="pointConstraint")
+    follicleList = parentToSurface.parentToSurface([cont_surfaceAttach], surface, mode="parentConstraint")
+    # pm.orientConstraint(master, cont_surfaceAttach, mo=False)
 
     controller.translate >> contConnect.translate
     controller.rotate >> contConnect.rotate

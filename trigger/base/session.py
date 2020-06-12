@@ -31,10 +31,11 @@ class Session(object):
         self.io.write(guides_data)
         FEEDBACK.info("Session Saved Successfully...")
 
-    def load_session(self, file_path):
+    def load_session(self, file_path, reset_scene=True):
         """Loads the session from the file"""
 
-        cmds.file(new=True, force=True)
+        if reset_scene:
+            cmds.file(new=True, force=True)
         self.io.file_path = file_path
         guides_data = self.io.read()
         if guides_data:

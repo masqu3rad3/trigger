@@ -29,4 +29,4 @@ cmds.delete("trigger_refGuides")
 
 # /mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charMax/MDL/work/maya/charMaxCvA.v029.ma
 
-####################################
+########################
