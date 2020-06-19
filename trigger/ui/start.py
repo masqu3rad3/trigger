@@ -1585,7 +1585,7 @@ class MainUI(QtWidgets.QMainWindow):
 
     def createRoot(self):
         cmds.undoInfo(openChunk=True)
-        self.initSkeleton.initLimb("root", defineAs=self.defineAs)
+        self.initSkeleton.initLimb("connector", defineAs=self.defineAs)
         cmds.undoInfo(closeChunk=True)
 
     def rig(self):

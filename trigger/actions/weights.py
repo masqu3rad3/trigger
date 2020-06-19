@@ -7,6 +7,7 @@ import maya.api.OpenMayaAnim as omAnim
 from trigger.core import io
 from trigger.core import feedback
 
+from trigger.library import functions as extra
 import time
 from pprint import pprint
 
@@ -81,7 +82,7 @@ class Weights(dict):
 
     def save_weights(self, deformer=None, file_path=None, vertexConnections=False, force=True, influencer=None):
         if not deformer and not self.deformer:
-            FEEDBACK.throw_error("No Deformer defined. A Deformer needs to be defined either as argument or class variable)")
+            FEEDBACK.throw_error("Cannot save the weight %s \nNo Deformer defined. A Deformer needs to be defined either as argument or class variable)" % file_path)
         if not deformer:
             deformer = self.deformer
         if not force:
@@ -93,8 +94,16 @@ class Weights(dict):
             file_dir, file_name = os.path.split(self.io.file_path)
         else:
             file_dir, file_name = os.path.split(file_path)
+        # extra attributes for recreation
+        deformer_type = cmds.objectType(deformer)
+        if deformer_type == "skinCluster":
+            attributes = ["envelope", "skinningMethod", "useComponents", "normalizeWeights", "deformUserNormals"]
+        else:
+            attributes = []
+        # TODO: ADD ATTRIBUTES FOR ALL DEFORMER TYPES
+
         # default value -1 means export all weights!
-        cmds.deformerWeights(file_name, export=True, deformer=deformer, path=file_dir, defaultValue=-1.0, vc=vertexConnections)
+        cmds.deformerWeights(file_name, export=True, deformer=deformer, path=file_dir, defaultValue=-1.0, vc=vertexConnections, at=attributes)
 
         # there is no argument to define the influencer while exporting.
         # If a specific influencer needs to be exported, strip the rest after the file exported.
@@ -133,12 +142,18 @@ class Weights(dict):
         self.io.file_path = os.path.join(file_dir, file_name)
         data = self.io.read()
         deformer_type = cmds.objectType(deformer)
-        if deformer_type == "blendshape":
+        if deformer_type == "blendShape":
             point_attr_template = "{0}.inputTarget[0].inputTargetGroup[{1}].targetWeights[0]"
         elif deformer_type == "ffd":
             point_attr_template = "{0}.weightList[{1}].weights[0]"
-        elif deformer_type == "skincluster":
-            pass
+        elif deformer_type == "skinCluster":
+            skin_meshes = cmds.listConnections(deformer, type="mesh")
+            for mesh in skin_meshes:
+                cmds.select("%s.vtx[0]" % mesh)
+                cmds.WeightHammer()
+            cmds.select(d=True)
+            return
+            # point_attr_template = "{0}.weightList[{1}].weights[0]"
 
         for nmb, weight_dict in enumerate(data["deformerWeight"]["weights"]):
             index0_val = weight_dict["points"][0]["value"]
@@ -146,6 +161,65 @@ class Weights(dict):
             cmds.setAttr(point_attr_template.format(deformer, nmb), index0_val)
             # splitMaps_blendshape.inputTarget[0].inputTargetGroup[X].targetWeights[0]
         return True
+
+    def create_deformer(self, weights_file, deformer_type=None):
+        """
+        Creates the deformer defined in the weights file and applies the pre-saved weights.
+
+        If a deformer with the same name exists, it uses that instead of creating
+
+        Main function to re-create rig weights.
+        Args:
+            weights_file: (String) Path to the weights file save with
+
+        Returns:
+
+        """
+
+        # load the weights file
+        self.io.file_path = weights_file
+        weights_data = self.io.read()
+
+        # get the deformer name
+        deformer_name = weights_data["deformerWeight"]["weights"][0]["deformer"]
+        if not cmds.objExists(deformer_name):
+            # collect the influencers (eg. joints if it is a skinCluster)
+            influencers = [weight_dict.get("source") for weight_dict in weights_data["deformerWeight"]["weights"]]
+
+            # get the affected shapes
+            affected = extra.uniqueList([weight_dict.get("shape") for weight_dict in weights_data["deformerWeight"]["weights"]])
+
+            deformer_info = weights_data["deformerWeight"].get("deformers")
+            if not deformer_info or deformer_type:
+                FEEDBACK.throw_error("Cannot identify the deformer type. Use the flag 'deformer_type' or export the weights with additional attributes")
+
+            if deformer_info:
+                deformer_type = weights_data["deformerWeight"]["deformers"][0]["type"]
+                deformer_attrs = weights_data["deformerWeight"]["deformers"][0]["attributes"] # this is list of dictionaries
+
+            else:
+                deformer_attrs = []
+
+            if deformer_type == "skinCluster":
+                print("=" * 45)
+                print("joints:", influencers)
+                print("affected:", affected[0])
+                deformer = cmds.skinCluster(influencers, affected[0], name=deformer_name, tsb=True)[0]
+            else:
+                # TODO : SUPPORT FOR ALL DEFORMERS
+                FEEDBACK.throw_error("deformers OTHER than skinCluster are not YET supported")
+                return
+            for attr_dict in deformer_attrs:
+                attr_name = attr_dict["name"]
+                attr_type = attr_dict["type"]
+                attr_value = float(attr_dict["value"]) # THIS IS NOT BULLET-PROOF
+                cmds.setAttr("%s.%s" % (deformer_name, attr_name), attr_value)
+
+        # finally load weights
+        self.load_weights(deformer=deformer_name, file_path=weights_file, method="index", ignore_name=False)
+
+
+        pass
 
     def save_matching_weights(self, deformer=None, file_path=None, vertexConnections=False, force=True, influencer=None):
         """

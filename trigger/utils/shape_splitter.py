@@ -78,7 +78,7 @@ class Splitter(dict):
                 suffix = "B"
             else:
                 suffix = "A"
-        split_name = "%s_%s" % (unsplit_name, suffix)
+        split_name = "%s%s" % (suffix, unsplit_name)
         return split_name
 
     def split_shapes(self):

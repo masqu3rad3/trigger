@@ -509,8 +509,8 @@ def create_attribute(node, property_dict, keyable=True, display=True):
         cmds.addAttr(node, longName=attr_name, niceName=nice_name, k=keyable, dataType="string")
         cmds.setAttr("%s.%s" % (node, attr_name), default_value, type="string")
     else:
-        min_val = property_dict.get("min_value") if property_dict.get("min_value") else -99999
-        max_val = property_dict.get("max_value") if property_dict.get("max_value") else 99999
+        min_val = property_dict.get("min_value") if property_dict.get("min_value") != None else -99999
+        max_val = property_dict.get("max_value") if property_dict.get("max_value") != None else 99999
         default_value = default_value if default_value else 0
         cmds.addAttr(node,
                      longName=attr_name,
@@ -523,6 +523,7 @@ def create_attribute(node, property_dict, keyable=True, display=True):
                      )
 
     cmds.setAttr("%s.%s" % (node, attr_name), e=True, cb=display)
+    return "%s.%s" % (node, attr_name)
 
 
 def set_joint_type(joint, type_name):
@@ -684,6 +685,12 @@ def getParent(node):
 def getShapes(node):
     return cmds.listRelatives(node, c=True, shapes=True)
 
+def getMeshes(node):
+    """Gets only the mesh transform nodes under a group"""
+    all_mesh_shapes = cmds.listRelatives(node, ad=True, children=True, type="mesh")
+    return uniqueList([getParent(mesh) for mesh in all_mesh_shapes])
+
+
 def matrixConstraint(parent, child, mo=True, prefix="", sr=None, st=None, ss=None):
     child_parent = getParent(child)
     # if child_parent:
@@ -729,3 +736,81 @@ def matrixConstraint(parent, child, mo=True, prefix="", sr=None, st=None, ss=Non
 
     return mult_matrix, decompose_matrix
 
+
+def drive_attrs(driver_attr, driven_attrs, driver_range=None, driven_range=None, force=True):
+    if type(driven_attrs) != list:
+        driven_attrs = [driven_attrs]
+    if not driver_range or not driven_range:
+        # direct connect
+        for driven in driven_attrs:
+            cmds.connectAttr(driver_attr, driven, force=force)
+        return
+    if driver_range == driven_range:
+        # also direct connect
+        for driven in driven_attrs:
+            cmds.connectAttr(driver_attr, driven, force=force)
+        return
+
+    # RANGE INPUTS
+    # check if there is a compound attr
+    driver_node, attr_name = driver_attr.split(".")
+    driver_attr_children = cmds.attributeQuery(attr_name, n=driver_node, listChildren=True)
+    is_driver_compound = True if driver_attr_children else False
+    # if it is eligible use a single set range node
+    if is_driver_compound:
+        if len(driver_attr_children) > 3:
+            cmds.error(
+                "drive_attrs does not support more than 3 channel compounds. Connect channels separetely ==> %s" % driver_attr)
+            return
+        range_node = cmds.createNode("setRange", name="%s_%s_setRange" % (driver_node, attr_name))
+        for ch in "XYZ":
+            cmds.setAttr("%s.oldMin%s" % (range_node, ch), driver_range[0])
+            cmds.setAttr("%s.oldMax%s" % (range_node, ch), driver_range[1])
+            cmds.setAttr("%s.min%s" % (range_node, ch), driven_range[0])
+            cmds.setAttr("%s.max%s" % (range_node, ch), driven_range[1])
+
+        if len(driver_attr_children) == 3:
+            cmds.connectAttr(driver_attr, "%s.value" % range_node)
+        else:
+            range_node_input_children = cmds.attributeQuery("value", n=range_node, listChildren=True)
+            for nmb, attr in enumerate(driver_attr_children):
+                cmds.connectAttr("%s.%s" % (driver_node, attr), "%s.%s" % (range_node, range_node_input_children[nmb]))
+    # if single channel
+    else:
+        range_node = cmds.createNode("remapValue", name="%s_%s_setRange" % (driver_node, attr_name))
+        cmds.setAttr("%s.inputMin" % range_node, driver_range[0])
+        cmds.setAttr("%s.inputMax" % range_node, driver_range[1])
+        cmds.setAttr("%s.outputMin" % range_node, driven_range[0])
+        cmds.setAttr("%s.outputMax" % range_node, driven_range[1])
+        cmds.connectAttr(driver_attr, "%s.inputValue" % range_node)
+
+    # RANGE OUTPUTS
+    for driven in driven_attrs:
+        # check if the attr is compound
+        driven_node, driven_attr_name = driven.split(".")
+        driven_attr_children = cmds.attributeQuery(driven_attr_name, n=driven_node, listChildren=True)
+        is_driven_compound = True if driven_attr_children else False
+        if is_driven_compound:
+            if len(driven_attr_children) > 3:
+                cmds.error(
+                    "drive_attrs does not support more than 3 channel compounds. Connect channels separetely ==> %s" % driven)
+                return
+            if is_driver_compound:
+                if len(driven_attr_children) == 3:
+                    cmds.connectAttr("%s.outValue" % range_node, driven)
+                else:
+                    range_node_output_children = cmds.attributeQuery("outValue", n=range_node, listChildren=True)
+                    for nmb in range(len(driven_attr_children)):
+                        cmds.connectAttr("%s.%s" % (range_node, range_node_output_children[nmb]),
+                                         "%s.%s" % (driven_node, driven_attr_children[nmb]))
+            else:
+                # if the driver is compound but the driven isnt, just connect the first one
+                cmds.connectAttr("%s.outputValueX" % (range_node), driven)
+        else:
+            # driver is not compound but driven is
+            if is_driven_compound:
+                for attr_name in driven_attr_children:
+                    cmds.connectAttr("%s.outValue" % range_node, "%s.%s" % (driven_node, attr_name))
+            # nothing is compound
+            else:
+                cmds.connectAttr("%s.outValue" % range_node, driven)

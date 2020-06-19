@@ -2,6 +2,8 @@
 
 from maya import cmds
 
+from trigger.core.undo_dec import undo
+
 
 def get_deformers(mesh):
     """Collects defomers in a dictionary by type
@@ -27,7 +29,7 @@ def get_deformers(mesh):
 def get_influencers(deformer):
     return cmds.aliasAttr(deformer, q=True)[::2]
 
-
+@undo
 def connect_bs_targets(
         driver_attr,
         targets_dictionary,
@@ -112,8 +114,8 @@ def connect_bs_targets(
     for bs_attr in bs_attrs:
         cmds.connectAttr(driver_attr, bs_attr)
 
-
-def localize(mesh, blendshape_node, local_target_name="LocalRig"):
+@undo
+def localize(mesh, blendshape_node, local_target_name="LocalRig", group_name=None):
     """Creates a local rig by duplicating and using the duplicate as the blendshape target to the original mesh.
 
     Arguments:
@@ -128,12 +130,21 @@ def localize(mesh, blendshape_node, local_target_name="LocalRig"):
     """
 
     # create a holding group
-    local_rig_grp = "%s_grp" % local_target_name
+    local_rig_grp = "%s_grp" %local_target_name if not group_name else group_name
+    # local_rig_grp = "%s_grp" % local_target_name
     if not cmds.objExists(local_rig_grp):
-        cmds.group(name="%s_grp" %local_target_name, em=True)
+        cmds.group(name=local_rig_grp, em=True)
 
     # duplicate once
     local_mesh = cmds.duplicate(mesh, name=local_target_name)[0]
+    # get rid of any inbetweens, unlock transforms
+    attrs = ["tx", "ty", "tz", "rx", "ry", "rz", "sx", "sy", "sz", "v"]
+    for attr in attrs:
+        cmds.setAttr("%s.%s" %(local_mesh, attr), e=True, k=True, l=False)
+    # delete intermediate objects
+    shapes = cmds.listRelatives(local_mesh, children=True)
+    _ = [cmds.delete(shape) for shape in shapes if cmds.getAttr("%s.intermediateObject" % shape) == 1]
+
 
 
     if cmds.objExists(blendshape_node):
