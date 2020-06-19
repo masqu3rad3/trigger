@@ -474,7 +474,34 @@ def create_global_joint_attrs(joint, moduleName=None, upAxis=None, mirrorAxis=No
         cmds.addAttr(joint, longName="useRefOri", niceName="Inherit_Orientation", at="bool", keyable=True)
     cmds.setAttr("{0}.useRefOri".format(joint), True)
 
-def create_attribute(node, property_dict, keyable=True, display=True):
+def create_attribute(node, property_dict=None, keyable=True, display=True, *args, **kwargs):
+    """
+    Create attribute with the properties defined by the property_dict
+    Args:
+        node: (String) Node to create attribute on
+        property_dict: (Dictionary) This holds the necessary information for the attribute:
+                {<nice_name>: (Optional) nice name for the attribute,
+                 <attr_name>: name of the attribute,
+                 <attr_type>: Valid types are "long", "short", "bool", "enum", "float", "double", "string"
+                 <enum_list>: Must be a single string (hence the name) Eg. "option1:option2:option3"
+                            Required if the attr_type is "enum".
+                 <default_value>: (Optional) Can be float, integer, string or bool depending on the attr_type.
+                            If not provided it is 0, "", or False depending on the attr_type
+                 <min_value>:  (Optional) Float or Integer. Default is -99999
+                 <max_value>:  (Optional) Float or Integer. Default is 99999
+
+                 For easier use, each these elements can be entered as kwargs.
+
+        keyable: (bool) Makes the attribute keyable and visible in the channelbox
+        display: (bool) Makes the attr displayable in the cb
+
+    Returns:
+
+    """
+
+    if not property_dict:
+        property_dict = {key: value for key, value in kwargs.items()}
+
     supported_attrs = ["long", "short", "bool", "enum", "float", "double", "string"]
     attr_name = property_dict.get("attr_name")
 
@@ -753,8 +780,14 @@ def drive_attrs(driver_attr, driven_attrs, driver_range=None, driven_range=None,
 
     # RANGE INPUTS
     # check if there is a compound attr
-    driver_node, attr_name = driver_attr.split(".")
-    driver_attr_children = cmds.attributeQuery(attr_name, n=driver_node, listChildren=True)
+    splits = driver_attr.split(".")
+    driver_node = splits[0]
+    attr_name = ".".join(splits[1:])
+    # driver_node, attr_name = driver_attr.split(".")
+    if len(splits) > 2:
+        driver_attr_children = []
+    else:
+        driver_attr_children = cmds.attributeQuery(attr_name, n=driver_node, listChildren=True)
     is_driver_compound = True if driver_attr_children else False
     # if it is eligible use a single set range node
     if is_driver_compound:
@@ -770,11 +803,11 @@ def drive_attrs(driver_attr, driven_attrs, driver_range=None, driven_range=None,
             cmds.setAttr("%s.max%s" % (range_node, ch), driven_range[1])
 
         if len(driver_attr_children) == 3:
-            cmds.connectAttr(driver_attr, "%s.value" % range_node)
+            cmds.connectAttr(driver_attr, "%s.value" % range_node, force=force)
         else:
             range_node_input_children = cmds.attributeQuery("value", n=range_node, listChildren=True)
             for nmb, attr in enumerate(driver_attr_children):
-                cmds.connectAttr("%s.%s" % (driver_node, attr), "%s.%s" % (range_node, range_node_input_children[nmb]))
+                cmds.connectAttr("%s.%s" % (driver_node, attr), "%s.%s" % (range_node, range_node_input_children[nmb]), force=force)
     # if single channel
     else:
         range_node = cmds.createNode("remapValue", name="%s_%s_setRange" % (driver_node, attr_name))
@@ -782,13 +815,19 @@ def drive_attrs(driver_attr, driven_attrs, driver_range=None, driven_range=None,
         cmds.setAttr("%s.inputMax" % range_node, driver_range[1])
         cmds.setAttr("%s.outputMin" % range_node, driven_range[0])
         cmds.setAttr("%s.outputMax" % range_node, driven_range[1])
-        cmds.connectAttr(driver_attr, "%s.inputValue" % range_node)
+        cmds.connectAttr(driver_attr, "%s.inputValue" % range_node, force=force)
 
     # RANGE OUTPUTS
     for driven in driven_attrs:
         # check if the attr is compound
-        driven_node, driven_attr_name = driven.split(".")
-        driven_attr_children = cmds.attributeQuery(driven_attr_name, n=driven_node, listChildren=True)
+        splits = driven.split(".")
+        driven_node = splits[0]
+        driven_attr_name = ".".join(splits[1:])
+        # driven_node, driven_attr_name = driven.split(".")
+        if len(splits) > 2:
+            driven_attr_children = []
+        else:
+            driven_attr_children = cmds.attributeQuery(driven_attr_name, n=driven_node, listChildren=True)
         is_driven_compound = True if driven_attr_children else False
         if is_driven_compound:
             if len(driven_attr_children) > 3:
@@ -797,20 +836,20 @@ def drive_attrs(driver_attr, driven_attrs, driver_range=None, driven_range=None,
                 return
             if is_driver_compound:
                 if len(driven_attr_children) == 3:
-                    cmds.connectAttr("%s.outValue" % range_node, driven)
+                    cmds.connectAttr("%s.outValue" % range_node, driven, force=force)
                 else:
                     range_node_output_children = cmds.attributeQuery("outValue", n=range_node, listChildren=True)
                     for nmb in range(len(driven_attr_children)):
                         cmds.connectAttr("%s.%s" % (range_node, range_node_output_children[nmb]),
-                                         "%s.%s" % (driven_node, driven_attr_children[nmb]))
+                                         "%s.%s" % (driven_node, driven_attr_children[nmb]), force=force)
             else:
                 # if the driver is compound but the driven isnt, just connect the first one
-                cmds.connectAttr("%s.outputValueX" % (range_node), driven)
+                cmds.connectAttr("%s.outputValueX" % (range_node), driven, force=force)
         else:
             # driver is not compound but driven is
             if is_driven_compound:
                 for attr_name in driven_attr_children:
-                    cmds.connectAttr("%s.outValue" % range_node, "%s.%s" % (driven_node, attr_name))
+                    cmds.connectAttr("%s.outValue" % range_node, "%s.%s" % (driven_node, attr_name), force=force)
             # nothing is compound
             else:
-                cmds.connectAttr("%s.outValue" % range_node, driven)
+                cmds.connectAttr("%s.outValue" % range_node, driven, force=force)

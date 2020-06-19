@@ -3,6 +3,7 @@
 from maya import cmds
 
 from trigger.core.undo_dec import undo
+from trigger.library import functions
 
 
 def get_deformers(mesh):
@@ -36,6 +37,7 @@ def connect_bs_targets(
         driver_range=None,
         force_new=False,
         front_of_chain=True,
+        bs_node_name=None
 ):
     """Creates or adds Blendshape target and connects them into the same controller attribute
 
@@ -50,8 +52,11 @@ def connect_bs_targets(
         driver_range (List): If defined, remaps the driver attribute. Example: [0, 100]
         force_new (Bool): If True, a new blendshape will be created for each mesh even though there are existing ones.
         front_of_chain: Created blendshapes will be added front of the chain. Default True
+        bs_node_name: If a new blendshape node will be created it will take this name. If a blendshape node with this
+                        name exists, it will use that one.
     """
-
+    if not bs_node_name:
+        bs_node_name = functions.uniqueName("trigger_blendShape")
     if driver_range:
         custom_range = True
     else:
@@ -98,10 +103,13 @@ def connect_bs_targets(
         bs_nodes = cmds.ls(history, type="blendShape")
         if force_new or not bs_nodes:
             bs_node = cmds.blendShape(
-                target_shape, base, w=[0, 1], foc=front_of_chain, sd=True
+                target_shape, base, w=[0, 1], foc=front_of_chain, sd=True, name=bs_node_name
             )[0]
         else:
-            bs_node = bs_nodes[0]
+            if bs_node_name in bs_nodes:
+                bs_node = bs_node_name
+            else:
+                bs_node = bs_nodes[0]
             next_index = cmds.blendShape(bs_node, q=True, wc=True)
             cmds.blendShape(
                 bs_node,
