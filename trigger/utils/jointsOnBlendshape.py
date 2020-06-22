@@ -1,9 +1,11 @@
 ## connects a controller, mesh surface and joint with follicle and makes it possible to
 ## create extra joint based tweaking over blendshapes
-import pymel.core as pm
+# import pymel.core as pm
+from maya import cmds
 from trigger.utils import parentToSurface
 reload(parentToSurface)
-from trigger.utils import extraProcedures as extra
+# from trigger.utils import extraProcedures as extra
+from trigger.library import functions
 
 
 def jointOnBlendshapes(joint=None, controller=None, surface=None, attach_mode="parentConstraint"):
@@ -21,31 +23,31 @@ def jointOnBlendshapes(joint=None, controller=None, surface=None, attach_mode="p
 
     """
     if joint == None and controller == None and surface == None:
-        selection = pm.ls(sl=True)
+        selection = cmds.ls(sl=True)
         if len(selection) != 3:
-            pm.warning("3 objects must be selected (control curve, joint, mesh surface")
+            cmds.warning("3 objects must be selected (control curve, joint, mesh surface")
             return
         else:
             try:
-                joint = pm.ls(selection, type="joint")[0]
+                joint = cmds.ls(selection, type="joint")[0]
                 selection.remove(joint)
             except IndexError:
-                pm.warning("No joint selected")
+                cmds.warning("No joint selected")
                 return
             try:
-                transformObjects = pm.ls(selection, type="transform")
+                transformObjects = cmds.ls(selection, type="transform")
                 controller = transformObjects[0]
                 surface = transformObjects[1]
             except IndexError:
-                pm.warning("Transform objects must be selected")
+                cmds.warning("Transform objects must be selected")
                 return
 
-    if type(joint) == str:
-        joint = pm.PyNode(joint)
-    if type(controller) == str:
-        controller = pm.PyNode(controller)
-    if type(surface) == str:
-        surface = pm.PyNode(surface)
+    # if type(joint) == str:
+    #     joint = pm.PyNode(joint)
+    # if type(controller) == str:
+    #     controller = pm.PyNode(controller)
+    # if type(surface) == str:
+    #     surface = pm.PyNode(surface)
 
     # master = joint.getParent()
 
@@ -53,37 +55,43 @@ def jointOnBlendshapes(joint=None, controller=None, surface=None, attach_mode="p
     # rigConnect = pm.group(joint, name="%s_rigConnect" % (joint.name()))
     # contConnect = pm.group(joint, name="%s_contConnect" % (joint.name()))
 
-    rigConnect = pm.group(name="%s_rigConnect" % (joint.name()), em=True)
-    contConnect = pm.group(name="%s_contConnect" % (joint.name()), em=True)
-    extra.alignToAlter(rigConnect, joint, mode=0)
-    extra.alignToAlter(contConnect, joint, mode=0)
-    extra.alignTo(rigConnect, controller, mode=1)
-    extra.alignTo(contConnect, controller, mode=1)
+    rigConnect = cmds.group(name="%s_rigConnect" % joint, em=True)
+    contConnect = cmds.group(name="%s_contConnect" % joint, em=True)
+    functions.alignToAlter(rigConnect, joint, mode=0)
+    functions.alignToAlter(contConnect, joint, mode=0)
+    functions.alignTo(rigConnect, controller, position=False, rotation=True)
+    functions.alignTo(contConnect, controller, position=False, rotation=True)
 
-    joint_parent = joint.getParent()
+    # joint_parent = joint.getParent()
+    joint_parent = functions.getParent(joint)
     ## if the offset has anouther parent, parent the new hierarchy under that
 
-    pm.parent(joint, contConnect)
-    pm.parent(contConnect, rigConnect)
+    cmds.parent(joint, contConnect)
+    cmds.parent(contConnect, rigConnect)
 
     if joint_parent:
-        pm.parent(rigConnect, joint_parent)
+        cmds.parent(rigConnect, joint_parent)
 
 
-    cont_surfaceAttach = extra.createUpGrp(controller, "sAttach")
-    cont_negative = extra.createUpGrp(controller, "negative")
+    cont_surfaceAttach = functions.createUpGrp(controller, "sAttach")
+    cont_negative = functions.createUpGrp(controller, "negative")
     # follicleList = parentToSurface.parentToSurface([cont_surfaceAttach], surface, mode="pointConstraint")
     follicleList = parentToSurface.parentToSurface([cont_surfaceAttach], surface, mode=attach_mode)
     # pm.orientConstraint(master, cont_surfaceAttach, mo=False)
 
-    controller.translate >> contConnect.translate
-    controller.rotate >> contConnect.rotate
+    # controller.translate >> contConnect.translate
+    cmds.connectAttr("%s.translate" % controller, "%s.translate" % contConnect)
+    # controller.rotate >> contConnect.rotate
+    cmds.connectAttr("%s.rotate" % controller, "%s.rotate" % contConnect)
 
     ## negative node
-    inverseNode = pm.createNode("multiplyDivide", name="%s_inverse" % (controller.name()))
-    pm.setAttr(inverseNode.input2, (-1, -1, -1))
+    inverseNode = cmds.createNode("multiplyDivide", name="%s_inverse" % controller)
+    cmds.setAttr("%s.input2" % inverseNode, -1, -1, -1)
 
-    controller.translate >> inverseNode.input1
-    inverseNode.output >> cont_negative.translate
+    # controller.translate >> inverseNode.input1
+    cmds.connectAttr("%s.translate" % controller, "%s.input1" % inverseNode)
+    # inverseNode.output >> cont_negative.translate
+    cmds.connectAttr("%s.output" % inverseNode, "%s.translate" % cont_negative)
 
+    # print "HEHEHEHE" * 50
 # jointOnBlendshapes()
