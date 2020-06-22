@@ -6,7 +6,7 @@ reload(parentToSurface)
 from trigger.utils import extraProcedures as extra
 
 
-def jointOnBlendshapes(joint=None, controller=None, surface=None):
+def jointOnBlendshapes(joint=None, controller=None, surface=None, attach_mode="parentConstraint"):
     """
     Creates the follicle and makes the necessary connections for using joint tweaking over
     blendshapes. If no arguments are given, it uses current selection to find out nodes.
@@ -73,7 +73,7 @@ def jointOnBlendshapes(joint=None, controller=None, surface=None):
     cont_surfaceAttach = extra.createUpGrp(controller, "sAttach")
     cont_negative = extra.createUpGrp(controller, "negative")
     # follicleList = parentToSurface.parentToSurface([cont_surfaceAttach], surface, mode="pointConstraint")
-    follicleList = parentToSurface.parentToSurface([cont_surfaceAttach], surface, mode="parentConstraint")
+    follicleList = parentToSurface.parentToSurface([cont_surfaceAttach], surface, mode=attach_mode)
     # pm.orientConstraint(master, cont_surfaceAttach, mo=False)
 
     controller.translate >> contConnect.translate
