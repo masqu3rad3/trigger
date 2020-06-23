@@ -6,7 +6,6 @@ import maya.api.OpenMayaAnim as omAnim
 
 from trigger.core import io
 from trigger.core import feedback
-
 from trigger.library import functions as extra
 import time
 from pprint import pprint
@@ -182,6 +181,17 @@ class Weights(dict):
 
         # get the deformer name
         deformer_name = weights_data["deformerWeight"]["weights"][0]["deformer"]
+        # if the affected object does not have the deformer, create a new one
+        deformer_name = extra.uniqueName(deformer_name)
+        # affected = extra.uniqueList([weight_dict.get("shape") for weight_dict in weights_data["deformerWeight"]["weights"]])
+        # history = cmds.listHistory(affected[0], pruneDagObjects=True)
+        # # print "ANAN", affected[0]
+        # if history:
+        #     if affected[0] not in history:
+        #         print("-"*33)
+        #         print(affected[0])
+        #         print(history)
+        #         deformer_name = extra.uniqueName(deformer_name)
         if not cmds.objExists(deformer_name):
             # collect the influencers (eg. joints if it is a skinCluster)
             influencers = [weight_dict.get("source") for weight_dict in weights_data["deformerWeight"]["weights"]]

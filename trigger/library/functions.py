@@ -4,6 +4,7 @@ import maya.cmds as cmds
 import maya.api.OpenMaya as om
 
 from trigger.core import feedback
+from trigger.core.undo_dec import undo
 FEEDBACK = feedback.Feedback(logger_name=__name__)
 
 JOINT_TYPE_DICT = {
@@ -474,6 +475,7 @@ def create_global_joint_attrs(joint, moduleName=None, upAxis=None, mirrorAxis=No
         cmds.addAttr(joint, longName="useRefOri", niceName="Inherit_Orientation", at="bool", keyable=True)
     cmds.setAttr("{0}.useRefOri".format(joint), True)
 
+@undo
 def create_attribute(node, property_dict=None, keyable=True, display=True, *args, **kwargs):
     """
     Create attribute with the properties defined by the property_dict
@@ -528,7 +530,7 @@ def create_attribute(node, property_dict=None, keyable=True, display=True, *args
     elif attr_type == "enum":
         default_value = default_value if default_value else 0
         enum_list = property_dict.get("enum_list")
-        if not enum_list:
+        if enum_list == None:
             FEEDBACK.throw_error("Missing 'enum_list'")
         cmds.addAttr(node, longName=attr_name, niceName=nice_name, at=attr_type, en=enum_list, k=keyable, defaultValue=default_value)
     elif attr_type == "string":

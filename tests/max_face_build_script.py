@@ -1,26 +1,39 @@
 from maya import cmds
+
 from trigger.library import functions
+
+reload(functions)
 from trigger.actions import import_export
+
+reload(import_export)
 from trigger.library import deformers
+
+reload(deformers)
 from trigger.base import session
+
+reload(session)
 from trigger.library import controllers
 from trigger.library import functions
 from trigger.utils import jointsOnBlendshape
 
-previz_rig_filepath = "/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charMax/RIG/work/maya/previsCharMaxAvA.v010.ma"
-new_meshes_abc = "/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charMax/MDL/publish/caches/charMaxAvA.v016.abc"
+reload(jointsOnBlendshape)
+from trigger.utils import parentToSurface
+
+reload(parentToSurface)
 
 # reset scene
 cmds.file(new=True, force=True)
 
 # open the previous rig
-cmds.file(previz_rig_filepath, open=True, force=True)
+cmds.file("/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charMax/RIG/work/maya/previsCharMaxAvA.v010.ma",
+          open=True, force=True)
 cmds.hide(cmds.listRelatives("bn_head", children=True))
 cmds.hide(cmds.listRelatives("grp_faceExtra", children=True))
 
 # import the mesh grp
 import_act = import_export.ImportExport()
-import_act.import_alembic(new_meshes_abc)
+import_act.import_alembic(
+    "/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charMax/MDL/publish/caches/charMaxAvA.v016.abc")
 # import_act.import_scene("/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charMax/MDL/publish/maya/charMaxAvA.v016.ma")
 if cmds.objExists("charMaxCvA"):
     cmds.delete("charMaxCvA")  # this is not necessary
@@ -45,10 +58,12 @@ local_meshes.append(
 ####### LOCAL BS RIG ##########
 ###############################
 
-local_rig_guides_filepath = "/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charMax/RIG/work/maya/triggerData/guides/max_local_bs_guides.json"
+
 sessionHandler = session.Session()
 # sessionHandler.load_session("/home/arda.kutlu/EG2_playground/guideData/max_local_bs_guides.json", reset_scene=False)
-sessionHandler.load_session(local_rig_guides_filepath, reset_scene=False)
+sessionHandler.load_session(
+    "/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charMax/RIG/work/maya/triggerData/guides/max_local_bs_guides.json",
+    reset_scene=False)
 
 # move the local bs joints and make the labels invisible
 local_bs_joints = cmds.listRelatives("trigger_refGuides", children=True, type="joint", ad=True)
@@ -365,8 +380,8 @@ for jnt_off, jnt in zip(joint_offsets, local_twk_joints):
     controller = jnt.replace("_jDef", "_cont")
     if not cmds.objExists(controller):
         cmds.error("CONTROLLER MISSING => %s" % controller)
-
-    jointsOnBlendshape.jointOnBlendshapes(joint=str(jnt_off), controller=str(controller), surface=str(main_face_mesh))
+    jointsOnBlendshape.jointOnBlendshapes(joint=str(jnt_off), controller=str(controller), surface=str(main_face_mesh),
+                                          attach_mode="pointConstraint")
 
 follicle_shapes = cmds.ls(type="follicle")
 follicle_transforms = map(lambda x: functions.getParent(x), follicle_shapes)
@@ -692,4 +707,3 @@ for node in turtleNodes:
     except:
         pass
     cmds.unloadPlugin("Turtle", f=True)
-
