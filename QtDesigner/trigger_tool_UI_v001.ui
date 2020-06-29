@@ -1,0 +1,467 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>trigger_tool</class>
+ <widget class="QDialog" name="trigger_tool">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>264</width>
+    <height>237</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string notr="true">Trigger Tool v0.1</string>
+  </property>
+  <property name="toolTip">
+   <string notr="true"/>
+  </property>
+  <property name="statusTip">
+   <string notr="true"/>
+  </property>
+  <property name="whatsThis">
+   <string notr="true"/>
+  </property>
+  <property name="accessibleName">
+   <string notr="true"/>
+  </property>
+  <property name="accessibleDescription">
+   <string notr="true"/>
+  </property>
+  <layout class="QVBoxLayout" name="main_vlay">
+   <property name="spacing">
+    <number>5</number>
+   </property>
+   <property name="leftMargin">
+    <number>5</number>
+   </property>
+   <property name="topMargin">
+    <number>5</number>
+   </property>
+   <property name="rightMargin">
+    <number>5</number>
+   </property>
+   <property name="bottomMargin">
+    <number>5</number>
+   </property>
+   <item>
+    <layout class="QHBoxLayout" name="select_and_pose_hlay">
+     <item>
+      <widget class="QGroupBox" name="select_gbox">
+       <property name="title">
+        <string notr="true">Select</string>
+       </property>
+       <layout class="QVBoxLayout" name="selecr_grp_vlay" stretch="0">
+        <property name="spacing">
+         <number>5</number>
+        </property>
+        <property name="sizeConstraint">
+         <enum>QLayout::SetDefaultConstraint</enum>
+        </property>
+        <property name="leftMargin">
+         <number>5</number>
+        </property>
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="rightMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
+         <number>5</number>
+        </property>
+        <item>
+         <layout class="QVBoxLayout" name="select_vlay" stretch="0,0,0,0">
+          <property name="spacing">
+           <number>5</number>
+          </property>
+          <property name="sizeConstraint">
+           <enum>QLayout::SetMaximumSize</enum>
+          </property>
+          <item>
+           <widget class="QPushButton" name="all_body_pb">
+            <property name="toolTip">
+             <string notr="true"/>
+            </property>
+            <property name="statusTip">
+             <string notr="true"/>
+            </property>
+            <property name="whatsThis">
+             <string notr="true"/>
+            </property>
+            <property name="accessibleName">
+             <string notr="true"/>
+            </property>
+            <property name="accessibleDescription">
+             <string notr="true"/>
+            </property>
+            <property name="text">
+             <string notr="true">All Body</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="all_face_pb">
+            <property name="toolTip">
+             <string notr="true"/>
+            </property>
+            <property name="statusTip">
+             <string notr="true"/>
+            </property>
+            <property name="whatsThis">
+             <string notr="true"/>
+            </property>
+            <property name="accessibleName">
+             <string notr="true"/>
+            </property>
+            <property name="accessibleDescription">
+             <string notr="true"/>
+            </property>
+            <property name="text">
+             <string notr="true">All Face</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="select_mirror_pb">
+            <property name="toolTip">
+             <string notr="true"/>
+            </property>
+            <property name="statusTip">
+             <string notr="true"/>
+            </property>
+            <property name="whatsThis">
+             <string notr="true"/>
+            </property>
+            <property name="accessibleName">
+             <string notr="true"/>
+            </property>
+            <property name="accessibleDescription">
+             <string notr="true"/>
+            </property>
+            <property name="text">
+             <string notr="true">Select Mirror</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="all_tweakers_pb">
+            <property name="toolTip">
+             <string notr="true"/>
+            </property>
+            <property name="statusTip">
+             <string notr="true"/>
+            </property>
+            <property name="whatsThis">
+             <string notr="true"/>
+            </property>
+            <property name="accessibleName">
+             <string notr="true"/>
+            </property>
+            <property name="accessibleDescription">
+             <string notr="true"/>
+            </property>
+            <property name="text">
+             <string notr="true">All Tweakers</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
+     </item>
+     <item>
+      <widget class="QGroupBox" name="pose_gbox">
+       <property name="title">
+        <string notr="true">Pose</string>
+       </property>
+       <layout class="QVBoxLayout" name="pose_grp_vlay">
+        <property name="spacing">
+         <number>5</number>
+        </property>
+        <property name="leftMargin">
+         <number>5</number>
+        </property>
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="rightMargin">
+         <number>5</number>
+        </property>
+        <property name="bottomMargin">
+         <number>0</number>
+        </property>
+        <item>
+         <layout class="QVBoxLayout" name="pose_ctrls_vlay">
+          <property name="spacing">
+           <number>5</number>
+          </property>
+          <item>
+           <widget class="QPushButton" name="copy_mirror_pb">
+            <property name="toolTip">
+             <string notr="true"/>
+            </property>
+            <property name="statusTip">
+             <string notr="true"/>
+            </property>
+            <property name="whatsThis">
+             <string notr="true"/>
+            </property>
+            <property name="accessibleName">
+             <string notr="true"/>
+            </property>
+            <property name="accessibleDescription">
+             <string notr="true"/>
+            </property>
+            <property name="text">
+             <string notr="true">Copy Mirror</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="swap_mirror_pb">
+            <property name="toolTip">
+             <string notr="true"/>
+            </property>
+            <property name="statusTip">
+             <string notr="true"/>
+            </property>
+            <property name="whatsThis">
+             <string notr="true"/>
+            </property>
+            <property name="accessibleName">
+             <string notr="true"/>
+            </property>
+            <property name="accessibleDescription">
+             <string notr="true"/>
+            </property>
+            <property name="text">
+             <string notr="true">Swap Mirror</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="zero_tpose_pb">
+            <property name="toolTip">
+             <string notr="true"/>
+            </property>
+            <property name="statusTip">
+             <string notr="true"/>
+            </property>
+            <property name="whatsThis">
+             <string notr="true"/>
+            </property>
+            <property name="accessibleName">
+             <string notr="true"/>
+            </property>
+            <property name="accessibleDescription">
+             <string notr="true"/>
+            </property>
+            <property name="text">
+             <string notr="true"> Zero T-Pose</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="reset_tpose_pb">
+            <property name="toolTip">
+             <string notr="true"/>
+            </property>
+            <property name="statusTip">
+             <string notr="true"/>
+            </property>
+            <property name="whatsThis">
+             <string notr="true"/>
+            </property>
+            <property name="accessibleName">
+             <string notr="true"/>
+            </property>
+            <property name="accessibleDescription">
+             <string notr="true"/>
+            </property>
+            <property name="text">
+             <string notr="true">Reset T-Pose</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="settings_gbox">
+     <property name="title">
+      <string notr="true">Settings</string>
+     </property>
+     <layout class="QVBoxLayout" name="settings_grp_vlay">
+      <property name="spacing">
+       <number>5</number>
+      </property>
+      <property name="leftMargin">
+       <number>5</number>
+      </property>
+      <property name="topMargin">
+       <number>0</number>
+      </property>
+      <property name="rightMargin">
+       <number>5</number>
+      </property>
+      <property name="bottomMargin">
+       <number>0</number>
+      </property>
+      <item>
+       <layout class="QHBoxLayout" name="namespace_hlay">
+        <property name="spacing">
+         <number>0</number>
+        </property>
+        <item>
+         <widget class="QLabel" name="namespace_lbl">
+          <property name="toolTip">
+           <string notr="true"/>
+          </property>
+          <property name="statusTip">
+           <string notr="true"/>
+          </property>
+          <property name="whatsThis">
+           <string notr="true"/>
+          </property>
+          <property name="accessibleName">
+           <string notr="true"/>
+          </property>
+          <property name="accessibleDescription">
+           <string notr="true"/>
+          </property>
+          <property name="text">
+           <string notr="true">Namespace</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QComboBox" name="namespace_combo">
+          <property name="toolTip">
+           <string notr="true"/>
+          </property>
+          <property name="statusTip">
+           <string notr="true"/>
+          </property>
+          <property name="whatsThis">
+           <string notr="true"/>
+          </property>
+          <property name="accessibleName">
+           <string notr="true"/>
+          </property>
+          <property name="accessibleDescription">
+           <string notr="true"/>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="mirror_mode_hlay">
+        <property name="spacing">
+         <number>0</number>
+        </property>
+        <item>
+         <widget class="QLabel" name="mirror_mode_lbl">
+          <property name="toolTip">
+           <string notr="true"/>
+          </property>
+          <property name="statusTip">
+           <string notr="true"/>
+          </property>
+          <property name="whatsThis">
+           <string notr="true"/>
+          </property>
+          <property name="accessibleName">
+           <string notr="true"/>
+          </property>
+          <property name="accessibleDescription">
+           <string notr="true"/>
+          </property>
+          <property name="text">
+           <string notr="true">Mirror Mode</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QComboBox" name="mirror_mode_combo">
+          <property name="toolTip">
+           <string notr="true"/>
+          </property>
+          <property name="statusTip">
+           <string notr="true"/>
+          </property>
+          <property name="whatsThis">
+           <string notr="true"/>
+          </property>
+          <property name="accessibleName">
+           <string notr="true"/>
+          </property>
+          <property name="accessibleDescription">
+           <string notr="true"/>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="side_tags_hlay">
+        <property name="spacing">
+         <number>0</number>
+        </property>
+        <item>
+         <widget class="QLabel" name="side_tags_lbl">
+          <property name="toolTip">
+           <string notr="true"/>
+          </property>
+          <property name="statusTip">
+           <string notr="true"/>
+          </property>
+          <property name="whatsThis">
+           <string notr="true"/>
+          </property>
+          <property name="accessibleName">
+           <string notr="true"/>
+          </property>
+          <property name="accessibleDescription">
+           <string notr="true"/>
+          </property>
+          <property name="text">
+           <string notr="true">Side Tags</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QComboBox" name="side_tags_combo">
+          <property name="toolTip">
+           <string notr="true"/>
+          </property>
+          <property name="statusTip">
+           <string notr="true"/>
+          </property>
+          <property name="whatsThis">
+           <string notr="true"/>
+          </property>
+          <property name="accessibleName">
+           <string notr="true"/>
+          </property>
+          <property name="accessibleDescription">
+           <string notr="true"/>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
