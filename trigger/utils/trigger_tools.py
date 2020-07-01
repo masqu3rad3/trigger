@@ -1,0 +1,364 @@
+"""tools to be used with trigger rigs
+
+:created: 29 June 2020
+:author: Arda Kutlu <arda.kutlu@rebellion.co.uk>
+"""
+
+import os
+import json
+from functools import wraps
+from maya import cmds
+
+
+import Qt
+from Qt import QtWidgets, QtCore, QtGui
+from maya import OpenMayaUI as omui
+
+if Qt.__binding__ == "PySide":
+    from shiboken import wrapInstance
+    from Qt.QtCore import Signal
+elif Qt.__binding__.startswith('PyQt'):
+    from sip import wrapinstance as wrapInstance
+    from Qt.Core import pyqtSignal as Signal
+else:
+    from shiboken2 import wrapInstance
+    from Qt.QtCore import Signal
+
+windowName = "Trigger Tool v0.1"
+
+
+def getMayaMainWindow():
+    """
+    Gets the memory adress of the main window to connect Qt dialog to it.
+    Returns:
+        (long) Memory Adress
+    """
+    win = omui.MQtUtil_mainWindow()
+    ptr = wrapInstance(long(win), QtWidgets.QMainWindow)
+    return ptr
+
+def undo(func):
+    """ Puts the wrapped `func` into a single Maya Undo action, then
+        undoes it when the function enters the finally: block """
+    @wraps(func)
+    def _undofunc(*args, **kwargs):
+        cmds.undoInfo(ock=True)
+        result = None
+        try:
+            # start an undo chunk
+            result = func(*args, **kwargs)
+        except Exception as e:
+            cmds.error(e)
+        finally:
+            # after calling the func, end the undo chunk and undo
+            cmds.undoInfo(cck=True)
+    return _undofunc
+
+class TriggerTool(object):
+    def __init__(self):
+        super(TriggerTool, self).__init__()
+        self.definitions = self.load_globals()
+
+        # self.all_ctrls = self.get_all_controllers()
+
+        # self.overrideNamespace = True
+
+        # temporary
+        self.namespace = self.get_scene_namespaces()[0]
+
+        # self.zero_dictionary = {"translate": (0,0,0), "rotate": (0,0,0), "scale": (1,1,1)}
+        self.zero_dictionary = {"tx": 0, "ty": 0, "tz": 0, "rx": 0, "ry": 0, "rz": 0, "sx": 1, "sy": 1, "sz": 1}
+
+    def _get_all_controls(self, selection_override=True):
+        """Selects all controllers based on the override settings"""
+        selection = cmds.ls(sl=True)
+        if selection_override and selection:
+            namespace = self.get_selected_namespace()
+        else:
+            namespace = self.namespace
+        if namespace:
+            print("debug")
+            select_keys = ["%s:%s" % (namespace, key) for key in self.definitions["controller_keys"]]
+        else:
+            select_keys = list(self.definitions["controller_keys"])
+
+        return (y for y in (cmds.ls(select_keys, transforms=True))) # this returns a generator
+
+    def _get_key_controls(self, key_list):
+        all_conts = self._get_all_controls()
+        for cont in all_conts:
+            for key in self.definitions[key_list]:
+                if key.lower() in cont.lower():
+                    yield cont
+
+    def _get_mirror_controls(self):
+        selection = cmds.ls(sl=True)
+        if not selection:
+            return
+        for node in selection:
+            for side in self.definitions["side_pairs"]:
+                if side[0] in node:
+                    other_side = node.replace(side[0], side[1])
+                    if cmds.objExists(other_side):
+                        yield other_side
+                    else:
+                        cmds.warning("Pair of %s does not exist" % node)
+                elif side[1] in node:
+                    other_side = node.replace(side[1], side[0])
+                    if cmds.objExists(other_side):
+                        yield other_side
+                    else:
+                        cmds.warning("Pair of %s does not exist" % node)
+                else:
+                    cmds.warning("%s is single sided or pair cannot be found" % node)
+
+    @undo
+    def select_body(self):
+        cmds.select(self._get_key_controls("body_keys"))
+
+    @undo
+    def select_face(self):
+        cmds.select(self._get_key_controls("face_keys"))
+
+    @undo
+    def select_tweakers(self):
+        cmds.select(self._get_key_controls("tweaker_keys"))
+
+    @undo
+    def select_mirror(self, add=False):
+        mirror_gen = self._get_mirror_controls()
+        if mirror_gen:
+            cmds.select(self._get_mirror_controls(), add=add)
+
+    # @undo
+    def zero_pose(self, selected=False):
+        modified = []
+        if selected:
+            controls = cmds.ls(sl=True)
+        else:
+            controls = self._get_all_controls()
+        for cont in controls:
+            for attr, value in self.zero_dictionary.items():
+                try:
+                    cmds.setAttr("%s.%s" %(cont, attr), value)
+                    modified.append("%s.%s" %(cont, attr))
+                except RuntimeError:
+                    pass
+            custom_attrs = cmds.listAttr(cont, ud=True)
+
+            if custom_attrs:
+                for attr in custom_attrs:
+                    if cmds.attributeQuery(attr, node=cont, storable=True):
+                        default_value = cmds.attributeQuery(attr, node=cont, listDefault=True)
+                        if default_value:
+                            try:
+                                cmds.setAttr("%s.%s" % (cont, attr), default_value[0])
+                                modified.append("%s.%s" % (cont, attr))
+                            except RuntimeError: pass
+        return modified
+
+    @undo
+    def reset_pose(self, selected=False):
+        modified = self.zero_pose(selected=selected)
+        for attr in modified:
+            key = cmds.listConnections(attr, connections=False, destination=False, source=True, scn=True)
+            if key:
+                if cmds.objectType(key[0]) == "animCurveTA" or\
+                    cmds.objectType(key[0]) == "animCurveTL" or\
+                        cmds.objectType(key[0]) == "animCurveTU":
+                    cmds.delete(key[0])
+
+
+
+
+    def load_globals(self):
+        """Loads the given json file"""
+        dir_path = os.path.dirname(os.path.realpath(__file__))
+        file_path = os.path.join(dir_path, "tt_globals.json")
+        if os.path.isfile(file_path):
+            try:
+                with open(file_path, 'r') as f:
+                    definitions = json.load(f)
+                    return definitions
+            except ValueError:
+                cmds.error("Corrupted JSON file => %s" % file_path)
+        else:
+            cmds.warning("Definition file cannot be found. Using default settings")
+            default_definitions = {
+                "controller_keys": ["ctrl*", "*cont"],
+                "body_keys": [],
+                "face_keys": [],
+                "side_pairs": [["_L_","_R_"]]
+            }
+            self.save_globals(default_definitions)
+            return default_definitions
+
+    def save_globals(self, definitions_data):
+        dir_path = os.path.dirname(os.path.realpath(__file__))
+        file_path = os.path.join(dir_path, "tt_globals.json")
+        with open(file_path, "w") as f:
+            json.dump(definitions_data, f, indent=4)
+
+    def get_scene_namespaces(self):
+        garbage = ['UI', 'shared']
+        return filter(lambda x: x not in garbage, cmds.namespaceInfo(listOnlyNamespaces=True))
+
+    def get_selected_namespace(self):
+        sel = cmds.ls(sl=True, sns=True)
+        if sel:
+            if ':' in sel[0]:
+                return sel[0].rsplit(':')[0]
+            else:
+                return ""
+
+    def set_namespace(self, namespace):
+        self.namespace = namespace
+        print "hede"
+
+class MainUI(QtWidgets.QDialog):
+    def __init__(self):
+        for entry in QtWidgets.QApplication.allWidgets():
+            try:
+                if entry.objectName() == windowName:
+                    entry.close()
+            except (AttributeError, TypeError):
+                pass
+        parent = getMayaMainWindow()
+        super(MainUI, self).__init__(parent=parent)
+
+        self.tr_tool = TriggerTool()
+        self.setWindowTitle(windowName)
+        self.setObjectName(windowName)
+        self.buildUI()
+
+    def buildUI(self):
+        # self.setObjectName("trigger_tool")
+        self.resize(264, 237)
+        # self.setWindowTitle("Trigger Tool v0.1")
+        self.main_vlay = QtWidgets.QVBoxLayout(self)
+        self.main_vlay.setContentsMargins(5, 5, 5, 5)
+        self.main_vlay.setSpacing(5)
+        self.main_vlay.setObjectName("main_vlay")
+
+        self.select_and_pose_hlay = QtWidgets.QHBoxLayout()
+
+        self.select_gbox = QtWidgets.QGroupBox(self)
+        self.select_gbox.setTitle("Select")
+
+        self.select_grp_vlay = QtWidgets.QVBoxLayout(self.select_gbox)
+        self.select_grp_vlay.setSizeConstraint(QtWidgets.QLayout.SetDefaultConstraint)
+        self.select_grp_vlay.setContentsMargins(5, 0, 0, 5)
+        self.select_grp_vlay.setSpacing(5)
+
+        self.select_vlay = QtWidgets.QVBoxLayout()
+        self.select_vlay.setSizeConstraint(QtWidgets.QLayout.SetMaximumSize)
+        self.select_vlay.setSpacing(5)
+
+        self.all_body_pb = QtWidgets.QPushButton(self.select_gbox)
+        self.all_body_pb.setText("All Body")
+        self.select_vlay.addWidget(self.all_body_pb)
+
+        self.all_face_pb = QtWidgets.QPushButton(self.select_gbox)
+        self.all_face_pb.setText("All Face")
+        self.select_vlay.addWidget(self.all_face_pb)
+
+        self.select_mirror_pb = QtWidgets.QPushButton(self.select_gbox)
+        self.select_mirror_pb.setText("Select Mirror")
+        self.select_vlay.addWidget(self.select_mirror_pb)
+
+        self.all_tweakers_pb = QtWidgets.QPushButton(self.select_gbox)
+        self.all_tweakers_pb.setText("All Tweakers")
+        self.select_vlay.addWidget(self.all_tweakers_pb)
+
+        self.select_grp_vlay.addLayout(self.select_vlay)
+        self.select_and_pose_hlay.addWidget(self.select_gbox)
+
+        self.pose_gbox = QtWidgets.QGroupBox(self)
+        self.pose_gbox.setTitle("Pose")
+
+        self.pose_grp_vlay = QtWidgets.QVBoxLayout(self.pose_gbox)
+        self.pose_grp_vlay.setContentsMargins(5, 0, 5, 0)
+        self.pose_grp_vlay.setSpacing(5)
+
+        self.pose_ctrls_vlay = QtWidgets.QVBoxLayout()
+        self.pose_ctrls_vlay.setSpacing(5)
+
+        self.copy_mirror_pb = QtWidgets.QPushButton(self.pose_gbox)
+        self.copy_mirror_pb.setText("Copy Mirror")
+        self.pose_ctrls_vlay.addWidget(self.copy_mirror_pb)
+
+        self.swap_mirror_pb = QtWidgets.QPushButton(self.pose_gbox)
+        self.swap_mirror_pb.setText("Swap Mirror")
+        self.pose_ctrls_vlay.addWidget(self.swap_mirror_pb)
+
+        self.zero_tpose_pb = QtWidgets.QPushButton(self.pose_gbox)
+        self.zero_tpose_pb.setText(" Zero T-Pose")
+        self.pose_ctrls_vlay.addWidget(self.zero_tpose_pb)
+
+        self.reset_tpose_pb = QtWidgets.QPushButton(self.pose_gbox)
+        self.reset_tpose_pb.setText("Reset T-Pose")
+
+        self.pose_ctrls_vlay.addWidget(self.reset_tpose_pb)
+
+        self.pose_grp_vlay.addLayout(self.pose_ctrls_vlay)
+
+        self.select_and_pose_hlay.addWidget(self.pose_gbox)
+
+        self.main_vlay.addLayout(self.select_and_pose_hlay)
+
+        self.settings_gbox = QtWidgets.QGroupBox(self)
+        self.settings_gbox.setTitle("Settings")
+
+        self.settings_grp_vlay = QtWidgets.QVBoxLayout(self.settings_gbox)
+        self.settings_grp_vlay.setContentsMargins(5, 0, 5, 0)
+        self.settings_grp_vlay.setSpacing(5)
+
+        self.namespace_hlay = QtWidgets.QHBoxLayout()
+        self.namespace_hlay.setSpacing(0)
+
+        self.namespace_lbl = QtWidgets.QLabel(self.settings_gbox)
+        self.namespace_lbl.setText("Namespace")
+        self.namespace_hlay.addWidget(self.namespace_lbl)
+
+        self.namespace_combo = QtWidgets.QComboBox(self.settings_gbox)
+        self.namespace_hlay.addWidget(self.namespace_combo)
+        self.settings_grp_vlay.addLayout(self.namespace_hlay)
+        self.namespace_combo.addItems(self.tr_tool.get_scene_namespaces())
+
+        self.mirror_mode_hlay = QtWidgets.QHBoxLayout()
+        self.mirror_mode_hlay.setSpacing(0)
+
+        self.mirror_mode_lbl = QtWidgets.QLabel(self.settings_gbox)
+        self.mirror_mode_lbl.setText("Mirror Mode")
+        self.mirror_mode_hlay.addWidget(self.mirror_mode_lbl)
+
+        self.mirror_mode_combo = QtWidgets.QComboBox(self.settings_gbox)
+        self.mirror_mode_hlay.addWidget(self.mirror_mode_combo)
+
+        self.settings_grp_vlay.addLayout(self.mirror_mode_hlay)
+
+        self.side_tags_hlay = QtWidgets.QHBoxLayout()
+        self.side_tags_hlay.setSpacing(0)
+
+        self.side_tags_lbl = QtWidgets.QLabel(self.settings_gbox)
+        self.side_tags_lbl.setText("Side Tags")
+        self.side_tags_hlay.addWidget(self.side_tags_lbl)
+
+        self.side_tags_combo = QtWidgets.QComboBox(self.settings_gbox)
+        self.side_tags_hlay.addWidget(self.side_tags_combo)
+
+        self.settings_grp_vlay.addLayout(self.side_tags_hlay)
+
+        self.main_vlay.addWidget(self.settings_gbox)
+
+        ######3 SIGNALS #######
+
+        self.namespace_combo.currentTextChanged.connect(lambda x: self.tr_tool.set_namespace(x))
+        self.all_body_pb.clicked.connect(self.tr_tool.select_body)
+        self.all_face_pb.clicked.connect(self.tr_tool.select_face)
+        self.all_tweakers_pb.clicked.connect(self.tr_tool.select_tweakers)
+        self.select_mirror_pb.clicked.connect(self.tr_tool.select_mirror)
+
+        # self.copy_mirror_pb.clicked.connect()
+        self.zero_tpose_pb.clicked.connect(self.tr_tool.zero_pose)
+        self.reset_tpose_pb.clicked.connect(self.tr_tool.reset_pose)
