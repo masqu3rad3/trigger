@@ -6,9 +6,12 @@
 
 import os
 import json
+import weakref
 from functools import wraps
 from maya import cmds
+import logging
 
+logger = logging.getLogger(__name__)
 
 import Qt
 from Qt import QtWidgets, QtCore, QtGui
@@ -123,7 +126,9 @@ class TriggerTool(object):
         self.overrideNamespace = False
 
         # temporary
-        self.namespace = self.get_scene_namespaces()[0]
+        # namespaces = self.get_scene_namespaces()
+        # self.namespace = namespaces[0] if namespaces else None
+        self.namespace = None
 
         # self.zero_dictionary = {"translate": (0,0,0), "rotate": (0,0,0), "scale": (1,1,1)}
         self.zero_dictionary = {"tx": 0, "ty": 0, "tz": 0, "rx": 0, "ry": 0, "rz": 0, "sx": 1, "sy": 1, "sz": 1}
@@ -134,7 +139,7 @@ class TriggerTool(object):
         if self.overrideNamespace and selection:
             namespace = self.get_selected_namespace()
         else:
-            namespace = self.get_scene_namespaces()[0]
+            namespace = self.namespace
         if namespace:
             select_keys = ["%s:%s" % (namespace, key) for key in self.definitions["controller_keys"]]
         else:
@@ -294,39 +299,119 @@ class TriggerTool(object):
                 return ""
 
     def set_namespace(self, namespace):
+        print namespace
         self.namespace = namespace
 
-class MainUI(QtWidgets.QDialog):
-    def __init__(self):
-        for entry in QtWidgets.QApplication.allWidgets():
-            try:
-                if entry.objectName() == windowName:
-                    entry.close()
-            except (AttributeError, TypeError):
-                pass
-        parent = getMayaMainWindow()
-        super(MainUI, self).__init__(parent=parent)
+
+def dock_window(dialog_class):
+    try:
+        cmds.deleteUI(dialog_class.CONTROL_NAME)
+        logger.info('removed workspace {}'.format(dialog_class.CONTROL_NAME))
+
+    except:
+        pass
+
+    # building the workspace control with maya.cmds
+    main_control = cmds.workspaceControl(dialog_class.CONTROL_NAME, ttc=["AttributeEditor", -1], iw=100, mw=80,
+                                         wp='preferred', label=dialog_class.DOCK_LABEL_NAME)
+
+    # now lets get a C++ pointer to it using OpenMaya
+    control_widget = omui.MQtUtil.findControl(dialog_class.CONTROL_NAME)
+    # conver the C++ pointer to Qt object we can use
+    control_wrap = wrapInstance(long(control_widget), QtWidgets.QWidget)
+
+    # control_wrap is the widget of the docking window and now we can start working with it:
+    control_wrap.setAttribute(QtCore.Qt.WA_DeleteOnClose)
+    win = dialog_class(control_wrap)
+
+    # after maya is ready we should restore the window since it may not be visible
+    cmds.evalDeferred(lambda *args: cmds.workspaceControl(main_control, e=True, rs=True))
+
+    # will return the class of the dock content.
+    return win.run()
+
+# class MainUI(QtWidgets.QMainWindow):
+class MainUI(QtWidgets.QWidget):
+
+    instances = list()
+    CONTROL_NAME = windowName
+    DOCK_LABEL_NAME = windowName
+
+    # def __init__(self):
+    def __init__(self, parent=None):
+        # if not parent:
+        #     for entry in QtWidgets.QApplication.allWidgets():
+        #         try:
+        #             if entry.objectName() == windowName:
+        #                 entry.close()
+        #         except (AttributeError, TypeError):
+        #             pass
+        #     parent = getMayaMainWindow()
+        # super(MainUI, self).__init__(parent=parent)
+        super(MainUI, self).__init__(parent)
+
+        # let's keep track of our docks so we only have one at a time.
+        MainUI.delete_instances()
+        self.__class__.instances.append(weakref.proxy(self))
+        self.window_name = self.CONTROL_NAME
+        self.ui = parent
+        self.main_layout = parent.layout()
+        self.main_layout.setContentsMargins(2, 2, 2, 2)
+
+        # # here we can start coding our UI
+        # self.my_label = QtWidgets.QLabel('hessllo world!')
+        # self.main_layout.addWidget(self.my_label)
+
+        self.centralwidget = QtWidgets.QWidget()
+        self.main_layout.addWidget(self.centralwidget)
+        self.centralwidget.setStyleSheet(qss)
+        self.setWindowTitle(windowName)
+        self.setObjectName(windowName)
+
+
+        # self.main_window = QtWidgets.QMainWindow(self)
+        #
+        # self.centralwidget = QtWidgets.QWidget(self)
+        # self.centralwidget.setObjectName("centralwidget")
+        # self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
+        # self.main_window.setCentralWidget(self.centralwidget)
+
 
         self.dynamicButtons = []
         self.tr_tool = TriggerTool()
-        self.setWindowTitle(windowName)
-        self.setObjectName(windowName)
-        self.setStyleSheet(qss)
+
         self.buildUI()
         self.init_values()
 
+    @staticmethod
+    def delete_instances():
+        for ins in MainUI.instances:
+            logger.info('Delete {}'.format(ins))
+            try:
+                ins.setParent(None)
+                ins.deleteLater()
+            except:
+                # ignore the fact that the actual parent has already been deleted by Maya...
+                pass
+
+            MainUI.instances.remove(ins)
+            del ins
+
+    def run(self):
+        return self
+
     def buildUI(self):
         # self.setObjectName("trigger_tool")
-        self.resize(264, 237)
+        # self.resize(264, 237)
         # self.setWindowTitle("Trigger Tool v0.1")
-        self.main_vlay = QtWidgets.QVBoxLayout(self)
+        self.main_vlay = QtWidgets.QVBoxLayout(self.centralwidget)
         self.main_vlay.setContentsMargins(5, 5, 5, 5)
         self.main_vlay.setSpacing(5)
         self.main_vlay.setObjectName("main_vlay")
 
         self.select_and_pose_hlay = QtWidgets.QHBoxLayout()
 
-        self.select_gbox = QtWidgets.QGroupBox(self)
+        self.select_gbox = QtWidgets.QGroupBox(self.centralwidget)
         self.select_gbox.setTitle("Select")
 
         self.select_grp_vlay = QtWidgets.QVBoxLayout(self.select_gbox)
@@ -360,7 +445,7 @@ class MainUI(QtWidgets.QDialog):
         self.select_grp_vlay.addLayout(self.select_vlay)
         self.select_and_pose_hlay.addWidget(self.select_gbox)
 
-        self.pose_gbox = QtWidgets.QGroupBox(self)
+        self.pose_gbox = QtWidgets.QGroupBox(self.centralwidget)
         self.pose_gbox.setTitle("Pose")
 
         self.pose_grp_vlay = QtWidgets.QVBoxLayout(self.pose_gbox)
@@ -395,14 +480,14 @@ class MainUI(QtWidgets.QDialog):
 
         self.main_vlay.addLayout(self.select_and_pose_hlay)
 
-        self.settings_gbox = QtWidgets.QGroupBox(self)
+        self.settings_gbox = QtWidgets.QGroupBox(self.centralwidget)
         self.settings_gbox.setTitle("Settings")
 
         self.settings_grp_vlay = QtWidgets.QVBoxLayout(self.settings_gbox)
         self.settings_grp_vlay.setContentsMargins(5, 0, 5, 0)
         self.settings_grp_vlay.setSpacing(5)
 
-        self.override_namespace_cb = QtWidgets.QCheckBox(self)
+        self.override_namespace_cb = QtWidgets.QCheckBox(self.centralwidget)
         self.override_namespace_cb.setText("Override with selection")
         self.override_namespace_cb.setLayoutDirection(QtCore.Qt.RightToLeft)
         self.settings_grp_vlay.addWidget(self.override_namespace_cb)
@@ -417,7 +502,9 @@ class MainUI(QtWidgets.QDialog):
         self.namespace_combo = QtWidgets.QComboBox(self.settings_gbox)
         self.namespace_hlay.addWidget(self.namespace_combo)
         self.settings_grp_vlay.addLayout(self.namespace_hlay)
+        self.namespace_combo.addItem("")
         self.namespace_combo.addItems(self.tr_tool.get_scene_namespaces())
+
 
         self.mirror_mode_hlay = QtWidgets.QHBoxLayout()
         self.mirror_mode_hlay.setSpacing(0)
@@ -471,3 +558,5 @@ class MainUI(QtWidgets.QDialog):
 
     def init_values(self):
         self.on_override_namespace()
+
+
