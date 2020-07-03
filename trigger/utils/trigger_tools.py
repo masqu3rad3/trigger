@@ -25,7 +25,49 @@ else:
     from Qt.QtCore import Signal
 
 windowName = "Trigger Tool v0.1"
+qss = """
+QPushButton
+{
+    color: #b1b1b1;
+    background-color: #404040;
+    border-width: 1px;
+    border-color: #1e1e1e;
+    border-style: solid;
+    padding: 5px;
+    font-size: 12px;
+}
 
+QPushButton:hover
+{
+    background-color: #505050;
+    border: 1px solid #ff8d1c;
+}
+
+QPushButton:disabled {
+  background-color: #303030;
+  border: 1px solid #404040;
+  color: #505050;
+  padding: 3px;
+}
+
+QPushButton:pressed {
+  background-color: #ff8d1c;
+  border: 1px solid #ff8d1c;
+}
+
+QPushButton[override = "0"]{
+    border-color: blue;
+}
+
+QPushButton[override = "1"]{
+    border-color: green;
+}
+
+QPushButton[menuButton=true] {
+  min-width: 120;
+  min-height: 45;
+}
+"""
 
 def getMayaMainWindow():
     """
@@ -37,22 +79,39 @@ def getMayaMainWindow():
     ptr = wrapInstance(long(win), QtWidgets.QMainWindow)
     return ptr
 
+
 def undo(func):
-    """ Puts the wrapped `func` into a single Maya Undo action, then
-        undoes it when the function enters the finally: block """
+    """Make maya commands undoable."""
+
     @wraps(func)
-    def _undofunc(*args, **kwargs):
-        cmds.undoInfo(ock=True)
-        result = None
+    def decorator(*args, **kwargs):
+        """Use maya undo chunks to allow undo on complicated methods."""
+        cmds.undoInfo(openChunk=True)
+        returned = None
         try:
-            # start an undo chunk
-            result = func(*args, **kwargs)
-        except Exception as e:
-            cmds.error(e)
+            returned = func(*args, **kwargs)
+        except Exception as exc:  # pylint: disable=broad-except
+            cmds.error(exc)
         finally:
-            # after calling the func, end the undo chunk and undo
-            cmds.undoInfo(cck=True)
-    return _undofunc
+            cmds.undoInfo(closeChunk=True)
+            return returned
+    return decorator
+# def undo(func):
+#     """ Puts the wrapped `func` into a single Maya Undo action, then
+#         undoes it when the function enters the finally: block """
+#     @wraps(func)
+#     def _undofunc(*args, **kwargs):
+#         cmds.undoInfo(ock=True)
+#         result = None
+#         try:
+#             # start an undo chunk
+#             result = func(*args, **kwargs)
+#         except Exception as e:
+#             cmds.error(e)
+#         finally:
+#             # after calling the func, end the undo chunk and undo
+#             cmds.undoInfo(cck=True)
+#     return _undofunc
 
 class TriggerTool(object):
     def __init__(self):
@@ -61,7 +120,7 @@ class TriggerTool(object):
 
         # self.all_ctrls = self.get_all_controllers()
 
-        # self.overrideNamespace = True
+        self.overrideNamespace = False
 
         # temporary
         self.namespace = self.get_scene_namespaces()[0]
@@ -69,15 +128,14 @@ class TriggerTool(object):
         # self.zero_dictionary = {"translate": (0,0,0), "rotate": (0,0,0), "scale": (1,1,1)}
         self.zero_dictionary = {"tx": 0, "ty": 0, "tz": 0, "rx": 0, "ry": 0, "rz": 0, "sx": 1, "sy": 1, "sz": 1}
 
-    def _get_all_controls(self, selection_override=True):
+    def _get_all_controls(self):
         """Selects all controllers based on the override settings"""
         selection = cmds.ls(sl=True)
-        if selection_override and selection:
+        if self.overrideNamespace and selection:
             namespace = self.get_selected_namespace()
         else:
-            namespace = self.namespace
+            namespace = self.get_scene_namespaces()[0]
         if namespace:
-            print("debug")
             select_keys = ["%s:%s" % (namespace, key) for key in self.definitions["controller_keys"]]
         else:
             select_keys = list(self.definitions["controller_keys"])
@@ -130,10 +188,10 @@ class TriggerTool(object):
         if mirror_gen:
             cmds.select(self._get_mirror_controls(), add=add)
 
-    # @undo
-    def zero_pose(self, selected=False):
+    @undo
+    def zero_pose(self, selectedOnly=False):
         modified = []
-        if selected:
+        if selectedOnly:
             controls = cmds.ls(sl=True)
         else:
             controls = self._get_all_controls()
@@ -158,8 +216,8 @@ class TriggerTool(object):
         return modified
 
     @undo
-    def reset_pose(self, selected=False):
-        modified = self.zero_pose(selected=selected)
+    def reset_pose(self, selectedOnly=False):
+        modified = self.zero_pose(selectedOnly=selectedOnly)
         for attr in modified:
             key = cmds.listConnections(attr, connections=False, destination=False, source=True, scn=True)
             if key:
@@ -168,6 +226,30 @@ class TriggerTool(object):
                         cmds.objectType(key[0]) == "animCurveTU":
                     cmds.delete(key[0])
 
+    @undo
+    def mirror_pose(self, mode, swap=False):
+        selected_conts = cmds.ls(sl=True)
+        mirror_conts = self._get_mirror_controls()
+        for mirror_cont, orig_cont in zip(mirror_conts, selected_conts):
+            for nmb, attr in enumerate("xyz"):
+                orig_t_value = cmds.getAttr("%s.t%s" %(orig_cont, attr))
+                swap_t_value = cmds.getAttr("%s.t%s" %(mirror_cont, attr))
+                mirror_t_value = orig_t_value * self.definitions["mirror_modes"][mode][0][nmb]
+                try:
+                    cmds.setAttr("%s.t%s" %(mirror_cont, attr), mirror_t_value)
+                    if swap:
+                        cmds.setAttr("%s.t%s" % (orig_cont, attr), swap_t_value)
+                except:
+                    pass
+                orig_r_value = cmds.getAttr("%s.r%s" % (orig_cont, attr))
+                swap_r_value = cmds.getAttr("%s.r%s" %(mirror_cont, attr))
+                mirror_r_value = orig_r_value * self.definitions["mirror_modes"][mode][1][nmb]
+                try:
+                    cmds.setAttr("%s.r%s" % (mirror_cont, attr), mirror_r_value)
+                    if swap:
+                        cmds.setAttr("%s.r%s" % (orig_cont, attr), swap_r_value)
+                except:
+                    pass
 
 
 
@@ -213,7 +295,6 @@ class TriggerTool(object):
 
     def set_namespace(self, namespace):
         self.namespace = namespace
-        print "hede"
 
 class MainUI(QtWidgets.QDialog):
     def __init__(self):
@@ -226,10 +307,13 @@ class MainUI(QtWidgets.QDialog):
         parent = getMayaMainWindow()
         super(MainUI, self).__init__(parent=parent)
 
+        self.dynamicButtons = []
         self.tr_tool = TriggerTool()
         self.setWindowTitle(windowName)
         self.setObjectName(windowName)
+        self.setStyleSheet(qss)
         self.buildUI()
+        self.init_values()
 
     def buildUI(self):
         # self.setObjectName("trigger_tool")
@@ -257,10 +341,12 @@ class MainUI(QtWidgets.QDialog):
         self.all_body_pb = QtWidgets.QPushButton(self.select_gbox)
         self.all_body_pb.setText("All Body")
         self.select_vlay.addWidget(self.all_body_pb)
+        self.dynamicButtons.append(self.all_body_pb)
 
         self.all_face_pb = QtWidgets.QPushButton(self.select_gbox)
         self.all_face_pb.setText("All Face")
         self.select_vlay.addWidget(self.all_face_pb)
+        self.dynamicButtons.append(self.all_face_pb)
 
         self.select_mirror_pb = QtWidgets.QPushButton(self.select_gbox)
         self.select_mirror_pb.setText("Select Mirror")
@@ -269,6 +355,7 @@ class MainUI(QtWidgets.QDialog):
         self.all_tweakers_pb = QtWidgets.QPushButton(self.select_gbox)
         self.all_tweakers_pb.setText("All Tweakers")
         self.select_vlay.addWidget(self.all_tweakers_pb)
+        self.dynamicButtons.append(self.all_tweakers_pb)
 
         self.select_grp_vlay.addLayout(self.select_vlay)
         self.select_and_pose_hlay.addWidget(self.select_gbox)
@@ -294,9 +381,11 @@ class MainUI(QtWidgets.QDialog):
         self.zero_tpose_pb = QtWidgets.QPushButton(self.pose_gbox)
         self.zero_tpose_pb.setText(" Zero T-Pose")
         self.pose_ctrls_vlay.addWidget(self.zero_tpose_pb)
+        self.dynamicButtons.append(self.zero_tpose_pb)
 
         self.reset_tpose_pb = QtWidgets.QPushButton(self.pose_gbox)
         self.reset_tpose_pb.setText("Reset T-Pose")
+        self.dynamicButtons.append(self.reset_tpose_pb)
 
         self.pose_ctrls_vlay.addWidget(self.reset_tpose_pb)
 
@@ -312,6 +401,11 @@ class MainUI(QtWidgets.QDialog):
         self.settings_grp_vlay = QtWidgets.QVBoxLayout(self.settings_gbox)
         self.settings_grp_vlay.setContentsMargins(5, 0, 5, 0)
         self.settings_grp_vlay.setSpacing(5)
+
+        self.override_namespace_cb = QtWidgets.QCheckBox(self)
+        self.override_namespace_cb.setText("Override with selection")
+        self.override_namespace_cb.setLayoutDirection(QtCore.Qt.RightToLeft)
+        self.settings_grp_vlay.addWidget(self.override_namespace_cb)
 
         self.namespace_hlay = QtWidgets.QHBoxLayout()
         self.namespace_hlay.setSpacing(0)
@@ -334,31 +428,46 @@ class MainUI(QtWidgets.QDialog):
 
         self.mirror_mode_combo = QtWidgets.QComboBox(self.settings_gbox)
         self.mirror_mode_hlay.addWidget(self.mirror_mode_combo)
+        self.mirror_mode_combo.addItems(sorted(self.tr_tool.definitions["mirror_modes"].keys()))
 
         self.settings_grp_vlay.addLayout(self.mirror_mode_hlay)
 
-        self.side_tags_hlay = QtWidgets.QHBoxLayout()
-        self.side_tags_hlay.setSpacing(0)
+        # self.side_tags_hlay = QtWidgets.QHBoxLayout()
+        # self.side_tags_hlay.setSpacing(0)
+        #
+        # self.side_tags_lbl = QtWidgets.QLabel(self.settings_gbox)
+        # self.side_tags_lbl.setText("Side Tags")
+        # self.side_tags_hlay.addWidget(self.side_tags_lbl)
+        #
+        # self.side_tags_combo = QtWidgets.QComboBox(self.settings_gbox)
+        # self.side_tags_hlay.addWidget(self.side_tags_combo)
 
-        self.side_tags_lbl = QtWidgets.QLabel(self.settings_gbox)
-        self.side_tags_lbl.setText("Side Tags")
-        self.side_tags_hlay.addWidget(self.side_tags_lbl)
-
-        self.side_tags_combo = QtWidgets.QComboBox(self.settings_gbox)
-        self.side_tags_hlay.addWidget(self.side_tags_combo)
-
-        self.settings_grp_vlay.addLayout(self.side_tags_hlay)
+        # self.settings_grp_vlay.addLayout(self.side_tags_hlay)
 
         self.main_vlay.addWidget(self.settings_gbox)
 
         ######3 SIGNALS #######
 
         self.namespace_combo.currentTextChanged.connect(lambda x: self.tr_tool.set_namespace(x))
-        self.all_body_pb.clicked.connect(self.tr_tool.select_body)
+        self.all_body_pb.clicked.connect(lambda x: self.tr_tool.select_body())
         self.all_face_pb.clicked.connect(self.tr_tool.select_face)
         self.all_tweakers_pb.clicked.connect(self.tr_tool.select_tweakers)
         self.select_mirror_pb.clicked.connect(self.tr_tool.select_mirror)
 
-        # self.copy_mirror_pb.clicked.connect()
+        self.copy_mirror_pb.clicked.connect(lambda x: self.tr_tool.mirror_pose(self.mirror_mode_combo.currentText()))
+        self.swap_mirror_pb.clicked.connect(lambda x: self.tr_tool.mirror_pose(self.mirror_mode_combo.currentText(), swap=True))
         self.zero_tpose_pb.clicked.connect(self.tr_tool.zero_pose)
         self.reset_tpose_pb.clicked.connect(self.tr_tool.reset_pose)
+        self.override_namespace_cb.stateChanged.connect(self.on_override_namespace)
+
+    def on_override_namespace(self):
+        state = self.override_namespace_cb.checkState()
+        self.namespace_combo.setEnabled(not state)
+        self.tr_tool.overrideNamespace = state
+
+        for button in self.dynamicButtons:
+            button.setProperty("override", "%s" % str(int(bool(state))))
+            button.style().polish(button)
+
+    def init_values(self):
+        self.on_override_namespace()
