@@ -470,6 +470,7 @@ class MainUI(QtWidgets.QMainWindow):
         self.sample_setting3_chk = QtWidgets.QCheckBox(self.action_settings_WidgetContents)
         self.action_settings_formLayout.setWidget(2, QtWidgets.QFormLayout.FieldRole, self.sample_setting3_chk)
 
+        self.kinematics_settings()
 
         self.action_settings_scrollArea.setWidget(self.action_settings_WidgetContents)
         self.action_settings_vLay.addWidget(self.action_settings_scrollArea)
@@ -490,6 +491,72 @@ class MainUI(QtWidgets.QMainWindow):
         ### SIGNALS ####
 
         self.add_action_pb.clicked.connect(self.add_actions_menu)
+
+    def kinematics_settings(self):
+        self.clearLayout(self.action_settings_formLayout)
+
+        self.guide_lbl = QtWidgets.QLabel()
+        self.guide_lbl.setText("Guides:")
+        self.guides_hLay = QtWidgets.QHBoxLayout()
+        self.from_file_radioButton = QtWidgets.QRadioButton()
+        self.from_file_radioButton.setText("From File")
+        self.guides_hLay.addWidget(self.from_file_radioButton)
+        self.from_current_scene_radioButton = QtWidgets.QRadioButton()
+        self.from_current_scene_radioButton.setText("From Current Scene")
+        self.guides_hLay.addWidget(self.from_current_scene_radioButton)
+        spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.guides_hLay.addItem(spacerItem)
+        self.action_settings_formLayout.addRow(self.guide_lbl, self.guides_hLay)
+
+        self.file_path_lbl = QtWidgets.QLabel()
+        self.file_path_lbl.setText("File Path:")
+        self.file_path_hLay = QtWidgets.QHBoxLayout()
+        self.file_path_le = QtWidgets.QLineEdit()
+        self.file_path_hLay.addWidget(self.file_path_le)
+        self.browse_path_pb = QtWidgets.QPushButton()
+        self.browse_path_pb.setText("Browse")
+        self.file_path_hLay.addWidget(self.browse_path_pb)
+        self.action_settings_formLayout.addRow(self.file_path_lbl, self.file_path_hLay)
+
+        self.guide_roots_lbl = QtWidgets.QLabel()
+        self.guide_roots_lbl.setText("Guide Roots:")
+        self.guide_roots_hLay = QtWidgets.QHBoxLayout()
+        self.guide_roots_le = QtWidgets.QLineEdit()
+        self.guide_roots_hLay.addWidget(self.guide_roots_le)
+        self.get_guide_roots_pb = QtWidgets.QPushButton()
+        self.get_guide_roots_pb.setText("Get")
+        self.guide_roots_hLay.addWidget(self.get_guide_roots_pb)
+        self.action_settings_formLayout.addRow(self.guide_roots_lbl, self.guide_roots_hLay)
+
+        self.create_auto_sw_lbl = QtWidgets.QLabel()
+        self.create_auto_sw_lbl.setText("Create Auto Switchers:")
+        self.create_auto_switchers_hLay = QtWidgets.QHBoxLayout()
+        self.auto_sw_on_radioButton = QtWidgets.QRadioButton()
+        self.auto_sw_on_radioButton.setText("On")
+        self.create_auto_switchers_hLay.addWidget(self.auto_sw_on_radioButton)
+        self.auto_sw_off_radioButton = QtWidgets.QRadioButton()
+        self.auto_sw_off_radioButton.setText("Off")
+        self.create_auto_switchers_hLay.addWidget(self.auto_sw_off_radioButton)
+        spacerItem1 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.create_auto_switchers_hLay.addItem(spacerItem1)
+        self.action_settings_formLayout.addRow(self.create_auto_sw_lbl, self.create_auto_switchers_hLay)
+
+        self.anchors_lbl = QtWidgets.QLabel()
+        self.anchors_lbl.setText("Anchors:")
+        self.anchors_le = QtWidgets.QLineEdit()
+        self.action_settings_formLayout.addRow(self.anchors_lbl, self.anchors_le)
+
+        self.anchor_locations_lbl = QtWidgets.QLabel()
+        self.anchor_locations_lbl.setText("Anchor Locations:")
+        self.anchor_locations_le = QtWidgets.QLineEdit()
+        self.action_settings_formLayout.addRow(self.anchor_locations_lbl, self.anchor_locations_le)
+
+        self.after_action_lbl = QtWidgets.QLabel()
+        self.after_action_lbl.setText("After Action:")
+        self.after_action_combo = QtWidgets.QComboBox()
+        self.after_action_combo.addItems(["Delete Guides", "Hide Guides", "Do Nothing"])
+        self.action_settings_formLayout.addRow(self.after_action_lbl, self.after_action_combo)
+
 
 
     def add_actions_menu(self):
