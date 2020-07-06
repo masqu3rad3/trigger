@@ -9,7 +9,7 @@ from trigger.core import io
 from trigger.core import feedback
 from trigger import modules
 
-from trigger.base import builder
+# from trigger.base import builder
 from trigger.base import initials
 
 FEEDBACK = feedback.Feedback(logger_name=__name__)
@@ -21,7 +21,7 @@ class Session(object):
         # at least a file name is necessary while instancing the IO
         self.io = io.IO(file_name="tmp_session.json")
         self.init = initials.Initials()
-        self.build = builder.Builder()
+        # self.build = builder.Builder()
 
     def save_session(self, file_path):
         """Saves the session to the given file path"""
@@ -56,7 +56,7 @@ class Session(object):
         for r_dict in all_root_jnts_data:
             root_jnt = (r_dict.get("root_joint"))
             root_joints_list.append(root_jnt)
-            limb_dict, _, __ = self.build.getWholeLimb(root_jnt)
+            limb_dict, _, __ = self.init.getWholeLimb(root_jnt)
             all_trigger_joints.append(limb_dict.values())
 
         flat_jnt_list = (flatten(all_trigger_joints))

@@ -1,5 +1,4 @@
-"""Builds the kinematics starting from the given root and for all descendants"""
-
+"""New rig builder module"""
 from maya import cmds
 from trigger.core import feedback
 import trigger.library.functions as extra
@@ -9,31 +8,22 @@ from trigger import modules
 import trigger.utils.space_switcher as anchorMaker
 from trigger.core import settings
 
-from trigger.actions import master
-
 from trigger.ui.Qt import QtWidgets
 
 FEEDBACK = feedback.Feedback(logger_name=__name__)
 
-ACTION_DATA = {"use_guides": "from_file",
-               "guides_file_path": "",
-               "guide_roots": [],
-               "auto_swithcers": True,
-               "anchors": [],
-               "anchor_locations": [],
-               "after_creation": "delete"
-               }
-class Kinematics(settings.Settings):
-    def __init__(self, root_joint, progress_bar=None, create_switchers=True, *args, **kwargs):
-        super(Kinematics, self).__init__()
+class Builder(settings.Settings):
+    def __init__(self, name="trigger", progress_bar=None):
+        super(Builder, self).__init__()
         self.progress_bar = progress_bar
         if self.progress_bar:
             self.progress_bar.setProperty("value", 0)
+        self.rig_name = name
 
-        self.createSwithcers = create_switchers
-        self.root_joint = root_joint
         self.module_dict = {mod: eval("modules.{0}.LIMB_DATA".format(mod)) for mod in modules.__all__}
         self.validRootList = [values["members"][0] for values in self.module_dict.values()]
+
+        self.limbCreationList = []
 
         self.fingerMatchList = []
         self.fingerMatchConts = []
@@ -47,28 +37,55 @@ class Kinematics(settings.Settings):
         self.riggedLimbList = []
         self.totalDefJoints = []
 
+        # TODO: These should go
+        self.skinMeshList = None
+        self.copySkinWeights = False
+        self.replaceExisting = False
 
-    def action(self):
-        root_grp = "trigger_grp"
-        if not cmds.objExists(root_grp):
-            master.Master().action()
-        self.collect_guides_info(self.root_joint)
-        self.limbCreationList = self.get_limb_hierarchy(self.root_joint)
-        self.match_fingers(self.fingerMatchList)
+    # @undo
+    def start_building(self, root_jnt=None, create_switchers=False):
+        """ Creates the modules for the selected root and for all the roots in the hiearchy and connects them
+
+        Args:
+            root_jnt(string): root guide joint. If not defined, scene selection will be used.
+            create_switchers (bool): If True, the default space switchers will be created.
+
+        Returns: None
+
+        """
+        if not root_jnt:
+            selection = cmds.ls(sl=True)
+            if len(selection) == 1:
+                root_jnt = selection[0]
+            else:
+                FEEDBACK.warning("Select a single root_jnt joint")
+        if not cmds.objectType(root_jnt, isType="joint"):
+            FEEDBACK.throw_error("root_jnt is not a joint")
+        root_name, root_type, root_side = extra.identifyMaster(root_jnt, self.module_dict)
+        if root_name not in self.validRootList:
+            FEEDBACK.throw_error("selected joint is not in the valid root_jnt list")
+
+        self.rootGroup = cmds.group(name=(extra.uniqueName("{0}_rig".format(self.rig_name))), em=True)
+        self.collect_guides_info(root_jnt)
+        # self.get_limb_hierarchy(root_jnt)
+        self.limbCreationList = self.get_limb_hierarchy(root_jnt)
+
+        self.create_masters()
         self.createlimbs(self.limbCreationList)
 
-        if self.createSwithcers and self.anchorLocations:
+        # create space switchers
+        if create_switchers:
             for anchor in (self.anchors):
                 anchorMaker.create_space_switch(anchor[0], self.anchorLocations, mode=anchor[1], defaultVal=anchor[2],
                                                 listException=anchor[3])
 
-        # else:
-        #     # TODO: tidy up here
-        #     for anchor in (self.anchors):
-        #         try:
-        #             cmds.parent(anchor[0], self.cont_placement)
-        #         except RuntimeError:
-        #             pass
+        else:
+            # TODO: tidy up here
+            for anchor in (self.anchors):
+                try:
+                    cmds.parent(anchor[0], self.cont_placement)
+                except RuntimeError:
+                    pass
 
         # grouping for fingers / toes
         for x in self.fingerMatchConts:
@@ -76,22 +93,73 @@ class Kinematics(settings.Settings):
             cont_offset = extra.createUpGrp(x[0], "offset", freezeTransform=False)
             socket = self.getNearestSocket(x[1], self.allSocketsList)
             cmds.parentConstraint(socket, cont_offset, mo=True)
-            cmds.scaleConstraint("pref_cont", cont_offset)
-            cmds.parent(cont_offset, root_grp)
-            cmds.connectAttr("pref_cont.Control_Visibility", "%s.v" % cont_offset)
+            cmds.scaleConstraint(self.cont_master, cont_offset)
+            cmds.parent(cont_offset, self.rootGroup)
 
         # TODO : tidy up / make settings human readable
         if self.get("afterCreation") == 1:
             # if the After Creation set to 'Hide Initial Joints'
-            cmds.hide(self.root_joint)
+            cmds.hide(root_jnt)
         if self.get("afterCreation") == 2:
             # if the After Creation set to 'Delete Initial Joints'
-            cmds.delete(self.root_joint)
+            cmds.delete(root_jnt)
 
-    def match_fingers(self, finger_match_list):
+        # TODO : re-make the whole skinCluster handling with a more sensible way
+        if self.skinMeshList and not self.replaceExisting:
+            # if there are skin mesh(s) defined, and replace existing is not checked, initiate the skinning process
+            self.skinning(copyMode=self.copySkinWeights)
+
+    def get_limb_hierarchy(self, node, isRoot=True, parentIndex=None, r_list=None):
+        """Checks the given nodes entire hieararchy for roots, and catalogues the root nodes into dictionaries.
+
+        Args:
+            node (string): starts checking from this node
+            isRoot(bool): if True, the given joint is considered as true. Default is True. For recursion.
+            parentIndex(string): indicates the parent of the current node. Default is none. For recursion.
+            r_list(list): If a list is provided, it appends the results into this one. For recursion
+
+        Returns (list): list of root guide nodes in the hierarchy
+
+        """
+        if not r_list:
+            r_list = []
+        if isRoot:
+            limbProps = self.getWholeLimb(node)
+            limbProps.append(parentIndex)
+            # self.limbCreationList.append(limbProps)
+            r_list.append(limbProps)
+            # pdb.set_trace()
+
+        # Do the same for all children recursively
+        children = cmds.listRelatives(node, children=True, type="joint")
+        children = children if children else []
+        for jnt in children:
+            cID = extra.identifyMaster(jnt, self.module_dict)
+            if cID[0] in self.validRootList:
+                self.get_limb_hierarchy(jnt, isRoot=True, parentIndex=node, r_list=r_list)
+            else:
+                self.get_limb_hierarchy(jnt, isRoot=False, r_list=r_list)
+        return r_list
+
+    def create_masters(self):
+        """
+        This method creates master controllers (Placement and Master)
+        Returns: None
+
+        """
         icon = ic.Icon()
-        for brother_roots in finger_match_list:
-            # finger_name, finger_type, finger_side = extra.identifyMaster(brother_roots[0], self.module_dict)
+        self.cont_placement, _ = icon.createIcon("Circle", iconName=extra.uniqueName("placement_cont"),
+                                                 scale=(self.hipDist, self.hipDist, self.hipDist))
+        self.cont_master, _ = icon.createIcon("TriCircle", iconName=extra.uniqueName("master_cont"), scale=(
+            self.hipDist * 1.5, self.hipDist * 1.5, self.hipDist * 1.5))
+
+        cmds.addAttr(self.cont_master, at="bool", ln="Control_Visibility", sn="contVis", defaultValue=True,
+                     keyable=True)
+        cmds.addAttr(self.cont_master, at="bool", ln="Joints_Visibility", sn="jointVis", keyable=True)
+        cmds.addAttr(self.cont_master, at="bool", ln="Rig_Visibility", sn="rigVis", keyable=True)
+
+        for brother_roots in self.fingerMatchList:
+            finger_name, finger_type, finger_side = extra.identifyMaster(brother_roots[0], self.module_dict)
             finger_parent = extra.getParent(brother_roots[0])
             offsetVector = extra.getBetweenVector(finger_parent, brother_roots)
             iconSize = extra.getDistance(brother_roots[0], brother_roots[-1])
@@ -106,7 +174,7 @@ class Kinematics(settings.Settings):
             else:
                 iconName = brother_roots[0]
 
-            cont_fGroup, dmp = icon.createIcon("Square", iconName="Fgrp_%s_cont" % iconName,
+            cont_fGroup, dmp = icon.createIcon("Square", iconName="cont_Fgrp_{0}".format(iconName),
                                                scale=(iconSize / 6, iconSize / 4, iconSize / 2))
             cmds.rotate(90, 0, 0, cont_fGroup)
             cmds.makeIdentity(cont_fGroup, a=True)
@@ -117,6 +185,25 @@ class Kinematics(settings.Settings):
             self.fingerMatchConts.append([cont_fGroup, finger_parent])
             for finger_root in brother_roots:
                 cmds.setAttr("%s.handController" % finger_root, cont_fGroup, type="string")
+
+        # make the created attributes visible in the channelbox
+        cmds.setAttr("%s.contVis" % self.cont_master, cb=True)
+        cmds.setAttr("%s.jointVis" % self.cont_master, cb=True)
+        cmds.setAttr("%s.rigVis" % self.cont_master, cb=True)
+        cmds.parent(self.cont_placement, self.cont_master)
+        # # add these to the anchor locations
+        self.anchorLocations.append(self.cont_master)
+        self.anchorLocations.append(self.cont_placement)
+
+        # COLOR CODING
+        index = 17
+        extra.colorize(self.cont_master, index)
+        extra.colorize(self.cont_placement, index)
+
+        # # GOOD PARENTING
+
+        extra.lockAndHide(self.rootGroup, ["tx", "ty", "tz", "rx", "ry", "rz", "sx", "sy", "sz"])
+        cmds.parent(self.cont_master, self.rootGroup)
 
     def collect_guides_info(self, rootNode):
         """
@@ -157,38 +244,6 @@ class Kinematics(settings.Settings):
                 if digit_brothers and digit_brothers not in self.fingerMatchList:
                     self.fingerMatchList.append(digit_brothers)
 
-
-    def get_limb_hierarchy(self, node, isRoot=True, parentIndex=None, r_list=None):
-        """Checks the given nodes entire hieararchy for roots, and catalogues the root nodes into dictionaries.
-
-        Args:
-            node (string): starts checking from this node
-            isRoot(bool): if True, the given joint is considered as true. Default is True. For recursion.
-            parentIndex(string): indicates the parent of the current node. Default is none. For recursion.
-            r_list(list): If a list is provided, it appends the results into this one. For recursion
-
-        Returns (list): list of root guide nodes in the hierarchy
-
-        """
-        if not r_list:
-            r_list = []
-        if isRoot:
-            limbProps = self.getWholeLimb(node)
-            limbProps.append(parentIndex)
-            # self.limbCreationList.append(limbProps)
-            r_list.append(limbProps)
-            # pdb.set_trace()
-
-        # Do the same for all children recursively
-        children = cmds.listRelatives(node, children=True, type="joint")
-        children = children if children else []
-        for jnt in children:
-            cID = extra.identifyMaster(jnt, self.module_dict)
-            if cID[0] in self.validRootList:
-                self.get_limb_hierarchy(jnt, isRoot=True, parentIndex=node, r_list=r_list)
-            else:
-                self.get_limb_hierarchy(jnt, isRoot=False, r_list=r_list)
-        return r_list
 
     def getWholeLimb(self, node):
         multi_guide_jnts = [value["multi_guide"] for value in self.module_dict.values() if
@@ -306,9 +361,9 @@ class Kinematics(settings.Settings):
                 set_name = extra.uniqueName(set_name)
                 j_def_set = cmds.sets(name=set_name)
 
-            # suffix = "%s_%s" % (sideVal, x[1].capitalize()) if sideVal != "C" else x[1].capitalize()
+            suffix = "%s_%s" % (sideVal, x[1].capitalize()) if sideVal != "C" else x[1].capitalize()
             module = "modules.{0}.{1}".format(x[1], x[1].capitalize())
-            flags = "build_data={0}".format(x[0])
+            flags = "build_data={0}, suffix='{1}', side='{2}'".format(x[0], suffix, x[2])
             construct_command = "{0}({1})".format(module, flags)
 
             limb = eval(construct_command)
@@ -344,22 +399,33 @@ class Kinematics(settings.Settings):
                     parentSocket = self.getNearestSocket(parent_guide_joint, self.allSocketsList,
                                                          excluding=limb.sockets)
 
-                # else:
-                #     parentSocket = self.cont_placement
+                else:
+                    parentSocket = self.cont_placement
 
-                    cmds.parent(limb.limbPlug, parentSocket)
+                cmds.parent(limb.limbPlug, parentSocket)
 
                 ## Good parenting / scale connections
                 scaleGrpPiv = extra.getWorldTranslation(limb.limbPlug)
                 cmds.xform(limb.scaleGrp, piv=scaleGrpPiv, ws=True)
                 ## pass the attributes
 
-                extra.attrPass(limb.scaleGrp, "pref_cont", values=True, daisyChain=True, overrideEx=False)
-                cmds.parent(limb.limbGrp, "trigger_grp")
-                # for sCon in limb.scaleConstraints:
-                #     cmds.scaleConstraint(self.cont_master, sCon)
+                extra.attrPass(limb.scaleGrp, self.cont_master, values=True, daisyChain=True, overrideEx=False)
+                cmds.parent(limb.limbGrp, self.rootGroup)
                 for sCon in limb.scaleConstraints:
-                    cmds.scaleConstraint("pref_cont", sCon)
+                    cmds.scaleConstraint(self.cont_master, sCon)
             self.totalDefJoints += limb.deformerJoints
             if j_def_set:
                 cmds.sets(limb.deformerJoints, add=j_def_set)
+
+    def skinning(self, copyMode):
+        if copyMode:
+            for i in self.skinMeshList:
+                dupMesh = cmds.duplicate(i)[0]
+                cmds.skinCluster(self.totalDefJoints, dupMesh, tsb=True)
+                cmds.copySkinWeights(i, dupMesh, noMirror=True, surfaceAssociation="closestPoint",
+                                     influenceAssociation="closestJoint", normalize=True)
+
+        else:
+            for i in self.skinMeshList:
+                cmds.skinCluster(self.totalDefJoints, i, tsb=True, bindMethod=self.get("bindMethod"),
+                                 skinMethod=self.get("skinMethod"))

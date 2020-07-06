@@ -2,6 +2,7 @@ from maya import cmds
 import maya.api.OpenMaya as om
 import pdb
 
+ACTION_DATA = {}
 
 def get_closest_vert(mayaMesh, pos, threshold=0.001):
     # mVector = api.MVector(pos)#using MVector type to represent position

@@ -47,7 +47,7 @@ class MainUI(QtWidgets.QMainWindow):
         # core ui
         self.setWindowTitle(WINDOW_NAME)
         self.setObjectName(WINDOW_NAME)
-        self.resize(650, 400)
+        self.resize(850, 400)
         self.centralwidget = QtWidgets.QWidget(self)
         self.centralwidget.setObjectName("centralwidget")
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
@@ -78,9 +78,15 @@ class MainUI(QtWidgets.QMainWindow):
         # Splitter size hack
         # this must be done after the show()
         sizes = self.splitter.sizes()
-        # print sizes
-        # self.splitter.setSizes([sizes[0] * 0.3, sizes[1] * 1.0])
         self.splitter.setSizes([sizes[0] * 0.3, sizes[1] * 1.0, sizes[2] * 1.5])
+
+        self.splitter.setStretchFactor(0, 10)
+        self.splitter.setStretchFactor(1, 90)
+        # self.splitter.setStretchFactor(2, 5)
+
+
+        self.rig_LR_splitter.setStretchFactor(0, 10)
+        self.rig_LR_splitter.setStretchFactor(1, 90)
 
 
 
@@ -351,7 +357,154 @@ class MainUI(QtWidgets.QMainWindow):
         self.inherit_orientation_cb.toggled.connect(lambda state=self.inherit_orientation_cb.isChecked(): self.update_properties("useRefOri", state))
 
     def buildRiggingUI(self):
-        pass
+        self.rigging_tab_vLay = QtWidgets.QVBoxLayout(self.rigging_tab)
+
+        self.rig_LR_splitter = QtWidgets.QSplitter(self.rigging_tab)
+        self.rig_LR_splitter.setOrientation(QtCore.Qt.Horizontal)
+
+        self.layoutWidget_2 = QtWidgets.QWidget(self.rig_LR_splitter)
+
+        self.rig_actions_vLay = QtWidgets.QVBoxLayout(self.layoutWidget_2)
+        self.rig_actions_vLay.setContentsMargins(0, 0, 0, 0)
+
+        self.actions_lbl = QtWidgets.QLabel(self.layoutWidget_2)
+        self.actions_lbl.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        self.actions_lbl.setFrameShadow(QtWidgets.QFrame.Plain)
+        self.actions_lbl.setText("Actions")
+        self.actions_lbl.setAlignment(QtCore.Qt.AlignCenter)
+        self.rig_actions_vLay.addWidget(self.actions_lbl)
+
+        self.rig_action_addremove_hLay = QtWidgets.QHBoxLayout()
+        self.rig_actions_vLay.addLayout(self.rig_action_addremove_hLay)
+        self.add_action_pb = QtWidgets.QPushButton(self.layoutWidget_2)
+        self.add_action_pb.setText("Add")
+        self.rig_action_addremove_hLay.addWidget(self.add_action_pb)
+
+        self.delete_action_pb = QtWidgets.QPushButton(self.layoutWidget_2)
+        self.delete_action_pb.setText("Delete")
+        self.rig_action_addremove_hLay.addWidget(self.delete_action_pb)
+
+        self.move_action_up = QtWidgets.QPushButton(self.layoutWidget_2)
+        self.move_action_up.setMaximumSize(QtCore.QSize(50, 16777215))
+        self.move_action_up.setText("up")
+        self.rig_action_addremove_hLay.addWidget(self.move_action_up)
+
+        self.move_action_down = QtWidgets.QPushButton(self.layoutWidget_2)
+        self.move_action_down.setMaximumSize(QtCore.QSize(50, 16777215))
+        self.move_action_down.setText("down")
+        self.rig_action_addremove_hLay.addWidget(self.move_action_down)
+
+        self.rig_actions_listwidget = QtWidgets.QListWidget(self.layoutWidget_2)
+        font = QtGui.QFont()
+        font.setPointSize(12)
+        font.setBold(False)
+        font.setWeight(50)
+        font.setStrikeOut(False)
+        self.rig_actions_listwidget.setFont(font)
+        self.rig_actions_listwidget.setMouseTracking(False)
+        self.rig_actions_listwidget.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        self.rig_actions_listwidget.setViewMode(QtWidgets.QListView.ListMode)
+        self.rig_actions_vLay.addWidget(self.rig_actions_listwidget)
+
+        ### SAMPLE ###
+        item = QtWidgets.QListWidgetItem()
+        item.setText("Kinematics")
+        item.setTextAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignVCenter)
+        self.rig_actions_listwidget.addItem(item)
+        item = QtWidgets.QListWidgetItem()
+        item.setText("Weights")
+        item.setTextAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignVCenter)
+        self.rig_actions_listwidget.addItem(item)
+        item = QtWidgets.QListWidgetItem()
+        item.setText("Shape")
+        item.setTextAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignVCenter)
+        self.rig_actions_listwidget.addItem(item)
+        item = QtWidgets.QListWidgetItem()
+        self.rig_actions_listwidget.addItem(item)
+        item = QtWidgets.QListWidgetItem()
+        self.rig_actions_listwidget.addItem(item)
+
+        self.verticalLayoutWidget_3 = QtWidgets.QWidget(self.rig_LR_splitter)
+        self.action_settings_vLay = QtWidgets.QVBoxLayout(self.verticalLayoutWidget_3)
+        self.action_settings_vLay.setContentsMargins(0, 0, 0, 0)
+
+        self.action_settings_lbl = QtWidgets.QLabel(self.verticalLayoutWidget_3)
+        self.action_settings_lbl.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        self.action_settings_lbl.setFrameShadow(QtWidgets.QFrame.Plain)
+        self.action_settings_lbl.setText("Settings")
+        self.action_settings_lbl.setAlignment(QtCore.Qt.AlignCenter)
+        self.action_settings_vLay.addWidget(self.action_settings_lbl)
+
+        self.action_settings_scrollArea = QtWidgets.QScrollArea(self.verticalLayoutWidget_3)
+        self.action_settings_scrollArea.setFrameShape(QtWidgets.QFrame.NoFrame)
+        self.action_settings_scrollArea.setFrameShadow(QtWidgets.QFrame.Sunken)
+        self.action_settings_scrollArea.setLineWidth(1)
+        self.action_settings_scrollArea.setWidgetResizable(True)
+
+        self.action_settings_WidgetContents = QtWidgets.QWidget()
+        self.action_settings_WidgetContents.setGeometry(QtCore.QRect(0, 0, 346, 223))
+
+        self.action_settings_scrollArea_vLay = QtWidgets.QVBoxLayout(self.action_settings_WidgetContents)
+
+        self.action_settings_formLayout = QtWidgets.QFormLayout()
+        self.action_settings_formLayout.setHorizontalSpacing(6)
+        self.action_settings_scrollArea_vLay.addLayout(self.action_settings_formLayout)
+
+
+        ### SAMPLE ###
+        self.sample_setting1_lbl = QtWidgets.QLabel(self.action_settings_WidgetContents)
+        self.sample_setting1_lbl.setText("Setting1")
+        self.action_settings_formLayout.setWidget(0, QtWidgets.QFormLayout.LabelRole, self.sample_setting1_lbl)
+        self.sample_setting1_le = QtWidgets.QLineEdit(self.action_settings_WidgetContents)
+        self.action_settings_formLayout.setWidget(0, QtWidgets.QFormLayout.FieldRole, self.sample_setting1_le)
+        self.sample_setting2_lbl = QtWidgets.QLabel(self.action_settings_WidgetContents)
+        self.sample_setting2_lbl.setText("Setting2")
+        self.sample_setting2_lbl.setObjectName("sample_setting2_lbl")
+        self.action_settings_formLayout.setWidget(1, QtWidgets.QFormLayout.LabelRole, self.sample_setting2_lbl)
+        self.sample_setting_combo = QtWidgets.QComboBox(self.action_settings_WidgetContents)
+        self.sample_setting_combo.setObjectName("sample_setting_combo")
+        self.action_settings_formLayout.setWidget(1, QtWidgets.QFormLayout.FieldRole, self.sample_setting_combo)
+        self.sample_setting3_lbl = QtWidgets.QLabel(self.action_settings_WidgetContents)
+        self.sample_setting3_lbl.setText("Setting3")
+        self.action_settings_formLayout.setWidget(2, QtWidgets.QFormLayout.LabelRole, self.sample_setting3_lbl)
+        self.sample_setting3_chk = QtWidgets.QCheckBox(self.action_settings_WidgetContents)
+        self.action_settings_formLayout.setWidget(2, QtWidgets.QFormLayout.FieldRole, self.sample_setting3_chk)
+
+
+        self.action_settings_scrollArea.setWidget(self.action_settings_WidgetContents)
+        self.action_settings_vLay.addWidget(self.action_settings_scrollArea)
+        self.rigging_tab_vLay.addWidget(self.rig_LR_splitter)
+        self.rig_buttons_hLay = QtWidgets.QHBoxLayout()
+
+        self.build_pb = QtWidgets.QPushButton(self.rigging_tab)
+        self.build_pb.setText("Build Rig")
+        self.rig_buttons_hLay.addWidget(self.build_pb)
+
+        self.build_and_publish_pb = QtWidgets.QPushButton(self.rigging_tab)
+        self.build_and_publish_pb.setText("Build && Publish")
+        self.rig_buttons_hLay.addWidget(self.build_and_publish_pb)
+        self.rigging_tab_vLay.addLayout(self.rig_buttons_hLay)
+
+        self.tabWidget.addTab(self.rigging_tab, "Rigging")
+
+        ### SIGNALS ####
+
+        self.add_action_pb.clicked.connect(self.add_actions_menu)
+
+
+    def add_actions_menu(self):
+        # recentList = reversed(self.manager.loadRecentProjects())
+        list_of_actions = sorted(self.rig.action_dict.keys())
+
+        zortMenu = QtWidgets.QMenu()
+        for action_item in list_of_actions:
+            tempAction = QtWidgets.QAction(action_item, self)
+            zortMenu.addAction(tempAction)
+            ## Take note about the usage of lambda "item=z" makes it possible using the loop, ignore -> for discarding emitted value
+            # tempAction.triggered.connect(lambda ignore=p, item=p: setAndClose(custompath=(item)))
+            # tempAction.triggered.connect(lambda item=z: manager.playPreview(str(item)))
+
+        zortMenu.exec_((QtGui.QCursor.pos()))
 
     def block_all_signals(self, state):
         self.guides_list_treeWidget.blockSignals(state)

@@ -4,6 +4,7 @@ import maya.api.OpenMayaAnim as apiAnim
 import time
 from pprint import pprint
 
+ACTION_DATA = {}
 def get_skincluster_influence_index(skin_cluster, influence):
     """Get the index of given influence.
 

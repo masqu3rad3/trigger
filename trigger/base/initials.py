@@ -392,3 +392,34 @@ class Initials(settings.Settings):
 
             list_of_dicts.append(tmp_dict)
         return list_of_dicts
+
+    def getWholeLimb(self, node):
+        multi_guide_jnts = [value["multi_guide"] for value in self.module_dict.values() if
+                            value["multi_guide"]]
+        limb_dict = {}
+        multiList = []
+        limb_name, limb_type, limb_side = extra.identifyMaster(node, self.module_dict)
+
+        limb_dict[limb_name] = node
+        nextNode = node
+        z = True
+        while z:
+            children = cmds.listRelatives(nextNode, children=True, type="joint")
+            children = [] if not children else children
+            if len(children) < 1:
+                z = False
+            failedChildren = 0
+            for child in children:
+                child_limb_name, child_limb_type, child_limb_side = extra.identifyMaster(child, self.module_dict)
+                if child_limb_name not in self.validRootList and child_limb_type == limb_type:
+                    nextNode = child
+                    if child_limb_name in multi_guide_jnts:
+                        multiList.append(child)
+                        limb_dict[child_limb_name] = multiList
+                    else:
+                        limb_dict[child_limb_name] = child
+                else:
+                    failedChildren += 1
+            if len(children) == failedChildren:
+                z = False
+        return [limb_dict, limb_type, limb_side]

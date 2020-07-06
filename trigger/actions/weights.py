@@ -13,8 +13,6 @@ from pprint import pprint
 FEEDBACK = feedback.Feedback(__name__)
 
 ACTION_DATA = {}
-
-
 def multiplyList(list_of_values):
     # Multiply elements one by one
     result = 1

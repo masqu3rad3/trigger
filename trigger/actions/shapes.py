@@ -10,7 +10,6 @@ from trigger.library import controllers as ic
 FEEDBACK = feedback.Feedback(__name__)
 
 ACTION_DATA = {}
-
 class Shapes(object):
     def __init__(self, *args, **kwargs):
         super(Shapes, self).__init__()

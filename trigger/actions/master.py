@@ -6,7 +6,6 @@ from trigger.library import functions as extra
 from trigger.library import controllers as ic
 
 ACTION_DATA = {}
-
 class Master(object):
     def __init__(self, *args, **kwargs):
         super(Master, self).__init__()

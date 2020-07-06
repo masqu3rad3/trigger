@@ -354,6 +354,12 @@ class Ui_trigger_MainWindow(object):
         self.R_guides_vLay.addWidget(self.R_guides_scrollArea)
         self.guides_tab_vlay.addWidget(self.splitter)
         self.tabWidget.addTab(self.guides_tab, "Guides")
+
+
+
+
+
+
         self.rigging_tab = QtWidgets.QWidget()
         self.rigging_tab.setToolTip("")
         self.rigging_tab.setStatusTip("")
@@ -361,8 +367,8 @@ class Ui_trigger_MainWindow(object):
         self.rigging_tab.setAccessibleName("")
         self.rigging_tab.setAccessibleDescription("")
         self.rigging_tab.setObjectName("rigging_tab")
-        self.verticalLayout = QtWidgets.QVBoxLayout(self.rigging_tab)
-        self.verticalLayout.setObjectName("verticalLayout")
+        self.rigging_tab_vLay = QtWidgets.QVBoxLayout(self.rigging_tab)
+        self.rigging_tab_vLay.setObjectName("verticalLayout")
         self.rig_LR_splitter = QtWidgets.QSplitter(self.rigging_tab)
         self.rig_LR_splitter.setOrientation(QtCore.Qt.Horizontal)
         self.rig_LR_splitter.setObjectName("rig_LR_splitter")
@@ -493,8 +499,8 @@ class Ui_trigger_MainWindow(object):
         self.action_settings_WidgetContents.setAccessibleName("")
         self.action_settings_WidgetContents.setAccessibleDescription("")
         self.action_settings_WidgetContents.setObjectName("action_settings_WidgetContents")
-        self.R_guides_scrollArea_vLay_2 = QtWidgets.QVBoxLayout(self.action_settings_WidgetContents)
-        self.R_guides_scrollArea_vLay_2.setObjectName("R_guides_scrollArea_vLay_2")
+        self.action_settings_scrollArea_vLay = QtWidgets.QVBoxLayout(self.action_settings_WidgetContents)
+        self.action_settings_scrollArea_vLay.setObjectName("R_guides_scrollArea_vLay_2")
         self.action_settings_formLayout = QtWidgets.QFormLayout()
         self.action_settings_formLayout.setHorizontalSpacing(6)
         self.action_settings_formLayout.setObjectName("action_settings_formLayout")
@@ -549,10 +555,10 @@ class Ui_trigger_MainWindow(object):
         self.sample_setting3_chk.setAccessibleDescription("")
         self.sample_setting3_chk.setObjectName("sample_setting3_chk")
         self.action_settings_formLayout.setWidget(2, QtWidgets.QFormLayout.FieldRole, self.sample_setting3_chk)
-        self.R_guides_scrollArea_vLay_2.addLayout(self.action_settings_formLayout)
+        self.action_settings_scrollArea_vLay.addLayout(self.action_settings_formLayout)
         self.action_settings_scrollArea.setWidget(self.action_settings_WidgetContents)
         self.action_settings_vLay.addWidget(self.action_settings_scrollArea)
-        self.verticalLayout.addWidget(self.rig_LR_splitter)
+        self.rigging_tab_vLay.addWidget(self.rig_LR_splitter)
         self.rig_buttons_hLay = QtWidgets.QHBoxLayout()
         self.rig_buttons_hLay.setObjectName("rig_buttons_hLay")
         self.build_pb = QtWidgets.QPushButton(self.rigging_tab)
@@ -573,7 +579,7 @@ class Ui_trigger_MainWindow(object):
         self.build_and_publish_pb.setText("Build && Publish")
         self.build_and_publish_pb.setObjectName("build_and_publish_pb")
         self.rig_buttons_hLay.addWidget(self.build_and_publish_pb)
-        self.verticalLayout.addLayout(self.rig_buttons_hLay)
+        self.rigging_tab_vLay.addLayout(self.rig_buttons_hLay)
         self.tabWidget.addTab(self.rigging_tab, "Rigging")
         self.centralWidget_vLay.addWidget(self.tabWidget)
         trigger_MainWindow.setCentralWidget(self.centralwidget)

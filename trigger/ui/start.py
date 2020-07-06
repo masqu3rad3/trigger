@@ -339,7 +339,6 @@ class MainUI(QtWidgets.QMainWindow):
 
         def buttonAction(dialog, value):
             dialog.done(1)
-            print value
             self.returnvalue = value
 
         for i in range (len(self.colorCodes)):
