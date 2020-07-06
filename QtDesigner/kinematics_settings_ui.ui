@@ -1,0 +1,360 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Dialog</class>
+ <widget class="QDialog" name="Dialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>557</width>
+    <height>671</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Dialog</string>
+  </property>
+  <widget class="QWidget" name="formLayoutWidget">
+   <property name="geometry">
+    <rect>
+     <x>90</x>
+     <y>80</y>
+     <width>389</width>
+     <height>451</height>
+    </rect>
+   </property>
+   <layout class="QFormLayout" name="formLayout">
+    <property name="sizeConstraint">
+     <enum>QLayout::SetDefaultConstraint</enum>
+    </property>
+    <property name="labelAlignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+    <item row="0" column="0">
+     <widget class="QLabel" name="guide_lbl">
+      <property name="toolTip">
+       <string notr="true"/>
+      </property>
+      <property name="statusTip">
+       <string notr="true"/>
+      </property>
+      <property name="whatsThis">
+       <string notr="true"/>
+      </property>
+      <property name="accessibleDescription">
+       <string notr="true"/>
+      </property>
+      <property name="text">
+       <string notr="true">Guides:</string>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="1">
+     <layout class="QHBoxLayout" name="guides_hLay">
+      <item>
+       <widget class="QRadioButton" name="from_file_radioButton">
+        <property name="toolTip">
+         <string notr="true"/>
+        </property>
+        <property name="statusTip">
+         <string notr="true"/>
+        </property>
+        <property name="whatsThis">
+         <string notr="true"/>
+        </property>
+        <property name="accessibleName">
+         <string notr="true"/>
+        </property>
+        <property name="accessibleDescription">
+         <string notr="true"/>
+        </property>
+        <property name="text">
+         <string notr="true">From File</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="from_current_scene_radioButton">
+        <property name="toolTip">
+         <string notr="true"/>
+        </property>
+        <property name="statusTip">
+         <string notr="true"/>
+        </property>
+        <property name="whatsThis">
+         <string notr="true"/>
+        </property>
+        <property name="accessibleName">
+         <string notr="true"/>
+        </property>
+        <property name="accessibleDescription">
+         <string notr="true"/>
+        </property>
+        <property name="text">
+         <string notr="true">From Current Scene</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="horizontalSpacer_2">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+     </layout>
+    </item>
+    <item row="1" column="0">
+     <widget class="QLabel" name="file_path_lbl">
+      <property name="toolTip">
+       <string notr="true"/>
+      </property>
+      <property name="statusTip">
+       <string notr="true"/>
+      </property>
+      <property name="whatsThis">
+       <string notr="true"/>
+      </property>
+      <property name="accessibleDescription">
+       <string notr="true"/>
+      </property>
+      <property name="text">
+       <string notr="true">File Path:</string>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="1">
+     <layout class="QHBoxLayout" name="file_path_hLay">
+      <item>
+       <widget class="QLineEdit" name="file_path_le"/>
+      </item>
+      <item>
+       <widget class="QPushButton" name="browse_path_pb">
+        <property name="text">
+         <string>Browse</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item row="2" column="0">
+     <widget class="QLabel" name="guide_roots_lbl">
+      <property name="toolTip">
+       <string notr="true"/>
+      </property>
+      <property name="statusTip">
+       <string notr="true"/>
+      </property>
+      <property name="whatsThis">
+       <string notr="true"/>
+      </property>
+      <property name="accessibleDescription">
+       <string notr="true"/>
+      </property>
+      <property name="text">
+       <string notr="true">Guide Roots:</string>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="1">
+     <layout class="QHBoxLayout" name="file_path_hLay_2">
+      <item>
+       <widget class="QLineEdit" name="guide_roots_le"/>
+      </item>
+      <item>
+       <widget class="QPushButton" name="get_guide_roots_pb">
+        <property name="text">
+         <string>Get</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item row="3" column="0">
+     <widget class="QLabel" name="guide_roots_lbl_2">
+      <property name="toolTip">
+       <string notr="true"/>
+      </property>
+      <property name="statusTip">
+       <string notr="true"/>
+      </property>
+      <property name="whatsThis">
+       <string notr="true"/>
+      </property>
+      <property name="accessibleDescription">
+       <string notr="true"/>
+      </property>
+      <property name="text">
+       <string notr="true">Create Auto Switchers:</string>
+      </property>
+     </widget>
+    </item>
+    <item row="3" column="1">
+     <layout class="QHBoxLayout" name="create_auto_switchers_hLay">
+      <item>
+       <widget class="QRadioButton" name="auto_sw_on_radioButton">
+        <property name="toolTip">
+         <string notr="true"/>
+        </property>
+        <property name="statusTip">
+         <string notr="true"/>
+        </property>
+        <property name="whatsThis">
+         <string notr="true"/>
+        </property>
+        <property name="accessibleName">
+         <string notr="true"/>
+        </property>
+        <property name="accessibleDescription">
+         <string notr="true"/>
+        </property>
+        <property name="text">
+         <string notr="true">On</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="auto_sw_off_radioButton">
+        <property name="toolTip">
+         <string notr="true"/>
+        </property>
+        <property name="statusTip">
+         <string notr="true"/>
+        </property>
+        <property name="whatsThis">
+         <string notr="true"/>
+        </property>
+        <property name="accessibleName">
+         <string notr="true"/>
+        </property>
+        <property name="accessibleDescription">
+         <string notr="true"/>
+        </property>
+        <property name="text">
+         <string notr="true">Off</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="horizontalSpacer">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+     </layout>
+    </item>
+    <item row="4" column="0">
+     <widget class="QLabel" name="anchors_lbl">
+      <property name="toolTip">
+       <string notr="true"/>
+      </property>
+      <property name="statusTip">
+       <string notr="true"/>
+      </property>
+      <property name="whatsThis">
+       <string notr="true"/>
+      </property>
+      <property name="accessibleDescription">
+       <string notr="true"/>
+      </property>
+      <property name="text">
+       <string notr="true">Anchors:</string>
+      </property>
+     </widget>
+    </item>
+    <item row="4" column="1">
+     <widget class="QLineEdit" name="anchors_le"/>
+    </item>
+    <item row="5" column="0">
+     <widget class="QLabel" name="anchor_locations_lbl">
+      <property name="toolTip">
+       <string notr="true"/>
+      </property>
+      <property name="statusTip">
+       <string notr="true"/>
+      </property>
+      <property name="whatsThis">
+       <string notr="true"/>
+      </property>
+      <property name="accessibleDescription">
+       <string notr="true"/>
+      </property>
+      <property name="text">
+       <string notr="true">Anchor Locations:</string>
+      </property>
+     </widget>
+    </item>
+    <item row="5" column="1">
+     <widget class="QLineEdit" name="anchor_locations_le"/>
+    </item>
+    <item row="6" column="0">
+     <widget class="QLabel" name="after_action_lbl">
+      <property name="toolTip">
+       <string notr="true"/>
+      </property>
+      <property name="statusTip">
+       <string notr="true"/>
+      </property>
+      <property name="whatsThis">
+       <string notr="true"/>
+      </property>
+      <property name="accessibleDescription">
+       <string notr="true"/>
+      </property>
+      <property name="text">
+       <string notr="true">After Action:</string>
+      </property>
+     </widget>
+    </item>
+    <item row="6" column="1">
+     <widget class="QComboBox" name="after_action_combo">
+      <property name="toolTip">
+       <string notr="true"/>
+      </property>
+      <property name="statusTip">
+       <string notr="true"/>
+      </property>
+      <property name="whatsThis">
+       <string notr="true"/>
+      </property>
+      <property name="accessibleName">
+       <string notr="true"/>
+      </property>
+      <property name="accessibleDescription">
+       <string notr="true"/>
+      </property>
+      <item>
+       <property name="text">
+        <string notr="true">Delete Guides</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string notr="true">Hide Guides</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string notr="true">Do Nothing</string>
+       </property>
+      </item>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
