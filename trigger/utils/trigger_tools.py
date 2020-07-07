@@ -145,7 +145,7 @@ class TriggerTool(object):
         else:
             select_keys = list(self.definitions["controller_keys"])
 
-        return (y for y in (cmds.ls(select_keys, transforms=True))) # this returns a generator
+        return (y for y in (cmds.ls(select_keys, transforms=True, exactType="transform"))) # this returns a generator
 
     def _get_key_controls(self, key_list):
         all_conts = self._get_all_controls()

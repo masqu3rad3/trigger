@@ -15,8 +15,7 @@ from trigger.ui.Qt import QtWidgets
 
 FEEDBACK = feedback.Feedback(logger_name=__name__)
 
-ACTION_DATA = {"action_name": "kinematics",
-               "use_guides": "from_file",
+ACTION_DATA = {"use_guides": "from_file",
                "guides_file_path": "",
                "guide_roots": [],
                "auto_swithcers": True,
@@ -25,7 +24,7 @@ ACTION_DATA = {"action_name": "kinematics",
                "after_creation": "delete"
                }
 class Kinematics(settings.Settings):
-    def __init__(self, root_joint, progress_bar=None, create_switchers=True, *args, **kwargs):
+    def __init__(self, root_joint=None, progress_bar=None, create_switchers=True, *args, **kwargs):
         super(Kinematics, self).__init__()
         self.progress_bar = progress_bar
         if self.progress_bar:

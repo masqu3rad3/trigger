@@ -557,6 +557,12 @@ class MainUI(QtWidgets.QMainWindow):
         self.after_action_combo.addItems(["Delete Guides", "Hide Guides", "Do Nothing"])
         self.action_settings_formLayout.addRow(self.after_action_lbl, self.after_action_combo)
 
+        self.selection_sets_lbl = QtWidgets.QLabel()
+        self.selection_sets_lbl.setText("Selection Sets")
+        self.selection_sets_combo = QtWidgets.QComboBox()
+        self.selection_sets_combo.addItems(["Single", "One per limb", "None"])
+        self.action_settings_formLayout.addRow(self.selection_sets_lbl, self.selection_sets_combo)
+
 
 
     def add_actions_menu(self):

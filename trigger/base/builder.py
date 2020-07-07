@@ -6,7 +6,7 @@ from trigger import actions
 
 FEEDBACK = feedback.Feedback(logger_name=__name__)
 
-class Builder(object):
+class Builder(list):
     def __init__(self, progress_bar=None):
         super(Builder, self).__init__()
 
@@ -14,15 +14,18 @@ class Builder(object):
         for mod in actions.__all__:
             self.action_dict[mod]=eval('actions.{0}.ACTION_DATA'.format(mod))
         # self.action_dict = {mod: eval("actions.{0}.ACTION_DATA".format(mod)) for mod in actions.__all__}
-        self.action_list = []
+        # self.action_list = []
 
     def get_valid_actions(self):
         return sorted(self.action_dict.keys())
 
     def add_action(self, action_name):
+        if action_name in self.get_valid_actions():
+            action_item = eval("actions.%s.%s()" % (action_name, action_name.capitalize()))
+            self.append(action_item)
         pass
 
-    def edit_action(self, action_index):
+    def edit_action(self, action_index, action_data):
         pass
 
     def remove_action(self, action_index):
