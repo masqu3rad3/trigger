@@ -11,8 +11,9 @@ charName = "emma"
 
 meshes = []
 meshes.extend(functions.getMeshes("charEmmaChairAvA"))
-# meshes.extend(functions.getMeshes("local_BS_rig_grp"))
-# meshes.extend(functions.getMeshes("local_TWK_rig_grp"))
+meshes.extend(functions.getMeshes("charEmmaAvA"))
+meshes.extend(functions.getMeshes("local_BS_rig_grp"))
+meshes.extend(functions.getMeshes("local_TWK_rig_grp"))
 ############### SAVE WEIGHTS #################
 # export skincluster weight maps
 for mesh in meshes:
@@ -43,3 +44,12 @@ for mesh in meshes:
     else:
         print("="*30)
         print mesh
+        
+############## SAVE GUIDES ###################
+
+#### CAREFUL ######
+
+sessionHandler = session.Session()
+
+# # SAVE LOCAL BS GUIDES
+sessionHandler.save_session(os.path.join(triggerData_root, "guides", "%s_local_bs_guides.json" % charName))

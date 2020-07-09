@@ -72,6 +72,19 @@ QPushButton[menuButton=true] {
 }
 """
 
+
+def _createCallbacks(function, parent, event):
+    callbackIDList = []
+    callbackIDList.append(
+        cmds.scriptJob(e=[event, function], replacePrevious=True, parent=parent))
+    return callbackIDList
+
+
+def _killCallbacks(callbackIDList):
+    for ID in callbackIDList:
+        if cmds.scriptJob(ex=ID):
+            cmds.scriptJob(kill=ID)
+
 def getMayaMainWindow():
     """
     Gets the memory adress of the main window to connect Qt dialog to it.
@@ -256,8 +269,6 @@ class TriggerTool(object):
                 except:
                     pass
 
-
-
     def load_globals(self):
         """Loads the given json file"""
         dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -299,8 +310,8 @@ class TriggerTool(object):
                 return ""
 
     def set_namespace(self, namespace):
-        print namespace
         self.namespace = namespace
+
 
 
 def dock_window(dialog_class):
@@ -312,8 +323,8 @@ def dock_window(dialog_class):
         pass
 
     # building the workspace control with maya.cmds
-    main_control = cmds.workspaceControl(dialog_class.CONTROL_NAME, ttc=["AttributeEditor", -1], iw=100, mw=80,
-                                         wp='preferred', label=dialog_class.DOCK_LABEL_NAME)
+    main_control = cmds.workspaceControl(dialog_class.CONTROL_NAME, ttc=["AttributeEditor", -1], iw=100, mw=80, wp='preferred', label=dialog_class.DOCK_LABEL_NAME)
+    cmds.workspaceControl(main_control, e=True, restore=True, dtc=["AttributeEditor", "top"], iw=100, mw=80, wp='preferred', label=dialog_class.DOCK_LABEL_NAME)
 
     # now lets get a C++ pointer to it using OpenMaya
     control_widget = omui.MQtUtil.findControl(dialog_class.CONTROL_NAME)
@@ -350,6 +361,7 @@ class MainUI(QtWidgets.QWidget):
         # super(MainUI, self).__init__(parent=parent)
         super(MainUI, self).__init__(parent)
 
+
         # let's keep track of our docks so we only have one at a time.
         MainUI.delete_instances()
         self.__class__.instances.append(weakref.proxy(self))
@@ -382,6 +394,11 @@ class MainUI(QtWidgets.QWidget):
 
         self.buildUI()
         self.init_values()
+        self.callbackIDList = _createCallbacks(self.populate_namespaces, windowName, "PostSceneRead")
+
+    def closeEvent(self, event):
+        if self.isCallback:
+            _killCallbacks(self.callbackIDList)
 
     @staticmethod
     def delete_instances():
@@ -501,10 +518,12 @@ class MainUI(QtWidgets.QWidget):
 
         self.namespace_combo = QtWidgets.QComboBox(self.settings_gbox)
         self.namespace_hlay.addWidget(self.namespace_combo)
+        self.namespace_refresh_pb = QtWidgets.QPushButton(self.settings_gbox)
+        self.namespace_refresh_pb.setText("R")
+        self.namespace_refresh_pb.setMinimumWidth(30)
+        self.namespace_refresh_pb.setMaximumWidth(30)
+        self.namespace_hlay.addWidget(self.namespace_refresh_pb)
         self.settings_grp_vlay.addLayout(self.namespace_hlay)
-        self.namespace_combo.addItem("")
-        self.namespace_combo.addItems(self.tr_tool.get_scene_namespaces())
-
 
         self.mirror_mode_hlay = QtWidgets.QHBoxLayout()
         self.mirror_mode_hlay.setSpacing(0)
@@ -536,6 +555,7 @@ class MainUI(QtWidgets.QWidget):
         ######3 SIGNALS #######
 
         self.namespace_combo.currentTextChanged.connect(lambda x: self.tr_tool.set_namespace(x))
+        self.namespace_refresh_pb.clicked.connect(self.populate_namespaces)
         self.all_body_pb.clicked.connect(lambda x: self.tr_tool.select_body())
         self.all_face_pb.clicked.connect(self.tr_tool.select_face)
         self.all_tweakers_pb.clicked.connect(self.tr_tool.select_tweakers)
@@ -556,7 +576,13 @@ class MainUI(QtWidgets.QWidget):
             button.setProperty("override", "%s" % str(int(bool(state))))
             button.style().polish(button)
 
+    def populate_namespaces(self):
+        self.namespace_combo.clear()
+        self.namespace_combo.addItem("")
+        self.namespace_combo.addItems(self.tr_tool.get_scene_namespaces())
+
     def init_values(self):
+        self.populate_namespaces()
         self.on_override_namespace()
 
 
