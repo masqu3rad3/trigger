@@ -193,7 +193,7 @@ def createUpGrp(node, suffix, freezeTransform=True):
     Args:
         node: (String) Source Object
         suffix: (String) Suffix for the group. String.
-        mi: (Boolean) Stands for "makeIdentity" If True, freezes the transformations of the new group. Default is True
+        freezeTransform: (Boolean) Stands for "makeIdentity" If True, freezes the transformations of the new group. Default is True
 
     Returns: The created group node
 
@@ -855,3 +855,12 @@ def drive_attrs(driver_attr, driven_attrs, driver_range=None, driven_range=None,
             # nothing is compound
             else:
                 cmds.connectAttr("%s.outValue" % range_node, driven, force=force)
+
+def deleteObject(node, force=True):
+    if cmds.objExists(node):
+        if force:
+            cmds.lockNode(node, lock=False)
+        cmds.delete(node)
+        return True
+    else:
+        return

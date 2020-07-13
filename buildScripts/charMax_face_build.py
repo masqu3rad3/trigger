@@ -11,13 +11,14 @@ from trigger.base import session
 from trigger.library import controllers
 from trigger.library import functions
 from trigger.library import shading
+from trigger.utils import parentToSurface
 from trigger.utils import jointsOnBlendshape
 
 # reset scene
 cmds.file(new=True, force=True)
 
 # open the previous rig
-cmds.file("/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charMax/RIG/work/maya/rootCharMaxAvA.v006.ma",
+cmds.file("/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charMax/RIG/work/maya/rootCharMaxAvA.v007.ma",
           open=True, force=True)
 cmds.hide(cmds.listRelatives("bn_head", children=True))
 cmds.hide(cmds.listRelatives("grp_faceExtra", children=True))
@@ -380,6 +381,42 @@ functions.drive_attrs("tweakers_onOff_cont.tx", "%s.v" % tweaker_conts_grp, driv
 # Add Blendshape Targets
 # Make tweak connections
 
+## BUTTON HACK
+
+# create 4 button joints starting from bottom
+# button_joints = []
+# cmds.select(d=True)
+# button_joints.append(cmds.joint(name="button01_jDef", position=[-2.123, 56.109, -22.024]))
+# cmds.select(d=True)
+# button_joints.append(cmds.joint(name="button02_jDef", position=[-1.984, 67.228, -20.748]))
+# cmds.select(d=True)
+# button_joints.append(cmds.joint(name="button03_jDef", position=[-2.528, 78.615, -19.409]))
+# cmds.select(d=True)
+# button_joints.append(cmds.joint(name="button04_jDef", position=[-2.472, 87.357, -14.708]))
+# cmds.select(d=True)
+
+# parentToSurface.parentToSurface(button_joints, "charMax_IDjacket")
+
+# button_twk = icon_handler.createIcon("Circle", iconName="button_twk_cont")
+btn_conts_grp = cmds.group(name="button_ctrls_grp", em=True)
+btn_jnts_grp = cmds.group(name="button_jnt_grp", em=True)
+w_pos_list = [[-2.123, 56.109, -22.024], [-1.984, 67.228, -20.748], [-2.528, 78.615, -19.409], [-2.472, 87.357, -14.708]]
+for nmb, wpos in enumerate(w_pos_list):
+    cmds.select(d=True)
+    jnt = cmds.joint(name="button%s_jDef" % nmb, position=wpos)
+    cont, _ = icon_handler.createIcon("Diamond", iconName="button%s_twk_cont" % nmb, scale=[2,2,2])
+    functions.alignTo(cont, jnt, position=True, rotation=True)
+    cont_offset = functions.createUpGrp(cont, "offset")
+    cmds.parentConstraint(cont, jnt, mo=False)
+    fol = parentToSurface.parentToSurface([cont_offset], "charMax_IDjacket")
+    cmds.parent(fol, btn_conts_grp)
+    cmds.parent(jnt, btn_jnts_grp)
+    functions.colorize(cont, "C")
+cmds.hide(btn_jnts_grp)
+cmds.parent([btn_jnts_grp, btn_conts_grp], "Char_Max")
+    
+
+
 
 ################################################
 ############### SKINCLUSTERS ###################
@@ -618,6 +655,10 @@ cmds.parent("trigger_stretch_grp", stretch_grp)
 
 # delete excess data
 cmds.delete("trigger_refGuides")
+
+
+
+
 
 #########################################
 ## FINAL CLEANUP & DISPLAY ADJUSTMENTS ##12

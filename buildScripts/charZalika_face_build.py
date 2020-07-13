@@ -24,7 +24,7 @@ reload(parentToSurface)
 # reset scene
 cmds.file(new=True, force=True)
 # open the previous rig
-cmds.file("/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charZalika/RIG/work/maya/rootCharZalika.v009.ma",open=True, force=True)
+cmds.file("/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charZalika/RIG/work/maya/rootCharZalika.v010.ma",open=True, force=True)
 cmds.hide(cmds.listRelatives("bn_head", children=True))
 cmds.hide(cmds.listRelatives("grp_faceExtra", children=True))
 
@@ -726,13 +726,22 @@ functions.colorize("Stretch_down_cont", "C")
 
 cmds.setAttr("%s.Preserve_Volume" % stretch_top_ctrl, 1)
 
+# Good Parenting
+rig_grp = cmds.group(name="rig_grp", em=True)
+renderGeo_grp = cmds.group(name="renderGeo_grp", em=True)
+cmds.parent(renderGeo_grp, rig_grp)
+
 # Put everything under the existing group
-cmds.parent("charZalikaAvA", "previsCharZalika")
+cmds.parent("charZalikaAvA", renderGeo_grp)
 cmds.parent("local_BS_rig_grp", "previsCharZalika")
 cmds.parent("local_TWK_rig_grp", "previsCharZalika")
 cmds.parent("local_STRETCH_rig_grp", "previsCharZalika")
 
 cmds.rename("previsCharZalika", "charZalika")
+
+cmds.parent("charZalika", rig_grp)
+
+
 # # Fix the texture paths
 # possibleFileHolders = cmds.listRelatives("charMax", ad=True, type=["mesh", "nurbsSurface"], fullPath=True)
 # allFileNodes = _getFileNodes(possibleFileHolders)
@@ -754,4 +763,10 @@ for node in turtleNodes:
 
 cmds.select("charZalikaAvA_button4_idMetal_GEO")
 cmds.DetachSkin()
-parentToSurface.parentToSurface(["charZalikaAvA_button4_idMetal_GEO"], "charZalikaAvA_top_idWhitePVC_GEO")
+follicle= parentToSurface.parentToSurface(["charZalikaAvA_button4_idMetal_GEO"], "charZalikaAvA_top_idWhitePVC_GEO", mode="parentConstraint")
+
+cmds.parent(follicle, follicle_grp)
+
+functions.deleteObject("back")
+functions.deleteObject("def_connector_C_Set")
+functions.deleteObject("def_spine_C_Set")

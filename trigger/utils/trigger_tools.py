@@ -112,22 +112,6 @@ def undo(func):
             cmds.undoInfo(closeChunk=True)
             return returned
     return decorator
-# def undo(func):
-#     """ Puts the wrapped `func` into a single Maya Undo action, then
-#         undoes it when the function enters the finally: block """
-#     @wraps(func)
-#     def _undofunc(*args, **kwargs):
-#         cmds.undoInfo(ock=True)
-#         result = None
-#         try:
-#             # start an undo chunk
-#             result = func(*args, **kwargs)
-#         except Exception as e:
-#             cmds.error(e)
-#         finally:
-#             # after calling the func, end the undo chunk and undo
-#             cmds.undoInfo(cck=True)
-#     return _undofunc
 
 class TriggerTool(object):
     def __init__(self):
@@ -138,9 +122,6 @@ class TriggerTool(object):
 
         self.overrideNamespace = False
 
-        # temporary
-        # namespaces = self.get_scene_namespaces()
-        # self.namespace = namespaces[0] if namespaces else None
         self.namespace = None
 
         # self.zero_dictionary = {"translate": (0,0,0), "rotate": (0,0,0), "scale": (1,1,1)}
@@ -158,7 +139,7 @@ class TriggerTool(object):
         else:
             select_keys = list(self.definitions["controller_keys"])
 
-        return (y for y in (cmds.ls(select_keys, transforms=True, exactType="transform"))) # this returns a generator
+        return (y for y in (cmds.ls(select_keys, transforms=True, exactType="transform")) if cmds.listRelatives(y, children=True, shapes=True)) # this returns a generator
 
     def _get_key_controls(self, key_list):
         all_conts = self._get_all_controls()
@@ -189,23 +170,43 @@ class TriggerTool(object):
                     cmds.warning("%s is single sided or pair cannot be found" % node)
 
     @undo
-    def select_body(self):
-        cmds.select(self._get_key_controls("body_keys"))
+    def select_body(self, modifier="replace"):
+        if modifier == "replace":
+            cmds.select(self._get_key_controls("body_keys"))
+        elif modifier == "add":
+            cmds.select(self._get_key_controls("body_keys"), add=True)
+        elif modifier == "subtract":
+            cmds.select(self._get_key_controls("body_keys"), d=True)
 
     @undo
-    def select_face(self):
-        cmds.select(self._get_key_controls("face_keys"))
+    def select_face(self, modifier="replace"):
+        if modifier == "replace":
+            cmds.select(self._get_key_controls("face_keys"))
+        elif modifier == "add":
+            cmds.select(self._get_key_controls("face_keys"), add=True)
+        elif modifier == "subtract":
+            cmds.select(self._get_key_controls("face_keys"), d=True)
 
     @undo
-    def select_tweakers(self):
-        cmds.select(self._get_key_controls("tweaker_keys"))
+    def select_tweakers(self, modifier="replace"):
+        if modifier == "replace":
+            cmds.select(self._get_key_controls("tweaker_keys"))
+        elif modifier == "add":
+            cmds.select(self._get_key_controls("tweaker_keys"), add=True)
+        elif modifier == "subtract":
+            cmds.select(self._get_key_controls("tweaker_keys"), d=True)
 
     @undo
-    def select_mirror(self, add=False):
+    def select_mirror(self, modifier="replace"):
         mirror_gen = self._get_mirror_controls()
         if mirror_gen:
-            cmds.select(self._get_mirror_controls(), add=add)
-
+            # cmds.select(self._get_mirror_controls(), add=add)
+            if modifier == "replace":
+                cmds.select(self._get_mirror_controls())
+            elif modifier == "add":
+                cmds.select(self._get_mirror_controls(), add=True)
+            elif modifier == "subtract":
+                cmds.select(self._get_mirror_controls(), d=True)
     @undo
     def zero_pose(self, selectedOnly=False):
         modified = []
@@ -313,7 +314,6 @@ class TriggerTool(object):
         self.namespace = namespace
 
 
-
 def dock_window(dialog_class):
     try:
         cmds.deleteUI(dialog_class.CONTROL_NAME)
@@ -370,25 +370,14 @@ class MainUI(QtWidgets.QWidget):
         self.main_layout = parent.layout()
         self.main_layout.setContentsMargins(2, 2, 2, 2)
 
-        # # here we can start coding our UI
-        # self.my_label = QtWidgets.QLabel('hessllo world!')
-        # self.main_layout.addWidget(self.my_label)
-
         self.centralwidget = QtWidgets.QWidget()
         self.main_layout.addWidget(self.centralwidget)
         self.centralwidget.setStyleSheet(qss)
         self.setWindowTitle(windowName)
         self.setObjectName(windowName)
-
-
-        # self.main_window = QtWidgets.QMainWindow(self)
-        #
-        # self.centralwidget = QtWidgets.QWidget(self)
-        # self.centralwidget.setObjectName("centralwidget")
-        # self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
-        # self.main_window.setCentralWidget(self.centralwidget)
-
-
+#
+        self.centralwidget.setFocusPolicy(QtCore.Qt.StrongFocus)
+#
         self.dynamicButtons = []
         self.tr_tool = TriggerTool()
 
@@ -417,6 +406,31 @@ class MainUI(QtWidgets.QWidget):
     def run(self):
         return self
 
+    def modifiedSelect(self, command):
+        mods = QtWidgets.QApplication.keyboardModifiers()
+        isShift = mods & QtCore.Qt.ShiftModifier
+        isCtrl = mods & QtCore.Qt.ControlModifier
+
+        if isShift and isCtrl:
+            modifier = "replace"
+        elif isShift:
+            modifier = "add"
+        elif isCtrl:
+            modifier = "subtract"
+        else:
+            modifier = "replace"
+
+        if command is "selectFace":
+            self.tr_tool.select_face(modifier=modifier)
+        elif command is "selectBody":
+            self.tr_tool.select_body(modifier=modifier)
+        elif command is "selectTweakers":
+            self.tr_tool.select_tweakers(modifier=modifier)
+        elif command is "selectMirror":
+            self.tr_tool.select_mirror(modifier=modifier)
+        # print("Shift pressed?", bool(isShiftPressed))
+
+
     def buildUI(self):
         # self.setObjectName("trigger_tool")
         # self.resize(264, 237)
@@ -441,6 +455,7 @@ class MainUI(QtWidgets.QWidget):
         self.select_vlay.setSpacing(5)
 
         self.all_body_pb = QtWidgets.QPushButton(self.select_gbox)
+        # self.all_body_pb = ModifierButton(self.select_gbox)
         self.all_body_pb.setText("All Body")
         self.select_vlay.addWidget(self.all_body_pb)
         self.dynamicButtons.append(self.all_body_pb)
@@ -556,10 +571,16 @@ class MainUI(QtWidgets.QWidget):
 
         self.namespace_combo.currentTextChanged.connect(lambda x: self.tr_tool.set_namespace(x))
         self.namespace_refresh_pb.clicked.connect(self.populate_namespaces)
-        self.all_body_pb.clicked.connect(lambda x: self.tr_tool.select_body())
-        self.all_face_pb.clicked.connect(self.tr_tool.select_face)
-        self.all_tweakers_pb.clicked.connect(self.tr_tool.select_tweakers)
-        self.select_mirror_pb.clicked.connect(self.tr_tool.select_mirror)
+        # self.all_body_pb.clicked.connect(lambda x: self.tr_tool.select_body())
+        self.all_body_pb.clicked.connect(lambda x: self.modifiedSelect(command="selectBody"))
+        # self.all_face_pb.clicked.connect(self.tr_tool.select_face)
+        self.all_face_pb.clicked.connect(lambda x: self.modifiedSelect(command="selectFace"))
+
+        # self.all_tweakers_pb.clicked.connect(self.tr_tool.select_tweakers)
+        self.all_tweakers_pb.clicked.connect(lambda x: self.modifiedSelect(command="selectTweakers"))
+
+        # self.select_mirror_pb.clicked.connect(self.tr_tool.select_mirror)
+        self.select_mirror_pb.clicked.connect(lambda x: self.modifiedSelect(command="selectMirror"))
 
         self.copy_mirror_pb.clicked.connect(lambda x: self.tr_tool.mirror_pose(self.mirror_mode_combo.currentText()))
         self.swap_mirror_pb.clicked.connect(lambda x: self.tr_tool.mirror_pose(self.mirror_mode_combo.currentText(), swap=True))
@@ -585,4 +606,25 @@ class MainUI(QtWidgets.QWidget):
         self.populate_namespaces()
         self.on_override_namespace()
 
-
+# class ModifierButton(QtWidgets.QPushButton):
+#
+# 	def __init__(self, *args, **kwargs):
+# 		super(ModifierButton, self).__init__(*args, **kwargs)
+# 		self.__isShiftPressed = False
+#
+# 		self.clicked.connect(self.handleClick)
+#
+# 	def keyPressEvent(self, event):
+# 		super(ModifierButton, self).keyPressEvent(event)
+# 		self._processKeyEvent(event)
+#
+# 	def keyReleaseEvent(self, event):
+# 		super(ModifierButton, self).keyReleaseEvent(event)
+# 		self._processKeyEvent(event)
+#
+# 	def _processKeyEvent(self, event):
+# 		isShift = event.modifiers() & QtCore.Qt.ShiftModifier
+# 		self.__isShiftPressed = bool(isShift)
+#
+# 	def handleClick(self):
+# 		print "Shift pressed?", self.__isShiftPressed

@@ -1,5 +1,8 @@
+cmds.error("PREVENT ACCIDENTAL RUN")
+
 # save all weights
 from trigger.library import functions
+from trigger.library import deformers
 from trigger.actions import weights
 reload(weights)
 from trigger.base import session
@@ -53,3 +56,10 @@ sessionHandler = session.Session()
 
 # # SAVE LOCAL BS GUIDES
 sessionHandler.save_session(os.path.join(triggerData_root, "guides", "%s_local_bs_guides.json" % charName))
+
+
+# # SAVE TWK GUIDES
+sessionHandler.save_session(os.path.join(triggerData_root, "guides", "%s_twk_guides.json" % charName))
+
+# # SAVE STRETCHY GUIDES
+sessionHandler.save_session(os.path.join(triggerData_root, "guides", "%s_stretchyFace.json" % charName))
