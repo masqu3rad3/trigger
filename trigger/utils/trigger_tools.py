@@ -27,7 +27,7 @@ else:
     from shiboken2 import wrapInstance
     from Qt.QtCore import Signal
 
-windowName = "Trigger Tool v0.1"
+windowName = "Trigger Tool v0.11"
 qss = """
 QPushButton
 {
@@ -85,15 +85,15 @@ def _killCallbacks(callbackIDList):
         if cmds.scriptJob(ex=ID):
             cmds.scriptJob(kill=ID)
 
-def getMayaMainWindow():
-    """
-    Gets the memory adress of the main window to connect Qt dialog to it.
-    Returns:
-        (long) Memory Adress
-    """
-    win = omui.MQtUtil_mainWindow()
-    ptr = wrapInstance(long(win), QtWidgets.QMainWindow)
-    return ptr
+# def getMayaMainWindow():
+#     """
+#     Gets the memory adress of the main window to connect Qt dialog to it.
+#     Returns:
+#         (long) Memory Adress
+#     """
+#     win = omui.MQtUtil_mainWindow()
+#     ptr = wrapInstance(long(win), QtWidgets.QMainWindow)
+#     return ptr
 
 
 def undo(func):
@@ -142,7 +142,10 @@ class TriggerTool(object):
         return (y for y in (cmds.ls(select_keys, transforms=True, exactType="transform")) if cmds.listRelatives(y, children=True, shapes=True)) # this returns a generator
 
     def _get_key_controls(self, key_list):
+        exclude_list = self.definitions["exclude"]
         all_conts = self._get_all_controls()
+        if exclude_list:
+            all_conts = [cont for cont in all_conts if cont not in exclude_list]
         for cont in all_conts:
             for key in self.definitions[key_list]:
                 if key.lower() in cont.lower():
@@ -170,45 +173,58 @@ class TriggerTool(object):
                     cmds.warning("%s is single sided or pair cannot be found" % node)
 
     @undo
-    def select_body(self, modifier="replace"):
+    def select_body(self, modifier="replace", selectVisible=False):
+        ctrls = self._get_key_controls("body_keys")
+        if selectVisible:
+            print "debug1", ctrls
+            ctrls = filter(self._filter_visibles, ctrls)
+            print "debug2", ctrls
         if modifier == "replace":
-            cmds.select(self._get_key_controls("body_keys"))
+            cmds.select(ctrls)
         elif modifier == "add":
-            cmds.select(self._get_key_controls("body_keys"), add=True)
+            cmds.select(ctrls, add=True)
         elif modifier == "subtract":
-            cmds.select(self._get_key_controls("body_keys"), d=True)
+            cmds.select(ctrls, d=True)
 
     @undo
-    def select_face(self, modifier="replace"):
+    def select_face(self, modifier="replace", selectVisible=False):
+        ctrls = self._get_key_controls("face_keys")
+        if selectVisible:
+            ctrls = filter(self._filter_visibles, ctrls)
         if modifier == "replace":
-            cmds.select(self._get_key_controls("face_keys"))
+            cmds.select(ctrls)
         elif modifier == "add":
-            cmds.select(self._get_key_controls("face_keys"), add=True)
+            cmds.select(ctrls, add=True)
         elif modifier == "subtract":
-            cmds.select(self._get_key_controls("face_keys"), d=True)
+            cmds.select(ctrls, d=True)
 
     @undo
-    def select_tweakers(self, modifier="replace"):
+    def select_tweakers(self, modifier="replace", selectVisible=False):
+        ctrls = self._get_key_controls("tweaker_keys")
+        if selectVisible:
+            ctrls = filter(self._filter_visibles, ctrls)
         if modifier == "replace":
-            cmds.select(self._get_key_controls("tweaker_keys"))
+            cmds.select(ctrls)
         elif modifier == "add":
-            cmds.select(self._get_key_controls("tweaker_keys"), add=True)
+            cmds.select(ctrls, add=True)
         elif modifier == "subtract":
-            cmds.select(self._get_key_controls("tweaker_keys"), d=True)
+            cmds.select(ctrls, d=True)
 
     @undo
-    def select_mirror(self, modifier="replace"):
+    def select_mirror(self, modifier="replace", selectVisible=False):
         mirror_gen = self._get_mirror_controls()
+        if selectVisible:
+            mirror_gen = filter(self._filter_visibles, mirror_gen)
         if mirror_gen:
             # cmds.select(self._get_mirror_controls(), add=add)
             if modifier == "replace":
-                cmds.select(self._get_mirror_controls())
+                cmds.select(mirror_gen)
             elif modifier == "add":
-                cmds.select(self._get_mirror_controls(), add=True)
+                cmds.select(mirror_gen, add=True)
             elif modifier == "subtract":
-                cmds.select(self._get_mirror_controls(), d=True)
+                cmds.select(mirror_gen, d=True)
     @undo
-    def zero_pose(self, selectedOnly=False):
+    def zero_pose(self, selectedOnly=True):
         modified = []
         if selectedOnly:
             controls = cmds.ls(sl=True)
@@ -313,18 +329,29 @@ class TriggerTool(object):
     def set_namespace(self, namespace):
         self.namespace = namespace
 
+    def _filter_visibles(self, node):
+        checklist = cmds.ls(node, long=True)[0].split('|')[1:-1] + [node]
+        for parent in checklist:
+            if (cmds.getAttr("%s.v" % parent) == 0):
+                return False
+        return True
+
 
 def dock_window(dialog_class):
     try:
         cmds.deleteUI(dialog_class.CONTROL_NAME)
         logger.info('removed workspace {}'.format(dialog_class.CONTROL_NAME))
-
     except:
         pass
 
     # building the workspace control with maya.cmds
-    main_control = cmds.workspaceControl(dialog_class.CONTROL_NAME, ttc=["AttributeEditor", -1], iw=100, mw=80, wp='preferred', label=dialog_class.DOCK_LABEL_NAME)
-    cmds.workspaceControl(main_control, e=True, restore=True, dtc=["AttributeEditor", "top"], iw=100, mw=80, wp='preferred', label=dialog_class.DOCK_LABEL_NAME)
+    # main_control = cmds.workspaceControl(dialog_class.CONTROL_NAME, ttc=["AttributeEditor", -1], iw=100, mw=80, wp='preferred', label=dialog_class.DOCK_LABEL_NAME)
+    main_control = cmds.workspaceControl(dialog_class.CONTROL_NAME, restore=True, dtc=["AttributeEditor", "top"], iw=100, mw=80, wp='preferred', label=dialog_class.DOCK_LABEL_NAME)
+    # main_control = cmds.workspaceControl(dialog_class.CONTROL_NAME, restore=True, dtc=["AttributeEditor", "top"], iw=100, mw=80, wp='preferred', label=dialog_class.DOCK_LABEL_NAME)
+    # cmds.workspaceControl(main_control, e=True, restore=True, dtc=["AttributeEditor", "top"], iw=100, mw=80, wp='preferred', label=dialog_class.DOCK_LABEL_NAME)
+    # cmds.workspaceControl(main_control, e=True, dtc=["AttributeEditor", "top"])
+    # cmds.workspaceControl(main_control, e=True, dtc=["AttributeEditor", "top"])
+    # cmds.workspaceControl(main_control, e=True, dtc=["AttributeEditor", "top"])
 
     # now lets get a C++ pointer to it using OpenMaya
     control_widget = omui.MQtUtil.findControl(dialog_class.CONTROL_NAME)
@@ -345,7 +372,7 @@ def dock_window(dialog_class):
 class MainUI(QtWidgets.QWidget):
 
     instances = list()
-    CONTROL_NAME = windowName
+    CONTROL_NAME = "triggerTools"
     DOCK_LABEL_NAME = windowName
 
     # def __init__(self):
@@ -420,14 +447,16 @@ class MainUI(QtWidgets.QWidget):
         else:
             modifier = "replace"
 
+        selectVisible = self.select_only_visible_cb.isChecked()
+
         if command is "selectFace":
-            self.tr_tool.select_face(modifier=modifier)
+            self.tr_tool.select_face(modifier=modifier, selectVisible=selectVisible)
         elif command is "selectBody":
-            self.tr_tool.select_body(modifier=modifier)
+            self.tr_tool.select_body(modifier=modifier, selectVisible=selectVisible)
         elif command is "selectTweakers":
-            self.tr_tool.select_tweakers(modifier=modifier)
+            self.tr_tool.select_tweakers(modifier=modifier, selectVisible=selectVisible)
         elif command is "selectMirror":
-            self.tr_tool.select_mirror(modifier=modifier)
+            self.tr_tool.select_mirror(modifier=modifier, selectVisible=selectVisible)
         # print("Shift pressed?", bool(isShiftPressed))
 
 
@@ -518,6 +547,11 @@ class MainUI(QtWidgets.QWidget):
         self.settings_grp_vlay = QtWidgets.QVBoxLayout(self.settings_gbox)
         self.settings_grp_vlay.setContentsMargins(5, 0, 5, 0)
         self.settings_grp_vlay.setSpacing(5)
+
+        self.select_only_visible_cb = QtWidgets.QCheckBox(self.centralwidget)
+        self.select_only_visible_cb.setText("Select Only Visible")
+        self.select_only_visible_cb.setLayoutDirection(QtCore.Qt.RightToLeft)
+        self.settings_grp_vlay.addWidget(self.select_only_visible_cb)
 
         self.override_namespace_cb = QtWidgets.QCheckBox(self.centralwidget)
         self.override_namespace_cb.setText("Override with selection")

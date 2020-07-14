@@ -18,7 +18,7 @@ from trigger.utils import jointsOnBlendshape
 cmds.file(new=True, force=True)
 
 # open the previous rig
-cmds.file("/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charMax/RIG/work/maya/rootCharMaxAvA.v007.ma",
+cmds.file("/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charMax/RIG/work/maya/rootCharMaxAvA.v008.ma",
           open=True, force=True)
 cmds.hide(cmds.listRelatives("bn_head", children=True))
 cmds.hide(cmds.listRelatives("grp_faceExtra", children=True))
