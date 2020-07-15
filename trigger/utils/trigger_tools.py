@@ -145,6 +145,8 @@ class TriggerTool(object):
         exclude_list = self.definitions["exclude"]
         all_conts = self._get_all_controls()
         if exclude_list:
+            if self.namespace:
+                exclude_list = ["%s:%s" %(self.namespace, element) for element in exclude_list]
             all_conts = [cont for cont in all_conts if cont not in exclude_list]
         for cont in all_conts:
             for key in self.definitions[key_list]:
@@ -176,9 +178,7 @@ class TriggerTool(object):
     def select_body(self, modifier="replace", selectVisible=False):
         ctrls = self._get_key_controls("body_keys")
         if selectVisible:
-            print "debug1", ctrls
             ctrls = filter(self._filter_visibles, ctrls)
-            print "debug2", ctrls
         if modifier == "replace":
             cmds.select(ctrls)
         elif modifier == "add":
