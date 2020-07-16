@@ -7,7 +7,7 @@ from trigger.core import settings
 
 import trigger.base.initials as init
 # from trigger.rig import scratch
-from trigger.base import builder
+from trigger.base import builder_zeroState as builder
 from trigger.core import feedback
 
 

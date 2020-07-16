@@ -640,6 +640,23 @@ def uniqueName(name, return_counter=False):
     else:
         return name
 
+def uniqueScene():
+    """Makes sure that everything is named uniquely. Returns list of renamed nodes and list of new names"""
+    collection = []
+    for obj in cmds.ls():
+        pathway = obj.split("|")
+        if len(pathway) > 1:
+            uniqueName(pathway[-1])
+            collection.append(obj)
+    collection.reverse()
+    old_names = []
+    new_names = []
+    for xe in collection:
+        pathway = xe.split("|")
+        old_names.append(pathway[-1])
+        new_names.append(cmds.rename(xe, uniqueName(pathway[-1])))
+    return old_names, new_names
+
 def getMirror(node):
     # find the mirror of the oldController
     if "_LEFT_" in node:
