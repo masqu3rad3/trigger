@@ -65,10 +65,10 @@ def replaceController(mirror=True, mirrorAxis="X", keepOldShape=False, keepAcopy
 
     ## get the same color code
     # pm.setAttr(newContDup.getShape()+".overrideEnabled", pm.getAttr(oldCont.getShape()+".overrideEnabled"))
-    cmds.setAttr("%s.overrideEnabled" % newContDup.getShape(), cmds.getAttr("%s.overrideEnabled" % oldCont.getShape()))
+    cmds.setAttr("%s.overrideEnabled" % functions.getShapes(newContDup)[0], cmds.getAttr("%s.overrideEnabled" % functions.getShapes(oldCont)[0]))
 
     # pm.setAttr(newContDup.getShape()+".overrideColor", pm.getAttr(oldCont.getShape()+".overrideColor"))
-    cmds.setAttr("%s.overrideColor" % newContDup.getShape(), cmds.getAttr("%s.overrideColor" % oldCont.getShape()))
+    cmds.setAttr("%s.overrideColor" % functions.getShapes(newContDup)[0], cmds.getAttr("%s.overrideColor" % functions.getShapes(oldCont)[0]))
 
 
 
@@ -81,8 +81,8 @@ def replaceController(mirror=True, mirrorAxis="X", keepOldShape=False, keepAcopy
 
 
     ## put the new controller shape under the same parent with the old first (if there is a parent)
-    if oldCont.getParent():
-        cmds.parent(newContDup, oldCont.getParent())
+    if functions.getParent(oldCont):
+        cmds.parent(newContDup, functions.getParent(oldCont))
     cmds.makeIdentity(newContDup, apply=True)
     # move the pivot to the same position
     # pivotPoint = pm.xform(oldCont,q=True, t=True, ws=True)
@@ -93,18 +93,19 @@ def replaceController(mirror=True, mirrorAxis="X", keepOldShape=False, keepAcopy
         # pm.delete(oldCont.getShape())
         cmds.delete(cmds.listRelatives(oldCont, shapes=True, children=True))
 
-    cmds.parent(newContDup.getShape(), oldCont, r=True, s=True)
+    cmds.parent(functions.getShapes(newContDup)[0], oldCont, r=True, s=True)
 
     if mirror:
         # find the mirror of the oldController
-        if "_LEFT_" in oldCont:
-            mirrorName = oldCont.replace("_LEFT_", "_RIGHT_")
-        elif "_RIGHT_" in oldCont:
-            mirrorName = oldCont.replace("_RIGHT_", "_LEFT_")
+        if oldCont.startswith("L_"):
+            mirrorName = oldCont.replace("L_", "R_")
+        elif oldCont.startswith("R_"):
+            mirrorName = oldCont.replace("R_", "L_")
         else:
             cmds.warning("Cannot find the mirror controller, skipping mirror part")
             if not keepOldShape:
-                cmds.delete(oldCont.getShape())
+                # cmds.delete(oldCont.getShape())
+                cmds.delete(functions.getShapes(oldCont))
             return
         oldContMirror = mirrorName
 
@@ -130,11 +131,13 @@ def replaceController(mirror=True, mirrorAxis="X", keepOldShape=False, keepAcopy
 
         ## get the same color code
         # pm.setAttr(newContDupMirror.getShape() + ".overrideEnabled", pm.getAttr(oldContMirror.getShape() + ".overrideEnabled"))
-        cmds.setAttr("%s.overrideEnabled" % newContDupMirror.getShape(), cmds.getAttr("%s.overrideEnabled") % oldContMirror.getShape())
+        # cmds.setAttr("%s.overrideEnabled" % newContDupMirror.getShape(), cmds.getAttr("%s.overrideEnabled") % oldContMirror.getShape())
+        cmds.setAttr("%s.overrideEnabled" % functions.getShapes(newContDupMirror)[0], cmds.getAttr("%s.overrideEnabled") % functions.getShapes(oldContMirror)[0])
 
 
         # pm.setAttr(newContDupMirror.getShape() + ".overrideColor", pm.getAttr(oldContMirror.getShape() + ".overrideColor"))
-        cmds.setAttr("%s.overrideColor" % newContDupMirror.getShape(), cmds.getAttr("%s.overrideColor" % oldContMirror.getShape()))
+        # cmds.setAttr("%s.overrideColor" % newContDupMirror.getShape(), cmds.getAttr("%s.overrideColor" % oldContMirror.getShape()))
+        cmds.setAttr("%s.overrideColor" % functions.getShapes(newContDupMirror)[0], cmds.getAttr("%s.overrideColor" % functions.getShapes(oldContMirror)[0]))
 
 
         # move the new controller to the old controllers place
@@ -247,9 +250,6 @@ def mirrorController(axis="x", node_list=None, side_flags=("L_", "R_"), side_bia
     if not side_bias in bias_dict.keys():
         cmds.error("Invalid argument: {0}".format(side_bias))
     for node in node_list:
-        print "-----------"
-        print node
-        print "-----------"
         if eval(bias_dict[side_bias].format(node, side_flags[0])):
             other_side = node.replace(side_flags[0], side_flags[1])
         elif eval(bias_dict[side_bias].format(node, side_flags[1])):
@@ -265,7 +265,9 @@ def mirrorController(axis="x", node_list=None, side_flags=("L_", "R_"), side_bia
             warnings.append(msg)
             continue
 
-        tmp_cont = cmds.duplicate(node, name="tmp_{0}".format(node))
+        tmp_cont = cmds.duplicate(node, name="tmp_{0}".format(node), rr=True, renameChildren=True)
+        ## delete nodes below it
+        cmds.delete(cmds.listRelatives(tmp_cont, type="transform"))
 
         ## create a group for the selected controller
         node_grp = cmds.group(name="tmpGrp", em=True)
@@ -277,9 +279,8 @@ def mirrorController(axis="x", node_list=None, side_flags=("L_", "R_"), side_bia
         cmds.setAttr("%s.s%s" % (node_grp, axis), -1)
         ## ungroup it
         cmds.ungroup(node_grp)
-        replace_curve(other_side, tmp_cont, maintain_offset=True)
+        replace_curve(other_side, tmp_cont, maintain_offset=False)
         cmds.delete(tmp_cont)
-
 
 # replace_curve(orig_curve=cmds.ls(sl=1)[0], new_curve=cmds.ls(sl=1)[1], maintain_offset=True)
 # mirrorController()

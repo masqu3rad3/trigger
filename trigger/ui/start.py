@@ -17,6 +17,7 @@ from trigger.utils import mr_cubic as mrCubic
 
 import trigger.library.functions as extra
 import trigger.library.tools as tools
+reload(tools)
 
 import os
 import json
@@ -1026,8 +1027,8 @@ class MainUI(QtWidgets.QMainWindow):
             self.infoPop(textTitle="Skipping action", textHeader="Selection needed", textInfo="You need to select at least one controller node. (transform node)")
             return
 
-        for i in selection:
-            oldController = str(i.name())
+        for oldController in selection:
+            # oldController = str(i.name())
             objName=extra.uniqueName("cont_{0}".format(self.controllers_combobox.currentText()))
             # newController = self.all_icon_functions[self.controllers_combobox.currentIndex()][1](name=objName, scale=(1,1,1))
             newController, dmp = self.icon.createIcon(self.controllers_combobox.currentText(), iconName=objName, scale=(1,1,1), normal=(self.alignVectorX_sb.value(), self.alignVectorY_sb.value(), self.alignVectorZ_sb.value()))

@@ -873,11 +873,15 @@ def drive_attrs(driver_attr, driven_attrs, driver_range=None, driven_range=None,
             else:
                 cmds.connectAttr("%s.outValue" % range_node, driven, force=force)
 
-def deleteObject(node, force=True):
-    if cmds.objExists(node):
-        if force:
-            cmds.lockNode(node, lock=False)
-        cmds.delete(node)
-        return True
-    else:
-        return
+def deleteObject(keyword, force=True):
+    """Deletes the object only if exists. Accepts wildcards."""
+    node_list = cmds.ls(keyword)
+    non_existing = []
+    for node in node_list:
+        if cmds.objExists(node):
+            if force:
+                cmds.lockNode(node, lock=False)
+            cmds.delete(node)
+        else:
+            non_existing.append(node)
+    return non_existing

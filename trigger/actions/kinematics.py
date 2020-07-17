@@ -98,16 +98,17 @@ class Kinematics(settings.Settings):
             iconSize = extra.getDistance(brother_roots[0], brother_roots[-1])
             translateOff = (iconSize / 2, 0, iconSize / 2)
             rotateOff = (0, 0, 0)
-            if "_left" in brother_roots[0]:
-                iconName = brother_roots[0].replace("_left", "_LEFT")
-            elif "_right" in brother_roots[0]:
-                iconName = brother_roots[0].replace("_right", "_RIGHT")
+            icon_name = brother_roots[0].replace("jInit", "")
+            if "_left" in icon_name:
+                icon_name = "L%s" % icon_name.replace("_left", "")
+            elif "_right" in icon_name:
+                icon_name = "R%s" % icon_name.replace("_right", "")
                 rotateOff = (0, 180, 0)
                 translateOff = (iconSize / 2, 0, -iconSize / 2)
             else:
-                iconName = brother_roots[0]
+                pass
 
-            cont_fGroup, dmp = icon.createIcon("Square", iconName="Fgrp_%s_cont" % iconName,
+            cont_fGroup, dmp = icon.createIcon("Square", iconName="%s_Fgrp_cont" % icon_name,
                                                scale=(iconSize / 6, iconSize / 4, iconSize / 2))
             cmds.rotate(90, 0, 0, cont_fGroup)
             cmds.makeIdentity(cont_fGroup, a=True)
