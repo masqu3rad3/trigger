@@ -22,116 +22,40 @@ icon_handler = controllers.Icon()
 # reset scene
 cmds.file(new=True, force=True)
 # open the previous rig
-cmds.file("/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charIvan/RIG/work/maya/rootCharIvanAvA.v003.ma",open=True, force=True)
+cmds.file("/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charValet/RIG/work/maya/rootCharValetAvA.v001.ma",open=True, force=True)
 cmds.hide(cmds.listRelatives("bn_head", children=True))
 cmds.hide(cmds.listRelatives("grp_faceExtra", children=True))
 
 # import the mesh grp
 
 import_act.import_alembic(
-    "/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charIvan/MDL/publish/caches/charIvanAvA.v040.abc")
+    "/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charValet/MDL/publish/caches/charValetAvA.v008.abc")
 
-
-#########################
-###### BODY RIG #########
-#########################
-
-
-# sessionHandler.load_session("/home/arda.kutlu/EG2_playground/guideData/max_local_bs_guides.json", reset_scene=False)
-sessionHandler.load_session(
-    "/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charIvan/RIG/work/maya/triggerData/guides/ivan_body_guides.json",
-    reset_scene=False)
-
-# medals
-
-medalA = kinematics.Kinematics("jInit_tail_center_0", create_switchers=False)
-medalA.action()
-medalB = kinematics.Kinematics("jInit_tail_center_4", create_switchers=False)
-medalB.action()
-medalC = kinematics.Kinematics("jInit_tail_center_5", create_switchers=False)
-medalC.action()
-medalD = kinematics.Kinematics("jInit_tail_center_6", create_switchers=False)
-medalD.action()
-
-medal_follicles = parentToSurface.parentToSurface(["limbPlug_medalA", "limbPlug_medalB", "limbPlug_medalC", "limbPlug_medalD"], "charIvanAvA_jacket_GEO", mode="parentConstraint")
-
-star = kinematics.Kinematics("jInit_tail_center1_0", create_switchers=False)
-star.action()
-
-star_follicle = parentToSurface.parentToSurface(["limbPlug_star"], "charIvanAvA_sash_GEO")
-
-sstrap_right = kinematics.Kinematics("jInit_tail_right_0", create_switchers=False)
-sstrap_right.action()
-sstrap_left = kinematics.Kinematics("jInit_tail_left_0", create_switchers=False)
-sstrap_left.action()
-
-# darn reversed game rig...!!
-cmds.makeIdentity("L_sstrapBase1_cont", a=True)
-cmds.makeIdentity("L_sstrapBase0_cont", a=True)
-cmds.makeIdentity("R_sstrapBase1_cont", a=True)
-cmds.makeIdentity("R_sstrapBase0_cont", a=True)
-
-cmds.parentConstraint("cBn_R_upArm_armor", "limbPlug_R_sstrapBase", mo=True)
-cmds.parentConstraint("cBn_L_upArm_armor", "limbPlug_L_sstrapBase", mo=True)
-
-cmds.select([x for x in cmds.ls(sl=True) if "jDef" in x])
-
-# rename the sash joints and gather everything under a group
-cmds.rename("root_c1", "sash01_jDef")
-cmds.rename("root_c2", "sash02_jDef")
-cmds.rename("root_c3", "sash03_jDef")
-
-bodyExtras = cmds.group(name="bodyExtras_grp", em=True)
-cmds.parent(cmds.ls("sash*_jDef"), bodyExtras)
-cmds.parent(cmds.ls("limbPlug_medal*"), bodyExtras)
-cmds.parent(cmds.ls("limbPlug_?_sstrapBase"), bodyExtras)
-
-cmds.rename("trigger_grp", "trigger_ebody_grp")
-cmds.parent("trigger_ebody_grp", "bodyExtras_grp")
-
-functions.deleteObject("trigger_refGuides")
-
-# # seperate values are too much, hide them
-for side in "LR":
-    obj = "%s_finger1_0_Fgrp_cont" % side
-    attr_list = cmds.listAttr(obj, userDefined=True)
-    for attr in attr_list:
-        if "Spread" in attr:
-            print attr
-            cmds.setAttr("%s.%s" %(obj, attr), e=True, keyable=False, cb=False)
-
-
-#######################################################
-#######################################################d
-
-## LOCALS prep
-
-
-# get all final meshes
-final_meshes = functions.getMeshes("charIvanAvA")
+final_meshes = functions.getMeshes("charValetAvA")
 
 # build the BASEs of Local Rigs
-face_meshes = ["charIvanAvA_head_GEO",
-                "charIvanAvA_lowerTeeth_GEO",
-                "charIvanAvA_upperTeeth_GEO",
-                "charIvanAvA_tongue_GEO",
-                "charIvanAvA_hat_GEO",
-                "charIvanAvA_Eye_Outer_R_GEO",
-                "charIvanAvA_Eye_Inner_R_GEO",
-                "charIvanAvA_sash_GEO",
-                "charIvanAvA_jacket_GEO",
-                ]
+face_meshes = ["charValetAvA_hair_GEO",
+               "charValetAvA_hat_GEO",
+               "charValetAvA_left_innerEye_GEO",
+               "charValetAvA_right_innerEye_GEO",
+               "charValetAvA_right_outerEye_GEO",
+               "charValetAvA_left_outerEye_GEO",
+               "charValetAvA_eyebrows_GEO",
+               "charValetAvA_head_IDskin",
+               ]
                
 local_meshes = []
 for mesh in face_meshes:
+    # print mesh
     local_BS_blendshape = "%s_local_bs" % mesh
     local_meshes.append(deformers.localize(mesh, local_BS_blendshape, "%s_local" % mesh, group_name="local_BS_rig_grp"))
 
-TWK_MESH = "charIvanAvA_head_GEO_local"
+TWK_MESH = "charSocialite_head_IDskin_local"
 local_tweakers_blendshape = "local_TWK_rig_bs"
 local_meshes.append(
     deformers.localize(TWK_MESH, local_tweakers_blendshape, "%s_TWK" % TWK_MESH, group_name="local_TWK_rig_grp"))
     
+
 ###############################
 ####### LOCAL BS RIG ##########
 ###############################
@@ -139,85 +63,87 @@ local_meshes.append(
 
 sessionHandler = session.Session()
 sessionHandler.load_session(
-    "/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charIvan/RIG/work/maya/triggerData/guides/ivan_local_bs_guides.json",
+    "/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charValet/RIG/work/maya/triggerData/guides/valet_local_bs_guides.json",
     reset_scene=False)
+
 
 # move the local bs joints and make the labels invisible
 local_bs_joints = cmds.listRelatives("trigger_refGuides", children=True, type="joint", ad=True)
 _ = [cmds.setAttr("%s.drawLabel" % jnt, 0) for jnt in local_bs_joints]
 cmds.parent(cmds.listRelatives("trigger_refGuides", children=True), "local_BS_rig_grp")
-# cmds.delete("trigger_refGuides")
+cmds.delete("trigger_refGuides")
 
+# # TONGUE RIG
+# ############
+# tongue_joints = cmds.ls("tongue_*_jDef")
 
-# TONGUE RIG
-############
-tongue_joints = cmds.ls("tongue_*_jDef")
+# icon_handler = controllers.Icon()
 
-tongue_conts = []
-for jnt in tongue_joints:
-    cmds.makeIdentity(jnt, a=True)
-    cont, _ = icon_handler.createIcon("Circle", iconName=jnt.replace("jDef", "cont"), normal=(1, 0, 0))
-    functions.alignTo(cont, jnt, position=True, rotation=True)
-    offset_cont = functions.createUpGrp(cont, "offset")
-    if tongue_conts:
-        cmds.parent(offset_cont, tongue_conts[-1])
-    tongue_conts.append(cont)
-    functions.colorize(cont, "C")
-    cmds.connectAttr("%s.rotate" % cont, "%s.rotate" % jnt)
+# tongue_conts = []
+# for jnt in tongue_joints:
+#     cmds.makeIdentity(jnt, a=True)
+#     cont, _ = icon_handler.createIcon("Circle", iconName=jnt.replace("jDef", "cont"), normal=(1, 0, 0))
+#     functions.alignTo(cont, jnt, position=True, rotation=True)
+#     offset_cont = functions.createUpGrp(cont, "offset")
+#     if tongue_conts:
+#         cmds.parent(offset_cont, tongue_conts[-1])
+#     tongue_conts.append(cont)
+#     functions.colorize(cont, "C")
+#     cmds.connectAttr("%s.rotate" % cont, "%s.rotate" % jnt)
 
-# create a hinge at the jaw location to move the tongue conts with jaw
-jaw_follow_grp = cmds.group(name="jaw_follow_grp", em=True)
-functions.alignTo(jaw_follow_grp, "jaw_jDef")
-cmds.connectAttr("jaw_jDef.rotate", "%s.rotate" % jaw_follow_grp)
-cmds.parent(functions.getParent(tongue_conts[0]), jaw_follow_grp)
+# # create a hinge at the jaw location to move the tongue conts with jaw
+# jaw_follow_grp = cmds.group(name="jaw_follow_grp", em=True)
+# functions.alignTo(jaw_follow_grp, "jaw_jDef")
+# cmds.connectAttr("jaw_jDef.rotate", "%s.rotate" % jaw_follow_grp)
+# cmds.parent(functions.getParent(tongue_conts[0]), jaw_follow_grp)
 
-head_follow_grp = cmds.group(name="tongue_headFollow", em=True)
-cmds.parentConstraint("bn_head", head_follow_grp, mo=False)
+# head_follow_grp = cmds.group(name="tongue_headFollow", em=True)
+# cmds.parentConstraint("bn_head", head_follow_grp, mo=False)
 
-cmds.parent(jaw_follow_grp, head_follow_grp)
-tongue_ctrl_grp = cmds.group(head_follow_grp, name="tongue_ctrl_grp")
-cmds.parent(tongue_ctrl_grp, "Rig_Controllers")
+# cmds.parent(jaw_follow_grp, head_follow_grp)
+# tongue_ctrl_grp = cmds.group(head_follow_grp, name="tongue_ctrl_grp")
+# cmds.parent(tongue_ctrl_grp, "Rig_Controllers")
 
 # import face UI
 # cmds.file("/home/arda.kutlu/localProjects/EG2_playground_200617/scenes/UI/faceUI/faceUI_UI_gn_v001.mb", i=True, mnr=True)
 import_act.import_scene(
     "/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charMax/RIG/work/maya/triggerData/UI/faceUI.mb")
 # import_act.import_alembic("/home/arda.kutlu/localProjects/EG2_playground_200617/_TRANSFER/ALEMBIC/faceUI.abc")
-cmds.setAttr("face_ctrls_grp.translate", -38, 200, 0)
+cmds.setAttr("face_ctrls_grp.translate", -36, 170, 0)
 cmds.parentConstraint("ctrl_head", "face_ctrls_grp", mo=True)
 cmds.parent("face_ctrls_grp", "Rig_Controllers")
 
 hook_blendshapes = "hook_blendshapes"
 
-# TEETH RIG
-###########
-upper_teeth_cont, _ = icon_handler.createIcon("Circle", iconName="upperTeeth_cont", scale=(3, 3, 3), normal=(0, 1, 0))
-lower_teeth_cont, _ = icon_handler.createIcon("Circle", iconName="lowerTeeth_cont", scale=(3, 3, 3), normal=(0, 1, 0))
-upper_teeth_cont_offset = functions.createUpGrp(upper_teeth_cont, "offset")
-lower_teeth_cont_offset = functions.createUpGrp(lower_teeth_cont, "offset")
-functions.alignTo(upper_teeth_cont_offset, "upperTeeth_jDef", position=True, rotation=True)
-functions.alignTo(lower_teeth_cont_offset, "lowerTeeth_jDef", position=True, rotation=True)
+# # TEETH RIG
+# ###########
+# upper_teeth_cont, _ = icon_handler.createIcon("Circle", iconName="upperTeeth_cont", scale=(3, 3, 3), normal=(0, 1, 0))
+# lower_teeth_cont, _ = icon_handler.createIcon("Circle", iconName="lowerTeeth_cont", scale=(3, 3, 3), normal=(0, 1, 0))
+# upper_teeth_cont_offset = functions.createUpGrp(upper_teeth_cont, "offset")
+# lower_teeth_cont_offset = functions.createUpGrp(lower_teeth_cont, "offset")
+# functions.alignTo(upper_teeth_cont_offset, "upperTeeth_jDef", position=True, rotation=True)
+# functions.alignTo(lower_teeth_cont_offset, "lowerTeeth_jDef", position=True, rotation=True)
 
-upper_teeth_jaw_follow = cmds.group(name="upperTeeth_jawFollow", em=True)
-lower_teeth_jaw_follow = cmds.group(name="lowerTeeth_jawFollow", em=True)
-functions.alignTo(upper_teeth_jaw_follow, "jawN_jDef", position=True, rotation=True)
-functions.alignTo(lower_teeth_jaw_follow, "jaw_jDef", position=True, rotation=True)
+# upper_teeth_jaw_follow = cmds.group(name="upperTeeth_jawFollow", em=True)
+# lower_teeth_jaw_follow = cmds.group(name="lowerTeeth_jawFollow", em=True)
+# functions.alignTo(upper_teeth_jaw_follow, "jawN_jDef", position=True, rotation=True)
+# functions.alignTo(lower_teeth_jaw_follow, "jaw_jDef", position=True, rotation=True)
 
-cmds.parent(upper_teeth_cont_offset, upper_teeth_jaw_follow)
-cmds.parent(lower_teeth_cont_offset, lower_teeth_jaw_follow)
+# cmds.parent(upper_teeth_cont_offset, upper_teeth_jaw_follow)
+# cmds.parent(lower_teeth_cont_offset, lower_teeth_jaw_follow)
 
-teeth_head_follow = cmds.group([upper_teeth_jaw_follow, lower_teeth_jaw_follow], name="teeth_headFollow")
+# teeth_head_follow = cmds.group([upper_teeth_jaw_follow, lower_teeth_jaw_follow], name="teeth_headFollow")
 
-functions.drive_attrs("jawN_jDef.t", "%s.t" % upper_teeth_jaw_follow)
-functions.drive_attrs("jawN_jDef.r", "%s.r" % upper_teeth_jaw_follow)
-functions.drive_attrs("jaw_jDef.t", "%s.t" % lower_teeth_jaw_follow)
-functions.drive_attrs("jaw_jDef.r", "%s.r" % lower_teeth_jaw_follow)
+# functions.drive_attrs("jawN_jDef.t", "%s.t" % upper_teeth_jaw_follow)
+# functions.drive_attrs("jawN_jDef.r", "%s.r" % upper_teeth_jaw_follow)
+# functions.drive_attrs("jaw_jDef.t", "%s.t" % lower_teeth_jaw_follow)
+# functions.drive_attrs("jaw_jDef.r", "%s.r" % lower_teeth_jaw_follow)
 
-cmds.connectAttr("%s.xformMatrix" % upper_teeth_cont, "upperTeeth_jDef.offsetParentMatrix")
-cmds.connectAttr("%s.xformMatrix" % lower_teeth_cont, "lowerTeeth_jDef.offsetParentMatrix")
-cmds.parentConstraint("bn_head", teeth_head_follow, mo=True)
-teeth_ctrls_grp = cmds.group(teeth_head_follow, name="teeth_ctrls_grp")
-cmds.parent(teeth_ctrls_grp, "Rig_Controllers")
+# cmds.connectAttr("%s.xformMatrix" % upper_teeth_cont, "upperTeeth_jDef.offsetParentMatrix")
+# cmds.connectAttr("%s.xformMatrix" % lower_teeth_cont, "lowerTeeth_jDef.offsetParentMatrix")
+# cmds.parentConstraint("bn_head", teeth_head_follow, mo=True)
+# teeth_ctrls_grp = cmds.group(teeth_head_follow, name="teeth_ctrls_grp")
+# cmds.parent(teeth_ctrls_grp, "Rig_Controllers")
 
 # MOUTH RIG
 ###########
@@ -242,11 +168,11 @@ jawN_ry_val = cmds.getAttr(jawN_ry)
 cmds.undoInfo(ock=True)
 # Controller Y Connections
 cmds.setDrivenKeyframe(jaw_rx, cd=mouth_cont_Y, v=jaw_rx_val, dv=0.0, itt="spline", ott="linear")
-cmds.setDrivenKeyframe(jaw_rx, cd=mouth_cont_Y, v=-40, dv=-10, itt="linear", ott="linear")
-cmds.setDrivenKeyframe(jaw_rx, cd=mouth_cont_Y, v=-6, dv=10, itt="linear", ott="linear")
+cmds.setDrivenKeyframe(jaw_rx, cd=mouth_cont_Y, v=-60, dv=-10, itt="linear", ott="linear")
+cmds.setDrivenKeyframe(jaw_rx, cd=mouth_cont_Y, v=-15, dv=10, itt="linear", ott="linear")
 
 cmds.setDrivenKeyframe(jawN_rx, cd=mouth_cont_Y, v=jawN_rx_val, dv=0, itt="linear", ott="linear")
-cmds.setDrivenKeyframe(jawN_rx, cd=mouth_cont_Y, v=-6, dv=10, itt="linear", ott="linear")
+cmds.setDrivenKeyframe(jawN_rx, cd=mouth_cont_Y, v=-15, dv=10, itt="linear", ott="linear")
 
 # Controller X Connections
 cmds.setDrivenKeyframe(jaw_ry, cd=mouth_cont_X, v=jaw_ry_val, dv=0.0, itt="spline", ott="spline")
@@ -280,9 +206,7 @@ cmds.parent(eye_R_offset, "bn_head")
 
 # offset the eyeLook at to the correct position
 # eyeLookat_offset = functions.createUpGrp("crtl_eyeLookat", "offset")
-cmds.setAttr("%s.ty" % "grp_eyeLookat_offset", 3.821045510259893)
-cmds.setAttr("%s.tx" % "grp_eyeLookat_offset", 4.462885002707793)
-
+# cmds.setAttr("%s.ty" % eyeLookat_offset, 5.725296945384471)
 
 # first layer eye movement
 cmds.aimConstraint("ctrl_L_eyeLookat", eye_L, weight=1, upVector=(0, 1, 0), worldUpObject='ctrl_head',
@@ -322,10 +246,10 @@ for side in "LR":
     # driven keys
     cmds.setDrivenKeyframe("%s.rx" % eyeFollowGrp, cd="%s.rx" % extractor, v=0.0, dv=0.0, itt="spline", ott="spline")
     cmds.setDrivenKeyframe("%s.rx" % eyeFollowGrp, cd="%s.rx" % extractor, v=-10, dv=-28.61, itt="spline", ott="spline")
-    cmds.setDrivenKeyframe("%s.rx" % eyeFollowGrp, cd="%s.rx" % extractor, v=14.5, dv=19.97, itt="spline", ott="spline")
+    cmds.setDrivenKeyframe("%s.rx" % eyeFollowGrp, cd="%s.rx" % extractor, v=18, dv=19.97, itt="spline", ott="spline")
     cmds.setDrivenKeyframe("%s.ry" % eyeFollowGrp, cd="%s.ry" % extractor, v=0.0, dv=0.0, itt="spline", ott="spline")
-    cmds.setDrivenKeyframe("%s.ry" % eyeFollowGrp, cd="%s.ry" % extractor, v=-14.5, dv=-42.27, itt="spline", ott="spline")
-    cmds.setDrivenKeyframe("%s.ry" % eyeFollowGrp, cd="%s.ry" % extractor, v=14.5, dv=42.27, itt="spline", ott="spline")
+    cmds.setDrivenKeyframe("%s.ry" % eyeFollowGrp, cd="%s.ry" % extractor, v=-18, dv=-42.27, itt="spline", ott="spline")
+    cmds.setDrivenKeyframe("%s.ry" % eyeFollowGrp, cd="%s.ry" % extractor, v=18, dv=42.27, itt="spline", ott="spline")
 
 # Eye Lids
 for side in "LR":
@@ -342,51 +266,6 @@ for side in "LR":
                            itt="linear", ott="linear")
     cmds.setDrivenKeyframe("lower_eyeLid_%s_jDef.rx" % side, cd="lower_eyeLid_%s_cont.ty" % side, v=63, dv=19,
                            itt="linear", ott="linear")
-                           
-                           
-## SASH extra tweak RIG
-
-# create controllers on tweaker joints (except root)
-sash_tweakers = ["sash01_jDef", "sash02_jDef", "sash03_jDef"]
-sash_twk_conts = []
-sash_twk_cont_offsets = []
-for jnt in sash_tweakers:
-    cont, _ = icon_handler.createIcon("Diamond", iconName=jnt.replace("_jDef", "_cont"))
-    functions.alignTo(cont, jnt, position=True, rotation=True)
-    sash_twk_conts.append(cont)
-    sash_twk_cont_offsets.append(functions.createUpGrp(cont, "offset"))
-
-sash_tweaker_conts_grp = cmds.group(sash_twk_cont_offsets, name="sash_twk_ctrls_grp")
-cmds.parent(sash_tweaker_conts_grp, "Rig_Controllers")
-
-# define the main face mesh
-sash_mesh = "charIvanAvA_sash_GEO"
-
-## ALL CONTROLLERS must have the same basename with corresponding joints
-## Example: twk_chin_C_jDef >> twk_chin_C_cont
-
-## ALL JOINTs must be FROZEN. (No value on rotation channels)
-_ = [cmds.makeIdentity(node, a=True) for node in sash_tweakers]
-
-# create offset groups
-sash_joint_offsets = [functions.createUpGrp(jnt, suffix="offset") for jnt in sash_tweakers]
-
-for jnt_off, jnt in zip(sash_joint_offsets, sash_tweakers):
-    # transfer jointOrientations to the offset group
-    jointOrient = cmds.getAttr("%s.jointOrient" % jnt)[0]
-    cmds.setAttr("%s.rotate" % jnt_off, *jointOrient)
-    cmds.setAttr("%s.jointOrient" % jnt, 0, 0, 0)
-
-    controller = jnt.replace("_jDef", "_cont")
-    if not cmds.objExists(controller):
-        cmds.error("CONTROLLER MISSING => %s" % controller)
-    jointsOnBlendshape.jointOnBlendshapes(joint=str(jnt_off), controller=str(controller), surface=str(sash_mesh),
-                                          attach_mode="pointConstraint")
-
-# follicle_shapes = cmds.ls(type="follicle")
-# follicle_transforms = map(lambda x: functions.getParent(x), follicle_shapes)
-# follicle_grp = cmds.group(follicle_transforms, name="follicle_grp")
-# cmds.parent(follicle_grp, "local_TWK_rig_grp")
 
 #############################################################
 
@@ -458,9 +337,10 @@ for jnt_off, jnt in zip(sash_joint_offsets, sash_tweakers):
 ###############################
 
 sessionHandler.load_session(
-    "/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charIvan/RIG/work/maya/triggerData/guides/ivan_twk_guides.json",
+    "/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charEmma/RIG/work/maya/triggerData/guides/emma_twk_guides.json",
     reset_scene=False)
 
+# sessionHandler.load_session("/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charMax/RIG/work/maya/triggerData/guides/max_local_bs_guides.json", reset_scene=False)
 # move the local bs joints and make the labels invisible
 local_twk_joints = cmds.listRelatives("trigger_refGuides", children=True, type="joint", ad=True)
 _ = [cmds.setAttr("%s.drawLabel" % jnt, 0) for jnt in local_twk_joints]
@@ -481,7 +361,7 @@ tweaker_conts_grp = cmds.group(twk_cont_offsets, name="twk_ctrls_grp")
 cmds.parent(tweaker_conts_grp, "Rig_Controllers")
 
 # define the main face mesh
-main_face_mesh = "charIvanAvA_head_GEO"
+main_face_mesh = "charValetAvA_head_IDskin"
 
 ## ALL CONTROLLERS must have the same basename with corresponding joints
 ## Example: twk_chin_C_jDef >> twk_chin_C_cont
@@ -517,7 +397,7 @@ functions.drive_attrs("tweakers_onOff_cont.tx", "%s.v" % tweaker_conts_grp, driv
 ############### SKINCLUSTERS ###################
 ################################################
 
-weights_root = "/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charIvan/RIG/work/maya/triggerData/weights/"
+weights_root = "/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charValet/RIG/work/maya/triggerData/weights/"
 
 ############### LOAD WEIGHTS #################
 all_meshes = final_meshes + local_meshes
@@ -542,18 +422,19 @@ from trigger.actions import kinematics
 from trigger.actions import shapes
 
 # create a temporary mesh for ffd boundaries
-a = cmds.duplicate("charIvanAvA_hat_GEO_local")
-b = cmds.duplicate("charIvanAvA_head_GEO_local")
+a = cmds.duplicate("charValetAvA_head_IDskin")
+b = cmds.duplicate("charValetAvA_hat_GEO")
 stretchy_mesh = cmds.polyUnite(a, b, ch=False)[0]
 
 # Define other objects that will stretch ALL MESHES NEEEDS TO BE BLENDSHAPED to final Mesh
-other_meshes = ["charIvanAvA_hat_GEO_local",
-                "charIvanAvA_head_GEO_local",
-                "charIvanAvA_Eye_Outer_R_GEO",
-                "charIvanAvA_Eye_Inner_R_GEO",
-                "charIvanAvA_upperTeeth_GEO",
-                "charIvanAvA_lowerTeeth_GEO",
-                "charIvanAvA_tongue_GEO",
+other_meshes = ["charValetAvA_head_IDskin_local",
+                "charValetAvA_hat_GEO_local",
+                "charValetAvA_hair_GEO",
+                "charValetAvA_left_innerEye_GEO",
+                "charValetAvA_right_innerEye_GEO",
+                "charValetAvA_right_outerEye_GEO",
+                "charValetAvA_left_outerEye_GEO",
+                "charValetAvA_eyebrows_GEO",
                 ]
 
 t_session = session.Session()
@@ -562,7 +443,7 @@ t_session = session.Session()
 # t_session.save_session("/home/arda.kutlu/EG2_playground/guideData/max_stretchyFace.json")
 
 # load the guides
-session_path = "/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charIvan/RIG/work/maya/triggerData/guides/ivan_stretchyFace.json"
+session_path = "/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charValet/RIG/work/maya/triggerData/guides/valet_stretchyFace.json"
 t_session.load_session(session_path, reset_scene=False)
 
 # build kinematics
@@ -583,7 +464,7 @@ lattice_deformer, lattice_points, lattice_base = cmds.lattice(
     ldv=local_inf,
     ol=True,
     objectCentered=True,
-    name="%s_ffd" % "ivan_head_stretch",
+    name="%s_ffd" % "valet_head_stretch",
 )
 
 # get the deformer set for lattice
@@ -734,34 +615,33 @@ cmds.parent("trigger_stretch_grp", stretch_grp)
 # delete excess data
 cmds.delete("trigger_refGuides")
 
-
 #########################################
 ## FINAL CLEANUP & DISPLAY ADJUSTMENTS ##12
 #########################################
 
-# replace adjusted Shapes
+# # replace adjusted Shapes
 from trigger.actions import shapes
 
 reload(shapes)
 shapesHandler = shapes.Shapes()
 
-# visibility connections
-# cmds.connectAttr("ctrl_character.ctrlVis_face", "face_ctrlBound.visibility")
+# # visibility connections
+cmds.connectAttr("ctrl_character.ctrlVis_face", "face_ctrlBound.visibility")
 
 # all shapes need to be visible prior to replace!
 cmds.setAttr("tweakers_onOff_cont.tx", -10)
 shapesHandler.import_shapes("/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charIvan/RIG/work/maya/triggerData/shapes/ivan_control_shapes.abc")
 cmds.setAttr("tweakers_onOff_cont.tx", 0)
 
-# hide the local groups
+# # hide the local groups
 cmds.hide("local_BS_rig_grp")
 cmds.hide("local_TWK_rig_grp")
 cmds.hide("local_STRETCH_rig_grp")
 # delete old meshes
 # cmds.delete(["Emma_BodyNone", "Emma_Chair", "Emma_Hair", "Emma_Hands", "Emma_Head"])
 
-# delete blendshape grp
-# cmds.delete("blendshapes_grp")
+# # delete blendshape grp
+# # cmds.delete("blendshapes_grp")
 
 # hide old rig elemets
 cmds.hide("ctrl_faceRigPanel")
@@ -777,20 +657,20 @@ functions.colorize("Stretch_top_cont", "C")
 functions.colorize("Stretch_down_cont", "C")
 
 cmds.setAttr("%s.Preserve_Volume" % stretch_top_ctrl, 1)
+
 # Good Parenting
 rig_grp = cmds.group(name="rig_grp", em=True)
 renderGeo_grp = cmds.group(name="renderGeo_grp", em=True)
 cmds.parent(renderGeo_grp, rig_grp)
 
-cmds.parent("Char_Ivan", rig_grp)
-cmds.parent("local_BS_rig_grp", "Char_Ivan")
-cmds.parent("local_TWK_rig_grp", "Char_Ivan")
-cmds.parent("local_STRETCH_rig_grp", "Char_Ivan")
+cmds.parent("charGroup", rig_grp)
+cmds.parent("local_BS_rig_grp", "charGroup")
+cmds.parent("local_TWK_rig_grp", "charGroup")
+cmds.parent("local_STRETCH_rig_grp", "charGroup")
 functions.lockAndHide(rig_grp)
-functions.lockAndHide("Char_Ivan")
-functions.lockAndHide("charIvanAvA")
-cmds.parent("charIvanAvA", renderGeo_grp)
-cmds.parent("bodyExtras_grp", "Char_Ivan")
+functions.lockAndHide("charGroup")
+functions.lockAndHide("charValetAvA")
+cmds.parent("charValetAvA", renderGeo_grp)
 
 
 # # Fix the texture paths
@@ -812,14 +692,10 @@ for node in turtleNodes:
         pass
     cmds.unloadPlugin("Turtle", f=True)
 
-functions.deleteObject("*_Set*")
-functions.deleteObject("back")
-functions.deleteObject("EG_BodyNone_RedIvan")
-functions.deleteObject("EG_Hands_RedIvan")
-functions.deleteObject("EG_Head_RedIvan")
+functions.deleteObject("MA_Hair_ShortBasic")
+functions.deleteObject("MA_Hands_Generic")
+functions.deleteObject("Male_head")
+functions.deleteObject("MA_BodyNone_Valet")
 
-cmds.setAttr("pref_cont.Joints_Visibility", 0)
 cmds.setAttr("bn_pelvis.v", 0)
-cmds.setAttr("sash01_jDef_offset_rigConnect.v", 0)
-cmds.setAttr("sash02_jDef_offset_rigConnect.v", 0)
-cmds.setAttr("sash03_jDef_offset_rigConnect.v", 0)
+

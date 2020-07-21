@@ -24,7 +24,7 @@ reload(parentToSurface)
 # reset scene
 cmds.file(new=True, force=True)
 # open the previous rig
-cmds.file("/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charZalika/RIG/work/maya/rootCharZalika.v010.ma",open=True, force=True)
+cmds.file("/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charZalika/RIG/work/maya/rootCharZalika.v011.ma",open=True, force=True)
 cmds.hide(cmds.listRelatives("bn_head", children=True))
 cmds.hide(cmds.listRelatives("grp_faceExtra", children=True))
 

@@ -12,6 +12,9 @@ class Look(object):
     def action(self):
         pass
 
+    def get_shading_groups(self, objects_list):
+        pass
+
     def save_look(self, nodes, file_path):
         pass
 

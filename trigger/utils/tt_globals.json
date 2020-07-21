@@ -1,6 +1,6 @@
 {
   "controller_keys": ["ctrl*", "crtl*", "*cont"],
-  "body_keys": ["character", "pelvis", "arm", "leg", "knee", "foot", "elbow","finger", "spine", "head", "hand", "toe", "collar", "torso", "neck", "thumb", "skirt", "hair"],
+  "body_keys": ["character", "pelvis", "arm", "leg", "knee", "foot", "clavicle", "elbow","finger", "spine", "head", "hand", "toe", "collar", "torso", "neck", "thumb", "skirt", "hair"],
   "face_keys": ["jaw", "eye", "cheek", "mouth", "lip", "eyelid", "scalp", "nose", "teeth", "stretch", "brow", "grin", "chin", "grumpy"],
   "tweaker_keys": ["twk"],
   "side_pairs": [["_L_","_R_"]],
