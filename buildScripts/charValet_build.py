@@ -22,15 +22,15 @@ icon_handler = controllers.Icon()
 # reset scene
 cmds.file(new=True, force=True)
 # open the previous rig
-cmds.file("/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charValet/RIG/work/maya/rootCharValetAvA.v001.ma",open=True, force=True)
+cmds.file("/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charValet/RIG/work/maya/rootCharValetAvA.v002.ma",open=True, force=True)
 cmds.hide(cmds.listRelatives("bn_head", children=True))
 cmds.hide(cmds.listRelatives("grp_faceExtra", children=True))
 
 # import the mesh grp
 
-import_act.import_alembic(
-    "/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charValet/MDL/publish/caches/charValetAvA.v008.abc")
-
+# import_act.import_alembic("/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charValet/MDL/publish/caches/charValetAvA.v008.abc")
+import_act.import_scene(
+    "/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charValet/MDL/publish/maya/charValetAvA.v011.ma")
 final_meshes = functions.getMeshes("charValetAvA")
 
 # build the BASEs of Local Rigs
@@ -696,6 +696,7 @@ functions.deleteObject("MA_Hair_ShortBasic")
 functions.deleteObject("MA_Hands_Generic")
 functions.deleteObject("Male_head")
 functions.deleteObject("MA_BodyNone_Valet")
+functions.deleteObject("def_*_Set")
 
 cmds.setAttr("bn_pelvis.v", 0)
 

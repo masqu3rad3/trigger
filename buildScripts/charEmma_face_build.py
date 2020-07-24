@@ -19,8 +19,8 @@ cmds.hide(cmds.listRelatives("grp_faceExtra", children=True))
 
 # import the mesh grp
 import_act = import_export.ImportExport()
-import_act.import_scene("/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charEmmaChair/MDL/publish/maya/charEmmaChairAvA.v015.ma")
-import_act.import_scene("/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charEmma/MDL/work/maya/charEmmaAvA.v019.ma")
+import_act.import_scene("/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charEmmaChair/MDL/publish/maya/charEmmaChairAvA.v017.ma")
+import_act.import_scene("/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charEmma/MDL/publish/maya/charEmmaAvA.v022.ma")
 
 # get all final meshes
 chair_meshes = functions.getMeshes("charEmmaChairAvA")
@@ -718,4 +718,22 @@ functions.deleteObject("charEmmaAvA_v019_back")
 functions.deleteObject("faceUI_back")
 functions.deleteObject("def_connector_C_Set")
 functions.deleteObject("def_spine_C_Set")
+
+cmds.setAttr("bn_root.v", 0)
+
+### EXTREME HACK ###
+for side in "LR":
+    # get total length extension
+    total_mult = cmds.createNode("addDoubleLinear", name="%s_total_ext_HACK" % side)
+    cmds.connectAttr("ctrl_%s_elbow_IK.upperLength" % side, "%s.input1" % total_mult)
+    cmds.connectAttr("ctrl_%s_elbow_IK.lowerLength" % side, "%s.input2" % total_mult)
+    # divide it with the initial arm length (which is the time input of a key)
+    divider = cmds.createNode("multiplyDivide", name="%s_divider_HACK" % side)
+    cmds.setAttr("%s.operation" % divider, 2)
+    cmds.connectAttr("dist_%s_armShape.distance" % side, "%s.input1X" % divider)
+    cmds.connectAttr("%s.output" % total_mult, "%s.input2X" % divider)
+    cmds.connectAttr("%s.outputX" % divider, "jDrv_%s_lowArmIK_translateY.input" % side, force=True)
+    
+    # cmds.setAttr("ctrl_%s_elbow_IK.upperLength" % side, 1.1)
+    # cmds.setAttr("ctrl_%s_elbow_IK.lowerLength" % side, 1.1)
 

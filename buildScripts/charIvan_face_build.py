@@ -28,8 +28,10 @@ cmds.hide(cmds.listRelatives("grp_faceExtra", children=True))
 
 # import the mesh grp
 
-import_act.import_alembic(
-    "/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charIvan/MDL/publish/caches/charIvanAvA.v040.abc")
+# import_act.import_alembic("/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charIvan/MDL/publish/caches/charIvanAvA.v042.abc")
+import_act.import_scene("/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charIvan/MDL/publish/maya/charIvanAvA.v042.ma")
+# cmds.rename("charIvanAvA_epauletteFringe_GEOShape", "charIvanAvA_epauletteFringe_GEO53Shape")
+# cmds.rename("charIvanAvA_epaulette_GEOShape", "charIvanAvA_epaulette_GEO98Shape")
 
 
 #########################
@@ -823,3 +825,4 @@ cmds.setAttr("bn_pelvis.v", 0)
 cmds.setAttr("sash01_jDef_offset_rigConnect.v", 0)
 cmds.setAttr("sash02_jDef_offset_rigConnect.v", 0)
 cmds.setAttr("sash03_jDef_offset_rigConnect.v", 0)
+
