@@ -189,7 +189,6 @@ def replace_curve(orig_curve, new_curve, maintain_offset=True):
     """
     if maintain_offset == True:
         new_curve = cmds.duplicate(new_curve, rc=1)[0]
-        print new_curve, orig_curve
         cmds.parentConstraint(orig_curve, new_curve)
 
     if cmds.objectType(orig_curve) == 'transform':

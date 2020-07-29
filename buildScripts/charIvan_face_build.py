@@ -520,7 +520,6 @@ functions.drive_attrs("tweakers_onOff_cont.tx", "%s.v" % tweaker_conts_grp, driv
 ################################################
 
 weights_root = "/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charIvan/RIG/work/maya/triggerData/weights/"
-
 ############### LOAD WEIGHTS #################
 all_meshes = final_meshes + local_meshes
 for mesh in all_meshes:
@@ -551,11 +550,11 @@ stretchy_mesh = cmds.polyUnite(a, b, ch=False)[0]
 # Define other objects that will stretch ALL MESHES NEEEDS TO BE BLENDSHAPED to final Mesh
 other_meshes = ["charIvanAvA_hat_GEO_local",
                 "charIvanAvA_head_GEO_local",
-                "charIvanAvA_Eye_Outer_R_GEO",
-                "charIvanAvA_Eye_Inner_R_GEO",
-                "charIvanAvA_upperTeeth_GEO",
-                "charIvanAvA_lowerTeeth_GEO",
-                "charIvanAvA_tongue_GEO",
+                "charIvanAvA_Eye_Outer_R_GEO_local",
+                "charIvanAvA_Eye_Inner_R_GEO_local",
+                "charIvanAvA_upperTeeth_GEO_local",
+                "charIvanAvA_lowerTeeth_GEO_local",
+                "charIvanAvA_tongue_GEO_local",
                 ]
 
 t_session = session.Session()

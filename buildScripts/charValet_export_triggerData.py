@@ -12,8 +12,8 @@ charName = "valet"
 
 meshes = []
 meshes.extend(functions.getMeshes("charValetAvA"))
-# meshes.extend(functions.getMeshes("local_BS_rig_grp"))
-# meshes.extend(functions.getMeshes("local_TWK_rig_grp"))
+meshes.extend(functions.getMeshes("local_BS_rig_grp"))
+meshes.extend(functions.getMeshes("local_TWK_rig_grp"))
 ############### SAVE WEIGHTS #################
 # export skincluster weight maps
 for mesh in meshes:
@@ -70,10 +70,10 @@ sessionHandler.save_session(os.path.join(triggerData_root, "guides", "%s_stretch
 
 
 # ############# SAVE CONTROL SHAPES ##############
-# from trigger.actions import shapes
-# reload(shapes)
-# shapesHandler = shapes.Shapes()
-# shapesHandler.export_shapes(os.path.join(triggerData_root, "shapes", "%s_control_shapes.abc" % charName))
+from trigger.actions import shapes
+reload(shapes)
+shapesHandler = shapes.Shapes()
+shapesHandler.export_shapes(os.path.join(triggerData_root, "shapes", "%s_control_shapes.abc" % charName))
 
 
 
