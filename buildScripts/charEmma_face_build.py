@@ -19,7 +19,7 @@ cmds.hide(cmds.listRelatives("grp_faceExtra", children=True))
 
 # import the mesh grp
 import_act = import_export.ImportExport()
-import_act.import_scene("/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charEmmaChair/MDL/publish/maya/charEmmaChairAvA.v017.ma")
+import_act.import_scene("/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charEmmaChair/MDL/publish/maya/charEmmaChairAvA.v018.ma")
 import_act.import_scene("/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charEmma/MDL/publish/maya/charEmmaAvA.v022.ma")
 
 # get all final meshes
