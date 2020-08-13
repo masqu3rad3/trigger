@@ -37,6 +37,7 @@ face_meshes = ["charEmmaAvA_teethUpper_GEO_IDteeth",
                "charEmmaAvA_Eye_Inner_R_GEO_IDeyeInner",
                "charEmmaAvA_face_GEO_IDskin",
                "charEmmaAvA_hair_GEO_IDhair",
+               "charEmmaAvA_dress_GEO_IDfabricCotton"
                ]
 
 local_meshes = []
@@ -736,4 +737,13 @@ for side in "LR":
     
     # cmds.setAttr("ctrl_%s_elbow_IK.upperLength" % side, 1.1)
     # cmds.setAttr("ctrl_%s_elbow_IK.lowerLength" % side, 1.1)
+
+
+## PALM HACK
+for side in "LR":
+    for attr in "xyz":
+        cmds.setAttr("ctrl_{0}_hand_IK.s{1}".format(side, attr), e=True, k=True, l=False)
+    cmds.scaleConstraint("ctrl_%s_hand_IK" % side, "bn_%s_hand" % side, mo=True)
+
+## EXTRA SKIRT DEFORMERS
 

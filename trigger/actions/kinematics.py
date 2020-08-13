@@ -53,7 +53,9 @@ class Kinematics(settings.Settings):
         root_grp = "trigger_grp"
         if not cmds.objExists(root_grp):
             master.Master().action()
+        FEEDBACK.debug("D1")
         self.collect_guides_info(self.root_joint)
+        FEEDBACK.debug("D2")
         self.limbCreationList = self.get_limb_hierarchy(self.root_joint)
         self.match_fingers(self.fingerMatchList)
         self.createlimbs(self.limbCreationList)
@@ -131,6 +133,7 @@ class Kinematics(settings.Settings):
         """
         l_hip, r_hip, l_shoulder, r_shoulder = [None, None, None, None]
         allJoints = cmds.listRelatives(rootNode, type="joint", ad=True)
+        allJoints = [] if not allJoints else allJoints
         all_fingers = []
         for jnt in allJoints:
             limb_name, limb_type, limb_side = extra.identifyMaster(jnt, self.module_dict)

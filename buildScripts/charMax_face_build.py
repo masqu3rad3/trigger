@@ -290,7 +290,7 @@ functions.drive_attrs("%s.outputRotateX" % RU_eyelid_decMatrix, "%s.UReyesWide" 
 
 RD_eyelid_multMatrix = cmds.createNode("multMatrix", name="RD_eyelid_multMatrix")
 RD_eyelid_decMatrix = cmds.createNode("decomposeMatrix", name="RD_eyelid_decMatrix")
-cmds.connectAttr("lower_eyeLid_L_jDef.worldMatrix[0]", "%s.matrixIn[0]" % RD_eyelid_multMatrix)
+cmds.connectAttr("lower_eyeLid_R_jDef.worldMatrix[0]", "%s.matrixIn[0]" % RD_eyelid_multMatrix)
 cmds.connectAttr("%s.matrixSum" % RD_eyelid_multMatrix, "%s.inputMatrix" % RD_eyelid_decMatrix)
 functions.drive_attrs("%s.outputRotateX" % RD_eyelid_decMatrix, "%s.DReyesWide" % hook_blendshapes,
                       driver_range=[0, -25], driven_range=[0, 1])
@@ -656,8 +656,20 @@ cmds.parent("trigger_stretch_grp", stretch_grp)
 # delete excess data
 cmds.delete("trigger_refGuides")
 
+# make the previous controllers not controllable
+deprecated_conts = ["Spine_Chest_cont", 
+"Spine_Hips_cont", 
+"Spine_Body_cont", 
+"Spine0_SpineFK_A_cont", 
+"Spine0_SpineFK_B_cont",
+"Spine1_SpineFK_A_cont", 
+"Spine1_SpineFK_B_cont",
+"Spine2_SpineFK_A_cont", 
+"Spine2_SpineFK_B_cont",
+"Spine_Spine1_tweak_cont"
+]
 
-
+_ = [functions.lockAndHide(cont) for cont in deprecated_conts]
 
 
 #########################################
@@ -718,12 +730,12 @@ functions.lockAndHide("Char_Max")
 functions.lockAndHide("charMax")
 
 # Fix the texture paths
-possibleFileHolders = cmds.listRelatives("charMax", ad=True, type=["mesh", "nurbsSurface"], fullPath=True)
-allFileNodes = shading.get_file_nodes(possibleFileHolders)
-for file_node in allFileNodes:
-    oldAbsPath = os.path.normpath(cmds.getAttr("%s.fileTextureName" % file_node))
-    relative_path = (oldAbsPath.split("maya/"))[1]
-    cmds.setAttr("%s.fileTextureName" % file_node, relative_path, type="string")
+# possibleFileHolders = cmds.listRelatives("charMax", ad=True, type=["mesh", "nurbsSurface"], fullPath=True)
+# allFileNodes = shading.get_file_nodes(possibleFileHolders)
+# for file_node in allFileNodes:
+#     oldAbsPath = os.path.normpath(cmds.getAttr("%s.fileTextureName" % file_node))
+#     relative_path = (oldAbsPath.split("maya/"))[1]
+#     cmds.setAttr("%s.fileTextureName" % file_node, relative_path, type="string")
 
 # kill the turtle
 turtleNodes = ["TurtleDefaultBakeLayer", "TurtleBakeLayerManager", "TurtleRenderOptions", "TurtleUIOptions"]
@@ -737,3 +749,142 @@ for node in turtleNodes:
 
 # rename
 cmds.rename("charMax", "renderGeo_grp")
+
+### EXTREME HACK ###
+for side in "LR":
+    # get total length extension
+    total_mult = cmds.createNode("addDoubleLinear", name="%s_total_ext_HACK" % side)
+    cmds.connectAttr("ctrl_%s_elbow_IK.upperLength" % side, "%s.input1" % total_mult)
+    cmds.connectAttr("ctrl_%s_elbow_IK.lowerLength" % side, "%s.input2" % total_mult)
+    # divide it with the initial arm length (which is the time input of a key)
+    divider = cmds.createNode("multiplyDivide", name="%s_divider_HACK" % side)
+    cmds.setAttr("%s.operation" % divider, 2)
+    cmds.connectAttr("dist_%s_armShape.distance" % side, "%s.input1X" % divider)
+    cmds.connectAttr("%s.output" % total_mult, "%s.input2X" % divider)
+    cmds.connectAttr("%s.outputX" % divider, "jDrv_%s_lowArmIK_translateY.input" % side, force=True)
+
+
+### EYE SPEC ###
+
+eye_pos_dict = {"R": [5.684, 115.77, -6.017], "L": [-5.684, 115.77, -6.017]}
+
+for side in "LR":
+    # side = "R"
+    eye_pos = eye_pos_dict.get(side)
+
+    # spec controls
+    ic = controllers.Icon()
+    cont, _ = ic.createIcon("Circle", iconName="Spec_%s_cont" % side, normal=(0,0,1), scale=(0.2, 0.2, 0.2))
+    cont_offset = functions.createUpGrp(cont, "offset")
+    functions.alignTo(cont_offset, "eye_%s_cont" % side, position=True, rotation=True)
+    # cmds.makeIdentity(cont, a=True)
+
+    cmds.addAttr(cont,
+    longName="specScale",
+    at="float",
+    minValue=0,
+    maxValue=10,
+    defaultValue=5,
+    k=True,
+    )
+
+    cmds.addAttr(cont,
+    longName="snapToEye",
+    at="float",
+    minValue=0,
+    maxValue=10,
+    defaultValue=10,
+    k=True,
+    )
+    
+    
+    cont_pacon = cmds.parentConstraint("eye_%s_cont" % side, "eye_ctrlBound_%s" % side, cont_offset)[0]
+    cont_weight1, cont_weight2 = cmds.listAttr(cont_pacon, ud=True)
+
+    functions.lockAndHide(cont, ["tz", "rx", "ry", "rz", "v"])
+
+    cmds.polyDisc(sides=3, subdivisions=3)
+    # polyDisc doesnt return anyvalue.. So name it from selection
+    spec_geo = "charMaxAvA_spec%s_IDglass_1" % side
+    cmds.rename(cmds.ls(sl=True)[0], spec_geo)
+    cmds.delete(spec_geo, ch=True)
+
+
+    cmds.setAttr("%s.translate" % spec_geo, *eye_pos )
+    # functions.alignTo(spec_geo, "eye_R_jnt", position=False, rotation=True)
+    cmds.setAttr("%s.rx" %spec_geo, -90)
+
+    spec_geo_local = deformers.localize(spec_geo, "local_spec%s_blendshape" % side, "%s_local" % spec_geo, group_name="local_BS_rig_grp")
+    cluster, cluster_handle = deformers.cluster(spec_geo_local)
+
+    bend1, bendhandle1 = cmds.nonLinear(spec_geo_local, type='bend', curvature=0)
+    cmds.setAttr("%s.rotate" % bendhandle1, -180, -90, 0)
+
+    bend2, bendhandle2 = cmds.nonLinear(spec_geo_local, type='bend', curvature=0)
+    cmds.setAttr("%s.rotate" % bendhandle2, -180, -90, 90)
+
+    cmds.setAttr("%s.curvature" % bend1, 25)
+    cmds.setAttr("%s.curvature" % bend2, 25)
+
+    cmds.select(d=True)
+    spec_jdef = cmds.joint(name = "%s_jDef" %(spec_geo))
+    functions.alignTo(spec_jdef, "eye_%s_local_jDef" % side, position = True, rotation = True)
+    spec_jdef_offset = functions.createUpGrp(spec_jdef, "offset")
+    ori_con = cmds.orientConstraint("eye_%s_local_jDef" % side, "localRig_root_jDef", spec_jdef_offset, mo=False)[0]
+
+    weight1, weight2 = cmds.listAttr(ori_con, ud=True)
+
+    cmds.getAttr("%s.scaleY" % cluster_handle)
+
+    cmds.skinCluster(spec_jdef, spec_geo_local, tsb=False)
+    cmds.skinCluster("bn_head", spec_geo, tsb=False)
+
+    lattice_set = cmds.listConnections("charMaxAvA_local_ffd", s=False, d=True, type="objectSet")[0]
+
+    cmds.sets(spec_geo_local, fe=lattice_set)
+
+
+    # drive attributes
+    functions.drive_attrs("%s.snapToEye" % cont, ["%s.%s" % (ori_con, weight1), "%s.%s" % (cont_pacon, cont_weight1)], driver_range=[0,10], driven_range=[0,1])
+    functions.drive_attrs("%s.snapToEye" % cont, ["%s.%s" % (ori_con, weight2), "%s.%s" % (cont_pacon, cont_weight2)], driver_range=[0,10], driven_range=[1,0])
+
+    functions.drive_attrs("%s.specScale" % cont, ["%s.scaleX" % cluster_handle, "%s.scaleY" % cluster_handle, "%s.scaleZ" % cluster_handle], driver_range=[0,10], driven_range=[0,1])
+
+    spec_setrange = cmds.createNode("setRange", name="spec_%s_cont_setRange" % side)
+    cmds.setAttr("%s.min" % spec_setrange, 55, -55, 0)
+    cmds.setAttr("%s.max" % spec_setrange, -55, 55, 0)
+    cmds.setAttr("%s.oldMin" % spec_setrange, -10, -10, 0)
+    cmds.setAttr("%s.oldMax" % spec_setrange, 10, 10, 0)
+    cmds.connectAttr("%s.translate" % cont, "%s.value" % spec_setrange)
+    cmds.connectAttr("%s.outValueX" % spec_setrange, "%s.ry" % spec_jdef)
+    cmds.connectAttr("%s.outValueY" % spec_setrange, "%s.rx" % spec_jdef)
+
+    # tiny offset from the sclera
+    cmds.setAttr("%s.tz" % cluster_handle, 0.024)
+
+    shader = cmds.shadingNode("surfaceShader", asShader=True, name="%s_M" % spec_geo.replace("_1", ""))
+    new_sg = cmds.sets(spec_geo, empty=True, renderable=True, noSurfaceShader=True, name="%s_SG" % spec_geo.replace("_1", ""))
+    cmds.connectAttr("%s.outColor" % shader, "%s.surfaceShader" % new_sg, f=True)
+    cmds.sets(spec_geo, e=True, forceElement=new_sg)
+
+    cmds.setAttr("%s.outColor" % shader, 1, 1, 1)
+    
+    # cleanup
+    spec_data_grp = cmds.group(name="spec_%s_data_grp" % side, em=True)
+    cmds.parent([bendhandle1, bendhandle2, cluster_handle, spec_jdef_offset], spec_data_grp)
+    
+    cmds.parent(cont_offset, "eye_ctrlBound_%s" % side)
+    
+    cmds.parent(spec_geo, "renderGeo_grp")
+    
+    cmds.parent(spec_data_grp, "Char_Max")
+    
+    cmds.hide(spec_data_grp)
+    functions.lockAndHide(spec_data_grp)
+    
+    # final touch
+    functions.colorize(cont, side)
+    cmds.setAttr("%s.tx" % cont, -1.5)
+    cmds.setAttr("%s.ty" % cont, 1.5)
+    cmds.setAttr("%s.specScale" % cont, 3)
+    cmds.setAttr("%s.snapToEye" % cont, 5)

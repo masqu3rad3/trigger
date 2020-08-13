@@ -46,7 +46,7 @@ class Icon(object):
             if shape != "%sShape" % cont:
                 cmds.rename(shape, extra.uniqueName("%sShape" % cont))
 
-        cmds.setAttr("%s.scale" % cont, scale[0], scale[1], scale[2])
+        cmds.setAttr("%s.scale" % cont, *scale)
         extra.alignNormal(cont, normal)
         cmds.makeIdentity(cont, a=True)
 

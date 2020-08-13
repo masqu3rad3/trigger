@@ -180,4 +180,13 @@ def localize(mesh, blendshape_node, local_target_name="LocalRig", group_name=Non
     return local_mesh
 
 
+def cluster(mesh):
+    original_selection = cmds.ls(sl=True)
+    cmds.select(mesh)
+    cmds.CreateCluster()
+    shape = cmds.listRelatives(mesh, shapes=True)[0]
+    cluster = cmds.listConnections(shape, type="cluster")[-1]
+    cluster_handle = cmds.listConnections(cluster, type="transform")[-1]
+    cmds.select(original_selection)
+    return cluster, cluster_handle
 
