@@ -85,7 +85,8 @@ class Finger(object):
     def createGrp(self):
         self.limbGrp = cmds.group(name=self.suffix, em=True)
         self.scaleGrp = cmds.group(name="%s_scaleGrp" % self.suffix, em=True)
-        extra.alignTo(self.scaleGrp, self.fingerRoot, 0)
+        # extra.alignTo(self.scaleGrp, self.fingerRoot, 0)
+        extra.alignTo(self.scaleGrp, self.fingerRoot, position=True)
         self.nonScaleGrp = cmds.group(name="%s_nonScaleGrp" % self.suffix, em=True)
 
         cmds.addAttr(self.scaleGrp, at="bool", ln="Control_Visibility", sn="contVis", defaultValue=True)

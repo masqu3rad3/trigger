@@ -63,7 +63,10 @@ class Surface(object):
         self.colorCodes = []
 
     def createGrp(self):
+        self.controllerGrp = cmds.group(name="%s_contGrp" %self.suffix, em=True)
         self.scaleGrp = cmds.group(name="%s_scaleGrp" % self.suffix, em=True)
+        extra.alignTo(self.scaleGrp, self.rootInit, 0)
+        self.nonScaleGrp = cmds.group(name="%s_nonScaleGrp" % self.suffix, em=True)
         cmds.addAttr(self.scaleGrp, at="bool", ln="Control_Visibility", sn="contVis", defaultValue=True)
         cmds.addAttr(self.scaleGrp, at="bool", ln="Joints_Visibility", sn="jointVis", defaultValue=True)
         cmds.addAttr(self.scaleGrp, at="bool", ln="Rig_Visibility", sn="rigVis", defaultValue=True)
@@ -73,10 +76,11 @@ class Surface(object):
         cmds.setAttr("{0}.rigVis".format(self.scaleGrp), cb=True)
 
         self.limbGrp = cmds.group(name=self.suffix, em=True)
-        cmds.parent(self.scaleGrp, self.nonScaleGrp, self.cont_IK_OFF, self.limbGrp)
+        cmds.parent(self.scaleGrp, self.nonScaleGrp,  self.controllerGrp, self.limbGrp)
         self.scaleConstraints.append(self.scaleGrp)
 
     def createJoints(self):
+        cmds.select(d=True)
         self.surface_jnt = cmds.joint(name="%s_jnt" % self.suffix)
         cmds.connectAttr("{0}.rigVis".format(self.scaleGrp), "{0}.v".format(self.surface_jnt))
 
@@ -87,6 +91,7 @@ class Surface(object):
         # Create connection groups
         self.surface_jnt_negate = extra.createUpGrp(self.surface_jnt, "negate")
         self.surface_jnt_bind = extra.createUpGrp(self.surface_jnt, "bind")
+        cmds.parent(self.surface_jnt_negate, self.nonScaleGrp)
 
     def createControllers(self):
         icon = ic.Icon()
@@ -94,11 +99,14 @@ class Surface(object):
         self.cont_surface = extra.createUpGrp(self.cont, "surface")
         self.cont_offset = extra.createUpGrp(self.cont, "offset")
 
+        cmds.connectAttr("%s.s" % self.scaleGrp ,"%s.s" % self.cont_offset)
+
         # extra.alignTo(self.cont_offset, self.surface_jnt, position=True, rotation=True)
 
         extra.colorize(self.cont, self.colorCodes[0])
 
         cmds.connectAttr("%s.contVis" % self.scaleGrp, "%s.v" % self.cont_offset)
+        cmds.parent(self.cont_surface, self.controllerGrp)
 
     def createConnections(self):
         negate_multMatrix = cmds.createNode("multMatrix", name="negate_multMatrix_%s" % self.suffix)
@@ -107,6 +115,7 @@ class Surface(object):
         cmds.connectAttr("%s.matrixSum" % negate_multMatrix, "%s.inputMatrix" % negate_decompose)
         cmds.connectAttr("%s.outputTranslate" % negate_decompose, "%s.translate" % self.surface_jnt_negate)
         cmds.connectAttr("%s.outputRotate" % negate_decompose, "%s.rotate" % self.surface_jnt_negate)
+        cmds.connectAttr("%s.outputScale" % negate_decompose, "%s.scale" % self.surface_jnt_negate)
 
         bind_multMatrix = cmds.createNode("multMatrix", name="bind_multMatrix_%s" % self.suffix)
         bind_decompose = cmds.createNode("decomposeMatrix", name="bind_decompose_%s" % self.suffix)
@@ -114,12 +123,13 @@ class Surface(object):
         cmds.connectAttr("%s.matrixSum" % bind_multMatrix, "%s.inputMatrix" % bind_decompose)
         cmds.connectAttr("%s.outputTranslate" % bind_decompose, "%s.translate" % self.surface_jnt_bind)
         cmds.connectAttr("%s.outputRotate" % bind_decompose, "%s.rotate" % self.surface_jnt_bind)
+        cmds.connectAttr("%s.outputScale" % bind_decompose, "%s.scale" % self.surface_jnt_bind)
 
         extra.alignTo(self.cont_offset, self.rootInit, position=True, rotation=True)
 
         if self.controllerSurface:
-            parentToSurface.parentToSurface(objects=[self.cont_surface], surface=self.controllerSurface, mode=self.stickMode)
-
+            fol = parentToSurface.parentToSurface(objects=[self.cont_surface], surface=self.controllerSurface, mode=self.stickMode)
+            cmds.parent(fol, self.nonScaleGrp)
 
     def createLimb(self):
         """
