@@ -283,3 +283,57 @@ def mirrorController(axis="x", node_list=None, side_flags=("L_", "R_"), side_bia
 
 # replace_curve(orig_curve=cmds.ls(sl=1)[0], new_curve=cmds.ls(sl=1)[1], maintain_offset=True)
 # mirrorController()
+
+from maya import cmds
+from trigger.library import functions
+
+
+def whip(node_list, attr_holder=None, create_up_grp=True, offset=5, diminish=0.8, attr_list=None):
+    if type(node_list) is not list:
+        cmds.error("node_list must be a list variable. duh...")
+    if len(node_list) < 2:
+        cmds.error("node_list must contain at least 2 elements. duh...")
+
+    attr_holder = node_list[0] if not attr_holder else attr_holder
+    attr_list = ["rx", "ry", "rz"] if not attr_list else attr_list
+
+    if create_up_grp:
+        temp_list = []
+        for node in node_list[1:]:
+            up_node = functions.createUpGrp(node, "whip")
+            cmds.makeIdentity(up_node, a=True)
+            temp_list.append(up_node)
+        node_list = [node_list[0]] + temp_list
+        # node_list = [functions.createUpGrp(node, "whip") for node in node_list]
+
+    cmds.addAttr(attr_holder, at="float", ln="powerDim", min=0, max=1, defaultValue=0.8, k=True)
+
+    for attr in attr_list:
+        cmds.addAttr(attr_holder, at="float", ln="offsetMult_%s" % attr, defaultValue=1, k=True)
+
+    for nmb, node in enumerate(node_list[1:]):
+        print("*" * 30)
+        print(nmb, node, node_list[nmb])
+        print("*" * 30)
+        for attr in attr_list:
+            frame_cache = cmds.createNode("frameCache", name="%s_frameCache" % node)
+            power_mult = cmds.createNode("multDoubleLinear", name="%s_powerlose" % node)
+            master_mult = cmds.createNode("multDoubleLinear", name="%s_%s_masterMult" % (attr_holder, attr))
+
+            cmds.connectAttr("%s.%s" % (node_list[nmb], attr), "%s.input1" % power_mult)
+            cmds.connectAttr("%s.powerDim" % attr_holder, "%s.input2" % power_mult)
+
+            cmds.connectAttr("%s.output" % power_mult, "%s.input1" % master_mult)
+            cmds.connectAttr("%s.%s" % (attr_holder, "offsetMult_%s" % attr), "%s.input2" % (master_mult))
+
+            cmds.connectAttr("%s.output" % master_mult, "%s.stream" % frame_cache)
+            cmds.connectAttr("%s.past[%s]" % (frame_cache, int(offset)), "%s.%s" % (node, attr))
+
+
+def whip_refresh():
+    frame_caches = cmds.ls(type="frameCache")
+    for cache in frame_caches:
+        cmds.setAttr("%s.nodeState" % cache, 1)
+        # cmds.refresh()
+        cmds.setAttr("%s.nodeState" % cache, 0)
+        # cmds.refresh()

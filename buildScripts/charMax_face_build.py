@@ -26,7 +26,7 @@ cmds.hide(cmds.listRelatives("grp_faceExtra", children=True))
 # import the mesh grp
 import_act = import_export.ImportExport()
 import_act.import_scene(
-    "/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charMax/MDL/publish/maya/charMaxAvA.v017.ma")
+    "/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charMax/MDL/publish/maya/charMaxAvA.v019.ma")
 if cmds.objExists("charMaxCvA"):
     cmds.delete("charMaxCvA")  # this is not necessary
 # get all final meshes
@@ -836,8 +836,8 @@ for side in "LR":
 
     cmds.getAttr("%s.scaleY" % cluster_handle)
 
-    cmds.skinCluster(spec_jdef, spec_geo_local, tsb=False)
-    cmds.skinCluster("bn_head", spec_geo, tsb=False)
+    cmds.skinCluster(spec_jdef, spec_geo_local, tsb=True)
+    cmds.skinCluster("bn_head", spec_geo, tsb=True)
 
     lattice_set = cmds.listConnections("charMaxAvA_local_ffd", s=False, d=True, type="objectSet")[0]
 
@@ -888,3 +888,7 @@ for side in "LR":
     cmds.setAttr("%s.ty" % cont, 1.5)
     cmds.setAttr("%s.specScale" % cont, 3)
     cmds.setAttr("%s.snapToEye" % cont, 5)
+    
+    cmds.hide("bn_pelvis")
+    
+functions.deleteObject("charMax_gumsUpper")

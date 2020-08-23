@@ -29,7 +29,7 @@ cmds.hide(cmds.listRelatives("grp_faceExtra", children=True))
 # import the mesh grp
 
 # import_act.import_alembic("/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charIvan/MDL/publish/caches/charIvanAvA.v042.abc")
-import_act.import_scene("/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charIvan/MDL/publish/maya/charIvanAvA.v042.ma")
+import_act.import_scene("/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charIvan/MDL/publish/maya/charIvanAvA.v044.ma")
 # cmds.rename("charIvanAvA_epauletteFringe_GEOShape", "charIvanAvA_epauletteFringe_GEO53Shape")
 # cmds.rename("charIvanAvA_epaulette_GEOShape", "charIvanAvA_epaulette_GEO98Shape")
 
@@ -200,6 +200,11 @@ lower_teeth_cont_offset = functions.createUpGrp(lower_teeth_cont, "offset")
 functions.alignTo(upper_teeth_cont_offset, "upperTeeth_jDef", position=True, rotation=True)
 functions.alignTo(lower_teeth_cont_offset, "lowerTeeth_jDef", position=True, rotation=True)
 
+upperTeeth_jDef_drive = functions.createUpGrp("upperTeeth_jDef", "drive")
+lowerTeeth_jDef_drive = functions.createUpGrp("lowerTeeth_jDef", "drive")
+cmds.makeIdentity(upperTeeth_jDef_drive, a=True)
+cmds.makeIdentity(lowerTeeth_jDef_drive, a=True)
+
 upper_teeth_jaw_follow = cmds.group(name="upperTeeth_jawFollow", em=True)
 lower_teeth_jaw_follow = cmds.group(name="lowerTeeth_jawFollow", em=True)
 functions.alignTo(upper_teeth_jaw_follow, "jawN_jDef", position=True, rotation=True)
@@ -215,8 +220,13 @@ functions.drive_attrs("jawN_jDef.r", "%s.r" % upper_teeth_jaw_follow)
 functions.drive_attrs("jaw_jDef.t", "%s.t" % lower_teeth_jaw_follow)
 functions.drive_attrs("jaw_jDef.r", "%s.r" % lower_teeth_jaw_follow)
 
-cmds.connectAttr("%s.xformMatrix" % upper_teeth_cont, "upperTeeth_jDef.offsetParentMatrix")
-cmds.connectAttr("%s.xformMatrix" % lower_teeth_cont, "lowerTeeth_jDef.offsetParentMatrix")
+# cmds.connectAttr("%s.xformMatrix" % upper_teeth_cont, "upperTeeth_jDef.offsetParentMatrix")
+# cmds.connectAttr("%s.xformMatrix" % lower_teeth_cont, "lowerTeeth_jDef.offsetParentMatrix")
+cmds.connectAttr("%s.t" % upper_teeth_cont, "%s.t" % upperTeeth_jDef_drive)
+cmds.connectAttr("%s.r" % upper_teeth_cont, "%s.r" % upperTeeth_jDef_drive)
+cmds.connectAttr("%s.t" % lower_teeth_cont, "%s.t" % lowerTeeth_jDef_drive)
+cmds.connectAttr("%s.r" % lower_teeth_cont, "%s.r" % lowerTeeth_jDef_drive)
+
 cmds.parentConstraint("bn_head", teeth_head_follow, mo=True)
 teeth_ctrls_grp = cmds.group(teeth_head_follow, name="teeth_ctrls_grp")
 cmds.parent(teeth_ctrls_grp, "Rig_Controllers")
@@ -735,6 +745,21 @@ cmds.parent("trigger_stretch_grp", stretch_grp)
 # delete excess data
 cmds.delete("trigger_refGuides")
 
+# make the previous controllers not controllable
+deprecated_conts = ["Spine_Chest_cont", 
+"Spine_Hips_cont", 
+"Spine_Body_cont", 
+"Spine0_SpineFK_A_cont", 
+"Spine0_SpineFK_B_cont",
+"Spine1_SpineFK_A_cont", 
+"Spine1_SpineFK_B_cont",
+"Spine2_SpineFK_A_cont", 
+"Spine2_SpineFK_B_cont",
+"Spine_Spine1_tweak_cont"
+]
+
+_ = [functions.lockAndHide(cont) for cont in deprecated_conts]
+
 
 #########################################
 ## FINAL CLEANUP & DISPLAY ADJUSTMENTS ##12
@@ -825,3 +850,129 @@ cmds.setAttr("sash01_jDef_offset_rigConnect.v", 0)
 cmds.setAttr("sash02_jDef_offset_rigConnect.v", 0)
 cmds.setAttr("sash03_jDef_offset_rigConnect.v", 0)
 
+### EYE SPEC ###
+
+eye_pos_dict = {"R": [4.463, 180.888, -0.193]}
+
+for side in "R":
+    # side = "R"
+    eye_pos = eye_pos_dict.get(side)
+
+    # spec controls
+    ic = controllers.Icon()
+    cont, _ = ic.createIcon("Circle", iconName="Spec_%s_cont" % side, normal=(0,0,1), scale=(0.2, 0.2, 0.2))
+    cont_offset = functions.createUpGrp(cont, "offset")
+    functions.alignTo(cont_offset, "eye_%s_cont" % side, position=True, rotation=True)
+    # cmds.makeIdentity(cont, a=True)
+
+    cmds.addAttr(cont,
+    longName="specScale",
+    at="float",
+    minValue=0,
+    maxValue=10,
+    defaultValue=5,
+    k=True,
+    )
+
+    cmds.addAttr(cont,
+    longName="snapToEye",
+    at="float",
+    minValue=0,
+    maxValue=10,
+    defaultValue=10,
+    k=True,
+    )
+    
+    
+    cont_pacon = cmds.parentConstraint("eye_%s_cont" % side, "eye_ctrlBound_%s" % side, cont_offset)[0]
+    cont_weight1, cont_weight2 = cmds.listAttr(cont_pacon, ud=True)
+
+    functions.lockAndHide(cont, ["tz", "rx", "ry", "rz", "v"])
+
+    cmds.polyDisc(sides=3, subdivisions=3)
+    # polyDisc doesnt return anyvalue.. So name it from selection
+    spec_geo = "charIvanAvA_spec%s_IDglass_1" % side
+    cmds.rename(cmds.ls(sl=True)[0], spec_geo)
+    cmds.delete(spec_geo, ch=True)
+
+
+    cmds.setAttr("%s.translate" % spec_geo, *eye_pos )
+    # functions.alignTo(spec_geo, "eye_R_jnt", position=False, rotation=True)
+    cmds.setAttr("%s.rx" %spec_geo, -90)
+
+    spec_geo_local = deformers.localize(spec_geo, "local_spec%s_blendshape" % side, "%s_local" % spec_geo, group_name="local_BS_rig_grp")
+    cluster, cluster_handle = deformers.cluster(spec_geo_local)
+
+    bend1, bendhandle1 = cmds.nonLinear(spec_geo_local, type='bend', curvature=0)
+    cmds.setAttr("%s.rotate" % bendhandle1, -180, -90, 0)
+
+    bend2, bendhandle2 = cmds.nonLinear(spec_geo_local, type='bend', curvature=0)
+    cmds.setAttr("%s.rotate" % bendhandle2, -180, -90, 90)
+
+    cmds.setAttr("%s.curvature" % bend1, 25)
+    cmds.setAttr("%s.curvature" % bend2, 25)
+
+    cmds.select(d=True)
+    spec_jdef = cmds.joint(name = "%s_jDef" %(spec_geo))
+    functions.alignTo(spec_jdef, "eye_%s_local_jDef" % side, position = True, rotation = True)
+    spec_jdef_offset = functions.createUpGrp(spec_jdef, "offset")
+    ori_con = cmds.orientConstraint("eye_%s_local_jDef" % side, "localRig_root_jDef", spec_jdef_offset, mo=False)[0]
+
+    weight1, weight2 = cmds.listAttr(ori_con, ud=True)
+
+    cmds.getAttr("%s.scaleY" % cluster_handle)
+
+    cmds.skinCluster(spec_jdef, spec_geo_local, tsb=True)
+    cmds.skinCluster("bn_head", spec_geo, tsb=True)
+
+    lattice_set = cmds.listConnections("ivan_head_stretch_ffd", s=False, d=True, type="objectSet")[0]
+
+    cmds.sets(spec_geo_local, fe=lattice_set)
+
+
+    # drive attributes
+    functions.drive_attrs("%s.snapToEye" % cont, ["%s.%s" % (ori_con, weight1), "%s.%s" % (cont_pacon, cont_weight1)], driver_range=[0,10], driven_range=[0,1])
+    functions.drive_attrs("%s.snapToEye" % cont, ["%s.%s" % (ori_con, weight2), "%s.%s" % (cont_pacon, cont_weight2)], driver_range=[0,10], driven_range=[1,0])
+
+    functions.drive_attrs("%s.specScale" % cont, ["%s.scaleX" % cluster_handle, "%s.scaleY" % cluster_handle, "%s.scaleZ" % cluster_handle], driver_range=[0,10], driven_range=[0,1])
+
+    spec_setrange = cmds.createNode("setRange", name="spec_%s_cont_setRange" % side)
+    cmds.setAttr("%s.min" % spec_setrange, 55, -55, 0)
+    cmds.setAttr("%s.max" % spec_setrange, -55, 55, 0)
+    cmds.setAttr("%s.oldMin" % spec_setrange, -10, -10, 0)
+    cmds.setAttr("%s.oldMax" % spec_setrange, 10, 10, 0)
+    cmds.connectAttr("%s.translate" % cont, "%s.value" % spec_setrange)
+    cmds.connectAttr("%s.outValueX" % spec_setrange, "%s.ry" % spec_jdef)
+    cmds.connectAttr("%s.outValueY" % spec_setrange, "%s.rx" % spec_jdef)
+
+    # tiny offset from the sclera
+    cmds.setAttr("%s.tz" % cluster_handle, 0.024)
+
+    shader = cmds.shadingNode("surfaceShader", asShader=True, name="%s_M" % spec_geo.replace("_1", ""))
+    new_sg = cmds.sets(spec_geo, empty=True, renderable=True, noSurfaceShader=True, name="%s_SG" % spec_geo.replace("_1", ""))
+    cmds.connectAttr("%s.outColor" % shader, "%s.surfaceShader" % new_sg, f=True)
+    cmds.sets(spec_geo, e=True, forceElement=new_sg)
+
+    cmds.setAttr("%s.outColor" % shader, 1, 1, 1)
+    
+    # cleanup
+    spec_data_grp = cmds.group(name="spec_%s_data_grp" % side, em=True)
+    cmds.parent([bendhandle1, bendhandle2, cluster_handle, spec_jdef_offset], spec_data_grp)
+    
+    cmds.parent(cont_offset, "eye_ctrlBound_%s" % side)
+    
+    cmds.parent(spec_geo, "renderGeo_grp")
+    
+    cmds.parent(spec_data_grp, "Char_Ivan")
+    
+    cmds.hide(spec_data_grp)
+    functions.lockAndHide(spec_data_grp)
+    
+    # final touch
+    functions.colorize(cont, side)
+    cmds.setAttr("%s.tx" % cont, -1.5)
+    cmds.setAttr("%s.ty" % cont, 1.5)
+    cmds.setAttr("%s.specScale" % cont, 3)
+    cmds.setAttr("%s.snapToEye" % cont, 5)
+
+# functions.drive_attrs("mouth_cont.teethVis", "upperTeeth_cont.v")

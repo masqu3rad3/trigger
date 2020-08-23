@@ -74,6 +74,6 @@ weightHandler.save_weights(deformer=ffd_name, file_path=os.path.join(triggerData
 from trigger.actions import shapes
 reload(shapes)
 shapesHandler = shapes.Shapes()
-shapesHandler.export_shapes(os.path.join(triggerData_root, "shapes", "%s_control_shapes" % charName))
+shapesHandler.export_shapes(os.path.join(triggerData_root, "shapes", "%s_control_shapes.abc" % charName))
 
 

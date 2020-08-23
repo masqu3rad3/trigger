@@ -129,7 +129,7 @@ cmds.parent(tongue_ctrl_grp, "Rig_Controllers")
 # import face UI
 # cmds.file("/home/arda.kutlu/localProjects/EG2_playground_200617/scenes/UI/faceUI/faceUI_UI_gn_v001.mb", i=True, mnr=True)
 import_act.import_scene(
-    "/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charMax/RIG/work/maya/triggerData/UI/faceUI.mb")
+    "/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charZalika/RIG/publish/maya/charZalikaFaceUI.v003.ma")
 # import_act.import_alembic("/home/arda.kutlu/localProjects/EG2_playground_200617/_TRANSFER/ALEMBIC/faceUI.abc")
 cmds.setAttr("face_ctrls_grp.translate", -36, 170, 0)
 cmds.parentConstraint("ctrl_head", "face_ctrls_grp", mo=True)
@@ -292,16 +292,16 @@ for side in "LR":
 #############################################################
 
 
-# # BLENDSHAPES
-# #############
-# import_act.import_alembic("/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charMax/RIG/publish/caches/charMaxBlendshapes.v002.abc")
-# blendshapes = functions.getMeshes("blendshapes_grp")
-# # filter out X meshes and neutral
-# blendshapes = [shape for shape in blendshapes if not shape.endswith("X") and shape != "neutral"]
+# BLENDSHAPES
+#############
+import_act.import_alembic("/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charZalika/RIG/publish/caches/charZalikaBlendshapes.v006.abc")
+blendshapes = functions.getMeshes("blendshapes_grp")
+# filter out X meshes and neutral
+blendshapes = [shape for shape in blendshapes if not shape.endswith("X") and shape != "neutral" and shape != "lipsSealed"]
 
-# for shape in blendshapes:
-#     hook_attr = shape.replace("Corrective", "")
-#     deformers.connect_bs_targets("%s.%s" %(hook_blendshapes, hook_attr), {"charMaxAvA_local": shape})
+for shape in blendshapes:
+    hook_attr = shape.replace("Corrective", "")
+    deformers.connect_bs_targets("%s.%s" %(hook_blendshapes, hook_attr), {"charZalikaAvA_head_idSkin_GEO_local": shape})
 
 # # eyelid correctives= Override hook node input to correct it in bone level
 # LU_eyelid_multMatrix = cmds.createNode("multMatrix", name="LU_eyelid_multMatrix")
@@ -328,28 +328,38 @@ for side in "LR":
 # cmds.connectAttr("%s.matrixSum" % RD_eyelid_multMatrix, "%s.inputMatrix" % RD_eyelid_decMatrix)
 # functions.drive_attrs("%s.outputRotateX" % RD_eyelid_decMatrix, "%s.DReyesWide" % hook_blendshapes, driver_range=[0, -25], driven_range=[0,1])
 
-# # LIPS_SEAL
-# ###########
+# LIPS_SEAL
+###########
 
-# # create an inbetween joint
-# between_jnt = cmds.joint(name="betweenJaw_jDef")
-# cmds.parentConstraint(["jaw_jDef", "jawN_jDef"], between_jnt, mo=False)
-# cmds.parent(between_jnt, "local_BS_rig_grp")
+# create an inbetween joint
+between_jnt = cmds.joint(name="betweenJaw_jDef")
+cmds.parentConstraint(["jaw_jDef", "jawN_jDef"], between_jnt, mo=False)
+cmds.parent(between_jnt, "local_BS_rig_grp")
 
-# lip_seal_mesh = cmds.duplicate("neutral", name="charMaxAvA_closeMouth")[0]
-# # make sure its correct pos
-# cmds.parent(lip_seal_mesh, "local_BS_rig_grp")
-# cmds.setAttr("%s.translate" % lip_seal_mesh, 0, 0, 0)
-# cmds.setAttr("%s.rotate" % lip_seal_mesh, 0, 0, 0)
+lip_seal_mesh = cmds.duplicate("lipsSealed", name="charZalikaAvA_closeMouth")[0]
+# make sure its correct pos
+cmds.parent(lip_seal_mesh, "local_BS_rig_grp")
+cmds.setAttr("%s.translate" % lip_seal_mesh, 0, 0, 0)
+cmds.setAttr("%s.rotate" % lip_seal_mesh, 0, 0, 0)
 
-# local_meshes.append(lip_seal_mesh)
+local_meshes.append(lip_seal_mesh)
 
-# # apply the same bs to this shit
-# for shape in blendshapes:
-#     hook_attr = shape.replace("Corrective", "")
-#     deformers.connect_bs_targets("%s.%s" %(hook_blendshapes, hook_attr), {lip_seal_mesh: shape})
+# apply the same bs to this shit
 
-# # THE SEAL MESH WILL BE ADDED AFTER SKINCLUSTERS
+# hack => replace the closed grins with X versions (non delta extracted versions)
+closedMouth_blendshapes = []
+for shape in blendshapes:
+    if "closedGrin" in shape:
+        shape = "%sX" % shape
+    else:
+        pass
+    closedMouth_blendshapes.append(shape)
+
+for shape in closedMouth_blendshapes:
+    hook_attr = shape.replace("Corrective", "")
+    deformers.connect_bs_targets("%s.%s" %(hook_blendshapes, hook_attr.replace("X", "")), {lip_seal_mesh: shape})
+
+# THE SEAL MESH WILL BE ADDED AFTER SKINCLUSTERS
 
 
 #############################################################################
@@ -423,6 +433,27 @@ functions.drive_attrs("tweakers_onOff_cont.tx", "%s.v" % tweaker_conts_grp, driv
 # Make tweak connections
 
 
+## BUTTON HACK
+# button_twk = icon_handler.createIcon("Circle", iconName="button_twk_cont")
+btn_conts_grp = cmds.group(name="button_ctrls_grp", em=True)
+btn_jnts_grp = cmds.group(name="button_jnt_grp", em=True)
+w_pos_list = [[4.72171152121855, 101.51015242027273, -9.797225899338892], [2.244273515215891, 113.56462278166379, -9.250602059115742], [-0.6595709194190686, 126.77261678777317, -8.93729586914046], [-2.2174724879054954, 136.646363066196, -10.071629279904894]]
+for nmb, wpos in enumerate(w_pos_list):
+    cmds.select(d=True)
+    jnt = cmds.joint(name="button%s_jDef" % nmb, position=wpos)
+    cont, _ = icon_handler.createIcon("Diamond", iconName="button%s_twk_cont" % nmb, scale=[2,2,2])
+    functions.alignTo(cont, jnt, position=True, rotation=True)
+    cont_offset = functions.createUpGrp(cont, "offset")
+    cmds.parentConstraint(cont, jnt, mo=False)
+    fol = parentToSurface.parentToSurface([cont_offset], "charZalikaAvA_top_idWhitePVC_GEO")
+    cmds.parent(fol, btn_conts_grp)
+    cmds.parent(jnt, btn_jnts_grp)
+    functions.colorize(cont, "C")
+    functions.lockAndHide(cont, ["sx", "sy", "sz", "v"])
+cmds.hide(btn_jnts_grp)
+cmds.parent([btn_jnts_grp, btn_conts_grp], "previsCharZalika")
+
+
 ################################################
 ############### SKINCLUSTERS ###################
 ################################################
@@ -455,7 +486,7 @@ for mesh in all_meshes:
         weightHandler.create_deformer(os.path.join(weights_root, weight_file_path))
 
 # # Add the lips seal blendhshape
-# deformers.connect_bs_targets("mouth_cont.sealLips", {"charMaxAvA_local": lip_seal_mesh}, bs_node_name="lips_seal_bs", front_of_chain=False, force_new=True)
+deformers.connect_bs_targets("mouth_cont.sealLips", {"charZalikaAvA_head_idSkin_GEO_local": lip_seal_mesh}, bs_node_name="lips_seal_bs", front_of_chain=False, force_new=True)
 # weightHandler.load_weights(deformer="lips_seal_bs", file_path=os.path.join(weights_root, "lips_seal_bs.json"))
 
 ################################################
@@ -701,7 +732,7 @@ cmds.connectAttr("ctrl_character.ctrlVis_face", "face_ctrlBound.visibility")
 # all shapes need to be visible prior to replace!
 cmds.setAttr("tweakers_onOff_cont.tx", -10)
 shapesHandler.import_shapes(
-    "/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charMax/RIG/work/maya/triggerData/shapes/max_control_shapes.json")
+    "/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charZalika/RIG/work/maya/triggerData/shapes/zalika_control_shapes.abc")
 cmds.setAttr("tweakers_onOff_cont.tx", 0)
 
 # hide the local groups
@@ -712,7 +743,7 @@ cmds.hide("local_STRETCH_rig_grp")
 cmds.delete(["Zalika_BodyExtra_Glass", "Zalika_BodyHands", "Zalika_Head", "Zalika_BodyExtra_GlassFORANIMATION"])
 
 # delete blendshape grp
-# cmds.delete("blendshapes_grp")
+cmds.delete("blendshapes_grp")
 
 # hide old rig elemets
 cmds.hide("ctrl_faceRigPanel")
@@ -764,11 +795,11 @@ for node in turtleNodes:
         pass
     cmds.unloadPlugin("Turtle", f=True)
 
-cmds.select("charZalikaAvA_button4_idMetal_GEO")
-cmds.DetachSkin()
-follicle= parentToSurface.parentToSurface(["charZalikaAvA_button4_idMetal_GEO"], "charZalikaAvA_top_idWhitePVC_GEO", mode="parentConstraint")
+# cmds.select("charZalikaAvA_button4_idMetal_GEO")
+# cmds.DetachSkin()
+# follicle= parentToSurface.parentToSurface(["charZalikaAvA_button4_idMetal_GEO"], "charZalikaAvA_top_idWhitePVC_GEO", mode="parentConstraint")
 
-cmds.parent(follicle, follicle_grp)
+# cmds.parent(follicle, follicle_grp)
 
 functions.deleteObject("back")
 functions.deleteObject("def_connector_C_Set")

@@ -21,6 +21,12 @@ LIMB_DATA = {
                         "enum_list": "parentConstraint:pointConstraint",
                         "default_value": 0,
                         },
+                       {"attr_name": "limbPlugLocation",
+                        "nice_name": "Module Plug Location",
+                        "attr_type": "enum",
+                        "enum_list": "On Surface Controller:On Local Joint",
+                        "default_value": 0,
+                        },
                        ],
         "multi_guide": None,
         "sided": True,
@@ -46,6 +52,7 @@ class Surface(object):
         self.controllerSurface = cmds.getAttr("%s.controllerSurface" % self.rootInit)
         stickNo = cmds.getAttr("%s.stickMode" % self.rootInit)
         self.stickMode = "parentConstraint" if stickNo == 0 else "pointConstraint"
+        self.isPlugOnLocal = cmds.getAttr("%s.limbPlugLocation" % self.rootInit)
 
         self.suffix = (extra.uniqueName(cmds.getAttr("%s.moduleName" % self.rootInit)))
 
@@ -85,12 +92,21 @@ class Surface(object):
         cmds.connectAttr("{0}.rigVis".format(self.scaleGrp), "{0}.v".format(self.surface_jnt))
 
         # extra.alignTo(self.surface_jnt, self.rootInit, position=True, rotation=True)
-        self.limbPlug = self.surface_jnt
-        self.sockets.append(self.surface_jnt)
+        if self.isPlugOnLocal:
+            self.limbPlug = self.surface_jnt
+        else:
+            self.limbPlug = cmds.joint(name="limbPlug_%s" % self.suffix, radius=2)
+            cmds.parent(self.limbPlug, self.scaleGrp)
+
+        self.sockets.append(self.limbPlug)
 
         # Create connection groups
         self.surface_jnt_negate = extra.createUpGrp(self.surface_jnt, "negate")
         self.surface_jnt_bind = extra.createUpGrp(self.surface_jnt, "bind")
+
+        extra.alignTo(self.surface_jnt_negate, self.rootInit, position=True, rotation=True)
+        cmds.makeIdentity(self.surface_jnt_negate, a=True)
+
         cmds.parent(self.surface_jnt_negate, self.nonScaleGrp)
 
     def createControllers(self):
@@ -98,11 +114,9 @@ class Surface(object):
         self.cont, _ = icon.createIcon("Diamond", iconName="%s_cont" % self.suffix)
         self.cont_surface = extra.createUpGrp(self.cont, "surface")
         self.cont_offset = extra.createUpGrp(self.cont, "offset")
-
-        cmds.connectAttr("%s.s" % self.scaleGrp ,"%s.s" % self.cont_offset)
+        cmds.connectAttr("%s.s" % self.scaleGrp,"%s.s" % self.cont_surface)
 
         # extra.alignTo(self.cont_offset, self.surface_jnt, position=True, rotation=True)
-
         extra.colorize(self.cont, self.colorCodes[0])
 
         cmds.connectAttr("%s.contVis" % self.scaleGrp, "%s.v" % self.cont_offset)
@@ -124,8 +138,17 @@ class Surface(object):
         cmds.connectAttr("%s.outputTranslate" % bind_decompose, "%s.translate" % self.surface_jnt_bind)
         cmds.connectAttr("%s.outputRotate" % bind_decompose, "%s.rotate" % self.surface_jnt_bind)
         cmds.connectAttr("%s.outputScale" % bind_decompose, "%s.scale" % self.surface_jnt_bind)
+        # can be scaled only with direct connection
+        # cmds.connectAttr("%s.scale" % self.cont)
 
-        extra.alignTo(self.cont_offset, self.rootInit, position=True, rotation=True)
+        if self.isPlugOnLocal:
+            pass # nothing to connect because plug is local joint itself
+        else:
+            cmds.parentConstraint(self.cont, self.limbPlug, mo=False)
+
+        # Alignment to the init joint happens last to minimize the steps
+        extra.alignTo(self.cont_surface, self.rootInit, position=True, rotation=True)
+        # extra.alignTo(self.surface_jnt, self.rootInit, position=True, rotation=True)
 
         if self.controllerSurface:
             fol = parentToSurface.parentToSurface(objects=[self.cont_surface], surface=self.controllerSurface, mode=self.stickMode)

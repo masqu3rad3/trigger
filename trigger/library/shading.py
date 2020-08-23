@@ -2,6 +2,7 @@
 
 from maya import cmds
 from trigger.core import feedback
+from trigger.library import functions
 
 FEEDBACK = feedback.Feedback(logger_name=__name__)
 
@@ -25,6 +26,34 @@ def get_file_nodes(objList):
             returnList.extend(fileNodes)
     returnList = set(returnList)
     return returnList
+
+def get_shading_groups(mesh):
+    mesh_shape = cmds.listRelatives(mesh, children=True)[0]
+    return cmds.listConnections(mesh_shape, type="shadingEngine")
+
+def get_shaders(mesh):
+    # mesh_shape = cmds.listRelatives(mesh, children=True)[0]
+    # shading_engines = cmds.listConnections(mesh_shape, type="shadingEngine")
+    shading_engines = get_shading_groups(mesh)
+    shaders = ((cmds.ls(cmds.listConnections(shading_engines), materials=True)))
+    return shaders
+
+
+def assign_shader(shader, mesh):
+    """Assings given shader to all available shading groups of mesh"""
+    shading_engines = get_shading_groups(mesh)
+    if not shading_engines:
+        original_selection = cmds.ls(sl=True)
+        cmds.select(mesh)
+        sg_name = functions.uniqueName("%s_SG" % mesh)
+        cmds.sets(renderable=True, noSurfaceShader=True, empty=True, name=sg_name)
+        cmds.select(original_selection)
+        shading_engines = [sg_name]
+    for sg in shading_engines:
+        cmds.connectAttr("%s.outColor" % shader, "%s.surfaceShader" % sg, f=True)
+        cmds.sets(mesh, e=True, forceElement=sg)
+
+
 
 def create_preview_shader(shader_type="blinn", preset=None, diffuse=None, mask=None, name="triggerShader", *args, **kwargs):
     """
