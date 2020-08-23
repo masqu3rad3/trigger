@@ -198,7 +198,7 @@ def createUpGrp(node, suffix, freezeTransform=True):
     Returns: The created group node
 
     """
-    grpName = "%s_%s" % (node, suffix)
+    grpName = uniqueName("%s_%s" % (node, suffix))
     newGrp = cmds.group(em=True, name=grpName)
 
     #align the new created empty group to the selected object
