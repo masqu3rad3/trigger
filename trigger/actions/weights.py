@@ -54,7 +54,7 @@ class Weights(dict):
         self.io.file_path = file_path
 
     def action(self):
-        """Mandatory method for all action modules"""
+        """Mandatory method for all action maya_modules"""
         pass
 
     # def collect_deformers(self, mesh):

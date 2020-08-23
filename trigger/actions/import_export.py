@@ -19,7 +19,7 @@ class ImportExport(object):
         # self.rigName = "trigger"
 
     def action(self):
-        """Mandatory method for all action modules"""
+        """Mandatory method for all action maya_modules"""
         pass
 
 

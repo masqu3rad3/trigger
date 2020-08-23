@@ -12,7 +12,7 @@ class Master(object):
         # self.rigName = "trigger"
 
     def action(self):
-        """Mandatory method for all action modules"""
+        """Mandatory method for all action maya_modules"""
         pref_name = "pref_cont"
 
         rig_grp_name = "trigger_grp"

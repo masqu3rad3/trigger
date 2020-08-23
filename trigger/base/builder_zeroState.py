@@ -20,7 +20,7 @@ class Builder(settings.Settings):
             self.progress_bar.setProperty("value", 0)
         self.rig_name = name
 
-        self.module_dict = {mod: eval("modules.{0}.LIMB_DATA".format(mod)) for mod in modules.__all__}
+        self.module_dict = {mod: eval("maya_modules.{0}.LIMB_DATA".format(mod)) for mod in modules.__all__}
         self.validRootList = [values["members"][0] for values in self.module_dict.values()]
 
         self.limbCreationList = []
@@ -44,7 +44,7 @@ class Builder(settings.Settings):
 
     # @undo
     def start_building(self, root_jnt=None, create_switchers=False):
-        """ Creates the modules for the selected root and for all the roots in the hiearchy and connects them
+        """ Creates the maya_modules for the selected root and for all the roots in the hiearchy and connects them
 
         Args:
             root_jnt(string): root guide joint. If not defined, scene selection will be used.
@@ -362,7 +362,7 @@ class Builder(settings.Settings):
                 j_def_set = cmds.sets(name=set_name)
 
             suffix = "%s_%s" % (sideVal, x[1].capitalize()) if sideVal != "C" else x[1].capitalize()
-            module = "modules.{0}.{1}".format(x[1], x[1].capitalize())
+            module = "maya_modules.{0}.{1}".format(x[1], x[1].capitalize())
             flags = "build_data={0}, suffix='{1}', side='{2}'".format(x[0], suffix, x[2])
             construct_command = "{0}({1})".format(module, flags)
 

@@ -42,7 +42,7 @@ class IO(dict):
             FEEDBACK.throw_error("IO module needs to know the extension")
             raise Exception
         if ext not in self.valid_extensions:
-            FEEDBACK.throw_error("IO modules does not support this extension (%s)" % ext)
+            FEEDBACK.throw_error("IO maya_modules does not support this extension (%s)" % ext)
             raise Exception
         if directory:
             self["file_path"] = self._folderCheck(new_path)

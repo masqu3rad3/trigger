@@ -17,7 +17,7 @@ class Shapes(object):
         # self.io = io.IO()
 
     def action(self):
-        """Mandatory method for all action modules"""
+        """Mandatory method for all action maya_modules"""
         pass
 
     def gather_scene_shapes(self, key="*_cont"):

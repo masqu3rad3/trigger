@@ -20,9 +20,9 @@ class Initials(settings.Settings):
         # settings = st.Settings("triggerSettings.json")
         self.parseSettings()
         self.projectName = "trigger"
-        self.module_dict = {mod: eval("modules.{0}.LIMB_DATA".format(mod)) for mod in modules.__all__}
+        self.module_dict = {mod: eval("maya_modules.{0}.LIMB_DATA".format(mod)) for mod in modules.__all__}
         # pprint(self.module_dict)
-        # self.module_dict = modules.all_modules_data.MODULE_DICTIONARY
+        # self.module_dict = maya_modules.all_modules_data.MODULE_DICTIONARY
         self.valid_limbs = self.module_dict.keys()
         self.validRootList = [values["members"][0] for values in self.module_dict.values()]
         self.non_sided_limbs = [limb for limb in self.valid_limbs if not self.module_dict[limb]["sided"]]
@@ -128,7 +128,7 @@ class Initials(settings.Settings):
         ## if defineAs is True, define the selected joints as the given limb instead creating new ones.
         if defineAs:
             # TODO: AUTO argument can be included by running a seperate method to determine the side of the root joint according to the matrix
-            construct_command = "modules.{0}.Guides(suffix='{1}', side='{2}')".format(limb_name, suffix, side)
+            construct_command = "maya_modules.{0}.Guides(suffix='{1}', side='{2}')".format(limb_name, suffix, side)
             guide = eval(construct_command)
             guide.convertJoints(currentselection)
             self.adjust_guide_display(guide)
@@ -172,7 +172,7 @@ class Initials(settings.Settings):
         cmds.parent(limbGroup, holderGroup)
         cmds.select(d=True)
 
-        module = "modules.{0}.{1}".format(limb_name, "Guides")
+        module = "maya_modules.{0}.{1}".format(limb_name, "Guides")
 
         flags = "side='{0}', " \
                 "suffix='{1}', " \

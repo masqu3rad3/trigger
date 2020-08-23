@@ -1,0 +1,56 @@
+import os, sys
+from maya import cmds
+from maya import mel
+
+dir_path = os.path.dirname(os.path.realpath(__file__))
+parent_dir = os.path.abspath(os.path.join(dir_path, os.pardir))
+SHELF_DIR = os.path.join(parent_dir, "shelves")
+
+if not os.path.exists(SHELF_DIR):
+    print('\n\n WARNING \n\n')
+
+
+def add_python_path():
+    """adds the python path to during launch"""
+    maya_modules_path = os.path.abspath(os.path.join(parent_dir, os.pardir))
+    rigging_path = os.path.abspath(os.path.join(maya_modules_path, os.pardir))
+    if rigging_path not in sys.path:
+        sys.path.append(rigging_path)
+    print("%s added to the python path" % rigging_path)
+
+def load_shelves(reset=False):
+    if os.path.isdir(SHELF_DIR) and not cmds.about(batch=True):
+        for s in os.listdir(SHELF_DIR):
+            path = os.path.join(SHELF_DIR, s).replace('\\', '/')
+            if not os.path.isfile(path):continue
+            name = os.path.splitext(s)[0].replace('shelf_', '')
+            # Delete existing shelf before loading
+            if reset:
+                if cmds.shelfLayout(name, ex=1):
+                    cmds.deleteUI(name)
+            mel.eval('loadNewShelf("{}")'.format(path))
+
+def load_menu():
+    command = "shelf_tools.load_shelves(reset=True)"
+    add_to_menu("Trigger", "Re-create Shelves", command)
+
+
+def add_to_menu(menu, menu_item, command):
+    main_window = mel.eval('$tmpVar=$gMainWindow')
+    menu_widget = '%s_widget' % menu
+
+    # dont create another menu if already exists
+    if cmds.menu(menu_widget, label=menu, exists=True, parent=main_window):
+        rebellion_menu = '%s|%s' % (main_window, menu_widget)
+    else:
+        rebellion_menu = cmds.menu(menu_widget, label=menu, parent=main_window, tearOff=True)
+
+    # skip the process if the menu_item exists
+    item_array = cmds.menu(menu_widget, q=True, itemArray=True)
+    if item_array:
+        for item in item_array:
+            label = cmds.menuItem(item, q=True, label=True)
+            if label == menu_item:
+                return
+
+    cmds.menuItem(label=menu_item, command=command)
