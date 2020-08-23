@@ -141,10 +141,6 @@ class MainUI(QtWidgets.QDialog):
         super(MainUI, self).__init__(parent=parent)
 
         self.setWindowTitle(WINDOW_NAME)
-        # self.centralwidget = QtWidgets.QWidget(self)
-        # self.centralwidget.setObjectName("centralwidget")
-        # self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
-        # self.setCentralWidget(self.centralwidget)
 
         # create guide and rig objects
         self.colorize = colorize()
