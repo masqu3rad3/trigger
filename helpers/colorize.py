@@ -21,8 +21,6 @@ elif Qt.__binding__.startswith('PyQt'):
 else:
     from shiboken2 import wrapInstance
 
-
-# import pymel.core as pm
 from maya import cmds
 slider = None
 

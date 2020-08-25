@@ -1,11 +1,9 @@
 ## Adds a direct controller to the selected joint (or any other object)
 import sys
-# import pymel.core as pm
 
 from trigger.library import functions
 from trigger.library.controllers import Icon
 from trigger.core.undo_dec import undo
-import inspect
 
 from trigger.ui import Qt
 from trigger.ui.Qt import QtWidgets, QtCore, QtGui
@@ -25,9 +23,6 @@ else:
 
 VERSION = "0.0.2"
 WINDOW_NAME = "Add_Controller %s" % VERSION
-
-# TODO: temp
-from PySide2 import QtWidgets, QtCore, QtGui
 
 def getMayaMainWindow():
     """
@@ -71,43 +66,6 @@ class AddController(Icon):
 
             if add_scale_constraint:
                 cmds.scaleConstraint(cont, sel, mo=False)
-
-    # @undo
-    # def add_controller(self, icon_type, icon_name=None, scale=(1,1,1)):
-    #     selection = cmds.ls(sl=True)
-    #     if not selection:
-    #         cont, _ = self.createIcon()
-    #     pass
-    #
-    #     with pm.UndoChunk():
-    #
-    #         if self.suffix_lineEdit.text() == "":
-    #             suffix = self.controllerType_comboBox.currentText()
-    #         else:
-    #             suffix = self.suffix_lineEdit.text()
-    #
-    #         scale = (self.controllerScale_doubleSpinBox.value(), self.controllerScale_doubleSpinBox.value(), self.controllerScale_doubleSpinBox.value())
-    #         if not pm.ls(sl=True):
-    #             self.all_iconFunctions[self.controllerType_comboBox.currentIndex()][1](name="cont_{0}".format(suffix), scale=scale)
-    #
-    #         else:
-    #             counter = 1
-    #             for i in pm.ls(sl=True):
-    #                 cont = self.all_iconFunctions[self.controllerType_comboBox.currentIndex()][1](name="cont_{0}{1}".format(suffix, counter), scale=scale)
-    #                 functions.alignToAlter(cont, i, mode=2)
-    #                 functions.createUpGrp(cont, "ORE")
-    #
-    #                 if self.parentCon_radioButton.isChecked():
-    #                     pm.parentConstraint(cont, i, mo=False)
-    #                 elif self.orientCon_radioButton.isChecked():
-    #                     pm.orientConstraint(cont, i, mo=False)
-    #                 elif self.pointCon_radioButton.isChecked():
-    #                     pm.pointConstraint(cont, i, mo=False)
-    #                 if self.scaleCon_checkBox.isChecked():
-    #                     pm.scaleConstraint(cont, i, mo=False)
-    #
-    #             counter += 1
-
 
 
 class MainUI(QtWidgets.QDialog):
@@ -201,88 +159,3 @@ class MainUI(QtWidgets.QDialog):
         normal = (self.normal_x_spinner.value(), self.normal_y_spinner.value(), self.normal_z_spinner.value())
 
         self.controller_handler.add_controller(name=name, icon=icon, scale=scale, constraint=constraint_type, add_scale_constraint=is_scale_constraint, normal=normal)
-
-
-
-
-
-
-
-
-
-
-
-    def old_buildUI(self):
-
-        self.setObjectName(WINDOW_NAME)
-        self.resize(300, 270)
-        self.setWindowTitle(WINDOW_NAME)
-
-
-
-        self.controllerType_label = QtWidgets.QLabel(self)
-        self.controllerType_label.setGeometry(QtCore.QRect(20, 60, 101, 21))
-        self.controllerType_label.setFrameShape(QtWidgets.QFrame.Box)
-        self.controllerType_label.setText(("Controller Type:"))
-
-        self.controllerType_comboBox = QtWidgets.QComboBox(self)
-        self.controllerType_comboBox.setGeometry(QtCore.QRect(130, 60, 151, 22))
-
-        self.controllerScale_doubleSpinBox = QtWidgets.QDoubleSpinBox(self, value=1, minimum=0, singleStep=0.1)
-        self.controllerScale_doubleSpinBox.setGeometry(QtCore.QRect(210, 100, 71, 21))
-        self.controllerScale_doubleSpinBox.setPrefix((""))
-        self.controllerScale_doubleSpinBox.setSuffix((""))
-
-        self.controllerScale_label = QtWidgets.QLabel(self)
-        self.controllerScale_label.setGeometry(QtCore.QRect(20, 100, 101, 21))
-        self.controllerScale_label.setFrameShape(QtWidgets.QFrame.Box)
-        self.controllerScale_label.setText(("Controller Scale:"))
-
-        self.constraintMethod_groupBox = QtWidgets.QGroupBox(self)
-        self.constraintMethod_groupBox.setGeometry(QtCore.QRect(20, 130, 261, 51))
-        self.constraintMethod_groupBox.setTitle(("Constraint Method"))
-        self.constraintMethod_groupBox.setFlat(False)
-        self.constraintMethod_groupBox.setCheckable(False)
-
-        self.pointCon_radioButton = QtWidgets.QRadioButton(self.constraintMethod_groupBox)
-        self.pointCon_radioButton.setGeometry(QtCore.QRect(10, 20, 61, 18))
-        self.pointCon_radioButton.setText(("Point"))
-
-        self.orientCon_radioButton = QtWidgets.QRadioButton(self.constraintMethod_groupBox)
-        self.orientCon_radioButton.setGeometry(QtCore.QRect(70, 20, 61, 18))
-        self.orientCon_radioButton.setText(("Orient"))
-
-        self.parentCon_radioButton = QtWidgets.QRadioButton(self.constraintMethod_groupBox)
-        self.parentCon_radioButton.setGeometry(QtCore.QRect(130, 20, 61, 18))
-        self.parentCon_radioButton.setText(("Parent"))
-        self.parentCon_radioButton.setChecked(True)
-
-        self.none_radioButton = QtWidgets.QRadioButton(self.constraintMethod_groupBox)
-        self.none_radioButton.setGeometry(QtCore.QRect(190, 20, 61, 18))
-        self.none_radioButton.setText(("None"))
-
-        self.scaleCon_checkBox = QtWidgets.QCheckBox(self)
-        self.scaleCon_checkBox.setGeometry(QtCore.QRect(180, 190, 101, 20))
-        self.scaleCon_checkBox.setText(("Scale Constraint"))
-
-        self.suffix_label = QtWidgets.QLabel(self)
-        self.suffix_label.setGeometry(QtCore.QRect(20, 20, 51, 21))
-        self.suffix_label.setFrameShape(QtWidgets.QFrame.Box)
-        self.suffix_label.setText(("Suffix:"))
-
-        self.suffix_lineEdit = QtWidgets.QLineEdit(self)
-        self.suffix_lineEdit.setGeometry(QtCore.QRect(80, 20, 201, 20))
-        self.suffix_lineEdit.setText((""))
-        self.suffix_lineEdit.setAlignment(QtCore.Qt.AlignCenter)
-        self.suffix_lineEdit.setPlaceholderText(("choose an unique name"))
-
-        self.create_pushButton = QtWidgets.QPushButton(self)
-        self.create_pushButton.setGeometry(QtCore.QRect(20, 220, 261, 31))
-        self.create_pushButton.setText(("Create Controller(s)"))
-
-        # iconNames = [i[0] for i in self.all_iconFunctions]
-        # self.controllerType_comboBox.addItems(iconNames)
-
-        # self.create_pushButton.clicked.connect(self.createController)
-
-
