@@ -117,7 +117,7 @@ class MainUI(QtWidgets.QMainWindow):
         self.menuFile.addAction(self.Settings_action)
         self.menubar.addAction(self.menuFile.menuAction())
 
-    def  buildTabsUI(self):
+    def buildTabsUI(self):
         self.centralWidget_vLay = QtWidgets.QVBoxLayout(self.centralwidget)  # this is only to fit the tab widget
         self.centralWidget_vLay.setSpacing(0)
         self.tabWidget = QtWidgets.QTabWidget(self.centralwidget)
