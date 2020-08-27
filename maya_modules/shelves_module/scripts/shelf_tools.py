@@ -19,16 +19,26 @@ def add_python_path():
     print("%s added to the python path" % rigging_path)
 
 def load_shelves(reset=False):
+    """
+    Loads all shelves under SHELF_DIR.
+    Args:
+        reset: (Bool) if True, deletes the existing shelves and re-creates them
+
+    Returns: None
+
+    """
     if os.path.isdir(SHELF_DIR) and not cmds.about(batch=True):
         for s in os.listdir(SHELF_DIR):
             path = os.path.join(SHELF_DIR, s).replace('\\', '/')
             if not os.path.isfile(path):continue
             name = os.path.splitext(s)[0].replace('shelf_', '')
             # Delete existing shelf before loading
-            if reset:
-                if cmds.shelfLayout(name, ex=1):
+            if cmds.shelfLayout(name, ex=1):
+                if reset:
                     cmds.deleteUI(name)
-            mel.eval('loadNewShelf("{}")'.format(path))
+                    mel.eval('loadNewShelf("{}")'.format(path))
+            else:
+                mel.eval('loadNewShelf("{}")'.format(path))
 
 def load_menu():
     command = "shelf_tools.load_shelves(reset=True)"

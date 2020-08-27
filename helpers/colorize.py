@@ -41,8 +41,7 @@ def getMayaMainWindow():
         ptr = wrapInstance(long(win), QtWidgets.QMainWindow)
     return ptr
 
-class colorize():
-
+class Colorize():
     def __init__(self):
         self.colorIndices = (
             (0.471, 0.471, 0.471),
@@ -141,7 +140,7 @@ class MainUI(QtWidgets.QDialog):
         self.setWindowTitle(WINDOW_NAME)
 
         # create guide and rig objects
-        self.colorize = colorize()
+        self.colorize = Colorize()
 
         # Build the UI elements
         self.buildUI(self)
