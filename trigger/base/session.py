@@ -1,4 +1,7 @@
 from compiler.ast import flatten
+# TODO: This will require a better solution compatible for both python3 and python2:
+# Check here: https://stackoverflow.com/questions/2158395/flatten-an-irregular-list-of-lists
+
 import os
 
 from maya import cmds
