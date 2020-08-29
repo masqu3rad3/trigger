@@ -26,7 +26,7 @@ def addList(list_of_values):
         result += x
     return result
 
-def subractList(list_of_values):
+def subtractList(list_of_values):
     result = list_of_values[0]
     for x in list_of_values[1:]:
         result += x

@@ -1,4 +1,5 @@
 """Main UI for TRigger"""
+import sys
 from trigger.ui import Qt
 from trigger.ui.Qt import QtWidgets, QtCore, QtGui
 
@@ -27,7 +28,10 @@ def getMayaMainWindow():
         (long) Memory Adress
     """
     win = omui.MQtUtil_mainWindow()
-    ptr = wrapInstance(long(win), QtWidgets.QMainWindow)
+    if sys.version_info.major == 3:
+        ptr = wrapInstance(int(win), QtWidgets.QMainWindow)
+    else:
+        ptr = wrapInstance(long(win), QtWidgets.QMainWindow)
     return ptr
 
 
@@ -56,7 +60,6 @@ class MainUI(QtWidgets.QMainWindow):
         # create guide and rig objects
         self.guide = initials.Initials()
         self.rig = builder.Builder()
-
         # Build the UI elements
         self.buildTabsUI()
         self.buildBarsUI()

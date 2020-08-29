@@ -7,6 +7,7 @@ import json
 import shutil
 
 from trigger.core import feedback
+from trigger.core import compatibility as compat
 
 FEEDBACK = feedback.Feedback(logger_name=__name__)
 
@@ -74,7 +75,7 @@ class IO(dict):
 
     def _dump_json(self, data, file_path):
         """Saves the data to the json file"""
-        name, ext = os.path.splitext(unicode(file_path).encode("utf-8"))
+        name, ext = os.path.splitext(compat.encode(file_path))
         temp_file = ("{0}.tmp".format(name))
         with open(temp_file, "w") as f:
             json.dump(data, f, indent=4)
