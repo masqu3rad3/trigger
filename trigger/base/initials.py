@@ -20,7 +20,7 @@ class Initials(settings.Settings):
         # settings = st.Settings("triggerSettings.json")
         self.parseSettings()
         self.projectName = "trigger"
-        self.module_dict = {mod: eval("trigger.modules.{0}.LIMB_DATA".format(mod)) for mod in modules.__all__}
+        self.module_dict = {mod: eval("modules.{0}.LIMB_DATA".format(mod)) for mod in modules.__all__}
         # pprint(self.module_dict)
         # self.module_dict = trigger.modules.all_modules_data.MODULE_DICTIONARY
         self.valid_limbs = self.module_dict.keys()
@@ -88,7 +88,7 @@ class Initials(settings.Settings):
             FEEDBACK.warning("cannot find mirror Joint automatically")
             return None, alignmentGiven, None
 
-    @undo
+    # @undo
     def initLimb(self, limb_name, whichSide="left", constrainedTo=None, parentNode=None, defineAs=False, *args, **kwargs):
 
         if limb_name not in self.valid_limbs:
@@ -128,7 +128,7 @@ class Initials(settings.Settings):
         ## if defineAs is True, define the selected joints as the given limb instead creating new ones.
         if defineAs:
             # TODO: AUTO argument can be included by running a seperate method to determine the side of the root joint according to the matrix
-            construct_command = "trigger.modules.{0}.Guides(suffix='{1}', side='{2}')".format(limb_name, suffix, side)
+            construct_command = "modules.{0}.Guides(suffix='{1}', side='{2}')".format(limb_name, suffix, side)
             guide = eval(construct_command)
             guide.convertJoints(currentselection)
             self.adjust_guide_display(guide)
@@ -172,7 +172,7 @@ class Initials(settings.Settings):
         cmds.parent(limbGroup, holderGroup)
         cmds.select(d=True)
 
-        module = "trigger.modules.{0}.{1}".format(limb_name, "Guides")
+        module = "modules.{0}.{1}".format(limb_name, "Guides")
 
         flags = "side='{0}', " \
                 "suffix='{1}', " \
