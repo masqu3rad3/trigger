@@ -88,7 +88,7 @@ class Initials(settings.Settings):
             FEEDBACK.warning("cannot find mirror Joint automatically")
             return None, alignmentGiven, None
 
-    # @undo
+    @undo
     def initLimb(self, limb_name, whichSide="left", constrainedTo=None, parentNode=None, defineAs=False, *args, **kwargs):
 
         if limb_name not in self.valid_limbs:

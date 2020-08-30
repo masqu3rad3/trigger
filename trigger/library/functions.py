@@ -558,7 +558,7 @@ def create_attribute(node, property_dict=None, keyable=True, display=True, *args
 def set_joint_type(joint, type_name):
     if type_name in JOINT_TYPE_DICT.values():
         # get the key from the value. This is compatible with both python3 and python2
-        value_list = list(JOINT_TYPE_DICT.values())
+        value_list = [0]+list(JOINT_TYPE_DICT.values())
         type_int = value_list.index(type_name)
         cmds.setAttr("%s.type" % joint, type_int)
     else:
