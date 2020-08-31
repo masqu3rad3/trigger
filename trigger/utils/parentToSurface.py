@@ -26,7 +26,7 @@ def parentToSurface(objects=None, surface=None, mode="parent"):
     """
     if objects == None and surface == None:
         numSel = cmds.ls(sl=True)
-        if numSel < 2:
+        if len(numSel) < 2:
             cmds.warning("ParentToSurface: select object(s) to parent followed by a mesh or nurbsSurface to attach to.")
             return
         else:
