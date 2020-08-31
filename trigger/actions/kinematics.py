@@ -53,9 +53,7 @@ class Kinematics(settings.Settings):
         root_grp = "trigger_grp"
         if not cmds.objExists(root_grp):
             master.Master().action()
-        FEEDBACK.debug("D1")
         self.collect_guides_info(self.root_joint)
-        FEEDBACK.debug("D2")
         self.limbCreationList = self.get_limb_hierarchy(self.root_joint)
         self.match_fingers(self.fingerMatchList)
         self.createlimbs(self.limbCreationList)
@@ -64,7 +62,7 @@ class Kinematics(settings.Settings):
             for anchor in (self.anchors):
                 anchorMaker.create_space_switch(anchor[0], self.anchorLocations, mode=anchor[1], defaultVal=anchor[2],
                                                 listException=anchor[3])
-
+        FEEDBACK.debug("DD1")
         # else:
         #     # TODO: tidy up here
         #     for anchor in (self.anchors):
@@ -82,6 +80,7 @@ class Kinematics(settings.Settings):
             cmds.scaleConstraint("pref_cont", cont_offset)
             cmds.parent(cont_offset, root_grp)
             cmds.connectAttr("pref_cont.Control_Visibility", "%s.v" % cont_offset)
+        FEEDBACK.debug("DD2")
 
         # TODO : tidy up / make settings human readable
         if self.get("afterCreation") == 1:
@@ -90,6 +89,7 @@ class Kinematics(settings.Settings):
         if self.get("afterCreation") == 2:
             # if the After Creation set to 'Delete Initial Joints'
             cmds.delete(self.root_joint)
+        FEEDBACK.debug("DD3")
 
     def match_fingers(self, finger_match_list):
         icon = ic.Icon()
