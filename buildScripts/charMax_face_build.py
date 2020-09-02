@@ -14,6 +14,7 @@ from trigger.library import shading
 from trigger.utils import parentToSurface
 from trigger.utils import jointsOnBlendshape
 
+
 # reset scene
 cmds.file(new=True, force=True)
 
@@ -35,7 +36,7 @@ final_meshes = functions.getMeshes("charMax")
 # build the BASEs of Local Rigs
 face_meshes = ["charMaxAvA", "charMax_IDglassRim", "charMax_teethUpper", "charMax_teethLower", "charMax_IDglass",
                "charMax_IDtongue", "charMax_gumsUpper", "charMax_gumsLower", "Eye_Inner_L_GEO", "Eye_Outer_L_GEO",
-               "Eye_Inner_R_GEO", "Eye_Outer_R_GEO"]
+               "Eye_Inner_R_GEO", "Eye_Outer_R_GEO", "charMax_IDjacket"]
 local_meshes = []
 for mesh in face_meshes:
     local_BS_blendshape = "%s_local_bs" % mesh
@@ -369,6 +370,8 @@ for jnt_off, jnt in zip(joint_offsets, local_twk_joints):
         cmds.error("CONTROLLER MISSING => %s" % controller)
     jointsOnBlendshape.jointOnBlendshapes(joint=str(jnt_off), controller=str(controller), surface=str(main_face_mesh),
                                           attach_mode="pointConstraint")
+# orientation fix
+cmds.orientConstraint("bn_head", tweaker_conts_grp, mo=False)
 
 follicle_shapes = cmds.ls(type="follicle")
 follicle_transforms = map(lambda x: functions.getParent(x), follicle_shapes)
@@ -416,12 +419,52 @@ cmds.hide(btn_jnts_grp)
 cmds.parent([btn_jnts_grp, btn_conts_grp], "Char_Max")
     
 
+## JACKET Correctives
+jc_joint_grp = cmds.group(name="jacketCorrection_joint_grp", em=True)
+jc_cont_grp = cmds.group(name="jacketCorrection_cont_grp", em=True)
+jc_follicle_grp = cmds.group(name="jacketCorrection_follicle_grp", em=True)
+cmds.parent([jc_joint_grp, jc_follicle_grp], "local_BS_rig_grp")
+cmds.parent(jc_cont_grp, "Rig_Controllers")
+
+sessionHandler.load_session("/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charMax/RIG/work/maya/triggerData/guides/max_bodyCorrective_guides.json", reset_scene=False)
+jacket_joints = cmds.listRelatives("trigger_refGuides")
+
+
+## ALL JOINTs must be FROZEN. (No value on rotation channels)
+_ = [cmds.makeIdentity(node, a=True) for node in jacket_joints]
+
+jacket_joints_offsets = [functions.createUpGrp(jnt, suffix="offset") for jnt in jacket_joints]
+
+for jnt_off, jnt in zip(jacket_joints_offsets, jacket_joints):
+    cont, _ = icon_handler.createIcon("Diamond", iconName=jnt+"_cont")
+    functions.alignTo(cont, jnt, position=True, rotation=True)
+
+    # transfer jointOrientations to the offset group
+    jointOrient = cmds.getAttr("%s.jointOrient" % jnt)[0]
+    cmds.setAttr("%s.rotate" % jnt_off, *jointOrient)
+    cmds.setAttr("%s.jointOrient" % jnt, 0, 0, 0)
+
+    joint_top, cont_top, follicle =jointsOnBlendshape.jointOnBlendshapes(joint=str(jnt_off), controller=cont, surface="charMax_IDjacket",
+                                          attach_mode="pointConstraint")
+    cmds.parent(joint_top, jc_joint_grp)
+    cmds.parent(cont_top, jc_cont_grp)
+    cmds.parent(follicle, jc_follicle_grp)
+
+# orientation fix
+cmds.orientConstraint("bn_torso", jc_cont_grp, mo=True)
+
+# Rename frigging controller names
 
 
 ################################################
 ############### SKINCLUSTERS ###################
 ################################################
-
+cmds.rename("surface_right2_cont", "twk_jacketD_L_cont")
+cmds.rename("surface_right_cont", "twk_jacketM_L_cont")
+cmds.rename("surface_right1_cont", "twk_jacketU_L_cont")
+cmds.rename("surface_left2_cont", "twk_jacketD_R_cont")
+cmds.rename("surface_left_cont", "twk_jacketM_R_cont")
+cmds.rename("surface_left1_cont", "twk_jacketU_R_cont")
 
 from trigger.actions import weights
 
@@ -892,3 +935,13 @@ for side in "LR":
     cmds.hide("bn_pelvis")
     
 functions.deleteObject("charMax_gumsUpper")
+
+# Delta Mush
+delta_mush = cmds.deltaMush("charMax_IDjacket")[0]
+cmds.setAttr("%s.smoothingIterations" % delta_mush, 10)
+cmds.setAttr("%s.smoothingStep" % delta_mush, 1)
+cmds.setAttr("%s.inwardConstraint" % delta_mush, 1)
+cmds.setAttr("%s.distanceWeight" % delta_mush, 1)
+
+
+    

@@ -47,7 +47,9 @@ sessionHandler.save_session("/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Ch
 
 # # SAVE TWK GUIDES
 sessionHandler.save_session("/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charMax/RIG/work/maya/triggerData/guides/max_twk_guides.json")
-        
+
+# # SAVE JACKET CORRECTIVE CONTS
+sessionHandler.save_session("/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charMax/RIG/work/maya/triggerData/guides/max_bodyCorrective_guides.json")
 
 ############# SAVE CONTROL SHAPES ##############
 from trigger.actions import shapes

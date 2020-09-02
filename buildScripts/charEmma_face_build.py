@@ -421,6 +421,9 @@ for jnt_off, jnt in zip(joint_offsets, local_twk_joints):
     jointsOnBlendshape.jointOnBlendshapes(joint=str(jnt_off), controller=str(controller), surface=str(main_face_mesh),
                                           attach_mode="pointConstraint")
 
+# orientation fix
+cmds.orientConstraint("bn_head", tweaker_conts_grp, mo=False)
+
 follicle_shapes = cmds.ls(type="follicle")
 follicle_transforms = map(lambda x: functions.getParent(x), follicle_shapes)
 follicle_grp = cmds.group(follicle_transforms, name="follicle_grp")
@@ -428,6 +431,57 @@ cmds.parent(follicle_grp, "local_TWK_rig_grp")
 
 functions.drive_attrs("tweakers_onOff_cont.tx", "%s.v" % tweaker_conts_grp, driver_range=[0, -10], driven_range=[0, 1])
 
+# # SKIRT TWEAKERS
+skirtTweak_grp = cmds.group(name="skirtTweak_grp", em=True)
+sessionHandler.load_session(
+    "/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charEmma/RIG/work/maya/triggerData/guides/emma_skirtCorrectives.json",
+    reset_scene=False)
+
+skirt_twk_joints = cmds.listRelatives("trigger_refGuides", children=True, type="joint", ad=True)
+_ = [cmds.setAttr("%s.drawLabel" % jnt, 0) for jnt in skirt_twk_joints]
+cmds.rename("trigger_refGuides", "skirtTweak_jnt_grp")
+cmds.parent("skirtTweak_jnt_grp", skirtTweak_grp)
+
+skirtTwk_conts = []
+skirtTwk_cont_offsets = []
+for jnt in skirt_twk_joints:
+    cont, _ = icon_handler.createIcon("Diamond", iconName=jnt.replace("_jDef", "_cont"))
+    functions.alignTo(cont, jnt, position=True, rotation=True)
+    skirtTwk_conts.append(cont)
+    skirtTwk_cont_offsets.append(functions.createUpGrp(cont, "offset"))
+
+skirtTwk_conts_grp = cmds.group(skirtTwk_cont_offsets, name="SkirtTwk_ctrls_grp")
+cmds.parent(skirtTwk_conts_grp, "Rig_Controllers")
+
+
+## ALL JOINTs must be FROZEN. (No value on rotation channels)
+_ = [cmds.makeIdentity(node, a=True) for node in skirt_twk_joints]
+
+# create offset groups
+skirt_joint_offsets = [functions.createUpGrp(jnt, suffix="offset") for jnt in skirt_twk_joints]
+
+for jnt_off, jnt in zip(skirt_joint_offsets, skirt_twk_joints):
+    # transfer jointOrientations to the offset group
+    jointOrient = cmds.getAttr("%s.jointOrient" % jnt)[0]
+    cmds.setAttr("%s.rotate" % jnt_off, *jointOrient)
+    cmds.setAttr("%s.jointOrient" % jnt, 0, 0, 0)
+
+    controller = jnt.replace("_jDef", "_cont")
+    if not cmds.objExists(controller):
+        cmds.error("CONTROLLER MISSING => %s" % controller)
+    jointsOnBlendshape.jointOnBlendshapes(joint=str(jnt_off), controller=str(controller), surface="charEmmaAvA_dress_GEO_IDfabricCotton",
+                                          attach_mode="parentConstraint")
+
+# orientation fix
+# cmds.orientConstraint("bn_pelvis", skirtTwk_conts_grp, mo=False)
+# cmds.orientConstraint("bn_R_upLeg", "bn_L_upLeg", skirtTwk_conts_grp, mo=True)
+
+follicle_shapes = cmds.ls("surface*", type="follicle")
+follicle_transforms = map(lambda x: functions.getParent(x), follicle_shapes)
+follicle_grp = cmds.group(follicle_transforms, name="skirt_follicle_grp")
+cmds.parent(follicle_grp, skirtTweak_grp)
+
+cmds.parent(skirtTweak_grp, "local_BS_rig_grp")
 
 ################################################
 ############### SKINCLUSTERS ###################
@@ -636,8 +690,6 @@ functions.drive_attrs("Spine_Chest_cont.endValue", "%s.value[2].value_FloatValue
 
 #######################[End]
 
-# Create Live rig controllers and direct connect stretch rig controllers to these
-# TODO:
 stretch_top_ctrl, _ = icon_handler.createIcon("Cube", iconName="Stretch_top_cont")
 stretch_top_ctrl_offset = functions.createUpGrp(stretch_top_ctrl, "offset")
 functions.alignTo(stretch_top_ctrl_offset, "Spine_Chest_cont", position=True, rotation=True)

@@ -30,7 +30,7 @@ cmds.hide(cmds.listRelatives("grp_faceExtra", children=True))
 
 # import_act.import_alembic("/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charValet/MDL/publish/caches/charValetAvA.v008.abc")
 import_act.import_scene(
-    "/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charValet/MDL/publish/maya/charValetAvA.v029.ma")
+    "/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charValet/MDL/publish/maya/charValetAvA.v031.ma")
 final_meshes = functions.getMeshes("charValetAvA")
 
 # build the BASEs of Local Rigs
@@ -118,12 +118,57 @@ hook_blendshapes = "hook_blendshapes"
 
 # TEETH RIG
 ###########
+# upper_teeth_cont, _ = icon_handler.createIcon("Circle", iconName="upperTeeth_cont", scale=(3, 3, 3), normal=(0, 1, 0))
+# lower_teeth_cont, _ = icon_handler.createIcon("Circle", iconName="lowerTeeth_cont", scale=(3, 3, 3), normal=(0, 1, 0))
+# upper_teeth_cont_offset = functions.createUpGrp(upper_teeth_cont, "offset")
+# lower_teeth_cont_offset = functions.createUpGrp(lower_teeth_cont, "offset")
+# functions.alignTo(upper_teeth_cont_offset, "upperTeeth_jDef", position=True, rotation=True)
+# functions.alignTo(lower_teeth_cont_offset, "lowerTeeth_jDef", position=True, rotation=True)
+
+# upper_teeth_jaw_follow = cmds.group(name="upperTeeth_jawFollow", em=True)
+# lower_teeth_jaw_follow = cmds.group(name="lowerTeeth_jawFollow", em=True)
+# functions.alignTo(upper_teeth_jaw_follow, "jawN_jDef", position=True, rotation=True)
+# functions.alignTo(lower_teeth_jaw_follow, "jaw_jDef", position=True, rotation=True)
+
+# cmds.parent(upper_teeth_cont_offset, upper_teeth_jaw_follow)
+# cmds.parent(lower_teeth_cont_offset, lower_teeth_jaw_follow)
+
+# teeth_head_follow = cmds.group([upper_teeth_jaw_follow, lower_teeth_jaw_follow], name="teeth_headFollow")
+
+# functions.drive_attrs("jawN_jDef.t", "%s.t" % upper_teeth_jaw_follow)
+# functions.drive_attrs("jawN_jDef.r", "%s.r" % upper_teeth_jaw_follow)
+# functions.drive_attrs("jaw_jDef.t", "%s.t" % lower_teeth_jaw_follow)
+# functions.drive_attrs("jaw_jDef.r", "%s.r" % lower_teeth_jaw_follow)
+
+# cmds.connectAttr("%s.xformMatrix" % upper_teeth_cont, "upperTeeth_jDef.offsetParentMatrix")
+# cmds.connectAttr("%s.xformMatrix" % lower_teeth_cont, "lowerTeeth_jDef.offsetParentMatrix")
+# cmds.parentConstraint("bn_head", teeth_head_follow, mo=True)
+# teeth_ctrls_grp = cmds.group(teeth_head_follow, name="teeth_ctrls_grp")
+# cmds.parent(teeth_ctrls_grp, "Rig_Controllers")
+
 upper_teeth_cont, _ = icon_handler.createIcon("Circle", iconName="upperTeeth_cont", scale=(3, 3, 3), normal=(0, 1, 0))
 lower_teeth_cont, _ = icon_handler.createIcon("Circle", iconName="lowerTeeth_cont", scale=(3, 3, 3), normal=(0, 1, 0))
 upper_teeth_cont_offset = functions.createUpGrp(upper_teeth_cont, "offset")
 lower_teeth_cont_offset = functions.createUpGrp(lower_teeth_cont, "offset")
 functions.alignTo(upper_teeth_cont_offset, "upperTeeth_jDef", position=True, rotation=True)
 functions.alignTo(lower_teeth_cont_offset, "lowerTeeth_jDef", position=True, rotation=True)
+
+# freeze transformations of joints and move joint orientation to the upper grp
+cmds.makeIdentity("upperTeeth_jDef", a=True)
+cmds.makeIdentity("lowerTeeth_jDef", a=True)
+
+# create a zero locator
+upper_zero = cmds.spaceLocator(name="upperTeeth_zero")[0]
+functions.alignTo(upper_zero, "upperTeeth_jDef", position=True, rotation=True)
+upper_zero_off = functions.createUpGrp(upper_zero, "off")
+cmds.parentConstraint(upper_zero, "upperTeeth_jDef", mo=True)
+lower_zero = cmds.spaceLocator(name="lowerTeeth_zero")[0]
+functions.alignTo(lower_zero, "lowerTeeth_jDef", position=True, rotation=True)
+lower_zero_off = functions.createUpGrp(lower_zero, "off")
+cmds.parentConstraint(lower_zero, "lowerTeeth_jDef", mo=True)
+
+cmds.parent(upper_zero_off, "jawN_jDef")
+cmds.parent(lower_zero_off, "jaw_jDef")
 
 upper_teeth_jaw_follow = cmds.group(name="upperTeeth_jawFollow", em=True)
 lower_teeth_jaw_follow = cmds.group(name="lowerTeeth_jawFollow", em=True)
@@ -140,8 +185,11 @@ functions.drive_attrs("jawN_jDef.r", "%s.r" % upper_teeth_jaw_follow)
 functions.drive_attrs("jaw_jDef.t", "%s.t" % lower_teeth_jaw_follow)
 functions.drive_attrs("jaw_jDef.r", "%s.r" % lower_teeth_jaw_follow)
 
-cmds.connectAttr("%s.xformMatrix" % upper_teeth_cont, "upperTeeth_jDef.offsetParentMatrix")
-cmds.connectAttr("%s.xformMatrix" % lower_teeth_cont, "lowerTeeth_jDef.offsetParentMatrix")
+cmds.connectAttr("%s.t" % upper_teeth_cont, "%s.t" % upper_zero)
+cmds.connectAttr("%s.r" % upper_teeth_cont, "%s.r" % upper_zero)
+cmds.connectAttr("%s.t" % lower_teeth_cont, "%s.t" % lower_zero)
+cmds.connectAttr("%s.r" % lower_teeth_cont, "%s.r" % lower_zero)
+
 cmds.parentConstraint("bn_head", teeth_head_follow, mo=True)
 teeth_ctrls_grp = cmds.group(teeth_head_follow, name="teeth_ctrls_grp")
 cmds.parent(teeth_ctrls_grp, "Rig_Controllers")

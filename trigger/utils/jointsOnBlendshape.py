@@ -93,5 +93,6 @@ def jointOnBlendshapes(joint=None, controller=None, surface=None, attach_mode="p
     # inverseNode.output >> cont_negative.translate
     cmds.connectAttr("%s.output" % inverseNode, "%s.translate" % cont_negative)
 
+    return [rigConnect, cont_surfaceAttach, follicleList[0]]
     # print "HEHEHEHE" * 50
 # jointOnBlendshapes()

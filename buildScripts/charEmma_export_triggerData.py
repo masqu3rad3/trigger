@@ -64,6 +64,8 @@ sessionHandler.save_session(os.path.join(triggerData_root, "guides", "%s_twk_gui
 # # SAVE STRETCHY GUIDES
 sessionHandler.save_session(os.path.join(triggerData_root, "guides", "%s_stretchyFace.json" % charName))
 
+# # SAVE SKIRT CORRECTIVE GUIDES
+sessionHandler.save_session(os.path.join(triggerData_root, "guides", "%s_skirtCorrectives.json" % charName))
 
 ############# SAVE CONTROL SHAPES ##############
 from trigger.actions import shapes
