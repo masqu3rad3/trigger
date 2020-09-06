@@ -1,7 +1,8 @@
-import maya.cmds as cmds
+from maya import cmds
 # import maya.OpenMaya as om
 # USING MAYA API 2.0
 import maya.api.OpenMaya as om
+from maya import mel
 
 from trigger.core import feedback
 from trigger.core.undo_dec import undo
@@ -737,29 +738,88 @@ def getMeshes(node):
     all_mesh_shapes = cmds.listRelatives(node, ad=True, children=True, type="mesh")
     return uniqueList([getParent(mesh) for mesh in all_mesh_shapes])
 
+# def matrixConstraint(parent, child, mo=True, prefix="", sr=None, st=None, ss=None):
+#     child_parent = getParent(child)
+#     # if child_parent:
+#     #     cmds.parent(child, w=True)
+#
+#
+#     mult_matrix = cmds.createNode("multMatrix", name="%s_multMatrix" % prefix)
+#     decompose_matrix = cmds.createNode("decomposeMatrix", name="%s_decomposeMatrix" % prefix)
+#
+#     cmds.connectAttr("%s.worldMatrix[0]" % parent, "%s.matrixIn[1]" % mult_matrix)
+#     cmds.connectAttr("%s.matrixSum" % mult_matrix, "%s.inputMatrix" % decompose_matrix)
+#
+#     if mo:
+#         parentWorldMatrix = getMDagPath(parent).inclusiveMatrix()
+#         childWorldMatrix = getMDagPath(child).inclusiveMatrix()
+#         localOffset = childWorldMatrix * parentWorldMatrix.inverse()
+#         cmds.setAttr("%s.matrixIn[0]" % mult_matrix, localOffset, type="matrix")
+#     if child_parent:
+#         child_parentWorldMatrix = getMDagPath(child_parent).inclusiveMatrix().inverse()
+#         # childWorldMatrix = getMDagPath(child).inclusiveMatrix()
+#         # localOffset = childWorldMatrix * child_parentWorldMatrix.inverse()
+#         cmds.setAttr("%s.matrixIn[2]" % mult_matrix, child_parentWorldMatrix, type="matrix")
+#
+#     if not st:
+#         cmds.connectAttr("%s.outputTranslate" % decompose_matrix, "%s.translate" % child)
+#     else:
+#         for attr in "XYZ":
+#             if attr.lower() not in st and attr.upper() not in st:
+#                 cmds.connectAttr("%s.outputTranslate%s" % (decompose_matrix, attr), "%s.translate%s" % (child, attr))
+#     if not sr:
+#         cmds.connectAttr("%s.outputRotate" % decompose_matrix, "%s.rotate" % child)
+#     else:
+#         for attr in "XYZ":
+#             if attr.lower() not in sr and attr.upper() not in sr:
+#                 cmds.connectAttr("%s.outputRotate%s" % (decompose_matrix, attr), "%s.rotate%s" % (child, attr))
+#     if not ss:
+#         cmds.connectAttr("%s.outputScale" % decompose_matrix, "%s.scale" % child)
+#     else:
+#         for attr in "XYZ":
+#             if attr.lower() not in ss and attr.upper() not in ss:
+#                 cmds.connectAttr("%s.outputScale%s" % (decompose_matrix, attr), "%s.scale%s" % (child, attr))
+#
+#     return mult_matrix, decompose_matrix
 
-def matrixConstraint(parent, child, mo=True, prefix="", sr=None, st=None, ss=None):
+def getNextIndex(attr, startFrom=0):
+    return mel.eval("getNextFreeMultiIndex %s %s" % (attr, startFrom))
+
+def matrixConstraint(parent, child, mo=True, prefix="", sr=None, st=None, ss=None, source_parent_cutoff=None):
     child_parent = getParent(child)
     # if child_parent:
     #     cmds.parent(child, w=True)
-
+    next_index = -1
 
     mult_matrix = cmds.createNode("multMatrix", name="%s_multMatrix" % prefix)
     decompose_matrix = cmds.createNode("decomposeMatrix", name="%s_decomposeMatrix" % prefix)
-
-    cmds.connectAttr("%s.worldMatrix[0]" % parent, "%s.matrixIn[1]" % mult_matrix)
-    cmds.connectAttr("%s.matrixSum" % mult_matrix, "%s.inputMatrix" % decompose_matrix)
 
     if mo:
         parentWorldMatrix = getMDagPath(parent).inclusiveMatrix()
         childWorldMatrix = getMDagPath(child).inclusiveMatrix()
         localOffset = childWorldMatrix * parentWorldMatrix.inverse()
-        cmds.setAttr("%s.matrixIn[0]" % mult_matrix, localOffset, type="matrix")
+        # next_index = getNextIndex("%s.matrixIn" % mult_matrix)
+        next_index += 1
+        cmds.setAttr("%s.matrixIn[%i]" % (mult_matrix, next_index), localOffset, type="matrix")
+
+    # next_index = getNextIndex("%s.matrixIn" % mult_matrix)
+    next_index += 1
+    cmds.connectAttr("%s.worldMatrix[0]" % parent, "%s.matrixIn[%i]" % (mult_matrix, next_index))
+    cmds.connectAttr("%s.matrixSum" % mult_matrix, "%s.inputMatrix" % decompose_matrix)
+
+    if source_parent_cutoff:
+        # next_index = getNextIndex("%s.matrixIn" % mult_matrix)
+        next_index += 1
+        cmds.connectAttr("%s.worldInverseMatrix" % source_parent_cutoff, "%s.matrixIn[%i]" % (mult_matrix, next_index))
+
+
     if child_parent:
         child_parentWorldMatrix = getMDagPath(child_parent).inclusiveMatrix().inverse()
         # childWorldMatrix = getMDagPath(child).inclusiveMatrix()
         # localOffset = childWorldMatrix * child_parentWorldMatrix.inverse()
-        cmds.setAttr("%s.matrixIn[2]" % mult_matrix, child_parentWorldMatrix, type="matrix")
+        # next_index = getNextIndex("%s.matrixIn" % mult_matrix)
+        next_index += 1
+        cmds.setAttr("%s.matrixIn[%i]" % (mult_matrix, next_index), child_parentWorldMatrix, type="matrix")
 
 
     if not st:

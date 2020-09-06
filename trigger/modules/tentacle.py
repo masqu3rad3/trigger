@@ -457,7 +457,7 @@ class Tentacle(object):
         cmds.parent(twistDeformer[1], twistLoc)
 
         ## make connections:
-        cmds.connectAttr("%s.twistAngle" % self.cont_special, "%s.endAngle" % twistDeformer[0])
+        cmds.connectAttr("%s.twistAngle" % self.cont_special, "%s.endAngle" % twistDeformer[0], force=True)
         cmds.connectAttr("%s.twistSlide" % self.cont_special, "%s.translateY" % twistLoc)
         cmds.connectAttr("%s.twistArea" % self.cont_special, "%s.scaleY" % twistLoc)
 
@@ -468,10 +468,10 @@ class Tentacle(object):
         cmds.parent(sineDeformer[1], sineLoc)
 
         ## make connections:
-        cmds.connectAttr("%s.sineAmplitude" % self.cont_special, "%s.amplitude" % sineDeformer[0])
-        cmds.connectAttr("%s.sineWavelength" % self.cont_special, "%s.wavelength" % sineDeformer[0])
-        cmds.connectAttr("%s.sineDropoff" % self.cont_special, "%s.dropoff" % sineDeformer[0])
-        cmds.connectAttr("%s.sineAnimate" % self.cont_special, "%s.offset" % sineDeformer[0])
+        cmds.connectAttr("%s.sineAmplitude" % self.cont_special, "%s.amplitude" % sineDeformer[0], force=True)
+        cmds.connectAttr("%s.sineWavelength" % self.cont_special, "%s.wavelength" % sineDeformer[0], force=True)
+        cmds.connectAttr("%s.sineDropoff" % self.cont_special, "%s.dropoff" % sineDeformer[0], force=True)
+        cmds.connectAttr("%s.sineAnimate" % self.cont_special, "%s.offset" % sineDeformer[0], force=True)
 
         cmds.connectAttr("%s.sineSlide" % self.cont_special, "%s.translateY" % sineLoc)
         cmds.connectAttr("%s.sineArea" % self.cont_special, "%s.scaleY" % sineLoc)

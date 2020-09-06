@@ -159,7 +159,7 @@ class Weights(dict):
             # splitMaps_blendshape.inputTarget[0].inputTargetGroup[X].targetWeights[0]
         return True
 
-    def create_deformer(self, weights_file, deformer_type=None):
+    def create_deformer(self, weights_file=None, deformer_type=None):
         """
         Creates the deformer defined in the weights file and applies the pre-saved weights.
 
@@ -172,6 +172,7 @@ class Weights(dict):
         Returns:
 
         """
+        weights_file = self.io.file_path if not weights_file else weights_file
 
         # load the weights file
         self.io.file_path = weights_file
