@@ -69,14 +69,9 @@ class Renamer(object):
 
     def getObjects(self, method):
         if method == 0: # selected objects
-            # self.objectList = pm.ls(sl=True)
             self.objectList = cmds.ls(sl=True)
         if method == 1: # Hierarchy
-            self.objectList = []
-            for obj in cmds.ls(sl=True):
-                self.objectList.append(obj)
-                self.objectList += (cmds.listRelatives(obj, ad=True, c=True))
-            self.objectList = functions.uniqueList(self.objectList)
+            self.objectList = cmds.listRelatives(cmds.ls(sl=True), c=True, ad=True, f=True)
         if method == 2: # Everything
             self.objectList = cmds.ls()
 
@@ -85,52 +80,51 @@ class Renamer(object):
         self.getObjects(selectMethod) # initialize the objectList
         for i in self.objectList:
             try:
-                cmds.rename(i, i.replace("pasted", ""))
-                # i.rename(i.name().replace("pasted__", ""))
+                cmds.rename(i, i.replace("pasted_", ""))
             except RuntimeError:
                 pass
 
-    def removeSemi(self, selectMethod):
+    def removeNamespace(self, selectMethod):
         self.getObjects(selectMethod)  # initialize the objectList
         for i in self.objectList:
             try:
                 cmds.rename(i, i.split(":")[-1])
-                # i.rename(i.name().split(":")[-1])
             except IndexError and RuntimeError:
                 pass
 
     def addRight(self, selectMethod):
         self.getObjects(selectMethod)  # initialize the objectList
-        for i in self.objectList:
+        for obj in self.objectList:
             try:
-                cmds.rename(i, "{0}_RIGHT".format(i))
-                # i.rename("{0}_RIGHT".format(i.name()))
+                name = obj if not "|" in obj else obj.split("|")[-1]
+                cmds.rename(obj, "{0}_RIGHT".format(name))
             except RuntimeError:
                 pass
 
     def addLeft(self, selectMethod):
         self.getObjects(selectMethod)  # initialize the objectList
-        for i in self.objectList:
+        for obj in self.objectList:
             try:
-                cmds.rename(i, "{0}_LEFT".format(i))
+                name = obj if not "|" in obj else obj.split("|")[-1]
+                cmds.rename(obj, "{0}_LEFT".format(name))
             except RuntimeError:
                 pass
 
     def addSuffix(self, selectMethod, suffix):
         self.getObjects(selectMethod)  # initialize the objectList
-        for i in self.objectList:
+        for obj in self.objectList:
             try:
-                cmds.rename(i, "{0}{1}".format(i,suffix))
-                # i.rename("{0}{1}".format(i.name(),suffix))
+                name = obj if not "|" in obj else obj.split("|")[-1]
+                cmds.rename(obj, "{0}{1}".format(name, suffix))
             except RuntimeError:
                 pass
 
     def addPrefix(self, selectMethod, prefix):
         self.getObjects(selectMethod)  # initialize the objectList
-        for i in self.objectList:
+        for obj in self.objectList:
             try:
-                cmds.rename(i, "{0}{1}".format(prefix, i))
-                # i.rename("{0}{1}".format(prefix, i.name()))
+                name = obj if not "|" in obj else obj.split("|")[-1]
+                cmds.rename(obj, "{0}{1}".format(prefix, name))
             except RuntimeError:
                 pass
 
@@ -147,7 +141,6 @@ class Renamer(object):
         for i in self.objectList:
             try:
                 cmds.rename(i, "{0}{1}".format(newName, str(counter).zfill(padding)))
-                # i.rename("{0}{1}".format(newName, str(counter).zfill(padding)))
                 counter += 1
             except RuntimeError:
                 pass
@@ -155,11 +148,10 @@ class Renamer(object):
     def replace(self, selectMethod, A, B):
         self.getObjects(selectMethod)  # initialize the objectList
 
-        for i in self.objectList:
+        for obj in self.objectList:
             try:
-                cmds.rename(i, i.replace(A, B))
-                # i.name().replace(A, B)
-                # i.rename(i.name().replace(A, B))
+                name = obj if not "|" in obj else obj.split("|")[-1]
+                cmds.rename(obj, name.replace(A, B))
             except RuntimeError:
                 pass
 
@@ -486,7 +478,7 @@ class MainUI(QtWidgets.QDialog):
         if command == "removePasted":
             self.renamer.removePasted(method)
         elif command == "removeSemi":
-            self.renamer.removeSemi(method)
+            self.renamer.removeNamespace(method)
         elif command == "addRight":
             self.renamer.addRight(method)
         elif command == "addLeft":
