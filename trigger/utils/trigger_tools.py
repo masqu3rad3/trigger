@@ -6,6 +6,7 @@
 
 import os
 import json
+import sys
 import weakref
 from functools import wraps
 from maya import cmds
@@ -13,19 +14,16 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-import Qt
-from Qt import QtWidgets, QtCore, QtGui
+from trigger.ui import Qt
+from trigger.ui.Qt import QtWidgets, QtCore, QtGui
 from maya import OpenMayaUI as omui
 
 if Qt.__binding__ == "PySide":
     from shiboken import wrapInstance
-    from Qt.QtCore import Signal
 elif Qt.__binding__.startswith('PyQt'):
     from sip import wrapinstance as wrapInstance
-    from Qt.Core import pyqtSignal as Signal
 else:
     from shiboken2 import wrapInstance
-    from Qt.QtCore import Signal
 
 windowName = "Trigger Tool v0.11"
 qss = """
@@ -356,7 +354,11 @@ def dock_window(dialog_class):
     # now lets get a C++ pointer to it using OpenMaya
     control_widget = omui.MQtUtil.findControl(dialog_class.CONTROL_NAME)
     # conver the C++ pointer to Qt object we can use
-    control_wrap = wrapInstance(long(control_widget), QtWidgets.QWidget)
+    # control_wrap = wrapInstance(long(control_widget), QtWidgets.QWidget)
+    if sys.version_info.major == 3:
+        control_wrap = wrapInstance(int(control_widget), QtWidgets.QWidget)
+    else:
+        control_wrap = wrapInstance(long(control_widget), QtWidgets.QWidget)
 
     # control_wrap is the widget of the docking window and now we can start working with it:
     control_wrap.setAttribute(QtCore.Qt.WA_DeleteOnClose)
