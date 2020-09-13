@@ -1,4 +1,5 @@
 import os
+from copy import deepcopy
 
 from maya import cmds
 import maya.api.OpenMaya as om
@@ -58,11 +59,8 @@ class ActionsSession(dict):
         self.io.write(self)
         FEEDBACK.info("Session Saved Successfully...")
 
-    def load_session(self, file_path, reset_scene=True):
+    def load_session(self, file_path):
         """Loads the session from the file"""
-
-        if reset_scene:
-            cmds.file(new=True, force=True)
         self.io.file_path = file_path
         actions_data = self.io.read()
         if actions_data:
@@ -73,6 +71,7 @@ class ActionsSession(dict):
             FEEDBACK.throw_error("The specified file doesn't exists")
 
     def get_valid_actions(self):
+        """Returns all available actions"""
         return sorted(self.action_data_dict.keys())
 
     def add_action(self, action_name, action_type):
@@ -95,33 +94,85 @@ class ActionsSession(dict):
         action = {
             "name": action_name,
             "type": action_type,
-            "data": self.action_data_dict.get(action_type)
+            "data": deepcopy(self.action_data_dict.get(action_type))
         }
         self["actions"].append(action)
         pass
 
-    def delete_action(self, action_name):
+    def get_action_by_name(self, action_name):
+        """Returns the action dictionary item by name"""
         for action in self["actions"]:
             if action["name"] == action_name:
-                self["actions"].remove(action)
-                return
+                return action
+        return None
+
+    def delete_action(self, action_name):
+        """Deletes the action by name from the dictionary"""
+        action = self.get_action_by_name(action_name)
+        if action:
+            self["actions"].remove(action)
         else:
             FEEDBACK.warning("%s cannot be found in the action list")
 
-    def edit_action(self, action_name, property):
-        pass
+    def edit_action(self, action_name, property, new_value):
+        """
+        Edits the property values
+        Args:
+            action_name: (String) Action by name
+            property: (String) Data Property
+            new_value: (Multi) The new value. If its not match to the value data of the property, will throw error
+
+        Returns: True if success, None or False if not
+
+        """
+        action = self.get_action_by_name(action_name)
+        if action:
+            current_value = action["data"].get(property)
+            if current_value == None:
+                FEEDBACK.throw_error("The property '%s' does not exist in %s ACTION_DATA" % (property, action["type"]))
+            if type(current_value) != type(new_value):
+                FEEDBACK.throw_error("%s property only accepts %s values" % (property, str(type(current_value))))
+            action["data"][property] = new_value
+            FEEDBACK.info("%s @ %s => %s" %(property, action["name"], new_value))
+            return True
+        else:
+            FEEDBACK.warning("%s cannot be found in the action list")
+            return False
 
     def get_actions(self):
+        """Returns all available actions"""
         return self["actions"]
 
     def get_action_names(self):
+        """Returns all available action names"""
         return [action["name"] for action in self["actions"]]
 
-    def move_up(self, action):
-        pass
+    def move_up(self, action_name):
+        """Moves the action one index up"""
+        action = self.get_action_by_name(action_name)
+        index = self["actions"].index(action)
+        if not index == 0:
+            self["actions"].insert(index-1, self["actions"].pop(index))
+        FEEDBACK.info("%s index => %s" % (action_name, index-1))
 
-    def move_down(self, action):
-        pass
+    def move_down(self, action_name):
+        """Moves the action one index down"""
+        action = self.get_action_by_name(action_name)
+        index = self["actions"].index(action)
+        if not index == len(self["actions"]):
+            self["actions"].insert(index+1, self["actions"].pop(index))
+        FEEDBACK.info("%s index => %s" % (action_name, index+1))
 
+    def move(self, action_name, new_index):
+        """Moves the action to the given index nmb"""
+        action = self.get_action_by_name(action_name)
+        old_index = self["actions"].index(action)
+        if old_index != new_index:
+            self["actions"].insert(new_index, self["actions"].pop(old_index))
+        FEEDBACK.info("%s index => %s" % (action_name, new_index))
+
+    def run_actions(self):
+        """runs all actions in the actions list"""
+        pass
 
 

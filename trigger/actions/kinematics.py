@@ -18,7 +18,7 @@ FEEDBACK = feedback.Feedback(logger_name=__name__)
 ACTION_DATA = {"use_guides": "from_file",
                "guides_file_path": "",
                "guide_roots": [],
-               "auto_swithcers": True,
+               "auto_switchers": True,
                "anchors": [],
                "anchor_locations": [],
                "after_creation": "delete"
@@ -30,7 +30,7 @@ class Kinematics(settings.Settings):
         if self.progress_bar:
             self.progress_bar.setProperty("value", 0)
 
-        self.createSwithcers = create_switchers
+        self.createSwitchers = create_switchers
         self.root_joint = root_joint
         self.module_dict = {mod: eval("modules.{0}.LIMB_DATA".format(mod)) for mod in modules.__all__}
         self.validRootList = [values["members"][0] for values in self.module_dict.values()]
@@ -58,18 +58,11 @@ class Kinematics(settings.Settings):
         self.match_fingers(self.fingerMatchList)
         self.createlimbs(self.limbCreationList)
 
-        if self.createSwithcers and self.anchorLocations:
+        if self.createSwitchers and self.anchorLocations:
             for anchor in (self.anchors):
                 anchorMaker.create_space_switch(anchor[0], self.anchorLocations, mode=anchor[1], defaultVal=anchor[2],
                                                 listException=anchor[3])
-        FEEDBACK.debug("DD1")
-        # else:
-        #     # TODO: tidy up here
-        #     for anchor in (self.anchors):
-        #         try:
-        #             cmds.parent(anchor[0], self.cont_placement)
-        #         except RuntimeError:
-        #             pass
+
 
         # grouping for fingers / toes
         for x in self.fingerMatchConts:
@@ -80,7 +73,6 @@ class Kinematics(settings.Settings):
             cmds.scaleConstraint("pref_cont", cont_offset)
             cmds.parent(cont_offset, root_grp)
             cmds.connectAttr("pref_cont.Control_Visibility", "%s.v" % cont_offset)
-        FEEDBACK.debug("DD2")
 
         # TODO : tidy up / make settings human readable
         if self.get("afterCreation") == 1:

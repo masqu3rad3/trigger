@@ -3,6 +3,7 @@
 # import pymel.core as pm
 from maya import cmds
 from trigger.utils import parentToSurface
+from importlib import reload
 reload(parentToSurface)
 # from trigger.utils import extraProcedures as extra
 from trigger.library import functions
