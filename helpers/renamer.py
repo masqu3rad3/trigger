@@ -49,19 +49,28 @@ class Renamer(object):
     def getObjects(self, method):
         """returns objects according to the method"""
         if method == 0: # selected objects
-            self.objectList = cmds.ls(sl=True)
+            self.objectList = cmds.ls(sl=True, long=True)
         if method == 1: # Hierarchy
             self.objectList = cmds.listRelatives(cmds.ls(sl=True), c=True, ad=True, f=True)
         if method == 2: # Everything
-            self.objectList = cmds.ls()
+            self.objectList = cmds.ls(long=True)
 
 
     def removePasted(self, selectMethod):
         """Removes pasted_ from the object name"""
         self.getObjects(selectMethod) # initialize the objectList
-        for i in self.objectList:
+        print(self.objectList)
+        for obj in self.objectList:
             try:
-                cmds.rename(i, i.replace("pasted_", ""))
+                if "pasted__" in obj:
+                    pasted = "pasted__"
+                elif "pasted_" in obj:
+                    pasted = "pasted_"
+                elif "pasted" in obj:
+                    pasted = "pasted"
+                else:
+                    return
+                cmds.rename(obj, obj.split("|")[-1].replace(pasted, ""))
             except RuntimeError:
                 pass
 
@@ -78,7 +87,8 @@ class Renamer(object):
         self.getObjects(selectMethod)  # initialize the objectList
         for obj in self.objectList:
             try:
-                name = obj if not "|" in obj else obj.split("|")[-1]
+                # name = obj if not "|" in obj else obj.split("|")[-1]
+                name = obj.split("|")[-1]
                 cmds.rename(obj, "{0}{1}".format(name, suffix))
             except RuntimeError:
                 pass
@@ -87,7 +97,8 @@ class Renamer(object):
         self.getObjects(selectMethod)  # initialize the objectList
         for obj in self.objectList:
             try:
-                name = obj if not "|" in obj else obj.split("|")[-1]
+                # name = obj if not "|" in obj else obj.split("|")[-1]
+                name = obj.split("|")[-1]
                 cmds.rename(obj, "{0}{1}".format(prefix, name))
             except RuntimeError:
                 pass
@@ -113,7 +124,8 @@ class Renamer(object):
 
         for obj in self.objectList:
             try:
-                name = obj if not "|" in obj else obj.split("|")[-1]
+                # name = obj if not "|" in obj else obj.split("|")[-1]
+                name = obj.split("|")[-1]
                 cmds.rename(obj, name.replace(A, B))
             except RuntimeError:
                 pass
