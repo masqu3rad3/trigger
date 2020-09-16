@@ -716,6 +716,14 @@ cmds.parent("trigger_stretch_grp", stretch_grp)
 # delete excess data
 cmds.delete("trigger_refGuides")
 
+
+## HAND HACK ##
+scale_jnt_list = ["bn_L_hand", "bn_L_thumb_base", "bn_L_fingerA_base", "bn_L_fingerA_mid", "bn_L_fingerB_base", "bn_L_fingerB_mid", "bn_L_fingerC_base", "bn_L_fingerC_mid", "bn_L_fingerD_base", "bn_L_fingerD_mid"]
+for side in "LR":
+    cmds.scaleConstraint("ctrl_%s_hand" %side, "grp_%s_fingers" %side)
+    for jnt in scale_jnt_list:
+        cmds.connectAttr("ctrl_%s_hand.s" %side ,"%s.s" %(jnt.replace("_L_", "_%s_" % side)))
+
 #########################################
 ## FINAL CLEANUP & DISPLAY ADJUSTMENTS ##12
 #########################################

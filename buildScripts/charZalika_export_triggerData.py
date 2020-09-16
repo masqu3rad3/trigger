@@ -2,6 +2,7 @@ cmds.error("PREVENT ACCIDENTAL RUN")
 
 # save all weights
 from trigger.library import functions
+from trigger.library import deformers
 from trigger.actions import weights
 reload(weights)
 from trigger.base import session

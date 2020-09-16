@@ -7,7 +7,8 @@ reload(weights)
 weightHandler = weights.Weights()
 fileHandler = import_export.ImportExport()
 
-baserig_file = "/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charHotelGuest/RIG/work/maya/rootCharHotelGuestBvA.v009.ma"
+# baserig_file = "/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charHotelGuest/RIG/work/maya/rootCharHotelGuestBvA.v009.ma"
+baserig_file = "/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charHotelGuest/RIG/work/maya/rootCharHotelGuestDvA.v002.ma"
 cmds.file(baserig_file, open=True, force=True)
 meshes_file = "/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charHotelGuest/MDL/publish/maya/charHotelGuestBvA.v002.ma"
 fileHandler.import_scene(meshes_file)

@@ -93,14 +93,24 @@ class Weights(dict):
             file_dir, file_name = os.path.split(file_path)
         # extra attributes for recreation
         deformer_type = cmds.objectType(deformer)
+        export_dq_weights = False
         if deformer_type == "skinCluster":
             attributes = ["envelope", "skinningMethod", "useComponents", "normalizeWeights", "deformUserNormals"]
+            # in case DQ blendweight mode, flag for adding DQ to the file afterwards
+            if cmds.getAttr("%s.skinningMethod" % deformer[0]) == 2:
+                export_dq_weights = True
         else:
             attributes = []
         # TODO: ADD ATTRIBUTES FOR ALL DEFORMER TYPES
 
         # default value -1 means export all weights!
         cmds.deformerWeights(file_name, export=True, deformer=deformer, path=file_dir, defaultValue=-1.0, vc=vertexConnections, at=attributes)
+
+        if export_dq_weights:
+            self.io.file_path = os.path.join(file_dir, file_name)
+            data = self.io.read()
+            data["DQ_weights"] = cmds.getAttr("%s.ptw" % deformer[0])
+            self.io.write(data)
 
         # there is no argument to define the influencer while exporting.
         # If a specific influencer needs to be exported, strip the rest after the file exported.
@@ -148,6 +158,9 @@ class Weights(dict):
             for mesh in skin_meshes:
                 cmds.select("%s.vtx[0]" % mesh)
                 cmds.WeightHammer()
+            if data.get("DQ_weights"):
+                for nmb, weight in enumerate(data["DQ_weights"]):
+                    cmds.setAttr('%s.bw[%s]' % (deformer, nmb), weight)
             cmds.select(d=True)
             return
             # point_attr_template = "{0}.weightList[{1}].weights[0]"

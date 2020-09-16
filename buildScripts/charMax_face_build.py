@@ -714,6 +714,15 @@ deprecated_conts = ["Spine_Chest_cont",
 
 _ = [functions.lockAndHide(cont) for cont in deprecated_conts]
 
+## HAND HACK ##
+scale_jnt_list = ["bn_L_hand", "bn_L_thumb_base", "bn_L_fingerA_base", "bn_L_fingerA_end", "bn_L_fingerA_end1", "bn_L_fingerB_base", "bn_L_fingerB_end", "bn_L_fingerB_end1", "bn_L_fingerC_base", "bn_L_fingerC_end", "bn_L_fingerC_end1", "bn_L_fingerD_base", "bn_L_fingerD_end", "bn_L_fingerD_end1"]
+for side in "LR":
+    cmds.setAttr("grp_%s_fingers.scaleX" % side, e=True, k=True, l=False)
+    cmds.setAttr("grp_%s_fingers.scaleY" % side, e=True, k=True, l=False)
+    cmds.setAttr("grp_%s_fingers.scaleZ" % side, e=True, k=True, l=False)
+    cmds.scaleConstraint("ctrl_%s_hand_IK" %side, "grp_%s_fingers" %side)
+    for jnt in scale_jnt_list:
+        cmds.connectAttr("ctrl_%s_hand_IK.s" %side ,"%s.s" %(jnt.replace("_L_", "_%s_" % side)))
 
 #########################################
 ## FINAL CLEANUP & DISPLAY ADJUSTMENTS ##12
@@ -805,6 +814,7 @@ for side in "LR":
     cmds.connectAttr("dist_%s_armShape.distance" % side, "%s.input1X" % divider)
     cmds.connectAttr("%s.output" % total_mult, "%s.input2X" % divider)
     cmds.connectAttr("%s.outputX" % divider, "jDrv_%s_lowArmIK_translateY.input" % side, force=True)
+
 
 
 ### EYE SPEC ###

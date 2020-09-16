@@ -20,7 +20,7 @@ cmds.hide(cmds.listRelatives("grp_faceExtra", children=True))
 # import the mesh grp
 import_act = import_export.ImportExport()
 import_act.import_scene("/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charEmmaChair/MDL/publish/maya/charEmmaChairAvA.v018.ma")
-import_act.import_scene("/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charEmma/MDL/publish/maya/charEmmaAvA.v027.ma")
+import_act.import_scene("/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charEmma/MDL/publish/maya/charEmmaAvA.v029.ma")
 
 # get all final meshes
 chair_meshes = functions.getMeshes("charEmmaChairAvA")
@@ -101,7 +101,7 @@ cmds.parent(tongue_ctrl_grp, "Rig_Controllers")
 # import face UI
 # cmds.file("/home/arda.kutlu/localProjects/EG2_playground_200617/scenes/UI/faceUI/faceUI_UI_gn_v001.mb", i=True, mnr=True)
 import_act.import_scene(
-    "/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charMax/RIG/work/maya/triggerData/UI/faceUI.mb")
+    "/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charEmma/RIG/work/maya/charEmmaFaceUI.v001.ma")
 # import_act.import_alembic("/home/arda.kutlu/localProjects/EG2_playground_200617/_TRANSFER/ALEMBIC/faceUI.abc")
 cmds.setAttr("face_ctrls_grp.translate", -36, 170, 0)
 cmds.parentConstraint("ctrl_head", "face_ctrls_grp", mo=True)
@@ -307,16 +307,16 @@ for side in "LR":
 #############################################################
 
 
-# # BLENDSHAPES
-# #############
-# import_act.import_alembic("/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charMax/RIG/publish/caches/charMaxBlendshapes.v002.abc")
-# blendshapes = functions.getMeshes("blendshapes_grp")
-# # filter out X meshes and neutral
-# blendshapes = [shape for shape in blendshapes if not shape.endswith("X") and shape != "neutral"]
+# BLENDSHAPES
+#############
+import_act.import_alembic("/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charEmma/RIG/publish/caches/charEmmaBlendshapes.v002.abc")
+blendshapes = functions.getMeshes("blendshapes_grp")
+# filter out X meshes and neutral
+blendshapes = [shape for shape in blendshapes if not shape.endswith("X") and shape != "neutral"]
 
-# for shape in blendshapes:
-#     hook_attr = shape.replace("Corrective", "")
-#     deformers.connect_bs_targets("%s.%s" %(hook_blendshapes, hook_attr), {"charMaxAvA_local": shape})
+for shape in blendshapes:
+    hook_attr = shape.replace("Corrective", "")
+    deformers.connect_bs_targets("%s.%s" %(hook_blendshapes, hook_attr), {"charEmmaAvA_face_GEO_IDskin_local": shape})
 
 # # eyelid correctives= Override hook node input to correct it in bone level
 # LU_eyelid_multMatrix = cmds.createNode("multMatrix", name="LU_eyelid_multMatrix")
@@ -343,26 +343,26 @@ for side in "LR":
 # cmds.connectAttr("%s.matrixSum" % RD_eyelid_multMatrix, "%s.inputMatrix" % RD_eyelid_decMatrix)
 # functions.drive_attrs("%s.outputRotateX" % RD_eyelid_decMatrix, "%s.DReyesWide" % hook_blendshapes, driver_range=[0, -25], driven_range=[0,1])
 
-# # LIPS_SEAL
-# ###########
+# LIPS_SEAL
+###########
 
-# # create an inbetween joint
-# between_jnt = cmds.joint(name="betweenJaw_jDef")
-# cmds.parentConstraint(["jaw_jDef", "jawN_jDef"], between_jnt, mo=False)
-# cmds.parent(between_jnt, "local_BS_rig_grp")
+# create an inbetween joint
+between_jnt = cmds.joint(name="betweenJaw_jDef")
+cmds.parentConstraint(["jaw_jDef", "jawN_jDef"], between_jnt, mo=False)
+cmds.parent(between_jnt, "local_BS_rig_grp")
 
-# lip_seal_mesh = cmds.duplicate("neutral", name="charMaxAvA_closeMouth")[0]
-# # make sure its correct pos
-# cmds.parent(lip_seal_mesh, "local_BS_rig_grp")
-# cmds.setAttr("%s.translate" % lip_seal_mesh, 0, 0, 0)
-# cmds.setAttr("%s.rotate" % lip_seal_mesh, 0, 0, 0)
+lip_seal_mesh = cmds.duplicate("neutral", name="charEmmaAvA_closeMouth")[0]
+# make sure its correct pos
+cmds.parent(lip_seal_mesh, "local_BS_rig_grp")
+cmds.setAttr("%s.translate" % lip_seal_mesh, 0, 0, 0)
+cmds.setAttr("%s.rotate" % lip_seal_mesh, 0, 0, 0)
 
-# local_meshes.append(lip_seal_mesh)
+local_meshes.append(lip_seal_mesh)
 
-# # apply the same bs to this shit
-# for shape in blendshapes:
-#     hook_attr = shape.replace("Corrective", "")
-#     deformers.connect_bs_targets("%s.%s" %(hook_blendshapes, hook_attr), {lip_seal_mesh: shape})
+# apply the same bs to this shit
+for shape in blendshapes:
+    hook_attr = shape.replace("Corrective", "")
+    deformers.connect_bs_targets("%s.%s" %(hook_blendshapes, hook_attr), {lip_seal_mesh: shape})
 
 # # THE SEAL MESH WILL BE ADDED AFTER SKINCLUSTERS
 
@@ -376,7 +376,7 @@ for side in "LR":
 sessionHandler.load_session(
     "/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charEmma/RIG/work/maya/triggerData/guides/emma_twk_guides.json",
     reset_scene=False)
-
+cmds.setAttr("twk_lowerLipMid_C_jDef.tz", -6)
 # sessionHandler.load_session("/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charMax/RIG/work/maya/triggerData/guides/max_local_bs_guides.json", reset_scene=False)
 # move the local bs joints and make the labels invisible
 local_twk_joints = cmds.listRelatives("trigger_refGuides", children=True, type="joint", ad=True)
@@ -515,7 +515,7 @@ for mesh in all_meshes:
         weightHandler.create_deformer(os.path.join(weights_root, weight_file_path))
 
 # # Add the lips seal blendhshape
-# deformers.connect_bs_targets("mouth_cont.sealLips", {"charMaxAvA_local": lip_seal_mesh}, bs_node_name="lips_seal_bs", front_of_chain=False, force_new=True)
+deformers.connect_bs_targets("mouth_cont.sealLips", {"charEmmaAvA_face_GEO_IDskin_local": lip_seal_mesh}, bs_node_name="lips_seal_bs", front_of_chain=False, force_new=True)
 # weightHandler.load_weights(deformer="lips_seal_bs", file_path=os.path.join(weights_root, "lips_seal_bs.json"))
 
 
@@ -724,6 +724,21 @@ cmds.parent("trigger_stretch_grp", stretch_grp)
 # delete excess data
 cmds.delete("trigger_refGuides")
 
+# make the previous controllers not controllable
+deprecated_conts = ["Spine_Chest_cont", 
+"Spine_Hips_cont", 
+"Spine_Body_cont", 
+"Spine0_SpineFK_A_cont", 
+"Spine0_SpineFK_B_cont",
+"Spine1_SpineFK_A_cont", 
+"Spine1_SpineFK_B_cont",
+"Spine2_SpineFK_A_cont", 
+"Spine2_SpineFK_B_cont",
+"Spine_Spine1_tweak_cont"
+]
+
+_ = [functions.lockAndHide(cont) for cont in deprecated_conts]
+
 
 #########################################
 ## FINAL CLEANUP & DISPLAY ADJUSTMENTS ##12
@@ -752,7 +767,8 @@ cmds.hide("local_STRETCH_rig_grp")
 cmds.delete(["Emma_BodyNone", "Emma_Chair", "Emma_Hair", "Emma_Hands", "Emma_Head"])
 
 # delete blendshape grp
-# cmds.delete("blendshapes_grp")
+functions.deleteObject("blendshapes_grp")
+functions.deleteObject("transform3")
 
 # hide old rig elemets
 cmds.hide("ctrl_faceRigPanel")

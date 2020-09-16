@@ -69,6 +69,9 @@ sessionHandler.save_session(os.path.join(triggerData_root, "guides", "%s_twk_gui
 # # SAVE STRETCHY GUIDES
 sessionHandler.save_session(os.path.join(triggerData_root, "guides", "%s_stretchyFace.json" % charName))
 
+# # SAVE HAT GUIDES
+sessionHandler.save_session(os.path.join(triggerData_root, "guides", "%s_hat_guides.json" % charName))
+
 # # SAV FFD
 ffd_name = "charIvanAvA_helmetglass_idHelmetGlass_GEO_local_ffd"
 weightHandler.save_weights(deformer=ffd_name, file_path=os.path.join(triggerData_root, "weights", "%s.json" % ffd_name) , vertexConnections=False, force=True, influencer=None)

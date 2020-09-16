@@ -29,7 +29,7 @@ cmds.hide(cmds.listRelatives("grp_faceExtra", children=True))
 # import the mesh grp
 
 # import_act.import_alembic("/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charIvan/MDL/publish/caches/charIvanAvA.v042.abc")
-import_act.import_scene("/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charIvan/MDL/publish/maya/charIvanAvA.v044.ma")
+import_act.import_scene("/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charIvan/MDL/publish/maya/charIvanAvA.v046.ma")
 # cmds.rename("charIvanAvA_epauletteFringe_GEOShape", "charIvanAvA_epauletteFringe_GEO53Shape")
 # cmds.rename("charIvanAvA_epaulette_GEOShape", "charIvanAvA_epaulette_GEO98Shape")
 
@@ -166,6 +166,9 @@ for jnt in tongue_joints:
     tongue_conts.append(cont)
     functions.colorize(cont, "C")
     cmds.connectAttr("%s.rotate" % cont, "%s.rotate" % jnt)
+    cmds.connectAttr("%s.scale" % cont, "%s.scale" % jnt)
+    offset_jnt = functions.createUpGrp(jnt, "pos")
+    cmds.connectAttr("%s.translate" % cont, "%s.translate" % offset_jnt)
 
 # create a hinge at the jaw location to move the tongue conts with jaw
 jaw_follow_grp = cmds.group(name="jaw_follow_grp", em=True)
@@ -394,6 +397,9 @@ for jnt_off, jnt in zip(sash_joint_offsets, sash_tweakers):
         cmds.error("CONTROLLER MISSING => %s" % controller)
     jointsOnBlendshape.jointOnBlendshapes(joint=str(jnt_off), controller=str(controller), surface=str(sash_mesh),
                                           attach_mode="pointConstraint")
+                                          
+# orientation fix
+cmds.orientConstraint("bn_pelvis", sash_tweaker_conts_grp, mo=False)
 
 # follicle_shapes = cmds.ls(type="follicle")
 # follicle_transforms = map(lambda x: functions.getParent(x), follicle_shapes)
@@ -472,7 +478,7 @@ for jnt_off, jnt in zip(sash_joint_offsets, sash_tweakers):
 sessionHandler.load_session(
     "/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charIvan/RIG/work/maya/triggerData/guides/ivan_twk_guides.json",
     reset_scene=False)
-
+cmds.setAttr("twk_upperLipSide_R_jDef.tz", -4)
 # move the local bs joints and make the labels invisible
 local_twk_joints = cmds.listRelatives("trigger_refGuides", children=True, type="joint", ad=True)
 _ = [cmds.setAttr("%s.drawLabel" % jnt, 0) for jnt in local_twk_joints]
@@ -515,6 +521,9 @@ for jnt_off, jnt in zip(joint_offsets, local_twk_joints):
         cmds.error("CONTROLLER MISSING => %s" % controller)
     jointsOnBlendshape.jointOnBlendshapes(joint=str(jnt_off), controller=str(controller), surface=str(main_face_mesh),
                                           attach_mode="pointConstraint")
+                                          
+# orientation fix
+cmds.orientConstraint("bn_head", tweaker_conts_grp, mo=False)
 
 follicle_shapes = cmds.ls(type="follicle")
 follicle_transforms = map(lambda x: functions.getParent(x), follicle_shapes)
@@ -523,7 +532,20 @@ cmds.parent(follicle_grp, "local_TWK_rig_grp")
 
 functions.drive_attrs("tweakers_onOff_cont.tx", "%s.v" % tweaker_conts_grp, driver_range=[0, -10], driven_range=[0, 1])
 
+## HAT RIG ##
+#############
 
+sessionHandler.load_session("/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charIvan/RIG/work/maya/triggerData/guides/ivan_hat_guides.json", reset_scene=False)
+from trigger.actions import kinematics
+kine_hand = kinematics.Kinematics("jInit_spine_c_0", create_switchers=False)
+kine_hand.action()
+
+cmds.parent("limbPlug_Hat", "bn_head")
+cmds.rename("trigger_grp", "hatRig_grp")
+cmds.parent("hatRig_grp", "Char_Ivan")
+
+functions.deleteObject("trigger_refGuides")
+cmds.hide("Hat_Hips_contShape")
                
 ################################################
 ############### SKINCLUSTERS ###################
@@ -976,3 +998,5 @@ for side in "R":
     cmds.setAttr("%s.snapToEye" % cont, 5)
 
 # functions.drive_attrs("mouth_cont.teethVis", "upperTeeth_cont.v")
+
+
