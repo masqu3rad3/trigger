@@ -240,15 +240,15 @@ class MainUI(QtWidgets.QDialog):
 
         self.colorize_pb.clicked.connect(self.on_colorize)
 
-        self.primary_right_pb.clicked.connect(lambda x: self.colorize.changeColor(self.colorize.primaryRightID))
-        self.primary_left_pb.clicked.connect(lambda x: self.colorize.changeColor(self.colorize.primaryLeftID))
-        self.primary_center_pb.clicked.connect(lambda x: self.colorize.changeColor(self.colorize.primaryCenterID))
-        self.secondary_right_pb.clicked.connect(lambda x: self.colorize.changeColor(self.colorize.secondaryRightID))
-        self.secondary_left_pb.clicked.connect(lambda x: self.colorize.changeColor(self.colorize.secondaryLeftID))
-        self.secondary_center_pb.clicked.connect(lambda x: self.colorize.changeColor(self.colorize.secondaryCenterID))
-        self.tertiary_right_pb.clicked.connect(lambda x: self.colorize.changeColor(self.colorize.tertiaryRightID))
-        self.tertiary_left_pb.clicked.connect(lambda x: self.colorize.changeColor(self.colorize.tertiaryLeftID))
-        self.tertiary_center_pb.clicked.connect(lambda x: self.colorize.changeColor(self.colorize.tertiaryCenterID))
+        self.primary_right_pb.clicked.connect(lambda x=0: self.colorize.changeColor(self.colorize.primaryRightID))
+        self.primary_left_pb.clicked.connect(lambda x=0: self.colorize.changeColor(self.colorize.primaryLeftID))
+        self.primary_center_pb.clicked.connect(lambda x=0: self.colorize.changeColor(self.colorize.primaryCenterID))
+        self.secondary_right_pb.clicked.connect(lambda x=0: self.colorize.changeColor(self.colorize.secondaryRightID))
+        self.secondary_left_pb.clicked.connect(lambda x=0: self.colorize.changeColor(self.colorize.secondaryLeftID))
+        self.secondary_center_pb.clicked.connect(lambda x=0: self.colorize.changeColor(self.colorize.secondaryCenterID))
+        self.tertiary_right_pb.clicked.connect(lambda x=0: self.colorize.changeColor(self.colorize.tertiaryRightID))
+        self.tertiary_left_pb.clicked.connect(lambda x=0: self.colorize.changeColor(self.colorize.tertiaryLeftID))
+        self.tertiary_center_pb.clicked.connect(lambda x=0: self.colorize.changeColor(self.colorize.tertiaryCenterID))
 
     def initialize(self):
         self.primary_right_pb.setStyleSheet("color: black; background-color:rgb{0}".format(self._f2b(self.colorize.colorIndices[self.colorize.primaryRightID])))

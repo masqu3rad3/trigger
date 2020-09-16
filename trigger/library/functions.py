@@ -885,50 +885,6 @@ def getMeshes(node):
     all_mesh_shapes = cmds.listRelatives(node, ad=True, children=True, type="mesh")
     return uniqueList([getParent(mesh) for mesh in all_mesh_shapes])
 
-# def matrixConstraint(parent, child, mo=True, prefix="", sr=None, st=None, ss=None):
-#     child_parent = getParent(child)
-#     # if child_parent:
-#     #     cmds.parent(child, w=True)
-#
-#
-#     mult_matrix = cmds.createNode("multMatrix", name="%s_multMatrix" % prefix)
-#     decompose_matrix = cmds.createNode("decomposeMatrix", name="%s_decomposeMatrix" % prefix)
-#
-#     cmds.connectAttr("%s.worldMatrix[0]" % parent, "%s.matrixIn[1]" % mult_matrix)
-#     cmds.connectAttr("%s.matrixSum" % mult_matrix, "%s.inputMatrix" % decompose_matrix)
-#
-#     if mo:
-#         parentWorldMatrix = getMDagPath(parent).inclusiveMatrix()
-#         childWorldMatrix = getMDagPath(child).inclusiveMatrix()
-#         localOffset = childWorldMatrix * parentWorldMatrix.inverse()
-#         cmds.setAttr("%s.matrixIn[0]" % mult_matrix, localOffset, type="matrix")
-#     if child_parent:
-#         child_parentWorldMatrix = getMDagPath(child_parent).inclusiveMatrix().inverse()
-#         # childWorldMatrix = getMDagPath(child).inclusiveMatrix()
-#         # localOffset = childWorldMatrix * child_parentWorldMatrix.inverse()
-#         cmds.setAttr("%s.matrixIn[2]" % mult_matrix, child_parentWorldMatrix, type="matrix")
-#
-#     if not st:
-#         cmds.connectAttr("%s.outputTranslate" % decompose_matrix, "%s.translate" % child)
-#     else:
-#         for attr in "XYZ":
-#             if attr.lower() not in st and attr.upper() not in st:
-#                 cmds.connectAttr("%s.outputTranslate%s" % (decompose_matrix, attr), "%s.translate%s" % (child, attr))
-#     if not sr:
-#         cmds.connectAttr("%s.outputRotate" % decompose_matrix, "%s.rotate" % child)
-#     else:
-#         for attr in "XYZ":
-#             if attr.lower() not in sr and attr.upper() not in sr:
-#                 cmds.connectAttr("%s.outputRotate%s" % (decompose_matrix, attr), "%s.rotate%s" % (child, attr))
-#     if not ss:
-#         cmds.connectAttr("%s.outputScale" % decompose_matrix, "%s.scale" % child)
-#     else:
-#         for attr in "XYZ":
-#             if attr.lower() not in ss and attr.upper() not in ss:
-#                 cmds.connectAttr("%s.outputScale%s" % (decompose_matrix, attr), "%s.scale%s" % (child, attr))
-#
-#     return mult_matrix, decompose_matrix
-
 def getNextIndex(attr, startFrom=0):
     """Returns the next free index from a multi index attribute"""
     return mel.eval("getNextFreeMultiIndex %s %s" % (attr, startFrom))
