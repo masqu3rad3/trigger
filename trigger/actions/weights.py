@@ -26,7 +26,7 @@ def addList(list_of_values):
         result += x
     return result
 
-def subtractList(list_of_values):
+def subractList(list_of_values):
     result = list_of_values[0]
     for x in list_of_values[1:]:
         result += x
@@ -54,7 +54,7 @@ class Weights(dict):
         self.io.file_path = file_path
 
     def action(self):
-        """Mandatory method for all action maya_modules"""
+        """Mandatory method for all action modules"""
         pass
 
     # def collect_deformers(self, mesh):
@@ -93,14 +93,24 @@ class Weights(dict):
             file_dir, file_name = os.path.split(file_path)
         # extra attributes for recreation
         deformer_type = cmds.objectType(deformer)
+        export_dq_weights = False
         if deformer_type == "skinCluster":
             attributes = ["envelope", "skinningMethod", "useComponents", "normalizeWeights", "deformUserNormals"]
+            # in case DQ blendweight mode, flag for adding DQ to the file afterwards
+            if cmds.getAttr("%s.skinningMethod" % deformer[0]) == 2:
+                export_dq_weights = True
         else:
             attributes = []
         # TODO: ADD ATTRIBUTES FOR ALL DEFORMER TYPES
 
         # default value -1 means export all weights!
         cmds.deformerWeights(file_name, export=True, deformer=deformer, path=file_dir, defaultValue=-1.0, vc=vertexConnections, at=attributes)
+
+        if export_dq_weights:
+            self.io.file_path = os.path.join(file_dir, file_name)
+            data = self.io.read()
+            data["DQ_weights"] = cmds.getAttr("%s.ptw" % deformer[0])
+            self.io.write(data)
 
         # there is no argument to define the influencer while exporting.
         # If a specific influencer needs to be exported, strip the rest after the file exported.
@@ -148,6 +158,9 @@ class Weights(dict):
             for mesh in skin_meshes:
                 cmds.select("%s.vtx[0]" % mesh)
                 cmds.WeightHammer()
+            if data.get("DQ_weights"):
+                for nmb, weight in enumerate(data["DQ_weights"]):
+                    cmds.setAttr('%s.bw[%s]' % (deformer, nmb), weight)
             cmds.select(d=True)
             return
             # point_attr_template = "{0}.weightList[{1}].weights[0]"
@@ -159,7 +172,7 @@ class Weights(dict):
             # splitMaps_blendshape.inputTarget[0].inputTargetGroup[X].targetWeights[0]
         return True
 
-    def create_deformer(self, weights_file=None, deformer_type=None):
+    def create_deformer(self, weights_file, deformer_type=None):
         """
         Creates the deformer defined in the weights file and applies the pre-saved weights.
 
@@ -172,7 +185,6 @@ class Weights(dict):
         Returns:
 
         """
-        weights_file = self.io.file_path if not weights_file else weights_file
 
         # load the weights file
         self.io.file_path = weights_file
@@ -522,10 +534,10 @@ def get_deformer_weights(mesh, source_deformer, source_influence=None, data_type
         skin_cluster_obj = (om.MSelectionList().add(source_deformer).getDependNode(0))
         influence_dag = om.MSelectionList().add(source_influence).getDagPath(0)
         index = int(omAnim.MFnSkinCluster(skin_cluster_obj).indexForInfluenceObject(influence_dag))
-            
+
         # Get weights
         weights = mfn_skc.getWeights(node_dag, components, om.MIntArray([index]))
-        
+
         return list(weights)
 
     plug, vtx_count = get_plug_ids(mesh, source_deformer, source_influence)
@@ -538,7 +550,7 @@ def get_deformer_weights(mesh, source_deformer, source_influence=None, data_type
         ]
     elif data_type == "float":
         weight_list = [
-            plug.elementByLogicalIndex(i).asFloat()   
+            plug.elementByLogicalIndex(i).asFloat()
             for i in range(vtx_count)
         ]
 
