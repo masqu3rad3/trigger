@@ -342,10 +342,15 @@ class MainUI(QtWidgets.QMainWindow):
 
         ## PROPERTIES - General [End]
 
+        self.guide_test_pb = QtWidgets.QPushButton()
+        self.guide_test_pb.setText("Test Build Selected Branch")
+        guides_tab_vlay.addWidget(self.guide_test_pb)
+
         ## SIGNALS
         self.guides_list_treeWidget.currentItemChanged.connect(self.on_guide_change)
         # self.module_name_le.textChanged.connect(lambda text=self.module_name_le.text(): self.update_properties("moduleName", text))
         self.module_name_le.textEdited.connect(lambda text=self.module_name_le.text(): self.update_properties("moduleName", text))
+        self.module_name_le.editingFinished.connect(self.populate_guides)
 
         self.up_axis_sp_list[0].valueChanged.connect(lambda num: self.update_properties("upAxisX", num))
         self.up_axis_sp_list[1].valueChanged.connect(lambda num: self.update_properties("upAxisY", num))
@@ -358,6 +363,11 @@ class MainUI(QtWidgets.QMainWindow):
         self.look_axis_sp_list[2].valueChanged.connect(lambda num: self.update_properties("lookAxisZ", num))
 
         self.inherit_orientation_cb.toggled.connect(lambda state=self.inherit_orientation_cb.isChecked(): self.update_properties("useRefOri", state))
+
+        self.guide_test_pb.clicked.connect(self.guides_test_build)
+
+    def guides_test_build(self):
+        self.guide.test_build()
 
     def buildRiggingUI(self):
         self.rigging_tab_vLay = QtWidgets.QVBoxLayout(self.rigging_tab)
@@ -697,8 +707,8 @@ class MainUI(QtWidgets.QMainWindow):
     def update_properties(self, property, value):
         root_jnt = self.guides_list_treeWidget.currentItem().text(2)
         self.guide.set_property(root_jnt, property, value)
-        if property == "moduleName":
-            self.populate_guides()
+        # if property == "moduleName":
+        #     self.populate_guides()
 
     def on_create_guide(self, limb_name, *args, **kwargs):
         if limb_name == "humanoid":

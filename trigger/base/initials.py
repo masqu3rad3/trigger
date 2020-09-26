@@ -5,6 +5,7 @@ import maya.api.OpenMaya as om
 
 from trigger.core.undo_dec import undo
 from trigger.library import functions as extra
+from trigger.actions import kinematics # for testing the guides
 
 from trigger import modules
 from trigger.core import settings
@@ -423,3 +424,19 @@ class Initials(settings.Settings):
             if len(children) == failedChildren:
                 z = False
         return [limb_dict, limb_type, limb_side]
+
+    def test_build(self, root_jnt=None):
+        if not root_jnt:
+            selection = cmds.ls(sl=True)
+            if len(selection) == 1:
+                root_jnt = selection[0]
+            else:
+                FEEDBACK.warning("Select a single root_jnt joint")
+        if not cmds.objectType(root_jnt, isType="joint"):
+            FEEDBACK.throw_error("root_jnt is not a joint")
+        root_name, root_type, root_side = extra.identifyMaster(root_jnt, self.module_dict)
+        if root_name not in self.validRootList:
+            FEEDBACK.throw_error("Selected joint is not in the valid Guide Root")
+
+        test_kinematics = kinematics.Kinematics(root_jnt)
+        test_kinematics.action()
