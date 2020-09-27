@@ -425,7 +425,8 @@ class Initials(settings.Settings):
                 z = False
         return [limb_dict, limb_type, limb_side]
 
-    def test_build(self, root_jnt=None):
+    @undo
+    def test_build(self, root_jnt=None, progress_bar=None):
         if not root_jnt:
             selection = cmds.ls(sl=True)
             if len(selection) == 1:
@@ -438,5 +439,5 @@ class Initials(settings.Settings):
         if root_name not in self.validRootList:
             FEEDBACK.throw_error("Selected joint is not in the valid Guide Root")
 
-        test_kinematics = kinematics.Kinematics(root_jnt)
+        test_kinematics = kinematics.Kinematics(root_jnt, progress_bar=progress_bar)
         test_kinematics.action()

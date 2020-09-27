@@ -1,9 +1,10 @@
 """Main UI for TRigger"""
-import sys
+import sys, os
 from trigger.ui import Qt
 from trigger.ui.Qt import QtWidgets, QtCore, QtGui
 
 from trigger.base import initials, builder
+from trigger.base import session
 
 from maya import OpenMayaUI as omui
 
@@ -36,6 +37,12 @@ def getMayaMainWindow():
 
 
 class MainUI(QtWidgets.QMainWindow):
+
+    # create guide and rig objects
+    guide = initials.Initials()
+    rig = builder.Builder()
+    session_handler = session.Session()
+
     def __init__(self):
         for entry in QtWidgets.QApplication.allWidgets():
             try:
@@ -57,15 +64,13 @@ class MainUI(QtWidgets.QMainWindow):
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.setCentralWidget(self.centralwidget)
 
-        # create guide and rig objects
-        self.guide = initials.Initials()
-        self.rig = builder.Builder()
+
         # Build the UI elements
         self.buildTabsUI()
         self.buildBarsUI()
-        self.buildGuidesUI()
         self.buildRiggingUI()
-        self.show()
+        self.buildGuidesUI()
+
 
         self.populate_guides()
 
@@ -77,20 +82,14 @@ class MainUI(QtWidgets.QMainWindow):
         # Call f() every 5 seconds
         self.timer.start(1000)
 
-
-        # Splitter size hack
-        # this must be done after the show()
-        sizes = self.splitter.sizes()
-        self.splitter.setSizes([sizes[0] * 0.3, sizes[1] * 1.0, sizes[2] * 1.5])
-
         self.splitter.setStretchFactor(0, 10)
-        self.splitter.setStretchFactor(1, 90)
-        # self.splitter.setStretchFactor(2, 5)
-
+        self.splitter.setStretchFactor(1, 40)
+        self.splitter.setStretchFactor(1, 50)
 
         self.rig_LR_splitter.setStretchFactor(0, 10)
         self.rig_LR_splitter.setStretchFactor(1, 90)
 
+        self.show()
 
 
     def buildBarsUI(self):
@@ -103,32 +102,41 @@ class MainUI(QtWidgets.QMainWindow):
         self.statusbar = QtWidgets.QStatusBar(self)
         self.setStatusBar(self.statusbar)
 
-        self.Import_Guides_action = QtWidgets.QAction(self, text="Import Guides")
-        self.Export_Guides_action = QtWidgets.QAction(self, text="Export Guides")
-        self.Save_Session_action = QtWidgets.QAction(self, text="Save Session")
-        self.Load_Session_action = QtWidgets.QAction(self, text="Load Session")
-        self.New_Session_action = QtWidgets.QAction(self, text="New Session")
-        self.Settings_action = QtWidgets.QAction(self, text="Settings")
+        self.new_trigger_action = QtWidgets.QAction(self, text="New Trigger Session")
+        self.open_trigger_action = QtWidgets.QAction(self, text="Open Trigger Session")
+        self.save_trigger_action = QtWidgets.QAction(self, text="Save Trigger Session")
+        self.save_as_trigger_action = QtWidgets.QAction(self, text="Save As Trigger Session")
+        self.import_guides_action = QtWidgets.QAction(self, text="Import Guides")
+        self.export_guides_action = QtWidgets.QAction(self, text="Export Guides")
+        self.settings_action = QtWidgets.QAction(self, text="Settings")
+        self.reset_scene_action = QtWidgets.QAction(self, text="Reset Scene")
 
-        self.menuFile.addAction(self.New_Session_action)
-        self.menuFile.addAction(self.Save_Session_action)
-        self.menuFile.addAction(self.Load_Session_action)
+        self.menuFile.addAction(self.new_trigger_action)
+        self.menuFile.addAction(self.open_trigger_action)
         self.menuFile.addSeparator()
-        self.menuFile.addAction(self.Import_Guides_action)
-        self.menuFile.addAction(self.Export_Guides_action)
+        self.menuFile.addAction(self.save_trigger_action)
+        self.menuFile.addAction(self.save_as_trigger_action)
         self.menuFile.addSeparator()
-        self.menuFile.addAction(self.Settings_action)
+        self.menuFile.addAction(self.import_guides_action)
+        self.menuFile.addAction(self.export_guides_action)
+        self.menuFile.addSeparator()
+        self.menuFile.addAction(self.settings_action)
+        self.menuFile.addSeparator()
+        self.menuFile.addAction(self.reset_scene_action)
+
         self.menubar.addAction(self.menuFile.menuAction())
 
     def buildTabsUI(self):
         self.centralWidget_vLay = QtWidgets.QVBoxLayout(self.centralwidget)  # this is only to fit the tab widget
         self.centralWidget_vLay.setSpacing(0)
         self.tabWidget = QtWidgets.QTabWidget(self.centralwidget)
+
+        self.rigging_tab = QtWidgets.QWidget()
+        self.tabWidget.addTab(self.rigging_tab, "Actions")
+
         self.guides_tab = QtWidgets.QWidget()
         self.tabWidget.addTab(self.guides_tab, "Guides")
 
-        self.rigging_tab = QtWidgets.QWidget()
-        self.tabWidget.addTab(self.rigging_tab, "Rigging")
         self.centralWidget_vLay.addWidget(self.tabWidget)
 
     def buildGuidesUI(self):
@@ -364,16 +372,41 @@ class MainUI(QtWidgets.QMainWindow):
 
         self.inherit_orientation_cb.toggled.connect(lambda state=self.inherit_orientation_cb.isChecked(): self.update_properties("useRefOri", state))
 
-        self.guide_test_pb.clicked.connect(self.guides_test_build)
+        self.guide_test_pb.clicked.connect(self.build_test_guides)
 
-    def guides_test_build(self):
-        self.guide.test_build()
+        # menu items
+        self.export_guides_action.triggered.connect(self.export_guides)
+        self.import_guides_action.triggered.connect(self.import_guides)
+
+        self.reset_scene_action.triggered.connect(self.session_handler.reset_scene)
+        self.reset_scene_action.triggered.connect(self.populate_guides)
+
+    def import_guides(self):
+        dlg = QtWidgets.QFileDialog.getOpenFileName(self, str("Import Guides"), "", str("Json Files (*.json)"))
+        if dlg[0]:
+            self.session_handler.load_session(os.path.normpath(dlg[0]), reset_scene=False)
+
+    def export_guides(self):
+        # dlg = QtWidgets.QFileDialog.getSaveFileName()
+        dlg = QtWidgets.QFileDialog.getSaveFileName(self, str("Export Guides"), "", str("Json Files (*.json)"))
+        if dlg[0]:
+            # if os.path.isfile(dlg[0]):
+            #     query = self.queryPop("okCancel", textTitle="Overwrite", textHeader="The File {0} exists. Do you Want to overwrite it?".format(dlg[0]))
+            #     if query == "cancel":
+            #         return
+            self.session_handler.save_session(os.path.normpath(dlg[0]))
+
+    def build_test_guides(self):
+        self.progressBar()
+        self.guide.test_build(progress_bar=self.progress_progressBar)
+        self.progress_Dialog.close()
 
     def buildRiggingUI(self):
         self.rigging_tab_vLay = QtWidgets.QVBoxLayout(self.rigging_tab)
 
         self.rig_LR_splitter = QtWidgets.QSplitter(self.rigging_tab)
         self.rig_LR_splitter.setOrientation(QtCore.Qt.Horizontal)
+
 
         self.layoutWidget_2 = QtWidgets.QWidget(self.rig_LR_splitter)
 
@@ -499,8 +532,6 @@ class MainUI(QtWidgets.QMainWindow):
         self.rig_buttons_hLay.addWidget(self.build_and_publish_pb)
         self.rigging_tab_vLay.addLayout(self.rig_buttons_hLay)
 
-        self.tabWidget.addTab(self.rigging_tab, "Rigging")
-
         ### SIGNALS ####
 
         self.add_action_pb.clicked.connect(self.add_actions_menu)
@@ -576,8 +607,6 @@ class MainUI(QtWidgets.QMainWindow):
         self.selection_sets_combo.addItems(["Single", "One per limb", "None"])
         self.action_settings_formLayout.addRow(self.selection_sets_lbl, self.selection_sets_combo)
 
-
-
     def add_actions_menu(self):
         # recentList = reversed(self.manager.loadRecentProjects())
         list_of_actions = sorted(self.rig.action_dict.keys())
@@ -601,7 +630,6 @@ class MainUI(QtWidgets.QMainWindow):
         for sp_look in self.look_axis_sp_list:
             sp_look.blockSignals(state)
         self.inherit_orientation_cb.blockSignals(state)
-
 
     def populate_guides(self):
         self.block_all_signals(True)
@@ -787,3 +815,91 @@ class MainUI(QtWidgets.QMainWindow):
         self.progress_progressBar.setObjectName(("progress_progressBar"))
 
         ret = self.progress_Dialog.show()
+
+
+    def infoPop(self, textTitle="info", textHeader="", textInfo="", type="I"):
+        self.msg = QtWidgets.QMessageBox(parent=self)
+        if type == "I":
+            self.msg.setIcon(QtWidgets.QMessageBox.Information)
+        if type == "C":
+            self.msg.setIcon(QtWidgets.QMessageBox.Critical)
+
+        self.msg.setText(textHeader)
+        self.msg.setInformativeText(textInfo)
+        self.msg.setWindowTitle(textTitle)
+        self.msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
+        self.msg.button(QtWidgets.QMessageBox.Ok).setFixedHeight(30)
+        self.msg.button(QtWidgets.QMessageBox.Ok).setFixedWidth(100)
+        self.msg.show()
+
+    def queryPop(self, type, textTitle="Question", textHeader="", textInfo=""):
+        """
+        Pops a query window
+
+        Args:
+            type: (String) Valid types are: 'yesNoCancel', 'okCancel', 'yesNo'
+            textTitle: (String) Title of the text
+            textHeader: (String) Message header
+            textInfo: (String) Message details
+
+        Returns: (String) 'yes', 'no', 'ok' or 'cancel' depending on the type
+
+        """
+
+        if type == "yesNoCancel":
+
+            q = QtWidgets.QMessageBox(parent=self)
+            q.setIcon(QtWidgets.QMessageBox.Question)
+            q.setText(textHeader)
+            q.setInformativeText(textInfo)
+            q.setWindowTitle(textTitle)
+            q.setStandardButtons(
+                QtWidgets.QMessageBox.Save | QtWidgets.QMessageBox.No | QtWidgets.QMessageBox.Cancel)
+
+            q.button(QtWidgets.QMessageBox.Save).setFixedHeight(30)
+            q.button(QtWidgets.QMessageBox.Save).setFixedWidth(100)
+            q.button(QtWidgets.QMessageBox.No).setFixedHeight(30)
+            q.button(QtWidgets.QMessageBox.No).setFixedWidth(100)
+            q.button(QtWidgets.QMessageBox.Cancel).setFixedHeight(30)
+            q.button(QtWidgets.QMessageBox.Cancel).setFixedWidth(100)
+            ret = q.exec_()
+            if ret == QtWidgets.QMessageBox.Save:
+                return "yes"
+            elif ret == QtWidgets.QMessageBox.No:
+                return "no"
+            elif ret == QtWidgets.QMessageBox.Cancel:
+                return "cancel"
+
+        if type == "okCancel":
+            q = QtWidgets.QMessageBox(parent=self)
+            q.setIcon(QtWidgets.QMessageBox.Question)
+            q.setText(textHeader)
+            q.setInformativeText(textInfo)
+            q.setWindowTitle(textTitle)
+            q.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
+            q.button(QtWidgets.QMessageBox.Ok).setFixedHeight(30)
+            q.button(QtWidgets.QMessageBox.Ok).setFixedWidth(100)
+            q.button(QtWidgets.QMessageBox.Cancel).setFixedHeight(30)
+            q.button(QtWidgets.QMessageBox.Cancel).setFixedWidth(100)
+            ret = q.exec_()
+            if ret == QtWidgets.QMessageBox.Ok:
+                return "ok"
+            elif ret == QtWidgets.QMessageBox.Cancel:
+                return "cancel"
+
+        if type == "yesNo":
+            q = QtWidgets.QMessageBox(parent=self)
+            q.setIcon(QtWidgets.QMessageBox.Question)
+            q.setText(textHeader)
+            q.setInformativeText(textInfo)
+            q.setWindowTitle(textTitle)
+            q.setStandardButtons(QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
+            q.button(QtWidgets.QMessageBox.Yes).setFixedHeight(30)
+            q.button(QtWidgets.QMessageBox.Yes).setFixedWidth(100)
+            q.button(QtWidgets.QMessageBox.No).setFixedHeight(30)
+            q.button(QtWidgets.QMessageBox.No).setFixedWidth(100)
+            ret = q.exec_()
+            if ret == QtWidgets.QMessageBox.Yes:
+                return "yes"
+            elif ret == QtWidgets.QMessageBox.No:
+                return "no"

@@ -1,7 +1,8 @@
-from compiler.ast import flatten
+# from compiler.ast import flatten
 # TODO: This will require a better solution compatible for both python3 and python2:
 # Check here: https://stackoverflow.com/questions/2158395/flatten-an-irregular-list-of-lists
 
+import collections
 import os
 
 from maya import cmds
@@ -16,6 +17,13 @@ from trigger import modules
 from trigger.base import initials
 
 FEEDBACK = feedback.Feedback(logger_name=__name__)
+
+def flatten(l):
+    for el in l:
+        if isinstance(el, collections.Iterable) and not isinstance(el, (str, bytes)):
+            yield from flatten(el)
+        else:
+            yield el
 
 class Session(object):
     def __init__(self):
@@ -38,7 +46,7 @@ class Session(object):
         """Loads the session from the file"""
 
         if reset_scene:
-            cmds.file(new=True, force=True)
+            self.reset_scene()
         self.io.file_path = file_path
         guides_data = self.io.read()
         if guides_data:
@@ -62,7 +70,7 @@ class Session(object):
             limb_dict, _, __ = self.init.getWholeLimb(root_jnt)
             all_trigger_joints.append(limb_dict.values())
 
-        flat_jnt_list = (flatten(all_trigger_joints))
+        flat_jnt_list = list(flatten(all_trigger_joints))
 
         save_data = []
 
@@ -137,4 +145,6 @@ class Session(object):
             else:
                 cmds.parent(jnt_dict.get("name"), holder_grp)
 
+    def reset_scene(self):
+        cmds.file(new=True, force=True)
 

@@ -70,7 +70,7 @@ class ActionsSession(dict):
         else:
             FEEDBACK.throw_error("The specified file doesn't exists")
 
-    def get_valid_actions(self):
+    def list_valid_actions(self):
         """Returns all available actions"""
         return sorted(self.action_data_dict.keys())
 
@@ -86,9 +86,9 @@ class ActionsSession(dict):
         """
         if not action_name:
             FEEDBACK.throw_error("Action Name cannot is empty or contains illegal chars")
-        if action_name in self.get_action_names():
+        if action_name in self.list_action_names():
             FEEDBACK.throw_error("Action Name already exists in the Session")
-        if not action_type in self.get_valid_actions():
+        if not action_type in self.list_valid_actions():
             FEEDBACK.throw_error("Defined Action type is not valid")
         # action_item = eval("actions.%s.%s()" % (action_name, action_name.capitalize()))
         action = {
@@ -99,7 +99,7 @@ class ActionsSession(dict):
         self["actions"].append(action)
         pass
 
-    def get_action_by_name(self, action_name):
+    def get_action(self, action_name):
         """Returns the action dictionary item by name"""
         for action in self["actions"]:
             if action["name"] == action_name:
@@ -108,7 +108,7 @@ class ActionsSession(dict):
 
     def delete_action(self, action_name):
         """Deletes the action by name from the dictionary"""
-        action = self.get_action_by_name(action_name)
+        action = self.get_action(action_name)
         if action:
             self["actions"].remove(action)
         else:
@@ -125,7 +125,7 @@ class ActionsSession(dict):
         Returns: True if success, None or False if not
 
         """
-        action = self.get_action_by_name(action_name)
+        action = self.get_action(action_name)
         if action:
             current_value = action["data"].get(property)
             if current_value == None:
@@ -139,17 +139,29 @@ class ActionsSession(dict):
             FEEDBACK.warning("%s cannot be found in the action list")
             return False
 
-    def get_actions(self):
+    def query_action(self, action_name, property):
+        action = self.get_action(action_name)
+        if action:
+            current_value = action["data"].get(property)
+            if current_value == None:
+                FEEDBACK.throw_error("The property '%s' does not exist in %s ACTION_DATA" % (property, action["type"]))
+            else:
+                return current_value
+        else:
+            FEEDBACK.warning("%s cannot be found in the action list")
+            return None
+
+    def get_all_actions(self):
         """Returns all available actions"""
         return self["actions"]
 
-    def get_action_names(self):
+    def list_action_names(self):
         """Returns all available action names"""
         return [action["name"] for action in self["actions"]]
 
     def move_up(self, action_name):
         """Moves the action one index up"""
-        action = self.get_action_by_name(action_name)
+        action = self.get_action(action_name)
         index = self["actions"].index(action)
         if not index == 0:
             self["actions"].insert(index-1, self["actions"].pop(index))
@@ -157,7 +169,7 @@ class ActionsSession(dict):
 
     def move_down(self, action_name):
         """Moves the action one index down"""
-        action = self.get_action_by_name(action_name)
+        action = self.get_action(action_name)
         index = self["actions"].index(action)
         if not index == len(self["actions"]):
             self["actions"].insert(index+1, self["actions"].pop(index))
@@ -165,7 +177,7 @@ class ActionsSession(dict):
 
     def move(self, action_name, new_index):
         """Moves the action to the given index nmb"""
-        action = self.get_action_by_name(action_name)
+        action = self.get_action(action_name)
         old_index = self["actions"].index(action)
         if old_index != new_index:
             self["actions"].insert(new_index, self["actions"].pop(old_index))
@@ -174,5 +186,7 @@ class ActionsSession(dict):
     def run_actions(self):
         """runs all actions in the actions list"""
         pass
+
+
 
 
