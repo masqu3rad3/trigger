@@ -1,7 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
 """Python3 - Python2 compatibility methods"""
+import sys
+if sys.version_info.major == 3:
+    from trigger.core.python3_only import flatten
+else:
+    from trigger.core.python2_only import flatten
 
 def encode(data):
     """Encodes the data as unicode data if the interpreter is Python 2.x"""
@@ -19,6 +23,32 @@ def decode(data):
             return data
 
 
+# try:
+#     from compiler.ast import flatten
+# except:
+#     pass
+    # def flatten(l):
+    #     for el in l:
+    #         if isinstance(el, collections.Iterable) and not isinstance(el, (str, bytes)):
+    #             yield from flatten(el)
+    #         else:
+    #             yield el
+
+# if sys.version_info.major == 3:
+#     def flatten(l):
+#         for el in l:
+#             if isinstance(el, collections.Iterable) and not isinstance(el, (str, bytes)):
+#                 yield from flatten(el)
+#             else:
+#                 yield el
+# else:
+#     def flatten(l):
+#         for el in l:
+#             if isinstance(el, collections.Iterable) and not isinstance(el, basestring):
+#                 for sub in flatten(el):
+#                     yield sub
+#             else:
+#                 yield el
 
 
 
