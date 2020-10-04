@@ -3,8 +3,11 @@ import sys, os
 from trigger.ui import Qt
 from trigger.ui.Qt import QtWidgets, QtCore, QtGui
 
-from trigger.base import initials, builder
+# from trigger.base import initials, builder
+from trigger.base import initials
 from trigger.base import session
+from trigger.base import actions_session
+
 
 from maya import OpenMayaUI as omui
 
@@ -21,6 +24,8 @@ FEEDBACK = feedback.Feedback(logger_name=__name__)
 
 WINDOW_NAME = "TRigger"
 
+# TODO: TEMPORARY
+from PySide2 import QtCore, QtGui, QtWidgets
 
 def getMayaMainWindow():
     """
@@ -40,8 +45,8 @@ class MainUI(QtWidgets.QMainWindow):
 
     # create guide and rig objects
     guide = initials.Initials()
-    rig = builder.Builder()
-    session_handler = session.Session()
+    actions_handler = actions_session.ActionsSession()
+    guides_handler = session.Session()
 
     def __init__(self):
         for entry in QtWidgets.QApplication.allWidgets():
@@ -378,28 +383,9 @@ class MainUI(QtWidgets.QMainWindow):
         self.export_guides_action.triggered.connect(self.export_guides)
         self.import_guides_action.triggered.connect(self.import_guides)
 
-        self.reset_scene_action.triggered.connect(self.session_handler.reset_scene)
+        self.reset_scene_action.triggered.connect(self.guides_handler.reset_scene)
         self.reset_scene_action.triggered.connect(self.populate_guides)
 
-    def import_guides(self):
-        dlg = QtWidgets.QFileDialog.getOpenFileName(self, str("Import Guides"), "", str("Json Files (*.json)"))
-        if dlg[0]:
-            self.session_handler.load_session(os.path.normpath(dlg[0]), reset_scene=False)
-
-    def export_guides(self):
-        # dlg = QtWidgets.QFileDialog.getSaveFileName()
-        dlg = QtWidgets.QFileDialog.getSaveFileName(self, str("Export Guides"), "", str("Json Files (*.json)"))
-        if dlg[0]:
-            # if os.path.isfile(dlg[0]):
-            #     query = self.queryPop("okCancel", textTitle="Overwrite", textHeader="The File {0} exists. Do you Want to overwrite it?".format(dlg[0]))
-            #     if query == "cancel":
-            #         return
-            self.session_handler.save_session(os.path.normpath(dlg[0]))
-
-    def build_test_guides(self):
-        self.progressBar()
-        self.guide.test_build(progress_bar=self.progress_progressBar)
-        self.progress_Dialog.close()
 
     def buildRiggingUI(self):
         self.rigging_tab_vLay = QtWidgets.QVBoxLayout(self.rigging_tab)
@@ -430,15 +416,15 @@ class MainUI(QtWidgets.QMainWindow):
         self.delete_action_pb.setText("Delete")
         self.rig_action_addremove_hLay.addWidget(self.delete_action_pb)
 
-        self.move_action_up = QtWidgets.QPushButton(self.layoutWidget_2)
-        self.move_action_up.setMaximumSize(QtCore.QSize(50, 16777215))
-        self.move_action_up.setText("up")
-        self.rig_action_addremove_hLay.addWidget(self.move_action_up)
+        self.move_action_up_pb = QtWidgets.QPushButton(self.layoutWidget_2)
+        self.move_action_up_pb.setMaximumSize(QtCore.QSize(50, 16777215))
+        self.move_action_up_pb.setText("up")
+        self.rig_action_addremove_hLay.addWidget(self.move_action_up_pb)
 
-        self.move_action_down = QtWidgets.QPushButton(self.layoutWidget_2)
-        self.move_action_down.setMaximumSize(QtCore.QSize(50, 16777215))
-        self.move_action_down.setText("down")
-        self.rig_action_addremove_hLay.addWidget(self.move_action_down)
+        self.move_action_down_pb = QtWidgets.QPushButton(self.layoutWidget_2)
+        self.move_action_down_pb.setMaximumSize(QtCore.QSize(50, 16777215))
+        self.move_action_down_pb.setText("down")
+        self.rig_action_addremove_hLay.addWidget(self.move_action_down_pb)
 
         self.rig_actions_listwidget = QtWidgets.QListWidget(self.layoutWidget_2)
         font = QtGui.QFont()
@@ -452,23 +438,23 @@ class MainUI(QtWidgets.QMainWindow):
         self.rig_actions_listwidget.setViewMode(QtWidgets.QListView.ListMode)
         self.rig_actions_vLay.addWidget(self.rig_actions_listwidget)
 
-        ### SAMPLE ###
-        item = QtWidgets.QListWidgetItem()
-        item.setText("Kinematics")
-        item.setTextAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignVCenter)
-        self.rig_actions_listwidget.addItem(item)
-        item = QtWidgets.QListWidgetItem()
-        item.setText("Weights")
-        item.setTextAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignVCenter)
-        self.rig_actions_listwidget.addItem(item)
-        item = QtWidgets.QListWidgetItem()
-        item.setText("Shape")
-        item.setTextAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignVCenter)
-        self.rig_actions_listwidget.addItem(item)
-        item = QtWidgets.QListWidgetItem()
-        self.rig_actions_listwidget.addItem(item)
-        item = QtWidgets.QListWidgetItem()
-        self.rig_actions_listwidget.addItem(item)
+        # ### SAMPLE ###
+        # item = QtWidgets.QListWidgetItem()
+        # item.setText("Kinematics")
+        # item.setTextAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignVCenter)
+        # self.rig_actions_listwidget.addItem(item)
+        # item = QtWidgets.QListWidgetItem()
+        # item.setText("Weights")
+        # item.setTextAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignVCenter)
+        # self.rig_actions_listwidget.addItem(item)
+        # item = QtWidgets.QListWidgetItem()
+        # item.setText("Shape")
+        # item.setTextAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignVCenter)
+        # self.rig_actions_listwidget.addItem(item)
+        # item = QtWidgets.QListWidgetItem()
+        # self.rig_actions_listwidget.addItem(item)
+        # item = QtWidgets.QListWidgetItem()
+        # self.rig_actions_listwidget.addItem(item)
 
         self.verticalLayoutWidget_3 = QtWidgets.QWidget(self.rig_LR_splitter)
         self.action_settings_vLay = QtWidgets.QVBoxLayout(self.verticalLayoutWidget_3)
@@ -497,26 +483,26 @@ class MainUI(QtWidgets.QMainWindow):
         self.action_settings_scrollArea_vLay.addLayout(self.action_settings_formLayout)
 
 
-        ### SAMPLE ###
-        self.sample_setting1_lbl = QtWidgets.QLabel(self.action_settings_WidgetContents)
-        self.sample_setting1_lbl.setText("Setting1")
-        self.action_settings_formLayout.setWidget(0, QtWidgets.QFormLayout.LabelRole, self.sample_setting1_lbl)
-        self.sample_setting1_le = QtWidgets.QLineEdit(self.action_settings_WidgetContents)
-        self.action_settings_formLayout.setWidget(0, QtWidgets.QFormLayout.FieldRole, self.sample_setting1_le)
-        self.sample_setting2_lbl = QtWidgets.QLabel(self.action_settings_WidgetContents)
-        self.sample_setting2_lbl.setText("Setting2")
-        self.sample_setting2_lbl.setObjectName("sample_setting2_lbl")
-        self.action_settings_formLayout.setWidget(1, QtWidgets.QFormLayout.LabelRole, self.sample_setting2_lbl)
-        self.sample_setting_combo = QtWidgets.QComboBox(self.action_settings_WidgetContents)
-        self.sample_setting_combo.setObjectName("sample_setting_combo")
-        self.action_settings_formLayout.setWidget(1, QtWidgets.QFormLayout.FieldRole, self.sample_setting_combo)
-        self.sample_setting3_lbl = QtWidgets.QLabel(self.action_settings_WidgetContents)
-        self.sample_setting3_lbl.setText("Setting3")
-        self.action_settings_formLayout.setWidget(2, QtWidgets.QFormLayout.LabelRole, self.sample_setting3_lbl)
-        self.sample_setting3_chk = QtWidgets.QCheckBox(self.action_settings_WidgetContents)
-        self.action_settings_formLayout.setWidget(2, QtWidgets.QFormLayout.FieldRole, self.sample_setting3_chk)
-
-        self.kinematics_settings()
+        # ### SAMPLE ###
+        # self.sample_setting1_lbl = QtWidgets.QLabel(self.action_settings_WidgetContents)
+        # self.sample_setting1_lbl.setText("Setting1")
+        # self.action_settings_formLayout.setWidget(0, QtWidgets.QFormLayout.LabelRole, self.sample_setting1_lbl)
+        # self.sample_setting1_le = QtWidgets.QLineEdit(self.action_settings_WidgetContents)
+        # self.action_settings_formLayout.setWidget(0, QtWidgets.QFormLayout.FieldRole, self.sample_setting1_le)
+        # self.sample_setting2_lbl = QtWidgets.QLabel(self.action_settings_WidgetContents)
+        # self.sample_setting2_lbl.setText("Setting2")
+        # self.sample_setting2_lbl.setObjectName("sample_setting2_lbl")
+        # self.action_settings_formLayout.setWidget(1, QtWidgets.QFormLayout.LabelRole, self.sample_setting2_lbl)
+        # self.sample_setting_combo = QtWidgets.QComboBox(self.action_settings_WidgetContents)
+        # self.sample_setting_combo.setObjectName("sample_setting_combo")
+        # self.action_settings_formLayout.setWidget(1, QtWidgets.QFormLayout.FieldRole, self.sample_setting_combo)
+        # self.sample_setting3_lbl = QtWidgets.QLabel(self.action_settings_WidgetContents)
+        # self.sample_setting3_lbl.setText("Setting3")
+        # self.action_settings_formLayout.setWidget(2, QtWidgets.QFormLayout.LabelRole, self.sample_setting3_lbl)
+        # self.sample_setting3_chk = QtWidgets.QCheckBox(self.action_settings_WidgetContents)
+        # self.action_settings_formLayout.setWidget(2, QtWidgets.QFormLayout.FieldRole, self.sample_setting3_chk)
+        #
+        # self.kinematics_settings()
 
         self.action_settings_scrollArea.setWidget(self.action_settings_WidgetContents)
         self.action_settings_vLay.addWidget(self.action_settings_scrollArea)
@@ -535,22 +521,26 @@ class MainUI(QtWidgets.QMainWindow):
         ### SIGNALS ####
 
         self.add_action_pb.clicked.connect(self.add_actions_menu)
+        self.move_action_up_pb.clicked.connect(self.move_action_up)
+        self.move_action_down_pb.clicked.connect(self.move_action_down)
+        self.delete_action_pb.clicked.connect(self.delete_action)
+        self.rig_actions_listwidget.currentItemChanged.connect(self.action_settings_menu)
 
     def kinematics_settings(self):
         self.clearLayout(self.action_settings_formLayout)
 
-        self.guide_lbl = QtWidgets.QLabel()
-        self.guide_lbl.setText("Guides:")
-        self.guides_hLay = QtWidgets.QHBoxLayout()
-        self.from_file_radioButton = QtWidgets.QRadioButton()
-        self.from_file_radioButton.setText("From File")
-        self.guides_hLay.addWidget(self.from_file_radioButton)
-        self.from_current_scene_radioButton = QtWidgets.QRadioButton()
-        self.from_current_scene_radioButton.setText("From Current Scene")
-        self.guides_hLay.addWidget(self.from_current_scene_radioButton)
-        spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.guides_hLay.addItem(spacerItem)
-        self.action_settings_formLayout.addRow(self.guide_lbl, self.guides_hLay)
+        # self.guide_lbl = QtWidgets.QLabel()
+        # self.guide_lbl.setText("Guides:")
+        # self.guides_hLay = QtWidgets.QHBoxLayout()
+        # self.from_file_radioButton = QtWidgets.QRadioButton()
+        # self.from_file_radioButton.setText("From File")
+        # self.guides_hLay.addWidget(self.from_file_radioButton)
+        # self.from_current_scene_radioButton = QtWidgets.QRadioButton()
+        # self.from_current_scene_radioButton.setText("From Current Scene")
+        # self.guides_hLay.addWidget(self.from_current_scene_radioButton)
+        # spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        # self.guides_hLay.addItem(spacerItem)
+        # self.action_settings_formLayout.addRow(self.guide_lbl, self.guides_hLay)
 
         self.file_path_lbl = QtWidgets.QLabel()
         self.file_path_lbl.setText("File Path:")
@@ -607,29 +597,155 @@ class MainUI(QtWidgets.QMainWindow):
         self.selection_sets_combo.addItems(["Single", "One per limb", "None"])
         self.action_settings_formLayout.addRow(self.selection_sets_lbl, self.selection_sets_combo)
 
+    def action_settings_menu(self):
+        """Builds the action settings depending on action type"""
+        # get the action type
+        action_name = self.rig_actions_listwidget.currentItem().text()
+        action_type = self.actions_handler.get_action_type(action_name)
+        print(action_name)
+        print(action_type)
+        self.clearLayout(self.action_settings_formLayout)
+
+        if action_type == "kinematics":
+            self.file_path_lbl = QtWidgets.QLabel()
+            self.file_path_lbl.setText("File Path:")
+            self.file_path_hLay = QtWidgets.QHBoxLayout()
+            self.file_path_le = QtWidgets.QLineEdit()
+            self.file_path_hLay.addWidget(self.file_path_le)
+            self.browse_path_pb = QtWidgets.QPushButton()
+            self.browse_path_pb.setText("Browse")
+            self.file_path_hLay.addWidget(self.browse_path_pb)
+            self.action_settings_formLayout.addRow(self.file_path_lbl, self.file_path_hLay)
+
+            self.guide_roots_lbl = QtWidgets.QLabel()
+            self.guide_roots_lbl.setText("Guide Roots:")
+            self.guide_roots_hLay = QtWidgets.QHBoxLayout()
+            self.guide_roots_le = QtWidgets.QLineEdit()
+            self.guide_roots_hLay.addWidget(self.guide_roots_le)
+            self.get_guide_roots_pb = QtWidgets.QPushButton()
+            self.get_guide_roots_pb.setText("Get")
+            self.guide_roots_hLay.addWidget(self.get_guide_roots_pb)
+            self.action_settings_formLayout.addRow(self.guide_roots_lbl, self.guide_roots_hLay)
+
+            self.create_auto_sw_lbl = QtWidgets.QLabel()
+            self.create_auto_sw_lbl.setText("Create Auto Switchers:")
+            self.create_auto_switchers_hLay = QtWidgets.QHBoxLayout()
+            self.auto_sw_on_radioButton = QtWidgets.QRadioButton()
+            self.auto_sw_on_radioButton.setText("On")
+            self.create_auto_switchers_hLay.addWidget(self.auto_sw_on_radioButton)
+            self.auto_sw_off_radioButton = QtWidgets.QRadioButton()
+            self.auto_sw_off_radioButton.setText("Off")
+            self.create_auto_switchers_hLay.addWidget(self.auto_sw_off_radioButton)
+            spacerItem1 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+            self.create_auto_switchers_hLay.addItem(spacerItem1)
+            self.action_settings_formLayout.addRow(self.create_auto_sw_lbl, self.create_auto_switchers_hLay)
+
+            self.anchors_lbl = QtWidgets.QLabel()
+            self.anchors_lbl.setText("Anchors:")
+            self.anchors_le = QtWidgets.QLineEdit()
+            self.action_settings_formLayout.addRow(self.anchors_lbl, self.anchors_le)
+
+            self.anchor_locations_lbl = QtWidgets.QLabel()
+            self.anchor_locations_lbl.setText("Anchor Locations:")
+            self.anchor_locations_le = QtWidgets.QLineEdit()
+            self.action_settings_formLayout.addRow(self.anchor_locations_lbl, self.anchor_locations_le)
+
+            self.after_action_lbl = QtWidgets.QLabel()
+            self.after_action_lbl.setText("After Action:")
+            self.after_action_combo = QtWidgets.QComboBox()
+            self.after_action_combo.addItems(["Delete Guides", "Hide Guides", "Do Nothing"])
+            self.action_settings_formLayout.addRow(self.after_action_lbl, self.after_action_combo)
+
+            self.selection_sets_lbl = QtWidgets.QLabel()
+            self.selection_sets_lbl.setText("Selection Sets")
+            self.selection_sets_combo = QtWidgets.QComboBox()
+            self.selection_sets_combo.addItems(["Single", "One per limb", "None"])
+            self.action_settings_formLayout.addRow(self.selection_sets_lbl, self.selection_sets_combo)
+
+        if action_type == "weights":
+            pass
+
     def add_actions_menu(self):
         # recentList = reversed(self.manager.loadRecentProjects())
-        list_of_actions = sorted(self.rig.action_dict.keys())
+        # list_of_actions = sorted(self.rig.action_dict.keys())
+        list_of_actions = sorted(self.actions_handler.action_data_dict.keys())
 
         zortMenu = QtWidgets.QMenu()
         for action_item in list_of_actions:
             tempAction = QtWidgets.QAction(action_item, self)
             zortMenu.addAction(tempAction)
+            tempAction.triggered.connect(lambda ignore=action_item, item=action_item: self.actions_handler.add_action(action_type=item))
+            tempAction.triggered.connect(self.populate_actions)
             ## Take note about the usage of lambda "item=z" makes it possible using the loop, ignore -> for discarding emitted value
             # tempAction.triggered.connect(lambda ignore=p, item=p: setAndClose(custompath=(item)))
             # tempAction.triggered.connect(lambda item=z: manager.playPreview(str(item)))
 
+        self.populate_actions()
+
         zortMenu.exec_((QtGui.QCursor.pos()))
 
-    def block_all_signals(self, state):
-        self.guides_list_treeWidget.blockSignals(state)
-        for sp_up in self.up_axis_sp_list:
-            sp_up.blockSignals(state)
-        for sp_mirror in self.mirror_axis_sp_list:
-            sp_mirror.blockSignals(state)
-        for sp_look in self.look_axis_sp_list:
-            sp_look.blockSignals(state)
-        self.inherit_orientation_cb.blockSignals(state)
+    def populate_actions(self):
+        self.rig_actions_listwidget.clear()
+        self.rig_actions_listwidget.addItems(self.actions_handler.list_action_names())
+
+    def move_action_up(self):
+        row = self.rig_actions_listwidget.currentRow()
+        if row == -1:
+            return
+        action_name = self.rig_actions_listwidget.currentItem().text()
+        self.actions_handler.move_up(action_name=action_name)
+        self.populate_actions()
+
+        # select the original selected item again
+        original_selection = self.rig_actions_listwidget.findItems(action_name, QtCore.Qt.MatchExactly)[0]
+        original_row = self.rig_actions_listwidget.row(original_selection)
+        self.rig_actions_listwidget.setCurrentRow(original_row)
+
+    def move_action_down(self):
+        row = self.rig_actions_listwidget.currentRow()
+        if row == -1:
+            return
+        action_name = self.rig_actions_listwidget.currentItem().text()
+        self.actions_handler.move_down(action_name=action_name)
+        self.populate_actions()
+
+        # select the original selected item again
+        original_selection = self.rig_actions_listwidget.findItems(action_name, QtCore.Qt.MatchExactly)[0]
+        original_row = self.rig_actions_listwidget.row(original_selection)
+        self.rig_actions_listwidget.setCurrentRow(original_row)
+
+    def delete_action(self):
+        row = self.rig_actions_listwidget.currentRow()
+        if row == -1:
+            return
+        action_name = self.rig_actions_listwidget.currentItem().text()
+        self.actions_handler.delete_action(action_name=action_name)
+        self.populate_actions()
+
+
+#######################
+### GUIDE FUNCTIONS ###
+#######################
+
+    def import_guides(self):
+        dlg = QtWidgets.QFileDialog.getOpenFileName(self, str("Import Guides"), "", str("Json Files (*.json)"))
+        if dlg[0]:
+            self.guides_handler.load_session(os.path.normpath(dlg[0]), reset_scene=False)
+
+    def export_guides(self):
+        # dlg = QtWidgets.QFileDialog.getSaveFileName()
+        dlg = QtWidgets.QFileDialog.getSaveFileName(self, str("Export Guides"), "", str("Json Files (*.json)"))
+        if dlg[0]:
+            # if os.path.isfile(dlg[0]):
+            #     query = self.queryPop("okCancel", textTitle="Overwrite", textHeader="The File {0} exists. Do you Want to overwrite it?".format(dlg[0]))
+            #     if query == "cancel":
+            #         return
+            self.guides_handler.save_session(os.path.normpath(dlg[0]))
+
+    def build_test_guides(self):
+        self.progressBar()
+        self.guide.test_build(progress_bar=self.progress_progressBar)
+        self.progress_Dialog.close()
 
     def populate_guides(self):
         self.block_all_signals(True)
@@ -784,7 +900,23 @@ class MainUI(QtWidgets.QMainWindow):
             child = layout.takeAt(0)
             if child.widget():
                 child.widget().deleteLater()
+            elif child.layout():
+                self.clearLayout(child.layout())
 
+
+    ##############
+    ### COMMON ###
+    ##############
+
+    def block_all_signals(self, state):
+        self.guides_list_treeWidget.blockSignals(state)
+        for sp_up in self.up_axis_sp_list:
+            sp_up.blockSignals(state)
+        for sp_mirror in self.mirror_axis_sp_list:
+            sp_mirror.blockSignals(state)
+        for sp_look in self.look_axis_sp_list:
+            sp_look.blockSignals(state)
+        self.inherit_orientation_cb.blockSignals(state)
 
     def progressBar(self):
 

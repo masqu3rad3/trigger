@@ -768,7 +768,8 @@ class Arm(object):
         cmds.orientConstraint(self.cont_fk_low_arm, self.j_fk_low, mo=False)
 
         # cmds.parentConstraint(self.j_collar_end, self.cont_fk_up_arm_off, sr=("x", "y", "z"), mo=False)
-        functions.matrixConstraint(self.j_collar_end, self.cont_fk_up_arm_off, sr=("x", "y", "z"), mo=False)
+        # functions.matrixConstraint(self.j_collar_end, self.cont_fk_up_arm_off, sr=("x", "y", "z"), mo=False)
+        functions.matrixConstraint(self.j_collar_end, self.cont_fk_up_arm_off, mo=False)
 
         # TODO : TAKE A LOOK TO THE OFFSET SOLUTION
         # cmds.parentConstraint(self.cont_fk_up_arm, self.cont_fk_low_arm_off, mo=True)

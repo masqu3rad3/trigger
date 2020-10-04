@@ -74,7 +74,7 @@ class ActionsSession(dict):
         """Returns all available actions"""
         return sorted(self.action_data_dict.keys())
 
-    def add_action(self, action_name, action_type):
+    def add_action(self, action_name=None, action_type=None):
         """
         Adds an action to the session database
         Args:
@@ -84,8 +84,15 @@ class ActionsSession(dict):
         Returns:
 
         """
+        # if not action_name:
+        #     FEEDBACK.throw_error("Action Name cannot is empty or contains illegal chars")
         if not action_name:
-            FEEDBACK.throw_error("Action Name cannot is empty or contains illegal chars")
+            action_name = action_type + "1"
+            idcounter = 0
+            while action_name in self.list_action_names():
+                action_name = "%s%s" % (action_type, str(idcounter + 1))
+                idcounter = idcounter + 1
+
         if action_name in self.list_action_names():
             FEEDBACK.throw_error("Action Name already exists in the Session")
         if not action_type in self.list_valid_actions():
@@ -105,6 +112,10 @@ class ActionsSession(dict):
             if action["name"] == action_name:
                 return action
         return None
+
+    def get_action_type(self, action_name):
+        action = self.get_action(action_name)
+        return action["type"]
 
     def delete_action(self, action_name):
         """Deletes the action by name from the dictionary"""
@@ -183,9 +194,22 @@ class ActionsSession(dict):
             self["actions"].insert(new_index, self["actions"].pop(old_index))
         FEEDBACK.info("%s index => %s" % (action_name, new_index))
 
-    def run_actions(self):
+    def run_all_actions(self):
         """runs all actions in the actions list"""
-        pass
+        # reset scene
+        cmds.file(new=True, force=True)
+        for action in self["actions"]:
+            action_cmd = "actions.{0}.{1}()".format(action["type"], action["type"].capitalize())
+            a_hand = eval(action_cmd)
+            a_hand.feed(action["data"])
+            a_hand.action()
+
+    def run_action(self, action_name):
+        action = self.get_action(action_name)
+        action_cmd = "actions.{0}.{1}()".format(action["type"], action["type"].capitalize())
+        a_hand = eval(action_cmd)
+        a_hand.feed(action["data"])
+        a_hand.action()
 
 
 

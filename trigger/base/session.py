@@ -52,7 +52,8 @@ class Session(object):
         self.io.write(guides_data)
         FEEDBACK.info("Session Saved Successfully...")
 
-    def load_session(self, file_path, reset_scene=True):
+    # def load_session(self, file_path, reset_scene=True):
+    def load_session(self, file_path, reset_scene=False):
         """Loads the session from the file"""
 
         if reset_scene:

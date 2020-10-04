@@ -1,3 +1,4 @@
+import sys
 from maya import cmds
 # import maya.OpenMaya as om
 # USING MAYA API 2.0
@@ -587,6 +588,8 @@ def create_attribute(node, property_dict=None, keyable=True, display=True, *args
     # if some attribute with same name exists, quit
     default_value = property_dict.get("default_value")
     if cmds.attributeQuery(attr_name, node=node, exists=True):
+        if sys.version_info.major == 3:
+            unicode = str
         if default_value:
             if type(default_value) == str or type(default_value) == unicode:
                 cmds.setAttr("%s.%s" % (node, attr_name), default_value, type="string")
