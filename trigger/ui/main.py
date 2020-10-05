@@ -1,5 +1,6 @@
 """Main UI for TRigger"""
 import sys, os
+from functools import wraps
 from trigger.ui import Qt
 from trigger.ui.Qt import QtWidgets, QtCore, QtGui
 
@@ -428,7 +429,7 @@ class MainUI(QtWidgets.QMainWindow):
 
         self.rig_actions_listwidget = QtWidgets.QListWidget(self.layoutWidget_2)
         font = QtGui.QFont()
-        font.setPointSize(12)
+        font.setPointSize(10)
         font.setBold(False)
         font.setWeight(50)
         font.setStrikeOut(False)
@@ -613,6 +614,7 @@ class MainUI(QtWidgets.QMainWindow):
         self.rig_actions_listwidget.addItems(self.actions_handler.list_action_names())
 
     def move_action_up(self):
+        self.block_all_signals(True)
         row = self.rig_actions_listwidget.currentRow()
         if row == -1:
             return
@@ -624,8 +626,10 @@ class MainUI(QtWidgets.QMainWindow):
         original_selection = self.rig_actions_listwidget.findItems(action_name, QtCore.Qt.MatchExactly)[0]
         original_row = self.rig_actions_listwidget.row(original_selection)
         self.rig_actions_listwidget.setCurrentRow(original_row)
+        self.block_all_signals(False)
 
     def move_action_down(self):
+        self.block_all_signals(True)
         row = self.rig_actions_listwidget.currentRow()
         if row == -1:
             return
@@ -637,14 +641,17 @@ class MainUI(QtWidgets.QMainWindow):
         original_selection = self.rig_actions_listwidget.findItems(action_name, QtCore.Qt.MatchExactly)[0]
         original_row = self.rig_actions_listwidget.row(original_selection)
         self.rig_actions_listwidget.setCurrentRow(original_row)
+        self.block_all_signals(False)
 
     def delete_action(self):
+        self.block_all_signals(True)
         row = self.rig_actions_listwidget.currentRow()
         if row == -1:
             return
         action_name = self.rig_actions_listwidget.currentItem().text()
         self.actions_handler.delete_action(action_name=action_name)
         self.populate_actions()
+        self.block_all_signals(False)
 
 
 #######################
@@ -832,15 +839,26 @@ class MainUI(QtWidgets.QMainWindow):
     ### COMMON ###
     ##############
 
+    # def block_all_signals(self, state):
+    #     self.guides_list_treeWidget.blockSignals(state)
+    #     self.rig_actions_listwidget.blockSignals(state)
+    #     for sp_up in self.up_axis_sp_list:
+    #         sp_up.blockSignals(state)
+    #     for sp_mirror in self.mirror_axis_sp_list:
+    #         sp_mirror.blockSignals(state)
+    #     for sp_look in self.look_axis_sp_list:
+    #         sp_look.blockSignals(state)
+    #     self.inherit_orientation_cb.blockSignals(state)
+
     def block_all_signals(self, state):
-        self.guides_list_treeWidget.blockSignals(state)
-        for sp_up in self.up_axis_sp_list:
-            sp_up.blockSignals(state)
-        for sp_mirror in self.mirror_axis_sp_list:
-            sp_mirror.blockSignals(state)
-        for sp_look in self.look_axis_sp_list:
-            sp_look.blockSignals(state)
-        self.inherit_orientation_cb.blockSignals(state)
+        """Blocks and Unblocks all signals for defined widgets inside function"""
+        widgets_affected = [self.guides_list_treeWidget, self.rig_actions_listwidget, self.inherit_orientation_cb]
+        widgets_affected.extend(self.up_axis_sp_list)
+        widgets_affected.extend(self.mirror_axis_sp_list)
+        widgets_affected.extend(self.look_axis_sp_list)
+        for widget in widgets_affected:
+            widget.blockSignals(state)
+
 
     def progressBar(self):
 
@@ -959,3 +977,4 @@ class MainUI(QtWidgets.QMainWindow):
                 return "yes"
             elif ret == QtWidgets.QMessageBox.No:
                 return "no"
+

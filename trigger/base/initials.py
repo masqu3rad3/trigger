@@ -324,7 +324,10 @@ class Initials(settings.Settings):
         roots_dictionary_list = []
         for jnt in guide_roots:
             # get module name
-            module_name = cmds.getAttr("%s.moduleName" % jnt)
+            try:
+                module_name = cmds.getAttr("%s.moduleName" % jnt)
+            except ValueError:
+                continue
             # get module info
             j_type, limb, side = extra.identifyMaster(jnt, self.module_dict)
             roots_dictionary_list.append({"module_name": module_name,
