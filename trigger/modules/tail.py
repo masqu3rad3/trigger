@@ -1,7 +1,7 @@
 from maya import cmds
 import maya.api.OpenMaya as om
 
-from trigger.library import functions as extra
+from trigger.library import functions
 from trigger.library import controllers as ic
 from trigger.core import feedback
 FEEDBACK = feedback.Feedback(__name__)
@@ -30,17 +30,17 @@ class Tail(object):
             FEEDBACK.throw_error("Class needs either build_data or inits to be constructed")
 
         # initialize coordinates
-        self.up_axis, self.mirror_axis, self.look_axis = extra.getRigAxes(self.inits[0])
+        self.up_axis, self.mirror_axis, self.look_axis = functions.getRigAxes(self.inits[0])
 
         # get properties
         self.useRefOrientation = cmds.getAttr("%s.useRefOri" % self.inits[0])
-        self.side = extra.get_joint_side(self.inits[0])
+        self.side = functions.get_joint_side(self.inits[0])
         self.sideMult = -1 if self.side == "R" else 1
 
         # initialize suffix
         # self.suffix = (extra.uniqueName("limbGrp_%s" % suffix)).replace("limbGrp_", "")
         # self.suffix = (extra.uniqueName(suffix))
-        self.suffix = (extra.uniqueName(cmds.getAttr("%s.moduleName" % self.inits[0])))
+        self.suffix = (functions.uniqueName(cmds.getAttr("%s.moduleName" % self.inits[0])))
 
         # scratch variables
         self.sockets = []
@@ -57,7 +57,7 @@ class Tail(object):
     def createGrp(self):
         self.limbGrp = cmds.group(name=self.suffix, em=True)
         self.scaleGrp = cmds.group(name="%s_scaleGrp" % self.suffix, em=True)
-        extra.alignTo(self.scaleGrp, self.tailRoot, position=True, rotation=False)
+        functions.alignTo(self.scaleGrp, self.tailRoot, position=True, rotation=False)
         self.nonScaleGrp = cmds.group(name="%s_nonScaleGrp" % self.suffix, em=True)
 
         cmds.addAttr(self.scaleGrp, at="bool", ln="Control_Visibility", sn="contVis", defaultValue=True)
@@ -74,28 +74,29 @@ class Tail(object):
     def createJoints(self):
         # draw Joints
         cmds.select(d=True)
-        self.limbPlug = cmds.joint(name="limbPlug_%s" % self.suffix, p=extra.getWorldTranslation(self.inits[0]), radius=3)
+        self.limbPlug = cmds.joint(name="limbPlug_%s" % self.suffix, p=functions.getWorldTranslation(self.inits[0]), radius=3)
 
         cmds.select(d=True)
         for j in range (0,len(self.inits)):
-            location = extra.getWorldTranslation(self.inits[j])
+            location = functions.getWorldTranslation(self.inits[j])
             jnt = cmds.joint(name="jDef_{0}_{1}".format(j, self.suffix), p=location)
             self.sockets.append(jnt)
             self.deformerJoints.append(jnt)
 
         if not self.useRefOrientation:
-            extra.orientJoints(self.deformerJoints, worldUpAxis=(self.look_axis), upAxis=(0, 1, 0), reverseAim=self.sideMult, reverseUp=self.sideMult)
+            functions.orientJoints(self.deformerJoints, worldUpAxis=(self.look_axis), upAxis=(0, 1, 0), reverseAim=self.sideMult, reverseUp=self.sideMult)
         else:
             for x in range (len(self.deformerJoints)):
-                extra.alignTo(self.deformerJoints[x], self.inits[x], position=True, rotation=True)
+                functions.alignTo(self.deformerJoints[x], self.inits[x], position=True, rotation=True)
                 cmds.makeIdentity(self.deformerJoints[x], a=True)
 
         cmds.parent(self.deformerJoints[0], self.scaleGrp)
 
-        map(lambda x: cmds.connectAttr("%s.jointVis" % self.scaleGrp, "%s.v" % x), self.deformerJoints)
+        # map(lambda x: cmds.connectAttr("%s.jointVis" % self.scaleGrp, "%s.v" % x), self.deformerJoints)
+        functions.drive_attrs("%s.jointVis" % self.scaleGrp, ["%s.v" % x for x in self.deformerJoints])
 
         cmds.connectAttr("%s.rigVis" % self.scaleGrp,"%s.v" % self.limbPlug)
-        extra.colorize(self.deformerJoints, self.colorCodes[0], shape=False)
+        functions.colorize(self.deformerJoints, self.colorCodes[0], shape=False)
 
         pass
 
@@ -107,14 +108,14 @@ class Tail(object):
         self.cont_off_list=[]
 
         for jnt in range (len(self.deformerJoints)-1):
-            scaleDis = extra.getDistance(self.deformerJoints[jnt], self.deformerJoints[jnt + 1]) / 2
+            scaleDis = functions.getDistance(self.deformerJoints[jnt], self.deformerJoints[jnt + 1]) / 2
             cont, _ = icon.createIcon("Cube", iconName="%s%i_cont" % (self.suffix, jnt), scale=(scaleDis, scaleDis, scaleDis))
 
             cmds.xform(cont, piv=(self.sideMult * (-scaleDis), 0, 0))
-            extra.alignToAlter(cont, self.deformerJoints[jnt], 2)
+            functions.alignToAlter(cont, self.deformerJoints[jnt], 2)
 
-            cont_OFF = extra.createUpGrp(cont, "OFF")
-            cont_ORE = extra.createUpGrp(cont, "ORE")
+            cont_OFF = functions.createUpGrp(cont, "OFF")
+            cont_ORE = functions.createUpGrp(cont, "ORE")
 
             self.contList.append(cont)
             self.cont_off_list.append(cont_OFF)
@@ -124,8 +125,9 @@ class Tail(object):
             else:
                 cmds.parent(self.cont_off_list[jnt], self.scaleGrp)
 
-        map(lambda x: cmds.connectAttr("%s.contVis" % self.scaleGrp, "%s.v" % x), self.cont_off_list)
-        extra.colorize(self.contList, self.colorCodes[0])
+        # map(lambda x: cmds.connectAttr("%s.contVis" % self.scaleGrp, "%s.v" % x), self.cont_off_list)
+        functions.drive_attrs("%s.contVis" % self.scaleGrp, ["%s.v" % x for x in self.cont_off_list])
+        functions.colorize(self.contList, self.colorCodes[0])
 
     def createFKsetup(self):
         for x in range (len(self.contList)):
@@ -198,24 +200,24 @@ class Guides(object):
         for seg in range(self.segments + 1):
             jnt = cmds.joint(p=(rPointTail + (addTail * seg)), name="jInit_tail_%s_%i" %(self.suffix, seg))
 
-            extra.set_joint_side(jnt, self.side)
+            functions.set_joint_side(jnt, self.side)
             # Update the guideJoints list
             self.guideJoints.append(jnt)
 
         # set orientation of joints
-        extra.orientJoints(self.guideJoints, worldUpAxis=self.lookVector, upAxis=(0, 1, 0), reverseAim=self.sideMultiplier, reverseUp=self.sideMultiplier)
+        functions.orientJoints(self.guideJoints, worldUpAxis=self.lookVector, upAxis=(0, 1, 0), reverseAim=self.sideMultiplier, reverseUp=self.sideMultiplier)
 
     def define_attributes(self):
-        extra.set_joint_type(self.guideJoints[0], "TailRoot")
-        _ = [extra.set_joint_type(jnt, "Tail") for jnt in self.guideJoints[1:]]
-        _ = [extra.set_joint_side(jnt, self.side) for jnt in self.guideJoints]
+        functions.set_joint_type(self.guideJoints[0], "TailRoot")
+        _ = [functions.set_joint_type(jnt, "Tail") for jnt in self.guideJoints[1:]]
+        _ = [functions.set_joint_side(jnt, self.side) for jnt in self.guideJoints]
 
         # ----------Mandatory---------[Start]
         root_jnt = self.guideJoints[0]
-        extra.create_global_joint_attrs(root_jnt, moduleName="%s_Tail" % self.side, upAxis=self.upVector, mirrorAxis=self.mirrorVector, lookAxis=self.lookVector)
+        functions.create_global_joint_attrs(root_jnt, moduleName="%s_Tail" % self.side, upAxis=self.upVector, mirrorAxis=self.mirrorVector, lookAxis=self.lookVector)
         # ----------Mandatory---------[End]
         for attr_dict in LIMB_DATA["properties"]:
-            extra.create_attribute(root_jnt, attr_dict)
+            functions.create_attribute(root_jnt, attr_dict)
 
     def createGuides(self):
         self.draw_joints()

@@ -51,7 +51,7 @@ def get_plug_ids(mesh, source_deformer, source_influence=None):
     }
 
     sel = api.MSelectionList()
-    print "DB", node_type
+    print("DB", node_type)
     sel.add(weight_plug[node_type].format(source_deformer))
     plug = sel.getPlug(0)
 

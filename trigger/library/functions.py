@@ -1,7 +1,9 @@
-import maya.cmds as cmds
+import sys
+from maya import cmds
 # import maya.OpenMaya as om
 # USING MAYA API 2.0
 import maya.api.OpenMaya as om
+from maya import mel
 
 from trigger.core import feedback
 from trigger.core.undo_dec import undo
@@ -47,6 +49,7 @@ AXIS_CONVERSION_DICT = {
 }
 
 def getMDagPath(node):
+    """Returns the API 2.0 dagPath of given Node"""
     selList = om.MSelectionList()
     selList.add(node)
     return selList.getDagPath(0)
@@ -67,7 +70,17 @@ def alignTo(node, target, position=True, rotation=False):
     """
     This is the fastest align method. May not work in all cases
     http://www.rihamtoulan.com/blog/2017/12/21/matching-transformation-in-maya-and-mfntransform-pitfalls
+
+    Args:
+        node: (String) Node to be aligned
+        target: (String) Align target
+        position: (Bool) Match world position. Default True
+        rotation: (Bool) Match rotation. Defaulf False
+
+    Returns: None
+
     """
+
     nodeMTransform = om.MFnTransform(getMDagPath(node))
     targetMTransform = om.MFnTransform(getMDagPath(target))
     if position:
@@ -81,12 +94,12 @@ def alignTo(node, target, position=True, rotation=False):
 
 def alignToAlter(node1, node2, mode=0, o=(0,0,0)):
     """
-    Aligns the first node to the second.
+    Aligns the first node to the second. Alternative method to alignTo
     Args:
-        node1: Node to be aligned.
-        node2: Target Node.
-        mode: Specifies the alignment Mode. Valid Values: 0=position only, 1=Rotation Only, 2=Position and Rotation
-        o: Offset Value. Default: (0,0,0)
+        node1: (String) Node to be aligned.
+        node2: (String) Target Node.
+        mode: (int) Specifies the alignment Mode. Valid Values: 0=position only, 1=Rotation Only, 2=Position and Rotation
+        o: (Tuple or List) Offset Value. Default: (0,0,0)
 
     Returns:None
 
@@ -118,7 +131,7 @@ def alignAndAim(node, targetList, aimTargetList, upObject=None, upVector=None, l
 
     """
     if upObject and upVector:
-        cmds.error("In alignAndAim function both upObject and upVector parameters cannot be used")
+        FEEDBACK.throw_error("In alignAndAim function both upObject and upVector parameters cannot be used")
         return
 
     pointFlags = ""
@@ -178,6 +191,15 @@ def alignBetween (node, targetA, targetB, position=True, aim_b=True, orientation
         cmds.delete(cmds.orientConstraint(targetA, targetB, node, mo=False, o=o))
 
 def getBetweenVector(node, targetPointNodeList):
+    """
+    Gets the between vector between the source node and target node list
+    Args:
+        node: (String) source node
+        targetPointNodeList: (List) Target nodes
+
+    Returns: MVector
+
+    """
     nodePos = getWorldTranslation(node)
     sumVectors = om.MVector(0,0,0)
     for point in targetPointNodeList:
@@ -198,7 +220,7 @@ def createUpGrp(node, suffix, freezeTransform=True):
     Returns: The created group node
 
     """
-    grpName = "%s_%s" % (node, suffix)
+    grpName = uniqueName("%s_%s" % (node, suffix))
     newGrp = cmds.group(em=True, name=grpName)
 
     #align the new created empty group to the selected object
@@ -215,8 +237,6 @@ def createUpGrp(node, suffix, freezeTransform=True):
     cmds.parent(node,newGrp)
     return newGrp
 
-
-## example use: connectMirror(obj1, obj2, "X")
 def connectMirror (node1, node2, mirrorAxis="X"):
     """
     Make a mirrored connection between node1 and node2 along the mirrorAxis
@@ -278,12 +298,39 @@ def connectMirror (node1, node2, mirrorAxis="X"):
         cmds.connectAttr("{0}.output3Dy".format(minusOpR), "{0}.ry".format(node2))
         cmds.connectAttr("{0}.output3Dz".format(minusOpR), "{0}.rz".format(node2))
 
-def colorize (node_list, index, shape=True):
+def changeColor( index, customColor=None):
+    """
+    Changes the wire color of selected nodes to the with the index
+    Args:
+        index: Index Number
+        customColor: (Tuple) If defined, this overrides index number.
+    Returns:None
+
+    """
+    node = cmds.ls(sl=True)
+    if not node:
+        return
+    shapes = cmds.listRelatives(node, s=True)
+    if not shapes:
+        return
+    if not customColor:
+        for shape in shapes:
+            try: cmds.setAttr("%s.overrideRGBColors", 0)
+            except: pass
+            cmds.setAttr("%s.overrideEnabled" % shape, True)
+            cmds.setAttr("%s.overrideColor" % shape, index)
+    else:
+        for shape in shapes:
+            cmds.setAttr("%s.overrideRGBColors" % shape, 1)
+            cmds.setAttr("%s.overrideColorRGB" % shape, *customColor)
+
+
+def colorize (node_list, index, customColor=None, shape=True):
     """
     Changes the wire color of the node to the index
     Args:
-        node_list: Node
-        index: Index Number
+        node_list: (list) List of nodes to be processed
+        index: (int) Index Number
 
     Returns:None
 
@@ -306,27 +353,37 @@ def colorize (node_list, index, shape=True):
         #shape=node.getShape()
         if shape:
             shapes=cmds.listRelatives(node, s=True)
-            shapes = [] if shapes == None else shapes
-            for shape in shapes:
-                cmds.setAttr("{0}.overrideEnabled".format(shape), True)
-                cmds.setAttr("{0}.overrideColor".format(shape), index)
+            node_list = [] if shapes == None else shapes
+            # for shape in shapes:
+            #     cmds.setAttr("{0}.overrideEnabled".format(shape), True)
+            #     cmds.setAttr("{0}.overrideColor".format(shape), index)
+        # else:
+        #     for shape in node_list:
+        #         cmds.setAttr("{0}.overrideEnabled".format(shape), True)
+        #         cmds.setAttr("{0}.overrideColor".format(shape), index)
+
+        if not customColor:
+            for node in node_list:
+                try: cmds.setAttr("%s.overrideRGBColors", 0)
+                except: pass
+                cmds.setAttr("%s.overrideEnabled" % node, True)
+                cmds.setAttr("%s.overrideColor" % node, index)
         else:
-            for shape in node_list:
-                cmds.setAttr("{0}.overrideEnabled".format(shape), True)
-                cmds.setAttr("{0}.overrideColor".format(shape), index)
+            for node in node_list:
+                cmds.setAttr("%s.overrideRGBColors" % node, 1)
+                cmds.setAttr("%s.overrideColorRGB" % node, *customColor)
 
 def lockAndHide (node, channelArray=None, hide=True):
     """
     Locks and hides the channels specified in the channelArray.
     Args:
-        node: Node
-        channelArray: Must be list value containing the channels as string values. eg: ["sx", "sy", "sz"] or ["translateX", "rotateX", "sz"]
-
+        node: (String) target object
+        channelArray: (List) the channels as string values. eg: ["sx", "sy", "sz"] or ["translateX", "rotateX", "sz"]
+        hide: (Bool) if false, the attributes will be only locked but not hidden. Defaulf True
     Returns: None
 
     """
     channelArray = ["tx", "ty", "tz", "rx", "ry", "rz", "sx", "sy", "sz", "v"] if not channelArray else channelArray
-    ## // TODO OPTIMIZE HERE (map function?)
     for i in channelArray:
         attribute=("%s.%s" %(node, i))
         cmds.setAttr(attribute, lock=True, keyable=not hide, channelBox=not hide)
@@ -452,6 +509,19 @@ def attrPass (sourceNode, targetNode, attributes=[], inConnections=True, outConn
                 cmds.deleteAttr("%s.%s" % (sourceNode,i))
 
 def create_global_joint_attrs(joint, moduleName=None, upAxis=None, mirrorAxis=None, lookAxis=None):
+    """
+    Creates Trigger specific global attrubutes.
+
+    Args:
+        joint: (String) Targer Joint
+        moduleName: (String) Optional. Name of the module name. If none given, joint name will be used instead
+        upAxis: (Tuple) Overrides default upAxis Values for Trigger
+        mirrorAxis: (Tuple) Overrides default mirrorAxis Values for Trigger
+        lookAxis: (Tuple) Overrides default lookAxis Values for Trigger
+
+    Returns:
+
+    """
     moduleName = joint if not moduleName else moduleName
     if not cmds.attributeQuery("moduleName", node=joint, exists=True):
         cmds.addAttr(joint, longName="moduleName", dataType="string", k=False)
@@ -518,6 +588,8 @@ def create_attribute(node, property_dict=None, keyable=True, display=True, *args
     # if some attribute with same name exists, quit
     default_value = property_dict.get("default_value")
     if cmds.attributeQuery(attr_name, node=node, exists=True):
+        if sys.version_info.major == 3:
+            unicode = str
         if default_value:
             if type(default_value) == str or type(default_value) == unicode:
                 cmds.setAttr("%s.%s" % (node, attr_name), default_value, type="string")
@@ -556,15 +628,34 @@ def create_attribute(node, property_dict=None, keyable=True, display=True, *args
 
 
 def set_joint_type(joint, type_name):
+    """
+    Sets Trigger Joint Type
+    Args:
+        joint: (String) Source Joint
+        type_name: (String) Name of the joint
+
+    Returns: None
+
+    """
     if type_name in JOINT_TYPE_DICT.values():
-        # get the key from the value
-        type_int = JOINT_TYPE_DICT.keys()[JOINT_TYPE_DICT.values().index(type_name)]
+        # get the key from the value. This is compatible with both python3 and python2
+        value_list = [0]+list(JOINT_TYPE_DICT.values())
+        type_int = value_list.index(type_name)
         cmds.setAttr("%s.type" % joint, type_int)
     else:
         cmds.setAttr("%s.type" % joint , 18) # 18 is the other
         cmds.setAttr("%s.otherType" % joint, type_name, type="string")
 
 def get_joint_type(joint, skipErrors=True):
+    """
+    Gets the joint type
+    Args:
+        joint: (String) source joint type
+        skipErrors: (Bool) If True, silently return if the type cannot be found, else throw error. Default True
+
+    Returns: (String) joint_type
+
+    """
     type_int = cmds.getAttr("%s.type" % joint)
     if type_int not in JOINT_TYPE_DICT.keys():
         if skipErrors:
@@ -578,6 +669,15 @@ def get_joint_type(joint, skipErrors=True):
     return type_name
 
 def set_joint_side(joint, side):
+    """
+    Sets the Joint side
+    Args:
+        joint: (String) Joint to work on
+        side: (String) Side value. Valid values are 'l', 'r', 'c', 'left', 'right', 'center' Not Case sensitive
+
+    Returns:
+
+    """
     if side.lower() == "left" or side.lower() == "l":
         cmds.setAttr("%s.side" % joint, 1)
     elif side.lower() == "right" or side.lower() == "r":
@@ -588,6 +688,15 @@ def set_joint_side(joint, side):
         FEEDBACK.throw_error("%s is not a valid side value" % side)
 
 def get_joint_side(joint, skipErrors=True):
+    """
+    Gets the joint side
+    Args:
+        joint: (String) Joint to be queried
+        skipErrors: (Bool) If true, error will be silenced and return None
+
+    Returns: (String) Side
+
+    """
     side_int = cmds.getAttr("{0}.side".format(joint))
     if side_int not in JOINT_SIDE_DICT.keys():
         if skipErrors:
@@ -597,6 +706,15 @@ def get_joint_side(joint, skipErrors=True):
     return JOINT_SIDE_DICT[side_int]
 
 def identifyMaster(joint, modules_dictionary):
+    """
+    Trigger Joint identification
+    Args:
+        joint: (String) Joint to query
+        modules_dictionary: (Dictionary)
+
+    Returns: (Tuple) jointType, limbType, side
+
+    """
     # define values as no
     limbType = "N/A"
     jointType = get_joint_type(joint)
@@ -606,11 +724,6 @@ def identifyMaster(joint, modules_dictionary):
 
     side = get_joint_side(joint)
     return jointType, limbType, side
-
-#
-# # TODO // Create a mirrorController method which will mirror the shape to the other side. similar to the replace controller.
-# def mirrorController():
-#     pass
 
 def getRigAxes(joint):
     """
@@ -630,6 +743,15 @@ def getRigAxes(joint):
     return tuple(upAxis), tuple(mirrorAxis), tuple(lookAxis)
 
 def uniqueName(name, return_counter=False):
+    """
+    Searches the scene for match and returns a unique name for given name
+    Args:
+        name: (String) Name to query
+        return_counter: (Bool) If true, returns the next available number insted of the object name
+
+    Returns: (String) uniquename
+
+    """
     baseName = name
     idcounter = 0
     while cmds.objExists(name):
@@ -658,17 +780,31 @@ def uniqueScene():
     return old_names, new_names
 
 def getMirror(node):
-    # find the mirror of the oldController
+    """Returns the mirror controller if exists"""
+
     if "_LEFT_" in node:
-        mirrorNode = node.replace("_LEFT_", "_RIGHT_")
+        mirrorNode = node.replace("_L", "_R")
 
     elif "_RIGHT_" in node:
-        mirrorNode = node.replace("_RIGHT_", "_LEFT_")
+        mirrorNode = node.replace("_R", "_L")
     else:
         mirrorNode = None
         cmds.warning("Cannot find the mirror controller")
     if mirrorNode:
         return mirrorNode
+
+# def getMirror(node):
+#     # find the mirror of the oldController
+#     if "_LEFT_" in node:
+#         mirrorNode = node.replace("_LEFT_", "_RIGHT_")
+#
+#     elif "_RIGHT_" in node:
+#         mirrorNode = node.replace("_RIGHT_", "_LEFT_")
+#     else:
+#         mirrorNode = None
+#         cmds.warning("Cannot find the mirror controller")
+#     if mirrorNode:
+#         return mirrorNode
 
 def alignNormal(node, normalVector):
     """
@@ -690,11 +826,24 @@ def alignNormal(node, normalVector):
 
 
 def orientJoints(jointList, aimAxis=(1.0,0.0,0.0), upAxis=(0.0,1.0,0.0), worldUpAxis=(0.0,1.0,0.0), reverseAim=1, reverseUp=1):
+    """
+    Orients joints. Alternative to maya's native joint orient method
+    Args:
+        jointList: (list) Joints list. Order is important.
+        aimAxis: (Tuple) Aim Axis of each joint default X
+        upAxis: (Tuple) Up Axis of each joint default Y
+        worldUpAxis: (Tuple) Worls up axis default Y
+        reverseAim: (int) multiplier for aim. Default 1
+        reverseUp: (int) multiplier for reverseUp. Default 1
+
+    Returns:
+
+    """
+    # aimAxis = om.MVector(aimAxis) if reverseAim else (-1*om.MVector(aimAxis))
+    # upAxis = om.MVector(upAxis) if reverseUp else (-1*om.MVector(reverseUp))
 
 
-    # aimAxis = reverseAim*dt.Vector(aimAxis)
     aimAxis = reverseAim*om.MVector(aimAxis)
-    # upAxis = reverseUp*dt.Vector(upAxis)
     upAxis = reverseUp*om.MVector(upAxis)
 
     if len(jointList) == 1:
@@ -720,15 +869,18 @@ def orientJoints(jointList, aimAxis=(1.0,0.0,0.0), upAxis=(0.0,1.0,0.0), worldUp
     cmds.setAttr("{0}.jointOrient".format(jointList[-1]), 0,0,0)
 
 def uniqueList(seq): # Dave Kirby
+    """Returns an ordered unique list from the given list"""
     # Order preserving
     seen = set()
     return [x for x in seq if x not in seen and not seen.add(x)]
 
 def getParent(node):
+    """Returns the parent of the given node"""
     parentList = cmds.listRelatives(node, parent=True)
     return parentList[0] if parentList else None
 
 def getShapes(node):
+    """Returns shapes of the given node"""
     return cmds.listRelatives(node, c=True, shapes=True)
 
 def getMeshes(node):
@@ -736,29 +888,61 @@ def getMeshes(node):
     all_mesh_shapes = cmds.listRelatives(node, ad=True, children=True, type="mesh")
     return uniqueList([getParent(mesh) for mesh in all_mesh_shapes])
 
+def getNextIndex(attr, startFrom=0):
+    """Returns the next free index from a multi index attribute"""
+    return mel.eval("getNextFreeMultiIndex %s %s" % (attr, startFrom))
 
-def matrixConstraint(parent, child, mo=True, prefix="", sr=None, st=None, ss=None):
+def matrixConstraint(parent, child, mo=True, prefix="", sr=None, st=None, ss=None, source_parent_cutoff=None):
+    """
+    Creates a Matrix Constraint
+    Args:
+        parent: (String) Parent Node
+        child: (String) Child Node
+        mo: (Bool) Maintain offset. If True, the existing distance between nodes will be preserved
+        prefix: (String) Prefix for the nodes names which will be created
+        sr: (List) Skip Rotations. Listed rotation values will be skipped. "xyz" or ["x", "y", "z"]
+        st: (List) Skip Translation. Listed translation values will be skipped. "xyz" or ["x", "y", "z"]
+        ss: (List) Skip Scale. Listed scale values will be skipped. "xyz" or ["x", "y", "z"]
+        source_parent_cutoff: (String) The transformation matrices above this node won't affect to the child.
+
+    Returns: (Tuple) mult_matrix, decompose_matrix
+
+    """
+
     child_parent = getParent(child)
     # if child_parent:
     #     cmds.parent(child, w=True)
-
+    next_index = -1
 
     mult_matrix = cmds.createNode("multMatrix", name="%s_multMatrix" % prefix)
     decompose_matrix = cmds.createNode("decomposeMatrix", name="%s_decomposeMatrix" % prefix)
-
-    cmds.connectAttr("%s.worldMatrix[0]" % parent, "%s.matrixIn[1]" % mult_matrix)
-    cmds.connectAttr("%s.matrixSum" % mult_matrix, "%s.inputMatrix" % decompose_matrix)
 
     if mo:
         parentWorldMatrix = getMDagPath(parent).inclusiveMatrix()
         childWorldMatrix = getMDagPath(child).inclusiveMatrix()
         localOffset = childWorldMatrix * parentWorldMatrix.inverse()
-        cmds.setAttr("%s.matrixIn[0]" % mult_matrix, localOffset, type="matrix")
+        # next_index = getNextIndex("%s.matrixIn" % mult_matrix)
+        next_index += 1
+        cmds.setAttr("%s.matrixIn[%i]" % (mult_matrix, next_index), localOffset, type="matrix")
+
+    # next_index = getNextIndex("%s.matrixIn" % mult_matrix)
+    next_index += 1
+    cmds.connectAttr("%s.worldMatrix[0]" % parent, "%s.matrixIn[%i]" % (mult_matrix, next_index))
+    cmds.connectAttr("%s.matrixSum" % mult_matrix, "%s.inputMatrix" % decompose_matrix)
+
+    if source_parent_cutoff:
+        # next_index = getNextIndex("%s.matrixIn" % mult_matrix)
+        next_index += 1
+        cmds.connectAttr("%s.worldInverseMatrix" % source_parent_cutoff, "%s.matrixIn[%i]" % (mult_matrix, next_index))
+
+
     if child_parent:
         child_parentWorldMatrix = getMDagPath(child_parent).inclusiveMatrix().inverse()
         # childWorldMatrix = getMDagPath(child).inclusiveMatrix()
         # localOffset = childWorldMatrix * child_parentWorldMatrix.inverse()
-        cmds.setAttr("%s.matrixIn[2]" % mult_matrix, child_parentWorldMatrix, type="matrix")
+        # next_index = getNextIndex("%s.matrixIn" % mult_matrix)
+        next_index += 1
+        cmds.setAttr("%s.matrixIn[%i]" % (mult_matrix, next_index), child_parentWorldMatrix, type="matrix")
 
 
     if not st:
@@ -784,6 +968,18 @@ def matrixConstraint(parent, child, mo=True, prefix="", sr=None, st=None, ss=Non
 
 
 def drive_attrs(driver_attr, driven_attrs, driver_range=None, driven_range=None, force=True):
+    """
+    Creates a ranged connection between driver and driven attr(s)
+    Args:
+        driver_attr: (String) Driver Attribute. Eg. pPlane.tx
+        driven_attrs: (List or String) Driven attribute or list of driven attributes. "pSphere.sx" or  ["pSphere.sx", "pSphere.sy"]
+        driver_range: (Tuple or List) Optional. Minumum and maximum range of driver. If not provided, there will be a direct connection between driver and driven
+        driven_range: (Tuple or List) Optional. Minumum and maximum range of driven. If not provided, there will be a direct connection between driver and driven
+        force: (Bool) If true, any existing connections on driven will be overriden.
+
+    Returns:
+
+    """
     if type(driven_attrs) != list:
         driven_attrs = [driven_attrs]
     if not driver_range or not driven_range:
@@ -874,7 +1070,17 @@ def drive_attrs(driver_attr, driven_attrs, driver_range=None, driven_range=None,
                 cmds.connectAttr("%s.outValue" % range_node, driven, force=force)
 
 def deleteObject(keyword, force=True):
-    """Deletes the object only if exists. Accepts wildcards."""
+    """
+    Deletes the object only if exists.
+    Accepts wildcards.
+
+    Args:
+        keyword: (String) name of the object with or without wildcards
+        force: (Bool) If True, the node will be deleted even if its locked. Default True
+
+    Returns: (List) Non - existing nodes
+
+    """
     node_list = cmds.ls(keyword)
     non_existing = []
     for node in node_list:

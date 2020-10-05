@@ -44,7 +44,7 @@ class Builder(settings.Settings):
 
     # @undo
     def start_building(self, root_jnt=None, create_switchers=False):
-        """ Creates the modules for the selected root and for all the roots in the hiearchy and connects them
+        """ Creates the maya_modules for the selected root and for all the roots in the hiearchy and connects them
 
         Args:
             root_jnt(string): root guide joint. If not defined, scene selection will be used.

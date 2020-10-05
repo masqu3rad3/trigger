@@ -32,7 +32,7 @@ class Kinematics(settings.Settings):
 
         self.createSwithcers = create_switchers
         self.root_joint = root_joint
-        self.module_dict = {mod: eval("modules.{0}.LIMB_DATA".format(mod)) for mod in modules.__all__}
+        self.module_dict = {mod: eval("maya_modules.{0}.LIMB_DATA".format(mod)) for mod in modules.__all__}
         self.validRootList = [values["members"][0] for values in self.module_dict.values()]
 
         self.fingerMatchList = []
@@ -310,7 +310,7 @@ class Kinematics(settings.Settings):
                 j_def_set = cmds.sets(name=set_name)
 
             # suffix = "%s_%s" % (sideVal, x[1].capitalize()) if sideVal != "C" else x[1].capitalize()
-            module = "modules.{0}.{1}".format(x[1], x[1].capitalize())
+            module = "maya_modules.{0}.{1}".format(x[1], x[1].capitalize())
             flags = "build_data={0}".format(x[0])
             construct_command = "{0}({1})".format(module, flags)
 

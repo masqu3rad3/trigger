@@ -1,8 +1,11 @@
 ## connects a controller, mesh surface and joint with follicle and makes it possible to
 ## create extra joint based tweaking over blendshapes
 # import pymel.core as pm
+import sys
 from maya import cmds
 from trigger.utils import parentToSurface
+if sys.version_info.major == 3:
+    from importlib import reload
 reload(parentToSurface)
 # from trigger.utils import extraProcedures as extra
 from trigger.library import functions

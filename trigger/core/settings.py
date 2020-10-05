@@ -25,8 +25,9 @@ DEFAULT_FILENAME = "triggerSettings.json"
 
 class Settings(dict):
     def __init__(self, filename=None, folder=None, custom_root_path=None):
-        super(Settings, self).__init__()
+        # super(Settings, self).__init__()
         FEEDBACK.debug("COUNTING")
+        FEEDBACK.debug("dd")
         filename = DEFAULT_FILENAME if not filename else filename
         self.io = io.IO(file_name=filename, folder_name=folder, root_path=custom_root_path)
         self.original_settings = self.read_settings()

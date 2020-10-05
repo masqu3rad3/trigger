@@ -1,7 +1,7 @@
 from maya import cmds
 import maya.api.OpenMaya as om
 
-from trigger.library import functions as extra
+from trigger.library import functions
 from trigger.library import controllers as ic
 from trigger.core import feedback
 FEEDBACK = feedback.Feedback(__name__)
@@ -54,20 +54,20 @@ class Finger(object):
 
 
         # initialize coordinates
-        self.up_axis, self.mirror_axis, self.look_axis = extra.getRigAxes(self.inits[0])
+        self.up_axis, self.mirror_axis, self.look_axis = functions.getRigAxes(self.inits[0])
 
         # get the properties from the root
         self.useRefOrientation = cmds.getAttr("%s.useRefOri" % self.inits[0])
         self.fingerType = cmds.getAttr("%s.fingerType" % self.fingerRoot, asString=True)
         self.isThumb = self.fingerType == "Thumb"
-        self.side = extra.get_joint_side(self.inits[0])
+        self.side = functions.get_joint_side(self.inits[0])
         self.sideMult = -1 if self.side == "R" else 1
 
         # initialize suffix
         # self.suffix = "%s_%s" %(suffix, cmds.getAttr("%s.fingerType" % self.fingerRoot, asString=True))
         # self.suffix = (extra.uniqueName("limbGrp_%s_%s" % (self.fingerType, suffix))).replace("limbGrp_", "")
         # self.suffix = (extra.uniqueName("%s_%s" % (suffix, self.fingerType)))
-        self.suffix = (extra.uniqueName("%s_%s" % (cmds.getAttr("%s.moduleName" % self.fingerRoot), self.fingerType)))
+        self.suffix = (functions.uniqueName("%s_%s" % (cmds.getAttr("%s.moduleName" % self.fingerRoot), self.fingerType)))
 
 
         # scratch variables
@@ -86,7 +86,7 @@ class Finger(object):
         self.limbGrp = cmds.group(name=self.suffix, em=True)
         self.scaleGrp = cmds.group(name="%s_scaleGrp" % self.suffix, em=True)
         # extra.alignTo(self.scaleGrp, self.fingerRoot, 0)
-        extra.alignTo(self.scaleGrp, self.fingerRoot, position=True)
+        functions.alignTo(self.scaleGrp, self.fingerRoot, position=True)
         self.nonScaleGrp = cmds.group(name="%s_nonScaleGrp" % self.suffix, em=True)
 
         cmds.addAttr(self.scaleGrp, at="bool", ln="Control_Visibility", sn="contVis", defaultValue=True)
@@ -106,32 +106,33 @@ class Finger(object):
 
         cmds.select(d=True)
 
-        self.limbPlug = cmds.joint(name="limbPlug_%s" % self.suffix, p=extra.getWorldTranslation(self.inits[0]), radius=2)
+        self.limbPlug = cmds.joint(name="limbPlug_%s" % self.suffix, p=functions.getWorldTranslation(self.inits[0]), radius=2)
 
         for guide in self.inits:
             jnt = cmds.joint(name="jDef_{0}_{1}".format(self.suffix, self.inits.index(guide)), radius=1.0)
-            extra.alignTo(jnt, guide, position=True, rotation=True)
+            functions.alignTo(jnt, guide, position=True, rotation=True)
             if guide == self.inits[-1]: # if it is the last joint dont add it to the deformers
                 jnt = cmds.rename(jnt, (jnt.replace("jDef", "jnt")))
             self.sockets.append(jnt)
             self.deformerJoints.append(jnt)
 
-        extra.orientJoints(self.deformerJoints, worldUpAxis=self.up_axis, upAxis=(0, -1, 0), reverseAim=self.sideMult,
-                           reverseUp=self.sideMult)
+        functions.orientJoints(self.deformerJoints, worldUpAxis=self.up_axis, upAxis=(0, -1, 0), reverseAim=self.sideMult,
+                               reverseUp=self.sideMult)
 
         if not self.useRefOrientation:
-            extra.orientJoints(self.deformerJoints, worldUpAxis=self.up_axis, upAxis=(0, -1, 0),
-                               reverseAim=self.sideMult, reverseUp=self.sideMult)
+            functions.orientJoints(self.deformerJoints, worldUpAxis=self.up_axis, upAxis=(0, -1, 0),
+                                   reverseAim=self.sideMult, reverseUp=self.sideMult)
         else:
             for x in range (len(self.deformerJoints)):
-                extra.alignTo(self.deformerJoints[x], self.inits[x], position=True, rotation=True)
+                functions.alignTo(self.deformerJoints[x], self.inits[x], position=True, rotation=True)
                 cmds.makeIdentity(self.deformerJoints[x], a=True)
 
 
         cmds.parentConstraint(self.limbPlug, self.scaleGrp)
-        map(lambda x: cmds.connectAttr("{0}.jointVis".format(self.scaleGrp), "{0}.v".format(x)), self.deformerJoints)
+        # map(lambda x: cmds.connectAttr("{0}.jointVis".format(self.scaleGrp), "{0}.v".format(x)), self.deformerJoints)
+        functions.drive_attrs("%s.jointVis" % self.scaleGrp, ["%s.v" % x for x in self.deformerJoints])
 
-        extra.colorize(self.deformerJoints, self.colorCodes[0], shape=False)
+        functions.colorize(self.deformerJoints, self.colorCodes[0], shape=False)
 
     def createControllers(self):
         icon = ic.Icon()
@@ -150,12 +151,12 @@ class Finger(object):
             contName = ("{0}_{1}_cont".format(self.suffix, index))
             cont, dmp = icon.createIcon("Circle", iconName=contName,scale=(contScl,contScl,contScl), normal=(1,0,0))
 
-            extra.alignToAlter(cont, self.deformerJoints[index], mode=2)
+            functions.alignToAlter(cont, self.deformerJoints[index], mode=2)
 
-            cont_OFF=extra.createUpGrp(cont,"OFF")
+            cont_OFF=functions.createUpGrp(cont, "OFF")
             self.conts_OFF.append([cont_OFF])
-            cont_ORE = extra.createUpGrp(cont, "ORE")
-            cont_con = extra.createUpGrp(cont, "con")
+            cont_ORE = functions.createUpGrp(cont, "ORE")
+            cont_con = functions.createUpGrp(cont, "con")
 
             if index>0:
                 cmds.parent(cont_OFF, self.conts[len(self.conts)-1])
@@ -169,8 +170,10 @@ class Finger(object):
         cmds.parent(self.deformerJoints[0], self.scaleGrp)
         cmds.parent(self.conts_OFF[0], self.scaleGrp)
 
-        map(lambda x: cmds.connectAttr("%s.contVis" % self.scaleGrp, "%s.v" % x[0]), self.conts_OFF)
-        extra.colorize(contList, self.colorCodes[0])
+        # map(lambda x: cmds.connectAttr("%s.contVis" % self.scaleGrp, "%s.v" % x[0]), self.conts_OFF)
+        functions.drive_attrs("%s.contVis" % self.scaleGrp, ["%s.v" % x[0] for x in self.conts_OFF])
+
+        functions.colorize(contList, self.colorCodes[0])
 
     def createFKsetup(self):
         ## Controller Attributtes
@@ -223,7 +226,7 @@ class Finger(object):
             thumb = fingerType == "Thumb"
             suffix = "%s_%s" %(suffix, cmds.getAttr("%s.fingerType" % fingerRoot, asString=True))
 
-        suffix=(extra.uniqueName("limbGrp_%s" % suffix)).replace("limbGrp_", "")
+        suffix=(functions.uniqueName("limbGrp_%s" % suffix)).replace("limbGrp_", "")
         self.limbGrp = cmds.group(name="limbGrp_%s" % suffix, em=True)
 
         if (len(inits) < 2):
@@ -242,7 +245,7 @@ class Finger(object):
 
         for guide in inits:
             jnt = cmds.joint(name="jDef_{0}_{1}".format(suffix, inits.index(guide)), radius=1.0)
-            extra.alignTo(jnt, guide, position=True, rotation=True)
+            functions.alignTo(jnt, guide, position=True, rotation=True)
 
             if guide == inits[-1]: # if it is the last joint dont add it to the deformers
 
@@ -267,15 +270,15 @@ class Finger(object):
 
             cont, _ = icon.createIcon("Circle", iconName=contName,scale=(contScl,contScl,contScl), normal=(1,0,0))
 
-            cont_OFF = extra.createUpGrp(cont,"OFF", freezeTransform=False)
+            cont_OFF = functions.createUpGrp(cont, "OFF", freezeTransform=False)
             conts_OFF.append([cont_OFF])
-            cont_ORE = extra.createUpGrp(cont, "ORE", freezeTransform=False)
-            cont_con = extra.createUpGrp(cont, "con", freezeTransform=False)
+            cont_ORE = functions.createUpGrp(cont, "ORE", freezeTransform=False)
+            cont_con = functions.createUpGrp(cont, "con", freezeTransform=False)
 
             if side == "R":
                 cmds.setAttr("%s.rotate%s" %(cont_ORE, mirrorAxis), -180)
 
-            extra.alignTo(cont_OFF, self.deformerJoints[i], position=True, rotation=True)
+            functions.alignTo(cont_OFF, self.deformerJoints[i], position=True, rotation=True)
 
             if i > 0:
                 cmds.parent(cont_OFF, self.conts[len(self.conts)-1])
@@ -317,8 +320,8 @@ class Finger(object):
             cmds.connectAttr("{0}.{1}".format(handController, bendAttr), "%s.rotateZ" % contConList[f])
 
         cmds.parent(self.scaleGrp, self.nonScaleGrp, self.cont_IK_OFF, self.limbGrp)
-        extra.colorize(contList, self.colorCodes[0])
-        extra.colorize(self.deformerJoints, self.colorCodes[0], shape=False)
+        functions.colorize(contList, self.colorCodes[0])
+        functions.colorize(self.deformerJoints, self.colorCodes[0], shape=False)
         cmds.parentConstraint(self.limbPlug, conts_OFF[0], mo=True)
 
 class Guides(object):
@@ -366,23 +369,23 @@ class Guides(object):
             self.guideJoints.append(finger_jnt)
 
         # set orientation of joints
-        extra.orientJoints(self.guideJoints, worldUpAxis=self.upVector, upAxis=(0, -1, 0), reverseAim=self.sideMultiplier,
-                           reverseUp=self.sideMultiplier)
+        functions.orientJoints(self.guideJoints, worldUpAxis=self.upVector, upAxis=(0, -1, 0), reverseAim=self.sideMultiplier,
+                               reverseUp=self.sideMultiplier)
 
     def define_attributes(self):
         # set joint side and type attributes
-        _ = [extra.set_joint_side(jnt, self.side) for jnt in self.guideJoints]
-        extra.set_joint_type(self.guideJoints[0], "FingerRoot")
-        _ = [extra.set_joint_type(jnt, "Finger") for jnt in self.guideJoints[1:]]
+        _ = [functions.set_joint_side(jnt, self.side) for jnt in self.guideJoints]
+        functions.set_joint_type(self.guideJoints[0], "FingerRoot")
+        _ = [functions.set_joint_type(jnt, "Finger") for jnt in self.guideJoints[1:]]
         cmds.setAttr("%s.radius" % self.guideJoints[0], 1)
 
         # ----------Mandatory---------[Start]
         root_jnt = self.guideJoints[0]
-        extra.create_global_joint_attrs(root_jnt, moduleName="%s_Finger" % self.side, upAxis=self.upVector, mirrorAxis=self.mirrorVector, lookAxis=self.lookVector)
+        functions.create_global_joint_attrs(root_jnt, moduleName="%s_Finger" % self.side, upAxis=self.upVector, mirrorAxis=self.mirrorVector, lookAxis=self.lookVector)
         # ----------Mandatory---------[End]
 
         for attr_dict in LIMB_DATA["properties"]:
-            extra.create_attribute(root_jnt, attr_dict)
+            functions.create_attribute(root_jnt, attr_dict)
 
     def createGuides(self):
         self.draw_joints()

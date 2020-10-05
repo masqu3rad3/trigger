@@ -12,7 +12,11 @@ from pprint import pprint
 
 FEEDBACK = feedback.Feedback(__name__)
 
-ACTION_DATA = {}
+ACTION_DATA = {
+                "create_deformers": True,
+                "deformers": [],
+                "weights_file_directory": ""
+               }
 def multiplyList(list_of_values):
     # Multiply elements one by one
     result = 1
@@ -37,6 +41,9 @@ class Weights(dict):
         super(Weights, self).__init__()
         self.io = io.IO(file_name="tmp_weights.json")
         self["deformer"] = None
+        self.isCreateDeformers = True
+        self.deformers_list = []
+        self.weights_root_path = ""
 
     @property
     def deformer(self):
@@ -53,9 +60,23 @@ class Weights(dict):
     def set_path(self, file_path):
         self.io.file_path = file_path
 
+    def feed(self, action_data):
+        """Mandatory method for all action modules - feeds the builder data"""
+        self.isCreateDeformers = action_data["create_deformers"]
+        self.deformers_list = action_data["deformers"]
+        self.weights_root_path = action_data["weights_file_directory"]
+
     def action(self):
         """Mandatory method for all action modules"""
-        pass
+        for deformer in self.deformers_list:
+            file_path = os.path.join(self.weights_root_path, "%s.json" % deformer)
+            if self.isCreateDeformers:
+                if not os.path.isfile(file_path):
+                    FEEDBACK.throw_error("Deformer file (%s) does not exist" % file_path)
+                self.create_deformer(file_path)
+            else:
+                self.load_weights(deformer=deformer, file_path=file_path)
+
 
     # def collect_deformers(self, mesh):
     #     """Collects defomers in a dictionary by type
@@ -534,10 +555,10 @@ def get_deformer_weights(mesh, source_deformer, source_influence=None, data_type
         skin_cluster_obj = (om.MSelectionList().add(source_deformer).getDependNode(0))
         influence_dag = om.MSelectionList().add(source_influence).getDagPath(0)
         index = int(omAnim.MFnSkinCluster(skin_cluster_obj).indexForInfluenceObject(influence_dag))
-            
+
         # Get weights
         weights = mfn_skc.getWeights(node_dag, components, om.MIntArray([index]))
-        
+
         return list(weights)
 
     plug, vtx_count = get_plug_ids(mesh, source_deformer, source_influence)
@@ -550,7 +571,7 @@ def get_deformer_weights(mesh, source_deformer, source_influence=None, data_type
         ]
     elif data_type == "float":
         weight_list = [
-            plug.elementByLogicalIndex(i).asFloat()   
+            plug.elementByLogicalIndex(i).asFloat()
             for i in range(vtx_count)
         ]
 

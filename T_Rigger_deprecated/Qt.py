@@ -1207,7 +1207,7 @@ def _setup(module, extras):
                 module, name)
         except ImportError:
             try:
-                # For extra modules like sip and shiboken that may not be
+                # For extra maya_modules like sip and shiboken that may not be
                 # children of the binding.
                 submodule = __import__(name)
             except ImportError:
@@ -1217,7 +1217,7 @@ def _setup(module, extras):
 
         if name not in extras:
             # Store reference to original binding,
-            # but don't store speciality modules
+            # but don't store speciality maya_modules
             # such as uic or QtUiTools
             setattr(Qt, name, _new_module(name))
 
@@ -1696,7 +1696,7 @@ def _install():
 
     _log("Order: '%s'" % "', '".join(order))
 
-    # Allow site-level customization of the available modules.
+    # Allow site-level customization of the available maya_modules.
     _apply_site_config()
 
     found_binding = False
@@ -1809,7 +1809,7 @@ if __name__ == "__main__":
 #
 # The License for this code is as follows:
 #
-# qt-helpers - a common front-end to various Qt modules
+# qt-helpers - a common front-end to various Qt maya_modules
 #
 # Copyright (c) 2015, Chris Beaumont and Thomas Robitaille
 #

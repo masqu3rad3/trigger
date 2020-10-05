@@ -6,7 +6,7 @@ from Qt import QtWidgets, QtCore, QtGui
 from maya import OpenMayaUI as omui
 
 reload(init)
-from T_Rigger import scratch, initials as init
+from T_Rigger_deprecated import scratch, initials as init
 
 reload(scratch)
 

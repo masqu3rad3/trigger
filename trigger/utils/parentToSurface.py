@@ -1,6 +1,6 @@
 ## This Script originally belongs to Duncan Brinsmead (parentToSurface.mel)
 ## I just converted it to Pymel for easier modification and
-## added som more functionality in order to use inside other python modules
+## added som more functionality in order to use inside other python maya_modules
 
 # import pymel.core as pm
 from maya import cmds
@@ -26,7 +26,7 @@ def parentToSurface(objects=None, surface=None, mode="parent"):
     """
     if objects == None and surface == None:
         numSel = cmds.ls(sl=True)
-        if numSel < 2:
+        if len(numSel) < 2:
             cmds.warning("ParentToSurface: select object(s) to parent followed by a mesh or nurbsSurface to attach to.")
             return
         else:
