@@ -11,7 +11,7 @@ weightHandler = weights.Weights()
 triggerData_root = "/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charIvan/RIG/work/maya/triggerData/"
 charName = "ivan"
 
-meshes = []
+meshes = ["charIvanAvA_jacket_GEO"]
 meshes.extend(functions.getMeshes("charIvanAvA"))
 meshes.extend(functions.getMeshes("local_BS_rig_grp"))
 meshes.extend(functions.getMeshes("local_TWK_rig_grp"))
@@ -71,6 +71,10 @@ sessionHandler.save_session(os.path.join(triggerData_root, "guides", "%s_stretch
 
 # # SAVE HAT GUIDES
 sessionHandler.save_session(os.path.join(triggerData_root, "guides", "%s_hat_guides.json" % charName))
+
+
+# # CAPE TWEAKER GUIDES
+sessionHandler.save_session(os.path.join(triggerData_root, "guides", "%s_cape_guides.json" % charName))
 
 # # SAV FFD
 ffd_name = "charIvanAvA_helmetglass_idHelmetGlass_GEO_local_ffd"

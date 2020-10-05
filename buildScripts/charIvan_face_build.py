@@ -122,6 +122,8 @@ face_meshes = ["charIvanAvA_head_GEO",
                 "charIvanAvA_Eye_Inner_R_GEO",
                 "charIvanAvA_sash_GEO",
                 "charIvanAvA_jacket_GEO",
+                "charIvanAvA_smallCape_GEO",
+                "charIvanAvA_capeLong_GEO"
                 ]
                
 local_meshes = []
@@ -546,6 +548,23 @@ cmds.parent("hatRig_grp", "Char_Ivan")
 
 functions.deleteObject("trigger_refGuides")
 cmds.hide("Hat_Hips_contShape")
+
+# CAPE TWEAKERS RIG ##
+sessionHandler.load_session("/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charIvan/RIG/work/maya/triggerData/guides/ivan_cape_guides.json", reset_scene=False)
+# get joints
+cape_twk_joints = cmds.listRelatives("trigger_refGuides", type="joint", allDescendents=True)
+for jnt in cape_twk_joints:
+    cmds.setAttr("%s.limbPlugLocation" % jnt, 1)
+    moduleName = cmds.getAttr("%s.moduleName" %jnt)
+    cmds.setAttr("%s.rotateObject" %jnt, "%s_cont_bind_follicle" %moduleName, type="string")
+    cape_twk_hand = kinematics.Kinematics(jnt, create_switchers=False)
+    cape_twk_hand.action()
+# rename default_trigger grp
+cmds.rename("trigger_grp", "cape_tweakers_grp")
+cmds.parent("cape_tweakers_grp", "Char_Ivan")
+
+functions.deleteObject("trigger_refGuides")
+# TODO
                
 ################################################
 ############### SKINCLUSTERS ###################
@@ -732,7 +751,7 @@ functions.drive_attrs("Spine_Chest_cont.endValue", "%s.value[2].value_FloatValue
 #######################[End]
 
 # Create Live rig controllers and direct connect stretch rig controllers to these
-# TODO:
+
 stretch_top_ctrl, _ = icon_handler.createIcon("Cube", iconName="Stretch_top_cont")
 stretch_top_ctrl_offset = functions.createUpGrp(stretch_top_ctrl, "offset")
 functions.alignTo(stretch_top_ctrl_offset, "Spine_Chest_cont", position=True, rotation=True)

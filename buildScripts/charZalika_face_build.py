@@ -32,7 +32,7 @@ cmds.hide(cmds.listRelatives("grp_faceExtra", children=True))
 import_act = import_export.ImportExport()
 # import_act.import_alembic("/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charMax/MDL/publish/caches/charMaxAvA.v016.abc")
 import_act.import_scene(
-    "/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charZalika/MDL/publish/maya/charZalikaAvA.v027.ma")
+    "/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charZalika/MDL/publish/maya/charZalikaAvA.v028.ma")
 # import_act.import_scene(
 #     "/mnt/ps-storage01/Rebellion_Films/RVFX/Others/Arda/charZalika_usd_test.ma")  
     

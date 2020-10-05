@@ -30,7 +30,7 @@ cmds.hide(cmds.listRelatives("grp_faceExtra", children=True))
 
 # import_act.import_alembic("/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charValet/MDL/publish/caches/charValetAvA.v008.abc")
 import_act.import_scene(
-    "/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charSocialite/MDL/publish/maya/charSocialiteAvA.v027.ma")
+    "/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charSocialite/MDL/publish/maya/charSocialiteAvA.v029.ma")
 final_meshes = functions.getMeshes("charSocialiteAvA_grp")
 
 # build the BASEs of Local Rigs

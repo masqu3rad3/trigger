@@ -1,11 +1,14 @@
 cmds.error("PREVENT ACCIDENTAL RUN")
 
+
 # save all weights
 from trigger.library import functions
+reload(functions)
 from trigger.actions import weights
 reload(weights)
 from trigger.base import session
 reload(session)
+from trigger.library import deformers
 weightHandler = weights.Weights()
 triggerData_root = "/mnt/ps-storage01/vfx_hgd_000/SG_ROOT/eg2/assets/Character/charSocialite/RIG/work/maya/triggerData/"
 charName = "socialite"
