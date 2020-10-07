@@ -11,7 +11,7 @@ from trigger.library import functions as extra
 
 from trigger.core import io
 from trigger.core import feedback
-from trigger import modules
+# from trigger import modules
 from trigger.core import compatibility as compat
 
 # from trigger.base import builder

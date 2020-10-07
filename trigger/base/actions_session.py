@@ -19,6 +19,7 @@ class ActionsSession(dict):
         self.io = io.IO(file_name="tmp_actions_session.json")
         self.action_data_dict = {}
         for mod in actions.__all__:
+            print(mod)
             self.action_data_dict[mod]=eval('actions.{0}.ACTION_DATA'.format(mod))
 
         """

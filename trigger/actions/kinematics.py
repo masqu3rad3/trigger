@@ -17,19 +17,20 @@ from trigger.ui.Qt import QtWidgets
 
 FEEDBACK = feedback.Feedback(logger_name=__name__)
 #
-ACTION_DATA = {"use_guides": "from_file",
+ACTION_DATA = {
                "guides_file_path": "",
                "guide_roots": [],
                "auto_switchers": True,
-               # "anchors": [],
-               # "anchor_locations": [],
-               "extra_switchers": [],
-               "after_creation": "delete"
+               "extra_switchers": [], # list of dictionaries?
+                   # "anchors": [],
+                   # "anchor_locations": [],
+               "after_creation": 2, # 0=nothing 1=hide 2=delete
+               "multi_selectionSets": False
                }
 
 class Kinematics(settings.Settings):
 # class Kinematics(object):
-    def __init__(self, root_joints=None, progress_bar=None, create_switchers=True, *args, **kwargs):
+    def __init__(self, root_joints=None, progress_bar=None, create_switchers=True, rig_name=None, *args, **kwargs):
         super(Kinematics, self).__init__()
         self.progress_bar = progress_bar
         if self.progress_bar:
@@ -52,9 +53,11 @@ class Kinematics(settings.Settings):
         self.allSocketsList = []
         self.riggedLimbList = []
         self.totalDefJoints = []
-        self.afterlife = "hide" # valid values are keep, hide, delete
-
+        self.afterlife = 2 # valid values are keep, hide, delete
+        self.multi_selectionSets = False
         self.guides_file_path = None
+
+        self.rig_name = rig_name if rig_name else "trigger"
 
     def feed(self, action_data):
         """Mandatory Function for builder- feeds with the Action Data from builder"""
@@ -65,7 +68,6 @@ class Kinematics(settings.Settings):
         # self.anchorLocations = action_data.get("anchor_locations")
         self.extraSwitchers = action_data.get("extra_switchers")
         self.afterlife = action_data.get("after_creation")
-
 
     def action(self):
         root_grp = "trigger_grp"
@@ -86,7 +88,6 @@ class Kinematics(settings.Settings):
                     anchorMaker.create_space_switch(anchor[0], self.anchorLocations, mode=anchor[1], defaultVal=anchor[2],
                                                     listException=anchor[3])
 
-
             # grouping for fingers / toes
             for x in self.fingerMatchConts:
                 # TODO: tidy up / matrix constraint
@@ -97,9 +98,9 @@ class Kinematics(settings.Settings):
                 cmds.parent(cont_offset, root_grp)
                 cmds.connectAttr("pref_cont.Control_Visibility", "%s.v" % cont_offset)
 
-            if self.afterlife == "hide":
+            if self.afterlife == 1: # hide guides
                 cmds.hide(root_joint)
-            elif self.afterlife == "delete":
+            elif self.afterlife == 2: # delete guides
                 functions.deleteObject(root_joint)
 
             # # TODO : tidy up / make settings human readable
@@ -300,7 +301,8 @@ class Kinematics(settings.Settings):
 
         j_def_set = None
 
-        if not self.get("seperateSelectionSets"):
+        # if not self.get("seperateSelectionSets"):
+        if not self.multi_selectionSets:
             cmds.select(d=True)
             if not cmds.objExists("def_jointsSet_%s" % self.rig_name):
                 j_def_set = cmds.sets(name="def_jointsSet_%s" % self.rig_name)
@@ -326,7 +328,8 @@ class Kinematics(settings.Settings):
                 sideVal = "C"
                 colorCodes = [self.get("majorCenterColor"), self.get("minorCenterColor")]
 
-            if self.get("seperateSelectionSets"):
+            # if self.get("seperateSelectionSets"):
+            if self.multi_selectionSets:
                 set_name = "def_%s_%s_Set" % (x[1], x[2])
                 set_name = functions.uniqueName(set_name)
                 j_def_set = cmds.sets(name=set_name)

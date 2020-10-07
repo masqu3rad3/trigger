@@ -3,9 +3,9 @@ import sys, os
 from functools import wraps
 from trigger.ui import Qt
 from trigger.ui.Qt import QtWidgets, QtCore, QtGui
+from trigger.ui import model_ctrl
 
-# from trigger.base import initials, builder
-from trigger.base import initials
+# from trigger.base import initials
 from trigger.base import session
 from trigger.base import actions_session
 
@@ -45,7 +45,7 @@ def getMayaMainWindow():
 class MainUI(QtWidgets.QMainWindow):
 
     # create guide and rig objects
-    guide = initials.Initials()
+    # guide = initials.Initials()
     actions_handler = actions_session.ActionsSession()
     guides_handler = session.Session()
 
@@ -226,7 +226,7 @@ class MainUI(QtWidgets.QMainWindow):
 
         ####### Module Buttons ########## [START]
 
-        for module in sorted(self.guide.valid_limbs):
+        for module in sorted(self.guides_handler.init.valid_limbs):
             guide_button_hLay = QtWidgets.QHBoxLayout()
             guide_button_hLay.setSpacing(2)
             guide_button_pb = QtWidgets.QPushButton(self.verticalLayoutWidget_2)
@@ -242,7 +242,7 @@ class MainUI(QtWidgets.QMainWindow):
             sizePolicy.setHeightForWidth(segments_sp.sizePolicy().hasHeightForWidth())
             segments_sp.setSizePolicy(sizePolicy)
             guide_button_hLay.addWidget(segments_sp)
-            if not self.guide.module_dict[module].get("multi_guide"):
+            if not self.guides_handler.init.module_dict[module].get("multi_guide"):
                 segments_sp.setValue(3)
                 segments_sp.setEnabled(False)
 
@@ -533,45 +533,10 @@ class MainUI(QtWidgets.QMainWindow):
         # get the action type
         action_name = self.rig_actions_listwidget.currentItem().text()
         action_type = self.actions_handler.get_action_type(action_name)
-        print(action_name)
-        print(action_type)
         self.clearLayout(self.action_settings_formLayout)
 
         if action_type == "kinematics":
-            file_path_lbl = QtWidgets.QLabel(text="File Path:")
-            file_path_hLay = QtWidgets.QHBoxLayout()
-            file_path_le = QtWidgets.QLineEdit()
-            file_path_hLay.addWidget(file_path_le)
-            browse_path_pb = QtWidgets.QPushButton(text="Browse")
-            file_path_hLay.addWidget(browse_path_pb)
-            self.action_settings_formLayout.addRow(file_path_lbl, file_path_hLay)
-
-            guide_roots_lbl = QtWidgets.QLabel(text="Guide Roots:")
-            guide_roots_hLay = QtWidgets.QHBoxLayout()
-            guide_roots_le = QtWidgets.QLineEdit()
-            guide_roots_hLay.addWidget(guide_roots_le)
-            get_guide_roots_pb = QtWidgets.QPushButton(text="Get")
-            guide_roots_hLay.addWidget(get_guide_roots_pb)
-            self.action_settings_formLayout.addRow(guide_roots_lbl, guide_roots_hLay)
-
-            create_auto_sw_lbl = QtWidgets.QLabel(text="Create Auto Switchers:")
-            create_auto_sw_cb = QtWidgets.QCheckBox()
-            self.action_settings_formLayout.addRow(create_auto_sw_lbl, create_auto_sw_cb)
-
-            extra_sw_lbl = QtWidgets.QLabel(text="Extra Switchers:")
-            extra_sp_le = QtWidgets.QLineEdit()
-            self.action_settings_formLayout.addRow(extra_sw_lbl, extra_sp_le)
-
-            after_action_lbl = QtWidgets.QLabel(text="After Action:")
-            after_action_combo = QtWidgets.QComboBox()
-            after_action_combo.addItems(["Delete Guides", "Hide Guides", "Do Nothing"])
-            self.action_settings_formLayout.addRow(after_action_lbl, after_action_combo)
-
-            selection_sets_lbl = QtWidgets.QLabel()
-            selection_sets_lbl.setText("Selection Sets")
-            selection_sets_combo = QtWidgets.QComboBox()
-            selection_sets_combo.addItems(["Single", "One per limb", "None"])
-            self.action_settings_formLayout.addRow(selection_sets_lbl, selection_sets_combo)
+            self.kinematics_settings_layout()
 
         if action_type == "weights":
             file_path_lbl = QtWidgets.QLabel(text="Directory:")
@@ -589,6 +554,72 @@ class MainUI(QtWidgets.QMainWindow):
             get_deformers_pb = QtWidgets.QPushButton(text="Get")
             deformers_hLay.addWidget(get_deformers_pb)
             self.action_settings_formLayout.addRow(deformers_lbl, deformers_hLay)
+
+    def kinematics_settings_layout(self):
+        row = self.rig_actions_listwidget.currentRow()
+        if row == -1:
+            return
+        action_name = self.rig_actions_listwidget.currentItem().text()
+        # feed the controller
+        ctrl = model_ctrl.Controller()
+        ctrl.model = self.actions_handler
+        ctrl.action_name = action_name
+
+        file_path_lbl = QtWidgets.QLabel(text="File Path:")
+        file_path_hLay = QtWidgets.QHBoxLayout()
+        file_path_le = QtWidgets.QLineEdit()
+        file_path_hLay.addWidget(file_path_le)
+        browse_path_pb = QtWidgets.QPushButton(text="Browse")
+        file_path_hLay.addWidget(browse_path_pb)
+        self.action_settings_formLayout.addRow(file_path_lbl, file_path_hLay)
+
+        guide_roots_lbl = QtWidgets.QLabel(text="Guide Roots:")
+        guide_roots_hLay = QtWidgets.QHBoxLayout()
+        guide_roots_le = QtWidgets.QLineEdit()
+        guide_roots_hLay.addWidget(guide_roots_le)
+        get_guide_roots_pb = QtWidgets.QPushButton(text="Get")
+        guide_roots_hLay.addWidget(get_guide_roots_pb)
+        self.action_settings_formLayout.addRow(guide_roots_lbl, guide_roots_hLay)
+
+        create_auto_sw_lbl = QtWidgets.QLabel(text="Create Auto Switchers:")
+        create_auto_sw_cb = QtWidgets.QCheckBox()
+        self.action_settings_formLayout.addRow(create_auto_sw_lbl, create_auto_sw_cb)
+
+        extra_sw_lbl = QtWidgets.QLabel(text="Extra Switchers:")
+        extra_sw_hlay = QtWidgets.QHBoxLayout()
+        extra_sw_le = QtWidgets.QLineEdit()
+        extra_sw_le.setReadOnly(True)
+        extra_sw_add_pb = QtWidgets.QPushButton(text="Add")
+        extra_sw_hlay.addWidget(extra_sw_le)
+        extra_sw_hlay.addWidget(extra_sw_add_pb)
+        self.action_settings_formLayout.addRow(extra_sw_lbl, extra_sw_hlay)
+
+        after_action_lbl = QtWidgets.QLabel(text="After Action:")
+        after_action_combo = QtWidgets.QComboBox()
+        after_action_combo.addItems(["Do Nothing", "Hide Guides", "Delete Guides"])
+        self.action_settings_formLayout.addRow(after_action_lbl, after_action_combo)
+
+        multi_selectionSets_lbl = QtWidgets.QLabel(text = "Selection Sets")
+        multi_selectionSets_cb = QtWidgets.QCheckBox()
+        self.action_settings_formLayout.addRow(multi_selectionSets_lbl, multi_selectionSets_cb)
+
+        # make connections with the controller object
+        ctrl.connect(file_path_le, "guides_file_path", str)
+        ctrl.connect(guide_roots_le, "guide_roots", list)
+        ctrl.connect(create_auto_sw_cb, "auto_switchers", bool)
+        ctrl.connect(after_action_combo, "after_creation", int)
+        ctrl.connect(multi_selectionSets_cb, "multi_selectionSets", bool)
+
+        ctrl.update_ui()
+
+        ### Signals
+        file_path_le.editingFinished.connect(lambda x=0: ctrl.update_model())
+        guide_roots_le.editingFinished.connect(lambda x=0: ctrl.update_model())
+        create_auto_sw_cb.stateChanged.connect(lambda x=0: ctrl.update_model())
+        after_action_combo.currentIndexChanged.connect(lambda x=0: ctrl.update_model())
+        multi_selectionSets_cb.stateChanged.connect(lambda x=0: ctrl.update_model())
+
+
 
     def add_actions_menu(self):
         # recentList = reversed(self.manager.loadRecentProjects())
@@ -675,7 +706,7 @@ class MainUI(QtWidgets.QMainWindow):
 
     def build_test_guides(self):
         self.progressBar()
-        self.guide.test_build(progress_bar=self.progress_progressBar)
+        self.guides_handler.init.test_build(progress_bar=self.progress_progressBar)
         self.progress_Dialog.close()
 
     def populate_guides(self):
@@ -687,7 +718,7 @@ class MainUI(QtWidgets.QMainWindow):
             selected_root_jnt = None
 
         self.guides_list_treeWidget.clear()
-        roots_dict_list = self.guide.get_scene_roots()
+        roots_dict_list = self.guides_handler.init.get_scene_roots()
         for item in roots_dict_list:
             if item["side"] == "C":
                 color = QtGui.QColor(255, 255, 0, 255)
@@ -714,18 +745,18 @@ class MainUI(QtWidgets.QMainWindow):
 
         root_jnt = self.guides_list_treeWidget.currentItem().text(2)
         module_type = self.guides_list_treeWidget.currentItem().text(3)
-        self.module_name_le.setText(self.guide.get_property(root_jnt, "moduleName"))
+        self.module_name_le.setText(self.guides_handler.init.get_property(root_jnt, "moduleName"))
         for num, axis in enumerate("XYZ"):
-            self.up_axis_sp_list[num].setValue(self.guide.get_property(root_jnt, "upAxis%s" % axis))
-            self.mirror_axis_sp_list[num].setValue(self.guide.get_property(root_jnt, "mirrorAxis%s" % axis))
-            self.look_axis_sp_list[num].setValue(self.guide.get_property(root_jnt, "lookAxis%s" % axis))
+            self.up_axis_sp_list[num].setValue(self.guides_handler.init.get_property(root_jnt, "upAxis%s" % axis))
+            self.mirror_axis_sp_list[num].setValue(self.guides_handler.init.get_property(root_jnt, "mirrorAxis%s" % axis))
+            self.look_axis_sp_list[num].setValue(self.guides_handler.init.get_property(root_jnt, "lookAxis%s" % axis))
 
-        self.inherit_orientation_cb.setChecked(self.guide.get_property(root_jnt, "useRefOri"))
+        self.inherit_orientation_cb.setChecked(self.guides_handler.init.get_property(root_jnt, "useRefOri"))
 
         self.R_guides_WidgetContents.setHidden(False)
 
         # extra properties
-        extra_properties = self.guide.get_extra_properties(module_type)
+        extra_properties = self.guides_handler.init.get_extra_properties(module_type)
         self.clearLayout(self.module_extras_formLayout)
         if extra_properties:
             for property_dict in extra_properties:
@@ -740,7 +771,7 @@ class MainUI(QtWidgets.QMainWindow):
         p_nice_name = property_dict.get("nice_name").replace("_", " ")
         p_lbl = QtWidgets.QLabel(self.R_guides_WidgetContents, text=p_nice_name)
         p_type = property_dict.get("attr_type")
-        p_value = self.guide.get_property(root_jnt, p_name)
+        p_value = self.guides_handler.init.get_property(root_jnt, p_name)
 
         if p_type == "long" or p_type == "short":
             p_widget = QtWidgets.QSpinBox()
@@ -781,13 +812,13 @@ class MainUI(QtWidgets.QMainWindow):
 
     def update_properties(self, property, value):
         root_jnt = self.guides_list_treeWidget.currentItem().text(2)
-        self.guide.set_property(root_jnt, property, value)
+        self.guides_handler.init.set_property(root_jnt, property, value)
         # if property == "moduleName":
         #     self.populate_guides()
 
     def on_create_guide(self, limb_name, *args, **kwargs):
         if limb_name == "humanoid":
-            self.guide.initHumanoid()
+            self.guides_handler.init.initHumanoid()
         else:
             # get side
             if self.guides_sides_L_rb.isChecked():
@@ -800,20 +831,19 @@ class MainUI(QtWidgets.QMainWindow):
                 side="auto"
             else:
                 side="center"
-            self.guide.initLimb(limb_name, whichSide= side, **kwargs)
+            self.guides_handler.init.initLimb(limb_name, whichSide= side, **kwargs)
         self.populate_guides()
 
     def on_guide_change(self, currentItem, previousItem):
         row = self.guides_list_treeWidget.currentIndex().row()
         if row == -1:
             return
-        self.guide.select_root(str(currentItem.text(2)))
+        self.guides_handler.init.select_root(str(currentItem.text(2)))
         self.populate_properties()
 
     def force_update(self):
         if self.force and self.tabWidget.currentIndex() == 0:
             self.populate_guides()
-
 
     def eventFilter(self, object, event):
         if event.type() == QtCore.QEvent.WindowActivate:
@@ -849,6 +879,13 @@ class MainUI(QtWidgets.QMainWindow):
     #     for sp_look in self.look_axis_sp_list:
     #         sp_look.blockSignals(state)
     #     self.inherit_orientation_cb.blockSignals(state)
+    @staticmethod
+    def list_to_text(list_item):
+        return " ".join(list_item)
+
+    @staticmethod
+    def text_to_list(text_item):
+        return text_item.split(" ")
 
     def block_all_signals(self, state):
         """Blocks and Unblocks all signals for defined widgets inside function"""

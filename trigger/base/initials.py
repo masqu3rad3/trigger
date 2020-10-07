@@ -1,11 +1,11 @@
 from pprint import pprint
-
+import importlib
 from maya import cmds
 import maya.api.OpenMaya as om
 
 from trigger.core.undo_dec import undo
 from trigger.library import functions as extra
-from trigger.actions import kinematics # for testing the guides
+# from trigger.actions import kinematics # for testing the guides
 
 from trigger import modules
 from trigger.core import settings
@@ -430,6 +430,7 @@ class Initials(settings.Settings):
 
     @undo
     def test_build(self, root_jnt=None, progress_bar=None):
+        kinematics = importlib.import_module("trigger.actions.kinematics")
         if not root_jnt:
             selection = cmds.ls(sl=True)
             if len(selection) == 1:
