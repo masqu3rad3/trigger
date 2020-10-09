@@ -543,21 +543,7 @@ class MainUI(QtWidgets.QMainWindow):
             self.kinematics_settings_layout()
 
         if action_type == "weights":
-            file_path_lbl = QtWidgets.QLabel(text="Directory:")
-            file_path_hLay = QtWidgets.QHBoxLayout()
-            file_path_le = QtWidgets.QLineEdit()
-            file_path_hLay.addWidget(file_path_le)
-            browse_path_pb = QtWidgets.QPushButton(text="Browse")
-            file_path_hLay.addWidget(browse_path_pb)
-            self.action_settings_formLayout.addRow(file_path_lbl, file_path_hLay)
-
-            deformers_lbl = QtWidgets.QLabel(text="Deformers")
-            deformers_hLay = QtWidgets.QHBoxLayout()
-            deformers_le = QtWidgets.QLineEdit()
-            deformers_hLay.addWidget(deformers_le)
-            get_deformers_pb = QtWidgets.QPushButton(text="Get")
-            deformers_hLay.addWidget(get_deformers_pb)
-            self.action_settings_formLayout.addRow(deformers_lbl, deformers_hLay)
+            self.weights_settings_layout()
 
     def kinematics_settings_layout(self):
         row = self.rig_actions_listwidget.currentRow()
@@ -615,6 +601,43 @@ class MainUI(QtWidgets.QMainWindow):
         after_action_combo.currentIndexChanged.connect(lambda x=0: ctrl.update_model())
         multi_selectionSets_cb.stateChanged.connect(lambda x=0: ctrl.update_model())
 
+    def weights_settings_layout(self):
+        row = self.rig_actions_listwidget.currentRow()
+        if row == -1:
+            return
+        action_name = self.rig_actions_listwidget.currentItem().text()
+        # feed the controller
+        ctrl = model_ctrl.Controller()
+        ctrl.model = self.actions_handler
+        ctrl.action_name = action_name
+
+        file_path_lbl = QtWidgets.QLabel(text="Directory:")
+        file_path_hLay = QtWidgets.QHBoxLayout()
+        file_path_le = QtWidgets.QLineEdit()
+        file_path_hLay.addWidget(file_path_le)
+        browse_path_pb = BrowserButton(mode="directory", update_widget=file_path_le)
+        file_path_hLay.addWidget(browse_path_pb)
+        self.action_settings_formLayout.addRow(file_path_lbl, file_path_hLay)
+
+        deformers_lbl = QtWidgets.QLabel(text="Deformers")
+        deformers_hLay = QtWidgets.QHBoxLayout()
+        deformers_le = QtWidgets.QLineEdit()
+        deformers_hLay.addWidget(deformers_le)
+        get_deformers_pb = QtWidgets.QPushButton(text="Get")
+        deformers_hLay.addWidget(get_deformers_pb)
+        self.action_settings_formLayout.addRow(deformers_lbl, deformers_hLay)
+
+        # make connections with the controller object
+        ctrl.connect(file_path_le, "weights_file_directory", str)
+        ctrl.connect(deformers_le, "deformers", list)
+
+        ctrl.update_ui()
+
+        ### Signals
+        file_path_le.editingFinished.connect(lambda x=0: ctrl.update_model())
+        browse_path_pb.clicked.connect(lambda x=0: ctrl.update_model())
+        deformers_le.editingFinished.connect(lambda x=0: ctrl.update_model())
+        get_deformers_pb.clicked.connect(lambda x=0: ctrl.update_model())
 
 
     def add_actions_menu(self):
@@ -1062,14 +1085,18 @@ class BrowserButton(QtWidgets.QPushButton):
         super(BrowserButton, self).mouseReleaseEvent(*args, **kwargs)
         if self._mode == "openFile":
             dlg = QtWidgets.QFileDialog.getOpenFileName(self, self._title, self._selectedPath, self._filterExtensions)
+            new_path = dlg[0] if dlg else None
         elif self._mode == "saveFile":
             dlg = QtWidgets.QFileDialog.getSaveFileName(self, self._title, self._selectedPath, self._filterExtensions)
+            new_path = dlg[0] if dlg else None
         elif self._mode == "directory":
             dlg = QtWidgets.QFileDialog.getExistingDirectory(self, self._title, self._selectedPath, options=(QtWidgets.QFileDialog.ShowDirsOnly))
+            new_path = dlg if dlg else None
+        else:
+            new_path = None
 
-        if dlg:
-            print(dlg)
-            self._selectedPath = os.path.normpath(dlg[0])
+        if new_path:
+            self._selectedPath = os.path.normpath(new_path)
             if self._updateWidget:
                 self._updateWidget.setText(self._selectedPath)
             self.click()

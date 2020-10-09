@@ -13,7 +13,7 @@ from trigger.core import settings
 
 from trigger.actions import master
 
-from trigger.ui.Qt import QtWidgets
+from trigger.ui.Qt import QtWidgets # for progressbar
 
 FEEDBACK = feedback.Feedback(logger_name=__name__)
 #
