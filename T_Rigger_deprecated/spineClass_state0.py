@@ -63,7 +63,7 @@ class Spine(object):
 
         ## Get the orientation axises
         self.upAxis, self.mirroAxis, self.spineDir = extra.getRigAxes(inits[0])
-        splineMode = pm.getAttr(inits[0].mode, asString=True)
+        splineMode = pm.getAttr(inits[0]._mode, asString=True)
         # print "splineMode", splineMode
         twistType = pm.getAttr(inits[0].twistType, asString=True)
         # print "twistType", twistType

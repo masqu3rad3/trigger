@@ -6,6 +6,7 @@ from trigger.ui.Qt import QtWidgets, QtCore, QtGui
 from trigger.ui import model_ctrl
 
 # from trigger.base import initials
+from trigger.core import compatibility as compat
 from trigger.base import session
 from trigger.base import actions_session
 
@@ -531,6 +532,9 @@ class MainUI(QtWidgets.QMainWindow):
     def action_settings_menu(self):
         """Builds the action settings depending on action type"""
         # get the action type
+        row = self.rig_actions_listwidget.currentRow()
+        if row == -1:
+            return
         action_name = self.rig_actions_listwidget.currentItem().text()
         action_type = self.actions_handler.get_action_type(action_name)
         self.clearLayout(self.action_settings_formLayout)
@@ -569,7 +573,7 @@ class MainUI(QtWidgets.QMainWindow):
         file_path_hLay = QtWidgets.QHBoxLayout()
         file_path_le = QtWidgets.QLineEdit()
         file_path_hLay.addWidget(file_path_le)
-        browse_path_pb = QtWidgets.QPushButton(text="Browse")
+        browse_path_pb = BrowserButton(update_widget=file_path_le, mode="openFile", filterExtensions=["Json Files (*.json)"])
         file_path_hLay.addWidget(browse_path_pb)
         self.action_settings_formLayout.addRow(file_path_lbl, file_path_hLay)
 
@@ -584,15 +588,6 @@ class MainUI(QtWidgets.QMainWindow):
         create_auto_sw_lbl = QtWidgets.QLabel(text="Create Auto Switchers:")
         create_auto_sw_cb = QtWidgets.QCheckBox()
         self.action_settings_formLayout.addRow(create_auto_sw_lbl, create_auto_sw_cb)
-
-        extra_sw_lbl = QtWidgets.QLabel(text="Extra Switchers:")
-        extra_sw_hlay = QtWidgets.QHBoxLayout()
-        extra_sw_le = QtWidgets.QLineEdit()
-        extra_sw_le.setReadOnly(True)
-        extra_sw_add_pb = QtWidgets.QPushButton(text="Add")
-        extra_sw_hlay.addWidget(extra_sw_le)
-        extra_sw_hlay.addWidget(extra_sw_add_pb)
-        self.action_settings_formLayout.addRow(extra_sw_lbl, extra_sw_hlay)
 
         after_action_lbl = QtWidgets.QLabel(text="After Action:")
         after_action_combo = QtWidgets.QComboBox()
@@ -614,6 +609,7 @@ class MainUI(QtWidgets.QMainWindow):
 
         ### Signals
         file_path_le.editingFinished.connect(lambda x=0: ctrl.update_model())
+        browse_path_pb.clicked.connect(lambda x=0: ctrl.update_model())
         guide_roots_le.editingFinished.connect(lambda x=0: ctrl.update_model())
         create_auto_sw_cb.stateChanged.connect(lambda x=0: ctrl.update_model())
         after_action_combo.currentIndexChanged.connect(lambda x=0: ctrl.update_model())
@@ -1014,4 +1010,67 @@ class MainUI(QtWidgets.QMainWindow):
                 return "yes"
             elif ret == QtWidgets.QMessageBox.No:
                 return "no"
+
+class BrowserButton(QtWidgets.QPushButton):
+    def __init__(self, text="Browse", update_widget=None, mode="openFile", filterExtensions=None, title=None):
+        super(BrowserButton, self).__init__()
+        self._updateWidget = update_widget
+        if text:
+            self.setText(text)
+        self._validModes = ["openFile", "saveFile", "directory"]
+        if mode in self._validModes:
+            self._mode = mode
+        else:
+            raise Exception("Mode is not valid. Valid modes are %s" % (", ".join(self._validModes)))
+        self._filterExtensions = self._listToFilter(filterExtensions) if filterExtensions else ""
+        self._title = title if title else ""
+        self._selectedPath = ""
+
+    def setUpdateWidget(self, widget):
+        self._updateWidget = widget
+
+    def updateWidget(self):
+        return self._updateWidget
+
+    def setMode(self, mode):
+        if mode not in self._validModes:
+            raise Exception("Mode is not valid. Valid modes are %s" % (", ".join(self._validModes)))
+        self._mode = mode
+
+    def mode(self):
+        return self._mode
+
+    def setFilterExtensions(self, extensionlist):
+        self._filterExtensions = self._listToFilter(extensionlist)
+
+    def selectedPath(self):
+        return self._selectedPath
+
+    def setSelectedPath(self, new_path):
+        self._selectedPath = new_path
+
+    def setTitle(self, title):
+        self._title = title
+
+    def title(self):
+        return self._title
+
+    def _listToFilter(self, filter_list):
+        return ";;".join(filter_list)
+
+    def mouseReleaseEvent(self, *args, **kwargs):
+        super(BrowserButton, self).mouseReleaseEvent(*args, **kwargs)
+        if self._mode == "openFile":
+            dlg = QtWidgets.QFileDialog.getOpenFileName(self, self._title, self._selectedPath, self._filterExtensions)
+        elif self._mode == "saveFile":
+            dlg = QtWidgets.QFileDialog.getSaveFileName(self, self._title, self._selectedPath, self._filterExtensions)
+        elif self._mode == "directory":
+            dlg = QtWidgets.QFileDialog.getExistingDirectory(self, self._title, self._selectedPath, options=(QtWidgets.QFileDialog.ShowDirsOnly))
+
+        if dlg:
+            print(dlg)
+            self._selectedPath = os.path.normpath(dlg[0])
+            if self._updateWidget:
+                self._updateWidget.setText(self._selectedPath)
+            self.click()
 

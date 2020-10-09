@@ -57,7 +57,7 @@ class Spine(object):
             pm.warning("Cannot find Inherit Orientation Attribute on Initial Root Joint %s... Skipping inheriting." %self.inits[0])
             self.useRefOrientation = False
 
-        self.splineMode = pm.getAttr(self.inits[0].mode, asString=True)
+        self.splineMode = pm.getAttr(self.inits[0]._mode, asString=True)
         self.twistType = pm.getAttr(self.inits[0].twistType, asString=True)
 
         # initialize suffix

@@ -182,7 +182,7 @@ class NeckAndHead():
 
     def createIKsetup(self):
         # create spline IK for neck
-        splineMode = pm.getAttr(self.neckNodes[0].mode, asString=True)
+        splineMode = pm.getAttr(self.neckNodes[0]._mode, asString=True)
         twistType = pm.getAttr(self.neckNodes[0].twistType, asString=True)
 
         # create spline IK for neck
