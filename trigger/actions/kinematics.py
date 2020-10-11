@@ -111,6 +111,12 @@ class Kinematics(settings.Settings):
             #     # if the After Creation set to 'Delete Initial Joints'
             #     cmds.delete(root_joint)
 
+    def save_action(self, *args, **kwargs):
+        """Mandatory Method"""
+        # kinematics action does not have a save action, it only uses guide data
+        pass
+
+
 
     def match_fingers(self, finger_match_list):
         icon = ic.Icon()
@@ -152,6 +158,7 @@ class Kinematics(settings.Settings):
         Returns: None
 
         """
+        FEEDBACK.warning(rootNode)
         l_hip, r_hip, l_shoulder, r_shoulder = [None, None, None, None]
         allJoints = cmds.listRelatives(rootNode, type="joint", ad=True)
         allJoints = [] if not allJoints else allJoints

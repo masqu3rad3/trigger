@@ -14,7 +14,7 @@ FEEDBACK = feedback.Feedback(logger_name=__name__)
 class IO(dict):
     def __init__(self, file_name=None, folder_name=None, root_path=None, file_path=None):
         super(IO, self).__init__()
-        self.valid_extensions = [".json"]
+        self.valid_extensions = [".json", ".tr", ".trg", ".trw", ".trs"]
         self.default_extension = ".json"
         if file_path:
             # self["file_path"] = file_path
@@ -68,7 +68,7 @@ class IO(dict):
                     data = json.load(f)
                     return data
             except ValueError:
-                FEEDBACK.throw_error("Corrupted JSON file => %s" % file_path)
+                FEEDBACK.throw_error("Corrupted file => %s" % file_path)
                 raise Exception
         else:
             FEEDBACK.throw_error("File cannot be found => %s" % file_path)
@@ -84,7 +84,11 @@ class IO(dict):
 
     def _folderCheck(self, checkpath):
         """Checks if the folder exists, creates it if doesnt"""
-        basefolder = os.path.split(checkpath)[0] # in case it is a file path
+        if os.path.splitext(checkpath)[1]:
+            basefolder = os.path.split(checkpath)[0] # in case it is a file path
+        else:
+            basefolder = checkpath
+
         if not os.path.isdir(os.path.normpath(basefolder)):
             os.makedirs(os.path.normpath(basefolder))
         return checkpath

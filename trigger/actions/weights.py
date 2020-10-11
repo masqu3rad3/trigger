@@ -15,7 +15,7 @@ FEEDBACK = feedback.Feedback(__name__)
 ACTION_DATA = {
                 "create_deformers": True,
                 "deformers": [],
-                "weights_file_directory": ""
+                "weights_file_path": ""
                }
 def multiplyList(list_of_values):
     # Multiply elements one by one
@@ -43,7 +43,7 @@ class Weights(dict):
         self["deformer"] = None
         self.isCreateDeformers = True
         self.deformers_list = []
-        self.weights_root_path = ""
+        self.weights_file_path = ""
 
     @property
     def deformer(self):
@@ -64,19 +64,50 @@ class Weights(dict):
         """Mandatory method for all action modules - feeds the builder data"""
         self.isCreateDeformers = action_data["create_deformers"]
         self.deformers_list = action_data["deformers"]
-        self.weights_root_path = action_data["weights_file_directory"]
+        self.weights_file_path = action_data["weights_file_path"]
 
     def action(self):
         """Mandatory method for all action modules"""
-        for deformer in self.deformers_list:
-            file_path = os.path.join(self.weights_root_path, "%s.json" % deformer)
-            if self.isCreateDeformers:
-                if not os.path.isfile(file_path):
-                    FEEDBACK.throw_error("Deformer file (%s) does not exist" % file_path)
-                self.create_deformer(file_path)
-            else:
-                self.load_weights(deformer=deformer, file_path=file_path)
+        self.io.file_path = self.weights_file_path
+        data_list = self.io.read()
 
+        base_folder, file_name_and_ext = os.path.split(self.weights_file_path)
+        file_name, ext = os.path.splitext(file_name_and_ext)
+        weights_folder = os.path.join(base_folder, file_name)
+
+        for data in data_list:
+            deformer = data["deformer"]
+            deformer_type = data["type"]
+            deformer_weight_path = os.path.join(weights_folder, "%s.json" %deformer)
+            self.create_deformer(deformer_weight_path, deformer_type=deformer_type)
+
+        # for deformer in self.deformers_list:
+        #     file_path = os.path.join(self.weights_file_path, "%s.json" % deformer)
+        #     if self.isCreateDeformers:
+        #         if not os.path.isfile(file_path):
+        #             FEEDBACK.throw_error("Deformer file (%s) does not exist" % file_path)
+        #         self.create_deformer(file_path)
+        #     else:
+        #         self.load_weights(deformer=deformer, file_path=file_path)
+
+    def save_action(self):
+        """Mandatory method for all action modules"""
+        base_folder, file_name_and_ext = os.path.split(self.weights_file_path)
+        file_name, ext = os.path.splitext(file_name_and_ext)
+        weights_folder = os.path.join(base_folder, file_name)
+        self.io._folderCheck(weights_folder)
+        # build the dictionary
+        data_list = []
+        for deformer in self.deformers_list:
+            data = {}
+            deformer_weight_path = os.path.join(weights_folder, "%s.json" %deformer)
+            data["deformer"] = deformer
+            data["type"] = cmds.objectType(deformer)
+            data_list.append(data)
+            self.save_weights(deformer=deformer, file_path=deformer_weight_path)
+
+        self.io.file_path = self.weights_file_path
+        self.io.write(data_list)
 
     # def collect_deformers(self, mesh):
     #     """Collects defomers in a dictionary by type
@@ -118,7 +149,8 @@ class Weights(dict):
         if deformer_type == "skinCluster":
             attributes = ["envelope", "skinningMethod", "useComponents", "normalizeWeights", "deformUserNormals"]
             # in case DQ blendweight mode, flag for adding DQ to the file afterwards
-            if cmds.getAttr("%s.skinningMethod" % deformer[0]) == 2:
+            # if cmds.getAttr("%s.skinningMethod" % deformer[0]) == 2:
+            if cmds.getAttr("%s.skinningMethod" % deformer) == 2:
                 export_dq_weights = True
         else:
             attributes = []
@@ -130,7 +162,8 @@ class Weights(dict):
         if export_dq_weights:
             self.io.file_path = os.path.join(file_dir, file_name)
             data = self.io.read()
-            data["DQ_weights"] = cmds.getAttr("%s.ptw" % deformer[0])
+            # data["DQ_weights"] = cmds.getAttr("%s.ptw" % deformer[0])
+            data["DQ_weights"] = cmds.getAttr("%s.ptw" % deformer)
             self.io.write(data)
 
         # there is no argument to define the influencer while exporting.
@@ -215,15 +248,7 @@ class Weights(dict):
         deformer_name = weights_data["deformerWeight"]["weights"][0]["deformer"]
         # if the affected object does not have the deformer, create a new one
         deformer_name = extra.uniqueName(deformer_name)
-        # affected = extra.uniqueList([weight_dict.get("shape") for weight_dict in weights_data["deformerWeight"]["weights"]])
-        # history = cmds.listHistory(affected[0], pruneDagObjects=True)
-        # # print "ANAN", affected[0]
-        # if history:
-        #     if affected[0] not in history:
-        #         print("-"*33)
-        #         print(affected[0])
-        #         print(history)
-        #         deformer_name = extra.uniqueName(deformer_name)
+
         if not cmds.objExists(deformer_name):
             # collect the influencers (eg. joints if it is a skinCluster)
             influencers = [weight_dict.get("source") for weight_dict in weights_data["deformerWeight"]["weights"]]
@@ -232,7 +257,7 @@ class Weights(dict):
             affected = extra.uniqueList([weight_dict.get("shape") for weight_dict in weights_data["deformerWeight"]["weights"]])
 
             deformer_info = weights_data["deformerWeight"].get("deformers")
-            if not deformer_info or deformer_type:
+            if not deformer_info and not deformer_type:
                 FEEDBACK.throw_error("Cannot identify the deformer type. Use the flag 'deformer_type' or export the weights with additional attributes")
 
             if deformer_info:

@@ -4,9 +4,10 @@ from maya import cmds
 
 from trigger.core.undo_dec import undo
 from trigger.library import functions
+from trigger.core import compatibility as compat
 
 
-def get_deformers(mesh):
+def get_deformers(mesh=None, namesOnly=False):
     """Collects defomers in a dictionary by type
 
     Args:
@@ -16,16 +17,21 @@ def get_deformers(mesh):
 
     """
 
-    valid_deformers = ["skinCluster", "blendShape", "nonLinear", "cluster"]
-    if int(cmds.about(version=True)) >= 2019:
+    valid_deformers = ["skinCluster", "blendShape", "nonLinear", "cluster", "jiggle", "deltaMush"]
+    if cmds.about(q=True, api=True) >= 20180400:
         valid_deformers.append("ffd")
     # get deformer from mesh
+    if not mesh:
+        mesh = cmds.ls(sl=True)
     history = cmds.listHistory(mesh, pruneDagObjects=True)
 
     deformer_data = {deformer_type: cmds.ls(history, type=deformer_type, shapes=True) for deformer_type in
                      valid_deformers}
-
-    return deformer_data
+    if namesOnly:
+        name_list = compat.flatten([value for key, value in deformer_data.items()])
+        return name_list
+    else:
+        return deformer_data
 
 def get_influencers(deformer):
     return cmds.aliasAttr(deformer, q=True)[::2]

@@ -40,13 +40,14 @@ class Session(object):
         super(Session, self).__init__()
 
         # at least a file name is necessary while instancing the IO
-        self.io = io.IO(file_name="tmp_session.json")
+        self.io = io.IO(file_name="tmp_session.trg")
         self.init = initials.Initials()
         # self.build = builder.Builder()
 
     def save_session(self, file_path):
         """Saves the session to the given file path"""
-
+        if not os.path.splitext(file_path)[1]:
+            file_path = "%s.trg" %file_path
         self.io.file_path = file_path
         guides_data = self.collect_guides()
         self.io.write(guides_data)
@@ -58,13 +59,22 @@ class Session(object):
 
         if reset_scene:
             self.reset_scene()
-        self.io.file_path = file_path
-        guides_data = self.io.read()
+        guides_data = self._get_guides_data(file_path)
         if guides_data:
             self.rebuild_guides(guides_data)
             FEEDBACK.info("Session Loaded Successfully...")
         else:
             FEEDBACK.throw_error("The specified file doesn't exists")
+
+    def get_roots_from_file(self, file_path):
+        guides_data = self._get_guides_data(file_path)
+        for j in guides_data:
+            if j["type"] in self.init.validRootList:
+                yield j["name"]
+
+    def _get_guides_data(self, file_path):
+        self.io.file_path = file_path
+        return self.io.read()
 
     def collect_guides(self):
         """Collect all necessary guide data ready to write"""

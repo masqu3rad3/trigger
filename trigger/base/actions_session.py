@@ -16,7 +16,8 @@ class ActionsSession(dict):
         super(ActionsSession, self).__init__()
 
         # at least a file name is necessary while instancing the IO
-        self.io = io.IO(file_name="tmp_actions_session.json")
+        self.io = io.IO(file_name="tmp_actions_session.tr")
+        self.currentFile = None
         self.action_data_dict = {}
         for mod in actions.__all__:
             print(mod)
@@ -55,9 +56,11 @@ class ActionsSession(dict):
 
     def save_session(self, file_path):
         """Saves the session to the given file path"""
-
+        if not os.path.splitext(file_path)[1]:
+            file_path = "%s.tr" %file_path
         self.io.file_path = file_path
         self.io.write(self)
+        self.currentFile = file_path
         FEEDBACK.info("Session Saved Successfully...")
 
     def load_session(self, file_path):
@@ -67,6 +70,7 @@ class ActionsSession(dict):
         if actions_data:
             self.clear()
             self.update(actions_data)
+            self.currentFile = file_path
             FEEDBACK.info("Action Session Loaded Successfully...")
         else:
             FEEDBACK.throw_error("The specified file doesn't exists")
@@ -212,6 +216,10 @@ class ActionsSession(dict):
         a_hand.feed(action["data"])
         a_hand.action()
 
-
-
+    def run_save_action(self, action_name):
+        action = self.get_action(action_name)
+        action_cmd = "actions.{0}.{1}()".format(action["type"], action["type"].capitalize())
+        a_hand = eval(action_cmd)
+        a_hand.feed(action["data"])
+        a_hand.save_action()
 

@@ -1,5 +1,6 @@
 """Main UI for TRigger"""
 import sys, os
+import importlib
 from functools import wraps
 from trigger.ui import Qt
 from trigger.ui.Qt import QtWidgets, QtCore, QtGui
@@ -382,6 +383,10 @@ class MainUI(QtWidgets.QMainWindow):
         self.guide_test_pb.clicked.connect(self.build_test_guides)
 
         # menu items
+        self.open_trigger_action.triggered.connect(self.open_trigger)
+        self.save_trigger_action.triggered.connect(self.save_trigger)
+        self.save_as_trigger_action.triggered.connect(self.save_as_trigger)
+
         self.export_guides_action.triggered.connect(self.export_guides)
         self.import_guides_action.triggered.connect(self.import_guides)
 
@@ -440,24 +445,6 @@ class MainUI(QtWidgets.QMainWindow):
         self.rig_actions_listwidget.setViewMode(QtWidgets.QListView.ListMode)
         self.rig_actions_vLay.addWidget(self.rig_actions_listwidget)
 
-        # ### SAMPLE ###
-        # item = QtWidgets.QListWidgetItem()
-        # item.setText("Kinematics")
-        # item.setTextAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignVCenter)
-        # self.rig_actions_listwidget.addItem(item)
-        # item = QtWidgets.QListWidgetItem()
-        # item.setText("Weights")
-        # item.setTextAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignVCenter)
-        # self.rig_actions_listwidget.addItem(item)
-        # item = QtWidgets.QListWidgetItem()
-        # item.setText("Shape")
-        # item.setTextAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignVCenter)
-        # self.rig_actions_listwidget.addItem(item)
-        # item = QtWidgets.QListWidgetItem()
-        # self.rig_actions_listwidget.addItem(item)
-        # item = QtWidgets.QListWidgetItem()
-        # self.rig_actions_listwidget.addItem(item)
-
         self.verticalLayoutWidget_3 = QtWidgets.QWidget(self.rig_LR_splitter)
         self.action_settings_vLay = QtWidgets.QVBoxLayout(self.verticalLayoutWidget_3)
         self.action_settings_vLay.setContentsMargins(0, 0, 0, 0)
@@ -484,39 +471,15 @@ class MainUI(QtWidgets.QMainWindow):
         self.action_settings_formLayout.setHorizontalSpacing(6)
         self.action_settings_scrollArea_vLay.addLayout(self.action_settings_formLayout)
 
-
-        # ### SAMPLE ###
-        # self.sample_setting1_lbl = QtWidgets.QLabel(self.action_settings_WidgetContents)
-        # self.sample_setting1_lbl.setText("Setting1")
-        # self.action_settings_formLayout.setWidget(0, QtWidgets.QFormLayout.LabelRole, self.sample_setting1_lbl)
-        # self.sample_setting1_le = QtWidgets.QLineEdit(self.action_settings_WidgetContents)
-        # self.action_settings_formLayout.setWidget(0, QtWidgets.QFormLayout.FieldRole, self.sample_setting1_le)
-        # self.sample_setting2_lbl = QtWidgets.QLabel(self.action_settings_WidgetContents)
-        # self.sample_setting2_lbl.setText("Setting2")
-        # self.sample_setting2_lbl.setObjectName("sample_setting2_lbl")
-        # self.action_settings_formLayout.setWidget(1, QtWidgets.QFormLayout.LabelRole, self.sample_setting2_lbl)
-        # self.sample_setting_combo = QtWidgets.QComboBox(self.action_settings_WidgetContents)
-        # self.sample_setting_combo.setObjectName("sample_setting_combo")
-        # self.action_settings_formLayout.setWidget(1, QtWidgets.QFormLayout.FieldRole, self.sample_setting_combo)
-        # self.sample_setting3_lbl = QtWidgets.QLabel(self.action_settings_WidgetContents)
-        # self.sample_setting3_lbl.setText("Setting3")
-        # self.action_settings_formLayout.setWidget(2, QtWidgets.QFormLayout.LabelRole, self.sample_setting3_lbl)
-        # self.sample_setting3_chk = QtWidgets.QCheckBox(self.action_settings_WidgetContents)
-        # self.action_settings_formLayout.setWidget(2, QtWidgets.QFormLayout.FieldRole, self.sample_setting3_chk)
-        #
-        # self.kinematics_settings()
-
         self.action_settings_scrollArea.setWidget(self.action_settings_WidgetContents)
         self.action_settings_vLay.addWidget(self.action_settings_scrollArea)
         self.rigging_tab_vLay.addWidget(self.rig_LR_splitter)
         self.rig_buttons_hLay = QtWidgets.QHBoxLayout()
 
-        self.build_pb = QtWidgets.QPushButton(self.rigging_tab)
-        self.build_pb.setText("Build Rig")
+        self.build_pb = QtWidgets.QPushButton(self.rigging_tab, text="Build Rig")
         self.rig_buttons_hLay.addWidget(self.build_pb)
 
-        self.build_and_publish_pb = QtWidgets.QPushButton(self.rigging_tab)
-        self.build_and_publish_pb.setText("Build && Publish")
+        self.build_and_publish_pb = QtWidgets.QPushButton(self.rigging_tab, text="Build && Publish")
         self.rig_buttons_hLay.addWidget(self.build_and_publish_pb)
         self.rigging_tab_vLay.addLayout(self.rig_buttons_hLay)
 
@@ -527,6 +490,25 @@ class MainUI(QtWidgets.QMainWindow):
         self.move_action_down_pb.clicked.connect(self.move_action_down)
         self.delete_action_pb.clicked.connect(self.delete_action)
         self.rig_actions_listwidget.currentItemChanged.connect(self.action_settings_menu)
+
+        self.build_pb.clicked.connect(lambda x=0: self.actions_handler.run_all_actions())
+
+    def open_trigger(self):
+        dlg = QtWidgets.QFileDialog.getOpenFileName(self, str("Open Trigger Session"), "", str("Trigger Session (*.tr)"))
+        if dlg[0]:
+            self.actions_handler.load_session(os.path.normpath(dlg[0]))
+            self.populate_actions()
+
+    def save_as_trigger(self):
+        dlg = QtWidgets.QFileDialog.getSaveFileName(self, str("Save Trigger Session"), "", str("Trigger Session (*.tr)"))
+        if dlg[0]:
+            self.actions_handler.save_session(os.path.normpath(dlg[0]))
+
+    def save_trigger(self):
+        if self.actions_handler.currentFile:
+            self.actions_handler.save_session(self.actions_handler.currentFile)
+        else:
+            self.save_as_trigger()
 
 
     def action_settings_menu(self):
@@ -559,7 +541,7 @@ class MainUI(QtWidgets.QMainWindow):
         file_path_hLay = QtWidgets.QHBoxLayout()
         file_path_le = QtWidgets.QLineEdit()
         file_path_hLay.addWidget(file_path_le)
-        browse_path_pb = BrowserButton(update_widget=file_path_le, mode="openFile", filterExtensions=["Json Files (*.json)"])
+        browse_path_pb = BrowserButton(update_widget=file_path_le, mode="openFile", filterExtensions=["Trigger Guide Files (*.trg)"])
         file_path_hLay.addWidget(browse_path_pb)
         self.action_settings_formLayout.addRow(file_path_lbl, file_path_hLay)
 
@@ -593,10 +575,42 @@ class MainUI(QtWidgets.QMainWindow):
 
         ctrl.update_ui()
 
+
+        def get_roots_menu():
+            # recentList = reversed(self.manager.loadRecentProjects())
+            # list_of_actions = sorted(self.rig.action_dict.keys())
+            if file_path_le.text():
+                if not os.path.isfile(file_path_le.text()):
+                    FEEDBACK.throw_error("Guide file does not exist")
+
+                list_of_roots = list(self.guides_handler.get_roots_from_file(file_path=file_path_le.text()))
+
+                zortMenu = QtWidgets.QMenu()
+                for root in list_of_roots:
+                    tempAction = QtWidgets.QAction(str(root), self)
+                    zortMenu.addAction(tempAction)
+                    tempAction.triggered.connect(lambda ignore=root, item=root: add_root(str(root)))
+                    # tempAction.triggered.connect(self.populate_actions)
+
+
+                # self.populate_actions()
+
+                zortMenu.exec_((QtGui.QCursor.pos()))
+
+        def add_root(root):
+            current_roots = guide_roots_le.text()
+            if root in current_roots:
+                FEEDBACK.warning("%s is already in the list" %root)
+                return
+            new_roots = root if not current_roots else "{0}  {1}".format(current_roots, root)
+            guide_roots_le.setText(new_roots)
+            ctrl.update_model()
+
         ### Signals
-        file_path_le.editingFinished.connect(lambda x=0: ctrl.update_model())
+        file_path_le.textEdited.connect(lambda x=0: ctrl.update_model())
         browse_path_pb.clicked.connect(lambda x=0: ctrl.update_model())
-        guide_roots_le.editingFinished.connect(lambda x=0: ctrl.update_model())
+        guide_roots_le.textEdited.connect(lambda x=0: ctrl.update_model())
+        get_guide_roots_pb.clicked.connect(get_roots_menu)
         create_auto_sw_cb.stateChanged.connect(lambda x=0: ctrl.update_model())
         after_action_combo.currentIndexChanged.connect(lambda x=0: ctrl.update_model())
         multi_selectionSets_cb.stateChanged.connect(lambda x=0: ctrl.update_model())
@@ -605,17 +619,18 @@ class MainUI(QtWidgets.QMainWindow):
         row = self.rig_actions_listwidget.currentRow()
         if row == -1:
             return
+        deformers = importlib.import_module("trigger.library.deformers")
         action_name = self.rig_actions_listwidget.currentItem().text()
         # feed the controller
         ctrl = model_ctrl.Controller()
         ctrl.model = self.actions_handler
         ctrl.action_name = action_name
 
-        file_path_lbl = QtWidgets.QLabel(text="Directory:")
+        file_path_lbl = QtWidgets.QLabel(text="File Path:")
         file_path_hLay = QtWidgets.QHBoxLayout()
         file_path_le = QtWidgets.QLineEdit()
         file_path_hLay.addWidget(file_path_le)
-        browse_path_pb = BrowserButton(mode="directory", update_widget=file_path_le)
+        browse_path_pb = BrowserButton(mode="saveFile", update_widget=file_path_le, filterExtensions=["Trigger Weight Files (*.trw)"])
         file_path_hLay.addWidget(browse_path_pb)
         self.action_settings_formLayout.addRow(file_path_lbl, file_path_hLay)
 
@@ -627,17 +642,62 @@ class MainUI(QtWidgets.QMainWindow):
         deformers_hLay.addWidget(get_deformers_pb)
         self.action_settings_formLayout.addRow(deformers_lbl, deformers_hLay)
 
+        save_current_lbl = QtWidgets.QLabel(text="Save Current states")
+        save_current_hlay = QtWidgets.QHBoxLayout()
+        save_current_pb = QtWidgets.QPushButton(text="Save")
+        increment_current_pb = QtWidgets.QPushButton(text="Increment and Save")
+        save_current_hlay.addWidget(save_current_pb)
+        save_current_hlay.addWidget(increment_current_pb)
+        self.action_settings_formLayout.addRow(save_current_lbl, save_current_hlay)
+
         # make connections with the controller object
-        ctrl.connect(file_path_le, "weights_file_directory", str)
+        ctrl.connect(file_path_le, "weights_file_path", str)
         ctrl.connect(deformers_le, "deformers", list)
 
         ctrl.update_ui()
+
+        def get_deformers_menu():
+            list_of_deformers = list(deformers.get_deformers(namesOnly=True))
+
+            zortMenu = QtWidgets.QMenu()
+            for deformer in list_of_deformers:
+                tempAction = QtWidgets.QAction(str(deformer), self)
+                zortMenu.addAction(tempAction)
+                tempAction.triggered.connect(lambda ignore=deformer, item=deformer: add_deformer(str(deformer)))
+            zortMenu.exec_((QtGui.QCursor.pos()))
+
+        def add_deformer(deformer):
+            current_deformers = deformers_le.text()
+            if deformer in current_deformers:
+                FEEDBACK.warning("%s is already in the list" %deformer)
+                return
+            new_deformers = deformer if not current_deformers else "{0}  {1}".format(current_deformers, deformer)
+            deformers_le.setText(new_deformers)
+            ctrl.update_model()
+
+        def save_deformers(increment=False):
+            if increment:
+                ctrl.update_model()
+                FEEDBACK.warning("NOT YET IMPLEMENTED")
+                # TODO make an external incrementer
+            else:
+                ctrl.update_model()
+                if os.path.isfile(file_path_le.text()):
+                    state = self.queryPop(type="okCancel", textTitle="Overwrite", textHeader="The file %s already exists.\nDo you want to OVERWRITE?" %file_path_le.text())
+                    if state == "cancel":
+                        return
+                self.actions_handler.run_save_action(action_name)
 
         ### Signals
         file_path_le.editingFinished.connect(lambda x=0: ctrl.update_model())
         browse_path_pb.clicked.connect(lambda x=0: ctrl.update_model())
         deformers_le.editingFinished.connect(lambda x=0: ctrl.update_model())
+        get_deformers_pb.clicked.connect(get_deformers_menu)
         get_deformers_pb.clicked.connect(lambda x=0: ctrl.update_model())
+
+        save_current_pb.clicked.connect(lambda x=0: save_deformers())
+        increment_current_pb.clicked.connect(lambda x=0: save_deformers(increment=True))
+
 
 
     def add_actions_menu(self):
@@ -709,18 +769,13 @@ class MainUI(QtWidgets.QMainWindow):
 #######################
 
     def import_guides(self):
-        dlg = QtWidgets.QFileDialog.getOpenFileName(self, str("Import Guides"), "", str("Json Files (*.json)"))
+        dlg = QtWidgets.QFileDialog.getOpenFileName(self, str("Import Guides"), "", str("Trigger Guides (*.trg)"))
         if dlg[0]:
             self.guides_handler.load_session(os.path.normpath(dlg[0]), reset_scene=False)
 
     def export_guides(self):
-        # dlg = QtWidgets.QFileDialog.getSaveFileName()
-        dlg = QtWidgets.QFileDialog.getSaveFileName(self, str("Export Guides"), "", str("Json Files (*.json)"))
+        dlg = QtWidgets.QFileDialog.getSaveFileName(self, str("Export Guides"), "", str("Trigger Guides (*.trg)"))
         if dlg[0]:
-            # if os.path.isfile(dlg[0]):
-            #     query = self.queryPop("okCancel", textTitle="Overwrite", textHeader="The File {0} exists. Do you Want to overwrite it?".format(dlg[0]))
-            #     if query == "cancel":
-            #         return
             self.guides_handler.save_session(os.path.normpath(dlg[0]))
 
     def build_test_guides(self):
