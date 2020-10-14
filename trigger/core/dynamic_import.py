@@ -1,9 +1,15 @@
 """Module for dynamic Imports"""
 import os, sys
-import imp
-import importlib
 
 python_version = sys.version_info.major
+if python_version < 2:
+    import importlib as imp
+else:
+    import imp
+
+# import imp
+# import importlib
+
 
 def dynamic_import(file_path):
     module_name = os.path.splitext(os.path.basename(file_path))[0]
