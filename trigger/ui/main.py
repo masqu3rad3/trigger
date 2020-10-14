@@ -1,4 +1,6 @@
 """Main UI for TRigger"""
+import subprocess
+import platform
 import sys, os
 import importlib
 from functools import wraps
@@ -66,7 +68,7 @@ class MainUI(QtWidgets.QMainWindow):
         # core ui
         self.setWindowTitle(WINDOW_NAME)
         self.setObjectName(WINDOW_NAME)
-        self.resize(850, 400)
+        self.resize(1000, 600)
         self.centralwidget = QtWidgets.QWidget(self)
         self.centralwidget.setObjectName("centralwidget")
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
@@ -527,6 +529,9 @@ class MainUI(QtWidgets.QMainWindow):
         if action_type == "weights":
             self.weights_settings_layout()
 
+        if action_type == "script":
+            self.script_settings_layout()
+
     def kinematics_settings_layout(self):
         row = self.rig_actions_listwidget.currentRow()
         if row == -1:
@@ -607,9 +612,10 @@ class MainUI(QtWidgets.QMainWindow):
             ctrl.update_model()
 
         ### Signals
-        file_path_le.textEdited.connect(lambda x=0: ctrl.update_model())
+        # file_path_le.textEdited.connect(lambda x=0: ctrl.update_model())
+        file_path_le.editingFinished.connect(lambda x=0: ctrl.update_model())
         browse_path_pb.clicked.connect(lambda x=0: ctrl.update_model())
-        guide_roots_le.textEdited.connect(lambda x=0: ctrl.update_model())
+        guide_roots_le.editingFinished.connect(lambda x=0: ctrl.update_model())
         get_guide_roots_pb.clicked.connect(get_roots_menu)
         create_auto_sw_cb.stateChanged.connect(lambda x=0: ctrl.update_model())
         after_action_combo.currentIndexChanged.connect(lambda x=0: ctrl.update_model())
@@ -630,7 +636,7 @@ class MainUI(QtWidgets.QMainWindow):
         file_path_hLay = QtWidgets.QHBoxLayout()
         file_path_le = QtWidgets.QLineEdit()
         file_path_hLay.addWidget(file_path_le)
-        browse_path_pb = BrowserButton(mode="saveFile", update_widget=file_path_le, filterExtensions=["Trigger Weight Files (*.trw)"])
+        browse_path_pb = BrowserButton(mode="saveFile", update_widget=file_path_le, filterExtensions=["Trigger Weight Files (*.trw)"], overwrite_check=False)
         file_path_hLay.addWidget(browse_path_pb)
         self.action_settings_formLayout.addRow(file_path_lbl, file_path_hLay)
 
@@ -698,7 +704,58 @@ class MainUI(QtWidgets.QMainWindow):
         save_current_pb.clicked.connect(lambda x=0: save_deformers())
         increment_current_pb.clicked.connect(lambda x=0: save_deformers(increment=True))
 
+    def script_settings_layout(self):
+        row = self.rig_actions_listwidget.currentRow()
+        if row == -1:
+            return
 
+        action_name = self.rig_actions_listwidget.currentItem().text()
+        # feed the controller
+        ctrl = model_ctrl.Controller()
+        ctrl.model = self.actions_handler
+        ctrl.action_name = action_name
+
+        file_path_lbl = QtWidgets.QLabel(text="File Path:")
+        file_path_hLay = QtWidgets.QHBoxLayout()
+        file_path_le = QtWidgets.QLineEdit()
+        file_path_hLay.addWidget(file_path_le)
+        edit_file_pb = QtWidgets.QPushButton(text="Edit")
+        file_path_hLay.addWidget(edit_file_pb)
+        browse_path_pb = BrowserButton(mode="saveFile", update_widget=file_path_le, filterExtensions=["Python Files (*.py)"], overwrite_check=False)
+        file_path_hLay.addWidget(browse_path_pb)
+        self.action_settings_formLayout.addRow(file_path_lbl, file_path_hLay)
+
+        import_as_lbl = QtWidgets.QLabel(text="Import as:")
+        import_as_le = QtWidgets.QLineEdit()
+        self.action_settings_formLayout.addRow(import_as_lbl, import_as_le)
+
+        commands_lbl = QtWidgets.QLabel(text="Commands")
+        commands_le = QtWidgets.QLineEdit()
+        self.action_settings_formLayout.addRow(commands_lbl, commands_le)
+
+        ctrl.connect(file_path_le, "script_file_path", str)
+        ctrl.connect(import_as_le, "import_as", str)
+        ctrl.connect(commands_le, "commands", list)
+        ctrl.update_ui()
+
+        def edit_file():
+            file_path = file_path_le.text()
+            system = platform.system()
+            if system == "Windows":
+                os.startfile(file_path)
+            elif system == "Linux":
+                subprocess.Popen(["xdg-open", file_path])
+                pass
+            else:
+                subprocess.Popen(["open", file_path])
+                pass
+
+        ### Signals
+        file_path_le.textEdited.connect(lambda x=0: ctrl.update_model())
+        import_as_le.textEdited.connect(lambda x=0: ctrl.update_model())
+        edit_file_pb.clicked.connect(edit_file)
+        browse_path_pb.clicked.connect(lambda x=0: ctrl.update_model())
+        commands_le.textEdited.connect(lambda x=0: ctrl.update_model())
 
     def add_actions_menu(self):
         # recentList = reversed(self.manager.loadRecentProjects())
@@ -1090,7 +1147,7 @@ class MainUI(QtWidgets.QMainWindow):
                 return "no"
 
 class BrowserButton(QtWidgets.QPushButton):
-    def __init__(self, text="Browse", update_widget=None, mode="openFile", filterExtensions=None, title=None):
+    def __init__(self, text="Browse", update_widget=None, mode="openFile", filterExtensions=None, title=None, overwrite_check=True):
         super(BrowserButton, self).__init__()
         self._updateWidget = update_widget
         if text:
@@ -1103,6 +1160,7 @@ class BrowserButton(QtWidgets.QPushButton):
         self._filterExtensions = self._listToFilter(filterExtensions) if filterExtensions else ""
         self._title = title if title else ""
         self._selectedPath = ""
+        self._overwriteCheck=overwrite_check
 
     def setUpdateWidget(self, widget):
         self._updateWidget = widget
@@ -1142,7 +1200,10 @@ class BrowserButton(QtWidgets.QPushButton):
             dlg = QtWidgets.QFileDialog.getOpenFileName(self, self._title, self._selectedPath, self._filterExtensions)
             new_path = dlg[0] if dlg else None
         elif self._mode == "saveFile":
-            dlg = QtWidgets.QFileDialog.getSaveFileName(self, self._title, self._selectedPath, self._filterExtensions)
+            if not self._overwriteCheck:
+                dlg = QtWidgets.QFileDialog.getSaveFileName(self, self._title, self._selectedPath, self._filterExtensions, options=(QtWidgets.QFileDialog.DontConfirmOverwrite))
+            else:
+                dlg = QtWidgets.QFileDialog.getSaveFileName(self, self._title, self._selectedPath, self._filterExtensions)
             new_path = dlg[0] if dlg else None
         elif self._mode == "directory":
             dlg = QtWidgets.QFileDialog.getExistingDirectory(self, self._title, self._selectedPath, options=(QtWidgets.QFileDialog.ShowDirsOnly))
