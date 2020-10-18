@@ -20,7 +20,6 @@ class ActionsSession(dict):
         self.currentFile = None
         self.action_data_dict = {}
         for mod in actions.__all__:
-            print(mod)
             self.action_data_dict[mod]=eval('actions.{0}.ACTION_DATA'.format(mod))
 
         """
@@ -54,6 +53,10 @@ class ActionsSession(dict):
 
         self["actions"] = []
 
+    def new_session(self):
+        """Clears the data"""
+        self.__init__()
+
     def save_session(self, file_path):
         """Saves the session to the given file path"""
         if not os.path.splitext(file_path)[1]:
@@ -74,6 +77,19 @@ class ActionsSession(dict):
             FEEDBACK.info("Action Session Loaded Successfully...")
         else:
             FEEDBACK.throw_error("The specified file doesn't exists")
+
+    def is_modified(self):
+        """Checks if the current file is different than the saved file"""
+        if not self.currentFile:
+            if self["actions"]:
+                return True
+            else:
+                return False
+        actions_data = self.io.read()
+        if actions_data != self:
+            return True
+        else:
+            return False
 
     def list_valid_actions(self):
         """Returns all available actions"""

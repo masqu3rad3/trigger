@@ -1,5 +1,6 @@
 """This module is responsible for importing/exporting external files (mostly geometries)"""
 
+import os
 from maya import cmds
 from maya import mel
 import platform
@@ -11,21 +12,39 @@ from trigger.library import controllers as ic
 FEEDBACK = feedback.Feedback(__name__)
 
 
-ACTION_DATA = {}
+ACTION_DATA = {
+    "import_file_path": ""
+}
 
-class ImportExport(object):
+class Import_asset(object):
     def __init__(self, *args, **kwargs):
-        super(ImportExport, self).__init__()
+        super(Import_asset, self).__init__()
         # self.rigName = "trigger"
+        self.filePath = None
+
+    def feed(self, action_data):
+        self.filePath = action_data.get("import_file_path")
 
     def action(self):
         """Mandatory method for all action maya_modules"""
-        pass
+        if not self.filePath:
+            FEEDBACK.warning("import path not defined")
+            return
+        ext = os.path.splitext(self.filePath)[1]
+        if ext == ".abc":
+            self.import_alembic(self.filePath)
+        elif ext == ".obj":
+            self.import_obj(self.filePath)
+        elif ext == ".fbx":
+            self.import_fbx(self.filePath)
+        elif ext == ".ma" or ext == ".mb":
+            self.import_scene(self.filePath)
+        else:
+            FEEDBACK.warning("Unrecognized file format => %s" %ext)
 
 
     def import_scene(self, file_path, *args, **kwargs):
         return cmds.file(file_path, i=True)
-
 
     def import_obj(self, file_path, *args, **kwargs):
         opFlag = "lo=0 mo=1"

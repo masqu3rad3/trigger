@@ -100,6 +100,12 @@ class MainUI(QtWidgets.QMainWindow):
         self.rig_LR_splitter.setStretchFactor(1, 90)
 
         self.show()
+        self.update_title()
+
+    def update_title(self):
+        file_name = self.actions_handler.currentFile if self.actions_handler.currentFile else "untitled"
+        asteriks = "*" if self.actions_handler.is_modified() else ""
+        self.setWindowTitle("{0} - {1}{2}".format(WINDOW_NAME, file_name, asteriks))
 
 
     def buildBarsUI(self):
@@ -385,6 +391,7 @@ class MainUI(QtWidgets.QMainWindow):
         self.guide_test_pb.clicked.connect(self.build_test_guides)
 
         # menu items
+        self.new_trigger_action.triggered.connect(self.new_trigger)
         self.open_trigger_action.triggered.connect(self.open_trigger)
         self.save_trigger_action.triggered.connect(self.save_trigger)
         self.save_as_trigger_action.triggered.connect(self.save_as_trigger)
@@ -495,20 +502,53 @@ class MainUI(QtWidgets.QMainWindow):
 
         self.build_pb.clicked.connect(lambda x=0: self.actions_handler.run_all_actions())
 
+    def new_trigger(self):
+        if self.actions_handler.is_modified():
+            if self.actions_handler.currentFile:
+                file_name = os.path.basename(self.actions_handler.currentFile)
+            else:
+                file_name = "untitled"
+            state = self.queryPop(type="yesNoCancel", textTitle="Save Changes?", textHeader="Save changes to %s?" %file_name, )
+            if state == "yes":
+                self.save_trigger()
+            elif state == "no":
+                pass
+            else:
+                return
+
+        self.actions_handler.new_session()
+        self.populate_actions()
+        self.update_title()
+
     def open_trigger(self):
+        if self.actions_handler.is_modified():
+            if self.actions_handler.currentFile:
+                file_name = os.path.basename(self.actions_handler.currentFile)
+            else:
+                file_name = "untitled"
+            state = self.queryPop(type="yesNoCancel", textTitle="Save Changes?", textHeader="Save changes to %s?" %file_name, )
+            if state == "yes":
+                self.save_trigger()
+            elif state == "no":
+                pass
+            else:
+                return
         dlg = QtWidgets.QFileDialog.getOpenFileName(self, str("Open Trigger Session"), "", str("Trigger Session (*.tr)"))
         if dlg[0]:
             self.actions_handler.load_session(os.path.normpath(dlg[0]))
             self.populate_actions()
+            self.update_title()
 
     def save_as_trigger(self):
         dlg = QtWidgets.QFileDialog.getSaveFileName(self, str("Save Trigger Session"), "", str("Trigger Session (*.tr)"))
         if dlg[0]:
             self.actions_handler.save_session(os.path.normpath(dlg[0]))
+            self.update_title()
 
     def save_trigger(self):
         if self.actions_handler.currentFile:
             self.actions_handler.save_session(self.actions_handler.currentFile)
+            self.update_title()
         else:
             self.save_as_trigger()
 
@@ -516,12 +556,12 @@ class MainUI(QtWidgets.QMainWindow):
     def action_settings_menu(self):
         """Builds the action settings depending on action type"""
         # get the action type
+        self.clearLayout(self.action_settings_formLayout)
         row = self.rig_actions_listwidget.currentRow()
         if row == -1:
             return
         action_name = self.rig_actions_listwidget.currentItem().text()
         action_type = self.actions_handler.get_action_type(action_name)
-        self.clearLayout(self.action_settings_formLayout)
 
         if action_type == "kinematics":
             self.kinematics_settings_layout()
@@ -531,6 +571,9 @@ class MainUI(QtWidgets.QMainWindow):
 
         if action_type == "script":
             self.script_settings_layout()
+
+        if action_type == "import_asset":
+            self.import_asset_settings_layout()
 
     def kinematics_settings_layout(self):
         row = self.rig_actions_listwidget.currentRow()
@@ -721,7 +764,9 @@ class MainUI(QtWidgets.QMainWindow):
         file_path_hLay.addWidget(file_path_le)
         edit_file_pb = QtWidgets.QPushButton(text="Edit")
         file_path_hLay.addWidget(edit_file_pb)
-        browse_path_pb = BrowserButton(mode="saveFile", update_widget=file_path_le, filterExtensions=["Python Files (*.py)"], overwrite_check=False)
+        browse_path_pb = BrowserButton(mode="openFile", update_widget=file_path_le, filterExtensions=["Python Files (*.py)"], overwrite_check=False)
+        save_path_pb = BrowserButton(mode="saveFile", update_widget=file_path_le, filterExtensions=["Python Files (*.py)"], overwrite_check=False)
+        # file_path_hLay.addWidget(save_path_pb)
         file_path_hLay.addWidget(browse_path_pb)
         self.action_settings_formLayout.addRow(file_path_lbl, file_path_hLay)
 
@@ -740,6 +785,14 @@ class MainUI(QtWidgets.QMainWindow):
 
         def edit_file():
             file_path = file_path_le.text()
+            if not file_path:
+                result = save_path_pb.browserEvent()
+                if result:
+                    if not os.path.isfile(result):
+                        f = open(result, "w+")
+                        f.close()
+                    file_path = result
+
             system = platform.system()
             if system == "Windows":
                 os.startfile(file_path)
@@ -750,12 +803,40 @@ class MainUI(QtWidgets.QMainWindow):
                 subprocess.Popen(["open", file_path])
                 pass
 
+
         ### Signals
         file_path_le.textEdited.connect(lambda x=0: ctrl.update_model())
         import_as_le.textEdited.connect(lambda x=0: ctrl.update_model())
         edit_file_pb.clicked.connect(edit_file)
         browse_path_pb.clicked.connect(lambda x=0: ctrl.update_model())
+        save_path_pb.clicked.connect(lambda x=0: ctrl.update_model())
         commands_le.textEdited.connect(lambda x=0: ctrl.update_model())
+
+
+    def import_asset_settings_layout(self):
+        row = self.rig_actions_listwidget.currentRow()
+        if row == -1:
+            return
+
+        action_name = self.rig_actions_listwidget.currentItem().text()
+        # feed the controller
+        ctrl = model_ctrl.Controller()
+        ctrl.model = self.actions_handler
+        ctrl.action_name = action_name
+
+        file_path_lbl = QtWidgets.QLabel(text="File Path:")
+        file_path_hLay = QtWidgets.QHBoxLayout()
+        file_path_le = QtWidgets.QLineEdit()
+        file_path_hLay.addWidget(file_path_le)
+        browse_path_pb = BrowserButton(mode="openFile", update_widget=file_path_le, filterExtensions=["Maya ASCII (*.ma)", "Maya Binary (*.mb)", "Alembic (*.abc)", "FBX (*.fbx)", "OBJ (*.obj)"], overwrite_check=False)
+        file_path_hLay.addWidget(browse_path_pb)
+        self.action_settings_formLayout.addRow(file_path_lbl, file_path_hLay)
+
+        ctrl.connect(file_path_le, "import_file_path", str)
+        ctrl.update_ui()
+
+        file_path_le.textEdited.connect(lambda x=0: ctrl.update_model())
+        browse_path_pb.clicked.connect(lambda x=0: ctrl.update_model())
 
     def add_actions_menu(self):
         # recentList = reversed(self.manager.loadRecentProjects())
@@ -817,8 +898,8 @@ class MainUI(QtWidgets.QMainWindow):
             return
         action_name = self.rig_actions_listwidget.currentItem().text()
         self.actions_handler.delete_action(action_name=action_name)
-        self.populate_actions()
         self.block_all_signals(False)
+        self.populate_actions()
 
 
 #######################
@@ -1194,8 +1275,7 @@ class BrowserButton(QtWidgets.QPushButton):
     def _listToFilter(self, filter_list):
         return ";;".join(filter_list)
 
-    def mouseReleaseEvent(self, *args, **kwargs):
-        super(BrowserButton, self).mouseReleaseEvent(*args, **kwargs)
+    def browserEvent(self):
         if self._mode == "openFile":
             dlg = QtWidgets.QFileDialog.getOpenFileName(self, self._title, self._selectedPath, self._filterExtensions)
             new_path = dlg[0] if dlg else None
@@ -1216,4 +1296,31 @@ class BrowserButton(QtWidgets.QPushButton):
             if self._updateWidget:
                 self._updateWidget.setText(self._selectedPath)
             self.click()
+
+        return new_path
+
+
+    def mouseReleaseEvent(self, *args, **kwargs):
+        super(BrowserButton, self).mouseReleaseEvent(*args, **kwargs)
+        self.browserEvent()
+        # if self._mode == "openFile":
+        #     dlg = QtWidgets.QFileDialog.getOpenFileName(self, self._title, self._selectedPath, self._filterExtensions)
+        #     new_path = dlg[0] if dlg else None
+        # elif self._mode == "saveFile":
+        #     if not self._overwriteCheck:
+        #         dlg = QtWidgets.QFileDialog.getSaveFileName(self, self._title, self._selectedPath, self._filterExtensions, options=(QtWidgets.QFileDialog.DontConfirmOverwrite))
+        #     else:
+        #         dlg = QtWidgets.QFileDialog.getSaveFileName(self, self._title, self._selectedPath, self._filterExtensions)
+        #     new_path = dlg[0] if dlg else None
+        # elif self._mode == "directory":
+        #     dlg = QtWidgets.QFileDialog.getExistingDirectory(self, self._title, self._selectedPath, options=(QtWidgets.QFileDialog.ShowDirsOnly))
+        #     new_path = dlg if dlg else None
+        # else:
+        #     new_path = None
+        #
+        # if new_path:
+        #     self._selectedPath = os.path.normpath(new_path)
+        #     if self._updateWidget:
+        #         self._updateWidget.setText(self._selectedPath)
+        #     self.click()
 
