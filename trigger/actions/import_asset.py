@@ -6,8 +6,9 @@ from maya import mel
 import platform
 
 from trigger.core import feedback
-from trigger.library import functions as extra
-from trigger.library import controllers as ic
+
+from trigger.ui.Qt import QtWidgets, QtGui # for progressbar
+from trigger.ui.custom_widgets import BrowserButton
 
 FEEDBACK = feedback.Feedback(__name__)
 
@@ -42,6 +43,25 @@ class Import_asset(object):
         else:
             FEEDBACK.warning("Unrecognized file format => %s" %ext)
 
+    def save_action(self):
+        """Mandatory method for all action modules"""
+        pass
+
+    def ui(self, ctrl, layout, *args, **kwargs):
+
+        file_path_lbl = QtWidgets.QLabel(text="File Path:")
+        file_path_hLay = QtWidgets.QHBoxLayout()
+        file_path_le = QtWidgets.QLineEdit()
+        file_path_hLay.addWidget(file_path_le)
+        browse_path_pb = BrowserButton(mode="openFile", update_widget=file_path_le, filterExtensions=["Maya ASCII (*.ma)", "Maya Binary (*.mb)", "Alembic (*.abc)", "FBX (*.fbx)", "OBJ (*.obj)"], overwrite_check=False)
+        file_path_hLay.addWidget(browse_path_pb)
+        layout.addRow(file_path_lbl, file_path_hLay)
+
+        ctrl.connect(file_path_le, "import_file_path", str)
+        ctrl.update_ui()
+
+        file_path_le.textEdited.connect(lambda x=0: ctrl.update_model())
+        browse_path_pb.clicked.connect(lambda x=0: ctrl.update_model())
 
     def import_scene(self, file_path, *args, **kwargs):
         return cmds.file(file_path, i=True)

@@ -239,3 +239,9 @@ class ActionsSession(dict):
         a_hand.feed(action["data"])
         a_hand.save_action()
 
+    def get_layout_ui(self, action_name, ctrl, layout):
+        action = self.get_action(action_name)
+        action_cmd = "actions.{0}.{1}()".format(action["type"], action["type"].capitalize())
+        a_hand = eval(action_cmd)
+        a_hand.ui(ctrl, layout, self)
+

@@ -1,3 +1,4 @@
+import importlib
 import os
 from copy import deepcopy
 from maya import cmds
@@ -7,8 +8,10 @@ import maya.api.OpenMayaAnim as omAnim
 from trigger.core import io
 from trigger.core import feedback
 from trigger.library import functions as extra
-import time
-from pprint import pprint
+
+from trigger.ui.Qt import QtWidgets, QtGui # for progressbar
+from trigger.ui.custom_widgets import BrowserButton
+from trigger.ui.custom_widgets import Pops
 
 FEEDBACK = feedback.Feedback(__name__)
 
@@ -60,7 +63,7 @@ class Weights(dict):
     def set_path(self, file_path):
         self.io.file_path = file_path
 
-    def feed(self, action_data):
+    def feed(self, action_data, *args, **kwargs):
         """Mandatory method for all action modules - feeds the builder data"""
         self.isCreateDeformers = action_data["create_deformers"]
         self.deformers_list = action_data["deformers"]
@@ -81,16 +84,7 @@ class Weights(dict):
             deformer_weight_path = os.path.join(weights_folder, "%s.json" %deformer)
             self.create_deformer(deformer_weight_path, deformer_type=deformer_type)
 
-        # for deformer in self.deformers_list:
-        #     file_path = os.path.join(self.weights_file_path, "%s.json" % deformer)
-        #     if self.isCreateDeformers:
-        #         if not os.path.isfile(file_path):
-        #             FEEDBACK.throw_error("Deformer file (%s) does not exist" % file_path)
-        #         self.create_deformer(file_path)
-        #     else:
-        #         self.load_weights(deformer=deformer, file_path=file_path)
-
-    def save_action(self):
+    def save_action(self, *args, **kwargs):
         """Mandatory method for all action modules"""
         base_folder, file_name_and_ext = os.path.split(self.weights_file_path)
         file_name, ext = os.path.splitext(file_name_and_ext)
@@ -109,25 +103,81 @@ class Weights(dict):
         self.io.file_path = self.weights_file_path
         self.io.write(data_list)
 
-    # def collect_deformers(self, mesh):
-    #     """Collects defomers in a dictionary by type
-    #
-    #     Args:
-    #         mesh (str): Shape or transform node
-    #     Return:
-    #         dictionary: {<type>: [list of deformers]}
-    #
-    #     """
-    #
-    #     valid_deformers = ["skinCluster", "blendShape", "nonLinear", "cluster"]
-    #     if int(cmds.about(version=True)) >= 2019:
-    #         valid_deformers.append("ffd")
-    #     # get deformer from mesh
-    #     history = cmds.listHistory(mesh, pruneDagObjects=True)
-    #
-    #     deformer_data = {deformer_type: cmds.ls(history, type=deformer_type, shapes=True) for deformer_type in valid_deformers}
-    #
-    #     return deformer_data
+    def ui(self, ctrl, layout, handler, *args, **kwargs):
+        "Mandatory Method"
+        deformers = importlib.import_module("trigger.library.deformers")
+
+        file_path_lbl = QtWidgets.QLabel(text="File Path:")
+        file_path_hLay = QtWidgets.QHBoxLayout()
+        file_path_le = QtWidgets.QLineEdit()
+        file_path_hLay.addWidget(file_path_le)
+        browse_path_pb = BrowserButton(mode="saveFile", update_widget=file_path_le, filterExtensions=["Trigger Weight Files (*.trw)"], overwrite_check=False)
+        file_path_hLay.addWidget(browse_path_pb)
+        layout.addRow(file_path_lbl, file_path_hLay)
+
+        deformers_lbl = QtWidgets.QLabel(text="Deformers")
+        deformers_hLay = QtWidgets.QHBoxLayout()
+        deformers_le = QtWidgets.QLineEdit()
+        deformers_hLay.addWidget(deformers_le)
+        get_deformers_pb = QtWidgets.QPushButton(text="Get")
+        deformers_hLay.addWidget(get_deformers_pb)
+        layout.addRow(deformers_lbl, deformers_hLay)
+
+        save_current_lbl = QtWidgets.QLabel(text="Save Current states")
+        save_current_hlay = QtWidgets.QHBoxLayout()
+        save_current_pb = QtWidgets.QPushButton(text="Save")
+        increment_current_pb = QtWidgets.QPushButton(text="Increment and Save")
+        save_current_hlay.addWidget(save_current_pb)
+        save_current_hlay.addWidget(increment_current_pb)
+        layout.addRow(save_current_lbl, save_current_hlay)
+
+        # make connections with the controller object
+        ctrl.connect(file_path_le, "weights_file_path", str)
+        ctrl.connect(deformers_le, "deformers", list)
+
+        ctrl.update_ui()
+
+        def get_deformers_menu():
+            list_of_deformers = list(deformers.get_deformers(namesOnly=True))
+
+            zortMenu = QtWidgets.QMenu()
+            for deformer in list_of_deformers:
+                tempAction = QtWidgets.QAction(str(deformer), self)
+                zortMenu.addAction(tempAction)
+                tempAction.triggered.connect(lambda ignore=deformer, item=deformer: add_deformer(str(deformer)))
+            zortMenu.exec_((QtGui.QCursor.pos()))
+
+        def add_deformer(deformer):
+            current_deformers = deformers_le.text()
+            if deformer in current_deformers:
+                FEEDBACK.warning("%s is already in the list" %deformer)
+                return
+            new_deformers = deformer if not current_deformers else "{0}  {1}".format(current_deformers, deformer)
+            deformers_le.setText(new_deformers)
+            ctrl.update_model()
+
+        def save_deformers(increment=False):
+            if increment:
+                ctrl.update_model()
+                FEEDBACK.warning("NOT YET IMPLEMENTED")
+                # TODO make an external incrementer
+            else:
+                ctrl.update_model()
+                if os.path.isfile(file_path_le.text()):
+                    state = Pops().queryPop(type="okCancel", textTitle="Overwrite", textHeader="The file %s already exists.\nDo you want to OVERWRITE?" %file_path_le.text())
+                    if state == "cancel":
+                        return
+                handler.run_save_action(ctrl.action_name)
+
+        ### Signals
+        file_path_le.editingFinished.connect(lambda x=0: ctrl.update_model())
+        browse_path_pb.clicked.connect(lambda x=0: ctrl.update_model())
+        deformers_le.editingFinished.connect(lambda x=0: ctrl.update_model())
+        get_deformers_pb.clicked.connect(get_deformers_menu)
+        get_deformers_pb.clicked.connect(lambda x=0: ctrl.update_model())
+
+        save_current_pb.clicked.connect(lambda x=0: save_deformers())
+        increment_current_pb.clicked.connect(lambda x=0: save_deformers(increment=True))
 
     def save_weights(self, deformer=None, file_path=None, vertexConnections=False, force=True, influencer=None):
         if not deformer and not self.deformer:

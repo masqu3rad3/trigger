@@ -1,5 +1,5 @@
 """Builds the kinematics starting from the given root and for all descendants"""
-
+import os
 from maya import cmds
 from trigger.core import feedback
 import trigger.library.functions as functions
@@ -13,7 +13,8 @@ from trigger.core import settings
 
 from trigger.actions import master
 
-from trigger.ui.Qt import QtWidgets # for progressbar
+from trigger.ui.Qt import QtWidgets, QtGui # for progressbar
+from trigger.ui.custom_widgets import BrowserButton
 
 FEEDBACK = feedback.Feedback(logger_name=__name__)
 #
@@ -59,7 +60,7 @@ class Kinematics(settings.Settings):
 
         self.rig_name = rig_name if rig_name else "trigger"
 
-    def feed(self, action_data):
+    def feed(self, action_data, *args, **kwargs):
         """Mandatory Function for builder- feeds with the Action Data from builder"""
         self.guides_file_path = action_data.get("guides_file_path")
         self.root_joints = action_data.get("guide_roots")
@@ -118,6 +119,78 @@ class Kinematics(settings.Settings):
         # kinematics action does not have a save action, it only uses guide data
         pass
 
+    def ui(self, ctrl, layout, handler, *args, **kwargs):
+        """Mandatory Method"""
+        file_path_lbl = QtWidgets.QLabel(text="File Path:")
+        file_path_hLay = QtWidgets.QHBoxLayout()
+        file_path_le = QtWidgets.QLineEdit()
+        file_path_hLay.addWidget(file_path_le)
+        browse_path_pb = BrowserButton(update_widget=file_path_le, mode="openFile", filterExtensions=["Trigger Guide Files (*.trg)"])
+        file_path_hLay.addWidget(browse_path_pb)
+        layout.addRow(file_path_lbl, file_path_hLay)
+
+        guide_roots_lbl = QtWidgets.QLabel(text="Guide Roots:")
+        guide_roots_hLay = QtWidgets.QHBoxLayout()
+        guide_roots_le = QtWidgets.QLineEdit()
+        guide_roots_hLay.addWidget(guide_roots_le)
+        get_guide_roots_pb = QtWidgets.QPushButton(text="Get")
+        guide_roots_hLay.addWidget(get_guide_roots_pb)
+        layout.addRow(guide_roots_lbl, guide_roots_hLay)
+
+        create_auto_sw_lbl = QtWidgets.QLabel(text="Create Auto Switchers:")
+        create_auto_sw_cb = QtWidgets.QCheckBox()
+        layout.addRow(create_auto_sw_lbl, create_auto_sw_cb)
+
+        after_action_lbl = QtWidgets.QLabel(text="After Action:")
+        after_action_combo = QtWidgets.QComboBox()
+        after_action_combo.addItems(["Do Nothing", "Hide Guides", "Delete Guides"])
+        layout.addRow(after_action_lbl, after_action_combo)
+
+        multi_selectionSets_lbl = QtWidgets.QLabel(text = "Selection Sets")
+        multi_selectionSets_cb = QtWidgets.QCheckBox()
+        layout.addRow(multi_selectionSets_lbl, multi_selectionSets_cb)
+
+        # make connections with the controller object
+        ctrl.connect(file_path_le, "guides_file_path", str)
+        ctrl.connect(guide_roots_le, "guide_roots", list)
+        ctrl.connect(create_auto_sw_cb, "auto_switchers", bool)
+        ctrl.connect(after_action_combo, "after_creation", int)
+        ctrl.connect(multi_selectionSets_cb, "multi_selectionSets", bool)
+
+        ctrl.update_ui()
+
+
+        def get_roots_menu():
+            if file_path_le.text():
+                if not os.path.isfile(file_path_le.text()):
+                    FEEDBACK.throw_error("Guide file does not exist")
+
+                list_of_roots = list(handler.get_roots_from_file(file_path=file_path_le.text()))
+
+                zortMenu = QtWidgets.QMenu()
+                for root in list_of_roots:
+                    tempAction = QtWidgets.QAction(str(root), self)
+                    zortMenu.addAction(tempAction)
+                    tempAction.triggered.connect(lambda ignore=root, item=root: add_root(str(root)))
+                zortMenu.exec_((QtGui.QCursor.pos()))
+
+        def add_root(root):
+            current_roots = guide_roots_le.text()
+            if root in current_roots:
+                FEEDBACK.warning("%s is already in the list" %root)
+                return
+            new_roots = root if not current_roots else "{0}  {1}".format(current_roots, root)
+            guide_roots_le.setText(new_roots)
+            ctrl.update_model()
+
+        ### Signals
+        file_path_le.editingFinished.connect(lambda x=0: ctrl.update_model())
+        browse_path_pb.clicked.connect(lambda x=0: ctrl.update_model())
+        guide_roots_le.editingFinished.connect(lambda x=0: ctrl.update_model())
+        get_guide_roots_pb.clicked.connect(get_roots_menu)
+        create_auto_sw_cb.stateChanged.connect(lambda x=0: ctrl.update_model())
+        after_action_combo.currentIndexChanged.connect(lambda x=0: ctrl.update_model())
+        multi_selectionSets_cb.stateChanged.connect(lambda x=0: ctrl.update_model())
 
 
     def match_fingers(self, finger_match_list):
@@ -401,3 +474,4 @@ class Kinematics(settings.Settings):
             self.totalDefJoints += limb.deformerJoints
             if j_def_set:
                 cmds.sets(limb.deformerJoints, add=j_def_set)
+
