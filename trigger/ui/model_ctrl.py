@@ -77,7 +77,10 @@ class Controller(object):
 
     @staticmethod
     def text_to_list(text_item):
-        return text_item.split(" ")
+        if text_item:
+            return text_item.split(" ")
+        else:
+            return []
 
 
 

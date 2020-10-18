@@ -63,6 +63,8 @@ class Kinematics(settings.Settings):
         """Mandatory Function for builder- feeds with the Action Data from builder"""
         self.guides_file_path = action_data.get("guides_file_path")
         self.root_joints = action_data.get("guide_roots")
+        if not self.root_joints:
+            self.root_joints = []
         self.autoSwitchers = action_data.get("auto_switchers")
         # self.anchors = action_data.get("anchors")
         # self.anchorLocations = action_data.get("anchor_locations")
@@ -76,6 +78,7 @@ class Kinematics(settings.Settings):
             guides_handler.load_session(self.guides_file_path)
         if not cmds.objExists(root_grp):
             master.Master().action()
+        FEEDBACK.warning(self.root_joints)
         for root_joint in self.root_joints:
             self.collect_guides_info(root_joint)
             self.limbCreationList = self.get_limb_hierarchy(root_joint)
