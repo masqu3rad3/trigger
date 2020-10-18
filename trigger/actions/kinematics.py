@@ -78,7 +78,6 @@ class Kinematics(settings.Settings):
             guides_handler.load_session(self.guides_file_path)
         if not cmds.objExists(root_grp):
             master.Master().action()
-        FEEDBACK.warning(self.root_joints)
         for root_joint in self.root_joints:
             self.collect_guides_info(root_joint)
             self.limbCreationList = self.get_limb_hierarchy(root_joint)
