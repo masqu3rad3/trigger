@@ -65,9 +65,9 @@ class Weights(dict):
 
     def feed(self, action_data, *args, **kwargs):
         """Mandatory method for all action modules - feeds the builder data"""
-        self.isCreateDeformers = action_data["create_deformers"]
-        self.deformers_list = action_data["deformers"]
-        self.weights_file_path = action_data["weights_file_path"]
+        self.isCreateDeformers = action_data.get("create_deformers")
+        self.deformers_list = action_data.get("deformers")
+        self.weights_file_path = action_data.get("weights_file_path")
 
     def action(self):
         """Mandatory method for all action modules"""
@@ -126,9 +126,11 @@ class Weights(dict):
         save_current_lbl = QtWidgets.QLabel(text="Save Current states")
         save_current_hlay = QtWidgets.QHBoxLayout()
         save_current_pb = QtWidgets.QPushButton(text="Save")
-        increment_current_pb = QtWidgets.QPushButton(text="Increment and Save")
+        increment_current_pb = QtWidgets.QPushButton(text="Increment")
+        save_as_current_pb = QtWidgets.QPushButton(text="Save As")
         save_current_hlay.addWidget(save_current_pb)
         save_current_hlay.addWidget(increment_current_pb)
+        save_current_hlay.addWidget(save_as_current_pb)
         layout.addRow(save_current_lbl, save_current_hlay)
 
         # make connections with the controller object
@@ -156,11 +158,15 @@ class Weights(dict):
             deformers_le.setText(new_deformers)
             ctrl.update_model()
 
-        def save_deformers(increment=False):
+        def save_deformers(increment=False, save_as=False):
             if increment:
                 ctrl.update_model()
                 FEEDBACK.warning("NOT YET IMPLEMENTED")
                 # TODO make an external incrementer
+            elif save_as:
+                ctrl.update_model()
+                FEEDBACK.warning("NOT YET IMPLEMENTED")
+                # TODO make save as
             else:
                 ctrl.update_model()
                 if os.path.isfile(file_path_le.text()):
@@ -178,6 +184,7 @@ class Weights(dict):
 
         save_current_pb.clicked.connect(lambda x=0: save_deformers())
         increment_current_pb.clicked.connect(lambda x=0: save_deformers(increment=True))
+        save_as_current_pb.clicked.connect(lambda x=0: save_deformers(save_as=True))
 
     def save_weights(self, deformer=None, file_path=None, vertexConnections=False, force=True, influencer=None):
         if not deformer and not self.deformer:

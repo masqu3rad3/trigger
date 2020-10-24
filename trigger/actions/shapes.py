@@ -1,24 +1,89 @@
 """This module is for saving / loading custom shapes"""
+import os
 
 from maya import cmds
 import platform
-# from trigger.core import io
 from trigger.core import feedback
 from trigger.library import functions as extra
-from trigger.library import controllers as ic
+
+from trigger.ui.Qt import QtWidgets, QtGui
+from trigger.ui.custom_widgets import BrowserButton
+from trigger.ui.custom_widgets import Pops
 
 FEEDBACK = feedback.Feedback(__name__)
 
-ACTION_DATA = {}
+ACTION_DATA = {
+                "shapes_file_path": "",
+}
+
 class Shapes(object):
     def __init__(self, *args, **kwargs):
         super(Shapes, self).__init__()
+        self.shapes_file_path = ""
         # self.rigName = "trigger"
         # self.io = io.IO()
 
+    def feed(self, action_data, *args, **kwargs):
+        """Mandatory method for all action maya_modules"""
+        self.shapes_file_path = action_data.get("shapes_file_path")
+
     def action(self):
         """Mandatory method for all action maya_modules"""
-        pass
+        self.import_shapes(self.shapes_file_path)
+
+    def save_action(self):
+        """Mandatory method for all action maya_modules"""
+        self.export_shapes(self.shapes_file_path)
+
+    def ui(self, ctrl, layout, handler, *args, **kwargs):
+        """Mandatory method for all action maya_modules"""
+
+        file_path_lbl = QtWidgets.QLabel(text="File Path:")
+        file_path_hLay = QtWidgets.QHBoxLayout()
+        file_path_le = QtWidgets.QLineEdit()
+        file_path_hLay.addWidget(file_path_le)
+        browse_path_pb = BrowserButton(mode="saveFile", update_widget=file_path_le, filterExtensions=["Alembic Files (*.abc)"], overwrite_check=False)
+        file_path_hLay.addWidget(browse_path_pb)
+        layout.addRow(file_path_lbl, file_path_hLay)
+
+        save_current_lbl = QtWidgets.QLabel(text="Save Current states")
+        save_current_hlay = QtWidgets.QHBoxLayout()
+        save_current_pb = QtWidgets.QPushButton(text="Save")
+        increment_current_pb = QtWidgets.QPushButton(text="Increment")
+        save_as_current_pb = QtWidgets.QPushButton(text="Save As")
+        save_current_hlay.addWidget(save_current_pb)
+        save_current_hlay.addWidget(increment_current_pb)
+        save_current_hlay.addWidget(save_as_current_pb)
+        layout.addRow(save_current_lbl, save_current_hlay)
+
+        # make connections with the controller object
+        ctrl.connect(file_path_le, "shapes_file_path", str)
+
+        def save_shapes(increment=False, save_as=False):
+            if increment:
+                ctrl.update_model()
+                FEEDBACK.warning("NOT YET IMPLEMENTED")
+                # TODO make an external incrementer
+            elif save_as:
+                ctrl.update_model()
+                FEEDBACK.warning("NOT YET IMPLEMENTED")
+                # TODO make save as
+            else:
+                ctrl.update_model()
+                if os.path.isfile(file_path_le.text()):
+                    state = Pops().queryPop(type="okCancel", textTitle="Overwrite", textHeader="The file %s already exists.\nDo you want to OVERWRITE?" %file_path_le.text())
+                    if state == "cancel":
+                        return
+                handler.run_save_action(ctrl.action_name)
+
+        ### Signals
+        file_path_le.editingFinished.connect(lambda x=0: ctrl.update_model())
+        browse_path_pb.clicked.connect(lambda x=0: ctrl.update_model())
+
+        save_current_pb.clicked.connect(lambda x=0: save_shapes())
+        increment_current_pb.clicked.connect(lambda x=0: save_shapes(increment=True))
+        save_as_current_pb.clicked.connect(lambda x=0: save_shapes(save_as=True))
+
 
     def gather_scene_shapes(self, key="*_cont"):
         """
@@ -97,7 +162,6 @@ class Shapes(object):
         # oddly, it requires a viewport refresh before disconnecting (or deleting) the replacement shapes
         cmds.refresh()
         cmds.delete("replaceShapes_grp")
-
 
     def load_alembic_plugin(self):
         """Makes sure the alembic plugin is loaded"""
