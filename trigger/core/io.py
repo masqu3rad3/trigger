@@ -6,10 +6,10 @@ import os
 import json
 import shutil
 
-from trigger.core import feedback
+from trigger.core import logger
 from trigger.core import compatibility as compat
 
-FEEDBACK = feedback.Feedback(logger_name=__name__)
+FEEDBACK = logger.Logger(logger_name=__name__)
 
 class IO(dict):
     def __init__(self, file_name=None, folder_name=None, root_path=None, file_path=None):

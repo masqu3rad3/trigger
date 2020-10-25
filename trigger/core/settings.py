@@ -1,9 +1,9 @@
 from copy import deepcopy
 
 from trigger.core import io
-from trigger.core import feedback
+from trigger.core import logger
 
-FEEDBACK = feedback.Feedback(logger_name=__name__)
+FEEDBACK = logger.Logger(logger_name=__name__)
 
 DEFAULT_SETTINGS = {
     "upAxis": "+y",

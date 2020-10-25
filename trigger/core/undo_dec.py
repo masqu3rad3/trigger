@@ -1,11 +1,11 @@
 from functools import wraps
 from maya import cmds
-from trigger.core import feedback
+from trigger.core import logger
 
 def undo(func):
     """ Puts the wrapped `func` into a single Maya Undo action, then
         undoes it when the function enters the finally: block """
-    FEEDBACK = feedback.Feedback(func.__name__)
+    FEEDBACK = logger.Logger(func.__name__)
     @wraps(func)
     def _undofunc(*args, **kwargs):
         cmds.undoInfo(ock=True)
@@ -25,7 +25,7 @@ def undo(func):
 def keepselection(func):
     """Decorator method to keep the current selection. Useful where
     the wrapped method messes with the current selection"""
-    FEEDBACK = feedback.Feedback(func.__name__)
+    FEEDBACK = logger.Logger(func.__name__)
     @wraps(func)
     def _keepfunc(*args, **kwargs):
         original_selection = cmds.ls(sl=True)

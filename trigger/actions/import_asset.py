@@ -5,12 +5,12 @@ from maya import cmds
 from maya import mel
 import platform
 
-from trigger.core import feedback
+from trigger.core import logger
 
 from trigger.ui.Qt import QtWidgets, QtGui # for progressbar
 from trigger.ui.custom_widgets import BrowserButton
 
-FEEDBACK = feedback.Feedback(__name__)
+FEEDBACK = logger.Logger(__name__)
 
 
 ACTION_DATA = {

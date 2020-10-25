@@ -6,14 +6,14 @@ import maya.api.OpenMaya as om
 import maya.api.OpenMayaAnim as omAnim
 
 from trigger.core import io
-from trigger.core import feedback
+from trigger.core import logger
 from trigger.library import functions as extra
 
 from trigger.ui.Qt import QtWidgets, QtGui # for progressbar
 from trigger.ui.custom_widgets import BrowserButton
-from trigger.ui.custom_widgets import Pops
+from trigger.ui.feedback import Feedback
 
-FEEDBACK = feedback.Feedback(__name__)
+FEEDBACK = logger.Logger(__name__)
 
 ACTION_DATA = {
                 "create_deformers": True,
@@ -170,7 +170,8 @@ class Weights(dict):
             else:
                 ctrl.update_model()
                 if os.path.isfile(file_path_le.text()):
-                    state = Pops().queryPop(type="okCancel", textTitle="Overwrite", textHeader="The file %s already exists.\nDo you want to OVERWRITE?" %file_path_le.text())
+                    question = Feedback()
+                    state = question.pop_question(title="Overwrite", text="The file %s already exists.\nDo you want to OVERWRITE?" %file_path_le.text(), buttons=["ok", "cancel"])
                     if state == "cancel":
                         return
                 handler.run_save_action(ctrl.action_name)

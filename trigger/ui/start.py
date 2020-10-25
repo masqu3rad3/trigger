@@ -8,7 +8,7 @@ from trigger.core import settings
 import trigger.base.initials as init
 # from trigger.rig import scratch
 from trigger.base import builder_zeroState as builder
-from trigger.core import feedback
+from trigger.core import logger
 
 
 import trigger.library.controllers as ic
@@ -24,7 +24,7 @@ import json
 import re
 
 
-FEEDBACK = feedback.Feedback(logger_name=__name__)
+FEEDBACK = logger.Logger(logger_name=__name__)
 # import math
 
 # from maya.app.general.mayaMixin import MayaQWidgetDockableMixin

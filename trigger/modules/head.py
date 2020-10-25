@@ -4,8 +4,8 @@ import maya.api.OpenMaya as om
 from trigger.library import functions
 from trigger.library import controllers as ic
 from trigger.library import twist_spline as twistSpline
-from trigger.core import feedback
-FEEDBACK = feedback.Feedback(__name__)
+from trigger.core import logger
+FEEDBACK = logger.Logger(__name__)
 
 LIMB_DATA = {
         "members": ["NeckRoot", "Neck", "Head", "Jaw", "HeadEnd"],

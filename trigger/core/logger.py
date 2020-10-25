@@ -5,9 +5,9 @@ import logging
 
 # TODO : Improve the class with file logging abilities
 
-class Feedback(object):
+class Logger(object):
     def __init__(self,  logger_name=None, log_directory=None, logging_level="debug"):
-        super(Feedback, self).__init__()
+        super(Logger, self).__init__()
         self.log_directory = log_directory
         self.logger = logging.getLogger(logger_name)
         if logging_level == "info":

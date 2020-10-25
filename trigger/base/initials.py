@@ -10,9 +10,9 @@ from trigger.library import functions as extra
 from trigger import modules
 from trigger.core import settings
 
-from trigger.core import feedback
+from trigger.core import logger
 
-FEEDBACK = feedback.Feedback(logger_name=__name__)
+FEEDBACK = logger.Logger(logger_name=__name__)
 
 class Initials(settings.Settings):
 

@@ -1,6 +1,6 @@
 """New rig builder module"""
 from maya import cmds
-from trigger.core import feedback
+from trigger.core import logger
 import trigger.library.functions as extra
 import trigger.library.controllers as ic
 
@@ -10,7 +10,7 @@ from trigger.core import settings
 
 from trigger.ui.Qt import QtWidgets
 
-FEEDBACK = feedback.Feedback(logger_name=__name__)
+FEEDBACK = logger.Logger(logger_name=__name__)
 
 class Builder(settings.Settings):
     def __init__(self, name="trigger", progress_bar=None):

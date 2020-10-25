@@ -8,9 +8,9 @@ from trigger.library import controllers as ic
 
 import maya.cmds as cmds
 
-from trigger.core import feedback
+from trigger.core import logger
 
-FEEDBACK = feedback.Feedback(__name__)
+FEEDBACK = logger.Logger(__name__)
 
 LIMB_DATA = {
         "members":["TentacleRoot", "Tentacle", "TentacleEnd"],

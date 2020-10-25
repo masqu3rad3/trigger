@@ -3,9 +3,9 @@ import maya.api.OpenMaya as om
 from trigger.library import functions
 from trigger.library import controllers as ic
 from trigger.library import ribbon as rc
-from trigger.core import feedback
+from trigger.core import logger
 
-FEEDBACK = feedback.Feedback(__name__)
+FEEDBACK = logger.Logger(__name__)
 
 LIMB_DATA = {
     "members": ["Collar", "Shoulder", "Elbow", "Hand"],

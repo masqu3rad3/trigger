@@ -1,7 +1,7 @@
 """Controller module for Model/View"""
-from trigger.core import feedback
+from trigger.core import logger
 
-FEEDBACK = feedback.Feedback(__name__)
+FEEDBACK = logger.Logger(__name__)
 
 class Controller(object):
 

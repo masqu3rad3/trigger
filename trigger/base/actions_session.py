@@ -6,10 +6,10 @@ import maya.api.OpenMaya as om
 from trigger.library import functions as extra
 
 from trigger.core import io
-from trigger.core import feedback
+from trigger.core import logger
 from trigger import actions
 
-FEEDBACK = feedback.Feedback(logger_name=__name__)
+FEEDBACK = logger.Logger(logger_name=__name__)
 
 class ActionsSession(dict):
     def __init__(self):

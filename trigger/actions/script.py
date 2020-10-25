@@ -5,14 +5,14 @@ from maya import cmds
 import platform
 import subprocess
 
-from trigger.core import feedback
+from trigger.core import logger
 from trigger.core import dynamic_import as dyn
 
 from trigger.ui.Qt import QtWidgets, QtGui # for progressbar
 from trigger.ui.custom_widgets import BrowserButton
 # from trigger.ui.custom_widgets import Pops
 
-FEEDBACK = feedback.Feedback(__name__)
+FEEDBACK = logger.Logger(__name__)
 
 ACTION_DATA = {
     "script_file_path": "",

@@ -1,7 +1,7 @@
 """Creates extra space switchers"""
 
 from maya import cmds
-from trigger.core import feedback
+from trigger.core import logger
 import trigger.library.functions as functions
 import trigger.library.controllers as ic
 
@@ -15,7 +15,7 @@ from trigger.actions import master
 
 from trigger.ui.Qt import QtWidgets
 
-FEEDBACK = feedback.Feedback(logger_name=__name__)
+FEEDBACK = logger.Logger(logger_name=__name__)
 
 ACTION_DATA = {
                "swithcer_definitions": []

@@ -1,10 +1,10 @@
 """Collection of shading related functions"""
 
 from maya import cmds
-from trigger.core import feedback
+from trigger.core import logger
 from trigger.library import functions
 
-FEEDBACK = feedback.Feedback(logger_name=__name__)
+FEEDBACK = logger.Logger(logger_name=__name__)
 
 def get_file_nodes(objList):
     returnList = []

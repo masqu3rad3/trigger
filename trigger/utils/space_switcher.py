@@ -1,7 +1,7 @@
 from maya import cmds
-from trigger.core import feedback
+from trigger.core import logger
 
-FEEDBACK = feedback.Feedback(logger_name=__name__)
+FEEDBACK = logger.Logger(logger_name=__name__)
 
 def create_space_switch(node, targetList, overrideExisting=False, mode="parent", defaultVal=1, listException=None):
     """

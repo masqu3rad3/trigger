@@ -20,9 +20,9 @@ else:
 
 from trigger.library import functions
 from trigger.core.undo_dec import undo
-from trigger.core import feedback
+from trigger.core import logger
 
-FEEDBACK = feedback.Feedback(__name__)
+FEEDBACK = logger.Logger(__name__)
 
 
 WINDOW_NAME = "Tik_Renamer"

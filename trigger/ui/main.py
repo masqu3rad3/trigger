@@ -8,7 +8,7 @@ from trigger.ui import Qt
 from trigger.ui.Qt import QtWidgets, QtCore, QtGui
 from trigger.ui import model_ctrl
 from trigger.ui.custom_widgets import BrowserButton
-from trigger.ui.custom_widgets import Pops
+from trigger.ui.feedback import Feedback
 
 from trigger.core import compatibility as compat
 from trigger.base import session
@@ -24,9 +24,9 @@ elif Qt.__binding__.startswith('PyQt'):
 else:
     from shiboken2 import wrapInstance
 
-from trigger.core import feedback
+from trigger.core import logger
 
-FEEDBACK = feedback.Feedback(logger_name=__name__)
+LOG = logger.Logger(logger_name=__name__)
 
 WINDOW_NAME = "TRigger"
 
@@ -47,7 +47,7 @@ def getMayaMainWindow():
     return ptr
 
 
-class MainUI(QtWidgets.QMainWindow, Pops):
+class MainUI(QtWidgets.QMainWindow):
 
     # create guide and rig objects
     actions_handler = actions_session.ActionsSession()
@@ -62,6 +62,9 @@ class MainUI(QtWidgets.QMainWindow, Pops):
                 pass
         parent = getMayaMainWindow()
         super(MainUI, self).__init__(parent=parent)
+
+        self.feedback = Feedback()
+        self.feedback.parent = self
         # self.setFocusPolicy(QtCore.Qt.StrongFocus)
         self.installEventFilter(self)
         self.force = False
@@ -504,7 +507,7 @@ class MainUI(QtWidgets.QMainWindow, Pops):
                 file_name = os.path.basename(self.actions_handler.currentFile)
             else:
                 file_name = "untitled"
-            state = self.queryPop(type="yesNoCancel", textTitle="Save Changes?", textHeader="Save changes to %s?" %file_name, )
+            state = self.feedback.pop_question(title="Save Changes?", text="Save changes to %s?" %file_name, buttons=["yes", "no", "cancel"])
             if state == "yes":
                 self.save_trigger()
             elif state == "no":
@@ -522,7 +525,7 @@ class MainUI(QtWidgets.QMainWindow, Pops):
                 file_name = os.path.basename(self.actions_handler.currentFile)
             else:
                 file_name = "untitled"
-            state = self.queryPop(type="yesNoCancel", textTitle="Save Changes?", textHeader="Save changes to %s?" %file_name, )
+            state = self.feedback.queryPop(title="Save Changes?", text="Save changes to %s?" %file_name, buttons=["yes", "no", "cancel"])
             if state == "yes":
                 self.save_trigger()
             elif state == "no":
@@ -725,7 +728,7 @@ class MainUI(QtWidgets.QMainWindow, Pops):
             p_widget = QtWidgets.QComboBox()
             enum_list_raw = property_dict.get("enum_list")
             if not enum_list_raw:
-                FEEDBACK.throw_error("Missing 'enum_list'")
+                LOG.throw_error("Missing 'enum_list'")
             enum_list = enum_list_raw.split(":")
             p_widget.addItems(enum_list)
             p_widget.setCurrentIndex(p_value)
@@ -743,7 +746,7 @@ class MainUI(QtWidgets.QMainWindow, Pops):
             p_widget.textChanged.connect(lambda text: self.update_properties(p_name, text))
         else:
             p_widget = None
-            FEEDBACK.throw_error("Cannot find a proper equivalent for this attribute type %s" % p_type)
+            LOG.throw_error("Cannot find a proper equivalent for this attribute type %s" % p_type)
 
         parent_form_layout.addRow(p_lbl, p_widget)
 

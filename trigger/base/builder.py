@@ -1,10 +1,10 @@
 """New rig builder module"""
 from maya import cmds
-from trigger.core import feedback
+from trigger.core import logger
 from trigger.core import settings
 from trigger import actions
 
-FEEDBACK = feedback.Feedback(logger_name=__name__)
+FEEDBACK = logger.Logger(logger_name=__name__)
 
 class Builder(list):
     def __init__(self, progress_bar=None):

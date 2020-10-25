@@ -5,8 +5,8 @@ from trigger.library import functions
 from trigger.library import controllers as ic
 from trigger.library import ribbon as rc
 
-from trigger.core import feedback
-FEEDBACK = feedback.Feedback(__name__)
+from trigger.core import logger
+FEEDBACK = logger.Logger(__name__)
 
 LIMB_DATA = {
         "members": ["LegRoot", "Hip", "Knee", "Foot", "Ball", "HeelPV", "ToePV", "BankIN", "BankOUT"],

@@ -5,9 +5,9 @@ from maya import cmds
 import maya.api.OpenMaya as om
 from maya import mel
 
-from trigger.core import feedback
+from trigger.core import logger
 from trigger.core.undo_dec import undo
-FEEDBACK = feedback.Feedback(logger_name=__name__)
+FEEDBACK = logger.Logger(logger_name=__name__)
 
 JOINT_TYPE_DICT = {
     1: 'Root',

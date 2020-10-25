@@ -7,9 +7,9 @@ import itertools
 from trigger.actions import weights
 from trigger.library import functions as extra
 from trigger.library import deformers
-from trigger.core import feedback
+from trigger.core import logger
 
-FEEDBACK = feedback.Feedback(logger_name=__name__)
+FEEDBACK = logger.Logger(logger_name=__name__)
 
 class Splitter(dict):
     def __init__(self):
