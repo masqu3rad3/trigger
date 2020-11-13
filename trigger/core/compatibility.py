@@ -22,6 +22,17 @@ def decode(data):
         else:
             return data
 
+def is_string(data):
+    if sys.version_info.major == 3:
+        if type(data) == str:
+            return True
+        else:
+            return False
+    else:
+        if type(data) == str or type(data) == unicode:
+            return True
+        else:
+            return False
 
 # try:
 #     from compiler.ast import flatten

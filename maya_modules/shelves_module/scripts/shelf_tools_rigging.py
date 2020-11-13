@@ -41,7 +41,7 @@ def load_shelves(reset=False):
                 mel.eval('loadNewShelf("{}")'.format(path))
 
 def load_menu():
-    command = "shelf_tools.load_shelves(reset=True)"
+    command = "shelf_tools_rigging.load_shelves(reset=True)"
     add_to_menu("Trigger", "Re-create Shelves", command)
 
 
