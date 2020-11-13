@@ -1,6 +1,6 @@
 from maya import cmds
-import shelf_tools
+import shelf_tools_rigging
 
-cmds.evalDeferred(shelf_tools.add_python_path)
-cmds.evalDeferred(shelf_tools.load_shelves)
-cmds.evalDeferred(shelf_tools.load_menu)
+cmds.evalDeferred(shelf_tools_rigging.add_python_path)
+cmds.evalDeferred(shelf_tools_rigging.load_shelves)
+cmds.evalDeferred(shelf_tools_rigging.load_menu)
