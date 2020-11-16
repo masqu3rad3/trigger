@@ -51,6 +51,7 @@ class MainUI(QtWidgets.QMainWindow):
 
     # create guide and rig objects
     actions_handler = actions_session.ActionsSession()
+    actions_handler.reset_actions()
     guides_handler = session.Session()
 
     def __init__(self):

@@ -95,6 +95,9 @@ class ActionsSession(dict):
         """Returns all available actions"""
         return sorted(self.action_data_dict.keys())
 
+    def reset_actions(self):
+        self["actions"] = []
+
     def add_action(self, action_name=None, action_type=None):
         """
         Adds an action to the session database
