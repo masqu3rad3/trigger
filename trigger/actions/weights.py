@@ -111,7 +111,7 @@ class Weights(dict):
         file_path_hLay = QtWidgets.QHBoxLayout()
         file_path_le = QtWidgets.QLineEdit()
         file_path_hLay.addWidget(file_path_le)
-        browse_path_pb = BrowserButton(mode="saveFile", update_widget=file_path_le, filterExtensions=["Trigger Weight Files (*.trw)"], overwrite_check=False)
+        browse_path_pb = BrowserButton(mode="openFile", update_widget=file_path_le, filterExtensions=["Trigger Weight Files (*.trw)"], overwrite_check=False)
         file_path_hLay.addWidget(browse_path_pb)
         layout.addRow(file_path_lbl, file_path_hLay)
 
@@ -127,7 +127,8 @@ class Weights(dict):
         save_current_hlay = QtWidgets.QHBoxLayout()
         save_current_pb = QtWidgets.QPushButton(text="Save")
         increment_current_pb = QtWidgets.QPushButton(text="Increment")
-        save_as_current_pb = QtWidgets.QPushButton(text="Save As")
+        # save_as_current_pb = QtWidgets.QPushButton(text="Save As")
+        save_as_current_pb = BrowserButton(mode="saveFile", text="Save As", update_widget=file_path_le, filterExtensions=["Trigger Weight Files (*.trw)"], overwrite_check=False)
         save_current_hlay.addWidget(save_current_pb)
         save_current_hlay.addWidget(increment_current_pb)
         save_current_hlay.addWidget(save_as_current_pb)
@@ -144,7 +145,7 @@ class Weights(dict):
 
             zortMenu = QtWidgets.QMenu()
             for deformer in list_of_deformers:
-                tempAction = QtWidgets.QAction(str(deformer), self)
+                tempAction = QtWidgets.QAction(str(deformer))
                 zortMenu.addAction(tempAction)
                 tempAction.triggered.connect(lambda ignore=deformer, item=deformer: add_deformer(str(deformer)))
             zortMenu.exec_((QtGui.QCursor.pos()))
@@ -160,12 +161,15 @@ class Weights(dict):
 
         def save_deformers(increment=False, save_as=False):
             if increment:
-                ctrl.update_model()
                 FEEDBACK.warning("NOT YET IMPLEMENTED")
+                ctrl.update_ui()
                 # TODO make an external incrementer
             elif save_as:
                 ctrl.update_model()
+                handler.run_save_action(ctrl.action_name)
+                # browse_path_pb.browserEvent()
                 FEEDBACK.warning("NOT YET IMPLEMENTED")
+                # ctrl.update_ui()
                 # TODO make save as
             else:
                 ctrl.update_model()

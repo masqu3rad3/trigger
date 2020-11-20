@@ -1,5 +1,6 @@
 import os
 from trigger.ui.Qt import QtWidgets
+from PySide2 import QtWidgets
 
 class BrowserButton(QtWidgets.QPushButton):
     def __init__(self, text="Browse", update_widget=None, mode="openFile", filterExtensions=None, title=None, overwrite_check=True):

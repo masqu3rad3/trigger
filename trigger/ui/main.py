@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 """Main UI for TRigger"""
 import subprocess
 import platform
@@ -13,6 +16,7 @@ from trigger.ui.feedback import Feedback
 from trigger.core import compatibility as compat
 from trigger.base import session
 from trigger.base import actions_session
+from trigger.core import foolproof
 
 
 from maya import OpenMayaUI as omui
@@ -492,7 +496,24 @@ class MainUI(QtWidgets.QMainWindow):
         self.rig_buttons_hLay.addWidget(self.build_and_publish_pb)
         self.rigging_tab_vLay.addLayout(self.rig_buttons_hLay)
 
+        ### RIGHT CLICK MENUS ###
+        # List Widget Right Click Menu
+        self.rig_actions_listwidget.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.rig_actions_listwidget.customContextMenuRequested.connect(self.on_context_menu_rig_actions)
+        self.popMenu_rig_action = QtWidgets.QMenu()
+
+        self.action_rc_rename = QtWidgets.QAction('Rename', self)
+        self.popMenu_rig_action.addAction(self.action_rc_rename)
+
+        self.popMenu_rig_action.addSeparator()
+
+        self.action_rc_run = QtWidgets.QAction('Run', self)
+        self.popMenu_rig_action.addAction(self.action_rc_run)
+
         ### SIGNALS ####
+
+        self.action_rc_rename.triggered.connect(self.on_action_rename)
+        # TODO: ADD signals for rc run
 
         self.add_action_pb.clicked.connect(self.add_actions_menu)
         self.move_action_up_pb.clicked.connect(self.move_action_up)
@@ -501,6 +522,32 @@ class MainUI(QtWidgets.QMainWindow):
         self.rig_actions_listwidget.currentItemChanged.connect(self.action_settings_menu)
 
         self.build_pb.clicked.connect(lambda x=0: self.actions_handler.run_all_actions())
+
+    def on_context_menu_rig_actions(self, point):
+        self.popMenu_rig_action.exec_(self.rig_actions_listwidget.mapToGlobal(point))
+
+    def on_action_rename(self):
+        action_name = self.rig_actions_listwidget.currentItem().text()
+        rename_dialog = QtWidgets.QDialog()
+        rename_dialog.setWindowTitle("test")
+        rename_masterLay = QtWidgets.QVBoxLayout()
+        rename_dialog.setLayout(rename_masterLay)
+        rename_le = QtWidgets.QLineEdit(text=action_name)
+        rename_masterLay.addWidget(rename_le)
+        rename_hlay = QtWidgets.QHBoxLayout()
+        rename_masterLay.addLayout(rename_hlay)
+        rename_cancel_pb = QtWidgets.QPushButton(text="Cancel")
+        rename_ok_pb = QtWidgets.QPushButton(text="Ok")
+        rename_hlay.addWidget(rename_cancel_pb)
+        rename_hlay.addWidget(rename_ok_pb)
+        rename_cancel_pb.clicked.connect(rename_dialog.close)
+        rename_ok_pb.clicked.connect(rename_dialog.accept)
+        r = rename_dialog.exec_()
+        if not r:
+            return
+        #TODO : FOOLPROOF IT _ NON-UNIQUE ACTION NAMES AND ILLEGAL CHARS
+        self.actions_handler.rename_action(action_name, str(rename_le.text()))
+        self.populate_actions()
 
     def new_trigger(self):
         if self.actions_handler.is_modified():
@@ -585,6 +632,9 @@ class MainUI(QtWidgets.QMainWindow):
         self.populate_actions()
 
         zortMenu.exec_((QtGui.QCursor.pos()))
+
+    def actions_rc(self):
+        pass
 
     def populate_actions(self):
         self.rig_actions_listwidget.clear()

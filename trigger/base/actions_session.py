@@ -8,6 +8,7 @@ from trigger.library import functions as extra
 from trigger.core import io
 from trigger.core import logger
 from trigger import actions
+from trigger.core import compatibility as compat
 
 FEEDBACK = logger.Logger(logger_name=__name__)
 
@@ -137,6 +138,10 @@ class ActionsSession(dict):
                 return action
         return None
 
+    def rename_action(self, action_name, new_name):
+        action = self.get_action(action_name)
+        action["name"] = new_name
+
     def get_action_type(self, action_name):
         action = self.get_action(action_name)
         return action["type"]
@@ -165,8 +170,11 @@ class ActionsSession(dict):
             current_value = action["data"].get(property)
             if current_value == None:
                 FEEDBACK.throw_error("The property '%s' does not exist in %s ACTION_DATA" % (property, action["type"]))
+            if compat.is_string(current_value):
+                new_value = compat.decode(new_value)
             if type(current_value) != type(new_value):
                 FEEDBACK.throw_error("%s property only accepts %s values" % (property, str(type(current_value))))
+
             action["data"][property] = new_value
             FEEDBACK.info("%s @ %s => %s" %(property, action["name"], new_value))
             return True
