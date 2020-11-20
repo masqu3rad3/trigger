@@ -7,7 +7,8 @@ import sys
 import re
 import unicodedata
 from maya import cmds
-from rebellion.library import common
+# from rebellion.library import common
+from trigger.library import functions
 
 def selection(min=None, max=None, groupsOnly=False, meshesOnly=False, nurbsCurvesOnly=False, transforms=True, fullPath=False):
 
@@ -16,7 +17,7 @@ def selection(min=None, max=None, groupsOnly=False, meshesOnly=False, nurbsCurve
         return False, "Nothing selected"
 
     if groupsOnly:
-        non_groups = [node for node in selected if not common.isGroup(node)]
+        non_groups = [node for node in selected if not functions.isGroup(node)]
         if non_groups:
             return False, "Selection contains non-group nodes" %non_groups
 
@@ -33,7 +34,7 @@ def selection(min=None, max=None, groupsOnly=False, meshesOnly=False, nurbsCurve
                 return False, "Selection type Error. Only %s type objects can be selected. (No Transform nodes)" %check
         else:
             for node in selected:
-                shapes = common.getShapes(node)
+                shapes = functions.getShapes(node)
                 if not shapes:
                     return False, "Selection contains objects other than %s (No shape node)" % check
                 for shape in shapes:

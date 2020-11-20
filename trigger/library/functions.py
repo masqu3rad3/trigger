@@ -238,6 +238,13 @@ def createUpGrp(node, suffix, freezeTransform=True):
     cmds.parent(node,newGrp)
     return newGrp
 
+def isGroup(node):
+    """Checks if the given node is a group node or not"""
+    if cmds.listRelatives(node, children=True, shapes=True):
+        return False
+    else:
+        return True
+
 def connectMirror (node1, node2, mirrorAxis="X"):
     """
     Make a mirrored connection between node1 and node2 along the mirrorAxis
@@ -546,7 +553,7 @@ def create_global_joint_attrs(joint, moduleName=None, upAxis=None, mirrorAxis=No
         cmds.addAttr(joint, longName="useRefOri", niceName="Inherit_Orientation", at="bool", keyable=True)
     cmds.setAttr("{0}.useRefOri".format(joint), True)
 
-# @undo
+@undo
 def create_attribute(node, property_dict=None, keyable=True, display=True, *args, **kwargs):
     """
     Create attribute with the properties defined by the property_dict

@@ -1,5 +1,6 @@
 import os
 from trigger.ui.Qt import QtWidgets
+from trigger.core import foolproof
 from PySide2 import QtWidgets
 
 class BrowserButton(QtWidgets.QPushButton):
@@ -77,3 +78,38 @@ class BrowserButton(QtWidgets.QPushButton):
     def mouseReleaseEvent(self, *args, **kwargs):
         super(BrowserButton, self).mouseReleaseEvent(*args, **kwargs)
         self.browserEvent()
+
+class ValidatedLineEdit(QtWidgets.QLineEdit):
+    def __init__(self, connected_widgets=None, allowSpaces=False, allowDirectory=False):
+        super(ValidatedLineEdit, self).__init__()
+        self.allowSpaces = allowSpaces
+        self.allowDirectory = allowDirectory
+        self.connected_widgets = connected_widgets
+        if connected_widgets:
+            if type(connected_widgets) != list:
+                self._connected_widgets = [connected_widgets]
+        else:
+            self._connected_widgets = []
+
+    @property
+    def connected_widgets(self):
+        return self._connected_widgets
+
+    @connected_widgets.setter
+    def connected_widgets(self, widgets):
+        if type(widgets) != list:
+            self._connected_widgets = [widgets]
+        else:
+            self._connected_widgets = widgets
+
+    def keyPressEvent(self, *args, **kwargs):
+        super(ValidatedLineEdit, self).keyPressEvent(*args, **kwargs)
+        current_text = self.text()
+        if not foolproof.text(current_text, allowSpaces=self.allowSpaces, directory=self.allowDirectory):
+            self.setStyleSheet("background-color: rgb(40,40,40); color: red")
+            for wid in self.connected_widgets:
+                wid.setEnabled(False)
+        else:
+            self.setStyleSheet("background-color: rgb(40,40,40); color: white")
+            for wid in self.connected_widgets:
+                wid.setEnabled(True)
