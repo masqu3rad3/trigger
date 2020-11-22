@@ -8,9 +8,9 @@ import platform
 from trigger.core import logger
 
 from trigger.ui.Qt import QtWidgets, QtGui # for progressbar
-from trigger.ui.custom_widgets import BrowserButton
+from trigger.ui import custom_widgets
 
-FEEDBACK = logger.Logger(__name__)
+LOG = logger.Logger(__name__)
 
 
 ACTION_DATA = {
@@ -29,7 +29,7 @@ class Import_asset(object):
     def action(self):
         """Mandatory method for all action maya_modules"""
         if not self.filePath:
-            FEEDBACK.warning("import path not defined")
+            LOG.warning("import path not defined")
             return
         ext = os.path.splitext(self.filePath)[1]
         if ext == ".abc":
@@ -41,7 +41,7 @@ class Import_asset(object):
         elif ext == ".ma" or ext == ".mb":
             self.import_scene(self.filePath)
         else:
-            FEEDBACK.warning("Unrecognized file format => %s" %ext)
+            LOG.warning("Unrecognized file format => %s" % ext)
 
     def save_action(self):
         """Mandatory method for all action modules"""
@@ -53,7 +53,7 @@ class Import_asset(object):
         file_path_hLay = QtWidgets.QHBoxLayout()
         file_path_le = QtWidgets.QLineEdit()
         file_path_hLay.addWidget(file_path_le)
-        browse_path_pb = BrowserButton(mode="openFile", update_widget=file_path_le, filterExtensions=["Maya ASCII (*.ma)", "Maya Binary (*.mb)", "Alembic (*.abc)", "FBX (*.fbx)", "OBJ (*.obj)"], overwrite_check=False)
+        browse_path_pb = custom_widgets.BrowserButton(mode="openFile", update_widget=file_path_le, filterExtensions=["Maya ASCII (*.ma)", "Maya Binary (*.mb)", "Alembic (*.abc)", "FBX (*.fbx)", "OBJ (*.obj)"], overwrite_check=False)
         file_path_hLay.addWidget(browse_path_pb)
         layout.addRow(file_path_lbl, file_path_hLay)
 
@@ -124,11 +124,11 @@ class Import_asset(object):
         currentPlatform = platform.system()
         ext = ".mll" if currentPlatform == "Windows" else ".so"
         try: cmds.loadPlugin("AbcExport%s" % ext)
-        except: FEEDBACK.throw_error("Alembic Plugin cannot be loaded")
+        except: LOG.throw_error("Alembic Plugin cannot be loaded")
 
     def _load_fbx_plugin(self):
         """Makes sure the FBX plugin is loaded"""
         try: cmds.loadPlugin("fbxmaya")
-        except: FEEDBACK.throw_error("FBX Plugin cannot be loaded")
+        except: LOG.throw_error("FBX Plugin cannot be loaded")
 
     # TODO: EXPORT FUNCTIONS

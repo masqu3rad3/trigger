@@ -10,8 +10,8 @@ from functools import wraps
 from trigger.ui import Qt
 from trigger.ui.Qt import QtWidgets, QtCore, QtGui
 from trigger.ui import model_ctrl
-from trigger.ui.custom_widgets import BrowserButton, ValidatedLineEdit
-from trigger.ui.feedback import Feedback
+from trigger.ui import custom_widgets
+from trigger.ui import feedback
 
 from trigger.core import compatibility as compat
 from trigger.base import session
@@ -70,7 +70,7 @@ class MainUI(QtWidgets.QMainWindow):
 
         self.actions_handler.reset_actions()
 
-        self.feedback = Feedback()
+        self.feedback = feedback.Feedback()
         self.feedback.parent = self
         # self.setFocusPolicy(QtCore.Qt.StrongFocus)
         self.installEventFilter(self)
@@ -524,6 +524,9 @@ class MainUI(QtWidgets.QMainWindow):
         self.rig_actions_listwidget.currentItemChanged.connect(self.action_settings_menu)
 
         self.build_pb.clicked.connect(lambda x=0: self.actions_handler.run_all_actions())
+        self.rig_actions_listwidget.doubleClicked.connect(lambda x: self.actions_handler.run_action(x.data()))
+        # TODO: Make a seperate method for running run actions wih progressbar
+
 
     def on_context_menu_rig_actions(self, point):
         self.popMenu_rig_action.exec_(self.rig_actions_listwidget.mapToGlobal(point))
@@ -535,7 +538,7 @@ class MainUI(QtWidgets.QMainWindow):
         rename_masterLay = QtWidgets.QVBoxLayout()
         rename_dialog.setLayout(rename_masterLay)
         # rename_le = QtWidgets.QLineEdit(text=action_name)
-        rename_le = ValidatedLineEdit(text=action_name)
+        rename_le = custom_widgets.ValidatedLineEdit(text=action_name)
         rename_masterLay.addWidget(rename_le)
         rename_hlay = QtWidgets.QHBoxLayout()
         rename_masterLay.addLayout(rename_hlay)
@@ -550,6 +553,9 @@ class MainUI(QtWidgets.QMainWindow):
         if not r:
             return
         #TODO : FOOLPROOF IT _ NON-UNIQUE ACTION NAMES AND ILLEGAL CHARS
+        if self.actions_handler.get_action(rename_le.text()) and rename_le.text() != action_name:
+            self.feedback.pop_info(title="Existing Action", text="This action name exists. Action names must be unique", critical=True)
+            self.on_action_rename()
         self.actions_handler.rename_action(action_name, str(rename_le.text()))
         self.populate_actions()
 
@@ -577,7 +583,7 @@ class MainUI(QtWidgets.QMainWindow):
                 file_name = os.path.basename(self.actions_handler.currentFile)
             else:
                 file_name = "untitled"
-            state = self.feedback.queryPop(title="Save Changes?", text="Save changes to %s?" %file_name, buttons=["yes", "no", "cancel"])
+            state = self.feedback.pop_question(title="Save Changes?", text="Save changes to %s?" %file_name, buttons=["yes", "no", "cancel"])
             if state == "yes":
                 self.save_trigger()
             elif state == "no":

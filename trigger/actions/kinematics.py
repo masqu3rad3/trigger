@@ -14,9 +14,9 @@ from trigger.core import settings
 from trigger.actions import master
 
 from trigger.ui.Qt import QtWidgets, QtGui # for progressbar
-from trigger.ui.custom_widgets import BrowserButton
+from trigger.ui import custom_widgets
 
-FEEDBACK = logger.Logger(logger_name=__name__)
+LOG = logger.Logger(logger_name=__name__)
 #
 ACTION_DATA = {
                "guides_file_path": "",
@@ -125,7 +125,7 @@ class Kinematics(settings.Settings):
         file_path_hLay = QtWidgets.QHBoxLayout()
         file_path_le = QtWidgets.QLineEdit()
         file_path_hLay.addWidget(file_path_le)
-        browse_path_pb = BrowserButton(update_widget=file_path_le, mode="openFile", filterExtensions=["Trigger Guide Files (*.trg)"])
+        browse_path_pb = custom_widgets.BrowserButton(update_widget=file_path_le, mode="openFile", filterExtensions=["Trigger Guide Files (*.trg)"])
         file_path_hLay.addWidget(browse_path_pb)
         layout.addRow(file_path_lbl, file_path_hLay)
 
@@ -163,7 +163,7 @@ class Kinematics(settings.Settings):
         def get_roots_menu():
             if file_path_le.text():
                 if not os.path.isfile(file_path_le.text()):
-                    FEEDBACK.throw_error("Guide file does not exist")
+                    LOG.throw_error("Guide file does not exist")
 
                 list_of_roots = list(handler.get_roots_from_file(file_path=file_path_le.text()))
 
@@ -177,7 +177,7 @@ class Kinematics(settings.Settings):
         def add_root(root):
             current_roots = guide_roots_le.text()
             if root in current_roots:
-                FEEDBACK.warning("%s is already in the list" %root)
+                LOG.warning("%s is already in the list" % root)
                 return
             new_roots = root if not current_roots else "{0}  {1}".format(current_roots, root)
             guide_roots_le.setText(new_roots)
@@ -233,7 +233,7 @@ class Kinematics(settings.Settings):
         Returns: None
 
         """
-        FEEDBACK.warning(rootNode)
+        LOG.warning(rootNode)
         l_hip, r_hip, l_shoulder, r_shoulder = [None, None, None, None]
         allJoints = cmds.listRelatives(rootNode, type="joint", ad=True)
         allJoints = [] if not allJoints else allJoints
@@ -366,18 +366,18 @@ class Kinematics(settings.Settings):
                 if root_plug and parent_socket and master_cont:
                     # check the root
                     if functions.identifyMaster(root_plug, self.module_dict)[0] not in self.validRootList:
-                        FEEDBACK.throw_error("root must be a valid root guide node")
+                        LOG.throw_error("root must be a valid root guide node")
                     limbCreationList = self.get_limb_hierarchy(root_plug)
                 else:
-                    FEEDBACK.throw_error("add_limb mode requires all root, parent and master_cont flags")
+                    LOG.throw_error("add_limb mode requires all root, parent and master_cont flags")
             else:
                 if len(cmds.ls(sl=True)) == 3:
                     root_plug, parent_socket, master_cont = cmds.ls(sl=True)
                 else:
-                    FEEDBACK.throw_error(
+                    LOG.throw_error(
                         "Select exactly three nodes. First reference root node then target parent and finally master controller")
                 if functions.identifyMaster(root_plug, self.module_dict)[0] not in self.validRootList:
-                    FEEDBACK.throw_error("First selection must be a valid root joint node")
+                    LOG.throw_error("First selection must be a valid root joint node")
 
             limbCreationList = self.get_limb_hierarchy(root_plug)
 

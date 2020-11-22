@@ -9,10 +9,9 @@ from trigger.core import logger
 from trigger.core import dynamic_import as dyn
 
 from trigger.ui.Qt import QtWidgets, QtGui # for progressbar
-from trigger.ui.custom_widgets import BrowserButton
-# from trigger.ui.custom_widgets import Pops
+from trigger.ui import custom_widgets
 
-FEEDBACK = logger.Logger(__name__)
+LOG = logger.Logger(__name__)
 
 ACTION_DATA = {
     "script_file_path": "",
@@ -57,8 +56,8 @@ class Script(object):
         file_path_hLay.addWidget(file_path_le)
         edit_file_pb = QtWidgets.QPushButton(text="Edit")
         file_path_hLay.addWidget(edit_file_pb)
-        browse_path_pb = BrowserButton(mode="openFile", update_widget=file_path_le, filterExtensions=["Python Files (*.py)"], overwrite_check=False)
-        save_path_pb = BrowserButton(mode="saveFile", update_widget=file_path_le, filterExtensions=["Python Files (*.py)"], overwrite_check=False)
+        browse_path_pb = custom_widgets.BrowserButton(mode="openFile", update_widget=file_path_le, filterExtensions=["Python Files (*.py)"], overwrite_check=False)
+        save_path_pb = custom_widgets.BrowserButton(mode="saveFile", update_widget=file_path_le, filterExtensions=["Python Files (*.py)"], overwrite_check=False)
         file_path_hLay.addWidget(browse_path_pb)
         layout.addRow(file_path_lbl, file_path_hLay)
 

@@ -139,6 +139,10 @@ class ActionsSession(dict):
         return None
 
     def rename_action(self, action_name, new_name):
+        if action_name == new_name:
+            return
+        if self.get_action(new_name):
+            FEEDBACK.throw_error("Action name %s already exists" %new_name)
         action = self.get_action(action_name)
         action["name"] = new_name
 
@@ -171,7 +175,9 @@ class ActionsSession(dict):
             if current_value == None:
                 FEEDBACK.throw_error("The property '%s' does not exist in %s ACTION_DATA" % (property, action["type"]))
             if compat.is_string(current_value):
-                new_value = compat.decode(new_value)
+                # new_value = compat.decode(new_value)
+                new_value = str(new_value)
+            print("DEBUG===", type(new_value))
             if type(current_value) != type(new_value):
                 FEEDBACK.throw_error("%s property only accepts %s values" % (property, str(type(current_value))))
 

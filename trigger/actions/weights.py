@@ -10,10 +10,10 @@ from trigger.core import logger
 from trigger.library import functions as extra
 
 from trigger.ui.Qt import QtWidgets, QtGui # for progressbar
-from trigger.ui.custom_widgets import BrowserButton
-from trigger.ui.feedback import Feedback
+from trigger.ui import custom_widgets
+from trigger.ui import feedback
 
-FEEDBACK = logger.Logger(__name__)
+LOG = logger.Logger(__name__)
 
 ACTION_DATA = {
                 "create_deformers": True,
@@ -57,7 +57,7 @@ class Weights(dict):
         if cmds.objExists(obj_name):
             self["deformer"] = obj_name
         else:
-            FEEDBACK.warning("The specified object does not exists")
+            LOG.warning("The specified object does not exists")
             return
 
     def set_path(self, file_path):
@@ -111,7 +111,7 @@ class Weights(dict):
         file_path_hLay = QtWidgets.QHBoxLayout()
         file_path_le = QtWidgets.QLineEdit()
         file_path_hLay.addWidget(file_path_le)
-        browse_path_pb = BrowserButton(mode="openFile", update_widget=file_path_le, filterExtensions=["Trigger Weight Files (*.trw)"], overwrite_check=False)
+        browse_path_pb = custom_widgets.BrowserButton(mode="openFile", update_widget=file_path_le, filterExtensions=["Trigger Weight Files (*.trw)"], overwrite_check=False)
         file_path_hLay.addWidget(browse_path_pb)
         layout.addRow(file_path_lbl, file_path_hLay)
 
@@ -128,7 +128,7 @@ class Weights(dict):
         save_current_pb = QtWidgets.QPushButton(text="Save")
         increment_current_pb = QtWidgets.QPushButton(text="Increment")
         # save_as_current_pb = QtWidgets.QPushButton(text="Save As")
-        save_as_current_pb = BrowserButton(mode="saveFile", text="Save As", update_widget=file_path_le, filterExtensions=["Trigger Weight Files (*.trw)"], overwrite_check=False)
+        save_as_current_pb = custom_widgets.BrowserButton(mode="saveFile", text="Save As", update_widget=file_path_le, filterExtensions=["Trigger Weight Files (*.trw)"], overwrite_check=False)
         save_current_hlay.addWidget(save_current_pb)
         save_current_hlay.addWidget(increment_current_pb)
         save_current_hlay.addWidget(save_as_current_pb)
@@ -153,7 +153,7 @@ class Weights(dict):
         def add_deformer(deformer):
             current_deformers = deformers_le.text()
             if deformer in current_deformers:
-                FEEDBACK.warning("%s is already in the list" %deformer)
+                LOG.warning("%s is already in the list" % deformer)
                 return
             new_deformers = deformer if not current_deformers else "{0}  {1}".format(current_deformers, deformer)
             deformers_le.setText(new_deformers)
@@ -161,20 +161,20 @@ class Weights(dict):
 
         def save_deformers(increment=False, save_as=False):
             if increment:
-                FEEDBACK.warning("NOT YET IMPLEMENTED")
+                LOG.warning("NOT YET IMPLEMENTED")
                 ctrl.update_ui()
                 # TODO make an external incrementer
             elif save_as:
                 ctrl.update_model()
                 handler.run_save_action(ctrl.action_name)
                 # browse_path_pb.browserEvent()
-                FEEDBACK.warning("NOT YET IMPLEMENTED")
+                LOG.warning("NOT YET IMPLEMENTED")
                 # ctrl.update_ui()
                 # TODO make save as
             else:
                 ctrl.update_model()
                 if os.path.isfile(file_path_le.text()):
-                    question = Feedback()
+                    question = feedback.Feedback()
                     state = question.pop_question(title="Overwrite", text="The file %s already exists.\nDo you want to OVERWRITE?" %file_path_le.text(), buttons=["ok", "cancel"])
                     if state == "cancel":
                         return
@@ -193,12 +193,12 @@ class Weights(dict):
 
     def save_weights(self, deformer=None, file_path=None, vertexConnections=False, force=True, influencer=None):
         if not deformer and not self.deformer:
-            FEEDBACK.throw_error("Cannot save the weight %s \nNo Deformer defined. A Deformer needs to be defined either as argument or class variable)" % file_path)
+            LOG.throw_error("Cannot save the weight %s \nNo Deformer defined. A Deformer needs to be defined either as argument or class variable)" % file_path)
         if not deformer:
             deformer = self.deformer
         if not force:
             if os.path.isfile(file_path):
-                FEEDBACK.warning("This file already exists. Skipping")
+                LOG.warning("This file already exists. Skipping")
                 return False
         # Vertex connections is required for barycentric and bilinear modes when loading
         if not file_path:
@@ -242,12 +242,12 @@ class Weights(dict):
             operation_data["deformerWeight"]["weights"][0]["layer"] = 0
             self.io.write(operation_data)
 
-        FEEDBACK.info("File exported to %s successfully..." % os.path.join(file_dir, file_name))
+        LOG.info("File exported to %s successfully..." % os.path.join(file_dir, file_name))
         return True
 
     def load_weights(self, deformer=None, file_path=None, method="index", ignore_name=True):
         if not deformer and not self.deformer:
-            FEEDBACK.throw_error(
+            LOG.throw_error(
                 "No Deformer defined. A Deformer needs to be defined either as argument or class variable)")
         if not deformer:
             deformer = self.deformer
@@ -320,7 +320,7 @@ class Weights(dict):
 
             deformer_info = weights_data["deformerWeight"].get("deformers")
             if not deformer_info and not deformer_type:
-                FEEDBACK.throw_error("Cannot identify the deformer type. Use the flag 'deformer_type' or export the weights with additional attributes")
+                LOG.throw_error("Cannot identify the deformer type. Use the flag 'deformer_type' or export the weights with additional attributes")
 
             if deformer_info:
                 deformer_type = weights_data["deformerWeight"]["deformers"][0]["type"]
@@ -336,7 +336,7 @@ class Weights(dict):
                 deformer = cmds.skinCluster(influencers, affected[0], name=deformer_name, tsb=True)[0]
             else:
                 # TODO : SUPPORT FOR ALL DEFORMERS
-                FEEDBACK.throw_error("deformers OTHER than skinCluster are not YET supported")
+                LOG.throw_error("deformers OTHER than skinCluster are not YET supported")
                 return
             for attr_dict in deformer_attrs:
                 attr_name = attr_dict["name"]

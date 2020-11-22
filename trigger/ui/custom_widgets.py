@@ -117,10 +117,12 @@ class ValidatedLineEdit(QtWidgets.QLineEdit):
         current_text = self.text()
         if not foolproof.text(current_text, allowSpaces=self.allowSpaces, directory=self.allowDirectory):
             self.setStyleSheet("background-color: rgb(40,40,40); color: red")
-            for wid in self.connected_widgets:
-                wid.setEnabled(False)
+            if self.connected_widgets:
+                for wid in self.connected_widgets:
+                    wid.setEnabled(False)
         else:
             # self.setStyleSheet("background-color: rgb(40,40,40); color: white")
             self.setStyleSheet(self.default_stylesheet)
-            for wid in self.connected_widgets:
-                wid.setEnabled(True)
+            if self.connected_widgets:
+                for wid in self.connected_widgets:
+                    wid.setEnabled(True)

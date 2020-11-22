@@ -7,10 +7,10 @@ from trigger.core import logger
 from trigger.library import functions as extra
 
 from trigger.ui.Qt import QtWidgets, QtGui
-from trigger.ui.custom_widgets import BrowserButton
-from trigger.ui.feedback import Feedback
+from trigger.ui import custom_widgets
+from trigger.ui import feedback
 
-FEEDBACK = logger.Logger(__name__)
+LOG = logger.Logger(__name__)
 
 ACTION_DATA = {
                 "shapes_file_path": "",
@@ -42,7 +42,7 @@ class Shapes(object):
         file_path_hLay = QtWidgets.QHBoxLayout()
         file_path_le = QtWidgets.QLineEdit()
         file_path_hLay.addWidget(file_path_le)
-        browse_path_pb = BrowserButton(mode="saveFile", update_widget=file_path_le, filterExtensions=["Alembic Files (*.abc)"], overwrite_check=False)
+        browse_path_pb = custom_widgets.BrowserButton(mode="saveFile", update_widget=file_path_le, filterExtensions=["Alembic Files (*.abc)"], overwrite_check=False)
         file_path_hLay.addWidget(browse_path_pb)
         layout.addRow(file_path_lbl, file_path_hLay)
 
@@ -62,16 +62,16 @@ class Shapes(object):
         def save_shapes(increment=False, save_as=False):
             if increment:
                 ctrl.update_model()
-                FEEDBACK.warning("NOT YET IMPLEMENTED")
+                LOG.warning("NOT YET IMPLEMENTED")
                 # TODO make an external incrementer
             elif save_as:
                 ctrl.update_model()
-                FEEDBACK.warning("NOT YET IMPLEMENTED")
+                LOG.warning("NOT YET IMPLEMENTED")
                 # TODO make save as
             else:
                 ctrl.update_model()
                 if os.path.isfile(file_path_le.text()):
-                    state = Feedback().pop_question(title="Overwrite", text="The file %s already exists.\nDo you want to OVERWRITE?" %file_path_le.text(), buttons=["ok", "cancel"])
+                    state = feedback.Feedback().pop_question(title="Overwrite", text="The file %s already exists.\nDo you want to OVERWRITE?" %file_path_le.text(), buttons=["ok", "cancel"])
                     if state == "cancel":
                         return
                 handler.run_save_action(ctrl.action_name)
@@ -135,10 +135,10 @@ class Shapes(object):
                          "-uvWrite 0 " \
                          "-root {1}".format(alembic_file_path, export_grp)
 
-        FEEDBACK.info("COMMAND", export_command)
+        LOG.info("COMMAND", export_command)
         cmds.AbcExport(j=export_command)
         cmds.delete(export_grp)
-        FEEDBACK.info("Exporting shapes successfull...")
+        LOG.info("Exporting shapes successfull...")
 
     # TODO: INCLUDE import_export action module and use that import functions
     def import_shapes(self, alembic_file_path):
@@ -168,4 +168,4 @@ class Shapes(object):
         currentPlatform = platform.system()
         ext = ".mll" if currentPlatform == "Windows" else ".so"
         try: cmds.loadPlugin("AbcExport%s" % ext)
-        except: FEEDBACK.throw_error("Alembic Plugin cannot be loaded")
+        except: LOG.throw_error("Alembic Plugin cannot be loaded")

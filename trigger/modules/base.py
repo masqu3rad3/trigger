@@ -4,7 +4,7 @@ import maya.api.OpenMaya as om
 from trigger.library import functions as extra
 from trigger.library import controllers as ic
 from trigger.core import logger
-FEEDBACK = logger.Logger(__name__)
+LOG = logger.Logger(__name__)
 
 LIMB_DATA = {
         "members": ["Base"],
@@ -18,7 +18,7 @@ class Base(object):
         super(Base, self).__init__()
         if build_data:
             if len(build_data.keys()) > 1:
-                FEEDBACK.throw_error("Base can only have one initial joint")
+                LOG.throw_error("Base can only have one initial joint")
                 return
             self.baseInit = build_data["Base"]
         elif inits:
@@ -27,7 +27,7 @@ class Base(object):
                 return
             self.baseInit = inits[0]
         else:
-            FEEDBACK.throw_error("Class needs either build_data or inits to be constructed")
+            LOG.throw_error("Class needs either build_data or inits to be constructed")
 
         # self.suffix=(extra.uniqueName("limbGrp_%s" %(suffix))).replace("limbGrp_", "")
         # self.suffix = (extra.uniqueName(suffix))
@@ -98,7 +98,7 @@ class Base(object):
 
     def createLimb(self):
         """Creates base joint for master and placement conts"""
-        FEEDBACK.info("Creating Base %s" % self.suffix)
+        LOG.info("Creating Base %s" % self.suffix)
         self.createGrp()
         self.createJoints()
         self.createControllers()
@@ -165,7 +165,7 @@ class Guides(object):
 
     def convertJoints(self, joints_list):
         if len(joints_list) != 1:
-            FEEDBACK.warning("Define or select a single joint for Root Guide conversion. Skipping")
+            LOG.warning("Define or select a single joint for Root Guide conversion. Skipping")
             return
         self.guideJoints = joints_list
         self.define_attributes()
