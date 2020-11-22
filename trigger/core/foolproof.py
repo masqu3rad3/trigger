@@ -50,9 +50,9 @@ def selection(min=None, max=None, groupsOnly=False, meshesOnly=False, nurbsCurve
 def text(text, allowSpaces=False, directory=False):
     """Checks the text for illegal characters"""
     aSpa = " " if allowSpaces else ""
-    dir = "\\\\:" if directory else ""
+    dir = "/\\\\:" if directory else ""
 
-    pattern = r'^[:/A-Za-z0-9%s%s.A_-]*$' %(dir, aSpa)
+    pattern = r'^[:A-Za-z0-9%s%s.A_-]*$' %(dir, aSpa)
 
     if re.match(pattern, text):
         return True

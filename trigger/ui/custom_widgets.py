@@ -4,8 +4,8 @@ from trigger.core import foolproof
 from PySide2 import QtWidgets
 
 class BrowserButton(QtWidgets.QPushButton):
-    def __init__(self, text="Browse", update_widget=None, mode="openFile", filterExtensions=None, title=None, overwrite_check=True):
-        super(BrowserButton, self).__init__()
+    def __init__(self, text="Browse", update_widget=None, mode="openFile", filterExtensions=None, title=None, overwrite_check=True, *args, **kwargs):
+        super(BrowserButton, self).__init__(*args, **kwargs)
         self._updateWidget = update_widget
         if text:
             self.setText(text)
@@ -80,27 +80,37 @@ class BrowserButton(QtWidgets.QPushButton):
         self.browserEvent()
 
 class ValidatedLineEdit(QtWidgets.QLineEdit):
-    def __init__(self, connected_widgets=None, allowSpaces=False, allowDirectory=False):
-        super(ValidatedLineEdit, self).__init__()
+    def __init__(self, connected_widgets=None, allowSpaces=False, allowDirectory=False, *args, **kwargs):
+        super(ValidatedLineEdit, self).__init__(*args, **kwargs)
         self.allowSpaces = allowSpaces
         self.allowDirectory = allowDirectory
         self.connected_widgets = connected_widgets
+        self.default_stylesheet = self.styleSheet()
         if connected_widgets:
             if type(connected_widgets) != list:
                 self._connected_widgets = [connected_widgets]
         else:
             self._connected_widgets = []
 
-    @property
-    def connected_widgets(self):
-        return self._connected_widgets
-
-    @connected_widgets.setter
-    def connected_widgets(self, widgets):
+    def setConnectedWidgets(self, widgets):
         if type(widgets) != list:
             self._connected_widgets = [widgets]
         else:
             self._connected_widgets = widgets
+
+    def connectedWidgets(self):
+        return self._connected_widgets
+
+    # @property
+    # def connected_widgets(self):
+    #     return self._connected_widgets
+
+    # @connected_widgets.setter
+    # def connected_widgets(self, widgets):
+    #     if type(widgets) != list:
+    #         self._connected_widgets = [widgets]
+    #     else:
+    #         self._connected_widgets = widgets
 
     def keyPressEvent(self, *args, **kwargs):
         super(ValidatedLineEdit, self).keyPressEvent(*args, **kwargs)
@@ -110,6 +120,7 @@ class ValidatedLineEdit(QtWidgets.QLineEdit):
             for wid in self.connected_widgets:
                 wid.setEnabled(False)
         else:
-            self.setStyleSheet("background-color: rgb(40,40,40); color: white")
+            # self.setStyleSheet("background-color: rgb(40,40,40); color: white")
+            self.setStyleSheet(self.default_stylesheet)
             for wid in self.connected_widgets:
                 wid.setEnabled(True)

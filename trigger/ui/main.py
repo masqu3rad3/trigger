@@ -10,7 +10,7 @@ from functools import wraps
 from trigger.ui import Qt
 from trigger.ui.Qt import QtWidgets, QtCore, QtGui
 from trigger.ui import model_ctrl
-from trigger.ui.custom_widgets import BrowserButton
+from trigger.ui.custom_widgets import BrowserButton, ValidatedLineEdit
 from trigger.ui.feedback import Feedback
 
 from trigger.core import compatibility as compat
@@ -532,12 +532,14 @@ class MainUI(QtWidgets.QMainWindow):
         rename_dialog.setWindowTitle("test")
         rename_masterLay = QtWidgets.QVBoxLayout()
         rename_dialog.setLayout(rename_masterLay)
-        rename_le = QtWidgets.QLineEdit(text=action_name)
+        # rename_le = QtWidgets.QLineEdit(text=action_name)
+        rename_le = ValidatedLineEdit(text=action_name)
         rename_masterLay.addWidget(rename_le)
         rename_hlay = QtWidgets.QHBoxLayout()
         rename_masterLay.addLayout(rename_hlay)
         rename_cancel_pb = QtWidgets.QPushButton(text="Cancel")
         rename_ok_pb = QtWidgets.QPushButton(text="Ok")
+        rename_le.setConnectedWidgets(rename_ok_pb)
         rename_hlay.addWidget(rename_cancel_pb)
         rename_hlay.addWidget(rename_ok_pb)
         rename_cancel_pb.clicked.connect(rename_dialog.close)
