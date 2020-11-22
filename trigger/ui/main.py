@@ -55,7 +55,7 @@ class MainUI(QtWidgets.QMainWindow):
 
     # create guide and rig objects
     actions_handler = actions_session.ActionsSession()
-    actions_handler.reset_actions()
+    # actions_handler.reset_actions()
     guides_handler = session.Session()
 
     def __init__(self):
@@ -67,6 +67,8 @@ class MainUI(QtWidgets.QMainWindow):
                 pass
         parent = getMayaMainWindow()
         super(MainUI, self).__init__(parent=parent)
+
+        self.actions_handler.reset_actions()
 
         self.feedback = Feedback()
         self.feedback.parent = self
