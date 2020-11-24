@@ -61,7 +61,6 @@ class Controller(object):
 
     def update_model(self):
         for item in self.connections:
-            print(item)
             ui_property_value = self._widget_val(item["widget"], item["type"], get=True)
             self.model.edit_action(item["action_name"], item["property"], ui_property_value)
 
@@ -74,12 +73,12 @@ class Controller(object):
 
     @staticmethod
     def list_to_text(list_item):
-        return " ".join(list_item)
+        return "; ".join(list_item)
 
     @staticmethod
     def text_to_list(text_item):
         if text_item:
-            return text_item.split(" ")
+            return str(text_item).split("; ")
         else:
             return []
 

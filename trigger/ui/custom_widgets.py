@@ -54,20 +54,31 @@ class BrowserButton(QtWidgets.QPushButton):
     def browserEvent(self):
         if self._mode == "openFile":
             dlg = QtWidgets.QFileDialog.getOpenFileName(self, self._title, self._selectedPath, self._filterExtensions)
-            new_path = dlg[0] if dlg else None
+            if dlg: new_path, selected_extension = dlg
+            else: new_path, selected_extension = None, None
+            # new_path = dlg[0] if dlg else None
         elif self._mode == "saveFile":
             if not self._overwriteCheck:
                 dlg = QtWidgets.QFileDialog.getSaveFileName(self, self._title, self._selectedPath, self._filterExtensions, options=(QtWidgets.QFileDialog.DontConfirmOverwrite))
             else:
                 dlg = QtWidgets.QFileDialog.getSaveFileName(self, self._title, self._selectedPath, self._filterExtensions)
-            new_path = dlg[0] if dlg else None
+            # new_path = dlg[0] if dlg else None
+            if dlg: new_path, selected_extension = dlg
+            else: new_path, selected_extension = None, None
         elif self._mode == "directory":
             dlg = QtWidgets.QFileDialog.getExistingDirectory(self, self._title, self._selectedPath, options=(QtWidgets.QFileDialog.ShowDirsOnly))
-            new_path = dlg if dlg else None
+            # new_path = dlg if dlg else None
+            if dlg: new_path, selected_extension = dlg
+            else: new_path, selected_extension = None, None
         else:
             new_path = None
+            selected_extension = None
 
         if new_path:
+            if selected_extension:
+                ext = selected_extension.split('(*', 1)[1].split(')')[0]
+                if not new_path.endswith(ext):
+                    new_path = "%s%s" %(new_path, ext)
             self._selectedPath = os.path.normpath(new_path)
             if self._updateWidget:
                 self._updateWidget.setText(self._selectedPath)
@@ -76,8 +87,8 @@ class BrowserButton(QtWidgets.QPushButton):
         return new_path
 
     def mouseReleaseEvent(self, *args, **kwargs):
-        super(BrowserButton, self).mouseReleaseEvent(*args, **kwargs)
         self.browserEvent()
+        super(BrowserButton, self).mouseReleaseEvent(*args, **kwargs)
 
 class ValidatedLineEdit(QtWidgets.QLineEdit):
     def __init__(self, connected_widgets=None, allowSpaces=False, allowDirectory=False, *args, **kwargs):

@@ -642,13 +642,13 @@ class MainUI(QtWidgets.QMainWindow):
         self.populate_actions()
 
         zortMenu.exec_((QtGui.QCursor.pos()))
-
     def actions_rc(self):
         pass
 
     def populate_actions(self):
         self.rig_actions_listwidget.clear()
         self.rig_actions_listwidget.addItems(self.actions_handler.list_action_names())
+        self.update_title()
 
     def move_action_up(self):
         self.block_all_signals(True)
@@ -764,7 +764,7 @@ class MainUI(QtWidgets.QMainWindow):
                 self.draw_extra_property(property_dict, self.module_extras_formLayout, root_jnt)
 
         self.block_all_signals(False)
-        pass
+        self.update_title()
 
     def draw_extra_property(self, property_dict, parent_form_layout, root_jnt):
 
@@ -814,8 +814,6 @@ class MainUI(QtWidgets.QMainWindow):
     def update_properties(self, property, value):
         root_jnt = self.guides_list_treeWidget.currentItem().text(2)
         self.guides_handler.init.set_property(root_jnt, property, value)
-        # if property == "moduleName":
-        #     self.populate_guides()
 
     def on_create_guide(self, limb_name, *args, **kwargs):
         if limb_name == "humanoid":

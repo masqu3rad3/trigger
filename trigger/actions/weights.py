@@ -8,6 +8,7 @@ import maya.api.OpenMayaAnim as omAnim
 from trigger.core import io
 from trigger.core import logger
 from trigger.library import functions as extra
+from trigger.library import deformers
 
 from trigger.ui.Qt import QtWidgets, QtGui # for progressbar
 from trigger.ui import custom_widgets
@@ -42,7 +43,7 @@ def subractList(list_of_values):
 class Weights(dict):
     def __init__(self, *args, **kwargs):
         super(Weights, self).__init__()
-        self.io = io.IO(file_name="tmp_weights.json")
+        self.io = io.IO(file_name="tmp_weights.trw")
         self["deformer"] = None
         self.isCreateDeformers = True
         self.deformers_list = []
@@ -92,6 +93,7 @@ class Weights(dict):
         self.io._folderCheck(weights_folder)
         # build the dictionary
         data_list = []
+
         for deformer in self.deformers_list:
             data = {}
             deformer_weight_path = os.path.join(weights_folder, "%s.json" %deformer)
@@ -105,7 +107,7 @@ class Weights(dict):
 
     def ui(self, ctrl, layout, handler, *args, **kwargs):
         "Mandatory Method"
-        deformers = importlib.import_module("trigger.library.deformers")
+        # deformers = importlib.import_module("trigger.library.deformers")
 
         file_path_lbl = QtWidgets.QLabel(text="File Path:")
         file_path_hLay = QtWidgets.QHBoxLayout()
@@ -144,19 +146,30 @@ class Weights(dict):
             list_of_deformers = list(deformers.get_deformers(namesOnly=True))
 
             zortMenu = QtWidgets.QMenu()
-            for deformer in list_of_deformers:
-                tempAction = QtWidgets.QAction(str(deformer))
-                zortMenu.addAction(tempAction)
-                tempAction.triggered.connect(lambda ignore=deformer, item=deformer: add_deformer(str(deformer)))
+            menuActions = [QtWidgets.QAction(str(deformer)) for deformer in list_of_deformers]
+            zortMenu.addActions(menuActions)
+            for defo, menu_action in zip(list_of_deformers, menuActions):
+                menu_action.triggered.connect(lambda ignore=defo, item=defo: add_deformers([str(item)]))
+            # add a last item to add all of them
+            if menuActions:
+                zortMenu.addSeparator()
+                allitems_menuaction = QtWidgets.QAction("Add All Items")
+                zortMenu.addAction(allitems_menuaction)
+                allitems_menuaction.triggered.connect(lambda x: add_deformers(list_of_deformers))
+
             zortMenu.exec_((QtGui.QCursor.pos()))
 
-        def add_deformer(deformer):
-            current_deformers = deformers_le.text()
-            if deformer in current_deformers:
-                LOG.warning("%s is already in the list" % deformer)
-                return
-            new_deformers = deformer if not current_deformers else "{0}  {1}".format(current_deformers, deformer)
-            deformers_le.setText(new_deformers)
+        def add_deformers(deformer_list):
+            current_deformers_text = deformers_le.text()
+            if current_deformers_text:
+                for deformer in deformer_list:
+                    if deformer in current_deformers_text:
+                        LOG.warning("%s is already in the list" % deformer)
+                        deformer_list.remove(deformer)
+                new_deformers_text = "; ".join([current_deformers_text] + deformer_list)
+            else:
+                new_deformers_text = "; ".join(deformer_list)
+            deformers_le.setText(new_deformers_text)
             ctrl.update_model()
 
         def save_deformers(increment=False, save_as=False):
@@ -166,13 +179,15 @@ class Weights(dict):
                 # TODO make an external incrementer
             elif save_as:
                 ctrl.update_model()
+                if not file_path_le.text():
+                    return
                 handler.run_save_action(ctrl.action_name)
-                # browse_path_pb.browserEvent()
-                LOG.warning("NOT YET IMPLEMENTED")
-                # ctrl.update_ui()
-                # TODO make save as
             else:
                 ctrl.update_model()
+                if not file_path_le.text():
+                    save_as_current_pb.browserEvent()
+                    save_deformers(save_as=True)
+                    return
                 if os.path.isfile(file_path_le.text()):
                     question = feedback.Feedback()
                     state = question.pop_question(title="Overwrite", text="The file %s already exists.\nDo you want to OVERWRITE?" %file_path_le.text(), buttons=["ok", "cancel"])

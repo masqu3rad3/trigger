@@ -32,13 +32,14 @@ class Script(object):
         self.commands = action_data.get("commands")
 
     def action(self):
-        # workaround for stupid windows paths to work in nested strings
-        self.filePath = self.filePath.replace("\\", "\\\\")
+        if self.filePath:
+            # workaround for stupid windows paths to work in nested strings
+            self.filePath = self.filePath.replace("\\", "\\\\")
 
-        # if import as not defined, use file name instead
-        if not self.importAs:
-            self.importAs = os.path.splitext(os.path.basename(self.filePath))[0]
-        exec("%s=dyn.dynamic_import('%s')" %(self.importAs, self.filePath))
+            # if import as not defined, use file name instead
+            if not self.importAs:
+                self.importAs = os.path.splitext(os.path.basename(self.filePath))[0]
+            exec("%s=dyn.dynamic_import('%s')" %(self.importAs, self.filePath))
 
         ## run the commands
         for command in self.commands:

@@ -2,15 +2,15 @@ import os
 from copy import deepcopy
 
 from maya import cmds
-import maya.api.OpenMaya as om
-from trigger.library import functions as extra
+# import maya.api.OpenMaya as om
+# from trigger.library import functions as extra
 
 from trigger.core import io
 from trigger.core import logger
 from trigger import actions
 from trigger.core import compatibility as compat
 
-FEEDBACK = logger.Logger(logger_name=__name__)
+LOG = logger.Logger(logger_name=__name__)
 
 class ActionsSession(dict):
     def __init__(self):
@@ -53,6 +53,7 @@ class ActionsSession(dict):
 
 
         self["actions"] = []
+        self.compareActions = deepcopy(self["actions"])
 
     def new_session(self):
         """Clears the data"""
@@ -65,7 +66,8 @@ class ActionsSession(dict):
         self.io.file_path = file_path
         self.io.write(self)
         self.currentFile = file_path
-        FEEDBACK.info("Session Saved Successfully...")
+        self.compareActions = deepcopy(self["actions"])
+        LOG.info("Session Saved Successfully...")
 
     def load_session(self, file_path):
         """Loads the session from the file"""
@@ -75,22 +77,27 @@ class ActionsSession(dict):
             self.clear()
             self.update(actions_data)
             self.currentFile = file_path
-            FEEDBACK.info("Action Session Loaded Successfully...")
+            self.compareActions = deepcopy(self["actions"])
+            LOG.info("Action Session Loaded Successfully...")
         else:
-            FEEDBACK.throw_error("The specified file doesn't exists")
+            LOG.throw_error("The specified file doesn't exists")
 
     def is_modified(self):
         """Checks if the current file is different than the saved file"""
-        if not self.currentFile:
-            if self["actions"]:
-                return True
-            else:
-                return False
-        actions_data = self.io.read()
-        if actions_data != self:
-            return True
-        else:
+        if self.compareActions == self["actions"]:
             return False
+        else:
+            return True
+        # if not self.currentFile:
+        #     if self["actions"]:
+        #         return True
+        #     else:
+        #         return False
+        # actions_data = self.io.read()
+        # if actions_data != self:
+        #     return True
+        # else:
+        #     return False
 
     def list_valid_actions(self):
         """Returns all available actions"""
@@ -98,6 +105,7 @@ class ActionsSession(dict):
 
     def reset_actions(self):
         self["actions"] = []
+        self.compareActions = deepcopy(self["actions"])
 
     def add_action(self, action_name=None, action_type=None):
         """
@@ -119,9 +127,9 @@ class ActionsSession(dict):
                 idcounter = idcounter + 1
 
         if action_name in self.list_action_names():
-            FEEDBACK.throw_error("Action Name already exists in the Session")
+            LOG.throw_error("Action Name already exists in the Session")
         if not action_type in self.list_valid_actions():
-            FEEDBACK.throw_error("Defined Action type is not valid")
+            LOG.throw_error("Defined Action type is not valid")
         # action_item = eval("actions.%s.%s()" % (action_name, action_name.capitalize()))
         action = {
             "name": action_name,
@@ -142,7 +150,7 @@ class ActionsSession(dict):
         if action_name == new_name:
             return
         if self.get_action(new_name):
-            FEEDBACK.throw_error("Action name %s already exists" %new_name)
+            LOG.throw_error("Action name %s already exists" % new_name)
         action = self.get_action(action_name)
         action["name"] = new_name
 
@@ -156,7 +164,7 @@ class ActionsSession(dict):
         if action:
             self["actions"].remove(action)
         else:
-            FEEDBACK.warning("%s cannot be found in the action list")
+            LOG.warning("%s cannot be found in the action list")
 
     def edit_action(self, action_name, property, new_value):
         """
@@ -173,19 +181,18 @@ class ActionsSession(dict):
         if action:
             current_value = action["data"].get(property)
             if current_value == None:
-                FEEDBACK.throw_error("The property '%s' does not exist in %s ACTION_DATA" % (property, action["type"]))
+                LOG.throw_error("The property '%s' does not exist in %s ACTION_DATA" % (property, action["type"]))
             if compat.is_string(current_value):
                 # new_value = compat.decode(new_value)
                 new_value = str(new_value)
-            print("DEBUG===", type(new_value))
             if type(current_value) != type(new_value):
-                FEEDBACK.throw_error("%s property only accepts %s values" % (property, str(type(current_value))))
+                LOG.throw_error("%s property only accepts %s values" % (property, str(type(current_value))))
 
             action["data"][property] = new_value
-            FEEDBACK.info("%s @ %s => %s" %(property, action["name"], new_value))
+            LOG.info("%s @ %s => %s" % (property, action["name"], new_value))
             return True
         else:
-            FEEDBACK.warning("%s cannot be found in the action list")
+            LOG.warning("%s cannot be found in the action list")
             return False
 
     def query_action(self, action_name, property):
@@ -193,11 +200,11 @@ class ActionsSession(dict):
         if action:
             current_value = action["data"].get(property)
             if current_value == None:
-                FEEDBACK.throw_error("The property '%s' does not exist in %s ACTION_DATA" % (property, action["type"]))
+                LOG.throw_error("The property '%s' does not exist in %s ACTION_DATA" % (property, action["type"]))
             else:
                 return current_value
         else:
-            FEEDBACK.warning("%s cannot be found in the action list")
+            LOG.warning("%s cannot be found in the action list")
             return None
 
     def get_all_actions(self):
@@ -214,7 +221,7 @@ class ActionsSession(dict):
         index = self["actions"].index(action)
         if not index == 0:
             self["actions"].insert(index-1, self["actions"].pop(index))
-        FEEDBACK.info("%s index => %s" % (action_name, index-1))
+        LOG.info("%s index => %s" % (action_name, index - 1))
 
     def move_down(self, action_name):
         """Moves the action one index down"""
@@ -222,7 +229,7 @@ class ActionsSession(dict):
         index = self["actions"].index(action)
         if not index == len(self["actions"]):
             self["actions"].insert(index+1, self["actions"].pop(index))
-        FEEDBACK.info("%s index => %s" % (action_name, index+1))
+        LOG.info("%s index => %s" % (action_name, index + 1))
 
     def move(self, action_name, new_index):
         """Moves the action to the given index nmb"""
@@ -230,7 +237,7 @@ class ActionsSession(dict):
         old_index = self["actions"].index(action)
         if old_index != new_index:
             self["actions"].insert(new_index, self["actions"].pop(old_index))
-        FEEDBACK.info("%s index => %s" % (action_name, new_index))
+        LOG.info("%s index => %s" % (action_name, new_index))
 
     def run_all_actions(self):
         """runs all actions in the actions list"""
