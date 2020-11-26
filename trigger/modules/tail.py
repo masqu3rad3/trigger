@@ -2,6 +2,8 @@ from maya import cmds
 import maya.api.OpenMaya as om
 
 from trigger.library import functions
+from trigger.library import attribute
+from trigger.library import api
 from trigger.library import controllers as ic
 from trigger.core import logger
 FEEDBACK = logger.Logger(__name__)
@@ -74,11 +76,11 @@ class Tail(object):
     def createJoints(self):
         # draw Joints
         cmds.select(d=True)
-        self.limbPlug = cmds.joint(name="limbPlug_%s" % self.suffix, p=functions.getWorldTranslation(self.inits[0]), radius=3)
+        self.limbPlug = cmds.joint(name="limbPlug_%s" % self.suffix, p=api.getWorldTranslation(self.inits[0]), radius=3)
 
         cmds.select(d=True)
         for j in range (0,len(self.inits)):
-            location = functions.getWorldTranslation(self.inits[j])
+            location = api.getWorldTranslation(self.inits[j])
             jnt = cmds.joint(name="jDef_{0}_{1}".format(j, self.suffix), p=location)
             self.sockets.append(jnt)
             self.deformerJoints.append(jnt)
@@ -93,7 +95,7 @@ class Tail(object):
         cmds.parent(self.deformerJoints[0], self.scaleGrp)
 
         # map(lambda x: cmds.connectAttr("%s.jointVis" % self.scaleGrp, "%s.v" % x), self.deformerJoints)
-        functions.drive_attrs("%s.jointVis" % self.scaleGrp, ["%s.v" % x for x in self.deformerJoints])
+        attribute.drive_attrs("%s.jointVis" % self.scaleGrp, ["%s.v" % x for x in self.deformerJoints])
 
         cmds.connectAttr("%s.rigVis" % self.scaleGrp,"%s.v" % self.limbPlug)
         functions.colorize(self.deformerJoints, self.colorCodes[0], shape=False)
@@ -126,7 +128,7 @@ class Tail(object):
                 cmds.parent(self.cont_off_list[jnt], self.scaleGrp)
 
         # map(lambda x: cmds.connectAttr("%s.contVis" % self.scaleGrp, "%s.v" % x), self.cont_off_list)
-        functions.drive_attrs("%s.contVis" % self.scaleGrp, ["%s.v" % x for x in self.cont_off_list])
+        attribute.drive_attrs("%s.contVis" % self.scaleGrp, ["%s.v" % x for x in self.cont_off_list])
         functions.colorize(self.contList, self.colorCodes[0])
 
     def createFKsetup(self):
@@ -214,10 +216,10 @@ class Guides(object):
 
         # ----------Mandatory---------[Start]
         root_jnt = self.guideJoints[0]
-        functions.create_global_joint_attrs(root_jnt, moduleName="%s_Tail" % self.side, upAxis=self.upVector, mirrorAxis=self.mirrorVector, lookAxis=self.lookVector)
+        attribute.create_global_joint_attrs(root_jnt, moduleName="%s_Tail" % self.side, upAxis=self.upVector, mirrorAxis=self.mirrorVector, lookAxis=self.lookVector)
         # ----------Mandatory---------[End]
         for attr_dict in LIMB_DATA["properties"]:
-            functions.create_attribute(root_jnt, attr_dict)
+            attribute.create_attribute(root_jnt, attr_dict)
 
     def createGuides(self):
         self.draw_joints()

@@ -2,6 +2,8 @@ from maya import cmds
 import maya.api.OpenMaya as om
 
 from trigger.library import functions
+from trigger.library import attribute
+from trigger.library import api
 from trigger.library import controllers as ic
 from trigger.library import ribbon as rc
 
@@ -45,12 +47,12 @@ class Leg(object):
             FEEDBACK.throw_error("Class needs either build_data or arminits to be constructed")
 
         # get positions
-        self.leg_root_pos = functions.getWorldTranslation(self.leg_root_ref)
-        self.hip_pos = functions.getWorldTranslation(self.hip_ref)
-        self.knee_pos = functions.getWorldTranslation(self.knee_ref)
-        self.foot_pos = functions.getWorldTranslation(self.foot_ref)
-        self.ball_pos = functions.getWorldTranslation(self.ball_ref)
-        self.toe_pv_pos = functions.getWorldTranslation(self.toe_pv_ref)
+        self.leg_root_pos = api.getWorldTranslation(self.leg_root_ref)
+        self.hip_pos = api.getWorldTranslation(self.hip_ref)
+        self.knee_pos = api.getWorldTranslation(self.knee_ref)
+        self.foot_pos = api.getWorldTranslation(self.foot_ref)
+        self.ball_pos = api.getWorldTranslation(self.ball_ref)
+        self.toe_pv_pos = api.getWorldTranslation(self.toe_pv_ref)
 
         # get distances
         self.init_upper_leg_dist = functions.getDistance(self.hip_ref, self.knee_ref)
@@ -312,7 +314,7 @@ class Leg(object):
         polecont_scale = ((((self.init_upper_leg_dist + self.init_lower_leg_dist) / 2) / 10), (((self.init_upper_leg_dist + self.init_lower_leg_dist) / 2) / 10), (((self.init_upper_leg_dist + self.init_lower_leg_dist) / 2) / 10))
         self.cont_Pole, _ = icon.createIcon("Plus", iconName="%s_Pole_cont" % self.suffix, scale=polecont_scale, normal=self.mirror_axis)
         offset_mag_pole = ((self.init_upper_leg_dist + self.init_lower_leg_dist) / 4)
-        offset_vector_pole = functions.getBetweenVector(self.j_def_midLeg, [self.j_def_hip, self.jfk_foot])
+        offset_vector_pole = api.getBetweenVector(self.j_def_midLeg, [self.j_def_hip, self.jfk_foot])
 
         functions.alignAndAim(self.cont_Pole,
                               targetList=[self.j_def_midLeg],
@@ -435,8 +437,7 @@ class Leg(object):
                         self.cont_fk_ik_pos,
                         self.cont_fk_low_leg_off, self.cont_fk_up_leg_off, self.cont_mid_lock_pos]
 
-        # map(lambda x: cmds.connectAttr("%s.contVis" % self.scaleGrp, "%s.v" % x), nodesContVis)
-        functions.drive_attrs("%s.contVis" % self.scaleGrp, ["%s.v" % x for x in nodesContVis])
+        attribute.drive_attrs("%s.contVis" % self.scaleGrp, ["%s.v" % x for x in nodesContVis])
 
         functions.colorize(self.cont_thigh, self.colorCodes[0])
         functions.colorize(self.cont_IK_foot, self.colorCodes[0])
@@ -1074,18 +1075,15 @@ class Leg(object):
         cmds.connectAttr("%s.tweakControls" %  self.cont_fk_ik, "%s.v" %  self.cont_mid_lock)
         tweakConts = ribbon_upper_leg.middleCont + ribbon_lower_leg.middleCont
         # map(lambda x: cmds.connectAttr("%s.tweakControls" % self.cont_fk_ik, "%s.v" % x), tweakConts)
-        functions.drive_attrs("%s.tweakControls" % self.cont_fk_ik, ["%s.v" % x for x in tweakConts])
+        attribute.drive_attrs("%s.tweakControls" % self.cont_fk_ik, ["%s.v" % x for x in tweakConts])
 
         cmds.connectAttr("%s.contVis" % self.scaleGrp, "%s.v" % ribbon_upper_leg.scaleGrp)
         cmds.connectAttr("%s.contVis" % self.scaleGrp, "%s.v" % ribbon_lower_leg.scaleGrp)
 
         self.deformerJoints += ribbon_lower_leg.deformerJoints + ribbon_upper_leg.deformerJoints
-        # map(lambda x: cmds.connectAttr("%s.jointVis" % self.scaleGrp, "%s.v" % x), self.deformerJoints)
-        functions.drive_attrs("%s.jointVis" % self.scaleGrp, ["%s.v" % x for x in self.deformerJoints])
-        # map(lambda x: cmds.connectAttr("%s.rigVis" % self.scaleGrp, "%s.v" % x), ribbon_lower_leg.toHide)
-        functions.drive_attrs("%s.rigVis" % self.scaleGrp, ["%s.v" % x for x in ribbon_lower_leg.toHide])
-        # map(lambda x: cmds.connectAttr("%s.rigVis" % self.scaleGrp, "%s.v" % x), ribbon_upper_leg.toHide)
-        functions.drive_attrs("%s.rigVis" % self.scaleGrp, ["%s.v" % x for x in ribbon_upper_leg.toHide])
+        attribute.drive_attrs("%s.jointVis" % self.scaleGrp, ["%s.v" % x for x in self.deformerJoints])
+        attribute.drive_attrs("%s.rigVis" % self.scaleGrp, ["%s.v" % x for x in ribbon_lower_leg.toHide])
+        attribute.drive_attrs("%s.rigVis" % self.scaleGrp, ["%s.v" % x for x in ribbon_upper_leg.toHide])
         functions.colorize(ribbon_upper_leg.middleCont, self.colorCodes[1])
         functions.colorize(ribbon_lower_leg.middleCont, self.colorCodes[1])
 
@@ -1153,14 +1151,14 @@ class Leg(object):
         cmds.parentConstraint(self.limbPlug, self.scaleGrp, mo=False)
         cmds.setAttr("%s.rigVis" % self.scaleGrp, 0)
 
-        functions.lockAndHide(self.cont_IK_foot, ["v"])
-        functions.lockAndHide(self.cont_Pole, ["rx", "ry", "rz", "sx", "sy", "sz", "v"])
-        functions.lockAndHide(self.cont_mid_lock, ["v"])
-        functions.lockAndHide(self.cont_fk_ik, ["sx", "sy", "sz", "v"])
-        functions.lockAndHide(self.cont_fk_foot, ["tx", "ty", "tz", "v"])
-        functions.lockAndHide(self.cont_fk_low_leg, ["tx", "ty", "tz", "sy", "sz", "v"])
-        functions.lockAndHide(self.cont_fk_up_leg, ["tx", "ty", "tz", "sy", "sz", "v"])
-        functions.lockAndHide(self.cont_thigh, ["sx", "sy", "sz", "v"])
+        attribute.lockAndHide(self.cont_IK_foot, ["v"])
+        attribute.lockAndHide(self.cont_Pole, ["rx", "ry", "rz", "sx", "sy", "sz", "v"])
+        attribute.lockAndHide(self.cont_mid_lock, ["v"])
+        attribute.lockAndHide(self.cont_fk_ik, ["sx", "sy", "sz", "v"])
+        attribute.lockAndHide(self.cont_fk_foot, ["tx", "ty", "tz", "v"])
+        attribute.lockAndHide(self.cont_fk_low_leg, ["tx", "ty", "tz", "sy", "sz", "v"])
+        attribute.lockAndHide(self.cont_fk_up_leg, ["tx", "ty", "tz", "sy", "sz", "v"])
+        attribute.lockAndHide(self.cont_thigh, ["sx", "sy", "sz", "v"])
 
         self.scaleConstraints = [self.scaleGrp, self.cont_IK_OFF]
         self.anchors = [(self.cont_IK_foot, "parent", 1, None), (self.cont_Pole, "parent", 1, None)]
@@ -1270,11 +1268,11 @@ class Guides(object):
 
         # ----------Mandatory---------[Start]
         root_jnt = self.guideJoints[0]
-        functions.create_global_joint_attrs(root_jnt, moduleName="%s_Leg" % self.side, upAxis=self.upVector, mirrorAxis=self.mirrorVector, lookAxis=self.lookVector)
+        attribute.create_global_joint_attrs(root_jnt, moduleName="%s_Leg" % self.side, upAxis=self.upVector, mirrorAxis=self.mirrorVector, lookAxis=self.lookVector)
         # ----------Mandatory---------[End]
 
         for attr_dict in LIMB_DATA["properties"]:
-            functions.create_attribute(root_jnt, attr_dict)
+            attribute.create_attribute(root_jnt, attr_dict)
 
     def createGuides(self):
         self.draw_joints()

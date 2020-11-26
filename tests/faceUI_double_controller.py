@@ -3,6 +3,7 @@
 from maya import cmds
 from trigger.library import controllers
 from trigger.library import functions
+from trigger.library import attribute
 
 iconHandler = controllers.Icon()
 
@@ -27,15 +28,15 @@ for contName in double_controllers:
     left_mult = cmds.createNode("multDoubleLinear", name="%s_L_mult" % contName)
     right_mult = cmds.createNode("multDoubleLinear", name="%s_R_mult" % contName)
 
-    functions.drive_attrs("%s.ty" % cont, ["%s.input1" % right_mult, "%s.input1" % left_mult], driver_range=[0, 10],
+    attribute.drive_attrs("%s.ty" % cont, ["%s.input1" % right_mult, "%s.input1" % left_mult], driver_range=[0, 10],
                           driven_range=[0, 1])
-    functions.drive_attrs("%s.tx" % cont, "%s.input2" % right_mult, driver_range=[0, -10], driven_range=[1, 0])
-    functions.drive_attrs("%s.tx" % cont, "%s.input2" % left_mult, driver_range=[0, 10], driven_range=[1, 0])
+    attribute.drive_attrs("%s.tx" % cont, "%s.input2" % right_mult, driver_range=[0, -10], driven_range=[1, 0])
+    attribute.drive_attrs("%s.tx" % cont, "%s.input2" % left_mult, driver_range=[0, 10], driven_range=[1, 0])
 
-    hook_attr_L = functions.create_attribute(hookNode,
+    hook_attr_L = attribute.create_attribute(hookNode,
                                              {"attr_name": "L%s" % contName, "attr_type": "float", "min_value": 0,
                                               "max_value": 1}, display=False)
-    hook_attr_R = functions.create_attribute(hookNode,
+    hook_attr_R = attribute.create_attribute(hookNode,
                                              {"attr_name": "R%s" % contName, "attr_type": "float", "min_value": 0,
                                               "max_value": 1}, display=False)
 

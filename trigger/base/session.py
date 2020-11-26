@@ -7,7 +7,9 @@ import os
 
 from maya import cmds
 import maya.api.OpenMaya as om
-from trigger.library import functions as extra
+from trigger.library import functions
+from trigger.library import api
+
 
 from trigger.core import io
 from trigger.core import logger
@@ -99,16 +101,16 @@ class Session(object):
         for jnt in flat_jnt_list:
             cmds.select(d=True)
             tmp_jnt = cmds.joint()
-            extra.alignTo(tmp_jnt, jnt, position=True, rotation=True)
-            world_pos = tuple(extra.getWorldTranslation(tmp_jnt))
+            functions.alignTo(tmp_jnt, jnt, position=True, rotation=True)
+            world_pos = tuple(api.getWorldTranslation(tmp_jnt))
             rotation = cmds.getAttr("%s.rotate" % tmp_jnt)[0]
             joint_orient = cmds.getAttr("%s.jointOrient" % tmp_jnt)[0]
             scale = cmds.getAttr("%s.scale" % jnt)[0]
-            side = extra.get_joint_side(jnt)
-            j_type = extra.get_joint_type(jnt)
+            side = functions.get_joint_side(jnt)
+            j_type = functions.get_joint_type(jnt)
             color = cmds.getAttr("%s.overrideColor" % jnt)
             radius = cmds.getAttr("%s.radius" % jnt)
-            parent = extra.getParent(jnt)
+            parent = functions.getParent(jnt)
             if parent in flat_jnt_list:
                 pass
             else:
@@ -147,7 +149,7 @@ class Session(object):
         for jnt_dict in guides_data:
             cmds.select(d=True)
             jnt = cmds.joint(name=jnt_dict.get("name"), p=jnt_dict.get("position"))
-            extra.create_global_joint_attrs(jnt)
+            attribute.create_global_joint_attrs(jnt)
             cmds.setAttr("%s.rotate" % jnt, *jnt_dict.get("rotation"))
             cmds.setAttr("%s.jointOrient" % jnt, *jnt_dict.get("joint_orient"))
             cmds.setAttr("%s.scale" % jnt, *jnt_dict.get("scale"))
@@ -156,11 +158,11 @@ class Session(object):
             cmds.setAttr("%s.displayLocalAxis" % jnt, 1)
             cmds.setAttr("%s.overrideEnabled" % jnt, True)
             cmds.setAttr("%s.overrideColor" % jnt, jnt_dict.get("color"))
-            extra.set_joint_side(jnt, jnt_dict.get("side"))
-            extra.set_joint_type(jnt, jnt_dict.get("type"))
+            functions.set_joint_side(jnt, jnt_dict.get("side"))
+            functions.set_joint_type(jnt, jnt_dict.get("type"))
             property_attrs = jnt_dict.get("user_attributes")
             for attr_dict in property_attrs:
-                extra.create_attribute(jnt, attr_dict)
+                attribute.create_attribute(jnt, attr_dict)
         for jnt_dict in guides_data:
             if jnt_dict.get("parent"):
                 cmds.parent(jnt_dict.get("name"), jnt_dict.get("parent"))

@@ -1,6 +1,9 @@
 from maya import cmds
 import maya.api.OpenMaya as om
 from trigger.library import functions
+from trigger.library import attribute
+from trigger.library import api
+from trigger.library import connection
 from trigger.library import controllers as ic
 from trigger.library import ribbon as rc
 from trigger.core import logger
@@ -46,10 +49,10 @@ class Arm(object):
         else:
             FEEDBACK.throw_error("Class needs either build_data or arm inits to be constructed")
 
-        self.collar_pos = functions.getWorldTranslation(self.collar_ref)
-        self.shoulder_pos = functions.getWorldTranslation(self.shoulder_ref)
-        self.elbow_pos = functions.getWorldTranslation(self.elbow_ref)
-        self.hand_pos = functions.getWorldTranslation(self.hand_ref)
+        self.collar_pos = api.getWorldTranslation(self.collar_ref)
+        self.shoulder_pos = api.getWorldTranslation(self.shoulder_ref)
+        self.elbow_pos = api.getWorldTranslation(self.elbow_ref)
+        self.hand_pos = api.getWorldTranslation(self.hand_ref)
 
         # get distances
         self.init_shoulder_dist = functions.getDistance(self.collar_ref, self.shoulder_ref)
@@ -283,8 +286,7 @@ class Arm(object):
         self.cont_Pole, dmp = icon.createIcon("Plus", iconName="%s_Pole_cont" % self.suffix, scale=polecont_scale,
                                               normal=(self.sideMult, 0, 0))
         offset_mag_pole = ((self.init_upper_arm_dist + self.init_lower_arm_dist) / 4)
-        # offset_vector_pole = extra.getBetweenVector(elbow_ref, [shoulder_ref, hand_ref])
-        offset_vector_pole = functions.getBetweenVector(self.j_def_elbow, [self.j_collar_end, self.j_def_hand])
+        offset_vector_pole = api.getBetweenVector(self.j_def_elbow, [self.j_collar_end, self.j_def_hand])
 
         functions.alignAndAim(self.cont_Pole,
                               targetList=[self.j_def_elbow],
@@ -443,21 +445,18 @@ class Arm(object):
         self.start_lock_twist = functions.createUpGrp(self.start_lock, "AutoTwist")
 
         # start_lock_weight = cmds.parentConstraint(self.j_collar_end, self.start_lock, sr=("y", "z"), mo=False)
-        start_lock_weight = functions.matrixConstraint(self.j_collar_end, self.start_lock, sr=("y", "z"), mo=False)
+        start_lock_weight = connection.matrixConstraint(self.j_collar_end, self.start_lock, sr=("y", "z"), mo=False)
 
         cmds.parentConstraint(self.start_lock, self.j_ik_sc_up, mo=False)
-        # extra.matrixConstraint(self.start_lock, self.j_ik_sc_up, mo=False)
         cmds.parentConstraint(self.start_lock, self.j_ik_rp_up, mo=False)
-        # extra.matrixConstraint(self.start_lock, self.j_ik_rp_up, mo=False)
 
         # Create Midlock
 
         self.mid_lock = cmds.spaceLocator(name="midLock_%s" % self.suffix)[0]
         cmds.parentConstraint(self.mid_lock, self.j_def_elbow)
-        # extra.matrixConstraint(self.mid_lock, self.j_def_elbow)
 
         # cmds.parentConstraint(self.cont_mid_lock, self.mid_lock, mo=False)
-        functions.matrixConstraint(self.cont_mid_lock, self.mid_lock, mo=False)
+        connection.matrixConstraint(self.cont_mid_lock, self.mid_lock, mo=False)
 
         # Create End Lock
         self.end_lock = cmds.spaceLocator(name="endLock_%s" % self.suffix)[0]
@@ -469,8 +468,7 @@ class Arm(object):
         self.hand_lock = cmds.spaceLocator(name="handLock_%s" % self.suffix)[0]
         functions.alignTo(self.hand_lock, self.cont_fk_hand_off, position=True, rotation=True)
 
-        # cmds.parentConstraint(self.cont_fk_hand, self.hand_lock, mo=False)
-        functions.matrixConstraint(self.cont_fk_hand, self.hand_lock, mo=False)
+        connection.matrixConstraint(self.cont_fk_hand, self.hand_lock, mo=False)
 
         self.root_master = cmds.spaceLocator(name="handMaster_%s" % self.suffix)[0]
         functions.alignTo(self.root_master, self.j_def_hand, position=True, rotation=True)
@@ -672,7 +670,7 @@ class Arm(object):
         functions.alignTo(self.ik_parent_grp, self.j_def_hand, position=True, rotation=True)
 
         # cmds.parentConstraint(self.cont_IK_hand, self.ik_parent_grp, mo=False)
-        functions.matrixConstraint(self.cont_IK_hand, self.ik_parent_grp, mo=False)
+        connection.matrixConstraint(self.cont_IK_hand, self.ik_parent_grp, mo=False)
 
         # parenting should be after the constraint
         cmds.parent(ik_handle_sc[0], self.ik_parent_grp)
@@ -739,7 +737,7 @@ class Arm(object):
         functions.alignTo(pacon_locator_shou, self.j_def_collar, position=True, rotation=True)
 
         # j_def_pa_con = cmds.parentConstraint(self.cont_shoulder, pacon_locator_shou, mo=False)
-        functions.matrixConstraint(self.cont_shoulder, pacon_locator_shou, mo=False)
+        connection.matrixConstraint(self.cont_shoulder, pacon_locator_shou, mo=False)
 
         cmds.parent(arm_start, self.scaleGrp)
         cmds.parent(arm_end, self.scaleGrp)
@@ -768,15 +766,15 @@ class Arm(object):
         cmds.orientConstraint(self.cont_fk_low_arm, self.j_fk_low, mo=False)
 
         # cmds.parentConstraint(self.j_collar_end, self.cont_fk_up_arm_off, sr=("x", "y", "z"), mo=False)
-        # functions.matrixConstraint(self.j_collar_end, self.cont_fk_up_arm_off, sr=("x", "y", "z"), mo=False)
-        functions.matrixConstraint(self.j_collar_end, self.cont_fk_up_arm_off, mo=False)
+        # connection.matrixConstraint(self.j_collar_end, self.cont_fk_up_arm_off, sr=("x", "y", "z"), mo=False)
+        connection.matrixConstraint(self.j_collar_end, self.cont_fk_up_arm_off, mo=False)
 
         # TODO : TAKE A LOOK TO THE OFFSET SOLUTION
         # cmds.parentConstraint(self.cont_fk_up_arm, self.cont_fk_low_arm_off, mo=True)
-        functions.matrixConstraint(self.cont_fk_up_arm, self.cont_fk_low_arm_off, mo=True)
+        connection.matrixConstraint(self.cont_fk_up_arm, self.cont_fk_low_arm_off, mo=True)
 
         # cmds.parentConstraint(self.cont_fk_low_arm, self.cont_fk_hand_pos, mo=True)
-        functions.matrixConstraint(self.cont_fk_low_arm, self.cont_fk_hand_pos, mo=True)
+        connection.matrixConstraint(self.cont_fk_low_arm, self.cont_fk_hand_pos, mo=True)
 
     def ikfkSwitching(self):
 
@@ -820,7 +818,7 @@ class Arm(object):
         # the following offset parent constraint is not important and wont cause any trouble since
         # it only affects the FK/IK icon
         # cmds.parentConstraint(self.end_lock, self.cont_fk_ik_pos, mo=True)
-        functions.matrixConstraint(self.end_lock, self.cont_fk_ik_pos, mo=True)
+        connection.matrixConstraint(self.end_lock, self.cont_fk_ik_pos, mo=True)
 
         # end_lock_rot = pm.parentConstraint(ik_parent_grp, cont_fk_hand, end_lock_twist, st=("x", "y", "z"), mo=True)
         end_lock_rot = cmds.parentConstraint(self.ik_parent_grp, self.cont_fk_hand, self.end_lock_twist,
@@ -1022,16 +1020,16 @@ class Arm(object):
         cmds.connectAttr("{0}.tweakControls".format(self.cont_fk_ik), "{0}.v".format(self.cont_mid_lock))
         tweakConts = ribbon_upper_arm.middleCont + ribbon_lower_arm.middleCont
 
-        functions.drive_attrs("%s.tweakControls" % self.cont_fk_ik, ["%s.v" % x for x in tweakConts])
+        attribute.drive_attrs("%s.tweakControls" % self.cont_fk_ik, ["%s.v" % x for x in tweakConts])
 
         cmds.connectAttr("{0}.contVis".format(self.scaleGrp), "{0}.v".format(ribbon_upper_arm.scaleGrp))
         cmds.connectAttr("{0}.contVis".format(self.scaleGrp), "{0}.v".format(ribbon_lower_arm.scaleGrp))
 
         self.deformerJoints += ribbon_lower_arm.deformerJoints + ribbon_upper_arm.deformerJoints
 
-        functions.drive_attrs("%s.jointVis" % self.scaleGrp, ["%s.v" % x for x in self.deformerJoints])
-        functions.drive_attrs("%s.rigVis" % self.scaleGrp, ["%s.v" % x for x in ribbon_lower_arm.toHide])
-        functions.drive_attrs("%s.rigVis" % self.scaleGrp, ["%s.v" % x for x in ribbon_upper_arm.toHide])
+        attribute.drive_attrs("%s.jointVis" % self.scaleGrp, ["%s.v" % x for x in self.deformerJoints])
+        attribute.drive_attrs("%s.rigVis" % self.scaleGrp, ["%s.v" % x for x in ribbon_lower_arm.toHide])
+        attribute.drive_attrs("%s.rigVis" % self.scaleGrp, ["%s.v" % x for x in ribbon_upper_arm.toHide])
 
 
     # for i in self.deformerJoints:
@@ -1052,7 +1050,7 @@ class Arm(object):
         cmds.parent(angleExt_Fixed_IK, angleExt_Float_IK, angleExt_Root_IK)
         # cmds.error("BREAK")
         # cmds.parentConstraint(self.limbPlug, angleExt_Root_IK, mo=False)
-        functions.matrixConstraint(self.limbPlug, angleExt_Root_IK, mo=False)
+        connection.matrixConstraint(self.limbPlug, angleExt_Root_IK, mo=False)
         # cmds.parentConstraint(self.cont_IK_hand, angleExt_Fixed_IK, mo=False)
         # extra.matrixConstraint(self.cont_IK_hand, angleExt_Fixed_IK, mo=False, ss=("x","y","z"))
         cmds.pointConstraint(self.cont_IK_hand, angleExt_Fixed_IK, mo=False)
@@ -1107,18 +1105,18 @@ class Arm(object):
 
     def roundUp(self):
         # cmds.parentConstraint(self.limbPlug, self.scaleGrp, mo=False)
-        functions.matrixConstraint(self.limbPlug, self.scaleGrp, mo=False)
+        connection.matrixConstraint(self.limbPlug, self.scaleGrp, mo=False)
 
         cmds.setAttr("%s.rigVis" % self.scaleGrp, 0)
 
-        functions.lockAndHide(self.cont_IK_hand, ["v"])
-        functions.lockAndHide(self.cont_Pole, ["rx", "ry", "rz", "sx", "sy", "sz", "v"])
-        functions.lockAndHide(self.cont_mid_lock, ["v"])
-        functions.lockAndHide(self.cont_fk_ik, ["sx", "sy", "sz", "v"])
-        functions.lockAndHide(self.cont_fk_hand, ["tx", "ty", "tz", "v"])
-        functions.lockAndHide(self.cont_fk_low_arm, ["tx", "ty", "tz", "sy", "sz", "v"])
-        functions.lockAndHide(self.cont_fk_up_arm, ["tx", "ty", "tz", "sy", "sz", "v"])
-        functions.lockAndHide(self.cont_shoulder, ["sx", "sy", "sz", "v"])
+        attribute.lockAndHide(self.cont_IK_hand, ["v"])
+        attribute.lockAndHide(self.cont_Pole, ["rx", "ry", "rz", "sx", "sy", "sz", "v"])
+        attribute.lockAndHide(self.cont_mid_lock, ["v"])
+        attribute.lockAndHide(self.cont_fk_ik, ["sx", "sy", "sz", "v"])
+        attribute.lockAndHide(self.cont_fk_hand, ["tx", "ty", "tz", "v"])
+        attribute.lockAndHide(self.cont_fk_low_arm, ["tx", "ty", "tz", "sy", "sz", "v"])
+        attribute.lockAndHide(self.cont_fk_up_arm, ["tx", "ty", "tz", "sy", "sz", "v"])
+        attribute.lockAndHide(self.cont_shoulder, ["sx", "sy", "sz", "v"])
 
         self.scaleConstraints = [self.scaleGrp, self.cont_IK_OFF]
         self.anchors = [(self.cont_IK_hand, "parent", 1, None), (self.cont_Pole, "parent", 1, None)]
@@ -1190,11 +1188,11 @@ class Guides(object):
         _ = [functions.set_joint_side(jnt, self.side) for jnt in self.guideJoints]
 
         root_jnt = self.guideJoints[0]
-        functions.create_global_joint_attrs(root_jnt, moduleName="%s_Arm" % self.side, upAxis=self.upVector,
+        attribute.create_global_joint_attrs(root_jnt, moduleName="%s_Arm" % self.side, upAxis=self.upVector,
                                             mirrorAxis=self.mirrorVector, lookAxis=self.lookVector)
 
         for attr_dict in LIMB_DATA["properties"]:
-            functions.create_attribute(root_jnt, attr_dict)
+            attribute.create_attribute(root_jnt, attr_dict)
 
     def createGuides(self):
         """Main Function to create Guides"""

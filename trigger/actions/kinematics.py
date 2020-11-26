@@ -2,7 +2,9 @@
 import os
 from maya import cmds
 from trigger.core import logger
-import trigger.library.functions as functions
+from trigger.library import functions
+from trigger.library import attribute
+from trigger.library import api
 import trigger.library.controllers as ic
 
 from trigger.base import session
@@ -198,7 +200,7 @@ class Kinematics(settings.Settings):
         for brother_roots in finger_match_list:
             # finger_name, finger_type, finger_side = extra.identifyMaster(brother_roots[0], self.module_dict)
             finger_parent = functions.getParent(brother_roots[0])
-            offsetVector = functions.getBetweenVector(finger_parent, brother_roots)
+            offsetVector = api.getBetweenVector(finger_parent, brother_roots)
             iconSize = functions.getDistance(brother_roots[0], brother_roots[-1])
             translateOff = (iconSize / 2, 0, iconSize / 2)
             rotateOff = (0, 0, 0)
@@ -432,11 +434,11 @@ class Kinematics(settings.Settings):
                 ## get the holder group
                 self.rootGroup = functions.getParent(master_cont)
                 ## Create the holder group if it does not exist
-                scaleGrpPiv = functions.getWorldTranslation(limb.limbPlug)
+                scaleGrpPiv = api.getWorldTranslation(limb.limbPlug)
                 cmds.xform(limb.scaleGrp, piv=scaleGrpPiv, ws=True)
                 ## pass the attributes
 
-                functions.attrPass(limb.scaleGrp, master_cont, values=True, daisyChain=True, overrideEx=False)
+                attribute.attrPass(limb.scaleGrp, master_cont, values=True, daisyChain=True, overrideEx=False)
                 cmds.parent(limb.limbGrp, self.rootGroup)
                 for sCon in limb.scaleConstraints:
                     cmds.scaleConstraint(master_cont, sCon)
@@ -461,11 +463,11 @@ class Kinematics(settings.Settings):
                     cmds.parent(limb.limbPlug, parentSocket)
 
                 ## Good parenting / scale connections
-                scaleGrpPiv = functions.getWorldTranslation(limb.limbPlug)
+                scaleGrpPiv = api.getWorldTranslation(limb.limbPlug)
                 cmds.xform(limb.scaleGrp, piv=scaleGrpPiv, ws=True)
                 ## pass the attributes
 
-                functions.attrPass(limb.scaleGrp, "pref_cont", values=True, daisyChain=True, overrideEx=False)
+                attribute.attrPass(limb.scaleGrp, "pref_cont", values=True, daisyChain=True, overrideEx=False)
                 cmds.parent(limb.limbGrp, "trigger_grp")
                 # for sCon in limb.scaleConstraints:
                 #     cmds.scaleConstraint(self.cont_master, sCon)

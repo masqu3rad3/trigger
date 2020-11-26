@@ -2,6 +2,8 @@ from maya import cmds
 import maya.api.OpenMaya as om
 
 from trigger.library import functions
+from trigger.library import attribute
+from trigger.library import api
 from trigger.library import controllers as ic
 from trigger.library import twist_spline as twistSpline
 from trigger.core import logger
@@ -73,9 +75,9 @@ class Head(object):
         self.headDist = functions.getDistance(self.headStart, self.headEnd)
 
         # get positions
-        self.root_pos = functions.getWorldTranslation(self.neckNodes[0])
-        self.headPivPos = functions.getWorldTranslation(self.headStart)
-        self.headEndPivPos = functions.getWorldTranslation(self.headEnd)
+        self.root_pos = api.getWorldTranslation(self.neckNodes[0])
+        self.headPivPos = api.getWorldTranslation(self.headStart)
+        self.headEndPivPos = api.getWorldTranslation(self.headEnd)
 
         # initialize coordinates
         self.up_axis, self.mirror_axis, self.look_axis = functions.getRigAxes(self.neckNodes[0])
@@ -131,7 +133,7 @@ class Head(object):
 
         ## Create temporaray Guide Joints
         cmds.select(d=True)
-        self.guideJoints = [cmds.joint(name="jTemp_%s" %i, p=functions.getWorldTranslation(i)) for i in self.neckNodes]
+        self.guideJoints = [cmds.joint(name="jTemp_%s" %i, p=api.getWorldTranslation(i)) for i in self.neckNodes]
         self.guideJoints.append(cmds.joint(name="jTemp_Head", p=self.headPivPos))
         self.guideJoints.append(cmds.joint(name="jTemp_HeadEnd", p=self.headEndPivPos))
         ## orientations
@@ -201,12 +203,12 @@ class Head(object):
         # # Connect neck end to the head controller
         cmds.parentConstraint(self.cont_head, neckSpline.contCurve_End, mo=True)
         # # pass Stretch controls from the splineIK to neck controller
-        functions.attrPass(neckSpline.attPassCont, self.cont_neck)
+        attribute.attrPass(neckSpline.attPassCont, self.cont_neck)
 
         # # Connect the scale to the scaleGrp
         cmds.connectAttr("%s.scale" % self.scaleGrp, "%s.scale" % neckSpline.scaleGrp)
         # bring out contents.
-        functions.attrPass(neckSpline.scaleGrp, self.scaleGrp, attributes=["sx", "sy", "sz"], keepSourceAttributes=True)
+        attribute.attrPass(neckSpline.scaleGrp, self.scaleGrp, attributes=["sx", "sy", "sz"], keepSourceAttributes=True)
         cmds.disconnectAttr(cmds.listConnections(neckSpline.scaleGrp, p=True)[0], "%s.scale" % neckSpline.scaleGrp)
 
         # create spline IK for Head squash
@@ -227,12 +229,12 @@ class Head(object):
             functions.alignToAlter(self.cont_headSquash, headSpline.contCurve_End, mode=2)
             # TODO // FIX HERE
             cmds.parentConstraint(self.cont_headSquash, headSpline.contCurve_End, mo=True)
-            functions.attrPass(headSpline.attPassCont, self.cont_headSquash)
+            attribute.attrPass(headSpline.attPassCont, self.cont_headSquash)
 
             # # Connect the scale to the scaleGrp
             cmds.connectAttr("%s.scale" % self.scaleGrp, "%s.scale" % headSpline.scaleGrp)
             # bring out contents.
-            functions.attrPass(headSpline.scaleGrp, self.scaleGrp, attributes=["sx", "sy", "sz"], keepSourceAttributes=True)
+            attribute.attrPass(headSpline.scaleGrp, self.scaleGrp, attributes=["sx", "sy", "sz"], keepSourceAttributes=True)
             cmds.disconnectAttr(cmds.listConnections(headSpline.scaleGrp, p=True)[0], "%s.scale" % headSpline.scaleGrp)
             self.deformerJoints.extend(headSpline.defJoints)
         else:
@@ -285,10 +287,8 @@ class Head(object):
             cmds.parent(headSpline.nonScaleGrp, self.nonScaleGrp)
 
         cmds.parent(neckSpline.nonScaleGrp, self.nonScaleGrp)
-        # map(lambda x: cmds.connectAttr("%s.contVis" % self.scaleGrp, "%s.v" % x), midControls)
-        functions.drive_attrs("%s.contVis" % self.scaleGrp, ["%s.v" % x for x in midControls])
-        # map(lambda x: cmds.connectAttr("%s.jointVis" % self.scaleGrp, "%s.v" % x), self.deformerJoints)
-        functions.drive_attrs("%s.jointVis" % self.scaleGrp, ["%s.v" % x for x in self.deformerJoints])
+        attribute.drive_attrs("%s.contVis" % self.scaleGrp, ["%s.v" % x for x in midControls])
+        attribute.drive_attrs("%s.jointVis" % self.scaleGrp, ["%s.v" % x for x in self.deformerJoints])
 
         if self.stretchyHead:
             cmds.connectAttr("%s.rigVis" % self.scaleGrp,"%s.v" % headSpline.contCurves_ORE[0], force=True)
@@ -299,12 +299,10 @@ class Head(object):
 
         if self.stretchyHead:
             for lst in headSpline.noTouchData:
-                # map(lambda x: cmds.connectAttr("%s.rigVis" % self.scaleGrp, "%s.v" % x, force=True), lst)
-                functions.drive_attrs("%s.rigVis" % self.scaleGrp, ["%s.v" % x for x in lst])
+                attribute.drive_attrs("%s.rigVis" % self.scaleGrp, ["%s.v" % x for x in lst])
 
         for lst in neckSpline.noTouchData:
-            # map(lambda x: cmds.connectAttr("%s.rigVis" % self.scaleGrp, "%s.v" % x, force=True), lst)
-            functions.drive_attrs("%s.rigVis" % self.scaleGrp, ["%s.v" % x for x in lst])
+            attribute.drive_attrs("%s.rigVis" % self.scaleGrp, ["%s.v" % x for x in lst])
 
         functions.colorize(self.deformerJoints, self.colorCodes[0], shape=False)
 
@@ -386,11 +384,11 @@ class Guides(object):
 
         # ----------Mandatory---------[Start]
         root_jnt = self.guideJoints[0]
-        functions.create_global_joint_attrs(root_jnt, moduleName="Head", upAxis=self.upVector, mirrorAxis=self.mirrorVector, lookAxis=self.lookVector)
+        attribute.create_global_joint_attrs(root_jnt, moduleName="Head", upAxis=self.upVector, mirrorAxis=self.mirrorVector, lookAxis=self.lookVector)
         # ----------Mandatory---------[End]
 
         for attr_dict in LIMB_DATA["properties"]:
-            functions.create_attribute(root_jnt, attr_dict)
+            attribute.create_attribute(root_jnt, attr_dict)
 
     def createGuides(self):
         self.draw_joints()

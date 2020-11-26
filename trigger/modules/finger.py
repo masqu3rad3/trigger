@@ -2,6 +2,8 @@ from maya import cmds
 import maya.api.OpenMaya as om
 
 from trigger.library import functions
+from trigger.library import attribute
+from trigger.library import api
 from trigger.library import controllers as ic
 from trigger.core import logger
 FEEDBACK = logger.Logger(__name__)
@@ -106,7 +108,7 @@ class Finger(object):
 
         cmds.select(d=True)
 
-        self.limbPlug = cmds.joint(name="limbPlug_%s" % self.suffix, p=functions.getWorldTranslation(self.inits[0]), radius=2)
+        self.limbPlug = cmds.joint(name="limbPlug_%s" % self.suffix, p=api.getWorldTranslation(self.inits[0]), radius=2)
 
         for guide in self.inits:
             jnt = cmds.joint(name="jDef_{0}_{1}".format(self.suffix, self.inits.index(guide)), radius=1.0)
@@ -130,7 +132,7 @@ class Finger(object):
 
         cmds.parentConstraint(self.limbPlug, self.scaleGrp)
         # map(lambda x: cmds.connectAttr("{0}.jointVis".format(self.scaleGrp), "{0}.v".format(x)), self.deformerJoints)
-        functions.drive_attrs("%s.jointVis" % self.scaleGrp, ["%s.v" % x for x in self.deformerJoints])
+        attribute.drive_attrs("%s.jointVis" % self.scaleGrp, ["%s.v" % x for x in self.deformerJoints])
 
         functions.colorize(self.deformerJoints, self.colorCodes[0], shape=False)
 
@@ -171,7 +173,7 @@ class Finger(object):
         cmds.parent(self.conts_OFF[0], self.scaleGrp)
 
         # map(lambda x: cmds.connectAttr("%s.contVis" % self.scaleGrp, "%s.v" % x[0]), self.conts_OFF)
-        functions.drive_attrs("%s.contVis" % self.scaleGrp, ["%s.v" % x[0] for x in self.conts_OFF])
+        attribute.drive_attrs("%s.contVis" % self.scaleGrp, ["%s.v" % x[0] for x in self.conts_OFF])
 
         functions.colorize(contList, self.colorCodes[0])
 
@@ -381,11 +383,11 @@ class Guides(object):
 
         # ----------Mandatory---------[Start]
         root_jnt = self.guideJoints[0]
-        functions.create_global_joint_attrs(root_jnt, moduleName="%s_Finger" % self.side, upAxis=self.upVector, mirrorAxis=self.mirrorVector, lookAxis=self.lookVector)
+        attribute.create_global_joint_attrs(root_jnt, moduleName="%s_Finger" % self.side, upAxis=self.upVector, mirrorAxis=self.mirrorVector, lookAxis=self.lookVector)
         # ----------Mandatory---------[End]
 
         for attr_dict in LIMB_DATA["properties"]:
-            functions.create_attribute(root_jnt, attr_dict)
+            attribute.create_attribute(root_jnt, attr_dict)
 
     def createGuides(self):
         self.draw_joints()

@@ -2,6 +2,8 @@ from maya import cmds
 import maya.api.OpenMaya as om
 
 from trigger.library import functions
+from trigger.library import attribute
+from trigger.library import api
 from trigger.library import controllers as ic
 # from trigger.library import ribbon as rc
 # from trigger.library import twist_spline as twistSpline
@@ -67,7 +69,7 @@ class Tentacle(object):
 
         # get positions
 
-        self.rootPos = functions.getWorldTranslation(self.inits[0])
+        self.rootPos = api.getWorldTranslation(self.inits[0])
 
         # initialize coordinates
         self.up_axis, self.mirror_axis, self.look_axis = functions.getRigAxes(self.inits[0])
@@ -151,7 +153,7 @@ class Tentacle(object):
 
         ## Create temporaray Guide Joints
         cmds.select(d=True)
-        self.guideJoints = [cmds.joint(p=functions.getWorldTranslation(i)) for i in self.inits]
+        self.guideJoints = [cmds.joint(p=api.getWorldTranslation(i)) for i in self.inits]
         # orientations
         if not self.useRefOrientation:
             functions.orientJoints(self.guideJoints, worldUpAxis=(self.up_axis), upAxis=(0, 1, 0), reverseAim=self.sideMult,
@@ -167,8 +169,7 @@ class Tentacle(object):
         cmds.parent(self.contJointsList, self.scaleGrp)
         cmds.parent(self.wrapScaleJoint, self.scaleGrp)
 
-        # map(lambda x: cmds.connectAttr("%s.rigVis" % self.scaleGrp, "%s.v" % x), self.contJointsList)
-        functions.drive_attrs("%s.rigVis" % self.scaleGrp, ["%s.v" % x for x in self.contJointsList])
+        attribute.drive_attrs("%s.rigVis" % self.scaleGrp, ["%s.v" % x for x in self.contJointsList])
 
         cmds.connectAttr("%s.rigVis" % self.scaleGrp, "%s.v" % self.wrapScaleJoint)
 
@@ -273,10 +274,8 @@ class Tentacle(object):
         functions.colorize(self.contTwk_List, self.colorCodes[0])
         functions.colorize(self.cont_special, self.colorCodes[0])
 
-        # map(lambda x: cmds.connectAttr("%s.contVis" % self.scaleGrp, "%s.v" % x), self.contTwk_List)
-        functions.drive_attrs("%s.contVis" % self.scaleGrp, ["%s.v" % x for x in self.contTwk_List])
-        # map(lambda x: cmds.connectAttr("%s.contVis" % self.scaleGrp, "%s.v" % x), self.contFK_List)
-        functions.drive_attrs("%s.contVis" % self.scaleGrp, ["%s.v" % x for x in self.contFK_List])
+        attribute.drive_attrs("%s.contVis" % self.scaleGrp, ["%s.v" % x for x in self.contTwk_List])
+        attribute.drive_attrs("%s.contVis" % self.scaleGrp, ["%s.v" % x for x in self.contFK_List])
 
     def createRoots(self):
         pass
@@ -315,7 +314,7 @@ class Tentacle(object):
             cmds.setAttr("%s.parameterV" % follicle, 0.5)
             cmds.setAttr("%s.parameterU" % follicle,
                          ((1 / self.jointRes) + (i / self.jointRes) - ((1 / self.jointRes) / 2)))
-            functions.lockAndHide(follicle_transform, ["tx", "ty", "tz", "rx", "ry", "rz"], hide=False)
+            attribute.lockAndHide(follicle_transform, ["tx", "ty", "tz", "rx", "ry", "rz"], hide=False)
             follicleList.append(follicle)
 
             defJ = cmds.joint(name="%s_%i_jDef" % (self.suffix, i))
@@ -339,7 +338,7 @@ class Tentacle(object):
             cmds.setAttr("%s.parameterV" % s_follicle, 0.0)
             cmds.setAttr("%s.parameterU" % s_follicle,
                          ((1 / self.jointRes) + (index / self.jointRes) - ((1 / self.jointRes) / 2)))
-            functions.lockAndHide(s_follicle_transform, ["tx", "ty", "tz", "rx", "ry", "rz"], hide=False)
+            attribute.lockAndHide(s_follicle_transform, ["tx", "ty", "tz", "rx", "ry", "rz"], hide=False)
             follicle_sca_list.append(s_follicle)
             cmds.parent(s_follicle_transform, self.nonScaleGrp)
             # create distance node
@@ -495,12 +494,9 @@ class Tentacle(object):
         cmds.parent(npJdefHolder, self.scaleGrp)
 
         nodesRigVis = [npBase, npJdefHolder, npDeformers, sineLoc, twistLoc, curlLoc]
-        # map(lambda x: cmds.connectAttr("%s.rigVis" % self.scaleGrp, "%s.v" % x), nodesRigVis)
-        functions.drive_attrs("%s.rigVis" % self.scaleGrp, ["%s.v" % x for x in nodesRigVis])
-        # map(lambda x: cmds.connectAttr("%s.rigVis" % self.scaleGrp, "%s.v" % x), follicle_sca_list)
-        functions.drive_attrs("%s.rigVis" % self.scaleGrp, ["%s.v" % x for x in follicle_sca_list])
-        # map(lambda x: cmds.connectAttr("%s.rigVis" % self.scaleGrp, "%s.v" % x), follicleList)
-        functions.drive_attrs("%s.rigVis" % self.scaleGrp, ["%s.v" % x for x in follicleList])
+        attribute.drive_attrs("%s.rigVis" % self.scaleGrp, ["%s.v" % x for x in nodesRigVis])
+        attribute.drive_attrs("%s.rigVis" % self.scaleGrp, ["%s.v" % x for x in follicle_sca_list])
+        attribute.drive_attrs("%s.rigVis" % self.scaleGrp, ["%s.v" % x for x in follicleList])
 
         functions.colorize(self.deformerJoints, self.colorCodes[0], shape=False)
 
@@ -523,8 +519,7 @@ class Tentacle(object):
         cmds.parentConstraint(self.limbPlug, self.scaleGrp, mo=False)
         cmds.setAttr("%s.rigVis" % self.scaleGrp, 0)
 
-        # map(lambda x: extra.lockAndHide(x, ["sx", "sy", "sz"]), self.contFK_List)
-        _ = [functions.lockAndHide(x, ["sx", "sy", "sz"]) for x in self.contFK_List]
+        _ = [attribute.lockAndHide(x, ["sx", "sy", "sz"]) for x in self.contFK_List]
         self.scaleConstraints = [self.scaleGrp]
 
         cmds.delete(self.guideJoints)
@@ -665,12 +660,12 @@ class Guides(object):
 
         # ----------Mandatory---------[Start]
         root_jnt = self.guideJoints[0]
-        functions.create_global_joint_attrs(root_jnt, moduleName="%s_Tentacle" % self.side, upAxis=self.upVector, mirrorAxis=self.mirrorVector,
+        attribute.create_global_joint_attrs(root_jnt, moduleName="%s_Tentacle" % self.side, upAxis=self.upVector, mirrorAxis=self.mirrorVector,
                                             lookAxis=self.lookVector)
         # ----------Mandatory---------[End]
 
         for attr_dict in LIMB_DATA["properties"]:
-            functions.create_attribute(root_jnt, attr_dict)
+            attribute.create_attribute(root_jnt, attr_dict)
 
     def createGuides(self):
         self.draw_joints()

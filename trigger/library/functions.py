@@ -1,5 +1,6 @@
 import sys
 from maya import cmds
+from trigger.library import api
 # import maya.OpenMaya as om
 # USING MAYA API 2.0
 import maya.api.OpenMaya as om
@@ -49,22 +50,10 @@ AXIS_CONVERSION_DICT = {
 
 }
 
-def getMDagPath(node):
-    """Returns the API 2.0 dagPath of given Node"""
-    selList = om.MSelectionList()
-    selList.add(node)
-    return selList.getDagPath(0)
-
-def getWorldTranslation(node):
-    """Returns given nodes world translation of rotate pivot"""
-    targetMTransform = om.MFnTransform(getMDagPath(node))
-    targetRotatePivot = om.MVector(targetMTransform.rotatePivot(om.MSpace.kWorld))
-    return targetRotatePivot
-
 def getDistance(node1, node2):
     """Returns the distance between two nodes"""
-    Ax, Ay, Az = getWorldTranslation(node1)
-    Bx, By, Bz = getWorldTranslation(node2)
+    Ax, Ay, Az = api.getWorldTranslation(node1)
+    Bx, By, Bz = api.getWorldTranslation(node2)
     return ((Ax-Bx)**2 + (Ay-By)**2 + (Az-Bz)**2)**0.5
 
 def alignTo(node, target, position=True, rotation=False):
@@ -82,8 +71,8 @@ def alignTo(node, target, position=True, rotation=False):
 
     """
 
-    nodeMTransform = om.MFnTransform(getMDagPath(node))
-    targetMTransform = om.MFnTransform(getMDagPath(target))
+    nodeMTransform = om.MFnTransform(api.getMDagPath(node))
+    targetMTransform = om.MFnTransform(api.getMDagPath(target))
     if position:
         targetRotatePivot = om.MVector(targetMTransform.rotatePivot(om.MSpace.kWorld))
         nodeMTransform.setTranslation(targetRotatePivot, om.MSpace.kWorld)
@@ -190,25 +179,6 @@ def alignBetween (node, targetA, targetB, position=True, aim_b=True, orientation
         cmds.delete(cmds.aimConstraint(targetB,node, mo=False, o=o))
     if orientation:
         cmds.delete(cmds.orientConstraint(targetA, targetB, node, mo=False, o=o))
-
-def getBetweenVector(node, targetPointNodeList):
-    """
-    Gets the between vector between the source node and target node list
-    Args:
-        node: (String) source node
-        targetPointNodeList: (List) Target nodes
-
-    Returns: MVector
-
-    """
-    nodePos = getWorldTranslation(node)
-    sumVectors = om.MVector(0,0,0)
-    for point in targetPointNodeList:
-        pVector = getWorldTranslation(point)
-        addVector = om.MVector(om.MVector(nodePos)-om.MVector(pVector)).normal()
-        sumVectors += addVector
-    return sumVectors.normal()
-
 
 def createUpGrp(node, suffix, freezeTransform=True):
     """
@@ -358,17 +328,9 @@ def colorize (node_list, index, customColor=None, shape=True):
         else:
             FEEDBACK.throw_error("Colorize error... Index flag must be integer or string('L', 'R', 'C')")
             return
-        #shape=node.getShape()
         if shape:
             shapes=cmds.listRelatives(node, s=True)
             node_list = [] if shapes == None else shapes
-            # for shape in shapes:
-            #     cmds.setAttr("{0}.overrideEnabled".format(shape), True)
-            #     cmds.setAttr("{0}.overrideColor".format(shape), index)
-        # else:
-        #     for shape in node_list:
-        #         cmds.setAttr("{0}.overrideEnabled".format(shape), True)
-        #         cmds.setAttr("{0}.overrideColor".format(shape), index)
 
         if not customColor:
             for node in node_list:
@@ -380,258 +342,6 @@ def colorize (node_list, index, customColor=None, shape=True):
             for node in node_list:
                 cmds.setAttr("%s.overrideRGBColors" % node, 1)
                 cmds.setAttr("%s.overrideColorRGB" % node, *customColor)
-
-def lockAndHide (node, channelArray=None, hide=True):
-    """
-    Locks and hides the channels specified in the channelArray.
-    Args:
-        node: (String) target object
-        channelArray: (List) the channels as string values. eg: ["sx", "sy", "sz"] or ["translateX", "rotateX", "sz"]
-        hide: (Bool) if false, the attributes will be only locked but not hidden. Defaulf True
-    Returns: None
-
-    """
-    channelArray = ["tx", "ty", "tz", "rx", "ry", "rz", "sx", "sy", "sz", "v"] if not channelArray else channelArray
-    for i in channelArray:
-        attribute=("%s.%s" %(node, i))
-        cmds.setAttr(attribute, lock=True, keyable=not hide, channelBox=not hide)
-
-def attrPass (sourceNode, targetNode, attributes=[], inConnections=True, outConnections=True, keepSourceAttributes=False, values=True, daisyChain=False, overrideEx=False):
-    """
-    Copies the attributes from source node to the target node.
-    Args:
-        sourceNode: (Unicode) Source Object which the attributes will be copied from
-        targetNode: (Unicode) Target Object which the attributes will be copied onto.
-        attributes: (List of Strings) Optional. If left blank, all user defined custom attributes will be copied. Accepts String list.
-        inConnections: (Bool) whether the incoming connections will be copied or not. Default is True. daisyChain overrides this argument.
-        outConnections: (Bool) whether the incoming connections will be copied or not. Default is True. If True, the present out connections of source object will be lost.
-        keepSourceAttributes: (Bool) If False the copied attributes will be deleted from the source node. Default is False
-        values: (Bool) If True the values of the attributes will be copied as well
-        daisyChain: (Bool) If true, instead of copyAttr command, it connects the source attributes to the target attributes. Non-destructive. Overrides inConnections and outConnections.
-        overrideExisting: (Bool) When this flas set to True, if an Attribute on the target node with the same name exists, it gets deleted and created again to ensure it has the same properties.
-    Returns: None
-
-    """
-
-    # get the user defined attributes:
-    if len(attributes)==0:
-        userAttr = cmds.listAttr(sourceNode, ud=True)
-    else:
-        userAttr = attributes
-
-    if not userAttr:
-        return
-
-    for attr in userAttr:
-        flagBuildList=[]
-        atType = cmds.getAttr("%s.%s" % (sourceNode,attr), type=True)
-        atTypeFlag = "at='%s'" % (str(atType))
-        flagBuildList.append(atTypeFlag)
-
-        if cmds.attributeQuery(attr, node=sourceNode, enum=True)==True:
-            enumList=cmds.attributeQuery(attr, node=sourceNode, listEnum=True)
-            enumListFlag="en='%s'" % str(enumList[0])
-            flagBuildList.append(enumListFlag)
-
-        hiddenState = cmds.attributeQuery(attr, node=sourceNode, hidden=True)
-        hiddenStateFlag = "h=%s" % (str(hiddenState))
-        flagBuildList.append(hiddenStateFlag)
-
-        keyableState = cmds.attributeQuery(attr, node=sourceNode, keyable=True)
-        keyableStateFlag = "k=%s" % (str(keyableState))
-        flagBuildList.append(keyableStateFlag)
-
-        longName = cmds.attributeQuery(attr, node=sourceNode, longName=True)
-        longNameFlag = "ln='%s'" % str(longName)
-        flagBuildList.append(longNameFlag)
-
-        if cmds.attributeQuery(attr, node=sourceNode, maxExists=True) == True:
-            hardMax=cmds.attributeQuery(attr, node=sourceNode, maximum =True)
-            hardMaxFlag = "max=%s" % (str(hardMax[0]))
-            flagBuildList.append(hardMaxFlag)
-
-        if cmds.attributeQuery(attr, node=sourceNode, minExists=True) == True:
-            hardMin = cmds.attributeQuery(attr, node=sourceNode, minimum=True)
-            hardMinFlag = "min=%s" % (str(hardMin[0]))
-            flagBuildList.append(hardMinFlag)
-
-        readState = cmds.attributeQuery(attr, node=sourceNode, readable=True)
-        readStateFlag = "r=%s" % (readState)
-        flagBuildList.append(readStateFlag)
-
-        shortName = cmds.attributeQuery(attr, node=sourceNode, shortName=True)
-        shortNameFlag = "sn='%s'" % str(shortName)
-        flagBuildList.append(shortNameFlag)
-
-        if cmds.attributeQuery(attr, node=sourceNode, softMaxExists=True) == True:
-            softMax = cmds.attributeQuery(attr, node=sourceNode, softMax =True)
-            softMaxFlag = "smx=%s" % (str(softMax[0]))
-            flagBuildList.append(softMaxFlag)
-
-        if cmds.attributeQuery(attr, node=sourceNode, softMinExists=True) == True:
-            softMin = cmds.attributeQuery(attr, node=sourceNode, softMin =True)
-            softMinFlag = "smn=%s" % (str(softMin[0]))
-            flagBuildList.append(softMinFlag)
-
-        writeState = cmds.attributeQuery(attr, node=sourceNode, writable=True)
-        writeStateFlag = "w=%s" % (writeState)
-        flagBuildList.append(writeStateFlag)
-
-
-        # parse the flagBuildList into single string
-        addAttribute = "cmds.addAttr('%s', " % (targetNode)
-        for i in range (0,len(flagBuildList)):
-
-            # addAttribute+=flagBuildList[i]
-            addAttribute = "%s%s" % (addAttribute, flagBuildList[i])
-            if i < len(flagBuildList)-1:
-                addAttribute = "%s, " % addAttribute
-            else:
-                addAttribute = "%s)" % addAttribute
-
-
-        # if an attribute with the same name exists
-        if cmds.attributeQuery(attr, node=targetNode, exists=True):
-            if overrideEx:
-                cmds.deleteAttr("%s.%s" % (targetNode, attr))
-                exec (addAttribute)
-            else:
-                continue
-        else:
-            exec(addAttribute)
-
-    if daisyChain==True:
-        # create connections between old and new attributes
-        for i in range (0, len(userAttr)):
-            if values==True:
-                # get value
-                value = cmds.getAttr("%s.%s" % (sourceNode, userAttr[i]))
-                # set Value
-                cmds.setAttr("%s.%s" % (targetNode, userAttr[i]), value)
-            cmds.connectAttr("{0}.{1}".format(targetNode, userAttr[i]), "{0}.{1}".format(sourceNode, userAttr[i]))
-            # pm.PyNode("%s.%s" % (targetNode, userAttr[i])) >> pm.PyNode("%s.%s" % (sourceNode, userAttr[i]))
-    else:
-        cmds.copyAttr(sourceNode, targetNode, inConnections=inConnections, outConnections=outConnections, values=values, attribute=userAttr)
-        if keepSourceAttributes==False:
-            for i in userAttr:
-                cmds.deleteAttr("%s.%s" % (sourceNode,i))
-
-def create_global_joint_attrs(joint, moduleName=None, upAxis=None, mirrorAxis=None, lookAxis=None):
-    """
-    Creates Trigger specific global attrubutes.
-
-    Args:
-        joint: (String) Targer Joint
-        moduleName: (String) Optional. Name of the module name. If none given, joint name will be used instead
-        upAxis: (Tuple) Overrides default upAxis Values for Trigger
-        mirrorAxis: (Tuple) Overrides default mirrorAxis Values for Trigger
-        lookAxis: (Tuple) Overrides default lookAxis Values for Trigger
-
-    Returns:
-
-    """
-    moduleName = joint if not moduleName else moduleName
-    if not cmds.attributeQuery("moduleName", node=joint, exists=True):
-        cmds.addAttr(joint, longName="moduleName", dataType="string", k=False)
-        cmds.setAttr("%s.%s" % (joint, "moduleName"), moduleName, type="string")
-
-    axis_attrs = ["upAxis", "mirrorAxis", "lookAxis"]
-    for attr in axis_attrs:
-        if not cmds.attributeQuery(attr, node=joint, exists=True):
-            cmds.addAttr(joint, ln=attr, at="float3")
-            cmds.addAttr(joint, ln="%sX" % attr, at="float", parent=attr)
-            cmds.addAttr(joint, ln="%sY" % attr, at="float", parent=attr)
-            cmds.addAttr(joint, ln="%sZ" % attr, at="float", parent=attr)
-    if upAxis:
-        _ = [cmds.setAttr("%s.upAxis%s" % (joint, axis), upAxis[nmb]) for nmb, axis in enumerate("XYZ")]
-    if mirrorAxis:
-        _ = [cmds.setAttr("%s.mirrorAxis%s" % (joint, axis), mirrorAxis[nmb]) for nmb, axis in enumerate("XYZ")]
-    if lookAxis:
-        _ = [cmds.setAttr("%s.lookAxis%s" % (joint, axis), lookAxis[nmb]) for nmb, axis in enumerate("XYZ")]
-
-    if not cmds.attributeQuery("useRefOri", node=joint, exists=True):
-        cmds.addAttr(joint, longName="useRefOri", niceName="Inherit_Orientation", at="bool", keyable=True)
-    cmds.setAttr("{0}.useRefOri".format(joint), True)
-
-@undo
-def create_attribute(node, property_dict=None, keyable=True, display=True, *args, **kwargs):
-    """
-    Create attribute with the properties defined by the property_dict
-    Args:
-        node: (String) Node to create attribute on
-        property_dict: (Dictionary) This holds the necessary information for the attribute:
-                {<nice_name>: (Optional) nice name for the attribute,
-                 <attr_name>: name of the attribute,
-                 <attr_type>: Valid types are "long", "short", "bool", "enum", "float", "double", "string"
-                 <enum_list>: Must be a single string (hence the name) Eg. "option1:option2:option3"
-                            Required if the attr_type is "enum".
-                 <default_value>: (Optional) Can be float, integer, string or bool depending on the attr_type.
-                            If not provided it is 0, "", or False depending on the attr_type
-                 <min_value>:  (Optional) Float or Integer. Default is -99999
-                 <max_value>:  (Optional) Float or Integer. Default is 99999
-
-                 For easier use, each these elements can be entered as kwargs.
-
-        keyable: (bool) Makes the attribute keyable and visible in the channelbox
-        display: (bool) Makes the attr displayable in the cb
-
-    Returns:
-
-    """
-
-    if not property_dict:
-        property_dict = {key: value for key, value in kwargs.items()}
-
-    supported_attrs = ["long", "short", "bool", "enum", "float", "double", "string"]
-    attr_name = property_dict.get("attr_name")
-
-    if not attr_name:
-        FEEDBACK.throw_error("The attribute dictionary does not have 'attr_name' value")
-    nice_name = property_dict.get("nice_name") if property_dict.get("nice_name") else attr_name
-    attr_type = property_dict.get("attr_type")
-    if not attr_type:
-        FEEDBACK.throw_error("The attribute dictionary does not have 'attr_type' value")
-    if attr_type not in supported_attrs:
-        FEEDBACK.throw_error("The attribute type (%s) is not supported by this method" % attr_type)
-    # if some attribute with same name exists, quit
-    default_value = property_dict.get("default_value")
-    if cmds.attributeQuery(attr_name, node=node, exists=True):
-        if default_value:
-            if compat.is_string(default_value):
-                cmds.setAttr("%s.%s" % (node, attr_name), default_value, type="string")
-            else:
-                cmds.setAttr("%s.%s" % (node, attr_name), default_value)
-        return
-    if attr_type == "bool":
-        default_value = default_value if default_value else 0
-        cmds.addAttr(node, longName=attr_name, niceName=nice_name, at=attr_type, k=keyable, defaultValue=default_value)
-    elif attr_type == "enum":
-        default_value = default_value if default_value else 0
-        enum_list = property_dict.get("enum_list")
-        if enum_list == None:
-            FEEDBACK.throw_error("Missing 'enum_list'")
-        cmds.addAttr(node, longName=attr_name, niceName=nice_name, at=attr_type, en=enum_list, k=keyable, defaultValue=default_value)
-    elif attr_type == "string":
-        default_value = default_value if default_value else ""
-        cmds.addAttr(node, longName=attr_name, niceName=nice_name, k=keyable, dataType="string")
-        cmds.setAttr("%s.%s" % (node, attr_name), default_value, type="string")
-    else:
-        min_val = property_dict.get("min_value") if property_dict.get("min_value") != None else -99999
-        max_val = property_dict.get("max_value") if property_dict.get("max_value") != None else 99999
-        default_value = default_value if default_value else 0
-        cmds.addAttr(node,
-                     longName=attr_name,
-                     niceName=nice_name,
-                     at=attr_type,
-                     minValue=min_val,
-                     maxValue=max_val,
-                     defaultValue=default_value,
-                     k=keyable,
-                     )
-
-    cmds.setAttr("%s.%s" % (node, attr_name), e=True, cb=display)
-    return "%s.%s" % (node, attr_name)
-
 
 def set_joint_type(joint, type_name):
     """
@@ -799,19 +509,6 @@ def getMirror(node):
     if mirrorNode:
         return mirrorNode
 
-# def getMirror(node):
-#     # find the mirror of the oldController
-#     if "_LEFT_" in node:
-#         mirrorNode = node.replace("_LEFT_", "_RIGHT_")
-#
-#     elif "_RIGHT_" in node:
-#         mirrorNode = node.replace("_RIGHT_", "_LEFT_")
-#     else:
-#         mirrorNode = None
-#         cmds.warning("Cannot find the mirror controller")
-#     if mirrorNode:
-#         return mirrorNode
-
 def alignNormal(node, normalVector):
     """
     Aligns the object according to the given normal vector
@@ -845,9 +542,6 @@ def orientJoints(jointList, aimAxis=(1.0,0.0,0.0), upAxis=(0.0,1.0,0.0), worldUp
     Returns:
 
     """
-    # aimAxis = om.MVector(aimAxis) if reverseAim else (-1*om.MVector(aimAxis))
-    # upAxis = om.MVector(upAxis) if reverseUp else (-1*om.MVector(reverseUp))
-
 
     aimAxis = reverseAim*om.MVector(aimAxis)
     upAxis = reverseUp*om.MVector(upAxis)
@@ -893,187 +587,6 @@ def getMeshes(node):
     """Gets only the mesh transform nodes under a group"""
     all_mesh_shapes = cmds.listRelatives(node, ad=True, children=True, type="mesh")
     return uniqueList([getParent(mesh) for mesh in all_mesh_shapes])
-
-def getNextIndex(attr, startFrom=0):
-    """Returns the next free index from a multi index attribute"""
-    return mel.eval("getNextFreeMultiIndex %s %s" % (attr, startFrom))
-
-def matrixConstraint(parent, child, mo=True, prefix="", sr=None, st=None, ss=None, source_parent_cutoff=None):
-    """
-    Creates a Matrix Constraint
-    Args:
-        parent: (String) Parent Node
-        child: (String) Child Node
-        mo: (Bool) Maintain offset. If True, the existing distance between nodes will be preserved
-        prefix: (String) Prefix for the nodes names which will be created
-        sr: (List) Skip Rotations. Listed rotation values will be skipped. "xyz" or ["x", "y", "z"]
-        st: (List) Skip Translation. Listed translation values will be skipped. "xyz" or ["x", "y", "z"]
-        ss: (List) Skip Scale. Listed scale values will be skipped. "xyz" or ["x", "y", "z"]
-        source_parent_cutoff: (String) The transformation matrices above this node won't affect to the child.
-
-    Returns: (Tuple) mult_matrix, decompose_matrix
-
-    """
-
-    child_parent = getParent(child)
-    # if child_parent:
-    #     cmds.parent(child, w=True)
-    next_index = -1
-
-    mult_matrix = cmds.createNode("multMatrix", name="%s_multMatrix" % prefix)
-    decompose_matrix = cmds.createNode("decomposeMatrix", name="%s_decomposeMatrix" % prefix)
-
-    if mo:
-        parentWorldMatrix = getMDagPath(parent).inclusiveMatrix()
-        childWorldMatrix = getMDagPath(child).inclusiveMatrix()
-        localOffset = childWorldMatrix * parentWorldMatrix.inverse()
-        # next_index = getNextIndex("%s.matrixIn" % mult_matrix)
-        next_index += 1
-        cmds.setAttr("%s.matrixIn[%i]" % (mult_matrix, next_index), localOffset, type="matrix")
-
-    # next_index = getNextIndex("%s.matrixIn" % mult_matrix)
-    next_index += 1
-    cmds.connectAttr("%s.worldMatrix[0]" % parent, "%s.matrixIn[%i]" % (mult_matrix, next_index))
-    cmds.connectAttr("%s.matrixSum" % mult_matrix, "%s.inputMatrix" % decompose_matrix)
-
-    if source_parent_cutoff:
-        # next_index = getNextIndex("%s.matrixIn" % mult_matrix)
-        next_index += 1
-        cmds.connectAttr("%s.worldInverseMatrix" % source_parent_cutoff, "%s.matrixIn[%i]" % (mult_matrix, next_index))
-
-
-    if child_parent:
-        child_parentWorldMatrix = getMDagPath(child_parent).inclusiveMatrix().inverse()
-        # childWorldMatrix = getMDagPath(child).inclusiveMatrix()
-        # localOffset = childWorldMatrix * child_parentWorldMatrix.inverse()
-        # next_index = getNextIndex("%s.matrixIn" % mult_matrix)
-        next_index += 1
-        cmds.setAttr("%s.matrixIn[%i]" % (mult_matrix, next_index), child_parentWorldMatrix, type="matrix")
-
-
-    if not st:
-        cmds.connectAttr("%s.outputTranslate" % decompose_matrix, "%s.translate" % child)
-    else:
-        for attr in "XYZ":
-            if attr.lower() not in st and attr.upper() not in st:
-                cmds.connectAttr("%s.outputTranslate%s" % (decompose_matrix, attr), "%s.translate%s" % (child, attr))
-    if not sr:
-        cmds.connectAttr("%s.outputRotate" % decompose_matrix, "%s.rotate" % child)
-    else:
-        for attr in "XYZ":
-            if attr.lower() not in sr and attr.upper() not in sr:
-                cmds.connectAttr("%s.outputRotate%s" % (decompose_matrix, attr), "%s.rotate%s" % (child, attr))
-    if not ss:
-        cmds.connectAttr("%s.outputScale" % decompose_matrix, "%s.scale" % child)
-    else:
-        for attr in "XYZ":
-            if attr.lower() not in ss and attr.upper() not in ss:
-                cmds.connectAttr("%s.outputScale%s" % (decompose_matrix, attr), "%s.scale%s" % (child, attr))
-
-    return mult_matrix, decompose_matrix
-
-
-def drive_attrs(driver_attr, driven_attrs, driver_range=None, driven_range=None, force=True):
-    """
-    Creates a ranged connection between driver and driven attr(s)
-    Args:
-        driver_attr: (String) Driver Attribute. Eg. pPlane.tx
-        driven_attrs: (List or String) Driven attribute or list of driven attributes. "pSphere.sx" or  ["pSphere.sx", "pSphere.sy"]
-        driver_range: (Tuple or List) Optional. Minumum and maximum range of driver. If not provided, there will be a direct connection between driver and driven
-        driven_range: (Tuple or List) Optional. Minumum and maximum range of driven. If not provided, there will be a direct connection between driver and driven
-        force: (Bool) If true, any existing connections on driven will be overriden.
-
-    Returns:
-
-    """
-    if type(driven_attrs) != list:
-        driven_attrs = [driven_attrs]
-    if not driver_range or not driven_range:
-        # direct connect
-        for driven in driven_attrs:
-            cmds.connectAttr(driver_attr, driven, force=force)
-        return
-    if driver_range == driven_range:
-        # also direct connect
-        for driven in driven_attrs:
-            cmds.connectAttr(driver_attr, driven, force=force)
-        return
-
-    # RANGE INPUTS
-    # check if there is a compound attr
-    splits = driver_attr.split(".")
-    driver_node = splits[0]
-    attr_name = ".".join(splits[1:])
-    # driver_node, attr_name = driver_attr.split(".")
-    if len(splits) > 2:
-        driver_attr_children = []
-    else:
-        driver_attr_children = cmds.attributeQuery(attr_name, n=driver_node, listChildren=True)
-    is_driver_compound = True if driver_attr_children else False
-    # if it is eligible use a single set range node
-    if is_driver_compound:
-        if len(driver_attr_children) > 3:
-            cmds.error(
-                "drive_attrs does not support more than 3 channel compounds. Connect channels separetely ==> %s" % driver_attr)
-            return
-        range_node = cmds.createNode("setRange", name="%s_%s_setRange" % (driver_node, attr_name))
-        for ch in "XYZ":
-            cmds.setAttr("%s.oldMin%s" % (range_node, ch), driver_range[0])
-            cmds.setAttr("%s.oldMax%s" % (range_node, ch), driver_range[1])
-            cmds.setAttr("%s.min%s" % (range_node, ch), driven_range[0])
-            cmds.setAttr("%s.max%s" % (range_node, ch), driven_range[1])
-
-        if len(driver_attr_children) == 3:
-            cmds.connectAttr(driver_attr, "%s.value" % range_node, force=force)
-        else:
-            range_node_input_children = cmds.attributeQuery("value", n=range_node, listChildren=True)
-            for nmb, attr in enumerate(driver_attr_children):
-                cmds.connectAttr("%s.%s" % (driver_node, attr), "%s.%s" % (range_node, range_node_input_children[nmb]), force=force)
-    # if single channel
-    else:
-        range_node = cmds.createNode("remapValue", name="%s_%s_setRange" % (driver_node, attr_name))
-        cmds.setAttr("%s.inputMin" % range_node, driver_range[0])
-        cmds.setAttr("%s.inputMax" % range_node, driver_range[1])
-        cmds.setAttr("%s.outputMin" % range_node, driven_range[0])
-        cmds.setAttr("%s.outputMax" % range_node, driven_range[1])
-        cmds.connectAttr(driver_attr, "%s.inputValue" % range_node, force=force)
-
-    # RANGE OUTPUTS
-    for driven in driven_attrs:
-        # check if the attr is compound
-        splits = driven.split(".")
-        driven_node = splits[0]
-        driven_attr_name = ".".join(splits[1:])
-        # driven_node, driven_attr_name = driven.split(".")
-        if len(splits) > 2:
-            driven_attr_children = []
-        else:
-            driven_attr_children = cmds.attributeQuery(driven_attr_name, n=driven_node, listChildren=True)
-        is_driven_compound = True if driven_attr_children else False
-        if is_driven_compound:
-            if len(driven_attr_children) > 3:
-                cmds.error(
-                    "drive_attrs does not support more than 3 channel compounds. Connect channels separetely ==> %s" % driven)
-                return
-            if is_driver_compound:
-                if len(driven_attr_children) == 3:
-                    cmds.connectAttr("%s.outValue" % range_node, driven, force=force)
-                else:
-                    range_node_output_children = cmds.attributeQuery("outValue", n=range_node, listChildren=True)
-                    for nmb in range(len(driven_attr_children)):
-                        cmds.connectAttr("%s.%s" % (range_node, range_node_output_children[nmb]),
-                                         "%s.%s" % (driven_node, driven_attr_children[nmb]), force=force)
-            else:
-                # if the driver is compound but the driven isnt, just connect the first one
-                cmds.connectAttr("%s.outputValueX" % (range_node), driven, force=force)
-        else:
-            # driver is not compound but driven is
-            if is_driven_compound:
-                for attr_name in driven_attr_children:
-                    cmds.connectAttr("%s.outValue" % range_node, "%s.%s" % (driven_node, attr_name), force=force)
-            # nothing is compound
-            else:
-                cmds.connectAttr("%s.outValue" % range_node, driven, force=force)
 
 def deleteObject(keyword, force=True):
     """

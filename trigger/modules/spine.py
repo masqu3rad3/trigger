@@ -2,6 +2,8 @@ from maya import cmds
 import maya.api.OpenMaya as om
 
 from trigger.library import functions
+from trigger.library import attribute
+from trigger.library import api
 from trigger.library import controllers as ic
 from trigger.library import twist_spline as twistSpline
 
@@ -70,8 +72,8 @@ class Spine(object):
         self.iconSize = functions.getDistance(self.inits[0], self.inits[-1])
 
         # get positions
-        self.rootPoint = functions.getWorldTranslation(self.inits[0])
-        self.chestPoint = functions.getWorldTranslation(self.inits[-1])
+        self.rootPoint = api.getWorldTranslation(self.inits[0])
+        self.chestPoint = api.getWorldTranslation(self.inits[-1])
 
         # initialize coordinates
         self.up_axis, self.mirror_axis, self.look_axis = functions.getRigAxes(self.inits[0])
@@ -135,7 +137,7 @@ class Spine(object):
 
         ## Create temporaray Guide Joints
         cmds.select(d=True)
-        self.guideJoints = [cmds.joint(p=functions.getWorldTranslation(i)) for i in self.inits]
+        self.guideJoints = [cmds.joint(p=api.getWorldTranslation(i)) for i in self.inits]
         # orientations
         # extra.orientJoints(self.guideJoints,
         #                    localMoveAxis=(dt.Vector(self.up_axis)),
@@ -233,10 +235,8 @@ class Spine(object):
 
         cmds.parentConstraint(self.limbPlug, self.cont_body_ORE, mo=False)
 
-        # map(lambda x: cmds.connectAttr("%s.fkAvis" %self.cont_body, "%s.v" %cmds.listRelatives(x, s=True)[0]), self.cont_spineFK_A_List)
-        functions.drive_attrs("%s.fkAvis" % self.cont_body, ["%s.v" % functions.getShapes(x)[0] for x in self.cont_spineFK_A_List])
-        # map(lambda x: cmds.connectAttr("%s.fkBvis" %self.cont_body, "%s.v" %cmds.listRelatives(x, s=True)[0]), self.cont_spineFK_B_List)
-        functions.drive_attrs("%s.fkBvis" % self.cont_body, ["%s.v" % functions.getShapes(x)[0] for x in self.cont_spineFK_B_List])
+        attribute.drive_attrs("%s.fkAvis" % self.cont_body, ["%s.v" % functions.getShapes(x)[0] for x in self.cont_spineFK_A_List])
+        attribute.drive_attrs("%s.fkBvis" % self.cont_body, ["%s.v" % functions.getShapes(x)[0] for x in self.cont_spineFK_B_List])
 
         functions.colorize(self.cont_body, self.colorCodes[0])
         functions.colorize(self.cont_chest, self.colorCodes[0])
@@ -256,7 +256,7 @@ class Spine(object):
         # self.sockets += spine.defJoints
         self.sockets.extend(spine.defJoints)
 
-        functions.attrPass(spine.scaleGrp, self.scaleGrp, attributes=["sx", "sy", "sz"], keepSourceAttributes=True)
+        attribute.attrPass(spine.scaleGrp, self.scaleGrp, attributes=["sx", "sy", "sz"], keepSourceAttributes=True)
 
         midConnection = spine.contCurves_ORE[int((len(spine.contCurves_ORE) / 2))]
 
@@ -274,7 +274,7 @@ class Spine(object):
         cmds.orientConstraint(self.cont_chest, self.endSocket)
 
         # # pass Stretch controls from the splineIK to neck controller
-        functions.attrPass(spine.attPassCont, self.cont_chest)
+        attribute.attrPass(spine.attPassCont, self.cont_chest)
 
         for m in range (len(spine.contCurves_ORE)):
             if m > 0 and m < len(spine.contCurves_ORE):
@@ -292,9 +292,7 @@ class Spine(object):
 
 
         self.deformerJoints += spine.defJoints
-        # map(lambda x: cmds.connectAttr("%s.jointVis" %self.scaleGrp, "%s.v" %x), self.deformerJoints)
-        functions.drive_attrs("%s.jointVis" % self.scaleGrp, ["%s.v" % x for x in self.deformerJoints])
-
+        attribute.drive_attrs("%s.jointVis" % self.scaleGrp, ["%s.v" % x for x in self.deformerJoints])
 
         for i in range(len(spine.contCurves_ORE)):
             if i != 0 or i != len(spine.contCurves_ORE):
@@ -302,16 +300,10 @@ class Spine(object):
                 cmds.connectAttr("%s.tweakVis" %self.cont_body, "%s.v" %node)
                 # self.cont_body.tweakVis >> node.v
                 cmds.connectAttr("%s.contVis" %self.scaleGrp, "%s.v" %spine.contCurves_ORE[i])
-                # self.scaleGrp.contVis >> spine.contCurves_ORE[i].v
-        # self.scaleGrp.contVis >> self.cont_body.v
         cmds.connectAttr("%s.contVis" %self.scaleGrp, "%s.v" %self.cont_body)
 
-        # cmds.connectAttr("%s.rigVis" %self.scaleGrp, "%s.v" %spine.contCurves_ORE[0]) #ETF
-        # cmds.connectAttr("%s.rigVis" %self.scaleGrp, "%s.v" %spine.contCurves_ORE[len(spine.contCurves_ORE) - 1])
-
         for lst in spine.noTouchData:
-            # map(lambda x: cmds.connectAttr("%s.rigVis" %self.scaleGrp, "%s.v" %x), lst)
-            functions.drive_attrs("%s.rigVis" % self.scaleGrp, ["%s.v" % x for x in lst])
+            attribute.drive_attrs("%s.rigVis" % self.scaleGrp, ["%s.v" % x for x in lst])
 
         functions.colorize(self.deformerJoints, self.colorCodes[0], shape=False)
 
@@ -339,14 +331,12 @@ class Spine(object):
 
         cmds.delete(self.guideJoints)
         # lock and hide
-        functions.lockAndHide(self.cont_body, "v")
-        functions.lockAndHide(self.cont_hips, ["sx", "sy", "sz", "v"])
-        functions.lockAndHide(self.cont_chest, ["sx", "sy", "sz", "v"])
+        attribute.lockAndHide(self.cont_body, "v")
+        attribute.lockAndHide(self.cont_hips, ["sx", "sy", "sz", "v"])
+        attribute.lockAndHide(self.cont_chest, ["sx", "sy", "sz", "v"])
 
-        # map(lambda x: functions.lockAndHide(x, ["tx", "ty", "tz", "sx", "sy", "sz", "v"]), self.cont_spineFK_A_List)
-        _ = [functions.lockAndHide(x, ["tx", "ty", "tz", "sx", "sy", "sz", "v"]) for x in self.cont_spineFK_A_List]
-        # map(lambda x: functions.lockAndHide(x, ["tx", "ty", "tz", "sx", "sy", "sz", "v"]), self.cont_spineFK_B_List)
-        _ = [functions.lockAndHide(x, ["tx", "ty", "tz", "sx", "sy", "sz", "v"]) for x in self.cont_spineFK_B_List]
+        _ = [attribute.lockAndHide(x, ["tx", "ty", "tz", "sx", "sy", "sz", "v"]) for x in self.cont_spineFK_A_List]
+        _ = [attribute.lockAndHide(x, ["tx", "ty", "tz", "sx", "sy", "sz", "v"]) for x in self.cont_spineFK_B_List]
 
 
     def createLimb(self):
@@ -413,10 +403,10 @@ class Guides(object):
 
         # ----------Mandatory---------[Start]
         root_jnt = self.guideJoints[0]
-        functions.create_global_joint_attrs(root_jnt, moduleName="Spine", upAxis=self.upVector, mirrorAxis=self.mirrorVector, lookAxis=self.lookVector)
+        attribute.create_global_joint_attrs(root_jnt, moduleName="Spine", upAxis=self.upVector, mirrorAxis=self.mirrorVector, lookAxis=self.lookVector)
         # ----------Mandatory---------[End]
         for attr_dict in LIMB_DATA["properties"]:
-            functions.create_attribute(root_jnt, attr_dict)
+            attribute.create_attribute(root_jnt, attr_dict)
 
     def createGuides(self):
         self.draw_joints()

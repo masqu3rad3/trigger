@@ -3,6 +3,7 @@
 from maya import cmds
 
 from trigger.library import functions
+from trigger.library import attribute
 from trigger.library import controllers as ic
 
 ACTION_DATA = {}
@@ -52,5 +53,5 @@ class Master(object):
                        },
         ]
         for attr_dict in attributes:
-            functions.create_attribute(pref_name, attr_dict, keyable=False)
+            attribute.create_attribute(pref_name, attr_dict, keyable=False)
         # extra.lockAndHide(pref_name)

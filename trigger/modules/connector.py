@@ -1,7 +1,8 @@
 from maya import cmds
 import maya.api.OpenMaya as om
 
-from trigger.library import functions as extra
+from trigger.library import functions
+from trigger.library import attribute
 from trigger.core import logger
 FEEDBACK = logger.Logger(__name__)
 
@@ -30,7 +31,7 @@ class Connector(object):
 
         # self.suffix=(extra.uniqueName("limbGrp_%s" %(suffix))).replace("limbGrp_", "")
         # self.suffix = (extra.uniqueName(suffix))
-        self.suffix = (extra.uniqueName(cmds.getAttr("%s.moduleName" % self.rootInit)))
+        self.suffix = (functions.uniqueName(cmds.getAttr("%s.moduleName" % self.rootInit)))
 
 
         self.limbGrp = None
@@ -65,9 +66,9 @@ class Connector(object):
         self.scaleConstraints.append(self.scaleGrp)
 
         defJ_root = cmds.joint(name="jDef_%s" % self.suffix)
-        extra.alignTo(defJ_root, self.rootInit, position=True, rotation=False)
+        functions.alignTo(defJ_root, self.rootInit, position=True, rotation=False)
 
-        extra.colorize(defJ_root, self.colorCodes[0])
+        functions.colorize(defJ_root, self.colorCodes[0])
         self.limbPlug = defJ_root
         self.sockets.append(defJ_root)
         self.deformerJoints.append(defJ_root)
@@ -113,17 +114,17 @@ class Guides(object):
 
     def define_attributes(self):
         # set joint side and type attributes
-        extra.set_joint_type(self.guideJoints[0], "Root")
+        functions.set_joint_type(self.guideJoints[0], "Root")
         cmds.setAttr("{0}.radius".format(self.guideJoints[0]), 2)
-        _ = [extra.set_joint_side(jnt, self.side) for jnt in self.guideJoints]
+        _ = [functions.set_joint_side(jnt, self.side) for jnt in self.guideJoints]
 
         # ----------Mandatory---------[Start]
         root_jnt = self.guideJoints[0]
-        extra.create_global_joint_attrs(root_jnt, moduleName="Connector", upAxis=self.upVector, mirrorAxis=self.mirrorVector, lookAxis=self.lookVector)
+        attribute.create_global_joint_attrs(root_jnt, moduleName="Connector", upAxis=self.upVector, mirrorAxis=self.mirrorVector, lookAxis=self.lookVector)
         # ----------Mandatory---------[End]
 
         for attr_dict in LIMB_DATA["properties"]:
-            extra.create_attribute(root_jnt, attr_dict)
+            attribute.create_attribute(root_jnt, attr_dict)
 
     def createGuides(self):
         self.draw_joints()

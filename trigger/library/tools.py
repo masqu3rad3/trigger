@@ -1,6 +1,6 @@
 
 from maya import cmds
-import trigger.library.functions as functions
+from trigger.library import functions
 
 def replaceController(mirror=True, mirrorAxis="X", keepOldShape=False, keepAcopy=False, alignToCenter=False, *args, **kwargs):
     if kwargs:

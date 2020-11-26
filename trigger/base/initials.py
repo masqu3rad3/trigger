@@ -4,7 +4,8 @@ from maya import cmds
 import maya.api.OpenMaya as om
 
 from trigger.core.undo_dec import undo
-from trigger.library import functions as extra
+from trigger.library import functions
+from trigger.library import attribute
 # from trigger.actions import kinematics # for testing the guides
 
 from trigger import modules
@@ -124,7 +125,7 @@ class Initials(settings.Settings):
                 side = "C"
 
 
-        suffix = extra.uniqueName("%sGrp_%s" % (limb_name, whichSide)).replace("%sGrp_" % (limb_name), "")
+        suffix = functions.uniqueName("%sGrp_%s" % (limb_name, whichSide)).replace("%sGrp_" % (limb_name), "")
 
         ## if defineAs is True, define the selected joints as the given limb instead creating new ones.
         if defineAs:
@@ -139,7 +140,7 @@ class Initials(settings.Settings):
             if cmds.ls(sl=True, type="joint"):
                 j = cmds.ls(sl=True)[-1]
                 try:
-                    if extra.identifyMaster(j, self.module_dict)[1] in self.valid_limbs:
+                    if functions.identifyMaster(j, self.module_dict)[1] in self.valid_limbs:
                         masterParent = cmds.ls(sl=True)[-1]
                     else:
                         masterParent = None
@@ -211,10 +212,10 @@ class Initials(settings.Settings):
             locator = cmds.spaceLocator(name="loc_%s" % guide.guideJoints[jnt])[0]
             locatorsList.append(locator)
             if constrainedTo:
-                extra.alignTo(locator, guide.guideJoints[jnt], position=True, rotation=False)
-                extra.connectMirror(constrainedTo[jnt], locatorsList[jnt], mirrorAxis=self.mirrorVector_asString)
+                functions.alignTo(locator, guide.guideJoints[jnt], position=True, rotation=False)
+                functions.connectMirror(constrainedTo[jnt], locatorsList[jnt], mirrorAxis=self.mirrorVector_asString)
 
-                extra.alignTo(guide.guideJoints[jnt], locator, position=True, rotation=False)
+                functions.alignTo(guide.guideJoints[jnt], locator, position=True, rotation=False)
                 cmds.parentConstraint(locator, guide.guideJoints[jnt], mo=True)
                 # extra.matrixConstraint(locator, limbJoints[jnt], mo=True)
             else:
@@ -228,14 +229,14 @@ class Initials(settings.Settings):
         if masterParent:
             if not constrainedTo:
                 # align the none constrained near to the selected joint
-                extra.alignTo(guide.guideJoints[0], masterParent)
+                functions.alignTo(guide.guideJoints[0], masterParent)
                 # move it a little along the mirrorAxis
                 # move it along offsetvector
                 cmds.move(guide.offsetVector[0], guide.offsetVector[1], guide.offsetVector[2], guide.guideJoints[0],
                           relative=True)
             else:
                 for joint in guide.guideJoints:
-                    extra.lockAndHide(joint, ["tx", "ty", "tz", "rx", "ry", "rz"], hide=False)
+                    attribute.lockAndHide(joint, ["tx", "ty", "tz", "rx", "ry", "rz"], hide=False)
             cmds.parent(guide.guideJoints[0], masterParent)
         else:
             cmds.parent(guide.guideJoints[0], limbGroup)
@@ -310,17 +311,17 @@ class Initials(settings.Settings):
             cmds.setAttr("%s.drawLabel" % jnt, 1)
 
         if guide_object.side == "C":
-            extra.colorize(guide_object.guideJoints, self.get("majorCenterColor"), shape=False)
+            functions.colorize(guide_object.guideJoints, self.get("majorCenterColor"), shape=False)
         if guide_object.side == "L":
-            extra.colorize(guide_object.guideJoints, self.get("majorLeftColor"), shape=False)
+            functions.colorize(guide_object.guideJoints, self.get("majorLeftColor"), shape=False)
         if guide_object.side == "R":
-            extra.colorize(guide_object.guideJoints, self.get("majorRightColor"), shape=False)
+            functions.colorize(guide_object.guideJoints, self.get("majorRightColor"), shape=False)
 
     def get_scene_roots(self):
         """collects the root joints in the scene and returns the dictionary with properties"""
         all_joints = cmds.ls(type="joint")
         # get roots
-        guide_roots = [jnt for jnt in all_joints if extra.get_joint_type(jnt) in self.validRootList]
+        guide_roots = [jnt for jnt in all_joints if functions.get_joint_type(jnt) in self.validRootList]
         roots_dictionary_list = []
         for jnt in guide_roots:
             # get module name
@@ -329,7 +330,7 @@ class Initials(settings.Settings):
             except ValueError:
                 continue
             # get module info
-            j_type, limb, side = extra.identifyMaster(jnt, self.module_dict)
+            j_type, limb, side = functions.identifyMaster(jnt, self.module_dict)
             roots_dictionary_list.append({"module_name": module_name,
                                           "side": side,
                                           "root_joint": jnt,
@@ -402,7 +403,7 @@ class Initials(settings.Settings):
                             value["multi_guide"]]
         limb_dict = {}
         multiList = []
-        limb_name, limb_type, limb_side = extra.identifyMaster(node, self.module_dict)
+        limb_name, limb_type, limb_side = functions.identifyMaster(node, self.module_dict)
 
         limb_dict[limb_name] = node
         nextNode = node
@@ -414,7 +415,7 @@ class Initials(settings.Settings):
                 z = False
             failedChildren = 0
             for child in children:
-                child_limb_name, child_limb_type, child_limb_side = extra.identifyMaster(child, self.module_dict)
+                child_limb_name, child_limb_type, child_limb_side = functions.identifyMaster(child, self.module_dict)
                 if child_limb_name not in self.validRootList and child_limb_type == limb_type:
                     nextNode = child
                     if child_limb_name in multi_guide_jnts:
@@ -428,7 +429,7 @@ class Initials(settings.Settings):
                 z = False
         return [limb_dict, limb_type, limb_side]
 
-    @undo
+    # @undo
     def test_build(self, root_jnt=None, progress_bar=None):
         kinematics = importlib.import_module("trigger.actions.kinematics")
         if not root_jnt:
@@ -439,7 +440,7 @@ class Initials(settings.Settings):
                 FEEDBACK.warning("Select a single root_jnt joint")
         if not cmds.objectType(root_jnt, isType="joint"):
             FEEDBACK.throw_error("root_jnt is not a joint")
-        root_name, root_type, root_side = extra.identifyMaster(root_jnt, self.module_dict)
+        root_name, root_type, root_side = functions.identifyMaster(root_jnt, self.module_dict)
         if root_name not in self.validRootList:
             FEEDBACK.throw_error("Selected joint is not in the valid Guide Root")
 

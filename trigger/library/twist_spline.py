@@ -1,7 +1,9 @@
 from maya import cmds
 import maya.api.OpenMaya as om
 
-from trigger.library import functions as extra
+from trigger.library import functions
+from trigger.library import attribute
+from trigger.library import api
 from trigger.library import controllers as ic
 
 class TwistSpline(object):
@@ -48,7 +50,7 @@ class TwistSpline(object):
         self.nonScaleGrp = cmds.group(name="nonScaleGrp_%s" % name, em=True)
 
         # rootVc = refJoints[0].getTranslation(space="world")  # Root Vector
-        rootVc = extra.getWorldTranslation(refJoints[0])
+        rootVc = api.getWorldTranslation(refJoints[0])
         totalLength = 0
         contDistances = []
         contCurves = []
@@ -61,7 +63,7 @@ class TwistSpline(object):
                 tmin = 0
             else:
                 tmin = i - 1
-            currentJointLength = extra.getDistance(refJoints[i], refJoints[tmin])
+            currentJointLength = functions.getDistance(refJoints[i], refJoints[tmin])
             ctrlDistance = currentJointLength + ctrlDistance
             totalLength += currentJointLength
             contDistances.append(ctrlDistance)  # this list contains distance between each control point
@@ -107,7 +109,7 @@ class TwistSpline(object):
         cmds.parent(IKjoints[0], self.nonScaleGrp)
 
         # ORIENT JOINTS PROPERLY
-        extra.orientJoints(IKjoints, worldUpAxis=(self.upAxis))
+        functions.orientJoints(IKjoints, worldUpAxis=(self.upAxis))
 
         map(lambda x: cmds.setAttr("%s.displayLocalAxis" %x, True), IKjoints)
         # for j in IKjoints:
@@ -137,7 +139,7 @@ class TwistSpline(object):
             #############################################################
             contJoints.append(jnt)
 
-        extra.orientJoints(contJoints, worldUpAxis=(self.upAxis))
+        functions.orientJoints(contJoints, worldUpAxis=(self.upAxis))
 
         cmds.select(d=True)
         cmds.parent(contJoints[1:], w=True)
@@ -167,10 +169,10 @@ class TwistSpline(object):
                     RPhandles.append(RP[0])
                     # # create locator and group for each rp
                     loc = cmds.spaceLocator(name="tSpinePoleLoc_%s%i" % (name, i))[0]
-                    loc_POS = extra.createUpGrp(loc, "POS")
-                    loc_OFF = extra.createUpGrp(loc, "OFF")
+                    loc_POS = functions.createUpGrp(loc, "POS")
+                    loc_OFF = functions.createUpGrp(loc, "OFF")
 
-                    extra.alignToAlter(loc_POS, self.defJoints[i], mode=2)
+                    functions.alignToAlter(loc_POS, self.defJoints[i], mode=2)
                     cmds.setAttr("%s.tz" %loc, 5)
 
                     # parent locator groups, pole vector locators >> RP Solvers, point constraint RP Solver >> IK Joints
@@ -217,8 +219,8 @@ class TwistSpline(object):
                 cont_Curve = cmds.spaceLocator(name="lockPoint_%s%i" %(name, i))[0]
             # pm.setAttr(cont_Curve.rotateOrder,3)
             # cont_Curve_OFF = extra.createUpGrp(cont_Curve, "OFF")
-            extra.alignToAlter(cont_Curve, contJoints[i], mode=2)
-            cont_Curve_ORE = extra.createUpGrp(cont_Curve, "ORE")
+            functions.alignToAlter(cont_Curve, contJoints[i], mode=2)
+            cont_Curve_ORE = functions.createUpGrp(cont_Curve, "ORE")
             # pm.setAttr(cont_Curve_ORE.rotateOrder, 3)
             cmds.parentConstraint(cont_Curve, contJoints[i], mo=False)
             contCurves.append(cont_Curve)
@@ -342,10 +344,10 @@ class TwistSpline(object):
 
         for o in range (0,len(self.contCurves_ORE)):
             if o == 0:
-                extra.alignToAlter(self.contCurves_ORE[o], refJoints[o], mode=2)
+                functions.alignToAlter(self.contCurves_ORE[o], refJoints[o], mode=2)
             else:
-                extra.alignToAlter(self.contCurves_ORE[o], refJoints[o], mode=0)
-                extra.alignToAlter(self.contCurves_ORE[o], refJoints[o-1], mode=1)
+                functions.alignToAlter(self.contCurves_ORE[o], refJoints[o], mode=0)
+                functions.alignToAlter(self.contCurves_ORE[o], refJoints[o - 1], mode=1)
 
 
         # GOOD PARENTING
@@ -355,10 +357,10 @@ class TwistSpline(object):
 
         # FOOL PROOFING
         for i in contCurves:
-            extra.lockAndHide(i, ["sx", "sy", "sz", "v"])
+            attribute.lockAndHide(i, ["sx", "sy", "sz", "v"])
 
         # COLOR CODING
-        extra.colorize(contCurves, colorCode)
+        functions.colorize(contCurves, colorCode)
 
         # RETURN
         # re-initialize the deformation joints (remove the last of it

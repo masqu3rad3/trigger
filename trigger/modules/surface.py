@@ -2,6 +2,8 @@ from maya import cmds
 import maya.api.OpenMaya as om
 
 from trigger.library import functions
+from trigger.library import attribute
+from trigger.library import connection
 from trigger.library import controllers as ic
 from trigger.utils import parentToSurface
 from trigger.core import logger
@@ -127,10 +129,10 @@ class Surface(object):
         if self.controllerSurface:
             follicle = parentToSurface.parentToSurface([self.cont_bind], surface=self.controllerSurface, mode="none")[0]
             # constrain controller translate to the follicle
-            functions.matrixConstraint(follicle, self.cont_bind, mo=True, sr="xyz", ss="xyz")
+            connection.matrixConstraint(follicle, self.cont_bind, mo=True, sr="xyz", ss="xyz")
             cmds.parent(follicle, self.nonScaleGrp)
         if self.rotateObject:
-            functions.matrixConstraint(self.rotateObject, self.cont_bind, mo=True, st="xyz", ss="xyz")
+            connection.matrixConstraint(self.rotateObject, self.cont_bind, mo=True, st="xyz", ss="xyz")
 
 
         negate_multMatrix = cmds.createNode("multMatrix", name="negate_multMatrix_%s" % self.suffix)
@@ -165,7 +167,7 @@ class Surface(object):
         #     cmds.parent(fol, self.nonScaleGrp)
 
         # Direct connection between controller and joint
-        #functions.matrixConstraint(test_cont, jDef_bind, mo=False, source_parent_cutoff=test_cont_cutoff)
+        #connection.matrixConstraint(test_cont, jDef_bind, mo=False, source_parent_cutoff=test_cont_cutoff)
         for attr in "trs":
             for axis in "xyz":
                 cmds.connectAttr("%s.%s%s" % (self.cont, attr, axis), "%s.%s%s" % (self.surface_jnt_bind, attr, axis))
@@ -229,11 +231,11 @@ class Guides(object):
 
         # ----------Mandatory---------[Start]
         root_jnt = self.guideJoints[0]
-        functions.create_global_joint_attrs(root_jnt, moduleName="Surface", upAxis=self.upVector, mirrorAxis=self.mirrorVector, lookAxis=self.lookVector)
+        attribute.create_global_joint_attrs(root_jnt, moduleName="Surface", upAxis=self.upVector, mirrorAxis=self.mirrorVector, lookAxis=self.lookVector)
         # ----------Mandatory---------[End]
 
         for attr_dict in LIMB_DATA["properties"]:
-            functions.create_attribute(root_jnt, attr_dict)
+            attribute.create_attribute(root_jnt, attr_dict)
 
     def createGuides(self):
         self.draw_joints()

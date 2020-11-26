@@ -2,6 +2,7 @@
 import sys
 
 from trigger.library import functions
+from trigger.library import api
 from trigger.library.controllers import Icon
 from trigger.core.undo_dec import undo
 

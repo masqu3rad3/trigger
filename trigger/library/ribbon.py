@@ -4,7 +4,8 @@
 ######### POWER RIBBON Func ##########
 ################################
 from maya import cmds
-from trigger.library import functions as extra
+from trigger.library import functions
+from trigger.library import attribute
 from trigger.library import controllers as ic
 
 class PowerRibbon():
@@ -35,16 +36,16 @@ class PowerRibbon():
                           ):
 
         # Create groups
-        name = extra.uniqueName("RBN_ScaleGrp_%s" %name)
+        name = functions.uniqueName("RBN_ScaleGrp_%s" % name)
         self.scaleGrp = cmds.group(name="RBN_ScaleGrp_%s" %name, em=True)
         self.nonScaleGrp = cmds.group(name="RBN_nonScaleGrp_%s" %name, em=True)
 
-        ribbonLength = extra.getDistance(startPoint, endPoint)
+        ribbonLength = functions.getDistance(startPoint, endPoint)
         nSurfTrans = cmds.nurbsPlane(ax=(0, 0, 1), u=float(ribbonRes), v=1, w=ribbonLength, lr=(1.0/ribbonLength), name="nSurf_%s" %name)[0]
         cmds.parent(nSurfTrans, self.nonScaleGrp)
         cmds.rebuildSurface (nSurfTrans, ch=1, rpo=1, rt=0, end=1, kr=2, kcp=0, kc=0, su=5, du=3, sv=1, dv=1, tol=0, fr=0, dir=1)
         cmds.makeIdentity(a=True)
-        nSurf = extra.getShapes(nSurfTrans)[0]
+        nSurf = functions.getShapes(nSurfTrans)[0]
 
         self.toHide.append(nSurfTrans)
 
@@ -58,11 +59,11 @@ class PowerRibbon():
 
 
         start_UP = cmds.spaceLocator(name="jRbn_StartUp_%s" %name)[0]
-        self.toHide.append(extra.getShapes(start_UP)[0])
+        self.toHide.append(functions.getShapes(start_UP)[0])
         cmds.move(-(ribbonLength/2.0), 0.5, 0, start_UP)
 
         self.startConnection = cmds.spaceLocator(name="jRbn_StartCn_%s" %name)[0]
-        self.toHide.append(extra.getShapes(self.startConnection)[0])
+        self.toHide.append(functions.getShapes(self.startConnection)[0])
         cmds.move(-(ribbonLength / 2.0), 0, 0, self.startConnection)
         cmds.makeIdentity(self.startConnection, a=True)
 
@@ -77,11 +78,11 @@ class PowerRibbon():
         cmds.move(-(ribbonLength/-2.0), 0, 0, end_AIM)
         cmds.makeIdentity(end_AIM, a=True)
         end_UP = cmds.spaceLocator(name="jRbn_End_%s_UP" %name)[0]
-        self.toHide.append(extra.getShapes(end_UP)[0])
+        self.toHide.append(functions.getShapes(end_UP)[0])
         cmds.move(-(ribbonLength/-2.0), 0.5, 0, end_UP)
 
         self.endConnection = cmds.spaceLocator(name="jRbn_End_%s_endCon" %name)[0]
-        self.toHide.append(extra.getShapes(self.endConnection)[0])
+        self.toHide.append(functions.getShapes(self.endConnection)[0])
         cmds.move(-(ribbonLength / -2.0), 0, 0, self.endConnection)
         cmds.makeIdentity(self.endConnection, a=True)
 
@@ -89,14 +90,14 @@ class PowerRibbon():
         # create follicles and deformer joints
         for index in range (int(jointRes)):
             follicle = cmds.createNode('follicle', name="follicle_{0}{1}".format(name, index))
-            follicle_transform = extra.getParent(follicle)
+            follicle_transform = functions.getParent(follicle)
             cmds.connectAttr("%s.local" % nSurf, "%s.inputSurface" % follicle)
             cmds.connectAttr("%s.worldMatrix[0]" % nSurf, "%s.inputWorldMatrix" % follicle)
             cmds.connectAttr("%s.outRotate" % follicle, "%s.rotate" % follicle_transform)
             cmds.connectAttr("%s.outTranslate" % follicle, "%s.translate" % follicle_transform)
             cmds.setAttr("%s.parameterV" % follicle, 0.5)
             cmds.setAttr("%s.parameterU" % follicle, 0.1+(index/float(jointRes)))
-            extra.lockAndHide(follicle_transform, ["tx","ty","tz","rx","ry","rz"], hide=False)
+            attribute.lockAndHide(follicle_transform, ["tx", "ty", "tz", "rx", "ry", "rz"], hide=False)
             follicleList.append(follicle)
             defJ = cmds.joint(name="jDef_%s%i" %(name,index))
             cmds.joint(defJ, e=True, zso=True, oj='zxy')
@@ -109,14 +110,14 @@ class PowerRibbon():
         counter=0 # TODO : Why did I use this?
         for index in range (int(jointRes)):
             s_follicle = cmds.createNode('follicle', name="follicleSCA_%s%i" % (name, index))
-            s_follicle_transform = extra.getParent(s_follicle)
+            s_follicle_transform = functions.getParent(s_follicle)
             cmds.connectAttr("%s.local" % nSurf,"%s.inputSurface" % s_follicle)
             cmds.connectAttr("%s.worldMatrix[0]" % nSurf,"%s.inputWorldMatrix" % s_follicle)
             cmds.connectAttr("%s.outRotate" % s_follicle,"%s.rotate" % s_follicle_transform)
             cmds.connectAttr("%s.outTranslate" % s_follicle,"%s.translate" % s_follicle_transform)
             cmds.setAttr("%s.parameterV" % s_follicle, 0.0)
             cmds.setAttr("%s.parameterU" % s_follicle, 0.1+(index/float(jointRes)))
-            extra.lockAndHide(s_follicle_transform, ["tx","ty","tz","rx","ry","rz"], hide=False)
+            attribute.lockAndHide(s_follicle_transform, ["tx", "ty", "tz", "rx", "ry", "rz"], hide=False)
             follicle_sca_list.append(s_follicle)
             cmds.parent(s_follicle_transform, self.nonScaleGrp)
             self.toHide.append(s_follicle)
@@ -172,7 +173,7 @@ class PowerRibbon():
             for ctrl in controllerList:
                 cmds.select(d=True)
                 midJ = cmds.joint(name="jRbn_Mid_%i_%s" %(counter, name), radius=2)
-                extra.alignToAlter(midJ, ctrl)
+                functions.alignToAlter(midJ, ctrl)
                 mid_joint_list.append(midJ)
         else:
             interval = ribbonLength / (controllerCount+1)
@@ -203,18 +204,18 @@ class PowerRibbon():
             midCon, _ = icon.createIcon("Circle", iconName="cont_midRbn_%s%i" %(name, counter), normal=(1, 0, 0))
             self.middleCont.append(midCon)
             middle_OFF = cmds.spaceLocator(name="mid_OFF_%s%i" % (name, counter))[0]
-            self.toHide.append(extra.getShapes(middle_OFF)[0])
+            self.toHide.append(functions.getShapes(middle_OFF)[0])
             middle_AIM = cmds.group(em=True, name="mid_AIM_%s%i" %(name, counter))
-            extra.alignTo(middle_AIM, mid, position=True, rotation=False)
+            functions.alignTo(middle_AIM, mid, position=True, rotation=False)
             middle_UP = cmds.spaceLocator(name="mid_UP_{0}{1}".format (name, counter))[0]
-            self.toHide.append(extra.getShapes(middle_UP)[0])
+            self.toHide.append(functions.getShapes(middle_UP)[0])
 
-            extra.alignTo(middle_UP, mid, position=True, rotation=False)
+            functions.alignTo(middle_UP, mid, position=True, rotation=False)
             cmds.setAttr("%s.ty" % middle_UP, 0.5)
 
             middle_POS = cmds.spaceLocator(name="mid_POS_{0}{1}".format (name, counter))[0]
-            self.toHide.append(extra.getShapes(middle_POS)[0])
-            extra.alignTo(middle_POS, mid, position=True, rotation=False)
+            self.toHide.append(functions.getShapes(middle_POS)[0])
+            functions.alignTo(middle_POS, mid, position=True, rotation=False)
 
             cmds.parent(mid, midCon)
             cmds.parent(midCon, middle_OFF)
@@ -232,7 +233,7 @@ class PowerRibbon():
 
         cmds.parent([self.startConnection, self.endConnection] + middle_POS_list, self.scaleGrp)
 
-        extra.alignAndAim(self.scaleGrp, [startPoint, endPoint], [endPoint], upVector=upVector)
+        functions.alignAndAim(self.scaleGrp, [startPoint, endPoint], [endPoint], upVector=upVector)
 
 
 

@@ -1,6 +1,7 @@
 from maya import cmds
 import maya.api.OpenMaya as om
-from trigger.library import functions as extra
+from trigger.library import functions
+from trigger.library import attribute
 from trigger.library import controllers as ic
 
 from trigger.core import logger
@@ -39,16 +40,16 @@ class Limb():
 
         # get the properties from the root
         self.useRefOrientation = cmds.getAttr("%s.useRefOri" % ROOT_JOINT)
-        self.side = extra.get_joint_side(ROOT_JOINT)
+        self.side = functions.get_joint_side(ROOT_JOINT)
         self.sideMult = -1 if self.side == "R" else 1
 
         # initialize coordinates
-        self.up_axis, self.mirror_axis, self.look_axis = extra.getRigAxes(self.inits[0])
+        self.up_axis, self.mirror_axis, self.look_axis = functions.getRigAxes(self.inits[0])
 
         # initialize suffix
         # self.suffix = (extra.uniqueName("limbGrp_%s" % suffix)).replace("limbGrp_", "")
         # self.suffix = (extra.uniqueName(suffix))
-        self.suffix = (extra.uniqueName(cmds.getAttr("%s.moduleName" % self.inits[0])))
+        self.suffix = (functions.uniqueName(cmds.getAttr("%s.moduleName" % self.inits[0])))
 
         # scratch variables
         self.sockets = []
@@ -65,7 +66,7 @@ class Limb():
     def createGrp(self):
         self.limbGrp = cmds.group(name=self.suffix, em=True)
         self.scaleGrp = cmds.group(name="%s_scaleGrp" % self.suffix, em=True)
-        extra.alignTo(self.scaleGrp, self.inits[0], 0)
+        functions.alignTo(self.scaleGrp, self.inits[0], 0)
         self.nonScaleGrp = cmds.group(name="%s_nonScaleGrp" % self.suffix, em=True)
 
         cmds.addAttr(self.scaleGrp, at="bool", ln="Control_Visibility", sn="contVis", defaultValue=True)
@@ -166,15 +167,15 @@ class Guides(object):
 
     def define_attributes(self):
         # set joint side and type attributes
-        _ = [extra.set_joint_side(jnt, self.side) for jnt in self.guideJoints]
+        _ = [functions.set_joint_side(jnt, self.side) for jnt in self.guideJoints]
 
         # ----------Mandatory---------[Start]
         root_jnt = self.guideJoints[0]
-        extra.create_global_joint_attrs(root_jnt, moduleName="%s_MODULENAME" % self.side, upAxis=self.upVector, mirrorAxis=self.mirrorVector, lookAxis=self.lookVector)
+        attribute.create_global_joint_attrs(root_jnt, moduleName="%s_MODULENAME" % self.side, upAxis=self.upVector, mirrorAxis=self.mirrorVector, lookAxis=self.lookVector)
         # ----------Mandatory---------[End]
 
         for attr_dict in LIMB_DATA["properties"]:
-            extra.create_attribute(root_jnt, attr_dict)
+            attribute.create_attribute(root_jnt, attr_dict)
 
     def createGuides(self):
         self.draw_joints()

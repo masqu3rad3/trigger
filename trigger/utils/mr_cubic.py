@@ -1,6 +1,7 @@
 ## Mr. Cubic
 from maya import cmds
-import trigger.library.functions as extra
+from trigger.library import connection
+from trigger.library import functions
 
 def mrCube (jointList, width=1):
     mrCubeGrp = cmds.group(name="mrCube", em=True)
@@ -9,15 +10,15 @@ def mrCube (jointList, width=1):
             children=cmds.listRelatives(jnt, children=True, type="joint")
             if children:
                 for c in children:
-                    cubeGuy = cmds.polyCube(name=extra.uniqueName("mrCube_%s" %c), h=width, d=width, w=width)[0]
-                    extra.alignBetween(cubeGuy, jnt, c)
-                    height=extra.getDistance(jnt, c)
+                    cubeGuy = cmds.polyCube(name=functions.uniqueName("mrCube_%s" % c), h=width, d=width, w=width)[0]
+                    functions.alignBetween(cubeGuy, jnt, c)
+                    height=functions.getDistance(jnt, c)
                     cmds.setAttr("%s.sx" % cubeGuy, height)
-                    extra.matrixConstraint(jnt, cubeGuy, mo=True)
+                    connection.matrixConstraint(jnt, cubeGuy, mo=True)
                     cmds.parent(cubeGuy, mrCubeGrp)
             else:
-                cubeGuy = cmds.polyCube(name=extra.uniqueName("mrCube_%s" % jnt), h=width, d=width, w=width)[0]
-                extra.matrixConstraint(jnt, cubeGuy, mo=False)
+                cubeGuy = cmds.polyCube(name=functions.uniqueName("mrCube_%s" % jnt), h=width, d=width, w=width)[0]
+                connection.matrixConstraint(jnt, cubeGuy, mo=False)
                 cmds.parent(cubeGuy, mrCubeGrp)
 
 

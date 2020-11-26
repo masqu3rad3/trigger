@@ -1,7 +1,8 @@
 from maya import cmds
 import maya.api.OpenMaya as om
 
-from trigger.library import functions as extra
+from trigger.library import functions
+from trigger.library import attribute
 from trigger.library import controllers as ic
 from trigger.core import logger
 LOG = logger.Logger(__name__)
@@ -31,7 +32,7 @@ class Base(object):
 
         # self.suffix=(extra.uniqueName("limbGrp_%s" %(suffix))).replace("limbGrp_", "")
         # self.suffix = (extra.uniqueName(suffix))
-        self.suffix = (extra.uniqueName(cmds.getAttr("%s.moduleName" % self.baseInit)))
+        self.suffix = (functions.uniqueName(cmds.getAttr("%s.moduleName" % self.baseInit)))
 
         self.limbGrp = None
         self.scaleGrp = None
@@ -63,7 +64,7 @@ class Base(object):
         self.base_jnt = cmds.joint(name="%s_jnt" % self.suffix)
         cmds.connectAttr("{0}.rigVis".format(self.scaleGrp), "{0}.v".format(self.base_jnt))
 
-        extra.alignTo(self.base_jnt, self.baseInit, position=True, rotation=False)
+        functions.alignTo(self.base_jnt, self.baseInit, position=True, rotation=False)
         self.limbPlug = self.base_jnt
         self.sockets.append(self.base_jnt)
 
@@ -71,13 +72,13 @@ class Base(object):
 
     def createControllers(self):
         icon = ic.Icon()
-        placement_cont, _ = icon.createIcon("Circle", iconName=extra.uniqueName("placement_cont"), scale=(10, 10, 10))
-        master_cont, _ = icon.createIcon("TriCircle", iconName=extra.uniqueName("master_cont"), scale=(15, 15, 15))
+        placement_cont, _ = icon.createIcon("Circle", iconName=functions.uniqueName("placement_cont"), scale=(10, 10, 10))
+        master_cont, _ = icon.createIcon("TriCircle", iconName=functions.uniqueName("master_cont"), scale=(15, 15, 15))
 
-        placement_off = extra.createUpGrp(placement_cont, "off")
-        master_off = extra.createUpGrp(master_cont, "off")
-        extra.alignTo(placement_off, self.base_jnt)
-        extra.alignTo(master_off, self.base_jnt)
+        placement_off = functions.createUpGrp(placement_cont, "off")
+        master_off = functions.createUpGrp(master_cont, "off")
+        functions.alignTo(placement_off, self.base_jnt)
+        functions.alignTo(master_off, self.base_jnt)
 
         cmds.parent(placement_off, master_cont)
         cmds.parent(master_off, self.scaleGrp)
@@ -85,16 +86,16 @@ class Base(object):
         # extra.matrixConstraint(placement_cont, self.base_jnt)
         cmds.parentConstraint(placement_cont, self.base_jnt, mo=False)
 
-        extra.colorize(placement_cont, self.colorCodes[0])
-        extra.colorize(master_cont, self.colorCodes[0])
+        functions.colorize(placement_cont, self.colorCodes[0])
+        functions.colorize(master_cont, self.colorCodes[0])
         self.anchorLocations.append(placement_cont)
         self.anchorLocations.append(master_cont)
 
         cmds.connectAttr("%s.contVis" % self.scaleGrp, "%s.v" % placement_off)
         cmds.connectAttr("%s.contVis" % self.scaleGrp, "%s.v" % master_off)
 
-        extra.lockAndHide(placement_cont, ["sx", "sy", "sz", "v"])
-        extra.lockAndHide(master_cont, ["sx", "sy", "sz", "v"])
+        attribute.lockAndHide(placement_cont, ["sx", "sy", "sz", "v"])
+        attribute.lockAndHide(master_cont, ["sx", "sy", "sz", "v"])
 
     def createLimb(self):
         """Creates base joint for master and placement conts"""
@@ -147,17 +148,17 @@ class Guides(object):
 
     def define_attributes(self):
         # set joint side and type attributes
-        extra.set_joint_type(self.guideJoints[0], "Base")
+        functions.set_joint_type(self.guideJoints[0], "Base")
         cmds.setAttr("{0}.radius".format(self.guideJoints[0]), 2)
-        _ = [extra.set_joint_side(jnt, self.side) for jnt in self.guideJoints]
+        _ = [functions.set_joint_side(jnt, self.side) for jnt in self.guideJoints]
 
         # ----------Mandatory---------[Start]
         root_jnt = self.guideJoints[0]
-        extra.create_global_joint_attrs(root_jnt, moduleName="Base", upAxis=self.upVector, mirrorAxis=self.mirrorVector, lookAxis=self.lookVector)
+        attribute.create_global_joint_attrs(root_jnt, moduleName="Base", upAxis=self.upVector, mirrorAxis=self.mirrorVector, lookAxis=self.lookVector)
         # ----------Mandatory---------[End]
 
         for attr_dict in LIMB_DATA["properties"]:
-            extra.create_attribute(root_jnt, attr_dict)
+            attribute.create_attribute(root_jnt, attr_dict)
 
     def createGuides(self):
         self.draw_joints()
