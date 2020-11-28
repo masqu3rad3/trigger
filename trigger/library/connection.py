@@ -1,6 +1,8 @@
 """Any connection / constrain / attachment / procedural movemen related methods goes here"""
 
 from trigger.library import api
+from trigger.library import interface
+from trigger.library import attribute
 from maya import cmds
 
 
@@ -143,3 +145,122 @@ def matrixConstraint(parent, child, mo=True, prefix="", sr=None, st=None, ss=Non
                 cmds.connectAttr("%s.outputScale%s" % (decompose_matrix, attr), "%s.scale%s" % (child, attr))
 
     return mult_matrix, decompose_matrix
+
+
+def getClosestUV(source_node, dest_node):
+    xPos, yPos, zPos = api.getWorldTranslation(dest_node)
+    CPOM = cmds.createNode('closestPointOnMesh')
+    cmds.connectAttr("%s.outMesh" % source_node, "%s.inMesh" % CPOM, f=1)
+    cmds.setAttr("%s.inPositionX" %CPOM, xPos)
+    cmds.setAttr("%s.inPositionY" %CPOM, yPos)
+    cmds.setAttr("%s.inPositionZ" %CPOM, zPos)
+    uVal = cmds.getAttr("%s.parameterU" %CPOM)
+    vVal = cmds.getAttr("%s.parameterV" %CPOM)
+    cmds.delete(CPOM)
+
+    return uVal, vVal
+
+def getVertexUV(mesh, vertex_id):
+    uv_map = cmds.polyListComponentConversion('{0}.vtx[{1}]'.format(mesh, vertex_id), toUV=True)
+    return cmds.polyEditUV(uv_map, q=True)
+
+def createFollicle(name, surfS, uv):
+    follicle = (cmds.createNode('follicle', n='%s_follicleShape' %name))
+    follicle_transform = (cmds.listRelatives(follicle, parent=True))[0]
+
+    nType = cmds.nodeType(surfS)
+    if nType == 'nurbsSurface':
+        #NURBS
+        out = '.local'
+        inp = '.inputSurface'
+    else:
+        #POLY
+        out = '.outMesh'
+        inp = '.inputMesh'
+
+    cmds.connectAttr('%s.worldMatrix'%surfS, '%s.inputWorldMatrix'%follicle)
+    cmds.connectAttr(surfS+out, follicle+inp)
+    cmds.connectAttr('%s.outTranslate'%follicle, '%s.translate'%follicle_transform)
+    cmds.connectAttr('%s.outRotate'%follicle, '%s.rotate'%follicle_transform)
+    cmds.setAttr('%s.parameterU'%follicle, uv[0])
+    cmds.setAttr('%s.parameterV'%follicle, uv[1])
+    return follicle_transform
+
+def uvPin(mesh_transform, coordinates):
+    assert cmds.about(api=True) > 20200000, "uv_pin requires Maya 2020 and later"
+    all_shapes = cmds.listRelatives(mesh_transform, shapes=True, children=True, parent=False)
+    #seperate intermediates
+    intermediates = [x for x in all_shapes if cmds.getAttr("%s.intermediateObject" %x) == 1]
+    non_intermediates = [x for x in all_shapes if x not in intermediates]
+    deformed_mesh = non_intermediates[0]
+    if not intermediates:
+        # create original / deformed mesh hiearchy
+        # deformed_mesh = cmds.listRelatives(mesh_transform, children=True, parent=False)[0]
+        dup = cmds.duplicate(mesh_transform, name="%s_ORIG" % mesh_transform)[0]
+        original_mesh = cmds.listRelatives(dup, children=True)[0]
+        cmds.parent(original_mesh, mesh_transform, shape=True, r=True)
+        cmds.delete(dup)
+        incoming_connections = connections(deformed_mesh)["incoming"]
+        for connection in incoming_connections:
+            attribute.disconnect_attr(connection["plug_out"])
+            cmds.connectAttr(connection["plug_in"], connection["plug_out"].replace(deformed_mesh, original_mesh))
+        cmds.connectAttr("%s.outMesh" % original_mesh, "%s.inMesh" % deformed_mesh)
+        # hide/intermediate original mesh
+        cmds.setAttr("%s.hiddenInOutliner" % original_mesh, 1)
+        cmds.setAttr("%s.intermediateObject" % original_mesh, 1)
+        interface.refreshOutliners()
+    else:
+        # deformed_mesh = cmds.listRelatives(mesh_transform, ni=True, children=True, parent=False)[0]
+        original_mesh = intermediates[0]
+
+    uv_pin = cmds.createNode("uvPin")
+
+    cmds.connectAttr("%s.worldMesh" % deformed_mesh, "%s.deformedGeometry" % uv_pin)
+    cmds.connectAttr("%s.outMesh" % original_mesh, "%s.originalGeometry" % uv_pin)
+
+    cmds.setAttr("%s.coordinate[0]" % uv_pin, *coordinates)
+
+    # loc = cmds.spaceLocator(name="temp_loc")[0]
+    # cmds.connectAttr("%s.outputMatrix[0]" % uv_pin, "%s.offsetParentMatrix" % loc)
+    return uv_pin
+
+def averageConstraint(target_mesh, vertex_list, source_object=None, offsetParent=False):
+    """
+    Creates a average weighted constraint between defined vertices. Works version 2020+
+    Args:
+        target_mesh: (String) Mesh object which holds the defined vertices
+        vertex_list: (List) List of Integer vertex IDs
+        source_object: (String) If not defined a locator will be created instead
+        offsetParent: (Boolean) If True, the matrix output will be connected to offset parent matrix of
+                    of the source object, leaving the transform values available
+
+    Returns:(String) source object. It will be the created locator if none provided
+
+    """
+    assert cmds.about(api=True) > 20200000, "uv_pin requires Maya 2020 and later"
+    average_node = cmds.createNode("wtAddMatrix")
+    weight_value = 1.0 / float(len(vertex_list))
+    for i, vertex_nmb in enumerate(vertex_list):
+        uv = getVertexUV(target_mesh, vertex_nmb)
+        pin_node = uvPin(target_mesh, uv)
+        cmds.connectAttr("%s.outputMatrix[0]" % pin_node, "{0}.wtMatrix[{1}].matrixIn".format(average_node, i))
+        cmds.setAttr("{0}.wtMatrix[{1}].weightIn".format(average_node, i), weight_value)
+
+    if not source_object:
+        source_object = cmds.spaceLocator(name="averaged_loc")[0]
+
+    if not offsetParent:
+        mult_matrix = cmds.createNode("multMatrix")
+        decompose_matrix = cmds.createNode("decomposeMatrix")
+        cmds.connectAttr("%s.matrixSum" % average_node, "%s.matrixIn[0]" % mult_matrix)
+        cmds.connectAttr("%s.matrixSum" %mult_matrix, "%s.inputMatrix" %decompose_matrix)
+        cmds.connectAttr("%s.outputTranslate" % decompose_matrix, "%s.translate" % source_object)
+    else:
+        pick_matrix = cmds.createNode("pickMatrix")
+        cmds.connectAttr("%s.matrixSum" % average_node, "%s.inputMatrix" %pick_matrix)
+        cmds.setAttr("%s.useRotate" %pick_matrix, 0)
+        cmds.setAttr("%s.useScale" %pick_matrix, 0)
+        cmds.setAttr("%s.useShear" %pick_matrix, 0)
+        cmds.connectAttr("%s.outputMatrix" % pick_matrix, "%s.offsetParentMatrix" %source_object)
+    return source_object
+

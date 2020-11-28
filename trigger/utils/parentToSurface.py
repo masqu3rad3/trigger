@@ -69,15 +69,12 @@ def parentToSurface(objects=None, surface=None, mode="parent"):
 
     follicleTransformList = []
     for obj in objects:
-        # cmds.disconnectAttr(surface.worldMesh)
-        # surface.worldMesh >> clPos.inMesh
         cmds.connectAttr("%s.worldMesh" % surface, "%s.inMesh" % clPos, f=True)
 
         bbox = cmds.xform(obj, q=True, ws=True, bb=True)
         pos = (((bbox[0] + bbox[3]) * 0.5) * convertFactor,
                ((bbox[1] + bbox[4]) * 0.5) * convertFactor,
                ((bbox[2] + bbox[5]) * 0.5) * convertFactor)
-        # cmds.setAttr("%s.inPosition" % clPos, pos, type="double3")
         cmds.setAttr("%s.inPosition" % clPos, *pos)
 
         closestU = cmds.getAttr("%s.parameterU" % clPos)
@@ -85,25 +82,17 @@ def parentToSurface(objects=None, surface=None, mode="parent"):
 
         # attachObjectToSurface(obj, surface, closestU, closestV)
         follicle = cmds.createNode("follicle", name=("%s_follicleShape" %obj))
-        # tforms = cmds.listTransforms(follicle)
-        # tforms = functions.listTransforms(follicle)
-        # follicleDag = tforms[0]
         follicleDag = cmds.listRelatives(follicle, parent=True)[0]
         cmds.rename(follicleDag, ("%s_follicle" %obj))
 
-        # surface.worldMatrix[0] >> follicle.inputWorldMatrix
         cmds.connectAttr("%s.worldMatrix[0]" % surface, "%s.inputWorldMatrix" % follicle)
         nType = cmds.nodeType(surface)
         if nType == "nurbsSurface":
-            # surface.local >> follicle.inputSurface
             cmds.connectAttr("%s.local" % surface, "%s.inputSurface" % follicle)
         else:
-            # surface.outMesh >> follicle.inputMesh
             cmds.connectAttr("%s.outMesh" % surface, "%s.inputMesh" % follicle)
 
-        # follicle.outTranslate >> follicleDag.translate
         cmds.connectAttr("%s.outTranslate" % follicle, "%s.translate" % follicleDag)
-        # follicle.outRotate >> follicleDag.rotate
         cmds.connectAttr("%s.outRotate" % follicle, "%s.rotate" % follicleDag)
         cmds.setAttr("%s.translate" % follicleDag, lock=True)
         cmds.setAttr("%s.rotate" % follicleDag, lock=True)
