@@ -181,7 +181,7 @@ class Kinematics(settings.Settings):
             if root in current_roots:
                 LOG.warning("%s is already in the list" % root)
                 return
-            new_roots = root if not current_roots else "{0}  {1}".format(current_roots, root)
+            new_roots = root if not current_roots else "{0}; {1}".format(current_roots, root)
             guide_roots_le.setText(new_roots)
             ctrl.update_model()
 
