@@ -55,6 +55,13 @@ class Controller(object):
                 return property_type(widget.value())
             else:
                 widget.setValue(int(value))
+        elif widget_class == "QListWidget":
+            if get:
+                items = [widget.item(index).text() for index in range(widget.count())]
+                return property_type(items)
+            else:
+                widget.addItems(list(value))
+
         else:
             FEEDBACK.throw_error("UNSUPPORTED WIDGET CLASS")
 
@@ -64,12 +71,10 @@ class Controller(object):
             ui_property_value = self._widget_val(item["widget"], item["type"], get=True)
             self.model.edit_action(item["action_name"], item["property"], ui_property_value)
 
-
     def update_ui(self):
         for item in self.connections:
             model_property_value = self.model.query_action(self.action_name, item["property"])
             self._widget_val(item["widget"], item["type"], model_property_value, set=True)
-
 
     @staticmethod
     def list_to_text(list_item):

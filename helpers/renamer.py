@@ -19,7 +19,7 @@ else:
     from trigger.ui.Qt.QtCore import Signal
 
 from trigger.library import functions
-from trigger.core.undo_dec import undo
+from trigger.core.decorators import undo
 from trigger.core import logger
 
 FEEDBACK = logger.Logger(__name__)

@@ -37,7 +37,6 @@ class Cloth_setup(object):
         """Execute Action"""
 
         self.setupHierarchy()
-        self.createClothGroup()
         self.createCloth(self.clothObjects)
         self.createStartFrameLoc()
         self.createWindControl()
@@ -162,34 +161,34 @@ class Cloth_setup(object):
             cmds.connectAttr('*time1.outTime', '*Nucleus.currentTime')
             return nucName
 
-    @staticmethod
-    def createClothGroup():
+    def createClothGroup(self, name=""):
         # Creates Cloth Group Hierarchy based on an input name
-        groupName = "cloth_grp"
+        groupName = "%s_cloth_grp" %name
+
         if not cmds.objExists(groupName):
             cmds.group(n=groupName, em=True)
-        # if cmds.objExists('cloth_grp') == True:
-        #     cmds.group(n=groupName, em=True, p='cloth_grp')
-        # else:
-        #     cmds.group(n=groupName, em=True)
 
         for i in ["wrapBase", "constraints", "colliders", "forces"]:
             grpCreate = cmds.group(n='%s_grp' % i, em=True, p=groupName)
             cmds.addAttr(ln='simRig_%s' % i, at='bool', dv=True)
+        cmds.parent(groupName, "simRig_grp")
+        return groupName
 
-    @staticmethod
-    def createCloth(objs, groupName="cloth_grp"):
+    def createCloth(self, objs):
         # Creates the connections for nCloth setup including INNIT CLOTH and REST Meshes. Parents to the cloth group.
-        print("DEBUGaaaaa", objs)
+
         for cloth in objs:
-            print("DEBUG----", cloth)
+            # get part name
+            part = cloth.split("_")[1]
+            cloth_group = self.createClothGroup(part)
+
             createInIt = cmds.duplicate(cloth, n=cloth + '_INIT')
             createCloth = cmds.duplicate(cloth, n=cloth + '_CLOTH')
             createRest = cmds.duplicate(cloth, n=cloth + '_REST')
 
-            cmds.parent(createInIt, groupName)
-            cmds.parent(createCloth, groupName)
-            cmds.parent(createRest, groupName)
+            cmds.parent(createInIt, cloth_group)
+            cmds.parent(createCloth, cloth_group)
+            cmds.parent(createRest, cloth_group)
             cmds.hide(createInIt)
             cmds.hide(createRest)
 
@@ -197,7 +196,7 @@ class Cloth_setup(object):
 
             cmds.select(createCloth, r=True)
             mel.eval('createNCloth 0')
-            cmds.parent('nCloth*', groupName)
+            cmds.parent('nCloth*', cloth_group)
 
     @staticmethod
     def createStartFrameLoc(nucleusName=None):

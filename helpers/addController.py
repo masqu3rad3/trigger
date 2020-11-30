@@ -4,7 +4,7 @@ import sys
 from trigger.library import functions
 from trigger.library import api
 from trigger.library.controllers import Icon
-from trigger.core.undo_dec import undo
+from trigger.core.decorators import undo
 
 from trigger.ui import Qt
 from trigger.ui.Qt import QtWidgets, QtCore, QtGui

@@ -4,10 +4,12 @@ from copy import deepcopy
 
 from maya import cmds
 import itertools
+from trigger.core import logger
+from trigger.core.decorators import keepselection
 from trigger.actions import weights
 from trigger.library import functions as extra
 from trigger.library import deformers
-from trigger.core import logger
+
 
 FEEDBACK = logger.Logger(logger_name=__name__)
 
@@ -169,7 +171,7 @@ class Splitter(dict):
     def clear_splitmaps(self):
         self["splitMaps"] = {}
 
-    # extras
+    @keepselection
     def prepare_for_painting(self, mesh, split_maps=None):
         bs_name = "splitMaps_blendshape"
         if not split_maps:

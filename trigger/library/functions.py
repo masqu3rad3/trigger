@@ -8,7 +8,7 @@ from maya import mel
 
 from trigger.core import logger
 from trigger.core import compatibility as compat
-from trigger.core.undo_dec import undo
+from trigger.core.decorators import undo
 FEEDBACK = logger.Logger(logger_name=__name__)
 
 JOINT_TYPE_DICT = {
