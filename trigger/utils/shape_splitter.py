@@ -7,7 +7,7 @@ import itertools
 from trigger.core import logger
 from trigger.core.decorators import keepselection
 from trigger.actions import weights
-from trigger.library import functions as extra
+from trigger.library import functions
 from trigger.library import deformers
 
 
@@ -21,16 +21,17 @@ class Splitter(dict):
         self["splitMaps"] = {}
         self.weightsHandler = weights.Weights()
         self.neutral = None
-        self.getMapMethod = "File"
 
-
-    def add_blendshapes(self):
-        selection = cmds.ls(sl=True, type="transform")
-        # remove groups
-        selection = filter(lambda x: extra.getShapes(x), selection)
-        # remove non-meshes
-        selection = filter(lambda x: cmds.objectType(extra.getShapes(x)[0]) == "mesh", selection)
-        self["matches"].update({mesh: [] for mesh in selection})
+    def add_blendshapes(self, meshes=None):
+        if not meshes:
+            selection = cmds.ls(sl=True, type="transform")
+            # remove groups
+            selection = filter(lambda x: functions.getShapes(x), selection)
+            # remove non-meshes
+            selection = filter(lambda x: cmds.objectType(functions.getShapes(x)[0]) == "mesh", selection)
+            self["matches"].update({mesh: [] for mesh in selection})
+        else:
+            self["matches"].update({mesh: [] for mesh in meshes})
 
     def add_splitmap(self, file_path, name=None):
         file_path = os.path.normpath(file_path) # stupid slashes
@@ -110,54 +111,6 @@ class Splitter(dict):
         cmds.delete(mort_list)
         return splits_grp
 
-    # def split_shapes(self):
-    #     if not self.neutral:
-    #         FEEDBACK.throw_error("Neutral shape is not defined")
-    #     splits_grp = "SPLITTED_SHAPES_grp"
-    #     if not cmds.objExists(splits_grp):
-    #         cmds.group(name="SPLITTED_SHAPES_grp", em = True)
-    #
-    #     for shape, split_maps in self["matches"].items():
-    #         if not split_maps:
-    #             continue
-    #         if len(split_maps) > 1:
-    #             # if there are multiple split maps, required shapes are quadrants, octants etc...
-    #             work_path_list = []
-    #             for s_map in split_maps:
-    #                 work_path_list.append(self["splitMaps"][s_map])
-    #             pGen = list(itertools.product(*work_path_list))
-    #             # tmp_name = "tmp"
-    #             for mult_path_list in pGen:
-    #                 tmp_name = "tmp"
-    #                 data_list = []
-    #                 for mult_path in mult_path_list:
-    #                     name = os.path.splitext(os.path.basename(mult_path))[0]
-    #                     tmp_name = "%s_%s" %(tmp_name, name)
-    #                     # get data
-    #                     self.weightsHandler.io.file_path = mult_path
-    #                     data = self.weightsHandler.io.read()
-    #                     data_list.append(data)
-    #                 multiplied_weights = self.weightsHandler.multiplyWeights(data_list)
-    #                 tmp_name = "%s.json" % tmp_name
-    #                 self.weightsHandler.io.file_path = tmp_name
-    #                 self.weightsHandler.io.write(multiplied_weights)
-    #                 map_path = self.weightsHandler.io.file_path
-    #                 print("="*30)
-    #                 print(shape, map_path)
-    #                 print("="*30)
-    #                 splitted_name = self._resolve_split_name(shape, map_path)
-    #                 self._bs_split(shape, map_path, splitted_name, splits_grp)
-    #             pass
-    #         else:
-    #             # there is a single map,
-    #             # so we only require that one and the negative of it
-    #             map_paths = self["splitMaps"][split_maps[0]]
-    #             for nmb, map_path in enumerate(map_paths):
-    #                 # resolve the name suffix
-    #                 splitted_name = self._resolve_split_name(shape, map_path)
-    #                 self._bs_split(shape, map_path, splitted_name, splits_grp)
-    #
-    #     return splits_grp
     # getters / cleaners
     def get_blendshapes(self):
         return self["matches"].keys()
@@ -179,8 +132,9 @@ class Splitter(dict):
         if type(split_maps) == str:
             split_maps = [split_maps]
         for map in split_maps:
-            deformers.localize(mesh, "splitMaps_blendshape", local_target_name=map)
-
+            local_target = deformers.localize(mesh, "splitMaps_blendshape", local_target_name=map)
+            functions.deleteObject(functions.getParent(local_target))
+            
         return bs_name
 
 

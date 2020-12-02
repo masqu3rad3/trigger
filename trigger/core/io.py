@@ -14,7 +14,7 @@ FEEDBACK = logger.Logger(logger_name=__name__)
 class IO(dict):
     def __init__(self, file_name=None, folder_name=None, root_path=None, file_path=None):
         super(IO, self).__init__()
-        self.valid_extensions = [".json", ".tr", ".trg", ".trw", ".trs"]
+        self.valid_extensions = [".json", ".tr", ".trg", ".trw", ".trs", ".trsplit"]
         self.default_extension = ".json"
         if file_path:
             # self["file_path"] = file_path
@@ -50,15 +50,17 @@ class IO(dict):
         else:
             self["file_path"] = os.path.join(self.root_path, self.folder_name, new_path)
 
-    def read(self):
-        if os.path.isfile(self.file_path):
-            return self._load_json(self.file_path)
+    def read(self, file_path=None):
+        file_path = file_path if file_path else self.file_path
+        if os.path.isfile(file_path):
+            return self._load_json(file_path)
         else:
             return False
 
-    def write(self, data):
-        self._dump_json(data, self.file_path)
-        return self.file_path
+    def write(self, data, file_path=None):
+        file_path = file_path if file_path else self.file_path
+        self._dump_json(data, file_path)
+        return file_path
 
     def _load_json(self, file_path):
         """Loads the given json file"""

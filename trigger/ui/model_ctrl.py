@@ -1,5 +1,6 @@
 """Controller module for Model/View"""
 from trigger.core import logger
+from trigger.ui.Qt import QtWidgets
 
 FEEDBACK = logger.Logger(__name__)
 
@@ -61,6 +62,21 @@ class Controller(object):
                 return property_type(items)
             else:
                 widget.addItems(list(value))
+        elif widget_class == "QTreeWidget":
+            if get:
+                return_dict = {}
+                root = widget.invisibleRootItem()
+                top_items = [root.child(i) for i in range(root.childCount())]
+                for item in top_items:
+                    children = [item.child(i) for i in range(item.childCount())]
+                    return_dict[item.text(0)] = [data.text(0) for data in children]
+                return return_dict
+            else:
+                for key, value_list in value.items():
+                    topLevel = QtWidgets.QTreeWidgetItem([key])
+                    widget.addTopLevelItem(topLevel)
+                    children = [QtWidgets.QTreeWidgetItem([value]) for value in value_list]
+                    topLevel.addChildren(children)
 
         else:
             FEEDBACK.throw_error("UNSUPPORTED WIDGET CLASS")

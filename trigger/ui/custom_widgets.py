@@ -137,3 +137,231 @@ class ValidatedLineEdit(QtWidgets.QLineEdit):
             if self.connected_widgets:
                 for wid in self.connected_widgets:
                     wid.setEnabled(True)
+
+class ListBoxLayout(QtWidgets.QVBoxLayout):
+    """Easy to manage listwidget with preset buttons"""
+    def __init__(self, buttonsPosition="right",
+                 alignment=None,
+                 buttonAdd=False,
+                 buttonNew=True,
+                 buttonRename=True,
+                 buttonGet=True,
+                 buttonUp=False,
+                 buttonDown=False,
+                 buttonRemove=True,
+                 buttonClear=True,
+                 multiSelect=True,
+                 *args, **kwargs):
+        super(ListBoxLayout, self).__init__(*args, **kwargs)
+        self.buttonsPosition = buttonsPosition
+        self.alignment = alignment
+        self.isButtonAdd = buttonAdd
+        self.isButtonNew = buttonNew
+        self.isButtonRename = buttonRename
+        self.isButtonGet = buttonGet
+        self.isButtonUp = buttonUp
+        self.isButtonDown = buttonDown
+        self.isButtonRemove = buttonRemove
+        self.isButtonClear = buttonClear
+        self.isMultiSelect = multiSelect
+        self.init_widget()
+        self.build()
+
+    def init_widget(self):
+        self.listwidget = QtWidgets.QListWidget()
+
+    def build(self):
+        if self.buttonsPosition == "right" or self.buttonsPosition == "left":
+            self.masterLayout = QtWidgets.QHBoxLayout()
+            self.buttonsStretchLay = QtWidgets.QVBoxLayout()
+            self.buttonslayout = QtWidgets.QVBoxLayout()
+        elif self.buttonsPosition == "top" or self.buttonsPosition == "bottom":
+            self.masterLayout = QtWidgets.QVBoxLayout()
+            self.buttonsStretchLay = QtWidgets.QHBoxLayout()
+            self.buttonslayout = QtWidgets.QHBoxLayout()
+        else:
+            raise Exception ("invalid value for buttonsPosition. Valid values are 'top', 'bottom', 'left', 'right'")
+        self.addLayout(self.masterLayout)
+        if self.alignment == "start":
+            spacer = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+            self.buttonsStretchLay.addLayout(self.buttonslayout)
+            self.buttonsStretchLay.addItem(spacer)
+        elif self.alignment == "end":
+            spacer = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+            self.buttonsStretchLay.addItem(spacer)
+            self.buttonsStretchLay.addLayout(self.buttonslayout)
+        else:
+            self.buttonsStretchLay.addLayout(self.buttonslayout)
+
+        # self.listwidget = QtWidgets.QListWidget()
+
+        if self.isMultiSelect:
+            self.listwidget.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
+
+        if self.isButtonAdd:
+            self.buttonAdd = QtWidgets.QPushButton(text="Add")
+            self.buttonslayout.addWidget(self.buttonAdd)
+        if self.isButtonNew:
+            self.buttonNew = QtWidgets.QPushButton(text="New")
+            self.buttonslayout.addWidget(self.buttonNew)
+            self.buttonNew.clicked.connect(self._on_new)
+        if self.isButtonRename:
+            self.buttonRename = QtWidgets.QPushButton(text="Rename")
+            self.buttonslayout.addWidget(self.buttonRename)
+            self.buttonRename.clicked.connect(self._on_rename)
+        if self.isButtonGet:
+            self.buttonGet = QtWidgets.QPushButton(text="Get")
+            self.buttonslayout.addWidget(self.buttonGet)
+        if self.isButtonUp:
+            self.buttonUp = QtWidgets.QPushButton(text="Move Up")
+            self.buttonslayout.addWidget(self.buttonUp)
+            self.buttonUp.clicked.connect(self._on_move_up)
+        if self.isButtonDown:
+            self.buttonDown = QtWidgets.QPushButton(text="Move Down")
+            self.buttonslayout.addWidget(self.buttonDown)
+            self.buttonDown.clicked.connect(self._on_move_down)
+        if self.isButtonRemove:
+            self.buttonRemove = QtWidgets.QPushButton(text="Remove")
+            self.buttonslayout.addWidget(self.buttonRemove)
+            self.buttonRemove.clicked.connect(self._on_remove)
+        if self.isButtonClear:
+            self.buttonClear = QtWidgets.QPushButton(text="Clear")
+            self.buttonslayout.addWidget(self.buttonClear)
+            self.buttonClear.clicked.connect(self.listwidget.clear)
+
+        if self.buttonsPosition == "top" or self.buttonsPosition == "left":
+            self.masterLayout.addLayout(self.buttonsStretchLay)
+            self.masterLayout.addWidget(self.listwidget)
+        else:
+            self.masterLayout.addWidget(self.listwidget)
+            self.masterLayout.addLayout(self.buttonsStretchLay)
+
+    def _on_new(self):
+        w = QtWidgets.QWidget()
+        newitem, ok = QtWidgets.QInputDialog.getText(w, "New Item", "Enter new item name:")
+        if ok:
+            self.listwidget.addItem(str(newitem))
+
+    def _on_rename(self):
+        all_selected_rows = [self.listwidget.row(item) for item in self.listwidget.selectedItems()]
+        if not all_selected_rows:
+            return
+        w = QtWidgets.QWidget()
+        newname, ok = QtWidgets.QInputDialog.getText(w, "Rename Item", "Enter new name:")
+        if ok:
+            for row in all_selected_rows:
+                self.listwidget.item(row).setText(newname)
+
+    def _on_move_up(self):
+        row = self.listwidget.currentRow()
+        if row == -1:
+            return
+        if not row == 0:
+            current_list = self.listItemNames()
+            current_list.insert(row-1, current_list.pop(row))
+            self.listwidget.clear()
+            self.listwidget.addItems(current_list)
+            self.listwidget.setCurrentRow(row-1)
+
+    def _on_move_down(self):
+        row = self.listwidget.currentRow()
+        if row == -1:
+            return
+        current_list = self.listItemNames()
+        if not row == len(current_list)-1:
+            current_list.insert(row+1, current_list.pop(row))
+            self.listwidget.clear()
+            self.listwidget.addItems(current_list)
+            self.listwidget.setCurrentRow(row + 1)
+        else:
+            self.listwidget.setCurrentRow(row)
+
+    def _on_remove(self):
+        all_selected_rows = [self.listwidget.row(item) for item in self.listwidget.selectedItems()]
+
+        for row in reversed(all_selected_rows):
+            self.listwidget.takeItem(row)
+
+    def addNewButton(self, buttonwidget):
+        self.buttonslayout.addWidget(buttonwidget)
+
+    def removeButton(self, buttonwidget):
+        buttonwidget.setEnabled(False)
+        buttonwidget.deleteLater()
+
+    def listItems(self):
+        return [self.listwidget.item(index) for index in range(self.listwidget.count())]
+
+    def listItemNames(self):
+        return [self.listwidget.item(index).text() for index in range(self.listwidget.count())]
+
+class TreeBoxLayout(ListBoxLayout):
+    def __init__(self, *args, **kwargs):
+        super(TreeBoxLayout, self).__init__(*args, **kwargs)
+        self.key_name = "Name"
+        self.value_name = "Value List"
+        self.value_database = []
+
+    def init_widget(self):
+        # override the widget with tree widget
+        self.listwidget = QtWidgets.QTreeWidget()
+
+    def _on_new(self):
+        dialog = QtWidgets.QDialog()
+        dialog.setModal(True)
+        master_layout = QtWidgets.QVBoxLayout()
+        dialog.setLayout(master_layout)
+        form_layout = QtWidgets.QFormLayout()
+        master_layout.addLayout(form_layout)
+
+        key_lbl = QtWidgets.QLabel(text=self.key_name)
+        key_le = QtWidgets.QLineEdit()
+        form_layout.addRow(key_lbl, key_le)
+
+        value_lbl = QtWidgets.QLabel(text=self.value_name)
+        value_listbox = ListBoxLayout(buttonGet=False)
+        # if not self.override_listbox:
+        #     value_listbox = ListBoxLayout(buttonGet=False)
+        # else:
+        #     value_listbox = self.override_listbox
+        form_layout.addRow(value_lbl, value_listbox)
+
+        button_box = QtWidgets.QDialogButtonBox(dialog)
+        button_box.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel | QtWidgets.QDialogButtonBox.Ok)
+        master_layout.addWidget(button_box)
+
+        # Signals
+        button_box.accepted.connect(lambda x=0: self._add_tree_item(key_le.text(), value_listbox.listItemNames()))
+        button_box.accepted.connect(dialog.close)
+        button_box.rejected.connect(dialog.close)
+
+        dialog.exec_()
+
+    def _add_tree_item(self, key, value_list):
+        topLevel = QtWidgets.QTreeWidgetItem([key])
+        self.listwidget.addTopLevelItem(topLevel)
+        children = [QtWidgets.QTreeWidgetItem([value]) for value in value_list]
+        topLevel.addChildren(children)
+
+    def _on_rename(self):
+        all_selected_items = self.listwidget.selectedItems()
+        if not all_selected_items:
+            return
+        w = QtWidgets.QWidget()
+        newname, ok = QtWidgets.QInputDialog.getText(w, "Rename Item", "Enter new name:")
+        if ok:
+            for x in self.listwidget.selectedItems():
+                x.setText(0, newname)
+
+    @staticmethod
+    def get_children(root):
+        return [root.child(i) for i in range(root.childCount())]
+
+    def get_dictionary(self):
+        return_dict = {}
+        top_items = self.get_children(self.listwidget.invisibleRootItem())
+        for item in top_items:
+            return_dict[item.text(0)] = [data.text(0) for data in self.get_children(item)]
+
+
+

@@ -234,16 +234,17 @@ class Weights(dict):
         # layout.addRow(deformers_lbl, deformers_hLay)
         ## OLD [end]
         deformers_lbl = QtWidgets.QLabel(text="Deformers")
-        deformers_hLay = QtWidgets.QHBoxLayout()
-        deformers_listwidget = QtWidgets.QListWidget()
-        deformers_hLay.addWidget(deformers_listwidget)
-        deformer_buttons_vLay = QtWidgets.QVBoxLayout()
-        deformers_hLay.addLayout(deformer_buttons_vLay)
-        get_deformers_pb = QtWidgets.QPushButton(text="Get")
-        deformer_buttons_vLay.addWidget(get_deformers_pb)
-        remove_deformer_pb = QtWidgets.QPushButton(text="Remove")
-        deformer_buttons_vLay.addWidget(remove_deformer_pb)
-        layout.addRow(deformers_lbl, deformers_hLay)
+        deformers_listbox = custom_widgets.ListBoxLayout(alignment="start", buttonUp=False, buttonDown=False)
+        # deformers_hLay = QtWidgets.QHBoxLayout()
+        # deformers_listwidget = QtWidgets.QListWidget()
+        # deformers_hLay.addWidget(deformers_listwidget)
+        # deformer_buttons_vLay = QtWidgets.QVBoxLayout()
+        # deformers_hLay.addLayout(deformer_buttons_vLay)
+        # get_deformers_pb = QtWidgets.QPushButton(text="Get")
+        # deformer_buttons_vLay.addWidget(get_deformers_pb)
+        # remove_deformer_pb = QtWidgets.QPushButton(text="Remove")
+        # deformer_buttons_vLay.addWidget(remove_deformer_pb)
+        layout.addRow(deformers_lbl, deformers_listbox)
 
         save_current_lbl = QtWidgets.QLabel(text="Save Current states")
         save_current_hlay = QtWidgets.QHBoxLayout()
@@ -258,7 +259,7 @@ class Weights(dict):
 
         # make connections with the controller object
         ctrl.connect(file_path_le, "weights_file_path", str)
-        ctrl.connect(deformers_listwidget, "deformers", list)
+        ctrl.connect(deformers_listbox.listwidget, "deformers", list)
 
         ctrl.update_ui()
 
@@ -280,27 +281,16 @@ class Weights(dict):
             zortMenu.exec_((QtGui.QCursor.pos()))
 
         def add_deformers(deformer_list):
-            deformers_listwidget.addItems(deformer_list)
+            deformers_listbox.listwidget.addItems(deformer_list)
             ctrl.update_model()
-
-        def remove_deformer():
-            row = deformers_listwidget.currentRow()
-            if row == -1:
-                return
-            deformers_listwidget.takeItem(row)
-            ctrl.update_model()
-        # def add_deformers(deformer_list):
-        #     current_deformers_text = deformers_le.text()
-        #     if current_deformers_text:
-        #         for deformer in deformer_list:
-        #             if deformer in current_deformers_text:
-        #                 LOG.warning("%s is already in the list" % deformer)
-        #                 deformer_list.remove(deformer)
-        #         new_deformers_text = "; ".join([current_deformers_text] + deformer_list)
-        #     else:
-        #         new_deformers_text = "; ".join(deformer_list)
-        #     deformers_le.setText(new_deformers_text)
+        #
+        # def remove_deformer():
+        #     row = deformers_listwidget.currentRow()
+        #     if row == -1:
+        #         return
+        #     deformers_listwidget.takeItem(row)
         #     ctrl.update_model()
+
 
         def save_deformers(increment=False, save_as=False):
             if increment:
@@ -328,10 +318,9 @@ class Weights(dict):
         ### Signals
         file_path_le.editingFinished.connect(lambda x=0: ctrl.update_model())
         browse_path_pb.clicked.connect(lambda x=0: ctrl.update_model())
-        # deformers_le.editingFinished.connect(lambda x=0: ctrl.update_model())
-        get_deformers_pb.clicked.connect(get_deformers_menu)
-        get_deformers_pb.clicked.connect(lambda x=0: ctrl.update_model())
-        remove_deformer_pb.clicked.connect(remove_deformer)
+        deformers_listbox.buttonGet.clicked.connect(get_deformers_menu)
+        deformers_listbox.buttonNew.clicked.connect(lambda x: ctrl.update_model())
+        deformers_listbox.buttonRemove.clicked.connect(lambda x: ctrl.update_model())
 
         save_current_pb.clicked.connect(lambda x=0: save_deformers())
         increment_current_pb.clicked.connect(lambda x=0: save_deformers(increment=True))
