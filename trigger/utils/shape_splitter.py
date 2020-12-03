@@ -81,7 +81,13 @@ class Splitter(dict):
                 suffix = "B"
             else:
                 suffix = "A"
-        split_name = "%s%s" % (suffix, unsplit_name)
+
+        combination_parts = unsplit_name.split("_")
+        if combination_parts:
+            split_named_combination_parts = ["%s%s" %(suffix, part) for part in combination_parts]
+            split_name = "_".join(split_named_combination_parts)
+        else:
+            split_name = "%s%s" % (suffix, unsplit_name)
         return split_name
 
     def split_shapes(self):
@@ -134,7 +140,7 @@ class Splitter(dict):
         for map in split_maps:
             local_target = deformers.localize(mesh, "splitMaps_blendshape", local_target_name=map)
             functions.deleteObject(functions.getParent(local_target))
-            
+
         return bs_name
 
 
