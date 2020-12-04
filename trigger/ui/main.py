@@ -116,6 +116,21 @@ class MainUI(QtWidgets.QMainWindow):
         asteriks = "*" if self.actions_handler.is_modified() else ""
         self.setWindowTitle("{0} - {1}{2}".format(WINDOW_NAME, file_name, asteriks))
 
+    def closeEvent(self, event):
+        print("event")
+        if self.actions_handler.is_modified():
+            r = self.feedback.pop_question(title="Scene not saved", text="Current Trigger session is not saved\n Do you want to save before quit?", buttons=["yes", "no", "cancel"])
+            if r == "yes":
+                self.save_trigger()
+                event.accept()
+            elif r == "no":
+                event.accept()
+            else:
+                event.ignore()
+        else:
+            event.accept()
+
+
 
     def buildBarsUI(self):
         self.menubar = QtWidgets.QMenuBar(self)
@@ -503,18 +518,21 @@ class MainUI(QtWidgets.QMainWindow):
         ### RIGHT CLICK MENUS ###
         # List Widget Right Click Menu
 
-        # TODO THIS SECTION CREATES SOME RANDOM CRASHES??? POSSIBLY 'QtWidgets.QMenu()'
-        self.popMenu_rig_action = QtWidgets.QMenu()
+        def on_context_menu_rig_actions(point):
+            popMenu_rig_action.exec_(self.rig_actions_listwidget.mapToGlobal(point))
+
+        # for some reason, if the popMenu_rig_action is a class variable, it causes random crashes
+        popMenu_rig_action = QtWidgets.QMenu()
         self.rig_actions_listwidget.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-        self.rig_actions_listwidget.customContextMenuRequested.connect(self.on_context_menu_rig_actions)
+        self.rig_actions_listwidget.customContextMenuRequested.connect(on_context_menu_rig_actions)
 
         self.action_rc_rename = QtWidgets.QAction('Rename', self)
-        self.popMenu_rig_action.addAction(self.action_rc_rename)
+        popMenu_rig_action.addAction(self.action_rc_rename)
 
-        self.popMenu_rig_action.addSeparator()
+        popMenu_rig_action.addSeparator()
 
         self.action_rc_run = QtWidgets.QAction('Run', self)
-        self.popMenu_rig_action.addAction(self.action_rc_run)
+        popMenu_rig_action.addAction(self.action_rc_run)
 
         ### SIGNALS ####
 
@@ -531,9 +549,8 @@ class MainUI(QtWidgets.QMainWindow):
         self.rig_actions_listwidget.doubleClicked.connect(lambda x: self.actions_handler.run_action(x.data()))
         # TODO: Make a seperate method for running run actions wih progressbar
 
-
-    def on_context_menu_rig_actions(self, point):
-        self.popMenu_rig_action.exec_(self.rig_actions_listwidget.mapToGlobal(point))
+    # def on_context_menu_rig_actions(self, point):
+    #     self.popMenu_rig_action.exec_(self.rig_actions_listwidget.mapToGlobal(point))
 
     def on_action_rename(self):
         action_name = self.rig_actions_listwidget.currentItem().text()
