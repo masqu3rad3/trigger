@@ -196,3 +196,11 @@ def cluster(mesh):
     cmds.select(original_selection)
     return cluster, cluster_handle
 
+def get_bs_index_by_name(bs_node, target_name):
+    attr = bs_node + '.w[{}]'
+    weightCount = cmds.blendShape(bs_node, q=True, wc=True)
+    for index in range(weightCount):
+        if cmds.aliasAttr(attr.format(index), q=True) == target_name:
+            return index
+    return -1
+

@@ -53,10 +53,7 @@ def getMayaMainWindow():
 
 class MainUI(QtWidgets.QMainWindow):
 
-    # create guide and rig objects
-    actions_handler = actions_session.ActionsSession()
-    # actions_handler.reset_actions()
-    guides_handler = session.Session()
+
 
     def __init__(self):
         for entry in QtWidgets.QApplication.allWidgets():
@@ -67,6 +64,11 @@ class MainUI(QtWidgets.QMainWindow):
                 pass
         parent = getMayaMainWindow()
         super(MainUI, self).__init__(parent=parent)
+
+        # create guide and rig objects
+        self.actions_handler = actions_session.ActionsSession()
+        # actions_handler.reset_actions()
+        self.guides_handler = session.Session()
 
         self.actions_handler.reset_actions()
 
@@ -500,9 +502,11 @@ class MainUI(QtWidgets.QMainWindow):
 
         ### RIGHT CLICK MENUS ###
         # List Widget Right Click Menu
+
+        # TODO THIS SECTION CREATES SOME RANDOM CRASHES??? POSSIBLY 'QtWidgets.QMenu()'
+        self.popMenu_rig_action = QtWidgets.QMenu()
         self.rig_actions_listwidget.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.rig_actions_listwidget.customContextMenuRequested.connect(self.on_context_menu_rig_actions)
-        self.popMenu_rig_action = QtWidgets.QMenu()
 
         self.action_rc_rename = QtWidgets.QAction('Rename', self)
         self.popMenu_rig_action.addAction(self.action_rc_rename)

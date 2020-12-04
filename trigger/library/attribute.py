@@ -59,16 +59,19 @@ def create_attribute(node, property_dict=None, keyable=True, display=True, *args
     if attr_type == "bool":
         default_value = default_value if default_value else 0
         cmds.addAttr(node, longName=attr_name, niceName=nice_name, at=attr_type, k=keyable, defaultValue=default_value)
+        cmds.setAttr("%s.%s" % (node, attr_name), e=True, cb=display)
     elif attr_type == "enum":
         default_value = default_value if default_value else 0
         enum_list = property_dict.get("enum_list")
         if enum_list == None:
             LOG.throw_error("Missing 'enum_list'")
         cmds.addAttr(node, longName=attr_name, niceName=nice_name, at=attr_type, en=enum_list, k=keyable, defaultValue=default_value)
+        cmds.setAttr("%s.%s" % (node, attr_name), e=True, cb=display)
     elif attr_type == "string":
         default_value = default_value if default_value else ""
         cmds.addAttr(node, longName=attr_name, niceName=nice_name, k=keyable, dataType="string")
         cmds.setAttr("%s.%s" % (node, attr_name), default_value, type="string")
+        cmds.setAttr("%s.%s" % (node, attr_name), e=True, cb=display)
     else:
         min_val = property_dict.get("min_value") if property_dict.get("min_value") != None else -99999
         max_val = property_dict.get("max_value") if property_dict.get("max_value") != None else 99999
@@ -83,8 +86,55 @@ def create_attribute(node, property_dict=None, keyable=True, display=True, *args
                      k=keyable,
                      )
 
-    cmds.setAttr("%s.%s" % (node, attr_name), e=True, cb=display)
+    # cmds.setAttr("%s.%s" % (node, attr_name), e=True, cb=display)
     return "%s.%s" % (node, attr_name)
+
+def validate_attr(attr, attr_range=None, nice_name=None, attr_type="float", default_value=None):
+    """Validate attribute.
+
+    Check if attr exists, and create if it doesn't
+
+    """
+    splits = attr.split(".")
+    node_name = splits[0]
+    attr_name = ".".join(splits[1:])
+    if cmds.attributeQuery(attr, node=node_name, exists=True):
+        if not cmds.addAttr(attr, query=True, exists=True):
+            # if this isn't a dynamic attr, we don't need to worry about min or max
+            return
+
+        if attr_range:
+            min_value = cmds.addAttr(attr_name, query=True, min=True)
+            max_value = cmds.addAttr(attr_name, query=True, max=True)
+
+            if min_value is None or attr_range[0] < min_value:
+                cmds.addAttr(
+                    attr_name, edit=True, hasMinValue=True, min=attr_range[0]
+                )
+
+            if max_value is None or attr_range[1] > max_value:
+                cmds.addAttr(
+                    attr, edit=True, hasMaxValue=True, max=attr_range[1]
+                )
+    else:
+        # create the creation dict
+        property_dict = {
+            "attr_name": attr_name,
+            "nice_name": nice_name,
+            "attr_type": attr_type,
+            "default_value": default_value,
+            "min_value": attr_range[0],
+            "max_value": attr_range[1]
+        }
+        create_attribute(node_name, property_dict=property_dict, display=False)
+        # cmds.addAttr(
+        #     self.node,
+        #     ln=self.attr,
+        #     min=self.min,
+        #     max=self.max,
+        #     keyable=True,
+        # )
+
 
 def drive_attrs(driver_attr, driven_attrs, driver_range=None, driven_range=None, force=True):
     """
@@ -99,8 +149,18 @@ def drive_attrs(driver_attr, driven_attrs, driver_range=None, driven_range=None,
     Returns:
 
     """
+
+
     if type(driven_attrs) != list:
         driven_attrs = [driven_attrs]
+
+    # validation
+    if force:
+        validate_attr(driver_attr, attr_range=driver_range)
+        for attr in driven_attrs:
+            validate_attr(attr, attr_range=driven_range)
+
+
     if not driver_range or not driven_range:
         # direct connect
         for driven in driven_attrs:

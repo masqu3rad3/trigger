@@ -182,9 +182,10 @@ class ActionsSession(dict):
             current_value = action["data"].get(property)
             if current_value == None:
                 LOG.throw_error("The property '%s' does not exist in %s ACTION_DATA" % (property, action["type"]))
-            if compat.is_string(current_value):
-                # new_value = compat.decode(new_value)
+            if compat.is_string(new_value):
                 new_value = str(new_value)
+            if compat.is_string(current_value):
+                current_value = str(current_value)
             if type(current_value) != type(new_value):
                 LOG.throw_error("%s property only accepts %s values" % (property, str(type(current_value))))
 
