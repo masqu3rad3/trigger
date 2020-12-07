@@ -186,7 +186,7 @@ class Split_shapes(weights.Weights):
                 for smap in split_maps:
                     extra_button = QtWidgets.QPushButton(text=smap)
                     value_listbox.buttonslayout.addWidget(extra_button)
-                    extra_button.clicked.connect(lambda ignore=0, val=smap: value_listbox.listwidget.addItem(str(val)))
+                    extra_button.clicked.connect(lambda ignore=0, val=smap: value_listbox.viewWidget.addItem(str(val)))
             form_layout.addRow(value_lbl, value_listbox)
 
             button_box = QtWidgets.QDialogButtonBox(dialog)
@@ -208,7 +208,7 @@ class Split_shapes(weights.Weights):
         # ctrl.connect(deformers_le, "split_maps_file_path", str)
         ctrl.connect(blendshapes_group_le, "blendshapes_root_group", str)
         ctrl.connect(neutral_mesh_le, "neutral_mesh", str)
-        ctrl.connect(split_definitions_treeBox.listwidget, "split_data", dict)
+        ctrl.connect(split_definitions_treeBox.viewWidget, "split_data", dict)
         ctrl.update_ui()
 
         def prepare_bs():

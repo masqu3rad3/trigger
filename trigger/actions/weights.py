@@ -259,7 +259,7 @@ class Weights(dict):
 
         # make connections with the controller object
         ctrl.connect(file_path_le, "weights_file_path", str)
-        ctrl.connect(deformers_listbox.listwidget, "deformers", list)
+        ctrl.connect(deformers_listbox.viewWidget, "deformers", list)
 
         ctrl.update_ui()
 
@@ -281,7 +281,7 @@ class Weights(dict):
             zortMenu.exec_((QtGui.QCursor.pos()))
 
         def add_deformers(deformer_list):
-            deformers_listbox.listwidget.addItems(deformer_list)
+            deformers_listbox.viewWidget.addItems(deformer_list)
             ctrl.update_model()
         #
         # def remove_deformer():
