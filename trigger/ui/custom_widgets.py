@@ -445,3 +445,12 @@ class TableBoxLayout(ListBoxLayout):
             for column, cell_data in enumerate(mapping_data):
                 self.viewWidget.setItem(row, column, QtWidgets.QTableWidgetItem(str(cell_data)))
 
+    def get_data(self):
+        row_count = self.viewWidget.rowCount()
+        column_count = self.viewWidget.columnCount()
+        data = []
+        for y in range(row_count):
+            data.append([self.viewWidget.item(y, x).text() for x in range(column_count)])
+        return data
+
+
