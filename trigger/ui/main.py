@@ -52,8 +52,7 @@ def getMayaMainWindow():
 
 
 class MainUI(QtWidgets.QMainWindow):
-
-
+    iconsPath = os.path.join(os.path.dirname(os.path.realpath(__file__)), "icons")
 
     def __init__(self):
         for entry in QtWidgets.QApplication.allWidgets():
@@ -92,6 +91,9 @@ class MainUI(QtWidgets.QMainWindow):
         self.buildRiggingUI()
         self.buildGuidesUI()
 
+        # define the listwidget to the actions handler to update it during build
+        self.actions_handler.progressListwidget = self.rig_actions_listwidget
+
         self.populate_guides()
 
         # Create a QTimer
@@ -117,7 +119,6 @@ class MainUI(QtWidgets.QMainWindow):
         self.setWindowTitle("{0} - {1}{2}".format(WINDOW_NAME, file_name, asteriks))
 
     def closeEvent(self, event):
-        print("event")
         if self.actions_handler.is_modified():
             r = self.feedback.pop_question(title="Scene not saved", text="Current Trigger session is not saved\n Do you want to save before quit?", buttons=["yes", "no", "cancel"])
             if r == "yes":
@@ -465,16 +466,19 @@ class MainUI(QtWidgets.QMainWindow):
         self.move_action_down_pb.setText("down")
         self.rig_action_addremove_hLay.addWidget(self.move_action_down_pb)
 
-        self.rig_actions_listwidget = QtWidgets.QListWidget(self.layoutWidget_2)
-        font = QtGui.QFont()
-        font.setPointSize(10)
-        font.setBold(False)
-        font.setWeight(50)
-        font.setStrikeOut(False)
-        self.rig_actions_listwidget.setFont(font)
-        self.rig_actions_listwidget.setMouseTracking(False)
-        self.rig_actions_listwidget.setFrameShape(QtWidgets.QFrame.StyledPanel)
-        self.rig_actions_listwidget.setViewMode(QtWidgets.QListView.ListMode)
+        # self.rig_actions_listwidget = QtWidgets.QListWidget(self.layoutWidget_2)
+        # font = QtGui.QFont()
+        # font.setPointSize(10)
+        # font.setBold(False)
+        # font.setWeight(50)
+        # font.setStrikeOut(False)
+        # self.rig_actions_listwidget.setFont(font)
+        # self.rig_actions_listwidget.setMouseTracking(False)
+        # self.rig_actions_listwidget.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        # self.rig_actions_listwidget.setViewMode(QtWidgets.QListView.ListMode)
+        # self.rig_actions_listwidget.setAlternatingRowColors(True)
+        self.rig_actions_listwidget = custom_widgets.ProgressListWidget()
+
         self.rig_actions_vLay.addWidget(self.rig_actions_listwidget)
 
         self.verticalLayoutWidget_3 = QtWidgets.QWidget(self.rig_LR_splitter)
@@ -512,6 +516,8 @@ class MainUI(QtWidgets.QMainWindow):
         self.rig_buttons_hLay.addWidget(self.build_pb)
 
         self.build_and_publish_pb = QtWidgets.QPushButton(self.rigging_tab, text="Build && Publish")
+        self.build_and_publish_pb.setIcon(QtGui.QIcon(os.path.join(self.iconsPath, "cab.png")))
+
         self.rig_buttons_hLay.addWidget(self.build_and_publish_pb)
         self.rigging_tab_vLay.addLayout(self.rig_buttons_hLay)
 
@@ -530,13 +536,16 @@ class MainUI(QtWidgets.QMainWindow):
         popMenu_rig_action.addAction(self.action_rc_rename)
 
         popMenu_rig_action.addSeparator()
-
         self.action_rc_run = QtWidgets.QAction('Run', self)
         popMenu_rig_action.addAction(self.action_rc_run)
+
+        self.action_rc_toggle = QtWidgets.QAction('Toggle Disable/Enable', self)
+        popMenu_rig_action.addAction(self.action_rc_toggle)
 
         ### SIGNALS ####
 
         self.action_rc_rename.triggered.connect(self.on_action_rename)
+        self.action_rc_toggle.triggered.connect(self.on_action_toggle)
         # TODO: ADD signals for rc run
 
         self.add_action_pb.clicked.connect(self.add_actions_menu)
@@ -555,7 +564,7 @@ class MainUI(QtWidgets.QMainWindow):
     def on_action_rename(self):
         action_name = self.rig_actions_listwidget.currentItem().text()
         rename_dialog = QtWidgets.QDialog()
-        rename_dialog.setWindowTitle("test")
+        rename_dialog.setWindowTitle("Rename Action")
         rename_masterLay = QtWidgets.QVBoxLayout()
         rename_dialog.setLayout(rename_masterLay)
         # rename_le = QtWidgets.QLineEdit(text=action_name)
@@ -578,6 +587,15 @@ class MainUI(QtWidgets.QMainWindow):
             self.feedback.pop_info(title="Existing Action", text="This action name exists. Action names must be unique", critical=True)
             self.on_action_rename()
         self.actions_handler.rename_action(action_name, str(rename_le.text()))
+        self.populate_actions()
+
+    def on_action_toggle(self):
+        action_name = self.rig_actions_listwidget.currentItem().text()
+        is_enabled = self.actions_handler.is_enabled(action_name)
+        if is_enabled:
+            self.actions_handler.disable_action(action_name)
+        else:
+            self.actions_handler.enable_action(action_name)
         self.populate_actions()
 
     def new_trigger(self):
@@ -652,7 +670,8 @@ class MainUI(QtWidgets.QMainWindow):
 
         zortMenu = QtWidgets.QMenu()
         for action_item in list_of_actions:
-            tempAction = QtWidgets.QAction(action_item, self)
+            icon_path = os.path.join(self.iconsPath, "%s.png" %action_item)
+            tempAction = QtWidgets.QAction(QtGui.QIcon(icon_path), action_item, self)
             zortMenu.addAction(tempAction)
             tempAction.triggered.connect(lambda ignore=action_item, item=action_item: self.actions_handler.add_action(action_type=item))
             tempAction.triggered.connect(self.populate_actions)
@@ -669,6 +688,27 @@ class MainUI(QtWidgets.QMainWindow):
     def populate_actions(self):
         self.rig_actions_listwidget.clear()
         self.rig_actions_listwidget.addItems(self.actions_handler.list_action_names())
+
+        for row, action_name in enumerate(self.actions_handler.list_action_names()):
+            action_type = self.actions_handler.get_action_type(action_name)
+            icon_path = os.path.join(self.iconsPath, "%s.png" % action_type)
+            print("*"*30)
+            print("*"*30)
+            print("*"*30)
+            print("*"*30)
+            print("*"*30)
+            self.rig_actions_listwidget.setIcon(row, icon_path)
+            if self.actions_handler.is_enabled(action_name):
+                self.rig_actions_listwidget.enableItem(row)
+            else:
+                self.rig_actions_listwidget.disableItem(row)
+
+        # for x in range(self.rig_actions_listwidget.count()):
+        #     item = self.rig_actions_listwidget.item(x)
+        #     if self.actions_handler.is_enabled(item.text()):
+        #         item.setForeground(self.colorDictionary["enabled"])
+        #     else:
+        #         item.setForeground(self.colorDictionary["disabled"])
         self.update_title()
 
     def move_action_up(self):

@@ -2,7 +2,7 @@
 from trigger.core import logger
 from trigger.ui.Qt import QtWidgets
 
-FEEDBACK = logger.Logger(__name__)
+log = logger.Logger(__name__)
 
 class Controller(object):
 
@@ -26,11 +26,11 @@ class Controller(object):
         """Returns the required widget method if the widget is supported"""
         widget_class = widget.__class__.__name__
         if set and value == None:
-            FEEDBACK.throw_error("Set mode needs a value")
+            log.throw_error("Set mode needs a value")
         if set == None and get == None:
-            FEEDBACK.throw_error("Either set or get needs to be flagged")
+            log.throw_error("Either set or get needs to be flagged")
         if set and get:
-            FEEDBACK.throw_error("Both set and get cannot be defined")
+            log.throw_error("Both set and get cannot be defined")
         if widget_class == "QLineEdit":
             if get:
                 if property_type == list:
@@ -77,9 +77,14 @@ class Controller(object):
                     widget.addTopLevelItem(topLevel)
                     children = [QtWidgets.QTreeWidgetItem([value]) for value in value_list]
                     topLevel.addChildren(children)
+        elif widget_class == "TableBoxLayout":
+            if get:
+                return widget.get_data()
+            else:
+                widget.set_data(list(value))
 
         else:
-            FEEDBACK.throw_error("UNSUPPORTED WIDGET CLASS")
+            log.throw_error("UNSUPPORTED WIDGET CLASS ==> %s" % widget_class)
 
 
     def update_model(self):

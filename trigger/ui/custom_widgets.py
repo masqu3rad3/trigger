@@ -1,5 +1,5 @@
 import os
-from trigger.ui.Qt import QtWidgets, QtCore
+from trigger.ui.Qt import QtWidgets, QtCore, QtGui
 from trigger.ui import feedback
 from trigger.core import foolproof
 from PySide2 import QtWidgets
@@ -372,11 +372,17 @@ class TreeBoxLayout(ListBoxLayout):
             return_dict[item.text(0)] = [data.text(0) for data in self.get_children(item)]
 
 class TableBoxLayout(ListBoxLayout):
-    def __init__(self, labels=["Driver", "Start", "End", "Driven", "Start", "End"], *args, **kwargs):
+    def __init__(self, labels=["Driver", "Start", "End", "Driven", "Start", "End"], buttonDuplicate=True,  *args, **kwargs):
         self.labels = labels
-
+        self.isButtonDuplicate = buttonDuplicate
         super(TableBoxLayout, self).__init__(*args, **kwargs)
 
+    def build(self):
+        super(TableBoxLayout, self).build()
+        if self.isButtonDuplicate:
+            self.buttonDuplicate = QtWidgets.QPushButton(text="Duplicate")
+            self.buttonslayout.addWidget(self.buttonDuplicate)
+            self.buttonDuplicate.clicked.connect(self._on_duplicate)
 
     def init_widget(self):
         self.viewWidget = QtWidgets.QTableWidget()
@@ -398,9 +404,19 @@ class TableBoxLayout(ListBoxLayout):
 
         self.viewWidget.verticalHeader().setVisible(False)
 
+    def _on_duplicate(self):
+        all_selected_rows = [idx.row() for idx in self.viewWidget.selectedIndexes()]
+        column_count = self.viewWidget.columnCount()
+        for row in all_selected_rows:
+            new_row = self._on_new()
+            for column in range(column_count):
+                self.viewWidget.setItem(new_row, column, QtWidgets.QTableWidgetItem(self.viewWidget.item(row, column)))
+
     def _on_new(self):
+        """Adds a new row and returns the new row number"""
         next_row = self.viewWidget.rowCount()
         self.viewWidget.insertRow(next_row)
+        return next_row
 
     def _on_clear(self):
         row_count = self.viewWidget.rowCount()
@@ -449,8 +465,78 @@ class TableBoxLayout(ListBoxLayout):
         row_count = self.viewWidget.rowCount()
         column_count = self.viewWidget.columnCount()
         data = []
-        for y in range(row_count):
-            data.append([self.viewWidget.item(y, x).text() for x in range(column_count)])
+        for x in range(row_count):
+            row_data = []
+            for y in range(column_count):
+                table_item = self.viewWidget.item(x, y)
+                if table_item:
+                    row_data.append(table_item.text())
+                else:
+                    row_data.append("")
+            data.append(row_data)
+
+        # for y in range(column_count):
+        #     row_data = []
+        #     for x in range(row_count):
+        #         table_item = self.viewWidget.item(x, y)
+        #         if table_item:
+        #             row_data.append(table_item.text())
+        #         else:
+        #             row_data.append("")
+        #         data.append(row_data)
         return data
+
+class ProgressListWidget(QtWidgets.QListWidget):
+    colorDictionary = {
+        "disabled": QtGui.QColor(80, 80, 80, 255),
+        "enabled": QtGui.QColor(255, 255, 255, 255),
+        "active": QtGui.QColor(255, 255, 0, 255),
+        "success": QtGui.QColor(0, 255, 0, 255),
+        "error": QtGui.QColor(255, 0, 0, 255)
+    }
+
+
+    def __init__(self):
+        super(ProgressListWidget, self).__init__()
+        font = QtGui.QFont()
+        font.setPointSize(10)
+        font.setBold(False)
+        font.setWeight(50)
+        font.setStrikeOut(False)
+        self.setFont(font)
+        self.setMouseTracking(False)
+        self.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        self.setViewMode(QtWidgets.QListView.ListMode)
+        self.setAlternatingRowColors(True)
+
+    def disableItem(self, row):
+        item = self.item(row)
+        if item:
+            item.setForeground(self.colorDictionary["disabled"])
+
+    def enableItem(self, row):
+        item = self.item(row)
+        if item:
+            item.setForeground(self.colorDictionary["enabled"])
+
+    def activateItem(self, row):
+        item = self.item(row)
+        if item:
+            item.setForeground(self.colorDictionary["active"])
+
+    def successItem(self, row):
+        item = self.item(row)
+        if item:
+            item.setForeground(self.colorDictionary["success"])
+
+    def errorItem(self, row):
+        item = self.item(row)
+        if item:
+            item.setForeground(self.colorDictionary["error"])
+
+    def setIcon(self, row, icon_path):
+        item = self.item(row)
+        if item:
+            item.setIcon(QtGui.QIcon(icon_path))
 
 

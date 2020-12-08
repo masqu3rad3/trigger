@@ -9,13 +9,14 @@ from trigger.core import io
 from trigger.core import logger
 from trigger import actions
 from trigger.core import compatibility as compat
+from trigger.ui.Qt import QtWidgets
 
 LOG = logger.Logger(logger_name=__name__)
 
 class ActionsSession(dict):
-    def __init__(self):
-        super(ActionsSession, self).__init__()
-
+    def __init__(self, progress_listwidget=None, *args, **kwargs):
+        super(ActionsSession, self).__init__(*args, **kwargs)
+        self.progressListwidget = progress_listwidget
         # at least a file name is necessary while instancing the IO
         self.io = io.IO(file_name="tmp_actions_session.tr")
         self.currentFile = None
@@ -50,7 +51,6 @@ class ActionsSession(dict):
                 ]
         }
         """
-
 
         self["actions"] = []
         self.compareActions = deepcopy(self["actions"])
@@ -88,16 +88,6 @@ class ActionsSession(dict):
             return False
         else:
             return True
-        # if not self.currentFile:
-        #     if self["actions"]:
-        #         return True
-        #     else:
-        #         return False
-        # actions_data = self.io.read()
-        # if actions_data != self:
-        #     return True
-        # else:
-        #     return False
 
     def list_valid_actions(self):
         """Returns all available actions"""
@@ -134,7 +124,8 @@ class ActionsSession(dict):
         action = {
             "name": action_name,
             "type": action_type,
-            "data": deepcopy(self.action_data_dict.get(action_type))
+            "data": deepcopy(self.action_data_dict.get(action_type)),
+            "enabled": True
         }
         self["actions"].append(action)
         pass
@@ -208,6 +199,21 @@ class ActionsSession(dict):
             LOG.warning("%s cannot be found in the action list")
             return None
 
+    def enable_action(self, action_name):
+        action = self.get_action(action_name)
+        action["enabled"] = True
+
+    def disable_action(self, action_name):
+        action = self.get_action(action_name)
+        action["enabled"] = False
+
+    def is_enabled(self, action_name):
+        action = self.get_action(action_name)
+        try:
+            return action["enabled"]
+        except KeyError: ## this is for backward compatibility
+            return True
+
     def get_all_actions(self):
         """Returns all available actions"""
         return self["actions"]
@@ -244,11 +250,23 @@ class ActionsSession(dict):
         """runs all actions in the actions list"""
         # reset scene
         cmds.file(new=True, force=True)
-        for action in self["actions"]:
-            action_cmd = "actions.{0}.{1}()".format(action["type"], action["type"].capitalize())
-            a_hand = eval(action_cmd)
-            a_hand.feed(action["data"])
-            a_hand.action()
+        for row, action in enumerate(self["actions"]):
+            if self.is_enabled(action["name"]):
+                if self.progressListwidget:
+                    self.progressListwidget.setCurrentRow(-1)
+                    self.progressListwidget.activateItem(row)
+                    QtWidgets.QApplication.processEvents()
+                try:
+                    action_cmd = "actions.{0}.{1}()".format(action["type"], action["type"].capitalize())
+                    a_hand = eval(action_cmd)
+                    a_hand.feed(action["data"])
+                    a_hand.action()
+                    if self.progressListwidget:
+                        self.progressListwidget.successItem(row)
+                except Exception as e:
+                    if self.progressListwidget:
+                        self.progressListwidget.errorItem(row)
+
 
     def run_action(self, action_name):
         action = self.get_action(action_name)

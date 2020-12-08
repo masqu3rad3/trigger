@@ -151,6 +151,7 @@ class Split_shapes(weights.Weights):
 
         split_definitions_lbl = QtWidgets.QLabel(text="Split Definitions:")
         split_definitions_treeBox = custom_widgets.TreeBoxLayout(buttonAdd=False, buttonNew=True)
+        split_definitions_treeBox.viewWidget.setMinimumHeight(300)
         ## override and customize the treeBox new button
         # split_definitions_treeBox.override_listbox = custom_widgets.ListBoxLayout(buttonGet=False)
         # def refresh_override_buttons():
