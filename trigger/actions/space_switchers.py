@@ -19,11 +19,14 @@ ACTION_DATA = {
 from trigger.core import io
 from trigger.core import logger
 
-from trigger.ui.Qt import QtWidgets, QtGui
+from trigger.ui.Qt import QtWidgets, QtGui, QtCore
 from trigger.ui import custom_widgets
 from trigger.ui import feedback
 
 from trigger.utils import space_switcher
+
+# TODO temporary
+from PySide2 import QtWidgets, QtGui
 
 LOG = logger.Logger(__name__)
 
@@ -50,7 +53,8 @@ class Space_switchers(object):
         """Mandatory Method - Execute Action"""
         # everything in this method will be executed automatically.
         # This method does not accept any arguments. all the user variable must be defined to the instance before
-        pass
+        for sw_data in self.swithcerDefinitions:
+            space_switcher.create_space_switch(sw_data[0], sw_data[1], overrideExisting=True, mode=sw_data[2])
 
     def save_action(self):
         """Mandatory Method - Save Action"""
@@ -74,5 +78,103 @@ class Space_switchers(object):
         Returns: None
 
         """
+        switcher_definitions_lbl = QtWidgets.QLabel(text="Definitions")
+        switcher_definitions_lay = QtWidgets.QVBoxLayout()
+        layout.addRow(switcher_definitions_lbl, switcher_definitions_lay)
+
+        add_new_definition_btn = QtWidgets.QPushButton(text= "Add New Definition")
+        switcher_definitions_lay.addWidget(add_new_definition_btn)
+
+        self.id = 0
+        self.definition_widgets = []
+
+        def add_new_definition(anchor_val="", locations_val="", mode_val="parent"):
+            self.id += 1
+
+            def_formlayout = QtWidgets.QFormLayout()
+            def_anchor_lbl = QtWidgets.QLabel(text="Anchor")
+            def_anchor_le = QtWidgets.QLineEdit()
+            def_formlayout.addRow(def_anchor_lbl, def_anchor_le)
+            def_targets_lbl = QtWidgets.QLabel(text="Locations")
+            def_targets_le = QtWidgets.QLineEdit()
+            def_targets_le.setPlaceholderText("(;) separated")
+            def_formlayout.addRow(def_targets_lbl, def_targets_le)
+            def_modes_lbl = QtWidgets.QLabel(text="Mode")
+            def_modes_combo = QtWidgets.QComboBox()
+            def_modes_combo.addItems(["parent", "point", "orient"])
+            def_formlayout.addRow(def_modes_lbl, def_modes_combo)
+            def_remove_lbl = QtWidgets.QLabel(text="")
+            def_remove_pb = QtWidgets.QPushButton(text="Remove")
+            def_formlayout.addRow(def_remove_lbl, def_remove_pb)
+            switcher_definitions_lay.addLayout(def_formlayout)
+
+            tmp_dict = {
+                "id": self.id,
+                "anchor_le": def_anchor_le,
+                "targets_le": def_targets_le,
+                "modes_combo": def_modes_combo,
+            }
+            self.definition_widgets.append(tmp_dict)
+
+            # initial values
+            def_anchor_le.setText(anchor_val)
+            def_targets_le.setText(locations_val)
+            index = def_modes_combo.findText(mode_val, QtCore.Qt.MatchFixedString)
+            if index >= 0:
+                def_modes_combo.setCurrentIndex(index)
+
+            # signals
+            def_anchor_le.editingFinished.connect(update_model)
+            def_targets_le.editingFinished.connect(update_model)
+            def_modes_combo.currentIndexChanged.connect(update_model)
+            def_remove_pb.clicked.connect(lambda _=0, lay=def_formlayout, id=self.id: delete_definition(lay, id))
+            def_remove_pb.clicked.connect(update_model)
+
+        # custom model/ui updates
+
+        def update_model():
+            # collect definition data
+            print("updating Model")
+            switcher_definitions = []
+            for widget_dict in self.definition_widgets:
+                tmp_list = []
+                tmp_list.append(widget_dict["anchor_le"].text())
+                tmp_list.append(ctrl.text_to_list(widget_dict["targets_le"].text()))
+                tmp_list.append(widget_dict["modes_combo"].currentText())
+                switcher_definitions.append(tmp_list)
+            # feed the model with the definitions
+            ctrl.model.edit_action(ctrl.action_name, "switcher_definitions", switcher_definitions)
+            print(switcher_definitions)
+            pass
+
+        def update_ui():
+            print("updating UI")
+            data = ctrl.model.query_action(ctrl.action_name, "switcher_definitions")
+            for definition in data:
+                add_new_definition(anchor_val=definition[0], locations_val=ctrl.list_to_text(definition[1]), mode_val=definition[2])
+            pass
+
+        def delete_definition(layout, id):
+            print("ID", id)
+            for item in self.definition_widgets:
+                if item["id"] == id:
+                    self.definition_widgets.pop(item)
+                    break
+            del_layout(layout)
+
+        def del_layout(layout):
+            if layout is not None:
+                while layout.count():
+                    item = layout.takeAt(0)
+                    widget = item.widget()
+                    if widget is not None:
+                        widget.setParent(None)
+                    else:
+                        del_layout(item.layout())
+
+        update_ui()
+
+        # signals
+        add_new_definition_btn.clicked.connect(add_new_definition)
 
         pass
