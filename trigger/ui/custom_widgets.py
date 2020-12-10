@@ -361,6 +361,11 @@ class TreeBoxLayout(ListBoxLayout):
             for x in self.viewWidget.selectedItems():
                 x.setText(0, newname)
 
+    def _on_remove(self):
+        root = self.viewWidget.invisibleRootItem()
+        for item in self.viewWidget.selectedItems():
+            (item.parent() or root).removeChild(item)
+
     @staticmethod
     def get_children(root):
         return [root.child(i) for i in range(root.childCount())]

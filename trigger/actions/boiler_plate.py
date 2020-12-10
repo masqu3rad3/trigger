@@ -1,20 +1,4 @@
-"""Creates extra space switchers"""
-
-"""
-example action data:
-ACTION_DATA = {
-                "switcher_definitions": [
-                        {
-                            "anchor": "IK_L_Hand_cont",
-                            "locations": ["pelvis_cont", "master_cont", "chest_cont"]
-                        },
-                        {
-                            "anchor": "head_cont",
-                            "locations": ["pelvis_cont", "neck_cont", "master_cont"]
-                        }
-                    ]
-                }
-"""
+"""Boiler Plate template for actions"""
 
 from trigger.core import io
 from trigger.core import logger
@@ -23,28 +7,28 @@ from trigger.ui.Qt import QtWidgets, QtGui
 from trigger.ui import custom_widgets
 from trigger.ui import feedback
 
-from trigger.utils import space_switcher
-
 LOG = logger.Logger(__name__)
 
 ACTION_DATA = {
-    "switcher_definitions": [],
+    "some_property": "some_default_data",
+    "some_more_property": "some_more_default_data"
 }
 
-
 # Name of the class MUST be the capitalized version of file name. eg. morph.py => Morph, split_shapes.py => Split_shapes
-class Space_switchers(object):
+class Boiler_plate(object):
     def __init__(self, *args, **kwargs):
-        super(Space_switchers, self).__init__()
+        super(Boiler_plate, self).__init__()
 
         # user defined variables
-        self.swithcerDefinitions = None
+        self.someProperty = None
+        self.someMoreProperty = None
 
         # class variables
 
     def feed(self, action_data, *args, **kwargs):
         """Mandatory Method - Feeds the instance with the action data stored in actions session"""
-        self.swithcerDefinitions = action_data.get("switcher_definitions")
+        self.someProperty = action_data.get("some_property")
+        self.someMoreProperty = action_data.get("some_more_property")
 
     def action(self):
         """Mandatory Method - Execute Action"""
@@ -66,8 +50,7 @@ class Space_switchers(object):
         Args:
             ctrl: (model_ctrl) ctrl object instance of /ui/model_ctrl. Updates UI and Model
             layout: (QLayout) The layout object from the main ui. All setting widgets should be added to this layout
-            handler: (actions_session) An instance of the actions_session.
-                                    TRY NOT TO USE HANDLER UNLESS ABSOLUTELY NECESSARY
+            handler: (actions_session) An instance of the actions_session. TRY NOT TO USE HANDLER UNLESS ABSOLUTELY NECESSARY
             *args:
             **kwargs:
 
