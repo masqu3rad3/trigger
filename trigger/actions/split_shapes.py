@@ -79,8 +79,21 @@ class Split_shapes(weights.Weights):
 
         splitter.split_shapes()
 
-    def save_action(self, *args, **kwargs):
-        base_folder, file_name_and_ext = os.path.split(self.splitMapsFilePath)
+    def save_action(self, file_path=None, *args, **kwargs):
+        file_path = file_path or self.splitMapsFilePath
+        print("*"*30)
+        print("*"*30)
+        print("*"*30)
+        print("*"*30)
+        print("DEBUG", file_path)
+        print("*"*30)
+        print("*"*30)
+        print("*"*30)
+
+
+
+
+        base_folder, file_name_and_ext = os.path.split(file_path)
         file_name, ext = os.path.splitext(file_name_and_ext)
         weights_folder = os.path.join(base_folder, file_name)
         self.io._folderCheck(weights_folder)
@@ -93,12 +106,16 @@ class Split_shapes(weights.Weights):
                 feedback.Feedback().pop_info(title="Cannot find Blendshape", text="splitMaps blendshape cannot be found")
         influencers = deformers.get_influencers(self.paintMapBs)
         for influencer in influencers:
-            file_path = os.path.join(weights_folder, "%s.json" % influencer)
-            self.io.file_path = file_path
+            inf_file_path = os.path.join(weights_folder, "%s.json" % influencer)
+            self.io.file_path = inf_file_path
             self.save_matching_weights(deformer=self.paintMapBs, influencer=influencer)
 
-        self.io.file_path = self.splitMapsFilePath
+        self.io.file_path = file_path
         self.io.write(influencers)
+
+        # export the whole weights for future paint fixes
+        whole_weights_path = os.path.join(weights_folder, "wholeWeights.json")
+        self.save_weights(deformer=self.paintMapBs, file_path=whole_weights_path, )
 
     # def save_action(self):
     #     """Save Action - Mandatory"""
@@ -131,15 +148,19 @@ class Split_shapes(weights.Weights):
         # deformers_hLay.addWidget(get_deformers_pb)
         # layout.addRow(deformers_lbl, deformers_hLay)
 
-        save_current_lbl = QtWidgets.QLabel(text="Save Split Maps:")
-        save_current_hlay = QtWidgets.QHBoxLayout()
-        save_current_pb = QtWidgets.QPushButton(text="Save")
-        increment_current_pb = QtWidgets.QPushButton(text="Increment")
-        save_as_current_pb = custom_widgets.BrowserButton(mode="saveFile", text="Save As", update_widget=file_path_le, filterExtensions=["Trigger Split Files (*.trsplit)"], overwrite_check=False)
-        save_current_hlay.addWidget(save_current_pb)
-        save_current_hlay.addWidget(increment_current_pb)
-        save_current_hlay.addWidget(save_as_current_pb)
-        layout.addRow(save_current_lbl, save_current_hlay)
+        # save_current_lbl = QtWidgets.QLabel(text="Save Split Maps:")
+        # save_current_hlay = QtWidgets.QHBoxLayout()
+        # save_current_pb = QtWidgets.QPushButton(text="Save")
+        # increment_current_pb = QtWidgets.QPushButton(text="Increment")
+        # save_as_current_pb = custom_widgets.BrowserButton(mode="saveFile", text="Save As", update_widget=file_path_le, filterExtensions=["Trigger Split Files (*.trsplit)"], overwrite_check=False)
+        # save_current_hlay.addWidget(save_current_pb)
+        # save_current_hlay.addWidget(increment_current_pb)
+        # save_current_hlay.addWidget(save_as_current_pb)
+        # layout.addRow(save_current_lbl, save_current_hlay)
+
+        save_current_lbl = QtWidgets.QLabel(text="Save Current states")
+        savebox_lay = custom_widgets.SaveBoxLayout(alignment="horizontal", update_widget=file_path_le, filter_extensions=["Trigger Split Files (*.trsplit)"], overwrite_check=True, control_model=ctrl)
+        layout.addRow(save_current_lbl, savebox_lay)
 
         blendshapes_group_lbl = QtWidgets.QLabel(text="Blendshapes Root Group:")
         blendshapes_group_le = QtWidgets.QLineEdit()
@@ -214,35 +235,44 @@ class Split_shapes(weights.Weights):
 
         def prepare_bs():
             self.paintMapBs = self.splitter.prepare_for_painting(cmds.ls(sl=True)[0])
+            file_path = file_path_le.text()
+            # if there is a wholeWeights.json file, use that to get back the pre-painted values
+            if file_path and os.path.isfile(file_path):
+                file_root, basename_with_ext = os.path.split(file_path)
+                maps_folder_name, ext = os.path.splitext(basename_with_ext)
+                import_root = os.path.join(file_root, maps_folder_name)
+                whole_weights_file = os.path.join(import_root, "wholeWeights.json")
+                if os.path.isfile(whole_weights_file):
+                    self.load_weights(deformer=self.paintMapBs, file_path=whole_weights_file)
             # deformers_le.setText(self.paintMapBs)
             ctrl.update_model()
 
-        def save_deformers(increment=False, save_as=False):
-            if increment:
-                LOG.warning("NOT YET IMPLEMENTED")
-                ctrl.update_ui()
-                # TODO make an external incrementer
-            elif save_as:
-                ctrl.update_model()
-                if not file_path_le.text():
-                    return
-                self.splitMapsFilePath = str(file_path_le.text())
-                self.save_action()
-                # handler.run_save_action(ctrl.action_name)
-            else:
-                ctrl.update_model()
-                if not file_path_le.text():
-                    save_as_current_pb.browserEvent()
-                    save_deformers(save_as=True)
-                    return
-                if os.path.isfile(file_path_le.text()):
-                    question = feedback.Feedback()
-                    state = question.pop_question(title="Overwrite", text="The file %s already exists.\nDo you want to OVERWRITE?" %file_path_le.text(), buttons=["ok", "cancel"])
-                    if state == "cancel":
-                        return
-                self.splitMapsFilePath = str(file_path_le.text())
-                self.save_action()
-                # handler.run_save_action(ctrl.action_name)
+        # def save_deformers(increment=False, save_as=False):
+        #     if increment:
+        #         LOG.warning("NOT YET IMPLEMENTED")
+        #         ctrl.update_ui()
+        #         # TODO make an external incrementer
+        #     elif save_as:
+        #         ctrl.update_model()
+        #         if not file_path_le.text():
+        #             return
+        #         self.splitMapsFilePath = str(file_path_le.text())
+        #         self.save_action()
+        #         # handler.run_save_action(ctrl.action_name)
+        #     else:
+        #         ctrl.update_model()
+        #         if not file_path_le.text():
+        #             save_as_current_pb.browserEvent()
+        #             save_deformers(save_as=True)
+        #             return
+        #         if os.path.isfile(file_path_le.text()):
+        #             question = feedback.Feedback()
+        #             state = question.pop_question(title="Overwrite", text="The file %s already exists.\nDo you want to OVERWRITE?" %file_path_le.text(), buttons=["ok", "cancel"])
+        #             if state == "cancel":
+        #                 return
+        #         self.splitMapsFilePath = str(file_path_le.text())
+        #         self.save_action()
+        #         # handler.run_save_action(ctrl.action_name)
 
         ### Signals
         file_path_le.editingFinished.connect(lambda x=0: ctrl.update_model())
@@ -252,9 +282,11 @@ class Split_shapes(weights.Weights):
         # get_deformers_pb.clicked.connect(get_deformers_menu)
         # get_deformers_pb.clicked.connect(lambda x=0: ctrl.update_model())
 
-        save_current_pb.clicked.connect(lambda x=0: save_deformers())
-        increment_current_pb.clicked.connect(lambda x=0: save_deformers(increment=True))
-        save_as_current_pb.clicked.connect(lambda x=0: save_deformers(save_as=True))
+        # save_current_pb.clicked.connect(lambda x=0: save_deformers())
+        # increment_current_pb.clicked.connect(lambda x=0: save_deformers(increment=True))
+        # save_as_current_pb.clicked.connect(lambda x=0: save_deformers(save_as=True))
+
+        savebox_lay.saved.connect(lambda file_path: self.save_action(file_path))
 
         blendshapes_group_le.editingFinished.connect(lambda x=0: ctrl.update_model())
         neutral_mesh_le.editingFinished.connect(lambda x=0: ctrl.update_model())

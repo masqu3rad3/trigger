@@ -6,6 +6,20 @@ from PySide2 import QtWidgets
 
 class BrowserButton(QtWidgets.QPushButton):
     def __init__(self, text="Browse", update_widget=None, mode="openFile", filterExtensions=None, title=None, overwrite_check=True, *args, **kwargs):
+        """
+        Customized Pushbutton opens the file browser by default
+
+        Args:
+            text: (string) Button label
+            update_widget: (QLineEdit) The line edit widget which will be updated with selected path (optional)
+            mode: (string) Sets the file browser mode. Valid modes are 'openFile', 'saveFile', 'directory'
+            filterExtensions: (list) if defined, only the extensions defined here will be shown in the file browser
+            title: (string) Title of the browser window
+            overwrite_check: (bool) If set True and if the defined file exists, it will pop up a confirmation box.
+                                    works only with 'openFile' mode
+            *args:
+            **kwargs:
+        """
         super(BrowserButton, self).__init__(*args, **kwargs)
         self._updateWidget = update_widget
         if text:
@@ -93,6 +107,7 @@ class BrowserButton(QtWidgets.QPushButton):
 
 class ValidatedLineEdit(QtWidgets.QLineEdit):
     def __init__(self, connected_widgets=None, allowSpaces=False, allowDirectory=False, *args, **kwargs):
+        """Custom QLineEdit widget to validate entered values"""
         super(ValidatedLineEdit, self).__init__(*args, **kwargs)
         self.allowSpaces = allowSpaces
         self.allowDirectory = allowDirectory
@@ -492,6 +507,7 @@ class TableBoxLayout(ListBoxLayout):
         return data
 
 class ProgressListWidget(QtWidgets.QListWidget):
+    """Custom QListWidget which the rows can be color coded with simple commands"""
     colorDictionary = {
         "disabled": QtGui.QColor(80, 80, 80, 255),
         "enabled": QtGui.QColor(255, 255, 255, 255),
@@ -499,7 +515,6 @@ class ProgressListWidget(QtWidgets.QListWidget):
         "success": QtGui.QColor(0, 255, 0, 255),
         "error": QtGui.QColor(255, 0, 0, 255)
     }
-
 
     def __init__(self):
         super(ProgressListWidget, self).__init__()
@@ -543,5 +558,70 @@ class ProgressListWidget(QtWidgets.QListWidget):
         item = self.item(row)
         if item:
             item.setIcon(QtGui.QIcon(icon_path))
+
+class SaveBoxLayout(QtWidgets.QVBoxLayout):
+    saved = QtCore.Signal(str)
+
+    def __init__(self, alignment=None, update_widget=None, filter_extensions=None, overwrite_check=False, control_model=None, *args, **kwargs):
+        super(SaveBoxLayout, self).__init__(*args, **kwargs)
+        self.alignment = alignment or "horizontal"
+        self.updateWidget = update_widget
+        self.filterExtensions = filter_extensions
+        self.overwriteCheck = overwrite_check
+        self.controlModel = control_model
+
+        self.build()
+
+    def build(self):
+        if self.alignment == "horizontal":
+            self.masterLayout = QtWidgets.QHBoxLayout()
+        elif self.alignment == "vertical":
+            self.masterLayout = QtWidgets.QVBoxLayout()
+        else:
+            raise Exception("alignment argument is not valid. Valid arguments are 'horizontal' and 'vertical'")
+
+        self.addLayout(self.masterLayout)
+        self.saveButton = QtWidgets.QPushButton(text="Save")
+        self.saveAsButton = BrowserButton(text="Save As", mode="saveFile", update_widget=self.updateWidget, filterExtensions=self.filterExtensions, overwrite_check=self.overwriteCheck)
+        self.incrementButton = QtWidgets.QPushButton(text="Increment")
+        self.masterLayout.addWidget(self.saveButton)
+        self.masterLayout.addWidget(self.saveAsButton)
+        self.masterLayout.addWidget(self.incrementButton)
+
+        # signals
+        self.saveButton.clicked.connect(self.save)
+        self.saveAsButton.clicked.connect(self.saveAs)
+        self.incrementButton.clicked.connect(self.increment)
+
+    def save(self):
+        if self.controlModel:
+            self.controlModel.update_model()
+        if self.updateWidget:
+            file_path = str(self.updateWidget.text())
+            if not file_path:
+                self.saveAsButton.browserEvent()
+                # self.saveAs()
+                return
+            self.controlModel.update_model()
+            self.saveEvent(file_path)
+
+    def saveAs(self):
+        if self.controlModel:
+            self.controlModel.update_model()
+        if self.updateWidget:
+            file_path = str(self.updateWidget.text())
+            if not file_path:
+                return
+            self.controlModel.update_model()
+            self.saveEvent(file_path)
+        pass
+
+    def increment(self):
+        print("NOT YET IMPLEMENTED")
+        pass
+
+    def saveEvent(self, file_path):
+        self.saved.emit(file_path)
+
 
 

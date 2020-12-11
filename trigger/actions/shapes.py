@@ -10,7 +10,7 @@ from trigger.ui.Qt import QtWidgets, QtGui
 from trigger.ui import custom_widgets
 from trigger.ui import feedback
 
-LOG = logger.Logger(__name__)
+LOG = logger.Logger(__name__, logging_level="info")
 
 ACTION_DATA = {
                 "shapes_file_path": "",
@@ -31,9 +31,11 @@ class Shapes(object):
         """Mandatory method for all action maya_modules"""
         self.import_shapes(self.shapes_file_path)
 
-    def save_action(self):
+    def save_action(self, file_path=None, *args, **kwargs):
         """Mandatory method for all action maya_modules"""
-        self.export_shapes(self.shapes_file_path)
+        file_path = file_path or self.shapes_file_path
+        if file_path:
+            self.export_shapes(file_path)
 
     def ui(self, ctrl, layout, handler, *args, **kwargs):
         """Mandatory method for all action maya_modules"""
@@ -47,42 +49,14 @@ class Shapes(object):
         layout.addRow(file_path_lbl, file_path_hLay)
 
         save_current_lbl = QtWidgets.QLabel(text="Save Current states")
-        save_current_hlay = QtWidgets.QHBoxLayout()
-        save_current_pb = QtWidgets.QPushButton(text="Save")
-        increment_current_pb = QtWidgets.QPushButton(text="Increment")
-        save_as_current_pb = QtWidgets.QPushButton(text="Save As")
-        save_current_hlay.addWidget(save_current_pb)
-        save_current_hlay.addWidget(increment_current_pb)
-        save_current_hlay.addWidget(save_as_current_pb)
-        layout.addRow(save_current_lbl, save_current_hlay)
-
-        # make connections with the controller object
-        ctrl.connect(file_path_le, "shapes_file_path", str)
-
-        def save_shapes(increment=False, save_as=False):
-            if increment:
-                ctrl.update_model()
-                LOG.warning("NOT YET IMPLEMENTED")
-                # TODO make an external incrementer
-            elif save_as:
-                ctrl.update_model()
-                LOG.warning("NOT YET IMPLEMENTED")
-                # TODO make save as
-            else:
-                ctrl.update_model()
-                if os.path.isfile(file_path_le.text()):
-                    state = feedback.Feedback().pop_question(title="Overwrite", text="The file %s already exists.\nDo you want to OVERWRITE?" %file_path_le.text(), buttons=["ok", "cancel"])
-                    if state == "cancel":
-                        return
-                handler.run_save_action(ctrl.action_name)
+        savebox_lay = custom_widgets.SaveBoxLayout(alignment="horizontal", update_widget=file_path_le, filter_extensions=["Alembic Files (*.abc)"], overwrite_check=True, control_model=ctrl)
+        layout.addRow(save_current_lbl, savebox_lay)
 
         ### Signals
         file_path_le.editingFinished.connect(lambda x=0: ctrl.update_model())
         browse_path_pb.clicked.connect(lambda x=0: ctrl.update_model())
+        savebox_lay.saved.connect(lambda file_path: self.save_action(file_path))
 
-        save_current_pb.clicked.connect(lambda x=0: save_shapes())
-        increment_current_pb.clicked.connect(lambda x=0: save_shapes(increment=True))
-        save_as_current_pb.clicked.connect(lambda x=0: save_shapes(save_as=True))
 
 
     def gather_scene_shapes(self, key="*_cont"):
