@@ -5,6 +5,7 @@
 import os
 import json
 import shutil
+import re
 
 from trigger.core import logger
 from trigger.core import compatibility as compat
@@ -14,7 +15,7 @@ FEEDBACK = logger.Logger(logger_name=__name__)
 class IO(dict):
     def __init__(self, file_name=None, folder_name=None, root_path=None, file_path=None):
         super(IO, self).__init__()
-        self.valid_extensions = [".json", ".tr", ".trg", ".trw", ".trs", ".trsplit"]
+        self.valid_extensions = [".json", ".tr", ".trg", ".trw", ".trs", ".trl", ".trsplit"]
         self.default_extension = ".json"
         if file_path:
             # self["file_path"] = file_path

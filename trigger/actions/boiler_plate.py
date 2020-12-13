@@ -36,7 +36,7 @@ class Boiler_plate(object):
         # This method does not accept any arguments. all the user variable must be defined to the instance before
         pass
 
-    def save_action(self):
+    def save_action(self, file_path=None, *args, **kwargs):
         """Mandatory Method - Save Action"""
         # This method will be called automatically and accepts no arguments.
         # If the action has an option to save files, this method will be used by the UI.

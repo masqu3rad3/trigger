@@ -40,7 +40,7 @@ class Shapes(object):
     def ui(self, ctrl, layout, handler, *args, **kwargs):
         """Mandatory method for all action maya_modules"""
 
-        file_path_lbl = QtWidgets.QLabel(text="File Path:")
+        file_path_lbl = QtWidgets.QLabel(text="Shapes File Path:")
         file_path_hLay = QtWidgets.QHBoxLayout()
         file_path_le = QtWidgets.QLineEdit()
         file_path_hLay.addWidget(file_path_le)
@@ -48,9 +48,13 @@ class Shapes(object):
         file_path_hLay.addWidget(browse_path_pb)
         layout.addRow(file_path_lbl, file_path_hLay)
 
+
         save_current_lbl = QtWidgets.QLabel(text="Save Current states")
         savebox_lay = custom_widgets.SaveBoxLayout(alignment="horizontal", update_widget=file_path_le, filter_extensions=["Alembic Files (*.abc)"], overwrite_check=True, control_model=ctrl)
         layout.addRow(save_current_lbl, savebox_lay)
+
+        ctrl.connect(file_path_le, "shapes_file_path", str)
+        ctrl.update_ui()
 
         ### Signals
         file_path_le.editingFinished.connect(lambda x=0: ctrl.update_model())
