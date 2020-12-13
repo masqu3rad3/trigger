@@ -2,7 +2,7 @@
 
 from maya import cmds
 from trigger.core import logger
-from trigger.library import functions
+from trigger.library import naming
 
 FEEDBACK = logger.Logger(logger_name=__name__)
 
@@ -45,7 +45,7 @@ def assign_shader(shader, mesh):
     if not shading_engines:
         original_selection = cmds.ls(sl=True)
         cmds.select(mesh)
-        sg_name = functions.uniqueName("%s_SG" % mesh)
+        sg_name = naming.uniqueName("%s_SG" % mesh)
         cmds.sets(renderable=True, noSurfaceShader=True, empty=True, name=sg_name)
         cmds.select(original_selection)
         shading_engines = [sg_name]

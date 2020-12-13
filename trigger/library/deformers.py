@@ -3,7 +3,7 @@
 from maya import cmds
 
 from trigger.core.decorators import undo
-from trigger.library import functions
+from trigger.library import naming
 from trigger.core import compatibility as compat
 
 
@@ -62,7 +62,7 @@ def connect_bs_targets(
                         name exists, it will use that one.
     """
     if not bs_node_name:
-        bs_node_name = functions.uniqueName("trigger_blendShape")
+        bs_node_name = naming.uniqueName("trigger_blendShape")
     if driver_range:
         custom_range = True
     else:

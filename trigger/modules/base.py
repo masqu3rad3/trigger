@@ -1,7 +1,7 @@
 from maya import cmds
 import maya.api.OpenMaya as om
 
-from trigger.library import functions
+from trigger.library import functions, naming
 from trigger.library import attribute
 from trigger.library import controllers as ic
 from trigger.core import logger
@@ -30,9 +30,7 @@ class Base(object):
         else:
             LOG.throw_error("Class needs either build_data or inits to be constructed")
 
-        # self.suffix=(extra.uniqueName("limbGrp_%s" %(suffix))).replace("limbGrp_", "")
-        # self.suffix = (extra.uniqueName(suffix))
-        self.suffix = (functions.uniqueName(cmds.getAttr("%s.moduleName" % self.baseInit)))
+        self.suffix = (naming.uniqueName(cmds.getAttr("%s.moduleName" % self.baseInit)))
 
         self.limbGrp = None
         self.scaleGrp = None
@@ -72,8 +70,8 @@ class Base(object):
 
     def createControllers(self):
         icon = ic.Icon()
-        placement_cont, _ = icon.createIcon("Circle", iconName=functions.uniqueName("placement_cont"), scale=(10, 10, 10))
-        master_cont, _ = icon.createIcon("TriCircle", iconName=functions.uniqueName("master_cont"), scale=(15, 15, 15))
+        placement_cont, _ = icon.createIcon("Circle", iconName=naming.uniqueName("placement_cont"), scale=(10, 10, 10))
+        master_cont, _ = icon.createIcon("TriCircle", iconName=naming.uniqueName("master_cont"), scale=(15, 15, 15))
 
         placement_off = functions.createUpGrp(placement_cont, "off")
         master_off = functions.createUpGrp(master_cont, "off")

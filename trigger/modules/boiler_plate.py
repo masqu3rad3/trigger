@@ -1,6 +1,7 @@
 from maya import cmds
 import maya.api.OpenMaya as om
 from trigger.library import functions
+from trigger.library import naming
 from trigger.library import attribute
 from trigger.library import controllers as ic
 
@@ -47,9 +48,7 @@ class Limb():
         self.up_axis, self.mirror_axis, self.look_axis = functions.getRigAxes(self.inits[0])
 
         # initialize suffix
-        # self.suffix = (extra.uniqueName("limbGrp_%s" % suffix)).replace("limbGrp_", "")
-        # self.suffix = (extra.uniqueName(suffix))
-        self.suffix = (functions.uniqueName(cmds.getAttr("%s.moduleName" % self.inits[0])))
+        self.suffix = (naming.uniqueName(cmds.getAttr("%s.moduleName" % self.inits[0])))
 
         # scratch variables
         self.sockets = []

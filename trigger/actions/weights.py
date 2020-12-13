@@ -7,7 +7,8 @@ import maya.api.OpenMayaAnim as omAnim
 
 from trigger.core import io
 from trigger.core import logger
-from trigger.library import functions as extra
+from trigger.library import functions
+from trigger.library import naming
 from trigger.library import deformers
 
 from trigger.ui.Qt import QtWidgets, QtGui # for progressbar
@@ -459,14 +460,14 @@ class Weights(dict):
         # get the deformer name
         deformer_name = weights_data["deformerWeight"]["weights"][0]["deformer"]
         # if the affected object does not have the deformer, create a new one
-        deformer_name = extra.uniqueName(deformer_name)
+        deformer_name = naming.uniqueName(deformer_name)
 
         if not cmds.objExists(deformer_name):
             # collect the influencers (eg. joints if it is a skinCluster)
             influencers = [weight_dict.get("source") for weight_dict in weights_data["deformerWeight"]["weights"]]
 
             # get the affected shapes
-            affected = extra.uniqueList([weight_dict.get("shape") for weight_dict in weights_data["deformerWeight"]["weights"]])
+            affected = functions.uniqueList([weight_dict.get("shape") for weight_dict in weights_data["deformerWeight"]["weights"]])
 
             deformer_info = weights_data["deformerWeight"].get("deformers")
             if not deformer_info and not deformer_type:

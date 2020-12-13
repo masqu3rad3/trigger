@@ -4,7 +4,7 @@
 ######### POWER RIBBON Func ##########
 ################################
 from maya import cmds
-from trigger.library import functions
+from trigger.library import functions, naming
 from trigger.library import attribute
 from trigger.library import controllers as ic
 
@@ -36,7 +36,7 @@ class PowerRibbon():
                           ):
 
         # Create groups
-        name = functions.uniqueName("RBN_ScaleGrp_%s" % name)
+        name = naming.uniqueName("RBN_ScaleGrp_%s" % name)
         self.scaleGrp = cmds.group(name="RBN_ScaleGrp_%s" %name, em=True)
         self.nonScaleGrp = cmds.group(name="RBN_nonScaleGrp_%s" %name, em=True)
 

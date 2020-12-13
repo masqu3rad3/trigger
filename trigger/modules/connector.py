@@ -1,7 +1,7 @@
 from maya import cmds
 import maya.api.OpenMaya as om
 
-from trigger.library import functions
+from trigger.library import functions, naming
 from trigger.library import attribute
 from trigger.core import logger
 FEEDBACK = logger.Logger(__name__)
@@ -29,9 +29,7 @@ class Connector(object):
         else:
             FEEDBACK.throw_error("Class needs either build_data or inits to be constructed")
 
-        # self.suffix=(extra.uniqueName("limbGrp_%s" %(suffix))).replace("limbGrp_", "")
-        # self.suffix = (extra.uniqueName(suffix))
-        self.suffix = (functions.uniqueName(cmds.getAttr("%s.moduleName" % self.rootInit)))
+        self.suffix = (naming.uniqueName(cmds.getAttr("%s.moduleName" % self.rootInit)))
 
 
         self.limbGrp = None
@@ -59,7 +57,6 @@ class Connector(object):
         FEEDBACK.info("Creating Root %s" %self.suffix)
 
         self.scaleGrp = cmds.group(name="%s_scaleGrp" % self.suffix, em=True)
-        # suffix=(extra.uniqueName("limbGrp_%s" % suffix)).replace("limbGrp_", "")
         self.limbGrp = cmds.group(name=self.suffix, em=True)
         cmds.parent(self.scaleGrp, self.nonScaleGrp, self.cont_IK_OFF, self.limbGrp)
 

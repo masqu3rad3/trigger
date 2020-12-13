@@ -2,6 +2,7 @@ from maya import cmds
 import maya.api.OpenMaya as om
 
 from trigger.library import functions
+from trigger.library import naming
 from trigger.library import attribute
 from trigger.library import connection
 from trigger.library import controllers as ic
@@ -54,7 +55,7 @@ class Surface(object):
         self.rotateObject = cmds.getAttr("%s.rotateObject" % self.rootInit)
         self.isPlugOnLocal = cmds.getAttr("%s.limbPlugLocation" % self.rootInit)
 
-        self.suffix = (functions.uniqueName(cmds.getAttr("%s.moduleName" % self.rootInit)))
+        self.suffix = (naming.uniqueName(cmds.getAttr("%s.moduleName" % self.rootInit)))
 
 
         self.limbGrp = None

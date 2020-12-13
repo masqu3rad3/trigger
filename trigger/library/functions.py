@@ -1,6 +1,7 @@
 import sys
 from maya import cmds
 from trigger.library import api
+from trigger.library import naming
 # import maya.OpenMaya as om
 # USING MAYA API 2.0
 import maya.api.OpenMaya as om
@@ -191,7 +192,7 @@ def createUpGrp(node, suffix, freezeTransform=True):
     Returns: The created group node
 
     """
-    grpName = uniqueName("%s_%s" % (node, suffix))
+    grpName = naming.uniqueName("%s_%s" % (node, suffix))
     newGrp = cmds.group(em=True, name=grpName)
 
     #align the new created empty group to the selected object
@@ -214,94 +215,6 @@ def isGroup(node):
         return False
     else:
         return True
-
-def connectMirror (node1, node2, mirrorAxis="X"):
-    """
-    Make a mirrored connection between node1 and node2 along the mirrorAxis
-    Args:
-        node1: Driver Node
-        node2: Driven Node
-        mirrorAxis: Mirror axis for the driven node.
-
-    Returns: None
-
-    """
-    ## make sure the axis is uppercase:
-    mirrorAxis = mirrorAxis.upper()
-    ## strip - and +
-    mirrorAxis = mirrorAxis.replace("+", "")
-    mirrorAxis = mirrorAxis.replace("-", "")
-
-    #nodes Translate
-    rvsNodeT=cmds.createNode("reverse")
-    minusOpT=cmds.createNode("plusMinusAverage")
-    cmds.setAttr("%s.operation" %minusOpT, 2)
-    cmds.connectAttr("{0}.translate".format(node1), "{0}.input".format(rvsNodeT))
-    cmds.connectAttr("{0}.output".format(rvsNodeT), "{0}.input3D[0]".format(minusOpT))
-    cmds.setAttr("%s.input3D[1]" %minusOpT, 1, 1, 1)
-    #nodes Rotate
-    rvsNodeR = cmds.createNode("reverse")
-    minusOpR = cmds.createNode("plusMinusAverage")
-    cmds.setAttr("%s.operation" %minusOpR, 2)
-    cmds.connectAttr("{0}.rotate".format(node1), "{0}.input".format(rvsNodeR))
-
-    # rvsNodeR.output >> minusOpR.input3D[0]
-    cmds.connectAttr("{0}.output".format(rvsNodeR), "{0}.input3D[0]".format(minusOpR))
-
-    cmds.setAttr("%s.input3D[1]" %minusOpR, 1, 1, 1)
-
-    #Translate
-
-    if (mirrorAxis=="X"):
-        cmds.connectAttr("{0}.output3Dx".format(minusOpT), "{0}.tx".format(node2))
-        cmds.connectAttr("{0}.ty".format(node1), "{0}.ty".format(node2))
-        cmds.connectAttr("{0}.tz".format(node1), "{0}.tz".format(node2))
-        cmds.connectAttr("{0}.rx".format(node1), "{0}.rx".format(node2))
-        cmds.connectAttr("{0}.output3Dy".format(minusOpR), "{0}.ry".format(node2))
-        cmds.connectAttr("{0}.output3Dz".format(minusOpR), "{0}.rz".format(node2))
-
-    if (mirrorAxis=="Y"):
-        cmds.connectAttr("{0}.tx".format(node1), "{0}.tx".format(node2))
-        cmds.connectAttr("{0}.output3Dy".format(minusOpT), "{0}.ty".format(node2))
-        cmds.connectAttr("{0}.tz".format(node1), "{0}.tz".format(node2))
-        cmds.connectAttr("{0}.output3Dx".format(minusOpR), "{0}.rx".format(node2))
-        cmds.connectAttr("{0}.ry".format(node1), "{0}.ry".format(node2))
-        cmds.connectAttr("{0}.output3Dz".format(minusOpR), "{0}.rz".format(node2))
-
-    if (mirrorAxis=="Z"):
-        cmds.connectAttr("{0}.tx".format(node1), "{0}.tx".format(node2))
-        cmds.connectAttr("{0}.ty".format(node1), "{0}.ty".format(node2))
-        cmds.connectAttr("{0}.output3Dz".format(minusOpT), "{0}.tz".format(node2))
-        cmds.connectAttr("{0}.rx".format(node1), "{0}.rx".format(node2))
-        cmds.connectAttr("{0}.output3Dy".format(minusOpR), "{0}.ry".format(node2))
-        cmds.connectAttr("{0}.output3Dz".format(minusOpR), "{0}.rz".format(node2))
-
-def changeColor( index, customColor=None):
-    """
-    Changes the wire color of selected nodes to the with the index
-    Args:
-        index: Index Number
-        customColor: (Tuple) If defined, this overrides index number.
-    Returns:None
-
-    """
-    node = cmds.ls(sl=True)
-    if not node:
-        return
-    shapes = cmds.listRelatives(node, s=True)
-    if not shapes:
-        return
-    if not customColor:
-        for shape in shapes:
-            try: cmds.setAttr("%s.overrideRGBColors", 0)
-            except: pass
-            cmds.setAttr("%s.overrideEnabled" % shape, True)
-            cmds.setAttr("%s.overrideColor" % shape, index)
-    else:
-        for shape in shapes:
-            cmds.setAttr("%s.overrideRGBColors" % shape, 1)
-            cmds.setAttr("%s.overrideColorRGB" % shape, *customColor)
-
 
 def colorize (node_list, index, customColor=None, shape=True):
     """
@@ -457,43 +370,6 @@ def getRigAxes(joint):
     lookAxis = [cmds.getAttr("%s.lookAxis%s" % (joint, dir)) for dir in "XYZ"]
 
     return tuple(upAxis), tuple(mirrorAxis), tuple(lookAxis)
-
-def uniqueName(name, return_counter=False):
-    """
-    Searches the scene for match and returns a unique name for given name
-    Args:
-        name: (String) Name to query
-        return_counter: (Bool) If true, returns the next available number insted of the object name
-
-    Returns: (String) uniquename
-
-    """
-    baseName = name
-    idcounter = 0
-    while cmds.objExists(name):
-        name = "%s%s" % (baseName, str(idcounter + 1))
-        idcounter = idcounter + 1
-    if return_counter:
-        return idcounter
-    else:
-        return name
-
-def uniqueScene():
-    """Makes sure that everything is named uniquely. Returns list of renamed nodes and list of new names"""
-    collection = []
-    for obj in cmds.ls():
-        pathway = obj.split("|")
-        if len(pathway) > 1:
-            uniqueName(pathway[-1])
-            collection.append(obj)
-    collection.reverse()
-    old_names = []
-    new_names = []
-    for xe in collection:
-        pathway = xe.split("|")
-        old_names.append(pathway[-1])
-        new_names.append(cmds.rename(xe, uniqueName(pathway[-1])))
-    return old_names, new_names
 
 def getMirror(node):
     """Returns the mirror controller if exists"""

@@ -2,6 +2,7 @@ from maya import cmds
 import maya.api.OpenMaya as om
 
 from trigger.library import functions
+from trigger.library import naming
 from trigger.library import attribute
 from trigger.library import api
 from trigger.library import controllers as ic
@@ -66,10 +67,7 @@ class Finger(object):
         self.sideMult = -1 if self.side == "R" else 1
 
         # initialize suffix
-        # self.suffix = "%s_%s" %(suffix, cmds.getAttr("%s.fingerType" % self.fingerRoot, asString=True))
-        # self.suffix = (extra.uniqueName("limbGrp_%s_%s" % (self.fingerType, suffix))).replace("limbGrp_", "")
-        # self.suffix = (extra.uniqueName("%s_%s" % (suffix, self.fingerType)))
-        self.suffix = (functions.uniqueName("%s_%s" % (cmds.getAttr("%s.moduleName" % self.fingerRoot), self.fingerType)))
+        self.suffix = (naming.uniqueName("%s_%s" % (cmds.getAttr("%s.moduleName" % self.fingerRoot), self.fingerType)))
 
 
         # scratch variables
@@ -228,7 +226,7 @@ class Finger(object):
             thumb = fingerType == "Thumb"
             suffix = "%s_%s" %(suffix, cmds.getAttr("%s.fingerType" % fingerRoot, asString=True))
 
-        suffix=(functions.uniqueName("limbGrp_%s" % suffix)).replace("limbGrp_", "")
+        suffix=(naming.uniqueName("limbGrp_%s" % suffix)).replace("limbGrp_", "")
         self.limbGrp = cmds.group(name="limbGrp_%s" % suffix, em=True)
 
         if (len(inits) < 2):

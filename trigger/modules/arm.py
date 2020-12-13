@@ -1,6 +1,7 @@
 from maya import cmds
 import maya.api.OpenMaya as om
 from trigger.library import functions
+from trigger.library import naming
 from trigger.library import attribute
 from trigger.library import api
 from trigger.library import connection
@@ -67,9 +68,7 @@ class Arm(object):
         self.sideMult = -1 if self.side == "R" else 1
 
         # self.originalSuffix = suffix
-        # self.suffix = (extra.uniqueName("limbGrp_%s" % suffix)).replace("limbGrp_", "")
-        # self.suffix = (extra.uniqueName(suffix))
-        self.suffix = (functions.uniqueName(cmds.getAttr("%s.moduleName" % self.collar_ref)))
+        self.suffix = (naming.uniqueName(cmds.getAttr("%s.moduleName" % self.collar_ref)))
 
         # scratch variables
         self.sockets = []

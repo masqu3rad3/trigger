@@ -4,7 +4,8 @@ from maya import cmds
 import maya.api.OpenMaya as om
 
 from trigger.core.decorators import undo
-from trigger.library import functions
+from trigger.library import functions, naming
+from trigger.library import connection
 from trigger.library import attribute
 # from trigger.actions import kinematics # for testing the guides
 
@@ -125,7 +126,7 @@ class Initials(settings.Settings):
                 side = "C"
 
 
-        suffix = functions.uniqueName("%sGrp_%s" % (limb_name, whichSide)).replace("%sGrp_" % (limb_name), "")
+        suffix = naming.uniqueName("%sGrp_%s" % (limb_name, whichSide)).replace("%sGrp_" % (limb_name), "")
 
         ## if defineAs is True, define the selected joints as the given limb instead creating new ones.
         if defineAs:
@@ -213,7 +214,7 @@ class Initials(settings.Settings):
             locatorsList.append(locator)
             if constrainedTo:
                 functions.alignTo(locator, guide.guideJoints[jnt], position=True, rotation=False)
-                functions.connectMirror(constrainedTo[jnt], locatorsList[jnt], mirrorAxis=self.mirrorVector_asString)
+                connection.connectMirror(constrainedTo[jnt], locatorsList[jnt], mirrorAxis=self.mirrorVector_asString)
 
                 functions.alignTo(guide.guideJoints[jnt], locator, position=True, rotation=False)
                 cmds.parentConstraint(locator, guide.guideJoints[jnt], mo=True)

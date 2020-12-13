@@ -1,5 +1,6 @@
 from maya import cmds
-import trigger.library.functions as extra
+from trigger.library import functions
+from trigger.library import naming
 
 class Icon(object):
     def __init__(self):
@@ -42,12 +43,12 @@ class Icon(object):
         else:
             cont = self.iconDictionary[iconType](name=iconName)
 
-        for shape in extra.getShapes(cont):
+        for shape in functions.getShapes(cont):
             if shape != "%sShape" % cont:
-                cmds.rename(shape, extra.uniqueName("%sShape" % cont))
+                cmds.rename(shape, naming.uniqueName("%sShape" % cont))
 
         cmds.setAttr("%s.scale" % cont, *scale)
-        extra.alignNormal(cont, normal)
+        functions.alignNormal(cont, normal)
         cmds.makeIdentity(cont, a=True)
 
         if location:
@@ -161,12 +162,12 @@ class Icon(object):
                                         (1.025203, -5.011799, 0)], k=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
                                 name="letterFK_K")
 
-        letter_f_k_k_shape = extra.getShapes(letter_f_k_k)[0]
+        letter_f_k_k_shape = functions.getShapes(letter_f_k_k)[0]
         cmds.parent(letter_f_k_k_shape, letter_fk_f, r=True, s=True)
         cmds.delete(letter_f_k_k)
         letter_fk = cmds.rename(letter_fk_f, "letterFK")
         letter_ik = cmds.duplicate(letter_fk, name="letterIK", renameChildren=True)[0]
-        letter_ik_shapes = extra.getShapes(letter_ik)
+        letter_ik_shapes = functions.getShapes(letter_ik)
 
         cmds.move(-4.168608, 0, 0, "{0}.cv[2]".format(letter_ik_shapes[0]), r=True, os=True, wd=True)
         cmds.move(-4.168608, 0, 0, "{0}.cv[3]".format(letter_ik_shapes[0]), r=True, os=True, wd=True)
@@ -323,9 +324,9 @@ class Icon(object):
         for i in range(0, 4):
             newTri = cmds.duplicate(masterTri, name="arrow_%i" %i)[0]
             cmds.makeIdentity(newTri, a=True)
-            newTriShape = extra.getShapes(newTri)[0]
+            newTriShape = functions.getShapes(newTri)[0]
             # previously created tricircle shapes clashes with this
-            newTriShape = cmds.rename(newTriShape, extra.uniqueName(newTriShape))
+            newTriShape = cmds.rename(newTriShape, naming.uniqueName(newTriShape))
             cmds.rotate(0, 90, 0, masterTri, r=True)
             cmds.parent(newTriShape, cont_triCircle, r=True, s=True)
             cmds.delete(newTri)

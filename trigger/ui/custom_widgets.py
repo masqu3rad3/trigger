@@ -1,4 +1,5 @@
 import os
+from trigger.library import naming
 from trigger.ui.Qt import QtWidgets, QtCore, QtGui
 from trigger.ui import feedback
 from trigger.core import foolproof
@@ -569,6 +570,7 @@ class SaveBoxLayout(QtWidgets.QVBoxLayout):
         self.filterExtensions = filter_extensions
         self.overwriteCheck = overwrite_check
         self.controlModel = control_model
+        self.feedback = feedback.Feedback()
 
         self.build()
 
@@ -617,8 +619,17 @@ class SaveBoxLayout(QtWidgets.QVBoxLayout):
         pass
 
     def increment(self):
-        print("NOT YET IMPLEMENTED")
-        pass
+
+        if self.controlModel:
+            self.controlModel.update_model()
+        if self.updateWidget:
+            file_path = str(self.updateWidget.text())
+            if not file_path:
+                self.feedback.pop_info(title="Cannot Proceed", text="No path defined to increment", critical=True)
+                return
+            incremented_file_path = naming.increment(file_path)
+            self.saveEvent(incremented_file_path)
+            self.updateWidget.setText(incremented_file_path)
 
     def saveEvent(self, file_path):
         self.saved.emit(file_path)

@@ -264,3 +264,63 @@ def averageConstraint(target_mesh, vertex_list, source_object=None, offsetParent
         cmds.connectAttr("%s.outputMatrix" % pick_matrix, "%s.offsetParentMatrix" %source_object)
     return source_object
 
+def connectMirror (node1, node2, mirrorAxis="X"):
+    """
+    Make a mirrored connection between node1 and node2 along the mirrorAxis
+    Args:
+        node1: Driver Node
+        node2: Driven Node
+        mirrorAxis: Mirror axis for the driven node.
+
+    Returns: None
+
+    """
+    ## make sure the axis is uppercase:
+    mirrorAxis = mirrorAxis.upper()
+    ## strip - and +
+    mirrorAxis = mirrorAxis.replace("+", "")
+    mirrorAxis = mirrorAxis.replace("-", "")
+
+    #nodes Translate
+    rvsNodeT=cmds.createNode("reverse")
+    minusOpT=cmds.createNode("plusMinusAverage")
+    cmds.setAttr("%s.operation" %minusOpT, 2)
+    cmds.connectAttr("{0}.translate".format(node1), "{0}.input".format(rvsNodeT))
+    cmds.connectAttr("{0}.output".format(rvsNodeT), "{0}.input3D[0]".format(minusOpT))
+    cmds.setAttr("%s.input3D[1]" %minusOpT, 1, 1, 1)
+    #nodes Rotate
+    rvsNodeR = cmds.createNode("reverse")
+    minusOpR = cmds.createNode("plusMinusAverage")
+    cmds.setAttr("%s.operation" %minusOpR, 2)
+    cmds.connectAttr("{0}.rotate".format(node1), "{0}.input".format(rvsNodeR))
+
+    # rvsNodeR.output >> minusOpR.input3D[0]
+    cmds.connectAttr("{0}.output".format(rvsNodeR), "{0}.input3D[0]".format(minusOpR))
+
+    cmds.setAttr("%s.input3D[1]" %minusOpR, 1, 1, 1)
+
+    #Translate
+
+    if (mirrorAxis=="X"):
+        cmds.connectAttr("{0}.output3Dx".format(minusOpT), "{0}.tx".format(node2))
+        cmds.connectAttr("{0}.ty".format(node1), "{0}.ty".format(node2))
+        cmds.connectAttr("{0}.tz".format(node1), "{0}.tz".format(node2))
+        cmds.connectAttr("{0}.rx".format(node1), "{0}.rx".format(node2))
+        cmds.connectAttr("{0}.output3Dy".format(minusOpR), "{0}.ry".format(node2))
+        cmds.connectAttr("{0}.output3Dz".format(minusOpR), "{0}.rz".format(node2))
+
+    if (mirrorAxis=="Y"):
+        cmds.connectAttr("{0}.tx".format(node1), "{0}.tx".format(node2))
+        cmds.connectAttr("{0}.output3Dy".format(minusOpT), "{0}.ty".format(node2))
+        cmds.connectAttr("{0}.tz".format(node1), "{0}.tz".format(node2))
+        cmds.connectAttr("{0}.output3Dx".format(minusOpR), "{0}.rx".format(node2))
+        cmds.connectAttr("{0}.ry".format(node1), "{0}.ry".format(node2))
+        cmds.connectAttr("{0}.output3Dz".format(minusOpR), "{0}.rz".format(node2))
+
+    if (mirrorAxis=="Z"):
+        cmds.connectAttr("{0}.tx".format(node1), "{0}.tx".format(node2))
+        cmds.connectAttr("{0}.ty".format(node1), "{0}.ty".format(node2))
+        cmds.connectAttr("{0}.output3Dz".format(minusOpT), "{0}.tz".format(node2))
+        cmds.connectAttr("{0}.rx".format(node1), "{0}.rx".format(node2))
+        cmds.connectAttr("{0}.output3Dy".format(minusOpR), "{0}.ry".format(node2))
+        cmds.connectAttr("{0}.output3Dz".format(minusOpR), "{0}.rz".format(node2))

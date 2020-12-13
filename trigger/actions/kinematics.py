@@ -2,7 +2,7 @@
 import os
 from maya import cmds
 from trigger.core import logger
-from trigger.library import functions
+from trigger.library import functions, naming
 from trigger.library import attribute
 from trigger.library import api
 import trigger.library.controllers as ic
@@ -415,7 +415,7 @@ class Kinematics(settings.Settings):
             # if self.get("seperateSelectionSets"):
             if self.multi_selectionSets:
                 set_name = "def_%s_%s_Set" % (x[1], x[2])
-                set_name = functions.uniqueName(set_name)
+                set_name = naming.uniqueName(set_name)
                 j_def_set = cmds.sets(name=set_name)
 
             # suffix = "%s_%s" % (sideVal, x[1].capitalize()) if sideVal != "C" else x[1].capitalize()

@@ -2,6 +2,7 @@
 import sys
 
 from trigger.library import functions
+from trigger.library import naming
 from trigger.library import api
 from trigger.library.controllers import Icon
 from trigger.core.decorators import undo
@@ -54,7 +55,7 @@ class AddController(Icon):
             if not name:
                 name = "%s_cont" % sel
             # make sure the name is unique
-            name = functions.uniqueName(name)
+            name = naming.uniqueName(name)
             cont, _ = self.createIcon(icon, iconName=name, scale=(scale, scale, scale), normal=normal)
             cont_offset = functions.createUpGrp(cont, "offset")
             functions.alignTo(cont_offset, sel, position=True, rotation=True)

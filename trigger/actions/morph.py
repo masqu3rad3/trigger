@@ -5,7 +5,7 @@ import re
 from maya import cmds
 
 from trigger.ui.Qt import QtWidgets, QtGui
-from trigger.library import functions, attribute, deformers
+from trigger.library import functions, attribute, deformers, naming
 
 ACTION_DATA = {
     "blendshapes_group": "",
@@ -29,7 +29,7 @@ class Morph(object):
         self.morphGrp = None
         self.morphHook = None
         self.morphMesh = None
-        self.bsNode = functions.uniqueName("trigger_morph_blendshape")
+        self.bsNode = naming.uniqueName("trigger_morph_blendshape")
 
 
     def feed(self, action_data, *args, **kwargs):
