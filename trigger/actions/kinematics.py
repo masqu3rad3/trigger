@@ -123,6 +123,8 @@ class Kinematics(settings.Settings):
 
     def ui(self, ctrl, layout, handler, *args, **kwargs):
         """Mandatory Method"""
+        guides_handler = session.Session()
+
         file_path_lbl = QtWidgets.QLabel(text="File Path:")
         file_path_hLay = QtWidgets.QHBoxLayout()
         file_path_le = QtWidgets.QLineEdit()
@@ -163,17 +165,34 @@ class Kinematics(settings.Settings):
 
 
         def get_roots_menu():
+            # if file_path_le.text():
+            #     if not os.path.isfile(file_path_le.text()):
+            #         LOG.throw_error("Guides file does not exist")
+            #
+            #     list_of_roots = list(guides_handler.get_roots_from_file(file_path=file_path_le.text()))
+            #     print("-"*60)
+            #     print("-"*60)
+            #     print("debug", list_of_roots)
+            #     print("-"*60)
+            #     print("-"*60)
+            #
+            #     zortMenu = QtWidgets.QMenu()
+            #     for root in list_of_roots:
+            #         tempAction = QtWidgets.QAction(str(root))
+            #         zortMenu.addAction(tempAction)
+            #         tempAction.triggered.connect(lambda ignore=root, item=root: add_root(str(item)))
+            #     zortMenu.exec_((QtGui.QCursor.pos()))
             if file_path_le.text():
                 if not os.path.isfile(file_path_le.text()):
-                    LOG.throw_error("Guide file does not exist")
+                    LOG.throw_error("Guides file does not exist")
 
-                list_of_roots = list(handler.get_roots_from_file(file_path=file_path_le.text()))
-
+                list_of_roots = list(guides_handler.get_roots_from_file(file_path=file_path_le.text()))
                 zortMenu = QtWidgets.QMenu()
-                for root in list_of_roots:
-                    tempAction = QtWidgets.QAction(str(root), self)
-                    zortMenu.addAction(tempAction)
-                    tempAction.triggered.connect(lambda ignore=root, item=root: add_root(str(root)))
+                menuActions = [QtWidgets.QAction(str(root)) for root in list_of_roots]
+                zortMenu.addActions(menuActions)
+                for defo, menu_action in zip(list_of_roots, menuActions):
+                    menu_action.triggered.connect(lambda ignore=defo, item=defo: add_root(str(item)))
+
                 zortMenu.exec_((QtGui.QCursor.pos()))
 
         def add_root(root):

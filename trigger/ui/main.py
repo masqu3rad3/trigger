@@ -692,11 +692,6 @@ class MainUI(QtWidgets.QMainWindow):
         for row, action_name in enumerate(self.actions_handler.list_action_names()):
             action_type = self.actions_handler.get_action_type(action_name)
             icon_path = os.path.join(self.iconsPath, "%s.png" % action_type)
-            print("*"*30)
-            print("*"*30)
-            print("*"*30)
-            print("*"*30)
-            print("*"*30)
             self.rig_actions_listwidget.setIcon(row, icon_path)
             if self.actions_handler.is_enabled(action_name):
                 self.rig_actions_listwidget.enableItem(row)

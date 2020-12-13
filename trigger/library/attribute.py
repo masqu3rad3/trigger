@@ -118,13 +118,15 @@ def validate_attr(attr, attr_range=None, nice_name=None, attr_type="float", defa
                 )
     else:
         # create the creation dict
+        min_value = None if not attr_range else attr_range[0]
+        max_value = None if not attr_range else attr_range[1]
         property_dict = {
             "attr_name": attr_name,
             "nice_name": nice_name,
             "attr_type": attr_type,
             "default_value": default_value,
-            "min_value": attr_range[0],
-            "max_value": attr_range[1]
+            "min_value": min_value,
+            "max_value": max_value
         }
         create_attribute(node_name, property_dict=property_dict, display=False)
         # cmds.addAttr(

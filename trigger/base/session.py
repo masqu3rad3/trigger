@@ -8,6 +8,7 @@ import os
 from maya import cmds
 import maya.api.OpenMaya as om
 from trigger.library import functions
+from trigger.library import attribute
 from trigger.library import api
 
 
