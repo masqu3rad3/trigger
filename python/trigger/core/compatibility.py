@@ -34,33 +34,4 @@ def is_string(data):
         else:
             return False
 
-# try:
-#     from compiler.ast import flatten
-# except:
-#     pass
-    # def flatten(l):
-    #     for el in l:
-    #         if isinstance(el, collections.Iterable) and not isinstance(el, (str, bytes)):
-    #             yield from flatten(el)
-    #         else:
-    #             yield el
-
-# if sys.version_info.major == 3:
-#     def flatten(l):
-#         for el in l:
-#             if isinstance(el, collections.Iterable) and not isinstance(el, (str, bytes)):
-#                 yield from flatten(el)
-#             else:
-#                 yield el
-# else:
-#     def flatten(l):
-#         for el in l:
-#             if isinstance(el, collections.Iterable) and not isinstance(el, basestring):
-#                 for sub in flatten(el):
-#                     yield sub
-#             else:
-#                 yield el
-
-
-
 

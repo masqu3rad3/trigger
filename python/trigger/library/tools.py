@@ -7,10 +7,6 @@ def replaceController(mirror=True, mirrorAxis="X", keepOldShape=False, keepAcopy
         if kwargs["oldController"] and kwargs["newController"]:
             oldCont = kwargs["oldController"]
             newCont = kwargs["newController"]
-            # if type(oldCont) == str:
-            #     oldCont=pm.PyNode(oldCont)
-            # if type(newCont) == str:
-            #     newCont=pm.PyNode(newCont)
         else:
             selection = cmds.ls(sl=True)
             if not len(selection) == 2:
@@ -64,14 +60,9 @@ def replaceController(mirror=True, mirrorAxis="X", keepOldShape=False, keepAcopy
     cmds.makeIdentity(newContDup, apply=True, t=True, r=False, s=True, n=False, pn=True)
 
     ## get the same color code
-    # pm.setAttr(newContDup.getShape()+".overrideEnabled", pm.getAttr(oldCont.getShape()+".overrideEnabled"))
     cmds.setAttr("%s.overrideEnabled" % functions.getShapes(newContDup)[0], cmds.getAttr("%s.overrideEnabled" % functions.getShapes(oldCont)[0]))
 
-    # pm.setAttr(newContDup.getShape()+".overrideColor", pm.getAttr(oldCont.getShape()+".overrideColor"))
     cmds.setAttr("%s.overrideColor" % functions.getShapes(newContDup)[0], cmds.getAttr("%s.overrideColor" % functions.getShapes(oldCont)[0]))
-
-
-
 
     #move the new controller to the old controllers place
     if alignToCenter:
@@ -79,18 +70,12 @@ def replaceController(mirror=True, mirrorAxis="X", keepOldShape=False, keepAcopy
     else:
         functions.alignToAlter(newContDup, oldCont, mode=2)
 
-
     ## put the new controller shape under the same parent with the old first (if there is a parent)
     if functions.getParent(oldCont):
         cmds.parent(newContDup, functions.getParent(oldCont))
     cmds.makeIdentity(newContDup, apply=True)
-    # move the pivot to the same position
-    # pivotPoint = pm.xform(oldCont,q=True, t=True, ws=True)
-    # pm.xform(newContDup, piv=pivotPoint, ws=True)
-
 
     if not keepOldShape:
-        # pm.delete(oldCont.getShape())
         cmds.delete(cmds.listRelatives(oldCont, shapes=True, children=True))
 
     cmds.parent(functions.getShapes(newContDup)[0], oldCont, r=True, s=True)
@@ -104,11 +89,9 @@ def replaceController(mirror=True, mirrorAxis="X", keepOldShape=False, keepAcopy
         else:
             cmds.warning("Cannot find the mirror controller, skipping mirror part")
             if not keepOldShape:
-                # cmds.delete(oldCont.getShape())
                 cmds.delete(functions.getShapes(oldCont))
             return
         oldContMirror = mirrorName
-
         # get the current transform
         transformDict_mir = {}
         for i in tryChannels:
@@ -130,26 +113,16 @@ def replaceController(mirror=True, mirrorAxis="X", keepOldShape=False, keepAcopy
         cmds.makeIdentity(newContDupMirror, apply=True, s=True)
 
         ## get the same color code
-        # pm.setAttr(newContDupMirror.getShape() + ".overrideEnabled", pm.getAttr(oldContMirror.getShape() + ".overrideEnabled"))
-        # cmds.setAttr("%s.overrideEnabled" % newContDupMirror.getShape(), cmds.getAttr("%s.overrideEnabled") % oldContMirror.getShape())
         cmds.setAttr("%s.overrideEnabled" % functions.getShapes(newContDupMirror)[0], cmds.getAttr("%s.overrideEnabled") % functions.getShapes(oldContMirror)[0])
-
-
-        # pm.setAttr(newContDupMirror.getShape() + ".overrideColor", pm.getAttr(oldContMirror.getShape() + ".overrideColor"))
-        # cmds.setAttr("%s.overrideColor" % newContDupMirror.getShape(), cmds.getAttr("%s.overrideColor" % oldContMirror.getShape()))
         cmds.setAttr("%s.overrideColor" % functions.getShapes(newContDupMirror)[0], cmds.getAttr("%s.overrideColor" % functions.getShapes(oldContMirror)[0]))
-
 
         # move the new controller to the old controllers place
         functions.alignToAlter(newContDupMirror, oldContMirror, mode=0)
 
         if not keepOldShape:
-            # pm.delete(oldContMirror.getShape())
             cmds.delete(cmds.listRelatives(oldContMirror, shapes=True, children=True))
 
         newContDupMirror_shape = cmds.listRelatives(newContDupMirror, shapes=True, children=True)
-        # pm.parent(newContDupMirror.getShape(), oldContMirror, r=True, s=True)
-
 
         for i in tryChannels:
             try:
@@ -281,12 +254,6 @@ def mirrorController(axis="x", node_list=None, side_flags=("L_", "R_"), side_bia
         replace_curve(other_side, tmp_cont, maintain_offset=False)
         cmds.delete(tmp_cont)
 
-# replace_curve(orig_curve=cmds.ls(sl=1)[0], new_curve=cmds.ls(sl=1)[1], maintain_offset=True)
-# mirrorController()
-
-from maya import cmds
-from trigger.library import functions
-
 
 def whip(node_list, attr_holder=None, create_up_grp=True, offset=5, diminish=0.8, attr_list=None):
     if type(node_list) is not list:
@@ -304,7 +271,6 @@ def whip(node_list, attr_holder=None, create_up_grp=True, offset=5, diminish=0.8
             cmds.makeIdentity(up_node, a=True)
             temp_list.append(up_node)
         node_list = [node_list[0]] + temp_list
-        # node_list = [functions.createUpGrp(node, "whip") for node in node_list]
 
     cmds.addAttr(attr_holder, at="float", ln="powerDim", min=0, max=1, defaultValue=0.8, k=True)
 
@@ -334,6 +300,4 @@ def whip_refresh():
     frame_caches = cmds.ls(type="frameCache")
     for cache in frame_caches:
         cmds.setAttr("%s.nodeState" % cache, 1)
-        # cmds.refresh()
         cmds.setAttr("%s.nodeState" % cache, 0)
-        # cmds.refresh()

@@ -18,19 +18,15 @@ class IO(dict):
         self.valid_extensions = [".json", ".tr", ".trg", ".trw", ".trs", ".trl", ".trsplit"]
         self.default_extension = ".json"
         if file_path:
-            # self["file_path"] = file_path
             self.file_path = file_path
         elif file_name:
             if not folder_name:
                 self.folder_name = ""
             if not root_path:
                 self.root_path = os.path.normpath(os.path.expanduser("~"))
-            # self["file_path"] = os.path.join(root_path, folder_name, file_name)
             self.file_path = os.path.join(self.root_path, self.folder_name, file_name)
         else:
             log.throw_error("IO class cannot initialized. At least a file name or file_path must be defined")
-
-        # self._folderCheck(self.file_path)
 
     @property
     def file_path(self):

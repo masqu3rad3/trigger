@@ -27,9 +27,6 @@ LOG = logger.Logger(logger_name=__name__)
 
 WINDOW_NAME = "TRigger"
 
-# TODO: TEMPORARY
-from PySide2 import QtCore, QtGui, QtWidgets
-
 def getMayaMainWindow():
     """
     Gets the memory adress of the main window to connect Qt dialog to it.
@@ -59,14 +56,12 @@ class MainUI(QtWidgets.QMainWindow):
 
         # create guide and rig objects
         self.actions_handler = actions_session.ActionsSession()
-        # actions_handler.reset_actions()
         self.guides_handler = session.Session()
 
         self.actions_handler.reset_actions()
 
         self.feedback = feedback.Feedback()
         self.feedback.parent = self
-        # self.setFocusPolicy(QtCore.Qt.StrongFocus)
         self.installEventFilter(self)
         self.force = False
         # core ui
@@ -128,7 +123,6 @@ class MainUI(QtWidgets.QMainWindow):
 
     def buildBarsUI(self):
         self.menubar = QtWidgets.QMenuBar(self)
-        # self.menubar.setGeometry(QtCore.QRect(0, 0, 570, 21))
         self.menuFile = QtWidgets.QMenu(self.menubar)
         self.menuFile.setTitle("File")
         self.setMenuBar(self.menubar)
@@ -390,7 +384,6 @@ class MainUI(QtWidgets.QMainWindow):
 
         ## SIGNALS
         self.guides_list_treeWidget.currentItemChanged.connect(self.on_guide_change)
-        # self.module_name_le.textChanged.connect(lambda text=self.module_name_le.text(): self.update_properties("moduleName", text))
         self.module_name_le.textEdited.connect(lambda text=self.module_name_le.text(): self.update_properties("moduleName", text))
         self.module_name_le.editingFinished.connect(self.populate_guides)
 
@@ -459,17 +452,6 @@ class MainUI(QtWidgets.QMainWindow):
         self.move_action_down_pb.setText("down")
         self.rig_action_addremove_hLay.addWidget(self.move_action_down_pb)
 
-        # self.rig_actions_listwidget = QtWidgets.QListWidget(self.layoutWidget_2)
-        # font = QtGui.QFont()
-        # font.setPointSize(10)
-        # font.setBold(False)
-        # font.setWeight(50)
-        # font.setStrikeOut(False)
-        # self.rig_actions_listwidget.setFont(font)
-        # self.rig_actions_listwidget.setMouseTracking(False)
-        # self.rig_actions_listwidget.setFrameShape(QtWidgets.QFrame.StyledPanel)
-        # self.rig_actions_listwidget.setViewMode(QtWidgets.QListView.ListMode)
-        # self.rig_actions_listwidget.setAlternatingRowColors(True)
         self.rig_actions_listwidget = custom_widgets.ProgressListWidget()
 
         self.rig_actions_vLay.addWidget(self.rig_actions_listwidget)
@@ -551,16 +533,12 @@ class MainUI(QtWidgets.QMainWindow):
         self.rig_actions_listwidget.doubleClicked.connect(lambda x: self.actions_handler.run_action(x.data()))
         # TODO: Make a seperate method for running run actions wih progressbar
 
-    # def on_context_menu_rig_actions(self, point):
-    #     self.popMenu_rig_action.exec_(self.rig_actions_listwidget.mapToGlobal(point))
-
     def on_action_rename(self):
         action_name = self.rig_actions_listwidget.currentItem().text()
         rename_dialog = QtWidgets.QDialog()
         rename_dialog.setWindowTitle("Rename Action")
         rename_masterLay = QtWidgets.QVBoxLayout()
         rename_dialog.setLayout(rename_masterLay)
-        # rename_le = QtWidgets.QLineEdit(text=action_name)
         rename_le = custom_widgets.ValidatedLineEdit(text=action_name)
         rename_masterLay.addWidget(rename_le)
         rename_hlay = QtWidgets.QHBoxLayout()
@@ -657,8 +635,6 @@ class MainUI(QtWidgets.QMainWindow):
         self.actions_handler.get_layout_ui(action_name, ctrl, self.action_settings_formLayout)
 
     def add_actions_menu(self):
-        # recentList = reversed(self.manager.loadRecentProjects())
-        # list_of_actions = sorted(self.rig.action_dict.keys())
         list_of_actions = sorted(self.actions_handler.action_data_dict.keys())
 
         zortMenu = QtWidgets.QMenu()
@@ -669,8 +645,6 @@ class MainUI(QtWidgets.QMainWindow):
             tempAction.triggered.connect(lambda ignore=action_item, item=action_item: self.actions_handler.add_action(action_type=item))
             tempAction.triggered.connect(self.populate_actions)
             ## Take note about the usage of lambda "item=z" makes it possible using the loop, ignore -> for discarding emitted value
-            # tempAction.triggered.connect(lambda ignore=p, item=p: setAndClose(custompath=(item)))
-            # tempAction.triggered.connect(lambda item=z: manager.playPreview(str(item)))
 
         self.populate_actions()
 
@@ -691,12 +665,6 @@ class MainUI(QtWidgets.QMainWindow):
             else:
                 self.rig_actions_listwidget.disableItem(row)
 
-        # for x in range(self.rig_actions_listwidget.count()):
-        #     item = self.rig_actions_listwidget.item(x)
-        #     if self.actions_handler.is_enabled(item.text()):
-        #         item.setForeground(self.colorDictionary["enabled"])
-        #     else:
-        #         item.setForeground(self.colorDictionary["disabled"])
         self.update_title()
 
     def move_action_up(self):
@@ -738,7 +706,6 @@ class MainUI(QtWidgets.QMainWindow):
         self.actions_handler.delete_action(action_name=action_name)
         self.block_all_signals(False)
         self.populate_actions()
-
 
 #######################
 ### GUIDE FUNCTIONS ###
@@ -908,11 +875,9 @@ class MainUI(QtWidgets.QMainWindow):
             elif child.layout():
                 self.clearLayout(child.layout())
 
-
     ##############
     ### COMMON ###
     ##############
-
 
     @staticmethod
     def list_to_text(list_item):

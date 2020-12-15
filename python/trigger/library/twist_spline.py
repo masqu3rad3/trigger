@@ -19,10 +19,7 @@ class TwistSpline(object):
         self.defJoints = None
         self.noTouchData = None
         self.moveAxis = None
-        # self.worldUpAxis = (0.0, 1.0, 0.0)
-        # self.localMoveAxis = (0.0, 0.0, 1.0)
         self.upAxis = (0.0, 1.0, 0.0)
-        # self.mirrorAxis = (1.0, 0.0, 0.0)
 
 
     def createTspline(self, refJoints, name, cuts, dropoff=2, mode="equalDistance", twistType="regular", colorCode=17):
@@ -49,7 +46,6 @@ class TwistSpline(object):
         self.scaleGrp = cmds.group(name="scaleGrp_%s" % name, em=True)
         self.nonScaleGrp = cmds.group(name="nonScaleGrp_%s" % name, em=True)
 
-        # rootVc = refJoints[0].getTranslation(space="world")  # Root Vector
         rootVc = api.getWorldTranslation(refJoints[0])
         totalLength = 0
         contDistances = []
@@ -68,12 +64,7 @@ class TwistSpline(object):
             totalLength += currentJointLength
             contDistances.append(ctrlDistance)  # this list contains distance between each control point
 
-        # for j in refJoints:
-        #     pm.joint(j, e=True, zso=True, oj="xyz", sao="yup")
-
-        # endVc = (rootVc.x, (rootVc.y + totalLength), rootVc.z)
         endVc = om.MVector(rootVc.x, (rootVc.y + totalLength), rootVc.z)
-        # endVc = ((rootVc.x + totalLength), rootVc.y, rootVc.z)
 
         splitVc = endVc - rootVc
         segmentVc = (splitVc / (cuts))
@@ -133,10 +124,6 @@ class TwistSpline(object):
             ctrlVc = splitVc.normal() * contDistances[index]
             place = rootVc + (ctrlVc)
             jnt = cmds.joint(p=place, name="jCont_spline_%s%i" %(name, index), radius=5, o=(0, 0, 0))
-            # pm.setAttr(j.rotateZ, 90)
-            #############################################################
-            # extra.alignTo(j, refJoints[i], mode=1)
-            #############################################################
             contJoints.append(jnt)
 
         functions.orientJoints(contJoints, worldUpAxis=(self.upAxis))
@@ -203,10 +190,7 @@ class TwistSpline(object):
             cmds.connectAttr("%s.worldMatrix[0]" %contJoints[0], "%s.dWorldUpMatrix" %splineIK[0])
             cmds.connectAttr("%s.worldMatrix[0]" %contJoints[-1], "%s.dWorldUpMatrixEnd" %splineIK[0])
 
-
         # connect rotations of locator groups
-
-
 
         icon = ic.Icon()
 
@@ -234,7 +218,6 @@ class TwistSpline(object):
             ## CREATE A TWIST NODE TO BE PASSED. this is the twist driver, connect it to rotation or attributes
 
             ## first make a solid connection for the top and bottom:
-
             for i in range(0, len(poleGroups)):
                 ## if it is the first or the last group
                 if i == 0:
@@ -250,8 +233,6 @@ class TwistSpline(object):
                     cmds.setAttr("%s.blender" %blender, blendRatio)
         else:
             pass
-
-
 
         # STRETCH and SQUASH
         #
@@ -270,15 +251,12 @@ class TwistSpline(object):
                    maxValue=1.0,
                    at="double", k=True)
 
-
-
         curveInfo = cmds.arclen(splineCurve, ch=True)
         initialLength = cmds.getAttr("%s.arcLength" %curveInfo)
 
         powValue = 0
 
         for i in range(0, len(IKjoints)):
-
             curveGlobMult = cmds.createNode("multiplyDivide", name="curveGlobMult_" + name)
             cmds.setAttr("%s.operation" %curveGlobMult, 2)
             boneGlobMult = cmds.createNode("multiplyDivide", name="boneGlobMult_" + name)
@@ -302,12 +280,10 @@ class TwistSpline(object):
             if i == 0 or i == len(IKjoints) - 1:
                 cmds.setAttr("%s.input2Y" %volumeFactor, 0)
                 cmds.setAttr("%s.input2Z" %volumeFactor, 0)
-
             elif (i <= middlePoint):
                 powValue = powValue - 1
                 cmds.setAttr("%s.input2Y" %volumeFactor, powValue)
                 cmds.setAttr("%s.input2Z" %volumeFactor, powValue)
-
             else:
                 powValue = powValue + 1
                 cmds.setAttr("%s.input2Y" %volumeFactor, powValue)
@@ -341,7 +317,6 @@ class TwistSpline(object):
         cmds.pointConstraint(self.defJoints[len(self.defJoints) - 1], self.endLock, mo=False)
 
         ## Move them to original Positions
-
         for o in range (0,len(self.contCurves_ORE)):
             if o == 0:
                 functions.alignToAlter(self.contCurves_ORE[o], refJoints[o], mode=2)
@@ -349,9 +324,7 @@ class TwistSpline(object):
                 functions.alignToAlter(self.contCurves_ORE[o], refJoints[o], mode=0)
                 functions.alignToAlter(self.contCurves_ORE[o], refJoints[o - 1], mode=1)
 
-
         # GOOD PARENTING
-
         cmds.parent(contJoints, self.scaleGrp)
         cmds.parent(splineIK[0], self.nonScaleGrp)
 
@@ -363,7 +336,5 @@ class TwistSpline(object):
         functions.colorize(contCurves, colorCode)
 
         # RETURN
-        # re-initialize the deformation joints (remove the last of it
-        # self.defJoints.pop(-1)
         self.noTouchData = ([splineCurve, splineIK[0], self.endLock], IKjoints, contJoints, poleGroups, RPhandles)
 

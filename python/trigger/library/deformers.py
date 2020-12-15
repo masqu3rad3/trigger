@@ -145,7 +145,6 @@ def localize(mesh, blendshape_node, local_target_name="LocalRig", group_name=Non
 
     # create a holding group
     local_rig_grp = "%s_grp" %local_target_name if not group_name else group_name
-    # local_rig_grp = "%s_grp" % local_target_name
     if not cmds.objExists(local_rig_grp):
         cmds.group(name=local_rig_grp, em=True)
 
@@ -169,7 +168,6 @@ def localize(mesh, blendshape_node, local_target_name="LocalRig", group_name=Non
                 "Specified blendshape_node ({0}) exists in the scene but not connected to the specified mesh ({1})".format(
                     blendshape_node, mesh))
         # query the existing targets
-        # ex_targets = cmds.blendShape(blendshape_node, q=True, t=True)
         next_index = cmds.blendShape(blendshape_node, q=True, wc=True)
         # this returns the total number of used indices. Theoratically, if index inputs follows order
         # it should return an empty index number. However:

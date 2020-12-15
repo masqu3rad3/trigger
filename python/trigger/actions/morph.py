@@ -143,7 +143,6 @@ class Morph(object):
             delta_shape = self.create_combination_delta(self.neutralMesh, blendshape.split("_"), blendshape)
 
         # ingest combination delta just like a regular base and drive it with combinationShape node
-        # self.ingest_base(delta_shape)
         next_index = cmds.blendShape(self.bsNode, q=True, wc=True)
         cmds.blendShape(self.bsNode, edit=True, t=(self.morphMesh, next_index, delta_shape, 1.0), w=[next_index, 0.0])
         combination_node = cmds.createNode("combinationShape")

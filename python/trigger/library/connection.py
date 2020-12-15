@@ -101,26 +101,20 @@ def matrixConstraint(parent, child, mo=True, prefix="", sr=None, st=None, ss=Non
         parentWorldMatrix = api.getMDagPath(parent).inclusiveMatrix()
         childWorldMatrix = api.getMDagPath(child).inclusiveMatrix()
         localOffset = childWorldMatrix * parentWorldMatrix.inverse()
-        # next_index = getNextIndex("%s.matrixIn" % mult_matrix)
         next_index += 1
         cmds.setAttr("%s.matrixIn[%i]" % (mult_matrix, next_index), localOffset, type="matrix")
 
-    # next_index = getNextIndex("%s.matrixIn" % mult_matrix)
     next_index += 1
     cmds.connectAttr("%s.worldMatrix[0]" % parent, "%s.matrixIn[%i]" % (mult_matrix, next_index))
     cmds.connectAttr("%s.matrixSum" % mult_matrix, "%s.inputMatrix" % decompose_matrix)
 
     if source_parent_cutoff:
-        # next_index = getNextIndex("%s.matrixIn" % mult_matrix)
         next_index += 1
         cmds.connectAttr("%s.worldInverseMatrix" % source_parent_cutoff, "%s.matrixIn[%i]" % (mult_matrix, next_index))
 
 
     if child_parent:
         child_parentWorldMatrix = api.getMDagPath(child_parent).inclusiveMatrix().inverse()
-        # childWorldMatrix = getMDagPath(child).inclusiveMatrix()
-        # localOffset = childWorldMatrix * child_parentWorldMatrix.inverse()
-        # next_index = getNextIndex("%s.matrixIn" % mult_matrix)
         next_index += 1
         cmds.setAttr("%s.matrixIn[%i]" % (mult_matrix, next_index), child_parentWorldMatrix, type="matrix")
 
@@ -210,7 +204,6 @@ def uvPin(mesh_transform, coordinates):
         cmds.setAttr("%s.intermediateObject" % original_mesh, 1)
         interface.refreshOutliners()
     else:
-        # deformed_mesh = cmds.listRelatives(mesh_transform, ni=True, children=True, parent=False)[0]
         original_mesh = intermediates[0]
 
     uv_pin = cmds.createNode("uvPin")
@@ -220,8 +213,6 @@ def uvPin(mesh_transform, coordinates):
 
     cmds.setAttr("%s.coordinate[0]" % uv_pin, *coordinates)
 
-    # loc = cmds.spaceLocator(name="temp_loc")[0]
-    # cmds.connectAttr("%s.outputMatrix[0]" % uv_pin, "%s.offsetParentMatrix" % loc)
     return uv_pin
 
 def averageConstraint(target_mesh, vertex_list, source_object=None, offsetParent=False):
@@ -294,7 +285,6 @@ def connectMirror (node1, node2, mirrorAxis="X"):
     cmds.setAttr("%s.operation" %minusOpR, 2)
     cmds.connectAttr("{0}.rotate".format(node1), "{0}.input".format(rvsNodeR))
 
-    # rvsNodeR.output >> minusOpR.input3D[0]
     cmds.connectAttr("{0}.output".format(rvsNodeR), "{0}.input3D[0]".format(minusOpR))
 
     cmds.setAttr("%s.input3D[1]" %minusOpR, 1, 1, 1)

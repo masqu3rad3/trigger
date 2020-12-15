@@ -106,7 +106,6 @@ class Surface(object):
         self.surface_jnt_bind = functions.createUpGrp(self.surface_jnt, "bind")
 
         functions.alignTo(self.surface_jnt_offset, self.rootInit, position=True, rotation=True)
-        # cmds.makeIdentity(self.surface_jnt_negate, a=True)
 
         cmds.parent(self.surface_jnt_offset, self.nonScaleGrp)
 
@@ -116,7 +115,6 @@ class Surface(object):
         self.cont_offset = functions.createUpGrp(self.cont, "offset")
         self.cont_bind = functions.createUpGrp(self.cont, "bind")
         self.cont_negate = functions.createUpGrp(self.cont, "negate")
-        # cmds.connectAttr("%s.s" % self.scaleGrp,"%s.s" % self.cont_surface)
 
         functions.alignTo(self.cont_offset, self.rootInit, position=True, rotation=True)
         functions.colorize(self.cont, self.colorCodes[0])
@@ -144,31 +142,12 @@ class Surface(object):
         cmds.connectAttr("%s.outputRotate" % negate_decompose, "%s.rotate" % self.cont_negate)
         cmds.connectAttr("%s.outputScale" % negate_decompose, "%s.scale" % self.cont_negate)
 
-        # bind_multMatrix = cmds.createNode("multMatrix", name="bind_multMatrix_%s" % self.suffix)
-        # bind_decompose = cmds.createNode("decomposeMatrix", name="bind_decompose_%s" % self.suffix)
-        # cmds.connectAttr("%s.worldMatrix[0]" % self.cont, "%s.matrixIn[0]" % bind_multMatrix)
-        # cmds.connectAttr("%s.matrixSum" % bind_multMatrix, "%s.inputMatrix" % bind_decompose)
-        # cmds.connectAttr("%s.outputTranslate" % bind_decompose, "%s.translate" % self.surface_jnt_bind)
-        # cmds.connectAttr("%s.outputRotate" % bind_decompose, "%s.rotate" % self.surface_jnt_bind)
-        # cmds.connectAttr("%s.outputScale" % bind_decompose, "%s.scale" % self.surface_jnt_bind)
-        # can be scaled only with direct connection
-        # cmds.connectAttr("%s.scale" % self.cont)
-
         if self.isPlugOnLocal:
             pass # nothing to connect because plug is local joint itself
         else:
             cmds.parentConstraint(self.cont, self.limbPlug, mo=False)
 
-        # Alignment to the init joint happens last to minimize the steps
-        # functions.alignTo(self.cont_surface, self.rootInit, position=True, rotation=True)
-        # extra.alignTo(self.surface_jnt, self.rootInit, position=True, rotation=True)
-
-        # if self.controllerSurface:
-        #     fol = parentToSurface.parentToSurface(objects=[self.cont_surface], surface=self.controllerSurface, mode=self.stickMode)
-        #     cmds.parent(fol, self.nonScaleGrp)
-
         # Direct connection between controller and joint
-        #connection.matrixConstraint(test_cont, jDef_bind, mo=False, source_parent_cutoff=test_cont_cutoff)
         for attr in "trs":
             for axis in "xyz":
                 cmds.connectAttr("%s.%s%s" % (self.cont, attr, axis), "%s.%s%s" % (self.surface_jnt_bind, attr, axis))

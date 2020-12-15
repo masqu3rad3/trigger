@@ -86,7 +86,6 @@ def create_attribute(node, property_dict=None, keyable=True, display=True, *args
                      k=keyable,
                      )
 
-    # cmds.setAttr("%s.%s" % (node, attr_name), e=True, cb=display)
     return "%s.%s" % (node, attr_name)
 
 def validate_attr(attr, attr_range=None, nice_name=None, attr_type="float", default_value=None):
@@ -129,14 +128,6 @@ def validate_attr(attr, attr_range=None, nice_name=None, attr_type="float", defa
             "max_value": max_value
         }
         create_attribute(node_name, property_dict=property_dict, display=False)
-        # cmds.addAttr(
-        #     self.node,
-        #     ln=self.attr,
-        #     min=self.min,
-        #     max=self.max,
-        #     keyable=True,
-        # )
-
 
 def drive_attrs(driver_attr, driven_attrs, driver_range=None, driven_range=None, force=True):
     """
@@ -179,7 +170,6 @@ def drive_attrs(driver_attr, driven_attrs, driver_range=None, driven_range=None,
     splits = driver_attr.split(".")
     driver_node = splits[0]
     attr_name = ".".join(splits[1:])
-    # driver_node, attr_name = driver_attr.split(".")
     if len(splits) > 2:
         driver_attr_children = []
     else:
@@ -219,7 +209,6 @@ def drive_attrs(driver_attr, driven_attrs, driver_range=None, driven_range=None,
         splits = driven.split(".")
         driven_node = splits[0]
         driven_attr_name = ".".join(splits[1:])
-        # driven_node, driven_attr_name = driven.split(".")
         if len(splits) > 2:
             driven_attr_children = []
         else:
@@ -347,7 +336,6 @@ def attrPass (sourceNode, targetNode, attributes=[], inConnections=True, outConn
         writeStateFlag = "w=%s" % (writeState)
         flagBuildList.append(writeStateFlag)
 
-
         # parse the flagBuildList into single string
         addAttribute = "cmds.addAttr('%s', " % (targetNode)
         for i in range (0,len(flagBuildList)):
@@ -358,7 +346,6 @@ def attrPass (sourceNode, targetNode, attributes=[], inConnections=True, outConn
                 addAttribute = "%s, " % addAttribute
             else:
                 addAttribute = "%s)" % addAttribute
-
 
         # if an attribute with the same name exists
         if cmds.attributeQuery(attr, node=targetNode, exists=True):

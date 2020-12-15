@@ -10,7 +10,6 @@ ACTION_DATA = {}
 class Master(object):
     def __init__(self, *args, **kwargs):
         super(Master, self).__init__()
-        # self.rigName = "trigger"
 
     def action(self):
         """Mandatory method for all action maya_modules"""

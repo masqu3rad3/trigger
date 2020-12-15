@@ -93,7 +93,6 @@ class Tail(object):
 
         cmds.parent(self.deformerJoints[0], self.scaleGrp)
 
-        # map(lambda x: cmds.connectAttr("%s.jointVis" % self.scaleGrp, "%s.v" % x), self.deformerJoints)
         attribute.drive_attrs("%s.jointVis" % self.scaleGrp, ["%s.v" % x for x in self.deformerJoints])
 
         cmds.connectAttr("%s.rigVis" % self.scaleGrp,"%s.v" % self.limbPlug)
@@ -126,7 +125,6 @@ class Tail(object):
             else:
                 cmds.parent(self.cont_off_list[jnt], self.scaleGrp)
 
-        # map(lambda x: cmds.connectAttr("%s.contVis" % self.scaleGrp, "%s.v" % x), self.cont_off_list)
         attribute.drive_attrs("%s.contVis" % self.scaleGrp, ["%s.v" % x for x in self.cont_off_list])
         functions.colorize(self.contList, self.colorCodes[0])
 

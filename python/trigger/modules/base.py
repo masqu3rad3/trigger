@@ -66,8 +66,6 @@ class Base(object):
         self.limbPlug = self.base_jnt
         self.sockets.append(self.base_jnt)
 
-        # self.deformerJoints.append(defJ_root)
-
     def createControllers(self):
         icon = ic.Icon()
         placement_cont, _ = icon.createIcon("Circle", iconName=naming.uniqueName("placement_cont"), scale=(10, 10, 10))
@@ -81,7 +79,6 @@ class Base(object):
         cmds.parent(placement_off, master_cont)
         cmds.parent(master_off, self.scaleGrp)
 
-        # extra.matrixConstraint(placement_cont, self.base_jnt)
         cmds.parentConstraint(placement_cont, self.base_jnt, mo=False)
 
         functions.colorize(placement_cont, self.colorCodes[0])

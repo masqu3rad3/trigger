@@ -2,14 +2,10 @@ import sys
 from maya import cmds
 from trigger.library import api
 from trigger.library import naming
-# import maya.OpenMaya as om
 # USING MAYA API 2.0
 import maya.api.OpenMaya as om
-from maya import mel
 
 from trigger.core import logger
-from trigger.core import compatibility as compat
-from trigger.core.decorators import undo
 FEEDBACK = logger.Logger(logger_name=__name__)
 
 JOINT_TYPE_DICT = {

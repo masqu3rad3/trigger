@@ -128,17 +128,6 @@ class ValidatedLineEdit(QtWidgets.QLineEdit):
     def connectedWidgets(self):
         return self._connected_widgets
 
-    # @property
-    # def connected_widgets(self):
-    #     return self._connected_widgets
-
-    # @connected_widgets.setter
-    # def connected_widgets(self, widgets):
-    #     if type(widgets) != list:
-    #         self._connected_widgets = [widgets]
-    #     else:
-    #         self._connected_widgets = widgets
-
     def keyPressEvent(self, *args, **kwargs):
         super(ValidatedLineEdit, self).keyPressEvent(*args, **kwargs)
         current_text = self.text()
@@ -148,7 +137,6 @@ class ValidatedLineEdit(QtWidgets.QLineEdit):
                 for wid in self.connected_widgets:
                     wid.setEnabled(False)
         else:
-            # self.setStyleSheet("background-color: rgb(40,40,40); color: white")
             self.setStyleSheet(self.default_stylesheet)
             if self.connected_widgets:
                 for wid in self.connected_widgets:
@@ -212,8 +200,6 @@ class ListBoxLayout(QtWidgets.QVBoxLayout):
             self.buttonsStretchLay.addLayout(self.buttonslayout)
         else:
             self.buttonsStretchLay.addLayout(self.buttonslayout)
-
-        # self.listwidget = QtWidgets.QListWidget()
 
         if self.isMultiSelect:
             self.viewWidget.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
@@ -343,10 +329,6 @@ class TreeBoxLayout(ListBoxLayout):
 
         value_lbl = QtWidgets.QLabel(text=self.value_name)
         value_listbox = ListBoxLayout(buttonGet=False)
-        # if not self.override_listbox:
-        #     value_listbox = ListBoxLayout(buttonGet=False)
-        # else:
-        #     value_listbox = self.override_listbox
         form_layout.addRow(value_lbl, value_listbox)
 
         button_box = QtWidgets.QDialogButtonBox(dialog)
@@ -494,16 +476,6 @@ class TableBoxLayout(ListBoxLayout):
                 else:
                     row_data.append("")
             data.append(row_data)
-
-        # for y in range(column_count):
-        #     row_data = []
-        #     for x in range(row_count):
-        #         table_item = self.viewWidget.item(x, y)
-        #         if table_item:
-        #             row_data.append(table_item.text())
-        #         else:
-        #             row_data.append("")
-        #         data.append(row_data)
         return data
 
 class ProgressListWidget(QtWidgets.QListWidget):
@@ -589,7 +561,7 @@ class SaveBoxLayout(QtWidgets.QVBoxLayout):
         self.masterLayout.addWidget(self.saveAsButton)
         self.masterLayout.addWidget(self.incrementButton)
 
-        # signals
+        # SIGNALS
         self.saveButton.clicked.connect(self.save)
         self.saveAsButton.clicked.connect(self.saveAs)
         self.incrementButton.clicked.connect(self.increment)
@@ -601,7 +573,6 @@ class SaveBoxLayout(QtWidgets.QVBoxLayout):
             file_path = str(self.updateWidget.text())
             if not file_path:
                 self.saveAsButton.browserEvent()
-                # self.saveAs()
                 return
             self.controlModel.update_model()
             self.saveEvent(file_path)

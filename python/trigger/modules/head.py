@@ -267,8 +267,6 @@ class Head(object):
         cmds.parent(neckSpline.contCurves_ORE, self.scaleGrp)
         cmds.parent(neckSpline.contCurves_ORE[0], self.neckRootLoc)
         try:
-            # FEEDBACK.warning("="*30, headSpline.contCurves_ORE)
-            # cmds.parent(neckSpline.contCurves_ORE[len(headSpline.contCurves_ORE) - 1], self.scaleGrp)
             cmds.parent(neckSpline.contCurves_ORE[len(neckSpline.contCurves_ORE) - 1], self.scaleGrp)
         except RuntimeError:
             pass

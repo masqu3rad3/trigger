@@ -279,7 +279,6 @@ class Leg(object):
 
         # IK Foot Controller
         foot_cont_scale = (self.init_foot_length * 0.75, 1, self.init_foot_width * 0.8)
-        # self.cont_IK_foot = icon.circle("cont_IK_foot_%s" % self.suffix, scale=foot_cont_scale, normal=(0, 1, 0))
         self.cont_IK_foot, _ = icon.createIcon("Circle", iconName="%s_IK_foot_cont" % self.suffix, scale=foot_cont_scale, normal=(0, 0, self.sideMult))
 
         # align it to the ball socket
@@ -347,7 +346,6 @@ class Leg(object):
 
         ## FK LOW Leg Controller
         scalecont_fk_low_leg = (self.init_lower_leg_dist / 2, self.init_lower_leg_dist / 6, self.init_lower_leg_dist / 6)
-        # self.cont_fk_low_leg = icon.cube("cont_FK_LowLeg_%s" % self.suffix, scalecont_fk_low_leg)
         self.cont_fk_low_leg, dmp = icon.createIcon("Cube", iconName="FK_LowLeg_%s_cont" % self.suffix, scale=scalecont_fk_low_leg)
 
         # move the pivot to the bottom
@@ -363,7 +361,6 @@ class Leg(object):
 
         ## FK FOOT Controller
         scalecont_fk_foot = (self.init_ball_dist / 2, self.init_ball_dist / 3, self.init_foot_width / 2)
-        # self.cont_fk_foot = icon.cube("cont_FK_Foot_%s" % self.suffix, scalecont_fk_foot)
         self.cont_fk_foot, _ = icon.createIcon("Cube", iconName="%s_FK_Foot_cont" % self.suffix, scale=scalecont_fk_foot)
         functions.alignToAlter(self.cont_fk_foot, self.jfk_foot, mode=2)
 
@@ -523,7 +520,6 @@ class Leg(object):
         functions.alignTo(self.pv_ball, self.ball_ref, position=True, rotation=False)
         self.pv_ball_ore = functions.createUpGrp(self.pv_ball, "ORE")
 
-        # pm.parentConstraint(self.pv_ball, self.j_socket_ball)
         # TODO // SOCKETBALL NEEDS A IK/FK Switch
 
         self.pv_heel = cmds.group(name="Pv_Heel_%s" % self.suffix, em=True)

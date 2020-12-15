@@ -32,7 +32,6 @@ ACTION_DATA = {
                }
 
 class Kinematics(settings.Settings):
-# class Kinematics(object):
     def __init__(self, root_joints=None, progress_bar=None, create_switchers=True, rig_name=None, *args, **kwargs):
         super(Kinematics, self).__init__()
         self.progress_bar = progress_bar
@@ -108,14 +107,6 @@ class Kinematics(settings.Settings):
             elif self.afterlife == 2: # delete guides
                 functions.deleteObject(root_joint)
 
-            # # TODO : tidy up / make settings human readable
-            # if self.get("afterCreation") == 1:
-            #     # if the After Creation set to 'Hide Initial Joints'
-            #     cmds.hide(root_joint)
-            # if self.get("afterCreation") == 2:
-            #     # if the After Creation set to 'Delete Initial Joints'
-            #     cmds.delete(root_joint)
-
     def save_action(self, *args, **kwargs):
         """Mandatory Method"""
         # kinematics action does not have a save action, it only uses guide data
@@ -165,23 +156,6 @@ class Kinematics(settings.Settings):
 
 
         def get_roots_menu():
-            # if file_path_le.text():
-            #     if not os.path.isfile(file_path_le.text()):
-            #         LOG.throw_error("Guides file does not exist")
-            #
-            #     list_of_roots = list(guides_handler.get_roots_from_file(file_path=file_path_le.text()))
-            #     print("-"*60)
-            #     print("-"*60)
-            #     print("debug", list_of_roots)
-            #     print("-"*60)
-            #     print("-"*60)
-            #
-            #     zortMenu = QtWidgets.QMenu()
-            #     for root in list_of_roots:
-            #         tempAction = QtWidgets.QAction(str(root))
-            #         zortMenu.addAction(tempAction)
-            #         tempAction.triggered.connect(lambda ignore=root, item=root: add_root(str(item)))
-            #     zortMenu.exec_((QtGui.QCursor.pos()))
             if file_path_le.text():
                 if not os.path.isfile(file_path_le.text()):
                     LOG.throw_error("Guides file does not exist")
@@ -488,8 +462,6 @@ class Kinematics(settings.Settings):
 
                 attribute.attrPass(limb.scaleGrp, "pref_cont", values=True, daisyChain=True, overrideEx=False)
                 cmds.parent(limb.limbGrp, "trigger_grp")
-                # for sCon in limb.scaleConstraints:
-                #     cmds.scaleConstraint(self.cont_master, sCon)
                 for sCon in limb.scaleConstraints:
                     cmds.scaleConstraint("pref_cont", sCon)
             self.totalDefJoints += limb.deformerJoints

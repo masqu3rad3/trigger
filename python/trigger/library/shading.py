@@ -32,8 +32,6 @@ def get_shading_groups(mesh):
     return cmds.listConnections(mesh_shape, type="shadingEngine")
 
 def get_shaders(mesh):
-    # mesh_shape = cmds.listRelatives(mesh, children=True)[0]
-    # shading_engines = cmds.listConnections(mesh_shape, type="shadingEngine")
     shading_engines = get_shading_groups(mesh)
     shaders = ((cmds.ls(cmds.listConnections(shading_engines), materials=True)))
     return shaders

@@ -1,7 +1,6 @@
 """Drag & Drop installer for Maya 2018+"""
 
 import os, sys
-import importlib
 # confirm the maya python interpreter
 CONFIRMED = False
 try:
@@ -16,7 +15,6 @@ def onMayaDroppedPythonFile(*args, **kwargs):
 def _add_module():
     trigger_module = os.path.normpath(os.path.join(os.path.dirname(__file__), "maya_modules", "shelves_module"))
     module_file_content = """+ trigger 0.0.1 %s""" % trigger_module
-    # print(module_file_content)
 
     user_module_dir = os.path.join(cmds.internalVar(uad=True), "modules")
     if not os.path.isdir(user_module_dir):
@@ -36,7 +34,3 @@ def _add_module():
 def _edit_usersetup():
     file_location = os.path.join(os.path.dirname(__file__))
     pass
-
-# if CONFIRMED:
-#     print("ANAN")
-#     _add_module()

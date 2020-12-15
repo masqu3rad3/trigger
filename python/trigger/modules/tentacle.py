@@ -603,8 +603,6 @@ class Tentacle(object):
         # I want to return a pyNode object for the wrap deformer.
         # I do not see the reason to rewrite the code here into pymel.
         return wrapNode, base
-        # return pm.nt.Wrap(wrapNode), base
-
 
 class Guides(object):
     def __init__(self, side="L", suffix="tentacle", segments=None, tMatrix=None, upVector=(0, 1, 0),

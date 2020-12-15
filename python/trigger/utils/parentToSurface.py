@@ -37,15 +37,9 @@ def parentToSurface(objects=None, surface=None, mode="parent"):
             surface = shapes[0]
     nType = cmds.nodeType(surface)
 
-    # For some weird reason, if the mesh is hidden it does not return nodeType!!!
-    # if nType != "mesh" and nType != "nurbsSurface":
-    #     pm.warning("ParentToSurface: Last selected item must be a mesh or nurbsSurface.")
-    #     return
-
     minU, minV, sizeU, sizeV = 0.0, 0.0, 0.0, 0.0
     if nType == "nurbsSurface":
         clPos = cmds.createNode("closestPointOnSurface")
-        # surface.worldSpace[0] >> clPos.inputSurface
         cmds.connectAttr("%s.worldSpace[0]" % surface, "%s.inputSurface" % clPos)
 
         minU = cmds.getAttr("%s.mnu" % surface)
@@ -113,6 +107,3 @@ def parentToSurface(objects=None, surface=None, mode="parent"):
 
 
     return follicleTransformList
-
-# parentToSurface([pm.ls(sl=True)[0]], pm.ls(sl=True)[1])
-

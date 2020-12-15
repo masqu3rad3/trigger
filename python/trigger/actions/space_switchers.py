@@ -16,12 +16,8 @@ ACTION_DATA = {
                 }
 """
 
-from trigger.core import io
 from trigger.core import logger
-
 from trigger.ui.Qt import QtWidgets, QtGui, QtCore
-from trigger.ui import custom_widgets
-from trigger.ui import feedback
 
 from trigger.utils import space_switcher
 
@@ -131,7 +127,6 @@ class Space_switchers(object):
 
         def update_model():
             # collect definition data
-            print("updating Model")
             switcher_definitions = []
             for widget_dict in self.definition_widgets:
                 tmp_list = []
@@ -145,14 +140,12 @@ class Space_switchers(object):
             pass
 
         def update_ui():
-            print("updating UI")
             data = ctrl.model.query_action(ctrl.action_name, "switcher_definitions")
             for definition in data:
                 add_new_definition(anchor_val=definition[0], locations_val=ctrl.list_to_text(definition[1]), mode_val=definition[2])
             pass
 
         def delete_definition(layout, id):
-            print("ID", id)
             for item in self.definition_widgets:
                 if item["id"] == id:
                     self.definition_widgets.pop(item)

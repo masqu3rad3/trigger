@@ -20,8 +20,6 @@ class Shapes(object):
     def __init__(self, *args, **kwargs):
         super(Shapes, self).__init__()
         self.shapes_file_path = ""
-        # self.rigName = "trigger"
-        # self.io = io.IO()
 
     def feed(self, action_data, *args, **kwargs):
         """Mandatory method for all action maya_modules"""

@@ -116,9 +116,3 @@ def remove_space_switch(node):
                     cmds.parent(child, w=True)
                 cmds.delete(switchNode)
                 cmds.deleteAttr("{0}.{1}".format(node, switch))
-
-
-# spaceSwitcher("pCube1", ["pCube2", "pCube3", "pCube4"], overrideExisting=True, mode="parent", defaultVal=1,
-#               listException=None)
-
-# removeAnchor("pCube1")

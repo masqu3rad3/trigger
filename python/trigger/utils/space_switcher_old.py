@@ -74,22 +74,6 @@ def spaceSwitcher(node, targetList, overrideExisting=False, mode="parent", defau
 
     switchGrp = extra.createUpGrp(node, "{0}SW".format(mode))
 
-    # # Upgrp
-    # grpName = (node.name() + "_" + mode + "SW")
-    # switchGrp = pm.group(em=True, name=grpName)
-    #
-    # # align the new created empty group to the selected object
-    # pointCon = pm.parentConstraint(node, switchGrp, mo=False)
-    # pm.delete(pointCon)
-    #
-    # # check if the target object has a parent
-    # originalParent = pm.listRelatives(node, p=True)
-    # if (len(originalParent) > 0):
-    #     pm.parent(switchGrp, originalParent[0])
-    #
-    # pm.parent(node, switchGrp)
-
-    # switchGrp=createUpGrp(node, (mode+"SW"))
     if mode == "parent":
         con = pm.parentConstraint(anchorPoses, switchGrp, mo=True)
     elif mode == "point":

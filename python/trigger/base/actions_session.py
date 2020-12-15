@@ -2,8 +2,6 @@ import os
 from copy import deepcopy
 
 from maya import cmds
-# import maya.api.OpenMaya as om
-# from trigger.library import functions as extra
 
 from trigger.core import io
 from trigger.core import logger
@@ -107,8 +105,6 @@ class ActionsSession(dict):
         Returns:
 
         """
-        # if not action_name:
-        #     FEEDBACK.throw_error("Action Name cannot is empty or contains illegal chars")
         if not action_name:
             action_name = action_type + "1"
             idcounter = 0
@@ -120,7 +116,6 @@ class ActionsSession(dict):
             LOG.throw_error("Action Name already exists in the Session")
         if not action_type in self.list_valid_actions():
             LOG.throw_error("Defined Action type is not valid")
-        # action_item = eval("actions.%s.%s()" % (action_name, action_name.capitalize()))
         action = {
             "name": action_name,
             "type": action_type,

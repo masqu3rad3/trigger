@@ -35,7 +35,7 @@ def addList(list_of_values):
         result += x
     return result
 
-def subractList(list_of_values):
+def subtractList(list_of_values):
     result = list_of_values[0]
     for x in list_of_values[1:]:
         result += x
@@ -107,113 +107,6 @@ class Weights(dict):
         self.io.file_path = file_path
         self.io.write(data_list)
 
-    # def ui(self, ctrl, layout, handler, *args, **kwargs):
-    #     "Mandatory Method"
-    #     # deformers = importlib.import_module("trigger.library.deformers")
-    #
-    #     file_path_lbl = QtWidgets.QLabel(text="File Path:")
-    #     file_path_hLay = QtWidgets.QHBoxLayout()
-    #     file_path_le = QtWidgets.QLineEdit()
-    #     file_path_hLay.addWidget(file_path_le)
-    #     browse_path_pb = custom_widgets.BrowserButton(mode="openFile", update_widget=file_path_le,
-    #                                                   filterExtensions=["Trigger Weight Files (*.trw)"],
-    #                                                   overwrite_check=False)
-    #     file_path_hLay.addWidget(browse_path_pb)
-    #     layout.addRow(file_path_lbl, file_path_hLay)
-    #
-    #     deformers_lbl = QtWidgets.QLabel(text="Deformers")
-    #     deformers_hLay = QtWidgets.QHBoxLayout()
-    #     deformers_le = QtWidgets.QLineEdit()
-    #     deformers_hLay.addWidget(deformers_le)
-    #     get_deformers_pb = QtWidgets.QPushButton(text="Get")
-    #     deformers_hLay.addWidget(get_deformers_pb)
-    #     layout.addRow(deformers_lbl, deformers_hLay)
-    #
-    #     save_current_lbl = QtWidgets.QLabel(text="Save Current states")
-    #     save_current_hlay = QtWidgets.QHBoxLayout()
-    #     save_current_pb = QtWidgets.QPushButton(text="Save")
-    #     increment_current_pb = QtWidgets.QPushButton(text="Increment")
-    #     # save_as_current_pb = QtWidgets.QPushButton(text="Save As")
-    #     save_as_current_pb = custom_widgets.BrowserButton(mode="saveFile", text="Save As", update_widget=file_path_le,
-    #                                                       filterExtensions=["Trigger Weight Files (*.trw)"],
-    #                                                       overwrite_check=False)
-    #     save_current_hlay.addWidget(save_current_pb)
-    #     save_current_hlay.addWidget(increment_current_pb)
-    #     save_current_hlay.addWidget(save_as_current_pb)
-    #     layout.addRow(save_current_lbl, save_current_hlay)
-    #
-    #     # make connections with the controller object
-    #     ctrl.connect(file_path_le, "weights_file_path", str)
-    #     ctrl.connect(deformers_le, "deformers", list)
-    #
-    #     ctrl.update_ui()
-    #
-    #     def get_deformers_menu():
-    #         list_of_deformers = list(deformers.get_deformers(namesOnly=True))
-    #
-    #         zortMenu = QtWidgets.QMenu()
-    #         menuActions = [QtWidgets.QAction(str(deformer)) for deformer in list_of_deformers]
-    #         zortMenu.addActions(menuActions)
-    #         for defo, menu_action in zip(list_of_deformers, menuActions):
-    #             menu_action.triggered.connect(lambda ignore=defo, item=defo: add_deformers([str(item)]))
-    #         # add a last item to add all of them
-    #         if menuActions:
-    #             zortMenu.addSeparator()
-    #             allitems_menuaction = QtWidgets.QAction("Add All Items")
-    #             zortMenu.addAction(allitems_menuaction)
-    #             allitems_menuaction.triggered.connect(lambda x: add_deformers(list_of_deformers))
-    #
-    #         zortMenu.exec_((QtGui.QCursor.pos()))
-    #
-    #     def add_deformers(deformer_list):
-    #         current_deformers_text = deformers_le.text()
-    #         if current_deformers_text:
-    #             for deformer in deformer_list:
-    #                 if deformer in current_deformers_text:
-    #                     LOG.warning("%s is already in the list" % deformer)
-    #                     deformer_list.remove(deformer)
-    #             new_deformers_text = "; ".join([current_deformers_text] + deformer_list)
-    #         else:
-    #             new_deformers_text = "; ".join(deformer_list)
-    #         deformers_le.setText(new_deformers_text)
-    #         ctrl.update_model()
-    #
-    #     def save_deformers(increment=False, save_as=False):
-    #         if increment:
-    #             LOG.warning("NOT YET IMPLEMENTED")
-    #             ctrl.update_ui()
-    #             # TODO make an external incrementer
-    #         elif save_as:
-    #             ctrl.update_model()
-    #             if not file_path_le.text():
-    #                 return
-    #             handler.run_save_action(ctrl.action_name)
-    #         else:
-    #             ctrl.update_model()
-    #             if not file_path_le.text():
-    #                 save_as_current_pb.browserEvent()
-    #                 save_deformers(save_as=True)
-    #                 return
-    #             if os.path.isfile(file_path_le.text()):
-    #                 question = feedback.Feedback()
-    #                 state = question.pop_question(title="Overwrite",
-    #                                               text="The file %s already exists.\nDo you want to OVERWRITE?" % file_path_le.text(),
-    #                                               buttons=["ok", "cancel"])
-    #                 if state == "cancel":
-    #                     return
-    #             handler.run_save_action(ctrl.action_name)
-    #
-    #     ### Signals
-    #     file_path_le.editingFinished.connect(lambda x=0: ctrl.update_model())
-    #     browse_path_pb.clicked.connect(lambda x=0: ctrl.update_model())
-    #     deformers_le.editingFinished.connect(lambda x=0: ctrl.update_model())
-    #     get_deformers_pb.clicked.connect(get_deformers_menu)
-    #     get_deformers_pb.clicked.connect(lambda x=0: ctrl.update_model())
-    #
-    #     save_current_pb.clicked.connect(lambda x=0: save_deformers())
-    #     increment_current_pb.clicked.connect(lambda x=0: save_deformers(increment=True))
-    #     save_as_current_pb.clicked.connect(lambda x=0: save_deformers(save_as=True))
-
     def ui(self, ctrl, layout, handler, *args, **kwargs):
         "Mandatory Method"
         # deformers = importlib.import_module("trigger.library.deformers")
@@ -226,26 +119,8 @@ class Weights(dict):
         file_path_hLay.addWidget(browse_path_pb)
         layout.addRow(file_path_lbl, file_path_hLay)
 
-        ## OLD
-        # deformers_lbl = QtWidgets.QLabel(text="Deformers")
-        # deformers_hLay = QtWidgets.QHBoxLayout()
-        # deformers_le = QtWidgets.QLineEdit()
-        # deformers_hLay.addWidget(deformers_le)
-        # get_deformers_pb = QtWidgets.QPushButton(text="Get")
-        # deformers_hLay.addWidget(get_deformers_pb)
-        # layout.addRow(deformers_lbl, deformers_hLay)
-        ## OLD [end]
         deformers_lbl = QtWidgets.QLabel(text="Deformers")
         deformers_listbox = custom_widgets.ListBoxLayout(alignment="start", buttonUp=False, buttonDown=False)
-        # deformers_hLay = QtWidgets.QHBoxLayout()
-        # deformers_listwidget = QtWidgets.QListWidget()
-        # deformers_hLay.addWidget(deformers_listwidget)
-        # deformer_buttons_vLay = QtWidgets.QVBoxLayout()
-        # deformers_hLay.addLayout(deformer_buttons_vLay)
-        # get_deformers_pb = QtWidgets.QPushButton(text="Get")
-        # deformer_buttons_vLay.addWidget(get_deformers_pb)
-        # remove_deformer_pb = QtWidgets.QPushButton(text="Remove")
-        # deformer_buttons_vLay.addWidget(remove_deformer_pb)
         layout.addRow(deformers_lbl, deformers_listbox)
 
         ctrl.connect(file_path_le, "weights_file_path", str)
@@ -253,22 +128,9 @@ class Weights(dict):
 
         ctrl.update_ui()
 
-
-
         save_current_lbl = QtWidgets.QLabel(text="Save Current states")
         savebox_lay = custom_widgets.SaveBoxLayout(alignment="horizontal", update_widget=file_path_le, filter_extensions=["Trigger Weight Files (*.trw)"], overwrite_check=True, control_model=ctrl)
         layout.addRow(save_current_lbl, savebox_lay)
-
-        # save_current_lbl = QtWidgets.QLabel(text="Save Current states")
-        # save_current_hlay = QtWidgets.QHBoxLayout()
-        # save_current_pb = QtWidgets.QPushButton(text="Save")
-        # increment_current_pb = QtWidgets.QPushButton(text="Increment")
-        # # save_as_current_pb = QtWidgets.QPushButton(text="Save As")
-        # save_as_current_pb = custom_widgets.BrowserButton(mode="saveFile", text="Save As", update_widget=file_path_le, filterExtensions=["Trigger Weight Files (*.trw)"], overwrite_check=False)
-        # save_current_hlay.addWidget(save_current_pb)
-        # save_current_hlay.addWidget(increment_current_pb)
-        # save_current_hlay.addWidget(save_as_current_pb)
-        # layout.addRow(save_current_lbl, save_current_hlay)
 
         # make connections with the controller object
 
@@ -295,37 +157,6 @@ class Weights(dict):
 
         def update_deformers():
             self.deformers_list = deformers_listbox.listItemNames()
-        #
-        # def remove_deformer():
-        #     row = deformers_listwidget.currentRow()
-        #     if row == -1:
-        #         return
-        #     deformers_listwidget.takeItem(row)
-        #     ctrl.update_model()
-
-
-        # def save_deformers(increment=False, save_as=False):
-        #     if increment:
-        #         LOG.warning("NOT YET IMPLEMENTED")
-        #         ctrl.update_ui()
-        #         # TODO make an external incrementer
-        #     elif save_as:
-        #         ctrl.update_model()
-        #         if not file_path_le.text():
-        #             return
-        #         handler.run_save_action(ctrl.action_name)
-        #     else:
-        #         ctrl.update_model()
-        #         if not file_path_le.text():
-        #             save_as_current_pb.browserEvent()
-        #             save_deformers(save_as=True)
-        #             return
-        #         if os.path.isfile(file_path_le.text()):
-        #             question = feedback.Feedback()
-        #             state = question.pop_question(title="Overwrite", text="The file %s already exists.\nDo you want to OVERWRITE?" %file_path_le.text(), buttons=["ok", "cancel"])
-        #             if state == "cancel":
-        #                 return
-        #         handler.run_save_action(ctrl.action_name)
 
         ### Signals
         file_path_le.editingFinished.connect(lambda x=0: ctrl.update_model())
@@ -334,13 +165,8 @@ class Weights(dict):
         deformers_listbox.buttonNew.clicked.connect(lambda x: ctrl.update_model())
         deformers_listbox.buttonRemove.clicked.connect(lambda x: ctrl.update_model())
 
-
         savebox_lay.saved.connect(lambda file_path: update_deformers())
         savebox_lay.saved.connect(lambda file_path: self.save_action(file_path))
-
-        # save_current_pb.clicked.connect(lambda x=0: save_deformers())
-        # increment_current_pb.clicked.connect(lambda x=0: save_deformers(increment=True))
-        # save_as_current_pb.clicked.connect(lambda x=0: save_deformers(save_as=True))
 
     def save_weights(self, deformer=None, file_path=None, vertexConnections=False, force=True, influencer=None):
         if not deformer and not self.deformer:
@@ -362,7 +188,6 @@ class Weights(dict):
         if deformer_type == "skinCluster":
             attributes = ["envelope", "skinningMethod", "useComponents", "normalizeWeights", "deformUserNormals"]
             # in case DQ blendweight mode, flag for adding DQ to the file afterwards
-            # if cmds.getAttr("%s.skinningMethod" % deformer[0]) == 2:
             if cmds.getAttr("%s.skinningMethod" % deformer) == 2:
                 export_dq_weights = True
         else:
@@ -550,7 +375,6 @@ class Weights(dict):
             print("Cannot find the influencer")
             return
         for weights in weights_list:
-            # weights["defaultValue"] = 1-weights["defaultValue"]
             for vert in weights["points"]:
                 vert["value"]=1-vert["value"]
         return json_data

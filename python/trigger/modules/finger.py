@@ -54,8 +54,6 @@ class Finger(object):
         else:
             self.handController = None
 
-
-
         # initialize coordinates
         self.up_axis, self.mirror_axis, self.look_axis = functions.getRigAxes(self.inits[0])
 
@@ -69,8 +67,7 @@ class Finger(object):
         # initialize suffix
         self.suffix = (naming.uniqueName("%s_%s" % (cmds.getAttr("%s.moduleName" % self.fingerRoot), self.fingerType)))
 
-
-        # scratch variables
+        # BASE variables
         self.sockets = []
         self.limbGrp = None
         self.scaleGrp = None
@@ -129,7 +126,6 @@ class Finger(object):
 
 
         cmds.parentConstraint(self.limbPlug, self.scaleGrp)
-        # map(lambda x: cmds.connectAttr("{0}.jointVis".format(self.scaleGrp), "{0}.v".format(x)), self.deformerJoints)
         attribute.drive_attrs("%s.jointVis" % self.scaleGrp, ["%s.v" % x for x in self.deformerJoints])
 
         functions.colorize(self.deformerJoints, self.colorCodes[0], shape=False)
@@ -160,7 +156,6 @@ class Finger(object):
 
             if index>0:
                 cmds.parent(cont_OFF, self.conts[len(self.conts)-1])
-                # pm.makeIdentity(cont, a=True)
             self.conts.append(cont)
             contList.append(cont)
             self.contConList.append(cont_con)
@@ -170,7 +165,6 @@ class Finger(object):
         cmds.parent(self.deformerJoints[0], self.scaleGrp)
         cmds.parent(self.conts_OFF[0], self.scaleGrp)
 
-        # map(lambda x: cmds.connectAttr("%s.contVis" % self.scaleGrp, "%s.v" % x[0]), self.conts_OFF)
         attribute.drive_attrs("%s.contVis" % self.scaleGrp, ["%s.v" % x[0] for x in self.conts_OFF])
 
         functions.colorize(contList, self.colorCodes[0])
@@ -182,7 +176,6 @@ class Finger(object):
         if not self.handController:
             self.handController=self.scaleGrp
         # Spread
-
         spreadAttr = "{0}_{1}".format(self.suffix, "Spread")
         cmds.addAttr(self.handController, shortName=spreadAttr, defaultValue=0.0, at="float", k=True)
         sprMult = cmds.createNode("multiplyDivide", name="sprMult_{0}_{1}".format(self.side, self.suffix))
@@ -255,7 +248,6 @@ class Finger(object):
             self.deformerJoints.append(jnt)
 
         ## Create Controllers
-
         self.conts = []
         conts_OFF = []
         conts_ORE = []
@@ -328,7 +320,6 @@ class Guides(object):
     def __init__(self, side="L", suffix="finger", segments=None, tMatrix=None, upVector=(0, 1, 0), mirrorVector=(1, 0, 0), lookVector=(0,0,1), *args, **kwargs):
         super(Guides, self).__init__()
         # fool check
-
         #-------Mandatory------[Start]
         self.side = side
         self.sideMultiplier = -1 if side == "R" else 1
@@ -350,13 +341,6 @@ class Guides(object):
         rPointFinger = om.MVector(0, 0, 0) * self.tMatrix
         nPointFinger = om.MVector(5*self.sideMultiplier, 0, 0) * self.tMatrix
         addFinger = (nPointFinger - rPointFinger) / ((self.segments + 1) - 1)
-
-        if self.side == "C":
-            # Guide joint positions for limbs with no side orientation
-            pass
-        else:
-            # Guide joint positions for limbs with sides
-            pass
 
         # Define the offset vector
         self.offsetVector = (nPointFinger-rPointFinger).normal()

@@ -57,8 +57,6 @@ class Spine(object):
             except:
                 self.spineEnd = build_data.get("SpineEnd")
                 self.inits = [sRoot] + [self.spineEnd]
-            # resolution = build_data.get("resolution")
-            # dropoff = build_data.get("dropoff")
         elif inits:
             # fool proofing
             if (len(inits) < 2):
@@ -136,15 +134,8 @@ class Spine(object):
         ## Create temporaray Guide Joints
         cmds.select(d=True)
         self.guideJoints = [cmds.joint(p=api.getWorldTranslation(i)) for i in self.inits]
-        # orientations
-        # extra.orientJoints(self.guideJoints,
-        #                    localMoveAxis=(dt.Vector(self.up_axis)),
-        #                    mirrorAxis=(self.sideMult, 0.0, 0.0), upAxis=self.sideMult * (dt.Vector(self.look_axis)))
-        # extra.orientJoints(self.guideJoints, upAxis=(0,1,0), worldUpAxis=(self.up_axis), reverse=self.sideMult)
-        # extra.orientJoints(self.guideJoints, worldUpAxis=-dt.Vector(self.look_axis), reverseAim=self.sideMult, reverseUp=self.sideMult)
 
         if not self.useRefOrientation:
-            # extra.orientJoints(self.guideJoints, worldUpAxis=(self.look_axis), upAxis=(0, 1, 0), reverseAim=self.sideMult, reverseUp=self.sideMult)
             functions.orientJoints(self.guideJoints, worldUpAxis=(self.up_axis), upAxis=(0, 0, -1), reverseAim=self.sideMult, reverseUp=self.sideMult)
         else:
             for x in range (len(self.guideJoints)):
@@ -158,13 +149,7 @@ class Spine(object):
         functions.alignToAlter(self.limbPlug, self.guideJoints[0], mode=2)
 
         cmds.parent(self.startSocket, self.scaleGrp)
-        # self.scaleGrp.rigVis >> self.limbPlug.v
         cmds.connectAttr("%s.rigVis" %self.scaleGrp, "%s.v" %self.limbPlug)
-
-        # map(lambda x: pm.setAttr(x.displayLocalAxis, True), self.guideJoints)
-
-
-        pass
 
     def createControllers(self):
 
@@ -174,7 +159,6 @@ class Spine(object):
         self.cont_hips, dmp = icon.createIcon("Waist", iconName="%s_Hips_cont" % self.suffix, scale=contHipsScale, normal=(1,0,0))
         functions.alignToAlter(self.cont_hips, self.guideJoints[0], mode=2)
         self.cont_hips_ORE = functions.createUpGrp(self.cont_hips, "ORE")
-
 
         ## Body Controller
         contBodyScale = (self.iconSize * 0.75, self.iconSize * 0.75, self.iconSize * 0.75)
@@ -203,14 +187,10 @@ class Spine(object):
         contSpineFKBScale = (self.iconSize / 2.5, self.iconSize / 2.5, self.iconSize / 2.5)
 
         for m in range (0, len(self.guideJoints)):
-
-            # contA = icon.circle("cont_SpineFK_A_%s%s" %(str(m), self.suffix), contSpineFKAScale, normal=(1,0,0))
             contA, _ = icon.createIcon("Circle", iconName="%s%i_SpineFK_A_cont" %(self.suffix, m), scale=contSpineFKAScale, normal=(1, 0, 0))
             functions.alignToAlter(contA, self.guideJoints[m], 2)
             contA_ORE = functions.createUpGrp(contA, "ORE")
             self.cont_spineFK_A_List.append(contA)
-
-            # contB = icon.ngon("cont_SpineFK_B_%s%s" %(str(m), self.suffix), contSpineFKBScale, normal=(0,0,1))
             contB, dmp = icon.createIcon("Ngon", iconName="%s%i_SpineFK_B_cont" %(self.suffix, m), scale=contSpineFKBScale, normal=(1,0,0))
             functions.alignTo(contB, self.guideJoints[m], position=True, rotation=True)
             contB_ORE = functions.createUpGrp(contB, "ORE")
@@ -251,13 +231,11 @@ class Spine(object):
         spine.upAxis =  -(om.MVector(self.look_axis))
         spine.createTspline(self.guideJoints, "Spine_%s" % self.suffix, self.resolution, dropoff=self.dropoff, mode=self.splineMode, twistType=self.twistType)
 
-        # self.sockets += spine.defJoints
         self.sockets.extend(spine.defJoints)
 
         attribute.attrPass(spine.scaleGrp, self.scaleGrp, attributes=["sx", "sy", "sz"], keepSourceAttributes=True)
 
         midConnection = spine.contCurves_ORE[int((len(spine.contCurves_ORE) / 2))]
-
 
         # # connect the spine root to the master root
         cmds.parentConstraint(self.startSocket, spine.contCurve_Start, mo=True)
@@ -296,7 +274,6 @@ class Spine(object):
             if i != 0 or i != len(spine.contCurves_ORE):
                 node = functions.createUpGrp(spine.contCurves_ORE[i], "OFF")
                 cmds.connectAttr("%s.tweakVis" %self.cont_body, "%s.v" %node)
-                # self.cont_body.tweakVis >> node.v
                 cmds.connectAttr("%s.contVis" %self.scaleGrp, "%s.v" %spine.contCurves_ORE[i])
         cmds.connectAttr("%s.contVis" %self.scaleGrp, "%s.v" %self.cont_body)
 
@@ -371,13 +348,6 @@ class Guides(object):
         rPoint = om.MVector(0, 14.0, 0) * self.tMatrix
         nPoint = om.MVector(0, 21.0, 0) * self.tMatrix
         add = (nPoint - rPoint) / ((self.segments + 1) - 1)
-
-        # if self.side == "C":
-        #     # Guide joint positions for limbs with no side orientation
-        #     pass
-        # else:
-        #     # Guide joint positions for limbs with sides
-        #     pass
 
         # Define the offset vector
         self.offsetVector = (nPoint - rPoint).normal()

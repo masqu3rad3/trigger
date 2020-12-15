@@ -83,17 +83,6 @@ def _killCallbacks(callbackIDList):
         if cmds.scriptJob(ex=ID):
             cmds.scriptJob(kill=ID)
 
-# def getMayaMainWindow():
-#     """
-#     Gets the memory adress of the main window to connect Qt dialog to it.
-#     Returns:
-#         (long) Memory Adress
-#     """
-#     win = omui.MQtUtil_mainWindow()
-#     ptr = wrapInstance(long(win), QtWidgets.QMainWindow)
-#     return ptr
-
-
 def undo(func):
     """Make maya commands undoable."""
 
@@ -116,13 +105,10 @@ class TriggerTool(object):
         super(TriggerTool, self).__init__()
         self.definitions = self.load_globals()
 
-        # self.all_ctrls = self.get_all_controllers()
-
         self.overrideNamespace = False
 
         self.namespace = None
 
-        # self.zero_dictionary = {"translate": (0,0,0), "rotate": (0,0,0), "scale": (1,1,1)}
         self.zero_dictionary = {"tx": 0, "ty": 0, "tz": 0, "rx": 0, "ry": 0, "rz": 0, "sx": 1, "sy": 1, "sz": 1}
 
     def _get_all_controls(self):
@@ -214,7 +200,6 @@ class TriggerTool(object):
         if selectVisible:
             mirror_gen = filter(self._filter_visibles, mirror_gen)
         if mirror_gen:
-            # cmds.select(self._get_mirror_controls(), add=add)
             if modifier == "replace":
                 cmds.select(mirror_gen)
             elif modifier == "add":
@@ -343,18 +328,10 @@ def dock_window(dialog_class):
         pass
 
     # building the workspace control with maya.cmds
-    # main_control = cmds.workspaceControl(dialog_class.CONTROL_NAME, ttc=["AttributeEditor", -1], iw=100, mw=80, wp='preferred', label=dialog_class.DOCK_LABEL_NAME)
     main_control = cmds.workspaceControl(dialog_class.CONTROL_NAME, restore=True, dtc=["AttributeEditor", "top"], iw=100, mw=80, wp='preferred', label=dialog_class.DOCK_LABEL_NAME)
-    # main_control = cmds.workspaceControl(dialog_class.CONTROL_NAME, restore=True, dtc=["AttributeEditor", "top"], iw=100, mw=80, wp='preferred', label=dialog_class.DOCK_LABEL_NAME)
-    # cmds.workspaceControl(main_control, e=True, restore=True, dtc=["AttributeEditor", "top"], iw=100, mw=80, wp='preferred', label=dialog_class.DOCK_LABEL_NAME)
-    # cmds.workspaceControl(main_control, e=True, dtc=["AttributeEditor", "top"])
-    # cmds.workspaceControl(main_control, e=True, dtc=["AttributeEditor", "top"])
-    # cmds.workspaceControl(main_control, e=True, dtc=["AttributeEditor", "top"])
 
     # now lets get a C++ pointer to it using OpenMaya
     control_widget = omui.MQtUtil.findControl(dialog_class.CONTROL_NAME)
-    # conver the C++ pointer to Qt object we can use
-    # control_wrap = wrapInstance(long(control_widget), QtWidgets.QWidget)
     if sys.version_info.major == 3:
         control_wrap = wrapInstance(int(control_widget), QtWidgets.QWidget)
     else:
@@ -377,17 +354,7 @@ class MainUI(QtWidgets.QWidget):
     CONTROL_NAME = "triggerTools"
     DOCK_LABEL_NAME = windowName
 
-    # def __init__(self):
     def __init__(self, parent=None):
-        # if not parent:
-        #     for entry in QtWidgets.QApplication.allWidgets():
-        #         try:
-        #             if entry.objectName() == windowName:
-        #                 entry.close()
-        #         except (AttributeError, TypeError):
-        #             pass
-        #     parent = getMayaMainWindow()
-        # super(MainUI, self).__init__(parent=parent)
         super(MainUI, self).__init__(parent)
 
 
@@ -459,13 +426,8 @@ class MainUI(QtWidgets.QWidget):
             self.tr_tool.select_tweakers(modifier=modifier, selectVisible=selectVisible)
         elif command is "selectMirror":
             self.tr_tool.select_mirror(modifier=modifier, selectVisible=selectVisible)
-        # print("Shift pressed?", bool(isShiftPressed))
-
 
     def buildUI(self):
-        # self.setObjectName("trigger_tool")
-        # self.resize(264, 237)
-        # self.setWindowTitle("Trigger Tool v0.1")
         self.main_vlay = QtWidgets.QVBoxLayout(self.centralwidget)
         self.main_vlay.setContentsMargins(5, 5, 5, 5)
         self.main_vlay.setSpacing(5)
@@ -589,33 +551,17 @@ class MainUI(QtWidgets.QWidget):
 
         self.settings_grp_vlay.addLayout(self.mirror_mode_hlay)
 
-        # self.side_tags_hlay = QtWidgets.QHBoxLayout()
-        # self.side_tags_hlay.setSpacing(0)
-        #
-        # self.side_tags_lbl = QtWidgets.QLabel(self.settings_gbox)
-        # self.side_tags_lbl.setText("Side Tags")
-        # self.side_tags_hlay.addWidget(self.side_tags_lbl)
-        #
-        # self.side_tags_combo = QtWidgets.QComboBox(self.settings_gbox)
-        # self.side_tags_hlay.addWidget(self.side_tags_combo)
-
-        # self.settings_grp_vlay.addLayout(self.side_tags_hlay)
-
         self.main_vlay.addWidget(self.settings_gbox)
 
         ######3 SIGNALS #######
 
         self.namespace_combo.currentTextChanged.connect(lambda x: self.tr_tool.set_namespace(x))
         self.namespace_refresh_pb.clicked.connect(self.populate_namespaces)
-        # self.all_body_pb.clicked.connect(lambda x: self.tr_tool.select_body())
         self.all_body_pb.clicked.connect(lambda x: self.modifiedSelect(command="selectBody"))
-        # self.all_face_pb.clicked.connect(self.tr_tool.select_face)
         self.all_face_pb.clicked.connect(lambda x: self.modifiedSelect(command="selectFace"))
 
-        # self.all_tweakers_pb.clicked.connect(self.tr_tool.select_tweakers)
         self.all_tweakers_pb.clicked.connect(lambda x: self.modifiedSelect(command="selectTweakers"))
 
-        # self.select_mirror_pb.clicked.connect(self.tr_tool.select_mirror)
         self.select_mirror_pb.clicked.connect(lambda x: self.modifiedSelect(command="selectMirror"))
 
         self.copy_mirror_pb.clicked.connect(lambda x: self.tr_tool.mirror_pose(self.mirror_mode_combo.currentText()))
@@ -641,26 +587,3 @@ class MainUI(QtWidgets.QWidget):
     def init_values(self):
         self.populate_namespaces()
         self.on_override_namespace()
-
-# class ModifierButton(QtWidgets.QPushButton):
-#
-# 	def __init__(self, *args, **kwargs):
-# 		super(ModifierButton, self).__init__(*args, **kwargs)
-# 		self.__isShiftPressed = False
-#
-# 		self.clicked.connect(self.handleClick)
-#
-# 	def keyPressEvent(self, event):
-# 		super(ModifierButton, self).keyPressEvent(event)
-# 		self._processKeyEvent(event)
-#
-# 	def keyReleaseEvent(self, event):
-# 		super(ModifierButton, self).keyReleaseEvent(event)
-# 		self._processKeyEvent(event)
-#
-# 	def _processKeyEvent(self, event):
-# 		isShift = event.modifiers() & QtCore.Qt.ShiftModifier
-# 		self.__isShiftPressed = bool(isShift)
-#
-# 	def handleClick(self):
-# 		print "Shift pressed?", self.__isShiftPressed

@@ -7,7 +7,6 @@ from trigger.core.decorators import undo
 from trigger.library import functions, naming
 from trigger.library import connection
 from trigger.library import attribute
-# from trigger.actions import kinematics # for testing the guides
 
 from trigger import modules
 from trigger.core import settings
@@ -20,12 +19,9 @@ class Initials(settings.Settings):
 
     def __init__(self):
         super(Initials, self).__init__()
-        # settings = st.Settings("triggerSettings.json")
         self.parseSettings()
         self.projectName = "trigger"
         self.module_dict = {mod: eval("modules.{0}.LIMB_DATA".format(mod)) for mod in modules.__all__}
-        # pprint(self.module_dict)
-        # self.module_dict = trigger.modules.all_modules_data.MODULE_DICTIONARY
         self.valid_limbs = self.module_dict.keys()
         self.validRootList = [values["members"][0] for values in self.module_dict.values()]
         self.non_sided_limbs = [limb for limb in self.valid_limbs if not self.module_dict[limb]["sided"]]
@@ -152,18 +148,14 @@ class Initials(settings.Settings):
         else:
             masterParent = parentNode
         if whichSide == "both":
-            # locators1, jnt_dict_side1 = self.initLimb(limb_name, "left", segments=segments)
             locators1, jnt_dict_side1 = self.initLimb(limb_name, "left", **kwargs)
-            # locators2, jnt_dict_side2 = self.initLimb(limb_name, "right", constrainedTo=locators1, segments=segments)
             locators2, jnt_dict_side2 = self.initLimb(limb_name, "right", constrainedTo=locators1, **kwargs)
             jnt_dict_side1.update(jnt_dict_side2)
             return (locators1 + locators2), jnt_dict_side1
         if whichSide == "auto" and masterParent:
             mirrorParent, givenAlignment, returnAlignment = self.autoGet(masterParent)
-            # locators1, jnt_dict_side1 = self.initLimb(limb_name, givenAlignment, segments=segments)
             locators1, jnt_dict_side1 = self.initLimb(limb_name, givenAlignment, **kwargs)
             if mirrorParent:
-                # locators2, jnt_dict_side2 = self.initLimb(limb_name, returnAlignment, constrainedTo=locators1, parentNode=mirrorParent, segments=segments)
                 locators2, jnt_dict_side2 = self.initLimb(limb_name, returnAlignment, constrainedTo=locators1, parentNode=mirrorParent, **kwargs)
                 total_locators = locators1 + locators2
                 jnt_dict_side1.update(jnt_dict_side2)
@@ -192,7 +184,6 @@ class Initials(settings.Settings):
             else:
                 extra_arg_list.append("%s=%s" % (key, value))
 
-        # extra_arg_list = ["%s='%s'" %(key, value) for key, value in kwargs.items() if (type(value) == str) else 12]
         extra_flags = ", ".join(extra_arg_list)
         construct_command = "{0}({1},{2})".format(module, flags, extra_flags)
         guide = eval(construct_command)
@@ -243,7 +234,6 @@ class Initials(settings.Settings):
             cmds.parent(guide.guideJoints[0], limbGroup)
         cmds.select(currentselection)
 
-        # cmds.undoInfo(closeChunk=True)
         return locatorsList, {side: guide.guideJoints}
 
     def _getMirror(self, vector):
@@ -345,7 +335,6 @@ class Initials(settings.Settings):
 
     def get_property(self, jnt, attr):
         return cmds.getAttr("%s.%s" % (jnt, attr))
-        # return self.module_dict[module_type].get("properties")
 
     def set_property(self, jnt, attr, value):
         if type(value) == int or type(value) == float or type(value) == bool:

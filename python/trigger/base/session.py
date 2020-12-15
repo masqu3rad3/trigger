@@ -1,43 +1,18 @@
-# from compiler.ast import flatten
-# TODO: This will require a better solution compatible for both python3 and python2:
-# Check here: https://stackoverflow.com/questions/2158395/flatten-an-irregular-list-of-lists
-
-# import collections
 import os
 
 from maya import cmds
-import maya.api.OpenMaya as om
 from trigger.library import functions
 from trigger.library import attribute
 from trigger.library import api
 
-
 from trigger.core import io
 from trigger.core import logger
-# from trigger import modules
 from trigger.core import compatibility as compat
 
-# from trigger.base import builder
 from trigger.base import initials
 
 LOG = logger.Logger(logger_name=__name__)
 
-
-# if
-# def flatten(l):
-#     for el in l:
-#         if isinstance(el, collections.Iterable) and not isinstance(el, (str, bytes)):
-#             yield from flatten(el)
-#         else:
-#             yield el
-#
-# def flatten(l):
-#     for el in l:
-#         if isinstance(el, collections.Iterable) and not isinstance(el, compat.basestring):
-#             for sub in flatten(el):
-#                 yield sub
-#         else:
-#             yield el
 class Session(object):
     def __init__(self):
         super(Session, self).__init__()
@@ -45,7 +20,6 @@ class Session(object):
         # at least a file name is necessary while instancing the IO
         self.io = io.IO(file_name="tmp_session.trg")
         self.init = initials.Initials()
-        # self.build = builder.Builder()
 
     def save_session(self, file_path):
         """Saves the session to the given file path"""
@@ -81,8 +55,6 @@ class Session(object):
 
     def collect_guides(self):
         """Collect all necessary guide data ready to write"""
-        # build = builder.Builder()
-        # init = initials.Initials()
 
         all_root_jnts_data = self.init.get_scene_roots()
         root_joints_list = []
@@ -94,7 +66,6 @@ class Session(object):
             limb_dict, _, __ = self.init.getWholeLimb(root_jnt)
             all_trigger_joints.append(limb_dict.values())
 
-        # flat_jnt_list = list(flatten(all_trigger_joints))
         flat_jnt_list = list(compat.flatten(all_trigger_joints))
 
         save_data = []
