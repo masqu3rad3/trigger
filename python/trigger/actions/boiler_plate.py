@@ -3,7 +3,6 @@
 from trigger.core import io
 from trigger.core import logger
 
-from trigger.ui.Qt import QtWidgets, QtGui
 from trigger.ui import custom_widgets
 from trigger.ui import feedback
 

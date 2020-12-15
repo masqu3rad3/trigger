@@ -3,7 +3,6 @@ from trigger.library import naming
 from trigger.ui.Qt import QtWidgets, QtCore, QtGui
 from trigger.ui import feedback
 from trigger.core import foolproof
-from PySide2 import QtWidgets
 
 class BrowserButton(QtWidgets.QPushButton):
     def __init__(self, text="Browse", update_widget=None, mode="openFile", filterExtensions=None, title=None, overwrite_check=True, *args, **kwargs):

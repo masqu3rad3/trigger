@@ -25,9 +25,6 @@ from trigger.ui import feedback
 
 from trigger.utils import space_switcher
 
-# TODO temporary
-from PySide2 import QtWidgets, QtGui
-
 LOG = logger.Logger(__name__)
 
 ACTION_DATA = {

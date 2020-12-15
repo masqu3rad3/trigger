@@ -5,20 +5,16 @@ import pymel.core as pm
 import pymel.core.datatypes as dt
 
 from trigger.ui import Qt
-from trigger.ui.Qt import QtWidgets, QtCore, QtGui
+from trigger.ui.Qt import QtWidgets, QtCore
 
 from maya import OpenMayaUI as omui
-from maya import cmds
 
 if Qt.__binding__ == "PySide":
     from shiboken import wrapInstance
-    from trigger.ui.Qt.QtCore import Signal
 elif Qt.__binding__.startswith('PyQt'):
     from sip import wrapinstance as wrapInstance
-    from trigger.ui.Qt.QtCore import pyqtSignal as Signal
 else:
     from shiboken2 import wrapInstance
-    from trigger.ui.Qt.QtCore import Signal
 windowName = "AnchorMaker"
 
 def getMayaMainWindow():

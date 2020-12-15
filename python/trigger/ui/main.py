@@ -2,22 +2,15 @@
 # -*- coding: utf-8 -*-
 
 """Main UI for TRigger"""
-import subprocess
-import platform
 import sys, os
-import importlib
-from functools import wraps
 from trigger.ui import Qt
 from trigger.ui.Qt import QtWidgets, QtCore, QtGui
 from trigger.ui import model_ctrl
 from trigger.ui import custom_widgets
 from trigger.ui import feedback
 
-from trigger.core import compatibility as compat
 from trigger.base import session
 from trigger.base import actions_session
-from trigger.core import foolproof
-
 
 from maya import OpenMayaUI as omui
 

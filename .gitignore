@@ -1,3 +1,7 @@
+build/
+build/CMakeCache.txt
+build/CMakeFiles/CMakeOutput.log
+*.log
 *.pyc
 *.directory
 .idea/

@@ -1,15 +1,13 @@
 """Reference another Trigger session"""
 
 import os
-from trigger.core import io
 from trigger.core import logger
 
 # from trigger.base.actions_session import ActionsSession
 
 import importlib
-from trigger.ui.Qt import QtWidgets, QtGui
+from trigger.ui.Qt import QtWidgets
 from trigger.ui import custom_widgets
-from trigger.ui import feedback
 
 LOG = logger.Logger(__name__)
 

@@ -10,13 +10,10 @@ from maya import OpenMayaUI as omui
 
 if Qt.__binding__ == "PySide":
     from shiboken import wrapInstance
-    from trigger.ui.Qt.QtCore import Signal
 elif Qt.__binding__.startswith('PyQt'):
     from sip import wrapinstance as wrapInstance
-    from trigger.ui.Qt.QtCore import pyqtSignal as Signal
 else:
     from shiboken2 import wrapInstance
-    from trigger.ui.Qt.QtCore import Signal
 
 from trigger.library import functions
 from trigger.core.decorators import undo

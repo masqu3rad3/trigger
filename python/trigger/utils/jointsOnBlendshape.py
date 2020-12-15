@@ -3,7 +3,8 @@
 # import pymel.core as pm
 import sys
 from maya import cmds
-from trigger.utils import parentToSurface
+from python.trigger.utils import parentToSurface
+
 if sys.version_info.major == 3:
     from importlib import reload
 reload(parentToSurface)

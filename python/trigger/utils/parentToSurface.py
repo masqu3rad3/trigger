@@ -2,7 +2,6 @@
 ## I just converted it to Pymel for easier modification and
 ## added som more functionality in order to use inside other python maya_modules
 
-# import pymel.core as pm
 from maya import cmds
 
 def convertToCmFactor():

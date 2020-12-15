@@ -8,8 +8,8 @@
 
 
 # from PyQt5 import QtCore, QtGui, QtWidgets
-from trigger.ui import Qt
-from trigger.ui.Qt import QtCore, QtGui, QtWidgets
+from python.trigger.ui import Qt
+from python.trigger.ui.Qt import QtCore, QtGui, QtWidgets
 
 class Ui_trigger_MainWindow(object):
     def setupUi(self, trigger_MainWindow):

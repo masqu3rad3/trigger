@@ -3,25 +3,21 @@ import sys
 
 from trigger.library import functions
 from trigger.library import naming
-from trigger.library import api
 from trigger.library.controllers import Icon
 from trigger.core.decorators import undo
 
 from trigger.ui import Qt
-from trigger.ui.Qt import QtWidgets, QtCore, QtGui
+from trigger.ui.Qt import QtWidgets, QtCore
 
 from maya import OpenMayaUI as omui
 from maya import cmds
 
 if Qt.__binding__ == "PySide":
     from shiboken import wrapInstance
-    from trigger.ui.Qt.QtCore import Signal
 elif Qt.__binding__.startswith('PyQt'):
     from sip import wrapinstance as wrapInstance
-    from trigger.ui.Qt.QtCore import pyqtSignal as Signal
 else:
     from shiboken2 import wrapInstance
-    from trigger.ui.Qt.QtCore import Signal
 
 VERSION = "0.0.2"
 WINDOW_NAME = "Add_Controller %s" % VERSION
