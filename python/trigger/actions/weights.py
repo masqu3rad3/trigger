@@ -42,7 +42,7 @@ def subtractList(list_of_values):
     return result
 
 class Weights(dict):
-    def __init__(self, *args, **kwargs):
+    def __init__(self):
         super(Weights, self).__init__()
         self.io = io.IO(file_name="tmp_weights.trw")
         self["deformer"] = None

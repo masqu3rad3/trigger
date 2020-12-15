@@ -12,6 +12,8 @@ from trigger.ui import feedback
 from trigger.base import session
 from trigger.base import actions_session
 
+from trigger.library import naming
+
 from maya import OpenMayaUI as omui
 
 if Qt.__binding__ == "PySide":
@@ -134,6 +136,7 @@ class MainUI(QtWidgets.QMainWindow):
         self.open_trigger_action = QtWidgets.QAction(self, text="Open Trigger Session")
         self.save_trigger_action = QtWidgets.QAction(self, text="Save Trigger Session")
         self.save_as_trigger_action = QtWidgets.QAction(self, text="Save As Trigger Session")
+        self.increment_trigger_action = QtWidgets.QAction(self, text="Increment Save Trigger Session")
         self.import_guides_action = QtWidgets.QAction(self, text="Import Guides")
         self.export_guides_action = QtWidgets.QAction(self, text="Export Guides")
         self.settings_action = QtWidgets.QAction(self, text="Settings")
@@ -144,6 +147,7 @@ class MainUI(QtWidgets.QMainWindow):
         self.menuFile.addSeparator()
         self.menuFile.addAction(self.save_trigger_action)
         self.menuFile.addAction(self.save_as_trigger_action)
+        self.menuFile.addAction(self.increment_trigger_action)
         self.menuFile.addSeparator()
         self.menuFile.addAction(self.import_guides_action)
         self.menuFile.addAction(self.export_guides_action)
@@ -406,6 +410,7 @@ class MainUI(QtWidgets.QMainWindow):
         self.open_trigger_action.triggered.connect(self.open_trigger)
         self.save_trigger_action.triggered.connect(self.save_trigger)
         self.save_as_trigger_action.triggered.connect(self.save_as_trigger)
+        self.increment_trigger_action.triggered.connect(self.increment_trigger)
 
         self.export_guides_action.triggered.connect(self.export_guides)
         self.import_guides_action.triggered.connect(self.import_guides)
@@ -605,6 +610,13 @@ class MainUI(QtWidgets.QMainWindow):
             self.actions_handler.load_session(os.path.normpath(dlg[0]))
             self.populate_actions()
             self.update_title()
+
+    def increment_trigger(self):
+        if self.actions_handler.currentFile:
+            self.actions_handler.save_session(naming.increment(self.actions_handler.currentFile))
+            self.update_title()
+        else:
+            self.feedback.pop_info(title="Cannot Complete", text="Trigger Session needs to be saved first to increment it\nAborting...", critical=True)
 
     def save_as_trigger(self):
         dlg = QtWidgets.QFileDialog.getSaveFileName(self, str("Save Trigger Session"), "", str("Trigger Session (*.tr)"))
