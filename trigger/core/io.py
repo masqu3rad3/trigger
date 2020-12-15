@@ -10,7 +10,7 @@ import re
 from trigger.core import logger
 from trigger.core import compatibility as compat
 
-FEEDBACK = logger.Logger(logger_name=__name__)
+log = logger.Logger(logger_name=__name__)
 
 class IO(dict):
     def __init__(self, file_name=None, folder_name=None, root_path=None, file_path=None):
@@ -28,7 +28,7 @@ class IO(dict):
             # self["file_path"] = os.path.join(root_path, folder_name, file_name)
             self.file_path = os.path.join(self.root_path, self.folder_name, file_name)
         else:
-            FEEDBACK.throw_error("IO class cannot initialized. At least a file name or file_path must be defined")
+            log.throw_error("IO class cannot initialized. At least a file name or file_path must be defined")
 
         # self._folderCheck(self.file_path)
 
@@ -41,10 +41,10 @@ class IO(dict):
         name, ext = os.path.splitext(new_path)
         directory, _ = os.path.split(new_path)
         if not ext:
-            FEEDBACK.throw_error("IO module needs to know the extension")
+            log.throw_error("IO module needs to know the extension")
             raise Exception
         if ext not in self.valid_extensions:
-            FEEDBACK.throw_error("IO maya_modules does not support this extension (%s)" % ext)
+            log.throw_error("IO maya_modules does not support this extension (%s)" % ext)
             raise Exception
         if directory:
             self["file_path"] = self._folderCheck(new_path)
@@ -71,10 +71,10 @@ class IO(dict):
                     data = json.load(f)
                     return data
             except ValueError:
-                FEEDBACK.throw_error("Corrupted file => %s" % file_path)
+                log.throw_error("Corrupted file => %s" % file_path)
                 raise Exception
         else:
-            FEEDBACK.throw_error("File cannot be found => %s" % file_path)
+            log.throw_error("File cannot be found => %s" % file_path)
 
     def _dump_json(self, data, file_path):
         """Saves the data to the json file"""

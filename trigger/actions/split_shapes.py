@@ -25,7 +25,7 @@ ACTION_DATA = {
 
 class Split_shapes(weights.Weights):
     def __init__(self, *args, **kwargs):
-        super(Split_shapes, self).__init__()
+        super(Split_shapes, self).__init__(*args, **kwargs)
         self.io = io.IO(file_name="tmp_shape_maps.trsplit")
         self.splitMapsFilePath = ""
         self.blendshapeRootGrp = ""

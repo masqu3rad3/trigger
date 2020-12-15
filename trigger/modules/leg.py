@@ -275,6 +275,8 @@ class Leg(object):
         cmds.xform(self.cont_thigh_ore, piv=self.leg_root_pos, ws=True)
         cmds.xform(self.cont_thigh_auto, piv=self.leg_root_pos, ws=True)
 
+        cmds.makeIdentity(self.cont_thigh, a=True)
+
         # IK Foot Controller
         foot_cont_scale = (self.init_foot_length * 0.75, 1, self.init_foot_width * 0.8)
         # self.cont_IK_foot = icon.circle("cont_IK_foot_%s" % self.suffix, scale=foot_cont_scale, normal=(0, 1, 0))
@@ -287,6 +289,8 @@ class Leg(object):
         self.cont_IK_OFF = functions.createUpGrp(self.cont_IK_foot, "OFF")
         cont_ik_foot_ore = functions.createUpGrp(self.cont_IK_foot, "ORE")
         cont_ik_foot_pos = functions.createUpGrp(self.cont_IK_foot, "POS")
+
+        cmds.makeIdentity(self.cont_IK_foot, a=True)
 
         cmds.addAttr(self.cont_IK_foot, shortName="polevector", longName="Pole_Vector", defaultValue=0.0, minValue=0.0, maxValue=1.0,
                    at="double", k=True)
