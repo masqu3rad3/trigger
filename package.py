@@ -18,3 +18,4 @@ def commands():
 
     env.PYTHONPATH.set("{root}/python/:$PYTHONPATH")
     env.MAYA_MODULE_PATH.prepend('{root}/python/maya_modules')
+    
