@@ -4,6 +4,8 @@ from trigger.ui.Qt import QtWidgets, QtCore, QtGui
 from trigger.ui import feedback
 from trigger.core import foolproof
 
+from PySide2 import QtWidgets
+
 class BrowserButton(QtWidgets.QPushButton):
     def __init__(self, text="Browse", update_widget=None, mode="openFile", filterExtensions=None, title=None, overwrite_check=True, *args, **kwargs):
         """
@@ -67,21 +69,25 @@ class BrowserButton(QtWidgets.QPushButton):
         return ";;".join(filter_list)
 
     def browserEvent(self):
+        if self._updateWidget:
+            default_path = str(self._updateWidget.text())
+        else:
+            default_path = self._selectedPath
         if self._mode == "openFile":
-            dlg = QtWidgets.QFileDialog.getOpenFileName(self, self._title, self._selectedPath, self._filterExtensions)
+            dlg = QtWidgets.QFileDialog.getOpenFileName(self, self._title, default_path, self._filterExtensions)
             if dlg: new_path, selected_extension = dlg
             else: new_path, selected_extension = None, None
             # new_path = dlg[0] if dlg else None
         elif self._mode == "saveFile":
             if not self._overwriteCheck:
-                dlg = QtWidgets.QFileDialog.getSaveFileName(self, self._title, self._selectedPath, self._filterExtensions, options=(QtWidgets.QFileDialog.DontConfirmOverwrite))
+                dlg = QtWidgets.QFileDialog.getSaveFileName(self, self._title, default_path, self._filterExtensions, options=(QtWidgets.QFileDialog.DontConfirmOverwrite))
             else:
-                dlg = QtWidgets.QFileDialog.getSaveFileName(self, self._title, self._selectedPath, self._filterExtensions)
+                dlg = QtWidgets.QFileDialog.getSaveFileName(self, self._title, default_path, self._filterExtensions)
             # new_path = dlg[0] if dlg else None
             if dlg: new_path, selected_extension = dlg
             else: new_path, selected_extension = None, None
         elif self._mode == "directory":
-            dlg = QtWidgets.QFileDialog.getExistingDirectory(self, self._title, self._selectedPath, options=(QtWidgets.QFileDialog.ShowDirsOnly))
+            dlg = QtWidgets.QFileDialog.getExistingDirectory(self, self._title, default_path, options=(QtWidgets.QFileDialog.ShowDirsOnly))
             # new_path = dlg if dlg else None
             if dlg: new_path, selected_extension = dlg
             else: new_path, selected_extension = None, None
@@ -291,8 +297,12 @@ class ListBoxLayout(QtWidgets.QVBoxLayout):
         for row in reversed(all_selected_rows):
             self.viewWidget.takeItem(row)
 
-    def addNewButton(self, buttonwidget):
-        self.buttonslayout.addWidget(buttonwidget)
+    def addNewButton(self, buttonwidget, insert=None):
+        if insert == None:
+            self.buttonslayout.addWidget(buttonwidget)
+        else:
+            self.buttonslayout.insertWidget(insert, buttonwidget)
+
 
     def removeButton(self, buttonwidget):
         buttonwidget.setEnabled(False)
@@ -491,9 +501,9 @@ class ProgressListWidget(QtWidgets.QListWidget):
     def __init__(self):
         super(ProgressListWidget, self).__init__()
         font = QtGui.QFont()
-        font.setPointSize(10)
+        font.setPointSize(15)
         font.setBold(False)
-        font.setWeight(50)
+        font.setWeight(150)
         font.setStrikeOut(False)
         self.setFont(font)
         self.setMouseTracking(False)

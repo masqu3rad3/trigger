@@ -79,3 +79,31 @@ def increment(file_path, force_version=True):
     last_saved_version = resolve_version(max(files_on_server, key=resolve_version))
     next_version = max(version + 1, last_saved_version + 1)
     return os.path.join(file_dir, "{0}{1}{2}".format(stripped_name, str(next_version).zfill(3), file_ext))
+
+
+def get_all_versions(file_path):
+    file_dir, file_name_with_ext = os.path.split(file_path)
+    file_name, file_ext = os.path.splitext(file_name_with_ext)
+
+    version = resolve_version(file_path)
+    if not version:
+        return None
+
+    stripped_name = file_name if not version else re.search("(.*)(%s)$" % str(version).zfill(3), file_name).groups()[0]
+    files_on_server = glob.glob(os.path.join(file_dir, "{0}*{1}".format(stripped_name, file_ext)))
+    if not files_on_server:
+        return None
+
+    return sorted(list(map(resolve_version, files_on_server)))
+
+
+# def get_next_version(file_path):
+#     current_version = resolve_version(file_path)
+#     all_versions = get_all_versions(file_path)
+#
+#
+# testlist = [1, 4, 5, 6, 8]
+# testlist.index(9)
+# min(testlist, key=lambda x: abs(x - 3))
+#
+# print(get_all_versions(test_file))

@@ -70,9 +70,12 @@ class Import_asset(object):
         opFlag = "lo=0 mo=1"
         cmds.file(file_path, i=True, op=opFlag)
 
-    def import_alembic(self, file_path, *args, **kwargs):
+    def import_alembic(self, file_path, update_only=False, *args, **kwargs):
         self._load_alembic_plugin()
-        cmds.AbcImport(file_path, ftr=False, sts=False)
+        if not update_only:
+            cmds.AbcImport(file_path, ftr=False, sts=False)
+        else:
+            cmds.AbcImport(file_path, connect="/", createIfNotFound=True, ftr=False, sts=False)
 
     def import_fbx(self, file_path, *args, **kwargs):
         self._load_fbx_plugin()
