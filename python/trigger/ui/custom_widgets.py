@@ -111,6 +111,12 @@ class BrowserButton(QtWidgets.QPushButton):
         self.browserEvent()
         super(BrowserButton, self).mouseReleaseEvent(*args, **kwargs)
 
+class FileLineEdit(QtWidgets.QLineEdit):
+    def __init__(self):
+        super(FileLineEdit, self).__init__()
+
+    # TODO
+
 class ValidatedLineEdit(QtWidgets.QLineEdit):
     def __init__(self, connected_widgets=None, allowSpaces=False, allowDirectory=False, *args, **kwargs):
         """Custom QLineEdit widget to validate entered values"""
