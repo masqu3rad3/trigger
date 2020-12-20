@@ -110,7 +110,8 @@ class Split_shapes(weights.Weights):
         """UI - Mandatory"""
         file_path_lbl = QtWidgets.QLabel(text="Split Maps Path:")
         file_path_hLay = QtWidgets.QHBoxLayout()
-        file_path_le = QtWidgets.QLineEdit()
+        # file_path_le = QtWidgets.QLineEdit()
+        file_path_le = custom_widgets.FileLineEdit()
         file_path_hLay.addWidget(file_path_le)
         prepare_bs_pb = QtWidgets.QPushButton(text="Prepare")
         file_path_hLay.addWidget(prepare_bs_pb)

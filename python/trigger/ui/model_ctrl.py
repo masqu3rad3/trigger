@@ -31,7 +31,7 @@ class Controller(object):
             log.throw_error("Either set or get needs to be flagged")
         if set and get:
             log.throw_error("Both set and get cannot be defined")
-        if widget_class == "QLineEdit":
+        if widget_class == "QLineEdit" or widget_class == "FileLineEdit":
             if get:
                 if property_type == list:
                     get_value = self.text_to_list(widget.text())

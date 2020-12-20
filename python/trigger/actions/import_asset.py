@@ -51,7 +51,8 @@ class Import_asset(object):
 
         file_path_lbl = QtWidgets.QLabel(text="File Path:")
         file_path_hLay = QtWidgets.QHBoxLayout()
-        file_path_le = QtWidgets.QLineEdit()
+        # file_path_le = QtWidgets.QLineEdit()
+        file_path_le = custom_widgets.FileLineEdit()
         file_path_hLay.addWidget(file_path_le)
         browse_path_pb = custom_widgets.BrowserButton(mode="openFile", update_widget=file_path_le, filterExtensions=["Maya ASCII (*.ma)", "Maya Binary (*.mb)", "Alembic (*.abc)", "FBX (*.fbx)", "OBJ (*.obj)"], overwrite_check=False)
         file_path_hLay.addWidget(browse_path_pb)
@@ -62,6 +63,7 @@ class Import_asset(object):
 
         file_path_le.textEdited.connect(lambda x=0: ctrl.update_model())
         browse_path_pb.clicked.connect(lambda x=0: ctrl.update_model())
+        browse_path_pb.clicked.connect(file_path_le.validate)
 
     def import_scene(self, file_path, *args, **kwargs):
         return cmds.file(file_path, i=True)

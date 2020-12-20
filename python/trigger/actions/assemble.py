@@ -1,5 +1,5 @@
 """Assembles the scene geo with alembic caches"""
-
+import os
 from trigger.core import io
 from trigger.core import logger
 from trigger.actions import import_asset
@@ -59,29 +59,77 @@ class Assemble(import_asset.Import_asset):
         """
         alembic_paths_lbl = QtWidgets.QLabel(text="Alembic Paths")
         alembic_paths_listbox = custom_widgets.ListBoxLayout(alignment="start", buttonAdd=False, buttonNew=False, buttonGet=False, buttonRename=False, buttonUp=False, buttonDown=False)
+        font = QtGui.QFont()
+        font.setPointSize(8)
+        alembic_paths_listbox.viewWidget.setFont(font)
+        alembic_paths_listbox.viewWidget.setViewMode(QtWidgets.QListView.ListMode)
+        alembic_paths_listbox.viewWidget.setAlternatingRowColors(True)
+
         browse_pb = custom_widgets.BrowserButton(text="Add", filterExtensions=["Alembic (*.abc)"], title="Choose Alembic Asset Cache")
         alembic_paths_listbox.addNewButton(browse_pb, insert=0)
-        increment_pb = QtWidgets.QPushButton(text="Increment Version")
-        alembic_paths_listbox.addNewButton(increment_pb, insert=1)
+        next_version_pb = QtWidgets.QPushButton(text="Next Version")
+        previous_version_pb = QtWidgets.QPushButton(text="Previous Version")
+        alembic_paths_listbox.addNewButton(next_version_pb, insert=1)
+        alembic_paths_listbox.addNewButton(previous_version_pb, insert=2)
         layout.addRow(alembic_paths_lbl, alembic_paths_listbox)
 
         ctrl.connect(alembic_paths_listbox.viewWidget, "alembic_path_list", list)
 
         ctrl.update_ui()
 
+
+        def color_update(item):
+            file_path = os.path.normpath(str(item.text()))
+            if not os.path.isfile(file_path):
+                item.setForeground(QtGui.QColor(255, 0, 0, 255))
+            elif naming.is_latest_version(file_path):
+                item.setForeground(QtGui.QColor(0, 255, 0, 255))
+            else:
+                item.setForeground(QtGui.QColor(255, 255, 0, 255))
+
+        def update_all():
+            row_count = alembic_paths_listbox.viewWidget.count()
+            for row_nmb in range(row_count):
+                item = alembic_paths_listbox.viewWidget.item(row_nmb)
+                color_update(item)
+
+        update_all()
+
         def add_path_to_list():
             file_path = browse_pb.selectedPath()
             if file_path:
-                alembic_paths_listbox.viewWidget.addItem(file_path)
+                item = QtWidgets.QListWidgetItem(file_path)
+                alembic_paths_listbox.viewWidget.addItem(item)
+                color_update(item)
+                # alembic_paths_listbox.viewWidget.addItem(file_path)
             ctrl.update_model()
 
-        def increment():
-            row = alembic_paths_listbox.viewWidget.row()
+        def version_up():
+            row = alembic_paths_listbox.viewWidget.currentRow()
             if row == -1:
                 return
-            current_text = alembic_paths_listbox.viewWidget.currentItem().text()
-            naming.increment(current_text, force_version=False)
+            current_item = alembic_paths_listbox.viewWidget.currentItem()
+            current_text = current_item.text()
+            current_item.setText(naming.get_next_version(current_text))
+            color_update(current_item)
+            # if naming.is_latest_version(current_text):
+            #     current_item.setForeground(QtGui.QColor(0, 255, 0, 255))
+            # else:
+            #     current_item.setForeground(QtGui.QColor(255, 255, 0, 255))
+
+            ctrl.update_model()
+
+        def version_down():
+            row = alembic_paths_listbox.viewWidget.currentRow()
+            if row == -1:
+                return
+            current_item = alembic_paths_listbox.viewWidget.currentItem()
+            current_text = current_item.text()
+            current_item.setText(naming.get_previous_version(current_text))
+            color_update(current_item)
             ctrl.update_model()
 
         alembic_paths_listbox.buttonRemove.clicked.connect(lambda x: ctrl.update_model())
         browse_pb.clicked.connect(add_path_to_list)
+        next_version_pb.clicked.connect(version_up)
+        previous_version_pb.clicked.connect(version_down)

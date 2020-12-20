@@ -126,14 +126,14 @@ def get_next_version(file_path):
     # if the given file path version does exist:
     if current_version in all_versions:
         id = all_versions.index(current_version)
-        if id != len(all_versions):
+        if id != len(all_versions)-1:
             next_version = all_versions[id+1]
         else:
             return file_path
     # if the given file path version is not in the disk
     else:
         id = bisect_left(all_versions, current_version)
-        if id != len(all_versions):
+        if id != len(all_versions)-1:
             next_version = all_versions[id]
         else:
             return file_path
@@ -161,3 +161,20 @@ def get_previous_version(file_path):
         else:
             return file_path
     return resolve_file_path(file_path=file_path, new_version=prev_version)
+
+def is_latest_version(file_path):
+    """Checks if the file is the latest version"""
+
+    current_version = resolve_version(file_path)
+    all_versions = get_all_versions(file_path)
+    if not all_versions:
+        return False
+    if current_version not in all_versions:
+        return False
+    id = all_versions.index(current_version)
+    if id == len(all_versions)-1:
+        return True
+    else:
+        return False
+
+

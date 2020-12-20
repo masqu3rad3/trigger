@@ -53,7 +53,8 @@ class Script(object):
 
         file_path_lbl = QtWidgets.QLabel(text="File Path:")
         file_path_hLay = QtWidgets.QHBoxLayout()
-        file_path_le = QtWidgets.QLineEdit()
+        # file_path_le = QtWidgets.QLineEdit()
+        file_path_le = custom_widgets.FileLineEdit()
         file_path_hLay.addWidget(file_path_le)
         edit_file_pb = QtWidgets.QPushButton(text="Edit")
         file_path_hLay.addWidget(edit_file_pb)

@@ -68,7 +68,8 @@ class Reference_session(object):
 
         trigger_file_path_lbl = QtWidgets.QLabel(text="Trigger Session:")
         trigger_file_path_hLay = QtWidgets.QHBoxLayout()
-        trigger_file_path_le = QtWidgets.QLineEdit()
+        # trigger_file_path_le = QtWidgets.QLineEdit()
+        trigger_file_path_le = custom_widgets.FileLineEdit()
         trigger_file_path_hLay.addWidget(trigger_file_path_le)
         browse_path_pb = custom_widgets.BrowserButton(mode="openFile", update_widget=trigger_file_path_le, filterExtensions=["Trigger Session (*.tr)"], overwrite_check=False)
         trigger_file_path_hLay.addWidget(browse_path_pb)
