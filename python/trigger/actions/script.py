@@ -99,10 +99,11 @@ class Script(object):
                 pass
 
         ### Signals
-        file_path_le.textEdited.connect(lambda x=0: ctrl.update_model())
-        import_as_le.textEdited.connect(lambda x=0: ctrl.update_model())
+        file_path_le.textChanged.connect(lambda x=0: ctrl.update_model())
+        import_as_le.textChanged.connect(lambda x=0: ctrl.update_model())
         edit_file_pb.clicked.connect(edit_file)
         browse_path_pb.clicked.connect(lambda x=0: ctrl.update_model())
+        browse_path_pb.clicked.connect(file_path_le.validate)  # to validate on initial browse result
         save_path_pb.clicked.connect(lambda x=0: ctrl.update_model())
         commands_le.textEdited.connect(lambda x=0: ctrl.update_model())
 

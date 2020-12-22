@@ -84,7 +84,7 @@ class Look(object):
 
         file_path_lbl = QtWidgets.QLabel(text="Look File Path:")
         file_path_hLay = QtWidgets.QHBoxLayout()
-        file_path_le = QtWidgets.QLineEdit()
+        # file_path_le = QtWidgets.QLineEdit()
         file_path_le = custom_widgets.FileLineEdit()
         file_path_hLay.addWidget(file_path_le)
         browse_path_pb = custom_widgets.BrowserButton(mode="saveFile", update_widget=file_path_le, filterExtensions=["Trigger Look Files (*.trl)"], overwrite_check=False)
@@ -100,7 +100,7 @@ class Look(object):
         ctrl.update_ui()
 
         ### Signals
-        file_path_le.editingFinished.connect(lambda x=0: ctrl.update_model())
+        file_path_le.textChanged.connect(lambda x=0: ctrl.update_model())
         browse_path_pb.clicked.connect(lambda x=0: ctrl.update_model())
         savebox_lay.saved.connect(lambda file_path: self.save_action(file_path))
 

@@ -522,6 +522,9 @@ class MainUI(QtWidgets.QMainWindow):
         self.action_rc_toggle = QtWidgets.QAction('Toggle Disable/Enable', self)
         popMenu_rig_action.addAction(self.action_rc_toggle)
 
+        ### SHORTCUTS ###
+        shortcutRefresh = QtWidgets.QShortcut(QtGui.QKeySequence("F5"), self, self.refresh)
+
         ### SIGNALS ####
 
         self.action_rc_rename.triggered.connect(self.on_action_rename)
@@ -537,6 +540,12 @@ class MainUI(QtWidgets.QMainWindow):
         self.build_pb.clicked.connect(lambda x=0: self.actions_handler.run_all_actions())
         self.rig_actions_listwidget.doubleClicked.connect(lambda x: self.actions_handler.run_action(x.data()))
         # TODO: Make a seperate method for running run actions wih progressbar
+
+    def refresh(self):
+        row = self.rig_actions_listwidget.currentRow()
+        self.populate_actions()
+        self.rig_actions_listwidget.setCurrentRow(row)
+        self.populate_properties()
 
     def on_action_rename(self):
         action_name = self.rig_actions_listwidget.currentItem().text()

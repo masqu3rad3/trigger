@@ -160,8 +160,9 @@ class Weights(dict):
             self.deformers_list = deformers_listbox.listItemNames()
 
         ### Signals
-        file_path_le.editingFinished.connect(lambda x=0: ctrl.update_model())
+        file_path_le.textChanged.connect(lambda x=0: ctrl.update_model())
         browse_path_pb.clicked.connect(lambda x=0: ctrl.update_model())
+        browse_path_pb.clicked.connect(file_path_le.validate)  # to validate on initial browse result
         deformers_listbox.buttonGet.clicked.connect(get_deformers_menu)
         deformers_listbox.buttonNew.clicked.connect(lambda x: ctrl.update_model())
         deformers_listbox.buttonRemove.clicked.connect(lambda x: ctrl.update_model())

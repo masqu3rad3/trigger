@@ -180,8 +180,9 @@ class Kinematics(settings.Settings):
             ctrl.update_model()
 
         ### Signals
-        file_path_le.editingFinished.connect(lambda x=0: ctrl.update_model())
+        file_path_le.textChanged.connect(lambda x=0: ctrl.update_model())
         browse_path_pb.clicked.connect(lambda x=0: ctrl.update_model())
+        browse_path_pb.clicked.connect(file_path_le.validate)  # to validate on initial browse result
         guide_roots_le.editingFinished.connect(lambda x=0: ctrl.update_model())
         get_guide_roots_pb.clicked.connect(get_roots_menu)
         create_auto_sw_cb.stateChanged.connect(lambda x=0: ctrl.update_model())

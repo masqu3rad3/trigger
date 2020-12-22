@@ -78,10 +78,20 @@ def tracktime(func):
             result = func(*args, **kwargs)
         except Exception as e:
             end = time.time()
-            logger.warning("Elapsed: %s" %(end-start))
+            print("-"*60)
+            print("-"*60)
+            print("Elapsed: %s" %(end-start))
+            print("-"*60)
+            print("-"*60)
+            # logger.warning("Elapsed: %s" %(end-start))
             logger.error(e)
         finally:
             end = time.time()
-            logger.warning("Elapsed: %s" %(end-start))
+            print("-"*60)
+            print("-"*60)
+            print("Elapsed: %s" %(end-start))
+            print("-"*60)
+            print("-"*60)
+            # logger.warning("Elapsed: %s" %(end-start))
             return result
     return _tracktime

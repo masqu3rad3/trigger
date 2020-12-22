@@ -149,6 +149,7 @@ class FileLineEdit(QtWidgets.QLineEdit):
         self.validate()
         if e.key() == 16777235: # CTRL + UP arrow
             self.version_up()
+
         if e.key() == 16777237: # CTRL + DOWN arrow
             self.version_down()
 

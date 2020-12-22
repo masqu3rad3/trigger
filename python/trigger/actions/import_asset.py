@@ -61,9 +61,9 @@ class Import_asset(object):
         ctrl.connect(file_path_le, "import_file_path", str)
         ctrl.update_ui()
 
-        file_path_le.textEdited.connect(lambda x=0: ctrl.update_model())
+        file_path_le.textChanged.connect(lambda x=0: ctrl.update_model())
         browse_path_pb.clicked.connect(lambda x=0: ctrl.update_model())
-        browse_path_pb.clicked.connect(file_path_le.validate)
+        browse_path_pb.clicked.connect(file_path_le.validate)  # to validate on initial browse result
 
     def import_scene(self, file_path, *args, **kwargs):
         return cmds.file(file_path, i=True)

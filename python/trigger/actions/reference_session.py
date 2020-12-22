@@ -78,7 +78,9 @@ class Reference_session(object):
         ctrl.connect(trigger_file_path_le, "trigger_file_path", str)
         ctrl.update_ui()
 
-        trigger_file_path_le.textEdited.connect(lambda x=0: ctrl.update_model())
+        trigger_file_path_le.textChanged.connect(lambda x=0: ctrl.update_model())
         browse_path_pb.clicked.connect(lambda x=0: ctrl.update_model())
+        # to validate on initial browse result
+        browse_path_pb.clicked.connect(trigger_file_path_le.validate)
 
 

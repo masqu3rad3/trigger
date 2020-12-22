@@ -13,9 +13,11 @@
 ## USAGE: First select the source Object, then select the target object and run the script
 #####################################################################################################################
 
-# import pymel.core as pm
+import sys
 from maya import cmds
+from trigger.core.decorators import keepselection
 
+@keepselection
 def skinTransfer():
     """
         Transfers (copies) skin to second object in the selection list. If the target object has skin cluster, it assumes
@@ -59,14 +61,17 @@ def skinTransfer():
             # If there is exactly one skin cluster connected to the target, continue with a simple copySkinWeights
             if len(shapeSkinClusters) == 1:
                 cmds.copySkinWeights (selection[0], transform, noMirror=True, surfaceAssociation="closestPoint", influenceAssociation="closestJoint", normalize=True)
+                sys.stdout.write('Success...')
                 return
             # eliminate the ones without shape (eliminate the groups under the group)
             if transform.getShape() != None:
                 sc = cmds.skinCluster(allInfluences, transform, tsb=True)
                 cmds.copySkinWeights (selection[0], transform, noMirror=True, surfaceAssociation="closestPoint", influenceAssociation="closestJoint", normalize=True)
+                sys.stdout.write('Success...')
                 # return
     else:
         if len(targetSkinClusters)==0:
             sc = cmds.skinCluster(allInfluences, selection[1], tsb=True)
         cmds.copySkinWeights (selection[0], selection[1], noMirror=True, surfaceAssociation="closestPoint", influenceAssociation="closestJoint", normalize=True)
+        sys.stdout.write('Success...')
         return

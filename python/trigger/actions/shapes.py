@@ -56,8 +56,9 @@ class Shapes(object):
         ctrl.update_ui()
 
         ### Signals
-        file_path_le.editingFinished.connect(lambda x=0: ctrl.update_model())
+        file_path_le.textChanged.connect(lambda x=0: ctrl.update_model())
         browse_path_pb.clicked.connect(lambda x=0: ctrl.update_model())
+        browse_path_pb.clicked.connect(file_path_le.validate)  # to validate on initial browse result
         savebox_lay.saved.connect(lambda file_path: self.save_action(file_path))
 
 

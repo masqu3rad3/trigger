@@ -6,6 +6,7 @@ from maya import cmds
 from trigger.core import io
 from trigger.core import logger
 from trigger import actions
+from trigger.core.decorators import tracktime
 from trigger.core import compatibility as compat
 from trigger.ui.Qt import QtWidgets
 
@@ -241,6 +242,7 @@ class ActionsSession(dict):
             self["actions"].insert(new_index, self["actions"].pop(old_index))
         LOG.info("%s index => %s" % (action_name, new_index))
 
+    @tracktime
     def run_all_actions(self):
         """runs all actions in the actions list"""
         # reset scene
@@ -262,7 +264,7 @@ class ActionsSession(dict):
                     if self.progressListwidget:
                         self.progressListwidget.errorItem(row)
 
-
+    @tracktime
     def run_action(self, action_name):
         action = self.get_action(action_name)
         action_cmd = "actions.{0}.{1}()".format(action["type"], action["type"].capitalize())
@@ -270,6 +272,7 @@ class ActionsSession(dict):
         a_hand.feed(action["data"])
         a_hand.action()
 
+    @tracktime
     def run_save_action(self, action_name):
         action = self.get_action(action_name)
         action_cmd = "actions.{0}.{1}()".format(action["type"], action["type"].capitalize())
