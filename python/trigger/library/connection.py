@@ -314,3 +314,82 @@ def connectMirror (node1, node2, mirrorAxis="X"):
         cmds.connectAttr("{0}.rx".format(node1), "{0}.rx".format(node2))
         cmds.connectAttr("{0}.output3Dy".format(minusOpR), "{0}.ry".format(node2))
         cmds.connectAttr("{0}.output3Dz".format(minusOpR), "{0}.rz".format(node2))
+
+
+
+def matrixLocalize(
+    inherit_transform,
+    offset_transform,
+    localized_transform,
+    prefix=None,
+    target_attrs=None,
+    force=True,
+):
+    # This function uses matrices to stick the destination_transform to the world space of the source_transform, but without inheriting...
+
+    if not prefix:
+        prefix = inherit_transform
+    if not target_attrs:
+        target_attrs = [
+            "translateX",
+            "translateY",
+            "translateZ",
+            "rotateX",
+            "rotateY",
+            "rotateZ",
+            "scaleX",
+            "scaleY",
+            "scaleZ",
+        ]
+
+    # grab 'bindPose' world matrix from transform we don't want to inherit from #
+    offset_bindpose_matrix = ("%s_bindPose_fourByFourMatrix" %offset_transform)
+    if not cmds.objExists(offset_bindpose_matrix):
+        grabbed_matrix = cmds.getAttr("%s.worldMatrix[0]" %offset_transform )
+        offset_bindpose_matrix = cmds.createNode("fourByFourMatrix", n=offset_bindpose_matrix)
+        for index, element in enumerate[
+            "in00",
+            "in01",
+            "in02",
+            "in03",
+            "in10",
+            "in11",
+            "in12",
+            "in13",
+            "in20",
+            "in21",
+            "in22",
+            "in23",
+            "in30",
+            "in31",
+            "in32",
+            "in33",
+        ]:
+            cmds.setAttr("%s.%s" %(offset_bindpose_matrix, element),grabbed_matrix[index])
+
+    # multiply all of the matrices together #
+    mult_matrix = cmds.createNode("multMatrix", n="%s_multMatrix" %localized_transform)
+    cmds.connectAttr("%s.worldMatrix[0]" %localized_transform, "%s.matrixIn[0]" %mult_matrix)
+    cmds.connectAttr("%s.worldInverseMatrix[0]" %offset_transform, "%s.matrixIn[1]" %mult_matrix)
+    cmds.connectAttr("%s.output" %offset_bindpose_matrix, "%s.matrixIn[2]" %mult_matrix)
+
+    # decompose result #
+    decomp_matrix = cmds.createNode("decomposeMatrix", n="%s_decomposeMatrix" %localized_transform)
+    cmds.connectAttr("%s.matrixSum" %mult_matrix, "%s.inputMatrix" %decomp_matrix)
+
+    # connect up #
+    for attr in target_attrs:
+        outputAttr = "output" + attr
+        outputAttr = outputAttr.replace("translate", "Translate")
+        outputAttr = outputAttr.replace("rotate", "Rotate")
+        outputAttr = outputAttr.replace("scale", "Scale")
+
+        lock_state = cmds.getAttr("%s.%s" %(localized_transform, attr), lock=True)
+        # unlock, connect, then reinstate lock state #
+        cmds.setAttr("%s.%s" %(localized_transform, attr), lock=False)  # unlock #
+        cmds.connectAttr("%s.%s" %(decomp_matrix, outputAttr), "%s.%s" %(localized_transform, attr), force=force)
+        # set back to original lock state #
+        cmds.setAttr("%s.%s" %(localized_transform, attr), lock=lock_state)
+
+
+    return decomp_matrix, mult_matrix, offset_bindpose_matrix
