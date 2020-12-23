@@ -198,7 +198,7 @@ def uvPin(mesh_transform, coordinates):
         for connection in incoming_connections:
             attribute.disconnect_attr(connection["plug_out"])
             cmds.connectAttr(connection["plug_in"], connection["plug_out"].replace(deformed_mesh, original_mesh))
-        cmds.connectAttr("%s.outMesh" % original_mesh, "%s.inMesh" % deformed_mesh)
+        # cmds.connectAttr("%s.outMesh" % original_mesh, "%s.inMesh" % deformed_mesh)
         # hide/intermediate original mesh
         cmds.setAttr("%s.hiddenInOutliner" % original_mesh, 1)
         cmds.setAttr("%s.intermediateObject" % original_mesh, 1)
@@ -347,24 +347,8 @@ def matrixLocalize(
     if not cmds.objExists(offset_bindpose_matrix):
         grabbed_matrix = cmds.getAttr("%s.worldMatrix[0]" %offset_transform )
         offset_bindpose_matrix = cmds.createNode("fourByFourMatrix", n=offset_bindpose_matrix)
-        for index, element in enumerate[
-            "in00",
-            "in01",
-            "in02",
-            "in03",
-            "in10",
-            "in11",
-            "in12",
-            "in13",
-            "in20",
-            "in21",
-            "in22",
-            "in23",
-            "in30",
-            "in31",
-            "in32",
-            "in33",
-        ]:
+        element_list = ["in00", "in01", "in02", "in03", "in10", "in11", "in12", "in13", "in20", "in21", "in22", "in23", "in30", "in31", "in32", "in33"]
+        for index, element in enumerate(element_list):
             cmds.setAttr("%s.%s" %(offset_bindpose_matrix, element),grabbed_matrix[index])
 
     # multiply all of the matrices together #
