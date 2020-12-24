@@ -435,4 +435,5 @@ class Initials(settings.Settings):
             FEEDBACK.throw_error("Selected joint is not in the valid Guide Root")
 
         test_kinematics = kinematics.Kinematics(root_jnt, progress_bar=progress_bar)
+        test_kinematics.afterlife = 0
         test_kinematics.action()

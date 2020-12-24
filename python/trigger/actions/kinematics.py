@@ -55,7 +55,7 @@ class Kinematics(settings.Settings):
         self.allSocketsList = []
         self.riggedLimbList = []
         self.totalDefJoints = []
-        self.afterlife = 2 # valid values are keep, hide, delete
+        self.afterlife = 2 # valid values are keep=0, hide=1, delete=2
         self.multi_selectionSets = False
         self.guides_file_path = None
 

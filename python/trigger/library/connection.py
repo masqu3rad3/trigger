@@ -90,7 +90,7 @@ def matrixConstraint(parent, child, mo=True, prefix="", sr=None, st=None, ss=Non
 
     """
 
-    parents = cmds.listRelatives(parent=True)
+    parents = cmds.listRelatives(child, parent=True)
     child_parent = parents[0] if parents else None
     next_index = -1
 

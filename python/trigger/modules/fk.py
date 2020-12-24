@@ -2,6 +2,7 @@ from maya import cmds
 import maya.api.OpenMaya as om
 from trigger.library import api
 from trigger.library import functions
+from trigger.library import connection
 from trigger.library import naming
 from trigger.library import attribute
 from trigger.library import controllers as ic
@@ -11,14 +12,17 @@ log = logger.Logger(__name__)
 
 LIMB_DATA = {
     "members": ["FkRoot", "Fk"],
-    "properties": [],
+    "properties": [{"attr_name": "localJoints",
+                    "nice_name": "Local_Joints",
+                    "attr_type": "bool",
+                    "default_value": False}],
     "multi_guide": "Fk",
     "sided": True,
 }
 
-class Simplefk():
+class Fk():
     def __init__(self, build_data=None, inits=None, *args, **kwargs):
-        super(Simplefk, self).__init__()
+        super(Fk, self).__init__()
         # fool proofing
 
         # reinitialize the initial Joints
@@ -45,6 +49,7 @@ class Simplefk():
         self.useRefOrientation = cmds.getAttr("%s.useRefOri" % self.fkRoot)
         self.side = functions.get_joint_side(self.fkRoot)
         self.sideMult = -1 if self.side == "R" else 1
+        self.isLocal = bool(cmds.getAttr("%s.localJoints" % self.inits[0]))
 
         # initialize coordinates
         self.up_axis, self.mirror_axis, self.look_axis = functions.getRigAxes(self.inits[0])
@@ -67,7 +72,7 @@ class Simplefk():
     def createGrp(self):
         self.limbGrp = cmds.group(name=self.suffix, em=True)
         self.scaleGrp = cmds.group(name="%s_scaleGrp" % self.suffix, em=True)
-        functions.alignTo(self.scaleGrp, self.inits[0], 0)
+        functions.alignTo(self.scaleGrp, self.inits[0], position=True, rotation=False)
         self.nonScaleGrp = cmds.group(name="%s_nonScaleGrp" % self.suffix, em=True)
 
         cmds.addAttr(self.scaleGrp, at="bool", ln="Control_Visibility", sn="contVis", defaultValue=True)
@@ -80,6 +85,12 @@ class Simplefk():
 
         cmds.parent(self.scaleGrp, self.limbGrp)
         cmds.parent(self.nonScaleGrp, self.limbGrp)
+
+        self.localOffGrp = cmds.group(name="%s_localOffset_grp" %self.suffix, em=True)
+        cmds.parent(self.localOffGrp, self.limbGrp)
+        self.jointsOffGrp = cmds.group(name="%s_jointsOff_grp" %self.suffix, em=True)
+        cmds.parent(self.jointsOffGrp, self.limbGrp)
+
 
     def createJoints(self):
         # draw Joints
@@ -130,6 +141,7 @@ class Simplefk():
                 cmds.parent(self.cont_off_list[nmb], self.cont_list[nmb - 1])
             # else:
                 # cmds.parent(self.cont_off_list[nmb], self.scaleGrp)
+        cmds.parent(self.cont_off_list[0], self.localOffGrp)
 
         attribute.drive_attrs("%s.contVis" % self.scaleGrp, ["%s.v" % x for x in self.cont_off_list])
         functions.colorize(self.cont_list, self.colorCodes[0])
@@ -149,13 +161,27 @@ class Simplefk():
         for jnt in self.deformerJoints[:-1]:
             cmds.setAttr("%s.t" %jnt, 0,0,0)
             cmds.setAttr("%s.r" %jnt, 0,0,0)
+            cmds.setAttr("%s.jointOrient" %jnt, 0,0,0)
+            cmds.parent(jnt, self.jointsOffGrp)
 
         for cont, jnt in zip(self.cont_list, self.deformerJoints[:-1]):
             cmds.connectAttr("%s.worldMatrix[0]" %cont, "%s.offsetParentMatrix" %jnt)
 
         functions.alignToAlter(self.deformerJoints[-1], self.inits[-1])
 
+        cmds.connectAttr("%s.worldInverseMatrix[0]" %self.localOffGrp, "%s.offsetParentMatrix" %self.jointsOffGrp)
 
+        if self.isLocal:
+            connection.matrixConstraint(self.limbPlug, self.localOffGrp)
+        else:
+            connection.matrixConstraint(self.limbPlug, self.cont_off_list[0], ss=False)
+            cmds.connectAttr("%s.s" %self.scaleGrp, "%s.s" %self.cont_off_list[0], force=True)
+
+        # cmds.connectAttr("%s.worldMatrix[0]" %self.limbPlug, "%s.offsetParentMatrix" %self.cont_off_list[0])
+        # connection.matrixConstraint(self.limbPlug, self.cont_off_list[0])
+
+        # cmds.connectAttr("%s.s" %self.scaleGrp, "%s.s" %self.localOffGrp)
+        # cmds.connectAttr("%s.s" %self.scaleGrp, "%s.s" %self.jointsOffGrp)
 
         pass
 
@@ -172,7 +198,7 @@ class Simplefk():
         pass
 
     def roundUp(self):
-        cmds.parentConstraint(self.limbPlug, self.scaleGrp, mo=False)
+        # cmds.parentConstraint(self.limbPlug, self.scaleGrp, mo=False)
         cmds.setAttr("%s.rigVis" % self.scaleGrp, 0)
 
         self.scaleConstraints.append(self.scaleGrp)
@@ -192,7 +218,7 @@ class Simplefk():
         self.roundUp()
 
 class Guides(object):
-    def __init__(self, side="L", suffix="simpleFk", segments=None, tMatrix=None, upVector=(0, 1, 0), mirrorVector=(1, 0, 0), lookVector=(0,0,1), *args, **kwargs):
+    def __init__(self, side="L", suffix="fk", segments=None, tMatrix=None, upVector=(0, 1, 0), mirrorVector=(1, 0, 0), lookVector=(0,0,1), *args, **kwargs):
         super(Guides, self).__init__()
         # fool check
 
@@ -250,7 +276,7 @@ class Guides(object):
 
         # ----------Mandatory---------[Start]
         root_jnt = self.guideJoints[0]
-        attribute.create_global_joint_attrs(root_jnt, moduleName="%s_SimpleFK" % self.side, upAxis=self.upVector, mirrorAxis=self.mirrorVector, lookAxis=self.lookVector)
+        attribute.create_global_joint_attrs(root_jnt, moduleName="%s_fk" % self.side, upAxis=self.upVector, mirrorAxis=self.mirrorVector, lookAxis=self.lookVector)
         # ----------Mandatory---------[End]
 
         for attr_dict in LIMB_DATA["properties"]:
@@ -262,7 +288,7 @@ class Guides(object):
 
     def convertJoints(self, joints_list):
         if len(joints_list) < 2:
-            log.warning("Define or select at least 2 joints for Simple FK Guide conversion. Skipping")
+            log.warning("Define or select at least 2 joints for FK Guide conversion. Skipping")
             return
         self.guideJoints = joints_list
         self.define_attributes()
