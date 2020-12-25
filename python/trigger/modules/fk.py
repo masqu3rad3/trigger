@@ -87,9 +87,11 @@ class Fk():
         cmds.parent(self.nonScaleGrp, self.limbGrp)
 
         self.localOffGrp = cmds.group(name="%s_localOffset_grp" %self.suffix, em=True)
-        cmds.parent(self.localOffGrp, self.limbGrp)
-        self.jointsOffGrp = cmds.group(name="%s_jointsOff_grp" %self.suffix, em=True)
-        cmds.parent(self.jointsOffGrp, self.limbGrp)
+        self.plugBindGrp = cmds.group(name="%s_plugBind_grp" %self.suffix, em=True)
+        cmds.parent(self.localOffGrp, self.plugBindGrp)
+        cmds.parent(self.plugBindGrp, self.limbGrp)
+        # self.jointsOffGrp = cmds.group(name="%s_jointsOff_grp" %self.suffix, em=True)
+        # cmds.parent(self.jointsOffGrp, self.limbGrp)
 
 
     def createJoints(self):
@@ -158,10 +160,61 @@ class Fk():
 
 
         for cont, jnt in zip(self.cont_list, self.deformerJoints[:-1]):
-            connection.matrixConstraint(cont, jnt)
+            connection.matrixConstraint(cont, jnt, source_parent_cutoff=self.localOffGrp)
             # disconnect inverse scale chain to inherit the scale from the controllers properly
             attribute.disconnect_attr(node=jnt, attr="inverseScale")
 
+
+        # functions.alignToAlter(self.deformerJoints[-1], self.inits[-1])
+        #
+        # cmds.connectAttr("%s.worldInverseMatrix[0]" %self.localOffGrp, "%s.offsetParentMatrix" %self.jointsOffGrp)
+        #
+        if self.isLocal:
+            connection.matrixConstraint(self.limbPlug, self.plugBindGrp)
+        else:
+            connection.matrixConstraint(self.limbPlug, self.cont_off_list[0])
+        #     cmds.connectAttr("%s.s" %self.scaleGrp, "%s.s" %self.cont_off_list[0], force=True)
+
+        # cmds.connectAttr("%s.s" %self.scaleGrp, "%s.s" %self.limbPlug)
+        # #
+        # cmds.connectAttr("%s.worldMatrix[0]" %self.limbPlug, "%s.offsetParentMatrix" %self.cont_off_list[0])
+        # connection.matrixConstraint(self.limbPlug, self.cont_off_list[0])
+        #
+        # cmds.connectAttr("%s.s" %self.scaleGrp, "%s.s" %self.localOffGrp)
+        # cmds.connectAttr("%s.s" %self.scaleGrp, "%s.s" %self.jointsOffGrp)
+
+        pass
+
+    # def createFKsetup(self):
+    #     # # unparent and move the deformation joints to world 0
+    #     cmds.parent(self.deformerJoints[:-1], world=True)
+    #     # # cmds.parent(self.deformerJoints, self.scaleGrp)
+    #     for jnt in self.deformerJoints[:-1]:
+    #         cmds.setAttr("%s.t" %jnt, 0,0,0)
+    #         cmds.setAttr("%s.r" %jnt, 0,0,0)
+    #         cmds.setAttr("%s.jointOrient" %jnt, 0,0,0)
+    #         cmds.parent(jnt, self.jointsOffGrp)
+    #
+    #     for cont, jnt in zip(self.cont_list, self.deformerJoints[:-1]):
+    #         cmds.connectAttr("%s.worldMatrix[0]" %cont, "%s.offsetParentMatrix" %jnt)
+    #
+    #     functions.alignToAlter(self.deformerJoints[-1], self.inits[-1])
+    #
+    #     cmds.connectAttr("%s.worldInverseMatrix[0]" %self.localOffGrp, "%s.offsetParentMatrix" %self.jointsOffGrp)
+    #
+    #     if self.isLocal:
+    #         connection.matrixConstraint(self.limbPlug, self.localOffGrp)
+    #     else:
+    #         connection.matrixConstraint(self.limbPlug, self.cont_off_list[0], ss=False)
+    #         cmds.connectAttr("%s.s" %self.scaleGrp, "%s.s" %self.cont_off_list[0], force=True)
+    #
+    #     # cmds.connectAttr("%s.worldMatrix[0]" %self.limbPlug, "%s.offsetParentMatrix" %self.cont_off_list[0])
+    #     # connection.matrixConstraint(self.limbPlug, self.cont_off_list[0])
+    #
+    #     # cmds.connectAttr("%s.s" %self.scaleGrp, "%s.s" %self.localOffGrp)
+    #     # cmds.connectAttr("%s.s" %self.scaleGrp, "%s.s" %self.jointsOffGrp)
+    #
+    #     pass
 
     def ikfkSwitching(self):
         pass
