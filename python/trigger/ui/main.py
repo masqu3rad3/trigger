@@ -878,6 +878,7 @@ class MainUI(QtWidgets.QMainWindow):
         self.populate_properties()
 
     def force_update(self):
+        # print("DEBUG")
         if self.force and self.tabWidget.currentIndex() == 0:
             self.populate_guides()
 

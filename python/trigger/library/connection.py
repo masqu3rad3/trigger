@@ -90,6 +90,7 @@ def matrixConstraint(parent, child, mo=True, prefix="", sr=None, st=None, ss=Non
 
     """
 
+    is_joint = True if cmds.objectType(child) == "joint" else False
     parents = cmds.listRelatives(child, parent=True)
     child_parent = parents[0] if parents else None
     next_index = -1
@@ -114,9 +115,13 @@ def matrixConstraint(parent, child, mo=True, prefix="", sr=None, st=None, ss=Non
 
 
     if child_parent:
-        child_parentWorldMatrix = api.getMDagPath(child_parent).inclusiveMatrix().inverse()
         next_index += 1
-        cmds.setAttr("%s.matrixIn[%i]" % (mult_matrix, next_index), child_parentWorldMatrix, type="matrix")
+        cmds.connectAttr("%s.worldInverseMatrix[0]" %child_parent, "%s.matrixIn[%i]" %(mult_matrix, next_index))
+
+    # if child_parent:
+        # child_parentWorldMatrix = api.getMDagPath(child_parent).inclusiveMatrix().inverse()
+        # next_index += 1
+        # cmds.setAttr("%s.matrixIn[%i]" % (mult_matrix, next_index), child_parentWorldMatrix, type="matrix")
 
 
     if not st:
@@ -126,11 +131,69 @@ def matrixConstraint(parent, child, mo=True, prefix="", sr=None, st=None, ss=Non
             if attr.lower() not in st and attr.upper() not in st:
                 cmds.connectAttr("%s.outputTranslate%s" % (decompose_matrix, attr), "%s.translate%s" % (child, attr))
     if not sr:
-        cmds.connectAttr("%s.outputRotate" % decompose_matrix, "%s.rotate" % child)
+        ## Joint rotations needs to be handled differently because of the jointOrientation
+        if is_joint:
+            # store the orientation values
+            joint_orientation = cmds.getAttr("%s.jointOrient" % child)[0]
+
+            # create the compensation node strand
+            rotation_compose = cmds.createNode("composeMatrix", name="%s_rotateComposeMatrix" %prefix)
+            rotation_first_mult_matrix = cmds.createNode("multMatrix", name="%s_firstRotateMultMatrix" %prefix)
+            rotation_inverse_matrix = cmds.createNode("inverseMatrix", name="%s_rotateInverseMatrix" %prefix)
+            rotation_sec_mult_matrix = cmds.createNode("multMatrix", name="%s_secRotateMultMatrix" %prefix)
+            rotation_decompose_matrix = cmds.createNode("decomposeMatrix", name="%s_rotateDecomposeMatrix" %prefix)
+
+            # set values and make connections for rotation strand
+            cmds.setAttr("%s.inputRotate" %rotation_compose, *joint_orientation)
+            cmds.connectAttr("%s.outputMatrix" %rotation_compose, "%s.matrixIn[0]" %rotation_first_mult_matrix)
+            if child_parent:
+                cmds.connectAttr("%s.worldMatrix[0]" %child_parent, "%s.matrixIn[1]" %rotation_first_mult_matrix)
+            cmds.connectAttr("%s.matrixSum" %rotation_first_mult_matrix, "%s.inputMatrix" %rotation_inverse_matrix)
+
+            cmds.connectAttr("%s.worldMatrix[0]" % parent, "%s.matrixIn[0]" %rotation_sec_mult_matrix)
+            cmds.connectAttr("%s.outputMatrix" %rotation_inverse_matrix, "%s.matrixIn[1]" %rotation_sec_mult_matrix)
+            cmds.connectAttr("%s.matrixSum" %rotation_sec_mult_matrix, "%s.inputMatrix" %rotation_decompose_matrix)
+            cmds.connectAttr("%s.outputRotate" % rotation_decompose_matrix, "%s.rotate" % child)
+        else:
+            cmds.connectAttr("%s.outputRotate" % decompose_matrix, "%s.rotate" % child)
     else:
-        for attr in "XYZ":
-            if attr.lower() not in sr and attr.upper() not in sr:
-                cmds.connectAttr("%s.outputRotate%s" % (decompose_matrix, attr), "%s.rotate%s" % (child, attr))
+
+        ## Joint rotations needs to be handled differently because of the jointOrientation
+        if is_joint:
+            # if all rotation axis defined, dont create the strand
+            if len(sr) != 3:
+                # store the orientation values
+                joint_orientation = cmds.getAttr("%s.jointOrientation" % child)
+
+                # create the compensation node strand
+                rotation_compose = cmds.createNode("composeMatrix", name="%s_rotateComposeMatrix" %prefix)
+                rotation_first_mult_matrix = cmds.createNode("multMatrix", name="%s_firstRotateMultMatrix" %prefix)
+                rotation_inverse_matrix = cmds.createNode("inverseMatrix", name="%s_rotateInverseMatrix" %prefix)
+                rotation_sec_mult_matrix = cmds.createNode("multMatrix", name="%s_secRotateMultMatrix" %prefix)
+                rotation_decompose_matrix = cmds.createNode("decomposeMatrix", name="%s_rotateDecomposeMatrix" %prefix)
+
+                # set values and make connections for rotation strand
+                cmds.setAttr("%s.inputRotate" %rotation_compose, *joint_orientation)
+                cmds.connectAttr("%s.outputMatrix" %rotation_compose, "%s.matrixIn[0]" %rotation_first_mult_matrix)
+                if child_parent:
+                    cmds.connectAttr("%s.worldMatrix[0]" %child_parent, "%s.matrixIn[1]" %rotation_first_mult_matrix)
+                cmds.connectAttr("%s.matrixSum" %rotation_first_mult_matrix, "%s.inputMatrix" %rotation_inverse_matrix)
+
+                cmds.connectAttr("%s.worldMatrix[0]" % parent, "%s.matrixIn[0]" %rotation_sec_mult_matrix)
+                cmds.connectAttr("%s.outputMatrix" %rotation_inverse_matrix, "%s.matrixIn[1]" %rotation_sec_mult_matrix)
+                cmds.connectAttr("%s.matrixSum" %rotation_sec_mult_matrix, "%s.inputMatrix" %rotation_decompose_matrix)
+
+                for attr in "XYZ":
+                    if attr.lower() not in sr and attr.upper() not in sr:
+                        cmds.connectAttr("%s.outputRotate%s" % (rotation_decompose_matrix, attr), "%s.rotate%s" % (child, attr))
+
+            else:
+                pass
+
+        else:
+            for attr in "XYZ":
+                if attr.lower() not in sr and attr.upper() not in sr:
+                    cmds.connectAttr("%s.outputRotate%s" % (decompose_matrix, attr), "%s.rotate%s" % (child, attr))
     if not ss:
         cmds.connectAttr("%s.outputScale" % decompose_matrix, "%s.scale" % child)
     else:
