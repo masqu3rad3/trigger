@@ -57,7 +57,7 @@ class Surface(object):
 
         self.suffix = (naming.uniqueName(cmds.getAttr("%s.moduleName" % self.rootInit)))
 
-
+        self.controllers = []
         self.limbGrp = None
         self.scaleGrp = None
         self.limbPlug = None
@@ -112,6 +112,7 @@ class Surface(object):
     def createControllers(self):
         icon = ic.Icon()
         self.cont, _ = icon.createIcon("Diamond", iconName="%s_cont" % self.suffix)
+        self.controllers.append(self.cont)
         self.cont_offset = functions.createUpGrp(self.cont, "offset")
         self.cont_bind = functions.createUpGrp(self.cont, "bind")
         self.cont_negate = functions.createUpGrp(self.cont, "negate")

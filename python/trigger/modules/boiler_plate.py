@@ -51,6 +51,7 @@ class Limb():
         self.suffix = (naming.uniqueName(cmds.getAttr("%s.moduleName" % self.inits[0])))
 
         # scratch variables
+        self.controllers = []
         self.sockets = []
         self.limbGrp = None
         self.scaleGrp = None

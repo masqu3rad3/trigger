@@ -58,6 +58,7 @@ class Fk():
         self.suffix = (naming.uniqueName(cmds.getAttr("%s.moduleName" % self.inits[0])))
 
         # scratch variables
+        self.controllers = []
         self.sockets = []
         self.limbGrp = None
         self.scaleGrp = None
@@ -112,7 +113,7 @@ class Fk():
                 functions.alignTo(self.deformerJoints[x], self.inits[x], position=True, rotation=True)
                 cmds.makeIdentity(self.deformerJoints[x], a=True)
 
-        # cmds.parent(self.deformerJoints[0], self.scaleGrp)
+        cmds.parent(self.deformerJoints[0], self.nonScaleGrp)
 
         attribute.drive_attrs("%s.jointVis" % self.scaleGrp, ["%s.v" % x for x in self.deformerJoints])
         cmds.connectAttr("%s.rigVis" % self.scaleGrp,"%s.v" % self.limbPlug)
@@ -121,7 +122,7 @@ class Fk():
     def createControllers(self):
         icon_handler = ic.Icon()
 
-        self.cont_list = []
+        self.controllers = []
         self.cont_off_list = []
 
         for nmb, jnt in enumerate(self.deformerJoints[:-1]):
@@ -136,17 +137,17 @@ class Fk():
             cont_ORE = functions.createUpGrp(cont, "ORE")
             cmds.makeIdentity(cont, a=True)
 
-            self.cont_list.append(cont)
+            self.controllers.append(cont)
             self.cont_off_list.append(cont_OFF)
 
             if nmb is not 0:
-                cmds.parent(self.cont_off_list[nmb], self.cont_list[nmb - 1])
+                cmds.parent(self.cont_off_list[nmb], self.controllers[nmb - 1])
             # else:
                 # cmds.parent(self.cont_off_list[nmb], self.scaleGrp)
         cmds.parent(self.cont_off_list[0], self.localOffGrp)
 
         attribute.drive_attrs("%s.contVis" % self.scaleGrp, ["%s.v" % x for x in self.cont_off_list])
-        functions.colorize(self.cont_list, self.colorCodes[0])
+        functions.colorize(self.controllers, self.colorCodes[0])
 
         pass
 
@@ -159,7 +160,7 @@ class Fk():
     def createFKsetup(self):
 
 
-        for cont, jnt in zip(self.cont_list, self.deformerJoints[:-1]):
+        for cont, jnt in zip(self.controllers, self.deformerJoints[:-1]):
             connection.matrixConstraint(cont, jnt, source_parent_cutoff=self.localOffGrp)
             # disconnect inverse scale chain to inherit the scale from the controllers properly
             attribute.disconnect_attr(node=jnt, attr="inverseScale")

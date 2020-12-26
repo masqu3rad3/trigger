@@ -49,6 +49,7 @@ class Kinematics(settings.Settings):
         self.shoulderDist = 1.0
         self.hipDist = 1.0
 
+        self.scaleRoot = None
         self.anchorLocations = []
         self.anchors = []
         self.extraSwitchers = []
@@ -464,8 +465,22 @@ class Kinematics(settings.Settings):
 
                 attribute.attrPass(limb.scaleGrp, "pref_cont", values=True, daisyChain=True, overrideEx=False)
                 cmds.parent(limb.limbGrp, "trigger_grp")
+                # scaler = "master_cont" if cmds.objExists("master_cont") else "pref_cont"
                 for sCon in limb.scaleConstraints:
-                    cmds.scaleConstraint("pref_cont", sCon)
+                    # if this is the root limb, use its values to scale the entire rig
+                    if x == limbCreationList[0]:
+                        self.scaleRoot = "pref_cont" if not limb.controllers else limb.controllers[0]
+                        # cmds.scaleConstraint(self.scaleRoot, sCon)
+
+                        # cmds.connectAttr("%s.s" % self.scaleRoot, "%s.s" %sCon, force=True)
+                    else:
+                        cmds.connectAttr("%s.s" % self.scaleRoot, "%s.s" %sCon, force=True)
+
+                cmds.connectAttr("%s.s" % self.scaleRoot, "%s.s" %limb.scaleGrp, force=True)
+                for s_attr in "xyz":
+                    cmds.setAttr("{0}.s{1}".format(self.scaleRoot, s_attr), e=True, k=True, l=False)
+                    # cmds.scaleConstraint("pref_cont", sCon)
+                    # cmds.connectAttr("pref_cont.s", "%s.s" %sCon, force=True)
             self.totalDefJoints += limb.deformerJoints
             if j_def_set:
                 cmds.sets(limb.deformerJoints, add=j_def_set)

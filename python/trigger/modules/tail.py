@@ -44,6 +44,7 @@ class Tail(object):
         self.suffix = (naming.uniqueName(cmds.getAttr("%s.moduleName" % self.inits[0])))
 
         # scratch variables
+        self.controllers = []
         self.sockets = []
         self.limbGrp = None
         self.scaleGrp = None
@@ -104,7 +105,7 @@ class Tail(object):
 
         icon = ic.Icon()
 
-        self.contList=[]
+        self.controllers=[]
         self.cont_off_list=[]
 
         for jnt in range (len(self.deformerJoints)-1):
@@ -117,31 +118,31 @@ class Tail(object):
             cont_OFF = functions.createUpGrp(cont, "OFF")
             cont_ORE = functions.createUpGrp(cont, "ORE")
 
-            self.contList.append(cont)
+            self.controllers.append(cont)
             self.cont_off_list.append(cont_OFF)
 
             if jnt is not 0:
-                cmds.parent(self.cont_off_list[jnt], self.contList[jnt - 1])
+                cmds.parent(self.cont_off_list[jnt], self.controllers[jnt - 1])
             else:
                 cmds.parent(self.cont_off_list[jnt], self.scaleGrp)
 
         attribute.drive_attrs("%s.contVis" % self.scaleGrp, ["%s.v" % x for x in self.cont_off_list])
-        functions.colorize(self.contList, self.colorCodes[0])
+        functions.colorize(self.controllers, self.colorCodes[0])
 
     def createFKsetup(self):
-        for x in range (len(self.contList)):
-            cmds.parentConstraint(self.contList[x], self.deformerJoints[x], mo=False)
+        for x in range (len(self.controllers)):
+            cmds.parentConstraint(self.controllers[x], self.deformerJoints[x], mo=False)
 
             # additive scalability
             sGlobal = cmds.createNode("multiplyDivide", name="sGlobal_%s_%s" %(x, self.suffix))
             cmds.connectAttr("%s.scale" % self.limbPlug,"%s.input1" % sGlobal)
-            cmds.connectAttr("%s.scale" % self.contList[x],"%s.input2" % sGlobal)
+            cmds.connectAttr("%s.scale" % self.controllers[x],"%s.input2" % sGlobal)
             cmds.connectAttr("%s.output" % sGlobal,"%s.scale" % self.deformerJoints[x])
 
         ## last joint has no cont, use the previous one to scale that
         sGlobal = cmds.createNode("multiplyDivide", name="sGlobal_Last_%s" %(self.suffix))
         cmds.connectAttr("%s.scale" %self.limbPlug, "%s.input1" %sGlobal)
-        cmds.connectAttr("%s.scale" %self.contList[-1], "%s.input2" %sGlobal)
+        cmds.connectAttr("%s.scale" %self.controllers[-1], "%s.input2" %sGlobal)
         cmds.connectAttr("%s.output" %sGlobal, "%s.scale" %self.deformerJoints[-1])
 
     def roundUp(self):

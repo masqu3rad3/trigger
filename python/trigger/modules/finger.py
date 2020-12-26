@@ -135,7 +135,7 @@ class Finger(object):
 
         ## Create Controllers
 
-        self.conts = []
+        self.controllers = []
         self.conts_OFF = []
         conts_ORE = []
         contList = []
@@ -155,8 +155,8 @@ class Finger(object):
             cont_con = functions.createUpGrp(cont, "con")
 
             if index>0:
-                cmds.parent(cont_OFF, self.conts[len(self.conts)-1])
-            self.conts.append(cont)
+                cmds.parent(cont_OFF, self.controllers[len(self.controllers)-1])
+            self.controllers.append(cont)
             contList.append(cont)
             self.contConList.append(cont_con)
 
@@ -208,113 +208,113 @@ class Finger(object):
         self.createFKsetup()
         self.roundUp()
 
-    def createFinger(self, inits, suffix="", side="L", handController=None, thumb=False, mirrorAxis="X"):
-
-        if not isinstance(inits, list):
-            fingerRoot = inits.get("FingerRoot")
-            fingers = (inits.get("Finger"))
-            inits = [fingerRoot] + (fingers)
-
-            fingerType = cmds.getAttr("%s.fingerType" % fingerRoot, asString=True)
-            thumb = fingerType == "Thumb"
-            suffix = "%s_%s" %(suffix, cmds.getAttr("%s.fingerType" % fingerRoot, asString=True))
-
-        suffix=(naming.uniqueName("limbGrp_%s" % suffix)).replace("limbGrp_", "")
-        self.limbGrp = cmds.group(name="limbGrp_%s" % suffix, em=True)
-
-        if (len(inits) < 2):
-            cmds.error("Insufficient Finger Initialization Joints")
-            return
-
-        self.scaleGrp = cmds.group(name="scaleGrp_%s" % suffix, em=True)
-        self.scaleConstraints.append(self.scaleGrp)
-
-        ## Create LimbPlug
-        cmds.select(d=True)
-        self.limbPlug = cmds.joint(name="limbPlug_%s" % suffix, p=inits[0].getTranslation(space="world"), radius=2)
-        cmds.parentConstraint(self.limbPlug, self.scaleGrp)
-
-        cmds.select(d=True)
-
-        for guide in inits:
-            jnt = cmds.joint(name="jDef_{0}_{1}".format(suffix, inits.index(guide)), radius=1.0)
-            functions.alignTo(jnt, guide, position=True, rotation=True)
-
-            if guide == inits[-1]: # if it is the last joint dont add it to the deformers
-
-                replacedName = (jnt.replace("jDef", "j"))
-                cmds.rename(jnt, replacedName)
-            self.sockets.append(jnt)
-            self.deformerJoints.append(jnt)
-
-        ## Create Controllers
-        self.conts = []
-        conts_OFF = []
-        conts_ORE = []
-        contList = []
-        contConList = []
-
-        icon = ic.Icon()
-
-        for i in range(0, len(self.deformerJoints)-1):
-            contScl = (cmds.getAttr("%s.tx" % self.deformerJoints[1]) / 2)
-            contName = ("cont_{0}_{1}".format(suffix, i))
-
-            cont, _ = icon.createIcon("Circle", iconName=contName,scale=(contScl,contScl,contScl), normal=(1,0,0))
-
-            cont_OFF = functions.createUpGrp(cont, "OFF", freezeTransform=False)
-            conts_OFF.append([cont_OFF])
-            cont_ORE = functions.createUpGrp(cont, "ORE", freezeTransform=False)
-            cont_con = functions.createUpGrp(cont, "con", freezeTransform=False)
-
-            if side == "R":
-                cmds.setAttr("%s.rotate%s" %(cont_ORE, mirrorAxis), -180)
-
-            functions.alignTo(cont_OFF, self.deformerJoints[i], position=True, rotation=True)
-
-            if i > 0:
-                cmds.parent(cont_OFF, self.conts[len(self.conts)-1])
-                cmds.makeIdentity(cont, a=True)
-            self.conts.append(cont)
-            contList.append(cont)
-            contConList.append(cont_con)
-
-            cmds.parentConstraint(cont, self.deformerJoints[i], mo=True)
-
-        cmds.parent(self.deformerJoints[0], self.scaleGrp)
-        cmds.parent(conts_OFF[0], self.scaleGrp)
-
-        ## Controller Attributtes
-        ## If there is no parent controller defined, create one. Everyone needs a parent
-
-        if not handController:
-            handController=self.scaleGrp
-        # Spread
-
-        spreadAttr = "{0}_{1}".format(suffix, "Spread")
-        cmds.addAttr(handController, shortName=spreadAttr, defaultValue=0.0, at="float", k=True)
-        sprMult = cmds.createNode("multiplyDivide", name="sprMult_{0}_{1}".format(side, suffix))
-        cmds.setAttr("%s.input1Y" % sprMult, 0.4)
-        cmds.connectAttr("%s.%s" % (handController, spreadAttr), "%s.input2Y" % sprMult)
-
-        cmds.connectAttr("%s.outputY" % sprMult, "%s.rotateY" % contConList[0])
-        cmds.connectAttr("%s.%s" % (handController, spreadAttr), "%s.rotateY" % contConList[1])
-
-        # Bend
-        # add bend attributes for each joint (except the end joint)
-        for f in range (0, (len(inits)-1)):
-            if f == 0 and thumb:
-                bendAttr="{0}{1}".format(suffix, "UpDown")
-            else:
-                bendAttr = "{0}{1}{2}".format(suffix, "Bend", f)
-
-            cmds.addAttr(handController, shortName=bendAttr, defaultValue=0.0, at="float", k=True)
-            cmds.connectAttr("{0}.{1}".format(handController, bendAttr), "%s.rotateZ" % contConList[f])
-
-        cmds.parent(self.scaleGrp, self.nonScaleGrp, self.cont_IK_OFF, self.limbGrp)
-        functions.colorize(contList, self.colorCodes[0])
-        functions.colorize(self.deformerJoints, self.colorCodes[0], shape=False)
-        cmds.parentConstraint(self.limbPlug, conts_OFF[0], mo=True)
+    # def createFinger(self, inits, suffix="", side="L", handController=None, thumb=False, mirrorAxis="X"):
+    #
+    #     if not isinstance(inits, list):
+    #         fingerRoot = inits.get("FingerRoot")
+    #         fingers = (inits.get("Finger"))
+    #         inits = [fingerRoot] + (fingers)
+    #
+    #         fingerType = cmds.getAttr("%s.fingerType" % fingerRoot, asString=True)
+    #         thumb = fingerType == "Thumb"
+    #         suffix = "%s_%s" %(suffix, cmds.getAttr("%s.fingerType" % fingerRoot, asString=True))
+    #
+    #     suffix=(naming.uniqueName("limbGrp_%s" % suffix)).replace("limbGrp_", "")
+    #     self.limbGrp = cmds.group(name="limbGrp_%s" % suffix, em=True)
+    #
+    #     if (len(inits) < 2):
+    #         cmds.error("Insufficient Finger Initialization Joints")
+    #         return
+    #
+    #     self.scaleGrp = cmds.group(name="scaleGrp_%s" % suffix, em=True)
+    #     self.scaleConstraints.append(self.scaleGrp)
+    #
+    #     ## Create LimbPlug
+    #     cmds.select(d=True)
+    #     self.limbPlug = cmds.joint(name="limbPlug_%s" % suffix, p=inits[0].getTranslation(space="world"), radius=2)
+    #     cmds.parentConstraint(self.limbPlug, self.scaleGrp)
+    #
+    #     cmds.select(d=True)
+    #
+    #     for guide in inits:
+    #         jnt = cmds.joint(name="jDef_{0}_{1}".format(suffix, inits.index(guide)), radius=1.0)
+    #         functions.alignTo(jnt, guide, position=True, rotation=True)
+    #
+    #         if guide == inits[-1]: # if it is the last joint dont add it to the deformers
+    #
+    #             replacedName = (jnt.replace("jDef", "j"))
+    #             cmds.rename(jnt, replacedName)
+    #         self.sockets.append(jnt)
+    #         self.deformerJoints.append(jnt)
+    #
+    #     ## Create Controllers
+    #     self.conts = []
+    #     conts_OFF = []
+    #     conts_ORE = []
+    #     contList = []
+    #     contConList = []
+    #
+    #     icon = ic.Icon()
+    #
+    #     for i in range(0, len(self.deformerJoints)-1):
+    #         contScl = (cmds.getAttr("%s.tx" % self.deformerJoints[1]) / 2)
+    #         contName = ("cont_{0}_{1}".format(suffix, i))
+    #
+    #         cont, _ = icon.createIcon("Circle", iconName=contName,scale=(contScl,contScl,contScl), normal=(1,0,0))
+    #
+    #         cont_OFF = functions.createUpGrp(cont, "OFF", freezeTransform=False)
+    #         conts_OFF.append([cont_OFF])
+    #         cont_ORE = functions.createUpGrp(cont, "ORE", freezeTransform=False)
+    #         cont_con = functions.createUpGrp(cont, "con", freezeTransform=False)
+    #
+    #         if side == "R":
+    #             cmds.setAttr("%s.rotate%s" %(cont_ORE, mirrorAxis), -180)
+    #
+    #         functions.alignTo(cont_OFF, self.deformerJoints[i], position=True, rotation=True)
+    #
+    #         if i > 0:
+    #             cmds.parent(cont_OFF, self.conts[len(self.conts)-1])
+    #             cmds.makeIdentity(cont, a=True)
+    #         self.conts.append(cont)
+    #         contList.append(cont)
+    #         contConList.append(cont_con)
+    #
+    #         cmds.parentConstraint(cont, self.deformerJoints[i], mo=True)
+    #
+    #     cmds.parent(self.deformerJoints[0], self.scaleGrp)
+    #     cmds.parent(conts_OFF[0], self.scaleGrp)
+    #
+    #     ## Controller Attributtes
+    #     ## If there is no parent controller defined, create one. Everyone needs a parent
+    #
+    #     if not handController:
+    #         handController=self.scaleGrp
+    #     # Spread
+    #
+    #     spreadAttr = "{0}_{1}".format(suffix, "Spread")
+    #     cmds.addAttr(handController, shortName=spreadAttr, defaultValue=0.0, at="float", k=True)
+    #     sprMult = cmds.createNode("multiplyDivide", name="sprMult_{0}_{1}".format(side, suffix))
+    #     cmds.setAttr("%s.input1Y" % sprMult, 0.4)
+    #     cmds.connectAttr("%s.%s" % (handController, spreadAttr), "%s.input2Y" % sprMult)
+    #
+    #     cmds.connectAttr("%s.outputY" % sprMult, "%s.rotateY" % contConList[0])
+    #     cmds.connectAttr("%s.%s" % (handController, spreadAttr), "%s.rotateY" % contConList[1])
+    #
+    #     # Bend
+    #     # add bend attributes for each joint (except the end joint)
+    #     for f in range (0, (len(inits)-1)):
+    #         if f == 0 and thumb:
+    #             bendAttr="{0}{1}".format(suffix, "UpDown")
+    #         else:
+    #             bendAttr = "{0}{1}{2}".format(suffix, "Bend", f)
+    #
+    #         cmds.addAttr(handController, shortName=bendAttr, defaultValue=0.0, at="float", k=True)
+    #         cmds.connectAttr("{0}.{1}".format(handController, bendAttr), "%s.rotateZ" % contConList[f])
+    #
+    #     cmds.parent(self.scaleGrp, self.nonScaleGrp, self.cont_IK_OFF, self.limbGrp)
+    #     functions.colorize(contList, self.colorCodes[0])
+    #     functions.colorize(self.deformerJoints, self.colorCodes[0], shape=False)
+    #     cmds.parentConstraint(self.limbPlug, conts_OFF[0], mo=True)
 
 class Guides(object):
     def __init__(self, side="L", suffix="finger", segments=None, tMatrix=None, upVector=(0, 1, 0), mirrorVector=(1, 0, 0), lookVector=(0,0,1), *args, **kwargs):

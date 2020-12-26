@@ -3,6 +3,8 @@ import maya.api.OpenMaya as om
 
 from trigger.library import functions, naming
 from trigger.library import attribute
+from trigger.library import connection
+
 from trigger.library import controllers as ic
 from trigger.core import logger
 LOG = logger.Logger(__name__)
@@ -32,6 +34,7 @@ class Base(object):
 
         self.suffix = (naming.uniqueName(cmds.getAttr("%s.moduleName" % self.baseInit)))
 
+        self.controllers = []
         self.limbGrp = None
         self.scaleGrp = None
         self.limbPlug = None
@@ -70,6 +73,7 @@ class Base(object):
         icon = ic.Icon()
         placement_cont, _ = icon.createIcon("Circle", iconName=naming.uniqueName("placement_cont"), scale=(10, 10, 10))
         master_cont, _ = icon.createIcon("TriCircle", iconName=naming.uniqueName("master_cont"), scale=(15, 15, 15))
+        self.controllers = [master_cont, placement_cont]
 
         placement_off = functions.createUpGrp(placement_cont, "off")
         master_off = functions.createUpGrp(master_cont, "off")
@@ -77,7 +81,10 @@ class Base(object):
         functions.alignTo(master_off, self.base_jnt)
 
         cmds.parent(placement_off, master_cont)
-        cmds.parent(master_off, self.scaleGrp)
+        # cmds.parent(master_off, self.scaleGrp)
+        cmds.parent(master_off, self.limbGrp)
+
+        # cmds.connectAttr("%s.s" %self.scaleGrp, "%s.s" %master_off)
 
         cmds.parentConstraint(placement_cont, self.base_jnt, mo=False)
 
@@ -88,6 +95,8 @@ class Base(object):
 
         cmds.connectAttr("%s.contVis" % self.scaleGrp, "%s.v" % placement_off)
         cmds.connectAttr("%s.contVis" % self.scaleGrp, "%s.v" % master_off)
+
+        connection.matrixConstraint(master_cont, self.scaleGrp, ss="xyz")
 
         attribute.lockAndHide(placement_cont, ["sx", "sy", "sz", "v"])
         attribute.lockAndHide(master_cont, ["sx", "sy", "sz", "v"])

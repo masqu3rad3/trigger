@@ -97,6 +97,7 @@ class Head(object):
         self.suffix = (naming.uniqueName(cmds.getAttr("%s.moduleName" % self.neckNodes[0])))
 
         # scratch variables
+        self.controllers = []
         self.sockets = []
         self.limbGrp = None
         self.scaleGrp = None
@@ -152,11 +153,13 @@ class Head(object):
         ## Neck Controller
         neckScale = (self.neckDist / 2, self.neckDist / 2, self.neckDist / 2)
         self.cont_neck, dmp = icon.createIcon("CurvedCircle", iconName="%s_neck_cont" % self.suffix, scale=neckScale, normal=(1,0,0))
+        self.controllers.append(self.cont_neck)
         functions.alignToAlter(self.cont_neck, self.guideJoints[0], mode=2)
         self.cont_neck_ORE = functions.createUpGrp(self.cont_neck, "ORE")
 
         ## Head Controller
         self.cont_head, _ = icon.createIcon("HalfDome", iconName="%s_head_cont" % self.suffix, scale=(self.headDist, self.headDist, self.headDist), normal=(0,1,0))
+        self.controllers.append(self.cont_head)
 
         functions.alignToAlter(self.cont_head, self.guideJoints[-2], mode=2)
         self.cont_IK_OFF = functions.createUpGrp(self.cont_head, "OFF")
@@ -165,6 +168,7 @@ class Head(object):
         if self.stretchyHead:
             ## Head Squash Controller
             self.cont_headSquash, _ = icon.createIcon("Circle", iconName="%s_headSquash_cont" % self.suffix, scale=((self.headDist / 2), (self.headDist / 2), (self.headDist / 2)), normal=(0,1,0))
+            self.controllers.append(self.cont_headSquash)
             functions.alignToAlter(self.cont_headSquash, self.guideJoints[-1])
             cont_headSquash_ORE = functions.createUpGrp(self.cont_headSquash, "ORE")
             functions.colorize(self.cont_headSquash, self.colorCodes[1])

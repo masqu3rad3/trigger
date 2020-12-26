@@ -31,7 +31,7 @@ class Connector(object):
 
         self.suffix = (naming.uniqueName(cmds.getAttr("%s.moduleName" % self.rootInit)))
 
-
+        self.controllers = []
         self.limbGrp = None
         self.scaleGrp = None
         self.limbPlug = None

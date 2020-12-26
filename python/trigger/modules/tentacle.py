@@ -89,6 +89,7 @@ class Tentacle(object):
 
 
         # scratch variables
+        self.controllers = []
         self.sockets = []
         self.limbGrp = None
         self.scaleGrp = None
@@ -179,6 +180,7 @@ class Tentacle(object):
         iconScale = functions.getDistance(self.inits[0], self.inits[1]) / 3
         self.cont_special, dmp = icon.createIcon("Looper", iconName="tentacleSP_%s_cont" % self.suffix,
                                                  scale=(iconScale, iconScale, iconScale))
+        self.controllers.append(self.cont_special)
         functions.alignAndAim(self.cont_special, targetList=[self.inits[0]], aimTargetList=[self.inits[-1]],
                               upVector=self.up_axis, rotateOff=(90, 0, 0))
         move_pos = om.MVector(self.up_axis) * (iconScale * 2.0)
@@ -266,6 +268,9 @@ class Tentacle(object):
                 cmds.parent(contFK_OFF, self.contFK_List[j - 1])
             else:
                 cmds.parent(contFK_OFF, self.scaleGrp)
+
+        self.controllers.extend(self.contFK_List)
+        self.controllers.extend(self.contTwk_List)
 
         cmds.parent(cont_special_ORE, self.contFK_List[0])
 

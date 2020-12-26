@@ -91,6 +91,7 @@ class Spine(object):
 
 
         # scratch variables
+        self.controllers = []
         self.sockets = []
         self.limbGrp = None
         self.scaleGrp = None
@@ -157,12 +158,14 @@ class Spine(object):
         ## Hips Controller
         contHipsScale = (self.iconSize / 1.5, self.iconSize / 1.5, self.iconSize / 1.5)
         self.cont_hips, dmp = icon.createIcon("Waist", iconName="%s_Hips_cont" % self.suffix, scale=contHipsScale, normal=(1,0,0))
+        self.controllers.append(self.cont_hips)
         functions.alignToAlter(self.cont_hips, self.guideJoints[0], mode=2)
         self.cont_hips_ORE = functions.createUpGrp(self.cont_hips, "ORE")
 
         ## Body Controller
         contBodyScale = (self.iconSize * 0.75, self.iconSize * 0.75, self.iconSize * 0.75)
         self.cont_body, dmp = icon.createIcon("Square", iconName="%s_Body_cont" % self.suffix, scale=contBodyScale, normal=(1,0,0))
+        self.controllers.insert(0, self.cont_body)
         functions.alignToAlter(self.cont_body, self.guideJoints[0], mode=2)
         self.cont_body_ORE = functions.createUpGrp(self.cont_body, "POS")
 
@@ -178,6 +181,7 @@ class Spine(object):
         ## Chest Controller
         contChestScale = (self.iconSize*0.5, self.iconSize*0.35, self.iconSize*0.2)
         self.cont_chest, dmp = icon.createIcon("Cube", iconName="%s_Chest_cont" % self.suffix, scale=contChestScale, normal=(0,0,1))
+        self.controllers.append(self.cont_chest)
         functions.alignToAlter(self.cont_chest, self.guideJoints[-1], mode=2)
         cont_Chest_ORE = functions.createUpGrp(self.cont_chest, "ORE")
 
@@ -209,6 +213,9 @@ class Spine(object):
         cmds.parent(cont_Chest_ORE, self.cont_spineFK_A_List[-1])
         cmds.parent(cmds.listRelatives(self.cont_spineFK_A_List[0], parent=True), self.cont_body)
         cmds.parent(self.cont_body_ORE, self.limbGrp)
+
+        self.controllers.extend(self.cont_spineFK_A_List)
+        self.controllers.extend(self.cont_spineFK_B_List)
 
 
         cmds.parentConstraint(self.limbPlug, self.cont_body_ORE, mo=False)
