@@ -3,6 +3,8 @@
 
 """Main UI for TRigger"""
 import sys, os
+from maya import cmds
+
 from trigger.ui import Qt
 from trigger.ui.Qt import QtWidgets, QtCore, QtGui
 from trigger.ui import model_ctrl
@@ -42,15 +44,39 @@ def getMayaMainWindow():
         ptr = wrapInstance(long(win), QtWidgets.QMainWindow)
     return ptr
 
+def _createCallbacks(function, parent=None, event=None):
+    callbackIDList = []
+    print(parent, bool(parent))
+    if parent:
+        job = cmds.scriptJob(e=[event, function], replacePrevious=True, parent=parent)
+    else:
+        job = cmds.scriptJob(e=[event, function])
+    callbackIDList.append(job)
+        # # cmds.scriptJob(e=[event, function], replacePrevious=True, parent=parent))
+        # # print(bool(parent))
+        #
+        # cmds.scriptJob(e=[event, function], replacePrevious=bool(parent)))
+        # # cmds.scriptJob(e=[event, function]))
+    return callbackIDList
+
+
+def _killCallbacks(callbackIDList):
+    for ID in callbackIDList:
+        if cmds.scriptJob(ex=ID):
+            cmds.scriptJob(kill=ID)
 
 class MainUI(QtWidgets.QMainWindow):
     iconsPath = os.path.join(os.path.dirname(os.path.realpath(__file__)), "icons")
 
     def __init__(self):
+
         for entry in QtWidgets.QApplication.allWidgets():
             try:
                 if entry.objectName() == WINDOW_NAME:
+                    # break
                     entry.close()
+                    entry.deleteLater()
+
             except (AttributeError, TypeError):
                 pass
         parent = getMayaMainWindow()
@@ -65,7 +91,7 @@ class MainUI(QtWidgets.QMainWindow):
         self.feedback = feedback.Feedback()
         self.feedback.parent = self
         self.installEventFilter(self)
-        self.force = False
+        # self.force = False
         # core ui
         self.setWindowTitle(WINDOW_NAME)
         self.setObjectName(WINDOW_NAME)
@@ -86,12 +112,14 @@ class MainUI(QtWidgets.QMainWindow):
 
         self.populate_guides()
 
-        # Create a QTimer
-        self.timer = QtCore.QTimer()
-        # Connect it to f
-        self.timer.timeout.connect(self.force_update)
-        # Call f() every 5 seconds
-        self.timer.start(1000)
+        # self.callbackIDList = _createCallbacks(self.force_update, WINDOW_NAME, "SelectionChanged")
+
+        # # Create a QTimer
+        # self.timer = QtCore.QTimer()
+        # # Connect it to f
+        # self.timer.timeout.connect(self.force_update)
+        # # Call f() every 5 seconds
+        # self.timer.start(1000)
 
         self.splitter.setStretchFactor(0, 10)
         self.splitter.setStretchFactor(1, 40)
@@ -103,6 +131,11 @@ class MainUI(QtWidgets.QMainWindow):
         self.show()
         self.update_title()
 
+        # self.callbackIDList = _createCallbacks(self.force_update, WINDOW_NAME, "SelectionChanged")
+        self.callbackIDList = _createCallbacks(self.force_update, parent=None, event="SelectionChanged")
+
+
+
     def update_title(self):
         file_name = self.actions_handler.currentFile if self.actions_handler.currentFile else "untitled"
         asteriks = "*" if self.actions_handler.is_modified() else ""
@@ -113,12 +146,15 @@ class MainUI(QtWidgets.QMainWindow):
             r = self.feedback.pop_question(title="Scene not saved", text="Current Trigger session is not saved\n Do you want to save before quit?", buttons=["yes", "no", "cancel"])
             if r == "yes":
                 self.save_trigger()
+                _killCallbacks(self.callbackIDList)
                 event.accept()
             elif r == "no":
+                _killCallbacks(self.callbackIDList)
                 event.accept()
             else:
                 event.ignore()
         else:
+            _killCallbacks(self.callbackIDList)
             event.accept()
 
 
@@ -172,6 +208,7 @@ class MainUI(QtWidgets.QMainWindow):
         self.centralWidget_vLay.addWidget(self.tabWidget)
 
     def buildGuidesUI(self):
+
         guides_tab_vlay = QtWidgets.QVBoxLayout(self.guides_tab)
         self.splitter = QtWidgets.QSplitter(self.guides_tab)
         self.splitter.setOrientation(QtCore.Qt.Horizontal)
@@ -385,6 +422,9 @@ class MainUI(QtWidgets.QMainWindow):
         self.guide_test_pb = QtWidgets.QPushButton()
         self.guide_test_pb.setText("Test Build Selected Branch")
         guides_tab_vlay.addWidget(self.guide_test_pb)
+
+        ### SHORTCUTS ###
+        shortcutForceUpdate = QtWidgets.QShortcut(QtGui.QKeySequence("F5"), self, self.force_update)
 
         ## SIGNALS
         self.guides_list_treeWidget.currentItemChanged.connect(self.on_guide_change)
@@ -878,16 +918,16 @@ class MainUI(QtWidgets.QMainWindow):
         self.populate_properties()
 
     def force_update(self):
-        # print("DEBUG")
-        if self.force and self.tabWidget.currentIndex() == 0:
-            self.populate_guides()
+        print("DeBUG")
+        # if self.tabWidget.currentIndex() == 0:
+        self.populate_guides()
 
-    def eventFilter(self, object, event):
-        if event.type() == QtCore.QEvent.WindowActivate:
-            self.force = False
-        elif event.type()== QtCore.QEvent.WindowDeactivate:
-            self.force = True
-        return False
+    # def eventFilter(self, object, event):
+    #     if event.type() == QtCore.QEvent.WindowActivate:
+    #         self.force = False
+    #     elif event.type()== QtCore.QEvent.WindowDeactivate:
+    #         self.force = True
+    #     return False
 
     def clearLayout(self, layout):
         while layout.count():
