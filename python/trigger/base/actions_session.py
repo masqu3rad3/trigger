@@ -57,6 +57,7 @@ class ActionsSession(dict):
 
     def new_session(self):
         """Clears the data"""
+        log.header("New Session")
         self.__init__()
 
     def save_session(self, file_path):
@@ -78,6 +79,7 @@ class ActionsSession(dict):
             self.update(actions_data)
             self.currentFile = file_path
             self.compareActions = deepcopy(self["actions"])
+            log.header("New Session")
             log.info("Action Session Loaded Successfully...")
         else:
             log.error("File doesn't exist or unreadable => %s" %file_path)
@@ -179,7 +181,7 @@ class ActionsSession(dict):
                 log.error("%s property only accepts %s values" % (property, str(type(current_value))))
 
             action["data"][property] = new_value
-            log.info("%s @ %s => %s" % (property, action["name"], new_value))
+            # log.info("%s @ %s => %s" % (property, action["name"], new_value))
             return True
         else:
             log.warning("%s cannot be found in the action list")
@@ -226,7 +228,7 @@ class ActionsSession(dict):
         index = self["actions"].index(action)
         if not index == 0:
             self["actions"].insert(index-1, self["actions"].pop(index))
-        log.info("%s index => %s" % (action_name, index - 1))
+        # log.info("%s index => %s" % (action_name, index - 1))
 
     def move_down(self, action_name):
         """Moves the action one index down"""
@@ -234,7 +236,7 @@ class ActionsSession(dict):
         index = self["actions"].index(action)
         if not index == len(self["actions"]):
             self["actions"].insert(index+1, self["actions"].pop(index))
-        log.info("%s index => %s" % (action_name, index + 1))
+        # log.info("%s index => %s" % (action_name, index + 1))
 
     def move(self, action_name, new_index):
         """Moves the action to the given index nmb"""
@@ -242,7 +244,7 @@ class ActionsSession(dict):
         old_index = self["actions"].index(action)
         if old_index != new_index:
             self["actions"].insert(new_index, self["actions"].pop(old_index))
-        log.info("%s index => %s" % (action_name, new_index))
+        # log.info("%s index => %s" % (action_name, new_index))
 
     @tracktime
     def run_all_actions(self):
@@ -258,14 +260,14 @@ class ActionsSession(dict):
                     self.progressListwidget.activateItem(row)
                     QtWidgets.QApplication.processEvents()
                 try:
-                    log.header("%s" %action["name"])
-                    action_cmd = "actions.{0}.{1}()".format(action["type"], action["type"].capitalize())
-                    a_hand = eval(action_cmd)
-                    a_hand.feed(action["data"])
-                    a_hand.action()
+                    self._action(action)
+                    # log.header("%s" %action["name"])
+                    # action_cmd = "actions.{0}.{1}()".format(action["type"], action["type"].capitalize())
+                    # a_hand = eval(action_cmd)
+                    # a_hand.feed(action["data"])
+                    # a_hand.action()
                     if self.progressListwidget:
                         self.progressListwidget.successItem(row)
-                    log.info("success...")
                 except Exception as e:
                     if self.progressListwidget:
                         self.progressListwidget.errorItem(row)
@@ -274,14 +276,23 @@ class ActionsSession(dict):
         log.header("Total BUILDING TIME:")
 
     @tracktime
-    def run_action(self, action_name):
-        log.info("Running action => %s" %action_name)
-        action = self.get_action(action_name)
+    def _action(self, action):
+        log.header("%s" %action["name"])
         action_cmd = "actions.{0}.{1}()".format(action["type"], action["type"].capitalize())
         a_hand = eval(action_cmd)
         a_hand.feed(action["data"])
         a_hand.action()
         log.info("success...")
+
+    def run_action(self, action_name):
+        log.info("Running action => %s" %action_name)
+        action = self.get_action(action_name)
+        self._action(action)
+        # action_cmd = "actions.{0}.{1}()".format(action["type"], action["type"].capitalize())
+        # a_hand = eval(action_cmd)
+        # a_hand.feed(action["data"])
+        # a_hand.action()
+        # log.info("success...")
 
     @tracktime
     def run_save_action(self, action_name):

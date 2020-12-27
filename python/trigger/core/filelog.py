@@ -34,6 +34,7 @@ class Filelog(object):
         self.logger.debug("="*len(self.logName))
         self.logger.debug(self.logName)
         self.logger.debug("="*len(self.logName))
+        self.logger.debug("")
         self._end_logging()
 
     def info(self, msg):
