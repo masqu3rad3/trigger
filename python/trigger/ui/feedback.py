@@ -1,7 +1,8 @@
 from trigger.ui.Qt import QtWidgets
-from trigger.core import logger
+from trigger.core import filelog
 
-LOG = logger.Logger()
+log = filelog.Filelog(logname=__name__, filename="trigger_log")
+
 
 class Feedback():
     def __init__(self, *args, **kwargs):
@@ -35,7 +36,7 @@ class Feedback():
         for button in buttons:
             widget = button_dict.get(button)
             if not widget:
-                LOG.throw_error("Non-valid button defined. Valid buttons are: %s" %button_dict.keys())
+                log.error("Non-valid button defined. Valid buttons are: %s" % button_dict.keys())
             widgets.append(widget)
 
         q = QtWidgets.QMessageBox(parent=self.parent)

@@ -1,7 +1,7 @@
 from maya import cmds
-from trigger.core import logger
+from trigger.core import filelog
 
-FEEDBACK = logger.Logger(logger_name=__name__)
+log = filelog.Filelog(logname=__name__, filename="trigger_log")
 
 def create_space_switch(node, targetList, overrideExisting=False, mode="parent", defaultVal=1, listException=None):
     """
@@ -22,7 +22,7 @@ def create_space_switch(node, targetList, overrideExisting=False, mode="parent",
         # if targetList contains the node itself, remove it
         anchorPoses.remove(node)
     if anchorPoses == []:
-        FEEDBACK.throw_error("target list is empty or no valid targets")
+        log.error("target list is empty or no valid targets")
         return
     if listException != None:
         for x in listException:

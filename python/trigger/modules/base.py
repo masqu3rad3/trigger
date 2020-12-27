@@ -6,8 +6,10 @@ from trigger.library import attribute
 from trigger.library import connection
 
 from trigger.library import controllers as ic
-from trigger.core import logger
-LOG = logger.Logger(__name__)
+from trigger.core import filelog
+
+log = filelog.Filelog(logname=__name__, filename="trigger_log")
+
 
 LIMB_DATA = {
         "members": ["Base"],
@@ -21,7 +23,7 @@ class Base(object):
         super(Base, self).__init__()
         if build_data:
             if len(build_data.keys()) > 1:
-                LOG.throw_error("Base can only have one initial joint")
+                log.error("Base can only have one initial joint")
                 return
             self.baseInit = build_data["Base"]
         elif inits:
@@ -30,7 +32,7 @@ class Base(object):
                 return
             self.baseInit = inits[0]
         else:
-            LOG.throw_error("Class needs either build_data or inits to be constructed")
+            log.error("Class needs either build_data or inits to be constructed")
 
         self.suffix = (naming.uniqueName(cmds.getAttr("%s.moduleName" % self.baseInit)))
 
@@ -103,7 +105,7 @@ class Base(object):
 
     def createLimb(self):
         """Creates base joint for master and placement conts"""
-        LOG.info("Creating Base %s" % self.suffix)
+        log.info("Creating Base %s" % self.suffix)
         self.createGrp()
         self.createJoints()
         self.createControllers()
@@ -170,7 +172,7 @@ class Guides(object):
 
     def convertJoints(self, joints_list):
         if len(joints_list) != 1:
-            LOG.warning("Define or select a single joint for Root Guide conversion. Skipping")
+            log.warning("Define or select a single joint for Root Guide conversion. Skipping")
             return
         self.guideJoints = joints_list
         self.define_attributes()

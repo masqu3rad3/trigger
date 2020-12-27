@@ -9,11 +9,10 @@ from trigger.library import controllers as ic
 # from trigger.library import ribbon as rc
 # from trigger.library import twist_spline as twistSpline
 
-import maya.cmds as cmds
+from maya import cmds
+from trigger.core import filelog
 
-from trigger.core import logger
-
-FEEDBACK = logger.Logger(__name__)
+log = filelog.Filelog(logname=__name__, filename="trigger_log")
 
 LIMB_DATA = {
         "members":["TentacleRoot", "Tentacle", "TentacleEnd"],
@@ -64,7 +63,7 @@ class Tentacle(object):
                 return
             self.inits = inits
         else:
-            FEEDBACK.throw_error("Class needs either build_data or inits to be constructed")
+            log.error("Class needs either build_data or inits to be constructed")
 
         # get distances
 
@@ -675,7 +674,7 @@ class Guides(object):
 
     def convertJoints(self, joints_list):
         if len(joints_list) < 2:
-            FEEDBACK.warning("Define or select at least 2 joints for Tentacle Guide conversion. Skipping")
+            log.warning("Define or select at least 2 joints for Tentacle Guide conversion. Skipping")
             return
         self.guideJoints = joints_list
         self.define_attributes()

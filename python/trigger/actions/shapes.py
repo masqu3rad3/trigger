@@ -3,14 +3,15 @@ import os
 
 from maya import cmds
 import platform
-from trigger.core import logger
+from trigger.core import filelog
 from trigger.library import functions as extra
 
 from trigger.ui.Qt import QtWidgets, QtGui
 from trigger.ui import custom_widgets
 from trigger.ui import feedback
 
-LOG = logger.Logger(__name__, logging_level="info")
+log = filelog.Filelog(logname=__name__, filename="trigger_log")
+
 
 ACTION_DATA = {
                 "shapes_file_path": "",
@@ -113,10 +114,10 @@ class Shapes(object):
                          "-uvWrite 0 " \
                          "-root {1}".format(alembic_file_path, export_grp)
 
-        LOG.info("COMMAND", export_command)
+        log.info("COMMAND", export_command)
         cmds.AbcExport(j=export_command)
         cmds.delete(export_grp)
-        LOG.info("Exporting shapes successfull...")
+        log.info("Exporting shapes successfull...")
 
     # TODO: INCLUDE import_export action module and use that import functions
     def import_shapes(self, alembic_file_path):
@@ -146,4 +147,4 @@ class Shapes(object):
         currentPlatform = platform.system()
         ext = ".mll" if currentPlatform == "Windows" else ".so"
         try: cmds.loadPlugin("AbcExport%s" % ext)
-        except: LOG.throw_error("Alembic Plugin cannot be loaded")
+        except: log.error("Alembic Plugin cannot be loaded")

@@ -4,14 +4,15 @@ import os
 from maya import cmds
 
 from trigger.core import io
-from trigger.core import logger
+from trigger.core import filelog
 
 from trigger.ui.Qt import QtWidgets, QtGui
 from trigger.ui import custom_widgets
 from trigger.core.decorators import keepselection
 from trigger.ui import feedback
 
-LOG = logger.Logger(__name__)
+log = filelog.Filelog(logname=__name__, filename="trigger_log")
+
 
 ACTION_DATA = {
     "look_file_path": "",
@@ -45,7 +46,7 @@ class Look(object):
         for sg_name, elements in look_data.items():
             sg_file_path = os.path.join(look_folder, "%s.ma" %sg_name)
             if not os.path.isfile(sg_file_path):
-                LOG.warning("Shader file path not exist => %s. Skipping" %sg_file_path)
+                log.warning("Shader file path not exist => %s. Skipping" % sg_file_path)
                 continue
 
             sg_node_list = self.import_sgs(sg_file_path)

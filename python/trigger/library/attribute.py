@@ -2,10 +2,11 @@ from maya import cmds
 from maya import mel
 
 from trigger.core.decorators import undo
-from trigger.core import logger
+from trigger.core import filelog
 from trigger.core import compatibility as compat
 
-LOG = logger.Logger()
+# log = logger.Logger()
+log = filelog.Filelog(logname=__name__, filename="trigger_log")
 
 @undo
 def create_attribute(node, property_dict=None, keyable=True, display=True, *args, **kwargs):
@@ -40,13 +41,13 @@ def create_attribute(node, property_dict=None, keyable=True, display=True, *args
     attr_name = property_dict.get("attr_name")
 
     if not attr_name:
-        LOG.throw_error("The attribute dictionary does not have 'attr_name' value")
+        log.error("The attribute dictionary does not have 'attr_name' value")
     nice_name = property_dict.get("nice_name") if property_dict.get("nice_name") else attr_name
     attr_type = property_dict.get("attr_type")
     if not attr_type:
-        LOG.throw_error("The attribute dictionary does not have 'attr_type' value")
+        log.error("The attribute dictionary does not have 'attr_type' value")
     if attr_type not in supported_attrs:
-        LOG.throw_error("The attribute type (%s) is not supported by this method" % attr_type)
+        log.error("The attribute type (%s) is not supported by this method" % attr_type)
     # if some attribute with same name exists, quit
     default_value = property_dict.get("default_value")
     if cmds.attributeQuery(attr_name, node=node, exists=True):
@@ -64,7 +65,7 @@ def create_attribute(node, property_dict=None, keyable=True, display=True, *args
         default_value = default_value if default_value else 0
         enum_list = property_dict.get("enum_list")
         if enum_list == None:
-            LOG.throw_error("Missing 'enum_list'")
+            log.error("Missing 'enum_list'")
         cmds.addAttr(node, longName=attr_name, niceName=nice_name, at=attr_type, en=enum_list, k=keyable, defaultValue=default_value)
         cmds.setAttr("%s.%s" % (node, attr_name), e=True, cb=display)
     elif attr_type == "string":

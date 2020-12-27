@@ -1,7 +1,7 @@
 """Reference another Trigger session"""
 
 import os
-from trigger.core import logger
+from trigger.core import filelog
 
 # from trigger.base.actions_session import ActionsSession
 
@@ -9,7 +9,8 @@ import importlib
 from trigger.ui.Qt import QtWidgets
 from trigger.ui import custom_widgets
 
-LOG = logger.Logger(__name__)
+log = filelog.Filelog(logname=__name__, filename="trigger_log")
+
 
 ACTION_DATA = {
     "trigger_file_path": ""
@@ -33,10 +34,10 @@ class Reference_session(object):
         # everything in this method will be executed automatically.
         # This method does not accept any arguments. all the user variable must be defined to the instance before
         if not self.triggerFilePath:
-            LOG.warning("Reference Trigger Session path not defined. Skipping")
+            log.warning("Reference Trigger Session path not defined. Skipping")
             return
         if not os.path.isfile(self.triggerFilePath):
-            LOG.throw_error("Trigger File does not exists => %s" %self.triggerFilePath)
+            log.error("Trigger File does not exists => %s" % self.triggerFilePath)
 
         actions_session = importlib.import_module("trigger.base.actions_session")
         referenced_session = actions_session.ActionsSession()

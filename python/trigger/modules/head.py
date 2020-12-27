@@ -7,8 +7,8 @@ from trigger.library import attribute
 from trigger.library import api
 from trigger.library import controllers as ic
 from trigger.library import twist_spline as twistSpline
-from trigger.core import logger
-FEEDBACK = logger.Logger(__name__)
+from trigger.core import filelog
+log = filelog.Filelog(logname=__name__, filename="trigger_log")
 
 LIMB_DATA = {
         "members": ["NeckRoot", "Neck", "Head", "Jaw", "HeadEnd"],
@@ -69,7 +69,7 @@ class Head(object):
                 self.headStart = inits.pop(-1)
                 self.neckNodes = list(inits)
         else:
-            FEEDBACK.throw_error("Class needs either build_data or arminits to be constructed")
+            log.error("Class needs either build_data or arminits to be constructed")
 
         # get distances
         self.neckDist = functions.getDistance(self.neckNodes[0], self.headStart)
@@ -397,7 +397,7 @@ class Guides(object):
 
     def convertJoints(self, joints_list):
         if len(joints_list) < 3:
-            FEEDBACK.warning("Define or select at least 3 joints for Finger Guide conversion. Skipping")
+            log.warning("Define or select at least 3 joints for Finger Guide conversion. Skipping")
             return
         self.guideJoints = joints_list
         self.define_attributes()

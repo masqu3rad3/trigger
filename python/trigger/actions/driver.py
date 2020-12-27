@@ -1,11 +1,12 @@
 """creates driven connections between given attributes. It uses remap or direct connect according to the values"""
 
 from trigger.library import attribute
+from trigger.core import filelog
 from trigger.ui import custom_widgets
 from trigger.ui.Qt import QtWidgets, QtGui # for progressbar
 from trigger.core import logger
 
-log = logger.Logger()
+log = filelog.Filelog(logname=__name__, filename="trigger_log")
 
 
 ACTION_DATA = {

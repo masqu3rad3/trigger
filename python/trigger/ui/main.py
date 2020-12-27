@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""Main UI for TRigger"""
+"""Main UI for trigger"""
 import sys, os
 from maya import cmds
 
@@ -25,9 +25,9 @@ elif Qt.__binding__.startswith('PyQt'):
 else:
     from shiboken2 import wrapInstance
 
-from trigger.core import logger
+from trigger.core import filelog
 
-LOG = logger.Logger(logger_name=__name__)
+log = filelog.Filelog(logname=__name__, filename="trigger_log")
 
 WINDOW_NAME = "TRigger"
 
@@ -52,11 +52,6 @@ def _createCallbacks(function, parent=None, event=None):
     else:
         job = cmds.scriptJob(e=[event, function])
     callbackIDList.append(job)
-        # # cmds.scriptJob(e=[event, function], replacePrevious=True, parent=parent))
-        # # print(bool(parent))
-        #
-        # cmds.scriptJob(e=[event, function], replacePrevious=bool(parent)))
-        # # cmds.scriptJob(e=[event, function]))
     return callbackIDList
 
 
@@ -82,6 +77,7 @@ class MainUI(QtWidgets.QMainWindow):
         parent = getMayaMainWindow()
         super(MainUI, self).__init__(parent=parent)
 
+        log.clear()
         # create guide and rig objects
         self.actions_handler = actions_session.ActionsSession()
         self.guides_handler = session.Session()
@@ -112,15 +108,6 @@ class MainUI(QtWidgets.QMainWindow):
 
         self.populate_guides()
 
-        # self.callbackIDList = _createCallbacks(self.force_update, WINDOW_NAME, "SelectionChanged")
-
-        # # Create a QTimer
-        # self.timer = QtCore.QTimer()
-        # # Connect it to f
-        # self.timer.timeout.connect(self.force_update)
-        # # Call f() every 5 seconds
-        # self.timer.start(1000)
-
         self.splitter.setStretchFactor(0, 10)
         self.splitter.setStretchFactor(1, 40)
         self.splitter.setStretchFactor(1, 50)
@@ -134,6 +121,7 @@ class MainUI(QtWidgets.QMainWindow):
         # self.callbackIDList = _createCallbacks(self.force_update, WINDOW_NAME, "SelectionChanged")
         self.callbackIDList = _createCallbacks(self.force_update, parent=None, event="SelectionChanged")
 
+        log.info("Interface Loaded Successfully")
 
 
     def update_title(self):
@@ -866,7 +854,7 @@ class MainUI(QtWidgets.QMainWindow):
             p_widget = QtWidgets.QComboBox()
             enum_list_raw = property_dict.get("enum_list")
             if not enum_list_raw:
-                LOG.throw_error("Missing 'enum_list'")
+                log.error("Missing 'enum_list'")
             enum_list = enum_list_raw.split(":")
             p_widget.addItems(enum_list)
             p_widget.setCurrentIndex(p_value)
@@ -884,7 +872,7 @@ class MainUI(QtWidgets.QMainWindow):
             p_widget.textChanged.connect(lambda text: self.update_properties(p_name, text))
         else:
             p_widget = None
-            LOG.throw_error("Cannot find a proper equivalent for this attribute type %s" % p_type)
+            log.error("Cannot find a proper equivalent for this attribute type %s" % p_type)
 
         parent_form_layout.addRow(p_lbl, p_widget)
 

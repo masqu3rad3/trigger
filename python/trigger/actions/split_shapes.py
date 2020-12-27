@@ -10,10 +10,11 @@ from trigger.library import deformers, functions
 from trigger.ui import custom_widgets
 from trigger.ui.Qt import QtWidgets, QtGui
 from trigger.ui import feedback
-from trigger.core import logger
+from trigger.core import filelog
 from trigger.utils import shape_splitter
 
-LOG = logger.Logger()
+log = filelog.Filelog(logname=__name__, filename="trigger_log")
+
 
 ACTION_DATA = {
     "split_maps_file_path": "",

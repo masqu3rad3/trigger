@@ -4,14 +4,14 @@ from copy import deepcopy
 
 from maya import cmds
 import itertools
-from trigger.core import logger
+from trigger.core import filelog
 from trigger.core.decorators import keepselection
 from trigger.actions import weights
 from trigger.library import functions
 from trigger.library import deformers
 
 
-FEEDBACK = logger.Logger(logger_name=__name__)
+log = filelog.Filelog(logname=__name__, filename="trigger_log")
 
 class Splitter(dict):
     def __init__(self):
@@ -92,7 +92,7 @@ class Splitter(dict):
 
     def split_shapes(self):
         if not self.neutral:
-            FEEDBACK.throw_error("Neutral shape is not defined")
+            log.error("Neutral shape is not defined")
         splits_grp = "SPLITTED_SHAPES_grp"
         if not cmds.objExists(splits_grp):
             cmds.group(name="SPLITTED_SHAPES_grp", em=True)

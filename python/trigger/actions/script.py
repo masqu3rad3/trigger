@@ -5,13 +5,14 @@ from maya import cmds
 import platform
 import subprocess
 
-from trigger.core import logger
+from trigger.core import filelog
 from trigger.core import dynamic_import as dyn
 
 from trigger.ui.Qt import QtWidgets, QtGui # for progressbar
 from trigger.ui import custom_widgets
 
-LOG = logger.Logger(__name__)
+log = filelog.Filelog(logname=__name__, filename="trigger_log")
+
 
 ACTION_DATA = {
     "script_file_path": "",

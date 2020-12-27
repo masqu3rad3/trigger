@@ -11,9 +11,10 @@ from trigger.library import attribute
 from trigger import modules
 from trigger.core import settings
 
-from trigger.core import logger
+from trigger.core import filelog
 
-FEEDBACK = logger.Logger(logger_name=__name__)
+log = filelog.Filelog(logname=__name__, filename="trigger_log")
+
 
 class Initials(settings.Settings):
 
@@ -66,7 +67,7 @@ class Initials(settings.Settings):
 
         """
         if not cmds.objExists(parentBone):
-            FEEDBACK.warning("Joints cannot be identified automatically")
+            log.warning("Joints cannot be identified automatically")
             return None, None, None
         if "_right" in parentBone:
             mirrorBoneName = parentBone.replace("_right", "_left")
@@ -79,19 +80,19 @@ class Initials(settings.Settings):
         elif "_c" in parentBone:
             return None, "both", None
         else:
-            FEEDBACK.warning("Joints cannot be identified automatically")
+            log.warning("Joints cannot be identified automatically")
             return None, None, None
         if cmds.objExists(mirrorBoneName):
             return mirrorBoneName, alignmentGiven, alignmentReturn
         else:
-            FEEDBACK.warning("cannot find mirror Joint automatically")
+            log.warning("cannot find mirror Joint automatically")
             return None, alignmentGiven, None
 
     @undo
     def initLimb(self, limb_name, whichSide="left", constrainedTo=None, parentNode=None, defineAs=False, *args, **kwargs):
 
         if limb_name not in self.valid_limbs:
-            FEEDBACK.throw_error("%s is not a valid limb" % limb_name)
+            log.error("%s is not a valid limb" % limb_name)
 
         currentselection = cmds.ls(sl=True)
 
@@ -108,10 +109,10 @@ class Initials(settings.Settings):
             ## check validity of side arguments
             valid_sides = ["left", "right", "center", "both", "auto"]
             if whichSide not in valid_sides:
-                FEEDBACK.throw_error(
+                log.error(
                     "side argument '%s' is not valid. Valid arguments are: %s" % (whichSide, valid_sides))
             if len(cmds.ls(sl=True, type="joint")) != 1 and whichSide == "auto" and defineAs == False:
-                FEEDBACK.warning("You need to select a single joint to use Auto method")
+                log.warning("You need to select a single joint to use Auto method")
                 return
             ## get the necessary info from arguments
             if whichSide == "left":
@@ -427,12 +428,12 @@ class Initials(settings.Settings):
             if len(selection) == 1:
                 root_jnt = selection[0]
             else:
-                FEEDBACK.warning("Select a single root_jnt joint")
+                log.warning("Select a single root_jnt joint")
         if not cmds.objectType(root_jnt, isType="joint"):
-            FEEDBACK.throw_error("root_jnt is not a joint")
+            log.error("root_jnt is not a joint")
         root_name, root_type, root_side = functions.identifyMaster(root_jnt, self.module_dict)
         if root_name not in self.validRootList:
-            FEEDBACK.throw_error("Selected joint is not in the valid Guide Root")
+            log.error("Selected joint is not in the valid Guide Root")
 
         test_kinematics = kinematics.Kinematics(root_jnt, progress_bar=progress_bar)
         test_kinematics.afterlife = 0

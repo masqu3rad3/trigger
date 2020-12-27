@@ -7,8 +7,8 @@ from trigger.library import naming
 from trigger.library import attribute
 from trigger.library import controllers as ic
 
-from trigger.core import logger
-log = logger.Logger(__name__)
+from trigger.core import filelog
+log = filelog.Filelog(logname=__name__, filename="trigger_log")
 
 LIMB_DATA = {
     "members": ["FkRoot", "Fk"],
@@ -20,7 +20,7 @@ LIMB_DATA = {
     "sided": True,
 }
 
-class Fk():
+class Fk(object):
     def __init__(self, build_data=None, inits=None, *args, **kwargs):
         super(Fk, self).__init__()
         # fool proofing
@@ -34,12 +34,12 @@ class Fk():
             pass
         elif inits:
             if (len(inits) < 2):
-                log.throw_error("Simple FK setup needs at least 2 initial joints")
+                log.error("Simple FK setup needs at least 2 initial joints")
                 return
             self.fkRoot = inits[0]
             self.inits = inits
         else:
-            log.throw_error("Class needs either build_data or inits to be constructed")
+            log.error("Class needs either build_data or inits to be constructed")
 
         # get distances
 

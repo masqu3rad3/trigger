@@ -6,7 +6,7 @@ import maya.api.OpenMaya as om
 import maya.api.OpenMayaAnim as omAnim
 
 from trigger.core import io
-from trigger.core import logger
+from trigger.core import filelog
 from trigger.library import functions
 from trigger.library import naming
 from trigger.library import deformers
@@ -15,7 +15,8 @@ from trigger.ui.Qt import QtWidgets, QtGui # for progressbar
 from trigger.ui import custom_widgets
 from trigger.ui import feedback
 
-LOG = logger.Logger(__name__)
+log = filelog.Filelog(logname=__name__, filename="trigger_log")
+
 
 ACTION_DATA = {
                 "create_deformers": True,
@@ -59,7 +60,7 @@ class Weights(dict):
         if cmds.objExists(obj_name):
             self["deformer"] = obj_name
         else:
-            LOG.warning("The specified object does not exists")
+            log.warning("The specified object does not exists")
             return
 
     def set_path(self, file_path):
@@ -172,12 +173,12 @@ class Weights(dict):
 
     def save_weights(self, deformer=None, file_path=None, vertexConnections=False, force=True, influencer=None):
         if not deformer and not self.deformer:
-            LOG.throw_error("Cannot save the weight %s \nNo Deformer defined. A Deformer needs to be defined either as argument or class variable)" % file_path)
+            log.error("Cannot save the weight %s \nNo Deformer defined. A Deformer needs to be defined either as argument or class variable)" % file_path)
         if not deformer:
             deformer = self.deformer
         if not force:
             if os.path.isfile(file_path):
-                LOG.warning("This file already exists. Skipping")
+                log.warning("This file already exists. Skipping")
                 return False
         # Vertex connections is required for barycentric and bilinear modes when loading
         if not file_path:
@@ -220,12 +221,12 @@ class Weights(dict):
             operation_data["deformerWeight"]["weights"][0]["layer"] = 0
             self.io.write(operation_data)
 
-        LOG.info("File exported to %s successfully..." % os.path.join(file_dir, file_name))
+        log.info("File exported to %s successfully..." % os.path.join(file_dir, file_name))
         return True
 
     def load_weights(self, deformer=None, file_path=None, method="index", ignore_name=True):
         if not deformer and not self.deformer:
-            LOG.throw_error(
+            log.error(
                 "No Deformer defined. A Deformer needs to be defined either as argument or class variable)")
         if not deformer:
             deformer = self.deformer
@@ -298,7 +299,7 @@ class Weights(dict):
 
             deformer_info = weights_data["deformerWeight"].get("deformers")
             if not deformer_info and not deformer_type:
-                LOG.throw_error("Cannot identify the deformer type. Use the flag 'deformer_type' or export the weights with additional attributes")
+                log.error("Cannot identify the deformer type. Use the flag 'deformer_type' or export the weights with additional attributes")
 
             if deformer_info:
                 deformer_type = weights_data["deformerWeight"]["deformers"][0]["type"]
@@ -314,7 +315,7 @@ class Weights(dict):
                 deformer = cmds.skinCluster(influencers, affected[0], name=deformer_name, tsb=True)[0]
             else:
                 # TODO : SUPPORT FOR ALL DEFORMERS
-                LOG.throw_error("deformers OTHER than skinCluster are not YET supported")
+                log.error("deformers OTHER than skinCluster are not YET supported")
                 return
             for attr_dict in deformer_attrs:
                 attr_name = attr_dict["name"]

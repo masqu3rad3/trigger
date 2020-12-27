@@ -1,9 +1,11 @@
 from copy import deepcopy
 
 from trigger.core import io
-from trigger.core import logger
+from trigger.core import filelog
 
-FEEDBACK = logger.Logger(logger_name=__name__)
+# log = logger.Logger(logger_name=__name__)
+log = filelog.Filelog(logname=__name__, filename="trigger_log")
+
 
 DEFAULT_SETTINGS = {
     "upAxis": "+y",
@@ -26,8 +28,8 @@ DEFAULT_FILENAME = "triggerSettings.json"
 class Settings(dict):
     def __init__(self, filename=None, folder=None, custom_root_path=None):
         # super(Settings, self).__init__()
-        FEEDBACK.debug("COUNTING")
-        FEEDBACK.debug("dd")
+        # log.debug("COUNTING")
+        # log.debug("dd")
         filename = DEFAULT_FILENAME if not filename else filename
         self.io = io.IO(file_name=filename, folder_name=folder, root_path=custom_root_path)
         self.original_settings = self.read_settings()
@@ -57,14 +59,14 @@ class Settings(dict):
         if self.isChanged():
             self.original_settings = deepcopy(self.current_settings)
             self.write_settings(self.original_settings)
-            FEEDBACK.info("Changes saved")
-        FEEDBACK.warning("Nothing changed")
+            log.info("Changes saved")
+        log.warning("Nothing changed")
 
     def get(self, name_of_setting):
         try:
             return self.current_settings[name_of_setting]
         except KeyError:
-            FEEDBACK.throw_error("Invalid Setting Name %s" %name_of_setting)
+            log.error("Invalid Setting Name %s" % name_of_setting)
 
 
     def set(self, name, value):
@@ -73,13 +75,13 @@ class Settings(dict):
             self.current_settings[name] = value
             return True
         else:
-            FEEDBACK.warning("'%s' is not in the settings. Use add instead" % name)
+            log.warning("'%s' is not in the settings. Use add instead" % name)
             return False
 
     def add(self, name, value):
         """adds a new item to the settings"""
         if name in self.current_settings.keys():
-            FEEDBACK.warning("'%s' is already in the settings. Use set instead" % name)
+            log.warning("'%s' is already in the settings. Use set instead" % name)
             return False
         else:
             self.current_settings[name] = value

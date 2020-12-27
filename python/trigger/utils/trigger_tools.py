@@ -10,9 +10,9 @@ import sys
 import weakref
 from functools import wraps
 from maya import cmds
-import logging
+from trigger.core import filelog
 
-logger = logging.getLogger(__name__)
+log = filelog.Filelog(logname=__name__, filename="trigger_log")
 
 from trigger.ui import Qt
 from trigger.ui.Qt import QtWidgets, QtCore, QtGui
@@ -323,7 +323,7 @@ class TriggerTool(object):
 def dock_window(dialog_class):
     try:
         cmds.deleteUI(dialog_class.CONTROL_NAME)
-        logger.info('removed workspace {}'.format(dialog_class.CONTROL_NAME))
+        log.info('removed workspace {}'.format(dialog_class.CONTROL_NAME))
     except:
         pass
 
@@ -388,7 +388,7 @@ class MainUI(QtWidgets.QWidget):
     @staticmethod
     def delete_instances():
         for ins in MainUI.instances:
-            logger.info('Delete {}'.format(ins))
+            log.info('Delete {}'.format(ins))
             try:
                 ins.setParent(None)
                 ins.deleteLater()

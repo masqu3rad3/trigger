@@ -1,12 +1,13 @@
 """Boiler Plate template for actions"""
 
 from trigger.core import io
-from trigger.core import logger
+from trigger.core import filelog
 
 from trigger.ui import custom_widgets
 from trigger.ui import feedback
 
-LOG = logger.Logger(__name__)
+log = filelog.Filelog(logname=__name__, filename="trigger_log")
+
 
 ACTION_DATA = {
     "some_property": "some_default_data",

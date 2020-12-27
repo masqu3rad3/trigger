@@ -1,10 +1,11 @@
 """Collection of shading related functions"""
 
 from maya import cmds
-from trigger.core import logger
+from trigger.core import filelog
 from trigger.library import naming
 
-FEEDBACK = logger.Logger(logger_name=__name__)
+log = filelog.Filelog(logname=__name__, filename="trigger_log")
+
 
 def get_file_nodes(objList):
     returnList = []
@@ -67,12 +68,12 @@ def create_preview_shader(shader_type="blinn", preset=None, diffuse=None, mask=N
     # TODO WIP
     valid_types = ["lambert", "surfaceShader", "blinn", "phong", "standardShader"]
     if shader_type not in valid_types:
-        FEEDBACK.throw_error("The shader type %s is not valid. valid types are: %s" %(shader_type, ", ".join(valid_types)))
+        log.error("The shader type %s is not valid. valid types are: %s" % (shader_type, ", ".join(valid_types)))
 
     if preset:
         valid_presets = ["glass", "skin", "fabric", "metal", "emissive"]
         if preset not in valid_presets:
-            FEEDBACK.throw_error(
+            log.error(
                 "The preset %s is not valid. valid presets are: %s" % (preset, ", ".join(valid_presets)))
         if preset == "glass":
             pass

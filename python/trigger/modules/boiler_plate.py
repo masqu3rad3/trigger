@@ -5,8 +5,9 @@ from trigger.library import naming
 from trigger.library import attribute
 from trigger.library import controllers as ic
 
-from trigger.core import logger
-FEEDBACK = logger.Logger(__name__)
+from trigger.core import filelog
+log = filelog.Filelog(logname=__name__, filename="trigger_log")
+
 
 LIMB_DATA = {"members": ["ROOT_NAME", "MID", "END"],
              "properties": [{"attr_name": "attrName",
@@ -33,7 +34,7 @@ class Limb():
             # parse inits
             pass
         else:
-            FEEDBACK.throw_error("Class needs either build_data or inits to be constructed")
+            log.error("Class needs either build_data or inits to be constructed")
 
         # get distances
 

@@ -3,8 +3,9 @@ import maya.api.OpenMaya as om
 
 from trigger.library import functions, naming
 from trigger.library import attribute
-from trigger.core import logger
-FEEDBACK = logger.Logger(__name__)
+from trigger.core import filelog
+log = filelog.Filelog(logname=__name__, filename="trigger_log")
+
 
 LIMB_DATA = {
         "members": ["Root"],
@@ -18,7 +19,7 @@ class Connector(object):
         super(Connector, self).__init__()
         if build_data:
             if len(build_data.keys()) > 1:
-                FEEDBACK.throw_error("Root can only have one initial joint")
+                log.error("Root can only have one initial joint")
                 return
             self.rootInit = build_data["Root"]
         elif inits:
@@ -27,7 +28,7 @@ class Connector(object):
                 return
             self.rootInit = inits[0]
         else:
-            FEEDBACK.throw_error("Class needs either build_data or inits to be constructed")
+            log.error("Class needs either build_data or inits to be constructed")
 
         self.suffix = (naming.uniqueName(cmds.getAttr("%s.moduleName" % self.rootInit)))
 
@@ -54,7 +55,7 @@ class Connector(object):
         Returns: None
 
         """
-        FEEDBACK.info("Creating Root %s" %self.suffix)
+        log.info("Creating Root %s" % self.suffix)
 
         self.scaleGrp = cmds.group(name="%s_scaleGrp" % self.suffix, em=True)
         self.limbGrp = cmds.group(name=self.suffix, em=True)
@@ -129,7 +130,7 @@ class Guides(object):
 
     def convertJoints(self, joints_list):
         if len(joints_list) != 1:
-            FEEDBACK.warning("Define or select a single joint for Root Guide conversion. Skipping")
+            log.warning("Define or select a single joint for Root Guide conversion. Skipping")
             return
         self.guideJoints = joints_list
         self.define_attributes()

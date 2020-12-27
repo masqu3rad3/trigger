@@ -6,8 +6,8 @@ from trigger.library import naming
 from trigger.library import attribute
 from trigger.library import api
 from trigger.library import controllers as ic
-from trigger.core import logger
-FEEDBACK = logger.Logger(__name__)
+from trigger.core import filelog
+log = filelog.Filelog(logname=__name__, filename="trigger_log")
 
 LIMB_DATA = {
         "members": ["TailRoot", "Tail"],
@@ -26,11 +26,11 @@ class Tail(object):
             self.inits = [self.tailRoot] + (self.tails)
         elif inits:
             if (len(inits) < 2):
-                FEEDBACK.throw_error("Tail setup needs at least 2 initial joints")
+                log.error("Tail setup needs at least 2 initial joints")
                 return
             self.inits = inits
         else:
-            FEEDBACK.throw_error("Class needs either build_data or inits to be constructed")
+            log.error("Class needs either build_data or inits to be constructed")
 
         # initialize coordinates
         self.up_axis, self.mirror_axis, self.look_axis = functions.getRigAxes(self.inits[0])
@@ -181,7 +181,7 @@ class Guides(object):
     def draw_joints(self):
         # fool check
         if not self.segments or self.segments < 1:
-            FEEDBACK.warning("minimum segments required for the simple tail is two. current: %s" % self.segments)
+            log.warning("minimum segments required for the simple tail is two. current: %s" % self.segments)
             return
 
         rPointTail = om.MVector(0, 14, 0) * self.tMatrix
@@ -225,7 +225,7 @@ class Guides(object):
 
     def convertJoints(self, joints_list):
         if len(joints_list) < 2:
-            FEEDBACK.warning("Define or select at least 2 joints for Tail Guide conversion. Skipping")
+            log.warning("Define or select at least 2 joints for Tail Guide conversion. Skipping")
             return
         self.guideJoints = joints_list
         self.define_attributes()

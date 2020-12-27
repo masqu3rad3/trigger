@@ -44,7 +44,6 @@ def uniqueScene():
 
 def resolve_version(file_path):
     """Resolves the version of the given file"""
-
     no_ext = os.path.splitext(file_path)[0]
     is_digits = re.search('.*?([0-9]+)$', no_ext)
     if not is_digits:

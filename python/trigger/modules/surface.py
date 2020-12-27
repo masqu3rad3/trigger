@@ -7,9 +7,9 @@ from trigger.library import attribute
 from trigger.library import connection
 from trigger.library import controllers as ic
 from trigger.utils import parentToSurface
-from trigger.core import logger
+from trigger.core import filelog
 
-FEEDBACK = logger.Logger(__name__)
+log = filelog.Filelog(logname=__name__, filename="trigger_log")
 
 LIMB_DATA = {
         "members": ["Surface"],
@@ -39,7 +39,7 @@ class Surface(object):
         super(Surface, self).__init__()
         if build_data:
             if len(build_data.keys()) > 1:
-                FEEDBACK.throw_error("Surface Module can only have one initial joint")
+                log.error("Surface Module can only have one initial joint")
                 return
             self.rootInit = build_data["Surface"]
         elif inits:
@@ -48,7 +48,7 @@ class Surface(object):
                 return
             self.rootInit = inits[0]
         else:
-            FEEDBACK.throw_error("Class needs either build_data or inits to be constructed")
+            log.error("Class needs either build_data or inits to be constructed")
 
         # get properties
         self.controllerSurface = cmds.getAttr("%s.controllerSurface" % self.rootInit)
@@ -230,7 +230,7 @@ class Guides(object):
 
     def convertJoints(self, joints_list):
         if len(joints_list) != 1:
-            FEEDBACK.warning("Define or select a single joint for Root Guide conversion. Skipping")
+            log.warning("Define or select a single joint for Root Guide conversion. Skipping")
             return
         self.guideJoints = joints_list
         self.define_attributes()

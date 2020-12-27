@@ -16,12 +16,12 @@ ACTION_DATA = {
                 }
 """
 
-from trigger.core import logger
+from trigger.core import filelog
 from trigger.ui.Qt import QtWidgets, QtGui, QtCore
 
 from trigger.utils import space_switcher
 
-LOG = logger.Logger(__name__)
+log = filelog.Filelog(logname=__name__, filename="trigger_log")
 
 ACTION_DATA = {
     "switcher_definitions": [],

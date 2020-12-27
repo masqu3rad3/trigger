@@ -1,7 +1,7 @@
 """Builds the kinematics starting from the given root and for all descendants"""
 import os
 from maya import cmds
-from trigger.core import logger
+from trigger.core import filelog
 from trigger.library import functions, naming
 from trigger.library import attribute
 from trigger.library import api
@@ -18,7 +18,7 @@ from trigger.actions import master
 from trigger.ui.Qt import QtWidgets, QtGui # for progressbar
 from trigger.ui import custom_widgets
 
-LOG = logger.Logger(logger_name=__name__)
+log = filelog.Filelog(logname=__name__, filename="trigger_log")
 #
 ACTION_DATA = {
                "guides_file_path": "",
@@ -160,7 +160,7 @@ class Kinematics(settings.Settings):
         def get_roots_menu():
             if file_path_le.text():
                 if not os.path.isfile(file_path_le.text()):
-                    LOG.throw_error("Guides file does not exist")
+                    log.error("Guides file does not exist")
 
                 list_of_roots = list(guides_handler.get_roots_from_file(file_path=file_path_le.text()))
                 zortMenu = QtWidgets.QMenu()
@@ -174,7 +174,7 @@ class Kinematics(settings.Settings):
         def add_root(root):
             current_roots = guide_roots_le.text()
             if root in current_roots:
-                LOG.warning("%s is already in the list" % root)
+                log.warning("%s is already in the list" % root)
                 return
             new_roots = root if not current_roots else "{0}; {1}".format(current_roots, root)
             guide_roots_le.setText(new_roots)
@@ -231,7 +231,6 @@ class Kinematics(settings.Settings):
         Returns: None
 
         """
-        LOG.warning(rootNode)
         l_hip, r_hip, l_shoulder, r_shoulder = [None, None, None, None]
         allJoints = cmds.listRelatives(rootNode, type="joint", ad=True)
         allJoints = [] if not allJoints else allJoints
@@ -364,18 +363,18 @@ class Kinematics(settings.Settings):
                 if root_plug and parent_socket and master_cont:
                     # check the root
                     if functions.identifyMaster(root_plug, self.module_dict)[0] not in self.validRootList:
-                        LOG.throw_error("root must be a valid root guide node")
+                        log.throw_error("root must be a valid root guide node")
                     limbCreationList = self.get_limb_hierarchy(root_plug)
                 else:
-                    LOG.throw_error("add_limb mode requires all root, parent and master_cont flags")
+                    log.throw_error("add_limb mode requires all root, parent and master_cont flags")
             else:
                 if len(cmds.ls(sl=True)) == 3:
                     root_plug, parent_socket, master_cont = cmds.ls(sl=True)
                 else:
-                    LOG.throw_error(
+                    log.throw_error(
                         "Select exactly three nodes. First reference root node then target parent and finally master controller")
                 if functions.identifyMaster(root_plug, self.module_dict)[0] not in self.validRootList:
-                    LOG.throw_error("First selection must be a valid root joint node")
+                    log.throw_error("First selection must be a valid root joint node")
 
             limbCreationList = self.get_limb_hierarchy(root_plug)
 

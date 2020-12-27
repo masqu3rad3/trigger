@@ -7,9 +7,10 @@ from trigger.library import api
 from trigger.library import connection
 from trigger.library import controllers as ic
 from trigger.library import ribbon as rc
-from trigger.core import logger
+from trigger.core import filelog
 
-FEEDBACK = logger.Logger(__name__)
+log = filelog.Filelog(logname=__name__, filename="trigger_log")
+
 
 LIMB_DATA = {
     "members": ["Collar", "Shoulder", "Elbow", "Hand"],
@@ -48,7 +49,7 @@ class Arm(object):
                 self.elbow_ref = inits[2]
                 self.hand_ref = inits[3]
         else:
-            FEEDBACK.throw_error("Class needs either build_data or arm inits to be constructed")
+            log.error("Class needs either build_data or arm inits to be constructed")
 
         self.collar_pos = api.getWorldTranslation(self.collar_ref)
         self.shoulder_pos = api.getWorldTranslation(self.shoulder_ref)
@@ -1160,7 +1161,7 @@ class Guides(object):
 
     def convertJoints(self, joints_list):
         if len(joints_list) != 4:
-            FEEDBACK.warning("Define or select exactly 5 joints for Arm Guide conversion. Skipping")
+            log.warning("Define or select exactly 5 joints for Arm Guide conversion. Skipping")
             return
         self.guideJoints = joints_list
         _ = [functions.set_joint_side(jnt, self.side) for jnt in self.guideJoints]

@@ -5,8 +5,10 @@ from trigger.library import naming
 # USING MAYA API 2.0
 import maya.api.OpenMaya as om
 
-from trigger.core import logger
-FEEDBACK = logger.Logger(logger_name=__name__)
+from trigger.core import filelog
+# log = logger.Logger(logger_name=__name__)
+log = filelog.Filelog(logname=__name__, filename="trigger_log")
+
 
 JOINT_TYPE_DICT = {
     1: 'Root',
@@ -118,7 +120,7 @@ def alignAndAim(node, targetList, aimTargetList, upObject=None, upVector=None, l
 
     """
     if upObject and upVector:
-        FEEDBACK.throw_error("In alignAndAim function both upObject and upVector parameters cannot be used")
+        log.throw_error("In alignAndAim function both upObject and upVector parameters cannot be used")
         return
 
     pointFlags = ""
@@ -232,10 +234,10 @@ def colorize (node_list, index, customColor=None, shape=True):
             if index.upper() in sidesDict.keys():
                 index = sidesDict[index.upper()]
             else:
-                FEEDBACK.throw_error("Colorize error... Unknown index command")
+                log.throw_error("Colorize error... Unknown index command")
                 return
         else:
-            FEEDBACK.throw_error("Colorize error... Index flag must be integer or string('L', 'R', 'C')")
+            log.throw_error("Colorize error... Index flag must be integer or string('L', 'R', 'C')")
             return
         if shape:
             shapes=cmds.listRelatives(node, s=True)
@@ -286,7 +288,7 @@ def get_joint_type(joint, skipErrors=True):
         if skipErrors:
             return
         else:
-            FEEDBACK.throw_error("Cannot detect joint type => %s" % joint)
+            log.throw_error("Cannot detect joint type => %s" % joint)
     if type_int == 18:
         type_name = cmds.getAttr("{0}.otherType".format(joint))
     else:
@@ -310,7 +312,7 @@ def set_joint_side(joint, side):
     elif side.lower() == "center" or side.lower() == "c":
         cmds.setAttr("%s.side" % joint, 0)
     else:
-        FEEDBACK.throw_error("%s is not a valid side value" % side)
+        log.throw_error("%s is not a valid side value" % side)
 
 def get_joint_side(joint, skipErrors=True):
     """
@@ -327,7 +329,7 @@ def get_joint_side(joint, skipErrors=True):
         if skipErrors:
             return
         else:
-            FEEDBACK.throw_error("Joint Side cannot not be detected (%s)" % joint)
+            log.throw_error("Joint Side cannot not be detected (%s)" % joint)
     return JOINT_SIDE_DICT[side_int]
 
 def identifyMaster(joint, modules_dictionary):

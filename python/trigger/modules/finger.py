@@ -6,8 +6,10 @@ from trigger.library import naming
 from trigger.library import attribute
 from trigger.library import api
 from trigger.library import controllers as ic
-from trigger.core import logger
-FEEDBACK = logger.Logger(__name__)
+from trigger.core import filelog
+log = filelog.Filelog(logname=__name__, filename="trigger_log")
+
+
 
 LIMB_DATA = {
         "members": ["FingerRoot", "Finger"],
@@ -38,18 +40,18 @@ class Finger(object):
         elif inits:
             # fool proofing
             if (len(inits) < 2):
-                FEEDBACK.throw_error("Insufficient Finger Initialization Joints")
+                log.error("Insufficient Finger Initialization Joints")
                 return
             self.inits = inits
         else:
-            FEEDBACK.throw_error("Class needs either build_data or arminits to be constructed")
+            log.error("Class needs either build_data or arminits to be constructed")
 
         hand_controller = cmds.getAttr("%s.handController" % self.inits[0])
         if hand_controller:
             if cmds.objExists(hand_controller):
                 self.handController = hand_controller
             else:
-                FEEDBACK.warning("Hand Control object %s is not exist. Skipping hand controller" % hand_controller)
+                log.warning("Hand Control object %s is not exist. Skipping hand controller" % hand_controller)
                 self.handController = None
         else:
             self.handController = None
@@ -336,7 +338,7 @@ class Guides(object):
 
     def draw_joints(self):
         if self.segments < 2:
-            FEEDBACK.warning("minimum segments for the fingers are two. current: %s" % self.segments)
+            log.warning("minimum segments for the fingers are two. current: %s" % self.segments)
             return
         rPointFinger = om.MVector(0, 0, 0) * self.tMatrix
         nPointFinger = om.MVector(5*self.sideMultiplier, 0, 0) * self.tMatrix
@@ -377,7 +379,7 @@ class Guides(object):
 
     def convertJoints(self, joints_list):
         if len(joints_list) < 2:
-            FEEDBACK.warning("Define or select at least 2 joints for Finger Guide conversion. Skipping")
+            log.warning("Define or select at least 2 joints for Finger Guide conversion. Skipping")
             return
         self.guideJoints = joints_list
         self.define_attributes()

@@ -8,8 +8,8 @@ from trigger.library import api
 from trigger.library import controllers as ic
 from trigger.library import ribbon as rc
 
-from trigger.core import logger
-FEEDBACK = logger.Logger(__name__)
+from trigger.core import filelog
+log = filelog.Filelog(logname=__name__, filename="trigger_log")
 
 LIMB_DATA = {
         "members": ["LegRoot", "Hip", "Knee", "Foot", "Ball", "HeelPV", "ToePV", "BankIN", "BankOUT"],
@@ -45,7 +45,7 @@ class Leg(object):
             self.bank_in_ref = inits[7]
             self.bank_out_ref = inits[8]
         else:
-            FEEDBACK.throw_error("Class needs either build_data or arminits to be constructed")
+            log.error("Class needs either build_data or arminits to be constructed")
 
         # get positions
         self.leg_root_pos = api.getWorldTranslation(self.leg_root_ref)
@@ -1288,7 +1288,7 @@ class Guides(object):
 
     def convertJoints(self, joints_list):
         if len(joints_list) != 8:
-            FEEDBACK.warning("Define or select exactly 8 joints for Leg Guide conversion. Skipping \nSelection Order => LegRoot-Hip-Knee-Foot-Ball-Toe-HeelpPV-ToePV-BankIN-BankOUT")
+            log.warning("Define or select exactly 8 joints for Leg Guide conversion. Skipping \nSelection Order => LegRoot-Hip-Knee-Foot-Ball-Toe-HeelpPV-ToePV-BankIN-BankOUT")
             return
         self.guideJoints = joints_list
         self.define_attributes()

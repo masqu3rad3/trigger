@@ -6,12 +6,13 @@ from trigger.library import attribute
 from trigger.library import api
 
 from trigger.core import io
-from trigger.core import logger
+from trigger.core import filelog
 from trigger.core import compatibility as compat
 
 from trigger.base import initials
 
-LOG = logger.Logger(logger_name=__name__)
+log = filelog.Filelog(logname=__name__, filename="trigger_log")
+
 
 class Session(object):
     def __init__(self):
@@ -28,7 +29,7 @@ class Session(object):
         self.io.file_path = file_path
         guides_data = self.collect_guides()
         self.io.write(guides_data)
-        LOG.info("Session Saved Successfully...")
+        log.info("Session Saved Successfully...")
 
     # def load_session(self, file_path, reset_scene=True):
     def load_session(self, file_path, reset_scene=False):
@@ -39,9 +40,9 @@ class Session(object):
         guides_data = self._get_guides_data(file_path)
         if guides_data:
             self.rebuild_guides(guides_data)
-            LOG.info("Session Loaded Successfully...")
+            log.info("Session Loaded Successfully...")
         else:
-            LOG.throw_error("The specified file doesn't exists")
+            log.error("The specified file doesn't exists")
 
     def get_roots_from_file(self, file_path):
         guides_data = self._get_guides_data(file_path)

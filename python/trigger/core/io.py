@@ -7,10 +7,11 @@ import json
 import shutil
 import re
 
-from trigger.core import logger
+from trigger.core import filelog
 from trigger.core import compatibility as compat
 
-log = logger.Logger(logger_name=__name__)
+log = filelog.Filelog(logname=__name__, filename="trigger_log")
+
 
 class IO(dict):
     def __init__(self, file_name=None, folder_name=None, root_path=None, file_path=None):
@@ -26,7 +27,7 @@ class IO(dict):
                 self.root_path = os.path.normpath(os.path.expanduser("~"))
             self.file_path = os.path.join(self.root_path, self.folder_name, file_name)
         else:
-            log.throw_error("IO class cannot initialized. At least a file name or file_path must be defined")
+            log.error("IO class cannot initialized. At least a file name or file_path must be defined")
 
     @property
     def file_path(self):
@@ -37,10 +38,10 @@ class IO(dict):
         name, ext = os.path.splitext(new_path)
         directory, _ = os.path.split(new_path)
         if not ext:
-            log.throw_error("IO module needs to know the extension")
+            log.error("IO module needs to know the extension")
             raise Exception
         if ext not in self.valid_extensions:
-            log.throw_error("IO maya_modules does not support this extension (%s)" % ext)
+            log.error("IO maya_modules does not support this extension (%s)" % ext)
             raise Exception
         if directory:
             self["file_path"] = self._folderCheck(new_path)
@@ -67,10 +68,10 @@ class IO(dict):
                     data = json.load(f)
                     return data
             except ValueError:
-                log.throw_error("Corrupted file => %s" % file_path)
+                log.error("Corrupted file => %s" % file_path)
                 raise Exception
         else:
-            log.throw_error("File cannot be found => %s" % file_path)
+            log.error("File cannot be found => %s" % file_path)
 
     def _dump_json(self, data, file_path):
         """Saves the data to the json file"""

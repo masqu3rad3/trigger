@@ -3,7 +3,7 @@
 import os
 from maya import cmds
 from maya import mel
-from trigger.core import logger
+from trigger.core import filelog
 from trigger.library import selection
 from trigger.library import connection
 import trigger.library.functions as functions
@@ -12,7 +12,8 @@ import trigger.library.controllers as ic
 from trigger.ui.Qt import QtWidgets, QtGui # for progressbar
 from trigger.ui import feedback
 
-LOG = logger.Logger(logger_name=__name__)
+log = filelog.Filelog(logname=__name__, filename="trigger_log")
+
 
 ACTION_DATA = {
     "cloth_objects": [],

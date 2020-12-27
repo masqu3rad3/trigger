@@ -1,7 +1,7 @@
 """Assembles the scene geo with alembic caches"""
 import os
 from trigger.core import io
-from trigger.core import logger
+from trigger.core import filelog
 from trigger.actions import import_asset
 from trigger.library import naming
 
@@ -9,7 +9,7 @@ from trigger.ui.Qt import QtWidgets, QtGui # for progressbar
 from trigger.ui import custom_widgets
 from trigger.ui import feedback
 
-LOG = logger.Logger(__name__)
+log = filelog.Filelog(logname=__name__, filename="trigger_log")
 
 ACTION_DATA = {
     "alembic_path_list": [],
