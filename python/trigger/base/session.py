@@ -40,9 +40,10 @@ class Session(object):
         guides_data = self._get_guides_data(file_path)
         if guides_data:
             self.rebuild_guides(guides_data)
-            log.info("Session Loaded Successfully...")
+            log.info("Guides Loaded Successfully...")
         else:
-            log.error("The specified file doesn't exists")
+            log.error("Guides File doesn't exist or unreadable => %s" %file_path)
+            raise Exception
 
     def get_roots_from_file(self, file_path):
         guides_data = self._get_guides_data(file_path)

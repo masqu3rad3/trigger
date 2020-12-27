@@ -7,6 +7,7 @@ import maya.api.OpenMayaAnim as omAnim
 
 from trigger.core import io
 from trigger.core import filelog
+from trigger.core.decorators import keepselection, tracktime, logerror
 from trigger.library import functions
 from trigger.library import naming
 from trigger.library import deformers
@@ -224,6 +225,7 @@ class Weights(dict):
         log.info("File exported to %s successfully..." % os.path.join(file_dir, file_name))
         return True
 
+    @keepselection
     def load_weights(self, deformer=None, file_path=None, method="index", ignore_name=True):
         if not deformer and not self.deformer:
             log.error(
@@ -251,12 +253,15 @@ class Weights(dict):
         elif deformer_type == "skinCluster":
             skin_meshes = cmds.listConnections(deformer, type="mesh")
             for mesh in skin_meshes:
+                # Skin cluster weight loading has a bug - Its not loading the value of the first vertex
                 cmds.select("%s.vtx[0]" % mesh)
                 cmds.WeightHammer()
             if data.get("DQ_weights"):
                 for nmb, weight in enumerate(data["DQ_weights"]):
                     cmds.setAttr('%s.bw[%s]' % (deformer, nmb), weight)
-            cmds.select(d=True)
+            # cmds.select(d=True)
+            log.info("%s Weights Lodaded Successfully..." %deformer)
+
             return
             # point_attr_template = "{0}.weightList[{1}].weights[0]"
 
@@ -265,6 +270,8 @@ class Weights(dict):
             # cmds.setAttr("%s.inputTarget[0].inputTargetGroup[%i].targetWeights[0]" % (deformer, nmb), index0_val)
             cmds.setAttr(point_attr_template.format(deformer, nmb), index0_val)
             # splitMaps_blendshape.inputTarget[0].inputTargetGroup[X].targetWeights[0]
+
+        log.info("%s Weights Lodaded Successfully..." %deformer)
         return True
 
     def create_deformer(self, weights_file, deformer_type=None):
@@ -641,5 +648,4 @@ def get_deformer_weights(mesh, source_deformer, source_influence=None, data_type
         ]
 
     return weight_list
-    
 

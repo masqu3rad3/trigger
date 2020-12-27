@@ -37,26 +37,26 @@ class Filelog(object):
         self._end_logging()
 
     def info(self, msg):
-        stamped_msg = "%sINFO    :%s" %(self._get_now(), msg)
+        stamped_msg = "%sINFO    : %s" %(self._get_now(), msg)
         self._start_logging()
         self.logger.info(stamped_msg)
         self._end_logging()
 
     def warning(self, msg):
-        stamped_msg = "%sWARNING :%s" % (self._get_now(), msg)
+        stamped_msg = "%sWARNING : %s" % (self._get_now(), msg)
         self._start_logging()
         self.logger.warning(stamped_msg)
         self._end_logging()
 
     def error(self, msg):
-        stamped_msg = "%sERROR   :%s" % (self._get_now(), msg)
+        stamped_msg = "%sERROR   : %s" % (self._get_now(), msg)
         self._start_logging()
         self.logger.error(stamped_msg)
         self._end_logging()
 
     def title(self, msg):
         self._start_logging()
-        self.logger.debug("\n")
+        self.logger.debug("")
         self.logger.debug("="*(len(msg)))
         self.logger.debug(msg)
         self.logger.debug("="*(len(msg)))
@@ -65,7 +65,7 @@ class Filelog(object):
 
     def header(self, msg):
         self._start_logging()
-        self.logger.debug("\n")
+        self.logger.debug("")
         self.logger.debug(msg)
         self.logger.debug("=" * (len(msg)))
         # self.logger.debug("\n")
@@ -73,7 +73,7 @@ class Filelog(object):
 
     def seperator(self):
         self._start_logging()
-        self.logger.debug("\n")
+        self.logger.debug("")
         self.logger.debug("-"*30)
         # self.logger.debug("\n")
         self._end_logging()

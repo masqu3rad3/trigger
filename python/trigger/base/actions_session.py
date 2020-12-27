@@ -80,7 +80,8 @@ class ActionsSession(dict):
             self.compareActions = deepcopy(self["actions"])
             log.info("Action Session Loaded Successfully...")
         else:
-            log.error("The specified file doesn't exists")
+            log.error("File doesn't exist or unreadable => %s" %file_path)
+            raise Exception
 
     def is_modified(self):
         """Checks if the current file is different than the saved file"""
@@ -152,7 +153,7 @@ class ActionsSession(dict):
         if action:
             self["actions"].remove(action)
         else:
-            log.warning("%s cannot be found in the action list")
+            log.warning("%s is not in the list of actions" %action_name)
 
     def edit_action(self, action_name, property, new_value):
         """
@@ -247,7 +248,8 @@ class ActionsSession(dict):
     def run_all_actions(self):
         """runs all actions in the actions list"""
         # reset scene
-        log.info("Running All Actions...")
+        log.seperator()
+        log.header("BUILDING...")
         cmds.file(new=True, force=True)
         for row, action in enumerate(self["actions"]):
             if self.is_enabled(action["name"]):
@@ -256,7 +258,7 @@ class ActionsSession(dict):
                     self.progressListwidget.activateItem(row)
                     QtWidgets.QApplication.processEvents()
                 try:
-                    log.info("Running action => %s" %action["name"])
+                    log.header("%s" %action["name"])
                     action_cmd = "actions.{0}.{1}()".format(action["type"], action["type"].capitalize())
                     a_hand = eval(action_cmd)
                     a_hand.feed(action["data"])
@@ -268,7 +270,8 @@ class ActionsSession(dict):
                     if self.progressListwidget:
                         self.progressListwidget.errorItem(row)
                     log.error("Cannot complete action => %s\n%s" %(action["name"], e))
-                    raise Exception
+                    raise
+        log.header("Total BUILDING TIME:")
 
     @tracktime
     def run_action(self, action_name):

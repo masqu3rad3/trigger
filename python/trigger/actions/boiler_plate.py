@@ -2,6 +2,7 @@
 
 from trigger.core import io
 from trigger.core import filelog
+from trigger.core.decorators import tracktime
 
 from trigger.ui import custom_widgets
 from trigger.ui import feedback

@@ -906,16 +906,7 @@ class MainUI(QtWidgets.QMainWindow):
         self.populate_properties()
 
     def force_update(self):
-        print("DeBUG")
-        # if self.tabWidget.currentIndex() == 0:
         self.populate_guides()
-
-    # def eventFilter(self, object, event):
-    #     if event.type() == QtCore.QEvent.WindowActivate:
-    #         self.force = False
-    #     elif event.type()== QtCore.QEvent.WindowDeactivate:
-    #         self.force = True
-    #     return False
 
     def clearLayout(self, layout):
         while layout.count():

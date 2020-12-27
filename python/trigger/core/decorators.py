@@ -1,10 +1,49 @@
+import sys
 from functools import wraps
 from maya import cmds
 from maya import mel
 import logging
+import traceback
 
 
-logger = logging.getLogger(__name__)
+from trigger.core import filelog
+
+log = filelog.Filelog(logname=__name__, filename="trigger_log")
+
+def logerror(func):
+    """
+    Decorator to save the exceptions into log file
+    """
+    @wraps(func)
+    def _exception(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except:
+            # log the exception
+            log.error("Exception in %s %s" %(func.__name__, func.__module__))
+            log.error(traceback.format_exc())
+            raise
+    return _exception
+
+# def undo(func):
+#     """ Puts the wrapped `func` into a single Maya Undo action, then
+#         undoes it when the function enters the finally: block """
+#     @wraps(func)
+#     def _undofunc(*args, **kwargs):
+#         cmds.undoInfo(ock=True)
+#         result = None
+#         try:
+#             # start an undo chunk
+#             result = func(*args, **kwargs)
+#         except Exception as e:
+#             log.error(e)
+#             raise RuntimeError
+#         finally:
+#             # after calling the func, end the undo chunk and undo
+#             cmds.undoInfo(cck=True)
+#             return result
+#
+#     return _undofunc
 
 def undo(func):
     """ Puts the wrapped `func` into a single Maya Undo action, then
@@ -15,13 +54,13 @@ def undo(func):
         result = None
         try:
             # start an undo chunk
-            result = func(*args, **kwargs)
+            return func(*args, **kwargs)
         except Exception as e:
-            logger.error(e)
+            # log.error(e)
+            raise
         finally:
             # after calling the func, end the undo chunk and undo
             cmds.undoInfo(cck=True)
-            return result
 
     return _undofunc
 
@@ -42,6 +81,7 @@ def viewportOff(func):
         try:
             return func(*args, **kwargs)
         except Exception:
+            mel.eval("paneLayout -e -manage true $gMainPane")
             raise  # will raise original error
         finally:
             mel.eval("paneLayout -e -manage true $gMainPane")
@@ -54,18 +94,38 @@ def keepselection(func):
     @wraps(func)
     def _keepfunc(*args, **kwargs):
         original_selection = cmds.ls(sl=True)
-        result = None
         try:
             # start an undo chunk
-            result = func(*args, **kwargs)
+            return func(*args, **kwargs)
         except Exception as e:
-            cmds.select(original_selection)
-            logger.error(e)
+            # log.error(e)
+            raise
         finally:
             # after calling the func, end the undo chunk and undo
             cmds.select(original_selection)
-            return result
+
     return _keepfunc
+
+# def keepselection(func):
+#     """Decorator method to keep the current selection. Useful where
+#     the wrapped method messes with the current selection"""
+#     @wraps(func)
+#     def _keepfunc(*args, **kwargs):
+#         original_selection = cmds.ls(sl=True)
+#         result = None
+#         try:
+#             # start an undo chunk
+#             result = func(*args, **kwargs)
+#         except Exception as e:
+#             cmds.select(original_selection)
+#             log.error(e)
+#         finally:
+#             # after calling the func, end the undo chunk and undo
+#             cmds.select(original_selection)
+#             return result
+#     return _keepfunc
+
+
 
 def tracktime(func):
     """Tracks time for the given function"""
@@ -73,25 +133,21 @@ def tracktime(func):
     def _tracktime(*args, **kwargs):
         import time
         start = time.time()
-        result = None
         try:
-            result = func(*args, **kwargs)
+            return func(*args, **kwargs)
         except Exception as e:
-            end = time.time()
-            print("-"*60)
-            print("-"*60)
-            print("Elapsed: %s" %(end-start))
-            print("-"*60)
-            print("-"*60)
-            # logger.warning("Elapsed: %s" %(end-start))
-            logger.error(e)
+            # log.error("Exception in %s %s" %(func.__name__, func.__module__))
+            # log.error(traceback.format_exc())
+            raise
         finally:
             end = time.time()
-            print("-"*60)
-            print("-"*60)
-            print("Elapsed: %s" %(end-start))
-            print("-"*60)
-            print("-"*60)
-            # logger.warning("Elapsed: %s" %(end-start))
-            return result
+            # print("-"*60)
+            # print("-"*60)
+            # print("Elapsed: %s" %(end-start))
+            # print("-"*60)
+            # print("-"*60)
+            log.info("Elapsed: %s" %(end-start))
+
     return _tracktime
+
+
