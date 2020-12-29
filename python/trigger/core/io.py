@@ -21,8 +21,9 @@ class IO(dict):
         if file_path:
             self.file_path = file_path
         elif file_name:
-            if not folder_name:
-                self.folder_name = ""
+            self.folder_name = folder_name or ""
+            # if not folder_name:
+            #     self.folder_name = ""
             if not root_path:
                 self.root_path = os.path.normpath(os.path.expanduser("~"))
             self.file_path = os.path.join(self.root_path, self.folder_name, file_name)

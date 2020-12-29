@@ -5,6 +5,8 @@
 import sys, os
 from maya import cmds
 
+from trigger.core import database
+
 from trigger.ui import Qt
 from trigger.ui.Qt import QtWidgets, QtCore, QtGui
 from trigger.ui import model_ctrl
@@ -28,8 +30,9 @@ else:
 from trigger.core import filelog
 
 log = filelog.Filelog(logname=__name__, filename="trigger_log")
+db = database.Database()
 
-WINDOW_NAME = "TRigger"
+WINDOW_NAME = "Trigger v2.0.0"
 
 def getMayaMainWindow():
     """
@@ -46,7 +49,6 @@ def getMayaMainWindow():
 
 def _createCallbacks(function, parent=None, event=None):
     callbackIDList = []
-    print(parent, bool(parent))
     if parent:
         job = cmds.scriptJob(e=[event, function], replacePrevious=True, parent=parent)
     else:
@@ -165,6 +167,7 @@ class MainUI(QtWidgets.QMainWindow):
         self.export_guides_action = QtWidgets.QAction(self, text="Export Guides")
         self.settings_action = QtWidgets.QAction(self, text="Settings")
         self.reset_scene_action = QtWidgets.QAction(self, text="Reset Scene")
+        self.exit_action = QtWidgets.QAction(self, text="Exit")
 
         self.menuFile.addAction(self.new_trigger_action)
         self.menuFile.addAction(self.open_trigger_action)
@@ -179,8 +182,33 @@ class MainUI(QtWidgets.QMainWindow):
         self.menuFile.addAction(self.settings_action)
         self.menuFile.addSeparator()
         self.menuFile.addAction(self.reset_scene_action)
+        self.menuFile.addSeparator()
+
+
+        self.recents_menu = QtWidgets.QMenu("Recent Sessions")
+        self.menuFile.addMenu(self.recents_menu)
+        # self.recents_menu = self.menuFile.addMenu("Recent Sessions")
+        self.menuFile.addAction(self.exit_action)
 
         self.menubar.addAction(self.menuFile.menuAction())
+
+        self.populate_recents()
+
+        # SIGNALS
+        # menu items
+        self.new_trigger_action.triggered.connect(self.new_trigger)
+        self.open_trigger_action.triggered.connect(self.open_trigger)
+        self.save_trigger_action.triggered.connect(self.save_trigger)
+        self.save_as_trigger_action.triggered.connect(self.save_as_trigger)
+        self.increment_trigger_action.triggered.connect(self.increment_trigger)
+
+        self.export_guides_action.triggered.connect(self.export_guides)
+        self.import_guides_action.triggered.connect(self.import_guides)
+
+        self.reset_scene_action.triggered.connect(self.guides_handler.reset_scene)
+        self.reset_scene_action.triggered.connect(self.populate_guides)
+
+        self.exit_action.triggered.connect(self.close)
 
     def buildTabsUI(self):
         self.centralWidget_vLay = QtWidgets.QVBoxLayout(self.centralwidget)  # this is only to fit the tab widget
@@ -433,19 +461,6 @@ class MainUI(QtWidgets.QMainWindow):
 
         self.guide_test_pb.clicked.connect(self.build_test_guides)
 
-        # menu items
-        self.new_trigger_action.triggered.connect(self.new_trigger)
-        self.open_trigger_action.triggered.connect(self.open_trigger)
-        self.save_trigger_action.triggered.connect(self.save_trigger)
-        self.save_as_trigger_action.triggered.connect(self.save_as_trigger)
-        self.increment_trigger_action.triggered.connect(self.increment_trigger)
-
-        self.export_guides_action.triggered.connect(self.export_guides)
-        self.import_guides_action.triggered.connect(self.import_guides)
-
-        self.reset_scene_action.triggered.connect(self.guides_handler.reset_scene)
-        self.reset_scene_action.triggered.connect(self.populate_guides)
-
     def buildRiggingUI(self):
         self.rigging_tab_vLay = QtWidgets.QVBoxLayout(self.rigging_tab)
 
@@ -575,6 +590,14 @@ class MainUI(QtWidgets.QMainWindow):
         self.rig_actions_listwidget.setCurrentRow(row)
         self.populate_properties()
 
+    def populate_recents(self):
+        self.recents_menu.clear()
+        for recent in db.recentSessions:
+            recent_action = QtWidgets.QAction(self.menuFile, text=recent)
+            # recent_action = QtWidgets.QAction("ANAN")
+            self.recents_menu.addAction(recent_action)
+            recent_action.triggered.connect(lambda _=0, x=recent: self.open_trigger(file_path=x))
+
     def on_action_rename(self):
         action_name = self.rig_actions_listwidget.currentItem().text()
         rename_dialog = QtWidgets.QDialog()
@@ -629,7 +652,7 @@ class MainUI(QtWidgets.QMainWindow):
         self.populate_actions()
         self.update_title()
 
-    def open_trigger(self):
+    def open_trigger(self, file_path=None):
         if self.actions_handler.is_modified():
             if self.actions_handler.currentFile:
                 file_name = os.path.basename(self.actions_handler.currentFile)
@@ -642,16 +665,27 @@ class MainUI(QtWidgets.QMainWindow):
                 pass
             else:
                 return
-        dlg = QtWidgets.QFileDialog.getOpenFileName(self, str("Open Trigger Session"), "", str("Trigger Session (*.tr)"))
-        if dlg[0]:
-            self.actions_handler.load_session(os.path.normpath(dlg[0]))
-            self.populate_actions()
-            self.update_title()
+        if not file_path:
+            dlg = QtWidgets.QFileDialog.getOpenFileName(self, str("Open Trigger Session"), "", str("Trigger Session (*.tr)"))
+            if dlg[0]:
+                file_path = os.path.normpath(dlg[0])
+            else:
+                return
+
+        self.actions_handler.load_session(file_path)
+        db.recentSessions.add(file_path)
+        self.populate_actions()
+        self.update_title()
+        self.populate_recents()
+        # self.buildBarsUI()
 
     def increment_trigger(self):
         if self.actions_handler.currentFile:
-            self.actions_handler.save_session(naming.increment(self.actions_handler.currentFile))
+            new_file = naming.increment(self.actions_handler.currentFile)
+            self.actions_handler.save_session(new_file)
+            db.recentSessions.add(new_file)
             self.update_title()
+            self.populate_recents()
         else:
             self.feedback.pop_info(title="Cannot Complete", text="Trigger Session needs to be saved first to increment it\nAborting...", critical=True)
 
@@ -659,12 +693,16 @@ class MainUI(QtWidgets.QMainWindow):
         dlg = QtWidgets.QFileDialog.getSaveFileName(self, str("Save Trigger Session"), "", str("Trigger Session (*.tr)"))
         if dlg[0]:
             self.actions_handler.save_session(os.path.normpath(dlg[0]))
+            db.recentSessions.add(os.path.normpath(dlg[0]))
             self.update_title()
+            self.populate_recents()
 
     def save_trigger(self):
         if self.actions_handler.currentFile:
             self.actions_handler.save_session(self.actions_handler.currentFile)
+            db.recentSessions.add(self.actions_handler.currentFile)
             self.update_title()
+            self.populate_recents()
         else:
             self.save_as_trigger()
 

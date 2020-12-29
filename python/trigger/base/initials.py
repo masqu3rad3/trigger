@@ -4,19 +4,20 @@ from maya import cmds
 import maya.api.OpenMaya as om
 
 from trigger.core.decorators import undo
+from trigger.core import database
+
 from trigger.library import functions, naming
 from trigger.library import connection
 from trigger.library import attribute
 
 from trigger import modules
-from trigger.core import settings
 
 from trigger.core import filelog
 
 log = filelog.Filelog(logname=__name__, filename="trigger_log")
+db = database.Database()
 
-
-class Initials(settings.Settings):
+class Initials(object):
 
     def __init__(self):
         super(Initials, self).__init__()
@@ -36,13 +37,13 @@ class Initials(settings.Settings):
                              u'-y': (0, -1, 0),
                              u'-z': (0, 0, -1)
                              }
-        self.upVector_asString = self.get("upAxis")
-        self.lookVector_asString = self.get("lookAxis")
-        self.mirrorVector_asString = self.get("mirrorAxis")
+        self.upVector_asString = db.userSettings.upAxis
+        self.lookVector_asString = db.userSettings.lookAxis
+        self.mirrorVector_asString = db.userSettings.mirrorAxis
 
-        self.upVector = om.MVector(parsingDictionary[self.get("upAxis")])
-        self.lookVector = om.MVector(parsingDictionary[self.get("lookAxis")])
-        self.mirrorVector = om.MVector(parsingDictionary[self.get("mirrorAxis")])
+        self.upVector = om.MVector(parsingDictionary[db.userSettings.upAxis])
+        self.lookVector = om.MVector(parsingDictionary[db.userSettings.lookAxis])
+        self.mirrorVector = om.MVector(parsingDictionary[db.userSettings.mirrorAxis])
 
         # get transformation matrix:
         self.upVector.normalize()
@@ -303,11 +304,11 @@ class Initials(settings.Settings):
             cmds.setAttr("%s.drawLabel" % jnt, 1)
 
         if guide_object.side == "C":
-            functions.colorize(guide_object.guideJoints, self.get("majorCenterColor"), shape=False)
+            functions.colorize(guide_object.guideJoints, db.userSettings.majorCenterColor, shape=False)
         if guide_object.side == "L":
-            functions.colorize(guide_object.guideJoints, self.get("majorLeftColor"), shape=False)
+            functions.colorize(guide_object.guideJoints, db.userSettings.majorLeftColor, shape=False)
         if guide_object.side == "R":
-            functions.colorize(guide_object.guideJoints, self.get("majorRightColor"), shape=False)
+            functions.colorize(guide_object.guideJoints, db.userSettings.majorRightColor, shape=False)
 
     def get_scene_roots(self):
         """collects the root joints in the scene and returns the dictionary with properties"""

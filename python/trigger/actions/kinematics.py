@@ -2,6 +2,7 @@
 import os
 from maya import cmds
 from trigger.core import filelog
+from trigger.core import database
 from trigger.library import functions, naming
 from trigger.library import attribute
 from trigger.library import api
@@ -11,7 +12,6 @@ from trigger.base import session
 
 from trigger import modules
 import trigger.utils.space_switcher as anchorMaker
-from trigger.core import settings
 
 from trigger.actions import master
 
@@ -19,6 +19,7 @@ from trigger.ui.Qt import QtWidgets, QtGui # for progressbar
 from trigger.ui import custom_widgets
 
 log = filelog.Filelog(logname=__name__, filename="trigger_log")
+db = database.Database()
 #
 ACTION_DATA = {
                "guides_file_path": "",
@@ -31,7 +32,7 @@ ACTION_DATA = {
                "multi_selectionSets": False
                }
 
-class Kinematics(settings.Settings):
+class Kinematics(object):
     def __init__(self, root_joints=None, progress_bar=None, create_switchers=True, rig_name=None, *args, **kwargs):
         super(Kinematics, self).__init__()
         self.progress_bar = progress_bar
@@ -380,7 +381,6 @@ class Kinematics(settings.Settings):
 
         j_def_set = None
 
-        # if not self.get("seperateSelectionSets"):
         if not self.multi_selectionSets:
             cmds.select(d=True)
             if not cmds.objExists("def_jointsSet_%s" % self.rig_name):
@@ -399,15 +399,14 @@ class Kinematics(settings.Settings):
 
             if x[2] == "R":
                 sideVal = "R"
-                colorCodes = [self.get("majorRightColor"), self.get("majorLeftColor")]
+                colorCodes = [db.userSettings.majorRightColor, db.userSettings.minorRightColor]
             elif x[2] == "L":
                 sideVal = "L"
-                colorCodes = [self.get("majorLeftColor"), self.get("minorLeftColor")]
+                colorCodes = [db.userSettings.majorLeftColor, db.userSettings.minorLeftColor]
             else:
                 sideVal = "C"
-                colorCodes = [self.get("majorCenterColor"), self.get("minorCenterColor")]
+                colorCodes = [db.userSettings.majorCenterColor, db.userSettings.majorCenterColor]
 
-            # if self.get("seperateSelectionSets"):
             if self.multi_selectionSets:
                 set_name = "def_%s_%s_Set" % (x[1], x[2])
                 set_name = naming.uniqueName(set_name)
