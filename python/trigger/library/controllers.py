@@ -181,10 +181,13 @@ class Icon(object):
         cont_FK_IK = cmds.rename(letter_fk, name)
         cmds.addAttr(cont_FK_IK, shortName="fk_ik", longName="FK_IK", defaultValue=1.0, minValue=0.0, maxValue=1.0, at="float",
                    k=True)
+        cmds.addAttr(cont_FK_IK, shortName="fk_ik_reverse", longName="FK_IK_Reverse", defaultValue=1.0, minValue=0.0, maxValue=1.0, at="float")
 
         fk_ik_rvs = cmds.createNode("reverse", name="fk_ik_rvs%s" % name)
         cmds.connectAttr("%s.fk_ik" %cont_FK_IK, "%s.weight[0]" %blShape_FKtoIK[0])
         cmds.connectAttr("%s.fk_ik" %cont_FK_IK, "%s.inputX" %fk_ik_rvs)
+
+        cmds.connectAttr("%s.outputX" %fk_ik_rvs, "%s.fk_ik_reverse" %cont_FK_IK)
 
         cmds.setAttr("%s.scale" %cont_FK_IK, 0.1, 0.1, 0.1)
         cmds.delete(letter_ik)
