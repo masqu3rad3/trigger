@@ -230,6 +230,46 @@ def matrixConstraint(parent, child, mo=True, prefix="", sr=None, st=None, ss=Non
 
     return mult_matrix, decompose_matrix
 
+def matrixSwitch(parentA, parentB, child, control_attribute, position=True, rotation=True, scale=False):
+    """
+    Creates a matrix blended switch between two locations
+
+    Args:
+        parentA: (string) first parent node
+        parentB: (string) second parent node
+        child: (string) child to be constrained
+        control_attribute: (string) switch control attribute. e.g. masterCont.switch. If doesnt exist, it will be created
+        position: (boolean) If True, makes the positional switch. Default True
+        rotation: (boolean) If True, makes the rotational switch. Default True
+        scale: (boolean) If True, makes the scale switch. Default False
+
+    Returns:
+
+    """
+    attribute.validate_attr(control_attribute, attr_range=[0,1])
+
+    mult_matrix_a = cmds.createNode("multMatrix", name="multMatrix_%s" %parentA)
+    cmds.connectAttr("%s.worldMatrix[0]" %parentA, "%s.matrixIn[0]" %mult_matrix_a)
+
+    mult_matrix_b = cmds.createNode("multMatrix", name="multMatrix_%s" %parentB)
+    cmds.connectAttr("%s.worldMatrix[0]" %parentB, "%s.matrixIn[0]" %mult_matrix_b)
+
+    wt_add_matrix = cmds.createNode("wtAddMatrix", name="wtAdd_%s_%s" %(parentA, parentB))
+    cmds.connectAttr("%s.matrixSum" %mult_matrix_a, "%s.wtMatrix[0].matrixIn" %wt_add_matrix)
+    cmds.connectAttr("%s.matrixSum" %mult_matrix_b, "%s.wtMatrix[1].matrixIn" %wt_add_matrix)
+
+    attribute.drive_attrs(control_attribute, "%s.wtMatrix[0].weightIn" %wt_add_matrix, driver_range=[0,1], driven_range=[0,1], force=False)
+    attribute.drive_attrs(control_attribute, "%s.wtMatrix[1].weightIn" %wt_add_matrix, driver_range=[0,1], driven_range=[1,0], force=False)
+
+    decompose_node = cmds.createNode("decomposeMatrix", name="decompose_switch")
+    cmds.connectAttr("%s.matrixSum" %wt_add_matrix, "%s.inputMatrix" %decompose_node)
+
+    if position:
+        cmds.connectAttr("%s.outputTranslate" %decompose_node, "%s.translate" %child)
+    if rotation:
+        cmds.connectAttr("%s.outputRotate" %decompose_node, "%s.rotate" %child)
+    if scale:
+        cmds.connectAttr("%s.outputScale" %decompose_node, "%s.scale" %child)
 
 def getClosestUV(source_node, dest_node):
     xPos, yPos, zPos = api.getWorldTranslation(dest_node)

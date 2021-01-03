@@ -7,6 +7,7 @@ from trigger.library import connection
 from trigger.library import naming
 from trigger.library import attribute
 from trigger.library import controllers as ic
+from trigger.library import arithmetic as op
 
 from trigger.core import filelog
 log = filelog.Filelog(logname=__name__, filename="trigger_log")
@@ -81,6 +82,8 @@ class Fkik(object):
         self.ikJoints = []
         self.fkControllers = []
         self.ikControllers = []
+        self.rootIkCont = None
+        self.endIKCont = None
         self.fkControllersOff = []
         self.ikControllersOff = []
         self.switchController = None
@@ -161,7 +164,7 @@ class Fkik(object):
             attribute.drive_attrs("%s.rigVis" % self.scaleGrp, ["%s.v" % x for x in self.fkJoints])
 
         attribute.drive_attrs("%s.jointVis" % self.scaleGrp, ["%s.v" % x for x in self.deformerJoints])
-        cmds.connectAttr("%s.rigVis" % self.scaleGrp,"%s.v" % self.limbPlug)
+        cmds.connectAttr("%s.jointVis" % self.scaleGrp,"%s.v" % self.limbPlug)
         functions.colorize(self.deformerJoints, self.colorCodes[0], shape=False)
 
 
@@ -202,15 +205,15 @@ class Fkik(object):
             connection.matrixConstraint(self.limbPlug, ik_bind_grp, mo=True)
 
             scale_mult = functions.getDistance(self.ikJoints[0], self.ikJoints[1]) * 0.5
-            root_ik_cont, _ = icon_handler.createIcon("Circle", iconName="%s_rootIK_cont" % self.suffix, normal=(1,0,0), scale=(scale_mult, scale_mult, scale_mult))
-            self.ikControllers.append(root_ik_cont)
-            root_ik_cont_off = functions.createUpGrp(root_ik_cont, "OFF")
+            self.rootIkCont, _ = icon_handler.createIcon("Circle", iconName="%s_rootIK_cont" % self.suffix, normal=(1,0,0), scale=(scale_mult, scale_mult, scale_mult))
+            self.ikControllers.append(self.rootIkCont)
+            root_ik_cont_off = functions.createUpGrp(self.rootIkCont, "OFF")
             self.ikControllersOff.append(root_ik_cont_off)
             functions.alignTo(root_ik_cont_off, self.ikJoints[0], rotation=True, position=True)
 
-            end_ik_cont, _ = icon_handler.createIcon("Circle", iconName="%s_endIK_cont" % self.suffix, normal=(1,0,0), scale=(scale_mult, scale_mult, scale_mult))
-            self.ikControllers.append(end_ik_cont)
-            end_ik_cont_off = functions.createUpGrp(end_ik_cont, "OFF")
+            self.endIKCont, _ = icon_handler.createIcon("Circle", iconName="%s_endIK_cont" % self.suffix, normal=(1,0,0), scale=(scale_mult, scale_mult, scale_mult))
+            self.ikControllers.append(self.endIKCont)
+            end_ik_cont_off = functions.createUpGrp(self.endIKCont, "OFF")
             self.ikControllersOff.append(end_ik_cont_off)
             functions.alignTo(end_ik_cont_off, self.ikJoints[-1], rotation=True, position=True)
 
@@ -240,6 +243,16 @@ class Fkik(object):
                 # connection.matrixConstraint(self.poleVectorBridge, self.poleVectorCont, mo=False, source_parent_cutoff=self.localOffGrp)
                 cmds.parent(pole_cont_off, ik_bind_grp)
 
+            if self.stretchyIk:
+                cmds.addAttr(self.endIKCont, shortName="squash", longName="Squash", defaultValue=0.0, minValue=0.0,
+                             maxValue=1.0, at="double", k=True)
+                cmds.addAttr(self.endIKCont, shortName="stretch", longName="Stretch", defaultValue=1.0, minValue=0.0,
+                             maxValue=1.0, at="double", k=True)
+                cmds.addAttr(self.endIKCont, shortName="stretchLimit", longName="StretchLimit", defaultValue=100.0,
+                             minValue=0.0, maxValue=1000.0, at="double", k=True)
+                cmds.addAttr(self.endIKCont, shortName="softIK", longName="SoftIK", defaultValue=0.0, minValue=0.0,
+                             maxValue=100.0, k=True)
+
         self.controllers.extend(self.fkControllers)
         self.controllers.extend(self.ikControllers)
 
@@ -252,10 +265,6 @@ class Fkik(object):
             cmds.parent(self.switchController, ik_bind_grp)
 
 
-
-
-        pass
-
     def createRoots(self):
         pass
 
@@ -264,8 +273,6 @@ class Fkik(object):
             return
 
         ik_joints = self.deformerJoints if self.switchMode != 0 else self.ikJoints
-        master_ik = cmds.spaceLocator(name="masterIK_%s" % self.suffix)[0]
-        functions.alignTo(master_ik, ik_joints[-1], position=True, rotation=False)
 
         if self.ikSolver == 0:
             solver = "ikSCsolver"
@@ -279,18 +286,25 @@ class Fkik(object):
             raise
 
         ik_handle = cmds.ikHandle(sj=ik_joints[0], ee=ik_joints[-1], name="ikHandle_%s" % self.suffix, sol=solver)[0]
+        cmds.connectAttr("%s.rigVis" % self.scaleGrp, "%s.v" %ik_handle)
+        cmds.parent(ik_handle, self.nonScaleGrp)
         if self.ikSolver != 0:
             cmds.poleVectorConstraint(self.poleVectorBridge, ik_handle)
             # cmds.aimConstraint(self.ikJoints[self.middleIndex], self.poleVectorCont, u=self.up_axis, wut="vector")
             connection.matrixConstraint(self.poleVectorCont, self.poleVectorBridge, mo=False, source_parent_cutoff=self.localOffGrp)
+            cmds.parent(self.poleVectorBridge, self.nonScaleGrp)
+            cmds.connectAttr("%s.rigVis" % self.scaleGrp, "%s.v" %self.poleVectorBridge)
+
+        # scaling
+        _ = [cmds.connectAttr("%s.s" %ik_joints[0], "%s.s" %jnt) for jnt in ik_joints[1:]]
 
         if self.stretchyIk:
-            ## TODO
-            pass
-        #
-        connection.matrixConstraint(self.ikControllers[-1], ik_handle, mo=False, source_parent_cutoff=self.localOffGrp)
+            stretch_locs = self.make_stretchy_ik(ik_joints, ik_handle, self.rootIkCont, self.endIKCont, source_parent_cutoff=self.localOffGrp, name=self.suffix)
+            cmds.parent(stretch_locs, self.nonScaleGrp)
+            attribute.drive_attrs("%s.rigVis" % self.scaleGrp, ["%s.v" % x for x in stretch_locs])
+        else:
+            connection.matrixConstraint(self.ikControllers[-1], ik_handle, mo=False, source_parent_cutoff=self.localOffGrp)
         connection.matrixConstraint(self.ikControllers[0], self.ikJoints[0], mo=False, source_parent_cutoff=self.localOffGrp)
-
 
     def createFKsetup(self):
         if self.switchMode == 2: # if it is IK only
@@ -334,6 +348,12 @@ class Fkik(object):
             cmds.connectAttr("%s.fk_ik_reverse" %self.switchController, "%s.blender" %blend_r)
             cmds.connectAttr("%s.fk_ik_reverse" %self.switchController, "%s.blender" %blend_s)
 
+        for ik_co in self.ikControllers:
+            cmds.connectAttr("%s.fk_ik" %(self.switchController), "%s.v" %ik_co)
+        cmds.connectAttr("%s.fk_ik" %self.switchController, "%s.v" %self.poleVectorCont)
+        for fk_co in self.fkControllers:
+            cmds.connectAttr("%s.fk_ik_reverse" %(self.switchController), "%s.v" %fk_co)
+
     def createRibbons(self):
         pass
 
@@ -350,6 +370,12 @@ class Fkik(object):
         self.scaleConstraints.append(self.scaleGrp)
         # lock and hide
 
+        # color
+        functions.colorize(self.fkControllers, self.colorCodes[0])
+        functions.colorize(self.ikControllers, self.colorCodes[0])
+        functions.colorize(self.poleVectorCont, self.colorCodes[0])
+        functions.colorize(self.switchController, self.colorCodes[0])
+
     def createLimb(self):
         self.createGrp()
         self.createJoints()
@@ -362,6 +388,98 @@ class Fkik(object):
         self.createTwistSplines()
         self.createAngleExtractors()
         self.roundUp()
+
+    @staticmethod
+    def make_stretchy_ik(joint_chain, ik_handle, root_controller, end_controller, source_parent_cutoff=None, name=None):
+        if not name:
+            name = joint_chain[0]
+
+        attribute.validate_attr("%s.squash" %end_controller, attr_type="double", attr_range=[0.0, 1.0], default_value=0.0)
+        attribute.validate_attr("%s.stretch" %end_controller, attr_type="double", attr_range=[0.0, 1.0], default_value=1.0)
+        attribute.validate_attr("%s.stretchLimit" %end_controller, attr_type="double", attr_range=[0.0, 99999.0], default_value=100.0)
+        attribute.validate_attr("%s.softIK" %end_controller, attr_type="double", attr_range=[0.0, 100.0], default_value=0.0)
+
+        root_loc = cmds.spaceLocator(name="rootLoc_%s" %name)[0]
+        connection.matrixConstraint(root_controller, root_loc, sr="xyz", mo=False)
+        cmds.aimConstraint(end_controller, root_loc, wuo=root_controller)
+
+        end_loc = cmds.spaceLocator(name="endLoc_%s" %name)[0]
+        end_loc_shape = functions.getShapes(end_loc)[0]
+        functions.alignTo(end_loc, end_controller, position=True, rotation=True)
+        cmds.parent(end_loc, root_loc)
+        soft_blend_loc = cmds.spaceLocator(name="softBlendLoc_%s" %name)[0]
+        soft_blend_loc_shape = functions.getShapes(soft_blend_loc)[0]
+        functions.alignTo(soft_blend_loc, end_controller, position=True, rotation=True)
+        connection.matrixSwitch(end_controller, end_loc, soft_blend_loc, "%s.stretch" %end_controller, position=True, rotation=False)
+
+        distance_start_loc =cmds.spaceLocator(name="distance_start_%s" %name)[0]
+        connection.matrixConstraint(root_controller, distance_start_loc, sr="xyz", ss="xyz", mo=False)
+
+        distance_end_loc =cmds.spaceLocator(name="distance_end_%s" %name)[0]
+        connection.matrixConstraint(end_controller, distance_end_loc, sr="xyz", ss="xyz", mo=False)
+
+        ctrl_distance = cmds.createNode("distanceBetween", name="distance_%s" % name)
+        cmds.connectAttr("%s.translate" %distance_start_loc, "%s.point1" %ctrl_distance)
+        cmds.connectAttr("%s.translate" %distance_end_loc, "%s.point2" %ctrl_distance)
+        ctrl_distance_p = "%s.distance" %ctrl_distance
+
+
+        plugs_to_sum = []
+        for nmb, jnt in enumerate(joint_chain[1:]):
+            dist = functions.getDistance(jnt, joint_chain[nmb])
+            cmds.addAttr(jnt, ln="initialDistance", at="double", dv=dist)
+            plugs_to_sum.append("%s.initialDistance" %jnt)
+            # cmds.connectAttr("%s.initialDistance" %jnt, "%s.input1D[%i]" %(sum_of_initial_lengths, nmb))
+
+        sum_of_lengths_p = op.add(value_list=plugs_to_sum)
+
+        # SOFT IK PART
+        softIK_sub1_p = op.subtract(sum_of_lengths_p, "%s.softIK" %end_controller)
+        # get the scale value from controller
+        scale_multMatrix = cmds.createNode("multMatrix", name="_multMatrix")
+        scale_decomposeMatrix = cmds.createNode("decomposeMatrix", name="_decomposeMatrix")
+        cmds.connectAttr("%s.worldMatrix[0]" %root_controller, "%s.matrixIn[0]" %scale_multMatrix)
+        cmds.connectAttr("%s.matrixSum" %scale_multMatrix, "%s.inputMatrix" %scale_decomposeMatrix)
+
+        global_scale_div_p = op.divide(1, "%s.outputScaleX" %scale_decomposeMatrix)
+        global_mult_p = op.multiply(ctrl_distance_p, global_scale_div_p)
+        softIK_sub2_p = op.subtract(global_mult_p, softIK_sub1_p)
+        softIK_div_p = op.divide(softIK_sub2_p, "%s.softIK" %end_controller)
+        softIK_invert_p = op.invert(softIK_div_p)
+        softIK_exponent_p = op.power(2.71828, softIK_invert_p)
+        softIK_mult_p = op.multiply(softIK_exponent_p, "%s.softIK" %end_controller)
+        softIK_sub3_p = op.subtract(sum_of_lengths_p, softIK_mult_p)
+
+        condition_zero_p = op.if_else("%s.softIK" %end_controller, ">", 0, softIK_sub3_p, sum_of_lengths_p)
+        condition_length_p = op.if_else(global_mult_p, ">", softIK_sub1_p, condition_zero_p, global_mult_p)
+
+        cmds.connectAttr(condition_length_p, "%s.tx" %end_loc)
+
+        # STRETCHING PART
+        soft_distance = cmds.createNode("distanceBetween", name="distanceSoft_%s" % name)
+        cmds.connectAttr("%s.worldPosition[0]" %end_loc_shape, "%s.point1" %soft_distance)
+        cmds.connectAttr("%s.worldPosition[0]" %soft_blend_loc_shape, "%s.point2" %soft_distance)
+        soft_distance_p = "%s.distance" %soft_distance
+
+        stretch_global_div_p = op.divide(soft_distance_p, "%s.outputScaleX" %scale_decomposeMatrix, name="globalDivide")
+        initial_divide_p = op.divide(ctrl_distance_p, sum_of_lengths_p)
+
+        for jnt in joint_chain[1:]:
+            div_initial_by_sum_p = op.divide("%s.initialDistance" %jnt, sum_of_lengths_p)
+            mult1_p = op.multiply(stretch_global_div_p, div_initial_by_sum_p)
+            mult2_p = op.multiply("%s.stretch" %end_controller, mult1_p)
+            sum1_p = op.add(mult2_p, "%s.initialDistance" %jnt)
+            squash_mult_p = op.multiply(initial_divide_p, "%s.initialDistance" %jnt)
+
+            squash_blend_node = cmds.createNode("blendColors", name="squash_blend_%s" %name)
+            cmds.connectAttr(squash_mult_p, "%s.color1R" %squash_blend_node)
+            cmds.connectAttr(sum1_p, "%s.color2R" %squash_blend_node)
+            cmds.connectAttr("%s.squash" %end_controller, "%s.blender" %squash_blend_node)
+
+            cmds.connectAttr("%s.outputR" %squash_blend_node, "%s.tx" %jnt)
+
+        connection.matrixConstraint(soft_blend_loc, ik_handle, mo=False, source_parent_cutoff=source_parent_cutoff)
+        return soft_blend_loc, root_loc, distance_start_loc, distance_end_loc
 
 class Guides(object):
     def __init__(self, side="L", suffix="fkik", segments=None, tMatrix=None, upVector=(0, 1, 0), mirrorVector=(1, 0, 0), lookVector=(0,0,1), *args, **kwargs):
