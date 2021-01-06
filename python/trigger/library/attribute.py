@@ -98,25 +98,31 @@ def validate_attr(attr, attr_range=None, nice_name=None, attr_type="float", defa
     splits = attr.split(".")
     node_name = splits[0]
     attr_name = ".".join(splits[1:])
-    if cmds.attributeQuery(attr, node=node_name, exists=True):
+    if cmds.attributeQuery(attr_name, node=node_name, exists=True):
         if not cmds.addAttr(attr, query=True, exists=True):
             # if this isn't a dynamic attr, we don't need to worry about min or max
+            print("anan", attr)
             return
 
         if attr_range:
-            min_value = cmds.addAttr(attr_name, query=True, min=True)
-            max_value = cmds.addAttr(attr_name, query=True, max=True)
-
+            min_value = cmds.addAttr(attr, query=True, min=True)
+            max_value = cmds.addAttr(attr, query=True, max=True)
+            print("min:", min_value)
+            print("max:", max_value)
+            print("attr_ranbge", attr_range)
             if min_value is None or attr_range[0] < min_value:
+                print("minVal")
                 cmds.addAttr(
-                    attr_name, edit=True, hasMinValue=True, min=attr_range[0]
+                    attr, edit=True, hasMinValue=True, min=attr_range[0]
                 )
 
             if max_value is None or attr_range[1] > max_value:
+                print("maxVal")
                 cmds.addAttr(
                     attr, edit=True, hasMaxValue=True, max=attr_range[1]
                 )
     else:
+        print("bacin", attr, node_name)
         # create the creation dict
         min_value = None if not attr_range else attr_range[0]
         max_value = None if not attr_range else attr_range[1]

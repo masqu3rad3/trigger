@@ -558,6 +558,9 @@ class MainUI(QtWidgets.QMainWindow):
         self.action_rc_rename = QtWidgets.QAction('Rename', self)
         popMenu_rig_action.addAction(self.action_rc_rename)
 
+        self.action_rc_dup = QtWidgets.QAction('Duplicate', self)
+        popMenu_rig_action.addAction(self.action_rc_dup)
+
         popMenu_rig_action.addSeparator()
         self.action_rc_run = QtWidgets.QAction('Run', self)
         popMenu_rig_action.addAction(self.action_rc_run)
@@ -571,6 +574,7 @@ class MainUI(QtWidgets.QMainWindow):
         ### SIGNALS ####
 
         self.action_rc_rename.triggered.connect(self.on_action_rename)
+        self.action_rc_dup.triggered.connect(self.on_action_duplicate)
         self.action_rc_toggle.triggered.connect(self.on_action_toggle)
         # TODO: ADD signals for rc run
 
@@ -623,6 +627,11 @@ class MainUI(QtWidgets.QMainWindow):
             self.feedback.pop_info(title="Existing Action", text="This action name exists. Action names must be unique", critical=True)
             self.on_action_rename()
         self.actions_handler.rename_action(action_name, str(rename_le.text()))
+        self.populate_actions()
+
+    def on_action_duplicate(self):
+        action_name = self.rig_actions_listwidget.currentItem().text()
+        self.actions_handler.duplicate_action(action_name)
         self.populate_actions()
 
     def on_action_toggle(self):

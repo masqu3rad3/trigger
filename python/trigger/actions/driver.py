@@ -4,7 +4,6 @@ from trigger.library import attribute
 from trigger.core import filelog
 from trigger.ui import custom_widgets
 from trigger.ui.Qt import QtWidgets, QtGui # for progressbar
-from trigger.core import logger
 
 log = filelog.Filelog(logname=__name__, filename="trigger_log")
 
@@ -49,6 +48,10 @@ class Driver(object):
 
         ## SIGNALS ##
         mappings_tablebox.viewWidget.cellChanged.connect(lambda x=0: ctrl.update_model())
+        mappings_tablebox.buttonRemove.clicked.connect(lambda x=0: ctrl.update_model())
+        mappings_tablebox.buttonUp.clicked.connect(lambda x=0: ctrl.update_model())
+        mappings_tablebox.buttonDown.clicked.connect(lambda x=0: ctrl.update_model())
+        mappings_tablebox.buttonClear.clicked.connect(lambda x=0: ctrl.update_model())
 
     @staticmethod
     def _validate(data_matrix):
@@ -57,5 +60,5 @@ class Driver(object):
             try:
                 validated_data.append([str(row[0]), float(row[1]), float(row[2]), str(row[3]), float(row[4]), float(row[5])])
             except ValueError:
-                log.throw_error("Range values must be digits => %s" %row)
+                log.error("Range values must be digits => %s" %row)
         return validated_data

@@ -1,5 +1,6 @@
 """Functions, checks and queries for selection dependant tasks"""
 from maya import cmds
+from trigger.library import functions
 
 def get_selection_type():
     component_selection = cmds.ls(sl=True, type='float3')
@@ -32,3 +33,40 @@ def selection_validate():
     if not face_selection:
         return False
     return True
+
+def validate(min=None, max=None, groupsOnly=False, meshesOnly=False, nurbsCurvesOnly=False, transforms=True, fullPath=False):
+
+    selected = cmds.ls(sl=True, long=fullPath)
+    if not selected:
+        return False, "Nothing selected"
+
+    if groupsOnly:
+        non_groups = [node for node in selected if not functions.isGroup(node)]
+        if non_groups:
+            return False, "Selection contains non-group nodes" %non_groups
+
+    check_list = []
+    if meshesOnly:
+        check_list.append("mesh")
+    if nurbsCurvesOnly:
+        check_list.append("nurbsCurve")
+
+    for check in check_list:
+        if not transforms:
+            filtered = cmds.ls(selected, type=check)
+            if len(filtered) != len(selected):
+                return False, "Selection type Error. Only %s type objects can be selected. (No Transform nodes)" %check
+        else:
+            for node in selected:
+                shapes = functions.getShapes(node)
+                if not shapes:
+                    return False, "Selection contains objects other than %s (No shape node)" % check
+                for shape in shapes:
+                    if cmds.objectType(shape) != check:
+                        return False, "Selection contains objects other than %s" %check
+
+    if min and len(selected) < min:
+        return False, "The minimum required selection is %s" %min
+    if max and len(selected) > max:
+        return False, "The maximum selection is %s" % max
+    return selected, ""

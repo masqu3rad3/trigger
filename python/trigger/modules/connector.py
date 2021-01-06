@@ -11,7 +11,7 @@ LIMB_DATA = {
         "members": ["Root"],
         "properties": [],
         "multi_guide": None,
-        "sided": False,
+        "sided": True,
     }
 
 class Connector(object):

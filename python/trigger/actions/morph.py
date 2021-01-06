@@ -1,9 +1,11 @@
 """Action that identify and connect blendshapes"""
 
 import re
+import itertools
 
 from maya import cmds
 
+from trigger.core.decorators import viewportOff
 from trigger.ui.Qt import QtWidgets, QtGui
 from trigger.library import functions, attribute, deformers, naming
 
@@ -37,6 +39,7 @@ class Morph(object):
         self.blendshapesGroup = action_data.get("blendshapes_group")
         self.neutralMesh = action_data.get("neutral_mesh")
 
+    @viewportOff
     def action(self):
         """Execute Action - Mandatory"""
         assert self.blendshapesGroup, "Blendshape Group not defined"
@@ -151,11 +154,30 @@ class Morph(object):
             cmds.connectAttr("%s.%s" %(self.bsNode, input_shape), "%s.inputWeight[%s]" %(combination_node, nmb), force=True)
         cmds.connectAttr("%s.outputWeight" %combination_node, "%s.%s" %(self.bsNode, delta_shape), force=True)
 
-
-    def create_combination_delta(self, neutral, non_sculpted_meshes, sculpted_mesh):
+    def create_combination_delta(self, neutral, non_sculpted_meshes, sculpted_mesh, check_sub_combinations=True):
         """Creates a basic delta mesh of the sculpted combination shape against non-sculpted"""
+        # if it already exists, return it immediately
+        combination_delta = "%sDelta" % sculpted_mesh
+        if cmds.objExists(combination_delta):
+            return combination_delta
+
+        # check for the nested sub-combination shapes if it contains more than 2 shapes
+        sub_combination_deltas = []
+        if len(non_sculpted_meshes) > 2 and check_sub_combinations:
+            sub_combinations = []
+            for L in range(2, len(non_sculpted_meshes)):
+                for subset in itertools.permutations(non_sculpted_meshes, L):
+                    check = "_".join(subset)
+                    if cmds.objExists(check):
+                        sub_combinations.append(check)
+            #recursively create deltas for sub-combinations
+            for sub in sub_combinations:
+                parts = sub.split("_")
+                sub_combination_deltas.append(self.create_combination_delta(neutral, parts, sub, check_sub_combinations=False))
+
+
         stack = cmds.duplicate(neutral)[0]
-        temp_bs_node = cmds.blendShape(non_sculpted_meshes, stack)[0]
+        temp_bs_node = cmds.blendShape(non_sculpted_meshes+sub_combination_deltas, stack)[0]
         for attr in cmds.aliasAttr(temp_bs_node, q=True)[::2]:
             cmds.setAttr("{0}.{1}".format(temp_bs_node, attr), -1)
         next_index = cmds.blendShape(temp_bs_node, q=True, wc=True)
@@ -165,5 +187,5 @@ class Morph(object):
         parent_node = functions.getParent(sculpted_mesh)
         if parent_node:
             cmds.parent(stack, parent_node)
-        return (cmds.rename(stack, "%sDelta" % sculpted_mesh))
+        return (cmds.rename(stack, combination_delta))
 

@@ -43,7 +43,11 @@ class Script(object):
             exec("%s=dyn.dynamic_import('%s')" %(self.importAs, self.filePath))
 
         ## run the commands
+        log.warning(self.commands)
         for command in self.commands:
+            if "\\n" in command:
+                command = command.replace("\\n", "\n")
+            log.info("Executing command: %s" %command)
             exec(command)
 
     def save_action(self):

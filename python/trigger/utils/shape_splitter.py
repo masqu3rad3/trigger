@@ -21,6 +21,7 @@ class Splitter(dict):
         self["splitMaps"] = {}
         self.weightsHandler = weights.Weights()
         self.neutral = None
+        self.splittedShapesGrp = "SPLITTED_SHAPES_grp"
 
     def add_blendshapes(self, meshes=None):
         if not meshes:
@@ -42,7 +43,7 @@ class Splitter(dict):
         file_name, file_ext = os.path.splitext(basename)
         file_pathN = os.path.join(file_dir, "%sN%s" % (file_name, file_ext))
         if not os.path.isfile(file_pathN):
-            self.weightsHandler.io.file_path = file_path
+            self.Handler.io.file_path = file_path
             positive_data = self.weightsHandler.io.read()
             negative_data = self.weightsHandler.negateWeights(positive_data)
             self.weightsHandler.io.file_path = file_pathN
@@ -93,8 +94,8 @@ class Splitter(dict):
     def split_shapes(self):
         if not self.neutral:
             log.error("Neutral shape is not defined")
-        splits_grp = "SPLITTED_SHAPES_grp"
-        if not cmds.objExists(splits_grp):
+        # splits_grp = "SPLITTED_SHAPES_grp"
+        if not cmds.objExists(self.splittedShapesGrp):
             cmds.group(name="SPLITTED_SHAPES_grp", em=True)
 
         mort_list = []
@@ -108,14 +109,14 @@ class Splitter(dict):
             for nmb, map_path in enumerate(map_paths):
                 # resolve the name suffix
                 splitted_name = self._resolve_split_name(shape, map_path)
-                splitted_mesh = self._bs_split(shape, map_path, splitted_name, splits_grp)
+                splitted_mesh = self._bs_split(shape, map_path, splitted_name, self.splittedShapesGrp)
 
                 if len(split_maps) > 1:
                     mort_list.append(splitted_mesh)
                     expandable_list.append((splitted_mesh, split_maps[1:]))
 
         cmds.delete(mort_list)
-        return splits_grp
+        return self.splittedShapesGrp
 
     # getters / cleaners
     def get_blendshapes(self):

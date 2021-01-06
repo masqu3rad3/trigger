@@ -5,8 +5,9 @@ import os
 from maya import cmds
 
 from trigger.core import io
+from trigger.core.decorators import viewportOff
 from trigger.actions import weights
-from trigger.library import deformers, functions
+from trigger.library import deformers, functions, selection
 from trigger.ui import custom_widgets
 from trigger.ui.Qt import QtWidgets, QtGui
 from trigger.ui import feedback
@@ -44,6 +45,7 @@ class Split_shapes(weights.Weights):
         self.neutralMesh = action_data.get("neutral_mesh")
         self.splitData = action_data.get("split_data")
 
+    @viewportOff
     def action(self):
         """Execute Action - Mandatory"""
         if not self.splitMapsFilePath or\
@@ -54,6 +56,10 @@ class Split_shapes(weights.Weights):
 
         # instanciate class object
         splitter = shape_splitter.Splitter()
+        split_grp = "SPLITTED_SHAPES_grp"
+        if not cmds.objExists(split_grp):
+            split_grp = cmds.group(name=split_grp, em=True)
+        splitter.splittedShapesGrp = "SPLITTED_SHAPES_grp"
 
         # define neutral
         splitter.neutral = self.neutralMesh
@@ -75,10 +81,16 @@ class Split_shapes(weights.Weights):
             splitter.add_splitmap(os.path.join(import_root, "%s.json" %split_map))
 
         # Define Split Maps
+        dead_list = []
         for mesh_name, split_maps in self.splitData.items():
             splitter.set_splitmap(mesh_name, split_maps)
+            if not split_maps:
+                cmds.parent(mesh_name, splitter.splittedShapesGrp)
+            else:
+                dead_list.append(mesh_name)
 
         splitter.split_shapes()
+        _ = [functions.deleteObject(x) for x in dead_list]
 
     def save_action(self, file_path=None, *args, **kwargs):
         file_path = file_path or self.splitMapsFilePath
@@ -183,7 +195,11 @@ class Split_shapes(weights.Weights):
         ctrl.update_ui()
 
         def prepare_bs():
-            self.paintMapBs = self.splitter.prepare_for_painting(cmds.ls(sl=True)[0])
+            sel, msg = selection.validate(min=1, max=1, meshesOnly=True, transforms=True, fullPath=False)
+            if not sel:
+                feedback.Feedback().pop_info(title="Selection Error", text=msg, critical=True)
+                return
+            self.paintMapBs = self.splitter.prepare_for_painting(sel[0])
             file_path = file_path_le.text()
             # if there is a wholeWeights.json file, use that to get back the pre-painted values
             if file_path and os.path.isfile(file_path):
@@ -211,3 +227,4 @@ class Split_shapes(weights.Weights):
         split_definitions_treeBox.buttonNew.clicked.connect(lambda x=0: ctrl.update_model())
         split_definitions_treeBox.buttonRemove.clicked.connect(lambda x=0: ctrl.update_model())
         split_definitions_treeBox.buttonClear.clicked.connect(lambda x=0: ctrl.update_model())
+        split_definitions_treeBox.buttonRename.clicked.connect(lambda x=0: ctrl.update_model())

@@ -41,9 +41,10 @@ def load_shelves(reset=False):
                 mel.eval('loadNewShelf("{}")'.format(path))
 
 def load_menu():
+    trigger_command = "from trigger.ui import main\nmain.MainUI().show()"
+    add_to_menu("Trigger", "Trigger UI", trigger_command)
     command = "shelf_tools_rigging.load_shelves(reset=True)"
     add_to_menu("Trigger", "Re-create Shelves", command)
-
 
 def add_to_menu(menu, menu_item, command):
     main_window = mel.eval('$tmpVar=$gMainWindow')

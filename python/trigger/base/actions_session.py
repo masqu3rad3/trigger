@@ -128,7 +128,6 @@ class ActionsSession(dict):
             "enabled": True
         }
         self["actions"].append(action)
-        pass
 
     def get_action(self, action_name):
         """Returns the action dictionary item by name"""
@@ -148,6 +147,23 @@ class ActionsSession(dict):
     def get_action_type(self, action_name):
         action = self.get_action(action_name)
         return action["type"]
+
+    def duplicate_action(self, action_name):
+        """Duplicates the given action"""
+        action = self.get_action(action_name)
+        if not action:
+            log.warning("%s is not in the list of actions" % action_name)
+            return
+        id = self["actions"].index(action)
+        dup_action = deepcopy(action)
+        idcounter = 0
+        action_name = dup_action["name"] + "1"
+        while action_name in self.list_action_names():
+            action_name = "%s%s" % (dup_action["name"], str(idcounter + 1))
+            idcounter = idcounter + 1
+
+        dup_action["name"] = action_name
+        self["actions"].insert(id+1, dup_action)
 
     def delete_action(self, action_name):
         """Deletes the action by name from the dictionary"""
