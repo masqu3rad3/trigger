@@ -214,6 +214,16 @@ def isGroup(node):
     else:
         return True
 
+def validateGroup(group_name):
+    "checks if the group exist, if not creates it. If there are any non-group object with that name, raises exception"
+    if cmds.objExists(group_name):
+        if isGroup(group_name):
+            return group_name
+        else:
+            log.error("%s is not a valid group name. There is another non-group object with the same same" %group_name)
+    else:
+        return cmds.group(name=group_name, em=True)
+
 def colorize (node_list, index, customColor=None, shape=True):
     """
     Changes the wire color of the node to the index
@@ -234,10 +244,10 @@ def colorize (node_list, index, customColor=None, shape=True):
             if index.upper() in sidesDict.keys():
                 index = sidesDict[index.upper()]
             else:
-                log.throw_error("Colorize error... Unknown index command")
+                log.error("Colorize error... Unknown index command")
                 return
         else:
-            log.throw_error("Colorize error... Index flag must be integer or string('L', 'R', 'C')")
+            log.error("Colorize error... Index flag must be integer or string('L', 'R', 'C')")
             return
         if shape:
             shapes=cmds.listRelatives(node, s=True)

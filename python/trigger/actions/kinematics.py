@@ -462,7 +462,8 @@ class Kinematics(object):
                 ## pass the attributes
 
                 attribute.attrPass(limb.scaleGrp, "pref_cont", values=True, daisyChain=True, overrideEx=False)
-                cmds.parent(limb.limbGrp, "trigger_grp")
+                if functions.getParent(limb.limbGrp) != "trigger_grp":
+                    cmds.parent(limb.limbGrp, "trigger_grp")
                 # scaler = "master_cont" if cmds.objExists("master_cont") else "pref_cont"
                 for sCon in limb.scaleConstraints:
                     # if this is the root limb, use its values to scale the entire rig

@@ -101,7 +101,6 @@ def validate_attr(attr, attr_range=None, nice_name=None, attr_type="float", defa
     if cmds.attributeQuery(attr_name, node=node_name, exists=True):
         if not cmds.addAttr(attr, query=True, exists=True):
             # if this isn't a dynamic attr, we don't need to worry about min or max
-            print("anan", attr)
             return
 
         if attr_range:

@@ -12,6 +12,8 @@ from trigger.library import functions, attribute, deformers, naming
 ACTION_DATA = {
     "blendshapes_group": "",
     "neutral_mesh": "",
+    "hook_node": "morph_hook",
+    "morph_mesh": ""
 }
 
 class Morph(object):
@@ -38,6 +40,8 @@ class Morph(object):
         """Feeds the instance with the action data stored in actions session"""
         self.blendshapesGroup = action_data.get("blendshapes_group")
         self.neutralMesh = action_data.get("neutral_mesh")
+        self.morphHook = action_data.get("hook_node")
+        self.morphMesh = action_data.get("morph_mesh")
 
     @viewportOff
     def action(self):
@@ -72,12 +76,24 @@ class Morph(object):
         neutral_mesh_le = QtWidgets.QLineEdit()
         layout.addRow(neutral_mesh_lbl, neutral_mesh_le)
 
+        hook_node_lbl = QtWidgets.QLabel(text="Hook Node:")
+        hook_node_le = QtWidgets.QLineEdit(placeholderText="(Optional)")
+        layout.addRow(hook_node_lbl, hook_node_le)
+
+        morph_mesh_lbl = QtWidgets.QLabel(text="Morph Mesh:")
+        morph_mesh_le = QtWidgets.QLineEdit(placeholderText="(Optional)")
+        layout.addRow(morph_mesh_lbl, morph_mesh_le)
+
         ctrl.connect(blendshapes_group_le, "blendshapes_group", str)
         ctrl.connect(neutral_mesh_le, "neutral_mesh", str)
+        ctrl.connect(hook_node_le, "hook_node", str)
+        ctrl.connect(morph_mesh_le, "morph_mesh", str)
         ctrl.update_ui()
 
-        blendshapes_group_le.editingFinished.connect(lambda x=0: ctrl.update_model())
-        neutral_mesh_le.editingFinished.connect(lambda x=0: ctrl.update_model())
+        blendshapes_group_le.textChanged.connect(lambda x=0: ctrl.update_model())
+        neutral_mesh_le.textChanged.connect(lambda x=0: ctrl.update_model())
+        hook_node_le.textChanged.connect(lambda x=0: ctrl.update_model())
+        morph_mesh_le.textChanged.connect(lambda x=0: ctrl.update_model())
 
     def categorize_blendshapes(self, meshes):
         """puts each shape into the correct category"""
@@ -98,18 +114,41 @@ class Morph(object):
 
     def _create_hierarchy(self):
         """Creates the hook node for blendshapes"""
-        rig_grp = "rig_grp"
+        rig_grp = functions.validateGroup("rig_grp")
+        attribute.lockAndHide(rig_grp)
+        self.morphGrp = functions.validateGroup("morph_grp")
+        attribute.lockAndHide(self.morphGrp)
+        if functions.getParent(self.morphGrp) != rig_grp:
+            cmds.parent(self.morphGrp, rig_grp)
+
+        if not self.morphHook:
+            self.morphHook = functions.validateGroup("morph_hook")
+            attribute.lockAndHide(self.morphHook)
+            cmds.parent(self.morphHook, rig_grp)
+        elif not cmds.objExists(self.morphHook):
+            self.morphHook = functions.validateGroup(self.morphHook)
+            attribute.lockAndHide(rig_grp)
+            cmds.parent(self.morphHook, rig_grp)
+
+        if not self.morphMesh:
+            self.morphMesh = cmds.duplicate(self.neutralMesh, name="trigger_morphMesh")[0]
+            cmds.parent(self.morphMesh, self.morphGrp)
+        elif not cmds.objExists(self.morphMesh):
+            self.morphMesh = cmds.duplicate(self.neutralMesh, name=self.morphMesh)[0]
+            cmds.parent(self.morphMesh, self.morphGrp)
+
         if not cmds.objExists(rig_grp):
             cmds.group(name=rig_grp, em=True)
             attribute.lockAndHide(rig_grp)
-        self.morphGrp = cmds.group(name="morph_grp", em=True)
-        attribute.lockAndHide(self.morphGrp)
-        cmds.parent(self.morphGrp, rig_grp)
-        self.morphHook = cmds.group(name="morph_hook", em=True)
-        attribute.lockAndHide(self.morphHook)
-        cmds.parent(self.morphHook, self.morphGrp)
-        self.morphMesh = cmds.duplicate(self.neutralMesh, name="trigger_morphMesh")[0]
-        cmds.parent(self.morphMesh, self.morphGrp)
+
+        # self.morphGrp = cmds.group(name="morph_grp", em=True)
+        # attribute.lockAndHide(self.morphGrp)
+        # cmds.parent(self.morphGrp, rig_grp)
+        # self.morphHook = cmds.group(name="morph_hook", em=True)
+        # attribute.lockAndHide(self.morphHook)
+        # cmds.parent(self.morphHook, self.morphGrp)
+        # self.morphMesh = cmds.duplicate(self.neutralMesh, name="trigger_morphMesh")[0]
+        # cmds.parent(self.morphMesh, self.morphGrp)
 
 
     def create_hook_node(self):

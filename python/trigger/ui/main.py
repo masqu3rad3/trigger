@@ -598,7 +598,6 @@ class MainUI(QtWidgets.QMainWindow):
         self.recents_menu.clear()
         for recent in db.recentSessions:
             recent_action = QtWidgets.QAction(self.menuFile, text=recent)
-            # recent_action = QtWidgets.QAction("ANAN")
             self.recents_menu.addAction(recent_action)
             recent_action.triggered.connect(lambda _=0, x=recent: self.open_trigger(file_path=x))
 

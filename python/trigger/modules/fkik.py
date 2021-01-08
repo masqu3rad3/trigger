@@ -305,6 +305,7 @@ class Fkik(object):
         else:
             connection.matrixConstraint(self.ikControllers[-1], ik_handle, mo=False, source_parent_cutoff=self.localOffGrp)
         connection.matrixConstraint(self.ikControllers[0], self.ikJoints[0], mo=False, source_parent_cutoff=self.localOffGrp)
+        connection.matrixConstraint(self.ikControllers[-1], self.ikJoints[-1], st="xyz", ss="xyz", mo=False, source_parent_cutoff=self.localOffGrp)
 
     def createFKsetup(self):
         if self.switchMode == 2: # if it is IK only
