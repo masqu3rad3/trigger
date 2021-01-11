@@ -1,10 +1,11 @@
 from maya import cmds
 import maya.api.OpenMaya as om
 from trigger.library import api
-from trigger.library import functions, connection
+from trigger.library import functions, connection, attribute
 from trigger.library import naming
 from trigger.library import attribute
 from trigger.library import controllers as ic
+from trigger.library import tools
 
 from trigger.core import filelog
 log = filelog.Filelog(logname=__name__, filename="trigger_log")
@@ -69,7 +70,7 @@ class Eye(object):
         self.aimCont = None
         self.aimDriven = None
         self.directDriven = None
-        self.aimContPlugFollow = None
+        self.aimContGroupFollow = None
         self.plugDriven = None
         self.controllerGrp = None
         self.jointGrp = None
@@ -124,7 +125,9 @@ class Eye(object):
             cmds.parent(self.limbGrp, "Eye_group%i" % self.groupID)
             self.limbGrp = "Eye_group%i" % self.groupID
             c_shapes = cmds.listRelatives("Eye_group%i" % self.groupID, ad=True, children=True, ap=False, type="nurbsCurve")
-            self.otherEyeConts = [functions.getParent(shape) for shape in c_shapes]
+            if c_shapes:
+                self.otherEyeConts = [functions.getParent(shape) for shape in c_shapes]
+
             if cmds.objExists("Eye_group%i_cont" %self.groupID):
                 self.groupCont = "Eye_group%i_cont" %self.groupID
                 self.otherEyeConts.remove(self.groupCont)
@@ -158,17 +161,61 @@ class Eye(object):
         self.aimBridge = cmds.spaceLocator(name="aimBridge_%s" %self.suffix)[0]
         self.aimCont, _ = icon_handler.createIcon("Circle", iconName="%s_Aim_cont" % self.suffix, scale = (1,1,1),
                                                       normal=(0, 0, 1))
+        self.otherEyeConts.append(self.aimCont)
 
         functions.alignTo(self.aimBridge, self.inits[1], position=True, rotation=True)
         functions.alignTo(self.aimCont, self.inits[1], position=True, rotation=True)
 
         aimCont_OFF = functions.createUpGrp(self.aimCont, "OFF")
-        self.aimContPlugFollow = functions.createUpGrp(self.aimCont, "PlugFollow")
+        self.aimContGroupFollow = functions.createUpGrp(self.aimCont, "GroupFollow")
 
         cmds.parent(self.aimBridge, self.nonScaleGrp)
 
         cmds.parent(aimCont_OFF, self.controllerGrp)
         # aimConstraint -offset 0 0 0 -weight 1 -aimVector 0 0 1 -upVector 0 1 0 -worldUpType "objectrotation" -worldUpVector 0 1 0 -worldUpObject limbPlug_C_eye;
+
+        if self.groupID:
+            if not self.groupCont:
+                self.groupCont, _ = icon_handler.createIcon("Circle", iconName="Eye_group%i_cont" %self.groupID, scale = (2,2,2),
+                                                          normal=(0, 0, 1))
+                cmds.delete(cmds.pointConstraint(self.otherEyeConts, self.groupCont, mo=False))
+                groupCont_off = functions.createUpGrp(self.groupCont, "OFF")
+                cmds.parent(groupCont_off, self.limbGrp)
+            for cont in self.otherEyeConts:
+                g_follow = functions.getParent(cont)
+                _ = [attribute.disconnect_attr(g_follow, attr=attr, suppress_warnings=True) for attr in ["translate", "rotate", "scale"]]
+                # connection.matrixConstraint(self.groupCont, g_follow, mo=True, source_parent_cutoff=self.localOffGrp)
+                connection.matrixConstraint(self.groupCont, g_follow, mo=True)
+            else:
+                # if the group controller exists, update only its shape and rotation pivot
+                ## TODO: update group controller shape
+
+                # adjust the pivot
+                cmds.xform(self.groupCont, a=True, ws=True, piv=api.getCenter(self.otherEyeConts))
+
+                bb = cmds.exactWorldBoundingBox(*self.otherEyeConts)
+                x_dist = abs(bb[0] - bb[3])
+                y_dist = abs(bb[1] - bb[4])
+                z_dist = abs(bb[2] - bb[5])
+                temp_cont, _ = icon_handler.createIcon("Circle", iconName="TEMP_%i_cont" %self.groupID, scale = (x_dist, z_dist, y_dist),
+                                                          normal=(0, 0, 1))
+
+                # cmds.delete(cmds.pointConstraint(test_nodes, cont))
+                temp_cont_shape = functions.getShapes(temp_cont)[0]
+                functions.alignTo(temp_cont, self.groupCont, position=True)
+                # cmds.makeIdentity(temp_cont, a=True)
+
+                # cmds.connectAttr("%s.worldSpace" % temp_cont_shape, "%s.create" % self.groupCont, f=True)
+                # oddly, it requires a viewport refresh before disconnecting (or deleting) the replacement shapes
+                # cmds.refresh()
+
+                tools.replace_curve(self.groupCont, temp_cont)
+
+                functions.deleteObject(temp_cont)
+                self.anchors = [(self.groupCont, "parent", 1, None)]
+                pass
+        else:
+            self.anchors = [(self.aimCont, "parent", 1, None)]
 
     def createConnections(self):
         aim_con = cmds.aimConstraint(self.aimBridge, self.aimDriven, upVector=self.up_axis, aimVector=self.look_axis,
@@ -181,18 +228,10 @@ class Eye(object):
 
         if self.isLocal:
             connection.matrixConstraint(self.limbPlug, self.plugBindGrp)
-            connection.matrixConstraint(self.plugBindGrp, self.aimContPlugFollow)
+            # connection.matrixConstraint(self.plugBindGrp, self.aimContGroupFollow)
         else:
-            connection.matrixConstraint(self.limbPlug, self.aimContPlugFollow)
+            # connection.matrixConstraint(self.limbPlug, self.aimContGroupFollow)
             connection.matrixConstraint(self.limbPlug, self.plugDriven)
-
-    def reconstructMasterEye(self):
-        """Re-makes the master eye controller and its connection
-
-        This is not an efficient way but it makes sure all the grouped eyes have the same master controller
-        The other way around would be moving this to Kinematics module and run it only once after rig completion
-        """
-
 
     def createLimb(self):
         self.createGrp()

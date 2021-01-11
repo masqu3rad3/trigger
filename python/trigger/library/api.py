@@ -32,3 +32,11 @@ def getBetweenVector(node, targetPointNodeList):
         addVector = om.MVector(om.MVector(nodePos)-om.MVector(pVector)).normal()
         sumVectors += addVector
     return sumVectors.normal()
+
+def getCenter(node_list):
+    "returns the center world position of the given nodes"
+    p_sum = om.MVector(0,0,0)
+    for x in node_list:
+        p_sum += getWorldTranslation(x)
+    return p_sum / len(node_list)
+

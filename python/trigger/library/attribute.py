@@ -419,7 +419,7 @@ def getNextIndex(attr, startFrom=0):
     """Returns the next free index from a multi index attribute"""
     return mel.eval("getNextFreeMultiIndex %s %s" % (attr, startFrom))
 
-def disconnect_attr(node=None, attr=None):
+def disconnect_attr(node=None, attr=None, suppress_warnings=False):
     """Disconnects all connections to the attribute"""
     if len(node.split(".")) < 2:
         if not attr:
@@ -433,5 +433,8 @@ def disconnect_attr(node=None, attr=None):
     if plug:
         cmds.disconnectAttr(plug[0], attr_path)
     else:
-        cmds.warning("Nothing connected to this attribute => %s" %attr_path)
+        if not suppress_warnings:
+            log.warning("Nothing connected to this attribute => %s" %attr_path)
+        else:
+            pass
 

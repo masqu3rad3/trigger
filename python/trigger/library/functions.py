@@ -120,7 +120,7 @@ def alignAndAim(node, targetList, aimTargetList, upObject=None, upVector=None, l
 
     """
     if upObject and upVector:
-        log.throw_error("In alignAndAim function both upObject and upVector parameters cannot be used")
+        log.error("In alignAndAim function both upObject and upVector parameters cannot be used")
         return
 
     pointFlags = ""

@@ -441,6 +441,10 @@ class Kinematics(object):
                 if self.autoSwitchers:
                     self.anchorLocations += limb.anchorLocations
                     self.anchors += limb.anchors
+                # make them unique lists
+                self.anchorLocations = functions.uniqueList(self.anchorLocations)
+                self.anchors = functions.uniqueList(self.anchors)
+
                 ## gather all sockets in a list
                 self.allSocketsList += limb.sockets
                 ## add the rigged limb to the riggedLimbList
