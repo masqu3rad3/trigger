@@ -73,6 +73,8 @@ class Eye(object):
         self.plugDriven = None
         self.controllerGrp = None
         self.jointGrp = None
+        self.otherEyeConts = []
+        self.groupCont = None
 
         # scratch variables
         self.controllers = []
@@ -121,6 +123,12 @@ class Eye(object):
             functions.validateGroup("Eye_group%i" % self.groupID)
             cmds.parent(self.limbGrp, "Eye_group%i" % self.groupID)
             self.limbGrp = "Eye_group%i" % self.groupID
+            c_shapes = cmds.listRelatives("Eye_group%i" % self.groupID, ad=True, children=True, ap=False, type="nurbsCurve")
+            self.otherEyeConts = [functions.getParent(shape) for shape in c_shapes]
+            if cmds.objExists("Eye_group%i_cont" %self.groupID):
+                self.groupCont = "Eye_group%i_cont" %self.groupID
+                self.otherEyeConts.remove(self.groupCont)
+
 
     def createJoints(self):
         cmds.select(d=True)
@@ -177,6 +185,13 @@ class Eye(object):
         else:
             connection.matrixConstraint(self.limbPlug, self.aimContPlugFollow)
             connection.matrixConstraint(self.limbPlug, self.plugDriven)
+
+    def reconstructMasterEye(self):
+        """Re-makes the master eye controller and its connection
+
+        This is not an efficient way but it makes sure all the grouped eyes have the same master controller
+        The other way around would be moving this to Kinematics module and run it only once after rig completion
+        """
 
 
     def createLimb(self):

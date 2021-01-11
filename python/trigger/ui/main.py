@@ -674,7 +674,7 @@ class MainUI(QtWidgets.QMainWindow):
             else:
                 return
         if not file_path:
-            dlg = QtWidgets.QFileDialog.getOpenFileName(self, str("Open Trigger Session"), "", str("Trigger Session (*.tr)"))
+            dlg = QtWidgets.QFileDialog.getOpenFileName(self, str("Open Trigger Session"), self.actions_handler.currentFile, str("Trigger Session (*.tr)"))
             if dlg[0]:
                 file_path = os.path.normpath(dlg[0])
             else:
@@ -698,7 +698,7 @@ class MainUI(QtWidgets.QMainWindow):
             self.feedback.pop_info(title="Cannot Complete", text="Trigger Session needs to be saved first to increment it\nAborting...", critical=True)
 
     def save_as_trigger(self):
-        dlg = QtWidgets.QFileDialog.getSaveFileName(self, str("Save Trigger Session"), "", str("Trigger Session (*.tr)"))
+        dlg = QtWidgets.QFileDialog.getSaveFileName(self, str("Save Trigger Session"), self.actions_handler.currentFile, str("Trigger Session (*.tr)"))
         if dlg[0]:
             self.actions_handler.save_session(os.path.normpath(dlg[0]))
             db.recentSessions.add(os.path.normpath(dlg[0]))
