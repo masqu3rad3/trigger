@@ -263,12 +263,13 @@ class ActionsSession(dict):
         # log.info("%s index => %s" % (action_name, new_index))
 
     @tracktime
-    def run_all_actions(self):
+    def run_all_actions(self, reset_scene=True):
         """runs all actions in the actions list"""
         # reset scene
         log.seperator()
         log.header("BUILDING...")
-        cmds.file(new=True, force=True)
+        if reset_scene:
+            cmds.file(new=True, force=True)
         for row, action in enumerate(self["actions"]):
             if self.is_enabled(action["name"]):
                 if self.progressListwidget:

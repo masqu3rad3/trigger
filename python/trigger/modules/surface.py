@@ -118,7 +118,8 @@ class Surface(object):
         self.cont_negate = functions.createUpGrp(self.cont, "negate")
         self.cont_pos = functions.createUpGrp(self.cont, "pos")
 
-        # functions.alignTo(self.cont_offset, self.rootInit, position=True, rotation=True)
+        # functions.alignTo(self.cont_offset, self.rootInit, position=True, rotation=False)
+        functions.alignTo(self.cont_offset, self.rootInit, position=True, rotation=True)
         # functions.alignTo(self.cont_pos, self.rootInit, position=True, rotation=True)
         functions.colorize(self.cont, self.colorCodes[0])
 
@@ -136,7 +137,7 @@ class Surface(object):
             cmds.parent(follicle, self.nonScaleGrp)
         if self.rotateObject:
             # connection.matrixConstraint(self.rotateObject, self.cont_bind, mo=True, st="xyz", ss="xyz")
-            connection.matrixConstraint(self.rotateObject, self.cont_bind, mo=False, st="xyz", ss="xyz")
+            connection.matrixConstraint(self.rotateObject, self.cont_bind, mo=True, st="xyz", ss="xyz")
 
 
         negate_multMatrix = cmds.createNode("multMatrix", name="negate_multMatrix_%s" % self.suffix)
@@ -152,7 +153,7 @@ class Surface(object):
         else:
             cmds.parentConstraint(self.cont, self.limbPlug, mo=False)
 
-        functions.alignTo(self.cont_pos, self.rootInit, position=True, rotation=True)
+        # functions.alignTo(self.cont_pos, self.rootInit, position=True, rotation=True)
 
         # Direct connection between controller and joint
         for attr in "trs":

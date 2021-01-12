@@ -42,7 +42,7 @@ class Reference_session(object):
         actions_session = importlib.import_module("trigger.base.actions_session")
         referenced_session = actions_session.ActionsSession()
         referenced_session.load_session(self.triggerFilePath)
-        referenced_session.run_all_actions()
+        referenced_session.run_all_actions(reset_scene=False)
 
 
     def save_action(self):

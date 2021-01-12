@@ -410,21 +410,21 @@ class MainUI(QtWidgets.QMainWindow):
         up_axis_lbl = QtWidgets.QLabel(self.R_guides_WidgetContents, text="Up Axis")
         up_axis_hLay = QtWidgets.QHBoxLayout(spacing=3)
 
-        self.up_axis_sp_list = [QtWidgets.QDoubleSpinBox(self.R_guides_WidgetContents, minimumWidth=40, buttonSymbols=QtWidgets.QAbstractSpinBox.NoButtons) for axis in "XYZ"]
+        self.up_axis_sp_list = [QtWidgets.QDoubleSpinBox(self.R_guides_WidgetContents, minimum=-1, maximum=1, minimumWidth=40, buttonSymbols=QtWidgets.QAbstractSpinBox.NoButtons) for axis in "XYZ"]
         _ = [up_axis_hLay.addWidget(sp) for sp in self.up_axis_sp_list]
         self.module_settings_formLayout.addRow(up_axis_lbl, up_axis_hLay)
         
         #mirror axis
         mirror_axis_lbl = QtWidgets.QLabel(self.R_guides_WidgetContents, text="Mirror Axis")
         mirror_axis_hLay = QtWidgets.QHBoxLayout(spacing=3)
-        self.mirror_axis_sp_list = [QtWidgets.QDoubleSpinBox(self.R_guides_WidgetContents, minimumWidth=40, buttonSymbols=QtWidgets.QAbstractSpinBox.NoButtons) for axis in "XYZ"]
+        self.mirror_axis_sp_list = [QtWidgets.QDoubleSpinBox(self.R_guides_WidgetContents,  minimum=-1, maximum=1, minimumWidth=40, buttonSymbols=QtWidgets.QAbstractSpinBox.NoButtons) for axis in "XYZ"]
         _ = [mirror_axis_hLay.addWidget(sp) for sp in self.mirror_axis_sp_list]
         self.module_settings_formLayout.addRow(mirror_axis_lbl, mirror_axis_hLay)
 
         #look axis
         look_axis_lbl = QtWidgets.QLabel(self.R_guides_WidgetContents, text="Look Axis")
         look_axis_hLay = QtWidgets.QHBoxLayout(spacing=3)
-        self.look_axis_sp_list = [QtWidgets.QDoubleSpinBox(self.R_guides_WidgetContents, minimumWidth=40, buttonSymbols=QtWidgets.QAbstractSpinBox.NoButtons) for axis in "XYZ"]
+        self.look_axis_sp_list = [QtWidgets.QDoubleSpinBox(self.R_guides_WidgetContents,  minimum=-1, maximum=1, minimumWidth=40, buttonSymbols=QtWidgets.QAbstractSpinBox.NoButtons) for axis in "XYZ"]
         _ = [look_axis_hLay.addWidget(sp) for sp in self.look_axis_sp_list]
         self.module_settings_formLayout.addRow(look_axis_lbl, look_axis_hLay)
 

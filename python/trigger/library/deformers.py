@@ -3,6 +3,7 @@
 from maya import cmds
 
 from trigger.core.decorators import undo
+from trigger.library import functions
 from trigger.library import naming
 from trigger.core import compatibility as compat
 
@@ -148,15 +149,18 @@ def localize(mesh, blendshape_node, local_target_name="LocalRig", group_name=Non
     if not cmds.objExists(local_rig_grp):
         cmds.group(name=local_rig_grp, em=True)
 
-    # duplicate once
-    local_mesh = cmds.duplicate(mesh, name=local_target_name)[0]
-    # get rid of any inbetweens, unlock transforms
-    attrs = ["tx", "ty", "tz", "rx", "ry", "rz", "sx", "sy", "sz", "v"]
-    for attr in attrs:
-        cmds.setAttr("%s.%s" %(local_mesh, attr), e=True, k=True, l=False)
-    # delete intermediate objects
-    shapes = cmds.listRelatives(local_mesh, children=True)
-    _ = [cmds.delete(shape) for shape in shapes if cmds.getAttr("%s.intermediateObject" % shape) == 1]
+    if cmds.objExists(local_target_name):
+        local_mesh = local_target_name
+    else:
+        # duplicate once
+        local_mesh = cmds.duplicate(mesh, name=local_target_name)[0]
+        # get rid of any inbetweens, unlock transforms
+        attrs = ["tx", "ty", "tz", "rx", "ry", "rz", "sx", "sy", "sz", "v"]
+        for attr in attrs:
+            cmds.setAttr("%s.%s" %(local_mesh, attr), e=True, k=True, l=False)
+        # delete intermediate objects
+        shapes = cmds.listRelatives(local_mesh, children=True)
+        _ = [cmds.delete(shape) for shape in shapes if cmds.getAttr("%s.intermediateObject" % shape) == 1]
 
 
 
@@ -179,7 +183,8 @@ def localize(mesh, blendshape_node, local_target_name="LocalRig", group_name=Non
         # create a blendshape
         cmds.blendShape(local_mesh, mesh, w=[0, 1], name=blendshape_node)
 
-    cmds.parent(local_mesh, local_rig_grp)
+    if functions.getParent(local_mesh) != local_rig_grp:
+        cmds.parent(local_mesh, local_rig_grp)
 
     return local_mesh
 

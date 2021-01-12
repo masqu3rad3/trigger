@@ -351,7 +351,8 @@ class Fkik(object):
 
         for ik_co in self.ikControllers:
             cmds.connectAttr("%s.fk_ik" %(self.switchController), "%s.v" %ik_co)
-        cmds.connectAttr("%s.fk_ik" %self.switchController, "%s.v" %self.poleVectorCont)
+        if self.ikSolver != 0:
+            cmds.connectAttr("%s.fk_ik" %self.switchController, "%s.v" %self.poleVectorCont)
         for fk_co in self.fkControllers:
             cmds.connectAttr("%s.fk_ik_reverse" %(self.switchController), "%s.v" %fk_co)
 

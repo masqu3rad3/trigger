@@ -376,12 +376,15 @@ def averageConstraint(target_mesh, vertex_list, source_object=None, offsetParent
         cmds.connectAttr("%s.matrixSum" % average_node, "%s.matrixIn[0]" % mult_matrix)
         cmds.connectAttr("%s.matrixSum" %mult_matrix, "%s.inputMatrix" %decompose_matrix)
         cmds.connectAttr("%s.outputTranslate" % decompose_matrix, "%s.translate" % source_object)
+        cmds.connectAttr("%s.outputRotate" % decompose_matrix, "%s.rotate" % source_object)
+
     else:
         pick_matrix = cmds.createNode("pickMatrix")
         cmds.connectAttr("%s.matrixSum" % average_node, "%s.inputMatrix" %pick_matrix)
-        cmds.setAttr("%s.useRotate" %pick_matrix, 0)
+        cmds.setAttr("%s.useRotate" %pick_matrix, 1)
         cmds.setAttr("%s.useScale" %pick_matrix, 0)
         cmds.setAttr("%s.useShear" %pick_matrix, 0)
+        cmds.connectAttr("%s.outputMatrix" % pick_matrix, "%s.offsetParentMatrix" %source_object)
         cmds.connectAttr("%s.outputMatrix" % pick_matrix, "%s.offsetParentMatrix" %source_object)
     return source_object
 
