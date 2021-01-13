@@ -98,7 +98,7 @@ class Surface(object):
         else:
             self.limbPlug = cmds.joint(name="limbPlug_%s" % self.suffix, radius=2)
             cmds.parent(self.limbPlug, self.scaleGrp)
-
+        self.deformerJoints.append(self.surface_jnt)
         self.sockets.append(self.limbPlug)
 
         # Create connection groups
@@ -108,6 +108,10 @@ class Surface(object):
         functions.alignTo(self.surface_jnt_offset, self.rootInit, position=True, rotation=True)
 
         cmds.parent(self.surface_jnt_offset, self.nonScaleGrp)
+
+        attribute.drive_attrs("%s.jointVis" % self.scaleGrp, ["%s.v" % x for x in self.deformerJoints])
+        cmds.connectAttr("%s.jointVis" % self.scaleGrp,"%s.v" % self.limbPlug, force=True)
+        functions.colorize(self.deformerJoints, self.colorCodes[0], shape=False)
 
     def createControllers(self):
         icon = ic.Icon()
@@ -135,6 +139,7 @@ class Surface(object):
             # connection.matrixConstraint(follicle, self.cont_bind, mo=True, sr="xyz", ss="xyz")
             connection.matrixConstraint(follicle, self.cont_bind, mo=False, sr="xyz", ss="xyz")
             cmds.parent(follicle, self.nonScaleGrp)
+            cmds.connectAttr("%s.rigVis" % self.scaleGrp, "%s.v" % follicle)
         if self.rotateObject:
             # connection.matrixConstraint(self.rotateObject, self.cont_bind, mo=True, st="xyz", ss="xyz")
             connection.matrixConstraint(self.rotateObject, self.cont_bind, mo=True, st="xyz", ss="xyz")
@@ -159,6 +164,8 @@ class Surface(object):
         for attr in "trs":
             for axis in "xyz":
                 cmds.connectAttr("%s.%s%s" % (self.cont, attr, axis), "%s.%s%s" % (self.surface_jnt_bind, attr, axis))
+
+
 
     def createLimb(self):
         """
