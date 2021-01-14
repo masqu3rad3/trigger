@@ -160,6 +160,7 @@ class MainUI(QtWidgets.QMainWindow):
 
         self.new_trigger_action = QtWidgets.QAction(self, text="New Trigger Session")
         self.open_trigger_action = QtWidgets.QAction(self, text="Open Trigger Session")
+        self.import_trigger_action = QtWidgets.QAction(self, text="Import Trigger Session")
         self.save_trigger_action = QtWidgets.QAction(self, text="Save Trigger Session")
         self.save_as_trigger_action = QtWidgets.QAction(self, text="Save As Trigger Session")
         self.increment_trigger_action = QtWidgets.QAction(self, text="Increment Save Trigger Session")
@@ -171,6 +172,7 @@ class MainUI(QtWidgets.QMainWindow):
 
         self.menuFile.addAction(self.new_trigger_action)
         self.menuFile.addAction(self.open_trigger_action)
+        self.menuFile.addAction(self.import_trigger_action)
         self.menuFile.addSeparator()
         self.menuFile.addAction(self.save_trigger_action)
         self.menuFile.addAction(self.save_as_trigger_action)
@@ -198,6 +200,7 @@ class MainUI(QtWidgets.QMainWindow):
         # menu items
         self.new_trigger_action.triggered.connect(self.new_trigger)
         self.open_trigger_action.triggered.connect(self.open_trigger)
+        self.import_trigger_action.triggered.connect(self.import_trigger)
         self.save_trigger_action.triggered.connect(self.save_trigger)
         self.save_as_trigger_action.triggered.connect(self.save_as_trigger)
         self.increment_trigger_action.triggered.connect(self.increment_trigger)
@@ -687,6 +690,20 @@ class MainUI(QtWidgets.QMainWindow):
         self.populate_recents()
         # self.buildBarsUI()
 
+    def import_trigger(self, file_path=None):
+        row = self.rig_actions_listwidget.currentRow()
+        index = None if row == -1 else row+1
+
+        if not file_path:
+            dlg = QtWidgets.QFileDialog.getOpenFileName(self, str("Open Trigger Session"), self.actions_handler.currentFile, str("Trigger Session (*.tr)"))
+            if dlg[0]:
+                file_path = os.path.normpath(dlg[0])
+            else:
+                return
+
+        self.actions_handler.import_session(file_path, insert_index=index)
+        self.populate_actions()
+
     def increment_trigger(self):
         if self.actions_handler.currentFile:
             new_file = naming.increment(self.actions_handler.currentFile)
@@ -731,13 +748,15 @@ class MainUI(QtWidgets.QMainWindow):
 
     def add_actions_menu(self):
         list_of_actions = sorted(self.actions_handler.action_data_dict.keys())
+        row = self.rig_actions_listwidget.currentRow()
+        index = None if row == -1 else row+1
 
         zortMenu = QtWidgets.QMenu()
         for action_item in list_of_actions:
             icon_path = os.path.join(self.iconsPath, "%s.png" %action_item)
             tempAction = QtWidgets.QAction(QtGui.QIcon(icon_path), action_item, self)
             zortMenu.addAction(tempAction)
-            tempAction.triggered.connect(lambda ignore=action_item, item=action_item: self.actions_handler.add_action(action_type=item))
+            tempAction.triggered.connect(lambda ignore=action_item, item=action_item: self.actions_handler.add_action(action_type=item, insert_index=index))
             tempAction.triggered.connect(self.populate_actions)
             ## Take note about the usage of lambda "item=z" makes it possible using the loop, ignore -> for discarding emitted value
 

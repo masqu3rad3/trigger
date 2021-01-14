@@ -159,8 +159,11 @@ class Eye(object):
         icon_handler = ic.Icon()
 
         self.aimBridge = cmds.spaceLocator(name="aimBridge_%s" %self.suffix)[0]
+        attribute.drive_attrs("%s.rigVis" % self.scaleGrp, "%s.v" % self.aimBridge)
         self.aimCont, _ = icon_handler.createIcon("Circle", iconName="%s_Aim_cont" % self.suffix, scale = (1,1,1),
                                                       normal=(0, 0, 1))
+        self.controllers.append(self.aimCont)
+
         self.otherEyeConts.append(self.aimCont)
 
         functions.alignTo(self.aimBridge, self.inits[1], position=True, rotation=True)
@@ -178,6 +181,8 @@ class Eye(object):
             if not self.groupCont:
                 self.groupCont, _ = icon_handler.createIcon("Circle", iconName="Eye_group%i_cont" %self.groupID, scale = (2,2,2),
                                                           normal=(0, 0, 1))
+                functions.colorize(self.groupCont, "C")
+                attribute.drive_attrs("%s.contVis" % self.scaleGrp, "%s.v" % self.groupCont)
                 cmds.delete(cmds.pointConstraint(self.otherEyeConts, self.groupCont, mo=False))
                 groupCont_off = functions.createUpGrp(self.groupCont, "OFF")
                 cmds.parent(groupCont_off, self.limbGrp)
@@ -216,6 +221,9 @@ class Eye(object):
                 pass
         else:
             self.anchors = [(self.aimCont, "parent", 1, None)]
+
+        attribute.drive_attrs("%s.contVis" % self.scaleGrp, ["%s.v" % x for x in self.controllers])
+        functions.colorize(self.controllers, self.colorCodes[0])
 
     def createConnections(self):
         aim_con = cmds.aimConstraint(self.aimBridge, self.aimDriven, upVector=self.up_axis, aimVector=self.look_axis,

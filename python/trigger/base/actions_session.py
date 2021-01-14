@@ -22,7 +22,7 @@ class ActionsSession(dict):
         self.currentFile = None
         self.action_data_dict = {}
         for mod in actions.__all__:
-            self.action_data_dict[mod]=eval('actions.{0}.ACTION_DATA'.format(mod))
+            self.action_data_dict[mod] = eval('actions.{0}.ACTION_DATA'.format(mod))
 
         """
         Structure:
@@ -63,7 +63,7 @@ class ActionsSession(dict):
     def save_session(self, file_path):
         """Saves the session to the given file path"""
         if not os.path.splitext(file_path)[1]:
-            file_path = "%s.tr" %file_path
+            file_path = "%s.tr" % file_path
         self.io.file_path = file_path
         self.io.write(self)
         self.currentFile = file_path
@@ -82,8 +82,37 @@ class ActionsSession(dict):
             log.header("New Session")
             log.info("Action Session Loaded Successfully...")
         else:
-            log.error("File doesn't exist or unreadable => %s" %file_path)
+            log.error("Cannot Open. File doesn't exist or unreadable => %s" % file_path)
             raise Exception
+
+    def import_session(self, file_path, insert_index=None):
+        """Imports the session from the file"""
+        self.io.file_path = file_path
+        actions_data = self.io.read()
+        imported_actions = actions_data["actions"]
+        ## Make sure new action names are not clashing
+        for act in imported_actions:
+            action_name = act["name"]
+            idcounter = 0
+            while action_name in self.list_action_names():
+                action_name = "%s%s" % (action_name, str(idcounter + 1))
+                idcounter = idcounter + 1
+            act["name"] = action_name
+
+        if insert_index == None:
+            self["actions"].extend(imported_actions)
+        else:
+            # slice it
+            self["actions"][insert_index:insert_index] = imported_actions
+        #
+        # if actions_data:
+        #     self.update(actions_data)
+        #     self.compareActions = deepcopy(self["actions"])
+        #     log.header("Import Session")
+        #     log.info("Action Session %s Imported Successfully..." % os.path.basename(file_path))
+        # else:
+        #     log.error("Cannot Import. File doesn't exist or unreadable => %s" % file_path)
+        #     raise Exception
 
     def is_modified(self):
         """Checks if the current file is different than the saved file"""
@@ -100,7 +129,7 @@ class ActionsSession(dict):
         self["actions"] = []
         self.compareActions = deepcopy(self["actions"])
 
-    def add_action(self, action_name=None, action_type=None):
+    def add_action(self, action_name=None, action_type=None, insert_index=None):
         """
         Adds an action to the session database
         Args:
@@ -127,7 +156,10 @@ class ActionsSession(dict):
             "data": deepcopy(self.action_data_dict.get(action_type)),
             "enabled": True
         }
-        self["actions"].append(action)
+        if insert_index == None:
+            self["actions"].append(action)
+        else:
+            self["actions"].insert(insert_index, action)
 
     def get_action(self, action_name):
         """Returns the action dictionary item by name"""
@@ -163,7 +195,7 @@ class ActionsSession(dict):
             idcounter = idcounter + 1
 
         dup_action["name"] = action_name
-        self["actions"].insert(id+1, dup_action)
+        self["actions"].insert(id + 1, dup_action)
 
     def delete_action(self, action_name):
         """Deletes the action by name from the dictionary"""
@@ -171,7 +203,7 @@ class ActionsSession(dict):
         if action:
             self["actions"].remove(action)
         else:
-            log.warning("%s is not in the list of actions" %action_name)
+            log.warning("%s is not in the list of actions" % action_name)
 
     def edit_action(self, action_name, property, new_value):
         """
@@ -227,7 +259,7 @@ class ActionsSession(dict):
         action = self.get_action(action_name)
         try:
             return action["enabled"]
-        except KeyError: ## this is for backward compatibility
+        except KeyError:  ## this is for backward compatibility
             return True
 
     def get_all_actions(self):
@@ -243,7 +275,7 @@ class ActionsSession(dict):
         action = self.get_action(action_name)
         index = self["actions"].index(action)
         if not index == 0:
-            self["actions"].insert(index-1, self["actions"].pop(index))
+            self["actions"].insert(index - 1, self["actions"].pop(index))
         # log.info("%s index => %s" % (action_name, index - 1))
 
     def move_down(self, action_name):
@@ -251,7 +283,7 @@ class ActionsSession(dict):
         action = self.get_action(action_name)
         index = self["actions"].index(action)
         if not index == len(self["actions"]):
-            self["actions"].insert(index+1, self["actions"].pop(index))
+            self["actions"].insert(index + 1, self["actions"].pop(index))
         # log.info("%s index => %s" % (action_name, index + 1))
 
     def move(self, action_name, new_index):
@@ -288,13 +320,13 @@ class ActionsSession(dict):
                 except Exception as e:
                     if self.progressListwidget:
                         self.progressListwidget.errorItem(row)
-                    log.error("Cannot complete action => %s\n%s" %(action["name"], e))
+                    log.error("Cannot complete action => %s\n%s" % (action["name"], e))
                     raise
         log.header("Total BUILDING TIME:")
 
     @tracktime
     def _action(self, action):
-        log.header("%s" %action["name"])
+        log.header("%s" % action["name"])
         action_cmd = "actions.{0}.{1}()".format(action["type"], action["type"].capitalize())
         a_hand = eval(action_cmd)
         a_hand.feed(action["data"])
@@ -302,7 +334,7 @@ class ActionsSession(dict):
         log.info("success...")
 
     def run_action(self, action_name):
-        log.info("Running action => %s" %action_name)
+        log.info("Running action => %s" % action_name)
         action = self.get_action(action_name)
         self._action(action)
         # action_cmd = "actions.{0}.{1}()".format(action["type"], action["type"].capitalize())
@@ -326,4 +358,3 @@ class ActionsSession(dict):
         action_cmd = "actions.{0}.{1}()".format(action["type"], action["type"].capitalize())
         a_hand = eval(action_cmd)
         a_hand.ui(ctrl, layout, self)
-
