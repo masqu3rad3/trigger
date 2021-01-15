@@ -443,7 +443,9 @@ class Kinematics(object):
                     self.anchors += limb.anchors
                 # make them unique lists
                 self.anchorLocations = functions.uniqueList(self.anchorLocations)
-                self.anchors = functions.uniqueList(self.anchors)
+                # log.warning(self.anchors)
+                # TODO : pass space switcher anchor arguments from a dictionary rather than a tuple
+                # self.anchors = functions.uniqueList(self.anchors)
 
                 ## gather all sockets in a list
                 self.allSocketsList += limb.sockets
