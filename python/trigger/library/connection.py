@@ -1,12 +1,14 @@
 """Any connection / constrain / attachment / procedural movemen related methods goes here"""
 
+import maya.api.OpenMaya as om
+
 from trigger.library import api
 from trigger.library import interface
 from trigger.library import attribute
 from maya import cmds
 
 
-def connections(node, exclude_nodes=None, exclude_types=None):
+def connections(node, exclude_nodes=None, exclude_types=None, return_mode="all"):
     """
         Returns the connections for the given node in a nice dictionary format:
 
@@ -29,8 +31,13 @@ def connections(node, exclude_nodes=None, exclude_types=None):
         node: (String) Node to get connections
         exclude_nodes: (List of Strings) nodes in this list will be excluded
         exclude_types: (List of Strings) nodes types in this list will be excluded
+        return_mode: (str) modifies return value:
+                            "all" : returns a dictionary with incoming and outgoing keys
+                            "incoming": returns a list of dictionaries for incoming connections
+                            "outgoing": returns a list of dictionaries for outgoing connections
+                            default "all"
 
-    Returns: (Dictionary)
+    Returns: (Dictionary) or (List) depending on the return_mode argument
 
     """
 
@@ -71,7 +78,35 @@ def connections(node, exclude_nodes=None, exclude_types=None):
             }
             result_dict["outgoing"].append(conn)
 
-    return result_dict
+    if return_mode == "all":
+        return result_dict
+    elif return_mode == "incoming":
+        return result_dict["incoming"]
+    elif return_mode == "outgoing":
+        return result_dict["outgoing"]
+    else:
+        raise Exception("Not valid return_mode argument. Valid values are 'all', 'incoming', 'outgoing'")
+
+def replace_connections(source_node, target_node, exclude_nodes=None, exclude_types=None, incoming=True, outgoing=True):
+    all_connections = connections(source_node, exclude_nodes=exclude_nodes, exclude_types=exclude_types)
+    in_connections = all_connections["incoming"] if incoming else []
+    out_connections = all_connections["outgoing"] if outgoing else []
+
+    for con_dict in in_connections:
+        out_p = con_dict["plug_out"]
+        in_p = con_dict["plug_in"].replace(source_node, target_node)
+        # prevent nasty warnings...
+        existing_connections = cmds.listConnections(out_p, p=True, source=False, destination=True) or []
+        if in_p not in existing_connections:
+            cmds.connectAttr(out_p, in_p, force=True)
+
+    for con_dict in out_connections:
+        out_p = con_dict["plug_out"].replace(source_node, target_node)
+        in_p = con_dict["plug_in"]
+        # stupid warnings...
+        existing_connections = cmds.listConnections(in_p, p=True, source=True, destination=False) or []
+        if out_p not in existing_connections:
+            cmds.connectAttr(out_p, in_p, force=True)
 
 def matrixConstraint(parent, child, mo=True, prefix="", sr=None, st=None, ss=None, source_parent_cutoff=None):
     """
@@ -272,17 +307,50 @@ def matrixSwitch(parentA, parentB, child, control_attribute, position=True, rota
         cmds.connectAttr("%s.outputScale" %decompose_node, "%s.scale" %child)
 
 def getClosestUV(source_node, dest_node):
-    xPos, yPos, zPos = api.getWorldTranslation(dest_node)
-    CPOM = cmds.createNode('closestPointOnMesh')
-    cmds.connectAttr("%s.outMesh" % source_node, "%s.inMesh" % CPOM, f=1)
-    cmds.setAttr("%s.inPositionX" %CPOM, xPos)
-    cmds.setAttr("%s.inPositionY" %CPOM, yPos)
-    cmds.setAttr("%s.inPositionZ" %CPOM, zPos)
-    uVal = cmds.getAttr("%s.parameterU" %CPOM)
-    vVal = cmds.getAttr("%s.parameterV" %CPOM)
-    cmds.delete(CPOM)
+    """Returns the UV coordinates of dest_node closest to the source_node
 
-    return uVal, vVal
+    Args:
+        source_node (str): source node to collect position
+        dest_node (str): destination node which will collect the uv coordinates from
+
+    Returns:
+        tuple: (float, float) The U and V values.
+    """
+
+    x_pos, y_pos, z_pos = api.getWorldTranslation(dest_node)
+    closest_point_node = cmds.createNode('closestPointOnMesh')
+    cmds.connectAttr("%s.outMesh" % source_node, "%s.inMesh" % closest_point_node, f=1)
+    cmds.setAttr("%s.inPositionX" %closest_point_node, x_pos)
+    cmds.setAttr("%s.inPositionY" %closest_point_node, y_pos)
+    cmds.setAttr("%s.inPositionZ" %closest_point_node, z_pos)
+    u_val = cmds.getAttr("%s.parameterU" %closest_point_node)
+    v_val = cmds.getAttr("%s.parameterV" %closest_point_node)
+    cmds.delete(closest_point_node)
+
+    return u_val, v_val
+
+def get_uv_at_point(position, dest_node):
+    """Get a tuple of u, v values for a point on a given mesh.
+
+    Args:
+        position (vector3): The world space position to get the uvs of.
+        dest_node (str): The mesh with uvs.
+
+    Returns:
+        tuple: (float, float) The U and V values.
+    """
+    selection_list = om.MSelectionList()
+    selection_list.add(dest_node)
+    dag_path = selection_list.getDagPath(0)
+
+    mfn_mesh = om.MFnMesh(dag_path)
+
+    point = om.MPoint(position)
+    space = om.MSpace.kWorld
+
+    u_val, v_val, _ = mfn_mesh.getUVAtPoint(point, space)
+
+    return u_val, v_val
 
 def getVertexUV(mesh, vertex_id):
     uv_map = cmds.polyListComponentConversion('{0}.vtx[{1}]'.format(mesh, vertex_id), toUV=True)

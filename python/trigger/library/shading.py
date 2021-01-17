@@ -28,6 +28,19 @@ def get_file_nodes(objList):
     returnList = set(returnList)
     return returnList
 
+def find_file_node(plug):
+    """Recursively finds the first file node connected to the plug"""
+
+    connected_node = cmds.listConnections(plug, source=True)
+    if cmds.objectType(connected_node) == "file":
+        return connected_node[0]
+    else:
+        connections = cmds.listConnections(connected_node, source=True, destination=False, plugs=True, connections=True)
+        if connections:
+            active_plugs = connections[::2]
+            for sub_plug in active_plugs:
+                return find_file_node(sub_plug)
+
 def get_shading_groups(mesh):
     mesh_shape = cmds.listRelatives(mesh, children=True)[0]
     return cmds.listConnections(mesh_shape, type="shadingEngine")
@@ -37,6 +50,11 @@ def get_shaders(mesh):
     shaders = ((cmds.ls(cmds.listConnections(shading_engines), materials=True)))
     return shaders
 
+def get_all_materials():
+    for shading_engine in cmds.ls(type='shadingEngine'):
+        if cmds.sets(shading_engine, q=True):
+            for material in cmds.ls(cmds.listConnections(shading_engine), materials=True):
+                yield material
 
 def assign_shader(shader, mesh):
     """Assings given shader to all available shading groups of mesh"""
