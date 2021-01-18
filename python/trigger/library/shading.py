@@ -39,7 +39,12 @@ def find_file_node(plug):
         if connections:
             active_plugs = connections[::2]
             for sub_plug in active_plugs:
-                return find_file_node(sub_plug)
+                # print(sub_plug, connected_node[0])
+                # if the plug is connected to the node itself dont go into the cycle loop
+                if sub_plug.split(".")[0] == connected_node[0]:
+                    continue
+                else:
+                    return find_file_node(sub_plug)
 
 def get_shading_groups(mesh):
     mesh_shape = cmds.listRelatives(mesh, children=True)[0]

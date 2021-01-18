@@ -60,7 +60,7 @@ class Cleanup(object):
             self.delete_animation_layers()
         if self.mergeSimilarFileNodes:
             self.merge_similar_file_nodes()
-        if self.mergeSimilarFileNodes:
+        if self.mergeSimilarShaders:
             self.merge_similar_shaders()
 
     def save_action(self, file_path=None, *args, **kwargs):
