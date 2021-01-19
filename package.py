@@ -2,7 +2,7 @@
 
 name = 'rigging'
 
-version = '0.0.6'
+version = '0.0.7'
 
 authors = ['Arda Kutlu']
 
