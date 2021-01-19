@@ -174,7 +174,6 @@ class FileLineEdit(QtWidgets.QLineEdit):
 
         menu.exec_(event.globalPos())
 
-
 class ValidatedLineEdit(QtWidgets.QLineEdit):
     def __init__(self, connected_widgets=None, allowSpaces=False, allowDirectory=False, *args, **kwargs):
         """Custom QLineEdit widget to validate entered values"""
@@ -377,6 +376,28 @@ class ListBoxLayout(QtWidgets.QVBoxLayout):
 
     def listItemNames(self):
         return [self.viewWidget.item(index).text() for index in range(self.viewWidget.count())]
+
+class LineEditBoxLayout(ListBoxLayout):
+    def __init__(self, buttonNew=False, buttonRename=False, buttonRemove=False, buttonClear=False, *args, **kwargs):
+        # buttonsPosition = "left"
+        # alignment=None
+        # # buttonAdd=False
+        # # buttonNew=True
+        # # buttonRename=True
+        # # buttonGet=True
+        # # buttonUp=False
+        # # buttonDown=False
+        # # buttonRemove=True
+        # # buttonClear=True
+        super(LineEditBoxLayout, self).__init__(buttonNew=buttonNew,
+                                                buttonRename=buttonRename,
+                                                buttonRemove=buttonRemove,
+                                                buttonClear=buttonClear,
+                                                multiSelect=False, *args, **kwargs)
+
+    def init_widget(self):
+        # override the widget with tree widget
+        self.viewWidget = QtWidgets.QLineEdit()
 
 class TreeBoxLayout(ListBoxLayout):
     def __init__(self, *args, **kwargs):

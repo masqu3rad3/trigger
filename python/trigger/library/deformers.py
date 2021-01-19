@@ -2,7 +2,7 @@
 
 from maya import cmds
 
-from trigger.core.decorators import undo
+from trigger.core.decorators import undo, keepselection
 from trigger.library import functions
 from trigger.library import naming
 from trigger.core import compatibility as compat
@@ -207,3 +207,120 @@ def get_bs_index_by_name(bs_node, target_name):
             return index
     return -1
 
+@keepselection
+def create_proximity_wrap(driver, driven, **kwargs):
+    # get arguments
+    wrap_mode_dict = {"offset": 0, "surface": 1, "snap": 2, "rigid": 3, "cluster":4}
+    wrap_mode = kwargs.get('wrap_mode', 1)
+    try: wrap_mode = int(wrap_mode)
+    except ValueError:
+        wrap_mode = wrap_mode_dict[wrap_mode.lower()]
+    name = kwargs.get('name', 'tr_proximityWrap')
+    max_drivers = kwargs.get('max_drivers', 1)
+    falloff_scale = kwargs.get('falloff_scale', 0.01)
+    smooth_influences = kwargs.get('smooth_influences', 0)
+    smooth_normals = kwargs.get('smooth_normals', 0)
+    soft_normalization = kwargs.get('soft_normalization', 0)
+    span_samples = kwargs.get('span_samples', 1)
+
+    cmds.select(driven)
+    cmds.ProximityWrap()
+    node_history = cmds.listHistory(driven)
+    wrap_node = [node for node in node_history if cmds.objectType(node) == "proximityWrap"][0]
+    wrap_node = cmds.rename(wrap_node, "proximity_wrap_{0}".format(name))
+    driver_shape = cmds.listRelatives(driver, c=True, type="shape")[0]
+
+    # check if there is another orig shape
+    if not cmds.objExists("{0}Orig".format(driver_shape)):
+        temp = cmds.duplicate(driver_shape)[0]
+        orig_shape = cmds.listRelatives(temp, c=True, type="shape")[0]
+        cmds.parent(orig_shape, driver, r=True, shape=True)
+        orig_shape = cmds.rename(orig_shape, "%sOrig" % driver_shape)
+        cmds.delete(temp)
+        cmds.setAttr("{0}.intermediateObject".format(orig_shape), 1)
+    else:
+        orig_shape = "{0}Orig".format(driver_shape)
+
+    cmds.connectAttr("{0}.outMesh".format(driver_shape), "{0}.drivers[0].driverGeometry".format(wrap_node))
+    cmds.connectAttr("{0}.outMesh".format(orig_shape), "{0}.drivers[0].driverBindGeometry".format(wrap_node))
+
+    cmds.setAttr("{0}.wrapMode".format(wrap_node), wrap_mode)
+    cmds.setAttr("{0}.maxDrivers".format(wrap_node), max_drivers)
+    cmds.setAttr("{0}.falloffScale".format(wrap_node), falloff_scale)
+    cmds.setAttr("{0}.smoothInfluences".format(wrap_node), smooth_influences)
+    cmds.setAttr("{0}.smoothNormals".format(wrap_node), smooth_normals)
+    cmds.setAttr("{0}.softNormalization".format(wrap_node), soft_normalization)
+    cmds.setAttr("{0}.spanSamples".format(wrap_node), span_samples)
+
+    return wrap_node
+
+def create_wrap(influence, surface, **kwargs):
+    ## TODO: refine the function and move to the library
+
+    shapes = cmds.listRelatives(influence, shapes=True)
+    influenceShape = shapes[0]
+
+    shapes = cmds.listRelatives(surface, shapes=True)
+    surfaceShape = shapes[0]
+
+    # create wrap deformer
+    weightThreshold = kwargs.get('weightThreshold', 0.0)
+    maxDistance = kwargs.get('maxDistance', 1.0)
+    exclusiveBind = kwargs.get('exclusiveBind', False)
+    autoWeightThreshold = kwargs.get('autoWeightThreshold', True)
+    falloffMode = kwargs.get('falloffMode', 0)
+
+    wrapData = cmds.deformer(surface, type='wrap')
+    wrapNode = wrapData[0]
+
+    cmds.setAttr(wrapNode + '.weightThreshold', weightThreshold)
+    cmds.setAttr(wrapNode + '.maxDistance', maxDistance)
+    cmds.setAttr(wrapNode + '.exclusiveBind', exclusiveBind)
+    cmds.setAttr(wrapNode + '.autoWeightThreshold', autoWeightThreshold)
+    cmds.setAttr(wrapNode + '.falloffMode', falloffMode)
+
+    cmds.connectAttr(surface + '.worldMatrix[0]', wrapNode + '.geomMatrix')
+
+    # add influence
+    duplicateData = cmds.duplicate(influence, name=influence + 'Base')
+    base = duplicateData[0]
+    shapes = cmds.listRelatives(base, shapes=True)
+    baseShape = shapes[0]
+    cmds.hide(base)
+
+    # create dropoff attr if it doesn't exist
+    if not cmds.attributeQuery('dropoff', n=influence, exists=True):
+        cmds.addAttr(influence, sn='dr', ln='dropoff', dv=4.0, min=0.0, max=20.0)
+        cmds.setAttr(influence + '.dr', k=True)
+
+    # if type mesh
+    if cmds.nodeType(influenceShape) == 'mesh':
+        # create smoothness attr if it doesn't exist
+        if not cmds.attributeQuery('smoothness', n=influence, exists=True):
+            cmds.addAttr(influence, sn='smt', ln='smoothness', dv=0.0, min=0.0)
+            cmds.setAttr(influence + '.smt', k=True)
+
+        # create the inflType attr if it doesn't exist
+        if not cmds.attributeQuery('inflType', n=influence, exists=True):
+            cmds.addAttr(influence, at='short', sn='ift', ln='inflType', dv=2, min=1, max=2)
+
+        cmds.connectAttr(influenceShape + '.worldMesh', wrapNode + '.driverPoints[0]')
+        cmds.connectAttr(baseShape + '.worldMesh', wrapNode + '.basePoints[0]')
+        cmds.connectAttr(influence + '.inflType', wrapNode + '.inflType[0]')
+        cmds.connectAttr(influence + '.smoothness', wrapNode + '.smoothness[0]')
+
+    # if type nurbsCurve or nurbsSurface
+    if cmds.nodeType(influenceShape) == 'nurbsCurve' or cmds.nodeType(influenceShape) == 'nurbsSurface':
+        # create the wrapSamples attr if it doesn't exist
+        if not cmds.attributeQuery('wrapSamples', n=influence, exists=True):
+            cmds.addAttr(influence, at='short', sn='wsm', ln='wrapSamples', dv=10, min=1)
+            cmds.setAttr(influence + '.wsm', k=True)
+
+        cmds.connectAttr(influenceShape + '.ws', wrapNode + '.driverPoints[0]')
+        cmds.connectAttr(baseShape + '.ws', wrapNode + '.basePoints[0]')
+        cmds.connectAttr(influence + '.wsm', wrapNode + '.nurbsSamples[0]')
+
+    cmds.connectAttr(influence + '.dropoff', wrapNode + '.dropoff[0]')
+    # I want to return a pyNode object for the wrap deformer.
+    # I do not see the reason to rewrite the code here into pymel.
+    return wrapNode, base
