@@ -4,7 +4,8 @@ import os
 from maya import cmds
 import platform
 from trigger.core import filelog
-from trigger.library import functions as extra
+# from trigger.library import functions
+from trigger.core.decorators import keepselection
 
 from trigger.ui.Qt import QtWidgets, QtGui
 from trigger.ui import custom_widgets
@@ -44,13 +45,13 @@ class Shapes(object):
         # file_path_le = QtWidgets.QLineEdit()
         file_path_le = custom_widgets.FileLineEdit()
         file_path_hLay.addWidget(file_path_le)
-        browse_path_pb = custom_widgets.BrowserButton(mode="saveFile", update_widget=file_path_le, filterExtensions=["Alembic Files (*.abc)"], overwrite_check=False)
+        browse_path_pb = custom_widgets.BrowserButton(mode="openFile", update_widget=file_path_le, filterExtensions=["Maya ASCII Files (*.ma)"], overwrite_check=False)
         file_path_hLay.addWidget(browse_path_pb)
         layout.addRow(file_path_lbl, file_path_hLay)
 
 
         save_current_lbl = QtWidgets.QLabel(text="Save Current states")
-        savebox_lay = custom_widgets.SaveBoxLayout(alignment="horizontal", update_widget=file_path_le, filter_extensions=["Alembic Files (*.abc)"], overwrite_check=True, control_model=ctrl)
+        savebox_lay = custom_widgets.SaveBoxLayout(alignment="horizontal", update_widget=file_path_le, filter_extensions=["Maya ASCII Files (*.ma)"], overwrite_check=True, control_model=ctrl)
         layout.addRow(save_current_lbl, savebox_lay)
 
         ctrl.connect(file_path_le, "shapes_file_path", str)
@@ -88,59 +89,82 @@ class Shapes(object):
             cmds.setAttr("%s.v" % dup_ctrl, 1)
             cmds.parent(dup_ctrl, export_grp)
         return export_grp
-    
-    def export_shapes(self, alembic_file_path):
-        """Exports the shapes to the file location as .abc"""
-        self.load_alembic_plugin()
 
+    @keepselection
+    def export_shapes(self, file_path):
         export_grp = self.gather_scene_shapes()
-
-        export_command = "-file " \
-                         "{0} " \
-                         "-writeFaceSets 0 " \
-                         "-writeUVsets 0 " \
-                         "-noNormals 0 " \
-                         "-autoSubd 0 " \
-                         "-stripNamespaces 1 " \
-                         "-wholeFrameGeo 0 " \
-                         "-renderableOnly 0 " \
-                         "-step 1.0 " \
-                         "-dataFormat 'Ogawa' " \
-                         "-worldSpace 0 " \
-                         "-writeVisibility 0 " \
-                         "-frameRange 1 1 " \
-                         "-eulerFilter 0 " \
-                         "-writeColorSets 0 " \
-                         "-uvWrite 0 " \
-                         "-root {1}".format(alembic_file_path, export_grp)
-
-        log.info("COMMAND", export_command)
-        cmds.AbcExport(j=export_command)
+        cmds.select(export_grp)
+        cmds.file(file_path, force=True, options="v=0;", typ="mayaAscii",
+                  preserveReferences=False, exportSelected=True)
         cmds.delete(export_grp)
-        log.info("Exporting shapes successfull...")
+        log.info("Controller Shapes Exported successfully...")
 
-    # TODO: INCLUDE import_export action module and use that import functions
-    def import_shapes(self, alembic_file_path):
-        """Imports shapes from the alembic file and replaces them with the existing ones"""
-        self.load_alembic_plugin()
+    ### ALEMBIC CURVE EXPORT HAS A BUG - ITs DEPRECATED UNTIL FURTHER FIXes
+    # def export_shapes(self, alembic_file_path):
+    #     """Exports the shapes to the file location as .abc"""
+    #     self.load_alembic_plugin()
+    #
+    #     export_grp = self.gather_scene_shapes()
+    #
+    #     export_command = "-file " \
+    #                      "{0} " \
+    #                      "-writeFaceSets 0 " \
+    #                      "-writeUVsets 0 " \
+    #                      "-noNormals 0 " \
+    #                      "-autoSubd 0 " \
+    #                      "-stripNamespaces 1 " \
+    #                      "-wholeFrameGeo 0 " \
+    #                      "-renderableOnly 0 " \
+    #                      "-step 1.0 " \
+    #                      "-dataFormat 'Ogawa' " \
+    #                      "-worldSpace 0 " \
+    #                      "-writeVisibility 0 " \
+    #                      "-frameRange 1 1 " \
+    #                      "-eulerFilter 0 " \
+    #                      "-writeColorSets 0 " \
+    #                      "-uvWrite 0 " \
+    #                      "-root {1}".format(alembic_file_path, export_grp)
+    #
+    #     log.info("COMMAND: %s" %export_command)
+    #     cmds.AbcExport(j=export_command)
+    #     cmds.delete(export_grp)
+    #     log.info("Exporting shapes successfull...")
 
-        cmds.AbcImport(alembic_file_path, ftr=False, sts=False)
-        # get all the shapes in the group
-        all_ctrl = cmds.listRelatives("replaceShapes_grp", children=True)
-
-        for ctrl in all_ctrl:
-            # get the shape
-            shapes = extra.getShapes(ctrl)
-            for shape in shapes:
-                rig_shape = shape.replace("_REPLACE", "")
-                if not cmds.objExists(rig_shape):
-                    continue
-                # Alex trick
-                cmds.connectAttr("%s.worldSpace" % shape, "%s.create" % rig_shape, f=True)
+    def import_shapes(self, file_path):
+        all_nodes = cmds.file(file_path, i=True, ignoreVersion=True, returnNewNodes=True)
+        all_ctrl_curves = cmds.ls(all_nodes, type="nurbsCurve")
+        for curve_shape in all_ctrl_curves:
+            rig_shape = curve_shape.replace("_REPLACE", "")
+            if not cmds.objExists(rig_shape):
+                continue
+            # Alex trick
+            cmds.connectAttr("%s.worldSpace" % curve_shape, "%s.create" % rig_shape, f=True)
 
         # oddly, it requires a viewport refresh before disconnecting (or deleting) the replacement shapes
         cmds.refresh()
         cmds.delete("replaceShapes_grp")
+
+    # def import_shapes(self, alembic_file_path):
+    #     """Imports shapes from the alembic file and replaces them with the existing ones"""
+    #     self.load_alembic_plugin()
+    #
+    #     cmds.AbcImport(alembic_file_path, ftr=False, sts=False)
+    #     # get all the shapes in the group
+    #     all_ctrl = cmds.listRelatives("replaceShapes_grp", children=True)
+    #
+    #     for ctrl in all_ctrl:
+    #         # get the shape
+    #         shapes = extra.getShapes(ctrl)
+    #         for shape in shapes:
+    #             rig_shape = shape.replace("_REPLACE", "")
+    #             if not cmds.objExists(rig_shape):
+    #                 continue
+    #             # Alex trick
+    #             cmds.connectAttr("%s.worldSpace" % shape, "%s.create" % rig_shape, f=True)
+    #
+    #     # oddly, it requires a viewport refresh before disconnecting (or deleting) the replacement shapes
+    #     cmds.refresh()
+    #     cmds.delete("replaceShapes_grp")
 
     def load_alembic_plugin(self):
         """Makes sure the alembic plugin is loaded"""

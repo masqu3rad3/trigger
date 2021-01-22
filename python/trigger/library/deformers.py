@@ -181,7 +181,7 @@ def localize(mesh, blendshape_node, local_target_name="LocalRig", group_name=Non
 
     else:
         # create a blendshape
-        cmds.blendShape(local_mesh, mesh, w=[0, 1], name=blendshape_node)
+        cmds.blendShape(local_mesh, mesh, w=[0, 1], name=blendshape_node, foc=True)
 
     if functions.getParent(local_mesh) != local_rig_grp:
         cmds.parent(local_mesh, local_rig_grp)

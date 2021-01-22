@@ -3,6 +3,7 @@ import re
 import glob
 from bisect import bisect_left
 from maya import cmds
+import uuid
 
 def uniqueName(name, return_counter=False):
     """
@@ -175,5 +176,27 @@ def is_latest_version(file_path):
         return True
     else:
         return False
+
+def get_uuid(prefix="uuid", short=True, no_dashes=True):
+    """
+    creates an uuid1 to prevent clashing issues
+
+    Args:
+        prefix: adds this to the start. Useful for making it compatible as node names.
+        short: uses the first part of uuid until the first dash
+        no_dashes: if True, the dashes in uuid will be removed
+
+    Returns: (string) uuid
+
+    """
+    _uuid = str(uuid.uuid1())
+    if short:
+        _uuid = _uuid.split("-")[0]
+    if no_dashes:
+        _uuid = _uuid.replace("-", "")
+    if prefix:
+        _uuid = "%s%s" %(prefix, _uuid)
+    return _uuid
+
 
 

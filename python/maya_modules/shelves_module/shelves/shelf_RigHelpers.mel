@@ -768,7 +768,7 @@ global proc shelf_RigHelpers () {
         -manage 1
         -visible 1
         -preventOverride 0
-        -annotation "Transfers the blendshape pack from same or different topology mase meshes"
+        -annotation "Transfers blendshape packs between same or different topology base meshes"
         -enableBackground 0
         -backgroundColor 0 0 0
         -highlightColor 0.321569 0.521569 0.65098

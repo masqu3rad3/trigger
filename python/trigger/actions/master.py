@@ -29,28 +29,35 @@ class Master(object):
             preferences_cont = icon.createIcon("Preferences", pref_name)
             cmds.parent(preferences_cont, trigger_rig_grp)
         # create attributes
-        attributes = [{"attr_name": "Control_Visibility",
+        attributes = [{"attr_name": "cacheMode",
+                       "nice_name": "Cache_Mode",
+                       "attr_type": "bool",
+                       "default_value": 0,
+                       },
+                      {"attr_name": "Control_Visibility",
                        "nice_name": "Control_Visibility",
                        "attr_type": "bool",
-                       # "attr_type": "enum",
-                       # "enum_list": "Off:On",
                        "default_value": 1,
                        },
                       {"attr_name": "Joints_Visibility",
                        "nice_name": "Joints_Visibility",
                        "attr_type": "bool",
-                       # "attr_type": "enum",
-                       # "enum_list": "Off:On",
                        "default_value": 0,
                        },
                       {"attr_name": "Rig_Visibility",
                        "nice_name": "Rig_Visibility",
                        "attr_type": "bool",
-                       # "attr_type": "enum",
-                       # "enum_list": "Off:On",
                        "default_value": 0,
                        },
         ]
         for attr_dict in attributes:
             attribute.create_attribute(pref_name, attr_dict, keyable=False)
         # extra.lockAndHide(pref_name)
+
+    def save_action(self, *args, **kwargs):
+        """Mandatory Method"""
+        pass
+
+    def ui(self, ctrl, layout, handler, *args, **kwargs):
+        """Mandatory Method"""
+        pass

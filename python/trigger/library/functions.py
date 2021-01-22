@@ -179,6 +179,7 @@ def alignBetween (node, targetA, targetB, position=True, aim_b=True, orientation
     if orientation:
         cmds.delete(cmds.orientConstraint(targetA, targetB, node, mo=False, o=o))
 
+# TODO: MOVE TO THE TRANSFORM MODULE
 def createUpGrp(node, suffix, freezeTransform=True):
     """
     Creates an Upper Group for the given object.
@@ -207,6 +208,7 @@ def createUpGrp(node, suffix, freezeTransform=True):
     cmds.parent(node,newGrp)
     return newGrp
 
+# TODO: MOVE TO THE TRANSFORM MODULE
 def isGroup(node):
     """Checks if the given node is a group node or not"""
     if cmds.listRelatives(node, children=True, shapes=True):
@@ -214,6 +216,7 @@ def isGroup(node):
     else:
         return True
 
+# TODO: MOVE TO THE TRANSFORM MODULE
 def validateGroup(group_name):
     "checks if the group exist, if not creates it. If there are any non-group object with that name, raises exception"
     if cmds.objExists(group_name):
@@ -467,6 +470,7 @@ def getShapes(node):
     """Returns shapes of the given node"""
     return cmds.listRelatives(node, c=True, shapes=True)
 
+# TODO: MOVE TO THE TRANSFORM MODULE
 def getMeshes(node):
     """Gets only the mesh transform nodes under a group"""
     all_mesh_shapes = cmds.listRelatives(node, ad=True, children=True, type="mesh")

@@ -1,4 +1,5 @@
 from maya import cmds
+from trigger.library import functions
 from trigger.core import filelog
 
 log = filelog.Filelog(logname=__name__, filename="trigger_log")
@@ -52,13 +53,14 @@ def create_space_switch(node, targetList, overrideExisting=False, mode="parent",
 
     # Offset grp [START]
     # Upgrp
-    grpName = ("{0}_{1}SW".format(node, mode))
-    switchGrp = cmds.group(em=True, name=grpName)
-    cmds.delete(cmds.parentConstraint(node, switchGrp, mo=False))
-    originalParent = cmds.listRelatives(node, p=True)
-    if originalParent:
-        cmds.parent(switchGrp, originalParent[0])
-    cmds.parent(node, switchGrp)
+    # grpName = ("{0}_{1}SW".format(node, mode))
+    # switchGrp = cmds.group(em=True, name=grpName)
+    # cmds.delete(cmds.parentConstraint(node, switchGrp, mo=False))
+    # originalParent = cmds.listRelatives(node, p=True)
+    # if originalParent:
+    #     cmds.parent(switchGrp, originalParent[0])
+    # cmds.parent(node, switchGrp)
+    switchGrp = functions.createUpGrp(node, "SW")
     # Offset grp [END]
 
     if mode == "parent":
