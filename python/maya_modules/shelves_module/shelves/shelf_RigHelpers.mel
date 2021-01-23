@@ -379,7 +379,7 @@ global proc shelf_RigHelpers () {
         -style "iconOnly"
         -marginWidth 1
         -marginHeight 1
-        -command "from trigger.ui import main\nmain.MainUI().show()"
+        -command "from trigger.ui import main\nmain.launch()"
         -sourceType "python"
         -commandRepeatable 1
         -flat 1

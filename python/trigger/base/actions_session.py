@@ -104,15 +104,6 @@ class ActionsSession(dict):
         else:
             # slice it
             self["actions"][insert_index:insert_index] = imported_actions
-        #
-        # if actions_data:
-        #     self.update(actions_data)
-        #     self.compareActions = deepcopy(self["actions"])
-        #     log.header("Import Session")
-        #     log.info("Action Session %s Imported Successfully..." % os.path.basename(file_path))
-        # else:
-        #     log.error("Cannot Import. File doesn't exist or unreadable => %s" % file_path)
-        #     raise Exception
 
     def is_modified(self):
         """Checks if the current file is different than the saved file"""
@@ -324,6 +315,16 @@ class ActionsSession(dict):
                     raise
         log.header("Total BUILDING TIME:")
 
+    def get_info(self, action_name):
+        action = self.get_action(action_name)
+        action_cmd = "actions.{0}.{1}()".format(action["type"], action["type"].capitalize())
+        a_hand = eval(action_cmd)
+        # backward compatibility for v2.0.0
+        try:
+            return a_hand.info()
+        except AttributeError:
+            return ""
+
     @tracktime
     def _action(self, action):
         log.header("%s" % action["name"])
@@ -337,11 +338,6 @@ class ActionsSession(dict):
         log.info("Running action => %s" % action_name)
         action = self.get_action(action_name)
         self._action(action)
-        # action_cmd = "actions.{0}.{1}()".format(action["type"], action["type"].capitalize())
-        # a_hand = eval(action_cmd)
-        # a_hand.feed(action["data"])
-        # a_hand.action()
-        # log.info("success...")
 
     @tracktime
     def run_save_action(self, action_name):

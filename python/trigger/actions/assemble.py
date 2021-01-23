@@ -133,3 +133,10 @@ class Assemble(import_asset.Import_asset):
         browse_pb.clicked.connect(add_path_to_list)
         next_version_pb.clicked.connect(version_up)
         previous_version_pb.clicked.connect(version_down)
+
+    def info(self):
+        description_text = """
+This action is for assembling set of Alembic files into the scene. The imported alembic caches updates the scene hierarchy.
+That means, only the non-existing nodes will be imported. The existing groups/meshes won't be duplicated.
+"""
+        return description_text

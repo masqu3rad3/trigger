@@ -35,7 +35,7 @@ from trigger.core import filelog
 log = filelog.Filelog(logname=__name__, filename="trigger_log")
 db = database.Database()
 
-WINDOW_NAME = "Trigger v2.0.0"
+WINDOW_NAME = "Trigger v2.0.1"
 
 # def getMayaMainWindow():
 #     """
@@ -553,12 +553,13 @@ class MainUI(QtWidgets.QMainWindow):
         self.action_info_pb.setMaximumWidth(15)
         self.action_settings_scrollArea_vLay.addWidget(self.action_info_pb)
 
-        spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.action_settings_scrollArea_vLay.addItem(spacerItem)
 
         self.action_settings_formLayout = QtWidgets.QFormLayout()
         self.action_settings_formLayout.setHorizontalSpacing(6)
         self.action_settings_scrollArea_vLay.addLayout(self.action_settings_formLayout)
+
+        spacerItem = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.action_settings_scrollArea_vLay.addItem(spacerItem)
 
         self.action_settings_scrollArea.setWidget(self.action_settings_WidgetContents)
         self.action_settings_vLay.addWidget(self.action_settings_scrollArea)
@@ -614,9 +615,12 @@ class MainUI(QtWidgets.QMainWindow):
         self.delete_action_pb.clicked.connect(self.delete_action)
         self.rig_actions_listwidget.currentItemChanged.connect(self.action_settings_menu)
 
+        self.action_info_pb.clicked.connect(self.on_action_info)
+
         self.build_pb.clicked.connect(lambda x=0: self.actions_handler.run_all_actions())
         self.rig_actions_listwidget.doubleClicked.connect(lambda x: self.actions_handler.run_action(x.data()))
         # TODO: Make a seperate method for running run actions wih progressbar
+
 
     def refresh(self):
         row = self.rig_actions_listwidget.currentRow()
@@ -630,6 +634,26 @@ class MainUI(QtWidgets.QMainWindow):
             recent_action = QtWidgets.QAction(self.menuFile, text=recent)
             self.recents_menu.addAction(recent_action)
             recent_action.triggered.connect(lambda _=0, x=recent: self.open_trigger(file_path=x))
+
+    def on_action_info(self):
+        row = self.rig_actions_listwidget.currentRow()
+        if row == -1:
+            return
+        action_name = self.rig_actions_listwidget.currentItem().text()
+        info = self.actions_handler.get_info(action_name)
+
+        self.message_dialog = QtWidgets.QDialog(self)
+        self.message_dialog.setWindowTitle("%s Action Information" %(action_name.capitalize().replace("_", " ")))
+        # self.message_dialog.resize(800, 700)
+        message_layout = QtWidgets.QVBoxLayout(self.message_dialog)
+        message_layout.setContentsMargins(0, 0, 0, 0)
+        info_te = QtWidgets.QTextEdit()
+        info_te.setFont(QtGui.QFont("Courier New", 12, QtGui.QFont.Bold))
+        info_te.setReadOnly(True)
+        info_te.setText(info)
+        message_layout.addWidget(info_te)
+        self.message_dialog.show()
+
 
     def on_action_rename(self):
         action_name = self.rig_actions_listwidget.currentItem().text()
@@ -785,10 +809,11 @@ class MainUI(QtWidgets.QMainWindow):
             zortMenu.addAction(tempAction)
             tempAction.triggered.connect(lambda ignore=action_item, item=action_item: self.actions_handler.add_action(action_type=item, insert_index=index))
             tempAction.triggered.connect(self.populate_actions)
+            tempAction.triggered.connect(lambda: self.rig_actions_listwidget.setCurrentRow(row+1))
             ## Take note about the usage of lambda "item=z" makes it possible using the loop, ignore -> for discarding emitted value
 
         self.populate_actions()
-
+        self.rig_actions_listwidget.setCurrentRow(row)
         zortMenu.exec_((QtGui.QCursor.pos()))
     def actions_rc(self):
         pass
