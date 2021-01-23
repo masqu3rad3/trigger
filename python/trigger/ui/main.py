@@ -19,7 +19,9 @@ from trigger.base import actions_session
 
 from trigger.library import naming
 
-from maya import OpenMayaUI as omui
+from PySide2 import QtWidgets, QtCore, QtGui
+
+# from maya import OpenMayaUI as omui
 
 # if Qt.__binding__ == "PySide":
 #     from shiboken import wrapInstance
@@ -63,24 +65,37 @@ def _killCallbacks(callbackIDList):
         if cmds.scriptJob(ex=ID):
             cmds.scriptJob(kill=ID)
 
+def launch(force=False):
+    for entry in QtWidgets.QApplication.allWidgets():
+        try:
+            if entry.objectName() == WINDOW_NAME:
+                if force:
+                    entry.close()
+                    entry.deleteLater()
+                else:
+                    log.warning("Only one session of Trigger can be opened per Maya instance")
+                    return
+        except (AttributeError, TypeError):
+            pass
+    MainUI().show()
+
 class MainUI(QtWidgets.QMainWindow):
     iconsPath = os.path.join(os.path.dirname(os.path.realpath(__file__)), "icons")
 
     def __init__(self):
 
-        for entry in QtWidgets.QApplication.allWidgets():
-            try:
-                if entry.objectName() == WINDOW_NAME:
-                    # self.closeEvent()
-                    # sys.stderr = lambda: 1
-                    self = entry
-                    # return
-                    # raise Exception("Only one session of Trigger can be opened per Maya instance")
-                    # entry.close()
-                    # entry.deleteLater()
-
-            except (AttributeError, TypeError):
-                pass
+        # for entry in QtWidgets.QApplication.allWidgets():
+        #     try:
+        #         if entry.objectName() == WINDOW_NAME:
+        #             # self.closeEvent()
+        #             # sys.stderr = lambda: 1
+        #             # return
+        #             raise Exception("Only one session of Trigger can be opened per Maya instance")
+        #             # entry.close()
+        #             # entry.deleteLater()
+        #
+        #     except (AttributeError, TypeError):
+        #         pass
         parent = getMayaMainWindow()
         super(MainUI, self).__init__(parent=parent)
 
@@ -532,6 +547,14 @@ class MainUI(QtWidgets.QMainWindow):
         self.action_settings_WidgetContents.setGeometry(QtCore.QRect(0, 0, 346, 223))
 
         self.action_settings_scrollArea_vLay = QtWidgets.QVBoxLayout(self.action_settings_WidgetContents)
+
+        # info button is standard for all actions
+        self.action_info_pb = QtWidgets.QPushButton(text="?")
+        self.action_info_pb.setMaximumWidth(15)
+        self.action_settings_scrollArea_vLay.addWidget(self.action_info_pb)
+
+        spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.action_settings_scrollArea_vLay.addItem(spacerItem)
 
         self.action_settings_formLayout = QtWidgets.QFormLayout()
         self.action_settings_formLayout.setHorizontalSpacing(6)
