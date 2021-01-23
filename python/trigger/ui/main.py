@@ -7,8 +7,9 @@ from maya import cmds
 
 from trigger.core import database
 
-from trigger.ui import Qt
+# from trigger.ui import Qt
 from trigger.ui.Qt import QtWidgets, QtCore, QtGui
+from trigger.ui.qtmaya import getMayaMainWindow
 from trigger.ui import model_ctrl
 from trigger.ui import custom_widgets
 from trigger.ui import feedback
@@ -20,12 +21,12 @@ from trigger.library import naming
 
 from maya import OpenMayaUI as omui
 
-if Qt.__binding__ == "PySide":
-    from shiboken import wrapInstance
-elif Qt.__binding__.startswith('PyQt'):
-    from sip import wrapinstance as wrapInstance
-else:
-    from shiboken2 import wrapInstance
+# if Qt.__binding__ == "PySide":
+#     from shiboken import wrapInstance
+# elif Qt.__binding__.startswith('PyQt'):
+#     from sip import wrapinstance as wrapInstance
+# else:
+#     from shiboken2 import wrapInstance
 
 from trigger.core import filelog
 
@@ -34,18 +35,18 @@ db = database.Database()
 
 WINDOW_NAME = "Trigger v2.0.0"
 
-def getMayaMainWindow():
-    """
-    Gets the memory adress of the main window to connect Qt dialog to it.
-    Returns:
-        (long) Memory Adress
-    """
-    win = omui.MQtUtil_mainWindow()
-    if sys.version_info.major == 3:
-        ptr = wrapInstance(int(win), QtWidgets.QMainWindow)
-    else:
-        ptr = wrapInstance(long(win), QtWidgets.QMainWindow)
-    return ptr
+# def getMayaMainWindow():
+#     """
+#     Gets the memory adress of the main window to connect Qt dialog to it.
+#     Returns:
+#         (long) Memory Adress
+#     """
+#     win = omui.MQtUtil_mainWindow()
+#     if sys.version_info.major == 3:
+#         ptr = wrapInstance(int(win), QtWidgets.QMainWindow)
+#     else:
+#         ptr = wrapInstance(long(win), QtWidgets.QMainWindow)
+#     return ptr
 
 def _createCallbacks(function, parent=None, event=None):
     callbackIDList = []
@@ -70,9 +71,13 @@ class MainUI(QtWidgets.QMainWindow):
         for entry in QtWidgets.QApplication.allWidgets():
             try:
                 if entry.objectName() == WINDOW_NAME:
-                    # break
-                    entry.close()
-                    entry.deleteLater()
+                    # self.closeEvent()
+                    # sys.stderr = lambda: 1
+                    self = entry
+                    # return
+                    # raise Exception("Only one session of Trigger can be opened per Maya instance")
+                    # entry.close()
+                    # entry.deleteLater()
 
             except (AttributeError, TypeError):
                 pass
@@ -124,7 +129,6 @@ class MainUI(QtWidgets.QMainWindow):
         self.callbackIDList = _createCallbacks(self.force_update, parent=None, event="SelectionChanged")
 
         log.info("Interface Loaded Successfully")
-
 
     def update_title(self):
         file_name = self.actions_handler.currentFile if self.actions_handler.currentFile else "untitled"

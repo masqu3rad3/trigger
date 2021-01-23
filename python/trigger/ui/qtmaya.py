@@ -2,7 +2,7 @@
 import sys
 from maya import cmds
 from maya import OpenMayaUI as omui
-from Qt import QtWidgets, QtCore, QtCompat
+from trigger.ui.Qt import QtWidgets, QtCore, QtCompat
 
 def getMayaMainWindow():
     """
