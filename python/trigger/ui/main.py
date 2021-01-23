@@ -19,16 +19,6 @@ from trigger.base import actions_session
 
 from trigger.library import naming
 
-from PySide2 import QtWidgets, QtCore, QtGui
-
-# from maya import OpenMayaUI as omui
-
-# if Qt.__binding__ == "PySide":
-#     from shiboken import wrapInstance
-# elif Qt.__binding__.startswith('PyQt'):
-#     from sip import wrapinstance as wrapInstance
-# else:
-#     from shiboken2 import wrapInstance
 
 from trigger.core import filelog
 
@@ -36,19 +26,6 @@ log = filelog.Filelog(logname=__name__, filename="trigger_log")
 db = database.Database()
 
 WINDOW_NAME = "Trigger v2.0.1"
-
-# def getMayaMainWindow():
-#     """
-#     Gets the memory adress of the main window to connect Qt dialog to it.
-#     Returns:
-#         (long) Memory Adress
-#     """
-#     win = omui.MQtUtil_mainWindow()
-#     if sys.version_info.major == 3:
-#         ptr = wrapInstance(int(win), QtWidgets.QMainWindow)
-#     else:
-#         ptr = wrapInstance(long(win), QtWidgets.QMainWindow)
-#     return ptr
 
 def _createCallbacks(function, parent=None, event=None):
     callbackIDList = []
