@@ -112,10 +112,6 @@ class Assemble(import_asset.Import_asset):
             current_text = current_item.text()
             current_item.setText(naming.get_next_version(current_text))
             color_update(current_item)
-            # if naming.is_latest_version(current_text):
-            #     current_item.setForeground(QtGui.QColor(0, 255, 0, 255))
-            # else:
-            #     current_item.setForeground(QtGui.QColor(255, 255, 0, 255))
 
             ctrl.update_model()
 
