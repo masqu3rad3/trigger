@@ -62,7 +62,7 @@ class ActionsSession(dict):
 
     def save_session(self, file_path):
         """Saves the session to the given file path"""
-        if not os.path.splitext(file_path)[1] == "tr":
+        if not os.path.splitext(file_path)[1] == ".tr":
             file_path = "%s.tr" % file_path
         self.io.file_path = file_path
         self.io.write(self)
