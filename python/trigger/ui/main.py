@@ -782,7 +782,7 @@ class MainUI(QtWidgets.QMainWindow):
         zortMenu = QtWidgets.QMenu()
         for action_item in list_of_actions:
             icon_path = os.path.join(self.iconsPath, "%s.png" %action_item)
-            tempAction = QtWidgets.QAction(QtGui.QIcon(icon_path), action_item, self)
+            tempAction = QtWidgets.QAction(QtGui.QIcon(icon_path), action_item.capitalize().replace("_", " "), self)
             zortMenu.addAction(tempAction)
             tempAction.triggered.connect(lambda ignore=action_item, item=action_item: self.actions_handler.add_action(action_type=item, insert_index=index))
             tempAction.triggered.connect(self.populate_actions)
