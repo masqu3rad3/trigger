@@ -209,7 +209,6 @@ class Split_shapes(weights.Weights):
                 whole_weights_file = os.path.join(import_root, "wholeWeights.json")
                 if os.path.isfile(whole_weights_file):
                     self.load_weights(deformer=self.paintMapBs, file_path=whole_weights_file)
-            # deformers_le.setText(self.paintMapBs)
             ctrl.update_model()
 
 
