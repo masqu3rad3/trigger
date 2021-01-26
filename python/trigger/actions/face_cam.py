@@ -6,19 +6,21 @@ from trigger.core import io
 from trigger.core import filelog
 from trigger.core.decorators import tracktime
 
-from trigger.library import transform
+from trigger.library import transform, selection
 
+from trigger.ui.Qt import QtWidgets
 from trigger.ui import custom_widgets
 from trigger.ui import feedback
+
+from PySide2 import QtWidgets # temp
 
 log = filelog.Filelog(logname=__name__, filename="trigger_log")
 
 
 ACTION_DATA = {
     "name": "faceCam",
-    "aim_coordinates": None,
     "face_mesh": "",
-    "parent_node": None,
+    "parent_node": "",
     "focal_length": 50.0,
     "initial_distance": 7.0,
     "limits": None,
@@ -31,21 +33,39 @@ class Face_cam(object):
         super(Face_cam, self).__init__()
 
         # user defined variables
-        self.someProperty = None
-        self.someMoreProperty = None
+        self.cameraName = "faceCam"
+        self.faceMesh = None
+        self.parentNode = None
+        self.focalLength = 50.0
+        self.initialDistance = 7.0,
+        self.limitMultiplier = 1.0
 
         # class variables
 
     def feed(self, action_data, *args, **kwargs):
         """Mandatory Method - Feeds the instance with the action data stored in actions session"""
-        self.someProperty = action_data.get("some_property")
-        self.someMoreProperty = action_data.get("some_more_property")
+        self.cameraName = action_data.get("name", self.cameraName)
+        self.faceMesh = action_data.get("face_mesh", self.faceMesh)
+        self.parentNode = action_data.get("parent_node", self.parentNode)
+        self.focalLength = action_data.get("focal_length", self.focalLength)
+        self.initialDistance = action_data.get("initial_distance", self.initialDistance)
+        self.limitMultiplier = action_data.get("limit_multiplier", self.limitMultiplier)
 
     def action(self):
         """Mandatory Method - Execute Action"""
         # everything in this method will be executed automatically.
         # This method does not accept any arguments. all the user variable must be defined to the instance before
-        pass
+
+        self.create_face_camera(
+            name=self.cameraName,
+            face_mesh=self.faceMesh,
+            parent=self.parentNode,
+            focal=self.focalLength,
+            distance=self.initialDistance,
+            limit_mult=self.limitMultiplier,
+            rig_grp="rig_grp",
+            hidden=True,
+        )
 
     def save_action(self, file_path=None, *args, **kwargs):
         """Mandatory Method - Save Action"""
@@ -69,7 +89,68 @@ class Face_cam(object):
 
         """
 
-        pass
+        name_lbl = QtWidgets.QLabel(text="Camera Name")
+        name_le = QtWidgets.QLineEdit()
+        layout.addRow(name_lbl, name_le)
+
+        face_mesh_lbl = QtWidgets.QLabel(text="Face Mesh")
+        face_mesh_leBox = custom_widgets.LineEditBoxLayout(buttonsPosition="right")
+        face_mesh_leBox.buttonGet.setText("<")
+        face_mesh_leBox.buttonGet.setMaximumWidth(30)
+        layout.addRow(face_mesh_lbl, face_mesh_leBox)
+
+        parent_node_lbl = QtWidgets.QLabel(text="Parent Node")
+        parent_node_leBox = custom_widgets.LineEditBoxLayout(buttonsPosition="right")
+        parent_node_leBox.buttonGet.setText("<")
+        parent_node_leBox.buttonGet.setMaximumWidth(30)
+        layout.addRow(parent_node_lbl, parent_node_leBox)
+
+        focal_length_lbl = QtWidgets.QLabel(text="Focal Length")
+        focal_length_sp = QtWidgets.QDoubleSpinBox()
+        layout.addRow(focal_length_lbl, focal_length_sp)
+
+        initial_distance_lbl = QtWidgets.QLabel(text="Initial Distance")
+        initial_distance_sp = QtWidgets.QDoubleSpinBox()
+        initial_distance_sp.setMinimum(-99999)
+        layout.addRow(initial_distance_lbl, initial_distance_sp)
+
+        limit_multiplier_lbl = QtWidgets.QLabel(text="Limit Multiplier")
+        limit_multiplier_sp = QtWidgets.QDoubleSpinBox()
+        layout.addRow(limit_multiplier_lbl, limit_multiplier_sp)
+
+        ctrl.connect(name_le, "name", str)
+        ctrl.connect(face_mesh_leBox.viewWidget, "face_mesh", str)
+        ctrl.connect(parent_node_leBox.viewWidget, "parent_node", str)
+        ctrl.connect(focal_length_sp, "focal_length", float)
+        ctrl.connect(focal_length_sp, "focal_length", float)
+        ctrl.connect(initial_distance_sp, "initial_distance", float)
+        ctrl.connect(limit_multiplier_sp, "limit_multiplier", float)
+        ctrl.update_ui()
+
+        def get_selected_face():
+            sel, msg = selection.validate(min=1, max=1, meshesOnly=True, transforms=True)
+            if sel:
+                face_mesh_leBox.viewWidget.setText(sel[0])
+                ctrl.update_model()
+            else:
+                feedback.Feedback().pop_info(title="Selection Error", text=msg, critical=True)
+
+        def get_selected_parent():
+            sel, msg = selection.validate(min=1, max=1, transforms=True)
+            if sel:
+                parent_node_leBox.viewWidget.setText(sel[0])
+                ctrl.update_model()
+            else:
+                feedback.Feedback().pop_info(title="Selection Error", text=msg, critical=True)
+
+        # SIGNALS
+
+        name_le.textChanged.connect(lambda x=0: ctrl.update_model())
+        face_mesh_leBox.buttonGet.clicked.connect(get_selected_face)
+        parent_node_leBox.buttonGet.clicked.connect(get_selected_parent)
+        focal_length_sp.valueChanged.connect(lambda x=0: ctrl.update_model())
+        initial_distance_sp.valueChanged.connect(lambda x=0: ctrl.update_model())
+        limit_multiplier_sp.valueChanged.connect(lambda x=0: ctrl.update_model())
 
     @staticmethod
     def create_face_camera(
@@ -120,7 +201,8 @@ class Face_cam(object):
             bounds = None
 
         if not aim_pos and not limits:
-            log.warning("One of the limits, aim_pos or face_mesh arguments must be defined")
+            log.error("One of the limits, aim_pos or face_mesh arguments must be defined")
+            raise Exception("One of the limits, aim_pos or face_mesh arguments must be defined")
 
         cam = cmds.camera(
             filmFit="Fill",

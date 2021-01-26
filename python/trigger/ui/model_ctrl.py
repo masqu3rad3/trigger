@@ -27,10 +27,13 @@ class Controller(object):
         widget_class = widget.__class__.__name__
         if set and value == None:
             log.error("Set mode needs a value")
+            raise
         if set == None and get == None:
             log.error("Either set or get needs to be flagged")
+            raise
         if set and get:
             log.error("Both set and get cannot be defined")
+            raise
         if widget_class == "QLineEdit" or widget_class == "FileLineEdit":
             if get:
                 if property_type == list:
@@ -56,6 +59,11 @@ class Controller(object):
                 return property_type(widget.value())
             else:
                 widget.setValue(int(value))
+        elif widget_class == "QDoubleSpinBox":
+            if get:
+                return property_type(widget.value())
+            else:
+                widget.setValue(float(value))
         elif widget_class == "QListWidget":
             if get:
                 items = [widget.item(index).text() for index in range(widget.count())]
@@ -85,6 +93,7 @@ class Controller(object):
 
         else:
             log.error("UNSUPPORTED WIDGET CLASS ==> %s" % widget_class)
+            raise
 
 
     def update_model(self):
