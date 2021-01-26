@@ -191,6 +191,8 @@ class BlendshapeTransfer(object):
             cmds.setAttr("%s.%s" %(self.blendshapeNode[0], attr), 1)
             new_blendshape = cmds.duplicate(self.tmpTarget)[0]
             # cmds.parent(new_blendshape, self.transferShapesGrp)
+            # get rid of the intermediates
+            functions.delete_intermediates(new_blendshape)
             cmds.rename(new_blendshape, attr)
             cmds.setAttr("%s.%s" %(self.blendshapeNode[0], attr), 0)
         functions.deleteObject("trTMP_blndtrans_*")

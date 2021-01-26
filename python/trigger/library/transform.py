@@ -20,3 +20,5 @@ def set_limits(node, attribute, attr_min, attr_max):
     }
     if attribute in flag_dict.keys():
         cmds.transformLimits(node, **flag_dict[attribute])
+
+
