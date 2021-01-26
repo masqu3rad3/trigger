@@ -2,7 +2,7 @@ from maya import cmds
 import maya.api.OpenMaya as om
 from trigger.core.decorators import viewportOff, keepselection
 
-from trigger.library import deformers, functions, selection, interface
+from trigger.library import deformers, functions, selection, interface, api
 
 from trigger.ui.qtmaya import getMayaMainWindow
 from trigger.ui.Qt import QtWidgets
@@ -198,11 +198,19 @@ class BlendshapeTransfer(object):
     @staticmethod
     def is_same_topology(source, target):
         """checks if the source and target shares the same topology"""
-        state = cmds.polyCompare([source, target], fd=True) # 0 means they are matching
-        if state == 0:
+        # state = cmds.polyCompare([source, target], fd=True) # 0 means they are matching
+        # if state == 0:
+        #     return True
+        # else:
+        #     return False
+        source_count = len(api.getAllVerts(source))
+        target_count = len(api.getAllVerts(target))
+
+        if source_count == target_count:
             return True
         else:
             return False
+
 
 class MainUI(QtWidgets.QDialog):
     def __init__(self):

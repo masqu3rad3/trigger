@@ -594,7 +594,8 @@ class MainUI(QtWidgets.QMainWindow):
 
         self.action_info_pb.clicked.connect(self.on_action_info)
 
-        self.build_pb.clicked.connect(lambda x=0: self.actions_handler.run_all_actions())
+        # self.build_pb.clicked.connect(lambda x=0: self.actions_handler.run_all_actions())
+        self.build_pb.clicked.connect(self.on_build_rig)
         self.rig_actions_listwidget.doubleClicked.connect(lambda x: self.actions_handler.run_action(x.data()))
         # TODO: Make a seperate method for running run actions wih progressbar
 
@@ -672,6 +673,15 @@ class MainUI(QtWidgets.QMainWindow):
         else:
             self.actions_handler.enable_action(action_name)
         self.populate_actions()
+
+    def on_build_rig(self):
+        msg = "The current scene will be RESET and all actions will run in order\n\nYou will lose any unsaved work in your scene!\nDo you want to continue?"
+        state = self.feedback.pop_question(title="Confirmation", text=msg, buttons=["yes", "no"])
+        if state == "yes":
+            self.actions_handler.run_all_actions()
+        else:
+            return
+
 
     def new_trigger(self):
         if self.actions_handler.is_modified():
