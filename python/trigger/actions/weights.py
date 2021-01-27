@@ -274,7 +274,7 @@ class Weights(dict):
         log.info("%s Weights Lodaded Successfully..." %deformer)
         return True
 
-    def create_deformer(self, weights_file, deformer_type=None):
+    def create_deformer(self, weights_file, deformer_type=None, force_unique_deformer=False):
         """
         Creates the deformer defined in the weights file and applies the pre-saved weights.
 
@@ -283,6 +283,10 @@ class Weights(dict):
         Main function to re-create rig weights.
         Args:
             weights_file: (String) Path to the weights file save with
+            deformer_type: (String) If the weights file does not contain the deformer type information this flag will
+                    be used to identify the deformer type
+            force_unique_deformer: (Bool) If True, in case of scene contains a node with the same name, it uses a
+                    unique name instead. Otherwise it will throw an error
 
         Returns:
 
@@ -295,7 +299,11 @@ class Weights(dict):
         # get the deformer name
         deformer_name = weights_data["deformerWeight"]["weights"][0]["deformer"]
         # if the affected object does not have the deformer, create a new one
-        deformer_name = naming.uniqueName(deformer_name)
+        if force_unique_deformer:
+            deformer_name = naming.uniqueName(deformer_name)
+        else:
+            if cmds.objExists(deformer_name):
+                cmds.delete(deformer_name)
 
         if not cmds.objExists(deformer_name):
             # collect the influencers (eg. joints if it is a skinCluster)
@@ -319,7 +327,13 @@ class Weights(dict):
                 print("=" * 45)
                 print("joints:", influencers)
                 print("affected:", affected[0])
+                # delete existing skin clusters first
+                affected_history = cmds.listHistory(affected[0], pdo=True)
+                old_skincluster = cmds.ls(affected_history, type="skinCluster")
+                if old_skincluster:
+                    cmds.delete(old_skincluster)
                 deformer = cmds.skinCluster(influencers, affected[0], name=deformer_name, tsb=True)[0]
+
             else:
                 # TODO : SUPPORT FOR ALL DEFORMERS
                 log.error("deformers OTHER than skinCluster are not YET supported")

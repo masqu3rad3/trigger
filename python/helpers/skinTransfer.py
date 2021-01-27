@@ -20,7 +20,7 @@ from trigger.library import selection
 from trigger.ui import feedback
 
 @keepselection
-def skinTransfer(source=None, target=None):
+def skinTransfer(source=None, target=None, continue_on_errors=False):
     """
         Transfers (copies) skin to second object in the selection list. If the target object has skin cluster, it assumes
      that the script ran before and continues with a simple copy skin weights command. If target object has no skin cluster
@@ -45,12 +45,24 @@ def skinTransfer(source=None, target=None):
     targetSkinClusters = cmds.ls(targetObjHist, type="skinCluster")
 
     # if there is no skin cluster on the first object do not continue
-    if (len(sourceSkinClusters)!=1):
-        cmds.error ("There is no skin cluster (or more than one) on the source object")
-        return
+    if (len(sourceSkinClusters)<1):
+        msg =" There is no skin cluster on the source object"
+        if continue_on_errors:
+            cmds.warning(msg)
+            return
+        else:
+            feedback.Feedback().pop_info(title="Error", text=msg)
+            raise
+
     if (len(targetSkinClusters)>1):
+        msg = "There is more than one skin clusters on the target object"
         cmds.error ("There is more than one skin clusters on the target object")
-        return
+        if continue_on_errors:
+            cmds.warning(msg)
+            return
+        else:
+            feedback.Feedback().pop_info(title="Error", text=msg)
+            raise
 
     allInfluences=cmds.skinCluster(sourceSkinClusters[0], q=True, weightedInfluence=True)
 

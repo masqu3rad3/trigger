@@ -139,6 +139,7 @@ class Shapes(object):
                 continue
             # Alex trick
             cmds.connectAttr("%s.worldSpace" % curve_shape, "%s.create" % rig_shape, f=True)
+            cmds.dgeval("%s.worldSpace" % rig_shape)
 
         # oddly, it requires a viewport refresh before disconnecting (or deleting) the replacement shapes
         cmds.refresh()

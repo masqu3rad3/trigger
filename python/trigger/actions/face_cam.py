@@ -148,6 +148,8 @@ class Face_cam(object):
         name_le.textChanged.connect(lambda x=0: ctrl.update_model())
         face_mesh_leBox.buttonGet.clicked.connect(get_selected_face)
         parent_node_leBox.buttonGet.clicked.connect(get_selected_parent)
+        face_mesh_leBox.viewWidget.textChanged.connect(lambda x=0: ctrl.update_model())
+        parent_node_leBox.viewWidget.textChanged.connect(lambda x=0: ctrl.update_model())
         focal_length_sp.valueChanged.connect(lambda x=0: ctrl.update_model())
         initial_distance_sp.valueChanged.connect(lambda x=0: ctrl.update_model())
         limit_multiplier_sp.valueChanged.connect(lambda x=0: ctrl.update_model())

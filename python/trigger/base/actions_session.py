@@ -285,36 +285,6 @@ class ActionsSession(dict):
             self["actions"].insert(new_index, self["actions"].pop(old_index))
         # log.info("%s index => %s" % (action_name, new_index))
 
-    @tracktime
-    def run_all_actions(self, reset_scene=True):
-        """runs all actions in the actions list"""
-        # reset scene
-        log.seperator()
-        log.header("BUILDING...")
-        if reset_scene:
-            cmds.file(new=True, force=True)
-        for row, action in enumerate(self["actions"]):
-            if self.is_enabled(action["name"]):
-                if self.progressListwidget:
-                    self.progressListwidget.setCurrentRow(-1)
-                    self.progressListwidget.activateItem(row)
-                    QtWidgets.QApplication.processEvents()
-                try:
-                    self._action(action)
-                    # log.header("%s" %action["name"])
-                    # action_cmd = "actions.{0}.{1}()".format(action["type"], action["type"].capitalize())
-                    # a_hand = eval(action_cmd)
-                    # a_hand.feed(action["data"])
-                    # a_hand.action()
-                    if self.progressListwidget:
-                        self.progressListwidget.successItem(row)
-                except Exception as e:
-                    if self.progressListwidget:
-                        self.progressListwidget.errorItem(row)
-                    log.error("Cannot complete action => %s\n%s" % (action["name"], e))
-                    raise
-        log.header("Total BUILDING TIME:")
-
     def get_info(self, action_name):
         action = self.get_action(action_name)
         action_cmd = "actions.{0}.{1}()".format(action["type"], action["type"].capitalize())
@@ -334,10 +304,45 @@ class ActionsSession(dict):
         a_hand.action()
         log.info("success...")
 
+    @tracktime
+    def run_all_actions(self, reset_scene=True, until=None):
+        """runs all actions in the actions list"""
+        # reset scene
+        log.seperator()
+        log.header("BUILDING...")
+        if reset_scene:
+            cmds.file(new=True, force=True)
+        for row, action in enumerate(self["actions"]):
+            if action["name"] == until:
+                return
+            if self.is_enabled(action["name"]):
+                if self.progressListwidget:
+                    self.progressListwidget.setCurrentRow(-1)
+                    self.progressListwidget.activateItem(row)
+                    QtWidgets.QApplication.processEvents()
+                try:
+                    self._action(action)
+                    if self.progressListwidget:
+                        self.progressListwidget.successItem(row)
+                except Exception as e:
+                    if self.progressListwidget:
+                        self.progressListwidget.errorItem(row)
+                    log.error("Cannot complete action => %s\n%s" % (action["name"], e))
+                    raise
+        log.header("Total BUILDING TIME:")
+
     def run_action(self, action_name):
         log.info("Running action => %s" % action_name)
         action = self.get_action(action_name)
-        self._action(action)
+        try:
+            self._action(action)
+            if self.progressListwidget:
+                self.progressListwidget.successItem(self.progressListwidget.currentRow())
+        except Exception as e:
+            if self.progressListwidget:
+                self.progressListwidget.errorItem(self.progressListwidget.currentRow())
+            log.error("Cannot complete action => %s\n%s" % (action["name"], e))
+            raise
 
     @tracktime
     def run_save_action(self, action_name):
