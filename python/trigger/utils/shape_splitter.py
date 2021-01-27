@@ -43,7 +43,7 @@ class Splitter(dict):
         file_name, file_ext = os.path.splitext(basename)
         file_pathN = os.path.join(file_dir, "%sN%s" % (file_name, file_ext))
         if not os.path.isfile(file_pathN):
-            self.Handler.io.file_path = file_path
+            self.weightsHandler.io.file_path = file_path
             positive_data = self.weightsHandler.io.read()
             negative_data = self.weightsHandler.negateWeights(positive_data)
             self.weightsHandler.io.file_path = file_pathN

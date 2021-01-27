@@ -301,9 +301,9 @@ class Weights(dict):
         # if the affected object does not have the deformer, create a new one
         if force_unique_deformer:
             deformer_name = naming.uniqueName(deformer_name)
-        else:
-            if cmds.objExists(deformer_name):
-                cmds.delete(deformer_name)
+        # else:
+        #     if cmds.objExists(deformer_name):
+        #         cmds.delete(deformer_name)
 
         if not cmds.objExists(deformer_name):
             # collect the influencers (eg. joints if it is a skinCluster)
@@ -333,6 +333,9 @@ class Weights(dict):
                 if old_skincluster:
                     cmds.delete(old_skincluster)
                 deformer = cmds.skinCluster(influencers, affected[0], name=deformer_name, tsb=True)[0]
+
+            elif deformer_type == "shrinkWrap":
+                pass
 
             else:
                 # TODO : SUPPORT FOR ALL DEFORMERS

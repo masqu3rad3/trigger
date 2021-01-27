@@ -18,7 +18,7 @@ def get_deformers(mesh=None, namesOnly=False):
 
     """
 
-    valid_deformers = ["skinCluster", "blendShape", "nonLinear", "cluster", "jiggle", "deltaMush"]
+    valid_deformers = ["skinCluster", "blendShape", "nonLinear", "cluster", "jiggle", "deltaMush", "shrinkWrap"]
     if cmds.about(q=True, api=True) >= 20180400:
         valid_deformers.append("ffd")
     # get deformer from mesh
