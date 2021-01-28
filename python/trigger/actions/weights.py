@@ -248,7 +248,7 @@ class Weights(dict):
         deformer_type = cmds.objectType(deformer)
         if deformer_type == "blendShape":
             point_attr_template = "{0}.inputTarget[0].inputTargetGroup[{1}].targetWeights[0]"
-        elif deformer_type == "ffd":
+        elif deformer_type == "ffd" or deformer_type == "shrinkWrap":
             point_attr_template = "{0}.weightList[{1}].weights[0]"
         elif deformer_type == "skinCluster":
             skin_meshes = cmds.listConnections(deformer, type="mesh")
@@ -261,7 +261,6 @@ class Weights(dict):
                     cmds.setAttr('%s.bw[%s]' % (deformer, nmb), weight)
             # cmds.select(d=True)
             log.info("%s Weights Lodaded Successfully..." %deformer)
-
             return
             # point_attr_template = "{0}.weightList[{1}].weights[0]"
 
