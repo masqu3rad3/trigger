@@ -774,7 +774,7 @@ class MainUI(QtWidgets.QMainWindow):
         dlg = QtWidgets.QFileDialog.getSaveFileName(self, str("Save Trigger Session"), self.actions_handler.currentFile, str("Trigger Session (*.tr)"))
         if dlg[0]:
             self.actions_handler.save_session(os.path.normpath(dlg[0]))
-            db.recentSessions.add(os.path.normpath(dlg[0]))
+            db.recentSessions.add(self.actions_handler.currentFile)
             self.update_title()
             self.populate_recents()
 
