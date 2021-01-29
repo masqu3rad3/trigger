@@ -85,8 +85,10 @@ class Weights(dict):
         for data in data_list:
             deformer = data["deformer"]
             deformer_type = data["type"]
+            influencers = data.get("influencers", 0) # leave them as get for backward compatibility
+            affected = data.get("affected", 0)
             deformer_weight_path = os.path.join(weights_folder, "%s.json" %deformer)
-            self.create_deformer(deformer_weight_path, deformer_type=deformer_type)
+            self.create_deformer(deformer_weight_path, deformer_type=deformer_type, deformer_name=deformer, affected=affected, influencers=influencers)
 
     def save_action(self, file_path=None, *args, **kwargs):
         """Mandatory method for all action modules"""
@@ -101,8 +103,19 @@ class Weights(dict):
         for deformer in self.deformers_list:
             data = {}
             deformer_weight_path = os.path.join(weights_folder, "%s.json" %deformer)
+            deformer_type = cmds.objectType(deformer)
             data["deformer"] = deformer
-            data["type"] = cmds.objectType(deformer)
+            data["type"] = deformer_type
+            if deformer_type == "skinCluster":
+                data["influencers"] = 0 # we are currently skipping this since these will be read from the weights file
+                data["affected"] = 0
+            elif deformer_type == "shrinkWrap":
+                data["influencers"] = cmds.listConnections("%s.targetGeom" % deformer, shapes=True, scn=True, source=True, destination=False)
+                data["affected"] = cmds.listConnections("%s.outputGeometry" % deformer, shapes=True, scn=True, source=False, destination=True)
+            else:
+                # TODO ADD OTHER DEFORMERS
+                raise Exception ("The deformer type <%s> needs to be added" % deformer_type)
+
             data_list.append(data)
             self.save_weights(deformer=deformer, file_path=deformer_weight_path)
 
@@ -194,6 +207,11 @@ class Weights(dict):
             # in case DQ blendweight mode, flag for adding DQ to the file afterwards
             if cmds.getAttr("%s.skinningMethod" % deformer) == 2:
                 export_dq_weights = True
+        elif deformer_type == "shrinkWrap":
+            attributes = ["projection", "closestIfNoIntersection", "reverse", "bidirectional", "offset", "targetInflation",
+                          "axisReference", "alongX", "alongY", "alongZ", "targetSmoothLevel", "falloff", "falloffIterations",
+                          "shapePreservationEnable", "shapePreservationSteps", "shapePreservationIterations",
+                          "shapePreservationMethod", "shapePreservationReprojection"]
         else:
             attributes = []
         # TODO: ADD ATTRIBUTES FOR ALL DEFORMER TYPES
@@ -273,7 +291,7 @@ class Weights(dict):
         log.info("%s Weights Lodaded Successfully..." %deformer)
         return True
 
-    def create_deformer(self, weights_file, deformer_type=None, force_unique_deformer=False):
+    def create_deformer(self, weights_file, deformer_type=None, force_unique_deformer=False, deformer_name=None, affected=None, influencers=None):
         """
         Creates the deformer defined in the weights file and applies the pre-saved weights.
 
@@ -295,22 +313,18 @@ class Weights(dict):
         self.io.file_path = weights_file
         weights_data = self.io.read()
 
+        weights_list = weights_data["deformerWeight"].get("weights", [])
         # get the deformer name
-        deformer_name = weights_data["deformerWeight"]["weights"][0]["deformer"]
-        # if the affected object does not have the deformer, create a new one
+        if not weights_list and not deformer_name:
+            log.error("deformer name cannot be obtained from file")
+            raise
+
+        deformer_name = deformer_name or weights_list[0]["deformer"]
         if force_unique_deformer:
             deformer_name = naming.uniqueName(deformer_name)
-        # else:
-        #     if cmds.objExists(deformer_name):
-        #         cmds.delete(deformer_name)
 
+        # if the affected object does not have the deformer, create a new one
         if not cmds.objExists(deformer_name):
-            # collect the influencers (eg. joints if it is a skinCluster)
-            influencers = [weight_dict.get("source") for weight_dict in weights_data["deformerWeight"]["weights"]]
-
-            # get the affected shapes
-            affected = functions.uniqueList([weight_dict.get("shape") for weight_dict in weights_data["deformerWeight"]["weights"]])
-
             deformer_info = weights_data["deformerWeight"].get("deformers")
             if not deformer_info and not deformer_type:
                 log.error("Cannot identify the deformer type. Use the flag 'deformer_type' or export the weights with additional attributes")
@@ -318,11 +332,13 @@ class Weights(dict):
             if deformer_info:
                 deformer_type = weights_data["deformerWeight"]["deformers"][0]["type"]
                 deformer_attrs = weights_data["deformerWeight"]["deformers"][0]["attributes"] # this is list of dictionaries
-
             else:
                 deformer_attrs = []
 
             if deformer_type == "skinCluster":
+                # collect the influencers (eg. joints if it is a skinCluster)
+                influencers = [weight_dict.get("source") for weight_dict in weights_list]
+                affected = functions.uniqueList([weight_dict.get("shape") for weight_dict in weights_list])
                 print("=" * 45)
                 print("joints:", influencers)
                 print("affected:", affected[0])
@@ -334,7 +350,7 @@ class Weights(dict):
                 deformer = cmds.skinCluster(influencers, affected[0], name=deformer_name, tsb=True)[0]
 
             elif deformer_type == "shrinkWrap":
-                pass
+                deformers.create_shrink_wrap(influencers[0], affected[0], name=deformer_name)
 
             else:
                 # TODO : SUPPORT FOR ALL DEFORMERS
@@ -343,7 +359,33 @@ class Weights(dict):
             for attr_dict in deformer_attrs:
                 attr_name = attr_dict["name"]
                 attr_type = attr_dict["type"]
-                attr_value = float(attr_dict["value"]) # THIS IS NOT BULLET-PROOF
+                # attr_value = float(attr_dict["value"]) # THIS IS NOT BULLET-PROOF
+                print("*"*30)
+                print("*"*30)
+                print("*"*30)
+                print("*"*30)
+                print(attr_type)
+                print("*"*30)
+                print("*"*30)
+                print("*"*30)
+                print("*"*30)
+                print("*"*30)
+                if attr_type == "short":
+                    attr_value = int(attr_dict["value"])
+                elif attr_type == "doubleLinear":
+                    attr_value = float(attr_dict["value"])
+                elif attr_type == "bool":
+                    attr_value = bool(attr_dict["value"])
+                elif attr_type == "enum":
+                    attr_value = int(attr_dict["value"])
+                elif attr_type == "string":
+                    attr_value = str(attr_dict["value"])
+                elif attr_type == "float":
+                    attr_value = float(attr_dict["value"])
+                else:
+                    log.error("Undefined attribute type => %s" %attr_type)
+                    raise
+
                 cmds.setAttr("%s.%s" % (deformer_name, attr_name), attr_value)
 
         # finally load weights
