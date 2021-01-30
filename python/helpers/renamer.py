@@ -4,39 +4,14 @@
 import sys
 import maya.cmds as cmds
 
-from trigger.ui import Qt
-from trigger.ui.Qt import QtWidgets, QtCore, QtGui
-from maya import OpenMayaUI as omui
+from trigger.ui.qtmaya import getMayaMainWindow
+from trigger.ui.Qt import QtWidgets
 
-if Qt.__binding__ == "PySide":
-    from shiboken import wrapInstance
-elif Qt.__binding__.startswith('PyQt'):
-    from sip import wrapinstance as wrapInstance
-else:
-    from shiboken2 import wrapInstance
-
-from trigger.library import functions
 from trigger.core.decorators import undo
 from trigger.core import logger
 
-FEEDBACK = logger.Logger(__name__)
-
-
+log = logger.Logger(__name__)
 WINDOW_NAME = "Tik_Renamer"
-
-def getMayaMainWindow():
-    """
-    Gets the memory adress of the main window to connect Qt dialog to it.
-    Returns:
-        (long) Memory Adress
-    """
-    win = omui.MQtUtil_mainWindow()
-    if sys.version_info.major == 3:
-        ptr = wrapInstance(int(win), QtWidgets.QMainWindow)
-    else:
-        ptr = wrapInstance(long(win), QtWidgets.QMainWindow)
-    return ptr
-
 
 class Renamer(object):
     def __init__(self):
@@ -50,7 +25,8 @@ class Renamer(object):
         if method == 1: # Hierarchy
             self.objectList = cmds.listRelatives(cmds.ls(sl=True), c=True, ad=True, f=True) + cmds.ls(sl=True)
         if method == 2: # Everything
-            self.objectList = cmds.ls(long=True)
+            # self.objectList = cmds.ls(long=True)
+            self.objectList = cmds.ls()
 
 
     def removePasted(self, selectMethod):
@@ -250,7 +226,7 @@ class MainUI(QtWidgets.QDialog):
         elif self.all_rb.isChecked():
             method=2
         else:
-            FEEDBACK.throw_error("Method cannot defined")
+            log.throw_error("Method cannot defined")
             return
 
         if command == "removePasted":
