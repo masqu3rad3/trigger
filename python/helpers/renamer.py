@@ -48,7 +48,7 @@ class Renamer(object):
         if method == 0: # selected objects
             self.objectList = cmds.ls(sl=True, long=True)
         if method == 1: # Hierarchy
-            self.objectList = cmds.listRelatives(cmds.ls(sl=True), c=True, ad=True, f=True)
+            self.objectList = cmds.listRelatives(cmds.ls(sl=True), c=True, ad=True, f=True) + cmds.ls(sl=True)
         if method == 2: # Everything
             self.objectList = cmds.ls(long=True)
 
@@ -56,7 +56,6 @@ class Renamer(object):
     def removePasted(self, selectMethod):
         """Removes pasted_ from the object name"""
         self.getObjects(selectMethod) # initialize the objectList
-        print(self.objectList)
         for obj in self.objectList:
             try:
                 if "pasted__" in obj:
@@ -165,7 +164,7 @@ class MainUI(QtWidgets.QDialog):
         radibuttons_hlay.addWidget(self.all_rb)
 
         self.remove_pasted_pb = QtWidgets.QPushButton(self)
-        self.remove_pasted_pb.setText("Remove _pasted")
+        self.remove_pasted_pb.setText("Remove pasted tag")
         master_vlay.addWidget(self.remove_pasted_pb)
 
         self.remove_namespace_pb = QtWidgets.QPushButton(self)
@@ -175,7 +174,7 @@ class MainUI(QtWidgets.QDialog):
         left_right_hlay = QtWidgets.QHBoxLayout()
         master_vlay.addLayout(left_right_hlay)
 
-        self.add_r_pb = QtWidgets.QPushButton(self)
+        self.add_r_pb = QtWidgets.QPushButton(self, text="Add")
         self.add_r_pb.setText("Add \'R\'")
         left_right_hlay.addWidget(self.add_r_pb)
 
@@ -259,9 +258,9 @@ class MainUI(QtWidgets.QDialog):
         elif command == "removeSemi":
             self.renamer.removeNamespace(method)
         elif command == "addRight":
-            self.renamer.addSuffix(method, "_R")
+            self.renamer.addPrefix(method, "R_")
         elif command == "addLeft":
-            self.renamer.addSuffix(method, "_L")
+            self.renamer.addPrefix(method, "L_")
         elif command == "addSuffix":
             self.renamer.addSuffix(method, str(self.add_suffix_le.text()))
         elif command == "addPrefix":
