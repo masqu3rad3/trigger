@@ -3,6 +3,21 @@
 import maya.api.OpenMaya as om
 from maya import cmds
 
+def getAllVerts(node):
+    """
+    Using Maya Python API 2.0
+    """
+
+    selectionLs = om.MSelectionList()
+    selectionLs.add(node)
+    selObj = selectionLs.getDagPath(0)
+
+    # ___________Query vertex position ___________
+    # create a Mesh functionset from our dag object
+    mfnObject = om.MFnMesh(selObj)
+
+    return mfnObject.getPoints(om.MSpace.kWorld)
+
 def getMDagPath(node):
     """Returns the API 2.0 dagPath of given Node"""
     selList = om.MSelectionList()

@@ -4,39 +4,14 @@
 import sys
 import maya.cmds as cmds
 
-from trigger.ui import Qt
-from trigger.ui.Qt import QtWidgets, QtCore, QtGui
-from maya import OpenMayaUI as omui
+from trigger.ui.qtmaya import getMayaMainWindow
+from trigger.ui.Qt import QtWidgets
 
-if Qt.__binding__ == "PySide":
-    from shiboken import wrapInstance
-elif Qt.__binding__.startswith('PyQt'):
-    from sip import wrapinstance as wrapInstance
-else:
-    from shiboken2 import wrapInstance
-
-from trigger.library import functions
 from trigger.core.decorators import undo
 from trigger.core import logger
 
-FEEDBACK = logger.Logger(__name__)
-
-
+log = logger.Logger(__name__)
 WINDOW_NAME = "Tik_Renamer"
-
-def getMayaMainWindow():
-    """
-    Gets the memory adress of the main window to connect Qt dialog to it.
-    Returns:
-        (long) Memory Adress
-    """
-    win = omui.MQtUtil_mainWindow()
-    if sys.version_info.major == 3:
-        ptr = wrapInstance(int(win), QtWidgets.QMainWindow)
-    else:
-        ptr = wrapInstance(long(win), QtWidgets.QMainWindow)
-    return ptr
-
 
 class Renamer(object):
     def __init__(self):
@@ -48,15 +23,15 @@ class Renamer(object):
         if method == 0: # selected objects
             self.objectList = cmds.ls(sl=True, long=True)
         if method == 1: # Hierarchy
-            self.objectList = cmds.listRelatives(cmds.ls(sl=True), c=True, ad=True, f=True)
+            self.objectList = cmds.listRelatives(cmds.ls(sl=True), c=True, ad=True, f=True) + cmds.ls(sl=True)
         if method == 2: # Everything
-            self.objectList = cmds.ls(long=True)
+            # self.objectList = cmds.ls(long=True)
+            self.objectList = cmds.ls()
 
 
     def removePasted(self, selectMethod):
         """Removes pasted_ from the object name"""
         self.getObjects(selectMethod) # initialize the objectList
-        print(self.objectList)
         for obj in self.objectList:
             try:
                 if "pasted__" in obj:
@@ -165,7 +140,7 @@ class MainUI(QtWidgets.QDialog):
         radibuttons_hlay.addWidget(self.all_rb)
 
         self.remove_pasted_pb = QtWidgets.QPushButton(self)
-        self.remove_pasted_pb.setText("Remove _pasted")
+        self.remove_pasted_pb.setText("Remove pasted tag")
         master_vlay.addWidget(self.remove_pasted_pb)
 
         self.remove_namespace_pb = QtWidgets.QPushButton(self)
@@ -175,7 +150,7 @@ class MainUI(QtWidgets.QDialog):
         left_right_hlay = QtWidgets.QHBoxLayout()
         master_vlay.addLayout(left_right_hlay)
 
-        self.add_r_pb = QtWidgets.QPushButton(self)
+        self.add_r_pb = QtWidgets.QPushButton(self, text="Add")
         self.add_r_pb.setText("Add \'R\'")
         left_right_hlay.addWidget(self.add_r_pb)
 
@@ -251,7 +226,7 @@ class MainUI(QtWidgets.QDialog):
         elif self.all_rb.isChecked():
             method=2
         else:
-            FEEDBACK.throw_error("Method cannot defined")
+            log.throw_error("Method cannot defined")
             return
 
         if command == "removePasted":
@@ -259,9 +234,9 @@ class MainUI(QtWidgets.QDialog):
         elif command == "removeSemi":
             self.renamer.removeNamespace(method)
         elif command == "addRight":
-            self.renamer.addSuffix(method, "_R")
+            self.renamer.addPrefix(method, "R_")
         elif command == "addLeft":
-            self.renamer.addSuffix(method, "_L")
+            self.renamer.addPrefix(method, "L_")
         elif command == "addSuffix":
             self.renamer.addSuffix(method, str(self.add_suffix_le.text()))
         elif command == "addPrefix":

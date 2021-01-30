@@ -18,7 +18,7 @@ def get_deformers(mesh=None, namesOnly=False):
 
     """
 
-    valid_deformers = ["skinCluster", "blendShape", "nonLinear", "cluster", "jiggle", "deltaMush"]
+    valid_deformers = ["skinCluster", "blendShape", "nonLinear", "cluster", "jiggle", "deltaMush", "shrinkWrap"]
     if cmds.about(q=True, api=True) >= 20180400:
         valid_deformers.append("ffd")
     # get deformer from mesh
@@ -254,14 +254,80 @@ def create_proximity_wrap(driver, driven, **kwargs):
 
     return wrap_node
 
+def create_shrink_wrap(driver, driven, name=None, **kwargs):
+    """
+    Creates the Shrink Wrap deformer
+
+    Args:
+        driver: (String) Influence mesh object
+        driven: (String) Deforming mesh object
+        name: (String) Optional. If not provided '<object name>_shrinkWrap' template will be used
+        **kwargs: Attributes of shrink wrap deformer. Supported keys are:
+                    projection (int)
+                    closestIfNoIntersection (bool)
+                    reverse (bool)
+                    bidirectional (bool)
+                    offset (float)
+                    targetInflation (float)
+                    axisReference (int)
+                    alongX, alongY, alongZ (bool)
+                    targetSmoothLevel (int)
+                    falloff (float)
+                    falloffIterations (int)
+                    shapePreservationEnable (bool)
+                    shapePreservationSteps (int)
+                    shapePreservationIterations (int)
+                    shapePreservationMethod (int)
+                    shapePreservationReprojection (int)
+
+                    Refer to the shrink wrap node for details
+
+    Returns: (string) shrink wrap node
+
+    """
+    name = name or "%s_shrinkWrap" % driven
+    attribute_dict = {
+        "projection": kwargs.get("projection", 0),
+        "closestIfNoIntersection": kwargs.get("closestIfNoIntersection", False),
+        "reverse": kwargs.get("reverse", False),
+        "bidirectional": kwargs.get("closestIfNoIntersection", False),
+        "offset": kwargs.get("offset", 0.0),
+        "targetInflation": kwargs.get("targetInflation", 0.0),
+        "axisReference": kwargs.get("axisReference", 0),
+        "alongX": kwargs.get("alongX", False),
+        "alongY": kwargs.get("alongY", False),
+        "alongZ": kwargs.get("alongZ", False),
+        "targetSmoothLevel": kwargs.get("targetSmoothLevel", 0),
+        "falloff": kwargs.get("falloff", 0.0),
+        "falloffIterations": kwargs.get("falloffIterations", 1),
+        "shapePreservationEnable": kwargs.get("shapePreservationEnable", False),
+        "shapePreservationSteps": kwargs.get("shapePreservationSteps", 1),
+        "shapePreservationIterations": kwargs.get("shapePreservationIterations", 1),
+        "shapePreservationMethod": kwargs.get("shapePreservationMethod", 0),
+        "shapePreservationReprojection": kwargs.get("shapePreservationReprojection", 1),
+    }
+
+    if cmds.objectType(driver) == "transform":
+        influenceShape = functions.getShapes(driver)[0]
+    else:
+        influenceShape = driver
+
+    shrink_wrap = cmds.deformer(driven, type="shrinkWrap", name=name)[0]
+    cmds.connectAttr("%s.worldMesh[0]" % influenceShape, "%s.targetGeom" % shrink_wrap)
+
+    # set the attributes
+    for attr, value in attribute_dict.items():
+        cmds.setAttr("{0}.{1}".format(shrink_wrap, attr), value)
+
+    return shrink_wrap
+
 def create_wrap(influence, surface, **kwargs):
     ## TODO: refine the function and move to the library
+    # shapes = cmds.listRelatives(influence, shapes=True)
+    influenceShape = functions.getShapes(influence)[0]
 
-    shapes = cmds.listRelatives(influence, shapes=True)
-    influenceShape = shapes[0]
-
-    shapes = cmds.listRelatives(surface, shapes=True)
-    surfaceShape = shapes[0]
+    # shapes = cmds.listRelatives(surface, shapes=True)
+    # surfaceShape = functions.getShapes(surface)[0]
 
     # create wrap deformer
     weightThreshold = kwargs.get('weightThreshold', 0.0)

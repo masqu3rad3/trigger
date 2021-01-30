@@ -167,9 +167,6 @@ class Fkik(object):
         cmds.connectAttr("%s.jointVis" % self.scaleGrp,"%s.v" % self.limbPlug)
         functions.colorize(self.deformerJoints, self.colorCodes[0], shape=False)
 
-
-
-
     def createControllers(self):
         icon_handler = ic.Icon()
         fk_joints = self.deformerJoints if self.switchMode != 0 else self.fkJoints
@@ -371,6 +368,7 @@ class Fkik(object):
 
         self.scaleConstraints.append(self.scaleGrp)
         # lock and hide
+        _ = [attribute.lockAndHide(cont, ["v"]) for cont in self.controllers]
 
         # color
         functions.colorize(self.fkControllers, self.colorCodes[0])

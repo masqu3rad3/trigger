@@ -569,9 +569,15 @@ class MainUI(QtWidgets.QMainWindow):
         self.action_rc_dup = QtWidgets.QAction('Duplicate', self)
         popMenu_rig_action.addAction(self.action_rc_dup)
 
+        self.action_rc_delete = QtWidgets.QAction('Delete', self)
+        popMenu_rig_action.addAction(self.action_rc_delete)
+
         popMenu_rig_action.addSeparator()
         self.action_rc_run = QtWidgets.QAction('Run', self)
         popMenu_rig_action.addAction(self.action_rc_run)
+
+        self.action_rc_run_until = QtWidgets.QAction('Run Until Here', self)
+        popMenu_rig_action.addAction(self.action_rc_run_until)
 
         self.action_rc_toggle = QtWidgets.QAction('Toggle Disable/Enable', self)
         popMenu_rig_action.addAction(self.action_rc_toggle)
@@ -584,7 +590,10 @@ class MainUI(QtWidgets.QMainWindow):
         self.action_rc_rename.triggered.connect(self.on_action_rename)
         self.action_rc_dup.triggered.connect(self.on_action_duplicate)
         self.action_rc_toggle.triggered.connect(self.on_action_toggle)
-        # TODO: ADD signals for rc run
+        self.action_rc_delete.triggered.connect(self.delete_action)
+
+        self.action_rc_run.triggered.connect(self.on_run_action)
+        self.action_rc_run_until.triggered.connect(self.on_run_action_until)
 
         self.add_action_pb.clicked.connect(self.add_actions_menu)
         self.move_action_up_pb.clicked.connect(self.move_action_up)
@@ -594,8 +603,9 @@ class MainUI(QtWidgets.QMainWindow):
 
         self.action_info_pb.clicked.connect(self.on_action_info)
 
-        self.build_pb.clicked.connect(lambda x=0: self.actions_handler.run_all_actions())
-        self.rig_actions_listwidget.doubleClicked.connect(lambda x: self.actions_handler.run_action(x.data()))
+        # self.build_pb.clicked.connect(lambda x=0: self.actions_handler.run_all_actions())
+        self.build_pb.clicked.connect(self.on_build_rig)
+        self.rig_actions_listwidget.doubleClicked.connect(self.on_run_action)
         # TODO: Make a seperate method for running run actions wih progressbar
 
 
@@ -673,6 +683,24 @@ class MainUI(QtWidgets.QMainWindow):
             self.actions_handler.enable_action(action_name)
         self.populate_actions()
 
+    def on_run_action(self):
+        action_name = self.rig_actions_listwidget.currentItem().text()
+        # self.populate_actions()
+        self.actions_handler.run_action(action_name)
+
+    def on_run_action_until(self):
+        stop_action = self.rig_actions_listwidget.currentItem().text()
+        self.populate_actions()
+        self.actions_handler.run_all_actions(reset_scene=False, until=stop_action)
+
+    def on_build_rig(self):
+        msg = "The current scene will be RESET and all actions will run in order\n\nYou will lose any unsaved work in your scene!\nDo you want to continue?"
+        state = self.feedback.pop_question(title="Confirmation", text=msg, buttons=["yes", "no"])
+        if state == "yes":
+            self.actions_handler.run_all_actions()
+        else:
+            return
+
     def new_trigger(self):
         if self.actions_handler.is_modified():
             if self.actions_handler.currentFile:
@@ -746,7 +774,7 @@ class MainUI(QtWidgets.QMainWindow):
         dlg = QtWidgets.QFileDialog.getSaveFileName(self, str("Save Trigger Session"), self.actions_handler.currentFile, str("Trigger Session (*.tr)"))
         if dlg[0]:
             self.actions_handler.save_session(os.path.normpath(dlg[0]))
-            db.recentSessions.add(os.path.normpath(dlg[0]))
+            db.recentSessions.add(self.actions_handler.currentFile)
             self.update_title()
             self.populate_recents()
 
@@ -782,7 +810,7 @@ class MainUI(QtWidgets.QMainWindow):
         zortMenu = QtWidgets.QMenu()
         for action_item in list_of_actions:
             icon_path = os.path.join(self.iconsPath, "%s.png" %action_item)
-            tempAction = QtWidgets.QAction(QtGui.QIcon(icon_path), action_item, self)
+            tempAction = QtWidgets.QAction(QtGui.QIcon(icon_path), action_item.capitalize().replace("_", " "), self)
             zortMenu.addAction(tempAction)
             tempAction.triggered.connect(lambda ignore=action_item, item=action_item: self.actions_handler.add_action(action_type=item, insert_index=index))
             tempAction.triggered.connect(self.populate_actions)
@@ -795,7 +823,13 @@ class MainUI(QtWidgets.QMainWindow):
     def actions_rc(self):
         pass
 
-    def populate_actions(self):
+    def populate_actions(self, keep_selection=False):
+        # try to keep the selected item
+        # if keep_selection:
+        #     row = self.rig_actions_listwidget.currentRow()
+        # else:
+        #     row = -1
+
         self.rig_actions_listwidget.clear()
         self.rig_actions_listwidget.addItems(self.actions_handler.list_action_names())
 
@@ -809,6 +843,8 @@ class MainUI(QtWidgets.QMainWindow):
                 self.rig_actions_listwidget.disableItem(row)
 
         self.update_title()
+
+        # self.rig_actions_listwidget.setCurrentRow(row)
 
     def move_action_up(self):
         self.block_all_signals(True)

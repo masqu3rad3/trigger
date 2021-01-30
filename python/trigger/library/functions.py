@@ -301,7 +301,7 @@ def get_joint_type(joint, skipErrors=True):
         if skipErrors:
             return
         else:
-            log.throw_error("Cannot detect joint type => %s" % joint)
+            log.error("Cannot detect joint type => %s" % joint)
     if type_int == 18:
         type_name = cmds.getAttr("{0}.otherType".format(joint))
     else:
@@ -325,7 +325,7 @@ def set_joint_side(joint, side):
     elif side.lower() == "center" or side.lower() == "c":
         cmds.setAttr("%s.side" % joint, 0)
     else:
-        log.throw_error("%s is not a valid side value" % side)
+        log.error("%s is not a valid side value" % side)
 
 def get_joint_side(joint, skipErrors=True):
     """
@@ -342,7 +342,7 @@ def get_joint_side(joint, skipErrors=True):
         if skipErrors:
             return
         else:
-            log.throw_error("Joint Side cannot not be detected (%s)" % joint)
+            log.error("Joint Side cannot not be detected (%s)" % joint)
     return JOINT_SIDE_DICT[side_int]
 
 def identifyMaster(joint, modules_dictionary):
@@ -470,11 +470,19 @@ def getShapes(node):
     """Returns shapes of the given node"""
     return cmds.listRelatives(node, c=True, shapes=True)
 
-# TODO: MOVE TO THE TRANSFORM MODULE
+# TODO: MOVE TO THE TRANSFORM MODULE ??
 def getMeshes(node):
     """Gets only the mesh transform nodes under a group"""
     all_mesh_shapes = cmds.listRelatives(node, ad=True, children=True, type="mesh")
     return uniqueList([getParent(mesh) for mesh in all_mesh_shapes])
+
+def delete_intermediates(transform_node):
+    """deletes the intermediate shapes under given transform node"""
+    shapes = getShapes(transform_node)
+    for shape in shapes:
+        if cmds.getAttr("%s.intermediateObject" % shape) == 1:
+            deleteObject(shape)
+
 
 def deleteObject(keyword, force=True):
     """

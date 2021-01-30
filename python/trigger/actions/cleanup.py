@@ -198,7 +198,10 @@ class Cleanup(object):
                 file_node = shading.find_file_node(plug)
                 if file_node:
                     texture_name = cmds.getAttr("%s.fileTextureName" % file_node)
-                file_dict[plug.split(".")[-1]] = texture_name
+                    file_dict[plug.split(".")[-1]] = texture_name
+                else:
+                    connected_node = cmds.listConnections(plug, s=True, d=False, scn=True)[0]
+                    file_dict[plug.split(".")[-1]] = connected_node
                 mat_dict["filedata"] = file_dict
             dict_list.append(mat_dict)
 

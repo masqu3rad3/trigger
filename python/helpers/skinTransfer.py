@@ -16,9 +16,11 @@
 import sys
 from maya import cmds
 from trigger.core.decorators import keepselection
+from trigger.library import selection
+from trigger.ui import feedback
 
 @keepselection
-def skinTransfer():
+def skinTransfer(source=None, target=None, continue_on_errors=False):
     """
         Transfers (copies) skin to second object in the selection list. If the target object has skin cluster, it assumes
      that the script ran before and continues with a simple copy skin weights command. If target object has no skin cluster
@@ -27,30 +29,46 @@ def skinTransfer():
     Returns: None
     """
 
-    #Get selected objects and find the skin cluster on the first one.
-    selection = cmds.ls(sl=True)
-    if (len(selection)!=2):
-        cmds.error("You need to select two Objects")
-        return
+    if not source or not target:
+        #Get selected objects and find the skin cluster on the first one.
+        sel, msg = selection.validate(min=2, max=2, meshesOnly=True, transforms=True)
+        if not sel:
+            feedback.Feedback().pop_info(title="Selection Error", text=msg, critical=True)
+            return
+        source = sel[0]
+        target = sel[0]
+
     # get the present skin clusters on the source and target
-    sourceObjHist = cmds.listHistory(selection[0], pdo=True)
+    sourceObjHist = cmds.listHistory(source, pdo=True)
     sourceSkinClusters = cmds.ls(sourceObjHist, type="skinCluster")
-    targetObjHist = cmds.listHistory(selection[1], pdo=True)
+    targetObjHist = cmds.listHistory(target, pdo=True)
     targetSkinClusters = cmds.ls(targetObjHist, type="skinCluster")
 
     # if there is no skin cluster on the first object do not continue
-    if (len(sourceSkinClusters)!=1):
-        cmds.error ("There is no skin cluster (or more than one) on the source object")
-        return
+    if (len(sourceSkinClusters)<1):
+        msg =" There is no skin cluster on the source object"
+        if continue_on_errors:
+            cmds.warning(msg)
+            return
+        else:
+            feedback.Feedback().pop_info(title="Error", text=msg)
+            raise
+
     if (len(targetSkinClusters)>1):
+        msg = "There is more than one skin clusters on the target object"
         cmds.error ("There is more than one skin clusters on the target object")
-        return
+        if continue_on_errors:
+            cmds.warning(msg)
+            return
+        else:
+            feedback.Feedback().pop_info(title="Error", text=msg)
+            raise
 
     allInfluences=cmds.skinCluster(sourceSkinClusters[0], q=True, weightedInfluence=True)
 
 
     ## add skin cluster for each shape under the transform node
-    allTransform = cmds.listRelatives(selection[1], children=True, ad=True, type="transform")
+    allTransform = cmds.listRelatives(target, children=True, ad=True, type="transform")
     # if the selected object has other transform nodes under it (if it is a group)
     if allTransform:
         for transform in allTransform:
@@ -60,18 +78,18 @@ def skinTransfer():
             print("presentSkinClusters", shapeSkinClusters)
             # If there is exactly one skin cluster connected to the target, continue with a simple copySkinWeights
             if len(shapeSkinClusters) == 1:
-                cmds.copySkinWeights (selection[0], transform, noMirror=True, surfaceAssociation="closestPoint", influenceAssociation="closestJoint", normalize=True)
+                cmds.copySkinWeights (source, transform, noMirror=True, surfaceAssociation="closestPoint", influenceAssociation="closestJoint", normalize=True)
                 sys.stdout.write('Success...')
                 return
             # eliminate the ones without shape (eliminate the groups under the group)
             if transform.getShape() != None:
                 sc = cmds.skinCluster(allInfluences, transform, tsb=True)
-                cmds.copySkinWeights (selection[0], transform, noMirror=True, surfaceAssociation="closestPoint", influenceAssociation="closestJoint", normalize=True)
+                cmds.copySkinWeights (source, transform, noMirror=True, surfaceAssociation="closestPoint", influenceAssociation="closestJoint", normalize=True)
                 sys.stdout.write('Success...')
                 # return
     else:
         if len(targetSkinClusters)==0:
-            sc = cmds.skinCluster(allInfluences, selection[1], tsb=True)
-        cmds.copySkinWeights (selection[0], selection[1], noMirror=True, surfaceAssociation="closestPoint", influenceAssociation="closestJoint", normalize=True)
+            sc = cmds.skinCluster(allInfluences, target, tsb=True)
+        cmds.copySkinWeights (source, target, noMirror=True, surfaceAssociation="closestPoint", influenceAssociation="closestJoint", normalize=True)
         sys.stdout.write('Success...')
         return
