@@ -87,7 +87,11 @@ def create_attribute(node, property_dict=None, keyable=True, display=True, *args
                      k=keyable,
                      )
 
-    return "%s.%s" % (node, attr_name)
+    attr_plug = "%s.%s" % (node, attr_name)
+    if display:
+        cmds.setAttr(attr_plug, e=True, channelBox=True)
+
+    return attr_plug
 
 def validate_attr(attr, attr_range=None, nice_name=None, attr_type="float", default_value=None):
     """Validate attribute.
