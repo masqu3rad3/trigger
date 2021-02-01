@@ -49,7 +49,7 @@ class Space_switchers(object):
         for sw_data in self.swithcerDefinitions:
             space_switcher.create_space_switch(sw_data[0], sw_data[1], overrideExisting=True, mode=sw_data[2])
 
-    def save_action(self):
+    def save_action(self, file_path=None, *args, **kwargs):
         """Mandatory Method - Save Action"""
         # This method will be called automatically and accepts no arguments.
         # If the action has an option to save files, this method will be used by the UI.
@@ -99,7 +99,12 @@ class Space_switchers(object):
             def_remove_lbl = QtWidgets.QLabel(text="")
             def_remove_pb = QtWidgets.QPushButton(text="Remove")
             def_formlayout.addRow(def_remove_lbl, def_remove_pb)
-            switcher_definitions_lay.addLayout(def_formlayout)
+
+            id_lbl = QtWidgets.QLabel("")
+            id_separator_lbl = QtWidgets.QLabel("-"*100)
+            def_formlayout.addRow(id_lbl, id_separator_lbl)
+
+            switcher_definitions_lay.insertLayout(0, def_formlayout)
 
             tmp_dict = {
                 "id": self.id,
@@ -136,7 +141,6 @@ class Space_switchers(object):
                 switcher_definitions.append(tmp_list)
             # feed the model with the definitions
             ctrl.model.edit_action(ctrl.action_name, "switcher_definitions", switcher_definitions)
-            print(switcher_definitions)
             pass
 
         def update_ui():
@@ -148,7 +152,7 @@ class Space_switchers(object):
         def delete_definition(layout, id):
             for item in self.definition_widgets:
                 if item["id"] == id:
-                    self.definition_widgets.pop(item)
+                    self.definition_widgets.remove(item)
                     break
             del_layout(layout)
 

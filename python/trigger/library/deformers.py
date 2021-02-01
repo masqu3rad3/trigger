@@ -34,6 +34,20 @@ def get_deformers(mesh=None, namesOnly=False):
     else:
         return deformer_data
 
+def get_pre_blendshapes(mesh):
+    """Returns the blendshape node(s) before the skinCluster"""
+    all_deformers = get_deformers(mesh)
+    skin_clusters = all_deformers.get("skinCluster")
+    if not skin_clusters:
+        return []
+
+    bs_deformers = all_deformers.get("blendShape")
+    skin_cluster_history = cmds.listHistory(skin_clusters[0])
+    pre_blendshapes = [node for node in bs_deformers if node in skin_cluster_history]
+
+    return pre_blendshapes
+
+
 def get_influencers(deformer):
     return cmds.aliasAttr(deformer, q=True)[::2]
 
