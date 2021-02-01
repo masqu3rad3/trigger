@@ -88,7 +88,7 @@ class Correctives(object):
                 psd_grp = functions.validateGroup("psd_grp")
                 if functions.getParent(psd_grp) != rig_grp:
                     cmds.parent(psd_grp, rig_grp)
-                angle_extractor_root = self.vector_psd(driver_transform, controller, target_rotation, up_object)
+                angle_extractor_root = self.vector_psd(driver_transform, controller, target_rotation, up_object, prefix=driver_transform)
                 cmds.parent(angle_extractor_root, psd_grp)
                 psd_attr = "%s.angleBetween" % angle_extractor_root
 
@@ -305,6 +305,7 @@ class Correctives(object):
 
         def update_model():
             # collect definition data
+            print("devbug")
             definitions = []
             for widget_dict in self.definition_widgets:
                 tmp_dict = {}
@@ -358,11 +359,11 @@ class Correctives(object):
         add_new_definition_btn.clicked.connect(add_new_definition)
 
     @staticmethod
-    def vector_psd(driver_transform, controller, target_rotation, up_object, return_angle_attr=False):
-        root_loc = cmds.spaceLocator(name="angleExt_root")[0]
-        point_a = cmds.spaceLocator(name="angleExt_pointA")[0]
+    def vector_psd(driver_transform, controller, target_rotation, up_object, return_angle_attr=False, prefix=""):
+        root_loc = cmds.spaceLocator(name=naming.uniqueName("%s_angleExt_root" %prefix))[0]
+        point_a = cmds.spaceLocator(name=naming.uniqueName("%s_angleExt_pointA" %prefix))[0]
         cmds.setAttr("%s.tx" % point_a, 5)
-        point_b = cmds.spaceLocator(name="angleExt_pointB")[0]
+        point_b = cmds.spaceLocator(name=naming.uniqueName("%s_angleExt_pointB" %prefix))[0]
         point_b_offset = functions.createUpGrp(point_b, "offset")
         cmds.setAttr("%s.tx" % point_b, 5)
         cmds.parent(point_a, root_loc)
@@ -393,7 +394,7 @@ class Correctives(object):
         # cmds.parent(point_b, point_b_offset)
         # cmds.delete(tmp_grp)
 
-        angle_between = cmds.createNode("angleBetween", name="angleExt_angleBetween")
+        angle_between = cmds.createNode("angleBetween", name=naming.uniqueName("%s_angleExt_angleBetween" % prefix))
         cmds.connectAttr("%s.t" % point_a, "%s.vector1" % angle_between)
         cmds.connectAttr("%s.t" % point_b, "%s.vector2" % angle_between)
 

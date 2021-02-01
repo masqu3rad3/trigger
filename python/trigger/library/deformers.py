@@ -100,13 +100,15 @@ def connect_bs_targets(
             k=True,
         )
     else:
-        # check if the given values are in range
-        min_val = cmds.addAttr("%s.%s" % (ch_node, ch_attr), q=True, min=True)
-        max_val = cmds.addAttr("%s.%s" % (ch_node, ch_attr), q=True, max=True)
-        if min_val > driver_range[0]:
-            cmds.addAttr("%s.%s" % (ch_node, ch_attr), e=True, min=driver_range[0])
-        if max_val < driver_range[1]:
-            cmds.addAttr("%s.%s" % (ch_node, ch_attr), e=True, max=driver_range[1])
+        user_attributes = cmds.listAttr(ch_node, ud=True)
+        if ch_attr in user_attributes:
+            # check if the given values are in range
+            min_val = cmds.addAttr("%s.%s" % (ch_node, ch_attr), q=True, min=True)
+            max_val = cmds.addAttr("%s.%s" % (ch_node, ch_attr), q=True, max=True)
+            if min_val > driver_range[0]:
+                cmds.addAttr("%s.%s" % (ch_node, ch_attr), e=True, min=driver_range[0])
+            if max_val < driver_range[1]:
+                cmds.addAttr("%s.%s" % (ch_node, ch_attr), e=True, max=driver_range[1])
 
     if custom_range:
         remap_node = cmds.createNode("remapValue")
