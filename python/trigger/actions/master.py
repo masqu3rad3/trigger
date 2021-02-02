@@ -54,6 +54,10 @@ class Master(object):
             attribute.create_attribute(pref_name, attr_dict, keyable=False)
         # extra.lockAndHide(pref_name)
 
+    def feed(self, action_data, *args, **kwargs):
+        """Mandatory Method"""
+        pass
+
     def save_action(self, *args, **kwargs):
         """Mandatory Method"""
         pass
