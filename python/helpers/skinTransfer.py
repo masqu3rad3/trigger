@@ -36,7 +36,7 @@ def skinTransfer(source=None, target=None, continue_on_errors=False):
             feedback.Feedback().pop_info(title="Selection Error", text=msg, critical=True)
             return
         source = sel[0]
-        target = sel[0]
+        target = sel[1]
 
     # get the present skin clusters on the source and target
     sourceObjHist = cmds.listHistory(source, pdo=True)
