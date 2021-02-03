@@ -265,6 +265,13 @@ def lockAndHide (node, channelArray=None, hide=True):
         attribute=("%s.%s" %(node, i))
         cmds.setAttr(attribute, lock=True, keyable=not hide, channelBox=not hide)
 
+def unlock(node, attr_list=None):
+    attr_list = ["tx", "ty", "tz", "rx", "ry", "rz", "sx", "sy", "sz", "v"] if not attr_list else attr_list
+    if type(attr_list) != list:
+        attr_list = [attr_list]
+    for attr in attr_list:
+        cmds.setAttr("{0}.{1}".format(node, attr), e=True, k=True, l=False)
+
 def attrPass (sourceNode, targetNode, attributes=[], inConnections=True, outConnections=True, keepSourceAttributes=False, values=True, daisyChain=False, overrideEx=False):
     """
     Copies the attributes from source node to the target node.
