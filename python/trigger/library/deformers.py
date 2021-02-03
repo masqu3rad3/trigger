@@ -306,7 +306,7 @@ def create_shrink_wrap(driver, driven, name=None, **kwargs):
         "projection": kwargs.get("projection", 0),
         "closestIfNoIntersection": kwargs.get("closestIfNoIntersection", False),
         "reverse": kwargs.get("reverse", False),
-        "bidirectional": kwargs.get("closestIfNoIntersection", False),
+        "bidirectional": kwargs.get("bidirectional", False),
         "offset": kwargs.get("offset", 0.0),
         "targetInflation": kwargs.get("targetInflation", 0.0),
         "axisReference": kwargs.get("axisReference", 0),
