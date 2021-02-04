@@ -338,13 +338,13 @@ def create_shrink_wrap(driver, driven, name=None, **kwargs):
     return shrink_wrap
 
 def create_wrap(influence, surface, **kwargs):
-    ## TODO: refine the function and move to the library
     # shapes = cmds.listRelatives(influence, shapes=True)
     influenceShape = functions.getShapes(influence)[0]
 
     # shapes = cmds.listRelatives(surface, shapes=True)
     # surfaceShape = functions.getShapes(surface)[0]
 
+    prefix = kwargs.get('name', surface)
     # create wrap deformer
     weightThreshold = kwargs.get('weightThreshold', 0.0)
     maxDistance = kwargs.get('maxDistance', 1.0)
@@ -352,7 +352,7 @@ def create_wrap(influence, surface, **kwargs):
     autoWeightThreshold = kwargs.get('autoWeightThreshold', True)
     falloffMode = kwargs.get('falloffMode', 0)
 
-    wrapData = cmds.deformer(surface, type='wrap')
+    wrapData = cmds.deformer(surface, type='wrap', name="%s_wrap" %prefix)
     wrapNode = wrapData[0]
 
     cmds.setAttr(wrapNode + '.weightThreshold', weightThreshold)

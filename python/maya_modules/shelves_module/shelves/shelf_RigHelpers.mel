@@ -441,7 +441,7 @@ global proc shelf_RigHelpers () {
         -style "iconOnly"
         -marginWidth 1
         -marginHeight 1
-        -command "from helpers import skinTransfer\nskinTransfer.skinTransfer()"
+        -command "from trigger.utils import skinTransfer\nskinTransfer.skinTransfer()"
         -sourceType "python"
         -commandRepeatable 1
         -flat 1
