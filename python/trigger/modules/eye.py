@@ -227,7 +227,7 @@ class Eye(object):
 
     def createConnections(self):
         aim_con = cmds.aimConstraint(self.aimBridge, self.aimDriven, upVector=self.up_axis, aimVector=self.look_axis,
-                                     wuo=self.limbPlug)
+                                     wut="objectrotation", wuo=self.limbPlug)
 
         connection.matrixConstraint(self.aimCont, self.aimBridge, mo=False,
                                     source_parent_cutoff=self.localOffGrp)

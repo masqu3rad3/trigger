@@ -1,3 +1,5 @@
+import re
+
 from maya import cmds
 from maya import mel
 
@@ -5,7 +7,6 @@ from trigger.core.decorators import undo
 from trigger.core import filelog
 from trigger.core import compatibility as compat
 
-# log = logger.Logger()
 log = filelog.Filelog(logname=__name__, filename="trigger_log")
 
 @undo
@@ -444,4 +445,35 @@ def disconnect_attr(node=None, attr=None, suppress_warnings=False):
             log.warning("Nothing connected to this attribute => %s" %attr_path)
         else:
             pass
+
+def separator(node, name, border="-"):
+    """Create an attribute providing a visual separator in the channel box.
+
+    Args:
+        node (str): The node to add the attribute to.
+        name (str): The name of the attribute.
+        border (str): The type of character to surround the name.
+            Default is `=` but other good options are `_` or `-`.
+
+    Returns:
+        str: The name of the attribute created.
+    """
+    long_name = "__{0}__".format(name.title().replace(" ", ""))
+    nice_name = re.sub(r"([a-z])([A-Z])", r"\g<1> \g<2>", name).upper()
+    nice_name = "{0} {1}".format(border * 5, nice_name)
+
+    if cmds.attributeQuery(long_name, node=node, exists=True):
+        log.info("Attribute %s already exists." %long_name)
+        return long_name
+
+    cmds.addAttr(
+        node,
+        longName=long_name,
+        attributeType="enum",
+        niceName=nice_name,
+        enumName=border * 5,
+    )
+    cmds.setAttr("{0}.{1}".format(node, long_name), channelBox=True, lock=True)
+
+    return "{0}.{1}".format(node, long_name)
 
