@@ -89,7 +89,7 @@ def create_attribute(node, property_dict=None, keyable=True, display=True, *args
                      )
 
     attr_plug = "%s.%s" % (node, attr_name)
-    if display:
+    if display and not keyable:
         cmds.setAttr(attr_plug, e=True, channelBox=True)
 
     return attr_plug
