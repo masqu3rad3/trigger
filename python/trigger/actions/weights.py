@@ -360,16 +360,6 @@ class Weights(dict):
                 attr_name = attr_dict["name"]
                 attr_type = attr_dict["type"]
                 # attr_value = float(attr_dict["value"]) # THIS IS NOT BULLET-PROOF
-                print("*"*30)
-                print("*"*30)
-                print("*"*30)
-                print("*"*30)
-                print(attr_type)
-                print("*"*30)
-                print("*"*30)
-                print("*"*30)
-                print("*"*30)
-                print("*"*30)
                 if attr_type == "short":
                     attr_value = int(attr_dict["value"])
                 elif attr_type == "doubleLinear":
