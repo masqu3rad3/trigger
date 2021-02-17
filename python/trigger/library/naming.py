@@ -46,7 +46,7 @@ def uniqueScene():
 def resolve_version(file_path):
     """Resolves the version of the given file"""
     no_ext = os.path.splitext(file_path)[0]
-    is_digits = re.search('.*?([0-9]+)$', no_ext)
+    is_digits = re.search('.*?([0-9]+)$', no_ext.split(".")[0])
     if not is_digits:
         return 0
     return int(is_digits.groups()[0])
@@ -83,20 +83,28 @@ def increment(file_path, force_version=True):
             return os.path.join(file_dir, "{0}_v001{1}".format(file_name, file_ext))
         else:
             return None
-    stripped_name = file_name if not version else re.search("(.*)(%s)$" % str(version).zfill(3), file_name).groups()[0]
+    # stripped_name = file_name if not version else re.search("(.*)(%s)$" % str(version).zfill(3), file_name).groups()[0]
+    stripped_name = file_name if not version else file_name.replace("_v%s" %(str(version).zfill(3)), "_v{0}")
     # check if this is has a proper version naming convention
-    if not stripped_name.endswith("_v"):
+    if "_v{0}" not in stripped_name:
         if force_version:
-            return os.path.join(file_dir, "{0}_v001{1}".format(file_name, file_ext))
-        else: return None
+            parts = file_name.split(".")
+            parts[0] = "%s_v001" % parts[0]
+            forced_filename = ".".join(parts)
+            return os.path.join(file_dir, "{0}{1}".format(forced_filename, file_ext))
 
-    files_on_server = glob.glob(os.path.join(file_dir, "{0}*{1}".format(stripped_name, file_ext)))
+    # if not stripped_name.endswith("_v"):
+    #     if force_version:
+    #         return os.path.join(file_dir, "{0}_v001{1}".format(file_name, file_ext))
+    #     else: return None
+
+    files_on_server = glob.glob(os.path.join(file_dir, "{0}{1}".format(stripped_name.format("*"), file_ext)))
     if not files_on_server:
         return file_path
 
     last_saved_version = resolve_version(max(files_on_server, key=resolve_version))
     next_version = max(version + 1, last_saved_version + 1)
-    return os.path.join(file_dir, "{0}{1}{2}".format(stripped_name, str(next_version).zfill(3), file_ext))
+    return os.path.join(file_dir, "{0}{1}".format(stripped_name.format(str(next_version).zfill(3)), file_ext))
 
 
 def get_all_versions(file_path):
@@ -109,8 +117,11 @@ def get_all_versions(file_path):
     if not version:
         return None
 
-    stripped_name = file_name if not version else re.search("(.*)(%s)$" % str(version).zfill(3), file_name).groups()[0]
-    files_on_server = glob.glob(os.path.join(file_dir, "{0}*{1}".format(stripped_name, file_ext)))
+    # stripped_name = file_name if not version else re.search("(.*)(%s)$" % str(version).zfill(3), file_name).groups()[0]
+    stripped_name = file_name if not version else file_name.replace("_v%s" %(str(version).zfill(3)), "_v{0}")
+    # search_template = "{0}{1}".format(stripped_name, file_ext)
+    # files_on_server = glob.glob(os.path.join(file_dir, "{0}*{1}".format(stripped_name, file_ext)))
+    files_on_server = glob.glob(os.path.join(file_dir, "{0}{1}".format(stripped_name.format("*"), file_ext)))
     if not files_on_server:
         return None
 
