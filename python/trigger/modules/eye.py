@@ -241,6 +241,9 @@ class Eye(object):
             # connection.matrixConstraint(self.limbPlug, self.aimContGroupFollow)
             connection.matrixConstraint(self.limbPlug, self.plugDriven)
 
+    def round_up(self):
+        _ = [cmds.connectAttr("%s.contVis" % self.scaleGrp, "%s.v" % x) for x in self.deformerJoints]
+
     def createLimb(self):
         self.createGrp()
         self.createJoints()
@@ -253,7 +256,7 @@ class Eye(object):
         # self.createRibbons()
         # self.createTwistSplines()
         # self.createAngleExtractors()
-        # self.roundUp()
+        self.round_up()
 
 
 class Guides(object):

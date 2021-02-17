@@ -16,7 +16,7 @@
 import sys
 from maya import cmds
 from trigger.core.decorators import keepselection
-from trigger.library import selection
+from trigger.library import selection, naming
 from trigger.ui import feedback
 
 @keepselection
@@ -89,7 +89,7 @@ def skinTransfer(source=None, target=None, continue_on_errors=False):
                 # return
     else:
         if len(targetSkinClusters)==0:
-            sc = cmds.skinCluster(allInfluences, target, tsb=True)
+            sc = cmds.skinCluster(allInfluences, target, tsb=True, name="%s_skincluster" %naming.get_part_name(target))
         cmds.copySkinWeights (source, target, noMirror=True, surfaceAssociation="closestPoint", influenceAssociation="closestJoint", normalize=True)
         sys.stdout.write('Success...')
         return

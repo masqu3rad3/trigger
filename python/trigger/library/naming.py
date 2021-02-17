@@ -198,5 +198,14 @@ def get_uuid(prefix="uuid", short=True, no_dashes=True):
         _uuid = "%s%s" %(prefix, _uuid)
     return _uuid
 
+def get_part_name(node_name):
+    """Gets a nice shorter name from the tagged mesh names"""
+    parts = node_name.split("_")
+    if not parts:
+        return node_name
+    if len(parts) == 4:
+        return parts[1]
+    else:
+        return parts[0]
 
 
