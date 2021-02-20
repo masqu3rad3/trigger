@@ -2,6 +2,7 @@
 
 from maya import cmds
 from trigger.core import io
+from trigger.core.decorators import keepselection
 
 def get_file_nodes(objList):
     returnList = []
