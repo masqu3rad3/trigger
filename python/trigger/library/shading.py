@@ -1,11 +1,7 @@
 """Collection of shading related functions"""
 
 from maya import cmds
-from trigger.core import filelog
-from trigger.library import naming
-
-log = filelog.Filelog(logname=__name__, filename="trigger_log")
-
+from trigger.core import io
 
 def get_file_nodes(objList):
     returnList = []
@@ -56,49 +52,97 @@ def get_shaders(mesh):
     return shaders
 
 def get_all_materials():
+    "Returns all materials IN USE"
     for shading_engine in cmds.ls(type='shadingEngine'):
         if cmds.sets(shading_engine, q=True):
             for material in cmds.ls(cmds.listConnections(shading_engine), materials=True):
                 yield material
 
-def assign_shader(shader, mesh):
+def assign_shader(shader, mesh=None, shading_group=None):
     """Assings given shader to all available shading groups of mesh"""
-    shading_engines = get_shading_groups(mesh)
-    if not shading_engines:
-        original_selection = cmds.ls(sl=True)
-        cmds.select(mesh)
-        sg_name = naming.uniqueName("%s_SG" % mesh)
-        cmds.sets(renderable=True, noSurfaceShader=True, empty=True, name=sg_name)
-        cmds.select(original_selection)
-        shading_engines = [sg_name]
-    for sg in shading_engines:
-        cmds.connectAttr("%s.outColor" % shader, "%s.surfaceShader" % sg, f=True)
-        cmds.sets(mesh, e=True, forceElement=sg)
+    if not mesh and not shading_group:
+        raise Exception("One of the mesh or shading_group arguments must be defined")
+    if mesh:
+        shading_engines = get_shading_groups(mesh)
+        if not shading_engines:
+            shading_engines = [create_shading_engine(mesh)]
+        for sg in shading_engines:
+            if sg == "initialShadingGroup":
+                sg = create_shading_engine(mesh)
+            cmds.connectAttr("%s.outColor" % shader, "%s.surfaceShader" % sg, f=True)
+            cmds.sets(mesh, e=True, forceElement=sg)
+    elif shading_group:
+        cmds.connectAttr("%s.outColor" % shader, "%s.surfaceShader" % shading_group, f=True)
+    else:
+        raise Exception("Only one of the mesh or shading_group arguments should be defined")
 
+@keepselection
+def create_shading_engine(mesh, name=None):
+    name = name or "%s_SG" % mesh
+    shading_group = cmds.sets(renderable=True, noSurfaceShader=True, empty=True, name=name)
+    return shading_group
 
-
-def create_preview_shader(shader_type="blinn", preset=None, diffuse=None, mask=None, name="triggerShader", *args, **kwargs):
+def collect_material_database():
     """
-    Creates a basic shader for visualization purposes
+    Collects all basic shader information from scene into a dictionary
+    Note that, this function ONLY collects the shader attribute values as it is. It does not collect
+    any connected node information like ramp, file etc.
+    """
+    excluded_mats = ['lambert1', 'standardSurface1', 'particleCloud1']
+    excluded_attrs = ['message', 'caching', 'frozen', 'isHistoricallyInteresting', 'nodeState', 'binMembership', ]
+    all_materials = [mat for mat in cmds.ls(materials=True) if not mat in excluded_mats]
+
+    material_dict = {}
+    for mat in all_materials:
+        material_dict[mat] = {}
+        material_dict[mat]["shaderType"] = cmds.objectType(mat)
+        all_attrs = [attr for attr in cmds.listAttr(mat, visible=True) if attr not in excluded_attrs]
+        for attr in all_attrs:
+            material_dict[mat][attr] = cmds.getAttr("{0}.{1}".format(mat, attr))
+    return material_dict
+
+
+def create_preview_shader(database, material_id, name=None, mesh=None):
+    """
+    Creates a preview shader based on the template on given database
 
     Args:
-        shader_type:
-        name:
+        database: (dictionary) dictionary item collected with 'collect_material_database' function
+        material_id: (string) key id which needs to exist in the provided dictionary. If not, default standardSurface
+                                will be used instead
+        name: (string) Name of the new shader. Optional. If not provided <material_id>_M template will be used
+        mesh: (string) Mesh that will be assigned. The Shading groups will be preserved if there are multi sgs
 
     Returns:
 
     """
-    # TODO WIP
-    valid_types = ["lambert", "surfaceShader", "blinn", "phong", "standardShader"]
-    if shader_type not in valid_types:
-        log.error("The shader type %s is not valid. valid types are: %s" % (shader_type, ", ".join(valid_types)))
+    name = name or "%s_M" % material_id
+    material_data = database.get(material_id)
+    if not material_data:
+        shader = cmds.shadingNode("standardSurface", asShader=True, name=name)
+    else:
+        shader_type = database[material_id]["shaderType"]
+        attributes = database[material_id]
+        del attributes["shaderType"]
+        shader = cmds.shadingNode(shader_type, asShader=True, name=name)
+        for attr, value in attributes.items():
+            if type(value) == list:
+                cmds.setAttr("{0}.{1}".format(shader, attr), *value[0])
+            elif type(value) == str:
+                cmds.setAttr("{0}.{1}".format(shader, attr), value, type="string")
+            else:
+                cmds.setAttr("{0}.{1}".format(shader, attr), value)
+    if mesh:
+        assign_shader(shader, mesh=mesh)
+    return shader
 
-    if preset:
-        valid_presets = ["glass", "skin", "fabric", "metal", "emissive"]
-        if preset not in valid_presets:
-            log.error(
-                "The preset %s is not valid. valid presets are: %s" % (preset, ", ".join(valid_presets)))
-        if preset == "glass":
-            pass
-    shader = cmds.shadingNode("lambert", asShader=True, name=name)
+def save_material_database(file_path):
+    database = collect_material_database()
+    io_handler = io.IO(file_path=file_path)
+    io_handler.write(database)
+
+def load_material_database(file_path):
+    io_handler = io.IO(file_path=file_path)
+    database = io_handler.read()
+    return database
 
