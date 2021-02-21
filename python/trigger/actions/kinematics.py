@@ -364,18 +364,18 @@ class Kinematics(object):
                 if root_plug and parent_socket and master_cont:
                     # check the root
                     if functions.identifyMaster(root_plug, self.module_dict)[0] not in self.validRootList:
-                        log.throw_error("root must be a valid root guide node")
+                        log.error("root must be a valid root guide node")
                     limbCreationList = self.get_limb_hierarchy(root_plug)
                 else:
-                    log.throw_error("add_limb mode requires all root, parent and master_cont flags")
+                    log.error("add_limb mode requires all root, parent and master_cont flags")
             else:
                 if len(cmds.ls(sl=True)) == 3:
                     root_plug, parent_socket, master_cont = cmds.ls(sl=True)
                 else:
-                    log.throw_error(
+                    log.error(
                         "Select exactly three nodes. First reference root node then target parent and finally master controller")
                 if functions.identifyMaster(root_plug, self.module_dict)[0] not in self.validRootList:
-                    log.throw_error("First selection must be a valid root joint node")
+                    log.error("First selection must be a valid root joint node")
 
             limbCreationList = self.get_limb_hierarchy(root_plug)
 
