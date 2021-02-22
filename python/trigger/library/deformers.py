@@ -204,7 +204,7 @@ def localize(mesh, blendshape_node, local_target_name="LocalRig", group_name=Non
 
     return local_mesh
 
-
+# TODO Make this one compatible with list vertex inputs
 def cluster(mesh):
     original_selection = cmds.ls(sl=True)
     cmds.select(mesh)
