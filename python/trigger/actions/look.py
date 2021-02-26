@@ -88,7 +88,7 @@ class Look(object):
         # file_path_le = QtWidgets.QLineEdit()
         file_path_le = custom_widgets.FileLineEdit()
         file_path_hLay.addWidget(file_path_le)
-        browse_path_pb = custom_widgets.BrowserButton(mode="saveFile", update_widget=file_path_le, filterExtensions=["Trigger Look Files (*.trl)"], overwrite_check=False)
+        browse_path_pb = custom_widgets.BrowserButton(mode="openFile", update_widget=file_path_le, filterExtensions=["Trigger Look Files (*.trl)"], overwrite_check=False)
         file_path_hLay.addWidget(browse_path_pb)
         layout.addRow(file_path_lbl, file_path_hLay)
 

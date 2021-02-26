@@ -77,6 +77,10 @@ class New_arm(object):
         self.useRefOrientation = cmds.getAttr("%s.useRefOri" % self.collar_ref)
         self.side = functions.get_joint_side(self.collar_ref)
         self.sideMult = -1 if self.side == "R" else 1
+        try:
+            self.isLocal = bool(cmds.getAttr("%s.localJoints" % self.collar_ref))
+        except ValueError:
+            self.isLocal = False
 
         self.suffix = (naming.uniqueName(cmds.getAttr("%s.moduleName" % self.collar_ref)))
 
@@ -321,6 +325,9 @@ class New_arm(object):
         cmds.addAttr(self.handIkCont, shortName="polevector", longName="Pole_Vector", defaultValue=0.0, minValue=0.0,
                      maxValue=1.0,
                      at="double", k=True)
+        cmds.addAttr(self.handIkCont, shortName="polevectorPin", longName="Pole_Pin", defaultValue=0.0, minValue=0.0,
+                     maxValue=1.0,
+                     at="double", k=True)
         cmds.addAttr(self.handIkCont, shortName="sUpArm", longName="Scale_Upper_Arm", defaultValue=1.0, minValue=0.0,
                      at="double", k=True)
         cmds.addAttr(self.handIkCont, shortName="sLowArm", longName="Scale_Lower_Arm", defaultValue=1.0, minValue=0.0,
@@ -536,7 +543,7 @@ class New_arm(object):
         distance_start = cmds.spaceLocator(name="distanceStart_%s" % self.suffix)[0]
         cmds.pointConstraint(self.startLock, distance_start, mo=False)
 
-        distance_end = cmds.spaceLocator(name="distanceStart_%s" % self.suffix)[0]
+        distance_end = cmds.spaceLocator(name="distanceEnd_%s" % self.suffix)[0]
         cmds.pointConstraint(self.endLock, distance_end, mo=False)
 
         connection.matrixConstraint(self.handIkCont, self.endLock, source_parent_cutoff=self.localOffGrp)
@@ -547,12 +554,76 @@ class New_arm(object):
                                              source_parent_cutoff=self.localOffGrp, name="rp_%s" %self.suffix, distance_start=distance_start, distance_end=distance_end)
         connection.matrixConstraint(self.handIkCont, self.j_ik_sc_low_end, st="xyz", ss="xyz", mo=False,
                                     source_parent_cutoff=self.localOffGrp)
+
+        # # pole vector pinning
+        pin_blender = cmds.createNode("blendColors", name="%s_polePin_Blender" %self.suffix)
+        cmds.connectAttr("%s.polevectorPin" % self.handIkCont, "%s.blender" % pin_blender)
+
+        upper_pin_distance = cmds.createNode("distanceBetween", name="%s_polePin_upperDistance" % self.suffix)
+        lower_pin_distance = cmds.createNode("distanceBetween", name="%s_polePin_lowerDistance" % self.suffix)
+        pin_root = functions.getShapes(rp_stretch_locs[1])[0]
+        pin_mid = functions.getShapes(self.poleContBridge)[0]
+        pin_end = functions.getShapes(rp_stretch_locs[0])[0]
+
+        cmds.connectAttr("%s.worldPosition[0]" % pin_root, "%s.point1" % upper_pin_distance)
+        cmds.connectAttr("%s.worldPosition[0]" % pin_mid, "%s.point2" % upper_pin_distance)
+        cmds.connectAttr("%s.worldPosition[0]" % pin_mid, "%s.point1" % lower_pin_distance)
+        cmds.connectAttr("%s.worldPosition[0]" % pin_end, "%s.point2" % lower_pin_distance)
+
+        cmds.connectAttr("%s.distance" % upper_pin_distance, "%s.color1R" % pin_blender)
+        cmds.connectAttr("%s.distance" % lower_pin_distance, "%s.color1G" % pin_blender)
+
+        # hijack the joints translate X
+        R_plug = connection.connections("%s.tx" % self.j_ik_rp_low, exclude_types=["ikEffector"], return_mode="incoming")[0]["plug_in"]
+        G_plug = connection.connections("%s.tx" % self.j_ik_rp_low_end, exclude_types=["ikEffector"], return_mode="incoming")[0]["plug_in"]
+        # R_plug = cmds.listConnections("%s.tx" % self.j_ik_rp_low, plugs=True, type="blendColors")[0]
+        # G_plug = cmds.listConnections("%s.tx" % self.j_ik_rp_low_end, plugs=True, type="blendColors")[0]
+
+        cmds.connectAttr(R_plug, "%s.color2R" % pin_blender, force=True)
+        cmds.connectAttr(G_plug, "%s.color2G" % pin_blender, force=True)
+        #
+        cmds.connectAttr("%s.outputR" % pin_blender, "%s.tx" % self.j_ik_rp_low, force=True)
+        cmds.connectAttr("%s.outputG" % pin_blender, "%s.tx" % self.j_ik_rp_low_end, force=True)
+
+
+
+        # for joint, distance_loc, scale_attr in zip([self.j_ik_rp_low, self.j_ik_rp_low_end], [distance_start, distance_end], ["sUpArm", "sLowArm"]):
+        #     distance_node = cmds.createNode("distanceBetween", name="%s_polePin_upperDistance" % self.suffix)
+        #     cmds.connectAttr("%s.worldPosition[0]" % distance_loc, "%s.point1" % distance_node)
+        #     cmds.connectAttr("%s.worldPosition[0]" % self.poleContBridge, "%s.point2" % distance_node)
+        #     distance_p = "%s.distance" % distance_node
+        #     initial_distance = cmds.getAttr("%s.initialDistance" % joint)
+        #
+        #     blend_node = cmds.createNode("blendTwoAttr", name="%s_polePin_blend" % self.suffix)
+        #     mult_p = op.multiply(initial_distance, "{0}.{1}".format(self.handIkCont, scale_attr))
+        #     cmds.connectAttr(mult_p, "%s.input[0]" % blend_node)
+        #     cmds.connectAttr(distance_p, "%s.input[1]" % blend_node)
+        #     cmds.connectAttr("%s.polevectorPin" % self.handIkCont, "%s.attributesBlender" % blend_node)
+        #     cmds.connectAttr("%s.output" % blend_node, "%s.initialDistance" % joint)
+
+
         # return ik_handle
 
     def createFKsetup(self):
         # shoulder
 
-        connection.matrixConstraint(self.shoulderCont, self.j_def_collar, mo=True, source_parent_cutoff=self.localOffGrp)
+        connection.matrixConstraint(self.shoulderCont, self.j_def_collar, ss="x", mo=True, source_parent_cutoff=self.localOffGrp)
+        connection.matrixConstraint(self.upArmFkCont, self.j_fk_up, ss="x", mo=True, source_parent_cutoff=self.localOffGrp)
+        connection.matrixConstraint(self.lowArmFkCont, self.j_fk_low, ss="x", mo=True, source_parent_cutoff=self.localOffGrp)
+        connection.matrixConstraint(self.handFkCont, self.j_fk_low_end, ss="x", mo=True, source_parent_cutoff=self.localOffGrp)
+
+        cmds.parent(self.handFkContOff, self.lowArmFkCont)
+        cmds.parent(self.lowArmFkContOff, self.upArmFkCont)
+        cmds.parent(self.upArmFkContOff, self.shoulderCont)
+        attribute.disconnect_attr(node= self.j_def_collar, attr="inverseScale")
+        attribute.disconnect_attr(node= self.j_fk_up, attr="inverseScale")
+        attribute.disconnect_attr(node= self.j_fk_low, attr="inverseScale")
+        attribute.disconnect_attr(node= self.j_fk_low_end, attr="inverseScale")
+
+        # if self.isLocal:
+        #     connection.matrixConstraint(self.limbPlug, self.plugBindGrp)
+        # else:
+        #     connection.matrixConstraint(self.limbPlug, self.shoulderCont)
 
     def ikfkSwitching(self):
         pass
@@ -678,7 +749,15 @@ class New_arm(object):
 
             squash_blend_node = cmds.createNode("blendColors", name="squash_blend_%s" %name)
             cmds.connectAttr(squash_mult_p, "%s.color1R" %squash_blend_node)
-            cmds.connectAttr(sum1_p, "%s.color2R" %squash_blend_node)
+            ## Stretch limit
+            clamp_node = cmds.createNode("clamp", name="stretchLimit_%s" %name)
+            max_distance_p = op.add("%s.stretchLimit" %end_controller, "%s.initialDistance" %jnt)
+            cmds.connectAttr(sum1_p, "%s.inputR" % clamp_node)
+            cmds.connectAttr(max_distance_p, "%s.maxR" % clamp_node)
+            cmds.connectAttr(sum1_p, "%s.minR" % clamp_node)
+            ##
+            cmds.connectAttr("%s.outputR" % clamp_node, "%s.color2R" %squash_blend_node)
+            # cmds.connectAttr(sum1_p, "%s.color2R" %squash_blend_node)
             cmds.connectAttr("%s.squash" %end_controller, "%s.blender" %squash_blend_node)
 
             cmds.connectAttr("%s.outputR" %squash_blend_node, "%s.tx" %jnt)
