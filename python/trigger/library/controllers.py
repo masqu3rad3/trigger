@@ -142,8 +142,6 @@ class Icon(object):
         Creates a FK-IK controller.
         Args:
             name: (String) name of the controller. Must be a String
-            scale: (Vector) Scale value as vector. example (1,1.5,1)
-            location: (Vector) Optional Location as vector. example (12,0,2)
 
         Returns:
             A list Containing Controller Node (index 0) and Reverse node (1) to be used
