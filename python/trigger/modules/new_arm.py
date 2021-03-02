@@ -88,33 +88,16 @@ class New_arm(object):
 
         # module variables
         self.shoulderCont = None
-        # self.shoulderContOff = None
-        # self.shoulderContOre = None
-        # self.shoulderContAuto = None
         self.handIkCont = None
-        # self.handIkContOff = None
-        # self.handIkContOre = None
-        # self.handIkContPos = None
         self.poleCont = None
-        # self.poleContOff = None
-        # self.poleContVis = None
-        self.poleContBridge = None
+        self.poleBridge = None
         self.upArmFkCont = None
-        # self.upArmFkContOff = None
-        # self.upArmFkContOre = None
         self.lowArmFkCont = None
-        # self.lowArmFkContOff = None
-        # self.lowArmFkContOre = None
         self.handFkCont = None
-        # self.handFkContOff = None
-        # self.handFkContPos = None
-        # self.handFkContOre = None
         self.switchIkFkCont = None
         self.switchIkFkContPos = None
         self.midLockCont = None
-        # self.midLockContExt = None
-        # self.midLockContPos = None
-        # self.midLockContAve = None
+        self.midLockBridge = None
         self.startLock = None
         self.startLockOre = None
         self.startLockPos = None
@@ -151,12 +134,12 @@ class New_arm(object):
         cmds.parent(self.nonScaleGrp, self.limbGrp)
 
         self.localOffGrp = cmds.group(name="%s_localOffset_grp" %self.suffix, em=True)
-        self.plugBindGrp = cmds.group(name="%s_plugBind_grp" %self.suffix, em=True)
-        cmds.parent(self.localOffGrp, self.plugBindGrp)
-        cmds.parent(self.plugBindGrp, self.limbGrp)
+        self.controllerGrp = cmds.group(name="%s_controller_grp" % self.suffix, em=True)
+        cmds.parent(self.localOffGrp, self.controllerGrp)
+        cmds.parent(self.controllerGrp, self.limbGrp)
 
-        self.ikBindGrp = cmds.group(name="%s_IK_bind_grp" % self.suffix, em=True)
-        cmds.parent(self.ikBindGrp, self.localOffGrp)
+        self.contBindGrp = cmds.group(name="%s_bind_grp" % self.suffix, em=True)
+        cmds.parent(self.contBindGrp, self.localOffGrp)
 
     def createJoints(self):
         # draw Joints
@@ -164,7 +147,7 @@ class New_arm(object):
         # limb plug
         cmds.select(d=True)
         self.limbPlug = cmds.joint(name="jPlug_%s" % self.suffix, p=self.collar_pos, radius=3)
-        connection.matrixConstraint(self.limbPlug, self.ikBindGrp, mo=True)
+        connection.matrixConstraint(self.limbPlug, self.contBindGrp, mo=True)
 
         # Shoulder Joints
         cmds.select(d=True)
@@ -311,7 +294,7 @@ class New_arm(object):
         _shoulder_ore = self.shoulderCont.add_offset("ORE")
         _shoulder_auto = self.shoulderCont.add_offset("Auto")
 
-        cmds.parent(_shoulder_auto, self.ikBindGrp)
+        cmds.parent(_shoulder_auto, self.contBindGrp)
 
         ## IK hand controller
         ik_cont_scale = (self.init_lower_arm_dist / 3, self.init_lower_arm_dist / 3, self.init_lower_arm_dist / 3)
@@ -327,7 +310,7 @@ class New_arm(object):
         _handIK_ore = self.handIkCont.add_offset("ORE")
         _handIK_pos = self.handIkCont.add_offset("POS")
 
-        cmds.parent(_handIK_pos, self.ikBindGrp)
+        cmds.parent(_handIK_pos, self.contBindGrp)
 
         cmds.addAttr(self.handIkCont.name, shortName="polevector", longName="Pole_Vector", defaultValue=0.0, minValue=0.0,
                      maxValue=1.0,
@@ -360,7 +343,7 @@ class New_arm(object):
             (((self.init_upper_arm_dist + self.init_lower_arm_dist) / 2) / 10),
             (((self.init_upper_arm_dist + self.init_lower_arm_dist) / 2) / 10)
         )
-        self.poleContBridge = cmds.spaceLocator(name="poleVectorBridge_%s" %self.suffix)[0]
+        self.poleBridge = cmds.spaceLocator(name="poleVectorBridge_%s" % self.suffix)[0]
         self.poleCont = objects.Controller(shape="Plus",
                                                name="%s_Pole_cont" % self.suffix,
                                                scale=polecont_scale,
@@ -369,19 +352,19 @@ class New_arm(object):
         offset_mag_pole = ((self.init_upper_arm_dist + self.init_lower_arm_dist) / 4)
         offset_vector_pole = api.getBetweenVector(self.j_def_elbow, [self.j_collar_end, self.j_def_hand])
 
-        functions.alignAndAim(self.poleContBridge,
+        functions.alignAndAim(self.poleBridge,
                               targetList=[self.j_def_elbow],
                               aimTargetList=[self.j_collar_end, self.j_def_hand],
                               upVector=self.up_axis,
                               translateOff=(offset_vector_pole * offset_mag_pole)
                               )
 
-        functions.alignTo(self.poleCont.name, self.poleContBridge, position=True, rotation=True)
+        functions.alignTo(self.poleCont.name, self.poleBridge, position=True, rotation=True)
 
         _poleCont_off = self.poleCont.add_offset("OFF")
         _poleCont_vis = self.poleCont.add_offset("VIS")
 
-        cmds.parent(_poleCont_vis, self.ikBindGrp)
+        cmds.parent(_poleCont_off, self.contBindGrp)
 
         ## FK UP Arm Controller
 
@@ -477,6 +460,8 @@ class New_arm(object):
         cmds.addAttr(self.switchFkIkCont.name, shortName="fingerControls", longName="Finger_Controls", defaultValue=1, at="bool")
         cmds.setAttr("{0}.fingerControls".format(self.switchFkIkCont.name), cb=True)
 
+        cmds.parent(_switchFkIk_pos, self.contBindGrp)
+
         ### Create MidLock controller
 
         midcont_scale = (self.init_lower_arm_dist / 4, self.init_lower_arm_dist / 4, self.init_lower_arm_dist / 4)
@@ -492,6 +477,11 @@ class New_arm(object):
         _midLock_ext = self.midLockCont.add_offset("EXT")
         _midLock_pos = self.midLockCont.add_offset("POS")
         _midLock_ave = self.midLockCont.add_offset("AVE")
+
+        cmds.parent(_midLock_ext, self.contBindGrp)
+
+        self.midLockBridge = cmds.spaceLocator(name="midLock_%s" % self.suffix)[0]
+        functions.alignTo(self.midLockBridge, self.midLockCont.name, position=True, rotation=True)
 
         # cmds.parent(self.cont_shoulder_off, self.scaleGrp)
         # cmds.parent(self.cont_fk_up_arm_off, self.nonScaleGrp)
@@ -528,17 +518,18 @@ class New_arm(object):
     #     return ik_handle
 
     def createRoots(self):
-        pass
+        connection.matrixConstraint(self.midLockBridge, self.j_def_elbow, mo=False)
+        connection.matrixConstraint(self.midLockCont.name, self.midLockBridge, mo=False, source_parent_cutoff=self.localOffGrp)
 
     def createIKsetup(self):
 
         # create IK chains
         sc_ik_handle = cmds.ikHandle(sj=self.j_ik_sc_up, ee=self.j_ik_sc_low_end, name="ikHandle_SC_%s" % self.suffix, sol="ikSCsolver")[0]
         rp_ik_handle = cmds.ikHandle(sj=self.j_ik_rp_up, ee=self.j_ik_rp_low_end, name="ikHandle_%s" % self.suffix, sol="ikRPsolver")[0]
-        cmds.poleVectorConstraint(self.poleContBridge, rp_ik_handle)
-        connection.matrixConstraint(self.poleCont.name, self.poleContBridge, mo=False,
+        cmds.poleVectorConstraint(self.poleBridge, rp_ik_handle)
+        connection.matrixConstraint(self.poleCont.name, self.poleBridge, mo=False,
                                     source_parent_cutoff=self.localOffGrp)
-        cmds.connectAttr("%s.rigVis" % self.scaleGrp, "%s.v" % self.poleContBridge)
+        cmds.connectAttr("%s.rigVis" % self.scaleGrp, "%s.v" % self.poleBridge)
 
         # twist (start) lock and distance locators
         # -----------------------------
@@ -576,7 +567,7 @@ class New_arm(object):
         upper_pin_distance = cmds.createNode("distanceBetween", name="%s_polePin_upperDistance" % self.suffix)
         lower_pin_distance = cmds.createNode("distanceBetween", name="%s_polePin_lowerDistance" % self.suffix)
         pin_root = functions.getShapes(rp_stretch_locs[1])[0]
-        pin_mid = functions.getShapes(self.poleContBridge)[0]
+        pin_mid = functions.getShapes(self.poleBridge)[0]
         pin_end = functions.getShapes(rp_stretch_locs[0])[0]
 
         cmds.connectAttr("%s.worldPosition[0]" % pin_root, "%s.point1" % upper_pin_distance)
@@ -599,7 +590,10 @@ class New_arm(object):
         cmds.connectAttr("%s.outputR" % pin_blender, "%s.tx" % self.j_ik_rp_low, force=True)
         cmds.connectAttr("%s.outputG" % pin_blender, "%s.tx" % self.j_ik_rp_low_end, force=True)
 
-
+        for jnt, scale_attr in zip([self.j_ik_rp_low, self.j_ik_rp_low_end], ["sUpArm", "sLowArm"]):
+            initial_distance = cmds.getAttr("%s.initialDistance" % jnt)
+            mult_p = op.multiply(initial_distance, "{0}.{1}".format(self.handIkCont.name, scale_attr))
+            cmds.connectAttr(mult_p, "%s.initialDistance" % jnt)
 
         # for joint, distance_loc, scale_attr in zip([self.j_ik_rp_low, self.j_ik_rp_low_end], [distance_start, distance_end], ["sUpArm", "sLowArm"]):
         #     distance_node = cmds.createNode("distanceBetween", name="%s_polePin_upperDistance" % self.suffix)
@@ -614,6 +608,29 @@ class New_arm(object):
         #     cmds.connectAttr(distance_p, "%s.input[1]" % blend_node)
         #     cmds.connectAttr("%s.polevectorPin" % self.handIkCont, "%s.attributesBlender" % blend_node)
         #     cmds.connectAttr("%s.output" % blend_node, "%s.initialDistance" % joint)
+
+        # rp_list = [self.j_ik_rp_up, self.j_ik_rp_low, self.j_ik_rp_low_end]
+        # sc_list = [self.j_ik_sc_up, self.j_ik_sc_low, self.j_ik_sc_low_end]
+        # orig_list = [self.j_ik_orig_up, self.j_ik_orig_low, self.j_ik_orig_low_end]
+        #
+        # for rp, sc, orig in zip(rp_list, sc_list, orig_list):
+        #     blend_trans = cmds.createNode("blendColors", name="blendTR_{0}_{1}".format(orig, self.suffix))
+        #     blend_rot = cmds.createNode("blendColors", name="blendROT_{0}_{1}".format(orig, self.suffix))
+        #
+        #     cmds.connectAttr("%s.Pole_Vector" %(self.handIkCont.name), "%s.blender" % blend_trans)
+        #     cmds.connectAttr("%s.Pole_Vector" %(self.handIkCont.name), "%s.blender" % blend_rot)
+        #     for rgb, xyz in zip("RGB", "XYZ"):
+        #         cmds.connectAttr("{0}.translate{1}".format(rp, xyz), "{0}.color1{1}".format(blend_trans, rgb))
+        #         cmds.connectAttr("{0}.translate{1}".format(sc, xyz), "{0}.color2{1}".format(blend_trans, rgb))
+        #         cmds.connectAttr("{0}.rotate{1}".format(rp, xyz), "{0}.color1{1}".format(blend_rot, rgb))
+        #         cmds.connectAttr("{0}.rotate{1}".format(sc, xyz), "{0}.color2{1}".format(blend_rot, rgb))
+        #         cmds.connectAttr("{0}.output{1}".format(blend_trans, rgb), "{0}.translate{1}".format(orig, xyz))
+        #         cmds.connectAttr("{0}.output{1}".format(blend_rot, rgb), "{0}.rotate{1}".format(orig, xyz))
+
+
+        connection.matrixSwitch(self.j_ik_rp_up, self.j_ik_sc_up, self.j_ik_orig_up, "%s.Pole_Vector" % self.handIkCont.name)
+        connection.matrixSwitch(self.j_ik_rp_low, self.j_ik_sc_low, self.j_ik_orig_low, "%s.Pole_Vector" % self.handIkCont.name)
+        connection.matrixSwitch(self.j_ik_rp_low_end, self.j_ik_sc_low_end, self.j_ik_orig_low_end, "%s.Pole_Vector" % self.handIkCont.name)
 
 
         # return ik_handle
@@ -662,9 +679,10 @@ class New_arm(object):
         self.createGrp()
         self.createJoints()
         self.createControllers()
-        # self.createRoots()
+        self.createRoots()
         self.createIKsetup()
         self.createFKsetup()
+
         # self.ikfkSwitching()
         # self.createRibbons()
         # self.createTwistSplines()

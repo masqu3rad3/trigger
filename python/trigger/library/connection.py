@@ -283,11 +283,20 @@ def matrixSwitch(parentA, parentB, child, control_attribute, position=True, rota
     """
     attribute.validate_attr(control_attribute, attr_range=[0,1])
 
+    parents = cmds.listRelatives(child, parent=True)
+    child_parent = parents[0] if parents else None
+
+    next_index = 0
     mult_matrix_a = cmds.createNode("multMatrix", name="multMatrix_%s" %parentA)
-    cmds.connectAttr("%s.worldMatrix[0]" %parentA, "%s.matrixIn[0]" %mult_matrix_a)
+    cmds.connectAttr("%s.worldMatrix[0]" %parentA, "%s.matrixIn[%i]" %(mult_matrix_a, next_index))
 
     mult_matrix_b = cmds.createNode("multMatrix", name="multMatrix_%s" %parentB)
-    cmds.connectAttr("%s.worldMatrix[0]" %parentB, "%s.matrixIn[0]" %mult_matrix_b)
+    cmds.connectAttr("%s.worldMatrix[0]" %parentB, "%s.matrixIn[%i]" %(mult_matrix_b, next_index))
+
+    if child_parent:
+        next_index += 1
+        cmds.connectAttr("%s.worldInverseMatrix[0]" %child_parent, "%s.matrixIn[%i]" %(mult_matrix_a, next_index))
+        cmds.connectAttr("%s.worldInverseMatrix[0]" %child_parent, "%s.matrixIn[%i]" %(mult_matrix_b, next_index))
 
     wt_add_matrix = cmds.createNode("wtAddMatrix", name="wtAdd_%s_%s" %(parentA, parentB))
     cmds.connectAttr("%s.matrixSum" %mult_matrix_a, "%s.wtMatrix[0].matrixIn" %wt_add_matrix)
