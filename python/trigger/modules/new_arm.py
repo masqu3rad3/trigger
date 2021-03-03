@@ -148,6 +148,8 @@ class New_arm(object):
         cmds.select(d=True)
         self.limbPlug = cmds.joint(name="jPlug_%s" % self.suffix, p=self.collar_pos, radius=3)
         connection.matrixConstraint(self.limbPlug, self.contBindGrp, mo=True)
+        if self.isLocal:
+            connection.matrixConstraint(self.limbPlug, self.localOffGrp, mo=True)
 
         # Shoulder Joints
         cmds.select(d=True)
@@ -294,7 +296,7 @@ class New_arm(object):
         _shoulder_ore = self.shoulderCont.add_offset("ORE")
         _shoulder_auto = self.shoulderCont.add_offset("Auto")
 
-        cmds.parent(_shoulder_auto, self.contBindGrp)
+        cmds.parent(_shoulder_off, self.contBindGrp)
 
         ## IK hand controller
         ik_cont_scale = (self.init_lower_arm_dist / 3, self.init_lower_arm_dist / 3, self.init_lower_arm_dist / 3)
@@ -310,7 +312,7 @@ class New_arm(object):
         _handIK_ore = self.handIkCont.add_offset("ORE")
         _handIK_pos = self.handIkCont.add_offset("POS")
 
-        cmds.parent(_handIK_pos, self.contBindGrp)
+        cmds.parent(_handIK_off, self.contBindGrp)
 
         cmds.addAttr(self.handIkCont.name, shortName="polevector", longName="Pole_Vector", defaultValue=0.0, minValue=0.0,
                      maxValue=1.0,
@@ -518,6 +520,31 @@ class New_arm(object):
     #     return ik_handle
 
     def createRoots(self):
+        # create two locators to hold the midLockCont
+        midLockBridge_IK = cmds.spaceLocator(name="%s_midLockBridge_IK" % self.suffix)[0]
+
+        multMatrix_IK_up_p = op.multiply_matrix(["%s.worldMatrix[0]" % self.j_ik_orig_up])
+        multMatrix_IK_low_p = op.multiply_matrix(["%s.worldMatrix[0]" % self.j_ik_orig_low])
+        average_matrix_IK_p = op.average_matrix([multMatrix_IK_up_p, multMatrix_IK_low_p])
+        decompose_IK_rot = cmds.createNode("decomposeMatrix", name="%s_decompose_rot" % self.suffix)
+        decompose_IK_trans = cmds.createNode("decomposeMatrix", name="%s_decompose_trans" % self.suffix)
+        cmds.connectAttr(average_matrix_IK_p, "%s.inputMatrix" % decompose_IK_rot)
+        cmds.connectAttr(multMatrix_IK_low_p, "%s.inputMatrix" % decompose_IK_trans)
+        cmds.connectAttr("%s.outputRotate" % decompose_IK_rot, "%s.rotate" % midLockBridge_IK)
+        cmds.connectAttr("%s.outputTranslate" % decompose_IK_trans, "%s.translate" % midLockBridge_IK)
+
+        midLockBridge_FK = cmds.spaceLocator(name="%s_midLockBridge_FK" % self.suffix)[0]
+        multMatrix_FK_up_p = op.multiply_matrix(["%s.worldMatrix[0]" % self.j_fk_up])
+        multMatrix_FK_low_p = op.multiply_matrix(["%s.worldMatrix[0]" % self.j_fk_low])
+        average_matrix_FK_p = op.average_matrix([multMatrix_FK_up_p, multMatrix_FK_low_p])
+        decompose_FK_rot = cmds.createNode("decomposeMatrix", name="%s_decompose_rot" % self.suffix)
+        decompose_FK_trans = cmds.createNode("decomposeMatrix", name="%s_decompose_trans" % self.suffix)
+        cmds.connectAttr(average_matrix_FK_p, "%s.inputMatrix" % decompose_FK_rot)
+        cmds.connectAttr(multMatrix_FK_low_p, "%s.inputMatrix" % decompose_FK_trans)
+        cmds.connectAttr("%s.outputRotate" % decompose_FK_rot, "%s.rotate" % midLockBridge_FK)
+        cmds.connectAttr("%s.outputTranslate" % decompose_FK_trans, "%s.translate" % midLockBridge_FK)
+
+
         connection.matrixConstraint(self.midLockBridge, self.j_def_elbow, mo=False)
         connection.matrixConstraint(self.midLockCont.name, self.midLockBridge, mo=False, source_parent_cutoff=self.localOffGrp)
 
@@ -627,7 +654,6 @@ class New_arm(object):
         #         cmds.connectAttr("{0}.output{1}".format(blend_trans, rgb), "{0}.translate{1}".format(orig, xyz))
         #         cmds.connectAttr("{0}.output{1}".format(blend_rot, rgb), "{0}.rotate{1}".format(orig, xyz))
 
-
         connection.matrixSwitch(self.j_ik_rp_up, self.j_ik_sc_up, self.j_ik_orig_up, "%s.Pole_Vector" % self.handIkCont.name)
         connection.matrixSwitch(self.j_ik_rp_low, self.j_ik_sc_low, self.j_ik_orig_low, "%s.Pole_Vector" % self.handIkCont.name)
         connection.matrixSwitch(self.j_ik_rp_low_end, self.j_ik_sc_low_end, self.j_ik_orig_low_end, "%s.Pole_Vector" % self.handIkCont.name)
@@ -652,11 +678,13 @@ class New_arm(object):
         attribute.disconnect_attr(node= self.j_fk_low_end, attr="inverseScale")
 
         # if self.isLocal:
-        #     connection.matrixConstraint(self.limbPlug, self.plugBindGrp)
+        #     connection.matrixConstraint(self.limbPlug, self.contBindGrp)
         # else:
         #     connection.matrixConstraint(self.limbPlug, self.shoulderCont)
 
     def ikfkSwitching(self):
+
+        #elbow joint switch
         pass
 
     def createRibbons(self):

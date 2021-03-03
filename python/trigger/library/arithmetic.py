@@ -134,3 +134,26 @@ def if_else(first_term, operation, second_term, if_true, if_false, return_plug=T
         return "%s.outColorR" %condition_node
     else:
         return condition_node
+
+def multiply_matrix(matrices_list, return_plug=True, name="multMatrix"):
+    mult_matrix_node = cmds.createNode("multMatrix", name=name)
+    for index, matrix in enumerate(matrices_list):
+        if compat.is_string(matrix):
+            cmds.connectAttr(matrix, "%s.matrixIn[%i]" %(mult_matrix_node, index))
+        else:
+            cmds.setAttr("%s.matrixIn[%i]" % (mult_matrix_node, index), matrix, type="matrix")
+    if return_plug:
+        return "%s.matrixSum" % mult_matrix_node
+    else:
+        return mult_matrix_node
+
+def average_matrix(matrices_list, return_plug=True, name="averageMatrix"):
+    average_matrix_node = cmds.createNode("wtAddMatrix", name=name)
+    average_value = 1.0 / len(matrices_list)
+    for index, matrix in enumerate(matrices_list):
+        cmds.connectAttr(matrix, "{0}.wtMatrix[{1}].matrixIn".format(average_matrix_node, index))
+        cmds.setAttr("{0}.wtMatrix[{1}].weightIn".format(average_matrix_node, index), average_value)
+    if return_plug:
+        return "%s.matrixSum" % average_matrix_node
+    else:
+        return average_matrix_node

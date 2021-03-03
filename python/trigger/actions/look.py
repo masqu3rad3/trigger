@@ -36,6 +36,12 @@ class Look(object):
         """Mandatory Method - Execute Action"""
         # everything in this method will be executed automatically.
         # This method does not accept any arguments. all the user variable must be defined to the instance before
+
+        # delete ALL SG nodes to prevent clashing
+        defaults = ["initialParticleSE", "initialShadingGroup"]
+        all_engines = [x for x in cmds.ls(type="shadingEngine") if x not in defaults]
+        cmds.delete(all_engines)
+
         look_data = self.io.read(self.lookFilePath)
 
         base_folder, file_name_and_ext = os.path.split(self.lookFilePath)

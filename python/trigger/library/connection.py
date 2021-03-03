@@ -265,7 +265,7 @@ def matrixConstraint(parent, child, mo=True, prefix="", sr=None, st=None, ss=Non
 
     return mult_matrix, decompose_matrix
 
-def matrixSwitch(parentA, parentB, child, control_attribute, position=True, rotation=True, scale=False):
+def matrixSwitch(parentA, parentB, child, control_attribute, position=True, rotation=True, scale=False, source_parent_cutoff=None):
     """
     Creates a matrix blended switch between two locations
 
@@ -283,20 +283,27 @@ def matrixSwitch(parentA, parentB, child, control_attribute, position=True, rota
     """
     attribute.validate_attr(control_attribute, attr_range=[0,1])
 
-    parents = cmds.listRelatives(child, parent=True)
-    child_parent = parents[0] if parents else None
+    # parents = cmds.listRelatives(child, parent=True)
+    # child_parent = parents[0] if parents else None
 
-    next_index = 0
-    mult_matrix_a = cmds.createNode("multMatrix", name="multMatrix_%s" %parentA)
-    cmds.connectAttr("%s.worldMatrix[0]" %parentA, "%s.matrixIn[%i]" %(mult_matrix_a, next_index))
+    # next_index = 0
+    # mult_matrix_a = cmds.createNode("multMatrix", name="multMatrix_%s" %parentA)
+    # cmds.connectAttr("%s.worldMatrix[0]" %parentA, "%s.matrixIn[%i]" %(mult_matrix_a, next_index))
+    #
+    # mult_matrix_b = cmds.createNode("multMatrix", name="multMatrix_%s" %parentB)
+    # cmds.connectAttr("%s.worldMatrix[0]" %parentB, "%s.matrixIn[%i]" %(mult_matrix_b, next_index))
+    #
+    # if child_parent:
+    #     next_index += 1
+    #     cmds.connectAttr("%s.worldInverseMatrix[0]" %child_parent, "%s.matrixIn[%i]" %(mult_matrix_a, next_index))
+    #     cmds.connectAttr("%s.worldInverseMatrix[0]" %child_parent, "%s.matrixIn[%i]" %(mult_matrix_b, next_index))
 
-    mult_matrix_b = cmds.createNode("multMatrix", name="multMatrix_%s" %parentB)
-    cmds.connectAttr("%s.worldMatrix[0]" %parentB, "%s.matrixIn[%i]" %(mult_matrix_b, next_index))
-
-    if child_parent:
-        next_index += 1
-        cmds.connectAttr("%s.worldInverseMatrix[0]" %child_parent, "%s.matrixIn[%i]" %(mult_matrix_a, next_index))
-        cmds.connectAttr("%s.worldInverseMatrix[0]" %child_parent, "%s.matrixIn[%i]" %(mult_matrix_b, next_index))
+    mult_matrix_a, dump = matrixConstraint(parentA, child, mo=False, prefix=parentA, sr="xyz", st="xyz", ss="xyz", source_parent_cutoff=source_parent_cutoff)
+    attribute.disconnect_attr(dump, attr="inputMatrix")
+    cmds.delete(dump)
+    mult_matrix_b, dump = matrixConstraint(parentB, child, mo=False, prefix=parentB, sr="xyz", st="xyz", ss="xyz", source_parent_cutoff=source_parent_cutoff)
+    attribute.disconnect_attr(dump, attr="inputMatrix")
+    cmds.delete(dump)
 
     wt_add_matrix = cmds.createNode("wtAddMatrix", name="wtAdd_%s_%s" %(parentA, parentB))
     cmds.connectAttr("%s.matrixSum" %mult_matrix_a, "%s.wtMatrix[0].matrixIn" %wt_add_matrix)
