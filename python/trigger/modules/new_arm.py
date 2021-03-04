@@ -97,7 +97,11 @@ class New_arm(object):
         self.switchIkFkCont = None
         self.switchIkFkContPos = None
         self.midLockCont = None
-        self.midLockBridge = None
+        self.defMid = None
+        self.defStart = None
+        self.defEnd = None
+        self.midLockBridge_IK = None
+        self.midLockBridge_FK = None
         self.startLock = None
         self.startLockOre = None
         self.startLockPos = None
@@ -480,10 +484,10 @@ class New_arm(object):
         _midLock_pos = self.midLockCont.add_offset("POS")
         _midLock_ave = self.midLockCont.add_offset("AVE")
 
-        cmds.parent(_midLock_ext, self.contBindGrp)
+        cmds.parent(_midLock_ext, self.localOffGrp)
 
-        self.midLockBridge = cmds.spaceLocator(name="midLock_%s" % self.suffix)[0]
-        functions.alignTo(self.midLockBridge, self.midLockCont.name, position=True, rotation=True)
+        # self.defMid = cmds.spaceLocator(name="midLock_%s" % self.suffix)[0]
+        # functions.alignTo(self.defMid, self.midLockCont.name, position=True, rotation=True)
 
         # cmds.parent(self.cont_shoulder_off, self.scaleGrp)
         # cmds.parent(self.cont_fk_up_arm_off, self.nonScaleGrp)
@@ -520,8 +524,15 @@ class New_arm(object):
     #     return ik_handle
 
     def createRoots(self):
+
+        # Locators for positioning deformation joints
+        self.defMid = cmds.spaceLocator(name="defMid_%s" % self.suffix)[0]
+        functions.alignTo(self.defMid, self.midLockCont.name, position=True, rotation=True)
+        self.defStart = cmds.spaceLocator(name="defStart_%s" % self.suffix)[0]
+        self.defEnd = cmds.spaceLocator(name="defEnd_%s" % self.suffix)[0]
+
         # create two locators to hold the midLockCont
-        midLockBridge_IK = cmds.spaceLocator(name="%s_midLockBridge_IK" % self.suffix)[0]
+        self.midLockBridge_IK = cmds.spaceLocator(name="%s_midLockBridge_IK" % self.suffix)[0]
 
         multMatrix_IK_up_p = op.multiply_matrix(["%s.worldMatrix[0]" % self.j_ik_orig_up])
         multMatrix_IK_low_p = op.multiply_matrix(["%s.worldMatrix[0]" % self.j_ik_orig_low])
@@ -530,10 +541,10 @@ class New_arm(object):
         decompose_IK_trans = cmds.createNode("decomposeMatrix", name="%s_decompose_trans" % self.suffix)
         cmds.connectAttr(average_matrix_IK_p, "%s.inputMatrix" % decompose_IK_rot)
         cmds.connectAttr(multMatrix_IK_low_p, "%s.inputMatrix" % decompose_IK_trans)
-        cmds.connectAttr("%s.outputRotate" % decompose_IK_rot, "%s.rotate" % midLockBridge_IK)
-        cmds.connectAttr("%s.outputTranslate" % decompose_IK_trans, "%s.translate" % midLockBridge_IK)
+        cmds.connectAttr("%s.outputRotate" % decompose_IK_rot, "%s.rotate" % self.midLockBridge_IK)
+        cmds.connectAttr("%s.outputTranslate" % decompose_IK_trans, "%s.translate" % self.midLockBridge_IK)
 
-        midLockBridge_FK = cmds.spaceLocator(name="%s_midLockBridge_FK" % self.suffix)[0]
+        self.midLockBridge_FK = cmds.spaceLocator(name="%s_midLockBridge_FK" % self.suffix)[0]
         multMatrix_FK_up_p = op.multiply_matrix(["%s.worldMatrix[0]" % self.j_fk_up])
         multMatrix_FK_low_p = op.multiply_matrix(["%s.worldMatrix[0]" % self.j_fk_low])
         average_matrix_FK_p = op.average_matrix([multMatrix_FK_up_p, multMatrix_FK_low_p])
@@ -541,12 +552,20 @@ class New_arm(object):
         decompose_FK_trans = cmds.createNode("decomposeMatrix", name="%s_decompose_trans" % self.suffix)
         cmds.connectAttr(average_matrix_FK_p, "%s.inputMatrix" % decompose_FK_rot)
         cmds.connectAttr(multMatrix_FK_low_p, "%s.inputMatrix" % decompose_FK_trans)
-        cmds.connectAttr("%s.outputRotate" % decompose_FK_rot, "%s.rotate" % midLockBridge_FK)
-        cmds.connectAttr("%s.outputTranslate" % decompose_FK_trans, "%s.translate" % midLockBridge_FK)
+        cmds.connectAttr("%s.outputRotate" % decompose_FK_rot, "%s.rotate" % self.midLockBridge_FK)
+        cmds.connectAttr("%s.outputTranslate" % decompose_FK_trans, "%s.translate" % self.midLockBridge_FK)
 
 
-        connection.matrixConstraint(self.midLockBridge, self.j_def_elbow, mo=False)
-        connection.matrixConstraint(self.midLockCont.name, self.midLockBridge, mo=False, source_parent_cutoff=self.localOffGrp)
+        # connection.matrixSwitch(midLockBridge_IK, midLockBridge_FK, self.midLockBridge, "%s.FK_IK" % self.switchFkIkCont.name)
+        cmds.parent(self.j_def_elbow, self.defMid)
+        connection.matrixConstraint(self.midLockCont.name, self.j_def_elbow, mo=False, source_parent_cutoff=self.localOffGrp)
+
+        # direct connection to the bridge
+        cmds.connectAttr("%s.t" % self.defMid, "%s.t" % self.midLockCont.get_offsets()[-1])
+        cmds.connectAttr("%s.r" % self.defMid, "%s.r" % self.midLockCont.get_offsets()[-1])
+        cmds.connectAttr("%s.s" % self.defMid, "%s.s" % self.midLockCont.get_offsets()[-1])
+        # connection.matrixConstraint(self.midLockBridge, self.midLockCont.get_offsets()[-1], mo=False, source_parent_cutoff=self.localOffGrp)
+
 
     def createIKsetup(self):
 
@@ -684,7 +703,10 @@ class New_arm(object):
 
     def ikfkSwitching(self):
 
-        #elbow joint switch
+        connection.matrixSwitch(self.j_ik_orig_up, self.j_fk_up, self.defStart, "%s.FK_IK" % self.switchFkIkCont.name)
+        connection.matrixSwitch(self.j_ik_orig_low_end, self.j_fk_low_end, self.defEnd, "%s.FK_IK" % self.switchFkIkCont.name)
+        connection.matrixSwitch(self.midLockBridge_IK, self.midLockBridge_FK, self.defMid, "%s.FK_IK" % self.switchFkIkCont.name)
+
         pass
 
     def createRibbons(self):
@@ -711,7 +733,7 @@ class New_arm(object):
         self.createIKsetup()
         self.createFKsetup()
 
-        # self.ikfkSwitching()
+        self.ikfkSwitching()
         # self.createRibbons()
         # self.createTwistSplines()
         # self.createAngleExtractors()
@@ -739,7 +761,7 @@ class New_arm(object):
         soft_blend_loc = cmds.spaceLocator(name="softBlendLoc_%s" %name)[0]
         soft_blend_loc_shape = functions.getShapes(soft_blend_loc)[0]
         functions.alignTo(soft_blend_loc, end_controller, position=True, rotation=True)
-        connection.matrixSwitch(end_controller, end_loc, soft_blend_loc, "%s.stretch" %end_controller, position=True, rotation=False)
+        connection.matrixSwitch(end_controller, end_loc, soft_blend_loc, "%s.stretch" %end_controller, position=True, rotation=True)
 
         if not distance_start:
             distance_start_loc =cmds.spaceLocator(name="distance_start_%s" %name)[0]
