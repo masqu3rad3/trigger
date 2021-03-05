@@ -298,10 +298,10 @@ def matrixSwitch(parentA, parentB, child, control_attribute, position=True, rota
     #     cmds.connectAttr("%s.worldInverseMatrix[0]" %child_parent, "%s.matrixIn[%i]" %(mult_matrix_a, next_index))
     #     cmds.connectAttr("%s.worldInverseMatrix[0]" %child_parent, "%s.matrixIn[%i]" %(mult_matrix_b, next_index))
 
-    mult_matrix_a, dump = matrixConstraint(parentA, child, mo=False, prefix=parentA, sr="xyz", st="xyz", ss="xyz", source_parent_cutoff=source_parent_cutoff)
+    mult_matrix_a, dump = matrixConstraint(parentA, child, mo=False, prefix=parentA, sr="xyz", st="xyz", ss="xyz", source_parent_cutoff=None)
     attribute.disconnect_attr(dump, attr="inputMatrix")
     cmds.delete(dump)
-    mult_matrix_b, dump = matrixConstraint(parentB, child, mo=False, prefix=parentB, sr="xyz", st="xyz", ss="xyz", source_parent_cutoff=source_parent_cutoff)
+    mult_matrix_b, dump = matrixConstraint(parentB, child, mo=False, prefix=parentB, sr="xyz", st="xyz", ss="xyz", source_parent_cutoff=None)
     attribute.disconnect_attr(dump, attr="inputMatrix")
     cmds.delete(dump)
 
@@ -312,8 +312,16 @@ def matrixSwitch(parentA, parentB, child, control_attribute, position=True, rota
     attribute.drive_attrs(control_attribute, "%s.wtMatrix[0].weightIn" %wt_add_matrix, driver_range=[0,1], driven_range=[0,1], force=False)
     attribute.drive_attrs(control_attribute, "%s.wtMatrix[1].weightIn" %wt_add_matrix, driver_range=[0,1], driven_range=[1,0], force=False)
 
+    if source_parent_cutoff:
+        mult_matrix_cutoff = cmds.createNode("multMatrix", name="multMatrixCutoff_%s_%s" %(parentA, parentB))
+        cmds.connectAttr("%s.matrixSum" %wt_add_matrix, "%s.matrixIn[0]" % mult_matrix_cutoff)
+        cmds.connectAttr("%s.worldInverseMatrix" % source_parent_cutoff, "%s.matrixIn[1]" % mult_matrix_cutoff)
+        out_plug = "%s.matrixSum" %mult_matrix_cutoff
+    else:
+        out_plug = "%s.matrixSum" %wt_add_matrix
+
     decompose_node = cmds.createNode("decomposeMatrix", name="decompose_switch")
-    cmds.connectAttr("%s.matrixSum" %wt_add_matrix, "%s.inputMatrix" %decompose_node)
+    cmds.connectAttr(out_plug, "%s.inputMatrix" %decompose_node)
 
     if position:
         cmds.connectAttr("%s.outputTranslate" %decompose_node, "%s.translate" %child)

@@ -97,6 +97,44 @@ def reverse(a, return_plug=True, name="reverse"):
     else:
         return reverse_node
 
+def clamp(a, min=0, max=1, return_plug=True, name="clamp"):
+    clamp_node = cmds.createNode("clamp", name=name)
+    if compat.is_string(a):
+        cmds.connectAttr(a, "%s.inputR" % clamp_node)
+    else:
+        cmds.setAttr("%s.inputR" % clamp_node, a)
+    if compat.is_string(min):
+        cmds.connectAttr(min, "%s.minR" % clamp_node)
+    else:
+        cmds.setAttr("%s.minR" % clamp_node, min)
+    if compat.is_string(max):
+        cmds.connectAttr(min, "%s.maxR" % clamp_node)
+    else:
+        cmds.setAttr("%s.maxR" % clamp_node, max)
+    if return_plug:
+        return "%s.outputR" % clamp_node
+    else:
+        return clamp_node
+
+def switch(a, b, switch, return_plug=True, name="switch"):
+    switch_node = cmds.createNode("blendTwoAttr", name=name)
+    if compat.is_string(a):
+        cmds.connectAttr(a, "%s.input[0]" % switch_node)
+    else:
+        cmds.setAttr("%s.input[0]" % switch_node, a)
+    if compat.is_string(b):
+        cmds.connectAttr(b, "%s.input[1]" % switch_node)
+    else:
+        cmds.setAttr("%s.input[1]" % switch_node, b)
+    if compat.is_string(switch):
+        cmds.connectAttr(switch, "%s.attributesBlender" % switch_node)
+    else:
+        cmds.setAttr("%s.attributesBlender" % switch_node, switch)
+    if return_plug:
+        return "%s.output" % switch_node
+    else:
+        return switch_node
+
 def if_else(first_term, operation, second_term, if_true, if_false, return_plug=True, name="condition"):
     operation_dict = {
         "==": 0,

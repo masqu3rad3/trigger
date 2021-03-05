@@ -636,10 +636,14 @@ class New_arm(object):
         cmds.connectAttr("%s.outputR" % pin_blender, "%s.tx" % self.j_ik_rp_low, force=True)
         cmds.connectAttr("%s.outputG" % pin_blender, "%s.tx" % self.j_ik_rp_low_end, force=True)
 
-        for jnt, scale_attr in zip([self.j_ik_rp_low, self.j_ik_rp_low_end], ["sUpArm", "sLowArm"]):
-            initial_distance = cmds.getAttr("%s.initialDistance" % jnt)
-            mult_p = op.multiply(initial_distance, "{0}.{1}".format(self.handIkCont.name, scale_attr))
-            cmds.connectAttr(mult_p, "%s.initialDistance" % jnt)
+        # Scale Upper / Lower Parts
+        upper_list = [self.j_ik_rp_low, self.j_ik_sc_low]
+        lower_list = [self.j_ik_rp_low_end, self.j_ik_sc_low_end]
+        for jnt_list, scale_attr in zip([upper_list, lower_list], ["sUpArm", "sLowArm"]):
+            for jnt in jnt_list:
+                initial_distance = cmds.getAttr("%s.initialDistance" % jnt)
+                mult_p = op.multiply(initial_distance, "{0}.{1}".format(self.handIkCont.name, scale_attr))
+                cmds.connectAttr(mult_p, "%s.initialDistance" % jnt)
 
         # for joint, distance_loc, scale_attr in zip([self.j_ik_rp_low, self.j_ik_rp_low_end], [distance_start, distance_end], ["sUpArm", "sLowArm"]):
         #     distance_node = cmds.createNode("distanceBetween", name="%s_polePin_upperDistance" % self.suffix)
@@ -704,7 +708,8 @@ class New_arm(object):
     def ikfkSwitching(self):
 
         connection.matrixSwitch(self.j_ik_orig_up, self.j_fk_up, self.defStart, "%s.FK_IK" % self.switchFkIkCont.name)
-        connection.matrixSwitch(self.j_ik_orig_low_end, self.j_fk_low_end, self.defEnd, "%s.FK_IK" % self.switchFkIkCont.name)
+        connection.matrixSwitch(self.j_ik_orig_low_end, self.j_fk_low_end, self.defEnd, "%s.FK_IK" % self.switchFkIkCont.name, position=True, rotation=False)
+        connection.matrixSwitch(self.handIkCont.name, self.handFkCont.name, self.defEnd, "%s.FK_IK" % self.switchFkIkCont.name, position=False, rotation=True, source_parent_cutoff=self.localOffGrp)
         connection.matrixSwitch(self.midLockBridge_IK, self.midLockBridge_FK, self.defMid, "%s.FK_IK" % self.switchFkIkCont.name)
 
         pass
@@ -828,6 +833,16 @@ class New_arm(object):
             sum1_p = op.add(mult1_p, "%s.initialDistance" %jnt)
             # sum1_p = op.add(mult2_p, "%s.initialDistance" %jnt)
             squash_mult_p = op.multiply(initial_divide_p, "%s.initialDistance" %jnt)
+
+            ## TODO
+            # clamp nodu yarat
+            # clamp.max >> initial distance
+            # squash_mult_p >> clamp.input
+            # switch node
+            # clamp.output >> switch.input[0]
+            # squash_mult_p >> switch.input[1]
+            # "%s.stretch" %end_controller >> switch blender
+
 
             squash_blend_node = cmds.createNode("blendColors", name="squash_blend_%s" %name)
             cmds.connectAttr(squash_mult_p, "%s.color1R" %squash_blend_node)
