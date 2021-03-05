@@ -660,7 +660,7 @@ global proc shelf_RigHelpers () {
         -style "iconOnly"
         -marginWidth 1
         -marginHeight 1
-        -command "from tik_rigHelpers import anchorMaker\nanchorMaker.MainUI().show()"
+        -command "from trigger.ui import space_switcher_ui\nspace_switcher_ui.launch()"
         -sourceType "python"
         -commandRepeatable 1
         -flat 1

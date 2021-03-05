@@ -835,6 +835,8 @@ class New_arm(object):
             squash_mult_p = op.multiply(initial_divide_p, "%s.initialDistance" %jnt)
 
             ## TODO
+            clamp_p = op.clamp(squash_mult_p, max="%s.initialDistance" %jnt)
+            switch_p = op.switch(clamp_p, squash_mult_p, "%s.stretch" %end_controller)
             # clamp nodu yarat
             # clamp.max >> initial distance
             # squash_mult_p >> clamp.input
@@ -845,7 +847,8 @@ class New_arm(object):
 
 
             squash_blend_node = cmds.createNode("blendColors", name="squash_blend_%s" %name)
-            cmds.connectAttr(squash_mult_p, "%s.color1R" %squash_blend_node)
+            # cmds.connectAttr(squash_mult_p, "%s.color1R" %squash_blend_node)
+            cmds.connectAttr(switch_p, "%s.color1R" %squash_blend_node)
             ## Stretch limit
             clamp_node = cmds.createNode("clamp", name="stretchLimit_%s" %name)
             max_distance_p = op.add("%s.stretchLimit" %end_controller, "%s.initialDistance" %jnt)

@@ -108,7 +108,7 @@ def clamp(a, min=0, max=1, return_plug=True, name="clamp"):
     else:
         cmds.setAttr("%s.minR" % clamp_node, min)
     if compat.is_string(max):
-        cmds.connectAttr(min, "%s.maxR" % clamp_node)
+        cmds.connectAttr(max, "%s.maxR" % clamp_node)
     else:
         cmds.setAttr("%s.maxR" % clamp_node, max)
     if return_plug:

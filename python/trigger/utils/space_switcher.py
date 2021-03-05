@@ -69,6 +69,8 @@ def create_space_switch(node, targetList, overrideExisting=False, mode="parent",
         con = cmds.parentConstraint(anchorPoses, switchGrp, sr=("x", "y", "z"), mo=True)
     elif mode == "orient":
         con = cmds.parentConstraint(anchorPoses, switchGrp, st=("x", "y", "z"), mo=True)
+    else:
+        raise Exception("Non-valid mode. The valid modes are 'parent', 'point' and 'orient'")
 
     ## make worldSpace driven key (all zero)
     for i in range(0, len(anchorPoses)):
