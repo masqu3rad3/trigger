@@ -852,6 +852,12 @@ class New_arm(object):
         cmds.connectAttr("{0}.volume".format(self.handIkCont.name), "{0}.input2X".format(vpPowerMid))
         cmds.connectAttr("{0}.volume".format(self.handIkCont.name), "{0}.input2Y".format(vpPowerMid))
 
+        cmds.connectAttr("{0}.initialDistance".format(self.j_ik_sc_low), "{0}.input1X".format(vpInitLength))
+        cmds.connectAttr("{0}.initialDistance".format(self.j_ik_sc_low_end), "{0}.input1Y".format(vpInitLength))
+
+        cmds.connectAttr("{0}.translateX".format(self.j_ik_sc_low), "{0}.input2X".format(vpInitLength))
+        cmds.connectAttr("{0}.translateX".format(self.j_ik_sc_low_end), "{0}.input2Y".format(vpInitLength))
+
         # cmds.connectAttr("{0}.outputX".format(self.initial_length_multip_sc), "{0}.input1X".format(vpInitLength))
         # cmds.connectAttr("{0}.outputY".format(self.initial_length_multip_sc), "{0}.input1Y".format(vpInitLength))
         #

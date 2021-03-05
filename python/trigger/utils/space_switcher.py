@@ -4,7 +4,7 @@ from trigger.core import filelog
 
 log = filelog.Filelog(logname=__name__, filename="trigger_log")
 
-def CHARGERMANSNIPER(node, targetList, overrideExisting=False, mode="parent", defaultVal=1, listException=None):
+def create_space_switch(node, targetList, overrideExisting=False, mode="parent", defaultVal=1, listException=None):
     """
     Creates the space switch attributes between selected node (controller) and targets.
     Args:
