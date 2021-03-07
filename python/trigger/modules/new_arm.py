@@ -107,6 +107,7 @@ class New_arm(object):
         self.startLockOre = None
         self.startLockPos = None
         self.startLockTwist = None
+        self.scaleHook = None
 
         # session variables
         self.controllers = []
@@ -145,6 +146,10 @@ class New_arm(object):
 
         self.contBindGrp = cmds.group(name="%s_bind_grp" % self.suffix, em=True)
         cmds.parent(self.contBindGrp, self.localOffGrp)
+
+        # scale hook gets the scale value from the bind group but not from the localOffset
+        self.scaleHook = cmds.group(name="%s_scaleHook" % self.suffix, em=True)
+        connection.matrixConstraint(self.contBindGrp, self.scaleHook, self.localOffGrp)
 
     def createJoints(self):
         # draw Joints
@@ -283,6 +288,11 @@ class New_arm(object):
         self.deformerJoints += [self.j_def_elbow, self.j_def_collar, self.j_def_hand]
 
         # cmds.connectAttr("{0}.rigVis".format(self.scaleGrp), "{0}.v".format(self.j_fk_up))
+        for jnt in [self.j_collar_end, self.j_ik_orig_up, self.j_ik_orig_low, self.j_ik_orig_low_end,
+                    self.j_ik_sc_up, self.j_ik_sc_low, self.j_ik_sc_low_end,
+                    self.j_ik_rp_up, self.j_ik_rp_low, self.j_ik_rp_low_end, self.j_def_hand]:
+            cmds.connectAttr("%s.s" % self.scaleHook, "%s.s" % jnt)
+
 
     def createControllers(self):
         icon = ic.Icon()
@@ -564,8 +574,9 @@ class New_arm(object):
         # direct connection to the bridge
         cmds.connectAttr("%s.t" % self.defMid, "%s.t" % self.midLockCont.get_offsets()[-1])
         cmds.connectAttr("%s.r" % self.defMid, "%s.r" % self.midLockCont.get_offsets()[-1])
-        cmds.connectAttr("%s.s" % self.defMid, "%s.s" % self.midLockCont.get_offsets()[-1])
+        cmds.connectAttr("%s.s" % self.scaleHook, "%s.s" % self.midLockCont.get_offsets()[-1])
         # connection.matrixConstraint(self.midLockBridge, self.midLockCont.get_offsets()[-1], mo=False, source_parent_cutoff=self.localOffGrp)
+
 
 
     def createIKsetup(self):
@@ -622,8 +633,12 @@ class New_arm(object):
         cmds.connectAttr("%s.worldPosition[0]" % pin_mid, "%s.point1" % lower_pin_distance)
         cmds.connectAttr("%s.worldPosition[0]" % pin_end, "%s.point2" % lower_pin_distance)
 
-        cmds.connectAttr("%s.distance" % upper_pin_distance, "%s.color1R" % pin_blender)
-        cmds.connectAttr("%s.distance" % lower_pin_distance, "%s.color1G" % pin_blender)
+        upper_pin_divided_p = op.divide("%s.distance" % upper_pin_distance, "%s.sx" % self.scaleHook)
+        lower_pin_divided_p = op.divide("%s.distance" % lower_pin_distance, "%s.sx" % self.scaleHook)
+        cmds.connectAttr(upper_pin_divided_p, "%s.color1R" % pin_blender)
+        cmds.connectAttr(lower_pin_divided_p, "%s.color1G" % pin_blender)
+        # cmds.connectAttr("%s.distance" % upper_pin_distance, "%s.color1R" % pin_blender)
+        # cmds.connectAttr("%s.distance" % lower_pin_distance, "%s.color1G" % pin_blender)
 
         # hijack the joints translate X
         R_plug = connection.connections("%s.tx" % self.j_ik_rp_low, exclude_types=["ikEffector"], return_mode="incoming")[0]["plug_in"]
@@ -688,10 +703,15 @@ class New_arm(object):
     def createFKsetup(self):
         # shoulder
 
-        connection.matrixConstraint(self.shoulderCont.name, self.j_def_collar, ss="x", mo=True, source_parent_cutoff=self.localOffGrp)
-        connection.matrixConstraint(self.upArmFkCont.name, self.j_fk_up, ss="x", mo=True, source_parent_cutoff=self.localOffGrp)
-        connection.matrixConstraint(self.lowArmFkCont.name, self.j_fk_low, ss="x", mo=True, source_parent_cutoff=self.localOffGrp)
-        connection.matrixConstraint(self.handFkCont.name, self.j_fk_low_end, ss="x", mo=True, source_parent_cutoff=self.localOffGrp)
+        # connection.matrixConstraint(self.shoulderCont.name, self.j_def_collar, ss="x", mo=True, source_parent_cutoff=self.localOffGrp)
+        # connection.matrixConstraint(self.upArmFkCont.name, self.j_fk_up, ss="x", mo=True, source_parent_cutoff=self.localOffGrp)
+        # connection.matrixConstraint(self.lowArmFkCont.name, self.j_fk_low, ss="x", mo=True, source_parent_cutoff=self.localOffGrp)
+        # connection.matrixConstraint(self.handFkCont.name, self.j_fk_low_end, ss="x", mo=True, source_parent_cutoff=self.localOffGrp)
+
+        connection.matrixConstraint(self.shoulderCont.name, self.j_def_collar, mo=True, source_parent_cutoff=self.localOffGrp)
+        connection.matrixConstraint(self.upArmFkCont.name, self.j_fk_up, mo=True, source_parent_cutoff=self.localOffGrp)
+        connection.matrixConstraint(self.lowArmFkCont.name, self.j_fk_low, mo=True, source_parent_cutoff=self.localOffGrp)
+        connection.matrixConstraint(self.handFkCont.name, self.j_fk_low_end, mo=True, source_parent_cutoff=self.localOffGrp)
 
         cmds.parent(self.handFkCont.get_offsets()[-1], self.lowArmFkCont.name)
         cmds.parent(self.lowArmFkCont.get_offsets()[-1], self.upArmFkCont.name)
@@ -731,6 +751,7 @@ class New_arm(object):
         # cmds.connectAttr("{0}.scale".format(self.cont_mid_lock), "{0}.scale".format(self.j_def_elbow))
 
         # cmds.scaleConstraint(self.scaleGrp, ribbon_upper_arm.scaleGrp)
+        cmds.connectAttr("%s.s" % self.scaleHook, "%s.s" % ribbon_upper_arm.scaleGrp)
 
         ribbon_start_ori_con = \
         cmds.parentConstraint(self.j_ik_orig_up, self.j_fk_up, ribbon_upper_arm.startAim, mo=True,
@@ -784,7 +805,8 @@ class New_arm(object):
         # connect the elbow scaling
         cmds.connectAttr("{0}.scale".format(self.switchFkIkCont.name), "{0}.scale".format(ribbon_lower_arm.startConnection))
 
-        cmds.scaleConstraint(self.scaleGrp, ribbon_lower_arm.scaleGrp)
+        # cmds.scaleConstraint(self.scaleGrp, ribbon_lower_arm.scaleGrp)
+        cmds.connectAttr("%s.s" % self.scaleHook, "%s.s" % ribbon_lower_arm.scaleGrp)
 
         # AUTO AND MANUAL TWIST
 
@@ -1048,11 +1070,10 @@ class New_arm(object):
 
 
 class Guides(object):
-    def __init__(self, side="L", suffix="LIMBNAME", segments=None, tMatrix=None, upVector=(0, 1, 0), mirrorVector=(1, 0, 0), lookVector=(0,0,1), *args, **kwargs):
+    def __init__(self, side="L", suffix="arm", segments=None, tMatrix=None, upVector=(0, 1, 0), mirrorVector=(1, 0, 0),
+                 lookVector=(0, 0, 1), *args, **kwargs):
         super(Guides, self).__init__()
-        # fool check
 
-        #-------Mandatory------[Start]
         self.side = side
         self.sideMultiplier = -1 if side == "R" else 1
         self.suffix = suffix
@@ -1064,40 +1085,59 @@ class Guides(object):
 
         self.offsetVector = None
         self.guideJoints = []
-        #-------Mandatory------[End]
 
     def draw_joints(self):
+        self.guideJoints = []
         if self.side == "C":
-            # Guide joint positions for limbs with no side orientation
-            pass
+            collarVec = om.MVector(0, 0, 2) * self.tMatrix
+            shoulderVec = om.MVector(0, 0, 5) * self.tMatrix
+            elbowVec = om.MVector(0, -1, 9) * self.tMatrix
+            handVec = om.MVector(0, 0, 14) * self.tMatrix
+        # Initial Joint positions for left arm
         else:
-            # Guide joint positions for limbs with sides
-            pass
+            collarVec = om.MVector(2 * self.sideMultiplier, 0, 0) * self.tMatrix
+            shoulderVec = om.MVector(5 * self.sideMultiplier, 0, 0) * self.tMatrix
+            elbowVec = om.MVector(9 * self.sideMultiplier, 0, -1) * self.tMatrix
+            handVec = om.MVector(14 * self.sideMultiplier, 0, 0) * self.tMatrix
 
-        # Define the offset vector
+        self.offsetVector = -((collarVec - shoulderVec).normalize())
 
-        # Draw the joints
+        cmds.select(d=True)
+        collar = cmds.joint(p=collarVec, name=("jInit_collar_%s" % self.suffix))
+        cmds.setAttr("{0}.radius".format(collar), 2)
+        shoulder = cmds.joint(p=shoulderVec, name=("jInit_shoulder_%s" % self.suffix))
+        elbow = cmds.joint(p=elbowVec, name=("jInit_elbow_%s" % self.suffix))
+        hand = cmds.joint(p=handVec, name=("jInit_hand_%s" % self.suffix))
 
-        # Update the guideJoints list
+        self.guideJoints = [collar, shoulder, elbow, hand]
 
-        # set orientation of joints
+        # Orientation
+        functions.orientJoints(self.guideJoints, worldUpAxis=self.lookVector, upAxis=(0, 1, 0),
+                               reverseAim=self.sideMultiplier, reverseUp=self.sideMultiplier)
 
     def define_attributes(self):
-        # set joint side and type attributes
+        functions.set_joint_type(self.guideJoints[0], "Collar")
+        functions.set_joint_type(self.guideJoints[1], "Shoulder")
+        functions.set_joint_type(self.guideJoints[2], "Elbow")
+        functions.set_joint_type(self.guideJoints[3], "Hand")
         _ = [functions.set_joint_side(jnt, self.side) for jnt in self.guideJoints]
 
-        # ----------Mandatory---------[Start]
         root_jnt = self.guideJoints[0]
-        attribute.create_global_joint_attrs(root_jnt, moduleName="%s_MODULENAME" % self.side, upAxis=self.upVector, mirrorAxis=self.mirrorVector, lookAxis=self.lookVector)
-        # ----------Mandatory---------[End]
+        attribute.create_global_joint_attrs(root_jnt, moduleName="%s_Arm" % self.side, upAxis=self.upVector,
+                                            mirrorAxis=self.mirrorVector, lookAxis=self.lookVector)
 
         for attr_dict in LIMB_DATA["properties"]:
             attribute.create_attribute(root_jnt, attr_dict)
 
     def createGuides(self):
+        """Main Function to create Guides"""
         self.draw_joints()
         self.define_attributes()
 
     def convertJoints(self, joints_list):
+        if len(joints_list) != 4:
+            log.warning("Define or select exactly 5 joints for Arm Guide conversion. Skipping")
+            return
         self.guideJoints = joints_list
+        _ = [functions.set_joint_side(jnt, self.side) for jnt in self.guideJoints]
         self.define_attributes()
