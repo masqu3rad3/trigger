@@ -185,6 +185,18 @@ def multiply_matrix(matrices_list, return_plug=True, name="multMatrix"):
     else:
         return mult_matrix_node
 
+def decompose_matrix(matrix, return_plug=True, name="decomposeMatrix"):
+    decompose_matrix_node = cmds.createNode("decomposeMatrix", name=name)
+    if compat.is_string(matrix):
+        cmds.connectAttr(matrix, "%s.inputMatrix" % decompose_matrix_node)
+    else:
+        cmds.setAttr("%s.inputMatrix" % decompose_matrix_node, matrix, type="matrix")
+    if return_plug:
+        return ["%s.outputTranslate" % decompose_matrix_node, "%s.outputRotate" % decompose_matrix_node,
+                "%s.outputScale" % decompose_matrix_node]
+    else:
+        return decompose_matrix_node
+
 def average_matrix(matrices_list, return_plug=True, name="averageMatrix"):
     average_matrix_node = cmds.createNode("wtAddMatrix", name=name)
     average_value = 1.0 / len(matrices_list)
