@@ -473,14 +473,18 @@ class Kinematics(object):
                 # scaler = "master_cont" if cmds.objExists("master_cont") else "pref_cont"
                 for sCon in limb.scaleConstraints:
                     # if this is the root limb, use its values to scale the entire rig
+                    print("DEBUG1")
                     if x == limbCreationList[0]:
+                        print("DEBUG2")
                         self.scaleRoot = "pref_cont" if not limb.controllers else limb.controllers[0]
                         # cmds.scaleConstraint(self.scaleRoot, sCon)
 
                         # cmds.connectAttr("%s.s" % self.scaleRoot, "%s.s" %sCon, force=True)
                     else:
+                        print("DEBUG3")
                         cmds.connectAttr("%s.s" % self.scaleRoot, "%s.s" %sCon, force=True)
-
+                # import pdb
+                # pdb.set_trace()
                 cmds.connectAttr("%s.s" % self.scaleRoot, "%s.s" %limb.scaleGrp, force=True)
                 for s_attr in "xyz":
                     cmds.setAttr("{0}.s{1}".format(self.scaleRoot, s_attr), e=True, k=True, l=False)

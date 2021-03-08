@@ -186,20 +186,38 @@ class New_arm(object):
         # Follow IK Chain
         cmds.select(d=True)
         self.j_ik_orig_up = cmds.joint(name="jIK_orig_Up_%s" % self.suffix, p=self.shoulder_pos, radius=0.5)
+        functions.alignTo(self.j_ik_orig_up, self.shoulder_ref, position=True, rotation=True)
+        cmds.makeIdentity(self.j_ik_orig_up, a=True)
         self.j_ik_orig_low = cmds.joint(name="jIK_orig_Low_%s" % self.suffix, p=self.elbow_pos, radius=0.5)
+        functions.alignTo(self.j_ik_orig_low, self.elbow_ref, position=True, rotation=True)
+        cmds.makeIdentity(self.j_ik_orig_low, a=True)
         self.j_ik_orig_low_end = cmds.joint(name="jIK_orig_LowEnd_%s" % self.suffix, p=self.hand_pos, radius=0.5)
+        functions.alignTo(self.j_ik_orig_low_end, self.hand_ref, position=True, rotation=True)
+        cmds.makeIdentity(self.j_ik_orig_low_end, a=True)
 
         # Single Chain IK
         cmds.select(d=True)
         self.j_ik_sc_up = cmds.joint(name="jIK_SC_Up_%s" % self.suffix, p=self.shoulder_pos, radius=1.0)
+        functions.alignTo(self.j_ik_sc_up, self.shoulder_ref, position=True, rotation=True)
+        cmds.makeIdentity(self.j_ik_sc_up, a=True)
         self.j_ik_sc_low = cmds.joint(name="jIK_SC_Low_%s" % self.suffix, p=self.elbow_pos, radius=1.0)
+        functions.alignTo(self.j_ik_sc_low, self.elbow_ref, position=True, rotation=True)
+        cmds.makeIdentity(self.j_ik_sc_low, a=True)
         self.j_ik_sc_low_end = cmds.joint(name="jIK_SC_LowEnd_%s" % self.suffix, p=self.hand_pos, radius=1)
+        functions.alignTo(self.j_ik_sc_low_end, self.hand_ref, position=True, rotation=True)
+        cmds.makeIdentity(self.j_ik_sc_low_end, a=True)
 
         # Rotate Plane IK
         cmds.select(d=True)
         self.j_ik_rp_up = cmds.joint(name="jIK_RP_Up_%s" % self.suffix, p=self.shoulder_pos, radius=1.5)
+        functions.alignTo(self.j_ik_rp_up, self.shoulder_ref, position=True, rotation=True)
+        cmds.makeIdentity(self.j_ik_rp_up, a=True)
         self.j_ik_rp_low = cmds.joint(name="jIK_RP_Low_%s" % self.suffix, p=self.elbow_pos, radius=1.5)
+        functions.alignTo(self.j_ik_rp_low, self.elbow_ref, position=True, rotation=True)
+        cmds.makeIdentity(self.j_ik_rp_low, a=True)
         self.j_ik_rp_low_end = cmds.joint(name="jIK_RP_LowEnd_%s" % self.suffix, p=self.hand_pos, radius=1.5)
+        functions.alignTo(self.j_ik_rp_low_end, self.hand_ref, position=True, rotation=True)
+        cmds.makeIdentity(self.j_ik_rp_low_end, a=True)
 
         cmds.select(d=True)
 
@@ -583,7 +601,7 @@ class New_arm(object):
 
         # create IK chains
         sc_ik_handle = cmds.ikHandle(sj=self.j_ik_sc_up, ee=self.j_ik_sc_low_end, name="ikHandle_SC_%s" % self.suffix, sol="ikSCsolver")[0]
-        rp_ik_handle = cmds.ikHandle(sj=self.j_ik_rp_up, ee=self.j_ik_rp_low_end, name="ikHandle_%s" % self.suffix, sol="ikRPsolver")[0]
+        rp_ik_handle = cmds.ikHandle(sj=self.j_ik_rp_up, ee=self.j_ik_rp_low_end, name="ikHandle_RP_%s" % self.suffix, sol="ikRPsolver")[0]
         cmds.poleVectorConstraint(self.poleBridge, rp_ik_handle)
         connection.matrixConstraint(self.poleCont.name, self.poleBridge, mo=False,
                                     source_parent_cutoff=self.localOffGrp)
@@ -611,13 +629,15 @@ class New_arm(object):
 
         connection.matrixConstraint(self.handIkCont.name, self.endLock, source_parent_cutoff=self.localOffGrp)
 
+        import pdb
+        pdb.set_trace()
         sc_stretch_locs = self.make_stretchy_ik([self.j_ik_sc_up, self.j_ik_sc_low, self.j_ik_sc_low_end], sc_ik_handle, self.shoulderCont.name, self.handIkCont.name,
                                              source_parent_cutoff=self.localOffGrp, name="sc_%s" %self.suffix, distance_start=distance_start, distance_end=distance_end)
         rp_stretch_locs = self.make_stretchy_ik([self.j_ik_rp_up, self.j_ik_rp_low, self.j_ik_rp_low_end], rp_ik_handle, self.shoulderCont.name, self.handIkCont.name,
                                              source_parent_cutoff=self.localOffGrp, name="rp_%s" %self.suffix, distance_start=distance_start, distance_end=distance_end)
         connection.matrixConstraint(self.handIkCont.name, self.j_ik_sc_low_end, st="xyz", ss="xyz", mo=False,
                                     source_parent_cutoff=self.localOffGrp)
-
+        # pdb.set_trace()
         # # pole vector pinning
         pin_blender = cmds.createNode("blendColors", name="%s_polePin_Blender" %self.suffix)
         cmds.connectAttr("%s.polevectorPin" % self.handIkCont.name, "%s.blender" % pin_blender)
@@ -948,12 +968,14 @@ class New_arm(object):
         self.createControllers()
         self.createRoots()
         self.createIKsetup()
-        self.createFKsetup()
-
-        self.ikfkSwitching()
-        self.createRibbons()
-        # self.createTwistSplines()
-        # self.createAngleExtractors()
+        # self.createFKsetup()
+        #
+        # self.ikfkSwitching()
+        # self.createRibbons()
+        #
+        # # self.createTwistSplines()
+        # # self.createAngleExtractors()
+        #
         # self.roundUp()
 
     @staticmethod
