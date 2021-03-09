@@ -767,7 +767,7 @@ class New_arm(object):
         connection.matrixSwitch(self.j_ik_orig_low_end, self.j_fk_low_end, self.defEnd, "%s.FK_IK" % self.switchFkIkCont.name, position=True, rotation=False)
         connection.matrixSwitch(self.handIkCont.name, self.handFkCont.name, self.defEnd, "%s.FK_IK" % self.switchFkIkCont.name, position=False, rotation=True, source_parent_cutoff=self.localOffGrp)
         connection.matrixSwitch(self.midLockBridge_IK, self.midLockBridge_FK, self.defMid, "%s.FK_IK" % self.switchFkIkCont.name)
-
+        connection.matrixSwitch(self.j_ik_orig_up, self.j_fk_up, self.defStart, "%s.FK_IK" % self.switchFkIkCont.name)
         pass
 
     def createRibbons(self):
