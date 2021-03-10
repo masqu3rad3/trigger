@@ -751,10 +751,10 @@ class Arm(object):
         cmds.parent(self.handFkCont.get_offsets()[-1], self.lowArmFkCont.name)
         cmds.parent(self.lowArmFkCont.get_offsets()[-1], self.upArmFkCont.name)
         cmds.parent(self.upArmFkCont.get_offsets()[-1], self.shoulderCont.name)
-        attribute.disconnect_attr(node= self.j_def_collar, attr="inverseScale")
-        attribute.disconnect_attr(node= self.j_fk_up, attr="inverseScale")
-        attribute.disconnect_attr(node= self.j_fk_low, attr="inverseScale")
-        attribute.disconnect_attr(node= self.j_fk_low_end, attr="inverseScale")
+        attribute.disconnect_attr(node= self.j_def_collar, attr="inverseScale", suppress_warnings=True)
+        attribute.disconnect_attr(node= self.j_fk_up, attr="inverseScale", suppress_warnings=True)
+        attribute.disconnect_attr(node= self.j_fk_low, attr="inverseScale", suppress_warnings=True)
+        attribute.disconnect_attr(node= self.j_fk_low_end, attr="inverseScale", suppress_warnings=True)
 
         # if self.isLocal:
         #     connection.matrixConstraint(self.limbPlug, self.contBindGrp)
