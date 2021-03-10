@@ -95,8 +95,7 @@ class Arm(object):
         self.upArmFkCont = None
         self.lowArmFkCont = None
         self.handFkCont = None
-        self.switchIkFkCont = None
-        self.switchIkFkContPos = None
+        self.switchFkIkCont = None
         self.midLockCont = None
         self.defMid = None
         self.defStart = None
@@ -324,6 +323,7 @@ class Arm(object):
                                                name="%s_Shoulder_cont" % self.suffix,
                                                scale=shouldercont_scale,
                                                normal=(0, 0, -self.sideMult))
+        self.shoulderCont.set_side(self.side, tier=0)
 
         self.controllers.append(self.shoulderCont.name)
         functions.alignToAlter(self.shoulderCont.name, self.j_def_collar, mode=2)
@@ -340,6 +340,7 @@ class Arm(object):
                                                name="%s_IK_hand_cont" % self.suffix,
                                                scale=ik_cont_scale,
                                                normal=(self.sideMult, 0, 0))
+        self.handIkCont.set_side(self.side, tier=0)
 
         self.controllers.append(self.handIkCont.name)
         functions.alignToAlter(self.handIkCont.name, self.j_fk_low_end, mode=2)
@@ -387,6 +388,7 @@ class Arm(object):
                                                name="%s_Pole_cont" % self.suffix,
                                                scale=polecont_scale,
                                                normal=(self.sideMult, 0, 0))
+        self.poleCont.set_side(self.side, tier=0)
         self.controllers.append(self.poleCont.name)
         offset_mag_pole = ((self.init_upper_arm_dist + self.init_lower_arm_dist) / 4)
         offset_vector_pole = api.getBetweenVector(self.j_def_elbow, [self.j_collar_end, self.j_def_hand])
@@ -412,6 +414,7 @@ class Arm(object):
         self.upArmFkCont = objects.Controller(shape="Cube",
                                                name="%s_FK_UpArm_cont" % self.suffix,
                                                scale=fk_up_arm_scale)
+        self.upArmFkCont.set_side(self.side, tier=0)
 
         self.controllers.append(self.upArmFkCont.name)
 
@@ -431,6 +434,7 @@ class Arm(object):
         self.lowArmFkCont = objects.Controller(shape="Cube",
                                                name="%s_FK_LowArm_cont" % self.suffix,
                                                scale=fk_low_arm_scale)
+        self.lowArmFkCont.set_side(self.side, tier=0)
         self.controllers.append(self.lowArmFkCont.name)
 
         # move the pivot to the bottom
@@ -448,6 +452,7 @@ class Arm(object):
         fk_cont_scale = (self.init_lower_arm_dist / 5, self.init_lower_arm_dist / 5, self.init_lower_arm_dist / 5)
         # self.handFkCont, dmp = icon.createIcon("Cube", iconName="%s_FK_Hand_cont" % self.suffix, scale=fk_cont_scale)
         self.handFkCont = objects.Controller(shape="Cube", name="%s_FK_Hand_cont" % self.suffix, scale=fk_cont_scale)
+        self.handFkCont.set_side(self.side, tier=0)
         self.controllers.append(self.handFkCont.name)
         functions.alignToAlter(self.handFkCont.name, self.j_def_hand, mode=2)
 
@@ -458,6 +463,7 @@ class Arm(object):
         # FK-IK SWITCH Controller
         icon_scale = (self.init_upper_arm_dist / 4, self.init_upper_arm_dist / 4, self.init_upper_arm_dist / 4)
         self.switchFkIkCont = objects.Controller(shape="FkikSwitch", name="%s_FK_IK_cont" % self.suffix, scale=icon_scale)
+        self.switchFkIkCont.set_side(self.side, tier=0)
         self.controllers.append(self.switchFkIkCont.name)
         functions.alignAndAim(self.switchFkIkCont.name, targetList=[self.j_def_hand], aimTargetList=[self.j_def_elbow],
                               upVector=self.up_axis, rotateOff=(0, 180, 0))
@@ -508,6 +514,7 @@ class Arm(object):
         #                                         normal=(self.sideMult, 0, 0))
         self.midLockCont = objects.Controller(shape="Star", name="%s_mid_cont" % self.suffix, scale=midcont_scale,
                                               normal=(self.sideMult, 0, 0))
+        self.midLockCont.set_side(self.side, tier=1)
 
         self.controllers.append(self.midLockCont.name)
 
@@ -764,6 +771,13 @@ class Arm(object):
         connection.matrixConstraint(self.defEnd, self.j_def_hand, ss="xyz", mo=False)
         # connection.matrixSwitch(self.j_ik_orig_low_end, self.j_fk_low_end, self.j_def_hand, "%s.FK_IK" % self.switchFkIkCont.name)
 
+        # for ik_co in self.ikControllers:
+        #     cmds.connectAttr("%s.fk_ik" %(self.switchFkIkCont.name), "%s.v" %ik_co)
+        # if self.ikSolver != 0:
+        #     cmds.connectAttr("%s.fk_ik" %self.switchFkIkCont.name, "%s.v" %self.poleCont.name)
+        # for fk_co in self.fkControllers:
+        #     cmds.connectAttr("%s.fk_ik_reverse" %(self.switchFkIkCont.name), "%s.v" %fk_co)
+
     def createRibbons(self):
         # UPPER ARM RIBBON
 
@@ -890,7 +904,7 @@ class Arm(object):
                          f=True)
         cmds.connectAttr("{0}.output".format(vpExtraInput), "{0}.scale".format(ribbon_upper_arm.endConnection), f=True)
         cmds.connectAttr("{0}.output".format(vpExtraInput), "{0}.scale".format(self.j_def_elbow), f=True)
-        cmds.connectAttr("{0}.scale".format(self.switchFkIkCont.name), "{0}.input1".format(vpExtraInput))
+        cmds.connectAttr("{0}.scale".format(self.midLockCont.name), "{0}.input1".format(vpExtraInput))
 
         cmds.connectAttr("{0}.output1D".format(vpMidAverage), "{0}.input2X".format(vpExtraInput))
         cmds.connectAttr("{0}.output1D".format(vpMidAverage), "{0}.input2Y".format(vpExtraInput))
@@ -945,7 +959,7 @@ class Arm(object):
         cmds.connectAttr("{0}.tweakControls".format(self.switchFkIkCont.name), "{0}.v".format(self.midLockCont.name))
         tweakConts = ribbon_upper_arm.middleCont + ribbon_lower_arm.middleCont
 
-        # attribute.drive_attrs("%s.tweakControls" % self.switchFkIkCont.name, ["%s.v" % x for x in tweakConts])
+        attribute.drive_attrs("%s.tweakControls" % self.switchFkIkCont.name, ["%s.v" % x for x in tweakConts])
 
         # cmds.connectAttr("{0}.contVis".format(self.scaleGrp), "{0}.v".format(ribbon_upper_arm.scaleGrp))
         # cmds.connectAttr("{0}.contVis".format(self.scaleGrp), "{0}.v".format(ribbon_lower_arm.scaleGrp))
@@ -953,11 +967,14 @@ class Arm(object):
         self.deformerJoints += ribbon_lower_arm.deformerJoints + ribbon_upper_arm.deformerJoints
 
         # attribute.drive_attrs("%s.jointVis" % self.scaleGrp, ["%s.v" % x for x in self.deformerJoints])
-        # attribute.drive_attrs("%s.rigVis" % self.scaleGrp, ["%s.v" % x for x in ribbon_lower_arm.toHide])
-        # attribute.drive_attrs("%s.rigVis" % self.scaleGrp, ["%s.v" % x for x in ribbon_upper_arm.toHide])
+        attribute.drive_attrs("%s.rigVis" % self.scaleGrp, ["%s.v" % x for x in ribbon_lower_arm.toHide])
+        attribute.drive_attrs("%s.rigVis" % self.scaleGrp, ["%s.v" % x for x in ribbon_upper_arm.toHide])
 
         functions.colorize(ribbon_upper_arm.middleCont, self.colorCodes[1])
         functions.colorize(ribbon_lower_arm.middleCont, self.colorCodes[1])
+
+        cmds.parent(ribbon_upper_arm.nonScaleGrp, self.defJointsGrp)
+        cmds.parent(ribbon_lower_arm.nonScaleGrp, self.defJointsGrp)
 
 
     def createTwistSplines(self):
@@ -1025,7 +1042,14 @@ class Arm(object):
         cmds.setAttr("%s.rigVis" % self.scaleGrp, 0)
 
         self.scaleConstraints.append(self.scaleGrp)
+
+        for jnt in self.deformerJoints:
+            cmds.connectAttr("%s.jointVis" % self.scaleGrp, "%s.v" % jnt)
+        cmds.connectAttr("%s.rigVis" % self.scaleGrp, "%s.v" % functions.getShapes(self.defMid)[0])
+        cmds.connectAttr("%s.rigVis" % self.scaleGrp, "%s.v" % self.nonScaleGrp)
+        cmds.connectAttr("%s.rigVis" % self.scaleGrp, "%s.v" % self.rigJointsGrp)
         # lock and hide
+        # _ = []
 
     def createLimb(self):
         self.createGrp()

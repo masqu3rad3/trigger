@@ -227,7 +227,7 @@ def validateGroup(group_name):
     else:
         return cmds.group(name=group_name, em=True)
 
-def colorize (node_list, index, customColor=None, shape=True):
+def colorize (node_list, index=None, customColor=None, shape=True):
     """
     Changes the wire color of the node to the index
     Args:
@@ -237,6 +237,11 @@ def colorize (node_list, index, customColor=None, shape=True):
     Returns:None
 
     """
+    if not index or not customColor:
+        log.error("index or customColor arguments must defined")
+        raise
+    if customColor: # very ugly backward compatibility workaround
+        index = 1
     if not isinstance(node_list, list):
         node_list=[node_list]
     for node in node_list:
