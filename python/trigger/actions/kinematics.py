@@ -417,6 +417,7 @@ class Kinematics(object):
             flags = "build_data={0}".format(x[0])
             construct_command = "{0}({1})".format(module, flags)
 
+            print("DEBUG:", construct_command)
             limb = eval(construct_command)
             limb.colorCodes = colorCodes
             limb.createLimb()

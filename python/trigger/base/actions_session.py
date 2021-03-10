@@ -319,6 +319,8 @@ class ActionsSession(dict):
                 if self.progressListwidget:
                     self.progressListwidget.setCurrentRow(-1)
                     self.progressListwidget.activateItem(row)
+
+                    self.progressListwidget.scrollToItem(self.progressListwidget.item(row), QtWidgets.QAbstractItemView.EnsureVisible)
                     QtWidgets.QApplication.processEvents()
                 try:
                     self._action(action)
