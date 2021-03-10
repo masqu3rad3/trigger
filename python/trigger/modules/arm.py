@@ -717,7 +717,12 @@ class Arm(object):
                 cmds.connectAttr(mult_p, "%s.initialDistance" % jnt)
 
         connection.matrixSwitch(self.j_ik_rp_up, self.j_ik_sc_up, self.j_ik_orig_up, "%s.Pole_Vector" % self.handIkCont.name)
-        connection.matrixSwitch(self.j_ik_rp_low, self.j_ik_sc_low, self.j_ik_orig_low, "%s.Pole_Vector" % self.handIkCont.name)
+        # another locator to be the bridge for correct rotations (joint orientation issue - matrix switch is not supporting it)
+        elbow_switcher = cmds.spaceLocator(name="elbowSwithcer_IK_%s" % self.suffix)[0]
+        cmds.parent(elbow_switcher, self.nonScaleGrp)
+        connection.matrixSwitch(self.j_ik_rp_low, self.j_ik_sc_low, elbow_switcher, "%s.Pole_Vector" % self.handIkCont.name)
+        connection.matrixConstraint(elbow_switcher, self.j_ik_orig_low)
+        # connection.matrixSwitch(self.j_ik_rp_low, self.j_ik_sc_low, self.j_ik_orig_low, "%s.Pole_Vector" % self.handIkCont.name)
         connection.matrixSwitch(self.j_ik_rp_low_end, self.j_ik_sc_low_end, self.j_ik_orig_low_end, "%s.Pole_Vector" % self.handIkCont.name)
 
 
