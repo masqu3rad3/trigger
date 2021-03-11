@@ -19,7 +19,6 @@ from trigger.base import actions_session
 
 from trigger.library import naming
 
-
 from trigger.core import filelog
 
 log = filelog.Filelog(logname=__name__, filename="trigger_log")

@@ -6,7 +6,7 @@ from maya import cmds
 from trigger.core import io
 from trigger.core import filelog
 from trigger import actions
-from trigger.core.decorators import tracktime
+from trigger.core.decorators import tracktime, windowsOff
 from trigger.core import compatibility as compat
 from trigger.ui.Qt import QtWidgets
 
@@ -304,6 +304,7 @@ class ActionsSession(dict):
         a_hand.action()
         log.info("success...")
 
+    @windowsOff
     @tracktime
     def run_all_actions(self, reset_scene=True, until=None):
         """runs all actions in the actions list"""
@@ -333,6 +334,7 @@ class ActionsSession(dict):
                     raise
         log.header("Total BUILDING TIME:")
 
+    # @windowsOff
     def run_action(self, action_name):
         log.info("Running action => %s" % action_name)
         action = self.get_action(action_name)

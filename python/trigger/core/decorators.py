@@ -1,8 +1,8 @@
-import sys
+# import sys
 from functools import wraps
 from maya import cmds
 from maya import mel
-import logging
+# import logging
 import traceback
 
 
@@ -98,3 +98,34 @@ def tracktime(func):
             end = time.time()
             log.info("Elapsed: %s" %(end-start))
     return _tracktime
+
+def windowsOff(func):
+    """
+    Decorator which turns off the Hypershade, Graph Editor, Node Editor and Blendshape Editor
+    """
+    @wraps(func)
+    def _windows_off(*args, **kwargs):
+        window_dict = {
+            "nodeEditorPanel1Window": cmds.NodeEditorWindow,
+            "hyperShadePanel1Window": cmds.HypershadeWindow,
+            "blendShapePanel1Window": cmds.BlendShapeEditor,
+            "graphEditor1Window": cmds.GraphEditor
+        }
+        open_windows = cmds.lsUI(type="window")
+        # close the windows
+        for key, value in window_dict.items():
+            if key in open_windows:
+                cmds.deleteUI(key)
+        try:
+            return func(*args, **kwargs)
+        except Exception as e:
+            for key, value in window_dict.items():
+                if key in open_windows:
+                    value()
+            raise
+        finally:
+            for key, value in window_dict.items():
+                if key in open_windows:
+                    value()
+
+    return _windows_off
