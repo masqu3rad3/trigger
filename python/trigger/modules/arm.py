@@ -384,7 +384,7 @@ class Arm(object):
         )
         self.poleBridge = cmds.spaceLocator(name="poleVectorBridge_%s" % self.suffix)[0]
         cmds.parent(self.poleBridge, self.nonScaleGrp)
-        self.poleCont = objects.Controller(shape="Plus",
+        self.poleCont = objects.Controller(shape="Sphere",
                                                name="%s_Pole_cont" % self.suffix,
                                                scale=polecont_scale,
                                                normal=(self.sideMult, 0, 0))

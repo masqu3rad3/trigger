@@ -49,11 +49,13 @@ class Filelog(object):
         self.logger.warning(stamped_msg)
         self._end_logging()
 
-    def error(self, msg):
+    def error(self, msg, proceed=True):
         stamped_msg = "%sERROR   : %s" % (self._get_now(), msg)
         self._start_logging()
         self.logger.error(stamped_msg)
         self._end_logging()
+        if not proceed:
+            raise Exception(msg)
 
     def title(self, msg):
         self._start_logging()

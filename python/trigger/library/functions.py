@@ -237,9 +237,8 @@ def colorize (node_list, index=None, customColor=None, shape=True):
     Returns:None
 
     """
-    if not index or not customColor:
-        log.error("index or customColor arguments must defined")
-        raise
+    if not index and not customColor:
+        log.error("index or customColor arguments must defined", proceed=False)
     if customColor: # very ugly backward compatibility workaround
         index = 1
     if not isinstance(node_list, list):
@@ -252,11 +251,9 @@ def colorize (node_list, index=None, customColor=None, shape=True):
             if index.upper() in sidesDict.keys():
                 index = sidesDict[index.upper()]
             else:
-                log.error("Colorize error... Unknown index command")
-                return
+                log.error("Colorize error... Unknown index command", proceed=False)
         else:
-            log.error("Colorize error... Index flag must be integer or string('L', 'R', 'C')")
-            return
+            log.error("Colorize error... Index flag must be integer or string('L', 'R', 'C')", proceed=False)
         if shape:
             shapes=cmds.listRelatives(node, s=True)
             node_list = [] if shapes == None else shapes
