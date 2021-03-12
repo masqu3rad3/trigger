@@ -221,7 +221,7 @@ class Guides(object):
     def define_attributes(self):
         # set joint side and type attributes
         functions.set_joint_type(self.guideJoints[0], "Surface")
-        cmds.setAttr("{0}.radius".format(self.guideJoints[0]), 2)
+        # cmds.setAttr("{0}.radius".format(self.guideJoints[0]), 2)
         _ = [functions.set_joint_side(jnt, self.side) for jnt in self.guideJoints]
 
         # ----------Mandatory---------[Start]

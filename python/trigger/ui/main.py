@@ -26,6 +26,50 @@ db = database.Database()
 
 WINDOW_NAME = "Trigger v2.0.1"
 
+qss = """
+QPushButton
+{
+    color: #b1b1b1;
+    background-color: #404040;
+    border-width: 1px;
+    border-color: #1e1e1e;
+    border-style: solid;
+    padding: 5px;
+    font-size: 12px;
+}
+
+QPushButton:hover
+{
+    background-color: #505050;
+    border: 1px solid #ff8d1c;
+}
+
+QPushButton:disabled {
+  background-color: #303030;
+  border: 1px solid #404040;
+  color: #505050;
+  padding: 3px;
+}
+
+QPushButton:pressed {
+  background-color: #ff8d1c;
+  border: 1px solid #ff8d1c;
+}
+
+QPushButton[override = "0"]{
+    border-color: #1e1e1e;
+}
+
+QPushButton[override = "1"]{
+    border-color: green;
+}
+
+QPushButton[menuButton=true] {
+  min-width: 120;
+  min-height: 45;
+}
+"""
+
 def _createCallbacks(function, parent=None, event=None):
     callbackIDList = []
     if parent:
@@ -76,6 +120,9 @@ class MainUI(QtWidgets.QMainWindow):
         super(MainUI, self).__init__(parent=parent)
 
         log.clear()
+
+        self.ctrl_modifier = False
+        self.guide_buttons = []
         # create guide and rig objects
         self.actions_handler = actions_session.ActionsSession()
         self.guides_handler = session.Session()
@@ -92,6 +139,7 @@ class MainUI(QtWidgets.QMainWindow):
         self.resize(1000, 600)
         self.centralwidget = QtWidgets.QWidget(self)
         self.centralwidget.setObjectName("centralwidget")
+        self.centralwidget.setStyleSheet(qss)
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.setCentralWidget(self.centralwidget)
 
@@ -120,6 +168,24 @@ class MainUI(QtWidgets.QMainWindow):
         self.callbackIDList = _createCallbacks(self.force_update, parent=None, event="SelectionChanged")
 
         log.info("Interface Loaded Successfully")
+
+    def keyPressEvent(self, e):
+        super(MainUI, self).keyPressEvent(e)
+        if e.key() == 16777249: # CTRL pressed
+            self.ctrl_modifier = True
+            for button in self.guide_buttons:
+                button.setProperty("override", "1")
+                button.style().polish(button)
+
+    def keyReleaseEvent(self, e):
+        super(MainUI, self).keyReleaseEvent(e)
+        if e.key() == 16777249: # CTRL released
+            self.ctrl_modifier = False
+            for button in self.guide_buttons:
+                button.setProperty("override", "0")
+                button.style().polish(button)
+
+
 
     def update_title(self):
         file_name = self.actions_handler.currentFile if self.actions_handler.currentFile else "untitled"
@@ -284,13 +350,15 @@ class MainUI(QtWidgets.QMainWindow):
         spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.guides_sides_hLay.addItem(spacerItem)
         self.guides_create_vLay.addLayout(self.guides_sides_hLay)
-        
+
         button_scrollArea = QtWidgets.QScrollArea()
         button_scrollArea.setFrameShape(QtWidgets.QFrame.NoFrame)
         button_scrollArea.setFrameShadow(QtWidgets.QFrame.Sunken)
         button_scrollArea.setWidgetResizable(True)
 
+
         button_scrollArea_WidgetContents = QtWidgets.QWidget()
+
         button_scrollArea_vLay = QtWidgets.QVBoxLayout(button_scrollArea_WidgetContents)
         button_scrollArea.setWidget(button_scrollArea_WidgetContents)
         self.guides_create_vLay.addWidget(button_scrollArea)
@@ -329,6 +397,7 @@ class MainUI(QtWidgets.QMainWindow):
             # following signal connection finds the related spinbox using the object name
             guide_button_pb.clicked.connect(lambda ignore=module, limb=module: self.on_create_guide(limb, segments=self.verticalLayoutWidget_2.findChild(QtWidgets.QSpinBox, "sp_%s" %limb).value()))
             ############ SIGNALS ############### [End]
+            self.guide_buttons.append(guide_button_pb)
 
         ####### Module Buttons ########## [End]
 
@@ -1024,7 +1093,7 @@ class MainUI(QtWidgets.QMainWindow):
                 side="auto"
             else:
                 side="center"
-            self.guides_handler.init.initLimb(limb_name, whichSide= side, **kwargs)
+            self.guides_handler.init.initLimb(limb_name, whichSide= side, defineAs=self.ctrl_modifier, **kwargs)
         self.populate_guides()
 
     def on_guide_change(self, currentItem, previousItem):
