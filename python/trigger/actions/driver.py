@@ -30,7 +30,7 @@ class Driver(object):
 
     def action(self):
         for data in self.mappingData:
-            attribute.drive_attrs(data[0], data[3], driver_range=[data[1], data[2]], driven_range=[data[4], data[5]])
+            attribute.drive_attrs(data[0], data[3], driver_range=[data[1], data[2]], driven_range=[data[4], data[5]], optimize=False)
 
     def save_action(self):
         pass

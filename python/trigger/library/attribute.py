@@ -136,7 +136,7 @@ def validate_attr(attr, attr_range=None, nice_name=None, attr_type="float", defa
 
     return attr
 
-def drive_attrs(driver_attr, driven_attrs, driver_range=None, driven_range=None, force=True):
+def drive_attrs(driver_attr, driven_attrs, driver_range=None, driven_range=None, force=True, optimize=True):
     """
     Creates a ranged connection between driver and driven attr(s)
     Args:
@@ -145,6 +145,7 @@ def drive_attrs(driver_attr, driven_attrs, driver_range=None, driven_range=None,
         driver_range: (Tuple or List) Optional. Minumum and maximum range of driver. If not provided, there will be a direct connection between driver and driven
         driven_range: (Tuple or List) Optional. Minumum and maximum range of driven. If not provided, there will be a direct connection between driver and driven
         force: (Bool) If true, any existing connections on driven will be overriden.
+        optimize: (Bool) When enabled, it uses direct connections where applicable. Default True
 
     Returns:
 
@@ -166,7 +167,7 @@ def drive_attrs(driver_attr, driven_attrs, driver_range=None, driven_range=None,
         for driven in driven_attrs:
             cmds.connectAttr(driver_attr, driven, force=force)
         return
-    if driver_range == driven_range:
+    if driver_range == driven_range and optimize:
         # also direct connect
         for driven in driven_attrs:
             cmds.connectAttr(driver_attr, driven, force=force)

@@ -83,6 +83,14 @@ def power(a, b, return_plug=True, name="power"):
     else:
         return power_node
 
+def abs(a, return_plug=True, name="absolute"):
+    p2_p = power(a, 2, name="pow2_%s" % name)
+    abs_p = power(p2_p, 0.5, name=name)
+    if return_plug:
+        return abs_p
+    else:
+        return abs_p.split(".")[0]
+
 def invert(a, return_plug=True, name="invert"):
     return (multiply(a, -1, return_plug=return_plug, name=name))
 
