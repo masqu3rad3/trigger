@@ -16,7 +16,7 @@ log = filelog.Filelog(logname=__name__, filename="trigger_log")
 class IO(dict):
     def __init__(self, file_name=None, folder_name=None, root_path=None, file_path=None):
         super(IO, self).__init__()
-        self.valid_extensions = [".json", ".tr", ".trg", ".trw", ".trs", ".trl", ".trsplit"]
+        self.valid_extensions = [".json", ".tr", ".trg", ".trw", ".trs", ".trl", ".trsplit", ".trp"]
         self.default_extension = ".json"
         if file_path:
             self.file_path = file_path

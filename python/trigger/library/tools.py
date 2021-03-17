@@ -1,6 +1,7 @@
 
 from maya import cmds
-from trigger.library import functions
+from trigger.library import functions, attribute, transform
+
 
 def replaceController(mirror=True, mirrorAxis="X", keepOldShape=False, keepAcopy=False, alignToCenter=False, *args, **kwargs):
     if kwargs:
@@ -301,3 +302,45 @@ def whip_refresh():
     for cache in frame_caches:
         cmds.setAttr("%s.nodeState" % cache, 1)
         cmds.setAttr("%s.nodeState" % cache, 0)
+
+
+def copy_controller(a, b=None, axis=None, side_flags=("L_", "R_"), side_bias="start"):
+    # get the other side
+    bias_dict = {"start": "'{0}'.startswith('{1}')", "end": "'{0}'.endswith('{1}')", "include": "'{1}' in '{0}'"}
+    if not side_bias in bias_dict.keys():
+        cmds.error("Invalid argument: {0}".format(side_bias))
+
+    if not b:
+        if eval(bias_dict[side_bias].format(a, side_flags[0])):
+            b = a.replace(side_flags[0], side_flags[1])
+        elif eval(bias_dict[side_bias].format(a, side_flags[1])):
+            b = a.replace(side_flags[1], side_flags[0])
+        else:
+            msg = "Cannot find side flags for %s. Skipping" % a
+            cmds.warning(msg)
+            return
+
+        if not cmds.objExists(b):
+            msg = "Cannot find the other side controller %s. Skipping" % b
+            cmds.warning(msg)
+            return
+
+    # extract the stuff from the controller
+    temp_cont = cmds.duplicate(a, name="tmp_{0}".format(a), rr=True, renameChildren=True)[0]
+    ## delete nodes below it
+    cmds.delete(cmds.listRelatives(temp_cont, type="transform"))
+    attribute.unlock(temp_cont)
+    transform.free_limits(temp_cont)
+
+    cmds.parent(temp_cont, world=True)
+    cmds.setAttr("%s.r" % temp_cont, 0, 0, 0)
+    temp_loc = cmds.spaceLocator()[0]
+    functions.alignToAlter(temp_cont, temp_loc, mode=0)
+    cmds.delete(temp_loc)
+    cmds.makeIdentity(temp_cont, a=True)
+    if axis:
+        cmds.setAttr("{0}.s{1}".format(temp_cont, axis), -1)
+    cmds.makeIdentity(temp_cont, a=True)
+
+    replace_curve(b, temp_cont)
+    cmds.delete(temp_cont)

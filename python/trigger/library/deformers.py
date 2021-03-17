@@ -204,6 +204,13 @@ def localize(mesh, blendshape_node, local_target_name="LocalRig", group_name=Non
 
     return local_mesh
 
+def add_target_blendshape(blendshape_node, target_mesh, weight=1.0):
+    # TODO is it foolproof?
+    connected_mesh = cmds.listConnections(blendshape_node, type="mesh", source=False, destination=True)[0]
+    next_index = cmds.blendShape(blendshape_node, q=True, wc=True)
+    cmds.blendShape(blendshape_node, edit=True, t=(connected_mesh, next_index, target_mesh, weight), w=[next_index, weight])
+    return next_index
+
 # TODO Make this one compatible with list vertex inputs
 def cluster(mesh):
     original_selection = cmds.ls(sl=True)

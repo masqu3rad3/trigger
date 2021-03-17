@@ -1,51 +1,82 @@
 """Saves and Loads node presets from arbitrary locations"""
 
 import os
+import shutil
 
 from maya import cmds
 from trigger.core import io
 from trigger.core import filelog
+from trigger.library import selection
 from trigger.core.decorators import tracktime
 
 from trigger.ui import custom_widgets
+from trigger.ui.Qt import QtWidgets, QtGui # for progressbar
 from trigger.ui import feedback
 
 log = filelog.Filelog(logname=__name__, filename="trigger_log")
 
 
 ACTION_DATA = {
-    "some_property": "some_default_data",
-    "some_more_property": "some_more_default_data"
+    "nodes": [],
+    "nodes_file_path": ""
 }
 
 # Name of the class MUST be the capitalized version of file name. eg. morph.py => Morph, split_shapes.py => Split_shapes
-class Boiler_plate(object):
+class Node_presets(object):
     def __init__(self, *args, **kwargs):
-        super(Boiler_plate, self).__init__()
+        super(Node_presets, self).__init__()
 
+        self.io = io.IO(file_name="tmp_presets.trp")
         # user defined variables
-        self.someProperty = None
-        self.someMoreProperty = None
+        self.nodes = None
+        self.nodes_file_path = ""
 
         # class variables
 
     def feed(self, action_data, *args, **kwargs):
         """Mandatory Method - Feeds the instance with the action data stored in actions session"""
-        self.someProperty = action_data.get("some_property")
-        self.someMoreProperty = action_data.get("some_more_property")
+        self.nodes = action_data.get("nodes")
+        self.nodes_file_path = action_data.get("nodes_file_path")
 
     def action(self):
         """Mandatory Method - Execute Action"""
-        # everything in this method will be executed automatically.
-        # This method does not accept any arguments. all the user variable must be defined to the instance before
-        pass
+        self.io.file_path = self.nodes_file_path
+        data_list = self.io.read()
+
+        base_folder, file_name_and_ext = os.path.split(self.nodes_file_path)
+        file_name, ext = os.path.splitext(file_name_and_ext)
+        remote_presets_folder = os.path.join(base_folder, file_name)
+
+        for data in data_list:
+            node_name = data["name"]
+            node_type = data["type"]
+            preset_path = os.path.join(remote_presets_folder, "%s.mel" %node_name)
+            self.load_preset(node_name, remote_presets_folder)
+
 
     def save_action(self, file_path=None, *args, **kwargs):
         """Mandatory Method - Save Action"""
         # This method will be called automatically and accepts no arguments.
-        # If the action has an option to save files, this method will be used by the UI.
-        # Else, this method can stay empty
-        pass
+        file_path = file_path or self.nodes_file_path
+        base_folder, file_name_and_ext = os.path.split(file_path)
+        file_name, ext = os.path.splitext(file_name_and_ext)
+        remote_presets_folder = os.path.join(base_folder, file_name)
+        self.io._folderCheck(remote_presets_folder)
+
+        # build .trp data
+        data_list = []
+        for node in self.nodes:
+            data = {}
+            # preset_path = os.path.join(remote_presets_folder, "%s.mel" % node)
+            node_type = cmds.objectType(node)
+            data["name"] = node
+            data["type"] = node_type
+            data_list.append(data)
+            self.save_preset(node, remote_presets_folder)
+
+        self.io.file_path = file_path
+        self.io.write(data_list)
+
 
     def ui(self, ctrl, layout, handler, *args, **kwargs):
         """
@@ -62,17 +93,75 @@ class Boiler_plate(object):
 
         """
 
+        file_path_lbl = QtWidgets.QLabel(text="File Path:")
+        file_path_hLay = QtWidgets.QHBoxLayout()
+        file_path_le = custom_widgets.FileLineEdit()
+        file_path_hLay.addWidget(file_path_le)
+        browse_path_pb = custom_widgets.BrowserButton(mode="openFile", update_widget=file_path_le, filterExtensions=["Trigger Preset Files (*.trp)"], overwrite_check=False)
+        file_path_hLay.addWidget(browse_path_pb)
+        layout.addRow(file_path_lbl, file_path_hLay)
+
+        nodes_lbl = QtWidgets.QLabel(text="Nodes")
+        nodes_listbox = custom_widgets.ListBoxLayout(alignment="start", buttonUp=False, buttonNew=False, buttonDown=False)
+        layout.addRow(nodes_lbl, nodes_listbox)
+
+        ctrl.connect(file_path_le, "nodes_file_path", str)
+        ctrl.connect(nodes_listbox.viewWidget, "nodes", list)
+
+        ctrl.update_ui()
+
+        save_current_lbl = QtWidgets.QLabel(text="Save Current states")
+        savebox_lay = custom_widgets.SaveBoxLayout(alignment="horizontal", update_widget=file_path_le, filter_extensions=["Trigger Weight Files (*.trp)"], overwrite_check=True, control_model=ctrl)
+        layout.addRow(save_current_lbl, savebox_lay)
+
+        def get_nodes():
+            sel, msg = selection.validate(min=1, max=None, meshesOnly=False, transforms=False)
+            if sel:
+                nodes_listbox.viewWidget.addItems(sel)
+                ctrl.update_model()
+            else:
+                feedback.Feedback().pop_info(title="Selection Error", text=msg, critical=True)
+
+        def update_nodes():
+            self.nodes = nodes_listbox.listItemNames()
+
+        ### Signals
+        file_path_le.textChanged.connect(lambda x=0: ctrl.update_model())
+        browse_path_pb.clicked.connect(lambda x=0: ctrl.update_model())
+        browse_path_pb.clicked.connect(file_path_le.validate)  # to validate on initial browse result
+        nodes_listbox.buttonGet.clicked.connect(get_nodes)
+        nodes_listbox.buttonRemove.clicked.connect(lambda x: ctrl.update_model())
+
+        savebox_lay.saved.connect(lambda file_path: update_nodes())
+        savebox_lay.saved.connect(lambda file_path: self.save_action(file_path))
+
         pass
 
     @staticmethod
-    def save_preset(node, file_path):
-        """saves the preset to a specific folder"""
+    def save_preset(node, target_folder):
+        """saves the preset to a specific folder. The file will be saved with the node name"""
         presets_folder = os.path.join(cmds.about(preferences=True), "presets")
         cmds.nodePreset(save=(node, "trigger_tmp_preset"))
-        file_name = "{0}Preset_{1}.mel".format(cmds.objectType(node), "trigger_tmp_preset")
-        source_path = os.path.join(presets_folder, file_name)
+        preset_name = "{0}Preset_{1}.mel".format(cmds.objectType(node), "trigger_tmp_preset")
+        source_path = os.path.join(presets_folder, preset_name)
         print(source_path, os.path.isfile(source_path))
+        target_path = os.path.join(target_folder, "%s.mel" % node)
+        shutil.copy(source_path, target_path)
+        os.remove(source_path)
+        return target_path
 
     @staticmethod
-    def load_preset(file_path):
-        pass
+    def load_preset(node, source_folder):
+        """loads the preset from a source folder. File name must match the node name"""
+        source_file = os.path.join(source_folder, "%s.mel" % node)
+        if not os.path.isfile(source_file):
+            log.error("The source file doesn't exist => %s" %source_file, proceed=False)
+        presets_folder = os.path.join(cmds.about(preferences=True), "presets")
+        if not os.path.isdir(presets_folder):
+            os.mkdir(presets_folder)
+        preset_name = "{0}Preset_{1}.mel".format(cmds.objectType(node), "trigger_tmp_preset")
+        target_path = os.path.join(presets_folder, preset_name)
+        shutil.copy(source_file, target_path)
+        cmds.nodePreset(load=(node, "trigger_tmp_preset"))
+        os.remove(target_path)
+
