@@ -18,7 +18,8 @@ log = filelog.Filelog(logname=__name__, filename="trigger_log")
 
 ACTION_DATA = {
     "nodes": [],
-    "nodes_file_path": ""
+    "nodes_file_path": "",
+    "skip_non_existing": True
 }
 
 # Name of the class MUST be the capitalized version of file name. eg. morph.py => Morph, split_shapes.py => Split_shapes
@@ -30,6 +31,7 @@ class Node_presets(object):
         # user defined variables
         self.nodes = None
         self.nodes_file_path = ""
+        self.skip_non_existing = True
 
         # class variables
 
@@ -37,6 +39,7 @@ class Node_presets(object):
         """Mandatory Method - Feeds the instance with the action data stored in actions session"""
         self.nodes = action_data.get("nodes")
         self.nodes_file_path = action_data.get("nodes_file_path")
+        self.skip_non_existing = action_data.get("skip_non_existing", True)
 
     def action(self):
         """Mandatory Method - Execute Action"""
@@ -47,11 +50,20 @@ class Node_presets(object):
         file_name, ext = os.path.splitext(file_name_and_ext)
         remote_presets_folder = os.path.join(base_folder, file_name)
 
-        for data in data_list:
-            node_name = data["name"]
-            node_type = data["type"]
-            preset_path = os.path.join(remote_presets_folder, "%s.mel" %node_name)
-            self.load_preset(node_name, remote_presets_folder)
+        for node in self.nodes:
+            node_preset = os.path.join(remote_presets_folder, "%s.mel" %node)
+            if not os.path.exists(node_preset) and not self.skip_non_existing:
+                log.error("The node preset cannot be found => %s" %node_preset, proceed=False)
+            else:
+                log.warning("The node preset cannot be found => %s" %node_preset)
+            self.load_preset(node, remote_presets_folder)
+
+
+        # for data in data_list:
+        #     node_name = data["name"]
+        #     node_type = data["type"]
+        #     preset_path = os.path.join(remote_presets_folder, "%s.mel" %node_name)
+        #     self.load_preset(node_name, remote_presets_folder)
 
 
     def save_action(self, file_path=None, *args, **kwargs):
