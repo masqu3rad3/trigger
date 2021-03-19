@@ -33,7 +33,7 @@ class Morph(object):
         self.morphGrp = None
         self.morphHook = None
         self.morphMesh = None
-        self.bsNode = naming.uniqueName("trigger_morph_blendshape")
+        self.bsNode = ("trigger_morph_blendshape")
 
 
     def feed(self, action_data, *args, **kwargs):
@@ -50,7 +50,7 @@ class Morph(object):
         self.categorize_blendshapes(functions.getMeshes(self.blendshapesGroup))
         # build hierarchy
         self._create_hierarchy()
-
+        print(self.shapeCategories)
         # ingest base shapes
         for target in self.shapeCategories["base"]:
             self.ingest_base(target)
@@ -224,7 +224,10 @@ class Morph(object):
         # put it where the sculpted mesh is and rename it
         cmds.delete(stack, ch=True)
         parent_node = functions.getParent(sculpted_mesh)
+        print("DEBUG:", parent_node)
         if parent_node:
-            cmds.parent(stack, parent_node)
+            print("DEBUG:", stack)
+            if functions.getParent(stack) != parent_node:
+                cmds.parent(stack, parent_node)
         return (cmds.rename(stack, combination_delta))
 
