@@ -168,6 +168,22 @@ class Morph(object):
     def ingest_base(self, blendshape):
         deformers.connect_bs_targets("%s.%s" % (self.morphHook, blendshape), {self.morphMesh: blendshape}, bs_node_name=self.bsNode)
 
+    # def ingest_inbetween(self, blendshape):
+    #     # is it delta?
+    #     if blendshape.endswith("Delta"):
+    #         search_name = blendshape.replace("Delta", "")
+    #     else:
+    #         search_name = blendshape
+    #
+    #     # get the base shape
+    #     digits = re.search('.*?([0-9]+)$', search_name)
+    #     percentage = (float(digits.groups()[0]) * 0.01)
+    #     base = blendshape if not digits else re.search("(.*)(%s)$" % digits.groups()[0], blendshape).groups()[0]
+    #
+    #     id = deformers.get_bs_index_by_name(self.bsNode, base)
+    #     cmds.blendShape(self.bsNode, edit=True, ib=True,
+    #                     t=(self.morphMesh, id, blendshape, percentage))
+
     def ingest_inbetween(self, blendshape):
         # get the base shape
         digits = re.search('.*?([0-9]+)$', blendshape)
@@ -179,26 +195,49 @@ class Morph(object):
                         t=(self.morphMesh, id, blendshape, percentage))
 
     def ingest_combination(self, blendshape):
-        if blendshape.endswith("Delta"):
+        is_inbetween = False
+        # if blendshape.endswith("Delta"):
+        if "Delta" in blendshape:
             delta_shape = blendshape
         else:
-            delta_shape = self.create_combination_delta(self.neutralMesh, blendshape.split("_"), blendshape)
+            parts = blendshape.split("_")
+            # check if this is inbetween combination or base combination
+            if parts[-1].isdigit():
+                is_inbetween = True
+                parts = parts[:-1]
+            delta_shape = self.create_combination_delta(self.neutralMesh, parts, blendshape, inbetween=is_inbetween)
 
-        # ingest combination delta just like a regular base and drive it with combinationShape node
-        next_index = cmds.blendShape(self.bsNode, q=True, wc=True)
-        cmds.blendShape(self.bsNode, edit=True, t=(self.morphMesh, next_index, delta_shape, 1.0), w=[next_index, 0.0])
-        combination_node = cmds.createNode("combinationShape")
-        input_list = blendshape.split("_")
-        for nmb, input_shape in enumerate(input_list):
-            cmds.connectAttr("%s.%s" %(self.bsNode, input_shape), "%s.inputWeight[%s]" %(combination_node, nmb), force=True)
-        cmds.connectAttr("%s.outputWeight" %combination_node, "%s.%s" %(self.bsNode, delta_shape), force=True)
+        if not is_inbetween:
+            # ingest combination delta just like a regular base and drive it with combinationShape node
+            next_index = cmds.blendShape(self.bsNode, q=True, wc=True)
+            cmds.blendShape(self.bsNode, edit=True, t=(self.morphMesh, next_index, delta_shape, 1.0), w=[next_index, 0.0])
+            combination_node = cmds.createNode("combinationShape", name="cmb_%s" %blendshape)
+            input_list = blendshape.split("_")
+            for nmb, input_shape in enumerate(input_list):
+                cmds.connectAttr("%s.%s" %(self.bsNode, input_shape), "%s.inputWeight[%s]" %(combination_node, nmb), force=True)
+            cmds.connectAttr("%s.outputWeight" %combination_node, "%s.%s" %(self.bsNode, delta_shape), force=True)
+        else:
+            self.ingest_inbetween(delta_shape)
 
-    def create_combination_delta(self, neutral, non_sculpted_meshes, sculpted_mesh, check_sub_combinations=True):
+
+    def create_combination_delta(self, neutral, non_sculpted_meshes, sculpted_mesh, check_sub_combinations=True, inbetween=False):
         """Creates a basic delta mesh of the sculpted combination shape against non-sculpted"""
         # if it already exists, return it immediately
-        combination_delta = "%sDelta" % sculpted_mesh
+        parts = sculpted_mesh.split("_")
+        if inbetween:
+            weight = (float(parts[-1]) * 0.01)
+            suffix = "Delta%s" % parts[-1]
+            combination_delta = "_".join(parts[:-1]) + suffix
+        else:
+            weight = 1.0
+            combination_delta = "%sDelta" % sculpted_mesh
         if cmds.objExists(combination_delta):
             return combination_delta
+
+        # # if it already exists, return it immediately
+        # combination_delta = "%sDelta" % sculpted_mesh
+        # if cmds.objExists(combination_delta):
+        #     return combination_delta
 
         # check for the nested sub-combination shapes if it contains more than 2 shapes
         sub_combination_deltas = []
@@ -214,19 +253,28 @@ class Morph(object):
                 parts = sub.split("_")
                 sub_combination_deltas.append(self.create_combination_delta(neutral, parts, sub, check_sub_combinations=False))
 
-
         stack = cmds.duplicate(neutral)[0]
         temp_bs_node = cmds.blendShape(non_sculpted_meshes+sub_combination_deltas, stack)[0]
-        for attr in cmds.aliasAttr(temp_bs_node, q=True)[::2]:
+        # set the last attr with the negative weight value instead of -1 to get the combination inbetween shape correct
+        # so... the ORDER of the combination matters!!!
+        attr_list = cmds.aliasAttr(temp_bs_node, q=True)[::2]
+        for attr in attr_list[:-1]:
             cmds.setAttr("{0}.{1}".format(temp_bs_node, attr), -1)
+        cmds.setAttr("{0}.{1}".format(temp_bs_node, attr_list[-1]), -1 * weight)
+
+        # for attr in cmds.aliasAttr(temp_bs_node, q=True)[::2]:
+        #     print("DEBUG_weight", weight)
+        #     cmds.setAttr("{0}.{1}".format(temp_bs_node, attr), -1*weight)
         next_index = cmds.blendShape(temp_bs_node, q=True, wc=True)
         cmds.blendShape(temp_bs_node, edit=True, t=(stack, next_index, sculpted_mesh, 1.0), w=[next_index, 1.0],)
+
+
         # put it where the sculpted mesh is and rename it
         cmds.delete(stack, ch=True)
         parent_node = functions.getParent(sculpted_mesh)
-        print("DEBUG:", parent_node)
+        # print("DEBUG:", parent_node)
         if parent_node:
-            print("DEBUG:", stack)
+            # print("DEBUG:", stack)
             if functions.getParent(stack) != parent_node:
                 cmds.parent(stack, parent_node)
         return (cmds.rename(stack, combination_delta))

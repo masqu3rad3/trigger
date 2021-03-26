@@ -85,7 +85,15 @@ class Splitter(dict):
 
         combination_parts = unsplit_name.split("_")
         if combination_parts:
-            split_named_combination_parts = ["%s%s" %(suffix, part) for part in combination_parts]
+            ## dont touch digits
+            split_named_combination_parts = []
+            for part in combination_parts:
+                if part.isdigit():
+                    split_named_combination_parts.append(part)
+                else:
+                    split_named_combination_parts.append("{0}{1}".format(suffix, part))
+
+            # split_named_combination_parts = ["%s%s" %(suffix, part) for part in combination_parts]
             split_name = "_".join(split_named_combination_parts)
         else:
             split_name = "%s%s" % (suffix, unsplit_name)
