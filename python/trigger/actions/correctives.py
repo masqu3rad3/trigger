@@ -62,6 +62,8 @@ class Correctives(object):
         self.correctiveDefinitions = None
 
         # class variables
+        self.definition_widgets = None
+        self.id = 0
 
     def feed(self, action_data, *args, **kwargs):
         """Mandatory Method - Feeds the instance with the action data stored in actions session"""
@@ -305,7 +307,6 @@ class Correctives(object):
 
         def update_model():
             # collect definition data
-            print("devbug")
             definitions = []
             for widget_dict in self.definition_widgets:
                 tmp_dict = {}

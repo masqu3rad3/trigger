@@ -181,9 +181,10 @@ def localize(mesh, blendshape_node, local_target_name="LocalRig", group_name=Non
 
 
     if cmds.objExists(blendshape_node):
-        shape = cmds.listRelatives(mesh, c=True, s=True)[0]
-        # check the shape if it contains the blendshape
-        if blendshape_node not in cmds.listConnections(shape):
+        # shape = cmds.listRelatives(mesh, c=True, s=True)[0]
+        # # check the shape if it contains the blendshape
+        # if blendshape_node not in cmds.listConnections(shape):
+        if blendshape_node not in get_deformers(mesh)["blendShape"]:
             cmds.error(
                 "Specified blendshape_node ({0}) exists in the scene but not connected to the specified mesh ({1})".format(
                     blendshape_node, mesh))

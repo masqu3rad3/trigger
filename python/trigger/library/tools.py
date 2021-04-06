@@ -344,3 +344,63 @@ def copy_controller(a, b=None, axis=None, side_flags=("L_", "R_"), side_bias="st
 
     replace_curve(b, temp_cont)
     cmds.delete(temp_cont)
+
+
+def motion_path_spline(curve_obj, num_of_objects, object_type="joint", aim=False):
+    incr = 0
+    obj_list = []
+    for i in range(num_of_objects):
+        if object_type == "joint":
+            obj = cmds.joint(n="{0}_{1}_jnt".format(curve_obj, i))
+        elif object_type == "locator":
+            obj = cmds.spaceLocator(n="{0}_{1}_loc".format(curve_obj, i))[0]
+        obj_list.append(obj)
+
+        motion_path = cmds.shadingNode('motionPath', n="%s_motionPath" % obj, asUtility=True)
+        cmds.connectAttr("%s.worldSpace[0]" % curve_obj, "%s.geometryPath" % motion_path)
+        cmds.connectAttr('%s.allCoordinates.xCoordinate' % motion_path, '%s.translateX' % obj)
+        cmds.connectAttr('%s.allCoordinates.yCoordinate' % motion_path, '%s.translateY' % obj)
+        cmds.connectAttr('%s.allCoordinates.zCoordinate' % motion_path, '%s.translateZ' % obj)
+        u_value = cmds.getAttr('%s.maxValue' % curve_obj)
+        cmds.setAttr('%s.uValue' % motion_path, incr)
+        incr += u_value / (num_of_objects - 1)
+
+    grp = cmds.group(obj_list, n="{0}_{1}s".format(curve_obj, object_type))
+
+    if aim == True:
+        clusters = []
+        upVec_curve = cmds.duplicate(curve_obj, n='%s_upVec_curve' % curve_obj)[0]
+        cmds.xform(upVec_curve, t=[1, 0, 0], r=1)
+        # Create clusters along curve & upVec curve. Transform rotate pivots to original curve
+        spans = cmds.getAttr('%s.degree' % curve_obj)
+        degree = cmds.getAttr('%s.spans' % curve_obj)
+        # For number of cv points, create cluster handles for both curve & duplicate.
+        for i in range(0, spans + degree):
+            cv_pos = cmds.pointPosition("{0}.cv[{1}]".format(curve_obj, str(i)))
+            cluster, _clusterHandle = cmds.cluster("{0}.cv[{1}]".format(curve_obj, str(i)),
+                                                   "{0}.cv[{1}]".format(upVec_curve, str(i)),
+                                                   n="{0}{1}_cluster".format(curve_obj, i))
+            cmds.xform(_clusterHandle, rp=cv_pos)
+            clusters.append(_clusterHandle)
+
+        # Create objects/joints along new curve
+        upVec_jnts = motion_path_spline(upVec_curve, num_of_objects, aim=False)
+
+        for i in range(0, len(obj_list)):
+            if obj_list[i] == obj_list[-1]:
+                break
+            cmds.aimConstraint(upVec_jnts[i],
+                               obj_list[i],
+                               weight=1,
+                               upVector=(0, 1, 0),
+                               worldUpObject=obj_list[i + 1],
+                               worldUpType="object",
+                               offset=(0, 0, 0),
+                               aimVector=(1, 0, 0),
+                               worldUpVector=(1, 0, 0))
+        # Cleanup aim
+        cluster_grp = cmds.group(clusters, n='%s_aim_clusters' % curve_obj)
+        aim_grp = cmds.group(cluster_grp, upVec_jnts, upVec_curve, n=curve_obj + '_aim_grp')
+
+        return obj_list, clusters
+    return obj_list
