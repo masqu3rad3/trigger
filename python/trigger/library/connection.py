@@ -437,6 +437,27 @@ def uvPin(mesh_transform, coordinates):
 
     return uv_pin
 
+def pin_to_surface(node, surface, sr="", st="", ss="xyz"):
+    world_pos = api.getWorldTranslation(node)
+    uv_coordinates = get_uv_at_point(world_pos, surface)
+    uv_pin = uvPin(surface, uv_coordinates)
+    decompose_matrix_node = cmds.createNode("decomposeMatrix", name="decompose_pinMatrix")
+    cmds.connectAttr("%s.outputMatrix[0]" % uv_pin, "%s.inputMatrix" % decompose_matrix_node)
+
+    for attr in "XYZ":
+        if attr.lower() not in sr and attr.upper() not in sr:
+            cmds.connectAttr("%s.outputRotate%s" % (decompose_matrix_node, attr), "%s.rotate%s" % (node, attr))
+
+    for attr in "XYZ":
+        if attr.lower() not in st and attr.upper() not in st:
+            cmds.connectAttr("%s.outputTranslate%s" % (decompose_matrix_node, attr), "%s.translate%s" % (node, attr))
+
+    for attr in "XYZ":
+        if attr.lower() not in ss and attr.upper() not in ss:
+            cmds.connectAttr("%s.outputScale%s" % (decompose_matrix_node, attr), "%s.scale%s" % (node, attr))
+
+    return uv_pin
+
 def averageConstraint(target_mesh, vertex_list, source_object=None, offsetParent=False):
     """
     Creates a average weighted constraint between defined vertices. Works version 2020+

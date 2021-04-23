@@ -112,6 +112,9 @@ class Weights(dict):
             elif deformer_type == "shrinkWrap":
                 data["influencers"] = cmds.listConnections("%s.targetGeom" % deformer, shapes=True, scn=True, source=True, destination=False)
                 data["affected"] = cmds.listConnections("%s.outputGeometry" % deformer, shapes=True, scn=True, source=False, destination=True)
+            elif deformer_type == "deltaMush":
+                data["influencers"] = 0 # not needed
+                data["affected"] = cmds.listConnections("%s.outputGeometry" % deformer, shapes=True, scn=True, source=False, destination=True)
             else:
                 # TODO ADD OTHER DEFORMERS
                 raise Exception ("The deformer type <%s> needs to be added" % deformer_type)
@@ -212,6 +215,9 @@ class Weights(dict):
                           "axisReference", "alongX", "alongY", "alongZ", "targetSmoothLevel", "falloff", "falloffIterations",
                           "shapePreservationEnable", "shapePreservationSteps", "shapePreservationIterations",
                           "shapePreservationMethod", "shapePreservationReprojection"]
+        elif deformer_type == "deltaMush":
+            # attributes = []
+            attributes = ["smoothingIterations", "smoothingStep", "inwardConstraint", "outwardConstraint", "distanceWeight", "displacement"]
         else:
             attributes = []
         # TODO: ADD ATTRIBUTES FOR ALL DEFORMER TYPES
@@ -266,8 +272,8 @@ class Weights(dict):
         deformer_type = cmds.objectType(deformer)
         if deformer_type == "blendShape":
             point_attr_template = "{0}.inputTarget[0].inputTargetGroup[{1}].targetWeights[0]"
-        elif deformer_type == "ffd" or deformer_type == "shrinkWrap":
-            point_attr_template = "{0}.weightList[{1}].weights[0]"
+        # elif deformer_type == "ffd" or deformer_type == "shrinkWrap" or deformer_type == "deltaMush":
+        #     point_attr_template = "{0}.weightList[{1}].weights[0]"
         elif deformer_type == "skinCluster":
             skin_meshes = cmds.listConnections(deformer, type="mesh")
             for mesh in skin_meshes:
@@ -281,6 +287,8 @@ class Weights(dict):
             log.info("%s Weights Lodaded Successfully..." %deformer)
             return
             # point_attr_template = "{0}.weightList[{1}].weights[0]"
+        else:
+            point_attr_template = "{0}.weightList[{1}].weights[0]"
 
         for nmb, weight_dict in enumerate(data["deformerWeight"]["weights"]):
             index0_val = weight_dict["points"][0]["value"]
@@ -352,6 +360,9 @@ class Weights(dict):
             elif deformer_type == "shrinkWrap":
                 deformers.create_shrink_wrap(influencers[0], affected[0], name=deformer_name)
 
+            elif deformer_type == "deltaMush":
+                cmds.deltaMush(affected[0], name=deformer_name)
+
             else:
                 # TODO : SUPPORT FOR ALL DEFORMERS
                 log.error("deformers OTHER than skinCluster are not YET supported")
@@ -372,6 +383,8 @@ class Weights(dict):
                     attr_value = str(attr_dict["value"])
                 elif attr_type == "float":
                     attr_value = float(attr_dict["value"])
+                elif attr_type == "long":
+                    attr_value = int(attr_dict["value"])
                 else:
                     log.error("Undefined attribute type => %s" %attr_type)
                     raise

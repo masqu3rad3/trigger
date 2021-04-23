@@ -242,7 +242,7 @@ class Eye(object):
             connection.matrixConstraint(self.limbPlug, self.plugDriven)
 
     def round_up(self):
-        _ = [cmds.connectAttr("%s.contVis" % self.scaleGrp, "%s.v" % x) for x in self.deformerJoints]
+        _ = [cmds.connectAttr("%s.jointVis" % self.scaleGrp, "%s.v" % x) for x in self.deformerJoints]
 
     def createLimb(self):
         self.createGrp()

@@ -51,13 +51,16 @@ def create_attribute(node, property_dict=None, keyable=True, display=True, *args
         log.error("The attribute type (%s) is not supported by this method" % attr_type)
     # if some attribute with same name exists, quit
     default_value = property_dict.get("default_value")
+
+    attr_plug = "%s.%s" % (node, attr_name)
+
     if cmds.attributeQuery(attr_name, node=node, exists=True):
         if default_value:
             if compat.is_string(default_value):
                 cmds.setAttr("%s.%s" % (node, attr_name), default_value, type="string")
             else:
                 cmds.setAttr("%s.%s" % (node, attr_name), default_value)
-        return
+        return attr_plug
     if attr_type == "bool":
         default_value = default_value if default_value else 0
         cmds.addAttr(node, longName=attr_name, niceName=nice_name, at=attr_type, k=keyable, defaultValue=default_value)
@@ -88,7 +91,7 @@ def create_attribute(node, property_dict=None, keyable=True, display=True, *args
                      k=keyable,
                      )
 
-    attr_plug = "%s.%s" % (node, attr_name)
+    # attr_plug = "%s.%s" % (node, attr_name)
     if display and not keyable:
         cmds.setAttr(attr_plug, e=True, channelBox=True)
 
