@@ -30,6 +30,8 @@ class Connector(object):
         else:
             log.error("Class needs either build_data or inits to be constructed")
 
+        self.useRefOrientation = cmds.getAttr("%s.useRefOri" % self.rootInit)
+
         self.suffix = (naming.uniqueName(cmds.getAttr("%s.moduleName" % self.rootInit)))
 
         self.controllers = []
@@ -64,7 +66,8 @@ class Connector(object):
         self.scaleConstraints.append(self.scaleGrp)
 
         defJ_root = cmds.joint(name="jDef_%s" % self.suffix)
-        functions.alignTo(defJ_root, self.rootInit, position=True, rotation=False)
+        log.warning(self.useRefOrientation)
+        functions.alignTo(defJ_root, self.rootInit, position=True, rotation=self.useRefOrientation)
 
         functions.colorize(defJ_root, self.colorCodes[0])
         self.limbPlug = defJ_root
