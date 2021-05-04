@@ -115,6 +115,9 @@ class Weights(dict):
             elif deformer_type == "deltaMush":
                 data["influencers"] = 0 # not needed
                 data["affected"] = cmds.listConnections("%s.outputGeometry" % deformer, shapes=True, scn=True, source=False, destination=True)
+            elif deformer_type == "blendShape":
+                data["influencers"] = 0 # ??? not needed ???
+                data["affected"] = cmds.listConnections("%s.outputGeometry" % deformer, shapes=True, scn=True, source=False, destination=True)
             else:
                 # TODO ADD OTHER DEFORMERS
                 raise Exception ("The deformer type <%s> needs to be added" % deformer_type)
