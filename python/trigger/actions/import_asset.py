@@ -28,7 +28,7 @@ class Import_asset(object):
     def action(self):
         """Mandatory method for all action maya_modules"""
         if not self.filePath:
-            LOG.warning("import path not defined")
+            log.warning("import path not defined")
             return
         ext = os.path.splitext(self.filePath)[1]
         if ext == ".abc":
@@ -40,7 +40,7 @@ class Import_asset(object):
         elif ext == ".ma" or ext == ".mb":
             self.import_scene(self.filePath)
         else:
-            LOG.warning("Unrecognized file format => %s" % ext)
+            log.warning("Unrecognized file format => %s" % ext)
 
     def save_action(self):
         """Mandatory method for all action modules"""
@@ -128,11 +128,11 @@ class Import_asset(object):
         currentPlatform = platform.system()
         ext = ".mll" if currentPlatform == "Windows" else ".so"
         try: cmds.loadPlugin("AbcExport%s" % ext)
-        except: LOG.throw_error("Alembic Plugin cannot be loaded")
+        except: log.throw_error("Alembic Plugin cannot be loaded")
 
     def _load_fbx_plugin(self):
         """Makes sure the FBX plugin is loaded"""
         try: cmds.loadPlugin("fbxmaya")
-        except: LOG.throw_error("FBX Plugin cannot be loaded")
+        except: log.throw_error("FBX Plugin cannot be loaded")
 
     # TODO: EXPORT FUNCTIONS
