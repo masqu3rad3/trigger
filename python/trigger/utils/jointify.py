@@ -1,17 +1,23 @@
 """Module for converting blendshape deformations joint based deformations"""
 import subprocess
 import os
+import platform
 
 from maya import cmds
+from maya import mel
 
 from trigger.library import deformers, attribute
+from trigger.core.decorators import keepselection
 from trigger.library import connection
 
 class Jointify(object):
     def __init__(self, blendshape_node=None, *args, **kwargs):
         super(Jointify, self).__init__()
 
+        self._check_plugins()
+
         # class variables
+        self.dem_exec = self._get_dem_bones()
         self.blendshapeNode = blendshape_node
         self.originalData = {}
         self.trainingData = {}
@@ -45,6 +51,7 @@ class Jointify(object):
         }
 
         """
+        print("Collecting Original Data")
         self.originalData.clear()
         targetshapes = deformers.get_influencers(self.blendshapeNode)
         for shape in targetshapes:
@@ -74,8 +81,10 @@ class Jointify(object):
     def prepare_training_set(self):
         """Creates a ROM from blendshape targets"""
 
+        print("Preparing Training Set")
         shape_duration = 10
         self.trainingData["animationRange"] = [0, (len(self.originalData.items())*shape_duration)]
+        self.trainingData["mesh"] = cmds.listConnections("{0}.outputGeometry".format(self.blendshapeNode))[0]
 
         for nmb, (attr, data) in enumerate(self.originalData.items()):
             # print("nmb", nmb)
@@ -99,25 +108,124 @@ class Jointify(object):
         # self.trainingData["endFrame"] = (shape_duration * (len(self.originalData.items())+1)) + (shape_duration-1)
         # self.trainingData["shapeDuration"] = shape_duration
 
-    def create_dem_bones(self):
+    @keepselection
+    def create_dem_bones(self, joint_count=10):
         """Exports the training set to DEM bones. does the training and get back the FBX"""
 
+        print("Training Dem Bones")
         # temporary file paths for alembic and FBX files
         abc_source = os.path.normpath(os.path.join(os.path.expanduser("~"), "jointify_source_abc.abc"))
         fbx_source = os.path.normpath(os.path.join(os.path.expanduser("~"), "jointify_source_fbx.fbx"))
         fbx_output = os.path.normpath(os.path.join(os.path.expanduser("~"), "jointify_output_fbx.fbx"))
 
         # export Alembic animation
-            ## requires whole animation start and end frames
+        abc_exp_command = "-framerange {0} {1} -uvWrite -dataFormat ogawa -noNormals -root {2} -file {3}".format(
+            self.trainingData["animationRange"][0],
+            self.trainingData["animationRange"][1],
+            self.trainingData["mesh"],
+            abc_source
+        )
+        cmds.AbcExport(j= abc_exp_command)
 
         # export static FBX
-            ## requires original geo
-        # duplicate a clean one
+        ### file -force -options "" -typ "FBX export" -pr -es "C:/Users/arda.kutlu/Documents/jointify_source_fbx.fbx";
+        cmds.currentTime(0)
+        copy_mesh = cmds.duplicate(self.trainingData["mesh"])[0]
+        cmds.select(copy_mesh)
+        fbx_export_settings = {
+            "FBXExportApplyConstantKeyReducer": "-v false",
+            "FBXExportShapes": "-v true",
+            "FBXExportUseSceneName": "-v false",
+            "FBXExportAxisConversionMethod": "convertAnimation",
+            "FBXExportBakeComplexEnd": "-v 10",
+            "FBXExportBakeComplexStart": "-v 1",
+            "FBXExportAnimationOnly": "-v false",
+            "FBXExportSkeletonDefinitions": "-v false",
+            "FBXExportUpAxis": "y",
+            "FBXExportQuaternion": "-v resample",
+            "FBXExportInstances": "-v false",
+            "FBXExportBakeComplexStep": "-v 1",
+            "FBXExportCameras": "-v true",
+            "FBXExportTangents": "-v false",
+            "FBXExportInAscii": "-v false",
+            "FBXExportLights": "-v true",
+            "FBXExportReferencedAssetsContent": "-v true",
+            "FBXExportConstraints": "-v true",
+            "FBXExportSmoothMesh": "-v true",
+            "FBXExportHardEdges": "-v false",
+            "FBXExportInputConnections": "-v true",
+            "FBXExportEmbeddedTextures": "-v true",
+            "FBXExportBakeComplexAnimation": "-v false",
+            "FBXExportCacheFile": "-v true",
+            "FBXExportConvertUnitString": "In",
+            "FBXExportSmoothingGroups": "-v true",
+            "FBXExportBakeResampleAnimation": "-v true",
+            "FBXExportTriangulate": "-v false",
+            "FBXExportSkins": "-v true",
+            "FBXExportFileVersion": "-v FBX202000",
+            "FBXExportScaleFactor": "1.0"
+        }
+        for item in fbx_export_settings.items():
+            mel.eval('%s %s'%(item[0], item[1]))
+
+        compFilePath = fbx_source.replace("\\", "//")  ## for compatibility with mel syntax.
+        cmd = ('FBXExport -f "{0}" -s;'.format(compFilePath))
+        mel.eval(cmd)
+
+        cmds.delete(copy_mesh)
 
         # do the DEM magic
+        print("DEBUG")
+        print(self.dem_exec)
+        print(abc_source)
+        print(fbx_source)
+        print(fbx_output)
+        print(joint_count)
+
+        subprocess.Popen([self.dem_exec.replace("\\", "/"),
+                          '-a=%s' %abc_source.replace("\\", "/"),
+                          '-i=%s' %fbx_source.replace("\\", "/"),
+                          '-o=%s' %fbx_output.replace("\\", "/"),
+                          '-b=%i' %joint_count])
+
             ## requires joint count
 
         # import back the output fbx
+        fbx_import_settings = {
+            "FBXImportMergeBackNullPivots": "-v true",
+            "FBXImportMode": "-v add",
+            "FBXImportSetLockedAttribute": "-v false",
+            "FBXImportUnlockNormals": "-v false",
+            "FBXImportScaleFactor": "1.0",
+            "FBXImportProtectDrivenKeys": "-v true",
+            "FBXImportShapes": "-v true",
+            "FBXImportQuaternion": "-v euler",
+            "FBXImportCameras": "-v true",
+            "FBXImportSetMayaFrameRate": "-v false",
+            "FBXImportResamplingRateSource": "-v Scene",
+            "FBXImportGenerateLog": "-v false",
+            "FBXImportConstraints": "-v true",
+            "FBXImportLights": "-v true",
+            "FBXImportConvertDeformingNullsToJoint": "-v true",
+            "FBXImportFillTimeline": "-v false",
+            "FBXImportMergeAnimationLayers": "-v true",
+            "FBXImportHardEdges": "-v true",
+            "FBXImportAxisConversionEnable": "-v true",
+            "FBXImportCacheFile": "-v true",
+            "FBXImportUpAxis": "y",
+            "FBXImportSkins": "-v true",
+            "FBXImportConvertUnitString": "-v true",
+            "FBXImportForcedFileAxis": "-v disabled"
+        }
+        for item in mayaImp_fbx.items():
+            # TODO : Test with more versions of Maya
+            mel.eval('%s %s' % (item[0], item[1]))
+
+        try:
+            compFilePath = filePath.replace("\\", "//")  ## for compatibility with mel syntax.
+            cmd = ('FBXImport -f "{0}";'.format(compFilePath))
+            mel.eval(cmd)
+
 
         # return imported joints and mesh
 
@@ -125,6 +233,8 @@ class Jointify(object):
 
     def jointify(self):
         """Creates a joint version of the blendshape deformations using the dem bones data as guidance"""
+
+        print("Jointifying the blendshape node")
         # create a hook node to replace the blendshape deformer
         jointify_hook = cmds.group(em=True, name="jointify_hook")
 
@@ -159,5 +269,52 @@ class Jointify(object):
 
         pass
 
+    @staticmethod
+    def _check_plugins():
+        if not cmds.pluginInfo('AbcExport', l=True, q=True):
+            try:
+                cmds.loadPlugin('AbcExport')
+            except:
+                msg = "Alembic Export Plugin cannot be initialized."
+                cmds.confirmDialog(title='Plugin Error', message=msg)
+                raise Exception(msg)
+
+        if not cmds.pluginInfo('AbcImport', l=True, q=True):
+            try:
+                cmds.loadPlugin('AbcImport')
+            except:
+                msg = "Alembic Import Plugin cannot be initialized."
+                cmds.confirmDialog(title='Plugin Error', message=msg)
+                raise Exception(msg)
+
+        if not cmds.pluginInfo('fbxmaya', l=True, q=True):
+            try:
+                cmds.loadPlugin('fbxmaya')
+            except:
+                msg = "FBX Plugin cannot be initialized."
+                cmds.confirmDialog(title='Plugin Error', message=msg)
+                raise Exception(msg)
+
+    @staticmethod
+    def _get_dem_bones():
+        """Checks the dem bones executables"""
+        folder = os.path.split(os.path.realpath(__file__))[0]
+        current_os = platform.system()
+
+        if current_os == "Windows":
+            executable = os.path.join(folder, "dembones", current_os, "DemBones.exe")
+        elif current_os == "Linux" or os == "MacOs":
+            executable = os.path.join(folder, "dembones", current_os, "DemBones")
+        else:
+            msg = "Unknown Operating System"
+            cmds.confirmDialog(title='OS Error', message=msg)
+            raise Exception(msg)
+
+        if not os.path.isfile(executable):
+            msg = "Dem-Bones executable cannot be found (%s)" %executable
+            cmds.confirmDialog(title='Executable Error', message=msg)
+            raise Exception(msg)
+
+        return executable
 
 
