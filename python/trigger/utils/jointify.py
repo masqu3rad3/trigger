@@ -6,28 +6,32 @@ import platform
 from maya import cmds
 from maya import mel
 
-from trigger.library import deformers, attribute
-from trigger.core.decorators import keepselection
+from trigger.library import deformers, attribute, functions
+from trigger.core.decorators import keepselection, tracktime
 from trigger.library import connection
 
 class Jointify(object):
-    def __init__(self, blendshape_node=None, *args, **kwargs):
+    def __init__(self, blendshape_node=None, joint_count=30, head_joint=None, shape_duration=10, joint_iterations=30, fbx_source=None, *args, **kwargs):
         super(Jointify, self).__init__()
 
         self._check_plugins()
 
+        # user variables
+        self.blendshapeNode = blendshape_node
+        self.jointCount = joint_count
+        self.headJoint = head_joint
+        self.shapeDuration = shape_duration
+        self.jointIterations = joint_iterations
+        self.fbxSource = fbx_source
+
+
         # class variables
         self.dem_exec = self._get_dem_bones()
-        self.blendshapeNode = blendshape_node
         self.originalData = {}
         self.trainingData = {}
+        self.demData = {}
 
-    def start(self, blendshape_node=None):
-        """Main function"""
-        self.blendshapeNode = self.blendshapeNode or blendshape_node
-        if not self.blendshapeNode:
-            raise Exception("Blendshape node is not defined")
-
+    def start(self):
         self.collect_original_data()
         self.prepare_training_set()
         self.create_dem_bones()
@@ -82,8 +86,7 @@ class Jointify(object):
         """Creates a ROM from blendshape targets"""
 
         print("Preparing Training Set")
-        shape_duration = 10
-        self.trainingData["animationRange"] = [0, (len(self.originalData.items())*shape_duration)]
+        self.trainingData["animationRange"] = [0, (len(self.originalData.items())*self.shapeDuration)]
         self.trainingData["mesh"] = cmds.listConnections("{0}.outputGeometry".format(self.blendshapeNode))[0]
 
         for nmb, (attr, data) in enumerate(self.originalData.items()):
@@ -95,8 +98,8 @@ class Jointify(object):
             # disconnect inputs
             if data["connected"]:
                 cmds.disconnectAttr(data["in"], data["out"])
-            start_frame = (shape_duration * (nmb+1)) - shape_duration
-            end_frame = start_frame + (shape_duration-1)
+            start_frame = (self.shapeDuration * (nmb+1)) - self.shapeDuration
+            end_frame = start_frame + (self.shapeDuration-1)
             cmds.setKeyframe(self.blendshapeNode, at=attr, t=start_frame - 1, value=0)
             cmds.setKeyframe(self.blendshapeNode, at=attr, t=start_frame, value=0)
             cmds.setKeyframe(self.blendshapeNode, at=attr, t=end_frame, value=1)
@@ -108,8 +111,9 @@ class Jointify(object):
         # self.trainingData["endFrame"] = (shape_duration * (len(self.originalData.items())+1)) + (shape_duration-1)
         # self.trainingData["shapeDuration"] = shape_duration
 
+    @tracktime
     @keepselection
-    def create_dem_bones(self, joint_count=10):
+    def create_dem_bones(self):
         """Exports the training set to DEM bones. does the training and get back the FBX"""
 
         print("Training Dem Bones")
@@ -127,69 +131,73 @@ class Jointify(object):
         )
         cmds.AbcExport(j= abc_exp_command)
 
-        # export static FBX
-        ### file -force -options "" -typ "FBX export" -pr -es "C:/Users/arda.kutlu/Documents/jointify_source_fbx.fbx";
-        cmds.currentTime(0)
-        copy_mesh = cmds.duplicate(self.trainingData["mesh"])[0]
-        cmds.select(copy_mesh)
-        fbx_export_settings = {
-            "FBXExportApplyConstantKeyReducer": "-v false",
-            "FBXExportShapes": "-v true",
-            "FBXExportUseSceneName": "-v false",
-            "FBXExportAxisConversionMethod": "convertAnimation",
-            "FBXExportBakeComplexEnd": "-v 10",
-            "FBXExportBakeComplexStart": "-v 1",
-            "FBXExportAnimationOnly": "-v false",
-            "FBXExportSkeletonDefinitions": "-v false",
-            "FBXExportUpAxis": "y",
-            "FBXExportQuaternion": "-v resample",
-            "FBXExportInstances": "-v false",
-            "FBXExportBakeComplexStep": "-v 1",
-            "FBXExportCameras": "-v true",
-            "FBXExportTangents": "-v false",
-            "FBXExportInAscii": "-v false",
-            "FBXExportLights": "-v true",
-            "FBXExportReferencedAssetsContent": "-v true",
-            "FBXExportConstraints": "-v true",
-            "FBXExportSmoothMesh": "-v true",
-            "FBXExportHardEdges": "-v false",
-            "FBXExportInputConnections": "-v true",
-            "FBXExportEmbeddedTextures": "-v true",
-            "FBXExportBakeComplexAnimation": "-v false",
-            "FBXExportCacheFile": "-v true",
-            "FBXExportConvertUnitString": "In",
-            "FBXExportSmoothingGroups": "-v true",
-            "FBXExportBakeResampleAnimation": "-v true",
-            "FBXExportTriangulate": "-v false",
-            "FBXExportSkins": "-v true",
-            "FBXExportFileVersion": "-v FBX202000",
-            "FBXExportScaleFactor": "1.0"
-        }
-        for item in fbx_export_settings.items():
-            mel.eval('%s %s'%(item[0], item[1]))
+        if not self.fbxSource:
+            # export static FBX
+            ### file -force -options "" -typ "FBX export" -pr -es "C:/Users/arda.kutlu/Documents/jointify_source_fbx.fbx";
+            cmds.currentTime(0)
+            copy_mesh = cmds.duplicate(self.trainingData["mesh"])[0]
+            cmds.select(copy_mesh)
+            fbx_export_settings = {
+                "FBXExportApplyConstantKeyReducer": "-v false",
+                "FBXExportShapes": "-v true",
+                "FBXExportUseSceneName": "-v false",
+                "FBXExportAxisConversionMethod": "convertAnimation",
+                "FBXExportBakeComplexEnd": "-v 0",
+                "FBXExportBakeComplexStart": "-v 0",
+                "FBXExportAnimationOnly": "-v false",
+                "FBXExportSkeletonDefinitions": "-v true",
+                "FBXExportUpAxis": "y",
+                "FBXExportQuaternion": "-v resample",
+                "FBXExportInstances": "-v false",
+                "FBXExportBakeComplexStep": "-v 1",
+                "FBXExportCameras": "-v false",
+                "FBXExportTangents": "-v false",
+                "FBXExportInAscii": "-v false",
+                "FBXExportLights": "-v true",
+                "FBXExportReferencedAssetsContent": "-v true",
+                "FBXExportConstraints": "-v false",
+                "FBXExportSmoothMesh": "-v true",
+                "FBXExportHardEdges": "-v false",
+                "FBXExportInputConnections": "-v false",
+                "FBXExportEmbeddedTextures": "-v false",
+                "FBXExportBakeComplexAnimation": "-v false",
+                "FBXExportCacheFile": "-v true",
+                "FBXExportSmoothingGroups": "-v true",
+                "FBXExportBakeResampleAnimation": "-v true",
+                "FBXExportTriangulate": "-v false",
+                "FBXExportSkins": "-v true",
+                "FBXExportFileVersion": "-v FBX202000",
+                "FBXExportScaleFactor": "1.0"
+            }
+            for item in fbx_export_settings.items():
+                mel.eval('%s %s'%(item[0], item[1]))
 
-        compFilePath = fbx_source.replace("\\", "//")  ## for compatibility with mel syntax.
-        cmd = ('FBXExport -f "{0}" -s;'.format(compFilePath))
-        mel.eval(cmd)
+            compFilePath = fbx_source.replace("\\", "//")  ## for compatibility with mel syntax.
+            cmd = ('FBXExport -f "{0}" -s;'.format(compFilePath))
+            mel.eval(cmd)
 
-        cmds.delete(copy_mesh)
+            cmds.delete(copy_mesh)
+
+        else:
+            fbx_source = self.fbxSource
 
         # do the DEM magic
-        print("DEBUG")
-        print(self.dem_exec)
-        print(abc_source)
-        print(fbx_source)
-        print(fbx_output)
-        print(joint_count)
-
-        subprocess.Popen([self.dem_exec.replace("\\", "/"),
+        process = subprocess.Popen([self.dem_exec.replace("\\", "/"),
                           '-a=%s' %abc_source.replace("\\", "/"),
                           '-i=%s' %fbx_source.replace("\\", "/"),
                           '-o=%s' %fbx_output.replace("\\", "/"),
-                          '-b=%i' %joint_count])
+                          '-b=%i' %self.jointCount,
+                                    # '--bindUpdate=1',
+                                    # '--patience=3',
+                                    # '--transAffine=10',
+                                    '--nInitIters=%i' %self.jointIterations,
+                                    # '-n=400',
+                                    # '--transAffineNorm=10'
+                                    ])
+        process.communicate()
+
 
             ## requires joint count
-
         # import back the output fbx
         fbx_import_settings = {
             "FBXImportMergeBackNullPivots": "-v true",
@@ -209,7 +217,7 @@ class Jointify(object):
             "FBXImportConvertDeformingNullsToJoint": "-v true",
             "FBXImportFillTimeline": "-v false",
             "FBXImportMergeAnimationLayers": "-v true",
-            "FBXImportHardEdges": "-v true",
+            "FBXImportHardEdges": "-v false",
             "FBXImportAxisConversionEnable": "-v true",
             "FBXImportCacheFile": "-v true",
             "FBXImportUpAxis": "y",
@@ -217,19 +225,24 @@ class Jointify(object):
             "FBXImportConvertUnitString": "-v true",
             "FBXImportForcedFileAxis": "-v disabled"
         }
-        for item in mayaImp_fbx.items():
-            # TODO : Test with more versions of Maya
+        for item in fbx_import_settings.items():
             mel.eval('%s %s' % (item[0], item[1]))
 
-        try:
-            compFilePath = filePath.replace("\\", "//")  ## for compatibility with mel syntax.
-            cmd = ('FBXImport -f "{0}";'.format(compFilePath))
-            mel.eval(cmd)
+        compFilePath = fbx_output.replace("\\", "//")  ## for compatibility with mel syntax.
+        cmd = ('FBXImport -f "{0}";'.format(compFilePath))
 
+        # get the difference of nodes before and after the import
+        pre = cmds.ls(long=True)
+        mel.eval(cmd)
+        after = cmds.ls(long=True)
 
-        # return imported joints and mesh
+        # build dem-data dictionary
+        self.demData["demNodes"] = [x for x in after if x not in pre]
+        self.demData["joints"] = cmds.ls(self.demData["demNodes"], type="joint")
+        self.demData["meshes"] = cmds.ls(self.demData["demNodes"], type="mesh")
+        self.demData["meshTransform"] = functions.getParent(self.demData["meshes"][0])
+        self.demData["skinCluster"] = deformers.get_deformers(self.demData["meshTransform"]).get('skinCluster')[0]
 
-        pass
 
     def jointify(self):
         """Creates a joint version of the blendshape deformations using the dem bones data as guidance"""
