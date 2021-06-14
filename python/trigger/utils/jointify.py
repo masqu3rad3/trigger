@@ -269,19 +269,23 @@ class Jointify(object):
             for jnt in active_joints:
                 if multMatrix_db.get(jnt):
                     translate_mult = multMatrix_db[jnt][0]
-                    # GET NEXT  index
+                    translate_mult_index = attribute.getNextIndex("%s.matrixIn" %translate_mult)
                     rotate_mult = multMatrix_db[jnt][1]
+                    rotate_mult_index = attribute.getNextIndex("%s.matrixIn" %rotate_mult)
                 else:
                     translate_mult = cmds.createNode("multMatrix")
                     translate_mult_index = 0
-                pass
+                    rotate_mult = cmds.createNode("multMatrix")
+                    rotate_mult_index = 0
+                    multMatrix_db[jnt] = (translate_mult, rotate_mult)
+                driver_loc = cmds.spaceLocator(name="%s_%s_loc" %(shape, jnt))
             # for each active joint:
                 # create an upper group, apply the same time gap animation to the group
 
                 # create the corresponding attribute on the jointify hook
                 # drive the group animation with that attribute
 
-
+        return multMatrix_db
         # do a separate loop for connecting combination shapes and end-hook connections:
         # for each shape:
             # if the shape IS a combination shape:
