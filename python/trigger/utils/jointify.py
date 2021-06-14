@@ -261,10 +261,20 @@ class Jointify(object):
 
         # requires imported animated joints and mesh
 
-        # for each shape:
-            ## requires TIME GAP for that shape
+        multMatrix_db = {}
+        for shape, data in self.originalData.items():
             # find the active joints in the time gap
+            active_joints = [jnt for jnt in self.demData["joints"] if self._is_moving(jnt, data["timeGap"])]
 
+            for jnt in active_joints:
+                if multMatrix_db.get(jnt):
+                    translate_mult = multMatrix_db[jnt][0]
+                    # GET NEXT  index
+                    rotate_mult = multMatrix_db[jnt][1]
+                else:
+                    translate_mult = cmds.createNode("multMatrix")
+                    translate_mult_index = 0
+                pass
             # for each active joint:
                 # create an upper group, apply the same time gap animation to the group
 
@@ -330,4 +340,27 @@ class Jointify(object):
 
         return executable
 
+    @staticmethod
+    def _is_moving(obj, time_gap, translate_threshold=0.01, rotate_threshold=0.5, decimal=3):
+        """Checks if the object is moving between the given time gap"""
+
+        def get_std_deviation(value_list):
+            avg = sum(value_list) / len(value_list)
+            var = sum((x - avg) ** 2 for x in value_list) / len(value_list)
+            std = var ** 0.5
+            return std
+
+        for attr in "xyz":
+            val_list = cmds.keyframe("%s.t%s" % (obj, attr), q=True, valueChange=True, t=tuple(time_gap))
+            deviation = round(get_std_deviation(val_list), decimal)
+            # print("t%s" %attr, deviation)
+            if deviation > translate_threshold:
+                return True
+        for attr in "xyz":
+            val_list = cmds.keyframe("%s.r%s" % (obj, attr), q=True, valueChange=True, t=tuple(time_gap))
+            deviation = round(get_std_deviation(val_list), decimal)
+            # print("r%s" %attr, deviation, val_list)
+            if deviation > rotate_threshold:
+                return True
+        return False
 
