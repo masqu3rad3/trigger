@@ -16,11 +16,14 @@ class Bone(object):
         self._name = joint
         self._translateMult_node = cmds.createNode("multMatrix", name="%s_MM_translate" % self._name)
         self._rotateMult_node = cmds.createNode("multMatrix", name="%s_MM_rotate" % self._name)
-        self._positionCompensate_node = cmds.createNode("decomposeMatrix", name="%s_decomposeMatrix" % self._name)
+        self._positionCompensate_node = cmds.createNode("pointMatrixMult", name="%s_pointMatrixMult" % self._name)
         self._rotationDecompose_node = cmds.createNode("decomposeMatrix", name="%s_decomposeMatrix" % self._name)
 
-        cmds.connectAttr("%s.matrixSum", self._translateMult_node, "%s.inMatrix" % self._positionCompensate_node)
-        cmds.connectAttr("%s.matrixSum", self._rotateMult_node, "%s.inputMatrix" % self._rotationDecompose_node)
+        # # WORKAROUND FOR CMDS BUG
+        # mel_cmd = "connectAttr -force {0}.matrixSum {1}.inMatrix;".format(self._translateMult_node, self._positionCompensate_node)
+        # mel.eval(mel_cmd)
+        cmds.connectAttr("%s.matrixSum" % self._translateMult_node, "%s.inMatrix" % self._positionCompensate_node)
+        cmds.connectAttr("%s.matrixSum" % self._rotateMult_node, "%s.inputMatrix" % self._rotationDecompose_node)
 
         # set initial compensation value
         self._default_distance = cmds.getAttr("%s.translate" % self._name, time=0)[0]
@@ -55,7 +58,7 @@ class Bone(object):
 
         # compensate the offset value
         offset = tuple(x - y for x, y in zip(self._default_distance, position_offset)) # subtract tuples
-        cmds.setAttr("%s.inPoint" % self._positionCompensate_node, *position_offset)
+        cmds.setAttr("%s.inPoint" % self._positionCompensate_node, *offset)
         self._default_distance = offset
 
     # @property
@@ -66,9 +69,9 @@ class Bone(object):
         return self._isClean
 
     def clear_keys(self):
-        t_keys = cmds.listConnections(self._name, type="animCurveTU")
-        r_keys = cmds.listConnections(self._name, type="animCurveTA")
-        s_keys = cmds.listConnections(self._name, type="animCurveTL")
+        t_keys = cmds.listConnections(self._name, type="animCurveTU") or []
+        r_keys = cmds.listConnections(self._name, type="animCurveTA") or []
+        s_keys = cmds.listConnections(self._name, type="animCurveTL") or []
         all_keys = t_keys + r_keys + s_keys
         if all_keys:
             cmds.delete(all_keys)
@@ -103,7 +106,7 @@ class Driver(object):
     def __init__(self, name="drv", bone=None, time_gap=None):
         self._name = cmds.spaceLocator(name=name)[0]
         self._bone = bone
-        self._timeGap = time_gap
+        self._timeGap = tuple(time_gap)
 
     @property
     def bone(self):
@@ -135,7 +138,7 @@ class Driver(object):
         assert self._bone, "bone to drive is not defined"
         assert self._timeGap, "time gap is not defined"
         time_offset = (self._timeGap[0] * -1)
-        cmds.copyKey(self._bone, time=self._timeGap)
+        cmds.copyKey(self._bone.name, time=self._timeGap)
         cmds.pasteKey(self._name, timeOffset=time_offset)
 
     def drive(self):
@@ -170,6 +173,10 @@ class Shape(object):
 
     def get_drivers(self):
         return self._drivers
+
+    def make_connections(self):
+        for driver in self._drivers:
+            driver.drive()
 
 
 
@@ -406,58 +413,58 @@ class Jointify(object):
         self.demData["meshTransform"] = functions.getParent(self.demData["meshes"][0])
         self.demData["skinCluster"] = deformers.get_deformers(self.demData["meshTransform"]).get('skinCluster')[0]
 
-    def jointify(self):
-        """Creates a joint version of the blendshape deformations using the dem bones data as guidance"""
-
-        print("Jointifying the blendshape node")
-        # create a hook node to replace the blendshape deformer
-        jointify_hook = cmds.group(em=True, name="jointify_hook")
-
-        # TODO prepare the incoming database according to the requirements:
-        # All imported animated joints
-        # imported mesh which is skinclustered to the animated joints
-        # Names of all shapes
-        # Time Gaps for all shapes
-        # combinationShape info for all shapes
-
-
-        # requires imported animated joints and mesh
-
-        multMatrix_db = {}
-        for shape, data in self.originalData.items():
-            # find the active joints in the time gap
-            active_joints = [jnt for jnt in self.demData["joints"] if self._is_moving(jnt, data["timeGap"])]
-
-            for jnt in active_joints:
-                if multMatrix_db.get(jnt):
-                    translate_mult = multMatrix_db[jnt][0]
-                    translate_mult_index = attribute.getNextIndex("%s.matrixIn" %translate_mult)
-                    rotate_mult = multMatrix_db[jnt][1]
-                    rotate_mult_index = attribute.getNextIndex("%s.matrixIn" %rotate_mult)
-                else:
-                    translate_mult = cmds.createNode("multMatrix")
-                    translate_mult_index = 0
-                    rotate_mult = cmds.createNode("multMatrix")
-                    rotate_mult_index = 0
-                    multMatrix_db[jnt] = (translate_mult, rotate_mult)
-                driver_loc = cmds.spaceLocator(name="%s_%s_loc" %(shape, jnt))
-                self.copy_keys(jnt, driver_loc, time_range=data["timeGap"], start_frame=0)
-            # for each active joint:
-                # create an upper group, apply the same time gap animation to the group
-
-                # create the corresponding attribute on the jointify hook
-                # drive the group animation with that attribute
-
-        return multMatrix_db
-        # do a separate loop for connecting combination shapes and end-hook connections:
-        # for each shape:
-            # if the shape IS a combination shape:
-                # create a combination node to drive that attribute with related base attributes
-                ## requires all combination shapes
-            # else (NOT a combination shape)
-                # if original shape is driven with some other attr, drive this with the same one
-
-        pass
+    # def jointify(self):
+    #     """Creates a joint version of the blendshape deformations using the dem bones data as guidance"""
+    #
+    #     print("Jointifying the blendshape node")
+    #     # create a hook node to replace the blendshape deformer
+    #     jointify_hook = cmds.group(em=True, name="jointify_hook")
+    #
+    #     # TODO prepare the incoming database according to the requirements:
+    #     # All imported animated joints
+    #     # imported mesh which is skinclustered to the animated joints
+    #     # Names of all shapes
+    #     # Time Gaps for all shapes
+    #     # combinationShape info for all shapes
+    #
+    #
+    #     # requires imported animated joints and mesh
+    #
+    #     multMatrix_db = {}
+    #     for shape, data in self.originalData.items():
+    #         # find the active joints in the time gap
+    #         active_joints = [jnt for jnt in self.demData["joints"] if self._is_moving(jnt, data["timeGap"])]
+    #
+    #         for jnt in active_joints:
+    #             if multMatrix_db.get(jnt):
+    #                 translate_mult = multMatrix_db[jnt][0]
+    #                 translate_mult_index = attribute.getNextIndex("%s.matrixIn" %translate_mult)
+    #                 rotate_mult = multMatrix_db[jnt][1]
+    #                 rotate_mult_index = attribute.getNextIndex("%s.matrixIn" %rotate_mult)
+    #             else:
+    #                 translate_mult = cmds.createNode("multMatrix")
+    #                 translate_mult_index = 0
+    #                 rotate_mult = cmds.createNode("multMatrix")
+    #                 rotate_mult_index = 0
+    #                 multMatrix_db[jnt] = (translate_mult, rotate_mult)
+    #             driver_loc = cmds.spaceLocator(name="%s_%s_loc" %(shape, jnt))
+    #             self.copy_keys(jnt, driver_loc, time_range=data["timeGap"], start_frame=0)
+    #         # for each active joint:
+    #             # create an upper group, apply the same time gap animation to the group
+    #
+    #             # create the corresponding attribute on the jointify hook
+    #             # drive the group animation with that attribute
+    #
+    #     return multMatrix_db
+    #     # do a separate loop for connecting combination shapes and end-hook connections:
+    #     # for each shape:
+    #         # if the shape IS a combination shape:
+    #             # create a combination node to drive that attribute with related base attributes
+    #             ## requires all combination shapes
+    #         # else (NOT a combination shape)
+    #             # if original shape is driven with some other attr, drive this with the same one
+    #
+    #     pass
 
     def jointify(self):
         """Creates a joint version of the blendshape deformations using the dem bones data as guidance"""
@@ -466,6 +473,7 @@ class Jointify(object):
 
         bone_objects = [Bone(x) for x in self.demData["joints"]]
 
+        # before making connections (which clears joint keys), get all the transform data from joints since they are re-used
         shape_objects = []
         for shape, data in self.originalData.items():
             shape_obj = Shape()
@@ -477,13 +485,16 @@ class Jointify(object):
                     shape_obj.add_driver(drv_obj)
             shape_objects.append(shape_obj)
 
+        for shape_obj in shape_objects:
+            shape_obj.make_connections()
+            pass
 
 
-        # create driver objects
-        for shape in all_shapes:
-            shape_obj = Shape()
-            # add active bones
-            active_bones = [x for x in bone_objects if x.is_active(time_gap=time_gap)]
+        # # create driver objects
+        # for shape in all_shapes:
+        #     shape_obj = Shape()
+        #     # add active bones
+        #     active_bones = [x for x in bone_objects if x.is_active(time_gap=time_gap)]
 
     @staticmethod
     def _check_plugins():
