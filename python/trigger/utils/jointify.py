@@ -10,6 +10,169 @@ from trigger.library import deformers, attribute, functions
 from trigger.core.decorators import keepselection, tracktime
 from trigger.library import connection
 
+
+class Bone(object):
+    def __init__(self, joint):
+        self._name = joint
+        self._translateMult_node = cmds.createNode("multMatrix", name="%s_MM_translate" % self._name)
+        self._rotateMult_node = cmds.createNode("multMatrix", name="%s_MM_rotate" % self._name)
+        self._positionCompensate_node = cmds.createNode("decomposeMatrix", name="%s_decomposeMatrix" % self._name)
+        self._rotationDecompose_node = cmds.createNode("decomposeMatrix", name="%s_decomposeMatrix" % self._name)
+
+        cmds.connectAttr("%s.matrixSum", self._translateMult_node, "%s.inMatrix" % self._positionCompensate_node)
+        cmds.connectAttr("%s.matrixSum", self._rotateMult_node, "%s.inputMatrix" % self._rotationDecompose_node)
+
+        # set initial compensation value
+        self._default_distance = cmds.getAttr("%s.translate" % self._name, time=0)[0]
+        cmds.setAttr("%s.inPoint" % self._positionCompensate_node, *self._default_distance)
+
+        self._isClean = False
+
+    @property
+    def name(self):
+        return self._name
+
+    @name.setter
+    def name(self, name):
+        cmds.rename(self._name, name)
+        self._name = name
+
+    # @property
+    # def translate_mult(self):
+    #     return self._translateMult_node
+    #
+    # @property
+    # def rotate_mult(self):
+    #     return self._rotateMult_node
+
+    def add_driver(self, t_matrix_plug, r_matrix_plug, position_offset=(0,0,0)):
+        # connect the driver into nex available attrs
+        t_id = attribute.getNextIndex("%s.matrixIn" % self._translateMult_node)
+        cmds.connectAttr(t_matrix_plug, "%s.matrixIn[%i]" %(self._translateMult_node, t_id))
+
+        r_id = attribute.getNextIndex("%s.matrixIn" % self._rotateMult_node)
+        cmds.connectAttr(r_matrix_plug, "%s.matrixIn[%i]" %(self._rotateMult_node, t_id))
+
+        # compensate the offset value
+        offset = tuple(x - y for x, y in zip(self._default_distance, position_offset)) # subtract tuples
+        cmds.setAttr("%s.inPoint" % self._positionCompensate_node, *position_offset)
+        self._default_distance = offset
+
+    # @property
+    # def decompose_matrix(self):
+    #     return self._decomposeMatrix
+
+    def is_clean(self):
+        return self._isClean
+
+    def clear_keys(self):
+        t_keys = cmds.listConnections(self._name, type="animCurveTU")
+        r_keys = cmds.listConnections(self._name, type="animCurveTA")
+        s_keys = cmds.listConnections(self._name, type="animCurveTL")
+        all_keys = t_keys + r_keys + s_keys
+        if all_keys:
+            cmds.delete(all_keys)
+
+        cmds.connectAttr("%s.output" % self._positionCompensate_node, "%s.translate" % self._name, f=True)
+        cmds.connectAttr("%s.outputRotate" % self._rotationDecompose_node, "%s.rotate" % self._name, f=True)
+        self._isClean = True
+
+    def is_active(self, time_gap, translate_threshold=0.01, rotate_threshold=0.5, decimal=3):
+        """Checks if the object is moving between the given time gap"""
+
+        def get_std_deviation(value_list):
+            avg = sum(value_list) / len(value_list)
+            var = sum((x - avg) ** 2 for x in value_list) / len(value_list)
+            std = var ** 0.5
+            return std
+
+        for attr in "xyz":
+            val_list = cmds.keyframe("%s.t%s" % (self._name, attr), q=True, valueChange=True, t=tuple(time_gap))
+            deviation = round(get_std_deviation(val_list), decimal)
+            # print("t%s" %attr, deviation)
+            if deviation > translate_threshold:
+                return True
+        for attr in "xyz":
+            val_list = cmds.keyframe("%s.r%s" % (self._name, attr), q=True, valueChange=True, t=tuple(time_gap))
+            deviation = round(get_std_deviation(val_list), decimal)
+            if deviation > rotate_threshold:
+                return True
+        return False
+
+class Driver(object):
+    def __init__(self, name="drv", bone=None, time_gap=None):
+        self._name = cmds.spaceLocator(name=name)[0]
+        self._bone = bone
+        self._timeGap = time_gap
+
+    @property
+    def bone(self):
+        return self._bone
+
+    @bone.setter
+    def bone(self, bone_object):
+        self._bone = bone_object
+
+    @property
+    def name(self):
+        return self._name
+
+    @name.setter
+    def name(self, name):
+        cmds.rename(self._name, name)
+        self._name = name
+
+    @property
+    def time_gap(self):
+        return self._timeGap
+
+    @time_gap.setter
+    def time_gap(self, time_gap):
+        self._timeGap = time_gap
+
+    def copy_keys(self):
+        """ copies the keys from the joint """
+        assert self._bone, "bone to drive is not defined"
+        assert self._timeGap, "time gap is not defined"
+        time_offset = (self._timeGap[0] * -1)
+        cmds.copyKey(self._bone, time=self._timeGap)
+        cmds.pasteKey(self._name, timeOffset=time_offset)
+
+    def drive(self):
+        assert self._bone, "bone to drive is not defined"
+        if not self._bone.is_clean():
+            self._bone.clear_keys()
+
+        pick_translate = cmds.createNode("pickMatrix", name="pick_translate")
+        cmds.setAttr("%s.useTranslate" % pick_translate, 1)
+        cmds.setAttr("%s.useRotate" % pick_translate, 0)
+        cmds.setAttr("%s.useShear" % pick_translate, 0)
+        cmds.setAttr("%s.useScale" % pick_translate, 0)
+        cmds.connectAttr("%s.worldMatrix[0]" % self._name, "%s.inputMatrix" % pick_translate)
+
+        pick_rotate = cmds.createNode("pickMatrix", name="pick_rotate")
+        cmds.setAttr("%s.useTranslate" % pick_rotate, 0)
+        cmds.setAttr("%s.useRotate" % pick_rotate, 1)
+        cmds.setAttr("%s.useShear" % pick_rotate, 0)
+        cmds.setAttr("%s.useScale" % pick_rotate, 0)
+        cmds.connectAttr("%s.worldMatrix[0]" % self._name, "%s.inputMatrix" % pick_rotate)
+
+        offset = cmds.getAttr("%s.translate" % self._name, time=0)[0]
+        self._bone.add_driver(t_matrix_plug="%s.outputMatrix" % pick_translate, r_matrix_plug="%s.outputMatrix" % pick_rotate, position_offset=offset)
+
+
+class Shape(object):
+    def __init__(self):
+        self._drivers = []
+
+    def add_driver(self, driver):
+        self._drivers.append(driver)
+
+    def get_drivers(self):
+        return self._drivers
+
+
+
 class Jointify(object):
     def __init__(self, blendshape_node=None, joint_count=30, head_joint=None, shape_duration=10, joint_iterations=30, fbx_source=None, *args, **kwargs):
         super(Jointify, self).__init__()
@@ -243,7 +406,6 @@ class Jointify(object):
         self.demData["meshTransform"] = functions.getParent(self.demData["meshes"][0])
         self.demData["skinCluster"] = deformers.get_deformers(self.demData["meshTransform"]).get('skinCluster')[0]
 
-
     def jointify(self):
         """Creates a joint version of the blendshape deformations using the dem bones data as guidance"""
 
@@ -279,6 +441,7 @@ class Jointify(object):
                     rotate_mult_index = 0
                     multMatrix_db[jnt] = (translate_mult, rotate_mult)
                 driver_loc = cmds.spaceLocator(name="%s_%s_loc" %(shape, jnt))
+                self.copy_keys(jnt, driver_loc, time_range=data["timeGap"], start_frame=0)
             # for each active joint:
                 # create an upper group, apply the same time gap animation to the group
 
@@ -295,6 +458,32 @@ class Jointify(object):
                 # if original shape is driven with some other attr, drive this with the same one
 
         pass
+
+    def jointify(self):
+        """Creates a joint version of the blendshape deformations using the dem bones data as guidance"""
+
+        print("Jointifying the blendshape node")
+
+        bone_objects = [Bone(x) for x in self.demData["joints"]]
+
+        shape_objects = []
+        for shape, data in self.originalData.items():
+            shape_obj = Shape()
+            # create a driver for each active bone object
+            for bone_obj in bone_objects:
+                if bone_obj.is_active(time_gap=data["timeGap"]):
+                    drv_obj = Driver(name="drv", bone=bone_obj, time_gap=data["timeGap"])
+                    drv_obj.copy_keys()
+                    shape_obj.add_driver(drv_obj)
+            shape_objects.append(shape_obj)
+
+
+
+        # create driver objects
+        for shape in all_shapes:
+            shape_obj = Shape()
+            # add active bones
+            active_bones = [x for x in bone_objects if x.is_active(time_gap=time_gap)]
 
     @staticmethod
     def _check_plugins():
@@ -368,3 +557,11 @@ class Jointify(object):
                 return True
         return False
 
+    @staticmethod
+    def copy_keys(source, target, time_range=None, start_frame=None):
+        if start_frame != None:
+            time_offset = (time_range[0] * -1) + start_frame
+        else:
+            time_offset = 0
+        cmds.copyKey(source, time=time_range)
+        cmds.pasteKey(target, timeOffset=time_offset)
