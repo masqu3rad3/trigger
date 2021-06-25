@@ -162,16 +162,16 @@ class Driver(object):
         cmds.setAttr("%s.useRotate" % pick_translate, 0)
         cmds.setAttr("%s.useShear" % pick_translate, 0)
         cmds.setAttr("%s.useScale" % pick_translate, 0)
-        # cmds.connectAttr("%s.worldMatrix[0]" % self._name, "%s.inputMatrix" % pick_translate)
-        cmds.connectAttr("%s.xformMatrix" % self._name, "%s.inputMatrix" % pick_translate)
+        cmds.connectAttr("%s.worldMatrix[0]" % self._name, "%s.inputMatrix" % pick_translate)
+        # cmds.connectAttr("%s.xformMatrix" % self._name, "%s.inputMatrix" % pick_translate)
 
         pick_rotate = cmds.createNode("pickMatrix", name="pick_rotate")
         cmds.setAttr("%s.useTranslate" % pick_rotate, 0)
         cmds.setAttr("%s.useRotate" % pick_rotate, 1)
         cmds.setAttr("%s.useShear" % pick_rotate, 0)
         cmds.setAttr("%s.useScale" % pick_rotate, 0)
-        # cmds.connectAttr("%s.worldMatrix[0]" % self._name, "%s.inputMatrix" % pick_rotate)
-        cmds.connectAttr("%s.xformMatrix" % self._name, "%s.inputMatrix" % pick_rotate)
+        cmds.connectAttr("%s.worldMatrix[0]" % self._name, "%s.inputMatrix" % pick_rotate)
+        # cmds.connectAttr("%s.xformMatrix" % self._name, "%s.inputMatrix" % pick_rotate)
 
         offset = cmds.getAttr("%s.translate" % self._name, time=0)[0]
         self._bone.add_driver(t_matrix_plug="%s.outputMatrix" % pick_translate, r_matrix_plug="%s.outputMatrix" % pick_rotate, position_offset=offset)
@@ -259,13 +259,12 @@ class Shape(object):
 
         # drive the attribute with the scene hook if there is one
 
-        if self._hookNode and not self._baseShapes:
+        if self._hookNode:
             hook_attr = attribute.validate_attr("{0}.{1}".format(self._hookNode, self._name),
                                                     attr_range=[0.0, 1.0],
                                                     attr_type="float", default_value=0, keyable=True, display=True)
 
-            # TODO maybe the _multiply connect node can be optimized if needed
-            self._multiply_connect(hook_attr, [jointify_attr], self._duration)
+
 
             # validate the hook attribute
             if self._baseShapes:  # in case this is a combination shape
@@ -284,6 +283,10 @@ class Shape(object):
                     cmds.connectAttr(attr, "{0}.inputWeight[{1}]".format(combo_node, nmb))
 
                 cmds.connectAttr("%s.outputWeight" % combo_node, jointify_attr)
+
+            else:
+                # TODO maybe the _multiply connect node can be optimized if needed
+                self._multiply_connect(hook_attr, [jointify_attr], self._duration)
 
 
     def _multiply_connect(self, driver_attr, driven_attrs, mult_value):
