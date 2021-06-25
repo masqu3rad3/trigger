@@ -178,13 +178,14 @@ class Driver(object):
 
 
 class Shape(object):
-    def __init__(self, name, hook_node, duration, combination_of=None):
+    def __init__(self, name, jointify_node, duration, combination_of=None, hook_node=None):
         self._drivers = []
-        if not cmds.objExists(hook_node):
-            cmds.group(em=True, name=hook_node)
-        self._hookNode = hook_node
+        if not cmds.objExists(jointify_node):
+            cmds.group(em=True, name=jointify_node)
+        self._jointifyNode = jointify_node
         self._name = name
         self._duration = duration
+        self._hookNode = hook_node
         if combination_of:
             self._baseShapes = combination_of
         else:
@@ -196,27 +197,53 @@ class Shape(object):
     def get_driver_names(self):
         return [drv.name for drv in self._drivers]
 
+    # def make_connections(self):
+    #     # validate the hook attribute
+    #     if self._baseShapes: # in case this is a combination shape
+    #         base_attrs = []
+    #         for base in self._baseShapes:
+    #             base_attr = attribute.validate_attr("{0}.{1}".format(self._jointifyNode, base), attr_range=[0.0, self._duration],
+    #                                                 attr_type="float", default_value=0, keyable=True, display=True)
+    #             base_attrs.append(base_attr)
+    #
+    #         # out_attr = "locator3.tx"
+    #         combo_node = cmds.createNode("combinationShape", name="%s_combo" % ("_".join(self._baseShapes)))
+    #         # TODO Here is the place to adjust combinationShape Node if necessary
+    #
+    #         for nmb, attr in enumerate(base_attrs):
+    #             cmds.connectAttr(attr, "{0}.inputWeight[{1}]".format(combo_node, nmb))
+    #
+    #         jointify_attr = "%s.outputWeight" % combo_node
+    #         # cmds.connectAttr("%s.outputWeight" % combo_node, out_attr)
+    #
+    #     else:
+    #         jointify_attr = attribute.validate_attr("{0}.{1}".format(self._jointifyNode, self._name), attr_range=[0.0, self._duration],
+    #                                             attr_type="float", default_value=0, keyable=True, display=True)
+    #     for driver in self._drivers:
+    #         driver.drive()
+    #         anim_curves = driver.get_animcurves()
+    #         if anim_curves:
+    #             input_attrs = ["%s.input" % x for x in anim_curves]
+    #             curve_duration = driver.time_gap[1] - driver.time_gap[0]
+    #             # attribute.drive_attrs(jointify_attr, input_attrs, driver_range=[0, 1], driven_range=[0,curve_duration], force=True)
+    #             # use multiplier in order to make out-of-range animation available
+    #             # self._multiply_connect(jointify_attr, input_attrs, self._duration)
+    #             # make a direct connection to jointify node
+    #             _ = [cmds.connectAttr(jointify_attr, x) for x in input_attrs]
+    #
+    #     # drive the attribute with the scene hook if there is one
+    #     if self._hookNode:
+    #         hook_attr = attribute.validate_attr("{0}.{1}".format(self._hookNode, self._name),
+    #                                                 attr_range=[0.0, 1.0],
+    #                                                 attr_type="float", default_value=0, keyable=True, display=True)
+    #
+    #         # TODO maybe the _multiply connect node can be optimized if needed
+    #         self._multiply_connect(hook_attr, [jointify_attr], self._duration)
+
     def make_connections(self):
-        # validate the hook attribute
-        if self._baseShapes: # in case this is a combination shape
-            base_attrs = []
-            for base in self._baseShapes:
-                base_attr = attribute.validate_attr("{0}.{1}".format(self._hookNode, base), attr_range=[0.0, 1.0],
-                                                    attr_type="float", default_value=0, keyable=True, display=True)
-                base_attrs.append(base_attr)
 
-            # out_attr = "locator3.tx"
-            combo_node = cmds.createNode("combinationShape", name="%s_combo" % ("_".join(self._baseShapes)))
-            # TODO Here is the place to adjust combinationShape Node if necessary
 
-            for nmb, attr in enumerate(base_attrs):
-                cmds.connectAttr(attr, "{0}.inputWeight[{1}]".format(combo_node, nmb))
-
-            hook_attr = "%s.outputWeight" % combo_node
-            # cmds.connectAttr("%s.outputWeight" % combo_node, out_attr)
-
-        else:
-            hook_attr = attribute.validate_attr("{0}.{1}".format(self._hookNode, self._name), attr_range=[0.0, 1.0],
+        jointify_attr = attribute.validate_attr("{0}.{1}".format(self._jointifyNode, self._name), attr_range=[0.0, self._duration],
                                                 attr_type="float", default_value=0, keyable=True, display=True)
         for driver in self._drivers:
             driver.drive()
@@ -224,11 +251,39 @@ class Shape(object):
             if anim_curves:
                 input_attrs = ["%s.input" % x for x in anim_curves]
                 curve_duration = driver.time_gap[1] - driver.time_gap[0]
-                # attribute.drive_attrs(hook_attr, input_attrs, driver_range=[0, 1], driven_range=[0,curve_duration], force=True)
+                # attribute.drive_attrs(jointify_attr, input_attrs, driver_range=[0, 1], driven_range=[0,curve_duration], force=True)
                 # use multiplier in order to make out-of-range animation available
-                self._multiply_connect(hook_attr, input_attrs, self._duration)
-                # try direct connection
-                # _ = [cmds.connectAttr(hook_attr, x) for x in input_attrs]
+                # self._multiply_connect(jointify_attr, input_attrs, self._duration)
+                # make a direct connection to jointify node
+                _ = [cmds.connectAttr(jointify_attr, x) for x in input_attrs]
+
+        # drive the attribute with the scene hook if there is one
+
+        if self._hookNode and not self._baseShapes:
+            hook_attr = attribute.validate_attr("{0}.{1}".format(self._hookNode, self._name),
+                                                    attr_range=[0.0, 1.0],
+                                                    attr_type="float", default_value=0, keyable=True, display=True)
+
+            # TODO maybe the _multiply connect node can be optimized if needed
+            self._multiply_connect(hook_attr, [jointify_attr], self._duration)
+
+            # validate the hook attribute
+            if self._baseShapes:  # in case this is a combination shape
+                base_attrs = []
+                for base in self._baseShapes:
+                    base_attr = attribute.validate_attr("{0}.{1}".format(self._hookNode, base),
+                                                        attr_range=[0.0, 1.0],
+                                                        attr_type="float", default_value=0, keyable=True, display=True)
+                    base_attrs.append(base_attr)
+
+                # out_attr = "locator3.tx"
+                combo_node = cmds.createNode("combinationShape", name="%s_combo" % ("_".join(self._baseShapes)))
+                # TODO Here is the place to adjust combinationShape Node if necessary
+
+                for nmb, attr in enumerate(base_attrs):
+                    cmds.connectAttr(attr, "{0}.inputWeight[{1}]".format(combo_node, nmb))
+
+                cmds.connectAttr("%s.outputWeight" % combo_node, jointify_attr)
 
 
     def _multiply_connect(self, driver_attr, driven_attrs, mult_value):
@@ -564,12 +619,14 @@ class Jointify(object):
 
         bone_objects = [Bone(x) for x in self.demData["joints"] if x is not "jointifyRoot_jnt"]
 
+        jointify_node = functions.validateGroup("jointify")
 
         # before making connections (which clears joint keys), get all the transform data from joints since they are re-used
         shape_objects = []
         for shape, data in self.originalData.items():
             # TODO Get the hook nood procedurally from the blendshapes input connections
-            shape_obj = Shape(name=shape, hook_node="morph_hook", combination_of=data["combinations"])
+            scene_hook = data["in"].split(".")[0] if data["in"] else None
+            shape_obj = Shape(name=shape, jointify_node=jointify_node, duration=data["timeGap"][1] - data["timeGap"][0], combination_of=data["combinations"], hook_node=scene_hook)
             # create a driver for each active bone object
             for bone_obj in bone_objects:
                 if bone_obj.is_active(time_gap=data["timeGap"]):
