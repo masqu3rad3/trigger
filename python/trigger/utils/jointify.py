@@ -6,7 +6,7 @@ import platform
 from maya import cmds
 from maya import mel
 
-from trigger.library import deformers, attribute, functions
+from trigger.library import deformers, attribute, functions, api, arithmetic, naming
 from trigger.core.decorators import keepselection, tracktime
 from trigger.library import connection
 
@@ -19,14 +19,13 @@ class Bone(object):
         self._positionCompensate_node = cmds.createNode("pointMatrixMult", name="%s_pointMatrixMult" % self._name)
         self._rotationDecompose_node = cmds.createNode("decomposeMatrix", name="%s_decomposeMatrix" % self._name)
 
-        # # WORKAROUND FOR CMDS BUG
-        # mel_cmd = "connectAttr -force {0}.matrixSum {1}.inMatrix;".format(self._translateMult_node, self._positionCompensate_node)
-        # mel.eval(mel_cmd)
         cmds.connectAttr("%s.matrixSum" % self._translateMult_node, "%s.inMatrix" % self._positionCompensate_node)
         cmds.connectAttr("%s.matrixSum" % self._rotateMult_node, "%s.inputMatrix" % self._rotationDecompose_node)
 
         # set initial compensation value
         self._default_distance = cmds.getAttr("%s.translate" % self._name, time=0)[0]
+        # cmds.currentTime(0)
+        # self._default_distance = api.getWorldTranslation()
         cmds.setAttr("%s.inPoint" % self._positionCompensate_node, *self._default_distance)
 
         self._isClean = False
@@ -103,10 +102,14 @@ class Bone(object):
         return False
 
 class Driver(object):
-    def __init__(self, name="drv", bone=None, time_gap=None):
-        self._name = cmds.spaceLocator(name=name)[0]
+    def __init__(self, name="drv", bone=None, time_gap=None, parent_node=None):
+        # self._name = cmds.spaceLocator(name=naming.uniqueName(name))[0]
+        self._name = cmds.group(em=True, name=naming.uniqueName(name))
+        if parent_node:
+            cmds.parent(self._name, parent_node)
         self._bone = bone
         self._timeGap = tuple(time_gap)
+
 
     @property
     def bone(self):
@@ -133,6 +136,11 @@ class Driver(object):
     def time_gap(self, time_gap):
         self._timeGap = time_gap
 
+    def get_animcurves(self):
+        connections = cmds.listConnections(self._name)
+        anim_curves = cmds.ls(connections, type=['animCurveTA', 'animCurveTL', 'animCurveTT', 'animCurveTU'])
+        return anim_curves
+
     def copy_keys(self):
         """ copies the keys from the joint """
         assert self._bone, "bone to drive is not defined"
@@ -140,6 +148,9 @@ class Driver(object):
         time_offset = (self._timeGap[0] * -1)
         cmds.copyKey(self._bone.name, time=self._timeGap)
         cmds.pasteKey(self._name, timeOffset=time_offset)
+        # set the handles and pre/post infinity
+        cmds.keyTangent(self._name, inTangentType="spline", outTangentType="spline")
+        cmds.setInfinity(self._name, pri='linear', poi='linear')
 
     def drive(self):
         assert self._bone, "bone to drive is not defined"
@@ -151,37 +162,96 @@ class Driver(object):
         cmds.setAttr("%s.useRotate" % pick_translate, 0)
         cmds.setAttr("%s.useShear" % pick_translate, 0)
         cmds.setAttr("%s.useScale" % pick_translate, 0)
-        cmds.connectAttr("%s.worldMatrix[0]" % self._name, "%s.inputMatrix" % pick_translate)
+        # cmds.connectAttr("%s.worldMatrix[0]" % self._name, "%s.inputMatrix" % pick_translate)
+        cmds.connectAttr("%s.xformMatrix" % self._name, "%s.inputMatrix" % pick_translate)
 
         pick_rotate = cmds.createNode("pickMatrix", name="pick_rotate")
         cmds.setAttr("%s.useTranslate" % pick_rotate, 0)
         cmds.setAttr("%s.useRotate" % pick_rotate, 1)
         cmds.setAttr("%s.useShear" % pick_rotate, 0)
         cmds.setAttr("%s.useScale" % pick_rotate, 0)
-        cmds.connectAttr("%s.worldMatrix[0]" % self._name, "%s.inputMatrix" % pick_rotate)
+        # cmds.connectAttr("%s.worldMatrix[0]" % self._name, "%s.inputMatrix" % pick_rotate)
+        cmds.connectAttr("%s.xformMatrix" % self._name, "%s.inputMatrix" % pick_rotate)
 
         offset = cmds.getAttr("%s.translate" % self._name, time=0)[0]
         self._bone.add_driver(t_matrix_plug="%s.outputMatrix" % pick_translate, r_matrix_plug="%s.outputMatrix" % pick_rotate, position_offset=offset)
 
 
 class Shape(object):
-    def __init__(self):
+    def __init__(self, name, hook_node, duration, combination_of=None):
         self._drivers = []
+        if not cmds.objExists(hook_node):
+            cmds.group(em=True, name=hook_node)
+        self._hookNode = hook_node
+        self._name = name
+        self._duration = duration
+        if combination_of:
+            self._baseShapes = combination_of
+        else:
+            self._baseShapes = []
 
     def add_driver(self, driver):
         self._drivers.append(driver)
 
-    def get_drivers(self):
-        return self._drivers
+    def get_driver_names(self):
+        return [drv.name for drv in self._drivers]
 
     def make_connections(self):
+        # validate the hook attribute
+        if self._baseShapes: # in case this is a combination shape
+            base_attrs = []
+            for base in self._baseShapes:
+                base_attr = attribute.validate_attr("{0}.{1}".format(self._hookNode, base), attr_range=[0.0, 1.0],
+                                                    attr_type="float", default_value=0, keyable=True, display=True)
+                base_attrs.append(base_attr)
+
+            # out_attr = "locator3.tx"
+            combo_node = cmds.createNode("combinationShape", name="%s_combo" % ("_".join(self._baseShapes)))
+            # TODO Here is the place to adjust combinationShape Node if necessary
+
+            for nmb, attr in enumerate(base_attrs):
+                cmds.connectAttr(attr, "{0}.inputWeight[{1}]".format(combo_node, nmb))
+
+            hook_attr = "%s.outputWeight" % combo_node
+            # cmds.connectAttr("%s.outputWeight" % combo_node, out_attr)
+
+        else:
+            hook_attr = attribute.validate_attr("{0}.{1}".format(self._hookNode, self._name), attr_range=[0.0, 1.0],
+                                                attr_type="float", default_value=0, keyable=True, display=True)
         for driver in self._drivers:
             driver.drive()
+            anim_curves = driver.get_animcurves()
+            if anim_curves:
+                input_attrs = ["%s.input" % x for x in anim_curves]
+                curve_duration = driver.time_gap[1] - driver.time_gap[0]
+                # attribute.drive_attrs(hook_attr, input_attrs, driver_range=[0, 1], driven_range=[0,curve_duration], force=True)
+                # use multiplier in order to make out-of-range animation available
+                self._multiply_connect(hook_attr, input_attrs, self._duration)
+                # try direct connection
+                # _ = [cmds.connectAttr(hook_attr, x) for x in input_attrs]
+
+
+    def _multiply_connect(self, driver_attr, driven_attrs, mult_value):
+        for driven_attr in driven_attrs:
+            if mult_value != 1:
+                # TODO make it NOT historically interesting
+                output_plug = arithmetic.multiply(driver_attr, mult_value)
+                cmds.connectAttr(output_plug, driven_attr)
+            else:
+                cmds.connectAttr(driver_attr, driven_attr)
 
 
 
 class Jointify(object):
-    def __init__(self, blendshape_node=None, joint_count=30, head_joint=None, shape_duration=10, joint_iterations=30, fbx_source=None, *args, **kwargs):
+    def __init__(self,
+                 blendshape_node=None,
+                 joint_count=30,
+                 shape_duration=10,
+                 joint_iterations=30,
+                 fbx_source=None,
+                 head_joint=None,
+                 head_position=None,
+                 *args, **kwargs):
         super(Jointify, self).__init__()
 
         self._check_plugins()
@@ -194,6 +264,12 @@ class Jointify(object):
         self.jointIterations = joint_iterations
         self.fbxSource = fbx_source
 
+        self.headJoint = head_joint
+
+        if head_joint and not head_position:
+            self.headPosition = api.getWorldTranslation(head_joint)
+        else:
+            self.headPosition = head_position or [0, 0, 0]
 
         # class variables
         self.dem_exec = self._get_dem_bones()
@@ -270,10 +346,10 @@ class Jointify(object):
                 cmds.disconnectAttr(data["in"], data["out"])
             start_frame = (self.shapeDuration * (nmb+1)) - self.shapeDuration
             end_frame = start_frame + (self.shapeDuration-1)
-            cmds.setKeyframe(self.blendshapeNode, at=attr, t=start_frame - 1, value=0)
-            cmds.setKeyframe(self.blendshapeNode, at=attr, t=start_frame, value=0)
-            cmds.setKeyframe(self.blendshapeNode, at=attr, t=end_frame, value=1)
-            cmds.setKeyframe(self.blendshapeNode, at=attr, t=end_frame + 1, value=0)
+            cmds.setKeyframe(self.blendshapeNode, at=attr, t=start_frame - 1, value=0, itt="linear", ott="linear")
+            cmds.setKeyframe(self.blendshapeNode, at=attr, t=start_frame, value=0, itt="linear", ott="linear")
+            cmds.setKeyframe(self.blendshapeNode, at=attr, t=end_frame, value=1, itt="linear", ott="linear")
+            cmds.setKeyframe(self.blendshapeNode, at=attr, t=end_frame + 1, value=0, itt="linear", ott="linear")
             data["timeGap"] = [start_frame, end_frame]
 
         # # update the training data
@@ -408,10 +484,22 @@ class Jointify(object):
 
         # build dem-data dictionary
         self.demData["demNodes"] = [x for x in after if x not in pre]
+
         self.demData["joints"] = cmds.ls(self.demData["demNodes"], type="joint")
         self.demData["meshes"] = cmds.ls(self.demData["demNodes"], type="mesh")
         self.demData["meshTransform"] = functions.getParent(self.demData["meshes"][0])
         self.demData["skinCluster"] = deformers.get_deformers(self.demData["meshTransform"]).get('skinCluster')[0]
+
+        # create the root joint:
+        cmds.select(d=True)
+        root_jnt = cmds.joint(name="jointifyRoot_jnt")
+        cmds.setAttr("%s.t" % root_jnt, *self.headPosition)
+        # parent the demJoints to the root bone and offset the key values accordingly
+        cmds.parent(self.demData["joints"], root_jnt)
+        for jnt in self.demData["joints"]:
+            cmds.keyframe("%s.tx" % jnt, vc=self.headPosition[0]*-1, relative=True)
+            cmds.keyframe("%s.ty" % jnt, vc=self.headPosition[1]*-1, relative=True)
+            cmds.keyframe("%s.tz" % jnt, vc=self.headPosition[2]*-1, relative=True)
 
     # def jointify(self):
     #     """Creates a joint version of the blendshape deformations using the dem bones data as guidance"""
@@ -471,24 +559,28 @@ class Jointify(object):
 
         print("Jointifying the blendshape node")
 
-        bone_objects = [Bone(x) for x in self.demData["joints"]]
+        # tidy up the scene with groups
+        drivers_grp = functions.validateGroup("jointifyDrv_grp")
+
+        bone_objects = [Bone(x) for x in self.demData["joints"] if x is not "jointifyRoot_jnt"]
+
 
         # before making connections (which clears joint keys), get all the transform data from joints since they are re-used
         shape_objects = []
         for shape, data in self.originalData.items():
-            shape_obj = Shape()
+            # TODO Get the hook nood procedurally from the blendshapes input connections
+            shape_obj = Shape(name=shape, hook_node="morph_hook", combination_of=data["combinations"])
             # create a driver for each active bone object
             for bone_obj in bone_objects:
                 if bone_obj.is_active(time_gap=data["timeGap"]):
-                    drv_obj = Driver(name="drv", bone=bone_obj, time_gap=data["timeGap"])
+                    drv_obj = Driver(name="drv", bone=bone_obj, time_gap=data["timeGap"], parent_node=drivers_grp)
                     drv_obj.copy_keys()
                     shape_obj.add_driver(drv_obj)
             shape_objects.append(shape_obj)
 
         for shape_obj in shape_objects:
             shape_obj.make_connections()
-            pass
-
+            # cmds.parent(shape_obj.get_driver_names(), drivers_grp)
 
         # # create driver objects
         # for shape in all_shapes:
