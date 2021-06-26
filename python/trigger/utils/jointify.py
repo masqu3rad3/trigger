@@ -6,6 +6,9 @@ import platform
 from maya import cmds
 from maya import mel
 
+import maya.api.OpenMaya as om
+import maya.api.OpenMayaAnim as oma
+
 from trigger.library import deformers, attribute, functions, api, arithmetic, naming
 from trigger.core.decorators import keepselection, tracktime
 from trigger.library import connection
@@ -737,3 +740,51 @@ class Jointify(object):
             time_offset = 0
         cmds.copyKey(source, time=time_range)
         cmds.pasteKey(target, timeOffset=time_offset)
+
+    @staticmethod
+    def get_inbetween_values(blendshape_node, target_name):
+
+        # get the bs api mobject
+        bs_sel = om.MSelectionList()
+        bs_sel.add(blendshape_node)
+        bs_mobj = om.MObject()
+        bs_sel.getDependNode(0, bs_mobj)
+
+        # get affected shapes api MObject
+        transform_name = cmds.listConnections("{0}.outputGeometry".format(blendshape_node))[0]
+        mesh_name = cmds.listRelatives(transform_name, children=True)[0]
+        mesh_sel = om.MSelectionList()
+        mesh_sel.add(mesh_name)
+        mesh_dag = om.MDagPath()
+        mesh_mobj = om.MObject()
+        mesh_sel.getDagPath(0, mesh_dag)
+        mesh_sel.getDependNode(0, mesh_mobj)
+        mesh_mfnmesh = om.MFnMesh(mesh_dag)
+
+        # function set for Blendshape
+        m_bs_func = oma.MFnBlendShapeDeformer(bs_mobj)
+
+
+        # find the target index from name
+        attr = blendshape_node + '.w[{}]'
+        weightCount = cmds.blendShape(blendshape_node, q=True, wc=True)
+        for index in range(weightCount):
+            if cmds.aliasAttr(attr.format(index), q=True) == target_name:
+                target_index = index
+                break
+        if target_index == None:
+            raise Exception("Target name cannot be found in the blendshape node")
+
+        target_index = deformers.get_bs_index_by_name(blendshape_node, target_name)
+
+        # get the target item index list
+        m_target_arr = om.MIntArray()
+        m_bs_func.targetItemIndexList(target_index, mesh_mobj, m_target_arr)
+
+        if m_target_arr.length() == 1:
+            return None
+
+        # drop the last element of array
+        m_target_arr.remove(m_target_arr.length()-1)
+
+        return [(x - 5000) / 1000.0 for x in m_target_arr]
