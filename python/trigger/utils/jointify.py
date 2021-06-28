@@ -3,11 +3,15 @@ import subprocess
 import os
 import platform
 
+import fractions
+import functools
+
 from maya import cmds
 from maya import mel
 
-import maya.api.OpenMaya as om
-import maya.api.OpenMayaAnim as oma
+# unfortunatalely only ol api has the MFnBlendShapeDeformer
+import maya.OpenMaya as om
+import maya.OpenMayaAnim as oma
 
 from trigger.library import deformers, attribute, functions, api, arithmetic, naming
 from trigger.core.decorators import keepselection, tracktime
@@ -200,52 +204,8 @@ class Shape(object):
     def get_driver_names(self):
         return [drv.name for drv in self._drivers]
 
-    # def make_connections(self):
-    #     # validate the hook attribute
-    #     if self._baseShapes: # in case this is a combination shape
-    #         base_attrs = []
-    #         for base in self._baseShapes:
-    #             base_attr = attribute.validate_attr("{0}.{1}".format(self._jointifyNode, base), attr_range=[0.0, self._duration],
-    #                                                 attr_type="float", default_value=0, keyable=True, display=True)
-    #             base_attrs.append(base_attr)
-    #
-    #         # out_attr = "locator3.tx"
-    #         combo_node = cmds.createNode("combinationShape", name="%s_combo" % ("_".join(self._baseShapes)))
-    #         # TODO Here is the place to adjust combinationShape Node if necessary
-    #
-    #         for nmb, attr in enumerate(base_attrs):
-    #             cmds.connectAttr(attr, "{0}.inputWeight[{1}]".format(combo_node, nmb))
-    #
-    #         jointify_attr = "%s.outputWeight" % combo_node
-    #         # cmds.connectAttr("%s.outputWeight" % combo_node, out_attr)
-    #
-    #     else:
-    #         jointify_attr = attribute.validate_attr("{0}.{1}".format(self._jointifyNode, self._name), attr_range=[0.0, self._duration],
-    #                                             attr_type="float", default_value=0, keyable=True, display=True)
-    #     for driver in self._drivers:
-    #         driver.drive()
-    #         anim_curves = driver.get_animcurves()
-    #         if anim_curves:
-    #             input_attrs = ["%s.input" % x for x in anim_curves]
-    #             curve_duration = driver.time_gap[1] - driver.time_gap[0]
-    #             # attribute.drive_attrs(jointify_attr, input_attrs, driver_range=[0, 1], driven_range=[0,curve_duration], force=True)
-    #             # use multiplier in order to make out-of-range animation available
-    #             # self._multiply_connect(jointify_attr, input_attrs, self._duration)
-    #             # make a direct connection to jointify node
-    #             _ = [cmds.connectAttr(jointify_attr, x) for x in input_attrs]
-    #
-    #     # drive the attribute with the scene hook if there is one
-    #     if self._hookNode:
-    #         hook_attr = attribute.validate_attr("{0}.{1}".format(self._hookNode, self._name),
-    #                                                 attr_range=[0.0, 1.0],
-    #                                                 attr_type="float", default_value=0, keyable=True, display=True)
-    #
-    #         # TODO maybe the _multiply connect node can be optimized if needed
-    #         self._multiply_connect(hook_attr, [jointify_attr], self._duration)
 
     def make_connections(self):
-
-
         jointify_attr = attribute.validate_attr("{0}.{1}".format(self._jointifyNode, self._name), attr_range=[0.0, self._duration],
                                                 attr_type="float", default_value=0, keyable=True, display=True)
         for driver in self._drivers:
@@ -260,27 +220,11 @@ class Shape(object):
                 # make a direct connection to jointify node
                 _ = [cmds.connectAttr(jointify_attr, x) for x in input_attrs]
 
-        # drive the attribute with the scene hook if there is one
-
-        # if self._hookAttrs:
-        #     hook_attr = attribute.validate_attr("{0}.{1}".format(self._hookAttrs, self._name),
-        #                                         attr_range=[0.0, 1.0],
-        #                                         attr_type="float", default_value=0, keyable=True, display=True)
 
 
 
         # validate the hook attribute
         if self._baseShapes:  # in case this is a combination shape
-            # print("Debug")
-            # print(self._name, self._baseShapes)
-            # base_attrs = []
-            # for base in self._baseShapes:
-            #     base_attr = attribute.validate_attr("{0}.{1}".format(self._hookAttrs, base),
-            #                                         attr_range=[0.0, 1.0],
-            #                                         attr_type="float", default_value=0, keyable=True, display=True)
-            #     base_attrs.append(base_attr)
-
-            # out_attr = "locator3.tx"
             combo_node = cmds.createNode("combinationShape", name="%s_combo" % ("_".join(self._baseShapes)))
             # TODO Here is the place to adjust combinationShape Node if necessary
 
@@ -311,7 +255,7 @@ class Jointify(object):
     def __init__(self,
                  blendshape_node=None,
                  joint_count=30,
-                 shape_duration=10,
+                 shape_duration=0,
                  joint_iterations=30,
                  fbx_source=None,
                  head_joint=None,
@@ -397,25 +341,55 @@ class Jointify(object):
         """Creates a ROM from blendshape targets"""
 
         print("Preparing Training Set")
-        self.trainingData["animationRange"] = [0, (len(self.originalData.items())*self.shapeDuration)]
+
+
         self.trainingData["mesh"] = cmds.listConnections("{0}.outputGeometry".format(self.blendshapeNode))[0]
 
+        # for nmb, (attr, data) in enumerate(self.originalData.items()):
+        #     duration = self.shapeDuration or self._get_shape_duration(self.blendshapeNode, attr)
+        #     duration += 1
+        #     print("debug: %s / %s" %(attr, duration))
+        #     # disconnect inputs
+        #     if data["connected"]:
+        #         cmds.disconnectAttr(data["in"], data["out"])
+        #     start_frame = (duration * (nmb+1)) - duration
+        #     end_frame = start_frame + (duration-1)
+        #     cmds.setKeyframe(self.blendshapeNode, at=attr, t=start_frame - 1, value=0, itt="linear", ott="linear")
+        #     cmds.setKeyframe(self.blendshapeNode, at=attr, t=start_frame, value=0, itt="linear", ott="linear")
+        #     cmds.setKeyframe(self.blendshapeNode, at=attr, t=end_frame, value=1, itt="linear", ott="linear")
+        #     cmds.setKeyframe(self.blendshapeNode, at=attr, t=end_frame + 1, value=0, itt="linear", ott="linear")
+        #     data["timeGap"] = [start_frame, end_frame]
+        #
+
+        start_frame = 0
+        end_frame = 0
         for nmb, (attr, data) in enumerate(self.originalData.items()):
-            # print("nmb", nmb)
-            # print("attr", attr)
-            # print("data", data)
-
-
+            duration = self.shapeDuration or self._get_shape_duration(self.blendshapeNode, attr)
+            end_frame = end_frame + duration + 1
             # disconnect inputs
             if data["connected"]:
                 cmds.disconnectAttr(data["in"], data["out"])
-            start_frame = (self.shapeDuration * (nmb+1)) - self.shapeDuration
-            end_frame = start_frame + (self.shapeDuration-1)
-            cmds.setKeyframe(self.blendshapeNode, at=attr, t=start_frame - 1, value=0, itt="linear", ott="linear")
+
             cmds.setKeyframe(self.blendshapeNode, at=attr, t=start_frame, value=0, itt="linear", ott="linear")
+            cmds.setKeyframe(self.blendshapeNode, at=attr, t=start_frame+1, value=0, itt="linear", ott="linear")
             cmds.setKeyframe(self.blendshapeNode, at=attr, t=end_frame, value=1, itt="linear", ott="linear")
             cmds.setKeyframe(self.blendshapeNode, at=attr, t=end_frame + 1, value=0, itt="linear", ott="linear")
             data["timeGap"] = [start_frame, end_frame]
+            start_frame = end_frame+1
+
+            # print("debug: %s / %s" %(attr, duration))
+            #
+            # start_frame = (duration * (nmb+1)) - duration
+            # end_frame = start_frame + (duration-1)
+            # cmds.setKeyframe(self.blendshapeNode, at=attr, t=start_frame - 1, value=0, itt="linear", ott="linear")
+            # cmds.setKeyframe(self.blendshapeNode, at=attr, t=start_frame, value=0, itt="linear", ott="linear")
+            # cmds.setKeyframe(self.blendshapeNode, at=attr, t=end_frame, value=1, itt="linear", ott="linear")
+            # cmds.setKeyframe(self.blendshapeNode, at=attr, t=end_frame + 1, value=0, itt="linear", ott="linear")
+            # data["timeGap"] = [start_frame, end_frame]
+
+
+        self.trainingData["animationRange"] = [0, end_frame]
+        print("DEBUG2", self.trainingData["animationRange"])
 
         # # update the training data
         # self.trainingData["startFrame"] = shape_duration
@@ -566,59 +540,6 @@ class Jointify(object):
             cmds.keyframe("%s.ty" % jnt, vc=self.headPosition[1]*-1, relative=True)
             cmds.keyframe("%s.tz" % jnt, vc=self.headPosition[2]*-1, relative=True)
 
-    # def jointify(self):
-    #     """Creates a joint version of the blendshape deformations using the dem bones data as guidance"""
-    #
-    #     print("Jointifying the blendshape node")
-    #     # create a hook node to replace the blendshape deformer
-    #     jointify_hook = cmds.group(em=True, name="jointify_hook")
-    #
-    #     # TODO prepare the incoming database according to the requirements:
-    #     # All imported animated joints
-    #     # imported mesh which is skinclustered to the animated joints
-    #     # Names of all shapes
-    #     # Time Gaps for all shapes
-    #     # combinationShape info for all shapes
-    #
-    #
-    #     # requires imported animated joints and mesh
-    #
-    #     multMatrix_db = {}
-    #     for shape, data in self.originalData.items():
-    #         # find the active joints in the time gap
-    #         active_joints = [jnt for jnt in self.demData["joints"] if self._is_moving(jnt, data["timeGap"])]
-    #
-    #         for jnt in active_joints:
-    #             if multMatrix_db.get(jnt):
-    #                 translate_mult = multMatrix_db[jnt][0]
-    #                 translate_mult_index = attribute.getNextIndex("%s.matrixIn" %translate_mult)
-    #                 rotate_mult = multMatrix_db[jnt][1]
-    #                 rotate_mult_index = attribute.getNextIndex("%s.matrixIn" %rotate_mult)
-    #             else:
-    #                 translate_mult = cmds.createNode("multMatrix")
-    #                 translate_mult_index = 0
-    #                 rotate_mult = cmds.createNode("multMatrix")
-    #                 rotate_mult_index = 0
-    #                 multMatrix_db[jnt] = (translate_mult, rotate_mult)
-    #             driver_loc = cmds.spaceLocator(name="%s_%s_loc" %(shape, jnt))
-    #             self.copy_keys(jnt, driver_loc, time_range=data["timeGap"], start_frame=0)
-    #         # for each active joint:
-    #             # create an upper group, apply the same time gap animation to the group
-    #
-    #             # create the corresponding attribute on the jointify hook
-    #             # drive the group animation with that attribute
-    #
-    #     return multMatrix_db
-    #     # do a separate loop for connecting combination shapes and end-hook connections:
-    #     # for each shape:
-    #         # if the shape IS a combination shape:
-    #             # create a combination node to drive that attribute with related base attributes
-    #             ## requires all combination shapes
-    #         # else (NOT a combination shape)
-    #             # if original shape is driven with some other attr, drive this with the same one
-    #
-    #     pass
-
     def jointify(self):
         """Creates a joint version of the blendshape deformations using the dem bones data as guidance"""
 
@@ -743,6 +664,7 @@ class Jointify(object):
 
     @staticmethod
     def get_inbetween_values(blendshape_node, target_name):
+        """Returns percentages of inbetween targets. If there are no inbetweens, returns [100]"""
 
         # get the bs api mobject
         bs_sel = om.MSelectionList()
@@ -759,7 +681,7 @@ class Jointify(object):
         mesh_mobj = om.MObject()
         mesh_sel.getDagPath(0, mesh_dag)
         mesh_sel.getDependNode(0, mesh_mobj)
-        mesh_mfnmesh = om.MFnMesh(mesh_dag)
+        # mesh_mfnmesh = om.MFnMesh(mesh_dag)
 
         # function set for Blendshape
         m_bs_func = oma.MFnBlendShapeDeformer(bs_mobj)
@@ -781,10 +703,34 @@ class Jointify(object):
         m_target_arr = om.MIntArray()
         m_bs_func.targetItemIndexList(target_index, mesh_mobj, m_target_arr)
 
-        if m_target_arr.length() == 1:
-            return None
+        # if m_target_arr.length() == 1:
+        #     return None
 
         # drop the last element of array
-        m_target_arr.remove(m_target_arr.length()-1)
+        # m_target_arr.remove(m_target_arr.length()-1)
 
-        return [(x - 5000) / 1000.0 for x in m_target_arr]
+        return [int((x - 5000) / 10.0) for x in m_target_arr]
+
+    def _get_shape_duration(self, blendshape_node, target_name):
+        """
+        Calculates the most optimized duration for the shapes which contains in-betweens
+        """
+
+        # TODO: test GCD with python 3.x
+
+        inbetween_percentages = self.get_inbetween_values(blendshape_node, target_name)
+
+        if len(inbetween_percentages) == 1: # means this shape has no inbetweens
+            return 1
+
+        # calculate the closest keyframe range
+        # if it is more than 10 frames, cap it there
+        greatest_common_dividier = functools.reduce(fractions.gcd, inbetween_percentages)
+
+        # if the GCD is too low, cap it with 10 frames
+        greatest_common_dividier = 10 if greatest_common_dividier < 10 else greatest_common_dividier
+
+        keyframe_range = [int(x / float(greatest_common_dividier)) for x in inbetween_percentages]
+        return keyframe_range[-1]
+
+
