@@ -361,21 +361,60 @@ class Jointify(object):
         #     data["timeGap"] = [start_frame, end_frame]
         #
 
+        # start_frame = 0
+        # end_frame = 0
+        # for nmb, (attr, data) in enumerate(self.originalData.items()):
+        #     duration = self.shapeDuration or self._get_shape_duration(self.blendshapeNode, attr)
+        #     end_frame = end_frame + duration + 1
+        #     # disconnect inputs
+        #     if data["connected"]:
+        #         cmds.disconnectAttr(data["in"], data["out"])
+        #
+        #     cmds.setKeyframe(self.blendshapeNode, at=attr, t=start_frame, value=0, itt="linear", ott="linear")
+        #     cmds.setKeyframe(self.blendshapeNode, at=attr, t=start_frame+1, value=0, itt="linear", ott="linear")
+        #     cmds.setKeyframe(self.blendshapeNode, at=attr, t=end_frame, value=1, itt="linear", ott="linear")
+        #     cmds.setKeyframe(self.blendshapeNode, at=attr, t=end_frame + 1, value=0, itt="linear", ott="linear")
+        #     data["timeGap"] = [start_frame, end_frame]
+        #     start_frame = end_frame+1
+        #
+        #     # print("debug: %s / %s" %(attr, duration))
+        #     #
+        #     # start_frame = (duration * (nmb+1)) - duration
+        #     # end_frame = start_frame + (duration-1)
+        #     # cmds.setKeyframe(self.blendshapeNode, at=attr, t=start_frame - 1, value=0, itt="linear", ott="linear")
+        #     # cmds.setKeyframe(self.blendshapeNode, at=attr, t=start_frame, value=0, itt="linear", ott="linear")
+        #     # cmds.setKeyframe(self.blendshapeNode, at=attr, t=end_frame, value=1, itt="linear", ott="linear")
+        #     # cmds.setKeyframe(self.blendshapeNode, at=attr, t=end_frame + 1, value=0, itt="linear", ott="linear")
+        #     # data["timeGap"] = [start_frame, end_frame]
+
         start_frame = 0
         end_frame = 0
         for nmb, (attr, data) in enumerate(self.originalData.items()):
             duration = self.shapeDuration or self._get_shape_duration(self.blendshapeNode, attr)
-            end_frame = end_frame + duration + 1
+            end_frame = start_frame+duration
             # disconnect inputs
             if data["connected"]:
                 cmds.disconnectAttr(data["in"], data["out"])
 
             cmds.setKeyframe(self.blendshapeNode, at=attr, t=start_frame, value=0, itt="linear", ott="linear")
-            cmds.setKeyframe(self.blendshapeNode, at=attr, t=start_frame+1, value=0, itt="linear", ott="linear")
             cmds.setKeyframe(self.blendshapeNode, at=attr, t=end_frame, value=1, itt="linear", ott="linear")
             cmds.setKeyframe(self.blendshapeNode, at=attr, t=end_frame + 1, value=0, itt="linear", ott="linear")
             data["timeGap"] = [start_frame, end_frame]
             start_frame = end_frame+1
+
+
+
+            # end_frame = end_frame + duration + 1
+            # # disconnect inputs
+            # if data["connected"]:
+            #     cmds.disconnectAttr(data["in"], data["out"])
+            #
+            # cmds.setKeyframe(self.blendshapeNode, at=attr, t=start_frame, value=0, itt="linear", ott="linear")
+            # cmds.setKeyframe(self.blendshapeNode, at=attr, t=start_frame+1, value=0, itt="linear", ott="linear")
+            # cmds.setKeyframe(self.blendshapeNode, at=attr, t=end_frame, value=1, itt="linear", ott="linear")
+            # cmds.setKeyframe(self.blendshapeNode, at=attr, t=end_frame + 1, value=0, itt="linear", ott="linear")
+            # data["timeGap"] = [start_frame, end_frame]
+            # start_frame = end_frame+1
 
             # print("debug: %s / %s" %(attr, duration))
             #

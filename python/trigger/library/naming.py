@@ -1,3 +1,4 @@
+import logging
 import os
 import re
 import glob
@@ -46,7 +47,8 @@ def uniqueScene():
 def resolve_version(file_path):
     """Resolves the version of the given file"""
     no_ext = os.path.splitext(file_path)[0]
-    is_digits = re.search('.*?([0-9]+)$', no_ext.split(".")[0])
+    # is_digits = re.search('.*?([0-9]+)$', no_ext.split(".")[0])
+    is_digits = re.search('.*?([0-9]+)$', no_ext)
     if not is_digits:
         return 0
     return int(is_digits.groups()[0])
@@ -175,7 +177,6 @@ def get_previous_version(file_path):
 
 def is_latest_version(file_path):
     """Checks if the file is the latest version"""
-
     current_version = resolve_version(file_path)
     all_versions = get_all_versions(file_path)
     if not all_versions:
