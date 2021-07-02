@@ -5,6 +5,7 @@ import platform
 
 import fractions
 import functools
+import time
 
 from maya import cmds
 from maya import mel
@@ -17,6 +18,8 @@ from trigger.library import deformers, attribute, functions, api, arithmetic, na
 from trigger.core.decorators import keepselection, tracktime
 from trigger.library import connection
 from trigger.utils import skinTransfer
+from trigger.core import filelog
+
 
 
 class Bone(object):
@@ -257,6 +260,8 @@ class Shape(object):
 
 
 class Jointify(object):
+    log = filelog.Filelog(logname=__name__, filename="jointify_report")
+
     def __init__(self,
                  blendshape_node=None,
                  joint_count=30,
@@ -265,6 +270,8 @@ class Jointify(object):
                  fbx_source=None,
                  head_joint=None,
                  head_position=None,
+                 correctives=False,
+                 corrective_threshold=0.01,
                  *args, **kwargs):
         super(Jointify, self).__init__()
 
@@ -291,11 +298,18 @@ class Jointify(object):
         self.trainingData = {}
         self.demData = {}
 
-    def start(self):
+    def run(self):
+        self.log.header("Starting Jointify process")
+        start_time = time.time()
         self.collect_original_data()
         self.prepare_training_set()
         self.create_dem_bones()
         self.jointify()
+        end_time = time.time()
+
+        self.log.seperator()
+        self.log.info("Jointified in total %s seconds" %(end_time-start_time))
+
 
     def collect_original_data(self):
         """Collects all target and hook plug data
@@ -315,7 +329,7 @@ class Jointify(object):
         }
 
         """
-        print("Collecting Original Data")
+        self.log.header("Collecting Original Data")
         self.originalData.clear()
         targetshapes = deformers.get_influencers(self.blendshapeNode)
         for shape in targetshapes:
@@ -340,12 +354,13 @@ class Jointify(object):
                 self.originalData[shape]["type"] = "base"
                 self.originalData[shape]["in"] = ""
                 self.originalData[shape]["out"] = ""
+        self.log.info("Original data collected successfully")
         return self.originalData
 
     def prepare_training_set(self):
         """Creates a ROM from blendshape targets"""
 
-        print("Preparing Training Set")
+        self.log.header("Preparing Training Set")
 
 
         self.trainingData["mesh"] = cmds.listConnections("{0}.outputGeometry".format(self.blendshapeNode))[0]
@@ -366,13 +381,14 @@ class Jointify(object):
             start_frame = end_frame+1
 
         self.trainingData["animationRange"] = [0, end_frame]
+        self.log.info("Training data prepared")
 
-    @tracktime
     @keepselection
     def create_dem_bones(self):
         """Exports the training set to DEM bones. does the training and get back the FBX"""
 
-        print("Training Dem Bones")
+        start_time = time.time()
+        self.log.header("Training Dem Bones")
         # temporary file paths for alembic and FBX files
         abc_source = os.path.normpath(os.path.join(os.path.expanduser("~"), "jointify_source_abc.abc"))
         fbx_source = os.path.normpath(os.path.join(os.path.expanduser("~"), "jointify_source_fbx.fbx"))
@@ -438,12 +454,13 @@ class Jointify(object):
             fbx_source = self.fbxSource
 
         # do the DEM magic
-        print(self.dem_exec.replace("\\", "/"))
-        print('-a=%s' %abc_source.replace("\\", "/"))
-        print('-i=%s' %fbx_source.replace("\\", "/"))
-        print('-o=%s' %fbx_output.replace("\\", "/"))
-        print('-b=%i' %self.jointCount)
-        print('--nInitIters=%i' %self.jointIterations)
+        self.log.info("DemBones are getting created with following flags:")
+        self.log.info(self.dem_exec.replace("\\", "/"))
+        self.log.info('-a=%s' %abc_source.replace("\\", "/"))
+        self.log.info('-i=%s' %fbx_source.replace("\\", "/"))
+        self.log.info('-o=%s' %fbx_output.replace("\\", "/"))
+        self.log.info('-b=%i' %self.jointCount)
+        self.log.info('--nInitIters=%i' %self.jointIterations)
         process = subprocess.Popen([self.dem_exec.replace("\\", "/"),
                           '-a=%s' %abc_source.replace("\\", "/"),
                           '-i=%s' %fbx_source.replace("\\", "/"),
@@ -523,11 +540,16 @@ class Jointify(object):
         # os.remove(fbx_source)
         # os.remove(fbx_output)
 
+        end_time = time.time()
+        self.log.info("DemBones are created in %s seconds" % (end_time-start_time))
 
     def jointify(self):
         """Creates a joint version of the blendshape deformations using the dem bones data as guidance"""
 
-        print("Replacing the blendshape node with joints...")
+        start_time = time.time()
+
+        self.log.header("Replacing the blendshape node with joints...")
+
         # delete the blendshape and transfer the skin weights to the original
         cmds.currentTime(0)
         cmds.refresh()
@@ -598,6 +620,8 @@ class Jointify(object):
         # delete the fbx and alembic files
         ###
 
+        end_time = time.time()
+        self.log.info("Connections created in %s seconds" % (end_time-start_time))
 
 
     @staticmethod
