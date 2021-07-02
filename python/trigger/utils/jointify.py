@@ -284,6 +284,8 @@ class Jointify(object):
         self.shapeDuration = shape_duration
         self.jointIterations = joint_iterations
         self.fbxSource = fbx_source
+        self.correctives = correctives
+        self.correctiveThreshold = corrective_threshold
 
         self.headJoint = head_joint
 
@@ -549,6 +551,10 @@ class Jointify(object):
         start_time = time.time()
 
         self.log.header("Replacing the blendshape node with joints...")
+
+        if self.correctives:
+            # TODO create corrective deltas for differences exceed the threshold
+            pass
 
         # delete the blendshape and transfer the skin weights to the original
         cmds.currentTime(0)
