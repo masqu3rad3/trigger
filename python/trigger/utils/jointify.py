@@ -506,6 +506,36 @@ class Jointify(object):
         self.demData["meshTransform"] = functions.getParent(self.demData["meshes"][0])
         self.demData["skinCluster"] = deformers.get_deformers(self.demData["meshTransform"]).get('skinCluster')[0]
 
+        # # create the root joint:
+        # cmds.select(d=True)
+        # root_jnt = cmds.joint(name="jointifyRoot_jnt")
+        # cmds.setAttr("%s.t" % root_jnt, *self.headPosition)
+        # # parent the demJoints to the root bone and offset the key values accordingly
+        # cmds.parent(self.demData["joints"], root_jnt)
+        # for jnt in self.demData["joints"]:
+        #     cmds.keyframe("%s.tx" % jnt, vc=self.headPosition[0]*-1, relative=True)
+        #     cmds.keyframe("%s.ty" % jnt, vc=self.headPosition[1]*-1, relative=True)
+        #     cmds.keyframe("%s.tz" % jnt, vc=self.headPosition[2]*-1, relative=True)
+
+
+        # # delete the temp files from disk
+        # os.remove(abc_source)
+        # os.remove(fbx_source)
+        # os.remove(fbx_output)
+
+
+    def jointify(self):
+        """Creates a joint version of the blendshape deformations using the dem bones data as guidance"""
+
+        print("Replacing the blendshape node with joints...")
+        # delete the blendshape and transfer the skin weights to the original
+        cmds.currentTime(0)
+        cmds.refresh()
+        functions.deleteObject(self.blendshapeNode)
+        skinTransfer.skinTransfer(source=self.demData["meshTransform"], target=self.trainingData["mesh"])
+        functions.deleteObject(self.demData["meshTransform"])
+
+        # create a root joint and gather the animated ones under it
         # create the root joint:
         cmds.select(d=True)
         root_jnt = cmds.joint(name="jointifyRoot_jnt")
@@ -517,10 +547,7 @@ class Jointify(object):
             cmds.keyframe("%s.ty" % jnt, vc=self.headPosition[1]*-1, relative=True)
             cmds.keyframe("%s.tz" % jnt, vc=self.headPosition[2]*-1, relative=True)
 
-    def jointify(self):
-        """Creates a joint version of the blendshape deformations using the dem bones data as guidance"""
-
-        print("Jointifying the blendshape node")
+        ######################################
 
         # tidy up the scene with groups
         drivers_grp = functions.validateGroup("jointifyDrv_grp")
@@ -531,7 +558,14 @@ class Jointify(object):
 
         # before making connections (which clears joint keys), get all the transform data from joints since they are re-used
         shape_objects = []
+
+
+        print("Creating drivers and making connections...")
+        progress = Progressbar(title="Creating Drivers ...", max_value=len(self.originalData.items()))
+
         for shape, data in self.originalData.items():
+            if progress.is_cancelled():
+                raise Exception("Cancelled by user")
             scene_hook = data["in"].split(".")[0] if data["in"] else None
             if data["type"] == "combination":
                 scene_hooks = [self.originalData[x]["in"] for x in data["combinations"] if self.originalData[x]["connected"]]
@@ -546,21 +580,25 @@ class Jointify(object):
                     drv_obj.copy_keys()
                     shape_obj.add_driver(drv_obj)
             shape_objects.append(shape_obj)
+            progress.update()
 
+        progress.close()
+
+        progress = Progressbar(title="Making Connections ...", max_value=len(shape_objects))
         for shape_obj in shape_objects:
+            if progress.is_cancelled():
+                raise Exception("Cancelled by user")
             shape_obj.make_connections()
+            progress.update()
+            # cmds.progressBar(gMainProgressBar, edit=True, step=1)
+        progress.close()
 
-        # # delete the blendshape node and replace it with skincluster
-        # functions.deleteObject(self.blendshapeNode)
-        # skinTransfer.skinTransfer(source=self.demData["meshTransform"], target=self.trainingData["mesh"])
-        #
-        # functions.deleteObject(self.demData["meshTransform"])
+        # post cleanup
 
-        # # create driver objects
-        # for shape in all_shapes:
-        #     shape_obj = Shape()
-        #     # add active bones
-        #     active_bones = [x for x in bone_objects if x.is_active(time_gap=time_gap)]
+        # delete the fbx and alembic files
+        ###
+
+
 
     @staticmethod
     def _check_plugins():
@@ -713,5 +751,29 @@ class Jointify(object):
 
         keyframe_range = [int(x / float(greatest_common_dividier)) for x in inbetween_percentages]
         return keyframe_range[-1]
+
+
+class Progressbar(object):
+    def __init__(self, title="", max_value=100):
+        super(Progressbar, self).__init__()
+        self.gMainProgressBar = mel.eval('$tmp = $gMainProgressBar')
+        cmds.progressBar(self.gMainProgressBar,
+                         edit=True,
+                         beginProgress=True,
+                         isInterruptable=True,
+                         status='%s' % title,
+                         maxValue=max_value)
+
+    def update(self, step=1):
+        cmds.progressBar(self.gMainProgressBar, edit=True, step=step)
+
+    def close(self):
+        cmds.progressBar(self.gMainProgressBar, edit=True, endProgress=True)
+
+    def is_cancelled(self):
+        if cmds.progressBar(self.gMainProgressBar, query=True, isCancelled=True):
+            return True
+        else:
+            return False
 
 
