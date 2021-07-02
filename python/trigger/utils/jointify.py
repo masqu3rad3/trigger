@@ -1,9 +1,15 @@
 """Module for converting blendshape deformations joint based deformations"""
+import sys
 import subprocess
 import os
 import platform
 
-import fractions
+import sys
+if sys.version_info.major == 3:
+    from math import gcd
+else:
+    from fractions import gcd
+# import fractions
 import functools
 import time
 
@@ -261,6 +267,7 @@ class Shape(object):
 
 class Jointify(object):
     log = filelog.Filelog(logname=__name__, filename="jointify_report")
+    log.title("Jointify Report")
 
     def __init__(self,
                  blendshape_node=None,
@@ -299,6 +306,15 @@ class Jointify(object):
         self.originalData = {}
         self.trainingData = {}
         self.demData = {}
+
+        self.log.header("Initialization")
+        self.log.info("Blendshape Node: %s" % self.blendshapeNode)
+        self.log.info("Joint count: %s" % self.jointCount)
+        self.log.info("Shape duration: %s" % self.shapeDuration or "Auto")
+        self.log.info("Joint Iterations: %s" % self.jointIterations)
+        self.log.info("FBX Source: %s" % self.fbxSource)
+        self.log.info("Correctives: %s" % str(bool(correctives)))
+        self.log.info("Corrective Threshold: %s" % self.correctiveThreshold)
 
     def run(self):
         self.log.header("Starting Jointify process")
@@ -773,8 +789,7 @@ class Jointify(object):
             return 1
 
         # calculate the closest keyframe range
-        # if it is more than 10 frames, cap it there
-        greatest_common_dividier = functools.reduce(fractions.gcd, inbetween_percentages)
+        greatest_common_dividier = functools.reduce(gcd, inbetween_percentages)
 
         # if the GCD is too low, cap it with 10 frames
         greatest_common_dividier = 10 if greatest_common_dividier < 10 else greatest_common_dividier
