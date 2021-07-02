@@ -16,6 +16,7 @@ import maya.OpenMayaAnim as oma
 from trigger.library import deformers, attribute, functions, api, arithmetic, naming
 from trigger.core.decorators import keepselection, tracktime
 from trigger.library import connection
+from trigger.utils import skinTransfer
 
 
 class Bone(object):
@@ -225,7 +226,9 @@ class Shape(object):
 
         # validate the hook attribute
         if self._baseShapes:  # in case this is a combination shape
-            combo_node = cmds.createNode("combinationShape", name="%s_combo" % ("_".join(self._baseShapes)))
+            name = "%s_combo" % ("_".join(self._baseShapes))
+            combo_node = cmds.createNode("combinationShape", name=name)
+            # combo_node = cmds.createNode("combinationShape", name="ANAN")
             # TODO Here is the place to adjust combinationShape Node if necessary
 
             for nmb, attr in enumerate(self._hookAttrs):
@@ -240,7 +243,9 @@ class Shape(object):
 
     def _multiply_connect(self, driver_attr, driven_attr, mult_value):
         if mult_value != 1:
-            mult_node = cmds.createNode("multDoubleLinear", name="%s_mult" %driven_attr)
+            name = "%s_mult" %driven_attr.split(".")[-1]
+            mult_node = cmds.createNode("multDoubleLinear", name=name)
+            # mult_node = cmds.createNode("multDoubleLinear", name="BACIN")
             cmds.setAttr("%s.isHistoricallyInteresting" %mult_node, 0)
             cmds.connectAttr(driver_attr, "%s.input1" %mult_node)
             cmds.setAttr("%s.input2" %mult_node, mult_value)
@@ -345,48 +350,6 @@ class Jointify(object):
 
         self.trainingData["mesh"] = cmds.listConnections("{0}.outputGeometry".format(self.blendshapeNode))[0]
 
-        # for nmb, (attr, data) in enumerate(self.originalData.items()):
-        #     duration = self.shapeDuration or self._get_shape_duration(self.blendshapeNode, attr)
-        #     duration += 1
-        #     print("debug: %s / %s" %(attr, duration))
-        #     # disconnect inputs
-        #     if data["connected"]:
-        #         cmds.disconnectAttr(data["in"], data["out"])
-        #     start_frame = (duration * (nmb+1)) - duration
-        #     end_frame = start_frame + (duration-1)
-        #     cmds.setKeyframe(self.blendshapeNode, at=attr, t=start_frame - 1, value=0, itt="linear", ott="linear")
-        #     cmds.setKeyframe(self.blendshapeNode, at=attr, t=start_frame, value=0, itt="linear", ott="linear")
-        #     cmds.setKeyframe(self.blendshapeNode, at=attr, t=end_frame, value=1, itt="linear", ott="linear")
-        #     cmds.setKeyframe(self.blendshapeNode, at=attr, t=end_frame + 1, value=0, itt="linear", ott="linear")
-        #     data["timeGap"] = [start_frame, end_frame]
-        #
-
-        # start_frame = 0
-        # end_frame = 0
-        # for nmb, (attr, data) in enumerate(self.originalData.items()):
-        #     duration = self.shapeDuration or self._get_shape_duration(self.blendshapeNode, attr)
-        #     end_frame = end_frame + duration + 1
-        #     # disconnect inputs
-        #     if data["connected"]:
-        #         cmds.disconnectAttr(data["in"], data["out"])
-        #
-        #     cmds.setKeyframe(self.blendshapeNode, at=attr, t=start_frame, value=0, itt="linear", ott="linear")
-        #     cmds.setKeyframe(self.blendshapeNode, at=attr, t=start_frame+1, value=0, itt="linear", ott="linear")
-        #     cmds.setKeyframe(self.blendshapeNode, at=attr, t=end_frame, value=1, itt="linear", ott="linear")
-        #     cmds.setKeyframe(self.blendshapeNode, at=attr, t=end_frame + 1, value=0, itt="linear", ott="linear")
-        #     data["timeGap"] = [start_frame, end_frame]
-        #     start_frame = end_frame+1
-        #
-        #     # print("debug: %s / %s" %(attr, duration))
-        #     #
-        #     # start_frame = (duration * (nmb+1)) - duration
-        #     # end_frame = start_frame + (duration-1)
-        #     # cmds.setKeyframe(self.blendshapeNode, at=attr, t=start_frame - 1, value=0, itt="linear", ott="linear")
-        #     # cmds.setKeyframe(self.blendshapeNode, at=attr, t=start_frame, value=0, itt="linear", ott="linear")
-        #     # cmds.setKeyframe(self.blendshapeNode, at=attr, t=end_frame, value=1, itt="linear", ott="linear")
-        #     # cmds.setKeyframe(self.blendshapeNode, at=attr, t=end_frame + 1, value=0, itt="linear", ott="linear")
-        #     # data["timeGap"] = [start_frame, end_frame]
-
         start_frame = 0
         end_frame = 0
         for nmb, (attr, data) in enumerate(self.originalData.items()):
@@ -402,38 +365,7 @@ class Jointify(object):
             data["timeGap"] = [start_frame, end_frame]
             start_frame = end_frame+1
 
-
-
-            # end_frame = end_frame + duration + 1
-            # # disconnect inputs
-            # if data["connected"]:
-            #     cmds.disconnectAttr(data["in"], data["out"])
-            #
-            # cmds.setKeyframe(self.blendshapeNode, at=attr, t=start_frame, value=0, itt="linear", ott="linear")
-            # cmds.setKeyframe(self.blendshapeNode, at=attr, t=start_frame+1, value=0, itt="linear", ott="linear")
-            # cmds.setKeyframe(self.blendshapeNode, at=attr, t=end_frame, value=1, itt="linear", ott="linear")
-            # cmds.setKeyframe(self.blendshapeNode, at=attr, t=end_frame + 1, value=0, itt="linear", ott="linear")
-            # data["timeGap"] = [start_frame, end_frame]
-            # start_frame = end_frame+1
-
-            # print("debug: %s / %s" %(attr, duration))
-            #
-            # start_frame = (duration * (nmb+1)) - duration
-            # end_frame = start_frame + (duration-1)
-            # cmds.setKeyframe(self.blendshapeNode, at=attr, t=start_frame - 1, value=0, itt="linear", ott="linear")
-            # cmds.setKeyframe(self.blendshapeNode, at=attr, t=start_frame, value=0, itt="linear", ott="linear")
-            # cmds.setKeyframe(self.blendshapeNode, at=attr, t=end_frame, value=1, itt="linear", ott="linear")
-            # cmds.setKeyframe(self.blendshapeNode, at=attr, t=end_frame + 1, value=0, itt="linear", ott="linear")
-            # data["timeGap"] = [start_frame, end_frame]
-
-
         self.trainingData["animationRange"] = [0, end_frame]
-        print("DEBUG2", self.trainingData["animationRange"])
-
-        # # update the training data
-        # self.trainingData["startFrame"] = shape_duration
-        # self.trainingData["endFrame"] = (shape_duration * (len(self.originalData.items())+1)) + (shape_duration-1)
-        # self.trainingData["shapeDuration"] = shape_duration
 
     @tracktime
     @keepselection
@@ -506,6 +438,12 @@ class Jointify(object):
             fbx_source = self.fbxSource
 
         # do the DEM magic
+        print(self.dem_exec.replace("\\", "/"))
+        print('-a=%s' %abc_source.replace("\\", "/"))
+        print('-i=%s' %fbx_source.replace("\\", "/"))
+        print('-o=%s' %fbx_output.replace("\\", "/"))
+        print('-b=%i' %self.jointCount)
+        print('--nInitIters=%i' %self.jointIterations)
         process = subprocess.Popen([self.dem_exec.replace("\\", "/"),
                           '-a=%s' %abc_source.replace("\\", "/"),
                           '-i=%s' %fbx_source.replace("\\", "/"),
@@ -594,7 +532,6 @@ class Jointify(object):
         # before making connections (which clears joint keys), get all the transform data from joints since they are re-used
         shape_objects = []
         for shape, data in self.originalData.items():
-            # TODO Get the hook nood procedurally from the blendshapes input connections
             scene_hook = data["in"].split(".")[0] if data["in"] else None
             if data["type"] == "combination":
                 scene_hooks = [self.originalData[x]["in"] for x in data["combinations"] if self.originalData[x]["connected"]]
@@ -612,7 +549,12 @@ class Jointify(object):
 
         for shape_obj in shape_objects:
             shape_obj.make_connections()
-            # cmds.parent(shape_obj.get_driver_names(), drivers_grp)
+
+        # # delete the blendshape node and replace it with skincluster
+        # functions.deleteObject(self.blendshapeNode)
+        # skinTransfer.skinTransfer(source=self.demData["meshTransform"], target=self.trainingData["mesh"])
+        #
+        # functions.deleteObject(self.demData["meshTransform"])
 
         # # create driver objects
         # for shape in all_shapes:
