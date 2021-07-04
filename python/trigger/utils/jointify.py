@@ -266,8 +266,7 @@ class Shape(object):
 
 
 class Jointify(object):
-    log = filelog.Filelog(logname=__name__, filename="jointify_report")
-    log.title("Jointify Report")
+
 
     def __init__(self,
                  blendshape_node=None,
@@ -275,31 +274,54 @@ class Jointify(object):
                  shape_duration=0,
                  joint_iterations=30,
                  fbx_source=None,
-                 head_joint=None,
-                 head_position=None,
+                 root_nodes=None,
+                 # root_positions=None,
+                 # head_joint=None,
+                 # neck_joints=None,
+                 # head_position=None,
                  correctives=False,
                  corrective_threshold=0.01,
                  *args, **kwargs):
         super(Jointify, self).__init__()
+
+        self.log = filelog.Filelog(logname=__name__, filename="jointify_report")
+        self.log.title("Jointify Report")
 
         self._check_plugins()
 
         # user variables
         self.blendshapeNode = blendshape_node
         self.jointCount = joint_count
-        self.headJoint = head_joint
+        # self.headJoint = head_joint
         self.shapeDuration = shape_duration
         self.jointIterations = joint_iterations
         self.fbxSource = fbx_source
         self.correctives = correctives
         self.correctiveThreshold = corrective_threshold
 
-        self.headJoint = head_joint
+        # self.headJoint = head_joint
 
-        if head_joint and not head_position:
-            self.headPosition = api.getWorldTranslation(head_joint)
+        # if head_joint and not head_position:
+        #     self.headPosition = api.getWorldTranslation(head_joint)
+        # else:
+        #     self.headPosition = head_position or [0, 0, 0]
+
+        if root_nodes:
+            if type(root_nodes) != list:
+                self.rootNodes = [root_nodes]
+            else:
+                self.rootNodes = root_nodes
         else:
-            self.headPosition = head_position or [0, 0, 0]
+            self.rootNodes = [cmds.spaceLocator(name="jointify_rootLoc")[0]]
+
+        # if root_nodes and not root_positions:
+        #     if type(root_nodes) != list:
+        #         root_nodes = [root_nodes]
+        #     self.rootPositions = [api.getWorldTranslation(x) for x in root_nodes]
+        # else:
+        #     self.rootPositions = [(0, 0, 0)]
+        #
+        # self.rootNodes = root_nodes
 
         # class variables
         self.dem_exec = self._get_dem_bones()
@@ -579,17 +601,36 @@ class Jointify(object):
         skinTransfer.skinTransfer(source=self.demData["meshTransform"], target=self.trainingData["mesh"])
         functions.deleteObject(self.demData["meshTransform"])
 
-        # create a root joint and gather the animated ones under it
-        # create the root joint:
-        cmds.select(d=True)
-        root_jnt = cmds.joint(name="jointifyRoot_jnt")
-        cmds.setAttr("%s.t" % root_jnt, *self.headPosition)
-        # parent the demJoints to the root bone and offset the key values accordingly
-        cmds.parent(self.demData["joints"], root_jnt)
-        for jnt in self.demData["joints"]:
-            cmds.keyframe("%s.tx" % jnt, vc=self.headPosition[0]*-1, relative=True)
-            cmds.keyframe("%s.ty" % jnt, vc=self.headPosition[1]*-1, relative=True)
-            cmds.keyframe("%s.tz" % jnt, vc=self.headPosition[2]*-1, relative=True)
+        # # # TODO disabled for testing
+        # # create a root joint and gather the animated ones under it
+        # # create the root joint:
+        # cmds.select(d=True)
+        # root_jnt = cmds.joint(name="jointifyRoot_jnt")
+        # cmds.setAttr("%s.t" % root_jnt, *self.headPosition)
+        # # parent the demJoints to the root bone and offset the key values accordingly
+        # cmds.parent(self.demData["joints"], root_jnt)
+        # for jnt in self.demData["joints"]:
+        #     cmds.keyframe("%s.tx" % jnt, vc=self.headPosition[0]*-1, relative=True)
+        #     cmds.keyframe("%s.ty" % jnt, vc=self.headPosition[1]*-1, relative=True)
+        #     cmds.keyframe("%s.tz" % jnt, vc=self.headPosition[2]*-1, relative=True)
+
+        root_joints_data = {}
+        for root_node in self.rootNodes:
+            cmds.select(d=True)
+            root_pos = api.getWorldTranslation(root_node)
+            root_jnt = cmds.joint(name="jntfRoot_%s" %root_node)
+            cmds.setAttr("%s.t" % root_jnt, *root_pos)
+            root_joints_data[root_jnt] = root_pos
+
+        for dem_jnt in self.demData["joints"]:
+            if len(self.rootNodes) > 1:
+                parent_jnt = min(root_joints_data.keys(), key=lambda x: functions.getDistance(dem_jnt, x))
+            else:
+                parent_jnt = root_joints_data.keys()[0]
+            cmds.parent(dem_jnt, parent_jnt)
+            cmds.keyframe("%s.tx" % dem_jnt, vc=root_joints_data[parent_jnt][0]*-1, relative=True)
+            cmds.keyframe("%s.ty" % dem_jnt, vc=root_joints_data[parent_jnt][1]*-1, relative=True)
+            cmds.keyframe("%s.tz" % dem_jnt, vc=root_joints_data[parent_jnt][2]*-1, relative=True)
 
         ######################################
 
@@ -645,6 +686,11 @@ class Jointify(object):
         end_time = time.time()
         self.log.info("Connections created in %s seconds" % (end_time-start_time))
 
+    @staticmethod
+    def get_closest_vector(node, vector_list):
+        node_pos = api.getWorldTranslation(node)
+        dist = lambda A, B: ((A[0]-B[0])**2 + (A[1]-B[1])**2 + (A[2]-B[2])**2)**0.5
+        return min(vector_list, key=lambda B: dist(node_pos,B))
 
     @staticmethod
     def _check_plugins():

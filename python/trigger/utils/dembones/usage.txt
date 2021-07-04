@@ -1,0 +1,96 @@
+
+USAGE: 
+
+   DemBones      -a=<filename> ...  -i=<filename> ...  -o=<filename> ... 
+                 [-b=<int>] [--nInitIters=<int>] [-n=<int>]
+                 [--tolerance=<double>] [--patience=<int>]
+                 [--nTransIters=<int>] [--bindUpdate=<int>]
+                 [--transAffine=<double>] [--transAffineNorm=<double>]
+                 [--nWeightsIters=<int>] [-z=<int>]
+                 [--weightsSmooth=<double>] [--weightsSmoothStep=<double>]
+                 [--dbg=<int>] [--log=<filename>] [--] [--version] [-h]
+
+
+Where: 
+
+   -a=<filename>,  --abc=<filename>  (accepted multiple times)
+     (required)  animated mesh sequences (alembic geometry cache files)
+
+   -i=<filename>,  --init=<filename>  (accepted multiple times)
+     (required)  rest pose/init skin clusters (fbx files), each file
+     correspond to one abc file
+
+   -o=<filename>,  --out=<filename>  (accepted multiple times)
+     (required)  output (fbx files), each outut correspond to one abc file
+
+   -b=<int>,  --nBones=<int>
+     number of bones
+
+   --nInitIters=<int>
+     number iterations per init cluster splitting
+
+   -n=<int>,  --nIters=<int>
+     number of global iterations
+
+   --tolerance=<double>
+     convergence tolerance, stop if error relatively reduces less than
+     [--tolerance] in [--patience] consecutive iterations
+
+   --patience=<int>
+     convergence patience, stop if error relatively reduces less than
+     [--tolerance] in [--patience] consecutive iterations
+
+   --nTransIters=<int>
+     number of transformation update iterations per global iteration
+
+   --bindUpdate=<int>
+     update bind pose (0=no update, 1=update joint positions, 2=regroup
+     joints under one root)
+
+   --transAffine=<double>
+     bone translations affinity soft constraint
+
+   --transAffineNorm=<double>
+     p-Norm for bone translations affinity
+
+   --nWeightsIters=<int>
+     number of weights update iterations per global iteration
+
+   -z=<int>,  --nnz=<int>
+     number of non-zero weights per vertex
+
+   --weightsSmooth=<double>
+     weights smoothness soft constraint
+
+   --weightsSmoothStep=<double>
+     step size for the weights smoothness
+
+   --dbg=<int>
+     debug level
+
+   --log=<filename>
+     log file name
+
+   --,  --ignore_rest
+     Ignores the rest of the labeled arguments following this flag.
+
+   --version
+     Displays version information and exits.
+
+   -h,  --help
+     Displays usage information and exits.
+
+
+   Dem Bones - (c) Electronic Arts 2019
+
+   - This tool only handles clean input data, i.e. only one piece of
+   geometry with one skinCluster and no excessive joint.
+
+   - To hard-lock the transformations of bones: in the input fbx files,
+   create bool attributes for joint nodes (bones) with name "demLock" and
+   set the value to "true".
+
+   - To soft-lock skinning weights of vertices: in the input fbx files,
+   paint per-vertex colors in gray-scale. The closer the color to white,
+   the more skinning weights of the vertex are preserved.
+
