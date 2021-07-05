@@ -20,13 +20,20 @@ from maya import mel
 import maya.OpenMaya as om
 import maya.OpenMayaAnim as oma
 
-from trigger.library import deformers, attribute, functions, api, arithmetic, naming
+from trigger.library import deformers, attribute, functions, api, arithmetic, naming, transform
 from trigger.core.decorators import keepselection, tracktime
 from trigger.library import connection
 from trigger.utils import skinTransfer
 from trigger.core import filelog
 
 
+def get_std_deviation(value_list):
+    if not value_list:
+        return 0
+    avg = sum(value_list) / len(value_list)
+    var = sum((x - avg) ** 2 for x in value_list) / len(value_list)
+    std = var ** 0.5
+    return std
 
 class Bone(object):
     def __init__(self, joint):
@@ -99,11 +106,11 @@ class Bone(object):
     def is_active(self, time_gap, translate_threshold=0.01, rotate_threshold=0.5, decimal=3):
         """Checks if the object is moving between the given time gap"""
 
-        def get_std_deviation(value_list):
-            avg = sum(value_list) / len(value_list)
-            var = sum((x - avg) ** 2 for x in value_list) / len(value_list)
-            std = var ** 0.5
-            return std
+        # def get_std_deviation(value_list):
+        #     avg = sum(value_list) / len(value_list)
+        #     var = sum((x - avg) ** 2 for x in value_list) / len(value_list)
+        #     std = var ** 0.5
+        #     return std
 
         for attr in "xyz":
             val_list = cmds.keyframe("%s.t%s" % (self._name, attr), q=True, valueChange=True, t=tuple(time_gap))
@@ -195,7 +202,7 @@ class Driver(object):
 
 
 class Shape(object):
-    def __init__(self, name, jointify_node, duration, combination_of=None, hook_attrs=None):
+    def __init__(self, name, jointify_node, duration, combination_of=None, hook_attrs=None, delta_shape=None, corrective_bs=None):
         self._drivers = []
         if not cmds.objExists(jointify_node):
             cmds.group(em=True, name=jointify_node)
@@ -207,6 +214,9 @@ class Shape(object):
             self._baseShapes = combination_of
         else:
             self._baseShapes = []
+        self.deltaShape = delta_shape
+        self.correctiveBs = corrective_bs
+
 
     def add_driver(self, driver):
         self._drivers.append(driver)
@@ -230,6 +240,17 @@ class Shape(object):
                 # make a direct connection to jointify node
                 _ = [cmds.connectAttr(jointify_attr, x) for x in input_attrs]
 
+        if self.deltaShape:
+            print("-"*30)
+            print("-"*30)
+            print("-"*30)
+            print(self.deltaShape)
+            print("-"*30)
+            print("-"*30)
+            deformers.add_target_blendshape(self.correctiveBs, self.deltaShape, weight=1.0)
+            self._multiply_connect(jointify_attr, "{0}.{1}".format(self.correctiveBs, self.deltaShape), self._duration)
+            functions.deleteObject(self.deltaShape)
+
 
 
 
@@ -237,7 +258,6 @@ class Shape(object):
         if self._baseShapes:  # in case this is a combination shape
             name = "%s_combo" % ("_".join(self._baseShapes))
             combo_node = cmds.createNode("combinationShape", name=name)
-            # combo_node = cmds.createNode("combinationShape", name="ANAN")
             # TODO Here is the place to adjust combinationShape Node if necessary
 
             for nmb, attr in enumerate(self._hookAttrs):
@@ -328,6 +348,7 @@ class Jointify(object):
         self.originalData = {}
         self.trainingData = {}
         self.demData = {}
+        self.correctiveBs = None
 
         self.log.header("Initialization")
         self.log.info("Blendshape Node: %s" % self.blendshapeNode)
@@ -590,16 +611,16 @@ class Jointify(object):
 
         self.log.header("Replacing the blendshape node with joints...")
 
-        if self.correctives:
-            # TODO create corrective deltas for differences exceed the threshold
-            pass
+        # if self.correctives:
+        #     # TODO create corrective deltas for differences exceed the threshold
+        #     pass
 
-        # delete the blendshape and transfer the skin weights to the original
-        cmds.currentTime(0)
-        cmds.refresh()
-        functions.deleteObject(self.blendshapeNode)
-        skinTransfer.skinTransfer(source=self.demData["meshTransform"], target=self.trainingData["mesh"])
-        functions.deleteObject(self.demData["meshTransform"])
+        if self.correctives:
+            neutral_shape = transform.duplicate(self.trainingData["mesh"], name="jointify_neutral", at_time=0)
+            self.correctiveBs = cmds.blendShape(self.trainingData["mesh"], name="jointify_correctives")[0]
+
+        # import pdb
+        # pdb.set_trace()
 
         # # # TODO disabled for testing
         # # create a root joint and gather the animated ones under it
@@ -648,6 +669,8 @@ class Jointify(object):
         print("Creating drivers and making connections...")
         progress = Progressbar(title="Creating Drivers ...", max_value=len(self.originalData.items()))
 
+
+
         for shape, data in self.originalData.items():
             if progress.is_cancelled():
                 raise Exception("Cancelled by user")
@@ -657,7 +680,36 @@ class Jointify(object):
             else:
                 scene_hooks = [data["in"]] if data["connected"] else []
 
-            shape_obj = Shape(name=shape, jointify_node=jointify_node, duration=data["timeGap"][1] - data["timeGap"][0], combination_of=data["combinations"], hook_attrs=scene_hooks)
+            delta_shape = None
+            if self.correctives:
+
+                dif_list = list(self._get_difference(self.demData["meshTransform"], self.trainingData["mesh"], at_time=data["timeGap"][-1]))
+                std_deviation = round(get_std_deviation(dif_list), 3)
+                self.log.info("{0} deviation value => {1}".format(shape, std_deviation))
+                if self.correctiveThreshold < std_deviation:
+                    self.log.info("{0} exceeded threshold ({1}) getting delta shape".format(shape, self.correctiveThreshold))
+                    original_shape = transform.duplicate(self.trainingData["mesh"], at_time=data["timeGap"][-1], name="%s_orig_DUP" % shape)
+                    dem_shape = transform.duplicate(self.demData["meshTransform"], at_time=data["timeGap"][-1], name="%s_dem_DUP" % shape)
+                    delta_shape = self._create_delta(neutral=neutral_shape, non_sculpted=dem_shape, sculpted=original_shape, name="%s_delta" % shape)
+                    cmds.parent(original_shape, world=True)
+                    cmds.parent(dem_shape, world=True)
+                    cmds.parent(delta_shape, world=True)
+                    print("*"*30)
+                    print("*"*30)
+                    print("*"*30)
+                    print(dem_shape)
+                    print("*"*30)
+                    print("*"*30)
+                    # import pdb
+                    # pdb.set_trace()
+                    functions.deleteObject(original_shape)
+                    functions.deleteObject(dem_shape)
+                else:
+                    delta_shape = None
+            else:
+                delta_shape = None
+
+            shape_obj = Shape(name=shape, jointify_node=jointify_node, duration=data["timeGap"][1] - data["timeGap"][0], combination_of=data["combinations"], hook_attrs=scene_hooks, delta_shape=delta_shape, corrective_bs=self.correctiveBs)
             # create a driver for each active bone object
             for bone_obj in bone_objects:
                 if bone_obj.is_active(time_gap=data["timeGap"]):
@@ -679,18 +731,44 @@ class Jointify(object):
         progress.close()
 
         # post cleanup
-
+        functions.deleteObject(neutral_shape)
         # delete the fbx and alembic files
         ###
+
+        # delete the blendshape and transfer the skin weights to the original
+        cmds.currentTime(0)
+        cmds.refresh()
+        functions.deleteObject(self.blendshapeNode)
+
+        skinTransfer.skinTransfer(source=self.demData["meshTransform"], target=self.trainingData["mesh"])
+        functions.deleteObject(self.demData["meshTransform"])
 
         end_time = time.time()
         self.log.info("Connections created in %s seconds" % (end_time-start_time))
 
+    # @staticmethod
+    # def get_closest_vector(node, vector_list):
+    #     node_pos = api.getWorldTranslation(node)
+    #     dist = lambda A, B: ((A[0]-B[0])**2 + (A[1]-B[1])**2 + (A[2]-B[2])**2)**0.5
+    #     return min(vector_list, key=lambda B: dist(node_pos,B))
+
     @staticmethod
-    def get_closest_vector(node, vector_list):
-        node_pos = api.getWorldTranslation(node)
-        dist = lambda A, B: ((A[0]-B[0])**2 + (A[1]-B[1])**2 + (A[2]-B[2])**2)**0.5
-        return min(vector_list, key=lambda B: dist(node_pos,B))
+    def _create_delta(neutral, non_sculpted, sculpted, name="delta_shape"):
+        stack = transform.duplicate(neutral, name=name)
+        temp_bs_node = cmds.blendShape([non_sculpted, sculpted], stack, w=[(0, -1), (1, 1)])
+        cmds.delete(stack, ch=True)
+        return stack
+
+    @staticmethod
+    def _get_difference(node_a, node_b, threshold=0.001, at_time=None):
+        if at_time:
+            cmds.currentTime(at_time)
+        a_vertices = api.getAllVerts(node_a)
+        b_vertices = api.getAllVerts(node_b)
+        for a, b in zip(a_vertices, b_vertices):
+            d = a.distanceTo(b)
+            if d > threshold:
+                yield (d)
 
     @staticmethod
     def _check_plugins():
