@@ -26,7 +26,7 @@ def skinTransfer(source=None, target=None, continue_on_errors=False):
      that the script ran before and continues with a simple copy skin weights command. If target object has no skin cluster
      it gets the joints from the first object, creates a skin cluster on the second object using these joints and finally
      copies the skin weights.
-    Returns: None
+    Returns: skincluster(s) node on target(s)
     """
 
     if not source or not target:
@@ -80,16 +80,16 @@ def skinTransfer(source=None, target=None, continue_on_errors=False):
             if len(shapeSkinClusters) == 1:
                 cmds.copySkinWeights (source, transform, noMirror=True, surfaceAssociation="closestPoint", influenceAssociation="closestJoint", normalize=True)
                 sys.stdout.write('Success...')
-                return
+                return shapeSkinClusters
             # eliminate the ones without shape (eliminate the groups under the group)
             if transform.getShape() != None:
                 sc = cmds.skinCluster(allInfluences, transform, tsb=True)
                 cmds.copySkinWeights (source, transform, noMirror=True, surfaceAssociation="closestPoint", influenceAssociation="closestJoint", normalize=True)
                 sys.stdout.write('Success...')
-                # return
+                return shapeSkinClusters
     else:
         if len(targetSkinClusters)==0:
             sc = cmds.skinCluster(allInfluences, target, tsb=True, name="%s_skincluster" %naming.get_part_name(target))
         cmds.copySkinWeights (source, target, noMirror=True, surfaceAssociation="closestPoint", influenceAssociation="closestJoint", normalize=True)
         sys.stdout.write('Success...')
-        return
+        return sc

@@ -21,7 +21,7 @@ import maya.OpenMaya as om
 import maya.OpenMayaAnim as oma
 
 from trigger.library import deformers, attribute, functions, api, arithmetic, naming, transform
-from trigger.core.decorators import keepselection, tracktime
+from trigger.core.decorators import keepselection, viewportOff
 from trigger.library import connection
 from trigger.utils import skinTransfer
 from trigger.core import filelog
@@ -241,12 +241,12 @@ class Shape(object):
                 _ = [cmds.connectAttr(jointify_attr, x) for x in input_attrs]
 
         if self.deltaShape:
-            print("-"*30)
-            print("-"*30)
-            print("-"*30)
-            print(self.deltaShape)
-            print("-"*30)
-            print("-"*30)
+            # print("-"*30)
+            # print("-"*30)
+            # print("-"*30)
+            # print(self.deltaShape, self.correctiveBs)
+            # print("-"*30)
+            # print("-"*30)
             deformers.add_target_blendshape(self.correctiveBs, self.deltaShape, weight=1.0)
             self._multiply_connect(jointify_attr, "{0}.{1}".format(self.correctiveBs, self.deltaShape), 1.0/self._duration)
             # for nmb, attr in enumerate(self._hookAttrs):
@@ -608,10 +608,11 @@ class Jointify(object):
         end_time = time.time()
         self.log.info("DemBones are created in %s seconds" % (end_time-start_time))
 
+    @viewportOff
     def jointify(self):
         """Creates a joint version of the blendshape deformations using the dem bones data as guidance"""
 
-        TEST_GRP = cmds.group(em=True)
+        temp_grp = cmds.group(em=True, name="garbage_grp")
 
         start_time = time.time()
 
@@ -621,10 +622,18 @@ class Jointify(object):
         #     # TODO create corrective deltas for differences exceed the threshold
         #     pass
 
+
         if self.correctives:
             neutral_shape = transform.duplicate(self.trainingData["mesh"], name="jointify_neutral", at_time=0)
             self.correctiveBs = cmds.blendShape(self.trainingData["mesh"], name="jointify_correctives")[0]
-            cmds.parent(neutral_shape, TEST_GRP)
+            cmds.parent(neutral_shape, temp_grp)
+
+        # transfer the skin weights, but dont activate the skincluster yet
+        cmds.currentTime(0.0)
+        jointify_sc = skinTransfer.skinTransfer(source=self.demData["meshTransform"], target=self.trainingData["mesh"])[0]
+        cmds.setAttr("%s.nodeState" % jointify_sc, 1)
+
+
 
         # import pdb
         # pdb.set_trace()
@@ -694,28 +703,30 @@ class Jointify(object):
                 std_deviation = round(get_std_deviation(dif_list), 3)
                 self.log.info("{0} deviation value => {1}".format(shape, std_deviation))
                 if self.correctiveThreshold < std_deviation:
-                    self.log.info("{0} exceeded threshold ({1}) getting delta shape".format(shape, self.correctiveThreshold))
+                    self.log.info("{0} has a corrective shape!".format(shape))
                     original_shape = transform.duplicate(self.trainingData["mesh"], at_time=data["timeGap"][-1], name="%s_orig_DUP" % shape)
                     dem_shape = transform.duplicate(self.demData["meshTransform"], at_time=data["timeGap"][-1], name="%s_dem_DUP" % shape)
                     delta_shape = self._create_delta(neutral=neutral_shape, non_sculpted=dem_shape, sculpted=original_shape, name="%s_delta" % shape)
-                    cmds.parent(original_shape, world=True)
-                    cmds.parent(dem_shape, world=True)
-                    cmds.parent(delta_shape, world=True)
-                    print("*"*30)
-                    print("*"*30)
-                    print("*"*30)
-                    print(dem_shape)
-                    print("*"*30)
-                    print("*"*30)
+                    # cmds.parent(original_shape, world=True)
+                    # cmds.parent(dem_shape, world=True)
+                    # cmds.parent(delta_shape, world=True)
+                    # print("*"*30)
+                    # print("*"*30)
+                    # print("*"*30)
+                    # print(dem_shape)
+                    # print("*"*30)
+                    # print("*"*30)
                     # import pdb
                     # pdb.set_trace()
                     # functions.deleteObject(original_shape)
                     # functions.deleteObject(dem_shape)
 
                     #TEST
-                    cmds.parent(original_shape, TEST_GRP)
-                    cmds.parent(dem_shape, TEST_GRP)
-                    cmds.parent(delta_shape, TEST_GRP)
+                    for shp in [original_shape, dem_shape, delta_shape]:
+                        try:
+                            cmds.parent(shp, temp_grp)
+                        except RuntimeError:
+                            pass
                 else:
                     delta_shape = None
             else:
@@ -733,6 +744,7 @@ class Jointify(object):
 
         progress.close()
 
+
         progress = Progressbar(title="Making Connections ...", max_value=len(shape_objects))
         for shape_obj in shape_objects:
             if progress.is_cancelled():
@@ -743,7 +755,7 @@ class Jointify(object):
         progress.close()
 
         # post cleanup
-        # functions.deleteObject(neutral_shape)
+
         # delete the fbx and alembic files
         ###
 
@@ -752,8 +764,11 @@ class Jointify(object):
         cmds.refresh()
         functions.deleteObject(self.blendshapeNode)
 
-        skinTransfer.skinTransfer(source=self.demData["meshTransform"], target=self.trainingData["mesh"])
+        # skinTransfer.skinTransfer(source=self.demData["meshTransform"], target=self.trainingData["mesh"])
+        # activate the skincluster
+        cmds.setAttr("%s.nodeState" % jointify_sc, 0)
         functions.deleteObject(self.demData["meshTransform"])
+        functions.deleteObject(temp_grp)
 
         end_time = time.time()
         self.log.info("Connections created in %s seconds" % (end_time-start_time))
