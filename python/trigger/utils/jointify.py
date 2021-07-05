@@ -248,8 +248,12 @@ class Shape(object):
             print("-"*30)
             print("-"*30)
             deformers.add_target_blendshape(self.correctiveBs, self.deltaShape, weight=1.0)
-            self._multiply_connect(jointify_attr, "{0}.{1}".format(self.correctiveBs, self.deltaShape), self._duration)
-            functions.deleteObject(self.deltaShape)
+            self._multiply_connect(jointify_attr, "{0}.{1}".format(self.correctiveBs, self.deltaShape), 1.0/self._duration)
+            # for nmb, attr in enumerate(self._hookAttrs):
+            #     self._multiply_connect(attr, "{0}.{1}".format(self.correctiveBs, self.deltaShape), 1.0)
+                # cmds.connectAttr(attr, "{0}.inputWeight[{1}]".format(combo_node, nmb))
+
+            # functions.deleteObject(self.deltaShape)
 
 
 
@@ -607,6 +611,8 @@ class Jointify(object):
     def jointify(self):
         """Creates a joint version of the blendshape deformations using the dem bones data as guidance"""
 
+        TEST_GRP = cmds.group(em=True)
+
         start_time = time.time()
 
         self.log.header("Replacing the blendshape node with joints...")
@@ -618,6 +624,7 @@ class Jointify(object):
         if self.correctives:
             neutral_shape = transform.duplicate(self.trainingData["mesh"], name="jointify_neutral", at_time=0)
             self.correctiveBs = cmds.blendShape(self.trainingData["mesh"], name="jointify_correctives")[0]
+            cmds.parent(neutral_shape, TEST_GRP)
 
         # import pdb
         # pdb.set_trace()
@@ -702,8 +709,13 @@ class Jointify(object):
                     print("*"*30)
                     # import pdb
                     # pdb.set_trace()
-                    functions.deleteObject(original_shape)
-                    functions.deleteObject(dem_shape)
+                    # functions.deleteObject(original_shape)
+                    # functions.deleteObject(dem_shape)
+
+                    #TEST
+                    cmds.parent(original_shape, TEST_GRP)
+                    cmds.parent(dem_shape, TEST_GRP)
+                    cmds.parent(delta_shape, TEST_GRP)
                 else:
                     delta_shape = None
             else:
@@ -731,7 +743,7 @@ class Jointify(object):
         progress.close()
 
         # post cleanup
-        functions.deleteObject(neutral_shape)
+        # functions.deleteObject(neutral_shape)
         # delete the fbx and alembic files
         ###
 
