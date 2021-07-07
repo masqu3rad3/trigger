@@ -723,10 +723,8 @@ class Jointify(object):
 
                     #TEST
                     for shp in [original_shape, dem_shape, delta_shape]:
-                        try:
+                        if functions.getParent(shp) != temp_grp:
                             cmds.parent(shp, temp_grp)
-                        except RuntimeError:
-                            pass
                 else:
                     delta_shape = None
             else:

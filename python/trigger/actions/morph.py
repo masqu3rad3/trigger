@@ -254,6 +254,8 @@ class Morph(object):
                 sub_combination_deltas.append(self.create_combination_delta(neutral, parts, sub, check_sub_combinations=False))
 
         stack = cmds.duplicate(neutral)[0]
+        ###########
+        # if one or more combination shapes does not exist, try to create them
         temp_bs_node = cmds.blendShape(non_sculpted_meshes+sub_combination_deltas, stack)[0]
         # set the last attr with the negative weight value instead of -1 to get the combination inbetween shape correct
         # so... the ORDER of the combination matters!!!
