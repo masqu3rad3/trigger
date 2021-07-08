@@ -125,6 +125,82 @@ class Bone(object):
                 return True
         return False
 
+# class Driver(object):
+#     def __init__(self, name="drv", bone=None, time_gap=None, parent_node=None):
+#         # self._name = cmds.spaceLocator(name=naming.uniqueName(name))[0]
+#         self._name = cmds.group(em=True, name=naming.uniqueName(name))
+#         if parent_node:
+#             cmds.parent(self._name, parent_node)
+#         self._bone = bone
+#         self._timeGap = tuple(time_gap)
+#
+#
+#     @property
+#     def bone(self):
+#         return self._bone
+#
+#     @bone.setter
+#     def bone(self, bone_object):
+#         self._bone = bone_object
+#
+#     @property
+#     def name(self):
+#         return self._name
+#
+#     @name.setter
+#     def name(self, name):
+#         cmds.rename(self._name, name)
+#         self._name = name
+#
+#     @property
+#     def time_gap(self):
+#         return self._timeGap
+#
+#     @time_gap.setter
+#     def time_gap(self, time_gap):
+#         self._timeGap = time_gap
+#
+#     def get_animcurves(self):
+#         connections = cmds.listConnections(self._name)
+#         anim_curves = cmds.ls(connections, type=['animCurveTA', 'animCurveTL', 'animCurveTT', 'animCurveTU'])
+#         return anim_curves
+#
+#     def copy_keys(self):
+#         """ copies the keys from the joint """
+#         assert self._bone, "bone to drive is not defined"
+#         assert self._timeGap, "time gap is not defined"
+#         time_offset = (self._timeGap[0] * -1)
+#         cmds.copyKey(self._bone.name, time=self._timeGap)
+#         cmds.pasteKey(self._name, timeOffset=time_offset)
+#         # set the handles and pre/post infinity
+#         cmds.keyTangent(self._name, inTangentType="spline", outTangentType="spline")
+#         cmds.setInfinity(self._name, pri='linear', poi='linear')
+#
+#     def drive(self):
+#         assert self._bone, "bone to drive is not defined"
+#         if not self._bone.is_clean():
+#             self._bone.clear_keys()
+#
+#         pick_translate = cmds.createNode("pickMatrix", name="pick_translate")
+#         cmds.setAttr("%s.useTranslate" % pick_translate, 1)
+#         cmds.setAttr("%s.useRotate" % pick_translate, 0)
+#         cmds.setAttr("%s.useShear" % pick_translate, 0)
+#         cmds.setAttr("%s.useScale" % pick_translate, 0)
+#         cmds.connectAttr("%s.worldMatrix[0]" % self._name, "%s.inputMatrix" % pick_translate)
+#         # cmds.connectAttr("%s.xformMatrix" % self._name, "%s.inputMatrix" % pick_translate)
+#
+#         pick_rotate = cmds.createNode("pickMatrix", name="pick_rotate")
+#         cmds.setAttr("%s.useTranslate" % pick_rotate, 0)
+#         cmds.setAttr("%s.useRotate" % pick_rotate, 1)
+#         cmds.setAttr("%s.useShear" % pick_rotate, 0)
+#         cmds.setAttr("%s.useScale" % pick_rotate, 0)
+#         cmds.connectAttr("%s.worldMatrix[0]" % self._name, "%s.inputMatrix" % pick_rotate)
+#         # cmds.connectAttr("%s.xformMatrix" % self._name, "%s.inputMatrix" % pick_rotate)
+#
+#         offset = cmds.getAttr("%s.translate" % self._name, time=0)[0]
+#         self._bone.add_driver(t_matrix_plug="%s.outputMatrix" % pick_translate, r_matrix_plug="%s.outputMatrix" % pick_rotate, position_offset=offset)
+
+
 class Driver(object):
     def __init__(self, name="drv", bone=None, time_gap=None, parent_node=None):
         # self._name = cmds.spaceLocator(name=naming.uniqueName(name))[0]
@@ -133,7 +209,8 @@ class Driver(object):
             cmds.parent(self._name, parent_node)
         self._bone = bone
         self._timeGap = tuple(time_gap)
-
+        self._composeTranslate = cmds.createNode("composeMatrix", name="composeTranslate")
+        self._composeRotate = cmds.createNode("composeMatrix", name="composeRotate")
 
     @property
     def bone(self):
@@ -181,25 +258,35 @@ class Driver(object):
         if not self._bone.is_clean():
             self._bone.clear_keys()
 
-        pick_translate = cmds.createNode("pickMatrix", name="pick_translate")
-        cmds.setAttr("%s.useTranslate" % pick_translate, 1)
-        cmds.setAttr("%s.useRotate" % pick_translate, 0)
-        cmds.setAttr("%s.useShear" % pick_translate, 0)
-        cmds.setAttr("%s.useScale" % pick_translate, 0)
-        cmds.connectAttr("%s.worldMatrix[0]" % self._name, "%s.inputMatrix" % pick_translate)
-        # cmds.connectAttr("%s.xformMatrix" % self._name, "%s.inputMatrix" % pick_translate)
+        for attr in "XYZ":
+            translate_out_plug = cmds.listConnections("{0}.translate{1}".format(self._name, attr), source=True, destination=False, p=True)[0]
+            cmds.connectAttr(translate_out_plug, "{0}.inputTranslate{1}".format(self._composeTranslate, attr), f=True)
 
-        pick_rotate = cmds.createNode("pickMatrix", name="pick_rotate")
-        cmds.setAttr("%s.useTranslate" % pick_rotate, 0)
-        cmds.setAttr("%s.useRotate" % pick_rotate, 1)
-        cmds.setAttr("%s.useShear" % pick_rotate, 0)
-        cmds.setAttr("%s.useScale" % pick_rotate, 0)
-        cmds.connectAttr("%s.worldMatrix[0]" % self._name, "%s.inputMatrix" % pick_rotate)
-        # cmds.connectAttr("%s.xformMatrix" % self._name, "%s.inputMatrix" % pick_rotate)
+            rotate_out_plug = cmds.listConnections("{0}.rotate{1}".format(self._name, attr), source=True, destination=False, p=True)[0]
+            cmds.connectAttr(rotate_out_plug, "{0}.inputRotate{1}".format(self._composeRotate, attr), f=True)
+
+        # pick_translate = cmds.createNode("pickMatrix", name="pick_translate")
+        # cmds.setAttr("%s.useTranslate" % pick_translate, 1)
+        # cmds.setAttr("%s.useRotate" % pick_translate, 0)
+        # cmds.setAttr("%s.useShear" % pick_translate, 0)
+        # cmds.setAttr("%s.useScale" % pick_translate, 0)
+        # cmds.connectAttr("%s.worldMatrix[0]" % self._name, "%s.inputMatrix" % pick_translate)
+        # # cmds.connectAttr("%s.xformMatrix" % self._name, "%s.inputMatrix" % pick_translate)
+        #
+        # pick_rotate = cmds.createNode("pickMatrix", name="pick_rotate")
+        # cmds.setAttr("%s.useTranslate" % pick_rotate, 0)
+        # cmds.setAttr("%s.useRotate" % pick_rotate, 1)
+        # cmds.setAttr("%s.useShear" % pick_rotate, 0)
+        # cmds.setAttr("%s.useScale" % pick_rotate, 0)
+        # cmds.connectAttr("%s.worldMatrix[0]" % self._name, "%s.inputMatrix" % pick_rotate)
+        # # cmds.connectAttr("%s.xformMatrix" % self._name, "%s.inputMatrix" % pick_rotate)
 
         offset = cmds.getAttr("%s.translate" % self._name, time=0)[0]
-        self._bone.add_driver(t_matrix_plug="%s.outputMatrix" % pick_translate, r_matrix_plug="%s.outputMatrix" % pick_rotate, position_offset=offset)
+        # self._bone.add_driver(t_matrix_plug="%s.outputMatrix" % pick_translate, r_matrix_plug="%s.outputMatrix" % pick_rotate, position_offset=offset)
+        self._bone.add_driver(t_matrix_plug="%s.outputMatrix" % self._composeTranslate, r_matrix_plug="%s.outputMatrix" % self._composeRotate, position_offset=offset)
 
+    def clear_node(self):
+        functions.deleteObject(self._name)
 
 class Shape(object):
     def __init__(self, name, jointify_node, duration, combination_of=None, hook_attrs=None, delta_shape=None, corrective_bs=None):
@@ -240,6 +327,8 @@ class Shape(object):
                 # make a direct connection to jointify node
                 _ = [cmds.connectAttr(jointify_attr, x) for x in input_attrs]
 
+            driver.clear_node()
+
         if self.deltaShape:
             # print("-"*30)
             # print("-"*30)
@@ -272,6 +361,8 @@ class Shape(object):
         else:
             # TODO maybe the _multiply connect node can be optimized if needed
             self._multiply_connect(self._hookAttrs[0], jointify_attr, self._duration)
+
+
 
 
     def _multiply_connect(self, driver_attr, driven_attr, mult_value):
