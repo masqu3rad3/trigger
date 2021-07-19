@@ -3,7 +3,7 @@ import os
 import datetime
 
 class Filelog(object):
-    def __init__(self, logname = None, filename=None, filedir=None, date=True, time=True, *args, **kwargs):
+    def __init__(self, logname = None, filename=None, filedir=None, date=True, time=True, size_cap=500000, *args, **kwargs):
         super(Filelog, self).__init__()
         self.fileName = filename if filename else "defaultLog"
         self.fileDir = filedir if filedir else os.path.expanduser("~")
@@ -15,6 +15,9 @@ class Filelog(object):
         self.isTime = time
         if not os.path.isfile(self.filePath):
             self._welcome()
+        if self.get_size() > size_cap:
+            self.clear()
+
 
     def _get_now(self):
         if self.isDate or self.isTime:
@@ -97,3 +100,7 @@ class Filelog(object):
             self.logger.removeHandler(handler)
             handler.flush()
             handler.close()
+
+    def get_size(self):
+        size = os.path.getsize(self.filePath)
+        return size

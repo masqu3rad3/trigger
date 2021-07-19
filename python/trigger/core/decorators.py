@@ -84,6 +84,24 @@ def keepselection(func):
 
     return _keepfunc
 
+def keepframe(func):
+    """Decorator method to keep the current slider time. Useful where
+    the wrapped method messes with the current time"""
+    @wraps(func)
+    def _keepfunc(*args, **kwargs):
+        original_frame = cmds.currentTime(q=True)
+        try:
+            # start an undo chunk
+            return func(*args, **kwargs)
+        except Exception as e:
+            # log.error(e)
+            raise
+        finally:
+            # after calling the func, end the undo chunk and undo
+            cmds.currentTime(original_frame)
+
+    return _keepfunc
+
 def tracktime(func):
     """Tracks time for the given function"""
     @wraps(func)

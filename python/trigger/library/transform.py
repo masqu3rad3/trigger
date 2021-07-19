@@ -1,5 +1,6 @@
 """transform related functions"""
 from maya import cmds
+from trigger.core.decorators import keepframe
 
 def set_limits(node, attribute, attr_min, attr_max):
     """Set a control's transform attribute limits.
@@ -29,4 +30,11 @@ def free_limits(node, attr_list = ("tx", "ty", "tz", "rx", "ry", "rz", "sx", "sy
 def reference(node):
     cmds.setAttr("%s.overrideEnabled" %node, 1)
     cmds.setAttr("%s.overrideDisplayType" %node, 2)
+
+@keepframe
+def duplicate(node, name=None, at_time=None):
+    if at_time != None:
+        cmds.currentTime(at_time)
+    node_name = name or "%s_dup" % node
+    return cmds.duplicate(node, name=node_name)[0]
 
