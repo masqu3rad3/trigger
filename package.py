@@ -2,13 +2,12 @@
 
 name = 'rigging'
 
-version = '0.1.6'
+version = '0.1.7'
 
 authors = ['Arda Kutlu']
 
 requires = [
     'python_extras',
-    'python-2.7.17',
 ]
 
 
