@@ -108,7 +108,7 @@ class Weights(dict):
             data["type"] = deformer_type
             if deformer_type == "skinCluster":
                 data["influencers"] = 0 # we are currently skipping this since these will be read from the weights file
-                data["affected"] = 0
+                data["affected"] = cmds.listConnections("%s.outputGeometry" % deformer, shapes=True, scn=True, source=False, destination=True)
             elif deformer_type == "shrinkWrap":
                 data["influencers"] = cmds.listConnections("%s.targetGeom" % deformer, shapes=True, scn=True, source=True, destination=False)
                 data["affected"] = cmds.listConnections("%s.outputGeometry" % deformer, shapes=True, scn=True, source=False, destination=True)
@@ -349,10 +349,9 @@ class Weights(dict):
             if deformer_type == "skinCluster":
                 # collect the influencers (eg. joints if it is a skinCluster)
                 influencers = [weight_dict.get("source") for weight_dict in weights_list]
-                affected = functions.uniqueList([weight_dict.get("shape") for weight_dict in weights_list])
-                print("=" * 45)
-                print("joints:", influencers)
-                print("affected:", affected[0])
+                # first try the custom affected input. If there is none (backward-compatibility) use the weight data
+                if not affected:
+                    affected = functions.uniqueList([weight_dict.get("shape") for weight_dict in weights_list])
                 # delete existing skin clusters first
                 affected_history = cmds.listHistory(affected[0], pdo=True)
                 old_skincluster = cmds.ls(affected_history, type="skinCluster")
@@ -368,7 +367,7 @@ class Weights(dict):
 
             else:
                 # TODO : SUPPORT FOR ALL DEFORMERS
-                log.error("deformers OTHER than skinCluster are not YET supported")
+                log.error("deformers OTHER than skinCluster, shrinkWrap and deltaMush are not YET supported")
                 return
             for attr_dict in deformer_attrs:
                 attr_name = attr_dict["name"]

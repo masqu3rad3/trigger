@@ -5,15 +5,21 @@ from maya import cmds
 from maya import mel
 import platform
 
+from trigger.library import attribute
+
 from trigger.core import filelog
-from trigger.ui.Qt import QtWidgets, QtGui # for progressbar
+# from trigger.ui.Qt import QtWidgets, QtGui # for progressbar
+from PySide2 import QtWidgets, QtGui # for progressbar
 from trigger.ui import custom_widgets
 
 log = filelog.Filelog(logname=__name__, filename="trigger_log")
 
 
 ACTION_DATA = {
-    "import_file_path": ""
+    "import_file_path": "",
+    "scale": 1.0,
+    "root_suffix": "",
+    "parent_under": "",
 }
 
 class Import_asset(object):
@@ -24,6 +30,9 @@ class Import_asset(object):
 
     def feed(self, action_data):
         self.filePath = action_data.get("import_file_path")
+        self.scale = action_data.get("scale", 1.0)
+        self.rootSuffix = action_data.get("root_suffix", "")
+        self.parentUnder = action_data.get("parent_under", "")
 
     def action(self):
         """Mandatory method for all action maya_modules"""
@@ -32,15 +41,20 @@ class Import_asset(object):
             return
         ext = os.path.splitext(self.filePath)[1]
         if ext == ".abc":
-            self.import_alembic(self.filePath)
+            new_nodes = self.import_alembic(self.filePath)
         elif ext == ".obj":
-            self.import_obj(self.filePath)
+            new_nodes = self.import_obj(self.filePath)
         elif ext == ".fbx":
-            self.import_fbx(self.filePath)
+            new_nodes = self.import_fbx(self.filePath)
         elif ext == ".ma" or ext == ".mb":
-            self.import_scene(self.filePath)
+            new_nodes = self.import_scene(self.filePath)
+        elif ext == ".usd":
+            new_nodes = self.import_usd(self.filePath)
         else:
             log.warning("Unrecognized file format => %s" % ext)
+            return
+
+        self.post_process(new_nodes, scale=self.scale, suffix=self.rootSuffix, parent_under=self.parentUnder)
 
     def save_action(self):
         """Mandatory method for all action modules"""
@@ -53,33 +67,64 @@ class Import_asset(object):
         # file_path_le = QtWidgets.QLineEdit()
         file_path_le = custom_widgets.FileLineEdit()
         file_path_hLay.addWidget(file_path_le)
-        browse_path_pb = custom_widgets.BrowserButton(mode="openFile", update_widget=file_path_le, filterExtensions=["Maya ASCII (*.ma)", "Maya Binary (*.mb)", "Alembic (*.abc)", "FBX (*.fbx)", "OBJ (*.obj)"], overwrite_check=False)
+        browse_path_pb = custom_widgets.BrowserButton(mode="openFile", update_widget=file_path_le, filterExtensions=["Maya ASCII (*.ma)", "Maya Binary (*.mb)", "USD (*.usd)", "Alembic (*.abc)", "FBX (*.fbx)", "OBJ (*.obj)"], overwrite_check=False)
         file_path_hLay.addWidget(browse_path_pb)
         layout.addRow(file_path_lbl, file_path_hLay)
 
+        scale_lbl = QtWidgets.QLabel(text="Scale:")
+        scale_sp = QtWidgets.QDoubleSpinBox(buttonSymbols=QtWidgets.QAbstractSpinBox.NoButtons, maximum=999999.9)
+        layout.addRow(scale_lbl, scale_sp)
+
+        root_suffix_lbl = QtWidgets.QLabel(text="Root Suffix:")
+        root_suffix_le = QtWidgets.QLineEdit(maximumWidth=50)
+        layout.addRow(root_suffix_lbl, root_suffix_le)
+
+        parent_under_lbl = QtWidgets.QLabel(text="Parent Under:")
+        parent_under_suffix_le = QtWidgets.QLineEdit(maximumWidth=75)
+        layout.addRow(parent_under_lbl, parent_under_suffix_le)
+
         ctrl.connect(file_path_le, "import_file_path", str)
+        ctrl.connect(scale_sp, "scale", float)
+        ctrl.connect(root_suffix_le, "root_suffix", str)
+        ctrl.connect(parent_under_suffix_le, "parent_under", str)
+
         ctrl.update_ui()
 
+        # SIGNALS
         file_path_le.textChanged.connect(lambda x=0: ctrl.update_model())
         browse_path_pb.clicked.connect(lambda x=0: ctrl.update_model())
         browse_path_pb.clicked.connect(file_path_le.validate)  # to validate on initial browse result
+        scale_sp.valueChanged.connect(lambda x=0: ctrl.update_model())
+        root_suffix_le.textChanged.connect(lambda x=0: ctrl.update_model())
+        parent_under_suffix_le.textChanged.connect(lambda x=0: ctrl.update_model())
 
     def import_scene(self, file_path, *args, **kwargs):
-        return cmds.file(file_path, i=True)
+        return cmds.file(file_path, i=True, returnNewNodes=True)
 
     def import_obj(self, file_path, *args, **kwargs):
         opFlag = "lo=0 mo=1"
-        cmds.file(file_path, i=True, op=opFlag)
+        new_nodes = cmds.file(file_path, i=True, op=opFlag, returnNewNodes=True)
+        return new_nodes
 
     def import_alembic(self, file_path, update_only=False, *args, **kwargs):
         self._load_alembic_plugin()
+        pre = cmds.ls(long=True)
         if not update_only:
             cmds.AbcImport(file_path, ftr=False, sts=False)
         else:
             cmds.AbcImport(file_path, connect="/", createIfNotFound=True, ftr=False, sts=False)
+        after = cmds.ls(long=True)
+        new_nodes = [x for x in after if x not in pre]
+        return new_nodes
+
+    def import_usd(self, file_path, *args, **kwargs):
+        self._load_usd_plugin()
+        new_nodes = cmds.file(file_path, i=True, type="USD Import", ignoreVersion=True, mergeNamespacesOnClash=False, rpr=True, returnNewNodes=True)
+        return new_nodes
 
     def import_fbx(self, file_path, *args, **kwargs):
         self._load_fbx_plugin()
+        pre = cmds.ls(long=True)
 
         fbx_import_settings = {
         "FBXImportMergeBackNullPivots": "-v true",
@@ -116,23 +161,62 @@ class Import_asset(object):
             compFilePath = file_path.replace("\\", "//")  ## for compatibility with mel syntax.
             cmd = ('FBXImport -f "{0}";'.format(compFilePath))
             mel.eval(cmd)
-            return True
+            after = cmds.ls(long=True)
+            new_nodes = [x for x in after if x not in pre]
+            return new_nodes
         except:
             msg = "Cannot import FBX for unknown reason. Skipping"
-            cmds.confirmDialog(title='Unknown Error', message=msg)
-            return False
+            log.error(msg)
+            raise Exception(msg)
+
+    @staticmethod
+    def post_process(new_nodes, scale=1.0, suffix="", parent_under="", *args, **kwargs):
+        """Scaling and renaming post process"""
+        if suffix != "" or scale != 1.0 or parent_under != "":
+            # get the root node(s)
+            root_nodes = cmds.ls(new_nodes, assemblies=True)
+            # make sure all scales are unlocked
+            for node in new_nodes:
+                attribute.unlock(node, attr_list=["sx", "sy", "sz"])
+
+            # _ = [attribute.unlock(node, attr_list=["sx", "sy", "sz"]) for node in new_nodes]
+            # scale it (them) and add the suffix
+            for node in root_nodes:
+                temp_grp = cmds.group(name="trigger_temp_grp", em=True)
+                cmds.parent(node, temp_grp)
+                cmds.xform(temp_grp, s=(scale, scale, scale), piv=(0, 0, 0), ztp=True, p=True)
+                cmds.makeIdentity(temp_grp, a=True, t=False, r=False, s=True)
+                cmds.parent(node, world=True)
+                cmds.delete(temp_grp)
+
+                if suffix:
+                    node = cmds.rename(node, "%s_%s" %(node, suffix))
+
+                if parent_under:
+                    cmds.parent(node, parent_under)
+        else:
+            # nothing to do
+            return
 
 
     def _load_alembic_plugin(self):
         """Makes sure the alembic plugin is loaded"""
         currentPlatform = platform.system()
         ext = ".mll" if currentPlatform == "Windows" else ".so"
-        try: cmds.loadPlugin("AbcExport%s" % ext)
-        except: log.throw_error("Alembic Plugin cannot be loaded")
+        if not cmds.pluginInfo("AbcExport%s" % ext, l=True, q=True):
+            try: cmds.loadPlugin("AbcExport%s" % ext)
+            except: log.error("Alembic Plugin cannot be loaded")
 
     def _load_fbx_plugin(self):
         """Makes sure the FBX plugin is loaded"""
-        try: cmds.loadPlugin("fbxmaya")
-        except: log.throw_error("FBX Plugin cannot be loaded")
+        if not cmds.pluginInfo('fbxmaya', l=True, q=True):
+            try: cmds.loadPlugin("fbxmaya")
+            except: log.error("FBX Plugin cannot be loaded")
+
+    def _load_usd_plugin(self):
+        """Makes sure the usd plugin loaded"""
+        if not cmds.pluginInfo('mayaUsdPlugin', l=True, q=True):
+            try: cmds.loadPlugin("mayaUsdPlugin")
+            except: log.error("USD Plugin cannot be loaded")
 
     # TODO: EXPORT FUNCTIONS

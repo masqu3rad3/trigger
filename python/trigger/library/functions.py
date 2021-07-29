@@ -465,12 +465,12 @@ def uniqueList(seq): # Dave Kirby
 
 def getParent(node):
     """Returns the parent of the given node"""
-    parentList = cmds.listRelatives(node, parent=True)
+    parentList = cmds.listRelatives(node, parent=True, path=True)
     return parentList[0] if parentList else None
 
 def getShapes(node):
     """Returns shapes of the given node"""
-    return cmds.listRelatives(node, c=True, shapes=True)
+    return cmds.listRelatives(node, c=True, shapes=True, path=True)
 
 # TODO: MOVE TO THE TRANSFORM MODULE ??
 def getMeshes(node):
