@@ -114,7 +114,13 @@ class Look(object):
     @staticmethod
     def collect_sg_data():
         all_shading_engines = cmds.ls(type="shadingEngine")
-        shading_dict = {sg: cmds.sets(sg, q=True) for sg in all_shading_engines if cmds.sets(sg, q=True)}
+        # shading_dict = {sg: cmds.sets(sg, q=True) for sg in all_shading_engines if cmds.sets(sg, q=True)}
+        shading_dict = {}
+        for sg in all_shading_engines:
+            if cmds.sets(sg, q=True):
+                sets = cmds.sets(sg, q=True)
+                sets_full_path = [cmds.ls(x, l=True)[0] for x in sets]
+                shading_dict[sg] = sets_full_path
         return shading_dict
 
     @staticmethod
@@ -123,10 +129,18 @@ class Look(object):
             ## elements are faces or shapes
             if elements:
                 for face_or_shape in elements:
-                    try:
-                        cmds.sets(face_or_shape, e=True, forceElement=sg)
-                    except ValueError:
-                        pass
+                    instances = cmds.ls(face_or_shape.split("|")[-1], l=True)
+                    for inst in instances:
+                        try:
+                            cmds.sets(inst, e=True, forceElement=sg)
+                        except ValueError:
+                            log.warning("Cannot find %s. Skipping" % inst)
+                    # try:
+                    #     cmds.sets(face_or_shape, e=True, forceElement=sg)
+                    # except ValueError:
+                    #     cmds.sets(face_or_shape.split("|")[-1], e=True, forceElement=sg)
+                    # finally:
+                    #     pass
 
     @staticmethod
     @keepselection

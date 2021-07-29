@@ -209,15 +209,20 @@ class ActionsSession(dict):
         """
         action = self.get_action(action_name)
         if action:
-            current_value = action["data"].get(property)
+            defaults=self.action_data_dict[action["type"]]
+            current_value = action["data"].get(property, defaults.get(property))
             if current_value == None:
-                log.error("The property '%s' does not exist in %s ACTION_DATA" % (property, action["type"]))
+                msg = "The property '%s' does not exist in %s ACTION_DATA" % (property, action["type"])
+                log.error(msg)
+                raise Exception(msg)
             if compat.is_string(new_value):
                 new_value = str(new_value)
             if compat.is_string(current_value):
                 current_value = str(current_value)
             if type(current_value) != type(new_value):
-                log.error("%s property only accepts %s values" % (property, str(type(current_value))))
+                msg = "%s property only accepts %s values" % (property, str(type(current_value)))
+                log.error(msg)
+                raise Exception(msg)
 
             action["data"][property] = new_value
             # log.info("%s @ %s => %s" % (property, action["name"], new_value))
@@ -229,7 +234,8 @@ class ActionsSession(dict):
     def query_action(self, action_name, property):
         action = self.get_action(action_name)
         if action:
-            current_value = action["data"].get(property)
+            defaults=self.action_data_dict[action["type"]]
+            current_value = action["data"].get(property, defaults.get(property))
             if current_value == None:
                 log.error("The property '%s' does not exist in %s ACTION_DATA" % (property, action["type"]))
             else:

@@ -210,8 +210,9 @@ def get_uuid(prefix="uuid", short=True, no_dashes=True):
         _uuid = "%s%s" %(prefix, _uuid)
     return _uuid
 
-def get_part_name(node_name):
+def get_part_name(node_dag_path):
     """Gets a nice shorter name from the tagged mesh names"""
+    node_name = node_dag_path.split("|")[-1]
     parts = node_name.split("_")
     if not parts:
         return node_name
