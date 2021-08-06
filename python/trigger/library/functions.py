@@ -211,6 +211,7 @@ def createUpGrp(node, suffix, freezeTransform=True):
 # TODO: MOVE TO THE TRANSFORM MODULE
 def isGroup(node):
     """Checks if the given node is a group node or not"""
+    log.warning("isGroup function is moved to transform.is_group. Use that one instead")
     if cmds.listRelatives(node, children=True, shapes=True):
         return False
     else:
@@ -219,6 +220,7 @@ def isGroup(node):
 # TODO: MOVE TO THE TRANSFORM MODULE
 def validateGroup(group_name):
     "checks if the group exist, if not creates it. If there are any non-group object with that name, raises exception"
+    log.warning("isGroup function is moved to transform.validate_group. Use that one instead")
     if cmds.objExists(group_name):
         if isGroup(group_name):
             return group_name

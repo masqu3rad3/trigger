@@ -3,9 +3,13 @@
 from maya import cmds
 
 from trigger.core.decorators import undo, keepselection
-from trigger.library import functions
+from trigger.library import functions, transform
 from trigger.library import naming
 from trigger.core import compatibility as compat
+
+from trigger.core import filelog
+
+log = filelog.Filelog(logname=__name__, filename="trigger_log")
 
 
 def get_deformers(mesh=None, namesOnly=False):
@@ -217,14 +221,24 @@ def add_target_blendshape(blendshape_node, target_mesh, weight=1.0):
     return next_index
 
 # TODO Make this one compatible with list vertex inputs
+@keepselection
 def cluster(mesh):
-    original_selection = cmds.ls(sl=True)
+    # original_selection = cmds.ls(sl=True)
     cmds.select(mesh)
     cmds.CreateCluster()
-    shape = cmds.listRelatives(mesh, shapes=True)[0]
+    # if the given node is a group, cluster will be applied to all shapes underneath. In that case, select the first one
+    if transform.is_group(mesh):
+        all_shapes = cmds.listRelatives(mesh, parent=False, children=True, ad=True, type="shape")
+        if all_shapes:
+            shape = all_shapes[0]
+        else:
+            log.error("There are no shapes under the %s group" %mesh)
+            raise
+    else:
+        shape = cmds.listRelatives(mesh, shapes=True)[0]
     cluster = cmds.listConnections(shape, type="cluster")[-1]
     cluster_handle = cmds.listConnections(cluster, type="transform")[-1]
-    cmds.select(original_selection)
+    # cmds.select(original_selection)
     return cluster, cluster_handle
 
 def get_bs_index_by_name(bs_node, target_name):

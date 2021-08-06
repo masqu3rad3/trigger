@@ -1,6 +1,10 @@
 """transform related functions"""
 from maya import cmds
 from trigger.core.decorators import keepframe
+from trigger.core import filelog
+
+log = filelog.Filelog(logname=__name__, filename="trigger_log")
+
 
 def set_limits(node, attribute, attr_min, attr_max):
     """Set a control's transform attribute limits.
@@ -37,4 +41,23 @@ def duplicate(node, name=None, at_time=None):
         cmds.currentTime(at_time)
     node_name = name or "%s_dup" % node
     return cmds.duplicate(node, name=node_name)[0]
+
+def is_group(node):
+    """Checks if the given node is a group node or not"""
+    if cmds.listRelatives(node, children=True, shapes=True):
+        return False
+    else:
+        return True
+
+def validate_group(group_name):
+    "checks if the group exist, if not creates it. If there are any non-group object with that name, raises exception"
+    log.warning("isGroup function is moved to transform.validate_group. Use that one instead")
+    if cmds.objExists(group_name):
+        if is_group(group_name):
+            return group_name
+        else:
+            log.error("%s is not a valid group name. There is another non-group object with the same same" %group_name)
+    else:
+        return cmds.group(name=group_name, em=True)
+
 
