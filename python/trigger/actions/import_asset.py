@@ -177,7 +177,8 @@ class Import_asset(object):
             root_nodes = cmds.ls(new_nodes, assemblies=True)
             # make sure all scales are unlocked
             for node in new_nodes:
-                attribute.unlock(node, attr_list=["sx", "sy", "sz"])
+                if cmds.objectType(node) == "transform":
+                    attribute.unlock(node, attr_list=["sx", "sy", "sz"])
 
             # _ = [attribute.unlock(node, attr_list=["sx", "sy", "sz"]) for node in new_nodes]
             # scale it (them) and add the suffix
