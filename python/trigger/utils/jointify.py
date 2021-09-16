@@ -510,6 +510,7 @@ class Jointify(object):
                 self.originalData[shape]["type"] = "base"
                 self.originalData[shape]["in"] = ""
                 self.originalData[shape]["out"] = ""
+                self.originalData[shape]["combinations"] = []
         self.log.info("Original data collected successfully")
         return self.originalData
 
@@ -550,6 +551,7 @@ class Jointify(object):
         fbx_source = os.path.normpath(os.path.join(os.path.expanduser("~"), "jointify_source_fbx.fbx"))
         fbx_output = os.path.normpath(os.path.join(os.path.expanduser("~"), "jointify_output_fbx.fbx"))
 
+        self.log.info("Exporting Alembic Animation...")
         # export Alembic animation
         abc_exp_command = "-framerange {0} {1} -uvWrite -dataFormat ogawa -noNormals -root {2} -file {3}".format(
             self.trainingData["animationRange"][0],
@@ -559,7 +561,9 @@ class Jointify(object):
         )
         cmds.AbcExport(j= abc_exp_command)
 
+
         if not self.fbxSource:
+            self.log.info("Exporting FBX...")
             # export static FBX
             ### file -force -options "" -typ "FBX export" -pr -es "C:/Users/arda.kutlu/Documents/jointify_source_fbx.fbx";
             cmds.currentTime(0)
@@ -607,6 +611,7 @@ class Jointify(object):
             cmds.delete(copy_mesh)
 
         else:
+            self.log.info("Using %s as FBX source..." %self.fbxSource)
             fbx_source = self.fbxSource
 
         # do the DEM magic
