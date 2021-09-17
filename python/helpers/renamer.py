@@ -41,7 +41,7 @@ class Renamer(object):
                 elif "pasted" in obj:
                     pasted = "pasted"
                 else:
-                    return
+                    continue
                 cmds.rename(obj, obj.split("|")[-1].replace(pasted, ""))
             except RuntimeError:
                 pass
