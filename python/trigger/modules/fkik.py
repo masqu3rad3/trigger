@@ -288,7 +288,6 @@ class Fkik(object):
         cmds.parent(ik_handle, self.nonScaleGrp)
         if self.ikSolver != 0:
             cmds.poleVectorConstraint(self.poleVectorBridge, ik_handle)
-            # cmds.aimConstraint(self.ikJoints[self.middleIndex], self.poleVectorCont, u=self.up_axis, wut="vector")
             connection.matrixConstraint(self.poleVectorCont, self.poleVectorBridge, mo=False, source_parent_cutoff=self.localOffGrp)
             cmds.parent(self.poleVectorBridge, self.nonScaleGrp)
             cmds.connectAttr("%s.rigVis" % self.scaleGrp, "%s.v" %self.poleVectorBridge)
@@ -302,8 +301,8 @@ class Fkik(object):
             attribute.drive_attrs("%s.rigVis" % self.scaleGrp, ["%s.v" % x for x in stretch_locs])
         else:
             connection.matrixConstraint(self.ikControllers[-1], ik_handle, mo=False, source_parent_cutoff=self.localOffGrp)
-        connection.matrixConstraint(self.ikControllers[0], self.ikJoints[0], mo=False, source_parent_cutoff=self.localOffGrp)
-        connection.matrixConstraint(self.ikControllers[-1], self.ikJoints[-1], st="xyz", ss="xyz", mo=False, source_parent_cutoff=self.localOffGrp)
+        connection.matrixConstraint(self.ikControllers[0], ik_joints[0], mo=False, source_parent_cutoff=self.localOffGrp)
+        connection.matrixConstraint(self.ikControllers[-1], ik_joints[-1], st="xyz", ss="xyz", mo=False, source_parent_cutoff=self.localOffGrp)
 
     def createFKsetup(self):
         if self.switchMode == 2: # if it is IK only
