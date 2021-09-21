@@ -2,11 +2,14 @@
 
 import maya.api.OpenMaya as om
 
+from trigger.base import validate
+
 from trigger.library import api
 from trigger.library import interface
 from trigger.library import attribute
 from maya import cmds
 
+validate.plugin("matrixNodes")
 
 def connections(node, exclude_nodes=None, exclude_types=None, return_mode="all"):
     """

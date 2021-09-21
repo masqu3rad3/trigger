@@ -891,6 +891,7 @@ class Jointify(object):
             if d > threshold:
                 yield (d)
 
+    # TODO move the validations to validate module
     @staticmethod
     def _check_plugins():
         if not cmds.pluginInfo('AbcExport', l=True, q=True):
