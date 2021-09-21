@@ -1,7 +1,8 @@
 #
 # Renamer version 1.1
 
-import sys
+import re
+
 import maya.cmds as cmds
 
 from trigger.ui.qtmaya import getMayaMainWindow
@@ -28,6 +29,8 @@ class Renamer(object):
             # self.objectList = cmds.ls(long=True)
             self.objectList = cmds.ls()
 
+        # sort the list to iterate transforms first
+        # self.objectList = sorted(object_list, key=lambda x: cmds.objectType(x) == "transform")
 
     def removePasted(self, selectMethod):
         """Removes pasted_ from the object name"""
@@ -75,21 +78,37 @@ class Renamer(object):
             except RuntimeError:
                 pass
 
-    def rename(self, selectMethod, newName):
+    def rename(self, selectMethod, new_name):
         self.getObjects(selectMethod)  # initialize the objectList
 
         # get the hashtags from the name
-        split = newName.split("#")
-        newName = split[0]
-        padding = abs(len(split)-1)
+        pat = r'[#]'
+        pat_iters = list(re.finditer(pat, new_name))
+        padding = len(pat_iters) or 0
 
-        counter = 1
-        for i in self.objectList:
+        if pat_iters:
+            pre = new_name[0:pat_iters[0].start()]
+            post = new_name[pat_iters[-1].end():-1]
+        else:
+            pre = new_name
+            post = ""
+
+        count = 1
+        for obj in self.objectList:
+            instance = str(count).zfill(padding) if padding else ""
             try:
-                cmds.rename(i, "{0}{1}".format(newName, str(counter).zfill(padding)))
-                counter += 1
+                renamed = cmds.rename(obj, "{0}{1}{2}".format(pre, instance, post), ignoreShape=True)
+                self._rename_children(renamed)
+                count += 1
             except RuntimeError:
                 pass
+
+    def _rename_children(self, obj):
+        children = cmds.listRelatives(obj, children=True, fullPath=True)
+        if children:
+            for c in children:
+                cmds.rename(c, "%sShape" %obj)
+
 
     def replace(self, selectMethod, A, B):
         self.getObjects(selectMethod)  # initialize the objectList
