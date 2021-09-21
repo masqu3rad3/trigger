@@ -169,11 +169,11 @@ class Fkik(object):
 
     def createControllers(self):
         icon_handler = ic.Icon()
-        fk_joints = self.deformerJoints if self.switchMode != 0 else self.fkJoints
+
 
         # FK Controllers
         if self.switchMode == 0 or self.switchMode == 1:
-
+            fk_joints = self.deformerJoints if self.switchMode != 0 else self.fkJoints
             for nmb, jnt in enumerate(fk_joints[:-1]):
                 scale_mult = functions.getDistance(jnt, fk_joints[nmb + 1]) * 0.5
                 cont, _ = icon_handler.createIcon("Cube", iconName="%s%i_FK_cont" % (self.suffix, nmb), scale=(scale_mult, scale_mult, scale_mult))
@@ -197,22 +197,23 @@ class Fkik(object):
 
         # IK Controllers
         if self.switchMode == 0 or self.switchMode == 2:
+            ik_joints = self.deformerJoints if self.switchMode != 0 else self.ikJoints
             ik_bind_grp = cmds.group(name="%s_IK_bind_grp" %self.suffix, em=True)
             cmds.parent(ik_bind_grp, self.localOffGrp)
             connection.matrixConstraint(self.limbPlug, ik_bind_grp, mo=True)
 
-            scale_mult = functions.getDistance(self.ikJoints[0], self.ikJoints[1]) * 0.5
+            scale_mult = functions.getDistance(ik_joints[0], ik_joints[1]) * 0.5
             self.rootIkCont, _ = icon_handler.createIcon("Circle", iconName="%s_rootIK_cont" % self.suffix, normal=(1,0,0), scale=(scale_mult, scale_mult, scale_mult))
             self.ikControllers.append(self.rootIkCont)
             root_ik_cont_off = functions.createUpGrp(self.rootIkCont, "OFF")
             self.ikControllersOff.append(root_ik_cont_off)
-            functions.alignTo(root_ik_cont_off, self.ikJoints[0], rotation=True, position=True)
+            functions.alignTo(root_ik_cont_off, ik_joints[0], rotation=True, position=True)
 
             self.endIKCont, _ = icon_handler.createIcon("Circle", iconName="%s_endIK_cont" % self.suffix, normal=(1,0,0), scale=(scale_mult, scale_mult, scale_mult))
             self.ikControllers.append(self.endIKCont)
             end_ik_cont_off = functions.createUpGrp(self.endIKCont, "OFF")
             self.ikControllersOff.append(end_ik_cont_off)
-            functions.alignTo(end_ik_cont_off, self.ikJoints[-1], rotation=True, position=True)
+            functions.alignTo(end_ik_cont_off, ik_joints[-1], rotation=True, position=True)
 
             cmds.parent(root_ik_cont_off, ik_bind_grp)
             cmds.parent(end_ik_cont_off, ik_bind_grp)
@@ -220,17 +221,17 @@ class Fkik(object):
             if self.ikSolver != 0: # if it is a rotate plane or spring solver
                 # create a bridge locator to stay with the local joints
 
-                scale_mult = functions.getDistance(self.ikJoints[0], self.ikJoints[-1]) * 0.1
+                scale_mult = functions.getDistance(ik_joints[0], ik_joints[-1]) * 0.1
                 self.poleVectorBridge = cmds.spaceLocator(name="poleVectorBridge_%s" %self.suffix)[0]
                 self.poleVectorCont, _ = icon_handler.createIcon("Plus", iconName="%s_Pole_cont" % self.suffix, scale=(scale_mult, scale_mult, scale_mult),
                                                       normal=(self.sideMult, 0, 0))
                 offset_magnitude = scale_mult
-                self.middleIndex = int((len(self.ikJoints)-1)*0.5)
-                offset_vector = api.getBetweenVector(self.ikJoints[self.middleIndex], self.ikJoints)
+                self.middleIndex = int((len(ik_joints)-1)*0.5)
+                offset_vector = api.getBetweenVector(ik_joints[self.middleIndex], ik_joints)
 
                 functions.alignAndAim(self.poleVectorBridge,
-                                      targetList=[self.ikJoints[self.middleIndex]],
-                                      aimTargetList=self.ikJoints,
+                                      targetList=[ik_joints[self.middleIndex]],
+                                      aimTargetList=ik_joints,
                                       upVector=self.up_axis,
                                       translateOff=(offset_vector * offset_magnitude)
                                       )

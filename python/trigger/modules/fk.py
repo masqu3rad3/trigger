@@ -20,6 +20,8 @@ LIMB_DATA = {
     "sided": True,
 }
 
+log.warning("FK module is deprecated. Use fkik module instead")
+
 class Fk(object):
     def __init__(self, build_data=None, inits=None, *args, **kwargs):
         super(Fk, self).__init__()
