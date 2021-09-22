@@ -33,6 +33,10 @@ class BrowserButton(QtWidgets.QPushButton):
         self._title = title if title else ""
         self._selectedPath = ""
         self._overwriteCheck=overwrite_check
+        self._cancelFlag = False
+
+    def isCancelled(self):
+        return self._cancelFlag
 
     def setUpdateWidget(self, widget):
         self._updateWidget = widget
@@ -67,6 +71,7 @@ class BrowserButton(QtWidgets.QPushButton):
         return ";;".join(filter_list)
 
     def browserEvent(self):
+        self._cancelFlag = False
         if self._updateWidget:
             default_path = str(self._updateWidget.text())
         else:
@@ -102,6 +107,8 @@ class BrowserButton(QtWidgets.QPushButton):
             if self._updateWidget:
                 self._updateWidget.setText(self._selectedPath)
             self.click()
+        else:
+            self._cancelFlag=True
 
         return new_path
 
@@ -675,6 +682,8 @@ class SaveBoxLayout(QtWidgets.QVBoxLayout):
     def saveAs(self):
         if self.controlModel:
             self.controlModel.update_model()
+        if self.saveAsButton.isCancelled():
+            return
         if self.updateWidget:
             file_path = str(self.updateWidget.text())
             if not file_path:
