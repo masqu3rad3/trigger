@@ -24,7 +24,7 @@ from trigger.core import filelog
 log = filelog.Filelog(logname=__name__, filename="trigger_log")
 db = database.Database()
 
-WINDOW_NAME = "Trigger v2.0.1"
+WINDOW_NAME = "Trigger v2.2.4"
 
 qss = """
 QPushButton
