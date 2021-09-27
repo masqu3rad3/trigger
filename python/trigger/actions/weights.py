@@ -52,6 +52,14 @@ class Weights(dict):
         self.deformers_list = []
         self.weights_file_path = ""
 
+    def info(self):
+        info_msg = """Weights action is for storing different weight paints on versioned files.
+        
+Add deformers (e.g skincluster) to object and paint them. Once you are happy first you need define the deformer in Weights Action if it is not already there. Either click 'New' button and enter the name of the deformer manually or select the object, hit the 'Get' button and choose the deformer from pop-up drop-down list. Repeat the process for each deformer that you want to store and version the weights.
+Then you can save and increment versions for all of them at once.
+        """
+        return info_msg
+
     @property
     def deformer(self):
         return self["deformer"]

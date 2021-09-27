@@ -29,7 +29,7 @@ ACTION_DATA = {
                             "mode": 0, # 0 means Vector mode
                             "driver_transform": "some_joint"
                             "controller": "upper_arm_cont"
-                            "target_rotation": "some_rotation"
+                            "target_matrix": "some_rotation"
                             "up_object": "some parent object of driver"
                             "driver_axis": "This is not used with angle mode"
                             "corrected_shape": "some_shape"
@@ -39,7 +39,7 @@ ACTION_DATA = {
                             "mode": 1, # 1 means Single Acis mode
                             "driver_transform": "some_joint"
                             "controller": "upper_arm_cont"
-                            "target_rotation": "some_rotation"
+                            "target_matrix": "some_rotation"
                             "up_object": "This is not used with single axis mode"
                             "driver_axis": "X Y or Z axis"
                             "corrected_shape": "some_shape"
@@ -77,7 +77,7 @@ class Correctives(object):
             mode = definition.get("mode")
             driver_transform = definition.get("driver_transform")
             controller = definition.get("controller")
-            target_rotation = definition.get("target_rotation")
+            target_rotation = definition.get("target_matrix")
             up_object = definition.get("up_object")
             driver_axis = definition.get("driver_axis")
             corrected_shape = definition.get("corrected_shape")
@@ -143,12 +143,14 @@ class Correctives(object):
         def add_new_definition(mode_val=0,
                                driver_transform_val="",
                                controller_val="",
-                               target_rotation_val=[0,0,0],
+                               target_matrix_val=None,
                                up_object_val="",
                                driver_axis_val="",
                                corrected_shape_val="",
                                skinned_mesh_val=""
                                ):
+
+            target_matrix_val = target_matrix_val or []
             self.id += 1
 
             def_formlayout = QtWidgets.QFormLayout()
@@ -170,18 +172,19 @@ class Correctives(object):
             def_controller_leBox.buttonGet.setMaximumWidth(30)
             def_formlayout.addRow(def_controller_lbl, def_controller_leBox)
 
-            def_target_rotation_lbl = QtWidgets.QLabel(text="Target Rotation")
-            rotations_hlay = QtWidgets.QHBoxLayout()
-            x_rot_sp = QtWidgets.QDoubleSpinBox(minimum=-999999, maximum=999999)
-            y_rot_sp = QtWidgets.QDoubleSpinBox(minimum=-999999, maximum=999999)
-            z_rot_sp = QtWidgets.QDoubleSpinBox(minimum=-999999, maximum=999999)
-            rotations_hlay.addWidget(x_rot_sp)
-            rotations_hlay.addWidget(y_rot_sp)
-            rotations_hlay.addWidget(z_rot_sp)
-            get_rotation_pb = QtWidgets.QPushButton(text="<")
-            get_rotation_pb.setMaximumWidth(30)
-            rotations_hlay.addWidget(get_rotation_pb)
-            def_formlayout.addRow(def_target_rotation_lbl, rotations_hlay)
+            def_target_matrix_lbl = QtWidgets.QLabel(text="Target Transform")
+            def_target_matrix_lbl.setToolTip("The ultimate position which will be the corrective 100% activated")
+            matrix_hlay = QtWidgets.QHBoxLayout()
+            target_matrix_list = QtWidgets.QListWidget()
+
+            matrix_hlay.addWidget(target_matrix_list)
+
+            capture_matrix_pb = QtWidgets.QPushButton(text="CAPTURE")
+            capture_matrix_pb.setToolTip("Adjust the controller to the angle and position where the corrective will be active and press this button to set the values")
+            capture_matrix_pb.setMaximumWidth(200)
+            capture_matrix_pb.setFixedHeight(100)
+            matrix_hlay.addWidget(capture_matrix_pb)
+            def_formlayout.addRow(def_target_matrix_lbl, matrix_hlay)
 
             def_up_object_lbl = QtWidgets.QLabel(text="Up Object")
             def_up_object_leBox = custom_widgets.LineEditBoxLayout(buttonsPosition="right")
@@ -221,9 +224,7 @@ class Correctives(object):
                 "def_mode_combo": def_mode_combo,
                 "def_driver_transform_leBox": def_driver_transform_leBox,
                 "def_controller_leBox": def_controller_leBox,
-                "x_rot_sp": x_rot_sp,
-                "y_rot_sp": y_rot_sp,
-                "z_rot_sp": z_rot_sp,
+                "target_matrix_list": target_matrix_list,
                 "def_up_object_leBox": def_up_object_leBox,
                 "def_driver_axis_combo": def_driver_axis_combo,
                 "def_corrected_shape_leBox": def_corrected_shape_leBox,
@@ -237,15 +238,27 @@ class Correctives(object):
             def_mode_combo.setCurrentIndex(mode_val)
             def_driver_transform_leBox.viewWidget.setText(driver_transform_val)
             def_controller_leBox.viewWidget.setText(controller_val)
-            x_rot_sp.setValue(target_rotation_val[0])
-            y_rot_sp.setValue(target_rotation_val[1])
-            z_rot_sp.setValue(target_rotation_val[2])
+            str_target_matrix_val = [str(x) for x in target_matrix_val]
+            target_matrix_list.addItems(str_target_matrix_val)
             def_up_object_leBox.viewWidget.setText(up_object_val)
             def_driver_axis_combo.setCurrentText(driver_axis_val)
             def_corrected_shape_leBox.viewWidget.setText(corrected_shape_val)
             def_skinned_mesh_leBox.viewWidget.setText(skinned_mesh_val)
 
             update_widget_visibility(def_mode_combo.currentIndex(), tmp_dict)
+
+            def capture_matrix():
+                cont = cmds.ls(def_controller_leBox.viewWidget.text())
+                # sel, msg = selection.validate(min=1, max=1, meshesOnly=False, transforms=True)
+                if cont:
+                    target_matrix_list.clear()
+                    tm_matrix = cmds.xform(cont[0], matrix=True, q=True)
+                    str_tm_matrix = [str(x) for x in tm_matrix]
+                    target_matrix_list.addItems(str_tm_matrix)
+                    # print("tm_matrix", tm_matrix)
+                    update_model()
+                else:
+                    feedback.Feedback().pop_info(title="Selection Error", text="Controller not defined or does not exist in the scene", critical=True)
 
             # signals
             def_mode_combo.currentIndexChanged.connect(lambda val, w_dict=tmp_dict: update_widget_visibility(val, w_dict))
@@ -254,10 +267,11 @@ class Correctives(object):
             def_driver_transform_leBox.buttonGet.clicked.connect(lambda _=0, widget=def_driver_transform_leBox.viewWidget: get_selected(widget, mesh_only=False))
             def_controller_leBox.viewWidget.textChanged.connect(update_model)
             def_controller_leBox.buttonGet.clicked.connect(lambda _=0, widget=def_controller_leBox.viewWidget: get_selected(widget, mesh_only=False))
-            x_rot_sp.valueChanged.connect(update_model)
-            y_rot_sp.valueChanged.connect(update_model)
-            z_rot_sp.valueChanged.connect(update_model)
-            get_rotation_pb.clicked.connect(lambda _=0, x=x_rot_sp, y=y_rot_sp, z=z_rot_sp: get_rotation(x, y, z))
+            # x_rot_sp.valueChanged.connect(update_model)
+            # y_rot_sp.valueChanged.connect(update_model)
+            # z_rot_sp.valueChanged.connect(update_model)
+            # capture_matrix_pb.clicked.connect(lambda _=0, x=x_rot_sp, y=y_rot_sp, z=z_rot_sp: get_rotation(x, y, z))
+            capture_matrix_pb.clicked.connect(capture_matrix)
             def_up_object_leBox.viewWidget.textChanged.connect(update_model)
             def_up_object_leBox.buttonGet.clicked.connect(lambda _=0, widget=def_up_object_leBox.viewWidget: get_selected(widget, mesh_only=False))
             def_driver_axis_combo.currentIndexChanged.connect(update_model)
@@ -267,6 +281,8 @@ class Correctives(object):
             def_skinned_mesh_leBox.buttonGet.clicked.connect(lambda _=0, widget=def_skinned_mesh_leBox.viewWidget: get_selected(widget))
             def_remove_pb.clicked.connect(lambda _=0, lay=def_formlayout, id=self.id: delete_definition(lay, id))
             def_remove_pb.clicked.connect(update_model)
+
+
 
         def get_rotation(x_widget, y_widget, z_widget):
             sel, msg = selection.validate(min=1, max=1, meshesOnly=False, transforms=True)
@@ -313,9 +329,9 @@ class Correctives(object):
                 tmp_dict["mode"] = widget_dict["def_mode_combo"].currentIndex()
                 tmp_dict["driver_transform"] = widget_dict["def_driver_transform_leBox"].viewWidget.text()
                 tmp_dict["controller"] = widget_dict["def_controller_leBox"].viewWidget.text()
-                tmp_dict["target_rotation"] = [widget_dict["x_rot_sp"].value(),
-                                               widget_dict["y_rot_sp"].value(),
-                                               widget_dict["z_rot_sp"].value()]
+                tm_widget = widget_dict["target_matrix_list"]
+                tmp_dict["target_matrix"] = [float(tm_widget.item(x).text()) for x in range(tm_widget.count())]
+
                 tmp_dict["up_object"] = widget_dict["def_up_object_leBox"].viewWidget.text()
                 tmp_dict["driver_axis"] = widget_dict["def_driver_axis_combo"].currentText()
                 tmp_dict["corrected_shape"] = widget_dict["def_corrected_shape_leBox"].viewWidget.text()
@@ -331,7 +347,7 @@ class Correctives(object):
                 add_new_definition(mode_val=definition["mode"],
                                    driver_transform_val=definition["driver_transform"],
                                    controller_val=definition["controller"],
-                                   target_rotation_val=definition["target_rotation"],
+                                   target_matrix_val=definition["target_matrix"],
                                    up_object_val=definition["up_object"],
                                    driver_axis_val=definition["driver_axis"],
                                    corrected_shape_val=definition["corrected_shape"],
@@ -360,7 +376,7 @@ class Correctives(object):
         add_new_definition_btn.clicked.connect(add_new_definition)
 
     @staticmethod
-    def vector_psd(driver_transform, controller, target_rotation, up_object, return_angle_attr=False, prefix=""):
+    def vector_psd(driver_transform, controller, target_matrix, up_object, return_angle_attr=False, prefix=""):
         root_loc = cmds.spaceLocator(name=naming.uniqueName("%s_angleExt_root" %prefix))[0]
         point_a = cmds.spaceLocator(name=naming.uniqueName("%s_angleExt_pointA" %prefix))[0]
         cmds.setAttr("%s.tx" % point_a, 5)
@@ -375,25 +391,16 @@ class Correctives(object):
         connection.matrixConstraint(up_object, point_b_offset, st="xyz", mo=True)
 
         # store controllers initial rotation
-        initial_rotation = cmds.getAttr("%s.r" % controller)[0]
+        # initial_rotation = cmds.getAttr("%s.r" % controller)[0]
+        initial_matrix = cmds.xform(controller, matrix=True, q=True)
         # temporarily parent b to the controller and move it to its target position
         cmds.parent(point_b, controller)
-        cmds.setAttr("%s.r" % controller, *target_rotation)
+        cmds.xform(controller, matrix=target_matrix)
         cmds.parent(point_b, point_b_offset)
-        cmds.setAttr("%s.r" % controller, *initial_rotation)
+        functions.alignTo(point_b, point_a, position=True, rotation=True)
 
-        # # create a temporary group hierarchy to match the locator to the target rotation
-        # tmp_grp = cmds.group(em=True, name="vector_psd_TEMP_GRP")
-        # functions.alignTo(tmp_grp, driver_transform, position=True, rotation=True)
-        # trans_parent = functions.getParent(driver_transform)
-        # if trans_parent:
-        #     cmds.parent(tmp_grp, trans_parent)
-        #
-        # # temporarily parent point_b to the transform to move it to the goal rotation
-        # cmds.parent(point_b, tmp_grp)
-        # cmds.setAttr("%s.r" % tmp_grp, *target_rotation)
-        # cmds.parent(point_b, point_b_offset)
-        # cmds.delete(tmp_grp)
+        cmds.xform(controller, matrix=initial_matrix)
+
 
         angle_between = cmds.createNode("angleBetween", name=naming.uniqueName("%s_angleExt_angleBetween" % prefix))
         cmds.connectAttr("%s.t" % point_a, "%s.vector1" % angle_between)
@@ -421,7 +428,7 @@ class Correctives(object):
                 raise
 
     @staticmethod
-    def connect_correctives(corrected_mesh, skinned_mesh, controller, target_rotation, psd_attr, discard_delta=True):
+    def connect_correctives(corrected_mesh, skinned_mesh, controller, target_matrix, psd_attr, discard_delta=True):
         """
         Extracts the deltas of the corrected mesh and connects it to the psd attribute
 
@@ -429,7 +436,7 @@ class Correctives(object):
             corrected_mesh: (String) Sculpted mesh
             skinned_mesh: (String) The mesh with the skinCluster
             controller: (String) Controller object which used to get into the sculpted position
-            target_rotation: (tuple or list) target rotations of the the controller object
+            target_matrix: (tuple or list) target rotations of the the controller object
             psd_attr: (String) pose space deformer attribute which will initiall drive the corrected shape
                                         e.g. L_thumb.rotateX, angleExtract_loc.angleBetween
             discard_delta: (bool) if True, the delta shape which will be extracted by extractDeltas plugin will be deleted
@@ -442,9 +449,10 @@ class Correctives(object):
         r_start = cmds.getAttr(psd_attr)
 
         # store controllers initial rotation
-        initial_rotation = cmds.getAttr("%s.r" % controller)[0]
+        initial_matrix = cmds.xform(controller, matrix=True, q=True)
 
-        cmds.setAttr("%s.r" % controller, *target_rotation)
+        cmds.xform(controller, matrix=target_matrix)
+
         # get range end
         r_end = cmds.getAttr(psd_attr)
 
@@ -467,7 +475,7 @@ class Correctives(object):
         )
 
         # back to original state
-        cmds.setAttr("%s.r" % controller, *initial_rotation)
+        cmds.xform(controller, matrix=initial_matrix)
 
         if discard_delta:
             functions.deleteObject(extracted_delta_shape)

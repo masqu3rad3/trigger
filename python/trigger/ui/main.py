@@ -104,18 +104,6 @@ class MainUI(QtWidgets.QMainWindow):
 
     def __init__(self):
 
-        # for entry in QtWidgets.QApplication.allWidgets():
-        #     try:
-        #         if entry.objectName() == WINDOW_NAME:
-        #             # self.closeEvent()
-        #             # sys.stderr = lambda: 1
-        #             # return
-        #             raise Exception("Only one session of Trigger can be opened per Maya instance")
-        #             # entry.close()
-        #             # entry.deleteLater()
-        #
-        #     except (AttributeError, TypeError):
-        #         pass
         parent = getMayaMainWindow()
         super(MainUI, self).__init__(parent=parent)
 
@@ -132,7 +120,6 @@ class MainUI(QtWidgets.QMainWindow):
         self.feedback = feedback.Feedback()
         self.feedback.parent = self
         self.installEventFilter(self)
-        # self.force = False
         # core ui
         self.setWindowTitle(WINDOW_NAME)
         self.setObjectName(WINDOW_NAME)
@@ -185,8 +172,6 @@ class MainUI(QtWidgets.QMainWindow):
                 button.setProperty("override", "0")
                 button.style().polish(button)
 
-
-
     def update_title(self):
         file_name = self.actions_handler.currentFile if self.actions_handler.currentFile else "untitled"
         asteriks = "*" if self.actions_handler.is_modified() else ""
@@ -207,8 +192,6 @@ class MainUI(QtWidgets.QMainWindow):
         else:
             _killCallbacks(self.callbackIDList)
             event.accept()
-
-
 
     def buildBarsUI(self):
         self.menubar = QtWidgets.QMenuBar(self)
@@ -250,7 +233,6 @@ class MainUI(QtWidgets.QMainWindow):
 
         self.recents_menu = QtWidgets.QMenu("Recent Sessions")
         self.menuFile.addMenu(self.recents_menu)
-        # self.recents_menu = self.menuFile.addMenu("Recent Sessions")
         self.menuFile.addAction(self.exit_action)
 
         self.menubar.addAction(self.menuFile.menuAction())
@@ -310,7 +292,6 @@ class MainUI(QtWidgets.QMainWindow):
 
         self.module_create_splitter = QtWidgets.QSplitter(L_splitter_layoutWidget)
         L_guides_vLay.addWidget(self.module_create_splitter)
-        # self.module_create_splitter.setGeometry(QtCore.QRect(30, 30, 473, 192))
         self.module_create_splitter.setOrientation(QtCore.Qt.Horizontal)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(0)
@@ -355,7 +336,6 @@ class MainUI(QtWidgets.QMainWindow):
         button_scrollArea.setFrameShape(QtWidgets.QFrame.NoFrame)
         button_scrollArea.setFrameShadow(QtWidgets.QFrame.Sunken)
         button_scrollArea.setWidgetResizable(True)
-
 
         button_scrollArea_WidgetContents = QtWidgets.QWidget()
 
@@ -703,7 +683,7 @@ class MainUI(QtWidgets.QMainWindow):
         message_layout = QtWidgets.QVBoxLayout(self.message_dialog)
         message_layout.setContentsMargins(0, 0, 0, 0)
         info_te = QtWidgets.QTextEdit()
-        info_te.setFont(QtGui.QFont("Courier New", 12, QtGui.QFont.Bold))
+        info_te.setFont(QtGui.QFont("Courier New", 10, QtGui.QFont.Bold))
         info_te.setReadOnly(True)
         info_te.setText(info)
         message_layout.addWidget(info_te)
