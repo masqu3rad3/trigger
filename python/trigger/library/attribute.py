@@ -390,7 +390,7 @@ def attrPass (sourceNode, targetNode, attributes=[], inConnections=True, outConn
             for i in userAttr:
                 cmds.deleteAttr("%s.%s" % (sourceNode,i))
 
-def create_global_joint_attrs(joint, moduleName=None, upAxis=None, mirrorAxis=None, lookAxis=None):
+def create_global_joint_attrs(joint, moduleName=None, upAxis=None, mirrorAxis=None, lookAxis=None, ):
     """
     Creates Trigger specific global attrubutes.
 
@@ -423,9 +423,9 @@ def create_global_joint_attrs(joint, moduleName=None, upAxis=None, mirrorAxis=No
     if lookAxis:
         _ = [cmds.setAttr("%s.lookAxis%s" % (joint, axis), lookAxis[nmb]) for nmb, axis in enumerate("XYZ")]
 
-    if not cmds.attributeQuery("useRefOri", node=joint, exists=True):
-        cmds.addAttr(joint, longName="useRefOri", niceName="Inherit_Orientation", at="bool", keyable=True)
-    cmds.setAttr("{0}.useRefOri".format(joint), True)
+    # if not cmds.attributeQuery("useRefOri", node=joint, exists=True):
+    #     cmds.addAttr(joint, longName="useRefOri", niceName="Inherit_Orientation", at="bool", keyable=True)
+    # cmds.setAttr("{0}.useRefOri".format(joint), True) ### TODO: THIS NEEDSA FIX
 
 def getNextIndex(attr, startFrom=0):
     """Returns the next free index from a multi index attribute"""
