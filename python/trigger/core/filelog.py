@@ -40,6 +40,12 @@ class Filelog(object):
         self.logger.debug("")
         self._end_logging()
 
+    def debug(self, msg):
+        stamped_msg = "%sDEBUG : %s" % (self._get_now(), msg)
+        self._start_logging()
+        self.logger.debug(stamped_msg)
+        self._end_logging()
+
     def info(self, msg):
         stamped_msg = "%sINFO    : %s" %(self._get_now(), msg)
         self._start_logging()
