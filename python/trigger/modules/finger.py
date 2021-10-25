@@ -44,7 +44,7 @@ class Finger(object):
                 return
             self.inits = inits
         else:
-            log.error("Class needs either build_data or arminits to be constructed")
+            log.error("Class needs either build_data or finger inits to be constructed")
 
         hand_controller = cmds.getAttr("%s.handController" % self.inits[0])
         if hand_controller:

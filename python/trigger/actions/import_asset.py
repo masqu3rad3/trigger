@@ -220,5 +220,3 @@ class Import_asset(object):
         if not cmds.pluginInfo('mayaUsdPlugin', l=True, q=True):
             try: cmds.loadPlugin("mayaUsdPlugin")
             except: log.error("USD Plugin cannot be loaded")
-
-    # TODO: EXPORT FUNCTIONS

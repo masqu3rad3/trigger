@@ -440,6 +440,11 @@ class Jointify(object):
 
         # class variables
         self.dem_exec = self._get_dem_bones()
+        if not self.dem_exec:
+            msg = "DemBones executable cannot be found"
+            self.log.error(msg)
+            raise
+
         self.originalData = {}
         self.trainingData = {}
         self.demData = {}
@@ -927,7 +932,13 @@ class Jointify(object):
         if current_os == "Windows":
             executable = os.path.join(folder, "dembones", current_os, "DemBones.exe")
         elif current_os == "Linux" or os == "MacOs":
-            executable = os.path.join(folder, "dembones", current_os, "DemBones")
+            # executable = os.path.join(folder, "dembones", current_os, "DemBones")
+            try:
+                v = subprocess.call(["DemBones", "--version"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                return "DemBones"
+            except OSError:
+                return False
+
         else:
             msg = "Unknown Operating System"
             cmds.confirmDialog(title='OS Error', message=msg)

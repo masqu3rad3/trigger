@@ -49,13 +49,14 @@ def create_attribute(node, property_dict=None, keyable=True, display=True, *args
         log.error("The attribute dictionary does not have 'attr_type' value")
     if attr_type not in supported_attrs:
         log.error("The attribute type (%s) is not supported by this method" % attr_type)
-    # if some attribute with same name exists, quit
-    default_value = property_dict.get("default_value")
+    # get the default value. The default values can be false, 0, -1 or anythin else that is why
+    # we use DOESNTEXIST. Hopefully no one will use DOESNTEXIST as a default value
+    default_value = property_dict.get("default_value", "DOESNTEXIST")
 
     attr_plug = "%s.%s" % (node, attr_name)
 
     if cmds.attributeQuery(attr_name, node=node, exists=True):
-        if default_value:
+        if default_value != "DOESNTEXIST":
             if compat.is_string(default_value):
                 cmds.setAttr("%s.%s" % (node, attr_name), default_value, type="string")
             else:
@@ -423,9 +424,9 @@ def create_global_joint_attrs(joint, moduleName=None, upAxis=None, mirrorAxis=No
     if lookAxis:
         _ = [cmds.setAttr("%s.lookAxis%s" % (joint, axis), lookAxis[nmb]) for nmb, axis in enumerate("XYZ")]
 
-    # if not cmds.attributeQuery("useRefOri", node=joint, exists=True):
-    #     cmds.addAttr(joint, longName="useRefOri", niceName="Inherit_Orientation", at="bool", keyable=True)
-    # cmds.setAttr("{0}.useRefOri".format(joint), True) ### TODO: THIS NEEDSA FIX
+    if not cmds.attributeQuery("useRefOri", node=joint, exists=True):
+        cmds.addAttr(joint, longName="useRefOri", niceName="Inherit_Orientation", at="bool", keyable=True)
+    cmds.setAttr("{0}.useRefOri".format(joint), True) ###
 
 def getNextIndex(attr, startFrom=0):
     """Returns the next free index from a multi index attribute"""
