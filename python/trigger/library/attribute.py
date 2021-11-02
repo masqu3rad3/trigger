@@ -62,28 +62,26 @@ def create_attribute(node, property_dict=None, keyable=True, display=True, *args
             else:
                 cmds.setAttr("%s.%s" % (node, attr_name), default_value)
         return attr_plug
-    else:
-        default_value = 0
     if attr_type == "bool":
-        default_value = default_value if default_value else 0
+        default_value = default_value if default_value != "DOESNTEXIST" else 0
         cmds.addAttr(node, longName=attr_name, niceName=nice_name, at=attr_type, k=keyable, defaultValue=default_value)
         cmds.setAttr("%s.%s" % (node, attr_name), e=True, cb=display)
     elif attr_type == "enum":
-        default_value = default_value if default_value else 0
+        default_value = default_value if default_value != "DOESNTEXIST" else 0
         enum_list = property_dict.get("enum_list")
         if enum_list == None:
             log.error("Missing 'enum_list'")
         cmds.addAttr(node, longName=attr_name, niceName=nice_name, at=attr_type, en=enum_list, k=keyable, defaultValue=default_value)
         cmds.setAttr("%s.%s" % (node, attr_name), e=True, cb=display)
     elif attr_type == "string":
-        default_value = default_value if default_value else ""
+        default_value = default_value if default_value != "DOESNTEXIST" else ""
         cmds.addAttr(node, longName=attr_name, niceName=nice_name, k=keyable, dataType="string")
         cmds.setAttr("%s.%s" % (node, attr_name), default_value, type="string")
         cmds.setAttr("%s.%s" % (node, attr_name), e=True, cb=display)
     else:
         min_val = property_dict.get("min_value") if property_dict.get("min_value") != None else -99999
         max_val = property_dict.get("max_value") if property_dict.get("max_value") != None else 99999
-        default_value = default_value if default_value else 0
+        default_value = default_value if default_value != "DOESNTEXIST" else 0
         cmds.addAttr(node,
                      longName=attr_name,
                      niceName=nice_name,
