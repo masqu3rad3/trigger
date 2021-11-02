@@ -62,6 +62,8 @@ def create_attribute(node, property_dict=None, keyable=True, display=True, *args
             else:
                 cmds.setAttr("%s.%s" % (node, attr_name), default_value)
         return attr_plug
+    else:
+        default_value = 0
     if attr_type == "bool":
         default_value = default_value if default_value else 0
         cmds.addAttr(node, longName=attr_name, niceName=nice_name, at=attr_type, k=keyable, defaultValue=default_value)
