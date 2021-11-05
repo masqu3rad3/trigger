@@ -399,6 +399,53 @@ class Hindleg(object):
         self.pastern_fk_cont = self._create_fk_cont(self.j_fk_hock, self.init_pastern_dist, name="FK_Pastern")
         self.foot_fk_cont = self._create_fk_cont(self.j_fk_phalanges, self.init_foot_dist, name="FK_Foot")
 
+        # FK-IK SWITCH Controller
+        icon_scale = (self.init_upper_leg_dist / 4, self.init_upper_leg_dist / 4, self.init_upper_leg_dist / 4)
+        self.switchFkIkCont = objects.Controller(shape="FkikSwitch", name="%s_FK_IK_cont" % self.suffix, scale=icon_scale)
+        self.switchFkIkCont.set_side(self.side, tier=0)
+        self.controllers.append(self.switchFkIkCont.name)
+        functions.alignAndAim(self.switchFkIkCont.name, targetList=[self.j_def_hock], aimTargetList=[self.j_def_stifle],
+                              upVector=self.up_axis, rotateOff=(self.sideMult*90, self.sideMult*90, 0))
+        cmds.move((self.up_axis[0] * icon_scale[0] * 2), (self.up_axis[1] * icon_scale[1] * 2),
+                  (self.up_axis[2] * icon_scale[2] * 2), self.switchFkIkCont.name, r=True)
+
+        _switchFkIk_pos = self.switchFkIkCont.add_offset("POS")
+
+        cmds.setAttr("{0}.s{1}".format(self.switchFkIkCont.name, "x"), self.sideMult)
+
+        # controller for twist orientation alignment
+        cmds.addAttr(self.switchFkIkCont.name, shortName="autoShoulder", longName="Auto_Shoulder", defaultValue=1.0, at="float",
+                     minValue=0.0, maxValue=1.0, k=True)
+        cmds.addAttr(self.switchFkIkCont.name, shortName="alignShoulder", longName="Align_Shoulder", defaultValue=1.0,
+                     at="float",
+                     minValue=0.0, maxValue=1.0, k=True)
+
+        cmds.addAttr(self.switchFkIkCont.name, shortName="handAutoTwist", longName="Hand_Auto_Twist", defaultValue=1.0,
+                     minValue=0.0,
+                     maxValue=1.0, at="float", k=True)
+        cmds.addAttr(self.switchFkIkCont.name, shortName="handManualTwist", longName="Hand_Manual_Twist", defaultValue=0.0,
+                     at="float",
+                     k=True)
+
+        cmds.addAttr(self.switchFkIkCont.name, shortName="shoulderAutoTwist", longName="Shoulder_Auto_Twist", defaultValue=1.0,
+                     minValue=0.0, maxValue=1.0, at="float", k=True)
+        cmds.addAttr(self.switchFkIkCont.name, shortName="shoulderManualTwist", longName="Shoulder_Manual_Twist",
+                     defaultValue=0.0,
+                     at="float", k=True)
+
+        cmds.addAttr(self.switchFkIkCont.name, shortName="allowScaling", longName="Allow_Scaling", defaultValue=1.0,
+                     minValue=0.0,
+                     maxValue=1.0, at="float", k=True)
+        cmds.addAttr(self.switchFkIkCont.name, at="enum", k=True, shortName="interpType", longName="Interp_Type",
+                     en="No_Flip:Average:Shortest:Longest:Cache", defaultValue=0)
+
+        cmds.addAttr(self.switchFkIkCont.name, shortName="tweakControls", longName="Tweak_Controls", defaultValue=0, at="bool")
+        cmds.setAttr("{0}.tweakControls".format(self.switchFkIkCont.name), cb=True)
+        cmds.addAttr(self.switchFkIkCont.name, shortName="fingerControls", longName="Finger_Controls", defaultValue=1, at="bool")
+        cmds.setAttr("{0}.fingerControls".format(self.switchFkIkCont.name), cb=True)
+
+        cmds.parent(_switchFkIk_pos, self.contBindGrp)
+
     def _create_fk_cont(self, joint, length, name=""):
 
         scale = (length*0.5, length*0.125, length*0.125)
@@ -498,7 +545,7 @@ class Hindleg(object):
         # self.createRoots()
         self.create_ik_setup()
         self.create_fk_setup()
-        # self.ikfkSwitching()
+        # self.ikfk_switching()
         # self.createRibbons()
         # self.createTwistSplines()
         # self.createAngleExtractors()
