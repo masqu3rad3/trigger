@@ -79,12 +79,10 @@ class Controller(object):
     def set_scale(self, values):
         cmds.setAttr("%s.scale" % self.name, *values)
         self.freeze()
-        # cmds.makeIdentity(self.name, a=True)
 
     def set_normal(self, normals):
         functions.alignNormal(self.name, normals)
         self.freeze()
-        # cmds.makeIdentity(self.name, a=True)
 
     def freeze(self, rotate=True, scale=True, translate=True):
         cmds.makeIdentity(self.name, a=True, r=rotate, s=scale, t=translate)

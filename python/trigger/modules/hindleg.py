@@ -6,8 +6,10 @@ from trigger.library import functions
 from trigger.library import naming
 from trigger.library import attribute
 from trigger.library import connection
+from trigger.library import objects
 from trigger.library import api
 from trigger.library import controllers as ic
+from trigger.library import tools
 
 from trigger.core import filelog
 log = filelog.Filelog(logname=__name__, filename="trigger_log")
@@ -57,6 +59,7 @@ class Hindleg(object):
         self.init_upper_leg_dist = functions.getDistance(self.hindhip_ref, self.stifle_ref)
         self.init_lower_leg_dist = functions.getDistance(self.stifle_ref, self.hock_ref)
         self.init_pastern_dist = functions.getDistance(self.hock_ref, self.phalanges_ref)
+        self.init_foot_dist = functions.getDistance(self.phalanges_ref, self.phalangestip_ref)
 
         # get the properties from the root
         self.useRefOrientation = cmds.getAttr("%s.useRefOri" % self.hindleg_root_ref)
@@ -72,6 +75,9 @@ class Hindleg(object):
 
         # self.originalSuffix = suffix
         self.suffix = (naming.uniqueName(cmds.getAttr("%s.moduleName" % self.hindleg_root_ref)))
+
+        # module variables
+        self.poleBridge = None
 
         # scratch variables
         self.controllers = []
@@ -162,18 +168,18 @@ class Hindleg(object):
         self.sockets.append(self.j_def_phalanges)
 
         cmds.select(d=True)
-        self.j_phalanges_tip = cmds.joint(name="jDef_PhalangesTip_%s" % self.suffix, p=self.phalangestip_pos, radius=1.0)
+        self.j_phalanges_tip = cmds.joint(name="j_PhalangesTip_%s" % self.suffix, p=self.phalangestip_pos, radius=1.0)
         self.sockets.append(self.j_def_phalanges)
 
 
         # IK Joints
         # IK Chain
         cmds.select(d=True)
-        self.j_ik_hip = cmds.joint(name="jIK_orig_hip_%s" % self.suffix, p=self.hindhip_pos, radius=0.5)
-        self.j_ik_stifle = cmds.joint(name="jIK_orig_stifle_%s" % self.suffix, p=self.stifle_pos, radius=0.5)
-        self.j_ik_hock = cmds.joint(name="jIK_orig_hock_%s" % self.suffix, p=self.hock_pos, radius=0.5)
-        self.j_ik_phalanges = cmds.joint(name="jIK_orig_phalanges_%s" % self.suffix, p=self.phalanges_pos, radius=0.5)
-        self.j_ik_phalanges_tip = cmds.joint(name="jIK_orig_phalangesTip_%s" % self.suffix, p=self.phalangestip_pos, radius=0.5)
+        self.j_ik_hip = cmds.joint(name="jIK_Hindhip_%s" % self.suffix, p=self.hindhip_pos, radius=0.5)
+        self.j_ik_stifle = cmds.joint(name="jIK_stifle_%s" % self.suffix, p=self.stifle_pos, radius=0.5)
+        self.j_ik_hock = cmds.joint(name="jIK_hock_%s" % self.suffix, p=self.hock_pos, radius=0.5)
+        self.j_ik_phalanges = cmds.joint(name="jIK_phalanges_%s" % self.suffix, p=self.phalanges_pos, radius=0.5)
+        self.j_ik_phalanges_tip = cmds.joint(name="jIK_phalangesTip_%s" % self.suffix, p=self.phalangestip_pos, radius=0.5)
         cmds.select(d=True)
 
         # orientations
@@ -237,13 +243,213 @@ class Hindleg(object):
         functions.alignToAlter(self.j_def_phalanges, self.j_fk_phalanges, 2)
         cmds.makeIdentity(self.j_def_phalanges, a=True)
 
+        # parent them under the collar
+        connection.matrixConstraint(self.j_def_hindhip, self.rigJointsGrp, mo=False)
+        cmds.parent(self.j_ik_hip, self.rigJointsGrp)
+        cmds.parent(self.j_fk_hip, self.rigJointsGrp)
+
+        self.deformerJoints += [self.j_def_hindleg_root, self.j_def_hindhip, self.j_def_stifle, self.j_def_hock, self.j_def_phalanges]
+
+        for jnt in [self.j_def_hindhip, self.j_phalanges_tip]:
+            cmds.connectAttr("%s.s" % self.scaleHook, "%s.s" % jnt)
+
+    def create_controllers(self):
+
+        #### IK ####
+
+        # THIGH
+        thigh_cont_scale = (self.init_upper_leg_dist / 16, self.init_upper_leg_dist / 4, self.init_upper_leg_dist / 4)
+        self.cont_thigh = objects.Controller(shape="Cube",
+                                             name="%s_Thigh_cont" % self.suffix,
+                                             scale=thigh_cont_scale,
+                                             normal=(0,0, -self.sideMult))
+
+        self.cont_thigh.set_side(self.side, tier=0)
+        self.controllers.append(self.cont_thigh.name)
+        functions.alignTo(self.cont_thigh.name, self.j_def_hindhip, position=True, rotation=False)
+        functions.alignTo(self.cont_thigh.name, self.j_def_hindleg_root, position=False, rotation=True)
+
+        cmds.move(self.sideMult*(thigh_cont_scale[0] * 3), 0, 0, self.cont_thigh.name, r=True, os=True)
+
+        _thigh_off = self.cont_thigh.add_offset("OFF")
+        _thigh_ore = self.cont_thigh.add_offset("ORE")
+        _thigh_pos = self.cont_thigh.add_offset("POS")
+
+        cmds.xform(self.cont_thigh.name, piv=self.hindleg_root_pos, ws=True)
+
+        cmds.parent(_thigh_off, self.contBindGrp)
+
+        # FOOT
+        foot_cont_scale = (self.init_foot_dist * 1.2, 1, self.init_foot_dist * 0.7)
+        self.cont_foot = objects.Controller(shape="Circle",
+                                            name="%s_Foot_cont" % self.suffix,
+                                            scale=foot_cont_scale,
+                                            normal=(0, self.sideMult, 0))
+        self.cont_foot.set_side(self.side, tier=0)
+        self.controllers.append(self.cont_foot.name)
+        functions.alignBetween(self.cont_foot.name, self.j_def_phalanges, self.j_phalanges_tip)
+        functions.alignTo(self.cont_foot.name, self.j_def_phalanges, position=False, rotation=True)
+
+        _foot_off = self.cont_foot.add_offset("OFF")
+        _foot_ore = self.cont_foot.add_offset("ORE")
+        _foot_pos = self.cont_foot.add_offset("POS")
+
+        cmds.xform(self.cont_foot.name, piv=self.phalanges_pos, ws=True)
+
+        cmds.parent(_foot_off, self.contBindGrp)
+
+        # HOCK
+        hock_cont_scale = ((self.init_lower_leg_dist + self.init_pastern_dist)*0.1)
+        self.cont_hock = objects.Controller(shape="DualCurvedArrow",
+                                            name="%s_Hock_cont" % self.suffix,
+                                            scale=(hock_cont_scale, hock_cont_scale, hock_cont_scale),
+                                            normal=(-self.sideMult,0,0))
+        self.cont_hock.set_side(self.side, tier=0)
+        self.controllers.append(self.cont_hock.name)
+
+
+        offset_mag_pole = ((self.init_lower_leg_dist + self.init_pastern_dist) / 4)
+        offset_vector_pole = api.getBetweenVector(self.j_def_hock, [self.j_def_stifle, self.j_def_phalanges])
+
+        functions.alignAndAim(self.cont_hock.name,
+                              targetList=[self.j_def_hock],
+                              aimTargetList=[self.j_def_hock],
+                              upVector=self.up_axis,
+                              translateOff=(offset_vector_pole * offset_mag_pole)
+                              )
+
+        functions.alignTo(self.cont_hock.name, self.j_def_phalanges, position=False, rotation=True)
+
+        _hock_off = self.cont_hock.add_offset("OFF")
+        _hock_ore = self.cont_hock.add_offset("ORE")
+        _hock_pos = self.cont_hock.add_offset("POS")
+
+        cmds.xform(self.cont_hock.name, piv=self.phalanges_pos, ws=True)
+
+        cmds.parent(_hock_off, self.cont_foot.name)
+
+        # POLEVECTOR
+        _scale = (((self.init_upper_leg_dist + self.init_lower_leg_dist) / 2) / 10)
+        polecont_scale = (_scale, _scale, _scale)
+
+        self.poleBridge = cmds.spaceLocator(name="poleVectorBridge_%s" % self.suffix)[0]
+        cmds.parent(self.poleBridge, self.nonScaleGrp)
+        self.poleCont = objects.Controller(shape="Sphere",
+                                               name="%s_Pole_cont" % self.suffix,
+                                               scale=polecont_scale,
+                                               normal=(self.sideMult, 0, 0))
+        self.poleCont.set_side(self.side, tier=0)
+        self.controllers.append(self.poleCont.name)
+        offset_mag_pole = ((self.init_upper_leg_dist + self.init_lower_leg_dist) / 4)
+        offset_vector_pole = api.getBetweenVector(self.j_def_stifle, [self.j_def_hindhip, self.j_def_hock])
+
+        functions.alignAndAim(self.poleBridge,
+                              targetList=[self.j_def_stifle],
+                              aimTargetList=[self.j_def_hindhip, self.j_def_hock],
+                              upVector=self.up_axis,
+                              translateOff=(offset_vector_pole * offset_mag_pole)
+                              )
+        # TODO: maybe alignAndAim function shouldnt be used in here
+        # reset rotation
+        cmds.setAttr("%s.rotate" % self.poleBridge, 0,0,0)
+
+        functions.alignTo(self.poleCont.name, self.poleBridge, position=True, rotation=True)
+
+        _poleCont_off = self.poleCont.add_offset("OFF")
+        _poleCont_vis = self.poleCont.add_offset("VIS")
+
+        cmds.parent(_poleCont_off, self.contBindGrp)
+
+
+    def common(self):
+        """Common stuff for both IK and FK"""
+
+        # connect thigh controller
+        connection.matrixConstraint(self.cont_thigh.name, self.j_def_hindleg_root, source_parent_cutoff=self.localOffGrp)
+
+
+    def create_ik_setup(self):
+        # create ik chains
+        hock_ik_handle = cmds.ikHandle(sj=self.j_ik_hip, ee=self.j_ik_hock, name="ikHandle_Hock_%s" % self.suffix, sol="ikRPsolver")[0]
+        phalanges_ik_handle = cmds.ikHandle(sj=self.j_ik_hock, ee=self.j_ik_phalanges, name="ikHandle_Phalanges_%s" % self.suffix, sol="ikSCsolver")[0]
+        phalanges_tip_ik_handle = cmds.ikHandle(sj=self.j_ik_phalanges, ee=self.j_ik_phalanges_tip, name="ikHandle_PhalangesTip_%s" % self.suffix, sol="ikSCsolver")[0]
+
+        def group_align(nodes, pivot_node, name):
+            loc = cmds.spaceLocator(name="{0}_Loc_{1}".format(name, self.suffix))[0]
+            functions.alignTo(loc, pivot_node, rotation=True, position=True)
+            grp = functions.createUpGrp(loc, "OFF")
+            cmds.parent(nodes, loc)
+            return grp, loc
+
+        hock_ik_grp, hock_ik_loc = group_align(hock_ik_handle, self.j_def_phalanges, "hock_trans")
+        phalanges_ik_grp, phalanges_ik_loc = group_align(phalanges_ik_handle, self.j_def_phalanges, "phalanges_trans")
+        phalanges_tip_ik_grp, phalanges_tip_ik_loc = group_align(phalanges_tip_ik_handle, self.j_def_phalanges, "phalangesTip_trans")
+        toe_trans_grp, toe_trans_loc = group_align([hock_ik_grp,phalanges_ik_grp, phalanges_tip_ik_grp], self.j_phalanges_tip, "toe_trans")
+        foot_trans_grp, foot_trans_loc = group_align(toe_trans_grp, self.j_def_phalanges, "foot_trans")
+
+
+        connection.matrixConstraint(self.cont_foot.name, foot_trans_loc, source_parent_cutoff=self.localOffGrp)
+        connection.matrixConstraint(self.cont_hock.name, hock_ik_loc, st="xyz", source_parent_cutoff=self.localOffGrp)
+
+        cmds.poleVectorConstraint(self.poleBridge, hock_ik_handle)
+
+
+        # stretchyness
+
+        hock_distance_start = cmds.spaceLocator(name="hock_distanceStart_%s" %self.suffix)[0]
+        cmds.parent(hock_distance_start, self.nonScaleGrp)
+        cmds.pointConstraint(self.j_def_hindhip, hock_distance_start, mo=False)
+
+        hock_distance_end = cmds.spaceLocator(name="hock_distanceEnd_%s" % self.suffix)[0]
+        cmds.parent(hock_distance_end, self.nonScaleGrp)
+        # cmds.pointConstraint(self.j_def_hock, hock_distance_end, mo=False)
+        # cmds.pointConstraint(self.cont_hock.name, hock_distance_end, mo=False)
+        functions.alignTo(hock_distance_end, self.j_def_hock, position=True)
+        connection.matrixConstraint(self.cont_foot.name, hock_distance_end, mo=True)
+
+        pha_distance_start = hock_distance_end
+        # pha_distance_start = cmds.spaceLocator(name="pha_distanceStart_%s" %self.suffix)[0]
+        # cmds.parent(pha_distance_start, self.nonScaleGrp)
+        # cmds.pointConstraint(self.j_ik_hock, pha_distance_start, mo=False)
+
+        pha_distance_end = cmds.spaceLocator(name="pha_distanceEnd_%s" % self.suffix)[0]
+        cmds.parent(pha_distance_end, self.nonScaleGrp)
+        cmds.pointConstraint(self.j_ik_phalanges, pha_distance_end, mo=False)
+
+
+        hock_stretch_locs = tools.make_stretchy_ik([self.j_ik_hip, self.j_ik_stifle, self.j_ik_hock],
+                                                   hock_ik_handle,
+                                                   self.cont_thigh.name,
+                                                   hock_distance_end,
+                                                   # self.cont_hock.name,
+                                                   # "hock_trans_Loc_L_Hindleg",
+                                                   self.side,
+                                                   # source_parent_cutoff=self.localOffGrp,
+                                                   name="hock_%s" %self.suffix,
+                                                   distance_start=hock_distance_start,
+                                                   distance_end=hock_distance_end,
+                                                   is_local=self.isLocal)
+
+        # phalanges_stretch_locs = tools.make_stretchy_ik([self.j_ik_hock, self.j_ik_phalanges],
+        #                                            phalanges_ik_handle,
+        #                                            self.cont_hock.name,
+        #                                            self.cont_foot.name,
+        #                                            self.side,
+        #                                            source_parent_cutoff=self.localOffGrp,
+        #                                            name="phalanges_%s" %self.suffix,
+        #                                            distance_start=pha_distance_start,
+        #                                            distance_end=pha_distance_end,
+        #                                            is_local=self.isLocal)
+
+
 
     def createLimb(self):
         self.createGrp()
         self.createJoints()
-        # self.createControllers()
+        self.create_controllers()
+        self.common()
         # self.createRoots()
-        # self.createIKsetup()
+        self.create_ik_setup()
         # self.createFKsetup()
         # self.ikfkSwitching()
         # self.createRibbons()
