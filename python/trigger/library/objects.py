@@ -136,7 +136,11 @@ class Controller(object):
     def lock_visibility(self, hide=True):
         attribute.lockAndHide(self.name, channelArray=["v"], hide=hide)
 
-
+    def lock_all(self, hide=True):
+        self.lock_translate(hide=hide)
+        self.lock_rotate(hide=hide)
+        self.lock_scale(hide=hide)
+        self.lock_visibility(hide=hide)
 
 
 

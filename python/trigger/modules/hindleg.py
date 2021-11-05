@@ -401,49 +401,52 @@ class Hindleg(object):
 
         # FK-IK SWITCH Controller
         icon_scale = (self.init_upper_leg_dist / 4, self.init_upper_leg_dist / 4, self.init_upper_leg_dist / 4)
-        self.switchFkIkCont = objects.Controller(shape="FkikSwitch", name="%s_FK_IK_cont" % self.suffix, scale=icon_scale)
-        self.switchFkIkCont.set_side(self.side, tier=0)
-        self.controllers.append(self.switchFkIkCont.name)
-        functions.alignAndAim(self.switchFkIkCont.name, targetList=[self.j_def_hock], aimTargetList=[self.j_def_stifle],
+        self.switch_cont = objects.Controller(shape="FkikSwitch", name="%s_FK_IK_cont" % self.suffix, scale=icon_scale)
+        self.switch_cont.set_side(self.side, tier=0)
+        self.controllers.append(self.switch_cont.name)
+        functions.alignAndAim(self.switch_cont.name, targetList=[self.j_def_hock], aimTargetList=[self.j_def_stifle],
                               upVector=self.up_axis, rotateOff=(self.sideMult*90, self.sideMult*90, 0))
-        cmds.move((self.up_axis[0] * icon_scale[0] * 2), (self.up_axis[1] * icon_scale[1] * 2),
-                  (self.up_axis[2] * icon_scale[2] * 2), self.switchFkIkCont.name, r=True)
+        move_offset = (om.MVector(self.mirror_axis) * self.sideMult) * icon_scale[0]
+        cmds.move(move_offset[0], move_offset[1], move_offset[2], self.switch_cont.name, r=True)
+        # cmds.move((self.mirror_axis[0] * icon_scale[0] * 2), (self.mirror_axis[1] * icon_scale[1] * 2),
+        #           (self.mirror_axis[2] * icon_scale[2] * 2), self.switch_cont.name, r=True)
 
-        _switchFkIk_pos = self.switchFkIkCont.add_offset("POS")
+        _switchFkIk_pos = self.switch_cont.add_offset("POS")
 
-        cmds.setAttr("{0}.s{1}".format(self.switchFkIkCont.name, "x"), self.sideMult)
+        cmds.setAttr("{0}.s{1}".format(self.switch_cont.name, "x"), self.sideMult)
 
         # controller for twist orientation alignment
-        cmds.addAttr(self.switchFkIkCont.name, shortName="autoShoulder", longName="Auto_Shoulder", defaultValue=1.0, at="float",
+        cmds.addAttr(self.switch_cont.name, shortName="autoShoulder", longName="Auto_Shoulder", defaultValue=1.0, at="float",
                      minValue=0.0, maxValue=1.0, k=True)
-        cmds.addAttr(self.switchFkIkCont.name, shortName="alignShoulder", longName="Align_Shoulder", defaultValue=1.0,
+        cmds.addAttr(self.switch_cont.name, shortName="alignShoulder", longName="Align_Shoulder", defaultValue=1.0,
                      at="float",
                      minValue=0.0, maxValue=1.0, k=True)
 
-        cmds.addAttr(self.switchFkIkCont.name, shortName="handAutoTwist", longName="Hand_Auto_Twist", defaultValue=1.0,
+        cmds.addAttr(self.switch_cont.name, shortName="handAutoTwist", longName="Hand_Auto_Twist", defaultValue=1.0,
                      minValue=0.0,
                      maxValue=1.0, at="float", k=True)
-        cmds.addAttr(self.switchFkIkCont.name, shortName="handManualTwist", longName="Hand_Manual_Twist", defaultValue=0.0,
+        cmds.addAttr(self.switch_cont.name, shortName="handManualTwist", longName="Hand_Manual_Twist", defaultValue=0.0,
                      at="float",
                      k=True)
 
-        cmds.addAttr(self.switchFkIkCont.name, shortName="shoulderAutoTwist", longName="Shoulder_Auto_Twist", defaultValue=1.0,
+        cmds.addAttr(self.switch_cont.name, shortName="shoulderAutoTwist", longName="Shoulder_Auto_Twist", defaultValue=1.0,
                      minValue=0.0, maxValue=1.0, at="float", k=True)
-        cmds.addAttr(self.switchFkIkCont.name, shortName="shoulderManualTwist", longName="Shoulder_Manual_Twist",
+        cmds.addAttr(self.switch_cont.name, shortName="shoulderManualTwist", longName="Shoulder_Manual_Twist",
                      defaultValue=0.0,
                      at="float", k=True)
 
-        cmds.addAttr(self.switchFkIkCont.name, shortName="allowScaling", longName="Allow_Scaling", defaultValue=1.0,
+        cmds.addAttr(self.switch_cont.name, shortName="allowScaling", longName="Allow_Scaling", defaultValue=1.0,
                      minValue=0.0,
                      maxValue=1.0, at="float", k=True)
-        cmds.addAttr(self.switchFkIkCont.name, at="enum", k=True, shortName="interpType", longName="Interp_Type",
+        cmds.addAttr(self.switch_cont.name, at="enum", k=True, shortName="interpType", longName="Interp_Type",
                      en="No_Flip:Average:Shortest:Longest:Cache", defaultValue=0)
 
-        cmds.addAttr(self.switchFkIkCont.name, shortName="tweakControls", longName="Tweak_Controls", defaultValue=0, at="bool")
-        cmds.setAttr("{0}.tweakControls".format(self.switchFkIkCont.name), cb=True)
-        cmds.addAttr(self.switchFkIkCont.name, shortName="fingerControls", longName="Finger_Controls", defaultValue=1, at="bool")
-        cmds.setAttr("{0}.fingerControls".format(self.switchFkIkCont.name), cb=True)
+        cmds.addAttr(self.switch_cont.name, shortName="tweakControls", longName="Tweak_Controls", defaultValue=0, at="bool")
+        cmds.setAttr("{0}.tweakControls".format(self.switch_cont.name), cb=True)
+        cmds.addAttr(self.switch_cont.name, shortName="fingerControls", longName="Finger_Controls", defaultValue=1, at="bool")
+        cmds.setAttr("{0}.fingerControls".format(self.switch_cont.name), cb=True)
 
+        self.switch_cont.lock_all()
         cmds.parent(_switchFkIk_pos, self.contBindGrp)
 
     def _create_fk_cont(self, joint, length, name=""):
@@ -491,7 +494,6 @@ class Hindleg(object):
 
         cmds.poleVectorConstraint(self.poleBridge, hock_ik_handle)
 
-
         # stretchyness
         if self.isStretchy:
             hock_distance_start = cmds.spaceLocator(name="hock_distanceStart_%s" %self.suffix)[0]
@@ -516,6 +518,9 @@ class Hindleg(object):
                                                        distance_start=hock_distance_start,
                                                        distance_end=hock_distance_end,
                                                        is_local=self.isLocal)
+
+            attribute.attrPass(hock_distance_end, self.cont_foot.name, attributes=[], inConnections=True, outConnections=True,
+                     keepSourceAttributes=False, values=True, daisyChain=False, overrideEx=False)
 
             cmds.parent(hock_stretch_locs[:2], self.nonScaleGrp)
 
