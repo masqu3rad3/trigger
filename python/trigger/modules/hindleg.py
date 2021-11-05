@@ -16,8 +16,19 @@ log = filelog.Filelog(logname=__name__, filename="trigger_log")
 
 
 LIMB_DATA = {"members": ["HindlegRoot", "Hindhip", "Stifle", "Hock", "Phalanges", "PhalangesTip"],
-             "properties": [
-                       ],
+             "properties": [{"attr_name": "localJoints",
+                             "nice_name": "Local_Joints",
+                             "attr_type": "bool",
+                             "default_value": False},
+                            {"attr_name": "stretchyIK",
+                             "nice_name": "Stretchy IK",
+                             "attr_type": "bool",
+                             "default_value": True},
+                            {"attr_name": "ribbon",
+                             "nice_name": "Ribbon",
+                             "attr_type": "bool",
+                             "default_value": True},
+                            ],
         "multi_guide": None,
         "sided": True,}
 
@@ -69,6 +80,8 @@ class Hindleg(object):
             self.isLocal = bool(cmds.getAttr("%s.localJoints" % self.hindleg_root_ref))
         except ValueError:
             self.isLocal = False
+        self.isStretchy = bool(cmds.getAttr("%s.stretchyIK" % self.hindleg_root_ref))
+        self.isRibbon = bool(cmds.getAttr("%s.ribbon" % self.hindleg_root_ref))
 
         # initialize coordinates
         self.up_axis, self.mirror_axis, self.look_axis = functions.getRigAxes(self.hindleg_root_ref)
@@ -295,8 +308,22 @@ class Hindleg(object):
         _foot_pos = self.cont_foot.add_offset("POS")
 
         cmds.xform(self.cont_foot.name, piv=self.phalanges_pos, ws=True)
+        self.cont_thigh.lock_visibility()
 
         cmds.parent(_foot_off, self.contBindGrp)
+
+        if self.isStretchy:
+            cmds.addAttr(self.cont_foot.name, shortName="squash", longName="Squash", defaultValue=0.0, minValue=0.0,
+                         maxValue=1.0, at="double", k=True)
+            cmds.addAttr(self.cont_foot.name, shortName="stretch", longName="Stretch", defaultValue=0.0, minValue=0.0,
+                         maxValue=1.0, at="double", k=True)
+            cmds.addAttr(self.cont_foot.name, shortName="stretchLimit", longName="StretchLimit", defaultValue=100.0,
+                         minValue=0.0, maxValue=1000.0, at="double", k=True)
+            cmds.addAttr(self.cont_foot.name, shortName="softIK", longName="SoftIK", defaultValue=0.0,
+                         minValue=0.0, maxValue=100.0, at="double", k=True)
+        if self.isRibbon:
+            cmds.addAttr(self.cont_foot.name, shortName="volume", longName="Volume_Preserve", defaultValue=0.0,
+                         at="double", k=True)
 
         # HOCK
         hock_cont_scale = ((self.init_lower_leg_dist + self.init_pastern_dist)*0.1)
@@ -325,7 +352,9 @@ class Hindleg(object):
         _hock_pos = self.cont_hock.add_offset("POS")
 
         cmds.xform(self.cont_hock.name, piv=self.phalanges_pos, ws=True)
-
+        self.cont_hock.lock_visibility()
+        self.cont_hock.lock_translate()
+        self.cont_hock.lock_scale()
         cmds.parent(_hock_off, self.cont_foot.name)
 
         # POLEVECTOR
@@ -357,15 +386,37 @@ class Hindleg(object):
 
         _poleCont_off = self.poleCont.add_offset("OFF")
         _poleCont_vis = self.poleCont.add_offset("VIS")
-
+        self.poleCont.lock_rotate()
+        self.poleCont.lock_scale()
+        self.poleCont.lock_visibility()
         cmds.parent(_poleCont_off, self.contBindGrp)
 
+
+        ###### FK ######
+
+        self.upper_leg_fk_cont = self._create_fk_cont(self.j_fk_hip, self.init_upper_leg_dist, name="FK_UpperLeg")
+        self.lower_leg_fk_cont = self._create_fk_cont(self.j_fk_stifle, self.init_lower_leg_dist, name="FK_LowerLeg")
+        self.pastern_fk_cont = self._create_fk_cont(self.j_fk_hock, self.init_pastern_dist, name="FK_Pastern")
+        self.foot_fk_cont = self._create_fk_cont(self.j_fk_phalanges, self.init_foot_dist, name="FK_Foot")
+
+    def _create_fk_cont(self, joint, length, name=""):
+
+        scale = (length*0.5, length*0.125, length*0.125)
+        cont = objects.Controller(shape="Cube", name="{0}_{1}_cont".format(self.suffix, name), scale=scale)
+        cont.set_side(self.side, tier=0)
+        cmds.xform(cont.name, piv=(self.sideMult * -(length*0.5), 0, 0), ws=True)
+        functions.alignToAlter(cont.name, joint, mode=2)
+        _off = cont.add_offset("OFF")
+        _ore = cont.add_offset("ORE")
+        cont.freeze(rotate=False)
+        return cont
 
     def common(self):
         """Common stuff for both IK and FK"""
 
         # connect thigh controller
         connection.matrixConstraint(self.cont_thigh.name, self.j_def_hindleg_root, source_parent_cutoff=self.localOffGrp)
+        attribute.disconnect_attr(node= self.j_def_hindleg_root, attr="inverseScale", suppress_warnings=True)
 
 
     def create_ik_setup(self):
@@ -395,52 +446,48 @@ class Hindleg(object):
 
 
         # stretchyness
+        if self.isStretchy:
+            hock_distance_start = cmds.spaceLocator(name="hock_distanceStart_%s" %self.suffix)[0]
+            cmds.parent(hock_distance_start, self.nonScaleGrp)
+            cmds.pointConstraint(self.j_def_hindhip, hock_distance_start, mo=False)
 
-        hock_distance_start = cmds.spaceLocator(name="hock_distanceStart_%s" %self.suffix)[0]
-        cmds.parent(hock_distance_start, self.nonScaleGrp)
-        cmds.pointConstraint(self.j_def_hindhip, hock_distance_start, mo=False)
+            hock_distance_end = cmds.spaceLocator(name="hock_distanceEnd_%s" % self.suffix)[0]
+            cmds.parent(hock_distance_end, self.nonScaleGrp)
+            functions.alignTo(hock_distance_end, self.j_def_hock, position=True)
+            connection.matrixConstraint(hock_ik_loc, hock_distance_end, mo=True)
 
-        hock_distance_end = cmds.spaceLocator(name="hock_distanceEnd_%s" % self.suffix)[0]
-        cmds.parent(hock_distance_end, self.nonScaleGrp)
-        # cmds.pointConstraint(self.j_def_hock, hock_distance_end, mo=False)
-        # cmds.pointConstraint(self.cont_hock.name, hock_distance_end, mo=False)
-        functions.alignTo(hock_distance_end, self.j_def_hock, position=True)
-        connection.matrixConstraint(self.cont_foot.name, hock_distance_end, mo=True)
+            hock_stretch_locs = tools.make_stretchy_ik([self.j_ik_hip, self.j_ik_stifle, self.j_ik_hock],
+                                                       hock_ik_handle,
+                                                       self.cont_thigh.name,
+                                                       # self.cont_foot.name,
+                                                       hock_distance_end,
+                                                       # self.cont_hock.name,
+                                                       # "hock_trans_Loc_L_Hindleg",
+                                                       self.side,
+                                                       source_parent_cutoff=self.localOffGrp,
+                                                       name="hock_%s" %self.suffix,
+                                                       distance_start=hock_distance_start,
+                                                       distance_end=hock_distance_end,
+                                                       is_local=self.isLocal)
 
-        pha_distance_start = hock_distance_end
-        # pha_distance_start = cmds.spaceLocator(name="pha_distanceStart_%s" %self.suffix)[0]
-        # cmds.parent(pha_distance_start, self.nonScaleGrp)
-        # cmds.pointConstraint(self.j_ik_hock, pha_distance_start, mo=False)
+            cmds.parent(hock_stretch_locs[:2], self.nonScaleGrp)
 
-        pha_distance_end = cmds.spaceLocator(name="pha_distanceEnd_%s" % self.suffix)[0]
-        cmds.parent(pha_distance_end, self.nonScaleGrp)
-        cmds.pointConstraint(self.j_ik_phalanges, pha_distance_end, mo=False)
+    def create_fk_setup(self):
+        connection.matrixConstraint(self.upper_leg_fk_cont.name, self.j_fk_hip, mo=True, source_parent_cutoff=self.localOffGrp)
+        connection.matrixConstraint(self.lower_leg_fk_cont.name, self.j_fk_stifle, mo=True, source_parent_cutoff=self.localOffGrp)
+        connection.matrixConstraint(self.pastern_fk_cont.name, self.j_fk_hock, mo=True, source_parent_cutoff=self.localOffGrp)
+        connection.matrixConstraint(self.foot_fk_cont.name, self.j_fk_phalanges, mo=True, source_parent_cutoff=self.localOffGrp)
 
+        cmds.parent(self.foot_fk_cont.get_offsets()[-1], self.pastern_fk_cont.name)
+        cmds.parent(self.pastern_fk_cont.get_offsets()[-1], self.lower_leg_fk_cont.name)
+        cmds.parent(self.lower_leg_fk_cont.get_offsets()[-1], self.upper_leg_fk_cont.name)
 
-        hock_stretch_locs = tools.make_stretchy_ik([self.j_ik_hip, self.j_ik_stifle, self.j_ik_hock],
-                                                   hock_ik_handle,
-                                                   self.cont_thigh.name,
-                                                   hock_distance_end,
-                                                   # self.cont_hock.name,
-                                                   # "hock_trans_Loc_L_Hindleg",
-                                                   self.side,
-                                                   # source_parent_cutoff=self.localOffGrp,
-                                                   name="hock_%s" %self.suffix,
-                                                   distance_start=hock_distance_start,
-                                                   distance_end=hock_distance_end,
-                                                   is_local=self.isLocal)
+        attribute.disconnect_attr(node= self.j_fk_hip, attr="inverseScale", suppress_warnings=True)
+        attribute.disconnect_attr(node= self.j_fk_stifle, attr="inverseScale", suppress_warnings=True)
+        attribute.disconnect_attr(node= self.j_fk_hock, attr="inverseScale", suppress_warnings=True)
+        attribute.disconnect_attr(node= self.j_fk_phalanges, attr="inverseScale", suppress_warnings=True)
 
-        # phalanges_stretch_locs = tools.make_stretchy_ik([self.j_ik_hock, self.j_ik_phalanges],
-        #                                            phalanges_ik_handle,
-        #                                            self.cont_hock.name,
-        #                                            self.cont_foot.name,
-        #                                            self.side,
-        #                                            source_parent_cutoff=self.localOffGrp,
-        #                                            name="phalanges_%s" %self.suffix,
-        #                                            distance_start=pha_distance_start,
-        #                                            distance_end=pha_distance_end,
-        #                                            is_local=self.isLocal)
-
+    # def ikfk_switching(self):
 
 
     def createLimb(self):
@@ -450,7 +497,7 @@ class Hindleg(object):
         self.common()
         # self.createRoots()
         self.create_ik_setup()
-        # self.createFKsetup()
+        self.create_fk_setup()
         # self.ikfkSwitching()
         # self.createRibbons()
         # self.createTwistSplines()

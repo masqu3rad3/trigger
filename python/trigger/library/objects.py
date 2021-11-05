@@ -7,7 +7,7 @@ from maya import cmds
 from trigger.core import filelog
 from trigger.core.decorators import keepselection
 
-from trigger.library import functions
+from trigger.library import functions, attribute
 from trigger.library.controllers import Icon
 from trigger.library.tools import replace_curve
 
@@ -121,6 +121,20 @@ class Controller(object):
         self._side = side
         self._tier = tier
 
+    def lock_translate(self, skip="", hide=True):
+        array = ["t%s" % attr for attr in "xyz" if attr not in skip]
+        attribute.lockAndHide(self.name, channelArray=array, hide=hide)
+
+    def lock_rotate(self, skip="", hide=True):
+        array = ["r%s" % attr for attr in "xyz" if attr not in skip]
+        attribute.lockAndHide(self.name, channelArray=array, hide=hide)
+
+    def lock_scale(self, skip="", hide=True):
+        array = ["s%s" % attr for attr in "xyz" if attr not in skip]
+        attribute.lockAndHide(self.name, channelArray=array, hide=hide)
+
+    def lock_visibility(self, hide=True):
+        attribute.lockAndHide(self.name, channelArray=["v"], hide=hide)
 
 
 

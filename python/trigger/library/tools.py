@@ -411,6 +411,9 @@ def make_stretchy_ik(joint_chain, ik_handle, root_controller, end_controller, si
     if not name:
         name = joint_chain[0]
 
+    if type(ik_handle) != list:
+        ik_handle = [ik_handle]
+
     attribute.validate_attr("%s.squash" %end_controller, attr_type="double", attr_range=[0.0, 1.0], default_value=0.0)
     attribute.validate_attr("%s.stretch" %end_controller, attr_type="double", attr_range=[0.0, 1.0], default_value=1.0)
     attribute.validate_attr("%s.stretchLimit" %end_controller, attr_type="double", attr_range=[0.0, 99999.0], default_value=100.0)
@@ -521,5 +524,8 @@ def make_stretchy_ik(joint_chain, ik_handle, root_controller, end_controller, si
             output_x_p = "%s.outputR" %squash_blend_node
         cmds.connectAttr(output_x_p, "%s.tx" %jnt)
 
-    connection.matrixConstraint(soft_blend_loc, ik_handle, mo=False, source_parent_cutoff=source_parent_cutoff)
+    for x in ik_handle:
+        connection.matrixConstraint(soft_blend_loc, x, mo=True, source_parent_cutoff=source_parent_cutoff)
+
+    # connection.matrixConstraint(soft_blend_loc, ik_handle, mo=False, source_parent_cutoff=source_parent_cutoff)
     return soft_blend_loc, root_loc, distance_start_loc, distance_end_loc
