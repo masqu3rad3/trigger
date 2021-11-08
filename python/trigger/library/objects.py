@@ -142,6 +142,25 @@ class Controller(object):
         self.lock_scale(hide=hide)
         self.lock_visibility(hide=hide)
 
+    def drive_visibility(self, driver_attr, up_level=None, lock_and_hide=True):
+        """
+        Drives the visibility of the controller with the given attribute
+
+        Args:
+            attr: attribute to drive the visibility
+            up_level: (integer) if defined the upper group visibility will be used instead
+            lock_and_hide: (bool) locks and hides the attribute after driven
+
+        Returns:
+
+        """
+        vis_attr = "%s.v" % self.name if up_level is None else "%s.v" % self.get_offsets()[up_level]
+        cmds.setAttr(vis_attr, e=True, k=True, l=False)
+        cmds.connectAttr(driver_attr, vis_attr, f=True)
+        if lock_and_hide:
+            cmds.setAttr(vis_attr, lock=True, keyable=False, channelBox=False)
+
+
 
 
 
