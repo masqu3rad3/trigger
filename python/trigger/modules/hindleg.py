@@ -527,7 +527,7 @@ class Hindleg(object):
             dummy_hock_cont = cmds.spaceLocator(name="dummy_hock_%s" % self.suffix)[0]
             functions.alignTo(dummy_hock_cont, hock_distance_end, position=True, rotation=True)
             # connection.matrixConstraint(self.foot_ik_cont.name, dummy_hock_cont, mo=True)
-            connection.matrixConstraint("L_Hindleg_Hock_cont", dummy_hock_cont, mo=True)
+            connection.matrixConstraint(self.hock_ik_cont.name, dummy_hock_cont, mo=True)
 
             cmds.parent(dummy_hock_cont, self.nonScaleGrp)
 
