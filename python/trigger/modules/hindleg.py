@@ -157,6 +157,7 @@ class Hindleg(object):
         cmds.select(d=True)
         self.j_def_hindleg_root = cmds.joint(name="jDef_HindlegRoot_%s" %self.suffix, p=self.hindleg_root_pos, radius=1.5)
         self.sockets.append(self.j_def_hindleg_root)
+        self.deformerJoints.append(self.j_def_hindleg_root)
         self.j_def_hindhip = cmds.joint(name="jDef_Hindhip_%s" %self.suffix, p=self.hindhip_pos, radius=1.5)
         self.sockets.append(self.j_def_hindhip)
 
@@ -174,19 +175,22 @@ class Hindleg(object):
         cmds.select(d=True)
         self.j_def_stifle = cmds.joint(name="jDef_Stifle_%s" %self.suffix, p=self.stifle_pos, radius=1.5)
         self.sockets.append(self.j_def_stifle)
+        self.deformerJoints.append(self.j_def_stifle)
 
         cmds.select(d=True)
         self.j_def_hock = cmds.joint(name="jDef_Hock_%s" %self.suffix, p=self.hock_pos, radius=1.0)
         self.sockets.append(self.j_def_hock)
+        self.deformerJoints.append(self.j_def_hock)
 
         cmds.select(d=True)
         self.j_def_phalanges = cmds.joint(name="jDef_Phalanges_%s" %self.suffix, p=self.phalanges_pos, radius=1.0)
         self.sockets.append(self.j_def_phalanges)
+        self.deformerJoints.append(self.j_def_phalanges)
 
-        cmds.select(d=True)
+        # cmds.select(d=True)
         self.j_phalanges_tip = cmds.joint(name="j_PhalangesTip_%s" % self.suffix, p=self.phalangestip_pos, radius=1.0)
-        self.sockets.append(self.j_def_phalanges)
-
+        self.sockets.append(self.j_phalanges_tip)
+        self.deformerJoints.append(self.j_phalanges_tip)
 
         # IK Joints
         # IK Chain
@@ -269,9 +273,10 @@ class Hindleg(object):
         for jnt in [self.j_def_hindhip, self.j_phalanges_tip]:
             cmds.connectAttr("%s.s" % self.scaleHook, "%s.s" % jnt)
 
+        # log.warning(self.deformerJoints)
+        cmds.parent([self.j_def_hindleg_root, self.j_def_stifle, self.j_def_hock, self.j_def_phalanges], self.defJointsGrp)
+
     def create_controllers(self):
-
-
 
         # THIGH
         thigh_cont_scale = (self.init_upper_leg_dist / 16, self.init_upper_leg_dist / 4, self.init_upper_leg_dist / 4)
@@ -499,6 +504,7 @@ class Hindleg(object):
         toe_trans_grp, toe_trans_loc = group_align([hock_ik_grp,phalanges_ik_grp, phalanges_tip_ik_grp], self.j_phalanges_tip, "toe_trans")
         foot_trans_grp, foot_trans_loc = group_align(toe_trans_grp, self.j_def_phalanges, "foot_trans")
 
+        cmds.parent(foot_trans_grp, self.nonScaleGrp)
 
         connection.matrixConstraint(self.foot_ik_cont.name, foot_trans_loc, source_parent_cutoff=self.localOffGrp)
         connection.matrixConstraint(self.hock_ik_cont.name, hock_ik_loc, st="xyz", source_parent_cutoff=self.localOffGrp)
@@ -514,15 +520,16 @@ class Hindleg(object):
             hock_distance_end = cmds.spaceLocator(name="hock_distanceEnd_%s" % self.suffix)[0]
             cmds.parent(hock_distance_end, self.nonScaleGrp)
             functions.alignTo(hock_distance_end, self.j_def_hock, position=True)
-            connection.matrixConstraint(hock_ik_loc, hock_distance_end, mo=True)
+
+            # create a dummy controller to be used instead of the end controller
+            dummy_hock_cont = cmds.spaceLocator(name="dummy_hock_%s" % self.suffix)[0]
+            functions.alignTo(dummy_hock_cont, hock_distance_end, position=True, rotation=True)
+            connection.matrixConstraint(self.hock_ik_cont.name, dummy_hock_cont, mo=True)
 
             hock_stretch_locs = tools.make_stretchy_ik([self.j_ik_hip, self.j_ik_stifle, self.j_ik_hock],
                                                        hock_ik_handle,
                                                        self.thigh_cont.name,
-                                                       # self.cont_foot.name,
-                                                       hock_distance_end,
-                                                       # self.cont_hock.name,
-                                                       # "hock_trans_Loc_L_Hindleg",
+                                                       dummy_hock_cont,
                                                        self.side,
                                                        source_parent_cutoff=self.localOffGrp,
                                                        name="hock_%s" %self.suffix,
@@ -530,19 +537,15 @@ class Hindleg(object):
                                                        distance_end=hock_distance_end,
                                                        is_local=self.isLocal)
 
-            attribute.attrPass(hock_distance_end, self.foot_ik_cont.name, attributes=[], inConnections=True, outConnections=True,
+            attribute.attrPass(dummy_hock_cont, self.foot_ik_cont.name, attributes=[], inConnections=True, outConnections=True,
                                keepSourceAttributes=False, values=True, daisyChain=False, overrideEx=False)
             cmds.parent(hock_stretch_locs[:2], self.nonScaleGrp)
-
-        # connection.matrixConstraint(self.j_def_hindhip, self.j_ik_hip, mo=False)
 
     def create_fk_setup(self):
         connection.matrixConstraint(self.upper_leg_fk_cont.name, self.j_fk_hip, mo=True, source_parent_cutoff=self.localOffGrp)
         connection.matrixConstraint(self.lower_leg_fk_cont.name, self.j_fk_stifle, mo=True, source_parent_cutoff=self.localOffGrp)
         connection.matrixConstraint(self.pastern_fk_cont.name, self.j_fk_hock, mo=True, source_parent_cutoff=self.localOffGrp)
         connection.matrixConstraint(self.foot_fk_cont.name, self.j_fk_phalanges, mo=True, source_parent_cutoff=self.localOffGrp)
-
-        # connection.matrixConstraint(self.thigh_cont, self.upper_leg_fk_cont.get_offsets()[-1], st="xyz")
 
         cmds.parent(self.foot_fk_cont.get_offsets()[-1], self.pastern_fk_cont.name)
         cmds.parent(self.pastern_fk_cont.get_offsets()[-1], self.lower_leg_fk_cont.name)
@@ -552,10 +555,6 @@ class Hindleg(object):
         attribute.disconnect_attr(node= self.j_fk_stifle, attr="inverseScale", suppress_warnings=True)
         attribute.disconnect_attr(node= self.j_fk_hock, attr="inverseScale", suppress_warnings=True)
         attribute.disconnect_attr(node= self.j_fk_phalanges, attr="inverseScale", suppress_warnings=True)
-
-        # connection.matrixConstraint(self.j_def_hindhip, self.j_fk_hip, mo=False)
-
-
 
     def ikfk_switching(self):
 
@@ -577,10 +576,6 @@ class Hindleg(object):
         self.foot_fk_cont.drive_visibility("%s.FK_IK_Reverse" % self.switch_cont.name)
 
     def create_ribbons(self):
-
-        # align_switch_a = "%s.alignHip" %self.switch_cont.name
-        # align_switch_b = op.reverse(align_switch_a, name="alignHip_reverse_%s" %self.suffix)
-
         # UPPER LEG RIBBON
 
         ribbon_upper_leg = rc.PowerRibbon()
@@ -590,6 +585,8 @@ class Hindleg(object):
         ribbon_upper_leg.pin_start(self.j_def_hindhip)
         ribbon_upper_leg.pin_end(self.j_def_stifle)
 
+        if not self.isLocal:
+            cmds.connectAttr("%s.s" % self.scaleHook, "%s.s" % ribbon_upper_leg.scaleGrp)
 
         upper_leg_ore_con = ribbon_upper_leg.orient(node_a=self.j_ik_hip, node_b=self.j_fk_hip, switch_a="%s.FK_IK" %self.switch_cont.name,
                                                     switch_b="%s.FK_IK_Reverse" %self.switch_cont.name)
@@ -602,6 +599,9 @@ class Hindleg(object):
         # re-connect to the custom attribute
         cmds.connectAttr("{0}.alignHip".format(self.switch_cont.name), "{0}.weight".format(pair_blend_node), force=True)
 
+        cmds.parent(ribbon_upper_leg.scaleGrp, self.nonScaleGrp)
+        cmds.parent(ribbon_upper_leg.nonScaleGrp, self.defJointsGrp)
+
 
         # LOWER LEG RIBBON
 
@@ -611,6 +611,12 @@ class Hindleg(object):
 
         ribbon_lower_leg.pin_start(self.j_def_stifle)
         ribbon_lower_leg.pin_end(self.j_def_hock)
+
+        cmds.parent(ribbon_lower_leg.scaleGrp, self.nonScaleGrp)
+        cmds.parent(ribbon_lower_leg.nonScaleGrp, self.defJointsGrp)
+
+        if not self.isLocal:
+            cmds.connectAttr("%s.s" % self.scaleHook, "%s.s" % ribbon_lower_leg.scaleGrp)
 
         # PASTERN RIBBON
 
@@ -623,31 +629,26 @@ class Hindleg(object):
 
         ribbon_pastern.orient(node_a=self.j_def_hock)
 
-        # ribbon_start_pa_con_upper_leg_start = \
-        # cmds.parentConstraint(self.j_def_hindhip, ribbon_upper_leg.startConnection, mo=True)
-        # cmds.parentConstraint(self.j_def_stifle, ribbon_upper_leg.endConnection, mo=True)
-        #
-        # ribbon_start_ori_con_start = \
-        # cmds.parentConstraint(self.j_ik_hip, self.j_fk_hip, ribbon_upper_leg.startAim, mo=True,
-        #                       skipTranslate=["x", "y", "z"])[0]
+        cmds.parent(ribbon_pastern.scaleGrp, self.nonScaleGrp)
+        cmds.parent(ribbon_pastern.nonScaleGrp, self.defJointsGrp)
 
-
+        if not self.isLocal:
+            cmds.connectAttr("%s.s" % self.scaleHook, "%s.s" % ribbon_pastern.scaleGrp)
 
     def createLimb(self):
         self.createGrp()
         self.createJoints()
         self.create_controllers()
         self.common()
-
-
-        # self.createRoots()
-
-
         self.create_ik_setup()
         self.create_fk_setup()
         self.ikfk_switching()
         if self.isRibbon:
             self.create_ribbons()
+        # else:
+        #     cmds.parent(self.j_def_phalanges, self.j_def_hock)
+        #     cmds.parent(self.j_def_hock, self.j_def_stifle )
+        #     cmds.parent(self.j_def_stifle, self.j_def_hindhip )
 
 
 
