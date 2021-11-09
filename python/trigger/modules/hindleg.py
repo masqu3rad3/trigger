@@ -332,9 +332,9 @@ class Hindleg(object):
                          minValue=0.0, maxValue=1000.0, at="double", k=True)
             cmds.addAttr(self.foot_ik_cont.name, shortName="softIK", longName="SoftIK", defaultValue=0.0,
                          minValue=0.0, maxValue=100.0, at="double", k=True)
-        if self.isRibbon:
-            cmds.addAttr(self.foot_ik_cont.name, shortName="volume", longName="Volume_Preserve", defaultValue=0.0,
-                         at="double", k=True)
+        # if self.isRibbon:
+        #     cmds.addAttr(self.foot_ik_cont.name, shortName="volume", longName="Volume_Preserve", defaultValue=0.0,
+        #                  at="double", k=True)
 
         # HOCK
         hock_cont_scale = ((self.init_lower_leg_dist + self.init_pastern_dist)*0.1)
@@ -435,24 +435,24 @@ class Hindleg(object):
                      at="float",
                      minValue=0.0, maxValue=1.0, k=True)
 
-        cmds.addAttr(self.switch_cont.name, shortName="handAutoTwist", longName="Hand_Auto_Twist", defaultValue=1.0,
-                     minValue=0.0,
-                     maxValue=1.0, at="float", k=True)
-        cmds.addAttr(self.switch_cont.name, shortName="handManualTwist", longName="Hand_Manual_Twist", defaultValue=0.0,
-                     at="float",
-                     k=True)
+        # cmds.addAttr(self.switch_cont.name, shortName="handAutoTwist", longName="Hand_Auto_Twist", defaultValue=1.0,
+        #              minValue=0.0,
+        #              maxValue=1.0, at="float", k=True)
+        # cmds.addAttr(self.switch_cont.name, shortName="handManualTwist", longName="Hand_Manual_Twist", defaultValue=0.0,
+        #              at="float",
+        #              k=True)
 
-        cmds.addAttr(self.switch_cont.name, shortName="shoulderAutoTwist", longName="Shoulder_Auto_Twist", defaultValue=1.0,
-                     minValue=0.0, maxValue=1.0, at="float", k=True)
-        cmds.addAttr(self.switch_cont.name, shortName="shoulderManualTwist", longName="Shoulder_Manual_Twist",
-                     defaultValue=0.0,
-                     at="float", k=True)
+        # cmds.addAttr(self.switch_cont.name, shortName="shoulderAutoTwist", longName="Shoulder_Auto_Twist", defaultValue=1.0,
+        #              minValue=0.0, maxValue=1.0, at="float", k=True)
+        # cmds.addAttr(self.switch_cont.name, shortName="shoulderManualTwist", longName="Shoulder_Manual_Twist",
+        #              defaultValue=0.0,
+        #              at="float", k=True)
 
-        cmds.addAttr(self.switch_cont.name, shortName="allowScaling", longName="Allow_Scaling", defaultValue=1.0,
-                     minValue=0.0,
-                     maxValue=1.0, at="float", k=True)
-        cmds.addAttr(self.switch_cont.name, at="enum", k=True, shortName="interpType", longName="Interp_Type",
-                     en="No_Flip:Average:Shortest:Longest:Cache", defaultValue=0)
+        # cmds.addAttr(self.switch_cont.name, shortName="allowScaling", longName="Allow_Scaling", defaultValue=1.0,
+        #              minValue=0.0,
+        #              maxValue=1.0, at="float", k=True)
+        # cmds.addAttr(self.switch_cont.name, at="enum", k=True, shortName="interpType", longName="Interp_Type",
+        #              en="No_Flip:Average:Shortest:Longest:Cache", defaultValue=0)
 
         cmds.addAttr(self.switch_cont.name, shortName="tweakControls", longName="Tweak_Controls", defaultValue=0, at="bool")
         cmds.setAttr("{0}.tweakControls".format(self.switch_cont.name), cb=True)
@@ -526,7 +526,8 @@ class Hindleg(object):
             # create a dummy controller to be used instead of the end controller
             dummy_hock_cont = cmds.spaceLocator(name="dummy_hock_%s" % self.suffix)[0]
             functions.alignTo(dummy_hock_cont, hock_distance_end, position=True, rotation=True)
-            connection.matrixConstraint(self.foot_ik_cont.name, dummy_hock_cont, mo=True)
+            # connection.matrixConstraint(self.foot_ik_cont.name, dummy_hock_cont, mo=True)
+            connection.matrixConstraint("L_Hindleg_Hock_cont", dummy_hock_cont, mo=True)
 
             cmds.parent(dummy_hock_cont, self.nonScaleGrp)
 
@@ -546,40 +547,9 @@ class Hindleg(object):
                                                        distance_end=hock_distance_end,
                                                        is_local=self.isLocal)
 
-            attribute.attrPass(hock_distance_end, self.foot_ik_cont.name, attributes=[], inConnections=True, outConnections=True,
+            attribute.attrPass(dummy_hock_cont, self.foot_ik_cont.name, attributes=[], inConnections=True, outConnections=True,
                                keepSourceAttributes=False, values=True, daisyChain=False, overrideEx=False)
             cmds.parent(hock_stretch_locs[:2], self.nonScaleGrp)
-
-        # # stretchyness
-        # if self.isStretchy:
-        #     hock_distance_start = cmds.spaceLocator(name="hock_distanceStart_%s" %self.suffix)[0]
-        #     cmds.parent(hock_distance_start, self.nonScaleGrp)
-        #     cmds.pointConstraint(self.j_def_hindhip, hock_distance_start, mo=False)
-        #
-        #     hock_distance_end = cmds.spaceLocator(name="hock_distanceEnd_%s" % self.suffix)[0]
-        #     cmds.parent(hock_distance_end, self.nonScaleGrp)
-        #     functions.alignTo(hock_distance_end, self.j_def_hock, position=True)
-        #
-        #     # create a dummy controller to be used instead of the end controller
-        #     dummy_hock_cont = cmds.spaceLocator(name="dummy_hock_%s" % self.suffix)[0]
-        #     functions.alignTo(dummy_hock_cont, hock_distance_end, position=True, rotation=True)
-        #     connection.matrixConstraint(self.foot_ik_cont.name, dummy_hock_cont, mo=True)
-        #
-        #     hock_stretch_locs = tools.make_stretchy_ik([self.j_ik_hip, self.j_ik_stifle, self.j_ik_hock],
-        #                                                hock_ik_handle,
-        #                                                self.thigh_cont.name,
-        #                                                hock_distance_end,
-        #                                                # dummy_hock_cont,
-        #                                                self.side,
-        #                                                source_parent_cutoff=self.localOffGrp,
-        #                                                name="hock_%s" %self.suffix,
-        #                                                distance_start=hock_distance_start,
-        #                                                distance_end=hock_distance_end,
-        #                                                is_local=self.isLocal)
-        #
-        #     attribute.attrPass(dummy_hock_cont, self.foot_ik_cont.name, attributes=[], inConnections=True, outConnections=True,
-        #                        keepSourceAttributes=False, values=True, daisyChain=False, overrideEx=False)
-        #     cmds.parent(hock_stretch_locs[:2], self.nonScaleGrp)
 
     def create_fk_setup(self):
         connection.matrixConstraint(self.upper_leg_fk_cont.name, self.j_fk_hip, mo=True, source_parent_cutoff=self.localOffGrp)
@@ -676,6 +646,10 @@ class Hindleg(object):
 
         if not self.isLocal:
             cmds.connectAttr("%s.s" % self.scaleHook, "%s.s" % ribbon_pastern.scaleGrp)
+
+        tweakConts = ribbon_upper_leg.middleCont + ribbon_lower_leg.middleCont + ribbon_pastern.middleCont
+        log.warning(tweakConts)
+        attribute.drive_attrs("%s.tweakControls" % self.switch_cont.name, ["%s.v" % x for x in tweakConts])
 
     def round_up(self):
         cmds.parentConstraint(self.limbPlug, self.scaleGrp, mo=False)
