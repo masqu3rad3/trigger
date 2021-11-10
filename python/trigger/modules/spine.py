@@ -333,9 +333,9 @@ class Guides(object):
     def __init__(self, side="C", suffix="spine", segments=None, tMatrix=None, upVector=(0, 1, 0), mirrorVector=(1, 0, 0), lookVector=(0,0,1), *args, **kwargs):
         super(Guides, self).__init__()
         # fool check
-        if not segments or segments < 1:
-            log.warning("minimum segments required for the simple tail is two. current: %s" % segments)
-            return
+        # if not segments or segments < 1:
+        #     log.warning("minimum segments required for the simple tail is two. current: %s" % segments)
+        #     return
 
         #-------Mandatory------[Start]
         self.side = side
@@ -378,7 +378,7 @@ class Guides(object):
 
         # ----------Mandatory---------[Start]
         root_jnt = self.guideJoints[0]
-        attribute.create_global_joint_attrs(root_jnt, moduleName="Spine", upAxis=self.upVector, mirrorAxis=self.mirrorVector, lookAxis=self.lookVector)
+        attribute.create_global_joint_attrs(root_jnt, moduleName="%s_spine" %self.suffix, upAxis=self.upVector, mirrorAxis=self.mirrorVector, lookAxis=self.lookVector)
         # ----------Mandatory---------[End]
         for attr_dict in LIMB_DATA["properties"]:
             attribute.create_attribute(root_jnt, attr_dict)

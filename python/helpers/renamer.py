@@ -96,15 +96,16 @@ class Renamer(object):
         count = 1
         for obj in self.objectList:
             instance = str(count).zfill(padding) if padding else ""
-            try:
-                renamed = cmds.rename(obj, "{0}{1}{2}".format(pre, instance, post), ignoreShape=True)
-                self._rename_children(renamed)
-                count += 1
-            except RuntimeError:
-                pass
+            # try:
+            print(obj, pre, instance, post)
+            renamed = cmds.rename(obj, "{0}{1}{2}".format(pre, instance, post), ignoreShape=True)
+            self._rename_children(renamed)
+            count += 1
+            # except RuntimeError:
+            #     continue
 
     def _rename_children(self, obj):
-        children = cmds.listRelatives(obj, children=True, fullPath=True)
+        children = cmds.listRelatives(obj, children=True, fullPath=True, type="shape")
         if children:
             for c in children:
                 cmds.rename(c, "%sShape" %obj)
@@ -265,3 +266,38 @@ class MainUI(QtWidgets.QDialog):
         elif command == "replace":
             self.renamer.replace(method, str(self.replace_A_le.text()), str(self.replace_B_le.text()))
 
+class Node(object):
+    dag_path = ""
+    def __init__(self, node=None):
+        super(Node, self).__init__()
+        if node:
+            self.update_dag(node)
+
+    @classmethod
+    def update_dag(cls, new_path):
+        node_list = cmds.ls(new_path, l=True)
+        if not node_list:
+            raise Exception("Node does not exist")
+        cls.dag_path = node_list[0]
+
+    @classmethod
+    def get_dag(cls):
+        return cls.dag_path
+
+    @classmethod
+    def rename(cls, new_name):
+        cls.update_dag(cmds.rename(cls.dag_path, new_name, ignoreShape=True))
+        cls._rename_children(new_name)
+
+    @staticmethod
+    def _rename_children(obj):
+        shapes = cmds.listRelatives(obj, children=True, fullPath=True, type="shape")
+        if shapes:
+            for c in shapes:
+                cmds.rename(c, "%sShape" %obj)
+
+    def __str__(self):
+        return self.get_dag()
+
+    def __repr__(self):
+        return self.get_dag()

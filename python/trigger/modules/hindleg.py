@@ -664,6 +664,7 @@ class Hindleg(object):
         cmds.connectAttr("%s.rigVis" % self.scaleGrp, "%s.v" % self.rigJointsGrp)
         # lock and hide
         # _ = []
+        self.anchors = [(self.foot_ik_cont.name, "parent", 1, None), (self.pole_ik_cont.name, "parent", 1, None)]
 
     def createLimb(self):
         self.createGrp()
