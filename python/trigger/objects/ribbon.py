@@ -497,14 +497,14 @@ class Ribbon(object):
             cmds.parent(middle_up, middle_aim, middle_pos)
             cmds.aimConstraint(self._startPlug, middle_aim, aimVector=(0, 0, -1), upVector=(0, 1, 0), wut=1,
                                wuo=middle_up, mo=True)
-            # cmds.pointConstraint(self._startPlug, self._endPlug, middle_POS)
-            connection.matrixConstraint([self._startPlug, self._endPlug], middle_pos, sr="xyz", ss="xyz")
+            cmds.pointConstraint(self._startPlug, self._endPlug, middle_pos)
+            # connection.matrixConstraint([self._startPlug, self._endPlug], middle_pos, sr="xyz", ss="xyz")
             # connection.matrixConstraint([self._startPlug, self._endPlug], middle_pos, sr="xyz", ss="xyz", source_parent_cutoff="RBN_ScaleGrp_TESTTT")
             # pos_average_p = op.average_matrix(["%s.worldMatrix[0]" % self._startPlug, "%s.worldMatrix[0]" % self._endPlug])
             # pos_trans_p = op.decompose_matrix(pos_average_p)[0]
             # cmds.connectAttr(pos_trans_p, "%s.t" % middle_POS)
-            # cmds.pointConstraint(self._startUp, self._endUp, middle_up)
-            connection.matrixConstraint([self._startUp, self._endUp], middle_up, sr="xyz", ss="xyz")
+            cmds.pointConstraint(self._startUp, self._endUp, middle_up)
+            # connection.matrixConstraint([self._startUp, self._endUp], middle_up, sr="xyz", ss="xyz")
             # connection.matrixConstraint([self._startUp, self._endUp], middle_up, sr="xyz", ss="xyz", source_parent_cutoff="RBN_ScaleGrp_TESTTT")
             # up_average_p = op.average_matrix(["%s.worldMatrix[0]" % self._startUp, "%s.worldMatrix[0]" % self._endUp])
             # up_trans_p = op.decompose_matrix(up_average_p)[0]

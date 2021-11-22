@@ -7,10 +7,9 @@ from trigger.library import api
 from trigger.library import connection
 from trigger.library import arithmetic as op
 from trigger.library import ribbon as rc
+from trigger.objects.ribbon import Ribbon
 
 from trigger.library import objects
-
-from trigger.library import controllers as ic
 
 from trigger.core import filelog
 log = filelog.Filelog(logname=__name__, filename="trigger_log")
@@ -716,6 +715,11 @@ class Arm(object):
         ribbon_start_pa_con_upper_arm_start = \
         cmds.parentConstraint(self.defStart, ribbon_upper_arm.startConnection, mo=True)[0]
         cmds.parentConstraint(self.j_def_elbow, ribbon_upper_arm.endConnection, mo=True)
+
+        # TODO: Make a proper test for new ribbon. The module is fine but there is something wrong with connections
+        ribbon_upper_arm_test = Ribbon(self.j_collar_end, self.j_def_elbow, name="up_%s" % self.suffix,
+                                       up_vector=self.up_axis)
+        ribbon_upper_arm_test.create()
 
         # connect the elbow scaling
         cmds.connectAttr("{0}.scale".format(self.midLockCont.name), "{0}.scale".format(ribbon_upper_arm.endConnection))
