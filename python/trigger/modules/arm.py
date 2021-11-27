@@ -708,31 +708,27 @@ class Arm(object):
     def createRibbons(self):
         # UPPER ARM RIBBON
 
-        ribbon_upper_arm = rc.PowerRibbon()
-        ribbon_upper_arm.createPowerRibbon(self.j_collar_end, self.j_def_elbow, "up_%s" % self.suffix, side=self.side,
-                                           orientation=0, connectStartAim=False, upVector=self.up_axis)
-
-        ribbon_start_pa_con_upper_arm_start = \
-        cmds.parentConstraint(self.defStart, ribbon_upper_arm.startConnection, mo=True)[0]
-        cmds.parentConstraint(self.j_def_elbow, ribbon_upper_arm.endConnection, mo=True)
-
-        # TODO: Make a proper test for new ribbon. The module is fine but there is something wrong with connections
-        ribbon_upper_arm_test = Ribbon(self.j_collar_end, self.j_def_elbow, name="up_%s" % self.suffix,
+        ####################
+        ribbon_upper_arm = Ribbon(self.j_collar_end, self.j_def_elbow, name="up_%s" % self.suffix,
+                                       connect_start_aim=False,
                                        up_vector=self.up_axis)
-        ribbon_upper_arm_test.create()
+        ribbon_upper_arm.create()
 
-        # connect the elbow scaling
-        cmds.connectAttr("{0}.scale".format(self.midLockCont.name), "{0}.scale".format(ribbon_upper_arm.endConnection))
+        ribbon_start_pa_con_upper_arm_start = ribbon_upper_arm.pin_start(self.defStart)[0]
+        ribbon_upper_arm.pin_end(self.j_def_elbow)
+
+        cmds.connectAttr("{0}.scale".format(self.midLockCont.name), "{0}.scale".format(ribbon_upper_arm.end_plug))
 
         if not self.isLocal:
-            cmds.connectAttr("%s.s" % self.scaleHook, "%s.s" % ribbon_upper_arm.scaleGrp)
+            cmds.connectAttr("%s.s" % self.scaleHook, "%s.s" % ribbon_upper_arm.scale_grp)
 
         ribbon_start_ori_con = \
-        cmds.parentConstraint(self.j_ik_orig_up, self.j_fk_up, ribbon_upper_arm.startAim, mo=True,
-                              skipTranslate=["x", "y", "z"])[0]
+            cmds.parentConstraint(self.j_ik_orig_up, self.j_fk_up, ribbon_upper_arm.start_aim, mo=True,
+                                  skipTranslate=["x", "y", "z"])[0]
 
-        ribbon_start_ori_con2 = cmds.parentConstraint(self.j_collar_end, ribbon_upper_arm.startAim, mo=True,
+        ribbon_start_ori_con2 = cmds.parentConstraint(self.j_collar_end, ribbon_upper_arm.start_aim, mo=True,
                                                       skipTranslate=["x", "y", "z"])[0]
+
 
         cmds.connectAttr("{0}.FK_IK".format(self.switchFkIkCont.name), ("%s.%sW0" % (ribbon_start_ori_con, self.j_ik_orig_up)))
         cmds.connectAttr("{0}.FK_IK_Reverse".format(self.switchFkIkCont.name), ("%s.%sW1" % (ribbon_start_ori_con, self.j_fk_up)))
@@ -751,7 +747,7 @@ class Arm(object):
 
         # !!! The parent constrain override should be disconnected like this
         cmds.disconnectAttr("{0}.constraintRotateX".format(ribbon_start_pa_con_upper_arm_start),
-                            "{0}.rotateX".format(ribbon_upper_arm.startConnection))
+                            "{0}.rotateX".format(ribbon_upper_arm.start_plug))
 
         # manual
         add_manual_twist = cmds.createNode("plusMinusAverage", name=("AddManualTwist_UpperArm_%s" % self.suffix))
@@ -760,27 +756,31 @@ class Arm(object):
                          "{0}.input3D[1].input3Dx".format(add_manual_twist))
 
         # connect to the joint
-        cmds.connectAttr("{0}.output3D".format(add_manual_twist), "{0}.rotate".format(ribbon_upper_arm.startConnection))
+        cmds.connectAttr("{0}.output3D".format(add_manual_twist), "{0}.rotate".format(ribbon_upper_arm.start_plug))
 
         # connect allowScaling
         cmds.connectAttr("{0}.allowScaling".format(self.switchFkIkCont.name),
-                         "{0}.scaleSwitch".format(ribbon_upper_arm.startConnection))
+                         "{0}.scaleSwitch".format(ribbon_upper_arm.start_plug))
 
        # LOWER ARM RIBBON
 
-        ribbon_lower_arm = rc.PowerRibbon()
-        ribbon_lower_arm.createPowerRibbon(self.j_def_elbow, self.j_def_hand, "low_%s" % self.suffix, side=self.side,
-                                           orientation=0, upVector=self.up_axis)
+        ribbon_lower_arm = Ribbon(self.j_def_elbow, self.j_def_hand, name="low_%s" % self.suffix,
+                                       connect_start_aim=False,
+                                       up_vector=self.up_axis)
 
-        cmds.parentConstraint(self.j_def_elbow, ribbon_lower_arm.startConnection, mo=True)
-        ribbon_start_pa_con_lower_arm_end = \
-        cmds.parentConstraint(self.defEnd, ribbon_lower_arm.endConnection, mo=True)[0]
+        ribbon_lower_arm.create()
+
+        ribbon_lower_arm.pin_start(self.j_def_elbow)
+        ribbon_start_pa_con_lower_arm_end = ribbon_lower_arm.pin_end(self.defEnd)[0]
+        # cmds.parentConstraint(self.j_def_elbow, ribbon_lower_arm.start_plug, mo=True)
+        # ribbon_start_pa_con_lower_arm_end = \
+        # cmds.parentConstraint(self.defEnd, ribbon_lower_arm.end_plug, mo=True)[0]
 
         # connect the elbow scaling
-        cmds.connectAttr("{0}.scale".format(self.switchFkIkCont.name), "{0}.scale".format(ribbon_lower_arm.startConnection))
+        cmds.connectAttr("{0}.scale".format(self.switchFkIkCont.name), "{0}.scale".format(ribbon_lower_arm.start_plug))
 
         if not self.isLocal:
-            cmds.connectAttr("%s.s" % self.scaleHook, "%s.s" % ribbon_lower_arm.scaleGrp)
+            cmds.connectAttr("%s.s" % self.scaleHook, "%s.s" % ribbon_lower_arm.scale_grp)
 
         # AUTO AND MANUAL TWIST
 
@@ -792,7 +792,7 @@ class Arm(object):
 
         # !!! The parent constrain override should be disconnected like this
         cmds.disconnectAttr("{0}.constraintRotateX".format(ribbon_start_pa_con_lower_arm_end),
-                            "{0}.rotateX".format(ribbon_lower_arm.endConnection))
+                            "{0}.rotateX".format(ribbon_lower_arm.end_plug))
 
         # manual
         add_manual_twist = cmds.createNode("plusMinusAverage", name=("AddManualTwist_LowerArm_%s" % self.suffix))
@@ -801,11 +801,11 @@ class Arm(object):
                          "{0}.input3D[1].input3Dx".format(add_manual_twist))
 
         # connect to the joint
-        cmds.connectAttr("{0}.output3D".format(add_manual_twist), "{0}.rotate".format(ribbon_lower_arm.endConnection))
+        cmds.connectAttr("{0}.output3D".format(add_manual_twist), "{0}.rotate".format(ribbon_lower_arm.end_plug))
 
         # connect allowScaling
         cmds.connectAttr("{0}.allowScaling".format(self.switchFkIkCont.name),
-                         "{0}.scaleSwitch".format(ribbon_lower_arm.startConnection))
+                         "{0}.scaleSwitch".format(ribbon_lower_arm.start_plug))
 
         # Volume Preservation Stuff
         vpExtraInput = cmds.createNode("multiplyDivide", name="vpExtraInput_%s" % self.suffix)
@@ -829,9 +829,9 @@ class Arm(object):
         cmds.setAttr("{0}.input2".format(vpUpperLowerReduce), 0.5)
         #
         # vp knee branch
-        cmds.connectAttr("{0}.output".format(vpExtraInput), "{0}.scale".format(ribbon_lower_arm.startConnection),
+        cmds.connectAttr("{0}.output".format(vpExtraInput), "{0}.scale".format(ribbon_lower_arm.start_plug),
                          f=True)
-        cmds.connectAttr("{0}.output".format(vpExtraInput), "{0}.scale".format(ribbon_upper_arm.endConnection), f=True)
+        cmds.connectAttr("{0}.output".format(vpExtraInput), "{0}.scale".format(ribbon_upper_arm.end_plug), f=True)
         cmds.connectAttr("{0}.output".format(vpExtraInput), "{0}.scale".format(self.j_def_elbow), f=True)
         cmds.connectAttr("{0}.scale".format(self.midLockCont.name), "{0}.input1".format(vpExtraInput))
 
@@ -855,7 +855,7 @@ class Arm(object):
         cmds.connectAttr("{0}.translateX".format(self.j_ik_sc_low_end), "{0}.input2Y".format(vpInitLength))
 
         # vp upper branch
-        mid_off_up = functions.getParent(ribbon_upper_arm.middleCont[0])
+        mid_off_up = functions.getParent(ribbon_upper_arm.controllers[0])
         cmds.connectAttr("{0}.outputX".format(vpPowerUpperLeg), "{0}.scaleX".format(mid_off_up))
         cmds.connectAttr("{0}.outputX".format(vpPowerUpperLeg), "{0}.scaleY".format(mid_off_up))
         cmds.connectAttr("{0}.outputX".format(vpPowerUpperLeg), "{0}.scaleZ".format(mid_off_up))
@@ -864,7 +864,7 @@ class Arm(object):
         cmds.connectAttr("{0}.output".format(vpUpperLowerReduce), "{0}.input2X".format(vpPowerUpperLeg))
 
         # vp lower branch
-        mid_off_low = functions.getParent(ribbon_lower_arm.middleCont[0])
+        mid_off_low = functions.getParent(ribbon_lower_arm.controllers[0])
         cmds.connectAttr("{0}.outputX".format(vpPowerLowerLeg), "{0}.scaleX".format(mid_off_low))
         cmds.connectAttr("{0}.outputX".format(vpPowerLowerLeg), "{0}.scaleY".format(mid_off_low))
         cmds.connectAttr("{0}.outputX".format(vpPowerLowerLeg), "{0}.scaleZ".format(mid_off_low))
@@ -874,26 +874,240 @@ class Arm(object):
 
         cmds.connectAttr("{0}.volume".format(self.handIkCont.name), "{0}.input1".format(vpUpperLowerReduce))
 
-        cmds.parent(ribbon_upper_arm.scaleGrp, self.nonScaleGrp)
-        cmds.parent(ribbon_upper_arm.nonScaleGrp, self.nonScaleGrp)
-        cmds.parent(ribbon_lower_arm.scaleGrp, self.nonScaleGrp)
-        cmds.parent(ribbon_lower_arm.nonScaleGrp, self.nonScaleGrp)
+        cmds.parent(ribbon_upper_arm.scale_grp, self.nonScaleGrp)
+        cmds.parent(ribbon_upper_arm.nonscale_grp, self.nonScaleGrp)
+        cmds.parent(ribbon_lower_arm.scale_grp, self.nonScaleGrp)
+        cmds.parent(ribbon_lower_arm.nonscale_grp, self.nonScaleGrp)
 
         cmds.connectAttr("{0}.tweakControls".format(self.switchFkIkCont.name), "{0}.v".format(self.midLockCont.name))
-        tweakConts = ribbon_upper_arm.middleCont + ribbon_lower_arm.middleCont
+        tweakConts = ribbon_upper_arm.controllers + ribbon_lower_arm.controllers
 
         attribute.drive_attrs("%s.tweakControls" % self.switchFkIkCont.name, ["%s.v" % x for x in tweakConts])
 
-        self.deformerJoints += ribbon_lower_arm.deformerJoints + ribbon_upper_arm.deformerJoints
+        self.deformerJoints += ribbon_lower_arm.deformer_joints + ribbon_upper_arm.deformer_joints
 
-        attribute.drive_attrs("%s.rigVis" % self.scaleGrp, ["%s.v" % x for x in ribbon_lower_arm.toHide])
-        attribute.drive_attrs("%s.rigVis" % self.scaleGrp, ["%s.v" % x for x in ribbon_upper_arm.toHide])
+        attribute.drive_attrs("%s.rigVis" % self.scaleGrp, ["%s.v" % x for x in ribbon_lower_arm.to_hide])
+        attribute.drive_attrs("%s.rigVis" % self.scaleGrp, ["%s.v" % x for x in ribbon_upper_arm.to_hide])
 
-        functions.colorize(ribbon_upper_arm.middleCont, self.colorCodes[1])
-        functions.colorize(ribbon_lower_arm.middleCont, self.colorCodes[1])
+        functions.colorize(ribbon_upper_arm.controllers, self.colorCodes[1])
+        functions.colorize(ribbon_lower_arm.controllers, self.colorCodes[1])
 
-        cmds.parent(ribbon_upper_arm.nonScaleGrp, self.defJointsGrp)
-        cmds.parent(ribbon_lower_arm.nonScaleGrp, self.defJointsGrp)
+        cmds.parent(ribbon_upper_arm.nonscale_grp, self.defJointsGrp)
+        cmds.parent(ribbon_lower_arm.nonscale_grp, self.defJointsGrp)
+
+    # def createRibbons(self):
+    #     # UPPER ARM RIBBON
+    #
+    #     ribbon_upper_arm = rc.PowerRibbon()
+    #     ribbon_upper_arm.createPowerRibbon(self.j_collar_end, self.j_def_elbow, "up_%s" % self.suffix, side=self.side,
+    #                                        orientation=0, connectStartAim=False, upVector=self.up_axis)
+    #
+    #     ribbon_start_pa_con_upper_arm_start = \
+    #     cmds.parentConstraint(self.defStart, ribbon_upper_arm.startConnection, mo=True)[0]
+    #     cmds.parentConstraint(self.j_def_elbow, ribbon_upper_arm.endConnection, mo=True)
+    #
+    #     ####################
+    #     # # TODO: Make a proper test for new ribbon. The module is fine but there is something wrong with connections
+    #     ribbon_upper_arm_test = Ribbon(self.j_collar_end, self.j_def_elbow, name="up_%s" % self.suffix,
+    #                                    connect_start_aim=False,
+    #                                    up_vector=self.up_axis)
+    #     ribbon_upper_arm_test.create()
+    #
+    #     ribbon_start_pa_con_upper_arm_start_test = \
+    #     cmds.parentConstraint(self.defStart, ribbon_upper_arm_test.start_plug, mo=True)[0]
+    #     cmds.parentConstraint(self.j_def_elbow, ribbon_upper_arm_test.end_plug, mo=True)
+    #     ####################
+    #
+    #     # connect the elbow scaling
+    #     cmds.connectAttr("{0}.scale".format(self.midLockCont.name), "{0}.scale".format(ribbon_upper_arm.endConnection))
+    #
+    #     #####
+    #     cmds.connectAttr("{0}.scale".format(self.midLockCont.name), "{0}.scale".format(ribbon_upper_arm_test.end_plug))
+    #     #####
+    #
+    #     if not self.isLocal:
+    #         cmds.connectAttr("%s.s" % self.scaleHook, "%s.s" % ribbon_upper_arm.scaleGrp)
+    #
+    #         ####
+    #         cmds.connectAttr("%s.s" % self.scaleHook, "%s.s" % ribbon_upper_arm_test.scale_grp)
+    #         ####
+    #
+    #     ribbon_start_ori_con = \
+    #     cmds.parentConstraint(self.j_ik_orig_up, self.j_fk_up, ribbon_upper_arm.startAim, mo=True,
+    #                           skipTranslate=["x", "y", "z"])[0]
+    #
+    #     ribbon_start_ori_con2 = cmds.parentConstraint(self.j_collar_end, ribbon_upper_arm.startAim, mo=True,
+    #                                                   skipTranslate=["x", "y", "z"])[0]
+    #
+    #     ####
+    #     ribbon_start_ori_con = \
+    #         cmds.parentConstraint(self.j_ik_orig_up, self.j_fk_up, ribbon_upper_arm_test.start_aim, mo=True,
+    #                               skipTranslate=["x", "y", "z"])[0]
+    #
+    #     ribbon_start_ori_con2 = cmds.parentConstraint(self.j_collar_end, ribbon_upper_arm_test.start_aim, mo=True,
+    #                                                   skipTranslate=["x", "y", "z"])[0]
+    #     ####
+    #
+    #     cmds.connectAttr("{0}.FK_IK".format(self.switchFkIkCont.name), ("%s.%sW0" % (ribbon_start_ori_con, self.j_ik_orig_up)))
+    #     cmds.connectAttr("{0}.FK_IK_Reverse".format(self.switchFkIkCont.name), ("%s.%sW1" % (ribbon_start_ori_con, self.j_fk_up)))
+    #
+    #     pairBlendNode = cmds.listConnections(ribbon_start_ori_con, d=True, t="pairBlend")[0]
+    #     # re-connect to the custom attribute
+    #     cmds.connectAttr("{0}.alignShoulder".format(self.switchFkIkCont.name), "{0}.weight".format(pairBlendNode), force=True)
+    #
+    #     # AUTO AND MANUAL TWIST
+    #
+    #     # auto
+    #     auto_twist = cmds.createNode("multiplyDivide", name="autoTwist_%s" % self.suffix)
+    #     cmds.connectAttr("{0}.shoulderAutoTwist".format(self.switchFkIkCont.name), "{0}.input2X".format(auto_twist))
+    #     cmds.connectAttr("{0}.constraintRotate".format(ribbon_start_pa_con_upper_arm_start),
+    #                      "{0}.input1".format(auto_twist))
+    #
+    #     # !!! The parent constrain override should be disconnected like this
+    #     cmds.disconnectAttr("{0}.constraintRotateX".format(ribbon_start_pa_con_upper_arm_start),
+    #                         "{0}.rotateX".format(ribbon_upper_arm.startConnection))
+    #
+    #     # manual
+    #     add_manual_twist = cmds.createNode("plusMinusAverage", name=("AddManualTwist_UpperArm_%s" % self.suffix))
+    #     cmds.connectAttr("{0}.output".format(auto_twist), "{0}.input3D[0]".format(add_manual_twist))
+    #     cmds.connectAttr("{0}.shoulderManualTwist".format(self.switchFkIkCont.name),
+    #                      "{0}.input3D[1].input3Dx".format(add_manual_twist))
+    #
+    #     # connect to the joint
+    #     cmds.connectAttr("{0}.output3D".format(add_manual_twist), "{0}.rotate".format(ribbon_upper_arm.startConnection))
+    #
+    #     # connect allowScaling
+    #     cmds.connectAttr("{0}.allowScaling".format(self.switchFkIkCont.name),
+    #                      "{0}.scaleSwitch".format(ribbon_upper_arm.startConnection))
+    #
+    #    # LOWER ARM RIBBON
+    #
+    #     ribbon_lower_arm = rc.PowerRibbon()
+    #     ribbon_lower_arm.createPowerRibbon(self.j_def_elbow, self.j_def_hand, "low_%s" % self.suffix, side=self.side,
+    #                                        orientation=0, upVector=self.up_axis)
+    #
+    #     cmds.parentConstraint(self.j_def_elbow, ribbon_lower_arm.startConnection, mo=True)
+    #     ribbon_start_pa_con_lower_arm_end = \
+    #     cmds.parentConstraint(self.defEnd, ribbon_lower_arm.endConnection, mo=True)[0]
+    #
+    #     # connect the elbow scaling
+    #     cmds.connectAttr("{0}.scale".format(self.switchFkIkCont.name), "{0}.scale".format(ribbon_lower_arm.startConnection))
+    #
+    #     if not self.isLocal:
+    #         cmds.connectAttr("%s.s" % self.scaleHook, "%s.s" % ribbon_lower_arm.scaleGrp)
+    #
+    #     # AUTO AND MANUAL TWIST
+    #
+    #     # auto
+    #     auto_twist = cmds.createNode("multiplyDivide", name="autoTwist_%s" % self.suffix)
+    #     cmds.connectAttr("{0}.handAutoTwist".format(self.switchFkIkCont.name), "{0}.input2X".format(auto_twist))
+    #     cmds.connectAttr("{0}.constraintRotate".format(ribbon_start_pa_con_lower_arm_end),
+    #                      "{0}.input1".format(auto_twist))
+    #
+    #     # !!! The parent constrain override should be disconnected like this
+    #     cmds.disconnectAttr("{0}.constraintRotateX".format(ribbon_start_pa_con_lower_arm_end),
+    #                         "{0}.rotateX".format(ribbon_lower_arm.endConnection))
+    #
+    #     # manual
+    #     add_manual_twist = cmds.createNode("plusMinusAverage", name=("AddManualTwist_LowerArm_%s" % self.suffix))
+    #     cmds.connectAttr("{0}.output".format(auto_twist), "{0}.input3D[0]".format(add_manual_twist))
+    #     cmds.connectAttr("{0}.handManualTwist".format(self.switchFkIkCont.name),
+    #                      "{0}.input3D[1].input3Dx".format(add_manual_twist))
+    #
+    #     # connect to the joint
+    #     cmds.connectAttr("{0}.output3D".format(add_manual_twist), "{0}.rotate".format(ribbon_lower_arm.endConnection))
+    #
+    #     # connect allowScaling
+    #     cmds.connectAttr("{0}.allowScaling".format(self.switchFkIkCont.name),
+    #                      "{0}.scaleSwitch".format(ribbon_lower_arm.startConnection))
+    #
+    #     # Volume Preservation Stuff
+    #     vpExtraInput = cmds.createNode("multiplyDivide", name="vpExtraInput_%s" % self.suffix)
+    #     cmds.setAttr("{0}.operation".format(vpExtraInput), 1)
+    #
+    #     vpMidAverage = cmds.createNode("plusMinusAverage", name="vpMidAverage_%s" % self.suffix)
+    #     cmds.setAttr("{0}.operation".format(vpMidAverage), 3)
+    #
+    #     vpPowerMid = cmds.createNode("multiplyDivide", name="vpPowerMid_%s" % self.suffix)
+    #     cmds.setAttr("{0}.operation".format(vpPowerMid), 3)
+    #     vpInitLength = cmds.createNode("multiplyDivide", name="vpInitLength_%s" % self.suffix)
+    #     cmds.setAttr("{0}.operation".format(vpInitLength), 2)
+    #
+    #     vpPowerUpperLeg = cmds.createNode("multiplyDivide", name="vpPowerUpperLeg_%s" % self.suffix)
+    #     cmds.setAttr("{0}.operation".format(vpPowerUpperLeg), 3)
+    #
+    #     vpPowerLowerLeg = cmds.createNode("multiplyDivide", name="vpPowerLowerLeg_%s" % self.suffix)
+    #     cmds.setAttr("{0}.operation".format(vpPowerLowerLeg), 3)
+    #     #
+    #     vpUpperLowerReduce = cmds.createNode("multDoubleLinear", name="vpUpperLowerReduce_%s" % self.suffix)
+    #     cmds.setAttr("{0}.input2".format(vpUpperLowerReduce), 0.5)
+    #     #
+    #     # vp knee branch
+    #     cmds.connectAttr("{0}.output".format(vpExtraInput), "{0}.scale".format(ribbon_lower_arm.startConnection),
+    #                      f=True)
+    #     cmds.connectAttr("{0}.output".format(vpExtraInput), "{0}.scale".format(ribbon_upper_arm.endConnection), f=True)
+    #     cmds.connectAttr("{0}.output".format(vpExtraInput), "{0}.scale".format(self.j_def_elbow), f=True)
+    #     cmds.connectAttr("{0}.scale".format(self.midLockCont.name), "{0}.input1".format(vpExtraInput))
+    #
+    #     cmds.connectAttr("{0}.output1D".format(vpMidAverage), "{0}.input2X".format(vpExtraInput))
+    #     cmds.connectAttr("{0}.output1D".format(vpMidAverage), "{0}.input2Y".format(vpExtraInput))
+    #     cmds.connectAttr("{0}.output1D".format(vpMidAverage), "{0}.input2Z".format(vpExtraInput))
+    #
+    #     cmds.connectAttr("{0}.outputX".format(vpPowerMid), "{0}.input1D[0]".format(vpMidAverage))
+    #     cmds.connectAttr("{0}.outputY".format(vpPowerMid), "{0}.input1D[1]".format(vpMidAverage))
+    #
+    #     cmds.connectAttr("{0}.outputX".format(vpInitLength), "{0}.input1X".format(vpPowerMid))
+    #     cmds.connectAttr("{0}.outputY".format(vpInitLength), "{0}.input1Y".format(vpPowerMid))
+    #
+    #     cmds.connectAttr("{0}.volume".format(self.handIkCont.name), "{0}.input2X".format(vpPowerMid))
+    #     cmds.connectAttr("{0}.volume".format(self.handIkCont.name), "{0}.input2Y".format(vpPowerMid))
+    #
+    #     cmds.connectAttr("{0}.initialDistance".format(self.j_ik_sc_low), "{0}.input1X".format(vpInitLength))
+    #     cmds.connectAttr("{0}.initialDistance".format(self.j_ik_sc_low_end), "{0}.input1Y".format(vpInitLength))
+    #
+    #     cmds.connectAttr("{0}.translateX".format(self.j_ik_sc_low), "{0}.input2X".format(vpInitLength))
+    #     cmds.connectAttr("{0}.translateX".format(self.j_ik_sc_low_end), "{0}.input2Y".format(vpInitLength))
+    #
+    #     # vp upper branch
+    #     mid_off_up = functions.getParent(ribbon_upper_arm.middleCont[0])
+    #     cmds.connectAttr("{0}.outputX".format(vpPowerUpperLeg), "{0}.scaleX".format(mid_off_up))
+    #     cmds.connectAttr("{0}.outputX".format(vpPowerUpperLeg), "{0}.scaleY".format(mid_off_up))
+    #     cmds.connectAttr("{0}.outputX".format(vpPowerUpperLeg), "{0}.scaleZ".format(mid_off_up))
+    #
+    #     cmds.connectAttr("{0}.outputX".format(vpInitLength), "{0}.input1X".format(vpPowerUpperLeg))
+    #     cmds.connectAttr("{0}.output".format(vpUpperLowerReduce), "{0}.input2X".format(vpPowerUpperLeg))
+    #
+    #     # vp lower branch
+    #     mid_off_low = functions.getParent(ribbon_lower_arm.middleCont[0])
+    #     cmds.connectAttr("{0}.outputX".format(vpPowerLowerLeg), "{0}.scaleX".format(mid_off_low))
+    #     cmds.connectAttr("{0}.outputX".format(vpPowerLowerLeg), "{0}.scaleY".format(mid_off_low))
+    #     cmds.connectAttr("{0}.outputX".format(vpPowerLowerLeg), "{0}.scaleZ".format(mid_off_low))
+    #
+    #     cmds.connectAttr("{0}.outputX".format(vpInitLength), "{0}.input1X".format(vpPowerLowerLeg))
+    #     cmds.connectAttr("{0}.output".format(vpUpperLowerReduce), "{0}.input2X".format(vpPowerLowerLeg))
+    #
+    #     cmds.connectAttr("{0}.volume".format(self.handIkCont.name), "{0}.input1".format(vpUpperLowerReduce))
+    #
+    #     cmds.parent(ribbon_upper_arm.scaleGrp, self.nonScaleGrp)
+    #     cmds.parent(ribbon_upper_arm.nonScaleGrp, self.nonScaleGrp)
+    #     cmds.parent(ribbon_lower_arm.scaleGrp, self.nonScaleGrp)
+    #     cmds.parent(ribbon_lower_arm.nonScaleGrp, self.nonScaleGrp)
+    #
+    #     cmds.connectAttr("{0}.tweakControls".format(self.switchFkIkCont.name), "{0}.v".format(self.midLockCont.name))
+    #     tweakConts = ribbon_upper_arm.middleCont + ribbon_lower_arm.middleCont
+    #
+    #     attribute.drive_attrs("%s.tweakControls" % self.switchFkIkCont.name, ["%s.v" % x for x in tweakConts])
+    #
+    #     self.deformerJoints += ribbon_lower_arm.deformerJoints + ribbon_upper_arm.deformerJoints
+    #
+    #     attribute.drive_attrs("%s.rigVis" % self.scaleGrp, ["%s.v" % x for x in ribbon_lower_arm.toHide])
+    #     attribute.drive_attrs("%s.rigVis" % self.scaleGrp, ["%s.v" % x for x in ribbon_upper_arm.toHide])
+    #
+    #     functions.colorize(ribbon_upper_arm.middleCont, self.colorCodes[1])
+    #     functions.colorize(ribbon_lower_arm.middleCont, self.colorCodes[1])
+    #
+    #     cmds.parent(ribbon_upper_arm.nonScaleGrp, self.defJointsGrp)
+    #     cmds.parent(ribbon_lower_arm.nonScaleGrp, self.defJointsGrp)
 
 
     def createTwistSplines(self):

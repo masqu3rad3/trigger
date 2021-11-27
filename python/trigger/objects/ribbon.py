@@ -208,6 +208,17 @@ class Ribbon(object):
         self._switch_weights(nodes, [switch_a, switch_b], constraint)
         return constraint
 
+    # def pin_start(self, node_a, node_b=None, switch_a=None, switch_b=None):
+    #     nodes = [node_a, node_b] if node_b else node_a
+    #     _, __, ave = connection.matrixConstraint(nodes, self._startPlug, mo=True, ss="xyz")
+    #
+    #     for nmb, sw in enumerate([switch_a, switch_b]):
+    #         if sw:
+    #             cmds.connectAttr("%s.wtMatrix[%i].weightIn" % (ave, nmb), sw)
+    #     if switch_a and not switch_b:
+    #         attribute.drive_attrs(switch_a, ["%s.wtMatrix[1].weightIn" % ave], [0, 1], [1, 0])
+
+
     def pin_end(self, node_a, node_b=None, switch_a=None, switch_b=None):
         """
         Connects the end of the ribbon to given controller(s)
@@ -226,6 +237,22 @@ class Ribbon(object):
         constraint = cmds.parentConstraint(nodes, self._endPlug, mo=True)
         self._switch_weights(nodes, [switch_a, switch_b], constraint)
         return constraint
+
+    # def pin_end(self, node_a, node_b=None, switch_a=None, switch_b=None):
+    #     nodes = [node_a, node_b] if node_b else node_a
+    #     _, __, ave = connection.matrixConstraint(nodes, self._endPlug, mo=True, ss="xyz")
+    #     for nmb, sw in enumerate([switch_a, switch_b]):
+    #         if sw:
+    #             cmds.connectAttr("%s.wtMatrix[%i].weightIn" % (ave, nmb), sw)
+    #     if switch_a and not switch_b:
+    #         attribute.drive_attrs(switch_a, ["%s.wtMatrix[1].weightIn" % ave], [0, 1], [1, 0])
+
+        # if switch_a:
+        #     cmds.connectAttr("%s.wtMatrix[0].weightIn" % ave, switch_a)
+        # if switch_b:
+        #     cmds.connectAttr("%s.wtMatrix[1].weightIn" % ave, switch_b)
+        # else:
+        #     attribute.drive_attrs(switch_a, ["%s.wtMatrix[1].weightIn" % ave], [0, 1], [1, 0])
 
     def orient(self, node_a, node_b=None, switch_a=None, switch_b=None):
         """

@@ -148,9 +148,11 @@ def matrixConstraint(drivers, driven, mo=True, prefix="", sr=None, st=None, ss=N
     ##########################
     if is_multi:
         driver_matrix_plugs = ["%s.worldMatrix[0]" % x for x in drivers]
-        out_plug = op.average_matrix(driver_matrix_plugs)
+        average_node = op.average_matrix(driver_matrix_plugs, return_plug=False)
+        out_plug = "%s.matrixSum" % average_node
     else:
         out_plug = "%s.worldMatrix[0]" % drivers
+        average_node = None
 
     if mo:
         driven_world_matrix = api.getMDagPath(driven).inclusiveMatrix()
@@ -297,7 +299,7 @@ def matrixConstraint(drivers, driven, mo=True, prefix="", sr=None, st=None, ss=N
             if attr.lower() not in ss and attr.upper() not in ss:
                 cmds.connectAttr("%s.outputScale%s" % (decompose_matrix, attr), "%s.scale%s" % (driven, attr))
 
-    return mult_matrix, decompose_matrix
+    return mult_matrix, decompose_matrix, average_node
 
 def matrixSwitch(parentA, parentB, child, control_attribute, position=True, rotation=True, scale=False, source_parent_cutoff=None):
     """
@@ -332,10 +334,10 @@ def matrixSwitch(parentA, parentB, child, control_attribute, position=True, rota
     #     cmds.connectAttr("%s.worldInverseMatrix[0]" %child_parent, "%s.matrixIn[%i]" %(mult_matrix_a, next_index))
     #     cmds.connectAttr("%s.worldInverseMatrix[0]" %child_parent, "%s.matrixIn[%i]" %(mult_matrix_b, next_index))
 
-    mult_matrix_a, dump = matrixConstraint(parentA, child, mo=False, prefix=parentA, sr="xyz", st="xyz", ss="xyz", source_parent_cutoff=None)
+    mult_matrix_a, dump, _ = matrixConstraint(parentA, child, mo=False, prefix=parentA, sr="xyz", st="xyz", ss="xyz", source_parent_cutoff=None)
     attribute.disconnect_attr(dump, attr="inputMatrix")
     cmds.delete(dump)
-    mult_matrix_b, dump = matrixConstraint(parentB, child, mo=False, prefix=parentB, sr="xyz", st="xyz", ss="xyz", source_parent_cutoff=None)
+    mult_matrix_b, dump, _ = matrixConstraint(parentB, child, mo=False, prefix=parentB, sr="xyz", st="xyz", ss="xyz", source_parent_cutoff=None)
     attribute.disconnect_attr(dump, attr="inputMatrix")
     cmds.delete(dump)
 

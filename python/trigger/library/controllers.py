@@ -4,7 +4,7 @@ from trigger.library import naming
 
 class Icon(object):
     def __init__(self):
-        super(Icon, self).__init__()
+        # super(Icon, self).__init__()
         self.iconDictionary={"Circle": self.circle,
                              "Cube": self.cube,
                              "Thigh": self.thigh,

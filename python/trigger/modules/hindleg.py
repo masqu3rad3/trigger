@@ -677,9 +677,6 @@ class Hindleg(object):
         if self.isRibbon:
             self.create_ribbons()
 
-
-        # self.createTwistSplines()
-        # self.createAngleExtractors()
         self.round_up()
 
 class Guides(object):

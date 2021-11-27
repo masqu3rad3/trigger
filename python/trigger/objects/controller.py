@@ -15,7 +15,6 @@ log = filelog.Filelog(logname=__name__, filename="trigger_log")
 
 class Controller(object):
     def __init__(self, name="cont", shape="Circle", scale=(1,1,1), normal=(0,1,0), pos=None, side=None, tier=None):
-        super(Controller, self).__init__()
 
         self.side_dict = {"center": [17, 21, 24],
                           "left": [6, 18, 29],
