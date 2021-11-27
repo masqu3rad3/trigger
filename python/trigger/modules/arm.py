@@ -705,6 +705,7 @@ class Arm(object):
 
         connection.matrixConstraint(self.j_def_hand, self.switchFkIkCont.name, mo=True)
 
+
     def createRibbons(self):
         # UPPER ARM RIBBON
 
@@ -742,12 +743,12 @@ class Arm(object):
         # auto
         auto_twist = cmds.createNode("multiplyDivide", name="autoTwist_%s" % self.suffix)
         cmds.connectAttr("{0}.shoulderAutoTwist".format(self.switchFkIkCont.name), "{0}.input2X".format(auto_twist))
-        cmds.connectAttr("{0}.constraintRotate".format(ribbon_start_pa_con_upper_arm_start),
-                         "{0}.input1".format(auto_twist))
+        # cmds.connectAttr("{0}.constraintRotate".format(ribbon_start_pa_con_upper_arm_start),
+        #                  "{0}.input1".format(auto_twist))
 
         # !!! The parent constrain override should be disconnected like this
-        cmds.disconnectAttr("{0}.constraintRotateX".format(ribbon_start_pa_con_upper_arm_start),
-                            "{0}.rotateX".format(ribbon_upper_arm.start_plug))
+        # cmds.disconnectAttr("{0}.constraintRotateX".format(ribbon_start_pa_con_upper_arm_start),
+        #                     "{0}.rotateX".format(ribbon_upper_arm.start_plug))
 
         # manual
         add_manual_twist = cmds.createNode("plusMinusAverage", name=("AddManualTwist_UpperArm_%s" % self.suffix))

@@ -207,7 +207,7 @@ class Ribbon(object):
         constraint = cmds.parentConstraint(nodes, self._startPlug, mo=True)
         self._switch_weights(nodes, [switch_a, switch_b], constraint)
         return constraint
-
+    #
     # def pin_start(self, node_a, node_b=None, switch_a=None, switch_b=None):
     #     nodes = [node_a, node_b] if node_b else node_a
     #     _, __, ave = connection.matrixConstraint(nodes, self._startPlug, mo=True, ss="xyz")
