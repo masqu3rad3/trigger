@@ -384,6 +384,7 @@ class Ribbon(object):
                 _name = "follicleSCA_%s%i" % (self._name, index)
                 _uv = (0.1 + (index / float(self._jointResolution)), 0.0)
                 follicle_transform, follicle = connection.create_follicle(_name, n_surf, _uv)
+                self._toHide.append(follicle)
                 attribute.lockAndHide(follicle_transform, ["tx", "ty", "tz", "rx", "ry", "rz"], hide=False)
                 cmds.parent(follicle_transform, self._nonScaleGrp)
                 dist_node = cmds.createNode("distanceBetween", name="fDistance_%s%i" % (self._name, index))

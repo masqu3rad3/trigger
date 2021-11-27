@@ -1,10 +1,10 @@
-
 from maya import cmds
 from trigger.library import functions, attribute, transform, connection
 from trigger.library import arithmetic as op
 
 
-def replaceController(mirror=True, mirrorAxis="X", keepOldShape=False, keepAcopy=False, alignToCenter=False, *args, **kwargs):
+def replaceController(mirror=True, mirrorAxis="X", keepOldShape=False, keepAcopy=False, alignToCenter=False, *args,
+                      **kwargs):
     if kwargs:
         if kwargs["oldController"] and kwargs["newController"]:
             oldCont = kwargs["oldController"]
@@ -28,45 +28,45 @@ def replaceController(mirror=True, mirrorAxis="X", keepOldShape=False, keepAcopy
     tryChannels = ["tx", "ty", "tz", "rx", "ry", "rz"]
     transformDict = {}
     for i in tryChannels:
-        keptdata = cmds.getAttr("%s.%s" %(oldCont, i))
-        transformDict[i]=keptdata
+        keptdata = cmds.getAttr("%s.%s" % (oldCont, i))
+        transformDict[i] = keptdata
         try:
-            cmds.setAttr("%s.%s" %(oldCont, i), 0)
+            cmds.setAttr("%s.%s" % (oldCont, i), 0)
         except RuntimeError:
             pass
-
 
     if keepAcopy:
         newContDup = cmds.duplicate(newCont)[0]
     else:
         newContDup = newCont
 
-    cmds.setAttr("%s.tx" %newContDup, e=True, k=True, l=False)
-    cmds.setAttr("%s.ty" %newContDup, e=True, k=True, l=False)
-    cmds.setAttr("%s.tz" %newContDup, e=True, k=True, l=False)
-    cmds.setAttr("%s.rx" %newContDup, e=True, k=True, l=False)
-    cmds.setAttr("%s.ry" %newContDup, e=True, k=True, l=False)
-    cmds.setAttr("%s.rz" %newContDup, e=True, k=True, l=False)
-    cmds.setAttr("%s.sx" %newContDup, e=True, k=True, l=False)
-    cmds.setAttr("%s.sy" %newContDup, e=True, k=True, l=False)
-    cmds.setAttr("%s.sz" %newContDup, e=True, k=True, l=False)
+    cmds.setAttr("%s.tx" % newContDup, e=True, k=True, l=False)
+    cmds.setAttr("%s.ty" % newContDup, e=True, k=True, l=False)
+    cmds.setAttr("%s.tz" % newContDup, e=True, k=True, l=False)
+    cmds.setAttr("%s.rx" % newContDup, e=True, k=True, l=False)
+    cmds.setAttr("%s.ry" % newContDup, e=True, k=True, l=False)
+    cmds.setAttr("%s.rz" % newContDup, e=True, k=True, l=False)
+    cmds.setAttr("%s.sx" % newContDup, e=True, k=True, l=False)
+    cmds.setAttr("%s.sy" % newContDup, e=True, k=True, l=False)
+    cmds.setAttr("%s.sz" % newContDup, e=True, k=True, l=False)
 
     cmds.makeIdentity(newContDup, a=True)
 
-    #Make sure the new controllers transform are zeroed at the (0,0,0)
+    # Make sure the new controllers transform are zeroed at the (0,0,0)
     offset = cmds.xform(newContDup, q=True, ws=True, rp=True)
     rvOffset = [x * -1 for x in offset]
     cmds.xform(newContDup, ws=True, t=rvOffset)
 
-
     cmds.makeIdentity(newContDup, apply=True, t=True, r=False, s=True, n=False, pn=True)
 
     ## get the same color code
-    cmds.setAttr("%s.overrideEnabled" % functions.getShapes(newContDup)[0], cmds.getAttr("%s.overrideEnabled" % functions.getShapes(oldCont)[0]))
+    cmds.setAttr("%s.overrideEnabled" % functions.getShapes(newContDup)[0],
+                 cmds.getAttr("%s.overrideEnabled" % functions.getShapes(oldCont)[0]))
 
-    cmds.setAttr("%s.overrideColor" % functions.getShapes(newContDup)[0], cmds.getAttr("%s.overrideColor" % functions.getShapes(oldCont)[0]))
+    cmds.setAttr("%s.overrideColor" % functions.getShapes(newContDup)[0],
+                 cmds.getAttr("%s.overrideColor" % functions.getShapes(oldCont)[0]))
 
-    #move the new controller to the old controllers place
+    # move the new controller to the old controllers place
     if alignToCenter:
         functions.alignTo(newContDup, oldCont, mode=2)
     else:
@@ -115,8 +115,10 @@ def replaceController(mirror=True, mirrorAxis="X", keepOldShape=False, keepAcopy
         cmds.makeIdentity(newContDupMirror, apply=True, s=True)
 
         ## get the same color code
-        cmds.setAttr("%s.overrideEnabled" % functions.getShapes(newContDupMirror)[0], cmds.getAttr("%s.overrideEnabled") % functions.getShapes(oldContMirror)[0])
-        cmds.setAttr("%s.overrideColor" % functions.getShapes(newContDupMirror)[0], cmds.getAttr("%s.overrideColor" % functions.getShapes(oldContMirror)[0]))
+        cmds.setAttr("%s.overrideEnabled" % functions.getShapes(newContDupMirror)[0],
+                     cmds.getAttr("%s.overrideEnabled") % functions.getShapes(oldContMirror)[0])
+        cmds.setAttr("%s.overrideColor" % functions.getShapes(newContDupMirror)[0],
+                     cmds.getAttr("%s.overrideColor" % functions.getShapes(oldContMirror)[0]))
 
         # move the new controller to the old controllers place
         functions.alignToAlter(newContDupMirror, oldContMirror, mode=0)
@@ -138,16 +140,16 @@ def replaceController(mirror=True, mirrorAxis="X", keepOldShape=False, keepAcopy
         except RuntimeError:
             pass
 
-def rigTransfer(oldSkin, newJointList, deleteOld=False):
 
-    #duplicate the old skin
+def rigTransfer(oldSkin, newJointList, deleteOld=False):
+    # duplicate the old skin
     newSkin = cmds.duplicate(oldSkin)[0]
 
-    #add new joints influences to the skin cluster
+    # add new joints influences to the skin cluster
 
-    #copy skin weights from the old skin to the dup skin (with closest joint option)
+    # copy skin weights from the old skin to the dup skin (with closest joint option)
 
-    #delete the old skin(optional)
+    # delete the old skin(optional)
     if deleteOld:
         # name = oldSkin.name()
         cmds.delete(oldSkin)
@@ -407,125 +409,161 @@ def motion_path_spline(curve_obj, num_of_objects, object_type="joint", aim=False
     return obj_list
 
 
-def make_stretchy_ik(joint_chain, ik_handle, root_controller, end_controller, side="L", source_parent_cutoff=None, name=None, distance_start=None, distance_end=None, is_local=False):
+def make_stretchy_ik(joint_chain, ik_handle, root_controller, end_controller, side="L", source_parent_cutoff=None,
+                     name=None, distance_start=None, distance_end=None, is_local=False):
     if not name:
         name = joint_chain[0]
 
     if type(ik_handle) != list:
         ik_handle = [ik_handle]
 
-    attribute.validate_attr("%s.squash" %end_controller, attr_type="double", attr_range=[0.0, 1.0], default_value=0.0)
-    attribute.validate_attr("%s.stretch" %end_controller, attr_type="double", attr_range=[0.0, 1.0], default_value=1.0)
-    attribute.validate_attr("%s.stretchLimit" %end_controller, attr_type="double", attr_range=[0.0, 99999.0], default_value=100.0)
-    attribute.validate_attr("%s.softIK" %end_controller, attr_type="double", attr_range=[0.0, 100.0], default_value=0.0)
+    attribute.validate_attr("%s.squash" % end_controller, attr_type="double", attr_range=[0.0, 1.0], default_value=0.0)
+    attribute.validate_attr("%s.stretch" % end_controller, attr_type="double", attr_range=[0.0, 1.0], default_value=1.0)
+    attribute.validate_attr("%s.stretchLimit" % end_controller, attr_type="double", attr_range=[0.0, 99999.0],
+                            default_value=100.0)
+    attribute.validate_attr("%s.softIK" % end_controller, attr_type="double", attr_range=[0.0, 100.0],
+                            default_value=0.0)
 
-    root_loc = cmds.spaceLocator(name="rootLoc_%s" %name)[0]
+    root_loc = cmds.spaceLocator(name="rootLoc_%s" % name)[0]
     functions.alignTo(root_loc, joint_chain[0], position=True, rotation=True)
     connection.matrixConstraint(root_controller, root_loc, sr="xyz", mo=True)
     cmds.aimConstraint(end_controller, root_loc, wuo=root_controller)
 
-    end_loc = cmds.spaceLocator(name="endLoc_%s" %name)[0]
+    end_loc = cmds.spaceLocator(name="endLoc_%s" % name)[0]
     end_loc_shape = functions.getShapes(end_loc)[0]
     functions.alignTo(end_loc, end_controller, position=True, rotation=True)
     cmds.parent(end_loc, root_loc)
-    soft_blend_loc = cmds.spaceLocator(name="softBlendLoc_%s" %name)[0]
+    soft_blend_loc = cmds.spaceLocator(name="softBlendLoc_%s" % name)[0]
     soft_blend_loc_shape = functions.getShapes(soft_blend_loc)[0]
     functions.alignTo(soft_blend_loc, end_controller, position=True, rotation=True)
-    connection.matrixSwitch(end_controller, end_loc, soft_blend_loc, "%s.stretch" %end_controller, position=True, rotation=True)
+    connection.matrixSwitch(end_controller, end_loc, soft_blend_loc, "%s.stretch" % end_controller, position=True,
+                            rotation=True)
 
     if not distance_start:
-        distance_start_loc =cmds.spaceLocator(name="distance_start_%s" %name)[0]
+        distance_start_loc = cmds.spaceLocator(name="distance_start_%s" % name)[0]
         connection.matrixConstraint(root_controller, distance_start_loc, sr="xyz", ss="xyz", mo=False)
     else:
         distance_start_loc = distance_start
 
     if not distance_end:
-        distance_end_loc =cmds.spaceLocator(name="distance_end_%s" %name)[0]
+        distance_end_loc = cmds.spaceLocator(name="distance_end_%s" % name)[0]
         connection.matrixConstraint(end_controller, distance_end_loc, sr="xyz", ss="xyz", mo=False)
     else:
         distance_end_loc = distance_end
 
     ctrl_distance = cmds.createNode("distanceBetween", name="distance_%s" % name)
-    cmds.connectAttr("%s.translate" %distance_start_loc, "%s.point1" %ctrl_distance)
-    cmds.connectAttr("%s.translate" %distance_end_loc, "%s.point2" %ctrl_distance)
-    ctrl_distance_p = "%s.distance" %ctrl_distance
-
+    cmds.connectAttr("%s.translate" % distance_start_loc, "%s.point1" % ctrl_distance)
+    cmds.connectAttr("%s.translate" % distance_end_loc, "%s.point2" % ctrl_distance)
+    ctrl_distance_p = "%s.distance" % ctrl_distance
 
     plugs_to_sum = []
     for nmb, jnt in enumerate(joint_chain[1:]):
         dist = functions.getDistance(jnt, joint_chain[nmb])
         cmds.addAttr(jnt, ln="initialDistance", at="double", dv=dist)
-        plugs_to_sum.append("%s.initialDistance" %jnt)
+        plugs_to_sum.append("%s.initialDistance" % jnt)
         # cmds.connectAttr("%s.initialDistance" %jnt, "%s.input1D[%i]" %(sum_of_initial_lengths, nmb))
 
     sum_of_lengths_p = op.add(value_list=plugs_to_sum)
 
     # SOFT IK PART
-    softIK_sub1_p = op.subtract(sum_of_lengths_p, "%s.softIK" %end_controller)
+    softIK_sub1_p = op.subtract(sum_of_lengths_p, "%s.softIK" % end_controller)
     # get the scale value from controller
     scale_multMatrix = cmds.createNode("multMatrix", name="_multMatrix")
     scale_decomposeMatrix = cmds.createNode("decomposeMatrix", name="_decomposeMatrix")
-    cmds.connectAttr("%s.worldMatrix[0]" %root_controller, "%s.matrixIn[0]" %scale_multMatrix)
-    cmds.connectAttr("%s.matrixSum" %scale_multMatrix, "%s.inputMatrix" %scale_decomposeMatrix)
+    cmds.connectAttr("%s.worldMatrix[0]" % root_controller, "%s.matrixIn[0]" % scale_multMatrix)
+    cmds.connectAttr("%s.matrixSum" % scale_multMatrix, "%s.inputMatrix" % scale_decomposeMatrix)
 
-    global_scale_div_p = op.divide(1, "%s.outputScaleX" %scale_decomposeMatrix, name="global_scale_div")
+    global_scale_div_p = op.divide(1, "%s.outputScaleX" % scale_decomposeMatrix, name="global_scale_div")
     if is_local:
         global_mult_p = ctrl_distance_p
     else:
         global_mult_p = op.multiply(ctrl_distance_p, global_scale_div_p, name="global_mult")
     softIK_sub2_p = op.subtract(global_mult_p, softIK_sub1_p, name="softIK_sub2")
-    softIK_div_p = op.divide(softIK_sub2_p, "%s.softIK" %end_controller, name="softIK_div")
+    softIK_div_p = op.divide(softIK_sub2_p, "%s.softIK" % end_controller, name="softIK_div")
     softIK_invert_p = op.invert(softIK_div_p, name="softIK_invert")
     softIK_exponent_p = op.power(2.71828, softIK_invert_p, name="softIK_exponent")
-    softIK_mult_p = op.multiply(softIK_exponent_p, "%s.softIK" %end_controller, name="softIK_mult")
+    softIK_mult_p = op.multiply(softIK_exponent_p, "%s.softIK" % end_controller, name="softIK_mult")
     softIK_sub3_p = op.subtract(sum_of_lengths_p, softIK_mult_p, name="softIK_sub3")
 
-    condition_zero_p = op.if_else("%s.softIK" %end_controller, ">", 0, softIK_sub3_p, sum_of_lengths_p, name="condition_zero")
-    condition_length_p = op.if_else(global_mult_p, ">", softIK_sub1_p, condition_zero_p, global_mult_p, name="condition_length")
+    condition_zero_p = op.if_else("%s.softIK" % end_controller, ">", 0, softIK_sub3_p, sum_of_lengths_p,
+                                  name="condition_zero")
+    condition_length_p = op.if_else(global_mult_p, ">", softIK_sub1_p, condition_zero_p, global_mult_p,
+                                    name="condition_length")
 
-    cmds.connectAttr(condition_length_p, "%s.tx" %end_loc)
+    cmds.connectAttr(condition_length_p, "%s.tx" % end_loc)
 
     # STRETCHING PART
     soft_distance = cmds.createNode("distanceBetween", name="distanceSoft_%s" % name)
-    cmds.connectAttr("%s.worldPosition[0]" %end_loc_shape, "%s.point1" %soft_distance)
-    cmds.connectAttr("%s.worldPosition[0]" %soft_blend_loc_shape, "%s.point2" %soft_distance)
-    soft_distance_p = "%s.distance" %soft_distance
+    cmds.connectAttr("%s.worldPosition[0]" % end_loc_shape, "%s.point1" % soft_distance)
+    cmds.connectAttr("%s.worldPosition[0]" % soft_blend_loc_shape, "%s.point2" % soft_distance)
+    soft_distance_p = "%s.distance" % soft_distance
 
-    stretch_global_div_p = op.divide(soft_distance_p, "%s.outputScaleX" %scale_decomposeMatrix, name="stretch_global_div")
+    stretch_global_div_p = op.divide(soft_distance_p, "%s.outputScaleX" % scale_decomposeMatrix,
+                                     name="stretch_global_div")
     initial_divide_p = op.divide(ctrl_distance_p, sum_of_lengths_p)
 
     for jnt in joint_chain[1:]:
-        div_initial_by_sum_p = op.divide("%s.initialDistance" %jnt, sum_of_lengths_p)
+        div_initial_by_sum_p = op.divide("%s.initialDistance" % jnt, sum_of_lengths_p)
         mult1_p = op.multiply(stretch_global_div_p, div_initial_by_sum_p)
-        sum1_p = op.add(mult1_p, "%s.initialDistance" %jnt)
-        squash_mult_p = op.multiply(initial_divide_p, "%s.initialDistance" %jnt)
+        sum1_p = op.add(mult1_p, "%s.initialDistance" % jnt)
+        squash_mult_p = op.multiply(initial_divide_p, "%s.initialDistance" % jnt)
 
-        clamp_p = op.clamp(squash_mult_p, max="%s.initialDistance" %jnt)
-        switch_p = op.switch(clamp_p, squash_mult_p, "%s.stretch" %end_controller)
+        clamp_p = op.clamp(squash_mult_p, max="%s.initialDistance" % jnt)
+        switch_p = op.switch(clamp_p, squash_mult_p, "%s.stretch" % end_controller)
 
-        squash_blend_node = cmds.createNode("blendColors", name="squash_blend_%s" %name)
+        squash_blend_node = cmds.createNode("blendColors", name="squash_blend_%s" % name)
         # cmds.connectAttr(squash_mult_p, "%s.color1R" %squash_blend_node)
-        cmds.connectAttr(switch_p, "%s.color1R" %squash_blend_node)
+        cmds.connectAttr(switch_p, "%s.color1R" % squash_blend_node)
         ## Stretch limit
-        clamp_node = cmds.createNode("clamp", name="stretchLimit_%s" %name)
-        max_distance_p = op.add("%s.stretchLimit" %end_controller, "%s.initialDistance" %jnt)
+        clamp_node = cmds.createNode("clamp", name="stretchLimit_%s" % name)
+        max_distance_p = op.add("%s.stretchLimit" % end_controller, "%s.initialDistance" % jnt)
         cmds.connectAttr(sum1_p, "%s.inputR" % clamp_node)
         cmds.connectAttr(max_distance_p, "%s.maxR" % clamp_node)
         cmds.connectAttr(sum1_p, "%s.minR" % clamp_node)
         ##
-        cmds.connectAttr("%s.outputR" % clamp_node, "%s.color2R" %squash_blend_node)
-        cmds.connectAttr("%s.squash" %end_controller, "%s.blender" %squash_blend_node)
+        cmds.connectAttr("%s.outputR" % clamp_node, "%s.color2R" % squash_blend_node)
+        cmds.connectAttr("%s.squash" % end_controller, "%s.blender" % squash_blend_node)
 
         # SIDE
         # if right side, invert X?
         if side == "R":
-            output_x_p = op.invert("%s.outputR" %squash_blend_node, name="side_invert")
+            output_x_p = op.invert("%s.outputR" % squash_blend_node, name="side_invert")
         else:
-            output_x_p = "%s.outputR" %squash_blend_node
-        cmds.connectAttr(output_x_p, "%s.tx" %jnt)
+            output_x_p = "%s.outputR" % squash_blend_node
+        cmds.connectAttr(output_x_p, "%s.tx" % jnt)
 
     for x in ik_handle:
         connection.matrixConstraint(soft_blend_loc, x, mo=True, source_parent_cutoff=source_parent_cutoff)
 
     # connection.matrixConstraint(soft_blend_loc, ik_handle, mo=False, source_parent_cutoff=source_parent_cutoff)
     return soft_blend_loc, root_loc, distance_start_loc, distance_end_loc
+
+
+def angle_extractors(root_node, fixed_node, float_offset, suffix=""):
+    # TODO THIS METHOD IS WIP
+    angle_ext_root = cmds.spaceLocator(name="angleExt_Root_IK_%s" % suffix)[0]
+    angle_ext_fixed = cmds.spaceLocator(name="angleExt_Fixed_IK_%s" % suffix)[0]
+    angle_ext_float = cmds.spaceLocator(name="angleExt_Float_IK_%s" % suffix)[0]
+    cmds.parent(angle_ext_fixed, angle_ext_float, angle_ext_root)
+    # connection.matrixConstraint(self.limbPlug, angle_ext_root, mo=False)
+    # cmds.pointConstraint(self.handIkCont.name, angle_ext_fixed, mo=False)
+    # functions.alignToAlter(angle_ext_float, self.j_def_collar, 2)
+    # cmds.move(0, 0, -self.sideMult * 5, angle_ext_float, objectSpace=True)
+
+    angle_node_ik = cmds.createNode("angleBetween", name="angleBetweenIK_%s" % suffix)
+    angle_remap_ik = cmds.createNode("remapValue", name="angleRemapIK_%s" % suffix)
+    angle_mult_ik = cmds.createNode("multDoubleLinear", name="angleMultIK_%s" % suffix)
+
+    cmds.connectAttr("{0}.translate".format(angle_ext_fixed), "{0}.vector1".format(angle_node_ik))
+    cmds.connectAttr("{0}.translate".format(angle_ext_float), "{0}.vector2".format(angle_node_ik))
+
+    cmds.connectAttr("{0}.angle".format(angle_node_ik), "{0}.inputValue".format(angle_remap_ik))
+    cmds.setAttr("{0}.inputMin".format(angle_remap_ik), cmds.getAttr("{0}.angle".format(angle_node_ik)))
+    cmds.setAttr("{0}.inputMax".format(angle_remap_ik), 0)
+    cmds.setAttr("{0}.outputMin".format(angle_remap_ik), 0)
+    cmds.setAttr("{0}.outputMax".format(angle_remap_ik), cmds.getAttr("{0}.angle".format(angle_node_ik)))
+
+    cmds.connectAttr("{0}.outValue".format(angle_remap_ik), "{0}.input1".format(angle_mult_ik))
+    cmds.setAttr("{0}.input2".format(angle_mult_ik), 0.5)
+
+    return angle_ext_root, angle_ext_fixed, angle_ext_float
