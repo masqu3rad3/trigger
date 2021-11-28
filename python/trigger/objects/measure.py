@@ -65,7 +65,7 @@ class Angle(object):
 
     def __attributes(self):
         angle_attr = attribute.create_attribute(self._angle_root, keyable=False, attr_name="Angle", attr_type="float")
-        value_attr = attribute.create_attribute(self._angle_root, keyable=False, attr_name="outValue", attr_type="float")
+        value_attr = attribute.create_attribute(self._angle_root, keyable=False, attr_name="Value", attr_type="float")
         value_mult_attr = attribute.create_attribute(self._angle_root, keyable=True, attr_name="valueMultiplier",
                                                      attr_type="float", default_value=1.0)
 
