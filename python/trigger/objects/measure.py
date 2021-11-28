@@ -78,6 +78,7 @@ class Angle(object):
         cmds.connectAttr(value_mult_attr, "%s.input2" % self._mult_node)
         return angle_attr, value_attr, value_mult_attr
 
+
 class Distance(object):
     def __init__(self, start=None, end=None, suffix=""):
         self._distance_node = cmds.createNode("distanceBetween", name="%s_distance" % suffix)
@@ -92,18 +93,18 @@ class Distance(object):
         return self._start
 
     @start.setter
-    def start(self, attribute):
-        cmds.connectAttr(attribute, "%s.point1" % self._distance_node)
-        self._start = attribute
+    def start(self, attr):
+        cmds.connectAttr(attr, "%s.point1" % self._distance_node)
+        self._start = attr
 
     @property
     def end(self):
         return self._end
 
     @end.setter
-    def end(self, attribute):
-        cmds.connectAttr(attribute, "%s.point2" % self._distance_node)
-        self._end = attribute
+    def end(self, attr):
+        cmds.connectAttr(attr, "%s.point2" % self._distance_node)
+        self._end = attr
 
     @property
     def plug(self):
