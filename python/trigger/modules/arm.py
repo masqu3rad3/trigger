@@ -640,8 +640,6 @@ class Arm(object):
         pin_blender = cmds.createNode("blendColors", name="%s_polePin_Blender" % self.suffix)
         cmds.connectAttr("%s.polevectorPin" % self.handIkCont.name, "%s.blender" % pin_blender)
 
-        upper_pin_distance = cmds.createNode("distanceBetween", name="%s_polePin_upperDistance" % self.suffix)
-        lower_pin_distance = cmds.createNode("distanceBetween", name="%s_polePin_lowerDistance" % self.suffix)
         mult_matrix_root_p = op.multiply_matrix(["%s.worldMatrix[0]" % self.j_ik_sc_up])
         pin_root_p = op.decompose_matrix(mult_matrix_root_p)[0]
 
@@ -649,13 +647,10 @@ class Arm(object):
         mult_matrix_end_p = op.multiply_matrix(["%s.worldMatrix[0]" % self.j_ik_sc_low_end])
         pin_end_p = op.decompose_matrix(mult_matrix_end_p)[0]
 
-        cmds.connectAttr(pin_root_p, "%s.point1" % upper_pin_distance)
-        cmds.connectAttr("%s.worldPosition[0]" % pin_mid, "%s.point2" % upper_pin_distance)
-        cmds.connectAttr("%s.worldPosition[0]" % pin_mid, "%s.point1" % lower_pin_distance)
-        cmds.connectAttr(pin_end_p, "%s.point2" % lower_pin_distance)
-
-        upper_pin_divided_p = op.divide("%s.distance" % upper_pin_distance, "%s.sx" % self.scaleHook)
-        lower_pin_divided_p = op.divide("%s.distance" % lower_pin_distance, "%s.sx" % self.scaleHook)
+        upper_pin_distance = measure.Distance(start=pin_root_p, end="%s.worldPosition[0]" % pin_mid)
+        lower_pin_distance = measure.Distance(start="%s.worldPosition[0]" % pin_mid, end=pin_end_p)
+        upper_pin_divided_p = op.divide(upper_pin_distance.plug, "%s.sx" % self.scaleHook)
+        lower_pin_divided_p = op.divide(lower_pin_distance.plug, "%s.sx" % self.scaleHook)
         cmds.connectAttr(upper_pin_divided_p, "%s.color1R" % pin_blender)
         cmds.connectAttr(lower_pin_divided_p, "%s.color1G" % pin_blender)
 

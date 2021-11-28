@@ -4,7 +4,7 @@ from trigger.library import connection, attribute
 
 class Angle(object):
     """Creates set of locators to create angle extractors"""
-    def __init__(self, suffix=""):
+    def __init__(self, suffix="", ):
         self._angle_root = cmds.spaceLocator(name="angleExt_Root_IK_%s" % suffix)[0]
         self._angle_fixed = cmds.spaceLocator(name="angleExt_Fixed_IK_%s" % suffix)[0]
         self._angle_float = cmds.spaceLocator(name="angleExt_Float_IK_%s" % suffix)[0]
@@ -56,6 +56,10 @@ class Angle(object):
         """Constraints 'fixed' end to the node"""
         cmds.pointConstraint(node, self._angle_fixed, mo=mo)
 
+    def pin_float(self, node, mo=False):
+        """Constraints 'float' end to the node"""
+        cmds.pointConstraint(node, self._angle_float, mo=mo)
+
     def calibrate(self):
         """Calibrates the value mapper accepting the current angle 100 percent"""
         cmds.setAttr("{0}.inputMin".format(self._remap_node), cmds.getAttr("{0}.angle".format(self._angle_node)))
@@ -73,3 +77,36 @@ class Angle(object):
         cmds.connectAttr("%s.output" % self._mult_node, value_attr)
         cmds.connectAttr(value_mult_attr, "%s.input2" % self._mult_node)
         return angle_attr, value_attr, value_mult_attr
+
+class Distance(object):
+    def __init__(self, start=None, end=None, suffix=""):
+        self._distance_node = cmds.createNode("distanceBetween", name="%s_distance" % suffix)
+        self._start = None
+        self._end = None
+
+        self.start = start
+        self.end = end
+
+    @property
+    def start(self):
+        return self._start
+
+    @start.setter
+    def start(self, attribute):
+        cmds.connectAttr(attribute, "%s.point1" % self._distance_node)
+        self._start = attribute
+
+    @property
+    def end(self):
+        return self._end
+
+    @end.setter
+    def end(self, attribute):
+        cmds.connectAttr(attribute, "%s.point2" % self._distance_node)
+        self._end = attribute
+
+    @property
+    def plug(self):
+        return "%s.distance" % self._distance_node
+
+
