@@ -8,6 +8,7 @@ from trigger.library import connection
 from trigger.library import arithmetic as op
 from trigger.objects.ribbon import Ribbon
 from trigger.objects.controller import Controller
+from trigger.objects import measure
 from trigger.library import tools
 
 from trigger.core import filelog
@@ -930,31 +931,14 @@ class Arm(object):
         cmds.parent(ribbon_lower_arm.nonscale_grp, self.defJointsGrp)
 
     def create_angle_extractors(self):
-        # IK Angle Extractor
-        angle_ext_root_ik = cmds.spaceLocator(name="angleExt_Root_IK_%s" % self.suffix)[0]
-        angle_ext_fixed_ik = cmds.spaceLocator(name="angleExt_Fixed_IK_%s" % self.suffix)[0]
-        angle_ext_float_ik = cmds.spaceLocator(name="angleExt_Float_IK_%s" % self.suffix)[0]
-        cmds.parent(angle_ext_fixed_ik, angle_ext_float_ik, angle_ext_root_ik)
-        connection.matrixConstraint(self.limbPlug, angle_ext_root_ik, mo=False)
-        cmds.pointConstraint(self.handIkCont.name, angle_ext_fixed_ik, mo=False)
-        functions.alignToAlter(angle_ext_float_ik, self.j_def_collar, 2)
-        cmds.move(0, 0, -self.sideMult * 5, angle_ext_float_ik, objectSpace=True)
-
-        angle_node_ik = cmds.createNode("angleBetween", name="angleBetweenIK_%s" % self.suffix)
-        angle_remap_ik = cmds.createNode("remapValue", name="angleRemapIK_%s" % self.suffix)
-        angle_mult_ik = cmds.createNode("multDoubleLinear", name="angleMultIK_%s" % self.suffix)
-
-        cmds.connectAttr("{0}.translate".format(angle_ext_fixed_ik), "{0}.vector1".format(angle_node_ik))
-        cmds.connectAttr("{0}.translate".format(angle_ext_float_ik), "{0}.vector2".format(angle_node_ik))
-
-        cmds.connectAttr("{0}.angle".format(angle_node_ik), "{0}.inputValue".format(angle_remap_ik))
-        cmds.setAttr("{0}.inputMin".format(angle_remap_ik), cmds.getAttr("{0}.angle".format(angle_node_ik)))
-        cmds.setAttr("{0}.inputMax".format(angle_remap_ik), 0)
-        cmds.setAttr("{0}.outputMin".format(angle_remap_ik), 0)
-        cmds.setAttr("{0}.outputMax".format(angle_remap_ik), cmds.getAttr("{0}.angle".format(angle_node_ik)))
-
-        cmds.connectAttr("{0}.outValue".format(angle_remap_ik), "{0}.input1".format(angle_mult_ik))
-        cmds.setAttr("{0}.input2".format(angle_mult_ik), 0.5)
+        # # IK Angle Extractor
+        angle = measure.Angle(suffix=self.suffix)
+        angle.pin_root(self.limbPlug)
+        angle.pin_fixed(self.handIkCont.name)
+        functions.alignTo(angle.float, self.j_def_collar, rotation=True, position=True)
+        cmds.move(0, 0, -self.sideMult * 5, angle.float, objectSpace=True)
+        angle.calibrate()
+        angle.set_value_multiplier(0.5)
 
         # FK Angle Extractor
         angle_remap_fk = cmds.createNode("remapValue", name="angleRemapFK_%s" % self.suffix)
@@ -975,15 +959,16 @@ class Arm(object):
 
         cmds.connectAttr("{0}.fk_ik".format(self.switchFkIkCont.name), "{0}.attributesBlender".format(angle_ext_blend))
         cmds.connectAttr("{0}.output".format(angle_mult_fk), "{0}.input[0]".format(angle_ext_blend))
-        cmds.connectAttr("{0}.output".format(angle_mult_ik), "{0}.input[1]".format(angle_ext_blend))
+
+        cmds.connectAttr(angle.value_plug, "{0}.input[1]".format(angle_ext_blend))
 
         cmds.connectAttr("{0}.output".format(angle_ext_blend), "{0}.input1".format(angle_global))
         cmds.connectAttr("{0}.autoShoulder".format(self.switchFkIkCont.name), "{0}.input2".format(angle_global))
 
         cmds.connectAttr("{0}.output".format(angle_global), "{0}.rotateY".format(self.shoulderCont.get_offsets()[0]))
 
-        cmds.parent(angle_ext_root_ik, self.nonScaleGrp)
-        cmds.connectAttr("{0}.rigVis".format(self.scaleGrp), "{0}.v".format(angle_ext_root_ik))
+        cmds.parent(angle.root, self.nonScaleGrp)
+        cmds.connectAttr("{0}.rigVis".format(self.scaleGrp), "{0}.v".format(angle.root))
         return
 
     def round_up(self):

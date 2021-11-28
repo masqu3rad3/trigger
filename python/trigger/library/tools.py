@@ -538,32 +538,3 @@ def make_stretchy_ik(joint_chain, ik_handle, root_controller, end_controller, si
     # connection.matrixConstraint(soft_blend_loc, ik_handle, mo=False, source_parent_cutoff=source_parent_cutoff)
     return soft_blend_loc, root_loc, distance_start_loc, distance_end_loc
 
-
-def angle_extractors(root_node, fixed_node, float_offset, suffix=""):
-    # TODO THIS METHOD IS WIP
-    angle_ext_root = cmds.spaceLocator(name="angleExt_Root_IK_%s" % suffix)[0]
-    angle_ext_fixed = cmds.spaceLocator(name="angleExt_Fixed_IK_%s" % suffix)[0]
-    angle_ext_float = cmds.spaceLocator(name="angleExt_Float_IK_%s" % suffix)[0]
-    cmds.parent(angle_ext_fixed, angle_ext_float, angle_ext_root)
-    # connection.matrixConstraint(self.limbPlug, angle_ext_root, mo=False)
-    # cmds.pointConstraint(self.handIkCont.name, angle_ext_fixed, mo=False)
-    # functions.alignToAlter(angle_ext_float, self.j_def_collar, 2)
-    # cmds.move(0, 0, -self.sideMult * 5, angle_ext_float, objectSpace=True)
-
-    angle_node_ik = cmds.createNode("angleBetween", name="angleBetweenIK_%s" % suffix)
-    angle_remap_ik = cmds.createNode("remapValue", name="angleRemapIK_%s" % suffix)
-    angle_mult_ik = cmds.createNode("multDoubleLinear", name="angleMultIK_%s" % suffix)
-
-    cmds.connectAttr("{0}.translate".format(angle_ext_fixed), "{0}.vector1".format(angle_node_ik))
-    cmds.connectAttr("{0}.translate".format(angle_ext_float), "{0}.vector2".format(angle_node_ik))
-
-    cmds.connectAttr("{0}.angle".format(angle_node_ik), "{0}.inputValue".format(angle_remap_ik))
-    cmds.setAttr("{0}.inputMin".format(angle_remap_ik), cmds.getAttr("{0}.angle".format(angle_node_ik)))
-    cmds.setAttr("{0}.inputMax".format(angle_remap_ik), 0)
-    cmds.setAttr("{0}.outputMin".format(angle_remap_ik), 0)
-    cmds.setAttr("{0}.outputMax".format(angle_remap_ik), cmds.getAttr("{0}.angle".format(angle_node_ik)))
-
-    cmds.connectAttr("{0}.outValue".format(angle_remap_ik), "{0}.input1".format(angle_mult_ik))
-    cmds.setAttr("{0}.input2".format(angle_mult_ik), 0.5)
-
-    return angle_ext_root, angle_ext_fixed, angle_ext_float
