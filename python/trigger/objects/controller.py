@@ -146,7 +146,7 @@ class Controller(object):
         Drives the visibility of the controller with the given attribute
 
         Args:
-            attr: attribute to drive the visibility
+            driver_attr: attribute to drive the visibility
             up_level: (integer) if defined the upper group visibility will be used instead
             lock_and_hide: (bool) locks and hides the attribute after driven
 
