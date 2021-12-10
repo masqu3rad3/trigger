@@ -465,19 +465,19 @@ def uniqueList(seq): # Dave Kirby
     seen = set()
     return [x for x in seq if x not in seen and not seen.add(x)]
 
-def getParent(node):
+def getParent(node, full_path=False):
     """Returns the parent of the given node"""
-    parentList = cmds.listRelatives(node, parent=True, path=True)
+    parentList = cmds.listRelatives(node, parent=True, path=True, fullPath=full_path)
     return parentList[0] if parentList else None
 
-def getShapes(node):
+def getShapes(node, full_path=False):
     """Returns shapes of the given node"""
-    return cmds.listRelatives(node, c=True, shapes=True, path=True)
+    return cmds.listRelatives(node, c=True, shapes=True, path=True, fullPath=full_path)
 
 # TODO: MOVE TO THE TRANSFORM MODULE ??
-def getMeshes(node):
+def getMeshes(node, full_path=False):
     """Gets only the mesh transform nodes under a group"""
-    all_mesh_shapes = cmds.listRelatives(node, ad=True, children=True, type="mesh")
+    all_mesh_shapes = cmds.listRelatives(node, ad=True, children=True, type="mesh", fullPath=full_path)
     return uniqueList([getParent(mesh) for mesh in all_mesh_shapes])
 
 def delete_intermediates(transform_node):
