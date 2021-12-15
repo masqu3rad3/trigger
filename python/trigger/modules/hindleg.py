@@ -323,6 +323,9 @@ class Hindleg(object):
 
         cmds.parent(_foot_off, self.contBindGrp)
 
+        cmds.addAttr(self.foot_ik_cont.name, shortName="footRoll", longName="Foot_Roll", defaultValue=0.0, at="double",
+                     k=True)
+
         if self.isStretchy:
             cmds.addAttr(self.foot_ik_cont.name, shortName="squash", longName="Squash", defaultValue=0.0, minValue=0.0,
                          maxValue=1.0, at="double", k=True)
@@ -550,6 +553,10 @@ class Hindleg(object):
             attribute.attrPass(dummy_hock_cont, self.foot_ik_cont.name, attributes=[], inConnections=True, outConnections=True,
                                keepSourceAttributes=False, values=True, daisyChain=False, overrideEx=False)
             cmds.parent(hock_stretch_locs[:2], self.nonScaleGrp)
+
+            # foot roll
+            cmds.parentConstraint(toe_trans_loc, self.hock_ik_cont.get_offsets()[-1], mo=True)
+            cmds.connectAttr("%s.footRoll" % self.foot_ik_cont.name, "%s.rx" %toe_trans_loc)
 
     def create_fk_setup(self):
         connection.matrixConstraint(self.upper_leg_fk_cont.name, self.j_fk_hip, mo=True, source_parent_cutoff=self.localOffGrp)
