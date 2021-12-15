@@ -174,9 +174,14 @@ class Fkik(object):
         # FK Controllers
         if self.switchMode == 0 or self.switchMode == 1:
             fk_joints = self.deformerJoints if self.switchMode != 0 else self.fkJoints
-            for nmb, jnt in enumerate(fk_joints[:-1]):
-                scale_mult = functions.getDistance(jnt, fk_joints[nmb + 1]) * 0.5
-                cont, _ = icon_handler.createIcon("Cube", iconName="%s%i_FK_cont" % (self.suffix, nmb), scale=(scale_mult, scale_mult, scale_mult))
+            # for nmb, jnt in enumerate(fk_joints[:-1]):
+            scale_mult = None
+            for nmb, jnt in enumerate(fk_joints):
+                if nmb < (len(fk_joints)-1):
+                    scale_mult = functions.getDistance(jnt, fk_joints[nmb + 1]) * 0.5
+
+                cont, _ = icon_handler.createIcon("Cube", iconName="%s%i_FK_cont" % (self.suffix, nmb),
+                                                  scale=(scale_mult, scale_mult, scale_mult))
 
                 cmds.xform(cont, piv=(self.sideMult * (-scale_mult), 0, 0))
                 functions.alignToAlter(cont, jnt, 2)
@@ -310,7 +315,8 @@ class Fkik(object):
 
         fk_joints = self.deformerJoints if self.switchMode != 0 else self.fkJoints
 
-        for cont, jnt in zip(self.fkControllers, fk_joints[:-1]):
+        # for cont, jnt in zip(self.fkControllers, fk_joints[:-1]):
+        for cont, jnt in zip(self.fkControllers, fk_joints):
             connection.matrixConstraint(cont, jnt, source_parent_cutoff=self.localOffGrp)
             # disconnect inverse scale chain to inherit the scale from the controllers properly
             attribute.disconnect_attr(node=jnt, attr="inverseScale")
