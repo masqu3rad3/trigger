@@ -197,8 +197,7 @@ class Head(object):
         neckSpline.upAxis = -(om.MVector(self.look_axis))
 
         neckSpline.createTspline(list(self.guideJoints[:-1]), "neckSplineIK_%s" % self.suffix, self.resolution, dropoff=self.dropoff, mode=self.splineMode, twistType=self.twistType, colorCode=self.colorCodes[1])
-        # map(self.sockets.append, neckSpline.defJoints)
-        self.sockets.extend(neckSpline.defJoints)
+        self.sockets.extend(neckSpline.defJoints[:-1]) # do not add the last neck spline joint to the socket list
 
         # # Connect neck start to the neck controller
         cmds.orientConstraint(self.cont_neck, neckSpline.contCurve_Start, mo=False)
