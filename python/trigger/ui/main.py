@@ -7,7 +7,6 @@ from maya import cmds
 
 from trigger.core import database
 
-# from trigger.ui import Qt
 from trigger.ui.Qt import QtWidgets, QtCore, QtGui
 from trigger.ui.qtmaya import getMayaMainWindow
 from trigger.ui import model_ctrl
@@ -70,20 +69,22 @@ QPushButton[menuButton=true] {
 }
 """
 
-def _createCallbacks(function, parent=None, event=None):
-    callbackIDList = []
+
+def _create_callbacks(function, parent=None, event=None):
+    callback_id_list = []
     if parent:
         job = cmds.scriptJob(e=[event, function], replacePrevious=True, parent=parent)
     else:
         job = cmds.scriptJob(e=[event, function])
-    callbackIDList.append(job)
-    return callbackIDList
+    callback_id_list.append(job)
+    return callback_id_list
 
 
-def _killCallbacks(callbackIDList):
-    for ID in callbackIDList:
+def _kill_callbacks(callback_id_list):
+    for ID in callback_id_list:
         if cmds.scriptJob(ex=ID):
             cmds.scriptJob(kill=ID)
+
 
 def launch(force=False):
     for entry in QtWidgets.QApplication.allWidgets():
@@ -98,6 +99,7 @@ def launch(force=False):
         except (AttributeError, TypeError):
             pass
     MainUI().show()
+
 
 class MainUI(QtWidgets.QMainWindow):
     iconsPath = os.path.join(os.path.dirname(os.path.realpath(__file__)), "icons")
@@ -152,7 +154,11 @@ class MainUI(QtWidgets.QMainWindow):
         self.update_title()
 
         # self.callbackIDList = _createCallbacks(self.force_update, WINDOW_NAME, "SelectionChanged")
-        self.callbackIDList = _createCallbacks(self.force_update, parent=None, event="SelectionChanged")
+        self.callbackIDList = _create_callbacks(self.force_update, parent=None, event="SelectionChanged")
+
+        # PEP8 vars
+        self.menuFile = None
+        self.statusbar = None
 
         log.info("Interface Loaded Successfully")
 
@@ -182,79 +188,93 @@ class MainUI(QtWidgets.QMainWindow):
             r = self.feedback.pop_question(title="Scene not saved", text="Current Trigger session is not saved\n Do you want to save before quit?", buttons=["yes", "no", "cancel"])
             if r == "yes":
                 self.save_trigger()
-                _killCallbacks(self.callbackIDList)
+                _kill_callbacks(self.callbackIDList)
                 event.accept()
             elif r == "no":
-                _killCallbacks(self.callbackIDList)
+                _kill_callbacks(self.callbackIDList)
                 event.accept()
             else:
                 event.ignore()
         else:
-            _killCallbacks(self.callbackIDList)
+            _kill_callbacks(self.callbackIDList)
             event.accept()
 
     def buildBarsUI(self):
-        self.menubar = QtWidgets.QMenuBar(self)
-        self.menuFile = QtWidgets.QMenu(self.menubar)
+        menubar = QtWidgets.QMenuBar(self)
+        self.setMenuBar(menubar)
+
+        # FILE main menu
+        self.menuFile = QtWidgets.QMenu(menubar)
         self.menuFile.setTitle("File")
-        self.setMenuBar(self.menubar)
 
-        self.statusbar = QtWidgets.QStatusBar(self)
-        self.setStatusBar(self.statusbar)
+        new_trigger_action = QtWidgets.QAction(self, text="New Trigger Session")
+        open_trigger_action = QtWidgets.QAction(self, text="Open Trigger Session")
+        import_trigger_action = QtWidgets.QAction(self, text="Import Trigger Session")
+        save_trigger_action = QtWidgets.QAction(self, text="Save Trigger Session")
+        save_as_trigger_action = QtWidgets.QAction(self, text="Save As Trigger Session")
+        increment_trigger_action = QtWidgets.QAction(self, text="Increment Save Trigger Session")
+        import_guides_action = QtWidgets.QAction(self, text="Import Guides")
+        export_guides_action = QtWidgets.QAction(self, text="Export Guides")
+        settings_action = QtWidgets.QAction(self, text="Settings")
+        reset_scene_action = QtWidgets.QAction(self, text="Reset Scene")
+        exit_action = QtWidgets.QAction(self, text="Exit")
 
-        self.new_trigger_action = QtWidgets.QAction(self, text="New Trigger Session")
-        self.open_trigger_action = QtWidgets.QAction(self, text="Open Trigger Session")
-        self.import_trigger_action = QtWidgets.QAction(self, text="Import Trigger Session")
-        self.save_trigger_action = QtWidgets.QAction(self, text="Save Trigger Session")
-        self.save_as_trigger_action = QtWidgets.QAction(self, text="Save As Trigger Session")
-        self.increment_trigger_action = QtWidgets.QAction(self, text="Increment Save Trigger Session")
-        self.import_guides_action = QtWidgets.QAction(self, text="Import Guides")
-        self.export_guides_action = QtWidgets.QAction(self, text="Export Guides")
-        self.settings_action = QtWidgets.QAction(self, text="Settings")
-        self.reset_scene_action = QtWidgets.QAction(self, text="Reset Scene")
-        self.exit_action = QtWidgets.QAction(self, text="Exit")
-
-        self.menuFile.addAction(self.new_trigger_action)
-        self.menuFile.addAction(self.open_trigger_action)
-        self.menuFile.addAction(self.import_trigger_action)
+        self.menuFile.addAction(new_trigger_action)
+        self.menuFile.addAction(open_trigger_action)
+        self.menuFile.addAction(import_trigger_action)
         self.menuFile.addSeparator()
-        self.menuFile.addAction(self.save_trigger_action)
-        self.menuFile.addAction(self.save_as_trigger_action)
-        self.menuFile.addAction(self.increment_trigger_action)
+        self.menuFile.addAction(save_trigger_action)
+        self.menuFile.addAction(save_as_trigger_action)
+        self.menuFile.addAction(increment_trigger_action)
         self.menuFile.addSeparator()
-        self.menuFile.addAction(self.import_guides_action)
-        self.menuFile.addAction(self.export_guides_action)
+        self.menuFile.addAction(import_guides_action)
+        self.menuFile.addAction(export_guides_action)
         self.menuFile.addSeparator()
-        self.menuFile.addAction(self.settings_action)
+        self.menuFile.addAction(settings_action)
         self.menuFile.addSeparator()
-        self.menuFile.addAction(self.reset_scene_action)
+        self.menuFile.addAction(reset_scene_action)
         self.menuFile.addSeparator()
 
 
         self.recents_menu = QtWidgets.QMenu("Recent Sessions")
         self.menuFile.addMenu(self.recents_menu)
-        self.menuFile.addAction(self.exit_action)
+        self.menuFile.addAction(exit_action)
 
-        self.menubar.addAction(self.menuFile.menuAction())
+        menubar.addAction(self.menuFile.menuAction())
 
+        # TOOLS Main Menu
+        menu_tools = QtWidgets.QMenu(menubar)
+        menu_tools.setTitle("Tools")
+
+        makeup_action = QtWidgets.QAction(self, text="Make-up")
+        menu_tools.addAction(makeup_action)
+        menubar.addAction(menu_tools.menuAction())
+
+        # Status BAR
+        self.statusbar = QtWidgets.QStatusBar(self)
+        self.setStatusBar(self.statusbar)
+
+        # Populate dynamic elements
         self.populate_recents()
 
         # SIGNALS
         # menu items
-        self.new_trigger_action.triggered.connect(self.new_trigger)
-        self.open_trigger_action.triggered.connect(self.open_trigger)
-        self.import_trigger_action.triggered.connect(self.import_trigger)
-        self.save_trigger_action.triggered.connect(self.save_trigger)
-        self.save_as_trigger_action.triggered.connect(self.save_as_trigger)
-        self.increment_trigger_action.triggered.connect(self.increment_trigger)
+        new_trigger_action.triggered.connect(self.new_trigger)
+        open_trigger_action.triggered.connect(self.open_trigger)
+        import_trigger_action.triggered.connect(self.import_trigger)
+        save_trigger_action.triggered.connect(self.save_trigger)
+        save_as_trigger_action.triggered.connect(self.save_as_trigger)
+        increment_trigger_action.triggered.connect(self.increment_trigger)
 
-        self.export_guides_action.triggered.connect(self.export_guides)
-        self.import_guides_action.triggered.connect(self.import_guides)
+        export_guides_action.triggered.connect(self.export_guides)
+        import_guides_action.triggered.connect(self.import_guides)
 
-        self.reset_scene_action.triggered.connect(self.guides_handler.reset_scene)
-        self.reset_scene_action.triggered.connect(self.populate_guides)
+        reset_scene_action.triggered.connect(self.guides_handler.reset_scene)
+        reset_scene_action.triggered.connect(self.populate_guides)
 
-        self.exit_action.triggered.connect(self.close)
+        exit_action.triggered.connect(self.close)
+
+        makeup_action.triggered.connect(self.on_makeup)
 
     def buildTabsUI(self):
         self.centralWidget_vLay = QtWidgets.QVBoxLayout(self.centralwidget)  # this is only to fit the tab widget
@@ -1093,6 +1113,12 @@ class MainUI(QtWidgets.QMainWindow):
                 child.widget().deleteLater()
             elif child.layout():
                 self.clearLayout(child.layout())
+
+    # Tools menu methods
+    @staticmethod
+    def on_makeup():
+        from trigger.utils import makeup
+        makeup.launch()
 
     ##############
     ### COMMON ###

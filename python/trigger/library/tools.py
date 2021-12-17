@@ -216,7 +216,7 @@ def replace_curve(orig_curve, new_curve, maintain_offset=True):
         cmds.delete(new_curve)
 
 
-def mirrorController(axis="x", node_list=None, side_flags=("L_", "R_"), side_bias="start"):
+def mirrorController(axis="x", node_list=None, side_flags=("L_", "R_"), side_bias="start", continue_on_fail=True):
     if not node_list:
         node_list = cmds.ls(sl=True)
 
@@ -231,15 +231,21 @@ def mirrorController(axis="x", node_list=None, side_flags=("L_", "R_"), side_bia
         elif eval(bias_dict[side_bias].format(node, side_flags[1])):
             other_side = node.replace(side_flags[1], side_flags[0])
         else:
-            msg = "Cannot find side flags for %s. Skipping" % node
-            cmds.warning(msg)
-            warnings.append(msg)
-            continue
+            if continue_on_fail:
+                msg = "Cannot find side flags for %s. Skipping" % node
+                cmds.warning(msg)
+                warnings.append(msg)
+                continue
+            else:
+                return -1
         if not cmds.objExists(other_side):
-            msg = "Cannot find the other side controller %s. Skipping" % other_side
-            cmds.warning(msg)
-            warnings.append(msg)
-            continue
+            if continue_on_fail:
+                msg = "Cannot find the other side controller %s. Skipping" % other_side
+                cmds.warning(msg)
+                warnings.append(msg)
+                continue
+            else:
+                return -1
 
         tmp_cont = cmds.duplicate(node, name="tmp_{0}".format(node), rr=True, renameChildren=True)
         ## delete nodes below it
