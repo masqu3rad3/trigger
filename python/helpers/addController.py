@@ -1,39 +1,37 @@
-## Adds a direct controller to the selected joint (or any other object)
-import sys
+"""Adds a direct controller to the selected joint (or any other object)"""
 
 from trigger.library import functions
 from trigger.library import naming
 from trigger.library.controllers import Icon
 from trigger.core.decorators import undo
 
-from trigger.ui import Qt
-from trigger.ui.Qt import QtWidgets, QtCore
+from trigger.ui.Qt import QtWidgets, QtCore, QtGui
+from trigger.ui.qtmaya import getMayaMainWindow
 
-from maya import OpenMayaUI as omui
 from maya import cmds
 
-if Qt.__binding__ == "PySide":
-    from shiboken import wrapInstance
-elif Qt.__binding__.startswith('PyQt'):
-    from sip import wrapinstance as wrapInstance
-else:
-    from shiboken2 import wrapInstance
+# if Qt.__binding__ == "PySide":
+#     from shiboken import wrapInstance
+# elif Qt.__binding__.startswith('PyQt'):
+#     from sip import wrapinstance as wrapInstance
+# else:
+#     from shiboken2 import wrapInstance
 
 VERSION = "0.0.2"
 WINDOW_NAME = "Add_Controller %s" % VERSION
 
-def getMayaMainWindow():
-    """
-    Gets the memory adress of the main window to connect Qt dialog to it.
-    Returns:
-        (long) Memory Adress
-    """
-    win = omui.MQtUtil_mainWindow()
-    if sys.version_info.major == 3:
-        ptr = wrapInstance(int(win), QtWidgets.QMainWindow)
-    else:
-        ptr = wrapInstance(long(win), QtWidgets.QMainWindow)
-    return ptr
+# def getMayaMainWindow():
+#     """
+#     Gets the memory adress of the main window to connect Qt dialog to it.
+#     Returns:
+#         (long) Memory Adress
+#     """
+#     win = omui.MQtUtil_mainWindow()
+#     if sys.version_info.major == 3:
+#         ptr = wrapInstance(int(win), QtWidgets.QMainWindow)
+#     else:
+#         ptr = wrapInstance(long(win), QtWidgets.QMainWindow)
+#     return ptr
 
 class AddController(Icon):
     """Inherits Trigger's controller library"""

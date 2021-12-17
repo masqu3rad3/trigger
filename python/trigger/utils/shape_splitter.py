@@ -107,7 +107,7 @@ class Splitter(dict):
             cmds.group(name="SPLITTED_SHAPES_grp", em=True)
 
         mort_list = []
-        expandable_list = deepcopy(self["matches"].items())
+        expandable_list = deepcopy(list(self["matches"].items()))
         for shape, split_maps in expandable_list:
             if not split_maps:
                 continue

@@ -1,7 +1,8 @@
+import sys
 import re
 def curveParser(melCommand):
     """
-    This function parses the mel curve creation command to pymel. Usefull for the situations where you want to design curves freely and easily convert the command to pymel equivilant
+    This function parses the mel curve creation command to pymel. Useful for the situations where you want to design curves freely and easily convert the command to pymel equivilant
     Args:
         melCommand: (String)
     Returns: (String) pymel command as string (needs to be executed)
@@ -42,9 +43,14 @@ def curveParser(melCommand):
 
         kFormatted += pItem
 
-    curveCommand = "pm.curve(d={0}, p=[{1}], k=[{2}])".format(curveMode, posFormatted, kFormatted)
-    print curveCommand
+    curveCommand = "cmds.curve(d={0}, p=[{1}], k=[{2}])".format(curveMode, posFormatted, kFormatted)
+    print(curveCommand)
     return curveCommand
 
-melCommand = raw_input()
-curveParser(melCommand)
+if __name__ == '__main__':
+    if sys.version_info.major > 2:
+        melCommand = input()
+    else:
+        melCommand = raw_input()
+    if melCommand:
+        curveParser(melCommand)

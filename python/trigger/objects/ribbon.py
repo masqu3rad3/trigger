@@ -162,6 +162,10 @@ class Ribbon(object):
         return self._nonScaleGrp
 
     @property
+    def ribbon_grp(self):
+        return self._ribbonGrp
+
+    @property
     def deformer_joints(self):
         return self._deformerJoints
 

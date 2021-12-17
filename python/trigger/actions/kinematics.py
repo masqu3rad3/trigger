@@ -92,7 +92,7 @@ class Kinematics(object):
             # if self.anchors and self.anchorLocations:
                 for anchor in (self.anchors):
                     anchorMaker.create_space_switch(anchor[0], self.anchorLocations, mode=anchor[1], defaultVal=anchor[2],
-                                                    listException=anchor[3])
+                                                    listException=anchor[3], skip_errors=True)
 
             # grouping for fingers / toes
             for x in self.fingerMatchConts:

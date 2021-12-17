@@ -904,10 +904,12 @@ class Arm(object):
 
         cmds.connectAttr("{0}.volume".format(self.handIkCont.name), "{0}.input1".format(vp_upper_lower_reduce))
 
-        cmds.parent(ribbon_upper_arm.scale_grp, self.nonScaleGrp)
-        cmds.parent(ribbon_upper_arm.nonscale_grp, self.nonScaleGrp)
-        cmds.parent(ribbon_lower_arm.scale_grp, self.nonScaleGrp)
-        cmds.parent(ribbon_lower_arm.nonscale_grp, self.nonScaleGrp)
+        # cmds.parent(ribbon_upper_arm.scale_grp, self.nonScaleGrp)
+        # cmds.parent(ribbon_upper_arm.nonscale_grp, self.nonScaleGrp)
+        # cmds.parent(ribbon_lower_arm.scale_grp, self.nonScaleGrp)
+        # cmds.parent(ribbon_lower_arm.nonscale_grp, self.nonScaleGrp)
+        cmds.parent(ribbon_upper_arm.ribbon_grp, self.nonScaleGrp)
+        cmds.parent(ribbon_lower_arm.ribbon_grp, self.nonScaleGrp)
 
         cmds.connectAttr("{0}.tweakControls".format(self.switchFkIkCont.name), "{0}.v".format(self.midLockCont.name))
         tweak_conts = ribbon_upper_arm.controllers + ribbon_lower_arm.controllers
