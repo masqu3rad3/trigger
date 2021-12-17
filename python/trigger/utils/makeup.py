@@ -2,7 +2,7 @@
 from maya import cmds
 
 # from trigger.ui.Qt import QtWidgets
-from PySide2 import QtWidgets
+from PySide2 import QtWidgets, QtCore
 from trigger.core.decorators import keepselection, undo
 from trigger.library.controllers import Icon
 from trigger.library.tools import replace_curve, mirrorController
@@ -121,6 +121,7 @@ class MainUI(QtWidgets.QDialog):
         self.mirror_controllers_side_combo = None
         self.mirror_controllers_bias_combo = None
         self.build_ui()
+        self.setWindowFlag(QtCore.Qt.WindowMaximizeButtonHint, False)
 
     def build_ui(self):
         self.setObjectName(WINDOW_NAME)
