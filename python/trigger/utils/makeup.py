@@ -45,6 +45,7 @@ class Makeup(object):
     def list_of_icons(self):
         return self.icon_handler.getIconsList()
 
+    @undo
     def mirror_curve_controller(self, side, bias):
         """
         Finds the pair of the controller and mirrors it

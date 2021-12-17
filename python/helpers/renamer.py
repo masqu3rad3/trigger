@@ -100,7 +100,7 @@ class Renamer(object):
             obj.set_new_name("{0}{1}{2}".format(pre, instance, post))
             # obj.rename("{0}{1}{2}".format(pre, instance, post))
 
-        for obj in reversed((sorted(self.objectList))):
+        for obj in list(reversed((sorted(self.objectList)))):
             obj.execute_new_name()
 
 
@@ -334,12 +334,25 @@ class Node(object):
             idcounter += 1
         return name
 
+    # this is for python 2.x
     def __cmp__(self, other):
+        print(self._dag_path, other._dag_path)
         if self._dag_path < other._dag_path:
             return -1  # <--------- yay!
         elif self._dag_path > other._dag_path:
             return 1
         else:
             return 0
+
+    # these are for python 3.x
+    def __lt__(self, other):
+        return self._dag_path < other._dag_path
+
+    def __gt__(self, other):
+        return self._dag_path > other._dag_path
+
+    def __eq__(self, other):
+        return self._dag_path == other._dag_path
+
 
 
