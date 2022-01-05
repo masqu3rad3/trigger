@@ -658,6 +658,9 @@ class Hindleg(object):
         log.warning(tweakConts)
         attribute.drive_attrs("%s.tweakControls" % self.switch_cont.name, ["%s.v" % x for x in tweakConts])
 
+        # add the ribbon deformer joints to the leg module
+        self.deformerJoints.extend(ribbon_upper_leg.deformerJoints + ribbon_lower_leg.deformerJoints)
+
     def round_up(self):
         cmds.parentConstraint(self.limbPlug, self.scaleGrp, mo=False)
         cmds.setAttr("%s.rigVis" % self.scaleGrp, 0)
