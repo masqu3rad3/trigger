@@ -472,7 +472,9 @@ def make_stretchy_ik(joint_chain, ik_handle, root_controller, end_controller, si
     sum_of_lengths_p = op.add(value_list=plugs_to_sum)
 
     # SOFT IK PART
-    softIK_sub1_p = op.subtract(sum_of_lengths_p, "%s.softIK" % end_controller)
+    soft_ik_out = op.add("%s.softIK" % end_controller, 0.001)
+    # softIK_sub1_p = op.subtract(sum_of_lengths_p, "%s.softIK" % end_controller)
+    softIK_sub1_p = op.subtract(sum_of_lengths_p, soft_ik_out)
     # get the scale value from controller
     scale_multMatrix = cmds.createNode("multMatrix", name="_multMatrix")
     scale_decomposeMatrix = cmds.createNode("decomposeMatrix", name="_decomposeMatrix")
@@ -485,10 +487,12 @@ def make_stretchy_ik(joint_chain, ik_handle, root_controller, end_controller, si
     else:
         global_mult_p = op.multiply(ctrl_distance_p, global_scale_div_p, name="global_mult")
     softIK_sub2_p = op.subtract(global_mult_p, softIK_sub1_p, name="softIK_sub2")
-    softIK_div_p = op.divide(softIK_sub2_p, "%s.softIK" % end_controller, name="softIK_div")
+    # softIK_div_p = op.divide(softIK_sub2_p, "%s.softIK" % end_controller, name="softIK_div")
+    softIK_div_p = op.divide(softIK_sub2_p, soft_ik_out, name="softIK_div")
     softIK_invert_p = op.invert(softIK_div_p, name="softIK_invert")
     softIK_exponent_p = op.power(2.71828, softIK_invert_p, name="softIK_exponent")
-    softIK_mult_p = op.multiply(softIK_exponent_p, "%s.softIK" % end_controller, name="softIK_mult")
+    # softIK_mult_p = op.multiply(softIK_exponent_p, "%s.softIK" % end_controller, name="softIK_mult")
+    softIK_mult_p = op.multiply(softIK_exponent_p, soft_ik_out, name="softIK_mult")
     softIK_sub3_p = op.subtract(sum_of_lengths_p, softIK_mult_p, name="softIK_sub3")
 
     condition_zero_p = op.if_else("%s.softIK" % end_controller, ">", 0, softIK_sub3_p, sum_of_lengths_p,
