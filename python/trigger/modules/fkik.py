@@ -131,6 +131,7 @@ class Fkik(object):
         # draw Joints
         cmds.select(d=True)
         self.limbPlug = cmds.joint(name="limbPlug_%s" % self.suffix, p=api.getWorldTranslation(self.inits[0]), radius=3)
+        cmds.connectAttr("%s.s" %self.scaleGrp, "%s.s" %self.limbPlug)
 
         cmds.select(d=True)
         for j in self.inits:
@@ -326,6 +327,8 @@ class Fkik(object):
         if self.isLocal:
             connection.matrixConstraint(self.limbPlug, self.plugBindGrp)
         else:
+            # for off in self.fkControllersOff:
+            #     connection.matrixConstraint(self.limbPlug, off)
             connection.matrixConstraint(self.limbPlug, self.fkControllersOff[0])
 
     def ikfkSwitching(self):
@@ -334,26 +337,26 @@ class Fkik(object):
         # create blend nodes
 
         for fk_jnt, ik_jnt, def_jnt in zip(self.fkJoints, self.ikJoints, self.deformerJoints):
-            connection.matrixSwitch(ik_jnt, fk_jnt, def_jnt, "%s.FK_IK" % self.switchController)
+            # connection.matrixSwitch(ik_jnt, fk_jnt, def_jnt, "%s.FK_IK" % self.switchController)
 
-            # blend_t = cmds.createNode("blendColors", name="%s_blend_t" %self.suffix)
-            # blend_r = cmds.createNode("blendColors", name="%s_blend_r" %self.suffix)
-            # blend_s = cmds.createNode("blendColors", name="%s_blend_s" %self.suffix)
-            #
-            # cmds.connectAttr("%s.translate" %fk_jnt, "%s.color1" %blend_t)
-            # cmds.connectAttr("%s.rotate" %fk_jnt, "%s.color1" %blend_r)
-            # cmds.connectAttr("%s.scale" %fk_jnt, "%s.color1" %blend_s)
-            # cmds.connectAttr("%s.translate" %ik_jnt, "%s.color2" %blend_t)
-            # cmds.connectAttr("%s.rotate" %ik_jnt, "%s.color2" %blend_r)
-            # cmds.connectAttr("%s.scale" %ik_jnt, "%s.color2" %blend_s)
-            #
-            # cmds.connectAttr("%s.output" %blend_t, "%s.translate" %def_jnt)
-            # cmds.connectAttr("%s.output" %blend_r, "%s.rotate" %def_jnt)
-            # cmds.connectAttr("%s.output" %blend_s, "%s.scale" %def_jnt)
-            #
-            # cmds.connectAttr("%s.fk_ik_reverse" %self.switchController, "%s.blender" %blend_t)
-            # cmds.connectAttr("%s.fk_ik_reverse" %self.switchController, "%s.blender" %blend_r)
-            # cmds.connectAttr("%s.fk_ik_reverse" %self.switchController, "%s.blender" %blend_s)
+            blend_t = cmds.createNode("blendColors", name="%s_blend_t" %self.suffix)
+            blend_r = cmds.createNode("blendColors", name="%s_blend_r" %self.suffix)
+            blend_s = cmds.createNode("blendColors", name="%s_blend_s" %self.suffix)
+
+            cmds.connectAttr("%s.translate" %fk_jnt, "%s.color1" %blend_t)
+            cmds.connectAttr("%s.rotate" %fk_jnt, "%s.color1" %blend_r)
+            cmds.connectAttr("%s.scale" %fk_jnt, "%s.color1" %blend_s)
+            cmds.connectAttr("%s.translate" %ik_jnt, "%s.color2" %blend_t)
+            cmds.connectAttr("%s.rotate" %ik_jnt, "%s.color2" %blend_r)
+            cmds.connectAttr("%s.scale" %ik_jnt, "%s.color2" %blend_s)
+
+            cmds.connectAttr("%s.output" %blend_t, "%s.translate" %def_jnt)
+            cmds.connectAttr("%s.output" %blend_r, "%s.rotate" %def_jnt)
+            cmds.connectAttr("%s.output" %blend_s, "%s.scale" %def_jnt)
+
+            cmds.connectAttr("%s.fk_ik_reverse" %self.switchController, "%s.blender" %blend_t)
+            cmds.connectAttr("%s.fk_ik_reverse" %self.switchController, "%s.blender" %blend_r)
+            cmds.connectAttr("%s.fk_ik_reverse" %self.switchController, "%s.blender" %blend_s)
 
         for ik_co in self.ikControllers:
             cmds.connectAttr("%s.fk_ik" %(self.switchController), "%s.v" %ik_co)

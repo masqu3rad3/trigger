@@ -495,6 +495,9 @@ class Hindleg(object):
         connection.matrixConstraint(self.thigh_cont.name, self.j_def_hindleg_root,
                                     source_parent_cutoff=self.localOffGrp)
         attribute.disconnect_attr(node=self.j_def_hindleg_root, attr="inverseScale", suppress_warnings=True)
+        cmds.connectAttr("%s.s" %self.scaleHook, "%s.s" %self.j_def_stifle)
+        cmds.connectAttr("%s.s" %self.scaleHook, "%s.s" %self.j_def_phalanges)
+        cmds.connectAttr("%s.s" %self.scaleHook, "%s.s" %self.j_def_hock)
 
     def create_ik_setup(self):
         # create ik chains
