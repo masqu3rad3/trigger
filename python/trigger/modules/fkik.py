@@ -302,11 +302,12 @@ class Fkik(object):
         _ = [cmds.connectAttr("%s.s" %ik_joints[0], "%s.s" %jnt) for jnt in ik_joints[1:]]
 
         if self.stretchyIk:
-            stretch_locs = make_stretchy_ik(ik_joints, ik_handle, self.rootIkCont, self.endIKCont, source_parent_cutoff=self.localOffGrp, name=self.suffix)
+            stretch_locs = make_stretchy_ik(ik_joints, ik_handle, self.rootIkCont, self.endIKCont, side=self.side,
+                                            source_parent_cutoff=self.localOffGrp, name=self.suffix)
             cmds.parent(stretch_locs, self.nonScaleGrp)
             attribute.drive_attrs("%s.rigVis" % self.scaleGrp, ["%s.v" % x for x in stretch_locs])
         else:
-            connection.matrixConstraint(self.ikControllers[-1], ik_handle, mo=False, source_parent_cutoff=self.localOffGrp)
+            connection.matrixConstraint(self.ikControllers[-1], ik_handle, mo=True, source_parent_cutoff=self.localOffGrp)
         connection.matrixConstraint(self.ikControllers[0], ik_joints[0], mo=False, source_parent_cutoff=self.localOffGrp)
         connection.matrixConstraint(self.ikControllers[-1], ik_joints[-1], st="xyz", ss="xyz", mo=False, source_parent_cutoff=self.localOffGrp)
 
@@ -332,26 +333,27 @@ class Fkik(object):
             return
         # create blend nodes
 
-
         for fk_jnt, ik_jnt, def_jnt in zip(self.fkJoints, self.ikJoints, self.deformerJoints):
-            blend_t = cmds.createNode("blendColors", name="%s_blend_t" %self.suffix)
-            blend_r = cmds.createNode("blendColors", name="%s_blend_r" %self.suffix)
-            blend_s = cmds.createNode("blendColors", name="%s_blend_s" %self.suffix)
+            connection.matrixSwitch(ik_jnt, fk_jnt, def_jnt, "%s.FK_IK" % self.switchController)
 
-            cmds.connectAttr("%s.translate" %fk_jnt, "%s.color1" %blend_t)
-            cmds.connectAttr("%s.rotate" %fk_jnt, "%s.color1" %blend_r)
-            cmds.connectAttr("%s.scale" %fk_jnt, "%s.color1" %blend_s)
-            cmds.connectAttr("%s.translate" %ik_jnt, "%s.color2" %blend_t)
-            cmds.connectAttr("%s.rotate" %ik_jnt, "%s.color2" %blend_r)
-            cmds.connectAttr("%s.scale" %ik_jnt, "%s.color2" %blend_s)
-
-            cmds.connectAttr("%s.output" %blend_t, "%s.translate" %def_jnt)
-            cmds.connectAttr("%s.output" %blend_r, "%s.rotate" %def_jnt)
-            cmds.connectAttr("%s.output" %blend_s, "%s.scale" %def_jnt)
-
-            cmds.connectAttr("%s.fk_ik_reverse" %self.switchController, "%s.blender" %blend_t)
-            cmds.connectAttr("%s.fk_ik_reverse" %self.switchController, "%s.blender" %blend_r)
-            cmds.connectAttr("%s.fk_ik_reverse" %self.switchController, "%s.blender" %blend_s)
+            # blend_t = cmds.createNode("blendColors", name="%s_blend_t" %self.suffix)
+            # blend_r = cmds.createNode("blendColors", name="%s_blend_r" %self.suffix)
+            # blend_s = cmds.createNode("blendColors", name="%s_blend_s" %self.suffix)
+            #
+            # cmds.connectAttr("%s.translate" %fk_jnt, "%s.color1" %blend_t)
+            # cmds.connectAttr("%s.rotate" %fk_jnt, "%s.color1" %blend_r)
+            # cmds.connectAttr("%s.scale" %fk_jnt, "%s.color1" %blend_s)
+            # cmds.connectAttr("%s.translate" %ik_jnt, "%s.color2" %blend_t)
+            # cmds.connectAttr("%s.rotate" %ik_jnt, "%s.color2" %blend_r)
+            # cmds.connectAttr("%s.scale" %ik_jnt, "%s.color2" %blend_s)
+            #
+            # cmds.connectAttr("%s.output" %blend_t, "%s.translate" %def_jnt)
+            # cmds.connectAttr("%s.output" %blend_r, "%s.rotate" %def_jnt)
+            # cmds.connectAttr("%s.output" %blend_s, "%s.scale" %def_jnt)
+            #
+            # cmds.connectAttr("%s.fk_ik_reverse" %self.switchController, "%s.blender" %blend_t)
+            # cmds.connectAttr("%s.fk_ik_reverse" %self.switchController, "%s.blender" %blend_r)
+            # cmds.connectAttr("%s.fk_ik_reverse" %self.switchController, "%s.blender" %blend_s)
 
         for ik_co in self.ikControllers:
             cmds.connectAttr("%s.fk_ik" %(self.switchController), "%s.v" %ik_co)
@@ -417,6 +419,7 @@ class Fkik(object):
     #     soft_blend_loc = cmds.spaceLocator(name="softBlendLoc_%s" %name)[0]
     #     soft_blend_loc_shape = functions.getShapes(soft_blend_loc)[0]
     #     functions.alignTo(soft_blend_loc, end_controller, position=True, rotation=True)
+    #     # functions.alignToAlter(soft_blend_loc, joint_chain[-1], mode=2)
     #     connection.matrixSwitch(end_controller, end_loc, soft_blend_loc, "%s.stretch" %end_controller, position=True, rotation=False)
     #
     #     distance_start_loc =cmds.spaceLocator(name="distance_start_%s" %name)[0]
@@ -483,9 +486,9 @@ class Fkik(object):
     #         cmds.connectAttr(sum1_p, "%s.color2R" %squash_blend_node)
     #         cmds.connectAttr("%s.squash" %end_controller, "%s.blender" %squash_blend_node)
     #
-    #         cmds.connectAttr("%s.outputR" %squash_blend_node, "%s.tx" %jnt)
+    #         # cmds.connectAttr("%s.outputR" %squash_blend_node, "%s.tx" %jnt)
     #
-    #     connection.matrixConstraint(soft_blend_loc, ik_handle, mo=False, source_parent_cutoff=source_parent_cutoff)
+    #     connection.matrixConstraint(soft_blend_loc, ik_handle, mo=True, source_parent_cutoff=source_parent_cutoff)
     #     return soft_blend_loc, root_loc, distance_start_loc, distance_end_loc
 
 class Guides(object):

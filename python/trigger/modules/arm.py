@@ -663,12 +663,14 @@ class Arm(object):
                                    return_mode="incoming")[0][
                 "plug_in"]
 
-        if self.side == "R":
-            r_plug = op.invert(low_output_plug)
-            g_plug = op.invert(low_end_output_plug)
-        else:
-            r_plug = low_output_plug
-            g_plug = low_end_output_plug
+        # if self.side == "R":
+        #     r_plug = op.invert(low_output_plug)
+        #     g_plug = op.invert(low_end_output_plug)
+        # else:
+        #     r_plug = low_output_plug
+        #     g_plug = low_end_output_plug
+        r_plug = low_output_plug
+        g_plug = low_end_output_plug
 
         cmds.connectAttr(r_plug, "%s.color2R" % pin_blender, force=True)
         cmds.connectAttr(g_plug, "%s.color2G" % pin_blender, force=True)
