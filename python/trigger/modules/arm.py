@@ -864,7 +864,14 @@ class Arm(object):
         cmds.connectAttr("{0}.output".format(vp_extra_input), "{0}.scale".format(ribbon_lower_arm.start_plug),
                          f=True)
         cmds.connectAttr("{0}.output".format(vp_extra_input), "{0}.scale".format(ribbon_upper_arm.end_plug), f=True)
-        cmds.connectAttr("{0}.output".format(vp_extra_input), "{0}.scale".format(self.j_def_elbow), f=True)
+        if self.isLocal:
+            cmds.connectAttr("{0}.output".format(vp_extra_input), "{0}.scale".format(self.j_def_elbow), f=True)
+        else:
+            _mult = cmds.createNode("multiplyDivide", name="elbow_global_scale_%s" % self.suffix)
+            cmds.connectAttr("{0}.output".format(vp_extra_input), "{0}.input1".format(_mult))
+            cmds.connectAttr("{0}.scale".format(self.scaleHook), "{0}.input2".format(_mult))
+            cmds.connectAttr("{0}.output".format(_mult), "{0}.scale".format(self.j_def_elbow), f=True)
+
         cmds.connectAttr("{0}.scale".format(self.midLockCont.name), "{0}.input1".format(vp_extra_input))
 
         cmds.connectAttr("{0}.output1D".format(vp_mid_average), "{0}.input2X".format(vp_extra_input))

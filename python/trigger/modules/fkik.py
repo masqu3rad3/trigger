@@ -91,6 +91,7 @@ class Fkik(object):
         self.poleVectorBridge = None
         self.poleVectorCont = None
         self.middleIndex = 1
+        self.scaleHook = None
 
         # scratch variables
         self.controllers = []
@@ -126,6 +127,12 @@ class Fkik(object):
         self.plugBindGrp = cmds.group(name="%s_plugBind_grp" %self.suffix, em=True)
         cmds.parent(self.localOffGrp, self.plugBindGrp)
         cmds.parent(self.plugBindGrp, self.limbGrp)
+
+        # scale hook gets the scale value from the bind group but not from the localOffset
+        self.scaleHook = cmds.group(name="%s_scaleHook" % self.suffix, em=True)
+        cmds.parent(self.scaleHook, self.limbGrp)
+        scale_skips = "xyz" if self.isLocal else ""
+        connection.matrixConstraint(self.scaleGrp, self.scaleHook, ss=scale_skips)
 
     def createJoints(self):
         # draw Joints
@@ -320,9 +327,18 @@ class Fkik(object):
 
         # for cont, jnt in zip(self.fkControllers, fk_joints[:-1]):
         for cont, jnt in zip(self.fkControllers, fk_joints):
-            connection.matrixConstraint(cont, jnt, source_parent_cutoff=self.localOffGrp)
+            # connection.matrixConstraint(cont, jnt, source_parent_cutoff=self.localOffGrp)
+            connection.matrixConstraint(cont, jnt, source_parent_cutoff=self.localOffGrp, ss="xyz")
+            if not self.isLocal:
+                # additive scalability
+                s_global = cmds.createNode("multiplyDivide", name="sGlobal_%s_%s" % (jnt, self.suffix))
+                cmds.connectAttr("%s.scale" % self.scaleHook, "%s.input1" % s_global)
+                cmds.connectAttr("%s.scale" % cont, "%s.input2" % s_global)
+                cmds.connectAttr("%s.output" % s_global, "%s.scale" % jnt)
+            else:
+                cmds.connectAttr("%s.scale" % cont, "%s.scale" % jnt)
             # disconnect inverse scale chain to inherit the scale from the controllers properly
-            attribute.disconnect_attr(node=jnt, attr="inverseScale")
+            # attribute.disconnect_attr(node=jnt, attr="inverseScale", suppress_warnings=True)
 
         if self.isLocal:
             connection.matrixConstraint(self.limbPlug, self.plugBindGrp)
