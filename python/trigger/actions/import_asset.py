@@ -60,7 +60,7 @@ class Import_asset(object):
         """Mandatory method for all action modules"""
         pass
 
-    def ui(self, ctrl, layout, *args, **kwargs):
+    def ui(self, ctrl, layout, handler, *args, **kwargs):
 
         file_path_lbl = QtWidgets.QLabel(text="File Path:")
         file_path_hLay = QtWidgets.QHBoxLayout()

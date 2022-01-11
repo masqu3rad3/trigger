@@ -16,6 +16,8 @@ ACTION_DATA = {
 }
 
 # Name of the class MUST be the capitalized version of file name. eg. morph.py => Morph, split_shapes.py => Split_shapes
+
+
 class Boiler_plate(object):
     def __init__(self, *args, **kwargs):
         super(Boiler_plate, self).__init__()

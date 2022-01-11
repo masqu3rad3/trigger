@@ -274,7 +274,6 @@ Then you can save and increment versions for all of them at once.
             file_dir, file_name = os.path.split(file_path)
 
         cmds.deformerWeights(file_name, im=True, deformer=deformer, path=file_dir, method=method, ignoreName=ignore_name)
-
         # this is a bug I came across one with one test geo.
         # Somehow it does not assign the value to index: 0
         # the following part forces to assign the correct value to index 0

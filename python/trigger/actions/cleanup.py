@@ -7,8 +7,6 @@ from trigger.library import functions, connection, shading
 
 from trigger.ui.Qt import QtWidgets, QtGui # for progressbar
 
-# from PySide2 import QtWidgets
-
 log = filelog.Filelog(logname=__name__, filename="trigger_log")
 
 ACTION_DATA = {
@@ -20,6 +18,7 @@ ACTION_DATA = {
     "merge_similar_file_nodes": True,
     "merge_similar_shaders": True,
 }
+
 
 class Cleanup(object):
     def __init__(self, *args, **kwargs):
@@ -77,7 +76,8 @@ class Cleanup(object):
         Args:
             ctrl: (model_ctrl) ctrl object instance of /ui/model_ctrl. Updates UI and Model
             layout: (QLayout) The layout object from the main ui. All setting widgets should be added to this layout
-            handler: (actions_session) An instance of the actions_session. TRY NOT TO USE HANDLER UNLESS ABSOLUTELY NECESSARY
+            handler: (actions_session) An instance of the actions_session.
+            TRY NOT TO USE HANDLER UNLESS ABSOLUTELY NECESSARY
             *args:
             **kwargs:
 
@@ -90,12 +90,12 @@ class Cleanup(object):
         clear_vlay = QtWidgets.QVBoxLayout()
         unknown_nodes_cb = QtWidgets.QCheckBox(text="Unknown Nodes")
         blind_data_cb = QtWidgets.QCheckBox(text="Blind Data")
-        delete_unusued_nodes_cb = QtWidgets.QCheckBox(text="Unused Shading Nodes")
+        delete_unused_nodes_cb = QtWidgets.QCheckBox(text="Unused Shading Nodes")
         display_layers_cb = QtWidgets.QCheckBox(text="Display Layers")
         animation_layers_cb = QtWidgets.QCheckBox(text="Animation Layers")
         clear_vlay.addWidget(unknown_nodes_cb)
         clear_vlay.addWidget(blind_data_cb)
-        clear_vlay.addWidget(delete_unusued_nodes_cb)
+        clear_vlay.addWidget(delete_unused_nodes_cb)
         clear_vlay.addWidget(display_layers_cb)
         clear_vlay.addWidget(animation_layers_cb)
 
@@ -113,7 +113,7 @@ class Cleanup(object):
 
         ctrl.connect(unknown_nodes_cb, "delete_unknown_nodes", bool)
         ctrl.connect(blind_data_cb, "delete_blind_data", bool)
-        ctrl.connect(delete_unusued_nodes_cb, "delete_unused_nodes", bool)
+        ctrl.connect(delete_unused_nodes_cb, "delete_unused_nodes", bool)
         ctrl.connect(display_layers_cb, "delete_display_layers", bool)
         ctrl.connect(animation_layers_cb, "delete_animation_layers", bool)
         ctrl.connect(merge_similar_file_nodes_cb, "merge_similar_file_nodes", bool)
@@ -121,39 +121,44 @@ class Cleanup(object):
 
         ctrl.update_ui()
 
-        #Signals
+        # Signals
         unknown_nodes_cb.stateChanged.connect(lambda x=0: ctrl.update_model())
         blind_data_cb.stateChanged.connect(lambda x=0: ctrl.update_model())
-        delete_unusued_nodes_cb.stateChanged.connect(lambda x=0: ctrl.update_model())
+        delete_unused_nodes_cb.stateChanged.connect(lambda x=0: ctrl.update_model())
         display_layers_cb.stateChanged.connect(lambda x=0: ctrl.update_model())
         animation_layers_cb.stateChanged.connect(lambda x=0: ctrl.update_model())
         merge_similar_file_nodes_cb.stateChanged.connect(lambda x=0: ctrl.update_model())
         merge_similar_shaders_cb.stateChanged.connect(lambda x=0: ctrl.update_model())
 
-    def delete_unknown_nodes(self):
+    @staticmethod
+    def delete_unknown_nodes():
         unknown_nodes = cmds.ls(type="unknown")
         functions.deleteObject(unknown_nodes)
-        log.info("%i unknown nodes deleted" %len(unknown_nodes))
+        log.info("%i unknown nodes deleted" % len(unknown_nodes))
 
-    def delete_blind_data(self):
+    @staticmethod
+    def delete_blind_data():
         blind_types = ["polyBlindData", "blindDataTemplate"]
         blind_nodes = cmds.ls(type=blind_types)
         functions.deleteObject(blind_nodes)
-        log.info("%i blind data nodes deleted" %len(blind_nodes))
+        log.info("%i blind data nodes deleted" % len(blind_nodes))
 
-    def delete_unused_nodes(self):
+    @staticmethod
+    def delete_unused_nodes():
         mel.eval('hyperShadePanelMenuCommand("hyperShadePanel1", "deleteUnusedNodes");')
 
-    def delete_display_layers(self):
+    @staticmethod
+    def delete_display_layers():
         layers = cmds.ls(type="displayLayer")
         layers.remove("defaultLayer")
         functions.deleteObject(layers)
-        log.info("%i display layers deleted" %len(layers))
+        log.info("%i display layers deleted" % len(layers))
 
-    def delete_animation_layers(self):
+    @staticmethod
+    def delete_animation_layers():
         layers = cmds.ls(type="animLayer")
         functions.deleteObject(layers)
-        log.info("%i animation layers deleted" %len(layers))
+        log.info("%i animation layers deleted" % len(layers))
 
     @staticmethod
     def merge_similar_file_nodes():
@@ -205,8 +210,7 @@ class Cleanup(object):
                 mat_dict["filedata"] = file_dict
             dict_list.append(mat_dict)
 
-        ## group the shaders sharing the same filedata
-
+        # group the shaders sharing the same filedata
         out = {}
         for d in dict_list:
             out.setdefault(tuple(d['filedata'].items()), []).append(d['name'])
@@ -215,7 +219,7 @@ class Cleanup(object):
         for same in same_shaders_list:
             selection_list = []
             shading_engines = cmds.listConnections(same, source=False, destination=True, type="shadingEngine")
-            for sha in shading_engines:
+            for _ in shading_engines:
                 selection_list.extend(cmds.sets(shading_engines, q=True))
             cmds.sets(selection_list, e=True, forceElement=shading_engines[0])
 
