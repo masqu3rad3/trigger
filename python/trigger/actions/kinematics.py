@@ -425,6 +425,8 @@ class Kinematics(object):
             ##############################################
             if add_limb:
                 cmds.parent(limb.limbPlug, parent_socket)
+                cmds.disconnectAttr("%s.scale" % parent_socket, "%s.inverseScale" %limb.limbPlug)
+                # Disconnect jDef_ChestSocket_c_spine.scale from jPlug_R_Arm.inverseScale
                 ## Good parenting / scale connections
                 ## get the holder group
                 self.rootGroup = functions.getParent(master_cont)
@@ -462,6 +464,7 @@ class Kinematics(object):
                 #     parentSocket = self.cont_placement
 
                     cmds.parent(limb.limbPlug, parentSocket)
+                    cmds.disconnectAttr("%s.scale" % parentSocket, "%s.inverseScale" %limb.limbPlug)
 
                 ## Good parenting / scale connections
                 scaleGrpPiv = api.getWorldTranslation(limb.limbPlug)
