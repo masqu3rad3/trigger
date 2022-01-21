@@ -17,6 +17,7 @@ ACTION_DATA = {
     "delete_animation_layers": True,
     "merge_similar_file_nodes": True,
     "merge_similar_shaders": True,
+    "clean_root": False
 }
 
 
@@ -32,6 +33,7 @@ class Cleanup(object):
         self.deleteAnimationLayers = True
         self.mergeSimilarFileNodes = True
         self.mergeSimilarShaders = True
+        self.cleanRoot = False
 
         # class variables
 
@@ -44,6 +46,7 @@ class Cleanup(object):
         self.deleteAnimationLayers = action_data.get("delete_animation_layers")
         self.mergeSimilarFileNodes = action_data.get("merge_similar_file_nodes")
         self.mergeSimilarShaders = action_data.get("merge_similar_shaders")
+        self.cleanRoot = action_data.get("clean_root", False)
 
     def action(self):
         """Mandatory Method - Execute Action"""
@@ -61,6 +64,8 @@ class Cleanup(object):
             self.merge_similar_file_nodes()
         if self.mergeSimilarShaders:
             self.merge_similar_shaders()
+        if self.cleanRoot:
+            self.clean_root()
 
     def save_action(self, file_path=None, *args, **kwargs):
         """Mandatory Method - Save Action"""
@@ -93,11 +98,14 @@ class Cleanup(object):
         delete_unused_nodes_cb = QtWidgets.QCheckBox(text="Unused Shading Nodes")
         display_layers_cb = QtWidgets.QCheckBox(text="Display Layers")
         animation_layers_cb = QtWidgets.QCheckBox(text="Animation Layers")
+        clean_root_cb = QtWidgets.QCheckBox(text="Clean Root")
+        # clean_root_cb.setToolTip("WARNING: Removes everything other than the rig_grp from the root")
         clear_vlay.addWidget(unknown_nodes_cb)
         clear_vlay.addWidget(blind_data_cb)
         clear_vlay.addWidget(delete_unused_nodes_cb)
         clear_vlay.addWidget(display_layers_cb)
         clear_vlay.addWidget(animation_layers_cb)
+        clear_vlay.addWidget(clean_root_cb)
 
         layout.addRow(clear_lbl, clear_vlay)
 
@@ -116,6 +124,7 @@ class Cleanup(object):
         ctrl.connect(delete_unused_nodes_cb, "delete_unused_nodes", bool)
         ctrl.connect(display_layers_cb, "delete_display_layers", bool)
         ctrl.connect(animation_layers_cb, "delete_animation_layers", bool)
+        ctrl.connect(clean_root_cb, "clean_root", bool)
         ctrl.connect(merge_similar_file_nodes_cb, "merge_similar_file_nodes", bool)
         ctrl.connect(merge_similar_shaders_cb, "merge_similar_shaders", bool)
 
@@ -127,6 +136,8 @@ class Cleanup(object):
         delete_unused_nodes_cb.stateChanged.connect(lambda x=0: ctrl.update_model())
         display_layers_cb.stateChanged.connect(lambda x=0: ctrl.update_model())
         animation_layers_cb.stateChanged.connect(lambda x=0: ctrl.update_model())
+        clean_root_cb.stateChanged.connect(lambda x=0: ctrl.update_model())
+
         merge_similar_file_nodes_cb.stateChanged.connect(lambda x=0: ctrl.update_model())
         merge_similar_shaders_cb.stateChanged.connect(lambda x=0: ctrl.update_model())
 
@@ -228,3 +239,10 @@ class Cleanup(object):
             total_shader_count += len(same)
         mel.eval('hyperShadePanelMenuCommand("hyperShadePanel1", "deleteUnusedNodes");')
         log.info("%s shaders merged into %s shaders" % (total_shader_count, len(same_shaders_list)))
+
+    @staticmethod
+    def clean_root():
+        log.warning("Deleting everything in the root other than the rig_grp")
+        exceptions = [u'persp', u'top', u'front', u'side', u'rig_grp']
+        morts = [x for x in cmds.ls(assemblies=True) if x not in exceptions]
+        functions.deleteObject(morts)

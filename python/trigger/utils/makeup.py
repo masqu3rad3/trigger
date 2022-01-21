@@ -78,16 +78,17 @@ class Makeup(object):
 
     @undo
     @keepselection
-    def replace_curve_controller(self, icon, objects=None, mo=True):
+    def replace_curve_controller(self, icon, objects=None, mo=True, scale=True):
         objects = objects or cmds.ls(sl=True)
         if type(objects) == str:
             objects = [objects]
 
         for obj in objects:
-            obj_size = self.__get_max_size(obj)
             new_shape, _ = self.icon_handler.createIcon(iconType=icon, scale=(1, 1, 1), normal=(0, 1, 0))
-            new_size = float(obj_size) / self.__get_max_size(new_shape)
-            cmds.setAttr("%s.scale" % new_shape, new_size, new_size, new_size)
+            if scale:
+                obj_size = self.__get_max_size(obj)
+                new_size = float(obj_size) / self.__get_max_size(new_shape)
+                cmds.setAttr("%s.scale" % new_shape, new_size, new_size, new_size)
             cmds.makeIdentity(new_shape, a=True, s=True)
             replace_curve(obj, new_shape, maintain_offset=mo)
             cmds.delete(new_shape)
@@ -122,7 +123,7 @@ class MainUI(QtWidgets.QDialog):
         self.mirror_controllers_side_combo = None
         self.mirror_controllers_bias_combo = None
         self.build_ui()
-        self.setWindowFlag(QtCore.Qt.WindowMaximizeButtonHint, False)
+        # self.setWindowFlag(QtCore.Qt.WindowMaximizeButtonHint, False)
 
     def build_ui(self):
         self.setObjectName(WINDOW_NAME)
@@ -141,9 +142,14 @@ class MainUI(QtWidgets.QDialog):
         replace_controllers_pb = QtWidgets.QPushButton(self)
         replace_controllers_pb.setText("Replace Controller(s)")
         replace_controllers_pb.setSizePolicy(size_policy)
+        replace_controllers_combo_lay = QtWidgets.QHBoxLayout()
         self.replace_controllers_combo = QtWidgets.QComboBox(self)
         self.replace_controllers_combo.setSizePolicy(size_policy)
-        form_lay.addRow(replace_controllers_pb, self.replace_controllers_combo)
+        replace_controllers_combo_lay.addWidget(self.replace_controllers_combo)
+        self.scale_controllers_cb = QtWidgets.QCheckBox(self)
+        self.scale_controllers_cb.setChecked(True)
+        replace_controllers_combo_lay.addWidget(self.scale_controllers_cb)
+        form_lay.addRow(replace_controllers_pb, replace_controllers_combo_lay)
 
         self.replace_controllers_combo.addItems(self.makeup_handler.list_of_icons)
 
@@ -167,7 +173,7 @@ class MainUI(QtWidgets.QDialog):
 
     def on_replace(self):
         new_icon = self.replace_controllers_combo.currentText()
-        self.makeup_handler.replace_curve_controller(new_icon)
+        self.makeup_handler.replace_curve_controller(new_icon, scale=self.scale_controllers_cb.isChecked())
 
     def on_mirror(self):
         side_rule = self.mirror_controllers_side_combo.currentText()
