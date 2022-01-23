@@ -261,7 +261,7 @@ Then you can save and increment versions for all of them at once.
         return True
 
     @keepselection
-    def load_weights(self, deformer=None, file_path=None, method="index", ignore_name=True):
+    def load_weights(self, deformer=None, file_path=None, method="index", ignore_name=True, deferred=False):
         if not deformer and not self.deformer:
             log.error(
                 "No Deformer defined. A Deformer needs to be defined either as argument or class variable)")
@@ -273,7 +273,14 @@ Then you can save and increment versions for all of them at once.
         else:
             file_dir, file_name = os.path.split(file_path)
 
+        if deferred:  # this is only for workaround for the bug introduced in 2022
+            # deferred argument bypasses all extra 'surgery' afterwards.
+            deferred_command = "cmds.deformerWeights('{0}', im=True, deformer='{1}', path='{2}', method='{3}', ignoreName={4})".format(file_name, deformer, file_dir, method, ignore_name)
+            cmds.evalDeferred(deferred_command)
+            return
+
         cmds.deformerWeights(file_name, im=True, deformer=deformer, path=file_dir, method=method, ignoreName=ignore_name)
+
         # this is a bug I came across one with one test geo.
         # Somehow it does not assign the value to index: 0
         # the following part forces to assign the correct value to index 0
@@ -326,7 +333,7 @@ Then you can save and increment versions for all of them at once.
         Returns:
 
         """
-
+        deferred_loading = False
         # load the weights file
         self.io.file_path = weights_file
         weights_data = self.io.read()
@@ -371,6 +378,7 @@ Then you can save and increment versions for all of them at once.
 
             elif deformer_type == "deltaMush":
                 cmds.deltaMush(affected[0], name=deformer_name)
+                deferred_loading = True
 
             else:
                 # TODO : SUPPORT FOR ALL DEFORMERS
@@ -401,7 +409,8 @@ Then you can save and increment versions for all of them at once.
                 cmds.setAttr("%s.%s" % (deformer_name, attr_name), attr_value)
 
         # finally load weights
-        self.load_weights(deformer=deformer_name, file_path=weights_file, method="index", ignore_name=False)
+        # cmds.evalDeferred('self.load_weights(deformer=deformer_name, file_path=weights_file, method="index", ignore_name=False)')
+        self.load_weights(deformer=deformer_name, file_path=weights_file, method="index", ignore_name=False, deferred=deferred_loading)
 
 
         pass
