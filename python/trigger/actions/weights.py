@@ -44,6 +44,7 @@ def subtractList(list_of_values):
     return result
 
 class Weights(dict):
+    _api_version = cmds.about(api=True)
     def __init__(self):
         super(Weights, self).__init__()
         self.io = io.IO(file_name="tmp_weights.trw")
@@ -378,7 +379,8 @@ Then you can save and increment versions for all of them at once.
 
             elif deformer_type == "deltaMush":
                 cmds.deltaMush(affected[0], name=deformer_name)
-                deferred_loading = True
+                if 20209999 < self._api_version < 20230000:
+                    deferred_loading = True
 
             else:
                 # TODO : SUPPORT FOR ALL DEFORMERS
@@ -411,9 +413,6 @@ Then you can save and increment versions for all of them at once.
         # finally load weights
         # cmds.evalDeferred('self.load_weights(deformer=deformer_name, file_path=weights_file, method="index", ignore_name=False)')
         self.load_weights(deformer=deformer_name, file_path=weights_file, method="index", ignore_name=False, deferred=deferred_loading)
-
-
-        pass
 
     def save_matching_weights(self, deformer=None, file_path=None, vertexConnections=False, force=True, influencer=None):
         """
