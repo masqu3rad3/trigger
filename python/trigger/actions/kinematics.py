@@ -92,7 +92,7 @@ class Kinematics(object):
             # if self.anchors and self.anchorLocations:
                 for anchor in (self.anchors):
                     anchorMaker.create_space_switch(anchor[0], self.anchorLocations, mode=anchor[1], defaultVal=anchor[2],
-                                                    listException=anchor[3])
+                                                    listException=anchor[3], skip_errors=True)
 
             # grouping for fingers / toes
             for x in self.fingerMatchConts:
@@ -425,6 +425,8 @@ class Kinematics(object):
             ##############################################
             if add_limb:
                 cmds.parent(limb.limbPlug, parent_socket)
+                cmds.disconnectAttr("%s.scale" % parent_socket, "%s.inverseScale" %limb.limbPlug)
+                # Disconnect jDef_ChestSocket_c_spine.scale from jPlug_R_Arm.inverseScale
                 ## Good parenting / scale connections
                 ## get the holder group
                 self.rootGroup = functions.getParent(master_cont)
@@ -462,6 +464,7 @@ class Kinematics(object):
                 #     parentSocket = self.cont_placement
 
                     cmds.parent(limb.limbPlug, parentSocket)
+                    cmds.disconnectAttr("%s.scale" % parentSocket, "%s.inverseScale" %limb.limbPlug)
 
                 ## Good parenting / scale connections
                 scaleGrpPiv = api.getWorldTranslation(limb.limbPlug)

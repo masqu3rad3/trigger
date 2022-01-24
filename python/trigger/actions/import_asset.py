@@ -60,7 +60,7 @@ class Import_asset(object):
         """Mandatory method for all action modules"""
         pass
 
-    def ui(self, ctrl, layout, *args, **kwargs):
+    def ui(self, ctrl, layout, handler, *args, **kwargs):
 
         file_path_lbl = QtWidgets.QLabel(text="File Path:")
         file_path_hLay = QtWidgets.QHBoxLayout()
@@ -202,11 +202,12 @@ class Import_asset(object):
 
     def _load_alembic_plugin(self):
         """Makes sure the alembic plugin is loaded"""
-        currentPlatform = platform.system()
-        ext = ".mll" if currentPlatform == "Windows" else ".so"
-        if not cmds.pluginInfo("AbcExport%s" % ext, l=True, q=True):
-            try: cmds.loadPlugin("AbcExport%s" % ext)
-            except: log.error("Alembic Plugin cannot be loaded")
+        if not cmds.pluginInfo("AbcExport", l=True, q=True):
+            try: cmds.loadPlugin("AbcExport")
+            except: log.error("Alembic Export Plugin cannot be loaded")
+        if not cmds.pluginInfo("AbcImport", l=True, q=True):
+            try: cmds.loadPlugin("AbcImport")
+            except: log.error("Alembic Import Plugin cannot be loaded")
 
     def _load_fbx_plugin(self):
         """Makes sure the FBX plugin is loaded"""
@@ -219,5 +220,3 @@ class Import_asset(object):
         if not cmds.pluginInfo('mayaUsdPlugin', l=True, q=True):
             try: cmds.loadPlugin("mayaUsdPlugin")
             except: log.error("USD Plugin cannot be loaded")
-
-    # TODO: EXPORT FUNCTIONS

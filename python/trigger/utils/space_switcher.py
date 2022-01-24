@@ -4,7 +4,7 @@ from trigger.core import filelog
 
 log = filelog.Filelog(logname=__name__, filename="trigger_log")
 
-def create_space_switch(node, targetList, overrideExisting=False, mode="parent", defaultVal=1, listException=None):
+def create_space_switch(node, targetList, overrideExisting=False, mode="parent", defaultVal=1, listException=None, skip_errors=False):
     """
     Creates the space switch attributes between selected node (controller) and targets.
     Args:
@@ -46,7 +46,10 @@ def create_space_switch(node, targetList, overrideExisting=False, mode="parent",
         if overrideExisting:
             cmds.deleteAttr("{0}.{1}Switch".format(node, mode))
         else:
-            cmds.error("Switch Attribute already exists. Use overrideExisting=True to delete the old")
+            if skip_errors:
+                return
+            else:
+                cmds.error("Switch Attribute already exists. Use overrideExisting=True to delete the old")
     cmds.addAttr(node, at="enum", k=True, shortName=mode + "Switch", longName=mode + "_Switch", en=enumFlag,
                  defaultValue=defaultVal)
     driver = "%s.%sSwitch" % (node, mode)

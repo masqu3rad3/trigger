@@ -22,12 +22,15 @@ class Renamer(object):
     def getObjects(self, method):
         """returns objects according to the method"""
         if method == 0: # selected objects
-            self.objectList = cmds.ls(sl=True, long=True)
+            # self.objectList = cmds.ls(sl=True, long=True)
+            self.objectList = [Node(node=x) for x in cmds.ls(sl=True, long=True)]
         if method == 1: # Hierarchy
-            self.objectList = cmds.listRelatives(cmds.ls(sl=True), c=True, ad=True, f=True) + cmds.ls(sl=True)
+            relatives = cmds.listRelatives(cmds.ls(sl=True), c=True, ad=True, f=True) or []
+            self.objectList = [Node(node=x) for x in relatives + cmds.ls(sl=True)]
         if method == 2: # Everything
             # self.objectList = cmds.ls(long=True)
-            self.objectList = cmds.ls()
+            # self.objectList = cmds.ls()
+            self.objectList = [Node(node=x) for x in cmds.ls()]
 
         # sort the list to iterate transforms first
         # self.objectList = sorted(object_list, key=lambda x: cmds.objectType(x) == "transform")
@@ -36,47 +39,45 @@ class Renamer(object):
         """Removes pasted_ from the object name"""
         self.getObjects(selectMethod) # initialize the objectList
         for obj in self.objectList:
-            try:
-                if "pasted__" in obj:
-                    pasted = "pasted__"
-                elif "pasted_" in obj:
-                    pasted = "pasted_"
-                elif "pasted" in obj:
-                    pasted = "pasted"
-                else:
-                    continue
-                cmds.rename(obj, obj.split("|")[-1].replace(pasted, ""))
-            except RuntimeError:
-                pass
+            if "pasted__" in obj:
+                pasted = "pasted__"
+            elif "pasted_" in obj:
+                pasted = "pasted_"
+            elif "pasted" in obj:
+                pasted = "pasted"
+            else:
+                continue
+            new_name = obj.get_base().replace(pasted, "")
+            obj.set_new_name(new_name)
+            # cmds.rename(obj, obj.split("|")[-1].replace(pasted, ""))
+
+        for obj in reversed((sorted(self.objectList))):
+            obj.execute_new_name()
 
     def removeNamespace(self, selectMethod):
         """Removes the namespace from selection"""
         self.getObjects(selectMethod)  # initialize the objectList
-        for i in self.objectList:
-            try:
-                cmds.rename(i, i.split(":")[-1])
-            except IndexError and RuntimeError:
-                pass
+        for obj in self.objectList:
+            obj.remove_namespace()
 
     def addSuffix(self, selectMethod, suffix):
         self.getObjects(selectMethod)  # initialize the objectList
         for obj in self.objectList:
-            try:
-                # name = obj if not "|" in obj else obj.split("|")[-1]
-                name = obj.split("|")[-1]
-                cmds.rename(obj, "{0}{1}".format(name, suffix))
-            except RuntimeError:
-                pass
+            name = obj.get_base()
+            obj.set_new_name("{0}{1}".format(name, suffix))
+
+        for obj in reversed((sorted(self.objectList))):
+            obj.execute_new_name()
 
     def addPrefix(self, selectMethod, prefix):
         self.getObjects(selectMethod)  # initialize the objectList
+
         for obj in self.objectList:
-            try:
-                # name = obj if not "|" in obj else obj.split("|")[-1]
-                name = obj.split("|")[-1]
-                cmds.rename(obj, "{0}{1}".format(prefix, name))
-            except RuntimeError:
-                pass
+            name = obj.get_base()
+            obj.set_new_name("{0}{1}".format(prefix, name))
+
+        for obj in reversed((sorted(self.objectList))):
+            obj.execute_new_name()
 
     def rename(self, selectMethod, new_name):
         self.getObjects(selectMethod)  # initialize the objectList
@@ -93,33 +94,22 @@ class Renamer(object):
             pre = new_name
             post = ""
 
-        count = 1
-        for obj in self.objectList:
-            instance = str(count).zfill(padding) if padding else ""
-            try:
-                renamed = cmds.rename(obj, "{0}{1}{2}".format(pre, instance, post), ignoreShape=True)
-                self._rename_children(renamed)
-                count += 1
-            except RuntimeError:
-                pass
+        for nmb, obj in enumerate(self.objectList):
+            instance = str(nmb+1).zfill(padding) if padding else ""
+            # print(instance, obj)
+            obj.set_new_name("{0}{1}{2}".format(pre, instance, post))
+            # obj.rename("{0}{1}{2}".format(pre, instance, post))
 
-    def _rename_children(self, obj):
-        children = cmds.listRelatives(obj, children=True, fullPath=True)
-        if children:
-            for c in children:
-                cmds.rename(c, "%sShape" %obj)
+        for obj in list(reversed((sorted(self.objectList)))):
+            obj.execute_new_name()
 
 
     def replace(self, selectMethod, A, B):
         self.getObjects(selectMethod)  # initialize the objectList
 
         for obj in self.objectList:
-            try:
-                # name = obj if not "|" in obj else obj.split("|")[-1]
-                name = obj.split("|")[-1]
-                cmds.rename(obj, name.replace(A, B))
-            except RuntimeError:
-                pass
+            name = obj.get_base()
+            obj.rename(name.replace(A, B))
 
 class MainUI(QtWidgets.QDialog):
     def __init__(self):
@@ -264,4 +254,105 @@ class MainUI(QtWidgets.QDialog):
             self.renamer.rename(method, str(self.rename_le.text()))
         elif command == "replace":
             self.renamer.replace(method, str(self.replace_A_le.text()), str(self.replace_B_le.text()))
+
+class Node(object):
+    def __init__(self, node=None):
+        super(Node, self).__init__()
+        self._dag_path = ""
+        self._new_name = ""
+        if node:
+            self.update_dag(node)
+
+    def update_dag(self, new_path):
+        node_list = cmds.ls(new_path, l=True)
+        if not node_list:
+            raise Exception("Node does not exist")
+        self._dag_path = node_list[0]
+
+    def get_base(self):
+        return self._dag_path.split("|")[-1]
+
+    def get_dag(self):
+        return self._dag_path
+
+    def set_new_name(self, new_name):
+        self._new_name = new_name
+
+    def execute_new_name(self):
+        if self._new_name:
+            self.rename(self._new_name)
+
+    def rename(self, new_name):
+        try:
+            self.update_dag(cmds.rename(self._dag_path, self.unique(new_name), ignoreShape=True))
+        except RuntimeError:
+            cmds.warning("%s cannot renamed" % new_name)
+            self._rename_children(new_name)
+
+
+    def _rename_children(self, obj):
+        if not cmds.objExists(obj):
+            return
+        shapes = cmds.listRelatives(obj, children=True, fullPath=True, type="shape")
+        if shapes:
+            for c in shapes:
+                try:
+                    cmds.rename(c, self.unique("%sShape" %obj))
+                except RuntimeError:
+                    cmds.warning("%s cannot renamed" % obj)
+
+    def remove_namespace(self):
+        if ':' in self._dag_path:
+            ns = self._dag_path.rsplit(':')[0]
+            ns = ns.split("|")[-1]
+        else:
+            return
+        cmds.namespace(rm=ns, mnr=True, f=True)
+
+    def __str__(self):
+        return self.get_dag()
+
+    def __repr__(self):
+        return self.get_dag()
+
+    @staticmethod
+    def unique(name):
+        """Searches the scene for match and returns a unique name for given name"""
+
+        baseName = name
+        idcounter = 0
+        while cmds.objExists(name):
+            is_digits = re.search('.*?([0-9]+)$', baseName.split(".")[0])
+            if not is_digits:
+                name = "%s%s" % (baseName, str(idcounter + 1))
+            else:
+                digit = is_digits.groups()[0] # as str
+                padding = len(digit)
+                stripped_name = baseName.replace(digit, "")
+                name = "%s%s" % (stripped_name, str(idcounter+int(digit)).zfill(padding))
+            # name = "%s%s" % (baseName, str(idcounter + 1))
+            idcounter += 1
+        return name
+
+    # this is for python 2.x
+    def __cmp__(self, other):
+        print(self._dag_path, other._dag_path)
+        if self._dag_path < other._dag_path:
+            return -1  # <--------- yay!
+        elif self._dag_path > other._dag_path:
+            return 1
+        else:
+            return 0
+
+    # these are for python 3.x
+    def __lt__(self, other):
+        return self._dag_path < other._dag_path
+
+    def __gt__(self, other):
+        return self._dag_path > other._dag_path
+
+    def __eq__(self, other):
+        return self._dag_path == other._dag_path
+
+
 

@@ -22,7 +22,7 @@ class TwistSpline(object):
         self.upAxis = (0.0, 1.0, 0.0)
 
 
-    def createTspline(self, refJoints, name, cuts, dropoff=2, mode="equalDistance", twistType="regular", colorCode=17):
+    def createTspline(self, refJoints, name, cuts=10, dropoff=2, mode="equalDistance", twistType="regular", colorCode=17):
         """
         
         Args:

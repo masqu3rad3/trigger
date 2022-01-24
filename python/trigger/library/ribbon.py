@@ -21,6 +21,41 @@ class PowerRibbon():
         self.toHide = []
         self.startAim = None
 
+    def pin_start(self, node_a, node_b=None, switch_a=None, switch_b=None):
+        nodes = [node_a, node_b] if node_b else node_a
+        constraint = cmds.parentConstraint(nodes, self.startConnection, mo=True)
+        self._switch_weights(nodes, [switch_a, switch_b], constraint)
+        return constraint
+
+    def pin_end(self, node_a, node_b=None, switch_a=None, switch_b=None):
+        nodes = [node_a, node_b] if node_b else node_a
+        constraint = cmds.parentConstraint(nodes, self.endConnection, mo=True)
+        self._switch_weights(nodes, [switch_a, switch_b], constraint)
+        return constraint
+
+    def orient(self, node_a, node_b=None, switch_a=None, switch_b=None):
+        nodes = [node_a, node_b] if node_b else node_a
+        constraint = cmds.parentConstraint(nodes, self.startAim, mo=True, skipTranslate=["x", "y", "z"])[0]
+        self._switch_weights(nodes, [switch_a, switch_b], constraint)
+        # if node_b and any([switch_a, switch_b]):
+        #     attrs = cmds.listAttr(constraint, ud=True)
+        #     if switch_a:
+        #         cmds.connectAttr(switch_a, "%s.%s" %(constraint, attrs[0]))
+        #     if switch_b:
+        #         cmds.connectAttr(switch_b, "%s.%s" % (constraint, attrs[1]))
+        return constraint
+
+    @staticmethod
+    def _switch_weights(nodes, switches, constraint):
+        if not nodes or not any(switches):
+            return
+        attrs = cmds.listAttr(constraint, ud=True)
+        for attr, sw in zip(attrs, switches):
+            if sw:
+                cmds.connectAttr(sw, "%s.%s" %(constraint, attr))
+
+
+
     def createPowerRibbon(self, startPoint,
                           endPoint,
                           name,

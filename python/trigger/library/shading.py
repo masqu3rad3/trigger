@@ -44,7 +44,7 @@ def find_file_node(plug):
                     return find_file_node(sub_plug)
 
 def get_shading_groups(mesh):
-    mesh_shape = cmds.listRelatives(mesh, children=True)[0]
+    mesh_shape = cmds.listRelatives(mesh, children=True, fullPath=True)[0]
     return cmds.listConnections(mesh_shape, type="shadingEngine")
 
 def get_shaders(mesh):

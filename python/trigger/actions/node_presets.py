@@ -50,21 +50,17 @@ class Node_presets(object):
         file_name, ext = os.path.splitext(file_name_and_ext)
         remote_presets_folder = os.path.join(base_folder, file_name)
 
-        for node in self.nodes:
+        for node_data in data_list:
+            node = node_data.get("name", None)
+            if not node_data.get("name", None) in self.nodes:
+                continue # if the node is not exist in trigger action list , skip that
             node_preset = os.path.join(remote_presets_folder, "%s.mel" %node)
             if not os.path.exists(node_preset) and not self.skip_non_existing:
                 log.error("The node preset cannot be found => %s" %node_preset, proceed=False)
             else:
                 log.warning("The node preset cannot be found => %s" %node_preset)
             self.load_preset(node, remote_presets_folder)
-
-
-        # for data in data_list:
-        #     node_name = data["name"]
-        #     node_type = data["type"]
-        #     preset_path = os.path.join(remote_presets_folder, "%s.mel" %node_name)
-        #     self.load_preset(node_name, remote_presets_folder)
-
+            self.set_user_defined_attributes(node, node_data.get("user_defined", []))
 
     def save_action(self, file_path=None, *args, **kwargs):
         """Mandatory Method - Save Action"""
@@ -83,6 +79,7 @@ class Node_presets(object):
             node_type = cmds.objectType(node)
             data["name"] = node
             data["type"] = node_type
+            data["user_defined"] = self.collect_user_defined_attributes(node)
             data_list.append(data)
             self.save_preset(node, remote_presets_folder)
 
@@ -176,4 +173,43 @@ class Node_presets(object):
         shutil.copy(source_file, target_path)
         cmds.nodePreset(load=(node, "trigger_tmp_preset"))
         os.remove(target_path)
+
+    @staticmethod
+    def collect_user_defined_attributes(node):
+        """
+        Returns the user attribute dictionary list for defined node
+
+        [
+            {
+            "name": "foot_roll",
+            "type": "float",
+            "value": 0.0
+            }
+        ]
+        """
+        ud_attrs = cmds.listAttr(node, ud=True) or []
+        ud_list = []
+        for attr in ud_attrs:
+            attr_data = {
+                "name": attr,
+                "type": cmds.attributeQuery(attr, node=node, at=True),
+                "value": cmds.getAttr("{0}.{1}".format(node, attr))
+            }
+            ud_list.append(attr_data)
+        return ud_list
+
+    @staticmethod
+    def set_user_defined_attributes(node, data_list):
+        """Sets the user attributes back from the json data"""
+        for data in data_list:
+            attr = "{0}.{1}".format(node, data["name"])
+            try:
+                cmds.setAttr(attr, data["value"])
+            except RuntimeError:
+                if cmds.listConnections(attr, source=True, destination=False):
+                    continue
+                elif cmds.getAttr(attr, l=True):
+                    continue
+                cmds.setAttr("{0}.{1}".format(node, data["name"]), data["value"], type=data["type"])
+        return
 

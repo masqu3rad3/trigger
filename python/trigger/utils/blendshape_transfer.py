@@ -340,6 +340,7 @@ class MainUI(QtWidgets.QDialog):
                 self.transfer.preview_mode_off()
 
         def on_transfer():
+            self.update_model()
             preview_pb.blockSignals(True)
             self.transfer.transfer()
             preview_pb.setChecked(False)

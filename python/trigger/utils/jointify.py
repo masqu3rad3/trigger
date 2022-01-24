@@ -48,8 +48,6 @@ class Bone(object):
 
         # set initial compensation value
         self._default_distance = cmds.getAttr("%s.translate" % self._name, time=0)[0]
-        # cmds.currentTime(0)
-        # self._default_distance = api.getWorldTranslation()
         cmds.setAttr("%s.inPoint" % self._positionCompensate_node, *self._default_distance)
 
         self._isClean = False
@@ -63,14 +61,6 @@ class Bone(object):
         cmds.rename(self._name, name)
         self._name = name
 
-    # @property
-    # def translate_mult(self):
-    #     return self._translateMult_node
-    #
-    # @property
-    # def rotate_mult(self):
-    #     return self._rotateMult_node
-
     def add_driver(self, t_matrix_plug, r_matrix_plug, position_offset=(0,0,0)):
         # connect the driver into nex available attrs
         t_id = attribute.getNextIndex("%s.matrixIn" % self._translateMult_node)
@@ -83,10 +73,6 @@ class Bone(object):
         offset = tuple(x - y for x, y in zip(self._default_distance, position_offset)) # subtract tuples
         cmds.setAttr("%s.inPoint" % self._positionCompensate_node, *offset)
         self._default_distance = offset
-
-    # @property
-    # def decompose_matrix(self):
-    #     return self._decomposeMatrix
 
     def is_clean(self):
         return self._isClean
@@ -106,12 +92,6 @@ class Bone(object):
     def is_active(self, time_gap, translate_threshold=0.01, rotate_threshold=0.5, decimal=3):
         """Checks if the object is moving between the given time gap"""
 
-        # def get_std_deviation(value_list):
-        #     avg = sum(value_list) / len(value_list)
-        #     var = sum((x - avg) ** 2 for x in value_list) / len(value_list)
-        #     std = var ** 0.5
-        #     return std
-
         for attr in "xyz":
             val_list = cmds.keyframe("%s.t%s" % (self._name, attr), q=True, valueChange=True, t=tuple(time_gap))
             deviation = round(get_std_deviation(val_list), decimal)
@@ -124,82 +104,6 @@ class Bone(object):
             if deviation > rotate_threshold:
                 return True
         return False
-
-# class Driver(object):
-#     def __init__(self, name="drv", bone=None, time_gap=None, parent_node=None):
-#         # self._name = cmds.spaceLocator(name=naming.uniqueName(name))[0]
-#         self._name = cmds.group(em=True, name=naming.uniqueName(name))
-#         if parent_node:
-#             cmds.parent(self._name, parent_node)
-#         self._bone = bone
-#         self._timeGap = tuple(time_gap)
-#
-#
-#     @property
-#     def bone(self):
-#         return self._bone
-#
-#     @bone.setter
-#     def bone(self, bone_object):
-#         self._bone = bone_object
-#
-#     @property
-#     def name(self):
-#         return self._name
-#
-#     @name.setter
-#     def name(self, name):
-#         cmds.rename(self._name, name)
-#         self._name = name
-#
-#     @property
-#     def time_gap(self):
-#         return self._timeGap
-#
-#     @time_gap.setter
-#     def time_gap(self, time_gap):
-#         self._timeGap = time_gap
-#
-#     def get_animcurves(self):
-#         connections = cmds.listConnections(self._name)
-#         anim_curves = cmds.ls(connections, type=['animCurveTA', 'animCurveTL', 'animCurveTT', 'animCurveTU'])
-#         return anim_curves
-#
-#     def copy_keys(self):
-#         """ copies the keys from the joint """
-#         assert self._bone, "bone to drive is not defined"
-#         assert self._timeGap, "time gap is not defined"
-#         time_offset = (self._timeGap[0] * -1)
-#         cmds.copyKey(self._bone.name, time=self._timeGap)
-#         cmds.pasteKey(self._name, timeOffset=time_offset)
-#         # set the handles and pre/post infinity
-#         cmds.keyTangent(self._name, inTangentType="spline", outTangentType="spline")
-#         cmds.setInfinity(self._name, pri='linear', poi='linear')
-#
-#     def drive(self):
-#         assert self._bone, "bone to drive is not defined"
-#         if not self._bone.is_clean():
-#             self._bone.clear_keys()
-#
-#         pick_translate = cmds.createNode("pickMatrix", name="pick_translate")
-#         cmds.setAttr("%s.useTranslate" % pick_translate, 1)
-#         cmds.setAttr("%s.useRotate" % pick_translate, 0)
-#         cmds.setAttr("%s.useShear" % pick_translate, 0)
-#         cmds.setAttr("%s.useScale" % pick_translate, 0)
-#         cmds.connectAttr("%s.worldMatrix[0]" % self._name, "%s.inputMatrix" % pick_translate)
-#         # cmds.connectAttr("%s.xformMatrix" % self._name, "%s.inputMatrix" % pick_translate)
-#
-#         pick_rotate = cmds.createNode("pickMatrix", name="pick_rotate")
-#         cmds.setAttr("%s.useTranslate" % pick_rotate, 0)
-#         cmds.setAttr("%s.useRotate" % pick_rotate, 1)
-#         cmds.setAttr("%s.useShear" % pick_rotate, 0)
-#         cmds.setAttr("%s.useScale" % pick_rotate, 0)
-#         cmds.connectAttr("%s.worldMatrix[0]" % self._name, "%s.inputMatrix" % pick_rotate)
-#         # cmds.connectAttr("%s.xformMatrix" % self._name, "%s.inputMatrix" % pick_rotate)
-#
-#         offset = cmds.getAttr("%s.translate" % self._name, time=0)[0]
-#         self._bone.add_driver(t_matrix_plug="%s.outputMatrix" % pick_translate, r_matrix_plug="%s.outputMatrix" % pick_rotate, position_offset=offset)
-
 
 class Driver(object):
     def __init__(self, name="drv", bone=None, time_gap=None, parent_node=None):
@@ -265,22 +169,6 @@ class Driver(object):
             rotate_out_plug = cmds.listConnections("{0}.rotate{1}".format(self._name, attr), source=True, destination=False, p=True)[0]
             cmds.connectAttr(rotate_out_plug, "{0}.inputRotate{1}".format(self._composeRotate, attr), f=True)
 
-        # pick_translate = cmds.createNode("pickMatrix", name="pick_translate")
-        # cmds.setAttr("%s.useTranslate" % pick_translate, 1)
-        # cmds.setAttr("%s.useRotate" % pick_translate, 0)
-        # cmds.setAttr("%s.useShear" % pick_translate, 0)
-        # cmds.setAttr("%s.useScale" % pick_translate, 0)
-        # cmds.connectAttr("%s.worldMatrix[0]" % self._name, "%s.inputMatrix" % pick_translate)
-        # # cmds.connectAttr("%s.xformMatrix" % self._name, "%s.inputMatrix" % pick_translate)
-        #
-        # pick_rotate = cmds.createNode("pickMatrix", name="pick_rotate")
-        # cmds.setAttr("%s.useTranslate" % pick_rotate, 0)
-        # cmds.setAttr("%s.useRotate" % pick_rotate, 1)
-        # cmds.setAttr("%s.useShear" % pick_rotate, 0)
-        # cmds.setAttr("%s.useScale" % pick_rotate, 0)
-        # cmds.connectAttr("%s.worldMatrix[0]" % self._name, "%s.inputMatrix" % pick_rotate)
-        # # cmds.connectAttr("%s.xformMatrix" % self._name, "%s.inputMatrix" % pick_rotate)
-
         offset = cmds.getAttr("%s.translate" % self._name, time=0)[0]
         # self._bone.add_driver(t_matrix_plug="%s.outputMatrix" % pick_translate, r_matrix_plug="%s.outputMatrix" % pick_rotate, position_offset=offset)
         self._bone.add_driver(t_matrix_plug="%s.outputMatrix" % self._composeTranslate, r_matrix_plug="%s.outputMatrix" % self._composeRotate, position_offset=offset)
@@ -330,20 +218,8 @@ class Shape(object):
             driver.clear_node()
 
         if self.deltaShape:
-            # print("-"*30)
-            # print("-"*30)
-            # print("-"*30)
-            # print(self.deltaShape, self.correctiveBs)
-            # print("-"*30)
-            # print("-"*30)
             deformers.add_target_blendshape(self.correctiveBs, self.deltaShape, weight=1.0)
             self._multiply_connect(jointify_attr, "{0}.{1}".format(self.correctiveBs, self.deltaShape), 1.0/self._duration)
-            # for nmb, attr in enumerate(self._hookAttrs):
-            #     self._multiply_connect(attr, "{0}.{1}".format(self.correctiveBs, self.deltaShape), 1.0)
-                # cmds.connectAttr(attr, "{0}.inputWeight[{1}]".format(combo_node, nmb))
-
-            # functions.deleteObject(self.deltaShape)
-
 
 
 
@@ -360,10 +236,8 @@ class Shape(object):
 
         else:
             # TODO maybe the _multiply connect node can be optimized if needed
-            self._multiply_connect(self._hookAttrs[0], jointify_attr, self._duration)
-
-
-
+            if self._hookAttrs:
+                self._multiply_connect(self._hookAttrs[0], jointify_attr, self._duration)
 
     def _multiply_connect(self, driver_attr, driven_attr, mult_value):
         if mult_value != 1:
@@ -378,8 +252,6 @@ class Shape(object):
         else:
             cmds.connectAttr(driver_attr, driven_attr)
 
-
-
 class Jointify(object):
 
 
@@ -390,10 +262,6 @@ class Jointify(object):
                  joint_iterations=30,
                  fbx_source=None,
                  root_nodes=None,
-                 # root_positions=None,
-                 # head_joint=None,
-                 # neck_joints=None,
-                 # head_position=None,
                  correctives=False,
                  corrective_threshold=0.01,
                  *args, **kwargs):
@@ -414,13 +282,6 @@ class Jointify(object):
         self.correctives = correctives
         self.correctiveThreshold = corrective_threshold
 
-        # self.headJoint = head_joint
-
-        # if head_joint and not head_position:
-        #     self.headPosition = api.getWorldTranslation(head_joint)
-        # else:
-        #     self.headPosition = head_position or [0, 0, 0]
-
         if root_nodes:
             if type(root_nodes) != list:
                 self.rootNodes = [root_nodes]
@@ -429,17 +290,13 @@ class Jointify(object):
         else:
             self.rootNodes = [cmds.spaceLocator(name="jointify_rootLoc")[0]]
 
-        # if root_nodes and not root_positions:
-        #     if type(root_nodes) != list:
-        #         root_nodes = [root_nodes]
-        #     self.rootPositions = [api.getWorldTranslation(x) for x in root_nodes]
-        # else:
-        #     self.rootPositions = [(0, 0, 0)]
-        #
-        # self.rootNodes = root_nodes
-
         # class variables
         self.dem_exec = self._get_dem_bones()
+        if not self.dem_exec:
+            msg = "DemBones executable cannot be found"
+            self.log.error(msg)
+            raise
+
         self.originalData = {}
         self.trainingData = {}
         self.demData = {}
@@ -729,24 +586,6 @@ class Jointify(object):
         jointify_sc = skinTransfer.skinTransfer(source=self.demData["meshTransform"], target=self.trainingData["mesh"])[0]
         cmds.setAttr("%s.nodeState" % jointify_sc, 1)
 
-
-
-        # import pdb
-        # pdb.set_trace()
-
-        # # # TODO disabled for testing
-        # # create a root joint and gather the animated ones under it
-        # # create the root joint:
-        # cmds.select(d=True)
-        # root_jnt = cmds.joint(name="jointifyRoot_jnt")
-        # cmds.setAttr("%s.t" % root_jnt, *self.headPosition)
-        # # parent the demJoints to the root bone and offset the key values accordingly
-        # cmds.parent(self.demData["joints"], root_jnt)
-        # for jnt in self.demData["joints"]:
-        #     cmds.keyframe("%s.tx" % jnt, vc=self.headPosition[0]*-1, relative=True)
-        #     cmds.keyframe("%s.ty" % jnt, vc=self.headPosition[1]*-1, relative=True)
-        #     cmds.keyframe("%s.tz" % jnt, vc=self.headPosition[2]*-1, relative=True)
-
         root_joints_data = {}
         for root_node in self.rootNodes:
             cmds.select(d=True)
@@ -778,10 +617,10 @@ class Jointify(object):
         shape_objects = []
 
 
-        print("Creating drivers and making connections...")
+        self.log.info("Creating drivers and making connections...")
         progress = Progressbar(title="Creating Drivers ...", max_value=len(self.originalData.items()))
 
-
+        self.log.debug("Original Data Items: %s" %self.originalData.items())
 
         for shape, data in self.originalData.items():
             if progress.is_cancelled():
@@ -829,20 +668,23 @@ class Jointify(object):
             shape_obj = Shape(name=shape, jointify_node=jointify_node, duration=data["timeGap"][1] - data["timeGap"][0], combination_of=data["combinations"], hook_attrs=scene_hooks, delta_shape=delta_shape, corrective_bs=self.correctiveBs)
             # create a driver for each active bone object
             for bone_obj in bone_objects:
+                self.log.debug("bone_obj: %s" %bone_obj)
                 if bone_obj.is_active(time_gap=data["timeGap"]):
                     drv_obj = Driver(name="drv", bone=bone_obj, time_gap=data["timeGap"], parent_node=drivers_grp)
                     drv_obj.copy_keys()
                     shape_obj.add_driver(drv_obj)
             shape_objects.append(shape_obj)
             progress.update()
+            self.log.debug("lastSuccess: %s" %shape)
 
         progress.close()
-
+        self.log.debug("WTF???")
 
         progress = Progressbar(title="Making Connections ...", max_value=len(shape_objects))
         for shape_obj in shape_objects:
             if progress.is_cancelled():
                 raise Exception("Cancelled by user")
+            self.log.debug("shape_obj: %s" %shape_obj._name)
             shape_obj.make_connections()
             progress.update()
             # cmds.progressBar(gMainProgressBar, edit=True, step=1)
@@ -866,12 +708,6 @@ class Jointify(object):
 
         end_time = time.time()
         self.log.info("Connections created in %s seconds" % (end_time-start_time))
-
-    # @staticmethod
-    # def get_closest_vector(node, vector_list):
-    #     node_pos = api.getWorldTranslation(node)
-    #     dist = lambda A, B: ((A[0]-B[0])**2 + (A[1]-B[1])**2 + (A[2]-B[2])**2)**0.5
-    #     return min(vector_list, key=lambda B: dist(node_pos,B))
 
     @staticmethod
     def _create_delta(neutral, non_sculpted, sculpted, name="delta_shape"):
@@ -927,7 +763,13 @@ class Jointify(object):
         if current_os == "Windows":
             executable = os.path.join(folder, "dembones", current_os, "DemBones.exe")
         elif current_os == "Linux" or os == "MacOs":
-            executable = os.path.join(folder, "dembones", current_os, "DemBones")
+            # executable = os.path.join(folder, "dembones", current_os, "DemBones")
+            try:
+                v = subprocess.call(["DemBones", "--version"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                return "DemBones"
+            except OSError:
+                return False
+
         else:
             msg = "Unknown Operating System"
             cmds.confirmDialog(title='OS Error', message=msg)
@@ -1013,12 +855,6 @@ class Jointify(object):
         # get the target item index list
         m_target_arr = om.MIntArray()
         m_bs_func.targetItemIndexList(target_index, mesh_mobj, m_target_arr)
-
-        # if m_target_arr.length() == 1:
-        #     return None
-
-        # drop the last element of array
-        # m_target_arr.remove(m_target_arr.length()-1)
 
         return [int((x - 5000) / 10.0) for x in m_target_arr]
 

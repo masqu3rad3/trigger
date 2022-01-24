@@ -137,6 +137,7 @@ class Session(object):
             property_attrs = jnt_dict.get("user_attributes")
             for attr_dict in property_attrs:
                 attribute.create_attribute(jnt, attr_dict)
+
         for jnt_dict in guides_data:
             if jnt_dict.get("parent"):
                 cmds.parent(jnt_dict.get("name"), jnt_dict.get("parent"))

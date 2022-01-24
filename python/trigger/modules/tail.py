@@ -126,6 +126,8 @@ class Tail(object):
             else:
                 cmds.parent(self.cont_off_list[jnt], self.scaleGrp)
 
+            cmds.makeIdentity(cont, a=True)
+
         attribute.drive_attrs("%s.contVis" % self.scaleGrp, ["%s.v" % x for x in self.cont_off_list])
         functions.colorize(self.controllers, self.colorCodes[0])
 

@@ -185,6 +185,7 @@ class Eye(object):
                 attribute.drive_attrs("%s.contVis" % self.scaleGrp, "%s.v" % self.groupCont)
                 cmds.delete(cmds.pointConstraint(self.otherEyeConts, self.groupCont, mo=False))
                 groupCont_off = functions.createUpGrp(self.groupCont, "OFF")
+                cmds.connectAttr("%s.scale" % self.scaleGrp, "%s.scale" %groupCont_off)
                 cmds.parent(groupCont_off, self.limbGrp)
             for cont in self.otherEyeConts:
                 g_follow = functions.getParent(cont)
@@ -193,10 +194,9 @@ class Eye(object):
                 connection.matrixConstraint(self.groupCont, g_follow, mo=True)
             else:
                 # if the group controller exists, update only its shape and rotation pivot
-                ## TODO: update group controller shape
-
                 # adjust the pivot
                 cmds.xform(self.groupCont, a=True, ws=True, piv=api.getCenter(self.otherEyeConts))
+                cmds.xform(functions.getParent(self.groupCont), a=True, ws=True, piv=api.getCenter(self.otherEyeConts))
 
                 bb = cmds.exactWorldBoundingBox(*self.otherEyeConts)
                 x_dist = abs(bb[0] - bb[3])

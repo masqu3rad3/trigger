@@ -13,11 +13,8 @@ from trigger.library.tools import replace_curve
 
 log = filelog.Filelog(logname=__name__, filename="trigger_log")
 
-log.warning("THIS CLASS IS DEPRECATED! USE trigger.objects.x")
-
 class Controller(object):
     def __init__(self, name="cont", shape="Circle", scale=(1,1,1), normal=(0,1,0), pos=None, side=None, tier=None):
-        super(Controller, self).__init__()
 
         self.side_dict = {"center": [17, 21, 24],
                           "left": [6, 18, 29],
@@ -149,7 +146,7 @@ class Controller(object):
         Drives the visibility of the controller with the given attribute
 
         Args:
-            attr: attribute to drive the visibility
+            driver_attr: attribute to drive the visibility
             up_level: (integer) if defined the upper group visibility will be used instead
             lock_and_hide: (bool) locks and hides the attribute after driven
 

@@ -44,6 +44,7 @@ def subtractList(list_of_values):
     return result
 
 class Weights(dict):
+    _api_version = cmds.about(api=True)
     def __init__(self):
         super(Weights, self).__init__()
         self.io = io.IO(file_name="tmp_weights.trw")
@@ -261,7 +262,7 @@ Then you can save and increment versions for all of them at once.
         return True
 
     @keepselection
-    def load_weights(self, deformer=None, file_path=None, method="index", ignore_name=True):
+    def load_weights(self, deformer=None, file_path=None, method="index", ignore_name=True, deferred=False):
         if not deformer and not self.deformer:
             log.error(
                 "No Deformer defined. A Deformer needs to be defined either as argument or class variable)")
@@ -272,6 +273,12 @@ Then you can save and increment versions for all of them at once.
             file_dir, file_name = os.path.split(self.io.file_path)
         else:
             file_dir, file_name = os.path.split(file_path)
+
+        if deferred:  # this is only for workaround for the bug introduced in 2022
+            # deferred argument bypasses all extra 'surgery' afterwards.
+            deferred_command = "cmds.deformerWeights('{0}', im=True, deformer='{1}', path='{2}', method='{3}', ignoreName={4})".format(file_name, deformer, file_dir, method, ignore_name)
+            cmds.evalDeferred(deferred_command)
+            return
 
         cmds.deformerWeights(file_name, im=True, deformer=deformer, path=file_dir, method=method, ignoreName=ignore_name)
 
@@ -327,7 +334,7 @@ Then you can save and increment versions for all of them at once.
         Returns:
 
         """
-
+        deferred_loading = False
         # load the weights file
         self.io.file_path = weights_file
         weights_data = self.io.read()
@@ -372,6 +379,8 @@ Then you can save and increment versions for all of them at once.
 
             elif deformer_type == "deltaMush":
                 cmds.deltaMush(affected[0], name=deformer_name)
+                if 20209999 < self._api_version < 20230000:
+                    deferred_loading = True
 
             else:
                 # TODO : SUPPORT FOR ALL DEFORMERS
@@ -402,10 +411,8 @@ Then you can save and increment versions for all of them at once.
                 cmds.setAttr("%s.%s" % (deformer_name, attr_name), attr_value)
 
         # finally load weights
-        self.load_weights(deformer=deformer_name, file_path=weights_file, method="index", ignore_name=False)
-
-
-        pass
+        # cmds.evalDeferred('self.load_weights(deformer=deformer_name, file_path=weights_file, method="index", ignore_name=False)')
+        self.load_weights(deformer=deformer_name, file_path=weights_file, method="index", ignore_name=False, deferred=deferred_loading)
 
     def save_matching_weights(self, deformer=None, file_path=None, vertexConnections=False, force=True, influencer=None):
         """
