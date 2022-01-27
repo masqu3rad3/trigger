@@ -1,4 +1,6 @@
 """Shotgrid toolkit"""
+import re
+
 from maya import cmds
 from rbl_pipe_sg import template, load, publish
 from trigger.core import filelog
@@ -13,31 +15,31 @@ sg_key = "nn5lcvmojkfqgbzUkhbwdh%nc"
 # Trigger
 #
 
-work_area_t = "asset_work_area_trigger"
+work_area = "asset_work_area_trigger"
 # definition: '@asset_root/work/trigger'
 
-guide_t = "asset_trigger_guide"
+guide = "asset_trigger_guide"
 # definition: '@asset_work_area_trigger/guides/{Asset}_{variant_name}_{part_name}_v{version}.trg'
 
-session_t = "asset_trigger_sessionfile"
-# definition: '@asset_work_area_trigger/{Asset}_{variant_name}_v{version}.tr'
+session = "asset_trigger_sessionfile"
+# definition: '@asset_work_area_trigger/{Asset}_{variant_name}_{part_name}_v{version}.tr'
 
-lookfile_t = "asset_trigger_lookfile"
+lookfile = "asset_trigger_lookfile"
 # definition: '@asset_work_area_trigger/look/{Asset}_{variant_name}_{action_name}_v{version}.trl'
 
-presetsfile_t = "asset_trigger_presetsfile"
+presetsfile = "asset_trigger_presetsfile"
 # definition: '@asset_work_area_trigger/presets/{Asset}_{variant_name}_{action_name}_v{version}.trp'
 
-script_t = "asset_trigger_script"
+script = "asset_trigger_script"
 # definition: '@asset_work_area_trigger/scripts/{Asset}_{variant_name}_{action_name}_v{version}.py'
 
-shapefile_t = "asset_trigger_shapefile"
-# definition: '@asset_work_area_trigger/shapes/{Asset}_{variant_name}_{action_name}_v{version}.trs'
+shapefile = "asset_trigger_shapefile"
+# definition: '@asset_work_area_trigger/shapes/{Asset}_{variant_name}_{action_name}_v{version}.ma'
 
-splitsfile_t = "asset_trigger_splitsfile"
+splitsfile = "asset_trigger_splitsfile"
 # definition: '@asset_work_area_trigger/splits/{Asset}_{variant_name}_{action_name}_v{version}.trsplit'
 
-weightfile_t = "asset_trigger_weightfile"
+weightfile = "asset_trigger_weightfile"
 # definition: '@asset_work_area_trigger/weights/{Asset}_{variant_name}_{action_name}_v{version}.trw'
 
 
@@ -49,7 +51,11 @@ class ShotTrigger(object):
     asset_type = None
     asset = None
     step = None
-    task = None
+    _task = None
+    variant = None
+    session = None
+    session_version = None
+    _sessions_db = {}
     def __init__(self):
         super(ShotTrigger, self).__init__()
 
@@ -65,7 +71,26 @@ class ShotTrigger(object):
                 self.asset_type = _fields.get("sg_asset_type")
                 self.asset = _fields.get("Asset", None)
                 self.step = _fields.get("Step", None)
-                self.task = _fields.get("variant_name", None)
+                # print("*****")
+                self.task = "{0}_{1}".format(self.variant, self.step)
+
+    @property
+    def task(self):
+        return self._task
+
+    @classmethod
+    @task.setter
+    def task(cls, val):
+        """When defining task, define the variation too"""
+        cls._task = val
+        cls.variant = cls._variant_from_task(val)
+
+    @staticmethod
+    def _variant_from_task(task_name):
+        match = re.match("([A-Z0-9a-z]*)(_([A-Z0-9a-z]*))", task_name)
+        if match:
+            return match.groups()[0]
+        return None
 
     def get_asset_types(self):
         """Returns all asset types in current project"""
@@ -87,6 +112,70 @@ class ShotTrigger(object):
         all_task_names = [x.get("content") for x in self._sg_load.get_asset_tasks(force=False, asset=asset_id, step=step_id)]
         # hide main_ tasks
         filtered_tasks = [x for x in all_task_names if "main_" not in x.lower()]
+
         return filtered_tasks
         # return [x.get("content") for x in self._sg_load.get_asset_tasks(force=False, asset=asset_id, step=step_id) if not x.get("content").startswith("main_")]
 
+    def get_sessions(self, asset, step, variant):
+        """Returns trigger session (.tr) files under the asset"""
+        _session_data = self.__get_session_data(asset, step, variant)
+        return list(sorted(_session_data.keys()))
+
+    def get_versions(self, asset, step, variant, session_part_name):
+        """Returns the versions of specified trigger session file"""
+        _session_data = self.__get_session_data(asset, step, variant)
+        return _session_data.get(session_part_name, [])
+
+    def __get_session_data(self, asset, step, variant):
+        """Returns dictionary containing session data where keys are part names, values are version numbers"""
+        self._sessions_db.clear()
+        tk = self._sg_template.tk  # get tk instance from sg_template, or elsewhere if you already have an instance
+        sg_temp = tk.templates.get(session)
+        fields = {"Asset": asset, "Step": step,
+                  "variant_name": variant}  # assemble all of the fields you know
+        paths = tk.paths_from_template(sg_temp, fields, ["version"],
+                                       skip_missing_optional_keys=True)  # the third arg is a list of all the fields you don't know, and you need to use the "skip_missing_optional_keys=True" option
+
+        for path in paths:
+            _f = sg_temp.get_fields(path)
+            part_name = _f.get("part_name", None)
+            ver = _f.get("version", None)
+            if self._sessions_db.get(part_name, None):
+                self._sessions_db[part_name].append(ver)
+            else:
+                self._sessions_db[part_name] = [ver]
+            # sg_temp.get_fields(path).get("part_name", None)
+        # part_names = [sg_temp.get_fields(path).get("part_name", None) for path in paths]
+        # part_names = sorted((list(set(part_names))))
+        # print(self._sg_template.fields_from_path(paths[0]))
+        return self._sessions_db  # This should list all the paths that match the above query
+
+    # def get_sessions(self):
+    #     """Returns trigger session (.tr) files under the asset"""
+    #     tk = self._sg_template.tk  # get tk instance from sg_template, or elsewhere if you already have an instance
+    #     sg_template = tk.templates.get(session)
+    #     fields = {"sg_asset_type": self.asset_type, "Asset": self.asset, "Step": self.step,
+    #               "variant_name": self.variant}  # assemble all of the fields you know
+    #     paths = tk.paths_from_template(sg_template, fields, ["version"],
+    #                                    skip_missing_optional_keys=True)  # the third arg is a list of all the fields you don't know, and you need to use the "skip_missing_optional_keys=True" option
+    #     return paths  # This should list all the paths that match the above query
+
+    def get_latest_path(self, trigger_template, **kwargs):
+        asset_id = self._sg_load.asset_id_from_name(self.asset)
+        print("asset_id", asset_id)
+        task_id = self._sg_load.task_id_from_name(self.task, asset_id=asset_id)
+        print("task_id", task_id)
+        version = self._sg_template.current_version_from_template_list([trigger_template], task_id) or 1
+        print("version", version)
+        path = self._sg_template.output_path_from_template(trigger_template, task_id, version, **kwargs)
+        return path
+        # pass
+
+    def get_next_path(self, trigger_template):
+        pass
+
+    def get_previous_path(self, trigger_template):
+        pass
+
+    def is_latest(self, trigger_template):
+        pass
