@@ -15,31 +15,31 @@ sg_key = "nn5lcvmojkfqgbzUkhbwdh%nc"
 # Trigger
 #
 
-work_area = "asset_work_area_trigger"
+work_area_t = "asset_work_area_trigger"
 # definition: '@asset_root/work/trigger'
 
-guide = "asset_trigger_guide"
+guide_t = "asset_trigger_guide"
 # definition: '@asset_work_area_trigger/guides/{Asset}_{variant_name}_{part_name}_v{version}.trg'
 
-session = "asset_trigger_sessionfile"
+session_t = "asset_trigger_sessionfile"
 # definition: '@asset_work_area_trigger/{Asset}_{variant_name}_{part_name}_v{version}.tr'
 
-lookfile = "asset_trigger_lookfile"
+lookfile_t = "asset_trigger_lookfile"
 # definition: '@asset_work_area_trigger/look/{Asset}_{variant_name}_{action_name}_v{version}.trl'
 
-presetsfile = "asset_trigger_presetsfile"
+presetsfile_t = "asset_trigger_presetsfile"
 # definition: '@asset_work_area_trigger/presets/{Asset}_{variant_name}_{action_name}_v{version}.trp'
 
-script = "asset_trigger_script"
+script_t = "asset_trigger_script"
 # definition: '@asset_work_area_trigger/scripts/{Asset}_{variant_name}_{action_name}_v{version}.py'
 
-shapefile = "asset_trigger_shapefile"
+shapefile_t = "asset_trigger_shapefile"
 # definition: '@asset_work_area_trigger/shapes/{Asset}_{variant_name}_{action_name}_v{version}.ma'
 
-splitsfile = "asset_trigger_splitsfile"
+splitsfile_t = "asset_trigger_splitsfile"
 # definition: '@asset_work_area_trigger/splits/{Asset}_{variant_name}_{action_name}_v{version}.trsplit'
 
-weightfile = "asset_trigger_weightfile"
+weightfile_t = "asset_trigger_weightfile"
 # definition: '@asset_work_area_trigger/weights/{Asset}_{variant_name}_{action_name}_v{version}.trw'
 
 
@@ -72,18 +72,21 @@ class ShotTrigger(object):
                 self.asset = _fields.get("Asset", None)
                 self.step = _fields.get("Step", None)
                 # print("*****")
-                self.task = "{0}_{1}".format(self.variant, self.step)
+                self.variant = _fields.get("variant_name", None)
+                self._task = "{0}_{1}".format(self.variant, self.step)
+                # get the first encountered session if there are tr sessions
+                _sessions = self.get_sessions(self.asset, self.step, self.variant)
+                self.session = _sessions[0] if _sessions else None
 
     @property
     def task(self):
         return self._task
 
-    @classmethod
     @task.setter
-    def task(cls, val):
+    def task(self, val):
         """When defining task, define the variation too"""
-        cls._task = val
-        cls.variant = cls._variant_from_task(val)
+        self._task = val
+        self.variant = self._variant_from_task(val)
 
     @staticmethod
     def _variant_from_task(task_name):
@@ -130,7 +133,7 @@ class ShotTrigger(object):
         """Returns dictionary containing session data where keys are part names, values are version numbers"""
         self._sessions_db.clear()
         tk = self._sg_template.tk  # get tk instance from sg_template, or elsewhere if you already have an instance
-        sg_temp = tk.templates.get(session)
+        sg_temp = tk.templates.get(session_t)
         fields = {"Asset": asset, "Step": step,
                   "variant_name": variant}  # assemble all of the fields you know
         paths = tk.paths_from_template(sg_temp, fields, ["version"],
@@ -144,10 +147,6 @@ class ShotTrigger(object):
                 self._sessions_db[part_name].append(ver)
             else:
                 self._sessions_db[part_name] = [ver]
-            # sg_temp.get_fields(path).get("part_name", None)
-        # part_names = [sg_temp.get_fields(path).get("part_name", None) for path in paths]
-        # part_names = sorted((list(set(part_names))))
-        # print(self._sg_template.fields_from_path(paths[0]))
         return self._sessions_db  # This should list all the paths that match the above query
 
     # def get_sessions(self):
@@ -159,6 +158,25 @@ class ShotTrigger(object):
     #     paths = tk.paths_from_template(sg_template, fields, ["version"],
     #                                    skip_missing_optional_keys=True)  # the third arg is a list of all the fields you don't know, and you need to use the "skip_missing_optional_keys=True" option
     #     return paths  # This should list all the paths that match the above query
+
+    # def get_next_session(self):
+
+    def request_new_session_path(self, part_name):
+        asset_id = self._sg_load.asset_id_from_name(self.asset)
+        task_id = self._sg_load.task_id_from_name(self.task, asset_id=asset_id)
+        # set the session file
+        self.session = part_name
+        return self._sg_template.output_path_from_template(session_t, task_id, 1, part_name=part_name)
+
+    def request_new_version_path(self):
+        """Version increment path"""
+        if not self.session:
+            log.error("No session (part_name) set")
+        asset_id = self._sg_load.asset_id_from_name(self.asset)
+        task_id = self._sg_load.task_id_from_name(self.task, asset_id=asset_id)
+        version = self._sg_template.current_version_from_template_list([session_t], task_id) or 0
+        path = self._sg_template.output_path_from_template(session_t, task_id, version + 1, part_name=self.session)
+        return path
 
     def get_latest_path(self, trigger_template, **kwargs):
         asset_id = self._sg_load.asset_id_from_name(self.asset)

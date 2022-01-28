@@ -1,8 +1,4 @@
-import os
-from trigger.library import naming
-# from trigger.ui.Qt import QtWidgets, QtCore, QtGui
-from trigger.ui import feedback
-from trigger.core import foolproof
+"""Custom shotgrid control widget for selecting trigger sessions and versions """
 
 from PySide2 import QtWidgets, QtCore
 
@@ -13,6 +9,8 @@ except ImportError:
 
 
 class AssetSelection(QtWidgets.QHBoxLayout):
+    new_session_signal = QtCore.Signal(str)
+    increment_version_signal = QtCore.Signal(str)
     def __init__(self, *args, **kwargs):
         super(AssetSelection, self).__init__(*args, **kwargs)
 
@@ -25,95 +23,80 @@ class AssetSelection(QtWidgets.QHBoxLayout):
         size_policy.setHorizontalStretch(1)
         size_policy.setVerticalStretch(0)
 
-        _asset_type_lay = QtWidgets.QVBoxLayout()
-        _asset_type_lb = QtWidgets.QLabel(text="Asset Type")
-        _asset_type_lb.setAlignment(QtCore.Qt.AlignCenter)
-        _asset_type_lay.addWidget(_asset_type_lb)
-        self.asset_type_combo = QtWidgets.QComboBox()
-        _asset_type_lay.addWidget(self.asset_type_combo)
-        self.addLayout(_asset_type_lay)
-
-        _asset_lay = QtWidgets.QVBoxLayout()
-        _asset_lb = QtWidgets.QLabel(text="Asset")
-        _asset_lb.setAlignment(QtCore.Qt.AlignCenter)
-        _asset_lay.addWidget(_asset_lb)
-        self.asset_combo = QtWidgets.QComboBox()
-        _asset_lay.addWidget(self.asset_combo)
-        self.addLayout(_asset_lay)
-
-        _step_lay = QtWidgets.QVBoxLayout()
-        _step_lb = QtWidgets.QLabel(text="Step")
-        _step_lb.setAlignment(QtCore.Qt.AlignCenter)
-        _step_lay.addWidget(_step_lb)
-        self.step_combo = QtWidgets.QComboBox()
-        _step_lay.addWidget(self.step_combo)
-        self.addLayout(_step_lay)
-
-        _task_lay = QtWidgets.QVBoxLayout()
-        _task_lb = QtWidgets.QLabel(text="Task")
-        _task_lb.setAlignment(QtCore.Qt.AlignCenter)
-        _task_lay.addWidget(_task_lb)
-        self.task_combo = QtWidgets.QComboBox()
-        self.task_combo.setContentsMargins(0,0,0,0)
-        _task_lay.addWidget(self.task_combo)
-        self.addLayout(_task_lay)
-
-        _session_lay = QtWidgets.QVBoxLayout()
-        _session_lb = QtWidgets.QLabel(text="Session")
-        _session_lb.setAlignment(QtCore.Qt.AlignCenter)
-        _session_lay.addWidget(_session_lb)
-        _session_h_lay = QtWidgets.QHBoxLayout()
-        _session_h_lay.setMargin(0)
-        _session_h_lay.setSpacing(0)
-        _session_h_lay.setContentsMargins(0,0,0,0)
-
-        _session_lay.setMargin(0)
-        _session_lay.setSpacing(0)
-        _session_lay.setContentsMargins(0,0,0,0)
-
-
-        self.session_combo = QtWidgets.QComboBox()
-        self.session_combo.setMinimumHeight(30)
-        # self.session_combo.setSizePolicy(size_policy)
-        self.new_session_pb = QtWidgets.QPushButton(text="+")
-        self.new_session_pb.setMinimumHeight(30)
-        # self.new_session_pb.setFixedWidth(30)
-        _session_h_lay.addWidget(self.session_combo)
-        _session_h_lay.addWidget(self.new_session_pb)
-        _session_lay.addLayout(_session_h_lay)
-        self.addLayout(_session_lay)
-
-        _version_lay = QtWidgets.QVBoxLayout()
-        _version_lb = QtWidgets.QLabel(text="Version")
-        _version_lb.setAlignment(QtCore.Qt.AlignCenter)
-        _version_lay.addWidget(_version_lb)
-        _version_h_lay = QtWidgets.QHBoxLayout()
-        self.version_combo = QtWidgets.QComboBox()
-        self.new_version_pb = QtWidgets.QPushButton(text="+")
-        self.new_version_pb.setFixedWidth(30)
-        _version_h_lay.addWidget(self.version_combo)
-        _version_h_lay.addWidget(self.new_version_pb)
-        _version_lay.addLayout(_version_h_lay)
-        self.addLayout(_version_lay)
-
-        # # add new session button
-        # self._add_session_lay = QtWidgets.QVBoxLayout()
-        # self._add_session_lb = QtWidgets.QLabel(text="")
-        # self._add_session_lb.setAlignment(QtCore.Qt.AlignCenter)
-        # self._add_session_lay.addWidget(self._add_session_lb)
-        # self.add_session_pb = QtWidgets.QPushButton(text="+")
-        # self.add_session_pb.setFixedWidth(40)
-        # self._add_session_lay.addWidget(self.add_session_pb)
-        # self.addLayout(self._add_session_lay)
+        self.asset_type_combo = self.__insert_single_combo(self, "Asset Type")
+        self.asset_combo = self.__insert_single_combo(self, "Asset")
+        self.step_combo = self.__insert_single_combo(self, "Step")
+        self.task_combo = self.__insert_single_combo(self, "Task")
+        self.session_combo, self.new_session_pb = self.__insert_combo_with_add_button(self, "Session")
+        self.version_combo, self.new_version_pb = self.__insert_combo_with_add_button(self, "Version")
 
         self.populate_asset_types()
 
+        # ####################
+        # SIGNALS
+        # ####################
         self.asset_type_combo.activated.connect(self.set_asset_type)
         self.asset_combo.activated.connect(self.set_asset)
         self.step_combo.activated.connect(self.set_step)
         self.task_combo.activated.connect(self.set_task)
         self.session_combo.activated.connect(self.set_session)
         self.version_combo.activated.connect(self.set_version)
+
+        self.new_session_pb.clicked.connect(self.new_session_dialog)
+        self.new_version_pb.clicked.connect(self.increment_version)
+
+    def __validate_button_states(self):
+        """Disables the new session and/or new version buttons depending on the task/session availability"""
+        task_state = bool(self.task_combo.count())
+        self.new_session_pb.setEnabled(task_state)
+        session_state = bool(self.session_combo.count())
+        self.new_version_pb.setEnabled(session_state)
+
+    def new_session_dialog(self):
+        w = QtWidgets.QWidget()
+        self.addWidget(w)
+        new_session_name, ok = QtWidgets.QInputDialog.getText(w, "New Session", "Enter new session name:")
+        if ok:
+            new_session_path = self.sgh.request_new_session_path(new_session_name)
+            self.new_session_signal.emit(new_session_path)
+            print("should be emitted")
+
+    def increment_version(self):
+        self.sgh.request_new_version_path()
+
+    @staticmethod
+    def __insert_single_combo(layout, label_text=""):
+        """Adds a single combobox (label on top) to the layout widget"""
+        _hold_vlay = QtWidgets.QVBoxLayout()
+        _label = QtWidgets.QLabel(text=label_text)
+        _label.setAlignment(QtCore.Qt.AlignCenter)
+        _hold_vlay.addWidget(_label)
+        combo = QtWidgets.QComboBox()
+        combo.setMinimumHeight(25)
+        _hold_vlay.addWidget(combo)
+        layout.addLayout(_hold_vlay)
+        return combo
+
+    @staticmethod
+    def __insert_combo_with_add_button(layout, label_text="", button_text="+"):
+        """Adds a combobox (label on top) with button to the layout widget"""
+        _hold_vlay = QtWidgets.QVBoxLayout()
+        _label = QtWidgets.QLabel(text=label_text)
+        _label.setAlignment(QtCore.Qt.AlignCenter)
+        _hold_vlay.addWidget(_label)
+        _hold_hlay = QtWidgets.QHBoxLayout()
+        _hold_hlay.setSpacing(1)
+        combo = QtWidgets.QComboBox()
+        combo.setMinimumHeight(25)
+        button = QtWidgets.QPushButton(text=button_text)
+        button.setMinimumHeight(24)
+        button.setFixedWidth(25)
+        _hold_hlay.addWidget(combo)
+        _hold_hlay.addWidget(button)
+        _hold_hlay.setContentsMargins(0, 0, 0, 0)
+        _hold_vlay.addLayout(_hold_hlay)
+        layout.addLayout(_hold_vlay)
+        return combo, button
 
     def populate_asset_types(self):
         self.asset_type_combo.clear()
@@ -150,7 +133,7 @@ class AssetSelection(QtWidgets.QHBoxLayout):
         current_step = self.sgh.step or self.step_combo.currentText()
         self.task_combo.addItems(self.sgh.get_tasks(current_asset, current_step))
         if self.sgh.task:
-            self.task_combo.setCurrentText(self.sgh.task)
+            self.task_combo.setCurrentText(str(self.sgh.task))
         else:
             self.task_combo.setCurrentIndex(0)
         self.populate_sessions()
@@ -166,6 +149,7 @@ class AssetSelection(QtWidgets.QHBoxLayout):
         else:
             self.session_combo.setCurrentIndex(0)
         self.populate_versions()
+        self.__validate_button_states()
 
     def populate_versions(self):
         self.version_combo.clear()
@@ -179,29 +163,37 @@ class AssetSelection(QtWidgets.QHBoxLayout):
             self.version_combo.addItems(self.sgh.get_versions(asset, step, variant, session))
         else:
             self.version_combo.setCurrentIndex(self.version_combo.count()-1)
+        self.__validate_button_states()
 
     def set_asset_type(self):
+        print("debug")
         self.sgh.asset_type = self.asset_type_combo.currentText()
         self.populate_assets()
+        self.set_asset()
 
     def set_asset(self):
         self.sgh.asset = self.asset_combo.currentText()
         self.populate_steps()
+        self.set_step()
 
     def set_step(self):
         self.sgh.step = self.step_combo.currentText()
         self.populate_tasks()
+        self.set_task()
 
     def set_task(self):
         self.sgh.task = self.task_combo.currentText()
         self.populate_sessions()
+        self.set_session()
 
     def set_session(self):
         self.sgh.session = self.session_combo.currentText()
         self.populate_versions()
+        self.set_version()
 
     def set_version(self):
-        self.sgh.session_version = int(self.version_combo.currentText())
+        if self.version_combo.currentText():
+            self.sgh.session_version = int(self.version_combo.currentText())
 
 
 
