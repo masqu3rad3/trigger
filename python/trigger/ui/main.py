@@ -20,6 +20,9 @@ from trigger.library import naming
 
 from trigger.core import filelog
 
+from trigger import version_control
+from trigger.ui.widgets.asset_selection import AssetSelection
+
 log = filelog.Filelog(logname=__name__, filename="trigger_log")
 db = database.Database()
 
@@ -132,7 +135,12 @@ class MainUI(QtWidgets.QMainWindow):
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.setCentralWidget(self.centralwidget)
 
+        self.centralWidget_vLay = QtWidgets.QVBoxLayout(self.centralwidget)  # this is only to fit the tab widget
+        # self.centralWidget_vLay.setSpacing(0)
+
         # Build the UI elements
+        if version_control.controller:
+            self.asset_control()
         self.buildTabsUI()
         self.buildBarsUI()
         self.buildRiggingUI()
@@ -160,7 +168,22 @@ class MainUI(QtWidgets.QMainWindow):
         self.menuFile = None
         self.statusbar = None
 
+        # force open the trigger session on initialization if a session found
+        if version_control.controller:
+            self.asset_selection_w.set_version()
+
         log.info("Interface Loaded Successfully")
+
+    def asset_control(self):
+        _asset_selection_vlay = QtWidgets.QVBoxLayout()
+        self.centralWidget_vLay.addLayout(_asset_selection_vlay)
+        self.asset_selection_w = AssetSelection()
+        _asset_selection_vlay.addLayout(self.asset_selection_w)
+
+        self.asset_selection_w.new_session_signal.connect(self.vcs_new_session)
+        # self.asset_selection_w.increment_version_signal.connect(self.vcs_new_session)
+        self.asset_selection_w.increment_version_signal.connect(self.vcs_new_version)
+        self.asset_selection_w.session_changed_signal.connect(self.vcs_open_session)
 
     def keyPressEvent(self, e):
         super(MainUI, self).keyPressEvent(e)
@@ -277,8 +300,7 @@ class MainUI(QtWidgets.QMainWindow):
         makeup_action.triggered.connect(self.on_makeup)
 
     def buildTabsUI(self):
-        self.centralWidget_vLay = QtWidgets.QVBoxLayout(self.centralwidget)  # this is only to fit the tab widget
-        self.centralWidget_vLay.setSpacing(0)
+
         self.tabWidget = QtWidgets.QTabWidget(self.centralwidget)
 
         self.rigging_tab = QtWidgets.QWidget()
@@ -676,7 +698,6 @@ class MainUI(QtWidgets.QMainWindow):
         self.rig_actions_listwidget.doubleClicked.connect(self.on_run_action)
         # TODO: Make a seperate method for running run actions wih progressbar
 
-
     def refresh(self):
         row = self.rig_actions_listwidget.currentRow()
         self.populate_actions()
@@ -708,7 +729,6 @@ class MainUI(QtWidgets.QMainWindow):
         info_te.setText(info)
         message_layout.addWidget(info_te)
         self.message_dialog.show()
-
 
     def on_action_rename(self):
         action_name = self.rig_actions_listwidget.currentItem().text()
@@ -770,24 +790,27 @@ class MainUI(QtWidgets.QMainWindow):
             return
 
     def new_trigger(self):
-        if self.actions_handler.is_modified():
-            if self.actions_handler.currentFile:
-                file_name = os.path.basename(self.actions_handler.currentFile)
-            else:
-                file_name = "untitled"
-            state = self.feedback.pop_question(title="Save Changes?", text="Save changes to %s?" %file_name, buttons=["yes", "no", "cancel"])
-            if state == "yes":
-                self.save_trigger()
-            elif state == "no":
-                pass
-            else:
-                return
+        if not self._validate_unsaved_work():
+            return False
+        # if self.actions_handler.is_modified():
+        #     if self.actions_handler.currentFile:
+        #         file_name = os.path.basename(self.actions_handler.currentFile)
+        #     else:
+        #         file_name = "untitled"
+        #     state = self.feedback.pop_question(title="Save Changes?", text="Save changes to %s?" %file_name, buttons=["yes", "no", "cancel"])
+        #     if state == "yes":
+        #         self.save_trigger()
+        #     elif state == "no":
+        #         pass
+        #     else:
+        #         return
 
         self.actions_handler.new_session()
         self.populate_actions()
         self.update_title()
+        return True
 
-    def open_trigger(self, file_path=None):
+    def _validate_unsaved_work(self):
         if self.actions_handler.is_modified():
             if self.actions_handler.currentFile:
                 file_name = os.path.basename(self.actions_handler.currentFile)
@@ -796,22 +819,41 @@ class MainUI(QtWidgets.QMainWindow):
             state = self.feedback.pop_question(title="Save Changes?", text="Save changes to %s?" %file_name, buttons=["yes", "no", "cancel"])
             if state == "yes":
                 self.save_trigger()
+                return True
             elif state == "no":
-                pass
+                return True
             else:
-                return
+                return False
+        else:
+            return True
+    def open_trigger(self, file_path=None):
+        if not self._validate_unsaved_work():
+            return False
+        # if self.actions_handler.is_modified():
+        #     if self.actions_handler.currentFile:
+        #         file_name = os.path.basename(self.actions_handler.currentFile)
+        #     else:
+        #         file_name = "untitled"
+        #     state = self.feedback.pop_question(title="Save Changes?", text="Save changes to %s?" %file_name, buttons=["yes", "no", "cancel"])
+        #     if state == "yes":
+        #         self.save_trigger()
+        #     elif state == "no":
+        #         pass
+        #     else:
+        #         return
         if not file_path:
             dlg = QtWidgets.QFileDialog.getOpenFileName(self, str("Open Trigger Session"), self.actions_handler.currentFile, str("Trigger Session (*.tr)"))
             if dlg[0]:
                 file_path = os.path.normpath(dlg[0])
             else:
-                return
+                return False
 
         self.actions_handler.load_session(file_path)
         db.recentSessions.add(file_path)
         self.populate_actions()
         self.update_title()
         self.populate_recents()
+        return True
         # self.buildBarsUI()
 
     def import_trigger(self, file_path=None):
@@ -854,6 +896,39 @@ class MainUI(QtWidgets.QMainWindow):
             self.populate_recents()
         else:
             self.save_as_trigger()
+
+    def vcs_new_session(self, path):
+        """Creates and saves a new session using the path coming from version control"""
+        if not self._validate_unsaved_work():
+            return False
+        if not self.new_trigger():
+            return False
+        self.actions_handler.save_session(os.path.normpath(path))
+        db.recentSessions.add(self.actions_handler.currentFile)
+        self.asset_selection_w.populate_sessions()
+        self.update_title()
+        self.populate_recents()
+        return True
+
+    def vcs_new_version(self, path):
+        """Increments the version using the path coming from the version control"""
+        if not self._validate_unsaved_work():
+            return False
+        # if not self.new_trigger():
+        #     return False
+        print("GEEE")
+        self.actions_handler.save_session(os.path.normpath(path))
+        db.recentSessions.add(self.actions_handler.currentFile)
+        self.asset_selection_w.populate_versions()
+        self.update_title()
+        self.populate_recents()
+        return True
+
+    def vcs_open_session(self, path):
+        if not self._validate_unsaved_work():
+            return False
+        self.open_trigger(path)
+        # print(path)
 
     def action_settings_menu(self):
         """Builds the action settings depending on action type"""

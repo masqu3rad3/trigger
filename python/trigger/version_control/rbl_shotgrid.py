@@ -43,23 +43,35 @@ weightfile_t = "asset_trigger_weightfile"
 # definition: '@asset_work_area_trigger/weights/{Asset}_{variant_name}_{action_name}_v{version}.trw'
 
 
-class ShotTrigger(object):
+class VersionControl(object):
     _sg_load = load.ShotgunLoad(sg_script, sg_key)
     _sg_template = template.SGTemplate(sg_script, sg_key)
 
-    project = None
-    asset_type = None
-    asset = None
-    step = None
-    _task = None
-    variant = None
-    session = None
-    session_version = None
-    _sessions_db = {}
+    controller = "rbl_shotgrid"
+    # project = None
+    # asset_type = None
+    # asset = None
+    # step = None
+    # _task = None
+    # variant = None
+    # session = None
+    # session_version = None
+    # _sessions_db = {}
     def __init__(self):
-        super(ShotTrigger, self).__init__()
+        super(VersionControl, self).__init__()
 
         self.work_file = cmds.file(sn=True, q=True)
+
+        self.project = None
+        self.asset_type = None
+        self.asset = None
+        self.step = None
+        self._task = None
+        self.variant = None
+        self.session = None
+        self.session_version = None
+        self._sessions_db = {}
+
         self._initialize()
 
     def _initialize(self):
@@ -168,15 +180,32 @@ class ShotTrigger(object):
         self.session = part_name
         return self._sg_template.output_path_from_template(session_t, task_id, 1, part_name=part_name)
 
+    # def request_new_version_path(self):
+    #     """Version increment path"""
+    #     if not self.session:
+    #         log.error("No session (part_name) set")
+    #     asset_id = self._sg_load.asset_id_from_name(self.asset)
+    #     task_id = self._sg_load.task_id_from_name(self.task, asset_id=asset_id)
+    #     version = self._sg_template.current_version_from_template_list([session_t], task_id) or 0
+    #     print(self.asset, self.task, self.session, version)
+    #     path = self._sg_template.output_path_from_template(session_t, task_id, version + 1, part_name=self.session)
+    #     return path
     def request_new_version_path(self):
         """Version increment path"""
         if not self.session:
             log.error("No session (part_name) set")
         asset_id = self._sg_load.asset_id_from_name(self.asset)
         task_id = self._sg_load.task_id_from_name(self.task, asset_id=asset_id)
-        version = self._sg_template.current_version_from_template_list([session_t], task_id) or 0
+        # version = self._sg_template.current_version_from_template_list([session_t], task_id) or 0
+        _dict = self.__get_session_data(self.asset, self.step, self.variant)
+        version = max(_dict.get(self.session, [0]))
         path = self._sg_template.output_path_from_template(session_t, task_id, version + 1, part_name=self.session)
         return path
+
+    def get_session_path(self):
+        asset_id = self._sg_load.asset_id_from_name(self.asset)
+        task_id = self._sg_load.task_id_from_name(self.task, asset_id=asset_id)
+        return self._sg_template.output_path_from_template(session_t, task_id, self.session_version, part_name=self.session)
 
     def get_latest_path(self, trigger_template, **kwargs):
         asset_id = self._sg_load.asset_id_from_name(self.asset)

@@ -1,23 +1,19 @@
 """Custom shotgrid control widget for selecting trigger sessions and versions """
 
 from PySide2 import QtWidgets, QtCore
-
-try:
-    from trigger.base import rbl_shotgrid as shotgrid
-except ImportError:
-    shotgrid = None
-
+from trigger import version_control
 
 class AssetSelection(QtWidgets.QHBoxLayout):
     new_session_signal = QtCore.Signal(str)
     increment_version_signal = QtCore.Signal(str)
-    def __init__(self, *args, **kwargs):
-        super(AssetSelection, self).__init__(*args, **kwargs)
+    session_changed_signal = QtCore.Signal(str)
+    def __init__(self):
+        super(AssetSelection, self).__init__()
 
-        if not shotgrid:
+        if not version_control:
             return
         else:
-            self.sgh = shotgrid.ShotTrigger()
+            self.sgh = version_control.controller.VersionControl()
 
         size_policy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed)
         size_policy.setHorizontalStretch(1)
@@ -30,6 +26,9 @@ class AssetSelection(QtWidgets.QHBoxLayout):
         self.session_combo, self.new_session_pb = self.__insert_combo_with_add_button(self, "Session")
         self.version_combo, self.new_version_pb = self.__insert_combo_with_add_button(self, "Version")
 
+        # self.parent_widget = QtWidgets.QWidget()
+        # self.addWidget(self.parent_widget)
+
         self.populate_asset_types()
 
         # ####################
@@ -41,6 +40,12 @@ class AssetSelection(QtWidgets.QHBoxLayout):
         self.task_combo.activated.connect(self.set_task)
         self.session_combo.activated.connect(self.set_session)
         self.version_combo.activated.connect(self.set_version)
+        # self.asset_type_combo.currentTextChanged.connect(self.set_asset_type)
+        # self.asset_combo.currentTextChanged.connect(self.set_asset)
+        # self.step_combo.currentTextChanged.connect(self.set_step)
+        # self.task_combo.currentTextChanged.connect(self.set_task)
+        # self.session_combo.currentTextChanged.connect(self.set_session)
+        # self.version_combo.currentTextChanged.connect(self.set_version)
 
         self.new_session_pb.clicked.connect(self.new_session_dialog)
         self.new_version_pb.clicked.connect(self.increment_version)
@@ -53,16 +58,22 @@ class AssetSelection(QtWidgets.QHBoxLayout):
         self.new_version_pb.setEnabled(session_state)
 
     def new_session_dialog(self):
-        w = QtWidgets.QWidget()
-        self.addWidget(w)
-        new_session_name, ok = QtWidgets.QInputDialog.getText(w, "New Session", "Enter new session name:")
+        # w = QtWidgets.QWidget()
+        # self.addWidget(w)
+        new_session_name, ok = QtWidgets.QInputDialog.getText(self.asset_type_combo, "New Session", "Enter new session name:")
+        # new_session_name, ok = QtWidgets.QInputDialog.getText(self.parent_widget, "New Session", "Enter new session name:")
+        # new_session_name, ok = QtWidgets.QInputDialog.getText(w, "New Session", "Enter new session name:")
         if ok:
             new_session_path = self.sgh.request_new_session_path(new_session_name)
             self.new_session_signal.emit(new_session_path)
-            print("should be emitted")
+            print("emitted")
 
     def increment_version(self):
-        self.sgh.request_new_version_path()
+        # self.set_session()
+        # self.set_version()
+        new_version_path = self.sgh.request_new_version_path()
+        self.increment_version_signal.emit(new_version_path)
+        # self.populate_versions(set_last=True)
 
     @staticmethod
     def __insert_single_combo(layout, label_text=""):
@@ -151,18 +162,35 @@ class AssetSelection(QtWidgets.QHBoxLayout):
         self.populate_versions()
         self.__validate_button_states()
 
+    # def populate_versions(self, set_last=False):
+    #     self.version_combo.clear()
+    #     asset = self.sgh.asset or self.asset_combo.currentText()
+    #     step = self.sgh.step or self.step_combo.currentText()
+    #     variant = self.sgh.variant or self.sgh._variant_from_task(self.task_combo.currentText())
+    #     session = self.sgh.session or self.session_combo.currentText()
+    #     _int_version_list = sorted(self.sgh.get_versions(asset, step, variant, session))
+    #     _str_version_list = ([str(x) for x in _int_version_list])
+    #     self.version_combo.addItems(_str_version_list)
+    #     if self.sgh.session_version and not set_last:
+    #         self.version_combo.setCurrentText(str(self.sgh.session_version))
+    #     else:
+    #         last_version = self.version_combo.count()-1
+    #         self.version_combo.setCurrentIndex(last_version)
+    #         self.sgh.session_version = last_version
+    #     self.__validate_button_states()
+
     def populate_versions(self):
         self.version_combo.clear()
         asset = self.sgh.asset or self.asset_combo.currentText()
         step = self.sgh.step or self.step_combo.currentText()
         variant = self.sgh.variant or self.sgh._variant_from_task(self.task_combo.currentText())
         session = self.sgh.session or self.session_combo.currentText()
-        _str_version_list = sorted([str(x) for x in self.sgh.get_versions(asset, step, variant, session)])
+        _int_version_list = sorted(self.sgh.get_versions(asset, step, variant, session))
+        _str_version_list = ([str(x) for x in _int_version_list])
         self.version_combo.addItems(_str_version_list)
-        if self.sgh.session_version:
-            self.version_combo.addItems(self.sgh.get_versions(asset, step, variant, session))
-        else:
-            self.version_combo.setCurrentIndex(self.version_combo.count()-1)
+        last_version = self.version_combo.count()-1
+        self.version_combo.setCurrentIndex(last_version)
+        # self.sgh.session_version = last_version
         self.__validate_button_states()
 
     def set_asset_type(self):
@@ -188,12 +216,16 @@ class AssetSelection(QtWidgets.QHBoxLayout):
 
     def set_session(self):
         self.sgh.session = self.session_combo.currentText()
+        # self.sgh.session_version = None # makes sure when switching back, it will pick up the latest
         self.populate_versions()
         self.set_version()
 
     def set_version(self):
         if self.version_combo.currentText():
+            print("pre", self.sgh.session_version)
             self.sgh.session_version = int(self.version_combo.currentText())
+            print("after", self.sgh.session_version)
+            self.session_changed_signal.emit(self.sgh.get_session_path())
 
 
 
