@@ -118,12 +118,11 @@ def shrink_wrap_eyebulge(
 
 
 def parse_sides(input_list):
-    middle = float(len(input_list)) / 2
+    middle = int(float(len(input_list))/2)
     if middle % 2 != 0:
-        return input_list[:len(input_list) / 2], [input_list[int(middle - .5)]], list(
-            reversed(input_list[(len(input_list) / 2) + 1:]))
+        return input_list[:int(len(input_list)/2)], [input_list[int(middle - .5)]], list(reversed(input_list[int((len(input_list)/2)+1):]))
     else:
-        return input_list[:len(input_list) / 2], [], list(reversed(input_list[(len(input_list) / 2):]))
+        return input_list[:int(len(input_list)/2)], [], list(reversed(input_list[int((len(input_list)/2)):]))
 
 
 def lip_zipper(upper_lip_edges, lower_lip_edges, morph_mesh, final_mesh, pair_count, controller=None):
