@@ -1,23 +1,20 @@
 """Custom shotgrid control widget for selecting trigger sessions and versions """
 
-from PySide2 import QtWidgets, QtCore
+from trigger.ui.Qt import QtWidgets, QtCore
+# from PySide2 import QtWidgets, QtCore
 from trigger import version_control
 
-class AssetSelection(QtWidgets.QHBoxLayout):
+class SessionSelection(QtWidgets.QHBoxLayout):
     new_session_signal = QtCore.Signal(str)
     increment_version_signal = QtCore.Signal(str)
     session_changed_signal = QtCore.Signal(str)
     def __init__(self):
-        super(AssetSelection, self).__init__()
+        super(SessionSelection, self).__init__()
 
         if not version_control:
             return
         else:
             self.sgh = version_control.controller.VersionControl()
-
-        size_policy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed)
-        size_policy.setHorizontalStretch(1)
-        size_policy.setVerticalStretch(0)
 
         self.asset_type_combo = self.__insert_single_combo(self, "Asset Type")
         self.asset_combo = self.__insert_single_combo(self, "Asset")

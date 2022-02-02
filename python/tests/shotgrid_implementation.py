@@ -57,11 +57,11 @@ shot_trigger.get_tasks(shot_trigger.asset, shot_trigger.step)
 # set the
 
 from PySide2 import QtWidgets
-from trigger.ui.widgets import asset_selection
+from trigger.ui.vcs_widgets import session_selection
 reload(asset_selection)
 # from trigger.ui.custom_widgets import ListBoxLayout
 d = QtWidgets.QDialog()
-r = asset_selection.AssetSelection()
+r = asset_selection.SessionSelection()
 r.new_session_signal.connect(lambda x: print("hede_%s" %x))
 d.setLayout(r)
 

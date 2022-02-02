@@ -21,7 +21,7 @@ from trigger.library import naming
 from trigger.core import filelog
 
 from trigger import version_control
-from trigger.ui.widgets.asset_selection import AssetSelection
+from trigger.ui.vcs_widgets.session_selection import SessionSelection
 
 log = filelog.Filelog(logname=__name__, filename="trigger_log")
 db = database.Database()
@@ -177,7 +177,7 @@ class MainUI(QtWidgets.QMainWindow):
     def asset_control(self):
         _asset_selection_vlay = QtWidgets.QVBoxLayout()
         self.centralWidget_vLay.addLayout(_asset_selection_vlay)
-        self.asset_selection_w = AssetSelection()
+        self.asset_selection_w = SessionSelection()
         _asset_selection_vlay.addLayout(self.asset_selection_w)
 
         self.asset_selection_w.new_session_signal.connect(self.vcs_new_session)
@@ -916,7 +916,6 @@ class MainUI(QtWidgets.QMainWindow):
             return False
         # if not self.new_trigger():
         #     return False
-        print("GEEE")
         self.actions_handler.save_session(os.path.normpath(path))
         db.recentSessions.add(self.actions_handler.currentFile)
         self.asset_selection_w.populate_versions()
