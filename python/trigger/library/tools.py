@@ -168,11 +168,15 @@ def replace_curve(orig_curve, new_curve, maintain_offset=True):
         new_curve = cmds.duplicate(new_curve, rc=1)[0]
         cmds.parentConstraint(orig_curve, new_curve)
 
-    if cmds.objectType(orig_curve) == 'transform':
+    if cmds.objectType(orig_curve) == 'transform' or cmds.objectType(orig_curve) == "joint" :
         orig_shapes = cmds.listRelatives(orig_curve, s=1)
+    else:
+        raise Exception("Cant find the shape of the orig_curve")
 
-    if cmds.objectType(new_curve) == 'transform':
+    if cmds.objectType(new_curve) == 'transform' or cmds.objectType(new_curve) == "joint":
         new_shapes = cmds.listRelatives(new_curve, s=1)
+    else:
+        raise Exception("Cant find the shape of the new_curve")
 
     color = None
     if cmds.getAttr(orig_shapes[0] + ".overrideEnabled"):

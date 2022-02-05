@@ -336,7 +336,11 @@ class Initials(object):
         cmds.select(joint_name)
 
     def get_property(self, jnt, attr):
-        return cmds.getAttr("%s.%s" % (jnt, attr))
+        try:
+            return cmds.getAttr("%s.%s" % (jnt, attr))
+        except ValueError:
+            log.warning("Attribute cannot find %s.%s" %(jnt, attr))
+            return False
 
     def set_property(self, jnt, attr, value):
         if type(value) == int or type(value) == float or type(value) == bool:
