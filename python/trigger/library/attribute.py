@@ -277,12 +277,18 @@ def lockAndHide(node, channelArray=None, hide=True):
 
 
 def unlock(node, attr_list=None):
+    """Unlocks the list of provided attributes on defined node"""
+
     attr_list = ["tx", "ty", "tz", "rx", "ry", "rz", "sx", "sy", "sz", "v"] if not attr_list else attr_list
     if type(attr_list) != list:
         attr_list = [attr_list]
     for attr in attr_list:
         cmds.setAttr("{0}.{1}".format(node, attr), e=True, k=True, l=False)
 
+def is_locked(node, attr):
+    """Returns the locked state of the given attribute on defined node"""
+
+    return cmds.getAttr("%s.%s" %(node, attr), lock=True)
 
 def attrPass(sourceNode, targetNode, attributes=[], inConnections=True, outConnections=True, keepSourceAttributes=False,
              values=True, daisyChain=False, overrideEx=False):
