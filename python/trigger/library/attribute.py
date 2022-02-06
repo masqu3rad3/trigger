@@ -286,9 +286,15 @@ def unlock(node, attr_list=None):
         cmds.setAttr("{0}.{1}".format(node, attr), e=True, k=True, l=False)
 
 def is_locked(node, attr):
-    """Returns the locked state of the given attribute on defined node"""
-
+    """Returns the locked state of the given attribute on defined node
+    """
     return cmds.getAttr("%s.%s" %(node, attr), lock=True)
+
+def is_visible(node, attr):
+    """Returns the channelbox state of the given attribute on defined node
+    """
+    return cmds.getAttr("%s.%s" %(node, attr), k=True)
+
 
 def attrPass(sourceNode, targetNode, attributes=[], inConnections=True, outConnections=True, keepSourceAttributes=False,
              values=True, daisyChain=False, overrideEx=False):
