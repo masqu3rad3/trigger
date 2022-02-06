@@ -23,6 +23,12 @@ LIMB_DATA = {
                         "attr_type": "string",
                         "default_value": ""
                         },
+                       {
+                           "attr_name": "bindScales",
+                           "nice_name": "Bind Scales",
+                           "attr_type": "bool",
+                           "default_value": False
+                       },
                        {"attr_name": "limbPlugLocation",
                         "nice_name": "Module Plug Location",
                         "attr_type": "enum",
@@ -54,6 +60,10 @@ class Surface(object):
         self.controllerSurface = cmds.getAttr("%s.controllerSurface" % self.rootInit)
         self.rotateObject = cmds.getAttr("%s.rotateObject" % self.rootInit)
         self.isPlugOnLocal = cmds.getAttr("%s.limbPlugLocation" % self.rootInit)
+        try:
+            self.bindScales = cmds.getAttr("%s.bindScales" % self.rootInit)
+        except ValueError:
+            self.bindScales = False
 
         self.suffix = (naming.uniqueName(cmds.getAttr("%s.moduleName" % self.rootInit)))
 
@@ -136,13 +146,24 @@ class Surface(object):
         if self.controllerSurface:
             follicle = parentToSurface.parentToSurface([self.cont_bind], surface=self.controllerSurface, mode="none")[0]
             # constrain controller translate to the follicle
-            # connection.matrixConstraint(follicle, self.cont_bind, mo=True, sr="xyz", ss="xyz")
-            connection.matrixConstraint(follicle, self.cont_bind, mo=False, sr="xyz", ss="xyz")
+            # connection.matrixConstraint(follicle, self.cont_bind, mo=False, sr="xyz", ss="xyz")
+            _sr = "xyz" if self.rotateObject else None
+            if self.bindScales:
+                cmds.connectAttr("%s.scale" % self.scaleGrp, "%s.scale" % follicle)
+                _ss = None
+            else:
+                _ss = "xyz"
+            _mo = False if self.rotateObject else True
+            connection.matrixConstraint(follicle, self.cont_bind, mo=_mo, sr=_sr, ss=_ss)
+
             cmds.parent(follicle, self.nonScaleGrp)
             cmds.connectAttr("%s.rigVis" % self.scaleGrp, "%s.v" % follicle)
+
+
         if self.rotateObject:
-            # connection.matrixConstraint(self.rotateObject, self.cont_bind, mo=True, st="xyz", ss="xyz")
             connection.matrixConstraint(self.rotateObject, self.cont_bind, mo=True, st="xyz", ss="xyz")
+            # connection.matrixConstraint(self.rotateObject, self.cont_bind, mo=True, st="xyz", ss=_ss)
+
 
 
         negate_multMatrix = cmds.createNode("multMatrix", name="negate_multMatrix_%s" % self.suffix)
@@ -157,8 +178,6 @@ class Surface(object):
             pass # nothing to connect because plug is local joint itself
         else:
             cmds.parentConstraint(self.cont, self.limbPlug, mo=False)
-
-        # functions.alignTo(self.cont_pos, self.rootInit, position=True, rotation=True)
 
         # Direct connection between controller and joint
         for attr in "trs":
