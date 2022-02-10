@@ -906,9 +906,9 @@ class MainUI(QtWidgets.QMainWindow):
 
     def vcs_new_version(self, path):
         """Increments the version using the path coming from the version control"""
-
         if not self._validate_unsaved_work():
             return False
+
         self.actions_handler.save_session(os.path.normpath(path))
         db.recentSessions.add(self.actions_handler.currentFile)
         self.asset_selection_w.populate_versions()
