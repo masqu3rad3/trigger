@@ -439,7 +439,7 @@ def create_follicle(name, surfS, uv):
     return follicle_transform, follicle
 
 def uvPin(mesh_transform, coordinates):
-    assert cmds.about(api=True) > 20200000, "uv_pin requires Maya 2020 and later"
+    assert cmds.about(api=True) >= 20200000, "uv_pin requires Maya 2020 and later"
     all_shapes = cmds.listRelatives(mesh_transform, shapes=True, children=True, parent=False)
     #seperate intermediates
     intermediates = [x for x in all_shapes if cmds.getAttr("%s.intermediateObject" %x) == 1]
@@ -507,7 +507,7 @@ def averageConstraint(target_mesh, vertex_list, source_object=None, offsetParent
     Returns:(String) source object. It will be the created locator if none provided
 
     """
-    assert cmds.about(api=True) > 20200000, "uv_pin requires Maya 2020 and later"
+    assert cmds.about(api=True) >= 20200000, "uv_pin requires Maya 2020 and later"
     average_node = cmds.createNode("wtAddMatrix")
     weight_value = 1.0 / float(len(vertex_list))
     for i, vertex_nmb in enumerate(vertex_list):
