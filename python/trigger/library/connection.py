@@ -2,7 +2,7 @@
 
 import maya.api.OpenMaya as om
 
-from trigger.base import validate
+from trigger.core import validate
 
 from trigger.library import api
 from trigger.library import interface
@@ -11,6 +11,7 @@ from trigger.library import arithmetic as op
 from maya import cmds
 
 validate.plugin("matrixNodes")
+
 
 def connections(node, exclude_nodes=None, exclude_types=None, return_mode="all"):
     """
@@ -51,9 +52,7 @@ def connections(node, exclude_nodes=None, exclude_types=None, return_mode="all")
     input_plugs = raw_inputs[::2] if raw_inputs else []
     output_plugs = raw_outputs[::2] if raw_outputs else []
 
-    result_dict = {}
-    result_dict["incoming"] = []
-    result_dict["outgoing"] = []
+    result_dict = {"incoming": [], "outgoing": []}
 
     # filter input plug lists
     if exclude_nodes:
@@ -62,9 +61,10 @@ def connections(node, exclude_nodes=None, exclude_types=None, return_mode="all")
         input_plugs = [plug for plug in input_plugs if cmds.objectType(plug.split(".")[0]) not in exclude_types]
 
     for in_plug in input_plugs:
-        conn = {}
-        conn["plug_out"], conn["plug_in"] = cmds.listConnections(in_plug, plugs=True, source=True, destination=False,
-                                                                 connections=True)
+        conn = {"plug_out": cmds.listConnections(in_plug, plugs=True, source=True, destination=False,
+                                                 connections=True)[0],
+                "plug_in": cmds.listConnections(in_plug, plugs=True, source=True, destination=False,
+                                                connections=True)[1]}
         result_dict["incoming"].append(conn)
 
     for out_plug in output_plugs:
@@ -91,6 +91,7 @@ def connections(node, exclude_nodes=None, exclude_types=None, return_mode="all")
     else:
         raise Exception("Not valid return_mode argument. Valid values are 'all', 'incoming', 'outgoing'")
 
+
 def replace_connections(source_node, target_node, exclude_nodes=None, exclude_types=None, incoming=True, outgoing=True):
     all_connections = connections(source_node, exclude_nodes=exclude_nodes, exclude_types=exclude_types)
     in_connections = all_connections["incoming"] if incoming else []
@@ -111,6 +112,7 @@ def replace_connections(source_node, target_node, exclude_nodes=None, exclude_ty
         existing_connections = cmds.listConnections(in_p, p=True, source=True, destination=False) or []
         if out_p not in existing_connections:
             cmds.connectAttr(out_p, in_p, force=True)
+
 
 def matrixConstraint(drivers, driven, mo=True, prefix="", sr=None, st=None, ss=None, source_parent_cutoff=None):
     """
@@ -135,15 +137,10 @@ def matrixConstraint(drivers, driven, mo=True, prefix="", sr=None, st=None, ss=N
     parent_of_driven = parents[0] if parents else None
     next_index = -1
 
-
-
     mult_matrix = cmds.createNode("multMatrix", name="%s_multMatrix" % prefix)
     decompose_matrix = cmds.createNode("decomposeMatrix", name="%s_decomposeMatrix" % prefix)
 
     # if there are multiple targets, average them first separately
-
-
-
 
     ##########################
     if is_multi:
@@ -166,32 +163,18 @@ def matrixConstraint(drivers, driven, mo=True, prefix="", sr=None, st=None, ss=N
         next_index += 1
         cmds.setAttr("%s.matrixIn[%i]" % (mult_matrix, next_index), local_offset, type="matrix")
 
-
     next_index += 1
     cmds.connectAttr(out_plug, "%s.matrixIn[%i]" % (mult_matrix, next_index))
-    ##########################
 
-
-
-    # next_index += 1
-    # # cmds.connectAttr("%s.worldMatrix[0]" % drivers, "%s.matrixIn[%i]" % (mult_matrix, next_index))
-    # cmds.connectAttr(out_plug, "%s.matrixIn[%i]" % (mult_matrix, next_index))
     cmds.connectAttr("%s.matrixSum" % mult_matrix, "%s.inputMatrix" % decompose_matrix)
 
     if source_parent_cutoff:
         next_index += 1
         cmds.connectAttr("%s.worldInverseMatrix" % source_parent_cutoff, "%s.matrixIn[%i]" % (mult_matrix, next_index))
 
-
     if parent_of_driven:
         next_index += 1
-        cmds.connectAttr("%s.worldInverseMatrix[0]" %parent_of_driven, "%s.matrixIn[%i]" %(mult_matrix, next_index))
-
-    # if child_parent:
-        # child_parentWorldMatrix = api.getMDagPath(child_parent).inclusiveMatrix().inverse()
-        # next_index += 1
-        # cmds.setAttr("%s.matrixIn[%i]" % (mult_matrix, next_index), child_parentWorldMatrix, type="matrix")
-
+        cmds.connectAttr("%s.worldInverseMatrix[0]" % parent_of_driven, "%s.matrixIn[%i]" % (mult_matrix, next_index))
 
     if not st:
         cmds.connectAttr("%s.outputTranslate" % decompose_matrix, "%s.translate" % driven)
@@ -200,7 +183,7 @@ def matrixConstraint(drivers, driven, mo=True, prefix="", sr=None, st=None, ss=N
             if attr.lower() not in st and attr.upper() not in st:
                 cmds.connectAttr("%s.outputTranslate%s" % (decompose_matrix, attr), "%s.translate%s" % (driven, attr))
     if not sr:
-        ## Joint rotations needs to be handled differently because of the jointOrientation
+        # Joint rotations needs to be handled differently because of the jointOrientation
         if is_joint:
             # store the orientation values
             rot_index = 0
@@ -208,41 +191,41 @@ def matrixConstraint(drivers, driven, mo=True, prefix="", sr=None, st=None, ss=N
             joint_orientation = cmds.getAttr("%s.jointOrient" % driven)[0]
 
             # create the compensation node strand
-            rotation_compose = cmds.createNode("composeMatrix", name="%s_rotateComposeMatrix" %prefix)
-            rotation_first_mult_matrix = cmds.createNode("multMatrix", name="%s_firstRotateMultMatrix" %prefix)
-            rotation_inverse_matrix = cmds.createNode("inverseMatrix", name="%s_rotateInverseMatrix" %prefix)
-            rotation_sec_mult_matrix = cmds.createNode("multMatrix", name="%s_secRotateMultMatrix" %prefix)
-            rotation_decompose_matrix = cmds.createNode("decomposeMatrix", name="%s_rotateDecomposeMatrix" %prefix)
+            rotation_compose = cmds.createNode("composeMatrix", name="%s_rotateComposeMatrix" % prefix)
+            rotation_first_mult_matrix = cmds.createNode("multMatrix", name="%s_firstRotateMultMatrix" % prefix)
+            rotation_inverse_matrix = cmds.createNode("inverseMatrix", name="%s_rotateInverseMatrix" % prefix)
+            rotation_sec_mult_matrix = cmds.createNode("multMatrix", name="%s_secRotateMultMatrix" % prefix)
+            rotation_decompose_matrix = cmds.createNode("decomposeMatrix", name="%s_rotateDecomposeMatrix" % prefix)
 
             # set values and make connections for rotation strand
-            cmds.setAttr("%s.inputRotate" %rotation_compose, *joint_orientation)
-            cmds.connectAttr("%s.outputMatrix" %rotation_compose, "%s.matrixIn[%i]" %(rotation_first_mult_matrix, rot_index))
-            # if source_parent_cutoff:
-            #     rot_index +=1
-            #     cmds.connectAttr("%s.worldInverseMatrix" % source_parent_cutoff, "%s.matrixIn[%i]" % (rotation_first_mult_matrix, rot_index))
+            cmds.setAttr("%s.inputRotate" % rotation_compose, *joint_orientation)
+            cmds.connectAttr("%s.outputMatrix" % rotation_compose,
+                             "%s.matrixIn[%i]" % (rotation_first_mult_matrix, rot_index))
 
             if parent_of_driven:
-                rot_index +=1
-                cmds.connectAttr("%s.worldMatrix[0]" %parent_of_driven, "%s.matrixIn[%i]" %(rotation_first_mult_matrix, rot_index))
-            cmds.connectAttr("%s.matrixSum" %rotation_first_mult_matrix, "%s.inputMatrix" %rotation_inverse_matrix)
+                rot_index += 1
+                cmds.connectAttr("%s.worldMatrix[0]" % parent_of_driven,
+                                 "%s.matrixIn[%i]" % (rotation_first_mult_matrix, rot_index))
+            cmds.connectAttr("%s.matrixSum" % rotation_first_mult_matrix, "%s.inputMatrix" % rotation_inverse_matrix)
 
-            # cmds.connectAttr("%s.worldMatrix[0]" % drivers, "%s.matrixIn[%i]" % (rotation_sec_mult_matrix, second_index))
             cmds.connectAttr(out_plug, "%s.matrixIn[%i]" % (rotation_sec_mult_matrix, second_index))
 
             if source_parent_cutoff:
-                second_index +=1
-                cmds.connectAttr("%s.worldInverseMatrix" % source_parent_cutoff, "%s.matrixIn[%i]" % (rotation_sec_mult_matrix, second_index))
+                second_index += 1
+                cmds.connectAttr("%s.worldInverseMatrix" % source_parent_cutoff,
+                                 "%s.matrixIn[%i]" % (rotation_sec_mult_matrix, second_index))
 
             second_index += 1
-            cmds.connectAttr("%s.outputMatrix" %rotation_inverse_matrix, "%s.matrixIn[%i]" %(rotation_sec_mult_matrix, second_index))
-            cmds.connectAttr("%s.matrixSum" %rotation_sec_mult_matrix, "%s.inputMatrix" %rotation_decompose_matrix)
+            cmds.connectAttr("%s.outputMatrix" % rotation_inverse_matrix,
+                             "%s.matrixIn[%i]" % (rotation_sec_mult_matrix, second_index))
+            cmds.connectAttr("%s.matrixSum" % rotation_sec_mult_matrix, "%s.inputMatrix" % rotation_decompose_matrix)
 
             cmds.connectAttr("%s.outputRotate" % rotation_decompose_matrix, "%s.rotate" % driven)
         else:
             cmds.connectAttr("%s.outputRotate" % decompose_matrix, "%s.rotate" % driven)
     else:
 
-        ## Joint rotations needs to be handled differently because of the jointOrientation
+        # Joint rotations needs to be handled differently because of the jointOrientation
         if is_joint:
             # if all rotation axis defined, dont create the strand
             if len(sr) != 3:
@@ -252,42 +235,43 @@ def matrixConstraint(drivers, driven, mo=True, prefix="", sr=None, st=None, ss=N
                 joint_orientation = cmds.getAttr("%s.jointOrient" % driven)[0]
 
                 # create the compensation node strand
-                rotation_compose = cmds.createNode("composeMatrix", name="%s_rotateComposeMatrix" %prefix)
-                rotation_first_mult_matrix = cmds.createNode("multMatrix", name="%s_firstRotateMultMatrix" %prefix)
-                rotation_inverse_matrix = cmds.createNode("inverseMatrix", name="%s_rotateInverseMatrix" %prefix)
-                rotation_sec_mult_matrix = cmds.createNode("multMatrix", name="%s_secRotateMultMatrix" %prefix)
-                rotation_decompose_matrix = cmds.createNode("decomposeMatrix", name="%s_rotateDecomposeMatrix" %prefix)
+                rotation_compose = cmds.createNode("composeMatrix", name="%s_rotateComposeMatrix" % prefix)
+                rotation_first_mult_matrix = cmds.createNode("multMatrix", name="%s_firstRotateMultMatrix" % prefix)
+                rotation_inverse_matrix = cmds.createNode("inverseMatrix", name="%s_rotateInverseMatrix" % prefix)
+                rotation_sec_mult_matrix = cmds.createNode("multMatrix", name="%s_secRotateMultMatrix" % prefix)
+                rotation_decompose_matrix = cmds.createNode("decomposeMatrix", name="%s_rotateDecomposeMatrix" % prefix)
 
                 # set values and make connections for rotation strand
-                cmds.setAttr("%s.inputRotate" %rotation_compose, *joint_orientation)
-                cmds.connectAttr("%s.outputMatrix" %rotation_compose, "%s.matrixIn[%i]" %(rotation_first_mult_matrix, rot_index))
-                # if source_parent_cutoff:
-                #     rot_index +=1
-                #     cmds.connectAttr("%s.worldInverseMatrix" % source_parent_cutoff, "%s.matrixIn[%i]" % (rotation_first_mult_matrix, rot_index))
+                cmds.setAttr("%s.inputRotate" % rotation_compose, *joint_orientation)
+                cmds.connectAttr("%s.outputMatrix" % rotation_compose,
+                                 "%s.matrixIn[%i]" % (rotation_first_mult_matrix, rot_index))
 
                 if parent_of_driven:
-                    rot_index +=1
-                    cmds.connectAttr("%s.worldMatrix[0]" %parent_of_driven, "%s.matrixIn[%i]" %(rotation_first_mult_matrix, rot_index))
-                cmds.connectAttr("%s.matrixSum" %rotation_first_mult_matrix, "%s.inputMatrix" %rotation_inverse_matrix)
+                    rot_index += 1
+                    cmds.connectAttr("%s.worldMatrix[0]" % parent_of_driven,
+                                     "%s.matrixIn[%i]" % (rotation_first_mult_matrix, rot_index))
+                cmds.connectAttr("%s.matrixSum" % rotation_first_mult_matrix,
+                                 "%s.inputMatrix" % rotation_inverse_matrix)
 
-                # cmds.connectAttr("%s.worldMatrix[0]" % drivers, "%s.matrixIn[%i]" % (rotation_sec_mult_matrix, second_index))
                 cmds.connectAttr(out_plug, "%s.matrixIn[%i]" % (rotation_sec_mult_matrix, second_index))
 
                 if source_parent_cutoff:
-                    second_index +=1
-                    cmds.connectAttr("%s.worldInverseMatrix" % source_parent_cutoff, "%s.matrixIn[%i]" % (rotation_sec_mult_matrix, second_index))
+                    second_index += 1
+                    cmds.connectAttr("%s.worldInverseMatrix" % source_parent_cutoff,
+                                     "%s.matrixIn[%i]" % (rotation_sec_mult_matrix, second_index))
 
                 second_index += 1
-                cmds.connectAttr("%s.outputMatrix" %rotation_inverse_matrix, "%s.matrixIn[%i]" %(rotation_sec_mult_matrix, second_index))
-                cmds.connectAttr("%s.matrixSum" %rotation_sec_mult_matrix, "%s.inputMatrix" %rotation_decompose_matrix)
+                cmds.connectAttr("%s.outputMatrix" % rotation_inverse_matrix,
+                                 "%s.matrixIn[%i]" % (rotation_sec_mult_matrix, second_index))
+                cmds.connectAttr("%s.matrixSum" % rotation_sec_mult_matrix,
+                                 "%s.inputMatrix" % rotation_decompose_matrix)
 
                 for attr in "XYZ":
                     if attr.lower() not in sr and attr.upper() not in sr:
-                        cmds.connectAttr("%s.outputRotate%s" % (rotation_decompose_matrix, attr), "%s.rotate%s" % (driven, attr))
-
+                        cmds.connectAttr("%s.outputRotate%s" % (rotation_decompose_matrix, attr),
+                                         "%s.rotate%s" % (driven, attr))
             else:
                 pass
-
         else:
             for attr in "XYZ":
                 if attr.lower() not in sr and attr.upper() not in sr:
@@ -301,7 +285,9 @@ def matrixConstraint(drivers, driven, mo=True, prefix="", sr=None, st=None, ss=N
 
     return mult_matrix, decompose_matrix, average_node
 
-def matrixSwitch(parentA, parentB, child, control_attribute, position=True, rotation=True, scale=False, source_parent_cutoff=None):
+
+def matrixSwitch(parentA, parentB, child, control_attribute, position=True, rotation=True, scale=False,
+                 source_parent_cutoff=None):
     """
     Creates a matrix blended switch between two locations
 
@@ -309,62 +295,52 @@ def matrixSwitch(parentA, parentB, child, control_attribute, position=True, rota
         parentA: (string) first parent node
         parentB: (string) second parent node
         child: (string) child to be constrained
-        control_attribute: (string) switch control attribute. e.g. masterCont.switch. If doesnt exist, it will be created
+        control_attribute: (string) switch control attribute. e.g. masterCont.switch. If missing, will created
         position: (boolean) If True, makes the positional switch. Default True
         rotation: (boolean) If True, makes the rotational switch. Default True
         scale: (boolean) If True, makes the scale switch. Default False
+        source_parent_cutoff: Any transforms on this node and above wont affect the constraint
 
     Returns:
 
     """
-    attribute.validate_attr(control_attribute, attr_range=[0,1])
-
-    # parents = cmds.listRelatives(child, parent=True)
-    # child_parent = parents[0] if parents else None
-
-    # next_index = 0
-    # mult_matrix_a = cmds.createNode("multMatrix", name="multMatrix_%s" %parentA)
-    # cmds.connectAttr("%s.worldMatrix[0]" %parentA, "%s.matrixIn[%i]" %(mult_matrix_a, next_index))
-    #
-    # mult_matrix_b = cmds.createNode("multMatrix", name="multMatrix_%s" %parentB)
-    # cmds.connectAttr("%s.worldMatrix[0]" %parentB, "%s.matrixIn[%i]" %(mult_matrix_b, next_index))
-    #
-    # if child_parent:
-    #     next_index += 1
-    #     cmds.connectAttr("%s.worldInverseMatrix[0]" %child_parent, "%s.matrixIn[%i]" %(mult_matrix_a, next_index))
-    #     cmds.connectAttr("%s.worldInverseMatrix[0]" %child_parent, "%s.matrixIn[%i]" %(mult_matrix_b, next_index))
-
-    mult_matrix_a, dump, _ = matrixConstraint(parentA, child, mo=False, prefix=parentA, sr="xyz", st="xyz", ss="xyz", source_parent_cutoff=None)
+    attribute.validate_attr(control_attribute, attr_range=[0, 1])
+    mult_matrix_a, dump, _ = matrixConstraint(parentA, child, mo=False, prefix=parentA, sr="xyz", st="xyz", ss="xyz",
+                                              source_parent_cutoff=None)
     attribute.disconnect_attr(dump, attr="inputMatrix")
     cmds.delete(dump)
-    mult_matrix_b, dump, _ = matrixConstraint(parentB, child, mo=False, prefix=parentB, sr="xyz", st="xyz", ss="xyz", source_parent_cutoff=None)
+    mult_matrix_b, dump, _ = matrixConstraint(parentB, child, mo=False, prefix=parentB, sr="xyz", st="xyz", ss="xyz",
+                                              source_parent_cutoff=None)
     attribute.disconnect_attr(dump, attr="inputMatrix")
     cmds.delete(dump)
 
-    wt_add_matrix = cmds.createNode("wtAddMatrix", name="wtAdd_%s_%s" %(parentA, parentB))
-    cmds.connectAttr("%s.matrixSum" %mult_matrix_a, "%s.wtMatrix[0].matrixIn" %wt_add_matrix)
-    cmds.connectAttr("%s.matrixSum" %mult_matrix_b, "%s.wtMatrix[1].matrixIn" %wt_add_matrix)
+    wt_add_matrix = cmds.createNode("wtAddMatrix", name="wtAdd_%s_%s" % (parentA, parentB))
+    cmds.connectAttr("%s.matrixSum" % mult_matrix_a, "%s.wtMatrix[0].matrixIn" % wt_add_matrix)
+    cmds.connectAttr("%s.matrixSum" % mult_matrix_b, "%s.wtMatrix[1].matrixIn" % wt_add_matrix)
 
-    attribute.drive_attrs(control_attribute, "%s.wtMatrix[0].weightIn" %wt_add_matrix, driver_range=[0,1], driven_range=[0,1], force=False)
-    attribute.drive_attrs(control_attribute, "%s.wtMatrix[1].weightIn" %wt_add_matrix, driver_range=[0,1], driven_range=[1,0], force=False)
+    attribute.drive_attrs(control_attribute, "%s.wtMatrix[0].weightIn" % wt_add_matrix, driver_range=[0, 1],
+                          driven_range=[0, 1], force=False)
+    attribute.drive_attrs(control_attribute, "%s.wtMatrix[1].weightIn" % wt_add_matrix, driver_range=[0, 1],
+                          driven_range=[1, 0], force=False)
 
     if source_parent_cutoff:
-        mult_matrix_cutoff = cmds.createNode("multMatrix", name="multMatrixCutoff_%s_%s" %(parentA, parentB))
-        cmds.connectAttr("%s.matrixSum" %wt_add_matrix, "%s.matrixIn[0]" % mult_matrix_cutoff)
+        mult_matrix_cutoff = cmds.createNode("multMatrix", name="multMatrixCutoff_%s_%s" % (parentA, parentB))
+        cmds.connectAttr("%s.matrixSum" % wt_add_matrix, "%s.matrixIn[0]" % mult_matrix_cutoff)
         cmds.connectAttr("%s.worldInverseMatrix" % source_parent_cutoff, "%s.matrixIn[1]" % mult_matrix_cutoff)
-        out_plug = "%s.matrixSum" %mult_matrix_cutoff
+        out_plug = "%s.matrixSum" % mult_matrix_cutoff
     else:
-        out_plug = "%s.matrixSum" %wt_add_matrix
+        out_plug = "%s.matrixSum" % wt_add_matrix
 
     decompose_node = cmds.createNode("decomposeMatrix", name="decompose_switch")
-    cmds.connectAttr(out_plug, "%s.inputMatrix" %decompose_node)
+    cmds.connectAttr(out_plug, "%s.inputMatrix" % decompose_node)
 
     if position:
-        cmds.connectAttr("%s.outputTranslate" %decompose_node, "%s.translate" %child)
+        cmds.connectAttr("%s.outputTranslate" % decompose_node, "%s.translate" % child)
     if rotation:
-        cmds.connectAttr("%s.outputRotate" %decompose_node, "%s.rotate" %child)
+        cmds.connectAttr("%s.outputRotate" % decompose_node, "%s.rotate" % child)
     if scale:
-        cmds.connectAttr("%s.outputScale" %decompose_node, "%s.scale" %child)
+        cmds.connectAttr("%s.outputScale" % decompose_node, "%s.scale" % child)
+
 
 def getClosestUV(source_node, dest_node):
     """Returns the UV coordinates of dest_node closest to the source_node
@@ -380,14 +356,15 @@ def getClosestUV(source_node, dest_node):
     x_pos, y_pos, z_pos = api.getWorldTranslation(dest_node)
     closest_point_node = cmds.createNode('closestPointOnMesh')
     cmds.connectAttr("%s.outMesh" % source_node, "%s.inMesh" % closest_point_node, f=1)
-    cmds.setAttr("%s.inPositionX" %closest_point_node, x_pos)
-    cmds.setAttr("%s.inPositionY" %closest_point_node, y_pos)
-    cmds.setAttr("%s.inPositionZ" %closest_point_node, z_pos)
-    u_val = cmds.getAttr("%s.parameterU" %closest_point_node)
-    v_val = cmds.getAttr("%s.parameterV" %closest_point_node)
+    cmds.setAttr("%s.inPositionX" % closest_point_node, x_pos)
+    cmds.setAttr("%s.inPositionY" % closest_point_node, y_pos)
+    cmds.setAttr("%s.inPositionZ" % closest_point_node, z_pos)
+    u_val = cmds.getAttr("%s.parameterU" % closest_point_node)
+    v_val = cmds.getAttr("%s.parameterV" % closest_point_node)
     cmds.delete(closest_point_node)
 
     return u_val, v_val
+
 
 def get_uv_at_point(position, dest_node):
     """Get a tuple of u, v values for a point on a given mesh.
@@ -412,42 +389,44 @@ def get_uv_at_point(position, dest_node):
 
     return u_val, v_val
 
+
 def getVertexUV(mesh, vertex_id):
     uv_map = cmds.polyListComponentConversion('{0}.vtx[{1}]'.format(mesh, vertex_id), toUV=True)
     return cmds.polyEditUV(uv_map, q=True)
 
-def create_follicle(name, surfS, uv):
-    follicle = (cmds.createNode('follicle', n='%s_follicleShape' %name))
+
+def create_follicle(name, surface, uv):
+    follicle = (cmds.createNode('follicle', n='%s_follicleShape' % name))
     follicle_transform = (cmds.listRelatives(follicle, parent=True))[0]
 
-    nType = cmds.nodeType(surfS)
+    nType = cmds.nodeType(surface)
     if nType == 'nurbsSurface':
-        #NURBS
-        out = '.local'
-        inp = '.inputSurface'
+        # NURBS
+        out = 'local'
+        inp = 'inputSurface'
     else:
-        #POLY
-        out = '.outMesh'
-        inp = '.inputMesh'
+        # POLY
+        out = 'outMesh'
+        inp = 'inputMesh'
 
-    cmds.connectAttr("%s.worldMatrix[0]" % surfS, "%s.inputWorldMatrix" % follicle)
-    cmds.connectAttr(surfS+out, follicle+inp)
-    cmds.connectAttr("%s.outTranslate" % follicle, '%s.translate'%follicle_transform)
-    cmds.connectAttr('%s.outRotate'%follicle, '%s.rotate'%follicle_transform)
-    cmds.setAttr('%s.parameterU'%follicle, uv[0])
-    cmds.setAttr('%s.parameterV'%follicle, uv[1])
+    cmds.connectAttr("%s.worldMatrix[0]" % surface, "%s.inputWorldMatrix" % follicle)
+    cmds.connectAttr("%s.%s" % (surface, out), "%s.%s" % (follicle, inp))
+    cmds.connectAttr("%s.outTranslate" % follicle, '%s.translate' % follicle_transform)
+    cmds.connectAttr('%s.outRotate' % follicle, '%s.rotate' % follicle_transform)
+    cmds.setAttr('%s.parameterU' % follicle, uv[0])
+    cmds.setAttr('%s.parameterV' % follicle, uv[1])
     return follicle_transform, follicle
+
 
 def uvPin(mesh_transform, coordinates):
     assert cmds.about(api=True) >= 20200000, "uv_pin requires Maya 2020 and later"
     all_shapes = cmds.listRelatives(mesh_transform, shapes=True, children=True, parent=False)
-    #seperate intermediates
-    intermediates = [x for x in all_shapes if cmds.getAttr("%s.intermediateObject" %x) == 1]
+    # seperate intermediates
+    intermediates = [x for x in all_shapes if cmds.getAttr("%s.intermediateObject" % x) == 1]
     non_intermediates = [x for x in all_shapes if x not in intermediates]
     deformed_mesh = non_intermediates[0]
     if not intermediates:
         # create original / deformed mesh hiearchy
-        # deformed_mesh = cmds.listRelatives(mesh_transform, children=True, parent=False)[0]
         dup = cmds.duplicate(mesh_transform, name="%s_ORIG" % mesh_transform)[0]
         original_mesh = cmds.listRelatives(dup, children=True)[0]
         cmds.parent(original_mesh, mesh_transform, shape=True, r=True)
@@ -456,7 +435,6 @@ def uvPin(mesh_transform, coordinates):
         for connection in incoming_connections:
             attribute.disconnect_attr(connection["plug_out"])
             cmds.connectAttr(connection["plug_in"], connection["plug_out"].replace(deformed_mesh, original_mesh))
-        # cmds.connectAttr("%s.outMesh" % original_mesh, "%s.inMesh" % deformed_mesh)
         # hide/intermediate original mesh
         cmds.setAttr("%s.hiddenInOutliner" % original_mesh, 1)
         cmds.setAttr("%s.intermediateObject" % original_mesh, 1)
@@ -472,6 +450,7 @@ def uvPin(mesh_transform, coordinates):
     cmds.setAttr("%s.coordinate[0]" % uv_pin, *coordinates)
 
     return uv_pin
+
 
 def pin_to_surface(node, surface, sr="", st="", ss="xyz"):
     world_pos = api.getWorldTranslation(node)
@@ -493,6 +472,7 @@ def pin_to_surface(node, surface, sr="", st="", ss="xyz"):
             cmds.connectAttr("%s.outputScale%s" % (decompose_matrix_node, attr), "%s.scale%s" % (node, attr))
 
     return uv_pin
+
 
 def averageConstraint(target_mesh, vertex_list, source_object=None, offsetParent=False):
     """
@@ -523,95 +503,89 @@ def averageConstraint(target_mesh, vertex_list, source_object=None, offsetParent
         mult_matrix = cmds.createNode("multMatrix")
         decompose_matrix = cmds.createNode("decomposeMatrix")
         cmds.connectAttr("%s.matrixSum" % average_node, "%s.matrixIn[0]" % mult_matrix)
-        cmds.connectAttr("%s.matrixSum" %mult_matrix, "%s.inputMatrix" %decompose_matrix)
+        cmds.connectAttr("%s.matrixSum" % mult_matrix, "%s.inputMatrix" % decompose_matrix)
         cmds.connectAttr("%s.outputTranslate" % decompose_matrix, "%s.translate" % source_object)
         cmds.connectAttr("%s.outputRotate" % decompose_matrix, "%s.rotate" % source_object)
 
     else:
         pick_matrix = cmds.createNode("pickMatrix")
-        cmds.connectAttr("%s.matrixSum" % average_node, "%s.inputMatrix" %pick_matrix)
-        cmds.setAttr("%s.useRotate" %pick_matrix, 1)
-        cmds.setAttr("%s.useScale" %pick_matrix, 0)
-        cmds.setAttr("%s.useShear" %pick_matrix, 0)
-        cmds.connectAttr("%s.outputMatrix" % pick_matrix, "%s.offsetParentMatrix" %source_object)
-        cmds.connectAttr("%s.outputMatrix" % pick_matrix, "%s.offsetParentMatrix" %source_object)
+        cmds.connectAttr("%s.matrixSum" % average_node, "%s.inputMatrix" % pick_matrix)
+        cmds.setAttr("%s.useRotate" % pick_matrix, 1)
+        cmds.setAttr("%s.useScale" % pick_matrix, 0)
+        cmds.setAttr("%s.useShear" % pick_matrix, 0)
+        cmds.connectAttr("%s.outputMatrix" % pick_matrix, "%s.offsetParentMatrix" % source_object)
+        cmds.connectAttr("%s.outputMatrix" % pick_matrix, "%s.offsetParentMatrix" % source_object)
     return source_object
 
-def connectMirror (node1, node2, mirrorAxis="X"):
+
+def connectMirror(node1, node2, mirror_axis="X"):
     """
     Make a mirrored connection between node1 and node2 along the mirrorAxis
     Args:
         node1: Driver Node
         node2: Driven Node
-        mirrorAxis: Mirror axis for the driven node.
+        mirror_axis: Mirror axis for the driven node.
 
     Returns: None
 
     """
-    ## make sure the axis is uppercase:
-    mirrorAxis = mirrorAxis.upper()
-    ## strip - and +
-    mirrorAxis = mirrorAxis.replace("+", "")
-    mirrorAxis = mirrorAxis.replace("-", "")
+    # make sure the axis is uppercase:
+    mirror_axis = mirror_axis.upper()
+    # strip - and +
+    mirror_axis = mirror_axis.replace("+", "")
+    mirror_axis = mirror_axis.replace("-", "")
 
-    #nodes Translate
-    rvsNodeT=cmds.createNode("reverse")
-    minusOpT=cmds.createNode("plusMinusAverage")
-    cmds.setAttr("%s.operation" %minusOpT, 2)
-    cmds.connectAttr("{0}.translate".format(node1), "{0}.input".format(rvsNodeT))
-    cmds.connectAttr("{0}.output".format(rvsNodeT), "{0}.input3D[0]".format(minusOpT))
-    cmds.setAttr("%s.input3D[1]" %minusOpT, 1, 1, 1)
-    #nodes Rotate
-    rvsNodeR = cmds.createNode("reverse")
-    minusOpR = cmds.createNode("plusMinusAverage")
-    cmds.setAttr("%s.operation" %minusOpR, 2)
-    cmds.connectAttr("{0}.rotate".format(node1), "{0}.input".format(rvsNodeR))
+    # nodes Translate
+    rvs_node_t = cmds.createNode("reverse")
+    minus_op_t = cmds.createNode("plusMinusAverage")
+    cmds.setAttr("%s.operation" % minus_op_t, 2)
+    cmds.connectAttr("{0}.translate".format(node1), "{0}.input".format(rvs_node_t))
+    cmds.connectAttr("{0}.output".format(rvs_node_t), "{0}.input3D[0]".format(minus_op_t))
+    cmds.setAttr("%s.input3D[1]" % minus_op_t, 1, 1, 1)
+    # nodes Rotate
+    rvs_node_r = cmds.createNode("reverse")
+    minus_op_r = cmds.createNode("plusMinusAverage")
+    cmds.setAttr("%s.operation" % minus_op_r, 2)
+    cmds.connectAttr("{0}.rotate".format(node1), "{0}.input".format(rvs_node_r))
 
-    cmds.connectAttr("{0}.output".format(rvsNodeR), "{0}.input3D[0]".format(minusOpR))
+    cmds.connectAttr("{0}.output".format(rvs_node_r), "{0}.input3D[0]".format(minus_op_r))
 
-    cmds.setAttr("%s.input3D[1]" %minusOpR, 1, 1, 1)
+    cmds.setAttr("%s.input3D[1]" % minus_op_r, 1, 1, 1)
 
-    #Translate
+    # Translate
 
-    if (mirrorAxis=="X"):
-        cmds.connectAttr("{0}.output3Dx".format(minusOpT), "{0}.tx".format(node2))
+    if mirror_axis == "X":
+        cmds.connectAttr("{0}.output3Dx".format(minus_op_t), "{0}.tx".format(node2))
         cmds.connectAttr("{0}.ty".format(node1), "{0}.ty".format(node2))
         cmds.connectAttr("{0}.tz".format(node1), "{0}.tz".format(node2))
         cmds.connectAttr("{0}.rx".format(node1), "{0}.rx".format(node2))
-        cmds.connectAttr("{0}.output3Dy".format(minusOpR), "{0}.ry".format(node2))
-        cmds.connectAttr("{0}.output3Dz".format(minusOpR), "{0}.rz".format(node2))
+        cmds.connectAttr("{0}.output3Dy".format(minus_op_r), "{0}.ry".format(node2))
+        cmds.connectAttr("{0}.output3Dz".format(minus_op_r), "{0}.rz".format(node2))
 
-    if (mirrorAxis=="Y"):
+    if mirror_axis == "Y":
         cmds.connectAttr("{0}.tx".format(node1), "{0}.tx".format(node2))
-        cmds.connectAttr("{0}.output3Dy".format(minusOpT), "{0}.ty".format(node2))
+        cmds.connectAttr("{0}.output3Dy".format(minus_op_t), "{0}.ty".format(node2))
         cmds.connectAttr("{0}.tz".format(node1), "{0}.tz".format(node2))
-        cmds.connectAttr("{0}.output3Dx".format(minusOpR), "{0}.rx".format(node2))
+        cmds.connectAttr("{0}.output3Dx".format(minus_op_r), "{0}.rx".format(node2))
         cmds.connectAttr("{0}.ry".format(node1), "{0}.ry".format(node2))
-        cmds.connectAttr("{0}.output3Dz".format(minusOpR), "{0}.rz".format(node2))
+        cmds.connectAttr("{0}.output3Dz".format(minus_op_r), "{0}.rz".format(node2))
 
-    if (mirrorAxis=="Z"):
+    if mirror_axis == "Z":
         cmds.connectAttr("{0}.tx".format(node1), "{0}.tx".format(node2))
         cmds.connectAttr("{0}.ty".format(node1), "{0}.ty".format(node2))
-        cmds.connectAttr("{0}.output3Dz".format(minusOpT), "{0}.tz".format(node2))
+        cmds.connectAttr("{0}.output3Dz".format(minus_op_t), "{0}.tz".format(node2))
         cmds.connectAttr("{0}.rx".format(node1), "{0}.rx".format(node2))
-        cmds.connectAttr("{0}.output3Dy".format(minusOpR), "{0}.ry".format(node2))
-        cmds.connectAttr("{0}.output3Dz".format(minusOpR), "{0}.rz".format(node2))
+        cmds.connectAttr("{0}.output3Dy".format(minus_op_r), "{0}.ry".format(node2))
+        cmds.connectAttr("{0}.output3Dz".format(minus_op_r), "{0}.rz".format(node2))
 
-
-
-def matrixLocalize(
-    inherit_transform,
-    offset_transform,
-    localized_transform,
-    prefix=None,
-    target_attrs=None,
-    force=True,
+def matrix_constrain_localised(
+        inherit,
+        no_inherit,
+        destination,
+        target_attrs="",
+        force=True,
 ):
-    # This function uses matrices to stick the destination_transform to the world space of the source_transform, but without inheriting...
-
-    if not prefix:
-        prefix = inherit_transform
-    if not target_attrs:
+    if target_attrs == "":
         target_attrs = [
             "translateX",
             "translateY",
@@ -625,37 +599,38 @@ def matrixLocalize(
         ]
 
     # grab 'bindPose' world matrix from transform we don't want to inherit from #
-    offset_bindpose_matrix = ("%s_bindPose_fourByFourMatrix" %offset_transform)
-    if not cmds.objExists(offset_bindpose_matrix):
-        grabbed_matrix = cmds.getAttr("%s.worldMatrix[0]" %offset_transform )
-        offset_bindpose_matrix = cmds.createNode("fourByFourMatrix", n=offset_bindpose_matrix)
-        element_list = ["in00", "in01", "in02", "in03", "in10", "in11", "in12", "in13", "in20", "in21", "in22", "in23", "in30", "in31", "in32", "in33"]
+    dont_inherit_bindPose_matrix = ("%s_bindPose_fourByFourMatrix" % no_inherit)
+    if cmds.objExists(dont_inherit_bindPose_matrix) == False:
+        grabbed_matrix = cmds.getAttr("%s.worldMatrix[0]" % no_inherit)
+        dont_inherit_bindPose_matrix = cmds.createNode("fourByFourMatrix", n=dont_inherit_bindPose_matrix)
+        element_list = ["in00", "in01", "in02", "in03", "in10", "in11", "in12", "in13", "in20", "in21", "in22", "in23",
+                        "in30", "in31", "in32", "in33"]
         for index, element in enumerate(element_list):
-            cmds.setAttr("%s.%s" %(offset_bindpose_matrix, element),grabbed_matrix[index])
+            cmds.setAttr("%s.%s" % (dont_inherit_bindPose_matrix, element), grabbed_matrix[index])
+    else:
+        print(
+            "detected a fourByFourMatrix already exists called " + dont_inherit_bindPose_matrix + ", so using that one.")
 
     # multiply all of the matrices together #
-    mult_matrix = cmds.createNode("multMatrix", n="%s_multMatrix" %localized_transform)
-    cmds.connectAttr("%s.worldMatrix[0]" %localized_transform, "%s.matrixIn[0]" %mult_matrix)
-    cmds.connectAttr("%s.worldInverseMatrix[0]" %offset_transform, "%s.matrixIn[1]" %mult_matrix)
-    cmds.connectAttr("%s.output" %offset_bindpose_matrix, "%s.matrixIn[2]" %mult_matrix)
+    mult_matrix = cmds.createNode("multMatrix", n="%s_multMatrix" % inherit)
+    cmds.connectAttr("%s.worldMatrix[0]" % inherit, "%s.matrixIn[0]" % mult_matrix)
+    cmds.connectAttr("%s.worldInverseMatrix[0]" % no_inherit, "%s.matrixIn[1]" % mult_matrix)
+    cmds.connectAttr("%s.output" % dont_inherit_bindPose_matrix, "%s.matrixIn[2]" % mult_matrix)
 
     # decompose result #
-    decomp_matrix = cmds.createNode("decomposeMatrix", n="%s_decomposeMatrix" %localized_transform)
-    cmds.connectAttr("%s.matrixSum" %mult_matrix, "%s.inputMatrix" %decomp_matrix)
+    decomp_matrix = cmds.createNode("decomposeMatrix", n="%s_decomposeMatrix" % destination)
+    cmds.connectAttr("%s.matrixSum" % mult_matrix, "%s.inputMatrix" % decomp_matrix)
 
     # connect up #
-    for attr in target_attrs:
-        outputAttr = "output" + attr
-        outputAttr = outputAttr.replace("translate", "Translate")
-        outputAttr = outputAttr.replace("rotate", "Rotate")
-        outputAttr = outputAttr.replace("scale", "Scale")
+    for  attr in target_attrs:
+        output_attr = "output%s%s" % (attr[0].capitalize(), attr[1:]) # capitalize only first letter
 
-        lock_state = cmds.getAttr("%s.%s" %(localized_transform, attr), lock=True)
+        lock_state = cmds.getAttr("%s.%s" % (destination, attr), lock=True)
         # unlock, connect, then reinstate lock state #
-        cmds.setAttr("%s.%s" %(localized_transform, attr), lock=False)  # unlock #
-        cmds.connectAttr("%s.%s" %(decomp_matrix, outputAttr), "%s.%s" %(localized_transform, attr), force=force)
+        cmds.setAttr("%s.%s" % (destination, attr), lock=False)  # unlock #
+        cmds.connectAttr("%s.%s" % (decomp_matrix, output_attr), "%s.%s" % (destination, attr), force=force)
+
         # set back to original lock state #
-        cmds.setAttr("%s.%s" %(localized_transform, attr), lock=lock_state)
+        cmds.setAttr("%s.%s" % (destination, attr), lock=lock_state)
 
-
-    return decomp_matrix, mult_matrix, offset_bindpose_matrix
+    return decomp_matrix, mult_matrix, dont_inherit_bindPose_matrix

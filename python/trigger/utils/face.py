@@ -429,9 +429,9 @@ def face_switcher(bs_node, tongue_cont, l_eye_plug, r_eye_plug, upper_teeth_join
     cmds.setAttr("%s.inputMatrix" % upper_teeth_node, upper_teeth_inmatrix, type="matrix")
 
     # connect blender outputs
-    cmds.connectAttr(L_eye_b_out_p, "%s.t" % l_eye_plug)
-    cmds.connectAttr(R_eye_b_out_p, "%s.t" % r_eye_plug)
-    cmds.connectAttr(upper_teeth_out_p, "%s.t" % upper_teeth_joint)
+    cmds.connectAttr(L_eye_b_out_p, "%s.t" % l_eye_plug, force=True)
+    cmds.connectAttr(R_eye_b_out_p, "%s.t" % r_eye_plug, force=True)
+    cmds.connectAttr(upper_teeth_out_p, "%s.t" % upper_teeth_joint, force=True)
 
     attribute.separator(pref_cont, "Morphs")
 

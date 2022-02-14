@@ -16,6 +16,7 @@ def get_deformers(mesh=None, namesOnly=False):
     """Collects defomers in a dictionary by type
 
     Args:
+        namesOnly: If True, returns a flattened list with only deformer names
         mesh (str): Shape or transform node
     Return:
         dictionary: {<type>: [list of deformers]}
@@ -38,6 +39,7 @@ def get_deformers(mesh=None, namesOnly=False):
     else:
         return deformer_data
 
+
 def get_pre_blendshapes(mesh):
     """Returns the blendshape node(s) before the skinCluster"""
     all_deformers = get_deformers(mesh)
@@ -54,6 +56,7 @@ def get_pre_blendshapes(mesh):
 
 def get_influencers(deformer):
     return cmds.aliasAttr(deformer, q=True)[::2]
+
 
 @undo
 def connect_bs_targets(
@@ -149,23 +152,26 @@ def connect_bs_targets(
     for bs_attr in bs_attrs:
         cmds.connectAttr(driver_attr, bs_attr)
 
+
 @undo
 def localize(mesh, blendshape_node, local_target_name="LocalRig", group_name=None):
     """Creates a local rig by duplicating and using the duplicate as the blendshape target to the original mesh.
 
     Arguments:
         mesh {String} -- Original mesh
-        blendshape_node {String} -- Name of the existing blendshape node on the original mesh. If this is an unexisting node, a new blendshape will be created with this name
+        blendshape_node {String} -- Name of the existing blendshape node on the original mesh.
+        If this is an non-existing node, a new blendshape will be created with this name
 
     Keyword Arguments:
-        local_target_name {String} -- Name of the localized target. If non given, default duplicate name will be used. (default: {LocalRig})
+        local_target_name {String} -- Name of the localized target. If non given, default duplicate name will be used.
+        (default: {LocalRig})
 
     Returns:
         [String] -- Name of the local target
     """
 
     # create a holding group
-    local_rig_grp = "%s_grp" %local_target_name if not group_name else group_name
+    local_rig_grp = "%s_grp" % local_target_name if not group_name else group_name
     if not cmds.objExists(local_rig_grp):
         cmds.group(name=local_rig_grp, em=True)
 
@@ -177,12 +183,10 @@ def localize(mesh, blendshape_node, local_target_name="LocalRig", group_name=Non
         # get rid of any inbetweens, unlock transforms
         attrs = ["tx", "ty", "tz", "rx", "ry", "rz", "sx", "sy", "sz", "v"]
         for attr in attrs:
-            cmds.setAttr("%s.%s" %(local_mesh, attr), e=True, k=True, l=False)
+            cmds.setAttr("%s.%s" % (local_mesh, attr), e=True, k=True, l=False)
         # delete intermediate objects
         shapes = cmds.listRelatives(local_mesh, children=True)
         _ = [cmds.delete(shape) for shape in shapes if cmds.getAttr("%s.intermediateObject" % shape) == 1]
-
-
 
     if cmds.objExists(blendshape_node):
         # shape = cmds.listRelatives(mesh, c=True, s=True)[0]
@@ -190,7 +194,8 @@ def localize(mesh, blendshape_node, local_target_name="LocalRig", group_name=Non
         # if blendshape_node not in cmds.listConnections(shape):
         if blendshape_node not in get_deformers(mesh)["blendShape"]:
             cmds.error(
-                "Specified blendshape_node ({0}) exists in the scene but not connected to the specified mesh ({1})".format(
+                "Specified blendshape_node ({0}) exists in the scene "
+                "but not connected to the specified mesh ({1})".format(
                     blendshape_node, mesh))
         # query the existing targets
         next_index = cmds.blendShape(blendshape_node, q=True, wc=True)
@@ -209,6 +214,7 @@ def localize(mesh, blendshape_node, local_target_name="LocalRig", group_name=Non
 
     return local_mesh
 
+
 def add_target_blendshape(blendshape_node, target_mesh, weight=1.0):
     # TODO is it foolproof?
     # TODO when weight is 0 something goes wrong. The attr name is wrong (weight[0] etc.)
@@ -217,8 +223,10 @@ def add_target_blendshape(blendshape_node, target_mesh, weight=1.0):
 
     # connected_mesh = cmds.listConnections(blendshape_node, type="mesh", source=False, destination=True)[0]
     next_index = cmds.blendShape(blendshape_node, q=True, wc=True)
-    cmds.blendShape(blendshape_node, edit=True, t=(connected_mesh, next_index, target_mesh, weight), w=[next_index, weight])
+    cmds.blendShape(blendshape_node, edit=True, t=(connected_mesh, next_index, target_mesh, weight),
+                    w=[next_index, weight])
     return next_index
+
 
 # TODO Make this one compatible with list vertex inputs
 @keepselection
@@ -232,29 +240,31 @@ def cluster(mesh):
         if all_shapes:
             shape = all_shapes[0]
         else:
-            log.error("There are no shapes under the %s group" %mesh)
+            log.error("There are no shapes under the %s group" % mesh)
             raise
     else:
         shape = cmds.listRelatives(mesh, shapes=True)[0]
-    cluster = cmds.listConnections(shape, type="cluster")[-1]
-    cluster_handle = cmds.listConnections(cluster, type="transform")[-1]
-    # cmds.select(original_selection)
-    return cluster, cluster_handle
+    _cluster = cmds.listConnections(shape, type="cluster")[-1]
+    cluster_handle = cmds.listConnections(_cluster, type="transform")[-1]
+    return _cluster, cluster_handle
+
 
 def get_bs_index_by_name(bs_node, target_name):
     attr = bs_node + '.w[{}]'
-    weightCount = cmds.blendShape(bs_node, q=True, wc=True)
-    for index in range(weightCount):
+    weight_count = cmds.blendShape(bs_node, q=True, wc=True)
+    for index in range(weight_count):
         if cmds.aliasAttr(attr.format(index), q=True) == target_name:
             return index
     return -1
 
+
 @keepselection
 def create_proximity_wrap(driver, driven, **kwargs):
     # get arguments
-    wrap_mode_dict = {"offset": 0, "surface": 1, "snap": 2, "rigid": 3, "cluster":4}
+    wrap_mode_dict = {"offset": 0, "surface": 1, "snap": 2, "rigid": 3, "cluster": 4}
     wrap_mode = kwargs.get('wrap_mode', 1)
-    try: wrap_mode = int(wrap_mode)
+    try:
+        wrap_mode = int(wrap_mode)
     except ValueError:
         wrap_mode = wrap_mode_dict[wrap_mode.lower()]
     name = kwargs.get('name', 'tr_proximityWrap')
@@ -295,6 +305,7 @@ def create_proximity_wrap(driver, driven, **kwargs):
     cmds.setAttr("{0}.spanSamples".format(wrap_node), span_samples)
 
     return wrap_node
+
 
 def create_shrink_wrap(driver, driven, name=None, **kwargs):
     """
@@ -350,12 +361,12 @@ def create_shrink_wrap(driver, driven, name=None, **kwargs):
     }
 
     if cmds.objectType(driver) == "transform":
-        influenceShape = functions.getShapes(driver)[0]
+        influence_shape = functions.getShapes(driver)[0]
     else:
-        influenceShape = driver
+        influence_shape = driver
 
     shrink_wrap = cmds.deformer(driven, type="shrinkWrap", name=name)[0]
-    cmds.connectAttr("%s.worldMesh[0]" % influenceShape, "%s.targetGeom" % shrink_wrap)
+    cmds.connectAttr("%s.worldMesh[0]" % influence_shape, "%s.targetGeom" % shrink_wrap)
 
     # set the attributes
     for attr, value in attribute_dict.items():
@@ -363,37 +374,34 @@ def create_shrink_wrap(driver, driven, name=None, **kwargs):
 
     return shrink_wrap
 
-def create_wrap(influence, surface, **kwargs):
-    # shapes = cmds.listRelatives(influence, shapes=True)
-    influenceShape = functions.getShapes(influence)[0]
 
-    # shapes = cmds.listRelatives(surface, shapes=True)
-    # surfaceShape = functions.getShapes(surface)[0]
+def create_wrap(influence, surface, **kwargs):
+    influence_shape = functions.getShapes(influence)[0]
 
     prefix = kwargs.get('name', surface)
     # create wrap deformer
-    weightThreshold = kwargs.get('weightThreshold', 0.0)
-    maxDistance = kwargs.get('maxDistance', 1.0)
-    exclusiveBind = kwargs.get('exclusiveBind', False)
-    autoWeightThreshold = kwargs.get('autoWeightThreshold', True)
-    falloffMode = kwargs.get('falloffMode', 0)
+    weight_threshold = kwargs.get('weightThreshold', 0.0)
+    max_distance = kwargs.get('maxDistance', 1.0)
+    exclusive_bind = kwargs.get('exclusiveBind', False)
+    auto_weight_threshold = kwargs.get('autoWeightThreshold', True)
+    falloff_mode = kwargs.get('falloffMode', 0)
 
-    wrapData = cmds.deformer(surface, type='wrap', name="%s_wrap" %prefix)
-    wrapNode = wrapData[0]
+    wrap_data = cmds.deformer(surface, type='wrap', name="%s_wrap" % prefix)
+    wrap_node = wrap_data[0]
 
-    cmds.setAttr(wrapNode + '.weightThreshold', weightThreshold)
-    cmds.setAttr(wrapNode + '.maxDistance', maxDistance)
-    cmds.setAttr(wrapNode + '.exclusiveBind', exclusiveBind)
-    cmds.setAttr(wrapNode + '.autoWeightThreshold', autoWeightThreshold)
-    cmds.setAttr(wrapNode + '.falloffMode', falloffMode)
+    cmds.setAttr('%s.weightThreshold' % wrap_node, weight_threshold)
+    cmds.setAttr('%s.maxDistance' % wrap_node, max_distance)
+    cmds.setAttr('%s.exclusiveBind' % wrap_node, exclusive_bind)
+    cmds.setAttr('%s.autoWeightThreshold' % wrap_node, auto_weight_threshold)
+    cmds.setAttr('%s.falloffMode' % wrap_node, falloff_mode)
 
-    cmds.connectAttr(surface + '.worldMatrix[0]', wrapNode + '.geomMatrix')
+    cmds.connectAttr('%s.worldMatrix[0]' % surface, '%s.geomMatrix' % wrap_node)
 
     # add influence
-    duplicateData = cmds.duplicate(influence, name=influence + 'Base')
-    base = duplicateData[0]
+    duplicate_data = cmds.duplicate(influence, name=influence + 'Base')
+    base = duplicate_data[0]
     shapes = cmds.listRelatives(base, shapes=True)
-    baseShape = shapes[0]
+    base_shape = shapes[0]
     cmds.hide(base)
 
     # create dropoff attr if it doesn't exist
@@ -402,7 +410,7 @@ def create_wrap(influence, surface, **kwargs):
         cmds.setAttr(influence + '.dr', k=True)
 
     # if type mesh
-    if cmds.nodeType(influenceShape) == 'mesh':
+    if cmds.nodeType(influence_shape) == 'mesh':
         # create smoothness attr if it doesn't exist
         if not cmds.attributeQuery('smoothness', n=influence, exists=True):
             cmds.addAttr(influence, sn='smt', ln='smoothness', dv=0.0, min=0.0)
@@ -412,23 +420,21 @@ def create_wrap(influence, surface, **kwargs):
         if not cmds.attributeQuery('inflType', n=influence, exists=True):
             cmds.addAttr(influence, at='short', sn='ift', ln='inflType', dv=2, min=1, max=2)
 
-        cmds.connectAttr(influenceShape + '.worldMesh', wrapNode + '.driverPoints[0]')
-        cmds.connectAttr(baseShape + '.worldMesh', wrapNode + '.basePoints[0]')
-        cmds.connectAttr(influence + '.inflType', wrapNode + '.inflType[0]')
-        cmds.connectAttr(influence + '.smoothness', wrapNode + '.smoothness[0]')
+        cmds.connectAttr('%s.worldMesh' % influence_shape, '%s.driverPoints[0]' % wrap_node)
+        cmds.connectAttr('%s.worldMesh' % base_shape, '%s.basePoints[0]' % wrap_node)
+        cmds.connectAttr('%s.inflType' % influence, '%s.inflType[0]' % wrap_node)
+        cmds.connectAttr('%s.smoothness' % influence, '%s.smoothness[0]' % wrap_node)
 
     # if type nurbsCurve or nurbsSurface
-    if cmds.nodeType(influenceShape) == 'nurbsCurve' or cmds.nodeType(influenceShape) == 'nurbsSurface':
+    if cmds.nodeType(influence_shape) == 'nurbsCurve' or cmds.nodeType(influence_shape) == 'nurbsSurface':
         # create the wrapSamples attr if it doesn't exist
         if not cmds.attributeQuery('wrapSamples', n=influence, exists=True):
             cmds.addAttr(influence, at='short', sn='wsm', ln='wrapSamples', dv=10, min=1)
-            cmds.setAttr(influence + '.wsm', k=True)
+            cmds.setAttr('%s.wsm' % influence, k=True)
 
-        cmds.connectAttr(influenceShape + '.ws', wrapNode + '.driverPoints[0]')
-        cmds.connectAttr(baseShape + '.ws', wrapNode + '.basePoints[0]')
-        cmds.connectAttr(influence + '.wsm', wrapNode + '.nurbsSamples[0]')
+        cmds.connectAttr('%s.ws' % influence_shape, '%s.driverPoints[0]' % wrap_node)
+        cmds.connectAttr('%s.ws' % base_shape, '%s.basePoints[0]' % wrap_node)
+        cmds.connectAttr('%s.wsm' % influence, '%s.nurbsSamples[0]' % wrap_node)
 
-    cmds.connectAttr(influence + '.dropoff', wrapNode + '.dropoff[0]')
-    # I want to return a pyNode object for the wrap deformer.
-    # I do not see the reason to rewrite the code here into pymel.
-    return wrapNode, base
+    cmds.connectAttr('%s.dropoff' % influence, '%s.dropoff[0]' % wrap_node)
+    return wrap_node, base

@@ -107,7 +107,7 @@ def launch(force=False):
 class MainUI(QtWidgets.QMainWindow):
     iconsPath = os.path.join(os.path.dirname(os.path.realpath(__file__)), "icons")
 
-    def __init__(self):
+    def __init__(self, disable_version_control=False):
 
         parent = getMayaMainWindow()
         super(MainUI, self).__init__(parent=parent)
@@ -144,9 +144,8 @@ class MainUI(QtWidgets.QMainWindow):
 
         self.centralWidget_vLay = QtWidgets.QVBoxLayout(self.centralwidget)  # this is only to fit the tab widget
         # self.centralWidget_vLay.setSpacing(0)
-
         # Build the UI elements
-        if version_control.controller:
+        if version_control.controller and not disable_version_control:
             self.asset_control()
         self.rigging_tab, self.guides_tab = self.build_tabs()
         self.build_bars_ui()
