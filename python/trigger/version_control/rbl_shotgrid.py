@@ -210,22 +210,22 @@ class VersionControl(object):
     # def get_task_path(self):
         
 
-    def get_latest_path(self, trigger_template, **kwargs):
-        asset_id = self._sg_load.asset_id_from_name(self.asset)
-        print("asset_id", asset_id)
-        task_id = self._sg_load.task_id_from_name(self.task, asset_id=asset_id)
-        print("task_id", task_id)
-        version = self._sg_template.current_version_from_template_list([trigger_template], task_id) or 1
-        print("version", version)
-        path = self._sg_template.output_path_from_template(trigger_template, task_id, version, **kwargs)
-        return path
-        # pass
+    # def get_latest_path(self, trigger_template, **kwargs):
+    #     asset_id = self._sg_load.asset_id_from_name(self.asset)
+    #     print("asset_id", asset_id)
+    #     task_id = self._sg_load.task_id_from_name(self.task, asset_id=asset_id)
+    #     print("task_id", task_id)
+    #     version = self._sg_template.current_version_from_template_list([trigger_template], task_id) or 1
+    #     print("version", version)
+    #     path = self._sg_template.output_path_from_template(trigger_template, task_id, version, **kwargs)
+    #     return path
+    #     # pass
 
-    def get_next_path(self, trigger_template):
-        pass
-
-    def get_previous_path(self, trigger_template):
-        pass
-
-    def is_latest(self, trigger_template):
-        pass
+    # def get_next_path(self, trigger_template):
+    #     pass
+    #
+    # def get_previous_path(self, trigger_template):
+    #     pass
+    #
+    # def is_latest(self, trigger_template):
+    #     pass

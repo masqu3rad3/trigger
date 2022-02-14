@@ -45,7 +45,7 @@ class Splitter(dict):
         if not os.path.isfile(file_pathN):
             self.weightsHandler.io.file_path = file_path
             positive_data = self.weightsHandler.io.read()
-            negative_data = self.weightsHandler.negateWeights(positive_data)
+            negative_data = self.weightsHandler.negate_weights(positive_data)
             self.weightsHandler.io.file_path = file_pathN
             file_pathN = self.weightsHandler.io.write(negative_data)
 

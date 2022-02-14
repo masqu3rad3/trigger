@@ -102,4 +102,4 @@ class TaskSelection(QtWidgets.QHBoxLayout):
 
     def set_task(self):
         self.sgh.task = self.task_combo.currentText()
-        self.task_changed_signal.emit(self.sgh.)
+        # self.task_changed_signal.emit(self.sgh.)

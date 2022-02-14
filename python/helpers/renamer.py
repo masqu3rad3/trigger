@@ -9,9 +9,7 @@ from trigger.ui.qtmaya import getMayaMainWindow
 from trigger.ui.Qt import QtWidgets
 
 from trigger.core.decorators import undo
-from trigger.core import logger
 
-log = logger.Logger(__name__)
 WINDOW_NAME = "Tik_Renamer"
 
 class Renamer(object):
@@ -235,7 +233,6 @@ class MainUI(QtWidgets.QDialog):
         elif self.all_rb.isChecked():
             method=2
         else:
-            log.throw_error("Method cannot defined")
             return
 
         if command == "removePasted":
