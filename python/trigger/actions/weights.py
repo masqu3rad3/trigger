@@ -279,7 +279,8 @@ Then you can save and increment versions for all of them at once.
         return True
 
     @keepselection
-    def load_weights(self, deformer=None, file_path=None, method="index", ignore_name=True, deferred=False):
+    def load_weights(self, deformer=None, file_path=None, method="index", ignore_name=True, deferred=False,
+                     suppress_messages=False):
         if not deformer and not self.deformer:
             log.error(
                 "No Deformer defined. A Deformer needs to be defined either as argument or class variable)")
@@ -318,7 +319,8 @@ Then you can save and increment versions for all of them at once.
             if data.get("DQ_weights"):
                 for nmb, weight in enumerate(data["DQ_weights"]):
                     cmds.setAttr('%s.bw[%s]' % (deformer, nmb), weight)
-            log.info("%s Weights Lodaded Successfully..." % deformer)
+            if not suppress_messages:
+                log.info("%s Weights Lodaded Successfully..." % deformer)
             return
             # point_attr_template = "{0}.weightList[{1}].weights[0]"
         else:
@@ -328,7 +330,8 @@ Then you can save and increment versions for all of them at once.
             index0_val = weight_dict["points"][0]["value"]
             cmds.setAttr(point_attr_template.format(deformer, nmb), index0_val)
 
-        log.info("%s Weights Lodaded Successfully..." % deformer)
+        if not suppress_messages:
+            log.info("%s Weights Lodaded Successfully..." % deformer)
         return True
 
     def create_deformer(self, weights_file, deformer_type=None, force_unique_deformer=False, deformer_name=None,

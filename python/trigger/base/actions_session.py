@@ -273,7 +273,6 @@ class ActionsSession(dict):
         index = self["actions"].index(action)
         if not index == 0:
             self["actions"].insert(index - 1, self["actions"].pop(index))
-        # log.info("%s index => %s" % (action_name, index - 1))
 
     def move_down(self, action_name):
         """Moves the action one index down"""
@@ -281,7 +280,6 @@ class ActionsSession(dict):
         index = self["actions"].index(action)
         if not index == len(self["actions"]):
             self["actions"].insert(index + 1, self["actions"].pop(index))
-        # log.info("%s index => %s" % (action_name, index + 1))
 
     def move(self, action_name, new_index):
         """Moves the action to the given index nmb"""
@@ -289,7 +287,6 @@ class ActionsSession(dict):
         old_index = self["actions"].index(action)
         if old_index != new_index:
             self["actions"].insert(new_index, self["actions"].pop(old_index))
-        # log.info("%s index => %s" % (action_name, new_index))
 
     def get_info(self, action_name):
         action = self.get_action(action_name)

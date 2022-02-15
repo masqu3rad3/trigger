@@ -11,7 +11,7 @@ from maya import cmds
 from trigger.library import functions
 
 
-def selection(min=None, max=None, groupsOnly=False, meshesOnly=False, nurbsCurvesOnly=False, transforms=True,
+def selection(minimum=None, maximum=None, groupsOnly=False, meshesOnly=False, nurbsCurvesOnly=False, transforms=True,
               fullPath=False):
     selected = cmds.ls(sl=True, long=fullPath)
     if not selected:
@@ -42,21 +42,21 @@ def selection(min=None, max=None, groupsOnly=False, meshesOnly=False, nurbsCurve
                     if cmds.objectType(shape) != check:
                         return False, "Selection contains objects other than %s" % check
 
-    if min and len(selected) < min:
-        return False, "The minimum required selection is %s" % min
-    if max and len(selected) > max:
-        return False, "The maximum selection is %s" % max
+    if minimum and len(selected) < minimum:
+        return False, "The minimum required selection is %s" % minimum
+    if maximum and len(selected) > maximum:
+        return False, "The maximum selection is %s" % maximum
     return selected, ""
 
 
-def text(text, allowSpaces=False, directory=False):
+def string_value(input_text, allow_spaces=False, directory=False):
     """Checks the text for illegal characters"""
-    aSpa = " " if allowSpaces else ""
-    dir = "/\\\\:" if directory else ""
+    allow_spaces = " " if allow_spaces else ""
+    directory = "/\\\\:" if directory else ""
 
-    pattern = r'^[:A-Za-z0-9%s%s.A_-]*$' % (dir, aSpa)
+    pattern = r'^[:A-Za-z0-9%s%s.A_-]*$' % (directory, allow_spaces)
 
-    if re.match(pattern, text):
+    if re.match(pattern, input_text):
         return True
     else:
         return False

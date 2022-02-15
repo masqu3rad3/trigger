@@ -460,7 +460,7 @@ def getNextIndex(attr, startFrom=0):
 
 
 def disconnect_attr(node=None, attr=None, suppress_warnings=False):
-    """Disconnects all connections to the attribute"""
+    """Disconnects all INCOMING connections to the attribute"""
     if len(node.split(".")) < 2:
         if not attr:
             cmds.error("You need to provide node=<node> and attr=<attr> or node=<node>.<attr>")

@@ -2,11 +2,13 @@
 from copy import deepcopy
 from trigger.core import io
 
+
 class Database(dict):
     def __init__(self):
         super(Database, self).__init__()
         self.userSettings = UserSettings()
         self.recentSessions = RecentSessions()
+
 
 class RecentSessions(list):
     handler = io.IO(file_name="recentSessions.json", folder_name="trigger")
@@ -28,6 +30,7 @@ class RecentSessions(list):
         if len(self) > 9:
             self.pop(-1)
         self.handler.write(self)
+
 
 class UserSettings(object):
     handler = io.IO(file_name="userSettings.json", folder_name="trigger")

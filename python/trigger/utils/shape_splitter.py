@@ -59,7 +59,8 @@ class Splitter(dict):
     def _bs_split(self, mesh, split_map_path, name, grp):
         splitted_mesh = cmds.duplicate(self.neutral, name=name)[0]
         cmds.blendShape(mesh, splitted_mesh, w=[0, 1], name="tmp_split_blendshape")
-        self.weightsHandler.load_weights(deformer="tmp_split_blendshape", file_path=split_map_path)
+        self.weightsHandler.load_weights(deformer="tmp_split_blendshape", file_path=split_map_path,
+                                         suppress_messages=True)
         cmds.delete(splitted_mesh, ch=True)
         cmds.parent(splitted_mesh, grp)
         return splitted_mesh
@@ -102,7 +103,6 @@ class Splitter(dict):
     def split_shapes(self):
         if not self.neutral:
             log.error("Neutral shape is not defined")
-        # splits_grp = "SPLITTED_SHAPES_grp"
         if not cmds.objExists(self.splittedShapesGrp):
             cmds.group(name="SPLITTED_SHAPES_grp", em=True)
 
@@ -122,6 +122,7 @@ class Splitter(dict):
                 if len(split_maps) > 1:
                     mort_list.append(splitted_mesh)
                     expandable_list.append((splitted_mesh, split_maps[1:]))
+                log.info("{0} splitted ({1})".format(shape, os.path.basename(map_path)))
 
         cmds.delete(mort_list)
         return self.splittedShapesGrp
