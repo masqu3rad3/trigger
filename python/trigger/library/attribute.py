@@ -186,6 +186,7 @@ def drive_attrs(driver_attr, driven_attrs, driver_range=None, driven_range=None,
     # check if there is a compound attr
     splits = driver_attr.split(".")
     driver_node = splits[0]
+    driver_name = driver_node.split("|")[0]
     attr_name = ".".join(splits[1:])
     if len(splits) > 2:
         driver_attr_children = []
@@ -199,7 +200,7 @@ def drive_attrs(driver_attr, driven_attrs, driver_range=None, driven_range=None,
                 "drive_attrs does not support more than 3 channel compounds. Connect channels separately ==> %s"
                 % driver_attr)
             return
-        range_node = cmds.createNode("setRange", name="%s_%s_setRange" % (driver_node, attr_name))
+        range_node = cmds.createNode("setRange", name="%s_%s_setRange" % (driver_name, attr_name))
         for ch in "XYZ":
             cmds.setAttr("%s.oldMin%s" % (range_node, ch), driver_range[0])
             cmds.setAttr("%s.oldMax%s" % (range_node, ch), driver_range[1])
@@ -215,7 +216,7 @@ def drive_attrs(driver_attr, driven_attrs, driver_range=None, driven_range=None,
                                  force=force)
     # if single channel
     else:
-        range_node = cmds.createNode("remapValue", name="%s_%s_setRange" % (driver_node, attr_name))
+        range_node = cmds.createNode("remapValue", name="%s_%s_setRange" % (driver_name, attr_name))
         cmds.setAttr("%s.inputMin" % range_node, driver_range[0])
         cmds.setAttr("%s.inputMax" % range_node, driver_range[1])
         cmds.setAttr("%s.outputMin" % range_node, driven_range[0])
