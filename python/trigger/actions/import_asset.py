@@ -9,11 +9,10 @@ from trigger.library import attribute
 
 from trigger.core import filelog
 # from trigger.ui.Qt import QtWidgets, QtGui # for progressbar
-from PySide2 import QtWidgets, QtGui # for progressbar
+from PySide2 import QtWidgets, QtGui  # for progressbar
 from trigger.ui import custom_widgets
 
 log = filelog.Filelog(logname=__name__, filename="trigger_log")
-
 
 ACTION_DATA = {
     "import_file_path": "",
@@ -22,11 +21,14 @@ ACTION_DATA = {
     "parent_under": "",
 }
 
+
 class Import_asset(object):
     def __init__(self, *args, **kwargs):
         super(Import_asset, self).__init__()
-        # self.rigName = "trigger"
         self.filePath = None
+        self.scale = None
+        self.rootSuffix = None
+        self.parentUnder = None
 
     def feed(self, action_data):
         self.filePath = action_data.get("import_file_path")
@@ -67,7 +69,10 @@ class Import_asset(object):
         # file_path_le = QtWidgets.QLineEdit()
         file_path_le = custom_widgets.FileLineEdit()
         file_path_hLay.addWidget(file_path_le)
-        browse_path_pb = custom_widgets.BrowserButton(mode="openFile", update_widget=file_path_le, filterExtensions=["Maya ASCII (*.ma)", "Maya Binary (*.mb)", "USD (*.usd)", "Alembic (*.abc)", "FBX (*.fbx)", "OBJ (*.obj)"], overwrite_check=False)
+        browse_path_pb = custom_widgets.BrowserButton(mode="openFile", update_widget=file_path_le,
+                                                      filterExtensions=["Maya ASCII (*.ma)", "Maya Binary (*.mb)",
+                                                                        "USD (*.usd)", "Alembic (*.abc)", "FBX (*.fbx)",
+                                                                        "OBJ (*.obj)"], overwrite_check=False)
         file_path_hLay.addWidget(browse_path_pb)
         layout.addRow(file_path_lbl, file_path_hLay)
 
@@ -119,7 +124,8 @@ class Import_asset(object):
 
     def import_usd(self, file_path, *args, **kwargs):
         self._load_usd_plugin()
-        new_nodes = cmds.file(file_path, i=True, type="USD Import", ignoreVersion=True, mergeNamespacesOnClash=False, rpr=True, returnNewNodes=True)
+        new_nodes = cmds.file(file_path, i=True, type="USD Import", ignoreVersion=True, mergeNamespacesOnClash=False,
+                              rpr=True, returnNewNodes=True)
         return new_nodes
 
     def import_fbx(self, file_path, *args, **kwargs):
@@ -127,30 +133,30 @@ class Import_asset(object):
         pre = cmds.ls(long=True)
 
         fbx_import_settings = {
-        "FBXImportMergeBackNullPivots": "-v true",
-        "FBXImportMode": "-v add",
-        "FBXImportSetLockedAttribute": "-v false",
-        "FBXImportUnlockNormals": "-v false",
-        "FBXImportScaleFactor": "1.0",
-        "FBXImportProtectDrivenKeys": "-v true",
-        "FBXImportShapes": "-v true",
-        "FBXImportQuaternion": "-v euler",
-        "FBXImportCameras": "-v true",
-        "FBXImportSetMayaFrameRate": "-v false",
-        "FBXImportResamplingRateSource": "-v Scene",
-        "FBXImportGenerateLog": "-v false",
-        "FBXImportConstraints": "-v true",
-        "FBXImportLights": "-v true",
-        "FBXImportConvertDeformingNullsToJoint": "-v true",
-        "FBXImportFillTimeline": "-v false",
-        "FBXImportMergeAnimationLayers": "-v true",
-        "FBXImportHardEdges": "-v true",
-        "FBXImportAxisConversionEnable": "-v true",
-        "FBXImportCacheFile": "-v true",
-        "FBXImportUpAxis": "y",
-        "FBXImportSkins": "-v true",
-        "FBXImportConvertUnitString": "-v true",
-        "FBXImportForcedFileAxis": "-v disabled"
+            "FBXImportMergeBackNullPivots": "-v true",
+            "FBXImportMode": "-v add",
+            "FBXImportSetLockedAttribute": "-v false",
+            "FBXImportUnlockNormals": "-v false",
+            "FBXImportScaleFactor": "1.0",
+            "FBXImportProtectDrivenKeys": "-v true",
+            "FBXImportShapes": "-v true",
+            "FBXImportQuaternion": "-v euler",
+            "FBXImportCameras": "-v true",
+            "FBXImportSetMayaFrameRate": "-v false",
+            "FBXImportResamplingRateSource": "-v Scene",
+            "FBXImportGenerateLog": "-v false",
+            "FBXImportConstraints": "-v true",
+            "FBXImportLights": "-v true",
+            "FBXImportConvertDeformingNullsToJoint": "-v true",
+            "FBXImportFillTimeline": "-v false",
+            "FBXImportMergeAnimationLayers": "-v true",
+            "FBXImportHardEdges": "-v true",
+            "FBXImportAxisConversionEnable": "-v true",
+            "FBXImportCacheFile": "-v true",
+            "FBXImportUpAxis": "y",
+            "FBXImportSkins": "-v true",
+            "FBXImportConvertUnitString": "-v true",
+            "FBXImportForcedFileAxis": "-v disabled"
         }
 
         for item in fbx_import_settings.items():
@@ -191,7 +197,7 @@ class Import_asset(object):
                 cmds.delete(temp_grp)
 
                 if suffix:
-                    node = cmds.rename(node, "%s_%s" %(node, suffix))
+                    node = cmds.rename(node, "%s_%s" % (node, suffix))
 
                 if parent_under:
                     cmds.parent(node, parent_under)
@@ -199,24 +205,31 @@ class Import_asset(object):
             # nothing to do
             return
 
-
     def _load_alembic_plugin(self):
         """Makes sure the alembic plugin is loaded"""
         if not cmds.pluginInfo("AbcExport", l=True, q=True):
-            try: cmds.loadPlugin("AbcExport")
-            except: log.error("Alembic Export Plugin cannot be loaded")
+            try:
+                cmds.loadPlugin("AbcExport")
+            except:
+                log.error("Alembic Export Plugin cannot be loaded")
         if not cmds.pluginInfo("AbcImport", l=True, q=True):
-            try: cmds.loadPlugin("AbcImport")
-            except: log.error("Alembic Import Plugin cannot be loaded")
+            try:
+                cmds.loadPlugin("AbcImport")
+            except:
+                log.error("Alembic Import Plugin cannot be loaded")
 
     def _load_fbx_plugin(self):
         """Makes sure the FBX plugin is loaded"""
         if not cmds.pluginInfo('fbxmaya', l=True, q=True):
-            try: cmds.loadPlugin("fbxmaya")
-            except: log.error("FBX Plugin cannot be loaded")
+            try:
+                cmds.loadPlugin("fbxmaya")
+            except:
+                log.error("FBX Plugin cannot be loaded")
 
     def _load_usd_plugin(self):
         """Makes sure the usd plugin loaded"""
         if not cmds.pluginInfo('mayaUsdPlugin', l=True, q=True):
-            try: cmds.loadPlugin("mayaUsdPlugin")
-            except: log.error("USD Plugin cannot be loaded")
+            try:
+                cmds.loadPlugin("mayaUsdPlugin")
+            except:
+                log.error("USD Plugin cannot be loaded")

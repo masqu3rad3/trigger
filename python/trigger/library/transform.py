@@ -38,6 +38,7 @@ def set_limits(node, attribute, attr_min, attr_max):
     if attribute in flag_dict.keys():
         cmds.transformLimits(node, **flag_dict[attribute])
 
+
 def query_limits(node, attribute):
     """Query transform attribute limits.
 
@@ -92,14 +93,17 @@ def query_limits(node, attribute):
     else:
         log.error("query_limits error. %s is not a valid transform attribute" % attribute)
 
-def free_limits(node, attr_list = ("tx", "ty", "tz", "rx", "ry", "rz", "sx", "sy", "sz")):
+
+def free_limits(node, attr_list=("tx", "ty", "tz", "rx", "ry", "rz", "sx", "sy", "sz")):
     for attr in attr_list:
         cmd = "cmds.transformLimits('{0}', e{1}=(0,0))".format(node, attr)
         eval(cmd)
 
+
 def reference(node):
-    cmds.setAttr("%s.overrideEnabled" %node, 1)
-    cmds.setAttr("%s.overrideDisplayType" %node, 2)
+    cmds.setAttr("%s.overrideEnabled" % node, 1)
+    cmds.setAttr("%s.overrideDisplayType" % node, 2)
+
 
 @keepframe
 def duplicate(node, name=None, at_time=None):
@@ -108,6 +112,7 @@ def duplicate(node, name=None, at_time=None):
     node_name = name or "%s_dup" % node
     return cmds.duplicate(node, name=node_name)[0]
 
+
 def is_group(node):
     """Checks if the given node is a group node or not"""
     if cmds.listRelatives(node, children=True, shapes=True):
@@ -115,14 +120,67 @@ def is_group(node):
     else:
         return True
 
+
 def validate_group(group_name):
     "checks if the group exist, if not creates it. If there are any non-group object with that name, raises exception"
     if cmds.objExists(group_name):
         if is_group(group_name):
             return group_name
         else:
-            log.error("%s is not a valid group name. There is another non-group object with the same same" %group_name)
+            log.error("%s is not a valid group name. There is another non-group object with the same same" % group_name)
     else:
         return cmds.group(name=group_name, em=True)
 
 
+def get_color(node):
+    """returns the normalized color values of given node"""
+    _color = None
+    # First check the node itself
+    if cmds.getAttr("%s.overrideEnabled" % node):
+        if cmds.getAttr("%s.overrideShading" % node):
+            if cmds.getAttr("%s.overrideRGBColors" % node):
+                _color = cmds.getAttr("%s.overrideColorRGB" % node)
+                return _color[0]
+            else:
+                _color_id = cmds.getAttr("%s.overrideColor" % node)
+                color_ids = {
+                    0: (0.471, 0.471, 0.471),
+                    1: (0, 0, 0),
+                    2: (0.251, 0.251, 0.251),
+                    3: (0.502, 0.502, 0.502),
+                    4: (0.608, 0, 0.157),
+                    5: (0, 0.016, 0.376),
+                    6: (0, 0, 1),
+                    7: (0, 0.275, 0.098),
+                    8: (0.149, 0, 0.263),
+                    9: (0.784, 0, 0.784),
+                    10: (0.541, 0.282, 0.2),
+                    11: (0.247, 0.137, 0.122),
+                    12: (0.6, 0.149, 0),
+                    13: (1, 0, 0),
+                    14: (0, 1, 0),
+                    15: (0, 0.255, 0.6),
+                    16: (1, 1, 1),
+                    17: (1, 1, 0),
+                    18: (0.392, 0.863, 1),
+                    19: (0.263, 1, 0.639),
+                    20: (1, 0.69, 0.69),
+                    21: (0.894, 0.675, 0.475),
+                    22: (1, 1, 0.388),
+                    23: (0, 0.6, 0.329),
+                    24: (0.631, 0.412, 0.188),
+                    25: (0.624, 0.631, 0.188),
+                    26: (0.408, 0.631, 0.188),
+                    27: (0.188, 0.631, 0.365),
+                    28: (0.188, 0.631, 0.631),
+                    29: (0.188, 0.404, 0.631),
+                    30: (0.435, 0.188, 0.631),
+                    31: (0.631, 0.188, 0.412)
+                }
+                return color_ids[_color_id]
+    else:
+        # check for the shapes
+        _shapes = cmds.listRelatives(node, c=True, shapes=True, path=True, fullPath=True) or []
+        for shape in _shapes:
+            _color = get_color(shape)
+    return _color

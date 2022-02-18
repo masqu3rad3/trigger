@@ -1,6 +1,6 @@
 from maya import cmds
 
-from trigger.library import functions, attribute, transform, connection
+from trigger.library import functions, attribute, transform, connection, shading
 from trigger.objects.base_node import BaseNode
 from trigger.core import filelog
 
@@ -11,21 +11,33 @@ class Filler(BaseNode):
     def __init__(self,
                  controller=None,
                  scaling=True,
-                 coloring=False,
+                 normalize_scale=True,
+                 coloring=True,
                  color_method="object",
-                 primary_channel="Auto"):
+                 color_match=False,
+                 primary_channel="Auto",
+                 visibility_controller=None,
+                 id_tag="fillers"):
         """
 
         Args:
             controller: (string) Unique name or dag path for controller object
             scaling: (Bool) If True filler will be scaled with primary axis
-            coloring: (Bool) If True filler change color with primary axis
+            normalize_scale: (Bool) If True and if the ranges goes below 0, it will only do a positive scaling
+                                    and will keep the 0 always 0 scale. Useful for two-way controllers.
+                                    Default is True
+            coloring: (Bool) If True filler change color with primary axis. Default True.
             color_method: (String) Defines either object color or shader will be used for coloring.
-                                    Valid values are 'object' and 'shader'
+                                    Valid values are 'object', 'shader' and 'triswitch'. Default 'object'
+            color_match: (Bool) If True, it matches BOTH color A and color B to the controllers color. In this case,
+                                    Colors wont be animated
             primary_channel: (String) If set to 'Auto' the first available non-locked channel will be used.
+            visibility_controller: (String) the attribute plug which will control the visibility of the filler
+            id_tag: (String) When multiple fillers are created, this tag will be an identifier
+                                    for shared node and group usage
         """
         super(Filler, self).__init__()
-        self.hold_group = transform.validate_group("fillers_grp")
+        self.hold_group = transform.validate_group("%s_grp" % id_tag)
 
         self.controller = None
         self.driver_hook = None
@@ -35,16 +47,20 @@ class Filler(BaseNode):
         self.colorA = (0, 0, 1)
         self.colorB = (0, 1, 0)
         self.scaling = scaling
+        self.normalize_scale = normalize_scale
         self.coloring = coloring
         self.color_method = color_method
+        self.color_match = color_match
         self.primary_channel = primary_channel
+        self.visibility_controller = visibility_controller
+        self.id_tag = str(id_tag)
 
     def set_controller(self, dag_path):
         """defines the controller and grabs its vaules in Origin class"""
         self.controller = Origin(dag_path, primary_channel=self.primary_channel)
         self.driver_hook = attribute.create_attribute(self.controller.dag_path,
                                                       attr_name="fillerPercentage_%s" % self.primary_channel,
-                                                      attr_type="float", min_value=0, max_value=1)
+                                                      attr_type="float")
 
         _range = self.controller.primary_ranges
         if not _range:
@@ -55,7 +71,8 @@ class Filler(BaseNode):
         attribute.drive_attrs("{0}.{1}".format(self.controller.dag_path, self.controller.primary_channel),
                               self.driver_hook,
                               self.controller.primary_ranges,
-                              [0, 100])
+                              self.controller.primary_ranges)
+        # [0, 100])
         return
 
     def create(self):
@@ -75,17 +92,28 @@ class Filler(BaseNode):
         if self.scaling:
             self.drive_scale()
 
+        if self.color_match:
+            _color = transform.get_color(self.controller.dag_path)
+            if _color:
+                self.colorA = _color
+                self.colorB = _color
+            else:
+                log.warning("Color Matching failed. Disabling Coloring")
+                self.coloring = False
+
         if self.coloring:
             if self.color_method == "object":
-                self.colorize_surfaces([self.dag_path], colorA=self.colorA, colorB=self.colorB,
-                                       driver_attr=self.driver_hook)
+                self.object_colorize([self.dag_path], color_a=self.colorA, color_b=self.colorB,
+                                     driver_attr=self.driver_hook)
             elif self.color_method == "shader":
-                self.shade_surfaces([self.dag_path], colorA=self.colorA, colorB=self.colorB,
-                                    driver_attr=self.driver_hook)
+                self.shader_colorize([self.dag_path], color_a=self.colorA, color_b=self.colorB,
+                                     driver_attr=self.driver_hook)
             else:
                 log.error("Color Method %s is not a valid coloring method. Valid methods are 'object' and 'shader'"
                           % self.color_method)
 
+        if self.visibility_controller:
+            cmds.connectAttr(self.visibility_controller, "%s.v" % bind_offset)
         return self.dag_path
 
     @staticmethod
@@ -100,7 +128,8 @@ class Filler(BaseNode):
         """
         surfaces = []
         for i, curve_shape in enumerate(cmds.listRelatives(curve, s=True)):
-            name = curve.replace("_" + curve.split("_")[-1], "_" + str(i))
+            name = curve.split("|")[-1]
+            # name = curve.replace("_" + curve.split("_")[-1], "_" + str(i))
 
             # Duplicate curve, unlock the scale, scale it to almost zero, then loft.
             loft_curve = cmds.duplicate(curve)[0]
@@ -143,24 +172,72 @@ class Filler(BaseNode):
     def drive_scale(self):
         """Creates the scale connections for the filler object using the driver hook attribute on controller
         """
-        for attr in "xyz":
-            attribute.drive_attrs(self.driver_hook,
-                                  "{0}.s{1}".format(self.dag_path, attr),
-                                  [0, 100],
-                                  [0, 1])
+        _range = self.controller.primary_ranges
+        if self.normalize_scale and (max(_range) - min(_range) > max(_range)):
+            # Other than normalize status we check if the max range is lower than the difference of max and min
+            name = "test"
+            remap_node = cmds.createNode("remapValue", name="normalized_remap_%s" % name)
+
+            # make a reverse V shaped mapping where mid point will correspond to the 0 value of controller
+            zero_position = 1 / (((_range[0] * -1) + _range[1]) / (
+                    _range[0] * -1))  # this gives the correct position of the 0 value between 0-1 scale
+            # may it be abs? # 1/((abs(input_min)+input_max)/abs(input_min))
+            cmds.setAttr("%s.value[0].value_Position" % remap_node, 0.0)
+            cmds.setAttr("%s.value[0].value_Interp" % remap_node, 1.0)
+            cmds.setAttr("%s.value[0].value_FloatValue" % remap_node, 1.0)
+
+            cmds.setAttr("%s.value[1].value_Position" % remap_node, zero_position)
+            cmds.setAttr("%s.value[1].value_Interp" % remap_node, 1.0)
+            cmds.setAttr("%s.value[1].value_FloatValue" % remap_node, 0.0)
+
+            cmds.setAttr("%s.value[2].value_Position" % remap_node, 1.0)
+            cmds.setAttr("%s.value[2].value_Interp" % remap_node, 1.0)
+            cmds.setAttr("%s.value[2].value_FloatValue" % remap_node, 1.0)
+
+            cmds.setAttr("%s.inputMin" % remap_node, _range[0])
+            cmds.setAttr("%s.inputMax" % remap_node, _range[1])
+            cmds.setAttr("%s.outputMin" % remap_node, 0)
+            cmds.setAttr("%s.outputMax" % remap_node, 1)
+
+            cmds.connectAttr(self.driver_hook, "%s.inputValue" % remap_node)
+            for attr in "xyz":
+                cmds.connectAttr("%s.outValue" % remap_node, "{0}.s{1}".format(self.dag_path, attr))
+
+        else:  # no normalization
+            # TODO: This needs some optimization. Currently creates 3 remap nodes where 1 is enough
+            for attr in "xyz":
+                attribute.drive_attrs(self.driver_hook,
+                                      "{0}.s{1}".format(self.dag_path, attr),
+                                      _range,
+                                      [0, 1])
 
     # #####################
     # SHADE / COLOR METHODS
     # #####################
 
     @staticmethod
-    def colorize_surfaces(loft_surfaces, colorA=(0, 0, 1), colorB=(0, 1, 0), driver_attr=None):
-        """Colorizes the surfaces with drawing overrides (No Shader)"""
+    def object_colorize(loft_surfaces, color_a=(0, 0, 1), color_b=(0, 1, 0), driver_attr=None):
+        """
+        Colorizes the surfaces with drawing overrides (No Shader)
+
+        Pros:   -Minimum extra nodes. Fast and efficient
+                -Visible in shaded mode only. No texture mode necessary
+                -No normal issues because of two sided lighting
+        Cons:   -Cannot have transparency or reflectivity
+        Args:
+            loft_surfaces: (String) The surfaces which shaders will be applied
+            color_a: (Tuple or List) normalized RGB color values for first color
+            color_b: (Tuple or List) normalized RGB color values for second color
+            driver_attr: (String) the attribute plug to drive the color from A to B
+
+        Returns:
+
+        """
         for loft in loft_surfaces:
             for shape in functions.getShapes(loft):
                 blend_colors_node = cmds.createNode("blendColors", name="%s_bColor" % shape)
-                cmds.setAttr("%s.color2" % blend_colors_node, *colorA)
-                cmds.setAttr("%s.color1" % blend_colors_node, *colorB)
+                cmds.setAttr("%s.color2" % blend_colors_node, *color_a)
+                cmds.setAttr("%s.color1" % blend_colors_node, *color_b)
                 if driver_attr:
                     attribute.drive_attrs(driver_attr, "%s.blender" % blend_colors_node, [0, 100], [0, 1])
                     # cmds.connectAttr(driver_attr, "%s.blender" % blend_colors_node)
@@ -175,12 +252,62 @@ class Filler(BaseNode):
             cmds.setAttr("%s.overrideEnabled" % loft, 0)
 
     @staticmethod
-    def shade_surfaces(loft_surfaces, colorA=(0, 0, 1), colorB=(0, 1, 0), driver_attr=None):
-        """Colorizes the surfaces using shaders"""
-        # TODO: Do the shader visualization. Try to use a tripleShadingSwitch on a single shader to avoid
-        # TODO: unnecessary cluttering
-        log.warning("color method => shader has not yet been implemented. Skipping.")
+    def shader_colorize(loft_surfaces, color_a=(0, 0, 1), color_b=(0, 1, 0), driver_attr=None,
+                        transparency=0.7):
+        """
+        Colorizes the surfaces using separate shaders.
+        Pros:   -Can have shader attributes like transparency and reflection
+                -If both colors are same and no switching, colors are visible in simple shading mode
+        Cons:   -Requires either 2 sided geometries or Two sided mode activated or one side will be black
+                -One shader per filler. This can clutter the hypershade a lot and there may be performance issues
+                -Textures needs to be activated to see the colors unless colarA == colorB. blendColors limitation
+        Args:
+            loft_surfaces: (String) The surfaces which shaders will be applied
+            color_a: (Tuple or List) normalized RGB color values for first color
+            color_b: (Tuple or List) normalized RGB color values for second color
+            driver_attr: (String) the attribute plug to drive the color from A to B
+
+        Returns:
+
+        """
+        for loft in loft_surfaces:
+            name = loft.split("|")[-1]
+            _shader = cmds.shadingNode("surfaceShader", asShader=True, name="%s_M" % name)
+            shading.assign_shader(_shader, loft)
+            cmds.setAttr("%s.outTransparency" % _shader, transparency, transparency, transparency)
+            if color_a == color_b:
+                cmds.setAttr("%s.outColor" % _shader, *color_a)
+            else:
+                blend_colors_node = cmds.createNode("blendColors", name="%s_bColor" % name)
+                cmds.setAttr("%s.color2" % blend_colors_node, *color_a)
+                cmds.setAttr("%s.color1" % blend_colors_node, *color_b)
+                if driver_attr:
+                    attribute.drive_attrs(driver_attr, "%s.blender" % blend_colors_node, [0, 100], [0, 1])
+                cmds.connectAttr("%s.output" % blend_colors_node, "%s.outColor" % _shader)
+
         return
+
+    @staticmethod
+    def triswitch_colorize(loft_surfaces, color_a=(0, 0, 1), color_b=(0, 1, 0), driver_attr=None):
+        """
+        Colorizes surfaces using a common shader (uses id_tag to identify) and triswitches
+
+        Pros:   -Can have shader attributes like transparency and reflection
+                -Slightly more optimized than shader_colorize and does not clutter hypershade.
+        Cons:   -Requires either 2 sided geometries or Two sided mode activated or one side will be black
+                -Textures needs to be activated to see any color
+        Args:
+            loft_surfaces: (String) The surfaces which shaders will be applied
+            color_a: (Tuple or List) normalized RGB color values for first color
+            color_b: (Tuple or List) normalized RGB color values for second color
+            driver_attr: (String) the attribute plug to drive the color from A to B
+
+        Returns:
+
+        """
+        # TODO: Use a tripleShadingSwitch on a single shader to avoid unnecessary cluttering
+        log.warning("color method => triswitch_colorize has not yet been implemented. Skipping.")
+        pass
 
 
 class Origin(BaseNode):
@@ -258,3 +385,5 @@ class Origin(BaseNode):
         for attr, data in self.attribute_states.items():
             cmds.setAttr("%s.%s" % (self.dag_path, attr), keyable=data["keyable"],
                          channelBox=data["channelBox"], lock=data["lock"])
+
+
