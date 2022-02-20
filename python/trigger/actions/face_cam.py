@@ -12,7 +12,7 @@ from trigger.ui.Qt import QtWidgets
 from trigger.ui import custom_widgets
 from trigger.ui import feedback
 
-from PySide2 import QtWidgets # temp
+# from PySide2 import QtWidgets # temp
 
 log = filelog.Filelog(logname=__name__, filename="trigger_log")
 

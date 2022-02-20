@@ -91,6 +91,13 @@ class Controller(object):
             else:
                 widget.set_data(list(value))
 
+        elif widget_class == "QPushButton":
+            if get:
+                print("something")
+                return(1,1,0.5) # TODO TEMP
+            else:
+                print("set to lll")
+
         else:
             log.error("UNSUPPORTED WIDGET CLASS ==> %s" % widget_class)
             raise
