@@ -9,6 +9,7 @@ from trigger.core.decorators import keepselection
 
 from trigger.ui.Qt import QtWidgets, QtGui
 from trigger.ui import custom_widgets
+from trigger.ui.widgets.browser_button import BrowserButton
 from trigger.ui import feedback
 
 log = filelog.Filelog(logname=__name__, filename="trigger_log")
@@ -45,7 +46,7 @@ class Shapes(object):
         # file_path_le = QtWidgets.QLineEdit()
         file_path_le = custom_widgets.FileLineEdit()
         file_path_hLay.addWidget(file_path_le)
-        browse_path_pb = custom_widgets.BrowserButton(mode="openFile", update_widget=file_path_le, filterExtensions=["Maya ASCII Files (*.ma)"], overwrite_check=False)
+        browse_path_pb = BrowserButton(mode="openFile", update_widget=file_path_le, filterExtensions=["Maya ASCII Files (*.ma)"], overwrite_check=False)
         file_path_hLay.addWidget(browse_path_pb)
         layout.addRow(file_path_lbl, file_path_hLay)
 

@@ -17,6 +17,7 @@ from trigger.actions import master
 
 from trigger.ui.Qt import QtWidgets, QtGui # for progressbar
 from trigger.ui import custom_widgets
+from trigger.ui.widgets.browser_button import BrowserButton
 
 log = filelog.Filelog(logname=__name__, filename="trigger_log")
 db = database.Database()
@@ -74,6 +75,7 @@ class Kinematics(object):
         # self.anchorLocations = action_data.get("anchor_locations")
         self.extraSwitchers = action_data.get("extra_switchers")
         self.afterlife = action_data.get("after_creation")
+        self.multi_selectionSets = action_data.get("multi_selectionSets", False)
 
     def action(self):
         root_grp = "trigger_grp"
@@ -123,7 +125,7 @@ class Kinematics(object):
         file_path_le = QtWidgets.QLineEdit()
         file_path_le = custom_widgets.FileLineEdit()
         file_path_hLay.addWidget(file_path_le)
-        browse_path_pb = custom_widgets.BrowserButton(update_widget=file_path_le, mode="openFile", filterExtensions=["Trigger Guide Files (*.trg)"])
+        browse_path_pb = BrowserButton(update_widget=file_path_le, mode="openFile", filterExtensions=["Trigger Guide Files (*.trg)"])
         file_path_hLay.addWidget(browse_path_pb)
         layout.addRow(file_path_lbl, file_path_hLay)
 
@@ -381,6 +383,13 @@ class Kinematics(object):
 
         j_def_set = None
 
+        print("-"*20)
+        print("-"*30)
+        print("-"*40)
+        print(self.multi_selectionSets)
+        print("-"*40)
+        print("-"*30)
+        print("-"*20)
         if not self.multi_selectionSets:
             cmds.select(d=True)
             if not cmds.objExists("def_jointsSet_%s" % self.rig_name):
@@ -464,7 +473,10 @@ class Kinematics(object):
                 #     parentSocket = self.cont_placement
 
                     cmds.parent(limb.limbPlug, parentSocket)
-                    cmds.disconnectAttr("%s.scale" % parentSocket, "%s.inverseScale" %limb.limbPlug)
+                    try:
+                        cmds.disconnectAttr("%s.scale" % parentSocket, "%s.inverseScale" %limb.limbPlug)
+                    except RuntimeError:
+                        pass
 
                 ## Good parenting / scale connections
                 scaleGrpPiv = api.getWorldTranslation(limb.limbPlug)

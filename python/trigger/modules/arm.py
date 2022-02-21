@@ -540,12 +540,15 @@ class Arm(object):
         functions.alignTo(self.defMid, self.midLockCont.name, position=True, rotation=True)
         cmds.parent(self.defMid, self.defJointsGrp)
         self.defStart = cmds.spaceLocator(name="defStart_%s" % self.suffix)[0]
+        cmds.connectAttr("%s.rigVis" % self.scaleGrp, "%s.v" % self.defStart)
         cmds.parent(self.defStart, self.nonScaleGrp)
         self.defEnd = cmds.spaceLocator(name="defEnd_%s" % self.suffix)[0]
+        cmds.connectAttr("%s.rigVis" % self.scaleGrp, "%s.v" % self.defEnd)
         cmds.parent(self.defEnd, self.nonScaleGrp)
 
         # create two locators to hold the midLockCont
         self.midLockBridge_IK = cmds.spaceLocator(name="%s_midLockBridge_IK" % self.suffix)[0]
+        cmds.connectAttr("%s.rigVis" % self.scaleGrp, "%s.v" % self.midLockBridge_IK)
         cmds.parent(self.midLockBridge_IK, self.nonScaleGrp)
 
         mult_matrix_ik_up_p = op.multiply_matrix(["%s.worldMatrix[0]" % self.j_ik_orig_up])
@@ -559,6 +562,7 @@ class Arm(object):
         cmds.connectAttr("%s.outputTranslate" % decompose_ik_trans, "%s.translate" % self.midLockBridge_IK)
 
         self.midLockBridge_FK = cmds.spaceLocator(name="%s_midLockBridge_FK" % self.suffix)[0]
+        cmds.connectAttr("%s.rigVis" % self.scaleGrp, "%s.v" % self.midLockBridge_FK)
         cmds.parent(self.midLockBridge_FK, self.nonScaleGrp)
 
         mult_matrix_fk_up_p = op.multiply_matrix(["%s.worldMatrix[0]" % self.j_fk_up])
@@ -586,8 +590,10 @@ class Arm(object):
         sc_ik_handle = cmds.ikHandle(sj=self.j_ik_sc_up, ee=self.j_ik_sc_low_end, name="ikHandle_SC_%s" % self.suffix,
                                      sol="ikSCsolver")[0]
         cmds.parent(sc_ik_handle, self.nonScaleGrp)
+        cmds.connectAttr("%s.rigVis" % self.scaleGrp, "%s.v" % sc_ik_handle)
         rp_ik_handle = cmds.ikHandle(sj=self.j_ik_rp_up, ee=self.j_ik_rp_low_end, name="ikHandle_RP_%s" % self.suffix,
                                      sol="ikRPsolver")[0]
+        cmds.connectAttr("%s.rigVis" % self.scaleGrp, "%s.v" % rp_ik_handle)
         cmds.parent(rp_ik_handle, self.nonScaleGrp)
         cmds.poleVectorConstraint(self.poleBridge, rp_ik_handle)
         connection.matrixConstraint(self.poleCont.name, self.poleBridge, mo=False,
@@ -602,19 +608,24 @@ class Arm(object):
         self.startLockOre = functions.createUpGrp(self.startLock, "Ore")
         self.startLockPos = functions.createUpGrp(self.startLock, "Pos")
         self.startLockTwist = functions.createUpGrp(self.startLock, "AutoTwist")
+        cmds.connectAttr("%s.rigVis" % self.scaleGrp, "%s.v" % self.startLock)
         cmds.parent(self.startLockOre, self.nonScaleGrp)
+
 
         self.endLock = cmds.spaceLocator(name="endLock_%s" % self.suffix)[0]
         cmds.parent(self.endLock, self.nonScaleGrp)
+        cmds.connectAttr("%s.rigVis" % self.scaleGrp, "%s.v" % self.endLock)
         functions.alignTo(self.endLock, self.j_def_hand, position=True, rotation=False)
 
         connection.matrixConstraint(self.j_collar_end, self.startLock, sr=("y", "z"), mo=False)
 
         distance_start = cmds.spaceLocator(name="distanceStart_%s" % self.suffix)[0]
+        cmds.connectAttr("%s.rigVis" % self.scaleGrp, "%s.v" % distance_start)
         cmds.parent(distance_start, self.nonScaleGrp)
         cmds.pointConstraint(self.startLock, distance_start, mo=False)
 
         distance_end = cmds.spaceLocator(name="distanceEnd_%s" % self.suffix)[0]
+        cmds.connectAttr("%s.rigVis" % self.scaleGrp, "%s.v" % distance_end)
         cmds.parent(distance_end, self.nonScaleGrp)
         cmds.pointConstraint(self.endLock, distance_end, mo=False)
 
@@ -632,7 +643,12 @@ class Arm(object):
                                                  source_parent_cutoff=self.localOffGrp, name="rp_%s" % self.suffix,
                                                  distance_start=distance_start, distance_end=distance_end,
                                                  is_local=self.isLocal)
+        for x in sc_stretch_locs[:2] + rp_stretch_locs[:2]:
+            cmds.connectAttr("%s.rigVis" % self.scaleGrp, "%s.v" % x)
+        # _ = [cmds.connectAttr("%s.rigVis" % self.scaleGrp, "%s.v" % x) for x in sc_stretch_locs]
+        # _ = [cmds.connectAttr("%s.rigVis" % self.scaleGrp, "%s.v" % x) for x in rp_stretch_locs]
         cmds.parent(sc_stretch_locs[:2] + rp_stretch_locs[:2], self.nonScaleGrp)
+
 
         connection.matrixConstraint(self.handIkCont.name, self.j_ik_sc_low_end, st="xyz", ss="xyz", mo=False,
                                     source_parent_cutoff=self.localOffGrp)
@@ -689,7 +705,8 @@ class Arm(object):
 
         connection.matrixSwitch(self.j_ik_rp_up, self.j_ik_sc_up, self.j_ik_orig_up,
                                 "%s.Pole_Vector" % self.handIkCont.name)
-        elbow_switcher = cmds.spaceLocator(name="elbowSwithcer_IK_%s" % self.suffix)[0]
+        elbow_switcher = cmds.spaceLocator(name="elbowSwitcher_IK_%s" % self.suffix)[0]
+        cmds.connectAttr("%s.rigVis" % self.scaleGrp, "%s.v" % elbow_switcher)
         cmds.parent(elbow_switcher, self.nonScaleGrp)
         connection.matrixSwitch(self.j_ik_rp_low, self.j_ik_sc_low, elbow_switcher,
                                 "%s.Pole_Vector" % self.handIkCont.name)
@@ -986,7 +1003,7 @@ class Arm(object):
         for jnt in self.deformerJoints:
             cmds.connectAttr("%s.jointVis" % self.scaleGrp, "%s.v" % jnt)
         cmds.connectAttr("%s.rigVis" % self.scaleGrp, "%s.v" % functions.getShapes(self.defMid)[0])
-        cmds.connectAttr("%s.rigVis" % self.scaleGrp, "%s.v" % self.nonScaleGrp)
+        # cmds.connectAttr("%s.rigVis" % self.scaleGrp, "%s.v" % self.nonScaleGrp)
         cmds.connectAttr("%s.rigVis" % self.scaleGrp, "%s.v" % self.rigJointsGrp)
         # lock and hide
         self.handIkCont.lock_visibility()

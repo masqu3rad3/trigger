@@ -221,4 +221,13 @@ def get_part_name(node_dag_path):
     else:
         return parts[0]
 
+def rename_skinclusters():
+    """Renames all skinclusters to match to the geometry names"""
+    all_skins = cmds.ls(type="skinCluster")
+
+    for skin in all_skins:
+        mesh_name = cmds.listConnections("%s.outputGeometry" %skin, shapes=False , source=False, destination=True)[0]
+        sc_name = "%s_%s" %(mesh_name.split("|")[-1], "skinCluster")
+        cmds.rename(skin, sc_name)
+
 

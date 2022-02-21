@@ -50,6 +50,7 @@ class IO(dict):
             self["file_path"] = os.path.join(self.root_path, self.folder_name, new_path)
 
     def read(self, file_path=None):
+        """Read and returns the data stored in file path"""
         file_path = file_path if file_path else self.file_path
         if os.path.isfile(file_path):
             return self._load_json(file_path)
@@ -57,11 +58,21 @@ class IO(dict):
             return False
 
     def write(self, data, file_path=None):
+        """
+        Writes the data to the file
+        Args:
+            data: <data> Data to be written to the json file
+            file_path: (String) if not specified uses the one defined in the class instantiation.
+
+        Returns:
+            (String) Path of the file
+        """
         file_path = file_path if file_path else self.file_path
         self._dump_json(data, file_path)
         return file_path
 
-    def _load_json(self, file_path):
+    @staticmethod
+    def _load_json(file_path):
         """Loads the given json file"""
         if os.path.isfile(file_path):
             try:
@@ -74,7 +85,8 @@ class IO(dict):
         else:
             log.error("File cannot be found => %s" % file_path)
 
-    def _dump_json(self, data, file_path):
+    @staticmethod
+    def _dump_json(data, file_path):
         """Saves the data to the json file"""
         name, ext = os.path.splitext(compat.encode(file_path))
         temp_file = ("{0}.tmp".format(name))
@@ -83,7 +95,8 @@ class IO(dict):
         shutil.copyfile(temp_file, file_path)
         os.remove(temp_file)
 
-    def _folderCheck(self, checkpath):
+    @staticmethod
+    def _folderCheck(checkpath):
         """Checks if the folder exists, creates it if doesnt"""
         if os.path.splitext(checkpath)[1]:
             basefolder = os.path.split(checkpath)[0] # in case it is a file path

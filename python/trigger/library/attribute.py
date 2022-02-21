@@ -186,6 +186,7 @@ def drive_attrs(driver_attr, driven_attrs, driver_range=None, driven_range=None,
     # check if there is a compound attr
     splits = driver_attr.split(".")
     driver_node = splits[0]
+    driver_name = driver_node.split("|")[0]
     attr_name = ".".join(splits[1:])
     if len(splits) > 2:
         driver_attr_children = []
@@ -199,7 +200,7 @@ def drive_attrs(driver_attr, driven_attrs, driver_range=None, driven_range=None,
                 "drive_attrs does not support more than 3 channel compounds. Connect channels separately ==> %s"
                 % driver_attr)
             return
-        range_node = cmds.createNode("setRange", name="%s_%s_setRange" % (driver_node, attr_name))
+        range_node = cmds.createNode("setRange", name="%s_%s_setRange" % (driver_name, attr_name))
         for ch in "XYZ":
             cmds.setAttr("%s.oldMin%s" % (range_node, ch), driver_range[0])
             cmds.setAttr("%s.oldMax%s" % (range_node, ch), driver_range[1])
@@ -215,7 +216,7 @@ def drive_attrs(driver_attr, driven_attrs, driver_range=None, driven_range=None,
                                  force=force)
     # if single channel
     else:
-        range_node = cmds.createNode("remapValue", name="%s_%s_setRange" % (driver_node, attr_name))
+        range_node = cmds.createNode("remapValue", name="%s_%s_setRange" % (driver_name, attr_name))
         cmds.setAttr("%s.inputMin" % range_node, driver_range[0])
         cmds.setAttr("%s.inputMax" % range_node, driver_range[1])
         cmds.setAttr("%s.outputMin" % range_node, driven_range[0])
@@ -277,11 +278,23 @@ def lockAndHide(node, channelArray=None, hide=True):
 
 
 def unlock(node, attr_list=None):
+    """Unlocks the list of provided attributes on defined node"""
+
     attr_list = ["tx", "ty", "tz", "rx", "ry", "rz", "sx", "sy", "sz", "v"] if not attr_list else attr_list
     if type(attr_list) != list:
         attr_list = [attr_list]
     for attr in attr_list:
         cmds.setAttr("{0}.{1}".format(node, attr), e=True, k=True, l=False)
+
+def is_locked(node, attr):
+    """Returns the locked state of the given attribute on defined node
+    """
+    return cmds.getAttr("%s.%s" %(node, attr), lock=True)
+
+def is_visible(node, attr):
+    """Returns the channelbox state of the given attribute on defined node
+    """
+    return cmds.getAttr("%s.%s" %(node, attr), k=True)
 
 
 def attrPass(sourceNode, targetNode, attributes=[], inConnections=True, outConnections=True, keepSourceAttributes=False,
@@ -448,7 +461,7 @@ def getNextIndex(attr, startFrom=0):
 
 
 def disconnect_attr(node=None, attr=None, suppress_warnings=False):
-    """Disconnects all connections to the attribute"""
+    """Disconnects all INCOMING connections to the attribute"""
     if len(node.split(".")) < 2:
         if not attr:
             cmds.error("You need to provide node=<node> and attr=<attr> or node=<node>.<attr>")

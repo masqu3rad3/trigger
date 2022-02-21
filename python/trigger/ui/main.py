@@ -20,6 +20,9 @@ from trigger.library import naming
 
 from trigger.core import filelog
 
+from trigger import version_control
+from trigger.ui.vcs_widgets.session_selection import SessionSelection
+
 log = filelog.Filelog(logname=__name__, filename="trigger_log")
 db = database.Database()
 
@@ -47,7 +50,8 @@ QPushButton:disabled {
   background-color: #303030;
   border: 1px solid #404040;
   color: #505050;
-  padding: 3px;
+  padding: 5px;
+  font-size: 12px;
 }
 
 QPushButton:pressed {
@@ -104,12 +108,19 @@ def launch(force=False):
 class MainUI(QtWidgets.QMainWindow):
     iconsPath = os.path.join(os.path.dirname(os.path.realpath(__file__)), "icons")
 
-    def __init__(self):
+    def __init__(self, disable_version_control=False):
 
         parent = getMayaMainWindow()
         super(MainUI, self).__init__(parent=parent)
 
         log.clear()
+
+        # PEP8 vars
+        self.menuFile = None
+        self.recents_menu = None
+        self.statusbar = None
+        self.asset_selection_w = None
+        self.guides_list_treeWidget = None
 
         self.ctrl_modifier = False
         self.guide_buttons = []
@@ -132,23 +143,25 @@ class MainUI(QtWidgets.QMainWindow):
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.setCentralWidget(self.centralwidget)
 
+        self.centralWidget_vLay = QtWidgets.QVBoxLayout(self.centralwidget)  # this is only to fit the tab widget
+        # self.centralWidget_vLay.setSpacing(0)
         # Build the UI elements
-        self.buildTabsUI()
-        self.buildBarsUI()
-        self.buildRiggingUI()
-        self.buildGuidesUI()
+        if version_control.controller and not disable_version_control:
+            self.asset_control()
+        self.rigging_tab, self.guides_tab = self.build_tabs()
+        self.build_bars_ui()
+        self.build_rigging_ui()
+        self.build_guides_ui()
 
         # define the listwidget to the actions handler to update it during build
         self.actions_handler.progressListwidget = self.rig_actions_listwidget
 
-        self.populate_guides()
-
-        self.splitter.setStretchFactor(0, 10)
-        self.splitter.setStretchFactor(1, 40)
-        self.splitter.setStretchFactor(1, 50)
-
         self.rig_LR_splitter.setStretchFactor(0, 10)
         self.rig_LR_splitter.setStretchFactor(1, 90)
+
+        # populate and show
+        self.populate_recents()
+        self.populate_guides()
 
         self.show()
         self.update_title()
@@ -156,15 +169,26 @@ class MainUI(QtWidgets.QMainWindow):
         # self.callbackIDList = _createCallbacks(self.force_update, WINDOW_NAME, "SelectionChanged")
         self.callbackIDList = _create_callbacks(self.force_update, parent=None, event="SelectionChanged")
 
-        # PEP8 vars
-        self.menuFile = None
-        self.statusbar = None
+        # force open the trigger session on initialization if a session found
+        if self.asset_selection_w:
+            self.asset_selection_w.set_version()
 
         log.info("Interface Loaded Successfully")
 
+    def asset_control(self):
+        _asset_selection_vlay = QtWidgets.QVBoxLayout()
+        self.centralWidget_vLay.addLayout(_asset_selection_vlay)
+        self.asset_selection_w = SessionSelection()
+        _asset_selection_vlay.addLayout(self.asset_selection_w)
+
+        self.asset_selection_w.new_session_signal.connect(self.vcs_new_session)
+        # self.asset_selection_w.increment_version_signal.connect(self.vcs_new_session)
+        self.asset_selection_w.increment_version_signal.connect(self.vcs_new_version)
+        self.asset_selection_w.session_changed_signal.connect(self.vcs_open_session)
+
     def keyPressEvent(self, e):
         super(MainUI, self).keyPressEvent(e)
-        if e.key() == 16777249: # CTRL pressed
+        if e.key() == 16777249:  # CTRL pressed
             self.ctrl_modifier = True
             for button in self.guide_buttons:
                 button.setProperty("override", "1")
@@ -172,7 +196,7 @@ class MainUI(QtWidgets.QMainWindow):
 
     def keyReleaseEvent(self, e):
         super(MainUI, self).keyReleaseEvent(e)
-        if e.key() == 16777249: # CTRL released
+        if e.key() == 16777249:  # CTRL released
             self.ctrl_modifier = False
             for button in self.guide_buttons:
                 button.setProperty("override", "0")
@@ -185,7 +209,10 @@ class MainUI(QtWidgets.QMainWindow):
 
     def closeEvent(self, event):
         if self.actions_handler.is_modified():
-            r = self.feedback.pop_question(title="Scene not saved", text="Current Trigger session is not saved\n Do you want to save before quit?", buttons=["yes", "no", "cancel"])
+            r = self.feedback.pop_question(title="Scene not saved",
+                                           text="Current Trigger session is not saved\n "
+                                                "Do you want to save before quit?",
+                                           buttons=["yes", "no", "cancel"])
             if r == "yes":
                 self.save_trigger()
                 _kill_callbacks(self.callbackIDList)
@@ -199,7 +226,7 @@ class MainUI(QtWidgets.QMainWindow):
             _kill_callbacks(self.callbackIDList)
             event.accept()
 
-    def buildBarsUI(self):
+    def build_bars_ui(self):
         menubar = QtWidgets.QMenuBar(self)
         self.setMenuBar(menubar)
 
@@ -235,7 +262,6 @@ class MainUI(QtWidgets.QMainWindow):
         self.menuFile.addAction(reset_scene_action)
         self.menuFile.addSeparator()
 
-
         self.recents_menu = QtWidgets.QMenu("Recent Sessions")
         self.menuFile.addMenu(self.recents_menu)
         self.menuFile.addAction(exit_action)
@@ -253,9 +279,6 @@ class MainUI(QtWidgets.QMainWindow):
         # Status BAR
         self.statusbar = QtWidgets.QStatusBar(self)
         self.setStatusBar(self.statusbar)
-
-        # Populate dynamic elements
-        self.populate_recents()
 
         # SIGNALS
         # menu items
@@ -276,30 +299,26 @@ class MainUI(QtWidgets.QMainWindow):
 
         makeup_action.triggered.connect(self.on_makeup)
 
-    def buildTabsUI(self):
-        self.centralWidget_vLay = QtWidgets.QVBoxLayout(self.centralwidget)  # this is only to fit the tab widget
-        self.centralWidget_vLay.setSpacing(0)
-        self.tabWidget = QtWidgets.QTabWidget(self.centralwidget)
+    def build_tabs(self):
 
-        self.rigging_tab = QtWidgets.QWidget()
-        self.tabWidget.addTab(self.rigging_tab, "Actions")
+        tabWidget = QtWidgets.QTabWidget(self.centralwidget)
+        _rigging_tab = QtWidgets.QWidget()
+        tabWidget.addTab(_rigging_tab, "Actions")
+        _guides_tab = QtWidgets.QWidget()
+        tabWidget.addTab(_guides_tab, "Guides")
+        self.centralWidget_vLay.addWidget(tabWidget)
+        return _rigging_tab, _guides_tab
 
-        self.guides_tab = QtWidgets.QWidget()
-        self.tabWidget.addTab(self.guides_tab, "Guides")
-
-        self.centralWidget_vLay.addWidget(self.tabWidget)
-
-    def buildGuidesUI(self):
+    def build_guides_ui(self):
 
         guides_tab_vlay = QtWidgets.QVBoxLayout(self.guides_tab)
-        self.splitter = QtWidgets.QSplitter(self.guides_tab)
-        self.splitter.setOrientation(QtCore.Qt.Horizontal)
-        guides_tab_vlay.addWidget(self.splitter)
+        _splitter = QtWidgets.QSplitter(self.guides_tab)
+        _splitter.setOrientation(QtCore.Qt.Horizontal)
+        guides_tab_vlay.addWidget(_splitter)
 
-        L_splitter_layoutWidget = QtWidgets.QWidget(self.splitter)
+        L_splitter_layoutWidget = QtWidgets.QWidget(_splitter)
         L_guides_vLay = QtWidgets.QVBoxLayout(L_splitter_layoutWidget)
         L_guides_vLay.setContentsMargins(0, 0, 0, 0)
-
 
         module_guides_lbl = QtWidgets.QLabel(L_splitter_layoutWidget)
         module_guides_lbl.setFrameShape(QtWidgets.QFrame.StyledPanel)
@@ -310,92 +329,95 @@ class MainUI(QtWidgets.QMainWindow):
 
         ########################################################################
 
-        self.module_create_splitter = QtWidgets.QSplitter(L_splitter_layoutWidget)
-        L_guides_vLay.addWidget(self.module_create_splitter)
-        self.module_create_splitter.setOrientation(QtCore.Qt.Horizontal)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.module_create_splitter.sizePolicy().hasHeightForWidth())
-        self.module_create_splitter.setSizePolicy(sizePolicy)
+        module_create_splitter = QtWidgets.QSplitter(L_splitter_layoutWidget)
+        L_guides_vLay.addWidget(module_create_splitter)
+        module_create_splitter.setOrientation(QtCore.Qt.Horizontal)
+        size_policy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        size_policy.setHorizontalStretch(0)
+        size_policy.setVerticalStretch(0)
+        size_policy.setHeightForWidth(module_create_splitter.sizePolicy().hasHeightForWidth())
+        module_create_splitter.setSizePolicy(size_policy)
 
-        self.verticalLayoutWidget_2 = QtWidgets.QWidget(self.module_create_splitter)
+        _vertical_layout_widget = QtWidgets.QWidget(module_create_splitter)
 
-        self.guides_create_vLay = QtWidgets.QVBoxLayout(self.verticalLayoutWidget_2)
-        self.guides_create_vLay.setContentsMargins(0, 0, 0, 0)
+        guides_create_vlay = QtWidgets.QVBoxLayout(_vertical_layout_widget)
+        guides_create_vlay.setContentsMargins(0, 0, 0, 0)
 
-        self.guides_sides_hLay = QtWidgets.QHBoxLayout()
-        self.guides_sides_hLay.setSpacing(3)
+        _guides_sides_hlay = QtWidgets.QHBoxLayout()
+        _guides_sides_hlay.setSpacing(3)
 
-        self.guides_sides_C_rb = QtWidgets.QRadioButton()
-        self.guides_sides_C_rb.setText("C")
-        self.guides_sides_hLay.addWidget(self.guides_sides_C_rb)
+        self.guides_sides_c_rb = QtWidgets.QRadioButton()
+        self.guides_sides_c_rb.setText("C")
+        _guides_sides_hlay.addWidget(self.guides_sides_c_rb)
 
         self.guides_sides_L_rb = QtWidgets.QRadioButton()
         self.guides_sides_L_rb.setText("L")
-        self.guides_sides_hLay.addWidget(self.guides_sides_L_rb)
+        _guides_sides_hlay.addWidget(self.guides_sides_L_rb)
 
         self.guides_sides_R_rb = QtWidgets.QRadioButton()
         self.guides_sides_R_rb.setText("R")
-        self.guides_sides_hLay.addWidget(self.guides_sides_R_rb)
+        _guides_sides_hlay.addWidget(self.guides_sides_R_rb)
 
         self.guides_sides_Both_rb = QtWidgets.QRadioButton()
         self.guides_sides_Both_rb.setText("Both")
-        self.guides_sides_hLay.addWidget(self.guides_sides_Both_rb)
+        _guides_sides_hlay.addWidget(self.guides_sides_Both_rb)
         self.guides_sides_Both_rb.setChecked(True)
 
         self.guides_sides_Auto_rb = QtWidgets.QRadioButton()
         self.guides_sides_Auto_rb.setText("Auto")
-        self.guides_sides_hLay.addWidget(self.guides_sides_Auto_rb)
+        _guides_sides_hlay.addWidget(self.guides_sides_Auto_rb)
 
-        spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.guides_sides_hLay.addItem(spacerItem)
-        self.guides_create_vLay.addLayout(self.guides_sides_hLay)
+        spacer_item_a = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        _guides_sides_hlay.addItem(spacer_item_a)
+        guides_create_vlay.addLayout(_guides_sides_hlay)
 
-        button_scrollArea = QtWidgets.QScrollArea()
-        button_scrollArea.setFrameShape(QtWidgets.QFrame.NoFrame)
-        button_scrollArea.setFrameShadow(QtWidgets.QFrame.Sunken)
-        button_scrollArea.setWidgetResizable(True)
+        button_scroll_area = QtWidgets.QScrollArea()
+        button_scroll_area.setFrameShape(QtWidgets.QFrame.NoFrame)
+        button_scroll_area.setFrameShadow(QtWidgets.QFrame.Sunken)
+        button_scroll_area.setWidgetResizable(True)
 
-        button_scrollArea_WidgetContents = QtWidgets.QWidget()
+        button_scroll_area_widget_contents = QtWidgets.QWidget()
 
-        button_scrollArea_vLay = QtWidgets.QVBoxLayout(button_scrollArea_WidgetContents)
-        button_scrollArea.setWidget(button_scrollArea_WidgetContents)
-        self.guides_create_vLay.addWidget(button_scrollArea)
+        button_scroll_area_v_lay = QtWidgets.QVBoxLayout(button_scroll_area_widget_contents)
+        button_scroll_area.setWidget(button_scroll_area_widget_contents)
+        guides_create_vlay.addWidget(button_scroll_area)
 
         self.module_settings_formLayout = QtWidgets.QFormLayout()
-        button_scrollArea_vLay.addLayout(self.module_settings_formLayout)
+        button_scroll_area_v_lay.addLayout(self.module_settings_formLayout)
 
-        self.guide_buttons_vLay = QtWidgets.QVBoxLayout()
-        self.guide_buttons_vLay.setSpacing(2)
+        _guide_buttons_vlay = QtWidgets.QVBoxLayout()
+        _guide_buttons_vlay.setSpacing(2)
 
         ####### Module Buttons ########## [START]
 
         for module in sorted(self.guides_handler.init.valid_limbs):
-            guide_button_hLay = QtWidgets.QHBoxLayout()
-            guide_button_hLay.setSpacing(2)
-            guide_button_pb = QtWidgets.QPushButton(self.verticalLayoutWidget_2)
+            guide_button_hlay = QtWidgets.QHBoxLayout()
+            guide_button_hlay.setSpacing(2)
+            guide_button_pb = QtWidgets.QPushButton(_vertical_layout_widget)
             guide_button_pb.setText(module.capitalize())
-            guide_button_hLay.addWidget(guide_button_pb)
-            segments_sp = QtWidgets.QSpinBox(self.verticalLayoutWidget_2)
-            segments_sp.setObjectName("sp_%s" %module)
+            guide_button_hlay.addWidget(guide_button_pb)
+            segments_sp = QtWidgets.QSpinBox(_vertical_layout_widget)
+            segments_sp.setObjectName("sp_%s" % module)
             segments_sp.setMinimum(1)
             segments_sp.setValue(3)
-            sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Fixed)
-            sizePolicy.setHorizontalStretch(0)
-            sizePolicy.setVerticalStretch(0)
-            sizePolicy.setHeightForWidth(segments_sp.sizePolicy().hasHeightForWidth())
-            segments_sp.setSizePolicy(sizePolicy)
-            guide_button_hLay.addWidget(segments_sp)
+            size_policy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Fixed)
+            size_policy.setHorizontalStretch(0)
+            size_policy.setVerticalStretch(0)
+            size_policy.setHeightForWidth(segments_sp.sizePolicy().hasHeightForWidth())
+            segments_sp.setSizePolicy(size_policy)
+            guide_button_hlay.addWidget(segments_sp)
             if not self.guides_handler.init.module_dict[module].get("multi_guide"):
                 segments_sp.setValue(3)
                 segments_sp.setEnabled(False)
 
-            self.guide_buttons_vLay.addLayout(guide_button_hLay)
+            _guide_buttons_vlay.addLayout(guide_button_hlay)
 
             ############ SIGNALS ############### [Start]
             # following signal connection finds the related spinbox using the object name
-            guide_button_pb.clicked.connect(lambda ignore=module, limb=module: self.on_create_guide(limb, segments=self.verticalLayoutWidget_2.findChild(QtWidgets.QSpinBox, "sp_%s" %limb).value()))
+            guide_button_pb.clicked.connect(lambda ignore=module, limb=module: self.on_create_guide(limb,
+                                                                                                    segments=_vertical_layout_widget.findChild(
+                                                                                                        QtWidgets.QSpinBox,
+                                                                                                        "sp_%s" % limb).value()))
             ############ SIGNALS ############### [End]
             self.guide_buttons.append(guide_button_pb)
 
@@ -403,35 +425,34 @@ class MainUI(QtWidgets.QMainWindow):
 
         ####### Preset Buttons ########## [Start]
         preset_spacer = QtWidgets.QSpacerItem(20, 20, QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
-        self.guide_buttons_vLay.addItem(preset_spacer)
+        _guide_buttons_vlay.addItem(preset_spacer)
 
         preset_lbl = QtWidgets.QLabel()
         preset_lbl.setFrameShape(QtWidgets.QFrame.StyledPanel)
         preset_lbl.setFrameShadow(QtWidgets.QFrame.Plain)
         preset_lbl.setText("Presets")
         preset_lbl.setAlignment(QtCore.Qt.AlignCenter)
-        self.guide_buttons_vLay.addWidget(preset_lbl)
+        _guide_buttons_vlay.addWidget(preset_lbl)
 
-        humanoid_button_pb = QtWidgets.QPushButton(self.verticalLayoutWidget_2, text="Humanoid")
-        self.guide_buttons_vLay.addWidget(humanoid_button_pb)
+        humanoid_button_pb = QtWidgets.QPushButton(_vertical_layout_widget, text="Humanoid")
+        _guide_buttons_vlay.addWidget(humanoid_button_pb)
 
         humanoid_button_pb.clicked.connect(lambda: self.on_create_guide("humanoid"))
 
-        spacerItem1 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-        self.guide_buttons_vLay.addItem(spacerItem1)
-        # self.guides_create_vLay.addLayout(self.guide_buttons_vLay)
-        button_scrollArea_vLay.addLayout(self.guide_buttons_vLay)
+        spacer_item_b = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        _guide_buttons_vlay.addItem(spacer_item_b)
+        button_scroll_area_v_lay.addLayout(_guide_buttons_vlay)
 
-        self.guides_list_treeWidget = QtWidgets.QTreeWidget(self.splitter, sortingEnabled=True, rootIsDecorated=False)
+        self.guides_list_treeWidget = QtWidgets.QTreeWidget(_splitter, sortingEnabled=True, rootIsDecorated=False)
         self.guides_list_treeWidget.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
 
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.guides_list_treeWidget.sizePolicy().hasHeightForWidth())
-        self.guides_list_treeWidget.setSizePolicy(sizePolicy)
+        size_policy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        size_policy.setHorizontalStretch(0)
+        size_policy.setVerticalStretch(0)
+        size_policy.setHeightForWidth(self.guides_list_treeWidget.sizePolicy().hasHeightForWidth())
+        self.guides_list_treeWidget.setSizePolicy(size_policy)
 
-        # columng for guides list
+        # column for guides list
         colums = ["Name", "Side", "Root Joint", "Module"]
         header = QtWidgets.QTreeWidgetItem(colums)
         self.guides_list_treeWidget.setHeaderItem(header)
@@ -439,28 +460,27 @@ class MainUI(QtWidgets.QMainWindow):
         self.guides_list_treeWidget.setColumnWidth(1, 20)
 
         # Guides Right Side
-        R_splitter_layoutWidget = QtWidgets.QWidget(self.splitter)
-        R_guides_vLay = QtWidgets.QVBoxLayout(R_splitter_layoutWidget)
-        R_guides_vLay.setContentsMargins(0, 0, 0, 0)
+        r_splitter_layout_widget = QtWidgets.QWidget(_splitter)
+        R_guides_vlay = QtWidgets.QVBoxLayout(r_splitter_layout_widget)
+        R_guides_vlay.setContentsMargins(0, 0, 0, 0)
 
-        guide_properties_lbl = QtWidgets.QLabel(R_splitter_layoutWidget)
+        guide_properties_lbl = QtWidgets.QLabel(r_splitter_layout_widget)
         guide_properties_lbl.setFrameShape(QtWidgets.QFrame.StyledPanel)
         guide_properties_lbl.setFrameShadow(QtWidgets.QFrame.Plain)
         guide_properties_lbl.setText("Guide Properties")
         guide_properties_lbl.setAlignment(QtCore.Qt.AlignCenter)
-        R_guides_vLay.addWidget(guide_properties_lbl)
+        R_guides_vlay.addWidget(guide_properties_lbl)
 
-        R_guides_scrollArea = QtWidgets.QScrollArea(R_splitter_layoutWidget)
-        R_guides_scrollArea.setFrameShape(QtWidgets.QFrame.NoFrame)
-        R_guides_scrollArea.setFrameShadow(QtWidgets.QFrame.Sunken)
-        R_guides_scrollArea.setWidgetResizable(True)
+        r_guides_scroll_area = QtWidgets.QScrollArea(r_splitter_layout_widget)
+        r_guides_scroll_area.setFrameShape(QtWidgets.QFrame.NoFrame)
+        r_guides_scroll_area.setFrameShadow(QtWidgets.QFrame.Sunken)
+        r_guides_scroll_area.setWidgetResizable(True)
 
         self.R_guides_WidgetContents = QtWidgets.QWidget()
 
         self.R_guides_scrollArea_vLay = QtWidgets.QVBoxLayout(self.R_guides_WidgetContents)
-        R_guides_scrollArea.setWidget(self.R_guides_WidgetContents)
-        R_guides_vLay.addWidget(R_guides_scrollArea)
-
+        r_guides_scroll_area.setWidget(self.R_guides_WidgetContents)
+        R_guides_vlay.addWidget(r_guides_scroll_area)
 
         self.module_settings_formLayout = QtWidgets.QFormLayout()
         self.module_extras_formLayout = QtWidgets.QFormLayout()
@@ -468,34 +488,40 @@ class MainUI(QtWidgets.QMainWindow):
         self.R_guides_scrollArea_vLay.addLayout(self.module_extras_formLayout)
 
         ## PROPERTIES -General [Start]
-        #name
+        # name
         module_name_lbl = QtWidgets.QLabel(self.R_guides_WidgetContents, text="Module Name")
         self.module_name_le = QtWidgets.QLineEdit(self.R_guides_WidgetContents)
         self.module_settings_formLayout.addRow(module_name_lbl, self.module_name_le)
 
-        #up axis
+        # up axis
         up_axis_lbl = QtWidgets.QLabel(self.R_guides_WidgetContents, text="Up Axis")
         up_axis_hLay = QtWidgets.QHBoxLayout(spacing=3)
 
-        self.up_axis_sp_list = [QtWidgets.QDoubleSpinBox(self.R_guides_WidgetContents, minimum=-1, maximum=1, minimumWidth=40, buttonSymbols=QtWidgets.QAbstractSpinBox.NoButtons) for axis in "XYZ"]
+        self.up_axis_sp_list = [
+            QtWidgets.QDoubleSpinBox(self.R_guides_WidgetContents, minimum=-1, maximum=1, minimumWidth=40,
+                                     buttonSymbols=QtWidgets.QAbstractSpinBox.NoButtons) for axis in "XYZ"]
         _ = [up_axis_hLay.addWidget(sp) for sp in self.up_axis_sp_list]
         self.module_settings_formLayout.addRow(up_axis_lbl, up_axis_hLay)
-        
-        #mirror axis
+
+        # mirror axis
         mirror_axis_lbl = QtWidgets.QLabel(self.R_guides_WidgetContents, text="Mirror Axis")
         mirror_axis_hLay = QtWidgets.QHBoxLayout(spacing=3)
-        self.mirror_axis_sp_list = [QtWidgets.QDoubleSpinBox(self.R_guides_WidgetContents,  minimum=-1, maximum=1, minimumWidth=40, buttonSymbols=QtWidgets.QAbstractSpinBox.NoButtons) for axis in "XYZ"]
+        self.mirror_axis_sp_list = [
+            QtWidgets.QDoubleSpinBox(self.R_guides_WidgetContents, minimum=-1, maximum=1, minimumWidth=40,
+                                     buttonSymbols=QtWidgets.QAbstractSpinBox.NoButtons) for axis in "XYZ"]
         _ = [mirror_axis_hLay.addWidget(sp) for sp in self.mirror_axis_sp_list]
         self.module_settings_formLayout.addRow(mirror_axis_lbl, mirror_axis_hLay)
 
-        #look axis
+        # look axis
         look_axis_lbl = QtWidgets.QLabel(self.R_guides_WidgetContents, text="Look Axis")
         look_axis_hLay = QtWidgets.QHBoxLayout(spacing=3)
-        self.look_axis_sp_list = [QtWidgets.QDoubleSpinBox(self.R_guides_WidgetContents,  minimum=-1, maximum=1, minimumWidth=40, buttonSymbols=QtWidgets.QAbstractSpinBox.NoButtons) for axis in "XYZ"]
+        self.look_axis_sp_list = [
+            QtWidgets.QDoubleSpinBox(self.R_guides_WidgetContents, minimum=-1, maximum=1, minimumWidth=40,
+                                     buttonSymbols=QtWidgets.QAbstractSpinBox.NoButtons) for axis in "XYZ"]
         _ = [look_axis_hLay.addWidget(sp) for sp in self.look_axis_sp_list]
         self.module_settings_formLayout.addRow(look_axis_lbl, look_axis_hLay)
 
-        #inherit orientation
+        # inherit orientation
         inherit_orientation_lbl = QtWidgets.QLabel(self.R_guides_WidgetContents, text="Inherit Orientation")
         self.inherit_orientation_cb = QtWidgets.QCheckBox(self.R_guides_WidgetContents, text="", checked=True)
         self.module_settings_formLayout.addRow(inherit_orientation_lbl, self.inherit_orientation_cb)
@@ -509,9 +535,14 @@ class MainUI(QtWidgets.QMainWindow):
         ### SHORTCUTS ###
         shortcutForceUpdate = QtWidgets.QShortcut(QtGui.QKeySequence("F5"), self, self.force_update)
 
+        _splitter.setStretchFactor(0, 10)
+        _splitter.setStretchFactor(1, 40)
+        _splitter.setStretchFactor(1, 50)
+
         ## SIGNALS
         self.guides_list_treeWidget.currentItemChanged.connect(self.on_guide_change)
-        self.module_name_le.textEdited.connect(lambda text=self.module_name_le.text(): self.update_properties("moduleName", text))
+        self.module_name_le.textEdited.connect(
+            lambda text=self.module_name_le.text(): self.update_properties("moduleName", text))
         self.module_name_le.editingFinished.connect(self.populate_guides)
 
         self.up_axis_sp_list[0].valueChanged.connect(lambda num: self.update_properties("upAxisX", num))
@@ -524,16 +555,16 @@ class MainUI(QtWidgets.QMainWindow):
         self.look_axis_sp_list[1].valueChanged.connect(lambda num: self.update_properties("lookAxisY", num))
         self.look_axis_sp_list[2].valueChanged.connect(lambda num: self.update_properties("lookAxisZ", num))
 
-        self.inherit_orientation_cb.toggled.connect(lambda state=self.inherit_orientation_cb.isChecked(): self.update_properties("useRefOri", state))
+        self.inherit_orientation_cb.toggled.connect(
+            lambda state=self.inherit_orientation_cb.isChecked(): self.update_properties("useRefOri", state))
 
         self.guide_test_pb.clicked.connect(self.build_test_guides)
 
-    def buildRiggingUI(self):
+    def build_rigging_ui(self):
         self.rigging_tab_vLay = QtWidgets.QVBoxLayout(self.rigging_tab)
 
         self.rig_LR_splitter = QtWidgets.QSplitter(self.rigging_tab)
         self.rig_LR_splitter.setOrientation(QtCore.Qt.Horizontal)
-
 
         self.layoutWidget_2 = QtWidgets.QWidget(self.rig_LR_splitter)
 
@@ -597,7 +628,6 @@ class MainUI(QtWidgets.QMainWindow):
         self.action_info_pb = QtWidgets.QPushButton(text="?")
         self.action_info_pb.setMaximumWidth(15)
         self.action_settings_scrollArea_vLay.addWidget(self.action_info_pb)
-
 
         self.action_settings_formLayout = QtWidgets.QFormLayout()
         self.action_settings_formLayout.setHorizontalSpacing(6)
@@ -676,7 +706,6 @@ class MainUI(QtWidgets.QMainWindow):
         self.rig_actions_listwidget.doubleClicked.connect(self.on_run_action)
         # TODO: Make a seperate method for running run actions wih progressbar
 
-
     def refresh(self):
         row = self.rig_actions_listwidget.currentRow()
         self.populate_actions()
@@ -684,6 +713,7 @@ class MainUI(QtWidgets.QMainWindow):
         self.populate_properties()
 
     def populate_recents(self):
+        """Clears and reloads the recent sessions action menu item"""
         self.recents_menu.clear()
         for recent in db.recentSessions:
             recent_action = QtWidgets.QAction(self.menuFile, text=recent)
@@ -698,7 +728,7 @@ class MainUI(QtWidgets.QMainWindow):
         info = self.actions_handler.get_info(action_name)
 
         self.message_dialog = QtWidgets.QDialog(self)
-        self.message_dialog.setWindowTitle("%s Action Information" %(action_name.capitalize().replace("_", " ")))
+        self.message_dialog.setWindowTitle("%s Action Information" % (action_name.capitalize().replace("_", " ")))
         # self.message_dialog.resize(800, 700)
         message_layout = QtWidgets.QVBoxLayout(self.message_dialog)
         message_layout.setContentsMargins(0, 0, 0, 0)
@@ -708,7 +738,6 @@ class MainUI(QtWidgets.QMainWindow):
         info_te.setText(info)
         message_layout.addWidget(info_te)
         self.message_dialog.show()
-
 
     def on_action_rename(self):
         action_name = self.rig_actions_listwidget.currentItem().text()
@@ -730,9 +759,10 @@ class MainUI(QtWidgets.QMainWindow):
         r = rename_dialog.exec_()
         if not r:
             return
-        #TODO : FOOLPROOF IT _ NON-UNIQUE ACTION NAMES AND ILLEGAL CHARS
+        # TODO : FOOLPROOF IT _ NON-UNIQUE ACTION NAMES AND ILLEGAL CHARS
         if self.actions_handler.get_action(rename_le.text()) and rename_le.text() != action_name:
-            self.feedback.pop_info(title="Existing Action", text="This action name exists. Action names must be unique", critical=True)
+            self.feedback.pop_info(title="Existing Action", text="This action name exists. Action names must be unique",
+                                   critical=True)
             self.on_action_rename()
         self.actions_handler.rename_action(action_name, str(rename_le.text()))
         self.populate_actions()
@@ -770,56 +800,58 @@ class MainUI(QtWidgets.QMainWindow):
             return
 
     def new_trigger(self):
-        if self.actions_handler.is_modified():
-            if self.actions_handler.currentFile:
-                file_name = os.path.basename(self.actions_handler.currentFile)
-            else:
-                file_name = "untitled"
-            state = self.feedback.pop_question(title="Save Changes?", text="Save changes to %s?" %file_name, buttons=["yes", "no", "cancel"])
-            if state == "yes":
-                self.save_trigger()
-            elif state == "no":
-                pass
-            else:
-                return
+        if not self._validate_unsaved_work():
+            return False
 
         self.actions_handler.new_session()
         self.populate_actions()
         self.update_title()
+        return True
 
-    def open_trigger(self, file_path=None):
+    def _validate_unsaved_work(self):
         if self.actions_handler.is_modified():
             if self.actions_handler.currentFile:
                 file_name = os.path.basename(self.actions_handler.currentFile)
             else:
                 file_name = "untitled"
-            state = self.feedback.pop_question(title="Save Changes?", text="Save changes to %s?" %file_name, buttons=["yes", "no", "cancel"])
+            state = self.feedback.pop_question(title="Save Changes?", text="Save changes to %s?" % file_name,
+                                               buttons=["yes", "no", "cancel"])
             if state == "yes":
                 self.save_trigger()
+                return True
             elif state == "no":
-                pass
+                return True
             else:
-                return
+                return False
+        else:
+            return True
+
+    def open_trigger(self, file_path=None):
+        if not self._validate_unsaved_work():
+            return False
+
         if not file_path:
-            dlg = QtWidgets.QFileDialog.getOpenFileName(self, str("Open Trigger Session"), self.actions_handler.currentFile, str("Trigger Session (*.tr)"))
+            dlg = QtWidgets.QFileDialog.getOpenFileName(self, str("Open Trigger Session"),
+                                                        self.actions_handler.currentFile, str("Trigger Session (*.tr)"))
             if dlg[0]:
                 file_path = os.path.normpath(dlg[0])
             else:
-                return
+                return False
 
         self.actions_handler.load_session(file_path)
         db.recentSessions.add(file_path)
         self.populate_actions()
         self.update_title()
         self.populate_recents()
-        # self.buildBarsUI()
+        return True
 
     def import_trigger(self, file_path=None):
         row = self.rig_actions_listwidget.currentRow()
-        index = None if row == -1 else row+1
+        index = None if row == -1 else row + 1
 
         if not file_path:
-            dlg = QtWidgets.QFileDialog.getOpenFileName(self, str("Open Trigger Session"), self.actions_handler.currentFile, str("Trigger Session (*.tr)"))
+            dlg = QtWidgets.QFileDialog.getOpenFileName(self, str("Open Trigger Session"),
+                                                        self.actions_handler.currentFile, str("Trigger Session (*.tr)"))
             if dlg[0]:
                 file_path = os.path.normpath(dlg[0])
             else:
@@ -836,10 +868,13 @@ class MainUI(QtWidgets.QMainWindow):
             self.update_title()
             self.populate_recents()
         else:
-            self.feedback.pop_info(title="Cannot Complete", text="Trigger Session needs to be saved first to increment it\nAborting...", critical=True)
+            self.feedback.pop_info(title="Cannot Complete",
+                                   text="Trigger Session needs to be saved first to increment it\nAborting...",
+                                   critical=True)
 
     def save_as_trigger(self):
-        dlg = QtWidgets.QFileDialog.getSaveFileName(self, str("Save Trigger Session"), self.actions_handler.currentFile, str("Trigger Session (*.tr)"))
+        dlg = QtWidgets.QFileDialog.getSaveFileName(self, str("Save Trigger Session"), self.actions_handler.currentFile,
+                                                    str("Trigger Session (*.tr)"))
         if dlg[0]:
             self.actions_handler.save_session(os.path.normpath(dlg[0]))
             db.recentSessions.add(self.actions_handler.currentFile)
@@ -854,6 +889,37 @@ class MainUI(QtWidgets.QMainWindow):
             self.populate_recents()
         else:
             self.save_as_trigger()
+
+    def vcs_new_session(self, path):
+        """Creates and saves a new session using the path coming from version control"""
+
+        if not self._validate_unsaved_work():
+            return False
+        if not self.new_trigger():
+            return False
+        self.actions_handler.save_session(os.path.normpath(path))
+        db.recentSessions.add(self.actions_handler.currentFile)
+        self.asset_selection_w.populate_sessions()
+        self.update_title()
+        self.populate_recents()
+        return True
+
+    def vcs_new_version(self, path):
+        """Increments the version using the path coming from the version control"""
+        if not self._validate_unsaved_work():
+            return False
+
+        self.actions_handler.save_session(os.path.normpath(path))
+        db.recentSessions.add(self.actions_handler.currentFile)
+        self.asset_selection_w.populate_versions()
+        self.update_title()
+        self.populate_recents()
+        return True
+
+    def vcs_open_session(self, path):
+        if not self._validate_unsaved_work():
+            return False
+        self.open_trigger(path)
 
     def action_settings_menu(self):
         """Builds the action settings depending on action type"""
@@ -873,31 +939,28 @@ class MainUI(QtWidgets.QMainWindow):
     def add_actions_menu(self):
         list_of_actions = sorted(self.actions_handler.action_data_dict.keys())
         row = self.rig_actions_listwidget.currentRow()
-        index = None if row == -1 else row+1
+        index = None if row == -1 else row + 1
 
         zortMenu = QtWidgets.QMenu()
         for action_item in list_of_actions:
-            icon_path = os.path.join(self.iconsPath, "%s.png" %action_item)
+            icon_path = os.path.join(self.iconsPath, "%s.png" % action_item)
             tempAction = QtWidgets.QAction(QtGui.QIcon(icon_path), action_item.capitalize().replace("_", " "), self)
             zortMenu.addAction(tempAction)
-            tempAction.triggered.connect(lambda ignore=action_item, item=action_item: self.actions_handler.add_action(action_type=item, insert_index=index))
+            tempAction.triggered.connect(
+                lambda ignore=action_item, item=action_item: self.actions_handler.add_action(action_type=item,
+                                                                                             insert_index=index))
             tempAction.triggered.connect(self.populate_actions)
-            tempAction.triggered.connect(lambda: self.rig_actions_listwidget.setCurrentRow(row+1))
+            tempAction.triggered.connect(lambda: self.rig_actions_listwidget.setCurrentRow(row + 1))
             ## Take note about the usage of lambda "item=z" makes it possible using the loop, ignore -> for discarding emitted value
 
         self.populate_actions()
         self.rig_actions_listwidget.setCurrentRow(row)
         zortMenu.exec_((QtGui.QCursor.pos()))
+
     def actions_rc(self):
         pass
 
     def populate_actions(self, keep_selection=False):
-        # try to keep the selected item
-        # if keep_selection:
-        #     row = self.rig_actions_listwidget.currentRow()
-        # else:
-        #     row = -1
-
         self.rig_actions_listwidget.clear()
         self.rig_actions_listwidget.addItems(self.actions_handler.list_action_names())
 
@@ -911,8 +974,6 @@ class MainUI(QtWidgets.QMainWindow):
                 self.rig_actions_listwidget.disableItem(row)
 
         self.update_title()
-
-        # self.rig_actions_listwidget.setCurrentRow(row)
 
     def move_action_up(self):
         self.block_all_signals(True)
@@ -954,9 +1015,9 @@ class MainUI(QtWidgets.QMainWindow):
         self.block_all_signals(False)
         self.populate_actions()
 
-#######################
-### GUIDE FUNCTIONS ###
-#######################
+    #######################
+    ### GUIDE FUNCTIONS ###
+    #######################
 
     def import_guides(self):
         dlg = QtWidgets.QFileDialog.getOpenFileName(self, str("Import Guides"), "", str("Trigger Guides (*.trg)"))
@@ -990,7 +1051,9 @@ class MainUI(QtWidgets.QMainWindow):
                 color = QtGui.QColor(0, 100, 255, 255)
             else:
                 color = QtGui.QColor(255, 100, 0, 255)
-            tree_item = QtWidgets.QTreeWidgetItem(self.guides_list_treeWidget, [item["module_name"], item["side"], item["root_joint"], item["module_type"]])
+            tree_item = QtWidgets.QTreeWidgetItem(self.guides_list_treeWidget,
+                                                  [item["module_name"], item["side"], item["root_joint"],
+                                                   item["module_type"]])
             if item["root_joint"] == selected_root_jnt:
                 self.guides_list_treeWidget.setCurrentItem(tree_item)
             tree_item.setForeground(0, color)
@@ -1012,7 +1075,8 @@ class MainUI(QtWidgets.QMainWindow):
         self.module_name_le.setText(self.guides_handler.init.get_property(root_jnt, "moduleName"))
         for num, axis in enumerate("XYZ"):
             self.up_axis_sp_list[num].setValue(self.guides_handler.init.get_property(root_jnt, "upAxis%s" % axis))
-            self.mirror_axis_sp_list[num].setValue(self.guides_handler.init.get_property(root_jnt, "mirrorAxis%s" % axis))
+            self.mirror_axis_sp_list[num].setValue(
+                self.guides_handler.init.get_property(root_jnt, "mirrorAxis%s" % axis))
             self.look_axis_sp_list[num].setValue(self.guides_handler.init.get_property(root_jnt, "lookAxis%s" % axis))
 
         self.inherit_orientation_cb.setChecked(self.guides_handler.init.get_property(root_jnt, "useRefOri"))
@@ -1078,22 +1142,22 @@ class MainUI(QtWidgets.QMainWindow):
         root_jnt = self.guides_list_treeWidget.currentItem().text(2)
         self.guides_handler.init.set_property(root_jnt, property, value)
 
-    def on_create_guide(self, limb_name, *args, **kwargs):
+    def on_create_guide(self, limb_name, **kwargs):
         if limb_name == "humanoid":
             self.guides_handler.init.initHumanoid()
         else:
             # get side
             if self.guides_sides_L_rb.isChecked():
-                side="left"
+                side = "left"
             elif self.guides_sides_R_rb.isChecked():
-                side="right"
+                side = "right"
             elif self.guides_sides_Both_rb.isChecked():
-                side="both"
+                side = "both"
             elif self.guides_sides_Auto_rb.isChecked():
-                side="auto"
+                side = "auto"
             else:
-                side="center"
-            self.guides_handler.init.initLimb(limb_name, whichSide= side, defineAs=self.ctrl_modifier, **kwargs)
+                side = "center"
+            self.guides_handler.init.initLimb(limb_name, whichSide=side, defineAs=self.ctrl_modifier, **kwargs)
         self.populate_guides()
 
     def on_guide_change(self, currentItem, previousItem):

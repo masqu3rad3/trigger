@@ -3,13 +3,22 @@ import maya.api.OpenMaya as om
 
 from trigger.library import functions, naming
 from trigger.library import attribute
+from trigger.objects.controller import Controller
+
 from trigger.core import filelog
 log = filelog.Filelog(logname=__name__, filename="trigger_log")
 
 
 LIMB_DATA = {
         "members": ["Root"],
-        "properties": [],
+        "properties": [
+            {
+                "attr_name": "curveAsShape",
+                "nice_name": "Use_Curve_as_Joint_Shape",
+                "attr_type": "bool",
+                "default_value": False
+            }
+        ],
         "multi_guide": None,
         "sided": True,
     }
@@ -19,18 +28,25 @@ class Connector(object):
         super(Connector, self).__init__()
         if build_data:
             if len(build_data.keys()) > 1:
-                log.error("Root can only have one initial joint")
+                log.error("Connector can only have one initial joint")
                 return
             self.rootInit = build_data["Root"]
         elif inits:
             if len(inits) > 1:
-                cmds.error("Root can only have one initial joint")
+                cmds.error("Connector can only have one initial joint")
                 return
             self.rootInit = inits[0]
         else:
             log.error("Class needs either build_data or inits to be constructed")
 
+        # get module properties
         self.useRefOrientation = cmds.getAttr("%s.useRefOri" % self.rootInit)
+        self.side = functions.get_joint_side(self.rootInit)
+        # try block for backward compatibility
+        try:
+            self.curveAsShape = cmds.getAttr("%s.curveAsShape" % self.rootInit)
+        except ValueError:
+            self.curveAsShape = False
 
         self.suffix = (naming.uniqueName(cmds.getAttr("%s.moduleName" % self.rootInit)))
 
@@ -49,7 +65,7 @@ class Connector(object):
 
     def createLimb(self):
         """
-        This will create a 'mid node' called root. This single joint will act as a socket for other limbs to connect to.
+        This will create a 'mid node' called connector. This single joint will act as a socket for other limbs to connect to.
         Args:
             inits: (dictionary or list) This is plural for naming convention only. In fact, the function accepts only one joint. If it is a dictionary, the key must be 'Root' and if it is a list it must contain only a single element
             suffix: (string) Name suffix for the nodes will be created
@@ -72,7 +88,17 @@ class Connector(object):
         functions.colorize(defJ_root, self.colorCodes[0])
         self.limbPlug = defJ_root
         self.sockets.append(defJ_root)
-        self.deformerJoints.append(defJ_root)
+
+        if self.curveAsShape:
+            _controller = Controller(shape="Cube",
+                                     name="%s_cont" % self.suffix,
+                                     scale=(1,1,1),
+                                     normal=(0,0,0))
+            _controller.set_side(self.side)
+            cmds.parent(_controller.shapes[0], defJ_root, r=True, s=True)
+            cmds.setAttr("%s.drawStyle" % defJ_root, 2)
+        else:
+            self.deformerJoints.append(defJ_root)
 
 class Guides(object):
     def __init__(self, side="L", suffix="root", segments=None, tMatrix=None, upVector=(0, 1, 0), mirrorVector=(1, 0, 0), lookVector=(0,0,1), *args, **kwargs):

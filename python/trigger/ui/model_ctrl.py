@@ -91,6 +91,12 @@ class Controller(object):
             else:
                 widget.set_data(list(value))
 
+        elif widget_class == "ColorButton":
+            if get:
+                return property_type(widget.getNormalized())
+            else:
+                widget.setColor(normalized_rgb=tuple(value))
+
         else:
             log.error("UNSUPPORTED WIDGET CLASS ==> %s" % widget_class)
             raise

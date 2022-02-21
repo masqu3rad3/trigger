@@ -12,7 +12,7 @@ from trigger.ui.Qt import QtWidgets
 from trigger.ui import custom_widgets
 from trigger.ui import feedback
 
-from PySide2 import QtWidgets # temp
+# from PySide2 import QtWidgets # temp
 
 log = filelog.Filelog(logname=__name__, filename="trigger_log")
 
@@ -111,7 +111,8 @@ class Face_cam(object):
 
         initial_distance_lbl = QtWidgets.QLabel(text="Initial Distance")
         initial_distance_sp = QtWidgets.QDoubleSpinBox()
-        initial_distance_sp.setMinimum(-99999)
+        initial_distance_sp.setMinimum(-999999)
+        initial_distance_sp.setMaximum(999999)
         layout.addRow(initial_distance_lbl, initial_distance_sp)
 
         limit_multiplier_lbl = QtWidgets.QLabel(text="Limit Multiplier")

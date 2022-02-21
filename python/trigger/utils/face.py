@@ -118,12 +118,11 @@ def shrink_wrap_eyebulge(
 
 
 def parse_sides(input_list):
-    middle = float(len(input_list)) / 2
+    middle = int(float(len(input_list))/2)
     if middle % 2 != 0:
-        return input_list[:len(input_list) / 2], [input_list[int(middle - .5)]], list(
-            reversed(input_list[(len(input_list) / 2) + 1:]))
+        return input_list[:int(len(input_list)/2)], [input_list[int(middle - .5)]], list(reversed(input_list[int((len(input_list)/2)+1):]))
     else:
-        return input_list[:len(input_list) / 2], [], list(reversed(input_list[(len(input_list) / 2):]))
+        return input_list[:int(len(input_list)/2)], [], list(reversed(input_list[int((len(input_list)/2)):]))
 
 
 def lip_zipper(upper_lip_edges, lower_lip_edges, morph_mesh, final_mesh, pair_count, controller=None):
@@ -430,9 +429,9 @@ def face_switcher(bs_node, tongue_cont, l_eye_plug, r_eye_plug, upper_teeth_join
     cmds.setAttr("%s.inputMatrix" % upper_teeth_node, upper_teeth_inmatrix, type="matrix")
 
     # connect blender outputs
-    cmds.connectAttr(L_eye_b_out_p, "%s.t" % l_eye_plug)
-    cmds.connectAttr(R_eye_b_out_p, "%s.t" % r_eye_plug)
-    cmds.connectAttr(upper_teeth_out_p, "%s.t" % upper_teeth_joint)
+    cmds.connectAttr(L_eye_b_out_p, "%s.t" % l_eye_plug, force=True)
+    cmds.connectAttr(R_eye_b_out_p, "%s.t" % r_eye_plug, force=True)
+    cmds.connectAttr(upper_teeth_out_p, "%s.t" % upper_teeth_joint, force=True)
 
     attribute.separator(pref_cont, "Morphs")
 
