@@ -75,6 +75,7 @@ class Kinematics(object):
         # self.anchorLocations = action_data.get("anchor_locations")
         self.extraSwitchers = action_data.get("extra_switchers")
         self.afterlife = action_data.get("after_creation")
+        self.multi_selectionSets = action_data.get("multi_selectionSets", False)
 
     def action(self):
         root_grp = "trigger_grp"
@@ -382,6 +383,13 @@ class Kinematics(object):
 
         j_def_set = None
 
+        print("-"*20)
+        print("-"*30)
+        print("-"*40)
+        print(self.multi_selectionSets)
+        print("-"*40)
+        print("-"*30)
+        print("-"*20)
         if not self.multi_selectionSets:
             cmds.select(d=True)
             if not cmds.objExists("def_jointsSet_%s" % self.rig_name):
