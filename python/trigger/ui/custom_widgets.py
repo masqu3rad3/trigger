@@ -98,7 +98,7 @@ class ValidatedLineEdit(QtWidgets.QLineEdit):
     def keyPressEvent(self, *args, **kwargs):
         super(ValidatedLineEdit, self).keyPressEvent(*args, **kwargs)
         current_text = self.text()
-        if not foolproof.text(current_text, allow_spaces=self.allowSpaces, directory=self.allowDirectory):
+        if not foolproof.string_value(current_text, allow_spaces=self.allowSpaces, directory=self.allowDirectory):
             self.setStyleSheet("background-color: rgb(40,40,40); color: red")
             if self.connected_widgets:
                 for wid in self.connected_widgets:
