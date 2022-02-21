@@ -6,26 +6,27 @@ from trigger.core.decorators import tracktime
 
 from trigger.ui.Qt import QtWidgets
 from trigger.ui import custom_widgets
+from trigger.ui.widgets.color_button import ColorButton
 from trigger.ui import feedback
 
-from PySide2 import QtWidgets # temp
+from PySide2 import QtWidgets  # temp
 
 log = filelog.Filelog(logname=__name__, filename="trigger_log")
-
 
 ACTION_DATA = {
     "controllers": [],
     "scaling": True,
     "normalize_scale": True,
     "coloring": True,
-    "color_method": 0, # 0 - object, 1 - shader, 2 - triswitch
+    "color_method": 0,  # 0 - object, 1 - shader, 2 - triswitch
     "color_match": False,
-    "color_a": [],
-    "color_b": [],
+    "color_a": [0.0, 0.0, 1.0],
+    "color_b": [1.0, 0.0, 0.0],
     "primary_channel": "",
     "visibility_controller": "",
     "id_tag": "fillers"
 }
+
 
 class Fillers(object):
     def __init__(self, *args, **kwargs):
@@ -38,8 +39,8 @@ class Fillers(object):
         self.coloring = None
         self.color_method = None
         self.color_match = None
-        self.color_a = None
-        self.color_b = None
+        self.color_a = [0.0, 0.0, 1.0]
+        self.color_b = [1.0, 0.0, 0.0]
         self.primary_channel = None
         self.visibility_controller = None
         self.id_tag = None
@@ -88,7 +89,8 @@ class Fillers(object):
 
         controllers_lbl = QtWidgets.QLabel(text="Controllers")
         controllers_lbl.setToolTip("Defined controller curves will be 'filled'")
-        controllers_listbox = custom_widgets.ListBoxLayout(alignment="start", buttonNew=False, buttonRename=False, buttonUp=False, buttonDown=False)
+        controllers_listbox = custom_widgets.ListBoxLayout(alignment="start", buttonNew=False, buttonRename=False,
+                                                           buttonUp=False, buttonDown=False)
         layout.addRow(controllers_lbl, controllers_listbox)
 
         scaling_lbl = QtWidgets.QLabel(text="Scaling Fillers")
@@ -116,11 +118,10 @@ class Fillers(object):
                                       "Switch = Single shader for all controllers with tripleShaderSwitches")
         layout.addRow(color_method_lbl, color_method_combo)
 
-
         colors_lbl = QtWidgets.QLabel(text="Colors")
         colors_lay = QtWidgets.QHBoxLayout()
-        color_a_pb = QtWidgets.QPushButton("Color A")
-        color_b_pb = QtWidgets.QPushButton("Color B")
+        color_a_pb = ColorButton(text="Color A")
+        color_b_pb = ColorButton(text="Color B")
         match_colors_cb = QtWidgets.QCheckBox(text="Match to Controller")
         match_colors_cb.setToolTip("Static colored filler matching to its controller")
         colors_lay.addWidget(color_a_pb)
@@ -157,9 +158,7 @@ class Fillers(object):
 
         ctrl.connect(color_a_pb, "color_a", list)
         ctrl.connect(color_b_pb, "color_b", list)
-        # TODO UPDATE PUSH BUTTON COLOURS in ui
         ctrl.update_ui()
-
 
         # def color_state_changes(state):
         #     color_method_lbl.setEnabled(state)
@@ -168,8 +167,6 @@ class Fillers(object):
         def get_controllers():
             # TODO get selected controllers from scene
             pass
-
-
 
         # SIGNALS
 
@@ -184,6 +181,7 @@ class Fillers(object):
         color_method_combo.currentIndexChanged.connect(lambda x: ctrl.update_model())
 
         color_a_pb.clicked.connect(lambda x: ctrl.update_model())
+        color_b_pb.clicked.connect(lambda x: ctrl.update_model())
 
         # enabling / disabling
         scaling_cb.stateChanged.connect(normalize_scale_lbl.setEnabled)
@@ -196,10 +194,10 @@ class Fillers(object):
         match_colors_cb.stateChanged.connect(color_a_pb.setDisabled)
         match_colors_cb.stateChanged.connect(color_b_pb.setDisabled)
 
-        coloring_cb.stateChanged.connect(lambda x: color_a_pb.setDisabled(x) if match_colors_cb.isChecked() and x else color_a_pb.setDisabled(not x))
-        coloring_cb.stateChanged.connect(lambda x: color_b_pb.setDisabled(x) if match_colors_cb.isChecked() and x else color_b_pb.setDisabled(not x))
-
-
+        coloring_cb.stateChanged.connect(
+            lambda x: color_a_pb.setDisabled(x) if match_colors_cb.isChecked() and x else color_a_pb.setDisabled(not x))
+        coloring_cb.stateChanged.connect(
+            lambda x: color_b_pb.setDisabled(x) if match_colors_cb.isChecked() and x else color_b_pb.setDisabled(not x))
 
     @staticmethod
     def get_custom_color():

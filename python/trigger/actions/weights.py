@@ -14,6 +14,7 @@ from trigger.library import deformers
 
 from trigger.ui.Qt import QtWidgets, QtGui  # for progressbar
 from trigger.ui import custom_widgets
+from trigger.ui.widgets.browser_button import BrowserButton
 
 log = filelog.Filelog(logname=__name__, filename="trigger_log")
 
@@ -154,7 +155,7 @@ Then you can save and increment versions for all of them at once.
         file_path_hLay = QtWidgets.QHBoxLayout()
         file_path_le = custom_widgets.FileLineEdit()
         file_path_hLay.addWidget(file_path_le)
-        browse_path_pb = custom_widgets.BrowserButton(mode="openFile", update_widget=file_path_le,
+        browse_path_pb = BrowserButton(mode="openFile", update_widget=file_path_le,
                                                       filterExtensions=["Trigger Weight Files (*.trw)"],
                                                       overwrite_check=False)
         file_path_hLay.addWidget(browse_path_pb)

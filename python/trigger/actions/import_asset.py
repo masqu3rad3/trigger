@@ -11,6 +11,7 @@ from trigger.core import filelog
 # from trigger.ui.Qt import QtWidgets, QtGui # for progressbar
 from PySide2 import QtWidgets, QtGui  # for progressbar
 from trigger.ui import custom_widgets
+from trigger.ui.widgets.browser_button import BrowserButton
 
 log = filelog.Filelog(logname=__name__, filename="trigger_log")
 
@@ -69,7 +70,7 @@ class Import_asset(object):
         # file_path_le = QtWidgets.QLineEdit()
         file_path_le = custom_widgets.FileLineEdit()
         file_path_hLay.addWidget(file_path_le)
-        browse_path_pb = custom_widgets.BrowserButton(mode="openFile", update_widget=file_path_le,
+        browse_path_pb = BrowserButton(mode="openFile", update_widget=file_path_le,
                                                       filterExtensions=["Maya ASCII (*.ma)", "Maya Binary (*.mb)",
                                                                         "USD (*.usd)", "Alembic (*.abc)", "FBX (*.fbx)",
                                                                         "OBJ (*.obj)"], overwrite_check=False)

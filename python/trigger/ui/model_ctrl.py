@@ -91,12 +91,11 @@ class Controller(object):
             else:
                 widget.set_data(list(value))
 
-        elif widget_class == "QPushButton":
+        elif widget_class == "ColorButton":
             if get:
-                print("something")
-                return(1,1,0.5) # TODO TEMP
+                return property_type(widget.getNormalized())
             else:
-                print("set to lll")
+                widget.setColor(normalized_rgb=tuple(value))
 
         else:
             log.error("UNSUPPORTED WIDGET CLASS ==> %s" % widget_class)

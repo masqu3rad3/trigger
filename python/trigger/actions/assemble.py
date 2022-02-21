@@ -5,6 +5,7 @@ from trigger.actions import import_asset
 from trigger.library import naming
 
 from trigger.ui.Qt import QtWidgets, QtGui # for progressbar
+from trigger.ui.widgets.browser_button import BrowserButton
 from trigger.ui import custom_widgets
 
 log = filelog.Filelog(logname=__name__, filename="trigger_log")
@@ -68,7 +69,7 @@ class Assemble(import_asset.Import_asset):
         alembic_paths_listbox.viewWidget.setViewMode(QtWidgets.QListView.ListMode)
         alembic_paths_listbox.viewWidget.setAlternatingRowColors(True)
 
-        browse_pb = custom_widgets.BrowserButton(text="Add", filterExtensions=["Alembic (*.abc)"],
+        browse_pb = BrowserButton(text="Add", filterExtensions=["Alembic (*.abc)"],
                                                  title="Choose Alembic Asset Cache")
         alembic_paths_listbox.addNewButton(browse_pb, insert=0)
         next_version_pb = QtWidgets.QPushButton(text="Next Version")

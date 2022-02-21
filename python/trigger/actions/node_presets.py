@@ -10,6 +10,7 @@ from trigger.library import selection
 from trigger.core.decorators import tracktime
 
 from trigger.ui import custom_widgets
+from trigger.ui.widgets.browser_button import BrowserButton
 from trigger.ui.Qt import QtWidgets, QtGui # for progressbar
 from trigger.ui import feedback
 
@@ -106,7 +107,7 @@ class Node_presets(object):
         file_path_hLay = QtWidgets.QHBoxLayout()
         file_path_le = custom_widgets.FileLineEdit()
         file_path_hLay.addWidget(file_path_le)
-        browse_path_pb = custom_widgets.BrowserButton(mode="openFile", update_widget=file_path_le, filterExtensions=["Trigger Preset Files (*.trp)"], overwrite_check=False)
+        browse_path_pb = BrowserButton(mode="openFile", update_widget=file_path_le, filterExtensions=["Trigger Preset Files (*.trp)"], overwrite_check=False)
         file_path_hLay.addWidget(browse_path_pb)
         layout.addRow(file_path_lbl, file_path_hLay)
 

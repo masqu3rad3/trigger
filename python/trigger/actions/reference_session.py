@@ -8,6 +8,7 @@ from trigger.core import filelog
 import importlib
 from trigger.ui.Qt import QtWidgets
 from trigger.ui import custom_widgets
+from trigger.ui.widgets.browser_button import BrowserButton
 
 log = filelog.Filelog(logname=__name__, filename="trigger_log")
 
@@ -72,7 +73,7 @@ class Reference_session(object):
         # trigger_file_path_le = QtWidgets.QLineEdit()
         trigger_file_path_le = custom_widgets.FileLineEdit()
         trigger_file_path_hLay.addWidget(trigger_file_path_le)
-        browse_path_pb = custom_widgets.BrowserButton(mode="openFile", update_widget=trigger_file_path_le, filterExtensions=["Trigger Session (*.tr)"], overwrite_check=False)
+        browse_path_pb = BrowserButton(mode="openFile", update_widget=trigger_file_path_le, filterExtensions=["Trigger Session (*.tr)"], overwrite_check=False)
         trigger_file_path_hLay.addWidget(browse_path_pb)
         layout.addRow(trigger_file_path_lbl, trigger_file_path_hLay)
 

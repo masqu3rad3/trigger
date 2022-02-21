@@ -9,6 +9,7 @@ from trigger.core.decorators import viewportOff
 from trigger.actions import weights
 from trigger.library import deformers, functions, selection
 from trigger.ui import custom_widgets
+from trigger.ui.widgets.browser_button import BrowserButton
 from trigger.ui.Qt import QtWidgets, QtGui
 from trigger.ui import feedback
 from trigger.core import filelog
@@ -128,7 +129,7 @@ class Split_shapes(weights.Weights):
         file_path_hLay.addWidget(file_path_le)
         prepare_bs_pb = QtWidgets.QPushButton(text="Prepare")
         file_path_hLay.addWidget(prepare_bs_pb)
-        browse_path_pb = custom_widgets.BrowserButton(mode="openFile", update_widget=file_path_le, filterExtensions=["Trigger Split Files (*.trsplit)"], overwrite_check=False)
+        browse_path_pb = BrowserButton(mode="openFile", update_widget=file_path_le, filterExtensions=["Trigger Split Files (*.trsplit)"], overwrite_check=False)
         file_path_hLay.addWidget(browse_path_pb)
         layout.addRow(file_path_lbl, file_path_hLay)
 
