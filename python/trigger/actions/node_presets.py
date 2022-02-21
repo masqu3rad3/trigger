@@ -127,7 +127,10 @@ class Node_presets(object):
         def get_nodes():
             sel, msg = selection.validate(min=1, max=None, meshesOnly=False, transforms=False)
             if sel:
-                nodes_listbox.viewWidget.addItems(sel)
+                # remove the items that is already in there
+                existing_list = nodes_listbox.listItemNames()
+                refined_sel = [x for x in sel if x not in existing_list]
+                nodes_listbox.viewWidget.addItems(refined_sel)
                 ctrl.update_model()
             else:
                 feedback.Feedback().pop_info(title="Selection Error", text=msg, critical=True)
