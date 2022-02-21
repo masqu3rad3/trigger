@@ -465,7 +465,10 @@ class Kinematics(object):
                 #     parentSocket = self.cont_placement
 
                     cmds.parent(limb.limbPlug, parentSocket)
-                    cmds.disconnectAttr("%s.scale" % parentSocket, "%s.inverseScale" %limb.limbPlug)
+                    try:
+                        cmds.disconnectAttr("%s.scale" % parentSocket, "%s.inverseScale" %limb.limbPlug)
+                    except RuntimeError:
+                        pass
 
                 ## Good parenting / scale connections
                 scaleGrpPiv = api.getWorldTranslation(limb.limbPlug)
