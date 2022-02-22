@@ -41,8 +41,6 @@ class Filler(BaseNode):
 
         self.controller = None
         self.driver_hook = None
-        if controller:
-            self.set_controller(controller)
 
         self.colorA = (0, 0, 1)
         self.colorB = (0, 1, 0)
@@ -54,6 +52,10 @@ class Filler(BaseNode):
         self.primary_channel = primary_channel
         self.visibility_controller = visibility_controller
         self.id_tag = str(id_tag)
+
+        if controller:
+            self.set_controller(controller)
+
 
     def set_controller(self, dag_path):
         """defines the controller and grabs its vaules in Origin class"""

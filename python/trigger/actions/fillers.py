@@ -4,6 +4,9 @@ from trigger.core import io
 from trigger.core import filelog
 from trigger.core.decorators import tracktime
 
+from trigger.library import selection
+from trigger.utils import controller_filler
+
 from trigger.ui.Qt import QtWidgets
 from trigger.ui import custom_widgets
 from trigger.ui.widgets.color_button import ColorButton
@@ -63,6 +66,27 @@ class Fillers(object):
         """Mandatory Method - Execute Action"""
         # everything in this method will be executed automatically.
         # This method does not accept any arguments. all the user variable must be defined to the instance before
+
+        methods = {0: "object",
+                   1: "shader",
+                   2: "triswitch"}
+        primary_channel = self.primary_channel or "Auto"
+        for controller in self.controllers:
+            filler = controller_filler.Filler(controller=controller,
+                                              scaling=self.scaling,
+                                              normalize_scale=self.normalize_scale,
+                                              coloring=self.coloring,
+                                              color_method=methods[self.color_method],
+                                              color_match=self.color_match,
+                                              primary_channel=primary_channel,
+                                              visibility_controller=self.visibility_controller
+                                              )
+            filler.colorA = self.color_a
+            filler.colorB = self.color_b
+
+            filler.create()
+
+
         pass
 
     def save_action(self, file_path=None, *args, **kwargs):
@@ -165,8 +189,16 @@ class Fillers(object):
         #     color_method_combo.setEnabled(state)
 
         def get_controllers():
-            # TODO get selected controllers from scene
-            pass
+            sel, msg = selection.validate(min=1, max=None, meshesOnly=False, transforms=False)
+            if sel:
+                # remove the items that is already in there
+                existing_list = controllers_listbox.listItemNames()
+                refined_sel = [x for x in sel if x not in existing_list]
+                controllers_listbox.viewWidget.addItems(refined_sel)
+                ctrl.update_model()
+            else:
+                feedback.Feedback().pop_info(title="Selection Error", text=msg, critical=True)
+
 
         # SIGNALS
 
@@ -182,6 +214,10 @@ class Fillers(object):
 
         color_a_pb.clicked.connect(lambda x: ctrl.update_model())
         color_b_pb.clicked.connect(lambda x: ctrl.update_model())
+
+        match_colors_cb.stateChanged.connect(lambda x: ctrl.update_model())
+        primary_channel_le.textChanged.connect(lambda x: ctrl.update_model())
+        visibility_controller_le.textChanged.connect(lambda x: ctrl.update_model())
 
         # enabling / disabling
         scaling_cb.stateChanged.connect(normalize_scale_lbl.setEnabled)
