@@ -96,6 +96,7 @@ class Connector(object):
                                      normal=(0,0,0))
             _controller.set_side(self.side)
             cmds.parent(_controller.shapes[0], defJ_root, r=True, s=True)
+            cmds.delete(_controller.name)
             cmds.setAttr("%s.drawStyle" % defJ_root, 2)
         else:
             self.deformerJoints.append(defJ_root)
