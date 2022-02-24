@@ -62,6 +62,7 @@ def parentToSurface(objects=None, surface=None, mode="parent"):
 
     follicleTransformList = []
     for obj in objects:
+        _name = obj.split("|")[-1] # if the object is a dag path
         cmds.connectAttr("%s.worldMesh" % surface, "%s.inMesh" % clPos, f=True)
 
         bbox = cmds.xform(obj, q=True, ws=True, bb=True)
@@ -74,7 +75,7 @@ def parentToSurface(objects=None, surface=None, mode="parent"):
         closestV = cmds.getAttr("%s.parameterV" % clPos)
 
         # attachObjectToSurface(obj, surface, closestU, closestV)
-        follicle = cmds.createNode("follicle", name=("%s_follicleShape" %obj))
+        follicle = cmds.createNode("follicle", name=("%s_follicleShape" %_name))
         follicleDag = cmds.listRelatives(follicle, parent=True)[0]
         cmds.rename(follicleDag, ("%s_follicle" %obj))
 
