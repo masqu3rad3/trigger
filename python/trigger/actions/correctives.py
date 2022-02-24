@@ -291,6 +291,8 @@ class Correctives(object):
             def_remove_pb.clicked.connect(lambda _=0, lay=def_formlayout, uid=self.uid: delete_definition(lay, uid))
             def_remove_pb.clicked.connect(update_model)
 
+            update_model()
+
         def get_rotation(x_widget, y_widget, z_widget):
             sel, msg = selection.validate(min=1, max=1, meshesOnly=False, transforms=True)
             if sel:

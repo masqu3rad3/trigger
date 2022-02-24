@@ -128,6 +128,7 @@ class Space_switchers(object):
             def_remove_pb.clicked.connect(lambda _=0, lay=def_formlayout, id=self.id: delete_definition(lay, id))
             def_remove_pb.clicked.connect(update_model)
 
+            update_model()
         # custom model/ui updates
 
         def update_model():

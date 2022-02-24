@@ -39,7 +39,7 @@ class Selection_sets(object):
         super(Selection_sets, self).__init__()
 
         # user defined variables
-        self.setDefinitions = None
+        self.setDefinitions = []
 
         # class variables
         self.definition_widgets = None
@@ -47,7 +47,7 @@ class Selection_sets(object):
 
     def feed(self, action_data, *args, **kwargs):
         """Mandatory Method - Feeds the instance with the action data stored in actions session"""
-        self.setDefinitions = action_data.get("definitions")
+        self.setDefinitions = action_data.get("definitions", [])
 
     def action(self):
         """Mandatory Method - Execute Action"""
@@ -99,7 +99,6 @@ class Selection_sets(object):
             members = members or []
 
             self.id += 1
-
             def_formlayout = QtWidgets.QFormLayout()
 
             def_name_lbl = QtWidgets.QLabel(text="Name")
@@ -107,8 +106,18 @@ class Selection_sets(object):
             def_formlayout.addRow(def_name_lbl, def_name_le)
 
             def_members_lbl = QtWidgets.QLabel(text="Members")
-            def_members_listBox = custom_widgets.ListBoxLayout(buttonAdd=True, buttonGet=True, buttonRename=True, buttonRemove=True)
+            def_members_listBox = custom_widgets.ListBoxLayout(buttonAdd=False, buttonGet=True, buttonRename=False, buttonRemove=True)
             def_formlayout.addRow(def_members_lbl, def_members_listBox)
+
+            def_remove_lbl = QtWidgets.QLabel(text="")
+            def_remove_pb = QtWidgets.QPushButton(text="Remove")
+            def_formlayout.addRow(def_remove_lbl, def_remove_pb)
+
+            id_lbl = QtWidgets.QLabel("")
+            id_separator_lbl = QtWidgets.QLabel("-"*100)
+            def_formlayout.addRow(id_lbl, id_separator_lbl)
+
+            definitions_lay.insertLayout(0, def_formlayout)
 
             tmp_dict = {
                 "id": self.id,
@@ -121,10 +130,26 @@ class Selection_sets(object):
             def_members_listBox.viewWidget.addItems(members)
             def_name_le.setText(set_name)
 
-        def get_selected(update_widget, mesh_only=True):
+            # signals
+            def_name_le.editingFinished.connect(update_model)
+            def_members_listBox.viewWidget.model().rowsInserted.connect(update_model) # catch the signal from the list
+            def_members_listBox.viewWidget.model().rowsRemoved.connect(update_model) # catch the signal from the list
+            def_members_listBox.buttonClear.clicked.connect(update_model) # catch the signal from the list
+            # def_members_listBox.viewWidget.model().modelReset.connect(update_model) # catch the signal from the list
+            def_members_listBox.buttonGet.clicked.connect(
+                lambda _=0, widget=def_members_listBox: get_selected(widget, mesh_only=False)
+            )
+            def_remove_pb.clicked.connect(lambda _=0, lay=def_formlayout, uid=self.id: delete_definition(lay, uid))
+
+            update_model()
+
+        def get_selected(list_box_layout, mesh_only=True):
             sel, msg = selection.validate(min=1, max=None, meshesOnly=False, transforms=False)
             if sel:
-                update_widget.setText(sel[0])
+                # remove the items that is already in there
+                existing_list = list_box_layout.listItemNames()
+                refined_sel = [x for x in sel if x not in existing_list]
+                list_box_layout.viewWidget.addItems(refined_sel)
                 update_model()
             else:
                 feedback.Feedback().pop_info(title="Selection Error", text=msg, critical=True)
@@ -148,17 +173,18 @@ class Selection_sets(object):
                                    members=definition["members"],
                                    )
 
-        def delete_definition(layout, id):
+        def delete_definition(layout_item, uid):
             for item in self.definition_widgets:
-                if item["id"] == id:
+                if item["id"] == uid:
                     self.definition_widgets.remove(item)
                     break
-            del_layout(layout)
+            del_layout(layout_item)
+            update_model()
 
-        def del_layout(layout):
+        def del_layout(layout_item):
             if layout is not None:
-                while layout.count():
-                    item = layout.takeAt(0)
+                while layout_item.count():
+                    item = layout_item.takeAt(0)
                     widget = item.widget()
                     if widget is not None:
                         widget.setParent(None)

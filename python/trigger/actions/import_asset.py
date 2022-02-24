@@ -181,7 +181,7 @@ class Import_asset(object):
         """Scaling and renaming post process"""
         if suffix != "" or scale != 1.0 or parent_under != "":
             # get the root node(s)
-            root_nodes = cmds.ls(new_nodes, assemblies=True)
+            root_nodes = cmds.ls(new_nodes, assemblies=True, l=True)
             # make sure all scales are unlocked
             for node in new_nodes:
                 if cmds.objectType(node) == "transform":
@@ -194,7 +194,7 @@ class Import_asset(object):
                 cmds.parent(node, temp_grp)
                 cmds.xform(temp_grp, s=(scale, scale, scale), piv=(0, 0, 0), ztp=True, p=True)
                 cmds.makeIdentity(temp_grp, a=True, t=False, r=False, s=True)
-                cmds.parent(node, world=True)
+                cmds.parent(temp_grp + node, world=True)
                 cmds.delete(temp_grp)
 
                 if suffix:
