@@ -1,4 +1,5 @@
 """Boiler Plate template for actions"""
+from maya import cmds
 
 from trigger.core import io
 from trigger.core import filelog
@@ -51,9 +52,10 @@ class Selection_sets(object):
 
     def action(self):
         """Mandatory Method - Execute Action"""
-        # everything in this method will be executed automatically.
-        # This method does not accept any arguments. all the user variable must be defined to the instance before
-        pass
+
+        for definition in self.setDefinitions:
+            # if the set exists use it
+            selection.add_to_set(definition["members"], definition["name"], force=True)
 
     def save_action(self, file_path=None, *args, **kwargs):
         """Mandatory Method - Save Action"""
