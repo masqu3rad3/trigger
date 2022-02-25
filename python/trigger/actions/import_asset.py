@@ -65,15 +65,19 @@ class Import_asset(object):
 
     def ui(self, ctrl, layout, handler, *args, **kwargs):
 
+
+
         file_path_lbl = QtWidgets.QLabel(text="File Path:")
         file_path_hLay = QtWidgets.QHBoxLayout()
         # file_path_le = QtWidgets.QLineEdit()
         file_path_le = custom_widgets.FileLineEdit()
         file_path_hLay.addWidget(file_path_le)
         browse_path_pb = BrowserButton(mode="openFile", update_widget=file_path_le,
-                                                      filterExtensions=["Maya ASCII (*.ma)", "Maya Binary (*.mb)",
+                                                      filterExtensions=["All Supported (*.ma *.mb *.usd *.abc *.obj)",
+                                                                        "Maya ASCII (*.ma)", "Maya Binary (*.mb)",
                                                                         "USD (*.usd)", "Alembic (*.abc)", "FBX (*.fbx)",
-                                                                        "OBJ (*.obj)"], overwrite_check=False)
+                                                                        "OBJ (*.obj)",
+                                                                        ], overwrite_check=False)
         file_path_hLay.addWidget(browse_path_pb)
         layout.addRow(file_path_lbl, file_path_hLay)
 
@@ -161,7 +165,6 @@ class Import_asset(object):
         }
 
         for item in fbx_import_settings.items():
-            # TODO : Test with more versions of Maya
             mel.eval('%s %s' % (item[0], item[1]))
 
         try:
