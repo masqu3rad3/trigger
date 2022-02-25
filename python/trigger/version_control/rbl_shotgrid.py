@@ -42,6 +42,11 @@ splitsfile_t = "asset_trigger_splitsfile"
 weightfile_t = "asset_trigger_weightfile"
 # definition: '@asset_work_area_trigger/weights/{Asset}_{variant_name}_{action_name}_v{version}.trw'
 
+# TODO find the published asset templates and make functions to find their versions (get_publishes)
+# published_abc_t = ??
+# published_usd_t = ??
+
+
 
 class VersionControl(object):
     _sg_load = load.ShotgunLoad(sg_script, sg_key)
@@ -229,3 +234,14 @@ class VersionControl(object):
     #
     # def is_latest(self, trigger_template):
     #     pass
+
+    def get_publish_types(self, *args, **kwargs):
+        """Returns the published types from the given task"""
+        # TODO
+        pass
+
+    def get_publish_versions(self, *args, **kwargs):
+        """Returns all published versions of given publish type and task"""
+        # TODO
+        pass
+
