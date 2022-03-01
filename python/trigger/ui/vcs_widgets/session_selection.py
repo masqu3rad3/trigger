@@ -191,7 +191,6 @@ class SessionSelection(QtWidgets.QHBoxLayout):
         self.__validate_button_states()
 
     def set_asset_type(self):
-        print("debug")
         self.sgh.asset_type = self.asset_type_combo.currentText()
         self.populate_assets()
         self.set_asset()
@@ -219,9 +218,7 @@ class SessionSelection(QtWidgets.QHBoxLayout):
 
     def set_version(self):
         if self.version_combo.currentText():
-            print("pre", self.sgh.session_version)
             self.sgh.session_version = int(self.version_combo.currentText())
-            print("after", self.sgh.session_version)
             self.session_changed_signal.emit(self.sgh.get_session_path())
 
 

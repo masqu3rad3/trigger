@@ -13,6 +13,9 @@ from PySide2 import QtWidgets, QtGui  # for progressbar
 from trigger.ui import custom_widgets
 from trigger.ui.widgets.browser_button import BrowserButton
 
+from trigger import version_control
+from trigger.ui.vcs_widgets.publish_selection import PublishSelection
+
 log = filelog.Filelog(logname=__name__, filename="trigger_log")
 
 ACTION_DATA = {
@@ -65,9 +68,18 @@ class Import_asset(object):
 
     def ui(self, ctrl, layout, handler, *args, **kwargs):
 
+        if version_control.controller:
+            vcs_lbl = QtWidgets.QLabel(text="Version Control")
+            # _hold_lay = QtWidgets.QVBoxLayout()
+            vcs_lay = PublishSelection()
+            vcs_lay.addStretch(1)
+            # _hold_lay.addLayout(vcs_lay)
+            # _hold_lay.addStretch(1)
+            layout.addRow(vcs_lbl, vcs_lay)
 
 
-        file_path_lbl = QtWidgets.QLabel(text="File Path:")
+
+        file_path_lbl = QtWidgets.QLabel(text="File Path")
         file_path_hLay = QtWidgets.QHBoxLayout()
         # file_path_le = QtWidgets.QLineEdit()
         file_path_le = custom_widgets.FileLineEdit()
