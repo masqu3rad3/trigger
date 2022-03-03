@@ -1,6 +1,6 @@
 """Shotgrid toolkit"""
 import re
-
+import os
 from maya import cmds
 from rbl_pipe_sg import template, load, publish
 from trigger.core import filelog
@@ -42,15 +42,17 @@ splitsfile_t = "asset_trigger_splitsfile"
 weightfile_t = "asset_trigger_weightfile"
 # definition: '@asset_work_area_trigger/weights/{Asset}_{variant_name}_{action_name}_v{version}.trw'
 
-# TODO find the published asset templates and make functions to find their versions (get_publishes)
-# published_abc_t = ??
-# published_usd_t = ??
-
+published_abc_t = "asset_model_abc_publish"
+published_usd_t = "usd_asset_intermediate"
+published_maya_t = "maya_asset_publish"
 
 
 class VersionControl(object):
     _sg_load = load.ShotgunLoad(sg_script, sg_key)
     _sg_template = template.SGTemplate(sg_script, sg_key)
+    _sg_publish = publish.SGPublish(sg_script, sg_key)
+
+    _valid_publish_formats = [".usd", ".abc", ".ma", ".mb", ".fbx", ".obj"]
 
     controller = "rbl_shotgrid"
     # project = None
@@ -72,10 +74,16 @@ class VersionControl(object):
         self.asset = None
         self.step = None
         self._task = None
+        self._all_task_data = {} # the list to hold the raw task data (<task_name>: <task_id>)
+        self._all_publish_data = []
         self.variant = None
         self.session = None
         self.session_version = None
         self._sessions_db = {}
+        self._publishes = None
+
+        self.publish_version = None
+        self.publish_type = None
 
         self._initialize()
 
@@ -129,12 +137,10 @@ class VersionControl(object):
         """Returns all asset variations under given asset"""
         asset_id = self._sg_load.asset_id_from_name(asset)
         step_id = self._sg_load.step_id_from_name(step, asset_id)
-        all_task_names = [x.get("content") for x in self._sg_load.get_asset_tasks(force=False, asset=asset_id, step=step_id)]
+        self._all_task_data = {x.get("content"): x.get("id") for x in self._sg_load.get_asset_tasks(force=False, asset=asset_id, step=step_id)}
         # hide main_ tasks
-        filtered_tasks = [x for x in all_task_names if "main_" not in x.lower()]
-
+        filtered_tasks = [x for x in self._all_task_data.keys() if "main_" not in x.lower()]
         return filtered_tasks
-        # return [x.get("content") for x in self._sg_load.get_asset_tasks(force=False, asset=asset_id, step=step_id) if not x.get("content").startswith("main_")]
 
     def get_sessions(self, asset, step, variant):
         """Returns trigger session (.tr) files under the asset"""
@@ -166,18 +172,6 @@ class VersionControl(object):
                 self._sessions_db[part_name] = [ver]
         return self._sessions_db  # This should list all the paths that match the above query
 
-    # def get_sessions(self):
-    #     """Returns trigger session (.tr) files under the asset"""
-    #     tk = self._sg_template.tk  # get tk instance from sg_template, or elsewhere if you already have an instance
-    #     sg_template = tk.templates.get(session)
-    #     fields = {"sg_asset_type": self.asset_type, "Asset": self.asset, "Step": self.step,
-    #               "variant_name": self.variant}  # assemble all of the fields you know
-    #     paths = tk.paths_from_template(sg_template, fields, ["version"],
-    #                                    skip_missing_optional_keys=True)  # the third arg is a list of all the fields you don't know, and you need to use the "skip_missing_optional_keys=True" option
-    #     return paths  # This should list all the paths that match the above query
-
-    # def get_next_session(self):
-
     def request_new_session_path(self, part_name):
         asset_id = self._sg_load.asset_id_from_name(self.asset)
         task_id = self._sg_load.task_id_from_name(self.task, asset_id=asset_id)
@@ -185,23 +179,12 @@ class VersionControl(object):
         self.session = part_name
         return self._sg_template.output_path_from_template(session_t, task_id, 1, part_name=part_name)
 
-    # def request_new_version_path(self):
-    #     """Version increment path"""
-    #     if not self.session:
-    #         log.error("No session (part_name) set")
-    #     asset_id = self._sg_load.asset_id_from_name(self.asset)
-    #     task_id = self._sg_load.task_id_from_name(self.task, asset_id=asset_id)
-    #     version = self._sg_template.current_version_from_template_list([session_t], task_id) or 0
-    #     print(self.asset, self.task, self.session, version)
-    #     path = self._sg_template.output_path_from_template(session_t, task_id, version + 1, part_name=self.session)
-    #     return path
     def request_new_version_path(self):
         """Version increment path"""
         if not self.session:
             log.error("No session (part_name) set")
         asset_id = self._sg_load.asset_id_from_name(self.asset)
         task_id = self._sg_load.task_id_from_name(self.task, asset_id=asset_id)
-        # version = self._sg_template.current_version_from_template_list([session_t], task_id) or 0
         _dict = self.__get_session_data(self.asset, self.step, self.variant)
         version = max(_dict.get(self.session, [0]))
         path = self._sg_template.output_path_from_template(session_t, task_id, version + 1, part_name=self.session)
@@ -212,36 +195,36 @@ class VersionControl(object):
         task_id = self._sg_load.task_id_from_name(self.task, asset_id=asset_id)
         return self._sg_template.output_path_from_template(session_t, task_id, self.session_version, part_name=self.session)
 
-    # def get_task_path(self):
-        
-
-    # def get_latest_path(self, trigger_template, **kwargs):
-    #     asset_id = self._sg_load.asset_id_from_name(self.asset)
-    #     print("asset_id", asset_id)
-    #     task_id = self._sg_load.task_id_from_name(self.task, asset_id=asset_id)
-    #     print("task_id", task_id)
-    #     version = self._sg_template.current_version_from_template_list([trigger_template], task_id) or 1
-    #     print("version", version)
-    #     path = self._sg_template.output_path_from_template(trigger_template, task_id, version, **kwargs)
-    #     return path
-    #     # pass
-
-    # def get_next_path(self, trigger_template):
-    #     pass
-    #
-    # def get_previous_path(self, trigger_template):
-    #     pass
-    #
-    # def is_latest(self, trigger_template):
-    #     pass
-
-    def get_publish_types(self, *args, **kwargs):
-        """Returns the published types from the given task"""
-        # TODO
-        pass
-
-    def get_publish_versions(self, *args, **kwargs):
+    def get_publish_versions(self, task_name):
         """Returns all published versions of given publish type and task"""
-        # TODO
-        pass
+        if not self._all_task_data:
+            return []
+        task_id = self._all_task_data.get(task_name, None)
+        if not task_id:
+            return []
+
+        # PUBLISH DATA:
+        # [
+        #     {
+        #     'type': 'PublishedFile',
+        #     'id': 41939,
+        #     'version_number': 2,
+        #     'code': 'charCube_AvA_MDL.hip',
+        #     'name': 'charCube_AvA_MDL.hip',
+        #     'published_file_type.PublishedFileType.code': 'Houdini Scene'
+        #     },
+        # ]
+        self._all_publish_data = self._sg_load.get_versions(task_id, published_file_type=None, name=None, force=False)
+        _versions_raw = [x.get('version_number') for x in self._all_publish_data]
+        return sorted(list(set(_versions_raw)))
+
+    def get_publish_types(self, version):
+        """Returns the published types from the given task"""
+        if not self._all_publish_data:
+            return []
+        _all_publish_formats = [x.get('name') for x in self._all_publish_data if x.get('version_number') == version]
+        _filtered_formats = [x for x in _all_publish_formats if os.path.splitext(x)[1] in self._valid_publish_formats]
+        return _filtered_formats
+
+
 
