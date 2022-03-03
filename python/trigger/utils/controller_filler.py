@@ -38,6 +38,10 @@ class Filler(BaseNode):
         """
         super(Filler, self).__init__()
         self.hold_group = transform.validate_group("%s_grp" % id_tag)
+        try:
+            cmds.parent(self.hold_group, "trigger_grp")
+        except (ValueError, RuntimeError) as e:
+            pass
 
         self.controller = None
         self.driver_hook = None
@@ -89,7 +93,13 @@ class Filler(BaseNode):
                                                 surface_parent=self.hold_group)[0], l=True)[0]
         bind_offset = functions.createUpGrp(self.name, "BIND")
         self.refresh_dag_path()
-        connection.matrixConstraint(self.controller.dag_path, bind_offset)
+
+        # unfortunately matrix constraint is not safe for all cases (in fact most cases)
+        # connection.matrixConstraint(self.controller.dag_path, bind_offset)
+        # functions.alignTo(bind_offset, self.controller.dag_path, position=True, rotation=True)
+        # cmds.parentConstraint(self.controller.dag_path, bind_offset, mo=False)
+        # cmds.scaleConstraint(self.controller.dag_path, bind_offset)
+
         # drive the scale if enabled
         if self.scaling:
             self.drive_scale()
@@ -116,6 +126,10 @@ class Filler(BaseNode):
 
         if self.visibility_controller:
             cmds.connectAttr(self.visibility_controller, "%s.v" % bind_offset)
+
+        cmds.parentConstraint(self.controller.dag_path, bind_offset, mo=True)
+        # cmds.scaleConstraint(self.controller.dag_path, bind_offset)
+
         return self.dag_path
 
     @staticmethod

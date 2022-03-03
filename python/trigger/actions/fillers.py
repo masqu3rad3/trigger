@@ -184,10 +184,6 @@ class Fillers(object):
         ctrl.connect(color_b_pb, "color_b", list)
         ctrl.update_ui()
 
-        # def color_state_changes(state):
-        #     color_method_lbl.setEnabled(state)
-        #     color_method_combo.setEnabled(state)
-
         def get_controllers():
             sel, msg = selection.validate(min=1, max=None, meshesOnly=False, transforms=False)
             if sel:
