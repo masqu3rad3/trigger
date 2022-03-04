@@ -286,7 +286,7 @@ def whip(node_list, attr_holder=None, create_up_grp=True, offset=5, diminish=0.8
             temp_list.append(up_node)
         node_list = [node_list[0]] + temp_list
 
-    cmds.addAttr(attr_holder, at="float", ln="powerDim", min=0, max=1, defaultValue=0.8, k=True)
+    cmds.addAttr(attr_holder, at="float", ln="powerDim", min=0, max=1, defaultValue=diminish, k=True)
 
     for attr in attr_list:
         cmds.addAttr(attr_holder, at="float", ln="offsetMult_%s" % attr, defaultValue=1, k=True)
