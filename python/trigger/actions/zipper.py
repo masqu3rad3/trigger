@@ -1,4 +1,5 @@
 """Zipper Action which wraps around lipzip from face utils"""
+from maya import cmds
 
 from trigger.core import filelog
 
@@ -9,10 +10,9 @@ from trigger.ui.Qt import QtWidgets
 from trigger.ui import custom_widgets
 from trigger.ui import feedback
 
-from PySide2 import QtWidgets # temp
+from PySide2 import QtWidgets  # temp
 
 log = filelog.Filelog(logname=__name__, filename="trigger_log")
-
 
 ACTION_DATA = {
     "upper_edges": [],
@@ -20,8 +20,9 @@ ACTION_DATA = {
     "morph_mesh": "",
     "final_mesh": "",
     "pair_count": 30,
-    "controller": None,
+    "controller": "",
 }
+
 
 # Name of the class MUST be the capitalized version of file name. eg. morph.py => Morph, split_shapes.py => Split_shapes
 
@@ -53,7 +54,7 @@ class Zipper(object):
         """Mandatory Method - Execute Action"""
         # everything in this method will be executed automatically.
         # This method does not accept any arguments. all the user variable must be defined to the instance before
-        pass
+        lip_zipper(self.upper_edges, self.lower_edges, self.morph_mesh, self.final_mesh, self.pair_count, self.controller)
 
     def save_action(self, file_path=None, *args, **kwargs):
         """Mandatory Method - Save Action"""
@@ -76,7 +77,7 @@ class Zipper(object):
         Returns: None
 
         """
-        
+
         upper_edges_lbl = QtWidgets.QLabel(text="Upper Edges")
         upper_edges_le_box = custom_widgets.LineEditBoxLayout(buttonsPosition="right")
         upper_edges_le_box.buttonGet.setText("<")
@@ -90,7 +91,7 @@ class Zipper(object):
         lower_edges_le_box.buttonGet.setMaximumWidth(30)
         lower_edges_le_box.buttonGet.setToolTip("Gets the selected edges from a polygon object")
         layout.addRow(lower_edges_lbl, lower_edges_le_box)
-        
+
         morph_mesh_lbl = QtWidgets.QLabel(text="Morph Mesh")
         morph_mesh_le_box = custom_widgets.LineEditBoxLayout(buttonsPosition="right")
         morph_mesh_le_box.buttonGet.setText("<")
@@ -104,13 +105,13 @@ class Zipper(object):
         final_mesh_le_box.buttonGet.setMaximumWidth(30)
         morph_mesh_le_box.buttonGet.setToolTip("Gets the selected object as final mesh")
         layout.addRow(final_mesh_lbl, final_mesh_le_box)
-        
+
         pair_count_lbl = QtWidgets.QLabel(text="Pair Count")
-        pair_count_sp = QtWidgets.QDoubleSpinBox()
+        pair_count_sp = QtWidgets.QSpinBox()
         pair_count_sp.setMinimum(2)
         pair_count_sp.setMaximum(999999)
         layout.addRow(pair_count_lbl, pair_count_sp)
-        
+
         controller_lbl = QtWidgets.QLabel(text="Controller")
         controller_le_box = custom_widgets.LineEditBoxLayout(buttonsPosition="right")
         controller_le_box.buttonGet.setText("<")
@@ -118,8 +119,48 @@ class Zipper(object):
         controller_le_box.buttonGet.setToolTip("Gets the selected object as controller")
         layout.addRow(controller_lbl, controller_le_box)
 
-        def get_selected_edges():
+        ctrl.connect(upper_edges_le_box.viewWidget, "upper_edges", list)
+        ctrl.connect(lower_edges_le_box.viewWidget, "lower_edges", list)
+        ctrl.connect(morph_mesh_le_box.viewWidget, "morph_mesh", str)
+        ctrl.connect(final_mesh_le_box.viewWidget, "final_mesh", str)
+        ctrl.connect(pair_count_sp, "pair_count", int)
+        ctrl.connect(controller_le_box.viewWidget, "controller", str)
+        ctrl.update_ui()
+
+        def get_selected_edges(widget):
             if selection.get_selection_type() != "edge":
-                feedback.Feedback().pop_info(text="Edges from the same object must be selected")
+                feedback.Feedback().pop_info(title="Selection Error", text="Edges from the same object must be selected", critical=True)
                 return
-            # TODO
+            all_object_selection = cmds.ls(sl=True, o=True)
+            if len(all_object_selection) > 1:
+                feedback.Feedback().pop_info(title="Selection Error", text="Edges from the same object must be selected", critical=True)
+                return
+            sel = cmds.ls(sl=True)
+            widget.setText(ctrl.list_to_text(sel))
+            ctrl.update_model()
+            return
+
+        def get_selected_mesh(widget):
+            sel, msg = selection.validate(min=1, max=1, meshesOnly=True, transforms=True)
+            if sel:
+                widget.setText(sel[0])
+                ctrl.update_model()
+                return
+            else:
+                feedback.Feedback().pop_info(title="Selection Error", text=msg, critical=True)
+                return
+
+        # SIGNALS
+
+        upper_edges_le_box.buttonGet.pressed.connect(lambda: get_selected_edges(upper_edges_le_box.viewWidget))
+        lower_edges_le_box.buttonGet.pressed.connect(lambda: get_selected_edges(lower_edges_le_box.viewWidget))
+        morph_mesh_le_box.buttonGet.pressed.connect(lambda: get_selected_mesh(morph_mesh_le_box.viewWidget))
+        final_mesh_le_box.buttonGet.pressed.connect(lambda: get_selected_mesh(final_mesh_le_box.viewWidget))
+        pair_count_sp.valueChanged.connect(lambda: ctrl.update_model())
+        controller_le_box.buttonGet.pressed.connect(lambda: get_selected_mesh(controller_le_box.viewWidget))
+
+        upper_edges_le_box.viewWidget.textChanged.connect(lambda: ctrl.update_model())
+        lower_edges_le_box.viewWidget.textChanged.connect(lambda: ctrl.update_model())
+        morph_mesh_le_box.viewWidget.textChanged.connect(lambda: ctrl.update_model())
+        final_mesh_le_box.viewWidget.textChanged.connect(lambda: ctrl.update_model())
+        controller_le_box.viewWidget.textChanged.connect(lambda: ctrl.update_model())
