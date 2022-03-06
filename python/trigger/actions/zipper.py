@@ -2,6 +2,7 @@
 
 from trigger.core import filelog
 
+from trigger.library import selection
 from trigger.utils.face import lip_zipper
 
 from trigger.ui.Qt import QtWidgets
@@ -116,3 +117,9 @@ class Zipper(object):
         controller_le_box.buttonGet.setMaximumWidth(30)
         controller_le_box.buttonGet.setToolTip("Gets the selected object as controller")
         layout.addRow(controller_lbl, controller_le_box)
+
+        def get_selected_edges():
+            if selection.get_selection_type() != "edge":
+                feedback.Feedback().pop_info(text="Edges from the same object must be selected")
+                return
+            # TODO
