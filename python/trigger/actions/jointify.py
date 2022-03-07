@@ -1,16 +1,18 @@
 """Converts Blendshape nodes into joint deformations keeping rig controls"""
+from maya import cmds
 from trigger.utils import jointify
 
 
 from trigger.core import io
 from trigger.core import filelog
 from trigger.core.decorators import tracktime
+from trigger.library import selection, deformers
 
 from trigger.ui.widgets.browser_button import BrowserButton
 from trigger.ui import custom_widgets
 from trigger.ui import feedback
 
-from PySide2 import QtWidgets  # temp
+from PySide2 import QtWidgets, QtGui  # temp
 
 log = filelog.Filelog(logname=__name__, filename="trigger_log")
 
@@ -19,7 +21,7 @@ ACTION_DATA = {
     "blendshape_node": "",
     "joint_count": 30,
     "auto_shape_duration": True,
-    "shape_duration": 0,
+    "shape_duration": 0.0,
     "joint_iterations": 30,
     "fbx_source": "",
     "root_nodes": [],
@@ -37,6 +39,7 @@ class Jointify(object):
         # user defined variables
         self.blendshape_node = None
         self.joint_count = None
+        self.auto_shape_duration = None
         self.shape_duration = None
         self.joint_iterations = None
         self.fbx_source = None
@@ -50,6 +53,7 @@ class Jointify(object):
         """Mandatory Method - Feeds the instance with the action data stored in actions session"""
         self.blendshape_node = action_data.get("blendshape_node")
         self.joint_count = action_data.get("joint_count")
+        self.auto_shape_duration = action_data.get("auto_shape_duration")
         self.shape_duration = action_data.get("shape_duration")
         self.joint_iterations = action_data.get("joint_iterations")
         self.fbx_source = action_data.get("fbx_source")
@@ -130,8 +134,10 @@ class Jointify(object):
         fbx_source_hlay.addWidget(browse_path_pb)
         layout.addRow(fbx_source_lbl, fbx_source_hlay)
 
-        root_nodes_lbl = QtWidgets.QLabel(text="Upper Edges")
+        root_nodes_lbl = QtWidgets.QLabel(text="Root Nodes")
         root_nodes_le_box = custom_widgets.LineEditBoxLayout(buttonsPosition="right")
+        root_nodes_le_box.viewWidget.setToolTip("Defines the one or multiple parent nodes scattered in the affected area. "
+                                     "For each joint that will be created, closest one will be picked")
         root_nodes_le_box.buttonGet.setText("<")
         root_nodes_le_box.buttonGet.setMaximumWidth(30)
         root_nodes_le_box.buttonGet.setToolTip("Gets the selected objects")
@@ -150,4 +156,66 @@ class Jointify(object):
         corrective_threshold_sp.setMinimum(0)
         corrective_threshold_sp.setMaximum(999999)
         layout.addRow(corrective_threshold_lbl, corrective_threshold_sp)
-        
+
+        ctrl.connect(blendshape_node_le_box.viewWidget, "blendshape_node", str)
+        ctrl.connect(joint_count_sp, "joint_count", int)
+        ctrl.connect(auto_shape_duration_cb, "auto_shape_duration", bool)
+        ctrl.connect(shape_duration_sp, "shape_duration", float)
+        ctrl.connect(joint_iterations_sp, "joint_iterations", int)
+        ctrl.connect(fbx_source_le, "fbx_source", str)
+        ctrl.connect(root_nodes_le_box.viewWidget, "root_nodes", list)
+        ctrl.connect(correctives_cb, "correctives", bool)
+        ctrl.connect(corrective_threshold_sp, "corrective_threshold", float)
+        ctrl.update_ui()
+        shape_duration_sp.setDisabled(auto_shape_duration_cb.isChecked())
+        corrective_threshold_sp.setEnabled(correctives_cb.isChecked())
+
+        def get_blendshape_node():
+            """pops up a sub menu to select the blendshape node. If nothing is selected, lists only blendshape nodes
+            applied to selected object. Otherwise lists all"""
+            sel, msg = selection.validate(transforms=True)
+            if sel:
+                bs_nodes = []
+                for x in sel:
+                    bs_nodes.extend(deformers.get_deformers(x).get("blendShape", []))
+                bs_nodes = list(set(bs_nodes))
+            else:
+                bs_nodes = cmds.ls(type="blendShape")
+            if not bs_nodes:
+                return
+            zort_menu = QtWidgets.QMenu()
+            menu_actions = [QtWidgets.QAction(str(bs)) for bs in bs_nodes]
+            zort_menu.addActions(menu_actions)
+            for defo, menu_action in zip(bs_nodes, menu_actions):
+                menu_action.triggered.connect(lambda ignore=defo, item=defo: blendshape_node_le_box.viewWidget.setText(str(item)))
+            zort_menu.exec_((QtGui.QCursor.pos()))
+
+            ctrl.update_model()
+            return
+
+        def get_root_nodes():
+            sel, msg = selection.validate(min=1, meshesOnly=False, transforms=True)
+            if sel:
+                root_nodes_le_box.viewWidget.setText(ctrl.list_to_text(sel))
+                ctrl.update_model()
+                return
+            else:
+                feedback.Feedback().pop_info(title="Selection Error", text=msg, critical=True)
+                return
+
+        # signals
+
+        blendshape_node_le_box.buttonGet.pressed.connect(lambda: get_blendshape_node())
+        blendshape_node_le_box.viewWidget.textChanged.connect(lambda: ctrl.update_model())
+        joint_count_sp.valueChanged.connect(lambda: ctrl.update_model())
+        auto_shape_duration_cb.stateChanged.connect(lambda: ctrl.update_model())
+        shape_duration_sp.valueChanged.connect(lambda: ctrl.update_model())
+        joint_iterations_sp.valueChanged.connect(lambda: ctrl.update_model())
+        fbx_source_le.textChanged.connect(lambda: ctrl.update_model())
+        browse_path_pb.clicked.connect(lambda: ctrl.update_model())
+        root_nodes_le_box.buttonGet.clicked.connect(lambda: get_root_nodes())
+        root_nodes_le_box.viewWidget.textChanged.connect(lambda: ctrl.update_model())
+        correctives_cb.stateChanged.connect(lambda: ctrl.update_model())
+        corrective_threshold_sp.valueChanged.connect(lambda: ctrl.update_model())
+        auto_shape_duration_cb.stateChanged.connect(lambda state: shape_duration_sp.setDisabled(state))
+        correctives_cb.stateChanged.connect(lambda state: corrective_threshold_sp.setEnabled(state))
