@@ -19,7 +19,7 @@ log = filelog.Filelog(logname=__name__, filename="trigger_log")
 
 ACTION_DATA = {
     "blendshape_node": "",
-    "joint_count": 30,
+    "joint_count": 50,
     "auto_shape_duration": True,
     "shape_duration": 0.0,
     "joint_iterations": 30,
@@ -65,7 +65,17 @@ class Jointify(object):
         """Mandatory Method - Execute Action"""
         # everything in this method will be executed automatically.
         # This method does not accept any arguments. all the user variable must be defined to the instance before
-        pass
+        _shape_duration = 0 if self.auto_shape_duration else self.shape_duration
+        j_hand = jointify.Jointify(blendshape_node=self.blendshape_node,
+                                   joint_count=self.joint_count,
+                                   shape_duration=_shape_duration,
+                                   joint_iterations=self.joint_iterations,
+                                   fbx_source=self.fbx_source,
+                                   root_nodes=self.root_nodes,
+                                   correctives=self.correctives,
+                                   corrective_threshold=self.corrective_threshold)
+
+        j_hand.run()
 
     def save_action(self, file_path=None, *args, **kwargs):
         """Mandatory Method - Save Action"""

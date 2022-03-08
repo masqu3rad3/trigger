@@ -376,8 +376,11 @@ class Jointify(object):
 
         self.log.header("Preparing Training Set")
 
-
-        self.trainingData["mesh"] = cmds.listConnections("{0}.outputGeometry".format(self.blendshapeNode))[0]
+        # self.trainingData["mesh"] = cmds.listConnections("{0}.outputGeometry".format(self.blendshapeNode))[0]
+        _history = cmds.listHistory(self.blendshapeNode, allFuture=True, future=True, pruneDagObjects=False,
+                                    bf=False)
+        _shape_node = cmds.ls(_history, type="mesh")[0]
+        self.trainingData["mesh"] = functions.getParent(_shape_node)
 
         start_frame = 0
         end_frame = 0
@@ -598,7 +601,7 @@ class Jointify(object):
             if len(self.rootNodes) > 1:
                 parent_jnt = min(root_joints_data.keys(), key=lambda x: functions.getDistance(dem_jnt, x))
             else:
-                parent_jnt = root_joints_data.keys()[0]
+                parent_jnt = list(root_joints_data.keys())[0]
             cmds.parent(dem_jnt, parent_jnt)
             cmds.keyframe("%s.tx" % dem_jnt, vc=root_joints_data[parent_jnt][0]*-1, relative=True)
             cmds.keyframe("%s.ty" % dem_jnt, vc=root_joints_data[parent_jnt][1]*-1, relative=True)
@@ -620,7 +623,7 @@ class Jointify(object):
         self.log.info("Creating drivers and making connections...")
         progress = Progressbar(title="Creating Drivers ...", max_value=len(self.originalData.items()))
 
-        self.log.debug("Original Data Items: %s" %self.originalData.items())
+        # self.log.debug("Original Data Items: %s" %self.originalData.items())
 
         for shape, data in self.originalData.items():
             if progress.is_cancelled():
@@ -668,23 +671,22 @@ class Jointify(object):
             shape_obj = Shape(name=shape, jointify_node=jointify_node, duration=data["timeGap"][1] - data["timeGap"][0], combination_of=data["combinations"], hook_attrs=scene_hooks, delta_shape=delta_shape, corrective_bs=self.correctiveBs)
             # create a driver for each active bone object
             for bone_obj in bone_objects:
-                self.log.debug("bone_obj: %s" %bone_obj)
+                # self.log.debug("bone_obj: %s" %bone_obj)
                 if bone_obj.is_active(time_gap=data["timeGap"]):
                     drv_obj = Driver(name="drv", bone=bone_obj, time_gap=data["timeGap"], parent_node=drivers_grp)
                     drv_obj.copy_keys()
                     shape_obj.add_driver(drv_obj)
             shape_objects.append(shape_obj)
             progress.update()
-            self.log.debug("lastSuccess: %s" %shape)
+            # self.log.debug("lastSuccess: %s" %shape)
 
         progress.close()
-        self.log.debug("WTF???")
 
         progress = Progressbar(title="Making Connections ...", max_value=len(shape_objects))
         for shape_obj in shape_objects:
             if progress.is_cancelled():
                 raise Exception("Cancelled by user")
-            self.log.debug("shape_obj: %s" %shape_obj._name)
+            # self.log.debug("shape_obj: %s" %shape_obj._name)
             shape_obj.make_connections()
             progress.update()
             # cmds.progressBar(gMainProgressBar, edit=True, step=1)

@@ -469,6 +469,10 @@ class Correctives(object):
         else:
             bs_node = naming.uniqueName("corrective_blendshapes")
 
+        print("bs_node", bs_node)
+        print("psd_attr", psd_attr)
+        print("skinned_mesh", skinned_mesh)
+        print("extracted_delta_shape", extracted_delta_shape)
         deformers.connect_bs_targets(
             psd_attr,
             {skinned_mesh: extracted_delta_shape},

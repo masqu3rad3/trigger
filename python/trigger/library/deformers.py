@@ -107,7 +107,7 @@ def connect_bs_targets(
             k=True,
         )
     else:
-        user_attributes = cmds.listAttr(ch_node, ud=True)
+        user_attributes = cmds.listAttr(ch_node, ud=True) or []
         if ch_attr in user_attributes:
             # check if the given values are in range
             min_val = cmds.addAttr("%s.%s" % (ch_node, ch_attr), q=True, min=True)
