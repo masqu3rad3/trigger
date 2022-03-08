@@ -3,12 +3,15 @@
 from trigger import version_control
 from trigger.ui.vcs_widgets.task_selection import TaskSelection
 
-# from trigger.ui.Qt import QtWidgets, QtCore
-from PySide2 import QtWidgets, QtCore
+from trigger.ui.Qt import QtWidgets, QtCore
+# from PySide2 import QtWidgets, QtCore
 
 class PublishSelection(TaskSelection):
+    selectionChanged = QtCore.Signal(str)
     def __init__(self):
         super(PublishSelection, self).__init__()
+
+        # _publish_path = None
 
         self.second_line = QtWidgets.QHBoxLayout()
         self.addLayout(self.second_line)
@@ -21,6 +24,25 @@ class PublishSelection(TaskSelection):
         self.published_types_combo.activated.connect(self.set_publish_type)
 
         self.populate_asset_types()
+
+    # @property
+    def get_path(self):
+        return self.sgh.get_publish_path()
+
+    # @path.setter
+    # def path(self, path):
+    #     # set the model
+    #     self.sgh.set_publish_fields_from_path(path)
+    #     # refresh the combos
+    #     self.populate_asset_types()
+
+    def set_path(self, path):
+        # set the model
+        state = self.sgh.set_publish_fields_from_path(path)
+        # refresh the combos
+        if state:
+            self.populate_asset_types()
+        return state
 
     def populate_tasks(self):
         super(PublishSelection, self).populate_tasks()
@@ -49,6 +71,10 @@ class PublishSelection(TaskSelection):
         current_task = self.sgh.task or self.task_combo.currentText()
         _int_version_list = sorted(self.sgh.get_publish_versions(current_task))
         _str_version_list = ([str(x) for x in _int_version_list])
+        print("DEBUG___")
+        print(current_task)
+        print(_int_version_list)
+        print(_str_version_list)
         self.published_versions_combo.addItems(_str_version_list)
         last_version = self.published_versions_combo.count()-1
         self.published_versions_combo.setCurrentIndex(last_version)
@@ -71,6 +97,9 @@ class PublishSelection(TaskSelection):
         else:
             self.published_types_combo.setCurrentIndex(0)
 
+
+        print(self.sgh.get_publish_path())
+
     def set_publish_version(self):
         """Sets the selected publish version"""
         _version = self.published_versions_combo.currentText()
@@ -84,3 +113,11 @@ class PublishSelection(TaskSelection):
     def set_publish_type(self):
         """sets the selected publish on model"""
         self.sgh.publish_type = self.published_types_combo.currentText()
+        self.selectionChanged.emit(self.sgh.get_publish_path())
+
+    # def set_from_path(self, path):
+    #     """Sets the dropdown lists from the path"""
+    #     # set the model
+    #     self.sgh.set_publish_fields_from_path(path)
+    #     # refresh the combos
+    #     self.populate_asset_types()

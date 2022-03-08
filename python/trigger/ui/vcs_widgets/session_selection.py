@@ -182,7 +182,7 @@ class SessionSelection(QtWidgets.QHBoxLayout):
         step = self.sgh.step or self.step_combo.currentText()
         variant = self.sgh.variant or self.sgh._variant_from_task(self.task_combo.currentText())
         session = self.sgh.session or self.session_combo.currentText()
-        _int_version_list = sorted(self.sgh.get_versions(asset, step, variant, session))
+        _int_version_list = sorted(self.sgh.get_session_versions(asset, step, variant, session))
         _str_version_list = ([str(x) for x in _int_version_list])
         self.version_combo.addItems(_str_version_list)
         last_version = self.version_combo.count()-1

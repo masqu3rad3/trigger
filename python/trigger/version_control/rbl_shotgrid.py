@@ -55,6 +55,7 @@ class VersionControl(object):
     _valid_publish_formats = [".usd", ".abc", ".ma", ".mb", ".fbx", ".obj"]
 
     controller = "rbl_shotgrid"
+
     # project = None
     # asset_type = None
     # asset = None
@@ -74,7 +75,7 @@ class VersionControl(object):
         self.asset = None
         self.step = None
         self._task = None
-        self._all_task_data = {} # the list to hold the raw task data (<task_name>: <task_id>)
+        self._all_task_data = {}  # the list to hold the raw task data (<task_name>: <task_id>)
         self._all_publish_data = []
         self.variant = None
         self.session = None
@@ -98,7 +99,8 @@ class VersionControl(object):
                 self.step = _fields.get("Step", None)
                 # print("*****")
                 self.variant = _fields.get("variant_name", None)
-                self._task = "{0}_{1}".format(self.variant, self.step)
+                # self._task = "{0}_{1}".format(self.variant, self.step)
+                self._task = self._variant_from_task(self.variant, self.step)
                 # get the first encountered session if there are tr sessions
                 _sessions = self.get_sessions(self.asset, self.step, self.variant)
                 self.session = _sessions[0] if _sessions else None
@@ -120,6 +122,10 @@ class VersionControl(object):
             return match.groups()[0]
         return None
 
+    @staticmethod
+    def _task_from_variant(variant, step):
+        return "%s_%s" % (variant, step)
+
     def get_asset_types(self):
         """Returns all asset types in current project"""
         return [x.get('name') for x in self._sg_load.get_asset_types(force=False)]
@@ -137,7 +143,8 @@ class VersionControl(object):
         """Returns all asset variations under given asset"""
         asset_id = self._sg_load.asset_id_from_name(asset)
         step_id = self._sg_load.step_id_from_name(step, asset_id)
-        self._all_task_data = {x.get("content"): x.get("id") for x in self._sg_load.get_asset_tasks(force=False, asset=asset_id, step=step_id)}
+        self._all_task_data = {x.get("content"): x.get("id") for x in
+                               self._sg_load.get_asset_tasks(force=False, asset=asset_id, step=step_id)}
         # hide main_ tasks
         filtered_tasks = [x for x in self._all_task_data.keys() if "main_" not in x.lower()]
         return filtered_tasks
@@ -147,7 +154,7 @@ class VersionControl(object):
         _session_data = self.__get_session_data(asset, step, variant)
         return list(sorted(_session_data.keys()))
 
-    def get_versions(self, asset, step, variant, session_part_name):
+    def get_session_versions(self, asset, step, variant, session_part_name):
         """Returns the versions of specified trigger session file"""
         _session_data = self.__get_session_data(asset, step, variant)
         return _session_data.get(session_part_name, [])
@@ -193,10 +200,12 @@ class VersionControl(object):
     def get_session_path(self):
         asset_id = self._sg_load.asset_id_from_name(self.asset)
         task_id = self._sg_load.task_id_from_name(self.task, asset_id=asset_id)
-        return self._sg_template.output_path_from_template(session_t, task_id, self.session_version, part_name=self.session)
+        return self._sg_template.output_path_from_template(session_t, task_id, self.session_version,
+                                                           part_name=self.session)
 
     def get_publish_versions(self, task_name):
         """Returns all published versions of given publish type and task"""
+
         if not self._all_task_data:
             return []
         task_id = self._all_task_data.get(task_name, None)
@@ -226,5 +235,71 @@ class VersionControl(object):
         _filtered_formats = [x for x in _all_publish_formats if os.path.splitext(x)[1] in self._valid_publish_formats]
         return _filtered_formats
 
+    def get_publish_path(self):
+        """returns the publish path using the defined class vars"""
+        if not self.publish_version or not self.publish_type:
+            return ""
+        version_data = [x for x in self._all_publish_data if x.get('version_number') == self.publish_version]
+        # filter the type from the version data
+        publish_data = [x for x in version_data if x.get("name") == self.publish_type]
+        if not publish_data:
+            return ""
+        return publish_data[0].get("path").get("local_path_linux")
 
+    def set_publish_fields_from_path(self, path):
+        print("DEBUG")
+        print("DEBUG")
+        print("DEBUG")
+        print("DEBUG")
+        print(path)
+        print("DEBUG")
+        print("DEBUG")
+        print("DEBUG")
+        print("DEBUG")
 
+        _fields = self._sg_template.fields_from_path(path)
+        _asset_type = _fields.get("sg_asset_type")
+        _asset = _fields.get("Asset")
+        _step = _fields.get("Step")
+        _variant = _fields.get("variant_name")
+        _task = self._task_from_variant(_variant, _step)
+        _version = _fields.get("version")
+        _publish_name = os.path.basename(path)
+
+        if _asset_type not in self.get_asset_types():
+            log.warning("%s is not in list of Asset Types of this project" % _asset_type)
+            return False
+        if _asset not in self.get_assets(_asset_type):
+            log.warning("%s is not in list of Assets of %s" % (_asset, _asset_type))
+            return False
+
+        if _step not in self.get_steps(_asset):
+            log.warning("%s is not a step of %s" % (_step, _asset))
+            return False
+
+        variants = [self._variant_from_task(x) for x in self.get_tasks(_asset, _step)]
+        if _variant not in variants:
+            log.warning("%s is not among variants of %s" % (_variant, _asset))
+            return False
+
+        print("DEBUG2")
+        print("DEBUG2")
+        print("DEBUG2")
+        print(self.get_publish_versions(_variant))
+        print("HES")
+        if _version not in self.get_publish_versions(_task):
+            log.warning("Version %i is not among published versions of %s %s" % (_version, _asset, _variant))
+            return False
+
+        if _publish_name not in self.get_publish_types(_version):
+            log.warning("%s is not among published formats of %s" % (_publish_name, _asset))
+            return False
+
+        self.asset_type = _asset_type
+        self.asset = _asset
+        self.step = _step
+        self.task = _task
+        self.variant = _variant
+        self.publish_version = _version
+        self.publish_type = _publish_name
+        return True

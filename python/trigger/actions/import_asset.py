@@ -68,6 +68,9 @@ class Import_asset(object):
 
     def ui(self, ctrl, layout, handler, *args, **kwargs):
 
+        vcs_lay = None
+        override_vcs_cb = None
+        path_available_in_vcs = None
         if version_control.controller:
             vcs_lbl = QtWidgets.QLabel(text="Version Control")
             # _hold_lay = QtWidgets.QVBoxLayout()
@@ -76,6 +79,16 @@ class Import_asset(object):
             # _hold_lay.addLayout(vcs_lay)
             # _hold_lay.addStretch(1)
             layout.addRow(vcs_lbl, vcs_lay)
+
+            path_available_in_vcs = vcs_lay.set_path(ctrl.model.query_action(ctrl.action_name, "import_file_path"))
+            # vcs_lay.path = ctrl.model.query_action(ctrl.action_name, "import_file_path")
+
+            override_vcs_lbl = QtWidgets.QLabel(text="Override Version Control")
+            override_vcs_cb = QtWidgets.QCheckBox(checked=not path_available_in_vcs)
+            layout.addRow(override_vcs_lbl, override_vcs_cb)
+
+
+
 
 
 
@@ -111,7 +124,16 @@ class Import_asset(object):
 
         ctrl.update_ui()
 
+        # version control override logic
+        file_path_le.setDisabled(path_available_in_vcs)
+        browse_path_pb.setDisabled(path_available_in_vcs)
+        #     pass
+
         # SIGNALS
+        if version_control.controller:
+            vcs_lay.selectionChanged.connect(lambda path: file_path_le.setText(path))
+            override_vcs_cb.stateChanged.connect(file_path_le.setEnabled)
+            override_vcs_cb.stateChanged.connect(browse_path_pb.setEnabled)
         file_path_le.textChanged.connect(lambda x=0: ctrl.update_model())
         browse_path_pb.clicked.connect(lambda x=0: ctrl.update_model())
         browse_path_pb.clicked.connect(file_path_le.validate)  # to validate on initial browse result
