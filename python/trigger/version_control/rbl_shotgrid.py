@@ -10,6 +10,8 @@ log = filelog.Filelog(logname=__name__, filename="trigger_log")
 sg_script = "rbl_pipe_maya"
 sg_key = "nn5lcvmojkfqgbzUkhbwdh%nc"
 
+MAIN_TASK_PREFIX = "main"
+
 # templates
 #
 # Trigger
@@ -146,7 +148,7 @@ class VersionControl(object):
         self._all_task_data = {x.get("content"): x.get("id") for x in
                                self._sg_load.get_asset_tasks(force=False, asset=asset_id, step=step_id)}
         # hide main_ tasks
-        filtered_tasks = [x for x in self._all_task_data.keys() if "main_" not in x.lower()]
+        filtered_tasks = [x for x in self._all_task_data.keys() if "%s_" % MAIN_TASK_PREFIX not in x.lower()]
         return filtered_tasks
 
     def get_sessions(self, asset, step, variant):
