@@ -1,8 +1,9 @@
 ## This Script originally belongs to Duncan Brinsmead (parentToSurface.mel)
-## I just converted it to Pymel for easier modification and
+## I just converted it to python for easier modification and
 ## added som more functionality in order to use inside other python maya_modules
 
 from maya import cmds
+from trigger.library.connection import matrixConstraint
 
 def convertToCmFactor():
     unit = cmds.currentUnit(q=True, linear=True)
@@ -16,9 +17,10 @@ def parentToSurface(objects=None, surface=None, mode="parent"):
     """
     Attaches the given objects to the surface by follicles
     Args:
-        objects: (PyNode List) Objects list.
-        surface: (PyNode) The surface that the objects will be attached on. Comptaible types are mesh and nurbs
-        mode: attach mode. Valid values are 'parent', 'parentConstraint', 'pointConstraint' and 'None'
+        objects: (List) Objects list.
+        surface: (String) The surface that the objects will be attached on. Comptaible types are mesh and nurbs
+        mode: attach mode. Valid values are 'parent', 'parentConstraint', 'pointConstraint', 'matrixConstraint'
+                            and 'None'
 
     Returns: Follicle Transform Node
 
@@ -101,6 +103,8 @@ def parentToSurface(objects=None, surface=None, mode="parent"):
             cmds.parentConstraint(follicleDag, obj, mo=True)
         if mode == "pointconstraint":
             cmds.pointConstraint(follicleDag, obj, mo=True)
+        if mode == "matrixconstraint":
+            matrixConstraint(follicleDag, obj, mo=True)
         if mode == "none":
             pass
 

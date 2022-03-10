@@ -53,7 +53,6 @@ class Ribbon(object):
         self._startUp = None
         self._endUp = None
 
-
     # INPUT Properties
     @property
     def name(self):
@@ -211,6 +210,7 @@ class Ribbon(object):
         constraint = cmds.parentConstraint(nodes, self._startPlug, mo=True)
         self._switch_weights(nodes, [switch_a, switch_b], constraint)
         return constraint
+
     #
     # def pin_start(self, node_a, node_b=None, switch_a=None, switch_b=None):
     #     nodes = [node_a, node_b] if node_b else node_a
@@ -221,7 +221,6 @@ class Ribbon(object):
     #             cmds.connectAttr("%s.wtMatrix[%i].weightIn" % (ave, nmb), sw)
     #     if switch_a and not switch_b:
     #         attribute.drive_attrs(switch_a, ["%s.wtMatrix[1].weightIn" % ave], [0, 1], [1, 0])
-
 
     def pin_end(self, node_a, node_b=None, switch_a=None, switch_b=None):
         """
@@ -251,12 +250,12 @@ class Ribbon(object):
     #     if switch_a and not switch_b:
     #         attribute.drive_attrs(switch_a, ["%s.wtMatrix[1].weightIn" % ave], [0, 1], [1, 0])
 
-        # if switch_a:
-        #     cmds.connectAttr("%s.wtMatrix[0].weightIn" % ave, switch_a)
-        # if switch_b:
-        #     cmds.connectAttr("%s.wtMatrix[1].weightIn" % ave, switch_b)
-        # else:
-        #     attribute.drive_attrs(switch_a, ["%s.wtMatrix[1].weightIn" % ave], [0, 1], [1, 0])
+    # if switch_a:
+    #     cmds.connectAttr("%s.wtMatrix[0].weightIn" % ave, switch_a)
+    # if switch_b:
+    #     cmds.connectAttr("%s.wtMatrix[1].weightIn" % ave, switch_b)
+    # else:
+    #     attribute.drive_attrs(switch_a, ["%s.wtMatrix[1].weightIn" % ave], [0, 1], [1, 0])
 
     def orient(self, node_a, node_b=None, switch_a=None, switch_b=None):
         """
@@ -413,10 +412,10 @@ class Ribbon(object):
         interval = length / (self._controllerCount + 1)
 
         for index in range(self._controllerCount):
-            cont = Controller(name="cont_midRbn_%s%i" % (self._name, index+1),
+            cont = Controller(name="cont_midRbn_%s%i" % (self._name, index + 1),
                               shape="Star",
                               tier="secondary",
-                              normal=(1,0,0),
+                              normal=(1, 0, 0),
                               pos=(-(length / 2.0) + (interval * (index + 1)), 0, 0),
                               )
             yield cont.name
@@ -501,24 +500,22 @@ class Ribbon(object):
 
         cmds.parent([self._startPlug, self._endPlug], self._scaleGrp)
 
-
         for nmb, mid in enumerate(mid_joint_list):
             print(mid)
             # counter += 1
-            mid_cont = Controller(shape="Circle", name="cont_midRbn_%s%i" % (self._name, nmb+1), normal=(1, 0, 0))
-            # mid_con, _ = icon.createIcon("Circle", iconName="cont_midRbn_%s%i" % (self._name, nmb+1), normal=(1, 0, 0))
+            mid_cont = Controller(shape="Circle", name="cont_midRbn_%s%i" % (self._name, nmb + 1), normal=(1, 0, 0))
             self._controllers.append(mid_cont.name)
-            middle_off = cmds.spaceLocator(name="mid_OFF_%s%i" % (self._name, nmb+1))[0]
+            middle_off = cmds.spaceLocator(name="mid_OFF_%s%i" % (self._name, nmb + 1))[0]
             self._toHide.append(functions.getShapes(middle_off)[0])
-            middle_aim = cmds.group(em=True, name="mid_AIM_%s%i" % (self._name, nmb+1))
+            middle_aim = cmds.group(em=True, name="mid_AIM_%s%i" % (self._name, nmb + 1))
             functions.alignTo(middle_aim, mid, position=True, rotation=False)
-            middle_up = cmds.spaceLocator(name="mid_UP_{0}{1}".format(self._name, nmb+1))[0]
+            middle_up = cmds.spaceLocator(name="mid_UP_{0}{1}".format(self._name, nmb + 1))[0]
             self._toHide.append(functions.getShapes(middle_up)[0])
 
             functions.alignTo(middle_up, mid, position=True, rotation=False)
             cmds.setAttr("%s.ty" % middle_up, 0.5)
 
-            middle_pos = cmds.spaceLocator(name="mid_POS_{0}{1}".format(self._name, nmb+1))[0]
+            middle_pos = cmds.spaceLocator(name="mid_POS_{0}{1}".format(self._name, nmb + 1))[0]
             cmds.parent(middle_pos, self._scaleGrp)
             self._toHide.append(functions.getShapes(middle_pos)[0])
             functions.alignTo(middle_pos, mid, position=True, rotation=False)
@@ -530,33 +527,8 @@ class Ribbon(object):
             cmds.aimConstraint(self._startPlug, middle_aim, aimVector=(0, 0, -1), upVector=(0, 1, 0), wut=1,
                                wuo=middle_up, mo=True)
             cmds.pointConstraint(self._startPlug, self._endPlug, middle_pos)
-            # connection.matrixConstraint([self._startPlug, self._endPlug], middle_pos, sr="xyz", ss="xyz")
-            # connection.matrixConstraint([self._startPlug, self._endPlug], middle_pos, sr="xyz", ss="xyz", source_parent_cutoff="RBN_ScaleGrp_TESTTT")
-            # pos_average_p = op.average_matrix(["%s.worldMatrix[0]" % self._startPlug, "%s.worldMatrix[0]" % self._endPlug])
-            # pos_trans_p = op.decompose_matrix(pos_average_p)[0]
-            # cmds.connectAttr(pos_trans_p, "%s.t" % middle_POS)
+
             cmds.pointConstraint(self._startUp, self._endUp, middle_up)
-            # connection.matrixConstraint([self._startUp, self._endUp], middle_up, sr="xyz", ss="xyz")
-            # connection.matrixConstraint([self._startUp, self._endUp], middle_up, sr="xyz", ss="xyz", source_parent_cutoff="RBN_ScaleGrp_TESTTT")
-            # up_average_p = op.average_matrix(["%s.worldMatrix[0]" % self._startUp, "%s.worldMatrix[0]" % self._endUp])
-            # up_trans_p = op.decompose_matrix(up_average_p)[0]
-            # cmds.connectAttr(up_trans_p, "%s.t" % middle_up)
-
-
-        # cmds.delete(cmds.pointConstraint([self._startPlug, self._endPlug], self._scaleGrp, mo=False)[0])
-        #
-        # cmds.makeIdentity(self._scaleGrp, a=True, t=True)
-        #
-        # cmds.parent([self._startPlug, self._endPlug] + middle_pos_list, self._scaleGrp)
-
-        # for middle_pos, middle_up in zip(middle_pos_list, middle_up_list):
-        #     connection.matrixConstraint([self._startPlug, self._endPlug], middle_pos, sr="xyz", ss="xyz")
-        #     connection.matrixConstraint([self._startUp, self._endUp], middle_up, sr="xyz", ss="xyz")
-            # cmds.pointConstraint(self._startPlug, self._endPlug, middle_pos)
-            # cmds.pointConstraint(self._startUp, self._endUp, middle_up)
-
 
         functions.alignAndAim(self._scaleGrp, [self._startNode, self._endNode], [self._endNode],
                               upVector=self._upVector)
-
-
