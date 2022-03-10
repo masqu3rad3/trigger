@@ -70,7 +70,7 @@ class Import_asset(object):
 
         vcs_lay = None
         override_vcs_cb = None
-        path_available_in_vcs = None
+        path_available_in_vcs = False
         if version_control.controller:
             vcs_lbl = QtWidgets.QLabel(text="Version Control")
             # _hold_lay = QtWidgets.QVBoxLayout()
