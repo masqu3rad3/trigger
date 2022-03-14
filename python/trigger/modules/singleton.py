@@ -132,6 +132,11 @@ class Singleton(object):
         if self.isLocal:
             # if the deformation joints are local, drive the plugBindGrp with limbPlug for negative compensation
             connection.matrixConstraint(self.limbPlug, self.plugBindGrp)
+        else:
+            # connection.matrixConstraint(self.limbPlug, self.conts_grp)
+            # cmds.connectAttr("%s.s" % self.limbPlug, "%s.s" % self.conts_grp)
+            # limbplug causes double scaling in here because of that we use scaleHook instead
+            connection.matrixConstraint(self.scaleHook, self.conts_grp)
 
         cmds.select(d=True)
         for nmb, j in enumerate(self.inits):
@@ -151,7 +156,8 @@ class Singleton(object):
             else:
                 if not self.isLocal:
                     # follow the limb plug only if the joints are not local
-                    connection.matrixConstraint(self.limbPlug, cont_bind)
+                    pass
+                    # connection.matrixConstraint(self.limbPlug, cont_bind, source_parent_cutoff=self.localOffGrp)
 
             cmds.parent(cont_bind, self.conts_grp)
             cmds.parent(j_def, self.joints_grp)
