@@ -185,12 +185,19 @@ class Correctives(object):
 
             matrix_hlay.addWidget(target_matrix_list)
 
+            matrix_vlay = QtWidgets.QVBoxLayout()
+            matrix_hlay.addLayout(matrix_vlay)
             capture_matrix_pb = QtWidgets.QPushButton(text="CAPTURE")
             capture_matrix_pb.setToolTip("Adjust the controller to the angle and position where the corrective "
                                          "will be active and press this button to set the values")
             capture_matrix_pb.setMaximumWidth(200)
             capture_matrix_pb.setFixedHeight(100)
-            matrix_hlay.addWidget(capture_matrix_pb)
+            matrix_vlay.addWidget(capture_matrix_pb)
+            edit_matrix_pb = QtWidgets.QPushButton(text="Edit")
+            edit_matrix_pb.setToolTip("sets the current controller to the defined target transform")
+            edit_matrix_pb.setMaximumWidth(200)
+            edit_matrix_pb.setFixedHeight(20)
+            matrix_vlay.addWidget(edit_matrix_pb)
             def_formlayout.addRow(def_target_matrix_lbl, matrix_hlay)
 
             def_up_object_lbl = QtWidgets.QLabel(text="Up Object")
@@ -267,6 +274,16 @@ class Correctives(object):
                                                  text="Controller not defined or does not exist in the scene",
                                                  critical=True)
 
+            def edit_matrix():
+                cont = cmds.ls(def_controller_lebox.viewWidget.text())
+                if cont:
+                    _matrix = [float(target_matrix_list.item(x).text()) for x in range(target_matrix_list.count())]
+                    cmds.xform(cont[0], matrix=_matrix)
+                else:
+                    feedback.Feedback().pop_info(title="Selection Error",
+                                                 text="Controller not defined or does not exist in the scene",
+                                                 critical=True)
+
             # signals
             def_mode_combo.currentIndexChanged.connect(
                 lambda val, w_dict=tmp_dict: update_widget_visibility(val, w_dict))
@@ -278,6 +295,7 @@ class Correctives(object):
             def_controller_lebox.buttonGet.clicked.connect(
                 lambda _=0, widget=def_controller_lebox.viewWidget: get_selected(widget, mesh_only=False))
             capture_matrix_pb.clicked.connect(capture_matrix)
+            edit_matrix_pb.clicked.connect(edit_matrix)
             def_up_object_lebox.viewWidget.textChanged.connect(update_model)
             def_up_object_lebox.buttonGet.clicked.connect(
                 lambda _=0, widget=def_up_object_lebox.viewWidget: get_selected(widget, mesh_only=False))

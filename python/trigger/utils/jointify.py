@@ -574,11 +574,6 @@ class Jointify(object):
 
         self.log.header("Replacing the blendshape node with joints...")
 
-        # if self.correctives:
-        #     # TODO create corrective deltas for differences exceed the threshold
-        #     pass
-
-
         if self.correctives:
             neutral_shape = transform.duplicate(self.trainingData["mesh"], name="jointify_neutral", at_time=0)
             self.correctiveBs = cmds.blendShape(self.trainingData["mesh"], name="jointify_correctives")[0]
