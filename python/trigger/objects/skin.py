@@ -2,7 +2,8 @@ import uuid
 import os
 import copy
 from maya import cmds
-import maya.api.OpenMaya as api
+import maya.api.OpenMaya as om
+import maya.api.OpenMayaAnim as omanim
 from trigger.library import deformers
 from trigger.core.io import IO
 
@@ -25,6 +26,50 @@ class Weight(IO):
         if file_path:
             self.read_data_from_file(file_path)
 
+    def feed(self, source):
+        """provides the data that the class needs to work with.
+        The source can be:
+         - absolute json path (string) (valid weight formatted matching cmds.deformerWeights output))
+         - dictionary item (matching cmds.deformerWeights output
+         - skinCluster node (String) (must be present in the current maya scene)
+         """
+        # TODO
+        pass
+
+    def export(self, file_path):
+        """Exports the data to specified json file path"""
+        # TODO
+        pass
+
+    def apply(self, deformer):
+        """Applies the data to specified deformer"""
+        if not self._data:
+            raise Exception("There is no data to export")
+
+        deformer = deformer or self._data["deformerWeight"]["deformers"][0]["name"]
+        # get the active influences
+        _influences = cmds.skinCluster(deformer, query=True, influence=True)
+        _data_influences = self.get_all_influences()
+
+        # add the missing ones / remove the excess
+        _ = [cmds.skinCluster(deformer, edit=True, addInfluence=x, nw=0) for x in _data_influences if x not in _influences]
+        _ = [cmds.skinCluster(deformer, edit=True, removeInfluence=x, nw=0) for x in _influences if x not in _data_influences]
+
+        # temporarily turn off the normalization
+        normalization = cmds.skinCluster(deformer, q=True, normalizeWeights=True)
+        cmds.skinCluster(deformer, edit=True, normalizeWeights=0)
+
+        geo = cmds.skinCluster(deformer, q=True, geometry=True)[0]
+        self.__set_weights(deformer, geo, self.__convert_to_m_array(self._data))
+
+        # back to original normalization setting
+        cmds.skinCluster(deformer, edit=True, normalizeWeights=normalization)
+
+
+    def get_all_influences(self):
+        """Returns the name of all influences the data contains"""
+        return [x.get("source") for x in self._data["deformerWeight"]["weights"]]
+
     def read_data_from_deformer(self, deformer):
         self._validate_deformer(deformer)
         # write the json file using maya thingie. Read it back and discard the temporary file
@@ -34,7 +79,8 @@ class Weight(IO):
         # Specific attributes for skinClusters
         attributes = ["envelope", "skinningMethod", "useComponents", "normalizeWeights", "deformUserNormals"]
         _file_path, _file_name = os.path.split(self.file_path)
-        cmds.deformerWeights(_file_name, export=True, deformer=deformer, path=_file_path, defaultValue=-1.0, vc=False, at=attributes)
+        # cmds.deformerWeights(_file_name, export=True, deformer=deformer, path=_file_path, defaultValue=-1.0, vc=False, at=attributes)
+        cmds.deformerWeights(_file_name, export=True, deformer=deformer, path=_file_path, vc=False, at=attributes)
         # cmds.deformerWeights(_file_name, export=True, deformer=deformer, path=_file_path, vc=False, at=attributes)
         # read it back
 
@@ -66,13 +112,15 @@ class Weight(IO):
         # cmds.skinCluster(deformer, edit=True, normalizeWeights=0)
         # cmds.skinCluster(deformer, edit=True, maximumInfluences=500)
 
+        geo = cmds.skinCluster(deformer, q=True, geometry=True)[0]
+        self.__set_weights(deformer, geo, self.__convert_to_m_array(self._data))
 
-        for inf in _data_influences:
-            # conform the influence dictionary to list
-            # print(deformer, list(self.__generate_influence_list(inf)), inf)
-            # deformers.set_deformer_weights(deformer, list(self.__generate_influence_list(inf)), inf)
-            print(inf)
-            self.__set_deformer_weights(deformer, inf)
+        # for inf in _data_influences:
+        #     # conform the influence dictionary to list
+        #     # print(deformer, list(self.__generate_influence_list(inf)), inf)
+        #     # deformers.set_deformer_weights(deformer, list(self.__generate_influence_list(inf)), inf)
+        #     print(inf)
+        #     self.__set_deformer_weights(deformer, inf)
 
         # file_dir, file_name = os.path.split(self.file_path)
         # cmds.deformerWeights(file_name, im=True, deformer=deformer, path=file_dir, method="index",
@@ -80,53 +128,73 @@ class Weight(IO):
 
         # JSON import bug with maya
 
-    def __generate_influence_list(self, raw_weights_data):
-        """spits out the json point data for given influence as list"""
-        for p_data in raw_weights_data["points"]:
-            yield p_data["index"], p_data["value"]
-            # yield p_data["value"]
+    # def __generate_influence_list(self, raw_weights_data):
+    #     """spits out the json point data for given influence as list"""
+    #     for p_data in raw_weights_data["points"]:
+    #         yield p_data["index"], p_data["value"]
+    #         # yield p_data["value"]
 
-    @staticmethod
-    def __get_plug_ids(deformer, layer):
-        """
-        Gets the plug of skin clusters weights
-        Args:
-            deformer: (string) the deformer
-            layer: (int) the layer (influencer id) defined as in JSON file
+    # @staticmethod
+    # def __get_plug_ids(deformer, layer):
+    #     """
+    #     Gets the plug of skin clusters weights
+    #     Args:
+    #         deformer: (string) the deformer
+    #         layer: (int) the layer (influencer id) defined as in JSON file
+    #
+    #     Returns:
+    #         <plug object>
+    #     """
+    #     sel = om.MSelectionList()
+    #     sel.add("%s.weightList[%i].weights" % (deformer, layer))
+    #     return sel.getPlug(0)
 
-        Returns:
-            <plug object>
-        """
-        sel = api.MSelectionList()
-        sel.add("%s.weightList[%i].weights" % (deformer, layer))
-        return sel.getPlug(0)
+    # def __set_deformer_weights(self, deformer, influence_name):
+    #
+    #     # get the influences list and layer (influence weights id)
+    #     weights_data = self.get_influence_data(influence_name)
+    #     count = weights_data.get("size")
+    #     layer = weights_data.get("layer")
+    #     print("layerL", layer)
+    #     print(count)
+    #
+    #     influences_gen = (self.__generate_influence_list(weights_data))
+    #
+    #     '{0}.weightList[5],weights[0]'
+    #
+    #     for index, value in influences_gen:
+    #         cmds.setAttr("{0}.weightList[{1}].weights[2]".format(deformer, layer, index), value)
+    #
+    #     # print(len(influences_gen))
+    #     plug = self.__get_plug_ids(deformer, layer)
+    #     # for index, val in influences_gen:
+    #     #     plug.elementByLogicalIndex(index).setDouble(val)
+    #
+    #     # for index, val in enumerate(influences_gen):
+    #     #     plug.elementByLogicalIndex(index).setDouble(val)
+    #     # map(lambda i: plug.elementByLogicalIndex(i).setDouble(influences_gen[i]), range(count))
+    #     # map(lambda i, v: plug.elementByLogicalIndex(i).setDouble(v), influences_gen)
 
-
-    def __set_deformer_weights(self, deformer, influence_name):
-
-        # this assumes the influence data count is always equal to the mesh vertex count
-
-        # get the influences list and layer (influence weights id)
-        weights_data = self.get_influence_data(influence_name)
-        count = weights_data.get("size")
-        layer = weights_data.get("layer")
-        print("layerL", layer)
-        print(count)
-
-        influences_gen = (self.__generate_influence_list(weights_data))
-        # print(len(influences_gen))
-        plug = self.__get_plug_ids(deformer, layer)
-        # for index, val in influences_gen:
-        #     plug.elementByLogicalIndex(index).setDouble(val)
-
-        # for index, val in enumerate(influences_gen):
-        #     plug.elementByLogicalIndex(index).setDouble(val)
-        # map(lambda i: plug.elementByLogicalIndex(i).setDouble(influences_gen[i]), range(count))
-        map(lambda i, v: plug.elementByLogicalIndex(i).setDouble(v), influences_gen)
-
-    def get_all_influences(self):
-        """Returns the name of all influences the data contains"""
-        return [x.get("source") for x in self._data["deformerWeight"]["weights"]]
+    # def __set_deformer_weights(self, deformer, influence_name):
+    #
+    #     # this assumes the influence data count is always equal to the mesh vertex count
+    #
+    #     # get the influences list and layer (influence weights id)
+    #     weights_data = self.get_influence_data(influence_name)
+    #     count = weights_data.get("size")
+    #     layer = weights_data.get("layer")
+    #     print("layerL", layer)
+    #     print(count)
+    #
+    #     influences_gen = (self.__generate_influence_list(weights_data))
+    #     # print(len(influences_gen))
+    #     plug = self.__get_plug_ids(deformer, layer)
+    #     # for index, val in influences_gen:
+    #     #     plug.elementByLogicalIndex(index).setDouble(val)
+    #     # for index, val in enumerate(influences_gen):
+    #     #     plug.elementByLogicalIndex(index).setDouble(val)
+    #     map(lambda i: plug.elementByLogicalIndex(i).setDouble(influences_gen[i]), range(count))
+    #     # map(lambda i, v: plug.elementByLogicalIndex(i).setFloat(v), influences_gen)
 
     def get_influence_data(self, influence_name):
         """searches the data dictionary and returns the related influence dictionary like
@@ -250,6 +318,53 @@ class Weight(IO):
     def _validate_deformer(self, deformer):
         # TODO
         pass
+
+    @staticmethod
+    def __convert_to_m_array(json_data):
+        """Converts the json data weights compatible to be applied with MFnSkincluster"""
+        vertex_count = json_data["deformerWeight"]["shapes"][0]["size"]
+        weights_data = json_data["deformerWeight"]["weights"]
+        m_array = om.MDoubleArray()
+        # first create a base
+        for vtx_id in range(vertex_count * len(weights_data)):
+            m_array.append(0.0)
+        # if there are 3 influences (jnt1, jnt2, jnt3):
+        #  Vertex ID         vtx0   vtx1   vtx2   .....
+        #  M Array           | | |  | | |  | | |  .....
+        #  Influence (Layer) 1 2 3  1 2 3  1 2 3  .....
+        inf_count = len(weights_data)
+        for inf_data in weights_data:
+            layer = inf_data.get("layer")
+            for point_data in inf_data["points"]:
+                data_index = (point_data["index"] * inf_count) + layer
+                m_array[data_index] = point_data["value"]
+                if point_data["value"] > 1.0:
+                    print(point_data["value"])
+
+        return m_array
+
+    @staticmethod
+    def __set_weights(skincluster, mesh, m_array):
+        """Sets the weights really fast using API 2.0"""
+        # https://gist.github.com/utatsuya/a95afe3c5523ab61e61b
+        vert_sel_list = om.MGlobal.getSelectionListByName(mesh)
+        mesh_path = vert_sel_list.getDagPath(0)
+        mesh_node = mesh_path.node()
+        mesh_ver_it_fn = om.MItMeshVertex(mesh_node)
+        indices = range(mesh_ver_it_fn.count())
+        single_id_comp = om.MFnSingleIndexedComponent()
+        vertex_comp = single_id_comp.create(om.MFn.kMeshVertComponent)
+        single_id_comp.addElements(indices)
+
+        sel_list = om.MGlobal.getSelectionListByName(skincluster)
+        skin_fn = omanim.MFnSkinCluster(sel_list.getDependNode(0))
+
+        inf_dags = skin_fn.influenceObjects()
+        inf_indexes = om.MIntArray(len(inf_dags), 0)
+        for x in range(len(inf_dags)):
+            inf_indexes[x] = int(skin_fn.indexForInfluenceObject(inf_dags[x]))
+
+        skin_fn.setWeights(mesh_path, vertex_comp, inf_indexes, m_array, False)
 
 
 # some_weight = Weight()
