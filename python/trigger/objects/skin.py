@@ -7,24 +7,15 @@ import maya.api.OpenMayaAnim as omanim
 from trigger.library import deformers
 from trigger.core.io import IO
 
-class Weight(IO):
-    def __init__(self, file_path=None, deformer=None):
-        if not file_path:
-            file_name = "%s.json" % uuid.uuid4().time_low
-            _file_path = os.path.join(os.path.expanduser("~"), file_name)
-            self.temp_file = True
-        else:
-            file_name = None
-            _file_path = file_path
-            self.temp_file = False
-        super(Weight, self).__init__(file_path=_file_path)
 
+class Weight(object):
+    def __init__(self, source=None):
+        super(Weight, self).__init__()
+        self.temp_io = IO(file_name="trigger_temp_skin.json")
         self._data = None
-        # self.set_file_path(self.file_path)
-        if deformer:
-            self.read_data_from_deformer(deformer)
-        if file_path:
-            self.read_data_from_file(file_path)
+
+        if source:
+            self.feed(source)
 
     def feed(self, source):
         """provides the data that the class needs to work with.
@@ -33,18 +24,34 @@ class Weight(IO):
          - dictionary item (matching cmds.deformerWeights output
          - skinCluster node (String) (must be present in the current maya scene)
          """
-        # TODO
-        pass
+        if isinstance(source, dict):
+            _data = source
+        elif isinstance(source, str):
+            if cmds.ls(source, type="skinCluster"):
+                _data = self.__read_data_from_deformer(source)
+            elif os.path.isfile(source):
+                _data = self.__read_data_from_file(source)
+            else:
+                raise Exception("Source (%s) cannot identified neither as a file or skinCluster" % source)
+        else:
+            raise Exception("invalid source (%s). Must be dictionary, file or deformer")
+
+        # TODO some data validation
+        self._data = _data
 
     def export(self, file_path):
-        """Exports the data to specified json file path"""
-        # TODO
-        pass
+        """
+        Exports the data to specified json file path
+
+        """
+        "TODO data validation?"
+        IO().write(self._data, file_path)
 
     def apply(self, deformer):
         """Applies the data to specified deformer"""
         if not self._data:
-            raise Exception("There is no data to export")
+            raise Exception("There is no data to apply")
+        # TODO data validation?
 
         deformer = deformer or self._data["deformerWeight"]["deformers"][0]["name"]
         # get the active influences
@@ -52,8 +59,10 @@ class Weight(IO):
         _data_influences = self.get_all_influences()
 
         # add the missing ones / remove the excess
-        _ = [cmds.skinCluster(deformer, edit=True, addInfluence=x, nw=0) for x in _data_influences if x not in _influences]
-        _ = [cmds.skinCluster(deformer, edit=True, removeInfluence=x, nw=0) for x in _influences if x not in _data_influences]
+        _ = [cmds.skinCluster(deformer, edit=True, addInfluence=x, nw=0) for x in _data_influences if
+             x not in _influences]
+        _ = [cmds.skinCluster(deformer, edit=True, removeInfluence=x, nw=0) for x in _influences if
+             x not in _data_influences]
 
         # temporarily turn off the normalization
         normalization = cmds.skinCluster(deformer, q=True, normalizeWeights=True)
@@ -61,140 +70,38 @@ class Weight(IO):
 
         geo = cmds.skinCluster(deformer, q=True, geometry=True)[0]
         self.__set_weights(deformer, geo, self.__convert_to_m_array(self._data))
+        if cmds.skinCluster(deformer, q=True, skinMethod=True):
+            self.__set_blend_weights(deformer, geo, self._data.get("DQ_weights", []))
 
         # back to original normalization setting
         cmds.skinCluster(deformer, edit=True, normalizeWeights=normalization)
-
 
     def get_all_influences(self):
         """Returns the name of all influences the data contains"""
         return [x.get("source") for x in self._data["deformerWeight"]["weights"]]
 
-    def read_data_from_deformer(self, deformer):
-        self._validate_deformer(deformer)
+    def __read_data_from_deformer(self, deformer):
+        """Gets the weight dictionary from specified deformer"""
         # write the json file using maya thingie. Read it back and discard the temporary file
-
-        # _temp_file_name = "%s.json" % uuid.uuid4().time_low
-        # _path = os.path.join(os.path.expanduser("~"))
         # Specific attributes for skinClusters
         attributes = ["envelope", "skinningMethod", "useComponents", "normalizeWeights", "deformUserNormals"]
-        _file_path, _file_name = os.path.split(self.file_path)
+        _file_path, _file_name = os.path.split(self.temp_io.file_path)
         # cmds.deformerWeights(_file_name, export=True, deformer=deformer, path=_file_path, defaultValue=-1.0, vc=False, at=attributes)
         cmds.deformerWeights(_file_name, export=True, deformer=deformer, path=_file_path, vc=False, at=attributes)
         # cmds.deformerWeights(_file_name, export=True, deformer=deformer, path=_file_path, vc=False, at=attributes)
+
         # read it back
+        _data = self.temp_io.read()
+        os.remove(self.temp_io.file_path)
+        # Check for the DQ blend weights and add it to the data dictionary if required
+        if cmds.skinCluster(deformer, q=True, skinMethod=True):
+            geo = cmds.skinCluster(deformer, q=True, geometry=True)[0]
+            _data["DQ_weights"] = self.__get_blend_weights(deformer, geo)
+        return _data
 
-        self._data = self.read()
-        # discard the file if no proper file path defined
-        if self.temp_file:
-            os.remove(self.file_path)
-
-    def read_data_from_file(self, path):
-        self._data = IO(file_path=path).read()
-
-    def apply_data(self, deformer=None, file_path=None):
-        # if a path is defined use that to get the data, otherwise use the data to define the file path
-        if file_path:
-            self.read_data_from_file(file_path)
-        # else:
-        #     self.write(self._data) # write this to read it back
-        # if not cmds.ls(deformer, type="skinCluster"):
-        #     # if the skincluster is not there, find the shape and create one
-        deformer = deformer or self._data["deformerWeight"]["deformers"][0]["name"]
-        # get the active influences
-        _influences = cmds.skinCluster(deformer, query=True, influence=True)
-        _data_influences = self.get_all_influences()
-
-        # add the missing ones / remove the excess
-        _ = [cmds.skinCluster(deformer, edit=True, addInfluence=x, nw=0) for x in _data_influences if x not in _influences]
-        _ = [cmds.skinCluster(deformer, edit=True, removeInfluence=x, nw=0) for x in _influences if x not in _data_influences]
-
-        # cmds.skinCluster(deformer, edit=True, normalizeWeights=0)
-        # cmds.skinCluster(deformer, edit=True, maximumInfluences=500)
-
-        geo = cmds.skinCluster(deformer, q=True, geometry=True)[0]
-        self.__set_weights(deformer, geo, self.__convert_to_m_array(self._data))
-
-        # for inf in _data_influences:
-        #     # conform the influence dictionary to list
-        #     # print(deformer, list(self.__generate_influence_list(inf)), inf)
-        #     # deformers.set_deformer_weights(deformer, list(self.__generate_influence_list(inf)), inf)
-        #     print(inf)
-        #     self.__set_deformer_weights(deformer, inf)
-
-        # file_dir, file_name = os.path.split(self.file_path)
-        # cmds.deformerWeights(file_name, im=True, deformer=deformer, path=file_dir, method="index",
-        #                      ignoreName=True)
-
-        # JSON import bug with maya
-
-    # def __generate_influence_list(self, raw_weights_data):
-    #     """spits out the json point data for given influence as list"""
-    #     for p_data in raw_weights_data["points"]:
-    #         yield p_data["index"], p_data["value"]
-    #         # yield p_data["value"]
-
-    # @staticmethod
-    # def __get_plug_ids(deformer, layer):
-    #     """
-    #     Gets the plug of skin clusters weights
-    #     Args:
-    #         deformer: (string) the deformer
-    #         layer: (int) the layer (influencer id) defined as in JSON file
-    #
-    #     Returns:
-    #         <plug object>
-    #     """
-    #     sel = om.MSelectionList()
-    #     sel.add("%s.weightList[%i].weights" % (deformer, layer))
-    #     return sel.getPlug(0)
-
-    # def __set_deformer_weights(self, deformer, influence_name):
-    #
-    #     # get the influences list and layer (influence weights id)
-    #     weights_data = self.get_influence_data(influence_name)
-    #     count = weights_data.get("size")
-    #     layer = weights_data.get("layer")
-    #     print("layerL", layer)
-    #     print(count)
-    #
-    #     influences_gen = (self.__generate_influence_list(weights_data))
-    #
-    #     '{0}.weightList[5],weights[0]'
-    #
-    #     for index, value in influences_gen:
-    #         cmds.setAttr("{0}.weightList[{1}].weights[2]".format(deformer, layer, index), value)
-    #
-    #     # print(len(influences_gen))
-    #     plug = self.__get_plug_ids(deformer, layer)
-    #     # for index, val in influences_gen:
-    #     #     plug.elementByLogicalIndex(index).setDouble(val)
-    #
-    #     # for index, val in enumerate(influences_gen):
-    #     #     plug.elementByLogicalIndex(index).setDouble(val)
-    #     # map(lambda i: plug.elementByLogicalIndex(i).setDouble(influences_gen[i]), range(count))
-    #     # map(lambda i, v: plug.elementByLogicalIndex(i).setDouble(v), influences_gen)
-
-    # def __set_deformer_weights(self, deformer, influence_name):
-    #
-    #     # this assumes the influence data count is always equal to the mesh vertex count
-    #
-    #     # get the influences list and layer (influence weights id)
-    #     weights_data = self.get_influence_data(influence_name)
-    #     count = weights_data.get("size")
-    #     layer = weights_data.get("layer")
-    #     print("layerL", layer)
-    #     print(count)
-    #
-    #     influences_gen = (self.__generate_influence_list(weights_data))
-    #     # print(len(influences_gen))
-    #     plug = self.__get_plug_ids(deformer, layer)
-    #     # for index, val in influences_gen:
-    #     #     plug.elementByLogicalIndex(index).setDouble(val)
-    #     # for index, val in enumerate(influences_gen):
-    #     #     plug.elementByLogicalIndex(index).setDouble(val)
-    #     map(lambda i: plug.elementByLogicalIndex(i).setDouble(influences_gen[i]), range(count))
-    #     # map(lambda i, v: plug.elementByLogicalIndex(i).setFloat(v), influences_gen)
+    def __read_data_from_file(self, path):
+        """Gets the weight dictionary from specified file path"""
+        return IO(file_path=path).read()
 
     def get_influence_data(self, influence_name):
         """searches the data dictionary and returns the related influence dictionary like
@@ -245,7 +152,7 @@ class Weight(IO):
         """
         _influence_name = influence_data.get("source", None)
         if self.get_influence_data(_influence_name) and not force:
-            raise Exception ("Data already contains weights data for %s" % _influence_name)
+            raise Exception("Data already contains weights data for %s" % _influence_name)
         self._data["deformerWeight"]["weights"].append(influence_data)
 
     def negate(self, influences=None):
@@ -269,55 +176,6 @@ class Weight(IO):
         for weights in weight_list:
             for vert in weights["points"]:
                 vert["value"] = 1 - vert["value"]
-
-
-
-    # def get_deformer(self):
-    #     return self._deformer
-
-    # def set_file_path(self, path):
-    #     self.file_path = path
-    #     self.temp_file = False
-    #     self._data = self.read()
-
-    def add_weights(self, deformer=None, path=None):
-        self._validate_source(deformer=deformer, path=path)
-        if deformer:
-            b = Weight()
-            b.read_deformer(deformer)
-
-
-
-    def _validate_source(self, deformer=None, path=None):
-        if deformer and path:
-            raise Exception ("both deformer and path cannot be defined")
-        if not deformer or not path:
-            raise Exception ("Either deformer or path needs to be defined")
-        # if deformer:
-        #     if not cmds.ls(deformer):
-        #         raise Exception ("Deformer %s cannot be found in the scene" % deformer)
-        return True
-
-    # @property
-    # def deformer(self):
-    #     return self._deformer
-    #
-    # @deformer.setter
-    # def deformer(self, val):
-    #    self._validate_deformer(val)
-
-    # @property
-    # def file_path(self):
-    #     return self["file_path"]
-    #
-    # @file_path.setter
-    # def file_path(self, val):
-    #     super(Weight, self).file_path
-    #     print("test")
-
-    def _validate_deformer(self, deformer):
-        # TODO
-        pass
 
     @staticmethod
     def __convert_to_m_array(json_data):
@@ -344,9 +202,10 @@ class Weight(IO):
         return m_array
 
     @staticmethod
-    def __set_weights(skincluster, mesh, m_array):
-        """Sets the weights really fast using API 2.0"""
-        # https://gist.github.com/utatsuya/a95afe3c5523ab61e61b
+    def __get_path_and_component(mesh, skincluster):
+        """Convenience method to get mesh dag path, components and MFnSkinCluster from a given mesh and skincluster
+        to be used setting and getting weights
+        """
         vert_sel_list = om.MGlobal.getSelectionListByName(mesh)
         mesh_path = vert_sel_list.getDagPath(0)
         mesh_node = mesh_path.node()
@@ -358,14 +217,86 @@ class Weight(IO):
 
         sel_list = om.MGlobal.getSelectionListByName(skincluster)
         skin_fn = omanim.MFnSkinCluster(sel_list.getDependNode(0))
+        return mesh_path, vertex_comp, skin_fn
+
+    def __get_weights(self, skincluster, mesh):
+        """
+        Gets the weights fast usin API 2.0
+
+        Args:
+            skincluster: (String) skincluster deformer from the current scene
+            mesh: (String) mesh shape name from the scene
+
+        Returns:
+            <MDoubleArray> of skin weights
+
+        """
+        mesh_path, vertex_comp, skin_fn = self.__get_path_and_component(mesh, skincluster)
+        return skin_fn.getWeights(mesh_path, vertex_comp)
+
+    def __set_weights(self, skincluster, mesh, m_array):
+        """
+        Sets the weights really fast using API 2.0
+
+        Args:
+            skincluster: (String) skincluster deformer from the current scene
+            mesh: (String) mesh shape name from the scene
+            m_array: (MDoubleArray) Array of weights data
+
+        Returns:
+            None
+        """
+        # https://gist.github.com/utatsuya/a95afe3c5523ab61e61b
+        mesh_path, vertex_comp, skin_fn = self.__get_path_and_component(mesh, skincluster)
 
         inf_dags = skin_fn.influenceObjects()
         inf_indexes = om.MIntArray(len(inf_dags), 0)
         for x in range(len(inf_dags)):
             inf_indexes[x] = int(skin_fn.indexForInfluenceObject(inf_dags[x]))
 
-        skin_fn.setWeights(mesh_path, vertex_comp, inf_indexes, m_array, False)
+        skin_fn.setWeights(mesh_path, vertex_comp, inf_indexes, m_array, True)
 
+    def __get_blend_weights(self, skincluster, mesh):
+        """
+        Gets the DQ blend weights fast usin API 2.0
+
+        Args:
+            skincluster: (String) skincluster deformer from the current scene
+            mesh: (String) mesh shape name from the scene
+
+        Returns:
+            <MDoubleArray> of DQ blend weights
+
+        """
+        mesh_path, vertex_comp, skin_fn = self.__get_path_and_component(mesh, skincluster)
+        return skin_fn.getBlendWeights(mesh_path, vertex_comp)
+
+    def __set_blend_weights(self, skincluster, mesh, m_array):
+        """
+        Sets the DQ blend weights really fast using API 2.0
+
+        Args:
+            skincluster: (String) skincluster deformer from the current scene
+            mesh: (String) mesh shape name from the scene
+            m_array: (MDoubleArray) Array of weights data
+
+        Returns:
+            None
+        """
+        mesh_path, vertex_comp, skin_fn = self.__get_path_and_component(mesh, skincluster)
+        skin_fn.setBlendWeights(mesh_path, vertex_comp, m_array)
+
+    def test_get_weights(self, skincluster, mesh):
+        return self.__get_weights(skincluster, mesh)
+
+    def test_set_weights(self, skincluster, mesh, m_array):
+        self.__set_weights(skincluster, mesh, m_array)
+
+    def test_get_blend_weights(self, skincluster, mesh):
+        return self.__get_blend_weights(skincluster, mesh)
+
+    def test_set_blend_weights(self, skincluster, mesh, m_array):
+        self.__set_blend_weights(skincluster, mesh, m_array)
 
 # some_weight = Weight()
 #
@@ -377,5 +308,3 @@ class Weight(IO):
 #
 #     @property
 #     def deformer
-
-
