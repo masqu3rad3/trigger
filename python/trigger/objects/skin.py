@@ -4,9 +4,13 @@ import copy
 from maya import cmds
 import maya.api.OpenMaya as om
 import maya.api.OpenMayaAnim as omanim
+from trigger.library import api
 from trigger.library import deformers
 from trigger.core.io import IO
 
+from trigger.core import filelog
+
+log = filelog.Filelog(logname=__name__, filename="trigger_log")
 
 class Weight(object):
     def __init__(self, source=None):
@@ -69,12 +73,58 @@ class Weight(object):
         cmds.skinCluster(deformer, edit=True, normalizeWeights=0)
 
         geo = cmds.skinCluster(deformer, q=True, geometry=True)[0]
-        self.__set_weights(deformer, geo, self.__convert_to_m_array(self._data))
-        if cmds.skinCluster(deformer, q=True, skinMethod=True):
-            self.__set_blend_weights(deformer, geo, self._data.get("DQ_weights", []))
+        # compare the vertex size and act accordingly if the topologies are different
+        if len(api.getAllVerts(geo)) == self.get_vertex_count():
+            # same topology
+            self.__set_weights(deformer, geo, self.__convert_to_m_array(self._data))
+            if cmds.skinCluster(deformer, q=True, skinMethod=True):
+                self.__set_blend_weights(deformer, geo, om.MDoubleArray(self._data.get("DQ_weights", [])))
+        else:
+            # different topology
+            # TODO try to figure out a more elegant way (and faster)
+            # write the data to a temporary location and read it back using
+            self.temp_io.write(self._data)
+            # ... and apply it from there
+            # first try barycentric if the data allows
+            if self._check_vc():
+                method = "bilinear"
+            else:
+                method = "nearest"
+            _file_path, _file_name = os.path.split(self.temp_io.file_path)
+            cmds.deformerWeights(_file_name, im=True, deformer=deformer, path=_file_path, method=method,
+                                 ignoreName=True)
+            os.remove(self.temp_io.file_path)
 
         # back to original normalization setting
         cmds.skinCluster(deformer, edit=True, normalizeWeights=normalization)
+
+    def _check_vc(self):
+        """Checks the data if vc (vertex connections) has or not"""
+        poly_counts = self._data["deformerWeight"]["shapes"][0].get("polyCounts", None)
+        poly_connects = self._data["deformerWeight"]["shapes"][0].get("polyConnects", None)
+
+        if poly_counts and poly_connects:
+            return True
+        else:
+            return False
+
+    def validate(self):
+        """validates data against the maya weight format standards"""
+        if not self._data.get("deformerWeight", None):
+            log.warning("skin.py => The weight data cannot be validated. key deformerWeight is missing")
+            return False
+        keys = ["headerInfo", "deformers", "shapes", "weights"]
+        for key in keys:
+            try:
+                _d = self._data[key]
+            except KeyError:
+                log.warning("skin.py => The weight data cannot be validated. key %s is missing" %key)
+                return False
+        return True
+
+    def get_vertex_count(self):
+        """Finds and returns the vertex count from the _data"""
+        return self._data.get("shapes", {}).get("size", None)
 
     def get_all_influences(self):
         """Returns the name of all influences the data contains"""
@@ -298,13 +348,3 @@ class Weight(object):
     def test_set_blend_weights(self, skincluster, mesh, m_array):
         self.__set_blend_weights(skincluster, mesh, m_array)
 
-# some_weight = Weight()
-#
-# some_weight.file_path = "something/somethging.json"
-# some_weight.deformer = "someDeformer"
-
-#
-# class Influence(dict):
-#
-#     @property
-#     def deformer
