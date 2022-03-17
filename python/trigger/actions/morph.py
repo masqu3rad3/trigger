@@ -9,6 +9,10 @@ from trigger.core.decorators import viewportOff
 from trigger.ui.Qt import QtWidgets, QtGui
 from trigger.library import functions, attribute, deformers, naming
 
+from trigger.core import filelog
+
+log = filelog.Filelog(logname=__name__, filename="trigger_log")
+
 ACTION_DATA = {
     "blendshapes_group": "",
     "neutral_mesh": "",
@@ -105,7 +109,11 @@ class Morph(object):
         filtered_meshes = [mesh for mesh in meshes if not mesh.endswith("X")]
         for mesh in filtered_meshes:
             if "_" in mesh:
-                self.shapeCategories["combination"].append(mesh)
+                # make sure combination inbetweens stay at the end of the list
+                if mesh.split("_")[-1].isdigit():
+                    self.shapeCategories["combination"].append(mesh)
+                else:
+                    self.shapeCategories["combination"].insert(0, mesh)
             elif re.search('.*?([0-9]+)$', mesh):
                 self.shapeCategories["inbetween"].append(mesh)
             else:
