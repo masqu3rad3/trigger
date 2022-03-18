@@ -16,10 +16,23 @@ class Weight(object):
     def __init__(self, source=None):
         super(Weight, self).__init__()
         self.temp_io = IO(file_name="trigger_temp_skin.json")
+        self._is_temp_dirty = True
         self._data = None
 
         if source:
             self.feed(source)
+
+    @property
+    def is_temp_dirty(self):
+        """Checks the temp file and dirty flag and returns True if the temp file requires recreated or not"""
+        if self._is_temp_dirty or not os.path.exists(self.temp_io.file_path):
+            return True
+        else:
+            return False
+
+    @is_temp_dirty.setter
+    def is_temp_dirty(self, state):
+        self._is_temp_dirty = state
 
     def feed(self, source):
         """provides the data that the class needs to work with.
@@ -40,8 +53,11 @@ class Weight(object):
         else:
             raise Exception("invalid source (%s). Must be dictionary, file or deformer")
 
-        # TODO some data validation
-        self._data = _data
+        if self.validate(_data):
+            self._data = _data
+        else:
+            log.error("Data is corrupted")
+            raise
 
     def export(self, file_path):
         """
@@ -80,51 +96,68 @@ class Weight(object):
             if cmds.skinCluster(deformer, q=True, skinMethod=True):
                 self.__set_blend_weights(deformer, geo, om.MDoubleArray(self._data.get("DQ_weights", [])))
         else:
+            log.warning("Applying the values to different topologies is WIP")
             # different topology
-            # TODO try to figure out a more elegant way (and faster)
+            # Although writing data out and reading it back is not elegant, it is the easiest (and fastest atm)
+            # Otherwise it requires some heavy barycentric calculations using maya.api. The better workaround
+            # would be a custom python/C++ plugin for this purpose
             # write the data to a temporary location and read it back using
-            self.temp_io.write(self._data)
+            # self.temp_io.write(self._data)
             # ... and apply it from there
             # first try barycentric if the data allows
-            if self._check_vc():
-                method = "bilinear"
-            else:
-                method = "nearest"
-            _file_path, _file_name = os.path.split(self.temp_io.file_path)
-            cmds.deformerWeights(_file_name, im=True, deformer=deformer, path=_file_path, method=method,
-                                 ignoreName=True)
-            os.remove(self.temp_io.file_path)
+
+            # TODO figure out a way get barycentric and/or bilinear values on different topos
+            # TODO deformerWeighst => JSON does not support it and XML tends to crash a lot (and slower)
+            # TODO It would be better and probably faster if can be done a conversion and apply __set_weights
+            # if self._check_vc():
+            #     method = "bilinear"
+            # else:
+            #     log.warning("There are no vertex connections provided with the weights file. Using 'nearest' method"
+            #                 "instead of 'barycentric' to apply the weights")
+            #     method = "nearest"
+
+            method = "nearest"
+
+            # TODO it turned out even the nearest method is not working with deformerWeights JSON implementation.
+            # TODO json is still fast and good for read/write. We need to figure out to convert the data or come up
+            # TODO with our implementation
+            # _file_path, _file_name = os.path.split(self.temp_io.file_path)
+            # cmds.deformerWeights(_file_name, im=True, deformer=deformer, path=_file_path, method=method,
+            #                      ignoreName=True)
+            # os.remove(self.temp_io.file_path)
 
         # back to original normalization setting
         cmds.skinCluster(deformer, edit=True, normalizeWeights=normalization)
 
     def _check_vc(self):
         """Checks the data if vc (vertex connections) has or not"""
-        poly_counts = self._data["deformerWeight"]["shapes"][0].get("polyCounts", None)
-        poly_connects = self._data["deformerWeight"]["shapes"][0].get("polyConnects", None)
+        # TODO test if its getting much faster when you query only the keys, not the values
+        poly_counts = self._data["deformerWeight"]["shapes"][0].get("polygonCounts", None)
+        poly_connects = self._data["deformerWeight"]["shapes"][0].get("polygonConnects", None)
 
         if poly_counts and poly_connects:
             return True
         else:
             return False
 
-    def validate(self):
+    def validate(self, data=None):
         """validates data against the maya weight format standards"""
-        if not self._data.get("deformerWeight", None):
+        _data = data or self._data
+        if not _data.get("deformerWeight", None):
             log.warning("skin.py => The weight data cannot be validated. key deformerWeight is missing")
             return False
         keys = ["headerInfo", "deformers", "shapes", "weights"]
         for key in keys:
             try:
-                _d = self._data[key]
+                _d = _data["deformerWeight"][key]
             except KeyError:
-                log.warning("skin.py => The weight data cannot be validated. key %s is missing" %key)
+                log.warning("skin.py => The weight data cannot be validated. key %s is missing" % key)
                 return False
         return True
 
     def get_vertex_count(self):
         """Finds and returns the vertex count from the _data"""
-        return self._data.get("shapes", {}).get("size", None)
+        return self._data["deformerWeight"]["shapes"][0].get("size", None)
 
     def get_all_influences(self):
         """Returns the name of all influences the data contains"""
@@ -137,7 +170,7 @@ class Weight(object):
         attributes = ["envelope", "skinningMethod", "useComponents", "normalizeWeights", "deformUserNormals"]
         _file_path, _file_name = os.path.split(self.temp_io.file_path)
         # cmds.deformerWeights(_file_name, export=True, deformer=deformer, path=_file_path, defaultValue=-1.0, vc=False, at=attributes)
-        cmds.deformerWeights(_file_name, export=True, deformer=deformer, path=_file_path, vc=False, at=attributes)
+        cmds.deformerWeights(_file_name, export=True, deformer=deformer, path=_file_path, vc=True, at=attributes)
         # cmds.deformerWeights(_file_name, export=True, deformer=deformer, path=_file_path, vc=False, at=attributes)
 
         # read it back
@@ -146,7 +179,7 @@ class Weight(object):
         # Check for the DQ blend weights and add it to the data dictionary if required
         if cmds.skinCluster(deformer, q=True, skinMethod=True):
             geo = cmds.skinCluster(deformer, q=True, geometry=True)[0]
-            _data["DQ_weights"] = self.__get_blend_weights(deformer, geo)
+            _data["DQ_weights"] = list(self.__get_blend_weights(deformer, geo))
         return _data
 
     def __read_data_from_file(self, path):
@@ -246,8 +279,8 @@ class Weight(object):
             for point_data in inf_data["points"]:
                 data_index = (point_data["index"] * inf_count) + layer
                 m_array[data_index] = point_data["value"]
-                if point_data["value"] > 1.0:
-                    print(point_data["value"])
+                # if point_data["value"] > 1.0:
+                #     print(point_data["value"])
 
         return m_array
 
@@ -335,6 +368,35 @@ class Weight(object):
         """
         mesh_path, vertex_comp, skin_fn = self.__get_path_and_component(mesh, skincluster)
         skin_fn.setBlendWeights(mesh_path, vertex_comp, m_array)
+
+    @staticmethod
+    def barycentric_interpolate(vec_a, vec_b, vec_c, vec_p):
+        '''
+        Calculates barycentricInterpolation of a point in a triangle.
+
+        :param vec_a - OpenMaya.MVector of a vertex point.
+        :param vec_b - OpenMaya.MVector of a vertex point.
+        :param vec_c - OpenMaya.MVector of a vertex point.
+        :param vec_p - OpenMaya.MVector of a point to be interpolated.
+
+        Returns list of 3 floats representing weight values per each point.
+        '''
+        # https://gamedev.stackexchange.com/questions/23743/whats-the-most-efficient-way-to-find-barycentric-coordinates
+        v0 = vec_b - vec_a
+        v1 = vec_c - vec_a
+        v2 = vec_p - vec_a
+
+        d00 = v0 * v0
+        d01 = v0 * v1
+        d11 = v1 * v1
+        d20 = v2 * v0
+        d21 = v2 * v1
+        denom = d00 * d11 - d01 * d01
+        v = (d11 * d20 - d01 * d21) / denom
+        w = (d00 * d21 - d01 * d20) / denom
+        u = 1.0 - v - w
+
+        return [u, v, w]
 
     def test_get_weights(self, skincluster, mesh):
         return self.__get_weights(skincluster, mesh)
