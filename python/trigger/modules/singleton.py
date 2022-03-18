@@ -128,6 +128,7 @@ class Singleton(object):
         cmds.select(d=True)
         self.limbPlug = cmds.joint(name="limbPlug_%s" % self.suffix, p=api.getWorldTranslation(self.inits[0]), radius=3)
         cmds.connectAttr("%s.s" % self.scaleGrp, "%s.s" % self.limbPlug)
+        cmds.parent(self.limbPlug, self.limbGrp)
 
         if self.isLocal:
             # if the deformation joints are local, drive the plugBindGrp with limbPlug for negative compensation
@@ -142,36 +143,39 @@ class Singleton(object):
         for nmb, j in enumerate(self.inits):
             cmds.select(d=True)
             j_def = cmds.joint(name="jDef_{0}_{1}".format(j, self.suffix))
+            j_def_off = functions.createUpGrp(j_def, "bind")
 
             cont = Controller(name="cont_%s%s" % (self.suffix, nmb + 1), shape="Circle")
             cont.set_side(side=self.side)
             cont_bind = cont.add_offset("bind")
             cont_off = cont.add_offset("pos")
             functions.alignTo(cont_off, j, position=True, rotation=True)
-            connection.matrixConstraint(cont.name, j_def, mo=False, source_parent_cutoff=self.localOffGrp)
+            connection.matrixConstraint(cont.name, j_def_off, mo=False, source_parent_cutoff=self.localOffGrp)
+            # connection.matrixConstraint(cont.name, j_def, mo=False, source_parent_cutoff=self.localOffGrp)
+            # cmds.parentConstraint(cont.name, j_def, mo=False)
             if self.surface:
                 # if there is a surface constraint, matrix constraint it to the surface and ignore limbPlug
                 fol = parentToSurface.parentToSurface([cont_bind], self.surface, mode="matrixConstraint")
                 cmds.parent(fol, self.follicle_grp)
-            else:
-                if not self.isLocal:
-                    # follow the limb plug only if the joints are not local
-                    pass
-                    # connection.matrixConstraint(self.limbPlug, cont_bind, source_parent_cutoff=self.localOffGrp)
+            # else:
+            #     if not self.isLocal:
+            #         # follow the limb plug only if the joints are not local
+            #         pass
+            #         # connection.matrixConstraint(self.limbPlug, cont_bind, source_parent_cutoff=self.localOffGrp)
 
             cmds.parent(cont_bind, self.conts_grp)
-            cmds.parent(j_def, self.joints_grp)
+            cmds.parent(j_def_off, self.joints_grp)
 
             self.sockets.append(j_def)
             self.deformerJoints.append(j_def)
 
-        if not self.useRefOrientation:
-            functions.orientJoints(self.deformerJoints, worldUpAxis=self.look_axis, upAxis=(0, 1, 0),
-                                   reverseAim=self.sideMult, reverseUp=self.sideMult)
-        else:
-            for x in range (len(self.deformerJoints)):
-                functions.alignTo(self.deformerJoints[x], self.inits[x], position=True, rotation=True)
-                cmds.makeIdentity(self.deformerJoints[x], a=True)
+        # if not self.useRefOrientation:
+        #     functions.orientJoints(self.deformerJoints, worldUpAxis=self.look_axis, upAxis=(0, 1, 0),
+        #                            reverseAim=self.sideMult, reverseUp=self.sideMult)
+        # else:
+        #     for x in range (len(self.deformerJoints)):
+        #         functions.alignTo(self.deformerJoints[x], self.inits[x], position=True, rotation=True)
+        #         cmds.makeIdentity(self.deformerJoints[x], a=True)
 
 
         attribute.drive_attrs("%s.jointVis" % self.scaleGrp, ["%s.v" % x for x in self.deformerJoints])
