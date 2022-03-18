@@ -29,7 +29,8 @@ class Icon(object):
                                "Rotator": self.rotator,
                                "CurvedArrow": self.curved_arrow,
                                "DualCurvedArrow": self.dual_curved_arrow,
-                               "Lollipop": self.lollipop
+                               "Lollipop": self.lollipop,
+                               "Drop": self.drop
                                }
 
     def createIcon(self, iconType, iconName=None, scale=(1, 1, 1), location=None, normal=(0, 1, 0)):
@@ -144,6 +145,36 @@ class Icon(object):
         return cont_star
 
     @staticmethod
+    def drop(name="drop_cont"):
+        """
+        Creates a star-ish shaped controller
+        Args:
+            name: (String) name of the controller. Must be a String
+            scale: (Vector) Scale value as vector. example (1,1.5,1)
+            location: (Vector) Optional Location as vector. example (12,0,2)
+            normal: (Vector) Optional normal override
+
+        Returns:
+            Controller node
+        """
+        _cont = cmds.curve(d=3, p=[(3, 0.999999, 0), (3.195091, 0.980784, 0), (3.382684, 0.923878, 0),
+                                    (3.55557, 0.831468, 0), (3.707106, 0.707106, 0), (3.831469, 0.555569, 0),
+                                    (3.923879, 0.382683, 0), (3.980784, 0.19509, 0), (4, 0, 0), (3.980785, -0.19509, 0),
+                                    (3.923879, -0.382683, 0), (3.83147, -0.55557, 0), (3.707107, -0.707107, 0),
+                                    (3.55557, -0.83147, 0), (3.382683, -0.923879, 0), (3.19509, -0.980785, 0),
+                                    (3, -1, 0), (2.801629, -0.980785, 0), (2.539676, -0.923879, 0),
+                                    (2.255514, -0.831469, 0), (1.9439, -0.707106, 0), (1.59123, -0.55557, 0),
+                                    (1.136886, -0.382683, 0), (0.611128, -0.19509, 0), (2.38419e-07, 3.27826e-07, 0),
+                                    (0.611129, 0.195091, 0), (1.136886, 0.382683, 0), (1.59123, 0.55557, 0),
+                                    (1.9439, 0.707106, 0), (2.255515, 0.831469, 0), (2.539676, 0.923879, 0),
+                                    (2.80163, 0.980784, 0), (3, 0.999999, 0)],
+                            k=[0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22,
+                               23, 24, 25, 26, 27, 28, 29, 30, 30, 30], name=name)
+
+        cmds.select(d=True)
+        return _cont
+
+    @staticmethod
     def fkikSwitch(name="fkik_cont"):
         """
         Creates a FK-IK controller.
@@ -254,6 +285,8 @@ class Icon(object):
         cmds.delete(x_plus)
         cmds.delete(x_minus)
         return cont_drop_circle_x
+
+
 
     @staticmethod
     def shoulder(name="shoulder_cont"):
