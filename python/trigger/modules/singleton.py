@@ -145,7 +145,7 @@ class Singleton(object):
             j_def = cmds.joint(name="jDef_{0}_{1}".format(j, self.suffix))
             j_def_off = functions.createUpGrp(j_def, "bind")
 
-            cont = Controller(name="cont_%s%s" % (self.suffix, nmb + 1), shape="Circle")
+            cont = Controller(name="%s%s_cont" % (self.suffix, nmb + 1), shape="Circle")
             cont.set_side(side=self.side)
             cont_bind = cont.add_offset("bind")
             cont_off = cont.add_offset("pos")

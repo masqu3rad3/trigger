@@ -135,7 +135,7 @@ class MainUI(QtWidgets.QMainWindow):
         # core ui
         self.setWindowTitle(WINDOW_NAME)
         self.setObjectName(WINDOW_NAME)
-        self.resize(1000, 600)
+        self.resize(1200, 800)
         self.centralwidget = QtWidgets.QWidget(self)
         self.centralwidget.setObjectName("centralwidget")
         self.centralwidget.setStyleSheet(qss)

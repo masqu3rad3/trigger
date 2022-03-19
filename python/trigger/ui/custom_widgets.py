@@ -484,7 +484,7 @@ class ProgressListWidget(QtWidgets.QListWidget):
     def __init__(self):
         super(ProgressListWidget, self).__init__()
         font = QtGui.QFont()
-        font.setPointSize(15)
+        font.setPointSize(12)
         font.setBold(False)
         font.setWeight(150)
         font.setStrikeOut(False)

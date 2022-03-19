@@ -253,18 +253,20 @@ def mirrorController(axis="x", node_list=None, side_flags=("L_", "R_"), side_bia
 
         tmp_cont = cmds.duplicate(node, name="tmp_{0}".format(node), rr=True, renameChildren=True)
         ## delete nodes below it
+        cmds.transformLimits(tmp_cont, etx=(0, 0), ety=(0, 0), etz=(0, 0), erx=(0, 0), ery=(0, 0), erz=(0, 0),
+                             esx=(0, 0), esy=(0, 0), esz=(0, 0))
+        attribute.unlock(tmp_cont[0])
         cmds.delete(cmds.listRelatives(tmp_cont, type="transform"))
 
         ## create a group for the selected controller
         node_grp = cmds.group(name="tmpGrp", em=True)
         cmds.parent(tmp_cont, node_grp)
         # get rid of the limits
-        cmds.transformLimits(tmp_cont, etx=(0, 0), ety=(0, 0), etz=(0, 0), erx=(0, 0), ery=(0, 0), erz=(0, 0),
-                             esx=(0, 0), esy=(0, 0), esz=(0, 0))
         # ## mirror it on the given axis
         cmds.setAttr("%s.s%s" % (node_grp, axis), -1)
         ## ungroup it
         cmds.ungroup(node_grp)
+        # cmds.makeIdentity(tmp_cont[0], a=True, r=False, t=False, s=True)
         replace_curve(other_side, tmp_cont, maintain_offset=False)
         cmds.delete(tmp_cont)
 
