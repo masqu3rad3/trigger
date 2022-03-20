@@ -30,6 +30,14 @@ LIMB_DATA = {"members": ["SingletonRoot", "Singleton"],
                      "attr_type": "string",
                      "default_value": "",
                  },
+                 {
+                     "attr_name": "directConnect",
+                     "nice_name": "Direct_Connect",
+                     "attr_type": "bool",
+                     "default_value": False,
+                     "tooltip": "If checked, controllers will drive joints with a direct connection. This can be"
+                                "useful to prevent cycles"
+                 },
 
              ],
              "multi_guide": "Singleton",
@@ -60,6 +68,10 @@ class Singleton(object):
         self.sideMult = -1 if self.side == "R" else 1
         self.isLocal = bool(cmds.getAttr("%s.localJoints" % self.inits[0]))
         self.surface = str(cmds.getAttr("%s.surface" % self.inits[0]))
+        try:
+            self.isDirect = bool(cmds.getAttr("%s.directConnect" % self.inits[0]))
+        except ValueError:
+            self.isDirect = False
 
         # initialize coordinates
         self.up_axis, self.mirror_axis, self.look_axis = functions.getRigAxes(self.inits[0])
@@ -143,20 +155,34 @@ class Singleton(object):
         for nmb, j in enumerate(self.inits):
             cmds.select(d=True)
             j_def = cmds.joint(name="jDef_{0}_{1}".format(j, self.suffix))
-            j_def_off = functions.createUpGrp(j_def, "bind")
+            j_def_off = functions.createUpGrp(j_def, "off")
+            j_def_bind = functions.createUpGrp(j_def, "bind")
 
             cont = Controller(name="%s%s_cont" % (self.suffix, nmb + 1), shape="Circle")
             cont.set_side(side=self.side)
             cont_bind = cont.add_offset("bind")
             cont_off = cont.add_offset("pos")
             functions.alignTo(cont_off, j, position=True, rotation=True)
-            connection.matrixConstraint(cont.name, j_def_off, mo=False, source_parent_cutoff=self.localOffGrp)
+            # connection.matrixConstraint(cont.name, j_def_bind, mo=False, source_parent_cutoff=self.localOffGrp)
+            # connection.matrixConstraint(cont.name, j_def_bind, mo=False, source_parent_cutoff=cont_bind)
             # connection.matrixConstraint(cont.name, j_def, mo=False, source_parent_cutoff=self.localOffGrp)
             # cmds.parentConstraint(cont.name, j_def, mo=False)
+
+            _cutoff = self.localOffGrp
             if self.surface:
                 # if there is a surface constraint, matrix constraint it to the surface and ignore limbPlug
                 fol = parentToSurface.parentToSurface([cont_bind], self.surface, mode="matrixConstraint")
                 cmds.parent(fol, self.follicle_grp)
+                _cutoff = cont_bind if self.isLocal else self.localOffGrp
+
+            if self.isDirect:
+                cmds.connectAttr("%s.t" % cont.name, "%s.t" % j_def_bind)
+                cmds.connectAttr("%s.r" % cont.name, "%s.r" % j_def_bind)
+                cmds.connectAttr("%s.s" % cont.name, "%s.s" % j_def_bind)
+                # Since the connection happening in local transform space, we need to move the joint to its position
+                functions.alignTo(j_def_off, j, position=True, rotation=True)
+            else:
+                connection.matrixConstraint(cont.name, j_def_bind, mo=False, source_parent_cutoff=_cutoff)
             # else:
             #     if not self.isLocal:
             #         # follow the limb plug only if the joints are not local
@@ -164,6 +190,7 @@ class Singleton(object):
             #         # connection.matrixConstraint(self.limbPlug, cont_bind, source_parent_cutoff=self.localOffGrp)
 
             cmds.parent(cont_bind, self.conts_grp)
+            # cmds.parent(j_def_bind, self.joints_grp)
             cmds.parent(j_def_off, self.joints_grp)
 
             self.sockets.append(j_def)

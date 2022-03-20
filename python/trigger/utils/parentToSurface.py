@@ -13,7 +13,7 @@ def convertToCmFactor():
     except KeyError:
         return 1.0
 
-def parentToSurface(objects=None, surface=None, mode="parent"):
+def parentToSurface(objects=None, surface=None, mode="parent", source_parent_cutoff=None):
     """
     Attaches the given objects to the surface by follicles
     Args:
@@ -21,6 +21,7 @@ def parentToSurface(objects=None, surface=None, mode="parent"):
         surface: (String) The surface that the objects will be attached on. Comptaible types are mesh and nurbs
         mode: attach mode. Valid values are 'parent', 'parentConstraint', 'pointConstraint', 'matrixConstraint'
                             and 'None'
+        source_parent_cutoff: (String) Only valid with 'matrixConstraint' mode. specified object will reverse-followed
 
     Returns: Follicle Transform Node
 
@@ -104,7 +105,7 @@ def parentToSurface(objects=None, surface=None, mode="parent"):
         if mode == "pointconstraint":
             cmds.pointConstraint(follicleDag, obj, mo=True)
         if mode == "matrixconstraint":
-            matrixConstraint(follicleDag, obj, mo=True)
+            matrixConstraint(follicleDag, obj, mo=True, source_parent_cutoff=source_parent_cutoff)
         if mode == "none":
             pass
 
