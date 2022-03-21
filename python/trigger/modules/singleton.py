@@ -55,6 +55,8 @@ class Singleton(object):
             self.singletonRoot = build_data.get("SingletonRoot")
             self.singletons = build_data.get("Singleton", [])
             self.inits = [self.singletonRoot] + self.singletons
+        elif inits:
+            self.inits = inits
         else:
             log.error("Class needs either build_data or inits to be constructed")
 
@@ -159,6 +161,7 @@ class Singleton(object):
             j_def_bind = functions.createUpGrp(j_def, "bind")
 
             cont = Controller(name="%s%s_cont" % (self.suffix, nmb + 1), shape="Circle")
+            cont.drive_visibility("%s.contVis" % self.scaleGrp, lock_and_hide=True)
             cont.set_side(side=self.side)
             cont_bind = cont.add_offset("bind")
             cont_off = cont.add_offset("pos")

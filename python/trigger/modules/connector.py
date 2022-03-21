@@ -76,12 +76,21 @@ class Connector(object):
         log.info("Creating Root %s" % self.suffix)
 
         self.scaleGrp = cmds.group(name="%s_scaleGrp" % self.suffix, em=True)
+        cmds.addAttr(self.scaleGrp, at="bool", ln="Control_Visibility", sn="contVis", defaultValue=True)
+        cmds.addAttr(self.scaleGrp, at="bool", ln="Joints_Visibility", sn="jointVis", defaultValue=True)
+        cmds.addAttr(self.scaleGrp, at="bool", ln="Rig_Visibility", sn="rigVis", defaultValue=False)
+        # make the created attributes visible in the channelbox
+        cmds.setAttr("%s.contVis" % self.scaleGrp, cb=True)
+        cmds.setAttr("%s.jointVis" % self.scaleGrp, cb=True)
+        cmds.setAttr("%s.rigVis" % self.scaleGrp, cb=True)
+
         self.limbGrp = cmds.group(name=self.suffix, em=True)
         cmds.parent(self.scaleGrp, self.nonScaleGrp, self.cont_IK_OFF, self.limbGrp)
 
         self.scaleConstraints.append(self.scaleGrp)
 
         defJ_root = cmds.joint(name="jDef_%s" % self.suffix)
+
         log.warning(self.useRefOrientation)
         functions.alignTo(defJ_root, self.rootInit, position=True, rotation=self.useRefOrientation)
 
@@ -100,6 +109,9 @@ class Connector(object):
             cmds.setAttr("%s.drawStyle" % defJ_root, 2)
         else:
             self.deformerJoints.append(defJ_root)
+
+        cmds.connectAttr("%s.jointVis" % self.scaleGrp, "%s.v" % defJ_root)
+        cmds.connectAttr("%s.jointVis" % self.scaleGrp, "%s.v" % self.limbGrp)
 
 class Guides(object):
     def __init__(self, side="L", suffix="root", segments=None, tMatrix=None, upVector=(0, 1, 0), mirrorVector=(1, 0, 0), lookVector=(0,0,1), *args, **kwargs):
