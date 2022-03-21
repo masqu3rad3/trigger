@@ -247,7 +247,7 @@ class Guides(object):
         r_point_j = om.MVector(0, 0, 0) * self.tMatrix
         if not self.segments:
             self.offsetVector = om.MVector(0, 1, 0)
-            singleton_root_jnt = cmds.joint(name="root_{0}".format(self.suffix))
+            singleton_root_jnt = cmds.joint(name="jInit_singleton_{0}".format(self.suffix))
             self.guideJoints.append(singleton_root_jnt)
             return
 
