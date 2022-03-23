@@ -474,7 +474,7 @@ def pin_to_surface(node, surface, sr="", st="", ss="xyz"):
     return uv_pin
 
 
-def averageConstraint(target_mesh, vertex_list, source_object=None, offsetParent=False):
+def averageConstraint(target_mesh, vertex_list, source_object=None, offsetParent=False, force_follicle=False):
     """
     Creates a average weighted constraint between defined vertices. Works version 2020+
     Args:
@@ -483,17 +483,24 @@ def averageConstraint(target_mesh, vertex_list, source_object=None, offsetParent
         source_object: (String) If not defined a locator will be created instead
         offsetParent: (Boolean) If True, the matrix output will be connected to offset parent matrix of
                     of the source object, leaving the transform values available
+        force_follicle: (Boolean) If True, follicles will be used instead of pin constraints.
+                                ATTENTION: Follicles wont follow face normals if the normals are locked
 
     Returns:(String) source object. It will be the created locator if none provided
 
     """
-    assert cmds.about(api=True) >= 20200000, "uv_pin requires Maya 2020 and later"
+    if not force_follicle:
+        assert cmds.about(api=True) >= 20200000, "uv_pin requires Maya 2020 and later"
     average_node = cmds.createNode("wtAddMatrix")
     weight_value = 1.0 / float(len(vertex_list))
     for i, vertex_nmb in enumerate(vertex_list):
         uv = getVertexUV(target_mesh, vertex_nmb)
-        pin_node = uvPin(target_mesh, uv)
-        cmds.connectAttr("%s.outputMatrix[0]" % pin_node, "{0}.wtMatrix[{1}].matrixIn".format(average_node, i))
+        if force_follicle:
+            pin_node, _ = create_follicle("pin%i" %i, target_mesh, uv)
+            cmds.connectAttr("%s.worldMatrix[0]" % pin_node, "{0}.wtMatrix[{1}].matrixIn".format(average_node, i))
+        else:
+            pin_node = uvPin(target_mesh, uv)
+            cmds.connectAttr("%s.outputMatrix[0]" % pin_node, "{0}.wtMatrix[{1}].matrixIn".format(average_node, i))
         cmds.setAttr("{0}.wtMatrix[{1}].weightIn".format(average_node, i), weight_value)
 
     if not source_object:
