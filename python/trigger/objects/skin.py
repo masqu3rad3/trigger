@@ -12,6 +12,27 @@ from trigger.core import filelog
 
 log = filelog.Filelog(logname=__name__, filename="trigger_log")
 
+def multiplyList(list_of_values):
+    # Multiply elements one by one
+    result = 1
+    for x in list_of_values:
+        result = result * x
+    return result
+
+
+def addList(list_of_values):
+    result = 0
+    for x in list_of_values:
+        result += x
+    return result
+
+
+def subtractList(list_of_values):
+    result = list_of_values[0]
+    for x in list_of_values[1:]:
+        result += x
+    return result
+
 class Weight(object):
     def __init__(self, source=None):
         super(Weight, self).__init__()
@@ -90,6 +111,18 @@ class Weight(object):
 
         geo = cmds.skinCluster(deformer, q=True, geometry=True)[0]
         # compare the vertex size and act accordingly if the topologies are different
+        # print("-------------------------------------")
+        # print("-------------------------------------")
+        # print("-------------------------------------")
+        # print("-------------------------------------")
+        # print("-------------------------------------")
+        # from pprint import pprint
+        # pprint(self._data["deformerWeight"]["weights"])
+        # print("-------------------------------------")
+        # print("-------------------------------------")
+        # print("-------------------------------------")
+        # print("-------------------------------------")
+        # print("-------------------------------------")
         if len(api.getAllVerts(geo)) == self.get_vertex_count():
             # same topology
             self.__set_weights(deformer, geo, self.__convert_to_m_array(self._data))
@@ -186,6 +219,21 @@ class Weight(object):
         """Gets the weight dictionary from specified file path"""
         return IO(file_path=path).read()
 
+    def __points_to_dict(self, points_data):
+        """Converts hard to calculate point data in json file to easy to iterate dictionary"""
+        _dict_data = {}
+        for x in points_data:
+            _dict_data[x["index"]] = x["value"]
+        return _dict_data
+
+    def __dict_to_points(self, dict_data):
+        """Converts back the dict data to maya weights JSON compatible point data"""
+        points_list = []
+        for index, value in dict_data.items():
+            points_list.append({"index": index, "value": value})
+        return points_list
+
+
     def get_influence_data(self, influence_name):
         """searches the data dictionary and returns the related influence dictionary like
         Args:
@@ -233,10 +281,28 @@ class Weight(object):
         Returns: None
 
         """
+
         _influence_name = influence_data.get("source", None)
         if self.get_influence_data(_influence_name) and not force:
             raise Exception("Data already contains weights data for %s" % _influence_name)
-        self._data["deformerWeight"]["weights"].append(influence_data)
+        # match the deformer and shape
+        _deformer = self._data["deformerWeight"]["deformers"][0]["name"]
+        _shape = self._data["deformerWeight"]["shapes"][0]["name"]
+        influence_data["deformer"] = _deformer
+        influence_data["shape"] = _shape
+
+        self._data["deformerWeight"]["weights"].append(copy.copy(influence_data))
+        # print("----------------------")
+        # print("----------------------")
+        # print("----------------------")
+        # print("----------------------")
+        # print("----------------------")
+        # from pprint import pprint
+        # pprint(self._data["deformerWeight"]["weights"])
+        # print("----------------------")
+        # print("----------------------")
+        # print("----------------------")
+        # print("----------------------")
 
     def negate(self, influences=None):
         """
@@ -259,6 +325,46 @@ class Weight(object):
         for weights in weight_list:
             for vert in weights["points"]:
                 vert["value"] = 1 - vert["value"]
+
+    def subtract(self, influences, influence_data, clamp=True):
+        """removes the influence data from defined influences"""
+        if isinstance(influences, str):
+            influences = [influences]
+        # first convert the weights list of dictionaries data into a simpler dictionary
+        # where the key is the vtx id and value is the value
+        subtract_dict_data = self.__points_to_dict(influence_data["points"])
+        for inf in influences:
+            source_data = self.get_influence_data(inf)
+            print(inf)
+            print(source_data)
+            # Do the same conversion for the source influence weights
+            weight_dict_data = self.__points_to_dict(source_data["points"])
+            for idx, value in weight_dict_data.items():
+                new_val = value - subtract_dict_data.get(idx, 0)
+                if clamp:
+                    new_val = max(min(new_val, 1.0), 0.0)
+                weight_dict_data[idx] = new_val
+            # convert it back and put it back
+            source_data["points"] = self.__dict_to_points(weight_dict_data)
+
+
+
+
+
+        # # TODO : not tested
+        # copy_data = copy.deepcopy(data_list[0])
+        # for weights_list_nmb, weights in enumerate(copy_data["deformerWeight"]["weights"]):
+        #     if influencer and weights["source"] != influencer:
+        #         continue
+        #     for point_nmb, point in enumerate(weights["points"]):
+        #         point_values = []
+        #         for data_list_nmb, json_data in enumerate(data_list):
+        #             val = json_data["deformerWeight"]["weights"][weights_list_nmb]["points"][point_nmb]["value"]
+        #             point_values.append(val)
+        #         point["value"] = subtractList(point_values)
+        #         if clamp:
+        #             point["value"] = max(min(point["value"], 1.0), 0.0)
+        # return copy_data
 
     @staticmethod
     def __convert_to_m_array(json_data):

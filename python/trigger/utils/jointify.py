@@ -23,6 +23,7 @@ import maya.OpenMayaAnim as oma
 from trigger.library import deformers, attribute, functions, api, arithmetic, naming, transform
 from trigger.core.decorators import keepselection, viewportOff
 from trigger.library import connection
+from trigger.objects import skin
 from trigger.utils import skinTransfer
 from trigger.core import filelog
 
@@ -581,7 +582,45 @@ class Jointify(object):
 
         # transfer the skin weights, but dont activate the skincluster yet
         cmds.currentTime(0.0)
-        jointify_sc = skinTransfer.skinTransfer(source=self.demData["meshTransform"], target=self.trainingData["mesh"])[0]
+
+        # transfer skin
+        # mesh_sc = cmds.ls(self.trainingData["mesh"], type="skinCluster")
+        mesh_sc = deformers.get_deformers(self.trainingData["mesh"]).get("skinCluster", None)
+        if not mesh_sc:
+            jointify_sc = skinTransfer.skinTransfer(source=self.demData["meshTransform"], target=self.trainingData["mesh"])[0]
+        else:
+            jointify_sc = mesh_sc[0]
+            cmds.skinCluster(jointify_sc, edit=True, normalizeWeights=0)
+            # dem_sc = cmds.ls(self.demData["meshTransform"], type="skinCluster")[0]
+            dem_sc = deformers.get_deformers(self.demData["meshTransform"]).get("skinCluster", None)[0]
+            mesh_sc_weights = skin.Weight(jointify_sc)
+            dem_sc_weights = skin.Weight(dem_sc)
+            dem_sc_influences = dem_sc_weights.get_all_influences()
+            mesh_sc_influences = mesh_sc_weights.get_all_influences()
+
+            test_data = dem_sc_weights.get_influence_data("joint1")
+            for inf in mesh_sc_influences:
+                mesh_sc_weights.subtract(inf, test_data)
+            mesh_sc_weights.add_influence(test_data)
+            # for inf in dem_sc_influences:
+            #     if inf not in mesh_sc_influences:
+            #         mesh_sc_weights.add_influence(dem_sc_weights.get_influence_data(inf))
+            print("-------------------------------------")
+            print("-------------------------------------")
+            print("-------------------------------------")
+            print("-------------------------------------")
+            print("-------------------------------------")
+            from pprint import pprint
+            pprint(test_data)
+            print("-------------------------------------")
+            print("-------------------------------------")
+            print("-------------------------------------")
+            print("-------------------------------------")
+            print("-------------------------------------")
+            mesh_sc_weights.apply(jointify_sc)
+
+
+
         cmds.setAttr("%s.nodeState" % jointify_sc, 1)
 
         root_joints_data = {}
@@ -607,7 +646,8 @@ class Jointify(object):
         # tidy up the scene with groups
         drivers_grp = functions.validateGroup("jointifyDrv_grp")
 
-        bone_objects = [Bone(x) for x in self.demData["joints"] if x is not "jointifyRoot_jnt"]
+        # bone_objects = [Bone(x) for x in self.demData["joints"] if x is not "jointifyRoot_jnt"]
+        bone_objects = [Bone(x) for x in self.demData["joints"] if x != "jointifyRoot_jnt"]
 
         jointify_node = functions.validateGroup("jointify")
 
