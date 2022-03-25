@@ -398,15 +398,21 @@ class Weight(object):
 
         return [u, v, w]
 
-    def test_get_weights(self, skincluster, mesh):
-        return self.__get_weights(skincluster, mesh)
+    # def test_get_weights(self, skincluster, mesh):
+    #     return self.__get_weights(skincluster, mesh)
+    #
+    # def test_set_weights(self, skincluster, mesh, m_array):
+    #     self.__set_weights(skincluster, mesh, m_array)
+    #
+    # def test_get_blend_weights(self, skincluster, mesh):
+    #     return self.__get_blend_weights(skincluster, mesh)
+    #
+    # def test_set_blend_weights(self, skincluster, mesh, m_array):
+    #     self.__set_blend_weights(skincluster, mesh, m_array)
 
-    def test_set_weights(self, skincluster, mesh, m_array):
-        self.__set_weights(skincluster, mesh, m_array)
+    def _clamp_point_weights(self, constant_inf_data):
+        """uses the constant_inf_data values as constant and removes the excess values from other influences"""
+        # get the
+        for point_data in constant_inf_data["points"]:
 
-    def test_get_blend_weights(self, skincluster, mesh):
-        return self.__get_blend_weights(skincluster, mesh)
-
-    def test_set_blend_weights(self, skincluster, mesh, m_array):
-        self.__set_blend_weights(skincluster, mesh, m_array)
-
+        pass
