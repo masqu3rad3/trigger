@@ -12,6 +12,10 @@ from trigger.core import filelog
 
 log = filelog.Filelog(logname=__name__, filename="trigger_log")
 
+
+def clamp(num, min_value=0, max_value=1):
+    return max(min(num, max_value), min_value)
+
 def multiplyList(list_of_values):
     # Multiply elements one by one
     result = 1
@@ -111,18 +115,6 @@ class Weight(object):
 
         geo = cmds.skinCluster(deformer, q=True, geometry=True)[0]
         # compare the vertex size and act accordingly if the topologies are different
-        # print("-------------------------------------")
-        # print("-------------------------------------")
-        # print("-------------------------------------")
-        # print("-------------------------------------")
-        # print("-------------------------------------")
-        # from pprint import pprint
-        # pprint(self._data["deformerWeight"]["weights"])
-        # print("-------------------------------------")
-        # print("-------------------------------------")
-        # print("-------------------------------------")
-        # print("-------------------------------------")
-        # print("-------------------------------------")
         if len(api.getAllVerts(geo)) == self.get_vertex_count():
             # same topology
             self.__set_weights(deformer, geo, self.__convert_to_m_array(self._data))
@@ -271,7 +263,7 @@ class Weight(object):
             if weights["source"] == influence_name:
                 self._data["deformerWeight"]["weights"].remove(weights)
 
-    def add_influence(self, influence_data, force=True):
+    def add_influence(self, influence_data, force=True, normalize_other_influences=True):
         """
         Adds the influence to the data
         Args:
@@ -281,7 +273,8 @@ class Weight(object):
         Returns: None
 
         """
-
+        if normalize_other_influences:
+            self._clamp_point_weights(influence_data)
         _influence_name = influence_data.get("source", None)
         if self.get_influence_data(_influence_name) and not force:
             raise Exception("Data already contains weights data for %s" % _influence_name)
@@ -292,17 +285,6 @@ class Weight(object):
         influence_data["shape"] = _shape
 
         self._data["deformerWeight"]["weights"].append(copy.copy(influence_data))
-        # print("----------------------")
-        # print("----------------------")
-        # print("----------------------")
-        # print("----------------------")
-        # print("----------------------")
-        # from pprint import pprint
-        # pprint(self._data["deformerWeight"]["weights"])
-        # print("----------------------")
-        # print("----------------------")
-        # print("----------------------")
-        # print("----------------------")
 
     def negate(self, influences=None):
         """
@@ -335,8 +317,6 @@ class Weight(object):
         subtract_dict_data = self.__points_to_dict(influence_data["points"])
         for inf in influences:
             source_data = self.get_influence_data(inf)
-            print(inf)
-            print(source_data)
             # Do the same conversion for the source influence weights
             weight_dict_data = self.__points_to_dict(source_data["points"])
             for idx, value in weight_dict_data.items():
@@ -385,9 +365,6 @@ class Weight(object):
             for point_data in inf_data["points"]:
                 data_index = (point_data["index"] * inf_count) + layer
                 m_array[data_index] = point_data["value"]
-                # if point_data["value"] > 1.0:
-                #     print(point_data["value"])
-
         return m_array
 
     @staticmethod
@@ -518,7 +495,49 @@ class Weight(object):
 
     def _clamp_point_weights(self, constant_inf_data):
         """uses the constant_inf_data values as constant and removes the excess values from other influences"""
-        # get the
-        for point_data in constant_inf_data["points"]:
+        # convert all influence weights into dictionary right at the beginning (so only once per influence)
+        inf_dict = {}
+        for inf in self._data["deformerWeight"]["weights"]:
+            p_dict = self.__points_to_dict(inf["points"])
+            inf_dict[inf.get("source")] = p_dict
+
+        # get the list of vtx and remaining values
+        # reduction_dict = {} # dictionary of excess values that needs to be reduced from the other incluences
+        for points_data in constant_inf_data["points"]:
+            vtx_id = points_data["index"]
+            excess_value = clamp(points_data["value"])
+            # excess_value = clamp((1 - points_data["value"]))
+            # reduction_dict[vtx_id] = excess_value
+            # build a dictionary for that vtx where keys are influences
+            vtx_inf_dict = {}
+            for inf_name, p_dict in inf_dict.items():
+                # p_dict = self.__points_to_dict(inf["points"])
+                value = p_dict.get(vtx_id, 0) # get the value on the vtx id
+                vtx_inf_dict[inf_name] = value
+            #
+            impact_list = list(reversed(sorted(vtx_inf_dict, key=vtx_inf_dict.get)))
+            while excess_value > 0:
+                counter = 0
+                _inf = impact_list[counter]
+                original_value = inf_dict[_inf].get(vtx_id, 0)
+                # print(original_value)
+                inf_dict[_inf].update({vtx_id:clamp(original_value-excess_value)})
+                counter += 1
+                excess_value = excess_value - original_value
+
+            # convert back to the maya JSON compatibility
+            for inf_data in self._data["deformerWeight"]["weights"]:
+                inf_name = inf_data.get("source")
+                reconverted_points_data = self.__dict_to_points(inf_dict[inf_name])
+                inf_data["points"] = reconverted_points_data
+
+
+        # find the next biggest impact on this vtx and steal from it
+
+            # for inf in self._data["deformerWeight"]["weights"]:
+            #     points_dict = self.__points_to_dict(inf["points"])
+
+            # if excess_value <= 0:
+                # if the vtx has full weights on this influence, simply remove this vertex from all influences
 
         pass
