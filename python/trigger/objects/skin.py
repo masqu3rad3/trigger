@@ -516,14 +516,23 @@ class Weight(object):
                 vtx_inf_dict[inf_name] = value
             #
             impact_list = list(reversed(sorted(vtx_inf_dict, key=vtx_inf_dict.get)))
-            while excess_value > 0:
-                counter = 0
-                _inf = impact_list[counter]
+            # print(impact_list)
+            for _inf in impact_list:
                 original_value = inf_dict[_inf].get(vtx_id, 0)
-                # print(original_value)
+                print("****")
+                print(original_value)
                 inf_dict[_inf].update({vtx_id:clamp(original_value-excess_value)})
-                counter += 1
-                excess_value = excess_value - original_value
+                print(_inf, excess_value)
+                excess_value = clamp(excess_value - original_value)
+
+            # while excess_value > 0:
+            #     counter = 0
+            #     _inf = impact_list[counter]
+            #     original_value = inf_dict[_inf].get(vtx_id, 0)
+            #     # print(original_value)
+            #     inf_dict[_inf].update({vtx_id:clamp(original_value-excess_value)})
+            #     counter += 1
+            #     excess_value = excess_value - original_value
 
             # convert back to the maya JSON compatibility
             for inf_data in self._data["deformerWeight"]["weights"]:
@@ -540,4 +549,3 @@ class Weight(object):
             # if excess_value <= 0:
                 # if the vtx has full weights on this influence, simply remove this vertex from all influences
 
-        pass
