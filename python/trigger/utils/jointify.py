@@ -599,8 +599,8 @@ class Jointify(object):
             mesh_sc_influences = mesh_sc_weights.get_all_influences()
 
             test_data = dem_sc_weights.get_influence_data("joint1")
-            for inf in mesh_sc_influences:
-                mesh_sc_weights.subtract(inf, test_data)
+            # for inf in mesh_sc_influences:
+            #     mesh_sc_weights.subtract(inf, test_data)
             mesh_sc_weights.add_influence(test_data)
             # for inf in dem_sc_influences:
             #     if inf not in mesh_sc_influences:

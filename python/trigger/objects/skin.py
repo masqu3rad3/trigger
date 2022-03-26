@@ -263,6 +263,12 @@ class Weight(object):
             if weights["source"] == influence_name:
                 self._data["deformerWeight"]["weights"].remove(weights)
 
+    def _get_last_layer(self):
+        _layers = []
+        for weights in self._data["deformerWeight"]["weights"]:
+            _layers.append(weights.get("layer", 0))
+        return max(_layers)
+
     def add_influence(self, influence_data, force=True, normalize_other_influences=True):
         """
         Adds the influence to the data
@@ -283,6 +289,7 @@ class Weight(object):
         _shape = self._data["deformerWeight"]["shapes"][0]["name"]
         influence_data["deformer"] = _deformer
         influence_data["shape"] = _shape
+        influence_data["layer"] = self._get_last_layer()+1
 
         self._data["deformerWeight"]["weights"].append(copy.copy(influence_data))
 
@@ -492,7 +499,6 @@ class Weight(object):
     #
     # def test_set_blend_weights(self, skincluster, mesh, m_array):
     #     self.__set_blend_weights(skincluster, mesh, m_array)
-
     def _clamp_point_weights(self, constant_inf_data):
         """uses the constant_inf_data values as constant and removes the excess values from other influences"""
         # convert all influence weights into dictionary right at the beginning (so only once per influence)
@@ -539,13 +545,4 @@ class Weight(object):
                 inf_name = inf_data.get("source")
                 reconverted_points_data = self.__dict_to_points(inf_dict[inf_name])
                 inf_data["points"] = reconverted_points_data
-
-
-        # find the next biggest impact on this vtx and steal from it
-
-            # for inf in self._data["deformerWeight"]["weights"]:
-            #     points_dict = self.__points_to_dict(inf["points"])
-
-            # if excess_value <= 0:
-                # if the vtx has full weights on this influence, simply remove this vertex from all influences
 
