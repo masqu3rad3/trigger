@@ -868,11 +868,7 @@ class Jointify(object):
         bs_sel.getDependNode(0, bs_mobj)
 
         # get affected shapes api MObject
-        transform_name = cmds.listConnections("{0}.outputGeometry".format(blendshape_node))[0]
-        # TODO here throws an error when 'auto' duration defined for a geo with existing skincluster
-        #     mesh_name = cmds.listRelatives(transform_name, children=True)[0]
-        #     TypeError: 'NoneType' object is not subscriptable
-        mesh_name = cmds.listRelatives(transform_name, children=True)[0]
+        mesh_name = cmds.deformer(blendshape_node, q=True, geometry=True)[0]
         mesh_sel = om.MSelectionList()
         mesh_sel.add(mesh_name)
         mesh_dag = om.MDagPath()
