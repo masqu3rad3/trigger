@@ -25,6 +25,7 @@ ACTION_DATA = {
     "joint_iterations": 30,
     "fbx_source": "",
     "root_nodes": [],
+    "parent_to_roots": True,
     "correctives": False,
     "corrective_threshold": 0.01,
 }
@@ -44,6 +45,7 @@ class Jointify(object):
         self.joint_iterations = None
         self.fbx_source = None
         self.root_nodes = None
+        self.parent_to_roots = None
         self.correctives = None
         self.corrective_threshold = None
 
@@ -58,6 +60,7 @@ class Jointify(object):
         self.joint_iterations = action_data.get("joint_iterations")
         self.fbx_source = action_data.get("fbx_source")
         self.root_nodes = action_data.get("root_nodes")
+        self.parent_to_roots = action_data.get("parent_to_roots", True)
         self.correctives = action_data.get("correctives")
         self.corrective_threshold = action_data.get("corrective_threshold")
 
@@ -72,6 +75,7 @@ class Jointify(object):
                                    joint_iterations=self.joint_iterations,
                                    fbx_source=self.fbx_source,
                                    root_nodes=self.root_nodes,
+                                   parent_to_roots=self.parent_to_roots,
                                    correctives=self.correctives,
                                    corrective_threshold=self.corrective_threshold)
 
@@ -152,6 +156,12 @@ class Jointify(object):
         root_nodes_le_box.buttonGet.setMaximumWidth(30)
         root_nodes_le_box.buttonGet.setToolTip("Gets the selected objects")
         layout.addRow(root_nodes_lbl, root_nodes_le_box)
+
+        parent_to_roots_lbl = QtWidgets.QLabel(text="Parent To Roots")
+        parent_to_roots_cb = QtWidgets.QCheckBox()
+        parent_to_roots_cb.setToolTip("If checked the defined roots will be used as parent for jointifed bones."
+                                      "Otherwise, new joints on root locations will be created")
+        layout.addRow(parent_to_roots_lbl, parent_to_roots_cb)
         
         correctives_lbl = QtWidgets.QLabel(text="Extra Correctives")
         correctives_cb = QtWidgets.QCheckBox()
@@ -174,6 +184,7 @@ class Jointify(object):
         ctrl.connect(joint_iterations_sp, "joint_iterations", int)
         ctrl.connect(fbx_source_le, "fbx_source", str)
         ctrl.connect(root_nodes_le_box.viewWidget, "root_nodes", list)
+        ctrl.connect(parent_to_roots_cb, "parent_to_roots", bool)
         ctrl.connect(correctives_cb, "correctives", bool)
         ctrl.connect(corrective_threshold_sp, "corrective_threshold", float)
         ctrl.update_ui()
@@ -225,6 +236,7 @@ class Jointify(object):
         browse_path_pb.clicked.connect(lambda: ctrl.update_model())
         root_nodes_le_box.buttonGet.clicked.connect(lambda: get_root_nodes())
         root_nodes_le_box.viewWidget.textChanged.connect(lambda: ctrl.update_model())
+        parent_to_roots_cb.stateChanged.connect(lambda: ctrl.update_model())
         correctives_cb.stateChanged.connect(lambda: ctrl.update_model())
         corrective_threshold_sp.valueChanged.connect(lambda: ctrl.update_model())
         auto_shape_duration_cb.stateChanged.connect(lambda state: shape_duration_sp.setDisabled(state))

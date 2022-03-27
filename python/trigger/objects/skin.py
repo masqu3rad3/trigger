@@ -525,10 +525,7 @@ class Weight(object):
             # print(impact_list)
             for _inf in impact_list:
                 original_value = inf_dict[_inf].get(vtx_id, 0)
-                print("****")
-                print(original_value)
                 inf_dict[_inf].update({vtx_id:clamp(original_value-excess_value)})
-                print(_inf, excess_value)
                 excess_value = clamp(excess_value - original_value)
 
             # while excess_value > 0:

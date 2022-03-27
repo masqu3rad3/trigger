@@ -263,6 +263,7 @@ class Jointify(object):
                  joint_iterations=30,
                  fbx_source=None,
                  root_nodes=None,
+                 parent_to_roots=True,
                  correctives=False,
                  corrective_threshold=0.01,
                  *args, **kwargs):
@@ -290,6 +291,8 @@ class Jointify(object):
                 self.rootNodes = root_nodes
         else:
             self.rootNodes = [cmds.spaceLocator(name="jointify_rootLoc")[0]]
+
+        self.parent_to_roots = parent_to_roots
 
         # class variables
         self.dem_exec = self._get_dem_bones()
@@ -597,26 +600,21 @@ class Jointify(object):
             dem_sc_weights = skin.Weight(dem_sc)
             dem_sc_influences = dem_sc_weights.get_all_influences()
             mesh_sc_influences = mesh_sc_weights.get_all_influences()
+            # print("----------------------------")
+            # print("----------------------------")
+            # print("----------------------------")
+            # print("----------------------------")
+            # print("----------------------------")
+            # print(dem_sc_influences)
+            for inf in dem_sc_influences:
+                # skip joint0 which is the root joint of dembones
+                if inf == "joint0":
+                    continue
+                _data = dem_sc_weights.get_influence_data(inf)
+                mesh_sc_weights.add_influence(_data)
+            # test_data = dem_sc_weights.get_influence_data("joint1")
+            # mesh_sc_weights.add_influence(test_data)
 
-            test_data = dem_sc_weights.get_influence_data("joint1")
-            # for inf in mesh_sc_influences:
-            #     mesh_sc_weights.subtract(inf, test_data)
-            mesh_sc_weights.add_influence(test_data)
-            # for inf in dem_sc_influences:
-            #     if inf not in mesh_sc_influences:
-            #         mesh_sc_weights.add_influence(dem_sc_weights.get_influence_data(inf))
-            print("-------------------------------------")
-            print("-------------------------------------")
-            print("-------------------------------------")
-            print("-------------------------------------")
-            print("-------------------------------------")
-            from pprint import pprint
-            pprint(test_data)
-            print("-------------------------------------")
-            print("-------------------------------------")
-            print("-------------------------------------")
-            print("-------------------------------------")
-            print("-------------------------------------")
             mesh_sc_weights.apply(jointify_sc)
 
 
@@ -625,10 +623,13 @@ class Jointify(object):
 
         root_joints_data = {}
         for root_node in self.rootNodes:
-            cmds.select(d=True)
             root_pos = api.getWorldTranslation(root_node)
-            root_jnt = cmds.joint(name="jntfRoot_%s" %root_node)
-            cmds.setAttr("%s.t" % root_jnt, *root_pos)
+            if self.parent_to_roots:
+                root_jnt = root_node
+            else:
+                cmds.select(d=True)
+                root_jnt = cmds.joint(name="jntfRoot_%s" %root_node)
+                cmds.setAttr("%s.t" % root_jnt, *root_pos)
             root_joints_data[root_jnt] = root_pos
 
         for dem_jnt in self.demData["joints"]:
@@ -742,6 +743,10 @@ class Jointify(object):
         cmds.setAttr("%s.nodeState" % jointify_sc, 0)
         functions.deleteObject(self.demData["meshTransform"])
         functions.deleteObject(temp_grp)
+
+        # rename all the dembones joints so they wont clash with other jointifies
+        for bone in bone_objects:
+            bone.name = "{0}_{1}".format(self.blendshapeNode, bone.name)
 
         end_time = time.time()
         self.log.info("Connections created in %s seconds" % (end_time-start_time))
@@ -864,6 +869,9 @@ class Jointify(object):
 
         # get affected shapes api MObject
         transform_name = cmds.listConnections("{0}.outputGeometry".format(blendshape_node))[0]
+        # TODO here throws an error when 'auto' duration defined for a geo with existing skincluster
+        #     mesh_name = cmds.listRelatives(transform_name, children=True)[0]
+        #     TypeError: 'NoneType' object is not subscriptable
         mesh_name = cmds.listRelatives(transform_name, children=True)[0]
         mesh_sel = om.MSelectionList()
         mesh_sel.add(mesh_name)

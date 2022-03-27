@@ -400,7 +400,7 @@ Then you can save and increment versions for all of them at once.
 
             elif deformer_type == "deltaMush":
                 cmds.deltaMush(affected[0], name=deformer_name)
-                if 20209999 < self._api_version < 20230000:
+                if 20209999 < self._api_version < 20220300:
                     deferred_loading = True
 
             else:
