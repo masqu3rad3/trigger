@@ -69,10 +69,10 @@ class Weight(object):
         if isinstance(source, dict):
             _data = source
         elif isinstance(source, str):
-            if cmds.ls(source, type="skinCluster"):
-                _data = self.__read_data_from_deformer(source)
-            elif os.path.isfile(source):
+            if os.path.isfile(source):
                 _data = self.__read_data_from_file(source)
+            elif cmds.ls(source, type="skinCluster"):
+                _data = self.__read_data_from_deformer(source)
             else:
                 raise Exception("Source (%s) cannot identified neither as a file or skinCluster" % source)
         else:

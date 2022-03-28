@@ -12,6 +12,8 @@ from trigger.library import functions
 from trigger.library import naming
 from trigger.library import deformers
 
+from trigger.objects import skin
+
 from trigger.ui.Qt import QtWidgets, QtGui  # for progressbar
 from trigger.ui import custom_widgets
 from trigger.ui.widgets.browser_button import BrowserButton
@@ -231,11 +233,15 @@ Then you can save and increment versions for all of them at once.
         # extra attributes for recreation
         deformer_type = cmds.objectType(deformer)
         export_dq_weights = False
+
+        # hot fix to speed up skinClusters
+        default_value = -1.0
         if deformer_type == "skinCluster":
             attributes = ["envelope", "skinningMethod", "useComponents", "normalizeWeights", "deformUserNormals"]
             # in case DQ blendweight mode, flag for adding DQ to the file afterwards
             if cmds.getAttr("%s.skinningMethod" % deformer) == 2:
                 export_dq_weights = True
+            default_value = 0.0
         elif deformer_type == "shrinkWrap":
             attributes = ["projection", "closestIfNoIntersection", "reverse", "bidirectional", "offset",
                           "targetInflation",
@@ -252,7 +258,8 @@ Then you can save and increment versions for all of them at once.
         # TODO: ADD ATTRIBUTES FOR ALL DEFORMER TYPES
 
         # default value -1 means export all weights!
-        cmds.deformerWeights(file_name, export=True, deformer=deformer, path=file_dir, defaultValue=-1.0,
+
+        cmds.deformerWeights(file_name, export=True, deformer=deformer, path=file_dir, defaultValue=default_value,
                              vc=vertexConnections, at=attributes)
 
         if export_dq_weights:
@@ -306,24 +313,31 @@ Then you can save and increment versions for all of them at once.
         # this is a bug I came across one with one test geo.
         # Somehow it does not assign the value to index: 0
         # the following part forces to assign the correct value to index 0
-        self.io.file_path = os.path.join(file_dir, file_name)
-        data = self.io.read()
         deformer_type = cmds.objectType(deformer)
-        if deformer_type == "blendShape":
-            point_attr_template = "{0}.inputTarget[0].inputTargetGroup[{1}].targetWeights[0]"
-        elif deformer_type == "skinCluster":
-            skin_meshes = cmds.listConnections(deformer, type="mesh")
-            for mesh in skin_meshes:
-                # Skin cluster weight loading has a bug - Its not loading the value of the first vertex
-                cmds.select("%s.vtx[0]" % mesh)
-                cmds.WeightHammer()
-            if data.get("DQ_weights"):
-                for nmb, weight in enumerate(data["DQ_weights"]):
-                    cmds.setAttr('%s.bw[%s]' % (deformer, nmb), weight)
+        if deformer_type == "skinCluster":
+            sc_weight_handler = skin.Weight(source=os.path.join(file_dir, file_name))
+            sc_weight_handler.apply(deformer)
             if not suppress_messages:
                 log.info("%s Weights Lodaded Successfully..." % deformer)
             return
-            # point_attr_template = "{0}.weightList[{1}].weights[0]"
+
+        self.io.file_path = os.path.join(file_dir, file_name)
+        data = self.io.read()
+        if deformer_type == "blendShape":
+            point_attr_template = "{0}.inputTarget[0].inputTargetGroup[{1}].targetWeights[0]"
+        # elif deformer_type == "skinCluster":
+        #     skin_meshes = cmds.listConnections(deformer, type="mesh")
+        #     for mesh in skin_meshes:
+        #         # Skin cluster weight loading has a bug - Its not loading the value of the first vertex
+        #         cmds.select("%s.vtx[0]" % mesh)
+        #         cmds.WeightHammer()
+        #     if data.get("DQ_weights"):
+        #         for nmb, weight in enumerate(data["DQ_weights"]):
+        #             cmds.setAttr('%s.bw[%s]' % (deformer, nmb), weight)
+        #     if not suppress_messages:
+        #         log.info("%s Weights Lodaded Successfully..." % deformer)
+        #     return
+        #     # point_attr_template = "{0}.weightList[{1}].weights[0]"
         else:
             point_attr_template = "{0}.weightList[{1}].weights[0]"
 
