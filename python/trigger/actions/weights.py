@@ -307,12 +307,6 @@ Then you can save and increment versions for all of them at once.
             cmds.evalDeferred(deferred_command)
             return
 
-        cmds.deformerWeights(file_name, im=True, deformer=deformer, path=file_dir, method=method,
-                             ignoreName=ignore_name)
-
-        # this is a bug I came across one with one test geo.
-        # Somehow it does not assign the value to index: 0
-        # the following part forces to assign the correct value to index 0
         deformer_type = cmds.objectType(deformer)
         if deformer_type == "skinCluster":
             sc_weight_handler = skin.Weight(source=os.path.join(file_dir, file_name))
@@ -320,6 +314,15 @@ Then you can save and increment versions for all of them at once.
             if not suppress_messages:
                 log.info("%s Weights Lodaded Successfully..." % deformer)
             return
+
+
+        cmds.deformerWeights(file_name, im=True, deformer=deformer, path=file_dir, method=method,
+                             ignoreName=ignore_name)
+
+        # this is a bug I came across one with one test geo.
+        # Somehow it does not assign the value to index: 0
+        # the following part forces to assign the correct value to index 0
+
 
         self.io.file_path = os.path.join(file_dir, file_name)
         data = self.io.read()

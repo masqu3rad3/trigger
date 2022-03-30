@@ -110,9 +110,9 @@ class Weight(object):
         _ = [cmds.skinCluster(deformer, edit=True, removeInfluence=x, nw=0) for x in _influences if
              x not in _data_influences]
 
-        # temporarily turn off the normalization
-        normalization = cmds.skinCluster(deformer, q=True, normalizeWeights=True)
-        cmds.skinCluster(deformer, edit=True, normalizeWeights=0)
+        # # temporarily turn off the normalization
+        # normalization = cmds.skinCluster(deformer, q=True, normalizeWeights=True)
+        # cmds.skinCluster(deformer, edit=True, normalizeWeights=0)
 
         geo = cmds.skinCluster(deformer, q=True, geometry=True)[0]
         # compare the vertex size and act accordingly if the topologies are different
@@ -153,7 +153,7 @@ class Weight(object):
             # os.remove(self.temp_io.file_path)
 
         # back to original normalization setting
-        cmds.skinCluster(deformer, edit=True, normalizeWeights=normalization)
+        # cmds.skinCluster(deformer, edit=True, normalizeWeights=normalization)
 
     def _check_vc(self):
         """Checks the data if vc (vertex connections) has or not"""
@@ -528,32 +528,23 @@ class Weight(object):
             #
             impact_list = list(reversed(sorted(vtx_inf_dict, key=vtx_inf_dict.get)))
             # print(impact_list)
-            # for _inf in impact_list:
-            #     original_value = inf_dict[_inf].get(vtx_id, 0)
-            #     inf_dict[_inf].update({vtx_id:clamp(original_value-excess_value)})
-            #     excess_value = clamp(excess_value - original_value)
-
-            # TODO maybe this speed it up a bit
-            counter = 0
-            while excess_value:
-                _inf = impact_list[counter]
+            for _inf in impact_list:
                 original_value = inf_dict[_inf].get(vtx_id, 0)
-                inf_dict[_inf].update({vtx_id: clamp(original_value - excess_value)})
+                inf_dict[_inf].update({vtx_id:clamp(original_value-excess_value)})
                 excess_value = clamp(excess_value - original_value)
 
-            #     for _inf in impact_list:
-            #         original_value = inf_dict[_inf].get(vtx_id, 0)
-            #         inf_dict[_inf].update({vtx_id:clamp(original_value-excess_value)})
-            #         excess_value = clamp(excess_value - original_value)
-
-            # while excess_value > 0:
-            #     counter = 0
-            #     _inf = impact_list[counter]
+            # # TODO maybe this speed it up a bit
+            # counter = 0
+            # while excess_value:
+            #     try:
+            #         _inf = impact_list[counter]
+            #     except IndexError:
+            #         break
             #     original_value = inf_dict[_inf].get(vtx_id, 0)
-            #     # print(original_value)
-            #     inf_dict[_inf].update({vtx_id:clamp(original_value-excess_value)})
+            #     inf_dict[_inf].update({vtx_id: clamp(original_value - excess_value)})
+            #     excess_value = clamp(excess_value - original_value)
             #     counter += 1
-            #     excess_value = excess_value - original_value
+
 
             # convert back to the maya JSON compatibility
             for inf_data in self._data["deformerWeight"]["weights"]:
