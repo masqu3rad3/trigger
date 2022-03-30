@@ -1,3 +1,4 @@
+import time
 import uuid
 import os
 import copy
@@ -281,6 +282,7 @@ class Weight(object):
         """
         if normalize_other_influences:
             self._clamp_point_weights(influence_data)
+        start = time.time()
         _influence_name = influence_data.get("source", None)
         if self.get_influence_data(_influence_name) and not force:
             raise Exception("Data already contains weights data for %s" % _influence_name)
@@ -290,8 +292,11 @@ class Weight(object):
         influence_data["deformer"] = _deformer
         influence_data["shape"] = _shape
         influence_data["layer"] = self._get_last_layer()+1
+        print("afer normalization: %s" %str(time.time() - start))
 
+        s_b = time.time()
         self._data["deformerWeight"]["weights"].append(copy.copy(influence_data))
+        print("apply data: %s" % str(time.time() - s_b))
 
     def negate(self, influences=None):
         """
@@ -523,10 +528,23 @@ class Weight(object):
             #
             impact_list = list(reversed(sorted(vtx_inf_dict, key=vtx_inf_dict.get)))
             # print(impact_list)
-            for _inf in impact_list:
+            # for _inf in impact_list:
+            #     original_value = inf_dict[_inf].get(vtx_id, 0)
+            #     inf_dict[_inf].update({vtx_id:clamp(original_value-excess_value)})
+            #     excess_value = clamp(excess_value - original_value)
+
+            # TODO maybe this speed it up a bit
+            counter = 0
+            while excess_value:
+                _inf = impact_list[counter]
                 original_value = inf_dict[_inf].get(vtx_id, 0)
-                inf_dict[_inf].update({vtx_id:clamp(original_value-excess_value)})
+                inf_dict[_inf].update({vtx_id: clamp(original_value - excess_value)})
                 excess_value = clamp(excess_value - original_value)
+
+            #     for _inf in impact_list:
+            #         original_value = inf_dict[_inf].get(vtx_id, 0)
+            #         inf_dict[_inf].update({vtx_id:clamp(original_value-excess_value)})
+            #         excess_value = clamp(excess_value - original_value)
 
             # while excess_value > 0:
             #     counter = 0

@@ -610,6 +610,9 @@ class Jointify(object):
                 # skip joint0 which is the root joint of dembones
                 if inf == "joint0":
                     continue
+                print("=--=--=")
+                print("=--=--=")
+                print(inf)
                 _data = dem_sc_weights.get_influence_data(inf)
                 mesh_sc_weights.add_influence(_data)
             # test_data = dem_sc_weights.get_influence_data("joint1")
@@ -624,12 +627,15 @@ class Jointify(object):
         root_joints_data = {}
         for root_node in self.rootNodes:
             root_pos = api.getWorldTranslation(root_node)
-            if self.parent_to_roots:
-                root_jnt = root_node
-            else:
-                cmds.select(d=True)
-                root_jnt = cmds.joint(name="jntfRoot_%s" %root_node)
-                cmds.setAttr("%s.t" % root_jnt, *root_pos)
+            cmds.select(d=True)
+            root_jnt = cmds.joint(name="jntfRoot_%s" % root_node)
+            cmds.setAttr("%s.t" % root_jnt, *root_pos)
+            # if self.parent_to_roots:
+            #     root_jnt = root_node
+            # else:
+            #     cmds.select(d=True)
+            #     root_jnt = cmds.joint(name="jntfRoot_%s" %root_node)
+            #     cmds.setAttr("%s.t" % root_jnt, *root_pos)
             root_joints_data[root_jnt] = root_pos
 
         for dem_jnt in self.demData["joints"]:
@@ -743,6 +749,11 @@ class Jointify(object):
         cmds.setAttr("%s.nodeState" % jointify_sc, 0)
         functions.deleteObject(self.demData["meshTransform"])
         functions.deleteObject(temp_grp)
+
+        if self.parent_to_roots:
+            for jnt in root_joints_data.keys():
+                parent_jnt = jnt.replace("jntfRoot_", "")
+                cmds.parent(jnt, parent_jnt)
 
         # rename all the dembones joints so they wont clash with other jointifies
         for bone in bone_objects:
