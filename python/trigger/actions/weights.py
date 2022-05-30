@@ -309,7 +309,7 @@ Then you can save and increment versions for all of them at once.
 
         deformer_type = cmds.objectType(deformer)
         if deformer_type == "skinCluster":
-            sc_weight_handler = skin.Weight(source=os.path.join(file_dir, file_name))
+            sc_weight_handler = skin.Weight(source=str(os.path.join(file_dir, file_name)))
             sc_weight_handler.apply(deformer)
             if not suppress_messages:
                 log.info("%s Weights Lodaded Successfully..." % deformer)
