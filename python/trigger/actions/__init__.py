@@ -1,7 +1,5 @@
-# import sys
 from os.path import dirname, basename, isfile, join
 import glob
-# import importlib
 
 modules = glob.glob(join(dirname(__file__), "*.py"))
 exceptions = ['__init__.py', 'boiler_plate.py', 'weights_wip.py']

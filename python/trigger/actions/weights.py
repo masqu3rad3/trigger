@@ -16,15 +16,12 @@ from trigger.objects import skin
 
 from trigger.ui.Qt import QtWidgets, QtGui  # for progressbar
 from trigger.ui import custom_widgets
+from trigger.ui.widgets.save_box import SaveBoxLayout
 from trigger.ui.widgets.browser_button import BrowserButton
 
 log = filelog.Filelog(logname=__name__, filename="trigger_log")
 
-ACTION_DATA = {
-    "create_deformers": True,
-    "deformers": [],
-    "weights_file_path": ""
-}
+ACTION_DATA = {"create_deformers": True, "deformers": [], "weights_file_path": ""}
 
 
 def multiplyList(list_of_values):
@@ -101,11 +98,18 @@ Then you can save and increment versions for all of them at once.
         for data in data_list:
             deformer = data["deformer"]
             deformer_type = data["type"]
-            influencers = data.get("influencers", 0)  # leave them as get for backward compatibility
+            influencers = data.get(
+                "influencers", 0
+            )  # leave them as get for backward compatibility
             affected = data.get("affected", 0)
             deformer_weight_path = os.path.join(weights_folder, "%s.json" % deformer)
-            self.create_deformer(deformer_weight_path, deformer_type=deformer_type, deformer_name=deformer,
-                                 affected=affected, influencers=influencers)
+            self.create_deformer(
+                deformer_weight_path,
+                deformer_type=deformer_type,
+                deformer_name=deformer,
+                affected=affected,
+                influencers=influencers,
+            )
 
     def save_action(self, file_path=None, *args, **kwargs):
         """Mandatory method for all action modules"""
@@ -124,25 +128,54 @@ Then you can save and increment versions for all of them at once.
             data["deformer"] = deformer
             data["type"] = deformer_type
             if deformer_type == "skinCluster":
-                data["influencers"] = 0  # we are currently skipping this since these will be read from the weights file
-                data["affected"] = cmds.listConnections("%s.outputGeometry" % deformer, shapes=True, scn=True,
-                                                        source=False, destination=True)
+                data[
+                    "influencers"
+                ] = 0  # we are currently skipping this since these will be read from the weights file
+                data["affected"] = cmds.listConnections(
+                    "%s.outputGeometry" % deformer,
+                    shapes=True,
+                    scn=True,
+                    source=False,
+                    destination=True,
+                )
             elif deformer_type == "shrinkWrap":
-                data["influencers"] = cmds.listConnections("%s.targetGeom" % deformer, shapes=True, scn=True,
-                                                           source=True, destination=False)
-                data["affected"] = cmds.listConnections("%s.outputGeometry" % deformer, shapes=True, scn=True,
-                                                        source=False, destination=True)
+                data["influencers"] = cmds.listConnections(
+                    "%s.targetGeom" % deformer,
+                    shapes=True,
+                    scn=True,
+                    source=True,
+                    destination=False,
+                )
+                data["affected"] = cmds.listConnections(
+                    "%s.outputGeometry" % deformer,
+                    shapes=True,
+                    scn=True,
+                    source=False,
+                    destination=True,
+                )
             elif deformer_type == "deltaMush":
                 data["influencers"] = 0  # not needed
-                data["affected"] = cmds.listConnections("%s.outputGeometry" % deformer, shapes=True, scn=True,
-                                                        source=False, destination=True)
+                data["affected"] = cmds.listConnections(
+                    "%s.outputGeometry" % deformer,
+                    shapes=True,
+                    scn=True,
+                    source=False,
+                    destination=True,
+                )
             elif deformer_type == "blendShape":
                 data["influencers"] = 0  # ??? not needed ???
-                data["affected"] = cmds.listConnections("%s.outputGeometry" % deformer, shapes=True, scn=True,
-                                                        source=False, destination=True)
+                data["affected"] = cmds.listConnections(
+                    "%s.outputGeometry" % deformer,
+                    shapes=True,
+                    scn=True,
+                    source=False,
+                    destination=True,
+                )
             else:
                 # TODO ADD OTHER DEFORMERS
-                raise Exception("The deformer type <%s> needs to be added" % deformer_type)
+                raise Exception(
+                    "The deformer type <%s> needs to be added" % deformer_type
+                )
 
             data_list.append(data)
             self.save_weights(deformer=deformer, file_path=deformer_weight_path)
@@ -157,14 +190,19 @@ Then you can save and increment versions for all of them at once.
         file_path_hLay = QtWidgets.QHBoxLayout()
         file_path_le = custom_widgets.FileLineEdit()
         file_path_hLay.addWidget(file_path_le)
-        browse_path_pb = BrowserButton(mode="openFile", update_widget=file_path_le,
-                                                      filterExtensions=["Trigger Weight Files (*.trw)"],
-                                                      overwrite_check=False)
+        browse_path_pb = BrowserButton(
+            mode="openFile",
+            update_widget=file_path_le,
+            filterExtensions=["Trigger Weight Files (*.trw)"],
+            overwrite_check=False,
+        )
         file_path_hLay.addWidget(browse_path_pb)
         layout.addRow(file_path_lbl, file_path_hLay)
 
         deformers_lbl = QtWidgets.QLabel(text="Deformers")
-        deformers_listbox = custom_widgets.ListBoxLayout(alignment="start", buttonUp=False, buttonDown=False)
+        deformers_listbox = custom_widgets.ListBoxLayout(
+            alignment="start", buttonUp=False, buttonDown=False
+        )
         layout.addRow(deformers_lbl, deformers_listbox)
 
         ctrl.connect(file_path_le, "weights_file_path", str)
@@ -173,9 +211,13 @@ Then you can save and increment versions for all of them at once.
         ctrl.update_ui()
 
         save_current_lbl = QtWidgets.QLabel(text="Save Current states")
-        savebox_lay = custom_widgets.SaveBoxLayout(alignment="horizontal", update_widget=file_path_le,
-                                                   filter_extensions=["Trigger Weight Files (*.trw)"],
-                                                   overwrite_check=True, control_model=ctrl)
+        savebox_lay = SaveBoxLayout(
+            alignment="horizontal",
+            update_widget=file_path_le,
+            filter_extensions=["Trigger Weight Files (*.trw)"],
+            overwrite_check=True,
+            control_model=ctrl,
+        )
         layout.addRow(save_current_lbl, savebox_lay)
 
         # make connections with the controller object
@@ -184,16 +226,22 @@ Then you can save and increment versions for all of them at once.
             list_of_deformers = list(deformers.get_deformers(namesOnly=True))
 
             zortMenu = QtWidgets.QMenu()
-            menuActions = [QtWidgets.QAction(str(deformer)) for deformer in list_of_deformers]
+            menuActions = [
+                QtWidgets.QAction(str(deformer)) for deformer in list_of_deformers
+            ]
             zortMenu.addActions(menuActions)
             for defo, menu_action in zip(list_of_deformers, menuActions):
-                menu_action.triggered.connect(lambda ignore=defo, item=defo: add_deformers([str(item)]))
+                menu_action.triggered.connect(
+                    lambda ignore=defo, item=defo: add_deformers([str(item)])
+                )
             # add a last item to add all of them
             if menuActions:
                 zortMenu.addSeparator()
                 allitems_menuaction = QtWidgets.QAction("Add All Items")
                 zortMenu.addAction(allitems_menuaction)
-                allitems_menuaction.triggered.connect(lambda x: add_deformers(list_of_deformers))
+                allitems_menuaction.triggered.connect(
+                    lambda x: add_deformers(list_of_deformers)
+                )
 
             zortMenu.exec_((QtGui.QCursor.pos()))
 
@@ -207,7 +255,9 @@ Then you can save and increment versions for all of them at once.
         ### Signals
         file_path_le.textChanged.connect(lambda x=0: ctrl.update_model())
         browse_path_pb.clicked.connect(lambda x=0: ctrl.update_model())
-        browse_path_pb.clicked.connect(file_path_le.validate)  # to validate on initial browse result
+        browse_path_pb.clicked.connect(
+            file_path_le.validate
+        )  # to validate on initial browse result
         deformers_listbox.buttonGet.clicked.connect(get_deformers_menu)
         deformers_listbox.buttonNew.clicked.connect(lambda x: ctrl.update_model())
         deformers_listbox.buttonRemove.clicked.connect(lambda x: ctrl.update_model())
@@ -215,10 +265,19 @@ Then you can save and increment versions for all of them at once.
         savebox_lay.saved.connect(lambda file_path: update_deformers())
         savebox_lay.saved.connect(lambda file_path: self.save_action(file_path))
 
-    def save_weights(self, deformer=None, file_path=None, vertexConnections=False, force=True, influencer=None):
+    def save_weights(
+        self,
+        deformer=None,
+        file_path=None,
+        vertexConnections=False,
+        force=True,
+        influencer=None,
+    ):
         if not deformer and not self.deformer:
             log.error(
-                "Cannot save the weight %s \nNo Deformer defined. A Deformer needs to be defined either as argument or class variable)" % file_path)
+                "Cannot save the weight %s \nNo Deformer defined. A Deformer needs to be defined either as argument or class variable)"
+                % file_path
+            )
         if not deformer:
             deformer = self.deformer
         if not force:
@@ -237,30 +296,63 @@ Then you can save and increment versions for all of them at once.
         # hot fix to speed up skinClusters
         default_value = -1.0
         if deformer_type == "skinCluster":
-            attributes = ["envelope", "skinningMethod", "useComponents", "normalizeWeights", "deformUserNormals"]
+            attributes = [
+                "envelope",
+                "skinningMethod",
+                "useComponents",
+                "normalizeWeights",
+                "deformUserNormals",
+            ]
             # in case DQ blendweight mode, flag for adding DQ to the file afterwards
             if cmds.getAttr("%s.skinningMethod" % deformer) == 2:
                 export_dq_weights = True
             default_value = 0.0
         elif deformer_type == "shrinkWrap":
-            attributes = ["projection", "closestIfNoIntersection", "reverse", "bidirectional", "offset",
-                          "targetInflation",
-                          "axisReference", "alongX", "alongY", "alongZ", "targetSmoothLevel", "falloff",
-                          "falloffIterations",
-                          "shapePreservationEnable", "shapePreservationSteps", "shapePreservationIterations",
-                          "shapePreservationMethod", "shapePreservationReprojection"]
+            attributes = [
+                "projection",
+                "closestIfNoIntersection",
+                "reverse",
+                "bidirectional",
+                "offset",
+                "targetInflation",
+                "axisReference",
+                "alongX",
+                "alongY",
+                "alongZ",
+                "targetSmoothLevel",
+                "falloff",
+                "falloffIterations",
+                "shapePreservationEnable",
+                "shapePreservationSteps",
+                "shapePreservationIterations",
+                "shapePreservationMethod",
+                "shapePreservationReprojection",
+            ]
         elif deformer_type == "deltaMush":
             # attributes = []
-            attributes = ["smoothingIterations", "smoothingStep", "inwardConstraint", "outwardConstraint",
-                          "distanceWeight", "displacement"]
+            attributes = [
+                "smoothingIterations",
+                "smoothingStep",
+                "inwardConstraint",
+                "outwardConstraint",
+                "distanceWeight",
+                "displacement",
+            ]
         else:
             attributes = []
         # TODO: ADD ATTRIBUTES FOR ALL DEFORMER TYPES
 
         # default value -1 means export all weights!
 
-        cmds.deformerWeights(file_name, export=True, deformer=deformer, path=file_dir, defaultValue=default_value,
-                             vc=vertexConnections, at=attributes)
+        cmds.deformerWeights(
+            file_name,
+            export=True,
+            deformer=deformer,
+            path=file_dir,
+            defaultValue=default_value,
+            vc=vertexConnections,
+            at=attributes,
+        )
 
         if export_dq_weights:
             self.io.file_path = os.path.join(file_dir, file_name)
@@ -283,15 +375,25 @@ Then you can save and increment versions for all of them at once.
             operation_data["deformerWeight"]["weights"][0]["layer"] = 0
             self.io.write(operation_data)
 
-        log.info("File exported to %s successfully..." % os.path.join(file_dir, file_name))
+        log.info(
+            "File exported to %s successfully..." % os.path.join(file_dir, file_name)
+        )
         return True
 
     @keepselection
-    def load_weights(self, deformer=None, file_path=None, method="index", ignore_name=True, deferred=False,
-                     suppress_messages=False):
+    def load_weights(
+        self,
+        deformer=None,
+        file_path=None,
+        method="index",
+        ignore_name=True,
+        deferred=False,
+        suppress_messages=False,
+    ):
         if not deformer and not self.deformer:
             log.error(
-                "No Deformer defined. A Deformer needs to be defined either as argument or class variable)")
+                "No Deformer defined. A Deformer needs to be defined either as argument or class variable)"
+            )
         if not deformer:
             deformer = self.deformer
 
@@ -303,31 +405,40 @@ Then you can save and increment versions for all of them at once.
         if deferred:  # this is only for workaround for the bug introduced in 2022
             # deferred argument bypasses all extra 'surgery' afterwards.
             deferred_command = "cmds.deformerWeights('{0}', im=True, deformer='{1}', path='{2}', method='{3}', ignoreName={4})".format(
-                file_name, deformer, file_dir, method, ignore_name)
+                file_name, deformer, file_dir, method, ignore_name
+            )
             cmds.evalDeferred(deferred_command)
             return
 
         deformer_type = cmds.objectType(deformer)
         if deformer_type == "skinCluster":
-            sc_weight_handler = skin.Weight(source=str(os.path.join(file_dir, file_name)))
+            sc_weight_handler = skin.Weight(
+                source=str(os.path.join(file_dir, file_name))
+            )
             sc_weight_handler.apply(deformer)
             if not suppress_messages:
                 log.info("%s Weights Lodaded Successfully..." % deformer)
             return
 
-
-        cmds.deformerWeights(file_name, im=True, deformer=deformer, path=file_dir, method=method,
-                             ignoreName=ignore_name)
+        cmds.deformerWeights(
+            file_name,
+            im=True,
+            deformer=deformer,
+            path=file_dir,
+            method=method,
+            ignoreName=ignore_name,
+        )
 
         # this is a bug I came across one with one test geo.
         # Somehow it does not assign the value to index: 0
         # the following part forces to assign the correct value to index 0
 
-
         self.io.file_path = os.path.join(file_dir, file_name)
         data = self.io.read()
         if deformer_type == "blendShape":
-            point_attr_template = "{0}.inputTarget[0].inputTargetGroup[{1}].targetWeights[0]"
+            point_attr_template = (
+                "{0}.inputTarget[0].inputTargetGroup[{1}].targetWeights[0]"
+            )
         # elif deformer_type == "skinCluster":
         #     skin_meshes = cmds.listConnections(deformer, type="mesh")
         #     for mesh in skin_meshes:
@@ -352,8 +463,15 @@ Then you can save and increment versions for all of them at once.
             log.info("%s Weights Lodaded Successfully..." % deformer)
         return True
 
-    def create_deformer(self, weights_file, deformer_type=None, force_unique_deformer=False, deformer_name=None,
-                        affected=None, influencers=None):
+    def create_deformer(
+        self,
+        weights_file,
+        deformer_type=None,
+        force_unique_deformer=False,
+        deformer_name=None,
+        affected=None,
+        influencers=None,
+    ):
         """
         Creates the deformer defined in the weights file and applies the pre-saved weights.
 
@@ -390,30 +508,40 @@ Then you can save and increment versions for all of them at once.
             deformer_info = weights_data["deformerWeight"].get("deformers")
             if not deformer_info and not deformer_type:
                 log.error(
-                    "Cannot identify the deformer type. Use the flag 'deformer_type' or export the weights with additional attributes")
+                    "Cannot identify the deformer type. Use the flag 'deformer_type' or export the weights with additional attributes"
+                )
 
             if deformer_info:
                 deformer_type = weights_data["deformerWeight"]["deformers"][0]["type"]
                 deformer_attrs = weights_data["deformerWeight"]["deformers"][0][
-                    "attributes"]  # this is list of dictionaries
+                    "attributes"
+                ]  # this is list of dictionaries
             else:
                 deformer_attrs = []
 
             if deformer_type == "skinCluster":
                 # collect the influencers (eg. joints if it is a skinCluster)
-                influencers = [weight_dict.get("source") for weight_dict in weights_list]
+                influencers = [
+                    weight_dict.get("source") for weight_dict in weights_list
+                ]
                 # first try the custom affected input. If there is none (backward-compatibility) use the weight data
                 if not affected:
-                    affected = functions.uniqueList([weight_dict.get("shape") for weight_dict in weights_list])
+                    affected = functions.uniqueList(
+                        [weight_dict.get("shape") for weight_dict in weights_list]
+                    )
                 # delete existing skin clusters first
                 affected_history = cmds.listHistory(affected[0], pdo=True)
                 old_skincluster = cmds.ls(affected_history, type="skinCluster")
                 if old_skincluster:
                     cmds.delete(old_skincluster)
-                deformer = cmds.skinCluster(influencers, affected[0], name=deformer_name, tsb=True)[0]
+                deformer = cmds.skinCluster(
+                    influencers, affected[0], name=deformer_name, tsb=True
+                )[0]
 
             elif deformer_type == "shrinkWrap":
-                deformers.create_shrink_wrap(influencers[0], affected[0], name=deformer_name)
+                deformers.create_shrink_wrap(
+                    influencers[0], affected[0], name=deformer_name
+                )
 
             elif deformer_type == "deltaMush":
                 cmds.deltaMush(affected[0], name=deformer_name)
@@ -422,7 +550,9 @@ Then you can save and increment versions for all of them at once.
 
             else:
                 # TODO : SUPPORT FOR ALL DEFORMERS
-                log.error("deformers OTHER than skinCluster, shrinkWrap and deltaMush are not YET supported")
+                log.error(
+                    "deformers OTHER than skinCluster, shrinkWrap and deltaMush are not YET supported"
+                )
                 return
             for attr_dict in deformer_attrs:
                 attr_name = attr_dict["name"]
@@ -450,11 +580,22 @@ Then you can save and increment versions for all of them at once.
 
         # finally load weights
         # cmds.evalDeferred('self.load_weights(deformer=deformer_name, file_path=weights_file, method="index", ignore_name=False)')
-        self.load_weights(deformer=deformer_name, file_path=weights_file, method="index", ignore_name=False,
-                          deferred=deferred_loading)
+        self.load_weights(
+            deformer=deformer_name,
+            file_path=weights_file,
+            method="index",
+            ignore_name=False,
+            deferred=deferred_loading,
+        )
 
-    def save_matching_weights(self, deformer=None, file_path=None, vertexConnections=False, force=True,
-                              influencer=None):
+    def save_matching_weights(
+        self,
+        deformer=None,
+        file_path=None,
+        vertexConnections=False,
+        force=True,
+        influencer=None,
+    ):
         """
         Saves the weights AND the negated weights to the disk
         Args:
@@ -471,8 +612,13 @@ Then you can save and increment versions for all of them at once.
         else:
             file_dir, file_name = os.path.split(file_path)
 
-        state = self.save_weights(deformer=deformer, file_path=os.path.join(file_dir, file_name),
-                                  vertexConnections=vertexConnections, force=force, influencer=influencer)
+        state = self.save_weights(
+            deformer=deformer,
+            file_path=os.path.join(file_dir, file_name),
+            vertexConnections=vertexConnections,
+            force=force,
+            influencer=influencer,
+        )
         if not state:
             return
 
@@ -512,13 +658,17 @@ Then you can save and increment versions for all of them at once.
         # take a copy of the first data list
         copy_data = deepcopy(data_list[0])
         # the json_datas in data_list must belong to the same deformer (same point count)
-        for weights_list_nmb, weights in enumerate(copy_data["deformerWeight"]["weights"]):
+        for weights_list_nmb, weights in enumerate(
+            copy_data["deformerWeight"]["weights"]
+        ):
             if influencer and weights["source"] != influencer:
                 continue
             for point_nmb, point in enumerate(weights["points"]):
                 point_values = []
                 for data_list_nmb, json_data in enumerate(data_list):
-                    val = json_data["deformerWeight"]["weights"][weights_list_nmb]["points"][point_nmb]["value"]
+                    val = json_data["deformerWeight"]["weights"][weights_list_nmb][
+                        "points"
+                    ][point_nmb]["value"]
                     point_values.append(val)
                 point["value"] = multiplyList(point_values)
         return copy_data
@@ -526,13 +676,17 @@ Then you can save and increment versions for all of them at once.
     def add_weights(self, data_list, influencer=None, clamp=True):
         # TODO : not tested
         copy_data = deepcopy(data_list[0])
-        for weights_list_nmb, weights in enumerate(copy_data["deformerWeight"]["weights"]):
+        for weights_list_nmb, weights in enumerate(
+            copy_data["deformerWeight"]["weights"]
+        ):
             if influencer and weights["source"] != influencer:
                 continue
             for point_nmb, point in enumerate(weights["points"]):
                 point_values = []
                 for data_list_nmb, json_data in enumerate(data_list):
-                    val = json_data["deformerWeight"]["weights"][weights_list_nmb]["points"][point_nmb]["value"]
+                    val = json_data["deformerWeight"]["weights"][weights_list_nmb][
+                        "points"
+                    ][point_nmb]["value"]
                     point_values.append(val)
                 point["value"] = addList(point_values)
                 if clamp:
@@ -542,17 +696,19 @@ Then you can save and increment versions for all of them at once.
     def subtract_weights(self, data_list, influencer=None, clamp=True):
         # TODO : not tested
         copy_data = deepcopy(data_list[0])
-        for weights_list_nmb, weights in enumerate(copy_data["deformerWeight"]["weights"]):
+        for weights_list_nmb, weights in enumerate(
+            copy_data["deformerWeight"]["weights"]
+        ):
             if influencer and weights["source"] != influencer:
                 continue
             for point_nmb, point in enumerate(weights["points"]):
                 point_values = []
                 for data_list_nmb, json_data in enumerate(data_list):
-                    val = json_data["deformerWeight"]["weights"][weights_list_nmb]["points"][point_nmb]["value"]
+                    val = json_data["deformerWeight"]["weights"][weights_list_nmb][
+                        "points"
+                    ][point_nmb]["value"]
                     point_values.append(val)
                 point["value"] = subtractList(point_values)
                 if clamp:
                     point["value"] = max(min(point["value"], 1.0), 0.0)
         return copy_data
-
-

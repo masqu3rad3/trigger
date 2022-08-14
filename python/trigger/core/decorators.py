@@ -54,6 +54,7 @@ def viewportOff(func):
     Decorator - turn off Maya display while func is running.
     if func will fail, the error will be raised after.
     """
+    log.warning("viewportOff is deprecated and not necessary Maya2020+")
 
     @wraps(func)
     def wrap(*args, **kwargs):

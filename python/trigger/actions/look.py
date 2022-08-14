@@ -22,7 +22,7 @@ ACTION_DATA = {
 class Look(object):
     def __init__(self, *args, **kwargs):
         super(Look, self).__init__()
-        self.io = io.IO(file_name = "tmp_look.trl")
+        self.io = io.IO(file_name="tmp_look.trl")
         # user defined variables
         self.lookFilePath = None
 
@@ -50,7 +50,7 @@ class Look(object):
 
         apply_data = {}
         for sg_name, elements in look_data.items():
-            sg_file_path = os.path.join(look_folder, "%s.ma" %sg_name)
+            sg_file_path = os.path.join(look_folder, "%s.ma" % sg_name)
             if not os.path.isfile(sg_file_path):
                 log.warning("Shader file path not exist => %s. Skipping" % sg_file_path)
                 continue
@@ -91,16 +91,25 @@ class Look(object):
 
         file_path_lbl = QtWidgets.QLabel(text="Look File Path:")
         file_path_hLay = QtWidgets.QHBoxLayout()
-        # file_path_le = QtWidgets.QLineEdit()
         file_path_le = custom_widgets.FileLineEdit()
         file_path_hLay.addWidget(file_path_le)
-        browse_path_pb = BrowserButton(mode="openFile", update_widget=file_path_le, filterExtensions=["Trigger Look Files (*.trl)"], overwrite_check=False)
+        browse_path_pb = BrowserButton(
+            mode="openFile",
+            update_widget=file_path_le,
+            filterExtensions=["Trigger Look Files (*.trl)"],
+            overwrite_check=False,
+        )
         file_path_hLay.addWidget(browse_path_pb)
         layout.addRow(file_path_lbl, file_path_hLay)
 
-
         save_current_lbl = QtWidgets.QLabel(text="Save Current states")
-        savebox_lay = custom_widgets.SaveBoxLayout(alignment="horizontal", update_widget=file_path_le, filter_extensions=["Trigger Look Files (*.trl)"], overwrite_check=True, control_model=ctrl)
+        savebox_lay = custom_widgets.SaveBoxLayout(
+            alignment="horizontal",
+            update_widget=file_path_le,
+            filter_extensions=["Trigger Look Files (*.trl)"],
+            overwrite_check=True,
+            control_model=ctrl,
+        )
         layout.addRow(save_current_lbl, savebox_lay)
 
         ctrl.connect(file_path_le, "look_file_path", str)
@@ -114,7 +123,6 @@ class Look(object):
     @staticmethod
     def collect_sg_data():
         all_shading_engines = cmds.ls(type="shadingEngine")
-        # shading_dict = {sg: cmds.sets(sg, q=True) for sg in all_shading_engines if cmds.sets(sg, q=True)}
         shading_dict = {}
         for sg in all_shading_engines:
             if cmds.sets(sg, q=True):
@@ -135,12 +143,6 @@ class Look(object):
                             cmds.sets(inst, e=True, forceElement=sg)
                         except ValueError:
                             log.warning("Cannot find %s. Skipping" % inst)
-                    # try:
-                    #     cmds.sets(face_or_shape, e=True, forceElement=sg)
-                    # except ValueError:
-                    #     cmds.sets(face_or_shape.split("|")[-1], e=True, forceElement=sg)
-                    # finally:
-                    #     pass
 
     @staticmethod
     @keepselection

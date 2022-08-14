@@ -1,5 +1,5 @@
 import os
-from trigger.ui.Qt import QtWidgets, QtCore, QtGui
+from trigger.ui.Qt import QtWidgets
 
 
 class BrowserButton(QtWidgets.QPushButton):
