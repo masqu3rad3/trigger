@@ -176,6 +176,7 @@ class RollerMatic(ompx.MPxNode):
             newMatrix = om.MMatrix()
 
             vpos = om.MVector(self.curPosition[0], -prePosY_float[1] + groundHeight, self.curPosition[2])
+            # vpos = om.MVector(self.curPosition[0],  self.curPosition[1], self.curPosition[2])
             # vpos = om.MVector(0, -prePosY_float[1] + groundHeight, 0)
             # matrixList = [vx[0], vx[1], vx[2], -vy[0], -vy[1], -vy[2], -vz[0], -vz[1], -vz[2], 0, vpos[0],
             #               vpos[1], vpos[2], 1]
@@ -197,8 +198,9 @@ class RollerMatic(ompx.MPxNode):
             # newMatrix[3][3] = 1
             yPosArray = [(vertPoints[v] * newMatrix)[1] for v in range(vertPoints.length())]
             minY = min(yPosArray)
-
+            # self.curPosition = om.MVector(self.curPosition[0], -minY, self.curPosition[2]) * newMatrix
             outputHandlePos.set3Float(self.curPosition[0], -minY, self.curPosition[2])
+            # outputHandlePos.set3Float(super_m[0], super_m[1], super_m[2])
 
             dataBlock.setClean(plug)
         else:
