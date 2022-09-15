@@ -6,7 +6,7 @@
 from PySide2 import QtWidgets, QtCore
 from trigger import version_control
 
-class TaskSelection(QtWidgets.QHBoxLayout):
+class TaskSelection(QtWidgets.QVBoxLayout):
 
     task_changed_signal = QtCore.Signal(str)
     def __init__(self):
@@ -17,12 +17,23 @@ class TaskSelection(QtWidgets.QHBoxLayout):
         else:
             self.sgh = version_control.controller.VersionControl()
 
-        self.asset_type_combo = self.__insert_single_combo(self, "Asset Type")
-        self.asset_combo = self.__insert_single_combo(self, "Asset")
-        self.step_combo = self.__insert_single_combo(self, "Step")
-        self.task_combo = self.__insert_single_combo(self, "Task")
+        self.size_policy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        self.size_policy.setHorizontalStretch(0)
+        self.size_policy.setVerticalStretch(0)
 
-        self.populate_asset_types()
+        self.first_line = QtWidgets.QHBoxLayout()
+        self.addLayout(self.first_line)
+
+        self.asset_type_combo = self._insert_single_combo(self.first_line, "Asset Type")
+        self.asset_type_combo.setSizePolicy(self.size_policy)
+        self.asset_combo = self._insert_single_combo(self.first_line, "Asset")
+        self.asset_combo.setSizePolicy(self.size_policy)
+        self.step_combo = self._insert_single_combo(self.first_line, "Step")
+        self.step_combo.setSizePolicy(self.size_policy)
+        self.task_combo = self._insert_single_combo(self.first_line, "Task")
+        self.task_combo.setSizePolicy(self.size_policy)
+
+        # self.populate_asset_types()
 
         # ####################
         # SIGNALS
@@ -32,8 +43,10 @@ class TaskSelection(QtWidgets.QHBoxLayout):
         self.step_combo.activated.connect(self.set_step)
         self.task_combo.activated.connect(self.set_task)
 
+        # self.first_line.addStretch(1)
+
     @staticmethod
-    def __insert_single_combo(layout, label_text=""):
+    def _insert_single_combo(layout, label_text=""):
         """Adds a single combobox (label on top) to the layout widget"""
         _hold_vlay = QtWidgets.QVBoxLayout()
         _label = QtWidgets.QLabel(text=label_text)
@@ -83,7 +96,7 @@ class TaskSelection(QtWidgets.QHBoxLayout):
             self.task_combo.setCurrentText(str(self.sgh.task))
         else:
             self.task_combo.setCurrentIndex(0)
-        self.populate_sessions()
+        # self.populate_sessions()
 
     def set_asset_type(self):
         self.sgh.asset_type = self.asset_type_combo.currentText()

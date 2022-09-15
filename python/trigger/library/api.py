@@ -55,3 +55,15 @@ def getCenter(node_list):
         p_sum += getWorldTranslation(x)
     return p_sum / len(node_list)
 
+def select_vertices(mesh, id_list):
+    """Selects vertices of the mesh with given id list"""
+    sel = om.MSelectionList()
+    sel.add(mesh)
+    dag, mObject = sel.getComponent(0)
+    mfn_components = om.MFnSingleIndexedComponent(mObject)
+    mfn_object = mfn_components.create(om.MFn.kMeshVertComponent)
+    mfn_components.addElements(id_list)
+    selection_list = om.MSelectionList()
+    selection_list.add((dag, mfn_object))
+    om.MGlobal.setActiveSelectionList(selection_list)
+

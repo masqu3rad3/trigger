@@ -383,13 +383,6 @@ class Kinematics(object):
 
         j_def_set = None
 
-        print("-"*20)
-        print("-"*30)
-        print("-"*40)
-        print(self.multi_selectionSets)
-        print("-"*40)
-        print("-"*30)
-        print("-"*20)
         if not self.multi_selectionSets:
             cmds.select(d=True)
             if not cmds.objExists("def_jointsSet_%s" % self.rig_name):
@@ -426,7 +419,6 @@ class Kinematics(object):
             flags = "build_data={0}".format(x[0])
             construct_command = "{0}({1})".format(module, flags)
 
-            print("DEBUG:", construct_command)
             limb = eval(construct_command)
             limb.colorCodes = colorCodes
             limb.createLimb()

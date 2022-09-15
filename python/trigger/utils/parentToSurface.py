@@ -1,8 +1,9 @@
 ## This Script originally belongs to Duncan Brinsmead (parentToSurface.mel)
-## I just converted it to Pymel for easier modification and
+## I just converted it to python for easier modification and
 ## added som more functionality in order to use inside other python maya_modules
 
 from maya import cmds
+from trigger.library.connection import matrixConstraint
 
 def convertToCmFactor():
     unit = cmds.currentUnit(q=True, linear=True)
@@ -12,13 +13,15 @@ def convertToCmFactor():
     except KeyError:
         return 1.0
 
-def parentToSurface(objects=None, surface=None, mode="parent"):
+def parentToSurface(objects=None, surface=None, mode="parent", source_parent_cutoff=None):
     """
     Attaches the given objects to the surface by follicles
     Args:
-        objects: (PyNode List) Objects list.
-        surface: (PyNode) The surface that the objects will be attached on. Comptaible types are mesh and nurbs
-        mode: attach mode. Valid values are 'parent', 'parentConstraint', 'pointConstraint' and 'None'
+        objects: (List) Objects list.
+        surface: (String) The surface that the objects will be attached on. Comptaible types are mesh and nurbs
+        mode: attach mode. Valid values are 'parent', 'parentConstraint', 'pointConstraint', 'matrixConstraint'
+                            and 'None'
+        source_parent_cutoff: (String) Only valid with 'matrixConstraint' mode. specified object will reverse-followed
 
     Returns: Follicle Transform Node
 
@@ -62,6 +65,7 @@ def parentToSurface(objects=None, surface=None, mode="parent"):
 
     follicleTransformList = []
     for obj in objects:
+        _name = obj.split("|")[-1] # if the object is a dag path
         cmds.connectAttr("%s.worldMesh" % surface, "%s.inMesh" % clPos, f=True)
 
         bbox = cmds.xform(obj, q=True, ws=True, bb=True)
@@ -74,7 +78,7 @@ def parentToSurface(objects=None, surface=None, mode="parent"):
         closestV = cmds.getAttr("%s.parameterV" % clPos)
 
         # attachObjectToSurface(obj, surface, closestU, closestV)
-        follicle = cmds.createNode("follicle", name=("%s_follicleShape" %obj))
+        follicle = cmds.createNode("follicle", name=("%s_follicleShape" %_name))
         follicleDag = cmds.listRelatives(follicle, parent=True)[0]
         cmds.rename(follicleDag, ("%s_follicle" %obj))
 
@@ -100,6 +104,8 @@ def parentToSurface(objects=None, surface=None, mode="parent"):
             cmds.parentConstraint(follicleDag, obj, mo=True)
         if mode == "pointconstraint":
             cmds.pointConstraint(follicleDag, obj, mo=True)
+        if mode == "matrixconstraint":
+            matrixConstraint(follicleDag, obj, mo=True, source_parent_cutoff=source_parent_cutoff)
         if mode == "none":
             pass
 

@@ -20,54 +20,6 @@ class ColorButton(QtWidgets.QPushButton):
         super(ColorButton, self).__init__(*args, **kwargs)
         self.default_stylesheet = self.styleSheet()
         self._color = QtGui.QColor()
-        # self._updateWidget = update_widget
-        # if text:
-        #     self.setText(text)
-        # self._validModes = ["openFile", "saveFile", "directory"]
-        # if mode in self._validModes:
-        #     self._mode = mode
-        # else:
-        #     raise Exception("Mode is not valid. Valid modes are %s" % (", ".join(self._validModes)))
-        # self._filterExtensions = self._listToFilter(filterExtensions) if filterExtensions else ""
-        # self._title = title if title else ""
-        # self._selectedPath = ""
-        # self._overwriteCheck = overwrite_check
-        # self._cancelFlag = False
-
-    # def isCancelled(self):
-    #     return self._cancelFlag
-    #
-    # def setUpdateWidget(self, widget):
-    #     self._updateWidget = widget
-    #
-    # def updateWidget(self):
-    #     return self._updateWidget
-    #
-    # def setMode(self, mode):
-    #     if mode not in self._validModes:
-    #         raise Exception("Mode is not valid. Valid modes are %s" % (", ".join(self._validModes)))
-    #     self._mode = mode
-    #
-    # def mode(self):
-    #     return self._mode
-    #
-    # def setFilterExtensions(self, extensionlist):
-    #     self._filterExtensions = self._listToFilter(extensionlist)
-    #
-    # def selectedPath(self):
-    #     return self._selectedPath
-    #
-    # def setSelectedPath(self, new_path):
-    #     self._selectedPath = new_path
-    #
-    # def setTitle(self, title):
-    #     self._title = title
-    #
-    # def title(self):
-    #     return self._title
-    #
-    # def _listToFilter(self, filter_list):
-    #     return ";;".join(filter_list)
 
     def setDisabled(self, state):
         super(ColorButton, self).setDisabled(state)
@@ -84,8 +36,6 @@ class ColorButton(QtWidgets.QPushButton):
         else:
             self._update_button_color()
 
-
-
     def setColor(self, rgb=None, normalized_rgb=None, hex=None, QColor=None):
         if QColor:
             self._color = QColor
@@ -98,13 +48,6 @@ class ColorButton(QtWidgets.QPushButton):
         elif hex:
             _hex = hex.lstrip("#")
             rgb = tuple(int(_hex[i:i+2], 16) for i in (0, 2, 4))
-        print("-"*30)
-        print("-"*30)
-        print("-"*30)
-        print(rgb)
-        print("-"*30)
-        print("-"*30)
-        print("-"*30)
         self._color.setRgb(*rgb)
         self._update_button_color()
 
@@ -127,8 +70,3 @@ class ColorButton(QtWidgets.QPushButton):
     def mouseReleaseEvent(self, *args, **kwargs):
         self.colorpickEvent()
         super(ColorButton, self).mouseReleaseEvent(*args, **kwargs)
-
-    # @staticmethod
-    # def _f2b(float_index_color):
-    #     byte_list = [int(f*255.999) for f in float_index_color]
-    #     return tuple(byte_list)

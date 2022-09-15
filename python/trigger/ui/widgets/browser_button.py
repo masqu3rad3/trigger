@@ -1,5 +1,5 @@
 import os
-from trigger.ui.Qt import QtWidgets, QtCore, QtGui
+from trigger.ui.Qt import QtWidgets
 
 
 class BrowserButton(QtWidgets.QPushButton):
@@ -103,7 +103,7 @@ class BrowserButton(QtWidgets.QPushButton):
             selected_extension = None
 
         if new_path:
-            if selected_extension:
+            if self._mode == "saveFile" and selected_extension:
                 ext = selected_extension.split('(*', 1)[1].split(')')[0]
                 if not new_path.endswith(ext):
                     new_path = "%s%s" % (new_path, ext)

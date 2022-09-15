@@ -47,7 +47,9 @@ class Space_switchers(object):
         # everything in this method will be executed automatically.
         # This method does not accept any arguments. all the user variable must be defined to the instance before
         for sw_data in self.swithcerDefinitions:
-            space_switcher.create_space_switch(sw_data[0], sw_data[1], overrideExisting=True, mode=sw_data[2])
+            space_switcher.create_space_switch(
+                sw_data[0], sw_data[1], overrideExisting=True, mode=sw_data[2]
+            )
 
     def save_action(self, file_path=None, *args, **kwargs):
         """Mandatory Method - Save Action"""
@@ -75,7 +77,7 @@ class Space_switchers(object):
         switcher_definitions_lay = QtWidgets.QVBoxLayout()
         layout.addRow(switcher_definitions_lbl, switcher_definitions_lay)
 
-        add_new_definition_btn = QtWidgets.QPushButton(text= "Add New Definition")
+        add_new_definition_btn = QtWidgets.QPushButton(text="Add New Definition")
         switcher_definitions_lay.addWidget(add_new_definition_btn)
 
         self.id = 0
@@ -101,7 +103,7 @@ class Space_switchers(object):
             def_formlayout.addRow(def_remove_lbl, def_remove_pb)
 
             id_lbl = QtWidgets.QLabel("")
-            id_separator_lbl = QtWidgets.QLabel("-"*100)
+            id_separator_lbl = QtWidgets.QLabel("-" * 100)
             def_formlayout.addRow(id_lbl, id_separator_lbl)
 
             switcher_definitions_lay.insertLayout(0, def_formlayout)
@@ -125,8 +127,12 @@ class Space_switchers(object):
             def_anchor_le.editingFinished.connect(update_model)
             def_targets_le.editingFinished.connect(update_model)
             def_modes_combo.currentIndexChanged.connect(update_model)
-            def_remove_pb.clicked.connect(lambda _=0, lay=def_formlayout, id=self.id: delete_definition(lay, id))
+            def_remove_pb.clicked.connect(
+                lambda _=0, lay=def_formlayout, id=self.id: delete_definition(lay, id)
+            )
             def_remove_pb.clicked.connect(update_model)
+
+            update_model()
 
         # custom model/ui updates
 
@@ -140,13 +146,19 @@ class Space_switchers(object):
                 tmp_list.append(widget_dict["modes_combo"].currentText())
                 switcher_definitions.append(tmp_list)
             # feed the model with the definitions
-            ctrl.model.edit_action(ctrl.action_name, "switcher_definitions", switcher_definitions)
+            ctrl.model.edit_action(
+                ctrl.action_name, "switcher_definitions", switcher_definitions
+            )
             pass
 
         def update_ui():
             data = ctrl.model.query_action(ctrl.action_name, "switcher_definitions")
             for definition in data:
-                add_new_definition(anchor_val=definition[0], locations_val=ctrl.list_to_text(definition[1]), mode_val=definition[2])
+                add_new_definition(
+                    anchor_val=definition[0],
+                    locations_val=ctrl.list_to_text(definition[1]),
+                    mode_val=definition[2],
+                )
             pass
 
         def delete_definition(layout, id):
@@ -170,5 +182,3 @@ class Space_switchers(object):
 
         # signals
         add_new_definition_btn.clicked.connect(add_new_definition)
-
-        pass

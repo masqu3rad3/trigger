@@ -352,8 +352,6 @@ global proc shelf_RigHelpers () {
     ;
         shelfButton
         -enableCommandRepeat 1
-        -flexibleWidthType 3
-        -flexibleWidthValue 32
         -enable 1
         -width 35
         -height 34
@@ -760,8 +758,6 @@ global proc shelf_RigHelpers () {
     ;
     shelfButton
         -enableCommandRepeat 1
-        -flexibleWidthType 3
-        -flexibleWidthValue 32
         -enable 1
         -width 35
         -height 34

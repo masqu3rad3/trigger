@@ -13,6 +13,9 @@ from PySide2 import QtWidgets, QtGui  # for progressbar
 from trigger.ui import custom_widgets
 from trigger.ui.widgets.browser_button import BrowserButton
 
+from trigger import version_control
+from trigger.ui.vcs_widgets.publish_selection import PublishSelection
+
 log = filelog.Filelog(logname=__name__, filename="trigger_log")
 
 ACTION_DATA = {
@@ -65,15 +68,40 @@ class Import_asset(object):
 
     def ui(self, ctrl, layout, handler, *args, **kwargs):
 
-        file_path_lbl = QtWidgets.QLabel(text="File Path:")
+        vcs_lay = None
+        override_vcs_cb = None
+        path_available_in_vcs = False
+        if version_control.controller:
+            vcs_lbl = QtWidgets.QLabel(text="Version Control")
+            # _hold_lay = QtWidgets.QVBoxLayout()
+            vcs_lay = PublishSelection()
+            vcs_lay.addStretch(1)
+            # _hold_lay.addLayout(vcs_lay)
+            # _hold_lay.addStretch(1)
+            layout.addRow(vcs_lbl, vcs_lay)
+
+            path_available_in_vcs = vcs_lay.set_path(ctrl.model.query_action(ctrl.action_name, "import_file_path"))
+            # vcs_lay.path = ctrl.model.query_action(ctrl.action_name, "import_file_path")
+
+            override_vcs_lbl = QtWidgets.QLabel(text="Override Version Control")
+            override_vcs_cb = QtWidgets.QCheckBox(checked=not path_available_in_vcs)
+            layout.addRow(override_vcs_lbl, override_vcs_cb)
+
+
+
+
+
+
+        file_path_lbl = QtWidgets.QLabel(text="File Path")
         file_path_hLay = QtWidgets.QHBoxLayout()
-        # file_path_le = QtWidgets.QLineEdit()
         file_path_le = custom_widgets.FileLineEdit()
         file_path_hLay.addWidget(file_path_le)
         browse_path_pb = BrowserButton(mode="openFile", update_widget=file_path_le,
-                                                      filterExtensions=["Maya ASCII (*.ma)", "Maya Binary (*.mb)",
+                                                      filterExtensions=["All Supported (*.ma *.mb *.usd *.abc *.obj)",
+                                                                        "Maya ASCII (*.ma)", "Maya Binary (*.mb)",
                                                                         "USD (*.usd)", "Alembic (*.abc)", "FBX (*.fbx)",
-                                                                        "OBJ (*.obj)"], overwrite_check=False)
+                                                                        "OBJ (*.obj)",
+                                                                        ], overwrite_check=False)
         file_path_hLay.addWidget(browse_path_pb)
         layout.addRow(file_path_lbl, file_path_hLay)
 
@@ -96,7 +124,16 @@ class Import_asset(object):
 
         ctrl.update_ui()
 
+        # version control override logic
+        file_path_le.setDisabled(path_available_in_vcs)
+        browse_path_pb.setDisabled(path_available_in_vcs)
+        #     pass
+
         # SIGNALS
+        if version_control.controller:
+            vcs_lay.selectionChanged.connect(lambda path: file_path_le.setText(path))
+            override_vcs_cb.stateChanged.connect(file_path_le.setEnabled)
+            override_vcs_cb.stateChanged.connect(browse_path_pb.setEnabled)
         file_path_le.textChanged.connect(lambda x=0: ctrl.update_model())
         browse_path_pb.clicked.connect(lambda x=0: ctrl.update_model())
         browse_path_pb.clicked.connect(file_path_le.validate)  # to validate on initial browse result
@@ -161,7 +198,6 @@ class Import_asset(object):
         }
 
         for item in fbx_import_settings.items():
-            # TODO : Test with more versions of Maya
             mel.eval('%s %s' % (item[0], item[1]))
 
         try:
@@ -181,7 +217,7 @@ class Import_asset(object):
         """Scaling and renaming post process"""
         if suffix != "" or scale != 1.0 or parent_under != "":
             # get the root node(s)
-            root_nodes = cmds.ls(new_nodes, assemblies=True)
+            root_nodes = cmds.ls(new_nodes, assemblies=True, l=True)
             # make sure all scales are unlocked
             for node in new_nodes:
                 if cmds.objectType(node) == "transform":
@@ -194,7 +230,7 @@ class Import_asset(object):
                 cmds.parent(node, temp_grp)
                 cmds.xform(temp_grp, s=(scale, scale, scale), piv=(0, 0, 0), ztp=True, p=True)
                 cmds.makeIdentity(temp_grp, a=True, t=False, r=False, s=True)
-                cmds.parent(node, world=True)
+                cmds.parent(temp_grp + node, world=True)
                 cmds.delete(temp_grp)
 
                 if suffix:

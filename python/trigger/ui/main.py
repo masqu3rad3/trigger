@@ -112,7 +112,6 @@ class MainUI(QtWidgets.QMainWindow):
 
         parent = getMayaMainWindow()
         super(MainUI, self).__init__(parent=parent)
-
         log.clear()
 
         # PEP8 vars
@@ -136,7 +135,7 @@ class MainUI(QtWidgets.QMainWindow):
         # core ui
         self.setWindowTitle(WINDOW_NAME)
         self.setObjectName(WINDOW_NAME)
-        self.resize(1000, 600)
+        self.resize(1200, 800)
         self.centralwidget = QtWidgets.QWidget(self)
         self.centralwidget.setObjectName("centralwidget")
         self.centralwidget.setStyleSheet(qss)
@@ -147,7 +146,12 @@ class MainUI(QtWidgets.QMainWindow):
         # self.centralWidget_vLay.setSpacing(0)
         # Build the UI elements
         if version_control.controller and not disable_version_control:
-            self.asset_control()
+            try:
+                self.asset_control()
+            except AttributeError:
+                version_control.controller = None
+                disable_version_control = True
+
         self.rigging_tab, self.guides_tab = self.build_tabs()
         self.build_bars_ui()
         self.build_rigging_ui()
@@ -170,8 +174,10 @@ class MainUI(QtWidgets.QMainWindow):
         self.callbackIDList = _create_callbacks(self.force_update, parent=None, event="SelectionChanged")
 
         # force open the trigger session on initialization if a session found
-        if self.asset_selection_w:
+        if self.asset_selection_w and not disable_version_control:
             self.asset_selection_w.set_version()
+        else:
+            self.statusbar.showMessage("Asset Control Disabled")
 
         log.info("Interface Loaded Successfully")
 

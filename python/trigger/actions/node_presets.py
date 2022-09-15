@@ -11,6 +11,7 @@ from trigger.core.decorators import tracktime
 
 from trigger.ui import custom_widgets
 from trigger.ui.widgets.browser_button import BrowserButton
+from trigger.ui.widgets.save_box import SaveBoxLayout
 from trigger.ui.Qt import QtWidgets, QtGui # for progressbar
 from trigger.ui import feedback
 
@@ -121,7 +122,7 @@ class Node_presets(object):
         ctrl.update_ui()
 
         save_current_lbl = QtWidgets.QLabel(text="Save Current states")
-        savebox_lay = custom_widgets.SaveBoxLayout(alignment="horizontal", update_widget=file_path_le, filter_extensions=["Trigger Weight Files (*.trp)"], overwrite_check=True, control_model=ctrl)
+        savebox_lay = SaveBoxLayout(alignment="horizontal", update_widget=file_path_le, filter_extensions=["Trigger Weight Files (*.trp)"], overwrite_check=True, control_model=ctrl)
         layout.addRow(save_current_lbl, savebox_lay)
 
         def get_nodes():

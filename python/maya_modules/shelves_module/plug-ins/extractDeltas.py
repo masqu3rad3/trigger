@@ -136,7 +136,7 @@ class extractDeltas(OpenMayaMPx.MPxCommand):
 		shapeList = []
 		
 		for i in range(len(sel)):
-			shapes = cmds.listRelatives(sel[i], s = True)
+			shapes = cmds.listRelatives(sel[i], s = True, f=True)
 			if shapes == None:
 				OpenMaya.MGlobal.displayError(sel[i] + ' has no shape node.')
 				return
@@ -223,8 +223,9 @@ class extractDeltas(OpenMayaMPx.MPxCommand):
 		#resultObj = resultFn.copy(intermediateObj, OpenMaya.cvar.MObject_kNullObj)
 		# duplicating the mesh through maya commands is a bit more complex
 		# but the undo comes for free
-		
-		resultMesh = cmds.duplicate(shapeList[0], rc = True)
+
+		_name = shapeList[0].split("|")[0]
+		resultMesh = cmds.duplicate(shapeList[0], rc = True, name=_name)
 		shapes = cmds.listRelatives(resultMesh, s = True)
 		# delete the main shape node and deactivate the intermediate object
 		cmds.delete(shapes[0])
@@ -233,7 +234,8 @@ class extractDeltas(OpenMayaMPx.MPxCommand):
 		attrList = ['tx', 'ty', 'tz', 'rx', 'ry', 'rz', 'sx', 'sy', 'sz']
 		for a in attrList:
 			cmds.setAttr(resultMesh[0] + '.' + a, l = False)
-		
+
+
 		selList.clear()
 		selList.add(shapes[0])
 		selList.getDependNode(0, resultObj)
@@ -324,8 +326,8 @@ class extractDeltas(OpenMayaMPx.MPxCommand):
 		# --------------------------------------------------------------------------------
 		
 		cmds.sets(resultFn.fullPathName(), e = True, fe = 'initialShadingGroup')
-		parentNode = cmds.listRelatives(resultFn.fullPathName(), p = True)
-		resultName = cmds.rename(parentNode, sel[1] + '_corrective')
+		parentNode = cmds.listRelatives(resultFn.fullPathName(), p = True, f=True)
+		resultName = cmds.rename(parentNode[0].split("|")[-1], sel[1] + '_corrective')
 		
 		self.setResult(resultName)
 		
@@ -383,7 +385,7 @@ mel = '''
 global proc extractDeltasDuplicateMesh()
 {
 	string $sel[] = `ls -sl`;
-	string $shapes[] = `listRelatives -s $sel[0]`;
+	string $shapes[] = `listRelatives -s -f $sel[0]`;
 	string $skin[] = `listConnections -type "skinCluster" $shapes[0]`;
 	if (`size($skin)`)
 	{
@@ -414,7 +416,7 @@ global proc performExtractDeltas()
 	string $shapes[];
 	for ($s in $sel)
 	{
-		$shapes = `listRelatives -s $s`;
+		$shapes = `listRelatives -s -f $s`;
 		for ($sh in $shapes)
 		{
 			if (`nodeType $sh` != "mesh")
@@ -425,7 +427,7 @@ global proc performExtractDeltas()
 	}
 	if (size($sel) == 2)
 	{
-		$shapes = `listRelatives -s $sel[0]`;
+		$shapes = `listRelatives -s -f $sel[0]`;
 		string $skin[] = `listConnections -type "skinCluster" $shapes[0]`;
 		if (!`size($skin)`)
 		{

@@ -10,6 +10,7 @@ from trigger.actions import weights
 from trigger.library import deformers, functions, selection
 from trigger.ui import custom_widgets
 from trigger.ui.widgets.browser_button import BrowserButton
+from trigger.ui.widgets.save_box import SaveBoxLayout
 from trigger.ui.Qt import QtWidgets, QtGui
 from trigger.ui import feedback
 from trigger.core import filelog
@@ -134,7 +135,7 @@ class Split_shapes(weights.Weights):
         layout.addRow(file_path_lbl, file_path_hLay)
 
         save_current_lbl = QtWidgets.QLabel(text="Save Current states")
-        savebox_lay = custom_widgets.SaveBoxLayout(alignment="horizontal", update_widget=file_path_le, filter_extensions=["Trigger Split Files (*.trsplit)"], overwrite_check=True, control_model=ctrl)
+        savebox_lay = SaveBoxLayout(alignment="horizontal", update_widget=file_path_le, filter_extensions=["Trigger Split Files (*.trsplit)"], overwrite_check=True, control_model=ctrl)
         layout.addRow(save_current_lbl, savebox_lay)
 
         blendshapes_group_lbl = QtWidgets.QLabel(text="Blendshapes Root Group:")

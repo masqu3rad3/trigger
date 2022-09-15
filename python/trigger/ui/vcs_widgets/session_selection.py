@@ -182,7 +182,7 @@ class SessionSelection(QtWidgets.QHBoxLayout):
         step = self.sgh.step or self.step_combo.currentText()
         variant = self.sgh.variant or self.sgh._variant_from_task(self.task_combo.currentText())
         session = self.sgh.session or self.session_combo.currentText()
-        _int_version_list = sorted(self.sgh.get_versions(asset, step, variant, session))
+        _int_version_list = sorted(self.sgh.get_session_versions(asset, step, variant, session))
         _str_version_list = ([str(x) for x in _int_version_list])
         self.version_combo.addItems(_str_version_list)
         last_version = self.version_combo.count()-1
@@ -191,7 +191,6 @@ class SessionSelection(QtWidgets.QHBoxLayout):
         self.__validate_button_states()
 
     def set_asset_type(self):
-        print("debug")
         self.sgh.asset_type = self.asset_type_combo.currentText()
         self.populate_assets()
         self.set_asset()
@@ -219,9 +218,7 @@ class SessionSelection(QtWidgets.QHBoxLayout):
 
     def set_version(self):
         if self.version_combo.currentText():
-            print("pre", self.sgh.session_version)
             self.sgh.session_version = int(self.version_combo.currentText())
-            print("after", self.sgh.session_version)
             self.session_changed_signal.emit(self.sgh.get_session_path())
 
 
