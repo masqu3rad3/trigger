@@ -99,11 +99,9 @@ def free_limits(node, attr_list=("tx", "ty", "tz", "rx", "ry", "rz", "sx", "sy",
         cmd = "cmds.transformLimits('{0}', e{1}=(0,0))".format(node, attr)
         eval(cmd)
 
-
 def reference(node):
     cmds.setAttr("%s.overrideEnabled" % node, 1)
     cmds.setAttr("%s.overrideDisplayType" % node, 2)
-
 
 @keepframe
 def duplicate(node, name=None, at_time=None):
@@ -112,14 +110,11 @@ def duplicate(node, name=None, at_time=None):
     node_name = name or "%s_dup" % node
     return cmds.duplicate(node, name=node_name)[0]
 
-
 def is_group(node):
-    """Checks if the given node is a group node or not"""
-    if cmds.listRelatives(node, children=True, shapes=True):
+    """Check if the given node is a group node or not."""
+    if cmds.objectType(node) != "transform":
         return False
-    else:
-        return True
-
+    return not bool(cmds.listRelatives(node, children=True, shapes=True))
 
 def validate_group(group_name):
     "checks if the group exist, if not creates it. If there are any non-group object with that name, raises exception"
@@ -130,7 +125,6 @@ def validate_group(group_name):
             log.error("%s is not a valid group name. There is another non-group object with the same same" % group_name)
     else:
         return cmds.group(name=group_name, em=True)
-
 
 def get_color(node):
     """returns the normalized color values of given node"""
