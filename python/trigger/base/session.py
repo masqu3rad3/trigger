@@ -76,7 +76,7 @@ class Session(object):
             cmds.select(d=True)
             tmp_jnt = cmds.joint()
             functions.alignTo(tmp_jnt, jnt, position=True, rotation=True)
-            world_pos = tuple(api.getWorldTranslation(tmp_jnt))
+            world_pos = tuple(api.get_world_translation(tmp_jnt))
             rotation = cmds.getAttr("%s.rotate" % tmp_jnt)[0]
             joint_orient = cmds.getAttr("%s.jointOrient" % tmp_jnt)[0]
             scale = cmds.getAttr("%s.scale" % jnt)[0]

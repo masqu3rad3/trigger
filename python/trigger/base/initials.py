@@ -207,7 +207,7 @@ class Initials(object):
             locatorsList.append(locator)
             if constrainedTo:
                 functions.alignTo(locator, guide.guideJoints[jnt], position=True, rotation=False)
-                connection.connectMirror(constrainedTo[jnt], locatorsList[jnt], mirror_axis=self.mirrorVector_asString)
+                connection.connect_mirror(constrainedTo[jnt], locatorsList[jnt], mirror_axis=self.mirrorVector_asString)
 
                 functions.alignTo(guide.guideJoints[jnt], locator, position=True, rotation=False)
                 cmds.parentConstraint(locator, guide.guideJoints[jnt], mo=True)

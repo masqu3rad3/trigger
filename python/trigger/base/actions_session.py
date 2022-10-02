@@ -303,7 +303,7 @@ class ActionsSession(dict):
         log.header("%s" % action["name"])
         action_cmd = "actions.{0}.{1}()".format(action["type"], action["type"].capitalize())
         a_hand = eval(action_cmd)
-        a_hand.feed(action["data"])
+        a_hand.FEED(action["data"])
         a_hand.action()
         log.info("success...")
 
@@ -357,7 +357,7 @@ class ActionsSession(dict):
         action = self.get_action(action_name)
         action_cmd = "actions.{0}.{1}()".format(action["type"], action["type"].capitalize())
         a_hand = eval(action_cmd)
-        a_hand.feed(action["data"])
+        a_hand.FEED(action["data"])
         a_hand.save_action()
         log.info("success")
 

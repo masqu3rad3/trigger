@@ -137,7 +137,7 @@ class Fkik(object):
     def createJoints(self):
         # draw Joints
         cmds.select(d=True)
-        self.limbPlug = cmds.joint(name="limbPlug_%s" % self.suffix, p=api.getWorldTranslation(self.inits[0]), radius=3)
+        self.limbPlug = cmds.joint(name="limbPlug_%s" % self.suffix, p=api.get_world_translation(self.inits[0]), radius=3)
         cmds.connectAttr("%s.s" %self.scaleGrp, "%s.s" %self.limbPlug)
 
         cmds.select(d=True)
@@ -189,8 +189,8 @@ class Fkik(object):
                 if nmb < (len(fk_joints)-1):
                     scale_mult = functions.getDistance(jnt, fk_joints[nmb + 1]) * 0.5
 
-                cont, _ = icon_handler.createIcon("Cube", iconName="%s%i_FK_cont" % (self.suffix, nmb),
-                                                  scale=(scale_mult, scale_mult, scale_mult))
+                cont, _ = icon_handler.create_icon("Cube", icon_name="%s%i_FK_cont" % (self.suffix, nmb),
+                                                   scale=(scale_mult, scale_mult, scale_mult))
 
                 cmds.xform(cont, piv=(self.sideMult * (-scale_mult), 0, 0))
                 functions.alignToAlter(cont, jnt, 2)
@@ -217,13 +217,13 @@ class Fkik(object):
             connection.matrixConstraint(self.limbPlug, ik_bind_grp, mo=True)
 
             scale_mult = functions.getDistance(ik_joints[0], ik_joints[1]) * 0.5
-            self.rootIkCont, _ = icon_handler.createIcon("Circle", iconName="%s_rootIK_cont" % self.suffix, normal=(1,0,0), scale=(scale_mult, scale_mult, scale_mult))
+            self.rootIkCont, _ = icon_handler.create_icon("Circle", icon_name="%s_rootIK_cont" % self.suffix, normal=(1, 0, 0), scale=(scale_mult, scale_mult, scale_mult))
             self.ikControllers.append(self.rootIkCont)
             root_ik_cont_off = functions.createUpGrp(self.rootIkCont, "OFF")
             self.ikControllersOff.append(root_ik_cont_off)
             functions.alignTo(root_ik_cont_off, ik_joints[0], rotation=True, position=True)
 
-            self.endIKCont, _ = icon_handler.createIcon("Circle", iconName="%s_endIK_cont" % self.suffix, normal=(1,0,0), scale=(scale_mult, scale_mult, scale_mult))
+            self.endIKCont, _ = icon_handler.create_icon("Circle", icon_name="%s_endIK_cont" % self.suffix, normal=(1, 0, 0), scale=(scale_mult, scale_mult, scale_mult))
             self.ikControllers.append(self.endIKCont)
             end_ik_cont_off = functions.createUpGrp(self.endIKCont, "OFF")
             self.ikControllersOff.append(end_ik_cont_off)
@@ -237,11 +237,11 @@ class Fkik(object):
 
                 scale_mult = functions.getDistance(ik_joints[0], ik_joints[-1]) * 0.1
                 self.poleVectorBridge = cmds.spaceLocator(name="poleVectorBridge_%s" %self.suffix)[0]
-                self.poleVectorCont, _ = icon_handler.createIcon("Plus", iconName="%s_Pole_cont" % self.suffix, scale=(scale_mult, scale_mult, scale_mult),
-                                                      normal=(self.sideMult, 0, 0))
+                self.poleVectorCont, _ = icon_handler.create_icon("Plus", icon_name="%s_Pole_cont" % self.suffix, scale=(scale_mult, scale_mult, scale_mult),
+                                                                  normal=(self.sideMult, 0, 0))
                 offset_magnitude = scale_mult
                 self.middleIndex = int((len(ik_joints)-1)*0.5)
-                offset_vector = api.getBetweenVector(ik_joints[self.middleIndex], ik_joints)
+                offset_vector = api.get_between_vector(ik_joints[self.middleIndex], ik_joints)
 
                 functions.alignAndAim(self.poleVectorBridge,
                                       targetList=[ik_joints[self.middleIndex]],
@@ -271,8 +271,8 @@ class Fkik(object):
         # SWITCH Controller
         if self.switchMode == 0:
             scale_mult = functions.getDistance(self.ikJoints[0], self.ikJoints[1]) * 0.5
-            self.switchController, _ = icon_handler.createIcon("FkikSwitch", iconName="%s_FK_IK_cont" % self.suffix,
-                                                        scale=(scale_mult, scale_mult, scale_mult))
+            self.switchController, _ = icon_handler.create_icon("FkikSwitch", icon_name="%s_FK_IK_cont" % self.suffix,
+                                                                scale=(scale_mult, scale_mult, scale_mult))
             self.controllers.append(self.switchController)
             cmds.parent(self.switchController, ik_bind_grp)
 

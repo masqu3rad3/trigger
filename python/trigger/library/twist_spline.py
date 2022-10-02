@@ -46,7 +46,7 @@ class TwistSpline(object):
         self.scaleGrp = cmds.group(name="scaleGrp_%s" % name, em=True)
         self.nonScaleGrp = cmds.group(name="nonScaleGrp_%s" % name, em=True)
 
-        rootVc = api.getWorldTranslation(refJoints[0])
+        rootVc = api.get_world_translation(refJoints[0])
         totalLength = 0
         contDistances = []
         contCurves = []
@@ -198,7 +198,7 @@ class TwistSpline(object):
             scaleRatio = (totalLength / len(contJoints))
             if i != 0 and i != (len(contJoints) - 1):
                 ## Create control Curve if it is not the first or last control joint
-                cont_Curve, dmp = icon.createIcon("Star", iconName="%s%i_tweak_cont" %(name, i), scale=(scaleRatio, scaleRatio, scaleRatio), normal=(1,0,0))
+                cont_Curve, dmp = icon.create_icon("Star", icon_name="%s%i_tweak_cont" % (name, i), scale=(scaleRatio, scaleRatio, scaleRatio), normal=(1, 0, 0))
             else:
                 cont_Curve = cmds.spaceLocator(name="lockPoint_%s%i" %(name, i))[0]
             # pm.setAttr(cont_Curve.rotateOrder,3)

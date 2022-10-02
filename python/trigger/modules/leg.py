@@ -48,12 +48,12 @@ class Leg(object):
             log.error("Class needs either build_data or arminits to be constructed")
 
         # get positions
-        self.leg_root_pos = api.getWorldTranslation(self.leg_root_ref)
-        self.hip_pos = api.getWorldTranslation(self.hip_ref)
-        self.knee_pos = api.getWorldTranslation(self.knee_ref)
-        self.foot_pos = api.getWorldTranslation(self.foot_ref)
-        self.ball_pos = api.getWorldTranslation(self.ball_ref)
-        self.toe_pv_pos = api.getWorldTranslation(self.toe_pv_ref)
+        self.leg_root_pos = api.get_world_translation(self.leg_root_ref)
+        self.hip_pos = api.get_world_translation(self.hip_ref)
+        self.knee_pos = api.get_world_translation(self.knee_ref)
+        self.foot_pos = api.get_world_translation(self.foot_ref)
+        self.ball_pos = api.get_world_translation(self.ball_ref)
+        self.toe_pv_pos = api.get_world_translation(self.toe_pv_ref)
 
         # get distances
         self.init_upper_leg_dist = functions.getDistance(self.hip_ref, self.knee_ref)
@@ -263,7 +263,7 @@ class Leg(object):
         icon = ic.Icon()
         # Thigh Controller
         thigh_cont_scale = (self.init_upper_leg_dist / 4, self.init_upper_leg_dist / 4, self.init_upper_leg_dist / 16)
-        self.cont_thigh, _ = icon.createIcon("Cube", iconName="%s_Thigh_cont" % self.suffix, scale=thigh_cont_scale, normal=(0, 0, self.sideMult))
+        self.cont_thigh, _ = icon.create_icon("Cube", icon_name="%s_Thigh_cont" % self.suffix, scale=thigh_cont_scale, normal=(0, 0, self.sideMult))
         self.controllers.append(self.cont_thigh)
         functions.alignToAlter(self.cont_thigh, self.jfk_root, mode=2)
         cmds.move(0, self.sideMult*((thigh_cont_scale[0] * 2)), 0, self.cont_thigh, r=True, os=True)
@@ -281,7 +281,7 @@ class Leg(object):
 
         # IK Foot Controller
         foot_cont_scale = (self.init_foot_length * 0.75, 1, self.init_foot_width * 0.8)
-        self.cont_IK_foot, _ = icon.createIcon("Circle", iconName="%s_IK_foot_cont" % self.suffix, scale=foot_cont_scale, normal=(0, 0, self.sideMult))
+        self.cont_IK_foot, _ = icon.create_icon("Circle", icon_name="%s_IK_foot_cont" % self.suffix, scale=foot_cont_scale, normal=(0, 0, self.sideMult))
         self.controllers.append(self.cont_IK_foot)
         # align it to the ball socket
         functions.alignToAlter(self.cont_IK_foot, self.j_socket_ball, mode=2)
@@ -316,10 +316,10 @@ class Leg(object):
 
         # Pole Vector Controller
         polecont_scale = ((((self.init_upper_leg_dist + self.init_lower_leg_dist) / 2) / 10), (((self.init_upper_leg_dist + self.init_lower_leg_dist) / 2) / 10), (((self.init_upper_leg_dist + self.init_lower_leg_dist) / 2) / 10))
-        self.cont_Pole, _ = icon.createIcon("Plus", iconName="%s_Pole_cont" % self.suffix, scale=polecont_scale, normal=self.mirror_axis)
+        self.cont_Pole, _ = icon.create_icon("Plus", icon_name="%s_Pole_cont" % self.suffix, scale=polecont_scale, normal=self.mirror_axis)
         self.controllers.append(self.cont_Pole)
         offset_mag_pole = ((self.init_upper_leg_dist + self.init_lower_leg_dist) / 4)
-        offset_vector_pole = api.getBetweenVector(self.j_def_midLeg, [self.j_def_hip, self.jfk_foot])
+        offset_vector_pole = api.get_between_vector(self.j_def_midLeg, [self.j_def_hip, self.jfk_foot])
 
         functions.alignAndAim(self.cont_Pole,
                               targetList=[self.j_def_midLeg],
@@ -334,7 +334,7 @@ class Leg(object):
         ## FK UP Leg Controller
         scalecont_fk_up_leg = (self.init_upper_leg_dist / 2, self.init_upper_leg_dist / 6, self.init_upper_leg_dist / 6)
 
-        self.cont_fk_up_leg, dmp = icon.createIcon("Cube", iconName="FK_Upleg_%s_cont" % self.suffix, scale=scalecont_fk_up_leg)
+        self.cont_fk_up_leg, dmp = icon.create_icon("Cube", icon_name="FK_Upleg_%s_cont" % self.suffix, scale=scalecont_fk_up_leg)
         self.controllers.append(self.cont_fk_up_leg)
 
         # move the pivot to the bottom
@@ -350,7 +350,7 @@ class Leg(object):
 
         ## FK LOW Leg Controller
         scalecont_fk_low_leg = (self.init_lower_leg_dist / 2, self.init_lower_leg_dist / 6, self.init_lower_leg_dist / 6)
-        self.cont_fk_low_leg, dmp = icon.createIcon("Cube", iconName="FK_LowLeg_%s_cont" % self.suffix, scale=scalecont_fk_low_leg)
+        self.cont_fk_low_leg, dmp = icon.create_icon("Cube", icon_name="FK_LowLeg_%s_cont" % self.suffix, scale=scalecont_fk_low_leg)
         self.controllers.append(self.cont_fk_low_leg)
 
         # move the pivot to the bottom
@@ -366,7 +366,7 @@ class Leg(object):
 
         ## FK FOOT Controller
         scalecont_fk_foot = (self.init_ball_dist / 2, self.init_ball_dist / 3, self.init_foot_width / 2)
-        self.cont_fk_foot, _ = icon.createIcon("Cube", iconName="%s_FK_Foot_cont" % self.suffix, scale=scalecont_fk_foot)
+        self.cont_fk_foot, _ = icon.create_icon("Cube", icon_name="%s_FK_Foot_cont" % self.suffix, scale=scalecont_fk_foot)
         self.controllers.append(self.cont_fk_foot)
         functions.alignToAlter(self.cont_fk_foot, self.jfk_foot, mode=2)
 
@@ -375,7 +375,7 @@ class Leg(object):
 
         # FK Ball Controller
         scalecont_fk_ball = (self.init_toe_dist / 2, self.init_toe_dist / 3, self.init_foot_width / 2)
-        self.cont_fk_ball, _ = icon.createIcon("Cube", iconName="%s_FK_Ball_cont" % self.suffix, scale=scalecont_fk_ball)
+        self.cont_fk_ball, _ = icon.create_icon("Cube", icon_name="%s_FK_Ball_cont" % self.suffix, scale=scalecont_fk_ball)
         self.controllers.append(self.cont_fk_ball)
         functions.alignToAlter(self.cont_fk_ball, self.jfk_ball, mode=2)
 
@@ -384,7 +384,7 @@ class Leg(object):
 
         # FK-IK SWITCH Controller
         icon_scale = self.init_upper_leg_dist / 4
-        self.cont_fk_ik, self.fk_ik_rvs = icon.createIcon("FkikSwitch", iconName="%s_FK_IK_cont" % self.suffix, scale=(icon_scale, icon_scale, icon_scale))
+        self.cont_fk_ik, self.fk_ik_rvs = icon.create_icon("FkikSwitch", icon_name="%s_FK_IK_cont" % self.suffix, scale=(icon_scale, icon_scale, icon_scale))
         self.controllers.append(self.cont_fk_ik)
 
         functions.alignAndAim(self.cont_fk_ik, targetList=[self.jfk_foot], aimTargetList=[self.j_def_midLeg],
@@ -424,7 +424,7 @@ class Leg(object):
         ### Create MidLock controller
 
         midcont_scale = (self.init_lower_leg_dist / 4, self.init_lower_leg_dist / 4, self.init_lower_leg_dist / 4)
-        self.cont_mid_lock, _ = icon.createIcon("Star", iconName="%s_mid_cont" % self.suffix, scale=midcont_scale, normal=self.mirror_axis)
+        self.cont_mid_lock, _ = icon.create_icon("Star", icon_name="%s_mid_cont" % self.suffix, scale=midcont_scale, normal=self.mirror_axis)
         self.controllers.append(self.cont_mid_lock)
 
         functions.alignToAlter(self.cont_mid_lock, self.jfk_knee, 2)

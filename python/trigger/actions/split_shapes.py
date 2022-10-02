@@ -100,7 +100,7 @@ class Split_shapes(weights.Weights):
         base_folder, file_name_and_ext = os.path.split(file_path)
         file_name, ext = os.path.splitext(file_name_and_ext)
         weights_folder = os.path.join(base_folder, file_name)
-        self.io._folderCheck(weights_folder)
+        self.io.folder_check(weights_folder)
 
         # build the deformers list from the influencers
         if not self.paintMapBs:

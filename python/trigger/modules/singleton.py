@@ -140,7 +140,7 @@ class Singleton(object):
     def _build_module(self):
         # draw Joints
         cmds.select(d=True)
-        self.limbPlug = cmds.joint(name="limbPlug_%s" % self.suffix, p=api.getWorldTranslation(self.inits[0]), radius=3)
+        self.limbPlug = cmds.joint(name="limbPlug_%s" % self.suffix, p=api.get_world_translation(self.inits[0]), radius=3)
         cmds.connectAttr("%s.s" % self.scaleGrp, "%s.s" % self.limbPlug)
         cmds.parent(self.limbPlug, self.limbGrp)
 

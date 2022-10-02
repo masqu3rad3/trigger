@@ -26,7 +26,7 @@ class Controller(object):
         if cmds.objExists(name):
             self._name = name
         else:
-            self._name = self.icon_handler.createIcon(iconType=self._shape, iconName=name, scale=scale, normal=normal, location=pos)[0]
+            self._name = self.icon_handler.create_icon(icon_type=self._shape, icon_name=name, scale=scale, normal=normal, location=pos)[0]
         self.lockedShapes = ["FkikSwitch"]
 
         if side:
@@ -71,7 +71,7 @@ class Controller(object):
     def set_shape(self, shape, scale=(1,1,1), normal=(0,1,0)):
         if self._shape in self.lockedShapes:
             log.error("set_shape argument is not valid for locked shapes. Locked Shapes are %s" % self.lockedShapes)
-        new_shape, _ = self.icon_handler.createIcon(iconType=shape, scale=scale, normal=normal)
+        new_shape, _ = self.icon_handler.create_icon(icon_type=shape, scale=scale, normal=normal)
         replace_curve(self._name, new_shape, maintain_offset=True)
         cmds.delete(new_shape)
 

@@ -76,11 +76,11 @@ class Tail(object):
     def createJoints(self):
         # draw Joints
         cmds.select(d=True)
-        self.limbPlug = cmds.joint(name="limbPlug_%s" % self.suffix, p=api.getWorldTranslation(self.inits[0]), radius=3)
+        self.limbPlug = cmds.joint(name="limbPlug_%s" % self.suffix, p=api.get_world_translation(self.inits[0]), radius=3)
 
         cmds.select(d=True)
         for j in range (0,len(self.inits)):
-            location = api.getWorldTranslation(self.inits[j])
+            location = api.get_world_translation(self.inits[j])
             jnt = cmds.joint(name="jDef_{0}_{1}".format(j, self.suffix), p=location)
             self.sockets.append(jnt)
             self.deformerJoints.append(jnt)
@@ -110,7 +110,7 @@ class Tail(object):
 
         for jnt in range (len(self.deformerJoints)-1):
             scaleDis = functions.getDistance(self.deformerJoints[jnt], self.deformerJoints[jnt + 1]) / 2
-            cont, _ = icon.createIcon("Cube", iconName="%s%i_cont" % (self.suffix, jnt), scale=(scaleDis, scaleDis, scaleDis))
+            cont, _ = icon.create_icon("Cube", icon_name="%s%i_cont" % (self.suffix, jnt), scale=(scaleDis, scaleDis, scaleDis))
 
             cmds.xform(cont, piv=(self.sideMult * (-scaleDis), 0, 0))
             functions.alignToAlter(cont, self.deformerJoints[jnt], 2)

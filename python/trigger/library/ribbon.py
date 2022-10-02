@@ -236,7 +236,7 @@ class PowerRibbon():
         icon = ic.Icon()
         for mid in mid_joint_list:
             counter += 1
-            midCon, _ = icon.createIcon("Circle", iconName="cont_midRbn_%s%i" %(name, counter), normal=(1, 0, 0))
+            midCon, _ = icon.create_icon("Circle", icon_name="cont_midRbn_%s%i" % (name, counter), normal=(1, 0, 0))
             self.middleCont.append(midCon)
             middle_OFF = cmds.spaceLocator(name="mid_OFF_%s%i" % (name, counter))[0]
             self.toHide.append(functions.getShapes(middle_OFF)[0])

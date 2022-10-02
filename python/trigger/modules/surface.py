@@ -131,7 +131,7 @@ class Surface(object):
         for nmb, (init, joint_bind) in enumerate(zip(self.inits, self.jointBinds)):
             nmb = "" if len(self.inits) == 1 else nmb  # for backward compatibility
             icon = ic.Icon()
-            _cont, _ = icon.createIcon("Diamond", iconName="%s%s_cont" % (self.suffix, nmb))
+            _cont, _ = icon.create_icon("Diamond", icon_name="%s%s_cont" % (self.suffix, nmb))
             self.controllers.append(_cont)
             _cont_offset = functions.createUpGrp(_cont, "offset")
             _cont_bind = functions.createUpGrp(_cont, "bind")

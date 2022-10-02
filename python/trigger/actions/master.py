@@ -26,7 +26,7 @@ class Master(object):
             cmds.parent(render_geo_grp, master_rig_grp)
         if not cmds.objExists(pref_name):
             icon = ic.Icon()
-            preferences_cont = icon.createIcon("Preferences", pref_name)
+            preferences_cont = icon.create_icon("Preferences", pref_name)
             cmds.parent(preferences_cont, trigger_rig_grp)
         # create attributes
         attributes = [{"attr_name": "cacheMode",

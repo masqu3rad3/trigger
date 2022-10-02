@@ -135,7 +135,7 @@ class Eye(object):
 
     def createJoints(self):
         cmds.select(d=True)
-        self.limbPlug = cmds.joint(name="limbPlug_%s" % self.suffix, p=api.getWorldTranslation(self.inits[0]), radius=3)
+        self.limbPlug = cmds.joint(name="limbPlug_%s" % self.suffix, p=api.get_world_translation(self.inits[0]), radius=3)
 
         cmds.select(d=True)
         eye_jnt = cmds.joint(name="jDef_eye_{0}".format(self.suffix))
@@ -160,8 +160,8 @@ class Eye(object):
 
         self.aimBridge = cmds.spaceLocator(name="aimBridge_%s" %self.suffix)[0]
         attribute.drive_attrs("%s.rigVis" % self.scaleGrp, "%s.v" % self.aimBridge)
-        self.aimCont, _ = icon_handler.createIcon("Circle", iconName="%s_Aim_cont" % self.suffix, scale = (1,1,1),
-                                                      normal=(0, 0, 1))
+        self.aimCont, _ = icon_handler.create_icon("Circle", icon_name="%s_Aim_cont" % self.suffix, scale = (1, 1, 1),
+                                                   normal=(0, 0, 1))
         self.controllers.append(self.aimCont)
 
         self.otherEyeConts.append(self.aimCont)
@@ -179,8 +179,8 @@ class Eye(object):
 
         if self.groupID:
             if not self.groupCont:
-                self.groupCont, _ = icon_handler.createIcon("Circle", iconName="Eye_group%i_cont" %self.groupID, scale = (2,2,2),
-                                                          normal=(0, 0, 1))
+                self.groupCont, _ = icon_handler.create_icon("Circle", icon_name="Eye_group%i_cont" % self.groupID, scale = (2, 2, 2),
+                                                             normal=(0, 0, 1))
                 functions.colorize(self.groupCont, "C")
                 attribute.drive_attrs("%s.contVis" % self.scaleGrp, "%s.v" % self.groupCont)
                 cmds.delete(cmds.pointConstraint(self.otherEyeConts, self.groupCont, mo=False))
@@ -195,15 +195,15 @@ class Eye(object):
             else:
                 # if the group controller exists, update only its shape and rotation pivot
                 # adjust the pivot
-                cmds.xform(self.groupCont, a=True, ws=True, piv=api.getCenter(self.otherEyeConts))
-                cmds.xform(functions.getParent(self.groupCont), a=True, ws=True, piv=api.getCenter(self.otherEyeConts))
+                cmds.xform(self.groupCont, a=True, ws=True, piv=api.get_center(self.otherEyeConts))
+                cmds.xform(functions.getParent(self.groupCont), a=True, ws=True, piv=api.get_center(self.otherEyeConts))
 
                 bb = cmds.exactWorldBoundingBox(*self.otherEyeConts)
                 x_dist = abs(bb[0] - bb[3])
                 y_dist = abs(bb[1] - bb[4])
                 z_dist = abs(bb[2] - bb[5])
-                temp_cont, _ = icon_handler.createIcon("Circle", iconName="TEMP_%i_cont" %self.groupID, scale = (x_dist, z_dist, y_dist),
-                                                          normal=(0, 0, 1))
+                temp_cont, _ = icon_handler.create_icon("Circle", icon_name="TEMP_%i_cont" % self.groupID, scale = (x_dist, z_dist, y_dist),
+                                                        normal=(0, 0, 1))
 
                 # cmds.delete(cmds.pointConstraint(test_nodes, cont))
                 temp_cont_shape = functions.getShapes(temp_cont)[0]

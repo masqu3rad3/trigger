@@ -199,7 +199,7 @@ class Kinematics(object):
         for brother_roots in finger_match_list:
             # finger_name, finger_type, finger_side = extra.identifyMaster(brother_roots[0], self.module_dict)
             finger_parent = functions.getParent(brother_roots[0])
-            offsetVector = api.getBetweenVector(finger_parent, brother_roots)
+            offsetVector = api.get_between_vector(finger_parent, brother_roots)
             iconSize = functions.getDistance(brother_roots[0], brother_roots[-1])
             translateOff = (iconSize / 2, 0, iconSize / 2)
             rotateOff = (0, 0, 0)
@@ -213,8 +213,8 @@ class Kinematics(object):
             else:
                 pass
 
-            cont_fGroup, dmp = icon.createIcon("Square", iconName="%s_Fgrp_cont" % icon_name,
-                                               scale=(iconSize / 6, iconSize / 4, iconSize / 2))
+            cont_fGroup, dmp = icon.create_icon("Square", icon_name="%s_Fgrp_cont" % icon_name,
+                                                scale=(iconSize / 6, iconSize / 4, iconSize / 2))
             cmds.rotate(90, 0, 0, cont_fGroup)
             cmds.makeIdentity(cont_fGroup, a=True)
 
@@ -432,7 +432,7 @@ class Kinematics(object):
                 ## get the holder group
                 self.rootGroup = functions.getParent(master_cont)
                 ## Create the holder group if it does not exist
-                scaleGrpPiv = api.getWorldTranslation(limb.limbPlug)
+                scaleGrpPiv = api.get_world_translation(limb.limbPlug)
                 cmds.xform(limb.scaleGrp, piv=scaleGrpPiv, ws=True)
                 ## pass the attributes
 
@@ -471,7 +471,7 @@ class Kinematics(object):
                         pass
 
                 ## Good parenting / scale connections
-                scaleGrpPiv = api.getWorldTranslation(limb.limbPlug)
+                scaleGrpPiv = api.get_world_translation(limb.limbPlug)
                 cmds.xform(limb.scaleGrp, piv=scaleGrpPiv, ws=True)
                 ## pass the attributes
 

@@ -71,7 +71,7 @@ class Node_presets(object):
         base_folder, file_name_and_ext = os.path.split(file_path)
         file_name, ext = os.path.splitext(file_name_and_ext)
         remote_presets_folder = os.path.join(base_folder, file_name)
-        self.io._folderCheck(remote_presets_folder)
+        self.io.folder_check(remote_presets_folder)
 
         # build .trp data
         data_list = []

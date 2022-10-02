@@ -7,7 +7,7 @@ import traceback
 
 from trigger.core import filelog
 
-log = filelog.Filelog(logname=__name__, filename="trigger_log")
+LOG = filelog.Filelog(logname=__name__, filename="trigger_log")
 
 
 def logerror(func):
@@ -18,8 +18,8 @@ def logerror(func):
         try:
             return func(*args, **kwargs)
         except:  # noqa: E722
-            log.error("Exception in %s %s" % (func.__name__, func.__module__))
-            log.error(traceback.format_exc())
+            LOG.error("Exception in %s %s" % (func.__name__, func.__module__))
+            LOG.error(traceback.format_exc())
             raise
 
     return _exception
@@ -49,7 +49,7 @@ def viewportOff(func):
     Decorator - turn off Maya display while func is running.
     if func will fail, the error will be raised after.
     """
-    log.warning("viewportOff is deprecated and not necessary Maya2020+")
+    LOG.warning("viewportOff is deprecated and not necessary Maya2020+")
 
     @wraps(func)
     def wrap(*args, **kwargs):
@@ -124,7 +124,7 @@ def tracktime(func):
             raise e
         finally:
             end = time.time()
-            log.info("Elapsed: %s" % (end - start))
+            LOG.info("Elapsed: %s" % (end - start))
 
     return _tracktime
 

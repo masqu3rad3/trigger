@@ -51,8 +51,8 @@ AXIS_CONVERSION_DICT = {
 
 def getDistance(node1, node2):
     """Returns the distance between two nodes"""
-    Ax, Ay, Az = api.getWorldTranslation(node1)
-    Bx, By, Bz = api.getWorldTranslation(node2)
+    Ax, Ay, Az = api.get_world_translation(node1)
+    Bx, By, Bz = api.get_world_translation(node2)
     return ((Ax-Bx)**2 + (Ay-By)**2 + (Az-Bz)**2)**0.5
 
 def alignTo(node, target, position=True, rotation=False):
@@ -70,8 +70,8 @@ def alignTo(node, target, position=True, rotation=False):
 
     """
 
-    nodeMTransform = om.MFnTransform(api.getMDagPath(node))
-    targetMTransform = om.MFnTransform(api.getMDagPath(target))
+    nodeMTransform = om.MFnTransform(api.get_m_dagpath(node))
+    targetMTransform = om.MFnTransform(api.get_m_dagpath(target))
     if position:
         targetRotatePivot = om.MVector(targetMTransform.rotatePivot(om.MSpace.kWorld))
         nodeMTransform.setTranslation(targetRotatePivot, om.MSpace.kWorld)

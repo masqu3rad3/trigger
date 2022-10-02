@@ -627,7 +627,7 @@ class Jointify(object):
 
         root_joints_data = {}
         for root_node in self.rootNodes:
-            root_pos = api.getWorldTranslation(root_node)
+            root_pos = api.get_world_translation(root_node)
             cmds.select(d=True)
             root_jnt = cmds.joint(name="jntfRoot_%s" % root_node)
             cmds.setAttr("%s.t" % root_jnt, *root_pos)
@@ -777,8 +777,8 @@ class Jointify(object):
     def _get_difference(node_a, node_b, threshold=0.001, at_time=None):
         if at_time:
             cmds.currentTime(at_time)
-        a_vertices = api.getAllVerts(node_a)
-        b_vertices = api.getAllVerts(node_b)
+        a_vertices = api.get_all_vertices(node_a)
+        b_vertices = api.get_all_vertices(node_b)
         for a, b in zip(a_vertices, b_vertices):
             d = a.distanceTo(b)
             if d > threshold:

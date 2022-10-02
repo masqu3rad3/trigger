@@ -9,23 +9,23 @@ class Icon(object):
                                "Cube": self.cube,
                                "Thigh": self.thigh,
                                "Star": self.star,
-                               "FkikSwitch": self.fkikSwitch,
+                               "FkikSwitch": self.fk_ik_switch,
                                "Shoulder": self.shoulder,
                                "Plus": self.plus,
                                "Waist": self.waist,
                                "Square": self.square,
                                "Sphere": self.sphere,
                                "Ngon": self.ngon,
-                               "TriCircle": self.triCircle,
-                               "CurvedCircle": self.curvedCircle,
-                               "HalfDome": self.halfDome,
+                               "TriCircle": self.tricircle,
+                               "CurvedCircle": self.curved_circle,
+                               "HalfDome": self.half_dome,
                                "Looper": self.looper,
                                "Triangle": self.triangle,
                                "Pyramid": self.pyramid,
                                "Diamond": self.diamond,
                                "Arrow": self.arrow,
                                "Preferences": self.preferences,
-                               "DropCircleX": self.dropCircle_x,
+                               "DropCircleX": self.drop_circle_x,
                                "Rotator": self.rotator,
                                "CurvedArrow": self.curved_arrow,
                                "DualCurvedArrow": self.dual_curved_arrow,
@@ -33,18 +33,23 @@ class Icon(object):
                                "Drop": self.drop
                                }
 
-    def createIcon(self, iconType, iconName=None, scale=(1, 1, 1), location=None, normal=(0, 1, 0)):
-        if iconType not in (self.getIconsList()):
+    def create_icon(self,
+                    icon_type,
+                    icon_name=None,
+                    scale=(1, 1, 1),
+                    location=None,
+                    normal=(0, 1, 0)):
+        if icon_type not in (self.get_icons_list()):
             cmds.warning("This icon is not available. Valid Icons are:\n  %s" % (self.iconDictionary.keys()))
             return
 
-        icon_name = iconName or "%s_cont" % iconType
+        icon_name = icon_name or "%s_cont" % icon_type
 
         rvsCon = None
-        if iconType == "FkikSwitch":
-            cont, rvsCon = self.iconDictionary[iconType](name=icon_name)
+        if icon_type == "FkikSwitch":
+            cont, rvsCon = self.iconDictionary[icon_type](name=icon_name)
         else:
-            cont = self.iconDictionary[iconType](name=icon_name)
+            cont = self.iconDictionary[icon_type](name=icon_name)
 
         for shape in functions.getShapes(cont):
             if shape != "%sShape" % cont:
@@ -59,7 +64,7 @@ class Icon(object):
 
         return cont, rvsCon
 
-    def getIconsList(self):
+    def get_icons_list(self):
         return self.iconDictionary.keys()
 
     @staticmethod
@@ -175,7 +180,7 @@ class Icon(object):
         return _cont
 
     @staticmethod
-    def fkikSwitch(name="fkik_cont"):
+    def fk_ik_switch(name="fkik_cont"):
         """
         Creates a FK-IK controller.
         Args:
@@ -234,7 +239,7 @@ class Icon(object):
         return cont_fk_ik, fk_ik_rvs
 
     @staticmethod
-    def dropCircle_x(name="dropCircle_cont"):
+    def drop_circle_x(name="dropCircle_cont"):
         cont_drop_circle_x = cmds.curve(d=3,
                                         p=[(4.47035e-07, 0.999999, 0), (0.195091, 0.980784, 0), (0.382683, 0.923878, 0),
                                            (0.55557, 0.831468, 0), (0.707106, 0.707106, 0), (0.831469, 0.555569, 0),
@@ -496,7 +501,7 @@ class Icon(object):
         return cont_ngon
 
     @staticmethod
-    def triCircle(name="triCircle_cont"):
+    def tricircle(name="triCircle_cont"):
         """
         Creates a circle controller with triangles on each direction.
         Args:
@@ -528,7 +533,7 @@ class Icon(object):
         return cont_tri_circle
 
     @staticmethod
-    def curvedCircle(name="curvedCircle_cont"):
+    def curved_circle(name="curvedCircle_cont"):
         """
         Creates a slightly curved circle controller
         Args:
@@ -545,7 +550,7 @@ class Icon(object):
         return cont_curved_circle
 
     @staticmethod
-    def halfDome(name="halfDome_cont"):
+    def half_dome(name="halfDome_cont"):
 
         cont_half_curve = cmds.curve(name=name, d=1,
                                     p=[(-2.98023e-008, 0, 1), (-0.309017, 0, 0.951057), (-0.587785, 0, 0.809017),

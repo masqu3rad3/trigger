@@ -69,7 +69,7 @@ class Tentacle(object):
 
         # get positions
 
-        self.rootPos = api.getWorldTranslation(self.inits[0])
+        self.rootPos = api.get_world_translation(self.inits[0])
 
         # initialize coordinates
         self.up_axis, self.mirror_axis, self.look_axis = functions.getRigAxes(self.inits[0])
@@ -152,7 +152,7 @@ class Tentacle(object):
 
         ## Create temporaray Guide Joints
         cmds.select(d=True)
-        self.guideJoints = [cmds.joint(p=api.getWorldTranslation(i)) for i in self.inits]
+        self.guideJoints = [cmds.joint(p=api.get_world_translation(i)) for i in self.inits]
         # orientations
         if not self.useRefOrientation:
             functions.orientJoints(self.guideJoints, worldUpAxis=(self.up_axis), upAxis=(0, 1, 0), reverseAim=self.sideMult,
@@ -177,8 +177,8 @@ class Tentacle(object):
         icon = ic.Icon()
         ## specialController
         iconScale = functions.getDistance(self.inits[0], self.inits[1]) / 3
-        self.cont_special, dmp = icon.createIcon("Looper", iconName="tentacleSP_%s_cont" % self.suffix,
-                                                 scale=(iconScale, iconScale, iconScale))
+        self.cont_special, dmp = icon.create_icon("Looper", icon_name="tentacleSP_%s_cont" % self.suffix,
+                                                  scale=(iconScale, iconScale, iconScale))
         self.controllers.append(self.cont_special)
         functions.alignAndAim(self.cont_special, targetList=[self.inits[0]], aimTargetList=[self.inits[-1]],
                               upVector=self.up_axis, rotateOff=(90, 0, 0))
@@ -247,16 +247,16 @@ class Tentacle(object):
             s = cmds.getAttr("%s.tx" % self.guideJoints[j]) / 3
             s = iconScale if s == 0 else s
             scaleTwk = (s, s, s)
-            contTwk, dmp = icon.createIcon("Circle", iconName="%s_tentacleTweak%i_cont" % (self.suffix, j),
-                                           scale=scaleTwk, normal=self.mirror_axis)
+            contTwk, dmp = icon.create_icon("Circle", icon_name="%s_tentacleTweak%i_cont" % (self.suffix, j),
+                                            scale=scaleTwk, normal=self.mirror_axis)
             functions.alignToAlter(contTwk, self.guideJoints[j], mode=2)
             contTwk_OFF = functions.createUpGrp(contTwk, "OFF")
             contTwk_ORE = functions.createUpGrp(contTwk, "ORE")
             self.contTwk_List.append(contTwk)
 
             scaleFK = (s * 1.2, s * 1.2, s * 1.2)
-            contFK, _ = icon.createIcon("Ngon", iconName="%s_tentacleFK%i_cont" % (self.suffix, j), scale=scaleFK,
-                                        normal=self.mirror_axis)
+            contFK, _ = icon.create_icon("Ngon", icon_name="%s_tentacleFK%i_cont" % (self.suffix, j), scale=scaleFK,
+                                         normal=self.mirror_axis)
             functions.alignToAlter(contFK, self.guideJoints[j], mode=2)
             contFK_OFF = functions.createUpGrp(contFK, "OFF")
             contFK_ORE = functions.createUpGrp(contFK, "ORE")

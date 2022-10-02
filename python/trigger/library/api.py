@@ -1,69 +1,71 @@
 """Methods that use Maya Api"""
 
-import maya.api.OpenMaya as om
-from maya import cmds
+from maya.api import OpenMaya
 
-def getAllVerts(node):
+
+def get_all_vertices(mesh_transform):
+    """Return all vertices of given mesh"""
+
+    selection_ls = OpenMaya.MSelectionList()
+    selection_ls.add(mesh_transform)
+    sel_obj = selection_ls.getDagPath(0)
+
+    mfn_object = OpenMaya.MFnMesh(sel_obj)
+    return mfn_object.getPoints(OpenMaya.MSpace.kWorld)
+
+
+def get_m_dagpath(node):
+    """Return the API 2.0 dagPath of given node."""
+    sel_list = OpenMaya.MSelectionList()
+    sel_list.add(node)
+    return sel_list.getDagPath(0)
+
+
+def get_world_translation(node):
+    """Return given nodes world translation of rotate pivot."""
+    target_m_transform = OpenMaya.MFnTransform(get_m_dagpath(node))
+    target_rotate_pivot = OpenMaya.MVector(
+        target_m_transform.rotatePivot(OpenMaya.MSpace.kWorld))
+    return target_rotate_pivot
+
+
+def get_between_vector(node, target_point_list):
     """
-    Using Maya Python API 2.0
-    """
-
-    selectionLs = om.MSelectionList()
-    selectionLs.add(node)
-    selObj = selectionLs.getDagPath(0)
-
-    # ___________Query vertex position ___________
-    # create a Mesh functionset from our dag object
-    mfnObject = om.MFnMesh(selObj)
-
-    return mfnObject.getPoints(om.MSpace.kWorld)
-
-def getMDagPath(node):
-    """Returns the API 2.0 dagPath of given Node"""
-    selList = om.MSelectionList()
-    selList.add(node)
-    return selList.getDagPath(0)
-
-def getWorldTranslation(node):
-    """Returns given nodes world translation of rotate pivot"""
-    targetMTransform = om.MFnTransform(getMDagPath(node))
-    targetRotatePivot = om.MVector(targetMTransform.rotatePivot(om.MSpace.kWorld))
-    return targetRotatePivot
-
-def getBetweenVector(node, targetPointNodeList):
-    """
-    Gets the between vector between the source node and target node list
+    Get the between vector between the source node and target node list.
     Args:
         node: (String) source node
-        targetPointNodeList: (List) Target nodes
+        target_point_list: (List) Target nodes
 
     Returns: MVector
 
     """
-    nodePos = getWorldTranslation(node)
-    sumVectors = om.MVector(0,0,0)
-    for point in targetPointNodeList:
-        pVector = getWorldTranslation(point)
-        addVector = om.MVector(om.MVector(nodePos)-om.MVector(pVector)).normal()
-        sumVectors += addVector
-    return sumVectors.normal()
+    node_pos = get_world_translation(node)
+    sum_vectors = OpenMaya.MVector(0, 0, 0)
+    for point in target_point_list:
+        p_vector = get_world_translation(point)
+        add_vector = OpenMaya.MVector(
+            OpenMaya.MVector(node_pos) - OpenMaya.MVector(p_vector)
+        ).normal()
+        sum_vectors += add_vector
+    return sum_vectors.normal()
 
-def getCenter(node_list):
-    "returns the center world position of the given nodes"
-    p_sum = om.MVector(0,0,0)
+
+def get_center(node_list):
+    """Return the center world position of the given nodes."""
+    p_sum = OpenMaya.MVector(0, 0, 0)
     for x in node_list:
-        p_sum += getWorldTranslation(x)
+        p_sum += get_world_translation(x)
     return p_sum / len(node_list)
+
 
 def select_vertices(mesh, id_list):
     """Selects vertices of the mesh with given id list"""
-    sel = om.MSelectionList()
+    sel = OpenMaya.MSelectionList()
     sel.add(mesh)
     dag, mObject = sel.getComponent(0)
-    mfn_components = om.MFnSingleIndexedComponent(mObject)
-    mfn_object = mfn_components.create(om.MFn.kMeshVertComponent)
+    mfn_components = OpenMaya.MFnSingleIndexedComponent(mObject)
+    mfn_object = mfn_components.create(OpenMaya.MFn.kMeshVertComponent)
     mfn_components.addElements(id_list)
-    selection_list = om.MSelectionList()
+    selection_list = OpenMaya.MSelectionList()
     selection_list.add((dag, mfn_object))
-    om.MGlobal.setActiveSelectionList(selection_list)
-
+    OpenMaya.MGlobal.setActiveSelectionList(selection_list)

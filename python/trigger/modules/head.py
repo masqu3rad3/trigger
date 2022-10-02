@@ -76,9 +76,9 @@ class Head(object):
         self.headDist = functions.getDistance(self.headStart, self.headEnd)
 
         # get positions
-        self.root_pos = api.getWorldTranslation(self.neckNodes[0])
-        self.headPivPos = api.getWorldTranslation(self.headStart)
-        self.headEndPivPos = api.getWorldTranslation(self.headEnd)
+        self.root_pos = api.get_world_translation(self.neckNodes[0])
+        self.headPivPos = api.get_world_translation(self.headStart)
+        self.headEndPivPos = api.get_world_translation(self.headEnd)
 
         # initialize coordinates
         self.up_axis, self.mirror_axis, self.look_axis = functions.getRigAxes(self.neckNodes[0])
@@ -133,7 +133,7 @@ class Head(object):
 
         ## Create temporaray Guide Joints
         cmds.select(d=True)
-        self.guideJoints = [cmds.joint(name="jTemp_%s" %i, p=api.getWorldTranslation(i)) for i in self.neckNodes]
+        self.guideJoints = [cmds.joint(name="jTemp_%s" %i, p=api.get_world_translation(i)) for i in self.neckNodes]
         self.guideJoints.append(cmds.joint(name="jTemp_Head", p=self.headPivPos))
         self.guideJoints.append(cmds.joint(name="jTemp_HeadEnd", p=self.headEndPivPos))
         ## orientations
@@ -152,13 +152,13 @@ class Head(object):
         icon = ic.Icon()
         ## Neck Controller
         neckScale = (self.neckDist / 2, self.neckDist / 2, self.neckDist / 2)
-        self.cont_neck, dmp = icon.createIcon("CurvedCircle", iconName="%s_neck_cont" % self.suffix, scale=neckScale, normal=(1,0,0))
+        self.cont_neck, dmp = icon.create_icon("CurvedCircle", icon_name="%s_neck_cont" % self.suffix, scale=neckScale, normal=(1, 0, 0))
         self.controllers.append(self.cont_neck)
         functions.alignToAlter(self.cont_neck, self.guideJoints[0], mode=2)
         self.cont_neck_ORE = functions.createUpGrp(self.cont_neck, "ORE")
 
         ## Head Controller
-        self.cont_head, _ = icon.createIcon("HalfDome", iconName="%s_head_cont" % self.suffix, scale=(self.headDist, self.headDist, self.headDist), normal=(0,1,0))
+        self.cont_head, _ = icon.create_icon("HalfDome", icon_name="%s_head_cont" % self.suffix, scale=(self.headDist, self.headDist, self.headDist), normal=(0, 1, 0))
         self.controllers.append(self.cont_head)
 
         functions.alignToAlter(self.cont_head, self.guideJoints[-2], mode=2)
@@ -167,7 +167,7 @@ class Head(object):
 
         if self.stretchyHead:
             ## Head Squash Controller
-            self.cont_headSquash, _ = icon.createIcon("Circle", iconName="%s_headSquash_cont" % self.suffix, scale=((self.headDist / 2), (self.headDist / 2), (self.headDist / 2)), normal=(0,1,0))
+            self.cont_headSquash, _ = icon.create_icon("Circle", icon_name="%s_headSquash_cont" % self.suffix, scale=((self.headDist / 2), (self.headDist / 2), (self.headDist / 2)), normal=(0, 1, 0))
             self.controllers.append(self.cont_headSquash)
             functions.alignToAlter(self.cont_headSquash, self.guideJoints[-1])
             cont_headSquash_ORE = functions.createUpGrp(self.cont_headSquash, "ORE")

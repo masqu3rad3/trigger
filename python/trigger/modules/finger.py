@@ -105,7 +105,7 @@ class Finger(object):
 
         cmds.select(d=True)
 
-        self.limbPlug = cmds.joint(name="limbPlug_%s" % self.suffix, p=api.getWorldTranslation(self.inits[0]), radius=2)
+        self.limbPlug = cmds.joint(name="limbPlug_%s" % self.suffix, p=api.get_world_translation(self.inits[0]), radius=2)
 
         for guide in self.inits:
             jnt = cmds.joint(name="jDef_{0}_{1}".format(self.suffix, self.inits.index(guide)), radius=1.0)
@@ -147,7 +147,7 @@ class Finger(object):
         for index in range(0, len(self.deformerJoints)-1):
             contScl = (cmds.getAttr("%s.tx" % self.deformerJoints[1]) / 2)
             contName = ("{0}_{1}_cont".format(self.suffix, index))
-            cont, dmp = icon.createIcon("Circle", iconName=contName,scale=(contScl,contScl,contScl), normal=(1,0,0))
+            cont, dmp = icon.create_icon("Circle", icon_name=contName, scale=(contScl, contScl, contScl), normal=(1, 0, 0))
 
             functions.alignToAlter(cont, self.deformerJoints[index], mode=2)
 

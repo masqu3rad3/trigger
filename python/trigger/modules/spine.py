@@ -71,8 +71,8 @@ class Spine(object):
         self.iconSize = functions.getDistance(self.inits[0], self.inits[-1])
 
         # get positions
-        self.rootPoint = api.getWorldTranslation(self.inits[0])
-        self.chestPoint = api.getWorldTranslation(self.inits[-1])
+        self.rootPoint = api.get_world_translation(self.inits[0])
+        self.chestPoint = api.get_world_translation(self.inits[-1])
 
         # initialize coordinates
         self.up_axis, self.mirror_axis, self.look_axis = functions.getRigAxes(self.inits[0])
@@ -134,7 +134,7 @@ class Spine(object):
 
         ## Create temporaray Guide Joints
         cmds.select(d=True)
-        self.guideJoints = [cmds.joint(p=api.getWorldTranslation(i)) for i in self.inits]
+        self.guideJoints = [cmds.joint(p=api.get_world_translation(i)) for i in self.inits]
 
         if not self.useRefOrientation:
             functions.orientJoints(self.guideJoints, worldUpAxis=(self.up_axis), upAxis=(0, 0, -1), reverseAim=self.sideMult, reverseUp=self.sideMult)
@@ -157,14 +157,14 @@ class Spine(object):
         icon = ic.Icon()
         ## Hips Controller
         contHipsScale = (self.iconSize / 1.5, self.iconSize / 1.5, self.iconSize / 1.5)
-        self.cont_hips, dmp = icon.createIcon("Waist", iconName="%s_Hips_cont" % self.suffix, scale=contHipsScale, normal=(1,0,0))
+        self.cont_hips, dmp = icon.create_icon("Waist", icon_name="%s_Hips_cont" % self.suffix, scale=contHipsScale, normal=(1, 0, 0))
         self.controllers.append(self.cont_hips)
         functions.alignToAlter(self.cont_hips, self.guideJoints[0], mode=2)
         self.cont_hips_ORE = functions.createUpGrp(self.cont_hips, "ORE")
 
         ## Body Controller
         contBodyScale = (self.iconSize * 0.75, self.iconSize * 0.75, self.iconSize * 0.75)
-        self.cont_body, dmp = icon.createIcon("Square", iconName="%s_Body_cont" % self.suffix, scale=contBodyScale, normal=(1,0,0))
+        self.cont_body, dmp = icon.create_icon("Square", icon_name="%s_Body_cont" % self.suffix, scale=contBodyScale, normal=(1, 0, 0))
         self.controllers.insert(0, self.cont_body)
         functions.alignToAlter(self.cont_body, self.guideJoints[0], mode=2)
         self.cont_body_ORE = functions.createUpGrp(self.cont_body, "POS")
@@ -180,7 +180,7 @@ class Spine(object):
 
         ## Chest Controller
         contChestScale = (self.iconSize*0.5, self.iconSize*0.35, self.iconSize*0.2)
-        self.cont_chest, dmp = icon.createIcon("Cube", iconName="%s_Chest_cont" % self.suffix, scale=contChestScale, normal=(0,0,1))
+        self.cont_chest, dmp = icon.create_icon("Cube", icon_name="%s_Chest_cont" % self.suffix, scale=contChestScale, normal=(0, 0, 1))
         self.controllers.append(self.cont_chest)
         functions.alignToAlter(self.cont_chest, self.guideJoints[-1], mode=2)
         cont_Chest_ORE = functions.createUpGrp(self.cont_chest, "ORE")
@@ -191,11 +191,11 @@ class Spine(object):
         contSpineFKBScale = (self.iconSize / 2.5, self.iconSize / 2.5, self.iconSize / 2.5)
 
         for m in range (0, len(self.guideJoints)):
-            contA, _ = icon.createIcon("Circle", iconName="%s%i_SpineFK_A_cont" %(self.suffix, m), scale=contSpineFKAScale, normal=(1, 0, 0))
+            contA, _ = icon.create_icon("Circle", icon_name="%s%i_SpineFK_A_cont" % (self.suffix, m), scale=contSpineFKAScale, normal=(1, 0, 0))
             functions.alignToAlter(contA, self.guideJoints[m], 2)
             contA_ORE = functions.createUpGrp(contA, "ORE")
             self.cont_spineFK_A_List.append(contA)
-            contB, dmp = icon.createIcon("Ngon", iconName="%s%i_SpineFK_B_cont" %(self.suffix, m), scale=contSpineFKBScale, normal=(1,0,0))
+            contB, dmp = icon.create_icon("Ngon", icon_name="%s%i_SpineFK_B_cont" % (self.suffix, m), scale=contSpineFKBScale, normal=(1, 0, 0))
             functions.alignTo(contB, self.guideJoints[m], position=True, rotation=True)
             contB_ORE = functions.createUpGrp(contB, "ORE")
             self.cont_spineFK_B_List.append(contB)

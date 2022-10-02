@@ -448,8 +448,8 @@ def make_stretchy_ik(joint_chain, ik_handle, root_controller, end_controller, si
     soft_blend_loc = cmds.spaceLocator(name="softBlendLoc_%s" % name)[0]
     soft_blend_loc_shape = functions.getShapes(soft_blend_loc)[0]
     functions.alignTo(soft_blend_loc, end_controller, position=True, rotation=True)
-    connection.matrixSwitch(end_controller, end_loc, soft_blend_loc, "%s.stretch" % end_controller, position=True,
-                            rotation=True)
+    connection.matrix_switch(end_controller, end_loc, soft_blend_loc, "%s.stretch" % end_controller, position=True,
+                             rotation=True)
 
     if not distance_start:
         distance_start_loc = cmds.spaceLocator(name="distance_start_%s" % name)[0]
@@ -524,7 +524,7 @@ def make_stretchy_ik(joint_chain, ik_handle, root_controller, end_controller, si
         sum1_p = op.add(mult1_p, "%s.initialDistance" % jnt)
         squash_mult_p = op.multiply(initial_divide_p, "%s.initialDistance" % jnt)
 
-        clamp_p = op.clamp(squash_mult_p, max="%s.initialDistance" % jnt)
+        clamp_p = op.clamp(squash_mult_p, maximum="%s.initialDistance" % jnt)
         switch_p = op.switch(clamp_p, squash_mult_p, "%s.stretch" % end_controller)
 
         squash_blend_node = cmds.createNode("blendColors", name="squash_blend_%s" % name)

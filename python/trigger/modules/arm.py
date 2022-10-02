@@ -61,10 +61,10 @@ class Arm(object):
         else:
             log.error("Class needs either build_data or inits to be constructed")
 
-        self.collar_pos = api.getWorldTranslation(self.collar_ref)
-        self.shoulder_pos = api.getWorldTranslation(self.shoulder_ref)
-        self.elbow_pos = api.getWorldTranslation(self.elbow_ref)
-        self.hand_pos = api.getWorldTranslation(self.hand_ref)
+        self.collar_pos = api.get_world_translation(self.collar_ref)
+        self.shoulder_pos = api.get_world_translation(self.shoulder_ref)
+        self.elbow_pos = api.get_world_translation(self.elbow_ref)
+        self.hand_pos = api.get_world_translation(self.hand_ref)
 
         # get distances
         self.init_shoulder_dist = functions.getDistance(self.collar_ref, self.shoulder_ref)
@@ -389,7 +389,7 @@ class Arm(object):
         self.poleCont.set_side(self.side, tier=0)
         self.controllers.append(self.poleCont.name)
         offset_mag_pole = ((self.init_upper_arm_dist + self.init_lower_arm_dist) / 4)
-        offset_vector_pole = api.getBetweenVector(self.j_def_elbow, [self.j_collar_end, self.j_def_hand])
+        offset_vector_pole = api.get_between_vector(self.j_def_elbow, [self.j_collar_end, self.j_def_hand])
 
         functions.alignAndAim(self.poleBridge,
                               targetList=[self.j_def_elbow],
@@ -703,15 +703,15 @@ class Arm(object):
                 mult_p = op.multiply(initial_distance, "{0}.{1}".format(self.handIkCont.name, scale_attr))
                 cmds.connectAttr(mult_p, "%s.initialDistance" % jnt)
 
-        connection.matrixSwitch(self.j_ik_rp_up, self.j_ik_sc_up, self.j_ik_orig_up,
+        connection.matrix_switch(self.j_ik_rp_up, self.j_ik_sc_up, self.j_ik_orig_up,
                                 "%s.Pole_Vector" % self.handIkCont.name)
         elbow_switcher = cmds.spaceLocator(name="elbowSwitcher_IK_%s" % self.suffix)[0]
         cmds.connectAttr("%s.rigVis" % self.scaleGrp, "%s.v" % elbow_switcher)
         cmds.parent(elbow_switcher, self.nonScaleGrp)
-        connection.matrixSwitch(self.j_ik_rp_low, self.j_ik_sc_low, elbow_switcher,
+        connection.matrix_switch(self.j_ik_rp_low, self.j_ik_sc_low, elbow_switcher,
                                 "%s.Pole_Vector" % self.handIkCont.name)
         connection.matrixConstraint(elbow_switcher, self.j_ik_orig_low)
-        connection.matrixSwitch(self.j_ik_rp_low_end, self.j_ik_sc_low_end, self.j_ik_orig_low_end,
+        connection.matrix_switch(self.j_ik_rp_low_end, self.j_ik_sc_low_end, self.j_ik_orig_low_end,
                                 "%s.Pole_Vector" % self.handIkCont.name)
 
     def create_fk_setup(self):
@@ -734,13 +734,13 @@ class Arm(object):
 
     def ik_fk_switching(self):
 
-        connection.matrixSwitch(self.j_ik_orig_up, self.j_fk_up, self.defStart, "%s.FK_IK" % self.switchFkIkCont.name)
-        connection.matrixSwitch(self.j_ik_orig_low_end, self.j_fk_low_end, self.defEnd,
+        connection.matrix_switch(self.j_ik_orig_up, self.j_fk_up, self.defStart, "%s.FK_IK" % self.switchFkIkCont.name)
+        connection.matrix_switch(self.j_ik_orig_low_end, self.j_fk_low_end, self.defEnd,
                                 "%s.FK_IK" % self.switchFkIkCont.name, position=True, rotation=False)
-        connection.matrixSwitch(self.handIkCont.name, self.handFkCont.name, self.defEnd,
+        connection.matrix_switch(self.handIkCont.name, self.handFkCont.name, self.defEnd,
                                 "%s.FK_IK" % self.switchFkIkCont.name, position=False, rotation=True,
-                                source_parent_cutoff=self.localOffGrp)
-        connection.matrixSwitch(self.midLockBridge_IK, self.midLockBridge_FK, self.defMid,
+                                 source_parent_cutoff=self.localOffGrp)
+        connection.matrix_switch(self.midLockBridge_IK, self.midLockBridge_FK, self.defMid,
                                 "%s.FK_IK" % self.switchFkIkCont.name)
 
         connection.matrixConstraint(self.defEnd, self.j_def_hand, ss="xyz", mo=False)

@@ -4,17 +4,18 @@ from maya import cmds
 from trigger.core import filelog
 from trigger.ui.feedback import Feedback
 
-log = filelog.Filelog(logname=__name__, filename="trigger_log")
-feed = Feedback()
+LOG = filelog.Filelog(logname=__name__, filename="trigger_log")
+FEED = Feedback()
 
-def plugin(plugin):
-    """Makes sure the given plugin is loaded"""
-    if not cmds.pluginInfo(plugin, l=True, q=True):
+
+def plugin(plugin_name):
+    """Make sure the given plugin is loaded."""
+    if not cmds.pluginInfo(plugin_name, l=True, q=True):
         try:
-            cmds.loadPlugin(plugin)
+            cmds.loadPlugin(plugin_name)
             return True
-        except:
-            msg = "%s cannot be initialized" %plugin
-            feed.pop_info(title="Plugin Error", text=msg, critical=True)
-            log.error(msg, proceed=False)
-
+        except Exception as e:
+            msg = "{} cannot be initialized".format(plugin_name)
+            FEED.pop_info(title="Plugin Error", text=msg, critical=True)
+            LOG.error(msg, proceed=False)
+            raise e

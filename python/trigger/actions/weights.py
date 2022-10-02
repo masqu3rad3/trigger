@@ -117,7 +117,7 @@ Then you can save and increment versions for all of them at once.
         base_folder, file_name_and_ext = os.path.split(file_path)
         file_name, ext = os.path.splitext(file_name_and_ext)
         weights_folder = os.path.join(base_folder, file_name)
-        self.io._folderCheck(weights_folder)
+        self.io.folder_check(weights_folder)
         # build the dictionary
         data_list = []
 

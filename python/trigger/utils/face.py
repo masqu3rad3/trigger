@@ -184,13 +184,13 @@ def lip_zipper(upper_lip_edges, lower_lip_edges, morph_mesh, final_mesh, pair_co
 
         switch_up = cmds.spaceLocator(name="switchLoc_up%i" % counter)[0]
         u_attr = "U{0}".format(str(counter).zfill(2))
-        connection.matrixSwitch(mid_loc_up, up, switch_up, "{0}.{1}".format(switch_hook, u_attr))
+        connection.matrix_switch(mid_loc_up, up, switch_up, "{0}.{1}".format(switch_hook, u_attr))
         hook_U_attrs.append(u_attr)
         cmds.parent(switch_up, switch_loc_grp)
 
         switch_low = cmds.spaceLocator(name="switchLoc_low%i" % counter)[0]
         d_attr = "D{0}".format(str(counter).zfill(2))
-        connection.matrixSwitch(mid_loc_low, low, switch_low, "{0}.{1}".format(switch_hook, d_attr))
+        connection.matrix_switch(mid_loc_low, low, switch_low, "{0}.{1}".format(switch_hook, d_attr))
         hook_D_attrs.append(d_attr)
         cmds.parent(switch_low, switch_loc_grp)
 

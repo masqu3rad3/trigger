@@ -73,8 +73,8 @@ class Base(object):
 
     def createControllers(self):
         icon = ic.Icon()
-        placement_cont, _ = icon.createIcon("Circle", iconName=naming.uniqueName("placement_cont"), scale=(10, 10, 10))
-        master_cont, _ = icon.createIcon("TriCircle", iconName=naming.uniqueName("master_cont"), scale=(15, 15, 15))
+        placement_cont, _ = icon.create_icon("Circle", icon_name=naming.uniqueName("placement_cont"), scale=(10, 10, 10))
+        master_cont, _ = icon.create_icon("TriCircle", icon_name=naming.uniqueName("master_cont"), scale=(15, 15, 15))
         self.controllers = [master_cont, placement_cont]
 
         placement_off = functions.createUpGrp(placement_cont, "off")

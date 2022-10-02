@@ -116,7 +116,7 @@ class Weight(object):
 
         geo = cmds.skinCluster(deformer, q=True, geometry=True)[0]
         # compare the vertex size and act accordingly if the topologies are different
-        if len(api.getAllVerts(geo)) == self.get_vertex_count():
+        if len(api.get_all_vertices(geo)) == self.get_vertex_count():
             # same topology
             self.__set_weights(deformer, geo, self.__convert_to_m_array(self._data))
             if cmds.skinCluster(deformer, q=True, skinMethod=True):

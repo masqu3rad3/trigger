@@ -60,12 +60,12 @@ class Hindleg(object):
             log.error("Class needs either build_data or inits to be constructed", proceed=False)
 
         # get positions
-        self.hindleg_root_pos = api.getWorldTranslation(self.hindleg_root_ref)
-        self.hindhip_pos = api.getWorldTranslation(self.hindhip_ref)
-        self.stifle_pos = api.getWorldTranslation(self.stifle_ref)
-        self.hock_pos = api.getWorldTranslation(self.hock_ref)
-        self.phalanges_pos = api.getWorldTranslation(self.phalanges_ref)
-        self.phalangestip_pos = api.getWorldTranslation(self.phalangestip_ref)
+        self.hindleg_root_pos = api.get_world_translation(self.hindleg_root_ref)
+        self.hindhip_pos = api.get_world_translation(self.hindhip_ref)
+        self.stifle_pos = api.get_world_translation(self.stifle_ref)
+        self.hock_pos = api.get_world_translation(self.hock_ref)
+        self.phalanges_pos = api.get_world_translation(self.phalanges_ref)
+        self.phalangestip_pos = api.get_world_translation(self.phalangestip_ref)
 
         # get distances
         self.init_upper_leg_dist = functions.getDistance(self.hindhip_ref, self.stifle_ref)
@@ -381,7 +381,7 @@ class Hindleg(object):
         self.controllers.append(self.hock_ik_cont.name)
 
         offset_mag_pole = ((self.init_lower_leg_dist + self.init_pastern_dist) / 4)
-        offset_vector_pole = api.getBetweenVector(self.j_def_hock, [self.j_def_stifle, self.j_def_phalanges])
+        offset_vector_pole = api.get_between_vector(self.j_def_hock, [self.j_def_stifle, self.j_def_phalanges])
 
         functions.alignAndAim(self.hock_ik_cont.name,
                               targetList=[self.j_def_hock],
@@ -415,7 +415,7 @@ class Hindleg(object):
         self.pole_ik_cont.set_side(self.side, tier=0)
         self.controllers.append(self.pole_ik_cont.name)
         offset_mag_pole = ((self.init_upper_leg_dist + self.init_lower_leg_dist) / 4)
-        offset_vector_pole = api.getBetweenVector(self.j_def_stifle, [self.j_def_hindhip, self.j_def_hock])
+        offset_vector_pole = api.get_between_vector(self.j_def_stifle, [self.j_def_hindhip, self.j_def_hock])
 
         functions.alignAndAim(self.pole_bridge,
                               targetList=[self.j_def_stifle],
@@ -603,12 +603,12 @@ class Hindleg(object):
     def ikfk_switching(self):
 
         # connection.matrixSwitch(self.j_ik_hip, self.j_fk_hip, self.j_def_hindhip, "%s.FK_IK" % self.switch_cont.name)
-        connection.matrixSwitch(self.j_ik_stifle, self.j_fk_stifle, self.j_def_stifle,
+        connection.matrix_switch(self.j_ik_stifle, self.j_fk_stifle, self.j_def_stifle,
                                 "%s.FK_IK" % self.switch_cont.name, position=True, rotation=True)
         cmds.setAttr("%s.jointOrient" % self.j_def_stifle, 0, 0, 0)
-        connection.matrixSwitch(self.j_ik_hock, self.j_fk_hock, self.j_def_hock, "%s.FK_IK" % self.switch_cont.name)
+        connection.matrix_switch(self.j_ik_hock, self.j_fk_hock, self.j_def_hock, "%s.FK_IK" % self.switch_cont.name)
         cmds.setAttr("%s.jointOrient" % self.j_def_hock, 0, 0, 0)
-        connection.matrixSwitch(self.j_ik_phalanges, self.j_fk_phalanges, self.j_def_phalanges,
+        connection.matrix_switch(self.j_ik_phalanges, self.j_fk_phalanges, self.j_def_phalanges,
                                 "%s.FK_IK" % self.switch_cont.name)
         cmds.setAttr("%s.jointOrient" % self.j_def_phalanges, 0, 0, 0)
 

@@ -205,8 +205,8 @@ class BlendshapeTransfer(object):
         #     return True
         # else:
         #     return False
-        source_count = len(api.getAllVerts(source))
-        target_count = len(api.getAllVerts(target))
+        source_count = len(api.get_all_vertices(source))
+        target_count = len(api.get_all_vertices(target))
 
         if source_count == target_count:
             return True
