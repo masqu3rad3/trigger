@@ -71,7 +71,7 @@ class UserSettings(object):
     def apply(self):
         self.handler.write(self._parse_to_dict())
 
-    def isChanged(self):
+    def is_changed(self):
         if self.compareData != self._parse_to_dict():
             return True
         else:

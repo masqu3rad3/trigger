@@ -11,16 +11,13 @@ log = filelog.Filelog(logname=__name__, filename="trigger_log")
 
 
 def logerror(func):
-    """
-    Decorator to save the exceptions into log file
-    """
+    """Save exceptions into log file."""
 
     @wraps(func)
     def _exception(*args, **kwargs):
         try:
             return func(*args, **kwargs)
-        except:
-            # log the exception
+        except:  # noqa: E722
             log.error("Exception in %s %s" % (func.__name__, func.__module__))
             log.error(traceback.format_exc())
             raise
@@ -35,13 +32,11 @@ def undo(func):
     @wraps(func)
     def _undofunc(*args, **kwargs):
         cmds.undoInfo(ock=True)
-        result = None
         try:
             # start an undo chunk
             return func(*args, **kwargs)
         except Exception as e:
-            # log.error(e)
-            raise
+            raise e
         finally:
             # after calling the func, end the undo chunk and undo
             cmds.undoInfo(cck=True)
@@ -64,7 +59,7 @@ def viewportOff(func):
 
         # Decorator will try/except running the function.
         # But it will always turn on the viewport at the end.
-        # In case the function failed, it will prevent leaving maya viewport off.
+        # it will prevent leaving maya viewport off.
         try:
             return func(*args, **kwargs)
         except Exception:
@@ -87,8 +82,7 @@ def keepselection(func):
             # start an undo chunk
             return func(*args, **kwargs)
         except Exception as e:
-            # log.error(e)
-            raise
+            raise e
         finally:
             # after calling the func, end the undo chunk and undo
             cmds.select(original_selection)
@@ -97,8 +91,10 @@ def keepselection(func):
 
 
 def keepframe(func):
-    """Decorator method to keep the current slider time. Useful where
-    the wrapped method messes with the current time"""
+    """
+    Keep the current slider time.
+    Useful where the wrapped method messes with the current time
+    """
 
     @wraps(func)
     def _keepfunc(*args, **kwargs):
@@ -107,8 +103,7 @@ def keepframe(func):
             # start an undo chunk
             return func(*args, **kwargs)
         except Exception as e:
-            # log.error(e)
-            raise
+            raise e
         finally:
             # after calling the func, end the undo chunk and undo
             cmds.currentTime(original_frame)
@@ -117,7 +112,7 @@ def keepframe(func):
 
 
 def tracktime(func):
-    """Tracks time for the given function"""
+    """Tracks time for the given function."""
 
     @wraps(func)
     def _tracktime(*args, **kwargs):
@@ -126,7 +121,7 @@ def tracktime(func):
         try:
             return func(*args, **kwargs)
         except Exception as e:
-            raise
+            raise e
         finally:
             end = time.time()
             log.info("Elapsed: %s" % (end - start))
@@ -135,9 +130,7 @@ def tracktime(func):
 
 
 def windowsOff(func):
-    """
-    Decorator which turns off the Hypershade, Graph Editor, Node Editor and Blendshape Editor
-    """
+    """Turn off the editors."""
 
     @wraps(func)
     def _windows_off(*args, **kwargs):
@@ -154,7 +147,7 @@ def windowsOff(func):
                 cmds.deleteUI(key)
         try:
             return func(*args, **kwargs)
-        except Exception as e:
+        except:  # noqa: E722
             for key, value in window_dict.items():
                 if key in open_windows:
                     value()
