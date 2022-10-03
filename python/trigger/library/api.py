@@ -69,3 +69,33 @@ def select_vertices(mesh, id_list):
     selection_list = OpenMaya.MSelectionList()
     selection_list.add((dag, mfn_object))
     OpenMaya.MGlobal.setActiveSelectionList(selection_list)
+
+def unlock_normals(transform, soften=False):
+    """Unlock the normals of the specified geometry.
+
+    Args:
+        geometries (str or list): string or list of strings for the geometries
+            to unlock.
+        soften (bool, optional): If true, softens the edges with given
+            softedge_angle value. Defaults to True.
+    """
+
+    # Retrieve the MFnMesh api object.
+    selection_list = OpenMaya.MSelectionList()
+    selection_list.add(transform)
+    mfn_mesh = OpenMaya.MFnMesh(selection_list.getDagPath(0))
+    # if its already unlocked, do not process again.
+    lock_state = any(
+        mfn_mesh.isNormalLocked(normal_index)
+        for normal_index in range(mfn_mesh.numNormals)
+    )
+    if lock_state:
+        mfn_mesh.unlockVertexNormals(
+            OpenMaya.MIntArray(range(mfn_mesh.numVertices))
+        )
+    if soften:
+        edge_ids = OpenMaya.MIntArray(range(mfn_mesh.numEdges))
+        smooths = OpenMaya.MIntArray([True] * mfn_mesh.numEdges)
+        mfn_mesh.setEdgeSmoothings(edge_ids, smooths)
+        mfn_mesh.cleanupEdgeSmoothing()
+        mfn_mesh.updateSurface()
