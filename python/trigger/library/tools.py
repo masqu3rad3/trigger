@@ -60,27 +60,27 @@ def replaceController(mirror=True, mirrorAxis="X", keepOldShape=False, keepAcopy
     cmds.makeIdentity(newContDup, apply=True, t=True, r=False, s=True, n=False, pn=True)
 
     ## get the same color code
-    cmds.setAttr("%s.overrideEnabled" % functions.getShapes(newContDup)[0],
-                 cmds.getAttr("%s.overrideEnabled" % functions.getShapes(oldCont)[0]))
+    cmds.setAttr("%s.overrideEnabled" % functions.get_shapes(newContDup)[0],
+                 cmds.getAttr("%s.overrideEnabled" % functions.get_shapes(oldCont)[0]))
 
-    cmds.setAttr("%s.overrideColor" % functions.getShapes(newContDup)[0],
-                 cmds.getAttr("%s.overrideColor" % functions.getShapes(oldCont)[0]))
+    cmds.setAttr("%s.overrideColor" % functions.get_shapes(newContDup)[0],
+                 cmds.getAttr("%s.overrideColor" % functions.get_shapes(oldCont)[0]))
 
     # move the new controller to the old controllers place
     if alignToCenter:
-        functions.alignTo(newContDup, oldCont, mode=2)
+        functions.align_to(newContDup, oldCont, mode=2)
     else:
-        functions.alignToAlter(newContDup, oldCont, mode=2)
+        functions.align_to_alter(newContDup, oldCont, mode=2)
 
     ## put the new controller shape under the same parent with the old first (if there is a parent)
-    if functions.getParent(oldCont):
-        cmds.parent(newContDup, functions.getParent(oldCont))
+    if functions.get_parent(oldCont):
+        cmds.parent(newContDup, functions.get_parent(oldCont))
     cmds.makeIdentity(newContDup, apply=True)
 
     if not keepOldShape:
         cmds.delete(cmds.listRelatives(oldCont, shapes=True, children=True))
 
-    cmds.parent(functions.getShapes(newContDup)[0], oldCont, r=True, s=True)
+    cmds.parent(functions.get_shapes(newContDup)[0], oldCont, r=True, s=True)
 
     if mirror:
         # find the mirror of the oldController
@@ -91,7 +91,7 @@ def replaceController(mirror=True, mirrorAxis="X", keepOldShape=False, keepAcopy
         else:
             cmds.warning("Cannot find the mirror controller, skipping mirror part")
             if not keepOldShape:
-                cmds.delete(functions.getShapes(oldCont))
+                cmds.delete(functions.get_shapes(oldCont))
             return
         oldContMirror = mirrorName
         # get the current transform
@@ -115,13 +115,13 @@ def replaceController(mirror=True, mirrorAxis="X", keepOldShape=False, keepAcopy
         cmds.makeIdentity(newContDupMirror, apply=True, s=True)
 
         ## get the same color code
-        cmds.setAttr("%s.overrideEnabled" % functions.getShapes(newContDupMirror)[0],
-                     cmds.getAttr("%s.overrideEnabled") % functions.getShapes(oldContMirror)[0])
-        cmds.setAttr("%s.overrideColor" % functions.getShapes(newContDupMirror)[0],
-                     cmds.getAttr("%s.overrideColor" % functions.getShapes(oldContMirror)[0]))
+        cmds.setAttr("%s.overrideEnabled" % functions.get_shapes(newContDupMirror)[0],
+                     cmds.getAttr("%s.overrideEnabled") % functions.get_shapes(oldContMirror)[0])
+        cmds.setAttr("%s.overrideColor" % functions.get_shapes(newContDupMirror)[0],
+                     cmds.getAttr("%s.overrideColor" % functions.get_shapes(oldContMirror)[0]))
 
         # move the new controller to the old controllers place
-        functions.alignToAlter(newContDupMirror, oldContMirror, mode=0)
+        functions.align_to_alter(newContDupMirror, oldContMirror, mode=0)
 
         if not keepOldShape:
             cmds.delete(cmds.listRelatives(oldContMirror, shapes=True, children=True))
@@ -283,7 +283,7 @@ def whip(node_list, attr_holder=None, create_up_grp=True, offset=5, diminish=0.8
     if create_up_grp:
         temp_list = []
         for node in node_list[1:]:
-            up_node = functions.createUpGrp(node, "whip")
+            up_node = functions.create_offset_group(node, "whip")
             cmds.makeIdentity(up_node, a=True)
             temp_list.append(up_node)
         node_list = [node_list[0]] + temp_list
@@ -350,7 +350,7 @@ def copy_controller(a, b=None, axis=None, side_flags=("L_", "R_"), side_bias="st
     cmds.parent(temp_cont, world=True)
     cmds.setAttr("%s.r" % temp_cont, 0, 0, 0)
     temp_loc = cmds.spaceLocator()[0]
-    functions.alignToAlter(temp_cont, temp_loc, mode=0)
+    functions.align_to_alter(temp_cont, temp_loc, mode=0)
     cmds.delete(temp_loc)
     cmds.makeIdentity(temp_cont, a=True)
     if axis:
@@ -437,17 +437,17 @@ def make_stretchy_ik(joint_chain, ik_handle, root_controller, end_controller, si
                             default_value=0.0)
 
     root_loc = cmds.spaceLocator(name="rootLoc_%s" % name)[0]
-    functions.alignTo(root_loc, joint_chain[0], position=True, rotation=True)
+    functions.align_to(root_loc, joint_chain[0], position=True, rotation=True)
     connection.matrixConstraint(root_controller, root_loc, sr="xyz", mo=True)
     cmds.aimConstraint(end_controller, root_loc, wuo=root_controller)
 
     end_loc = cmds.spaceLocator(name="endLoc_%s" % name)[0]
-    end_loc_shape = functions.getShapes(end_loc)[0]
-    functions.alignTo(end_loc, end_controller, position=True, rotation=True)
+    end_loc_shape = functions.get_shapes(end_loc)[0]
+    functions.align_to(end_loc, end_controller, position=True, rotation=True)
     cmds.parent(end_loc, root_loc)
     soft_blend_loc = cmds.spaceLocator(name="softBlendLoc_%s" % name)[0]
-    soft_blend_loc_shape = functions.getShapes(soft_blend_loc)[0]
-    functions.alignTo(soft_blend_loc, end_controller, position=True, rotation=True)
+    soft_blend_loc_shape = functions.get_shapes(soft_blend_loc)[0]
+    functions.align_to(soft_blend_loc, end_controller, position=True, rotation=True)
     connection.matrix_switch(end_controller, end_loc, soft_blend_loc, "%s.stretch" % end_controller, position=True,
                              rotation=True)
 
@@ -470,7 +470,7 @@ def make_stretchy_ik(joint_chain, ik_handle, root_controller, end_controller, si
 
     plugs_to_sum = []
     for nmb, jnt in enumerate(joint_chain[1:]):
-        dist = functions.getDistance(jnt, joint_chain[nmb])
+        dist = functions.get_distance(jnt, joint_chain[nmb])
         cmds.addAttr(jnt, ln="initialDistance", at="double", dv=dist)
         plugs_to_sum.append("%s.initialDistance" % jnt)
         # cmds.connectAttr("%s.initialDistance" %jnt, "%s.input1D[%i]" %(sum_of_initial_lengths, nmb))
@@ -553,4 +553,3 @@ def make_stretchy_ik(joint_chain, ik_handle, root_controller, end_controller, si
 
     # connection.matrixConstraint(soft_blend_loc, ik_handle, mo=False, source_parent_cutoff=source_parent_cutoff)
     return soft_blend_loc, root_loc, distance_start_loc, distance_end_loc
-

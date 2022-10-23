@@ -63,7 +63,7 @@ def create_space_switch(node, targetList, overrideExisting=False, mode="parent",
     # if originalParent:
     #     cmds.parent(switchGrp, originalParent[0])
     # cmds.parent(node, switchGrp)
-    switchGrp = functions.createUpGrp(node, "SW")
+    switchGrp = functions.create_offset_group(node, "SW")
     # Offset grp [END]
 
     if mode == "parent":

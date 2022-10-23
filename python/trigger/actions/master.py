@@ -20,9 +20,9 @@ class Master(object):
         for grp in [master_rig_grp, trigger_rig_grp, render_geo_grp]:
             if not cmds.objExists(grp):
                 cmds.group(name=grp, em=True)
-        if functions.getParent(trigger_rig_grp) != master_rig_grp:
+        if functions.get_parent(trigger_rig_grp) != master_rig_grp:
             cmds.parent(trigger_rig_grp, master_rig_grp)
-        if functions.getParent(render_geo_grp) != master_rig_grp:
+        if functions.get_parent(render_geo_grp) != master_rig_grp:
             cmds.parent(render_geo_grp, master_rig_grp)
         if not cmds.objExists(pref_name):
             icon = ic.Icon()

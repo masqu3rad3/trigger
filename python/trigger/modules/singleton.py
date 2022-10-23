@@ -2,15 +2,13 @@
 
 from maya import cmds
 import maya.api.OpenMaya as om
-from trigger.library import functions
+from trigger.library import functions, joint
 from trigger.library import naming
 from trigger.library import attribute
 from trigger.library import connection
 from trigger.library import api
 from trigger.objects.controller import Controller
 from trigger.utils import parentToSurface
-
-from trigger.library import controllers as ic
 
 from trigger.core import filelog
 
@@ -66,7 +64,7 @@ class Singleton(object):
 
         # get the properties from the root
         self.useRefOrientation = cmds.getAttr("%s.useRefOri" % self.inits[0])
-        self.side = functions.get_joint_side(self.inits[0])
+        self.side = joint.get_joint_side(self.inits[0])
         self.sideMult = -1 if self.side == "R" else 1
         self.isLocal = bool(cmds.getAttr("%s.localJoints" % self.inits[0]))
         self.surface = str(cmds.getAttr("%s.surface" % self.inits[0]))
@@ -76,10 +74,10 @@ class Singleton(object):
             self.isDirect = False
 
         # initialize coordinates
-        self.up_axis, self.mirror_axis, self.look_axis = functions.getRigAxes(self.inits[0])
+        self.up_axis, self.mirror_axis, self.look_axis = joint.get_rig_axes(self.inits[0])
 
         # initialize suffix
-        self.suffix = (naming.uniqueName(cmds.getAttr("%s.moduleName" % self.inits[0])))
+        self.suffix = (naming.unique_name(cmds.getAttr("%s.moduleName" % self.inits[0])))
 
         # module specific variables
         self.localOffGrp = None
@@ -105,7 +103,7 @@ class Singleton(object):
     def createGrp(self):
         self.limbGrp = cmds.group(name=self.suffix, em=True)
         self.scaleGrp = cmds.group(name="%s_scaleGrp" % self.suffix, em=True)
-        functions.alignTo(self.scaleGrp, self.inits[0], position=True, rotation=False)
+        functions.align_to(self.scaleGrp, self.inits[0], position=True, rotation=False)
         self.nonScaleGrp = cmds.group(name="%s_nonScaleGrp" % self.suffix, em=True)
 
         cmds.addAttr(self.scaleGrp, at="bool", ln="Control_Visibility", sn="contVis", defaultValue=True)
@@ -157,15 +155,15 @@ class Singleton(object):
         for nmb, j in enumerate(self.inits):
             cmds.select(d=True)
             j_def = cmds.joint(name="jDef_{0}_{1}".format(j, self.suffix))
-            j_def_off = functions.createUpGrp(j_def, "off")
-            j_def_bind = functions.createUpGrp(j_def, "bind")
+            j_def_off = functions.create_offset_group(j_def, "off")
+            j_def_bind = functions.create_offset_group(j_def, "bind")
 
             cont = Controller(name="%s%s_cont" % (self.suffix, nmb + 1), shape="Circle")
             cont.drive_visibility("%s.contVis" % self.scaleGrp, lock_and_hide=True)
             cont.set_side(side=self.side)
             cont_bind = cont.add_offset("bind")
             cont_off = cont.add_offset("pos")
-            functions.alignTo(cont_off, j, position=True, rotation=True)
+            functions.align_to(cont_off, j, position=True, rotation=True)
             # connection.matrixConstraint(cont.name, j_def_bind, mo=False, source_parent_cutoff=self.localOffGrp)
             # connection.matrixConstraint(cont.name, j_def_bind, mo=False, source_parent_cutoff=cont_bind)
             # connection.matrixConstraint(cont.name, j_def, mo=False, source_parent_cutoff=self.localOffGrp)
@@ -183,7 +181,7 @@ class Singleton(object):
                 cmds.connectAttr("%s.r" % cont.name, "%s.r" % j_def_bind)
                 cmds.connectAttr("%s.s" % cont.name, "%s.s" % j_def_bind)
                 # Since the connection happening in local transform space, we need to move the joint to its position
-                functions.alignTo(j_def_off, j, position=True, rotation=True)
+                functions.align_to(j_def_off, j, position=True, rotation=True)
             else:
                 connection.matrixConstraint(cont.name, j_def_bind, mo=False, source_parent_cutoff=_cutoff)
             # else:
@@ -276,15 +274,15 @@ class Guides(object):
         # Update the guideJoints list
 
         # set orientation of joints
-        functions.orientJoints(self.guideJoints, worldUpAxis=self.upVector, upAxis=(0, 1, 0),
-                               reverseAim=self.sideMultiplier, reverseUp=self.sideMultiplier)
+        joint.orient_joints(self.guideJoints, worldUpAxis=self.upVector, up_axis=(0, 1, 0),
+                                reverseAim=self.sideMultiplier, reverseUp=self.sideMultiplier)
 
     def define_attributes(self):
         # set joint side and type attributes
-        functions.set_joint_type(self.guideJoints[0], "SingletonRoot")
+        joint.set_joint_type(self.guideJoints[0], "SingletonRoot")
         if len(self.guideJoints) > 1:
-            _ = [functions.set_joint_type(jnt, "Singleton") for jnt in self.guideJoints[1:]]
-        _ = [functions.set_joint_side(jnt, self.side) for jnt in self.guideJoints]
+            _ = [joint.set_joint_type(jnt, "Singleton") for jnt in self.guideJoints[1:]]
+        _ = [joint.set_joint_side(jnt, self.side) for jnt in self.guideJoints]
 
         # ----------Mandatory---------[Start]
         root_jnt = self.guideJoints[0]

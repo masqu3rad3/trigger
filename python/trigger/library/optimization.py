@@ -3,6 +3,7 @@
 from maya import cmds
 from trigger.library import arithmetic as ar
 
+
 def switch_connections(switch, override_switch, kill_nodes, switch_on_visibles, switch_on_invisibles):
     """
     Creates visibility and nodeState connections between controllers and nodes

@@ -25,5 +25,5 @@ def annotate(object, text, name=None, offset=None, visibility_range=None, arrow=
         cmds.setKeyframe(annotation_shape, at="v", t=visibility_range[1], value=1)
         cmds.setKeyframe(annotation_shape, at="v", t=visibility_range[1] + 1, value=0)
 
-    annotation_transform = cmds.rename(functions.getParent(annotation_shape), name)
+    annotation_transform = cmds.rename(functions.get_parent(annotation_shape), name)
     return annotation_transform

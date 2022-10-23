@@ -1,7 +1,7 @@
 from maya import cmds
 import maya.api.OpenMaya as om
 
-from trigger.library import functions
+from trigger.library import functions, joint
 from trigger.library import naming
 from trigger.library import attribute
 from trigger.library import connection
@@ -63,7 +63,7 @@ class Surface(object):
         except ValueError:
             self.bindScales = False
 
-        self.suffix = (naming.uniqueName(cmds.getAttr("%s.moduleName" % self.inits[0])))
+        self.suffix = (naming.unique_name(cmds.getAttr("%s.moduleName" % self.inits[0])))
 
         self.controllerGrp = None
 
@@ -84,7 +84,7 @@ class Surface(object):
     def createGrp(self):
         self.controllerGrp = cmds.group(name="%s_contGrp" % self.suffix, em=True)
         self.scaleGrp = cmds.group(name="%s_scaleGrp" % self.suffix, em=True)
-        functions.alignTo(self.scaleGrp, self.inits[0], 0)
+        functions.align_to(self.scaleGrp, self.inits[0], 0)
         self.nonScaleGrp = cmds.group(name="%s_nonScaleGrp" % self.suffix, em=True)
         cmds.addAttr(self.scaleGrp, at="bool", ln="Control_Visibility", sn="contVis", defaultValue=True)
         cmds.addAttr(self.scaleGrp, at="bool", ln="Joints_Visibility", sn="jointVis", defaultValue=True)
@@ -109,10 +109,10 @@ class Surface(object):
             self.deformerJoints.append(j_def)
             cmds.connectAttr("{0}.rigVis".format(self.scaleGrp), "{0}.v".format(j_def))
             # Create connection groups
-            j_def_offset = functions.createUpGrp(j_def, "offset")
-            j_def_bind = functions.createUpGrp(j_def, "bind")
+            j_def_offset = functions.create_offset_group(j_def, "offset")
+            j_def_bind = functions.create_offset_group(j_def, "bind")
             self.jointBinds.append(j_def_bind)
-            functions.alignTo(j_def_offset, init, position=True, rotation=True)
+            functions.align_to(j_def_offset, init, position=True, rotation=True)
             cmds.parent(j_def_offset, self.nonScaleGrp)
 
         # extra.alignTo(self.surface_jnt, self.rootInit, position=True, rotation=True)
@@ -133,13 +133,13 @@ class Surface(object):
             icon = ic.Icon()
             _cont, _ = icon.create_icon("Diamond", icon_name="%s%s_cont" % (self.suffix, nmb))
             self.controllers.append(_cont)
-            _cont_offset = functions.createUpGrp(_cont, "offset")
-            _cont_bind = functions.createUpGrp(_cont, "bind")
-            _cont_negate = functions.createUpGrp(_cont, "negate")
-            _cont_pos = functions.createUpGrp(_cont, "pos")
+            _cont_offset = functions.create_offset_group(_cont, "offset")
+            _cont_bind = functions.create_offset_group(_cont, "bind")
+            _cont_negate = functions.create_offset_group(_cont, "negate")
+            _cont_pos = functions.create_offset_group(_cont, "pos")
 
             # functions.alignTo(self.cont_offset, self.rootInit, position=True, rotation=False)
-            functions.alignTo(_cont_offset, init, position=True, rotation=True)
+            functions.align_to(_cont_offset, init, position=True, rotation=True)
             # functions.alignTo(self.cont_pos, self.rootInit, position=True, rotation=True)
             functions.colorize(_cont, self.colorCodes[0])
 
@@ -241,15 +241,15 @@ class Guides(object):
         # Update the guideJoints list
 
         # set orientation of joints
-        functions.orientJoints(self.guideJoints, worldUpAxis=self.upVector, upAxis=(0, 1, 0),
-                               reverseAim=self.sideMultiplier, reverseUp=self.sideMultiplier)
+        joint.orient_joints(self.guideJoints, worldUpAxis=self.upVector, up_axis=(0, 1, 0),
+                                reverseAim=self.sideMultiplier, reverseUp=self.sideMultiplier)
 
     def define_attributes(self):
         # set joint side and type attributes
-        functions.set_joint_type(self.guideJoints[0], "Surface")
+        joint.set_joint_type(self.guideJoints[0], "Surface")
         if len(self.guideJoints) > 1:
-            _ = [functions.set_joint_type(jnt, "SurfaceItem") for jnt in self.guideJoints[1:]]
-        _ = [functions.set_joint_side(jnt, self.side) for jnt in self.guideJoints]
+            _ = [joint.set_joint_type(jnt, "SurfaceItem") for jnt in self.guideJoints[1:]]
+        _ = [joint.set_joint_side(jnt, self.side) for jnt in self.guideJoints]
 
         # ----------Mandatory---------[Start]
         root_jnt = self.guideJoints[0]

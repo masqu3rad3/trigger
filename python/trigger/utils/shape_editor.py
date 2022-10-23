@@ -63,7 +63,7 @@ class ShapeEditor(object):
     #     return _bs_data
 
     def get_blendshapes(self, blendshape_pack_group):
-        _meshes = functions.getMeshes(blendshape_pack_group)
+        _meshes = functions.get_meshes(blendshape_pack_group)
         for mesh in _meshes:
             pass
 

@@ -72,7 +72,7 @@ def spaceSwitcher(node, targetList, overrideExisting=False, mode="parent", defau
     pm.addAttr(node, at="enum", k=True, shortName=mode + "Switch", longName=mode + "_Switch", en=enumFlag, defaultValue=defaultVal)
     driver = "%s.%sSwitch" % (node, mode)
 
-    switchGrp = extra.createUpGrp(node, "{0}SW".format(mode))
+    switchGrp = extra.create_offset_group(node, "{0}SW".format(mode))
 
     if mode == "parent":
         con = pm.parentConstraint(anchorPoses, switchGrp, mo=True)

@@ -1,12 +1,13 @@
 from maya import cmds
 import maya.api.OpenMaya as om
 
-from trigger.library import functions, naming
+from trigger.library import functions, naming, joint
 from trigger.library import attribute
 from trigger.library import connection
 
 from trigger.library import controllers as ic
 from trigger.core import filelog
+
 
 log = filelog.Filelog(logname=__name__, filename="trigger_log")
 
@@ -34,7 +35,7 @@ class Base(object):
         else:
             log.error("Class needs either build_data or inits to be constructed")
 
-        self.suffix = (naming.uniqueName(cmds.getAttr("%s.moduleName" % self.baseInit)))
+        self.suffix = (naming.unique_name(cmds.getAttr("%s.moduleName" % self.baseInit)))
 
         self.controllers = []
         self.limbGrp = None
@@ -67,20 +68,20 @@ class Base(object):
         self.base_jnt = cmds.joint(name="%s_jnt" % self.suffix)
         cmds.connectAttr("{0}.rigVis".format(self.scaleGrp), "{0}.v".format(self.base_jnt))
 
-        functions.alignTo(self.base_jnt, self.baseInit, position=True, rotation=False)
+        functions.align_to(self.base_jnt, self.baseInit, position=True, rotation=False)
         self.limbPlug = self.base_jnt
         self.sockets.append(self.base_jnt)
 
     def createControllers(self):
         icon = ic.Icon()
-        placement_cont, _ = icon.create_icon("Circle", icon_name=naming.uniqueName("placement_cont"), scale=(10, 10, 10))
-        master_cont, _ = icon.create_icon("TriCircle", icon_name=naming.uniqueName("master_cont"), scale=(15, 15, 15))
+        placement_cont, _ = icon.create_icon("Circle", icon_name=naming.unique_name("placement_cont"), scale=(10, 10, 10))
+        master_cont, _ = icon.create_icon("TriCircle", icon_name=naming.unique_name("master_cont"), scale=(15, 15, 15))
         self.controllers = [master_cont, placement_cont]
 
-        placement_off = functions.createUpGrp(placement_cont, "off")
-        master_off = functions.createUpGrp(master_cont, "off")
-        functions.alignTo(placement_off, self.base_jnt)
-        functions.alignTo(master_off, self.base_jnt)
+        placement_off = functions.create_offset_group(placement_cont, "off")
+        master_off = functions.create_offset_group(master_cont, "off")
+        functions.align_to(placement_off, self.base_jnt)
+        functions.align_to(master_off, self.base_jnt)
 
         cmds.parent(placement_off, master_cont)
         # cmds.parent(master_off, self.scaleGrp)
@@ -100,8 +101,8 @@ class Base(object):
 
         connection.matrixConstraint(master_cont, self.scaleGrp, ss="xyz")
 
-        attribute.lockAndHide(placement_cont, ["sx", "sy", "sz", "v"])
-        attribute.lockAndHide(master_cont, ["sx", "sy", "sz", "v"])
+        attribute.lock_and_hide(placement_cont, ["sx", "sy", "sz", "v"])
+        attribute.lock_and_hide(master_cont, ["sx", "sy", "sz", "v"])
 
     def createLimb(self):
         """Creates base joint for master and placement conts"""
@@ -154,9 +155,9 @@ class Guides(object):
 
     def define_attributes(self):
         # set joint side and type attributes
-        functions.set_joint_type(self.guideJoints[0], "Base")
+        joint.set_joint_type(self.guideJoints[0], "Base")
         cmds.setAttr("{0}.radius".format(self.guideJoints[0]), 2)
-        _ = [functions.set_joint_side(jnt, self.side) for jnt in self.guideJoints]
+        _ = [joint.set_joint_side(jnt, self.side) for jnt in self.guideJoints]
 
         # ----------Mandatory---------[Start]
         root_jnt = self.guideJoints[0]

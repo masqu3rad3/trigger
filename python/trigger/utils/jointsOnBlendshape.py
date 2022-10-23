@@ -46,12 +46,12 @@ def jointOnBlendshapes(joint=None, controller=None, surface=None, attach_mode="p
 
     rigConnect = cmds.group(name="%s_rigConnect" % joint, em=True)
     contConnect = cmds.group(name="%s_contConnect" % joint, em=True)
-    functions.alignToAlter(rigConnect, joint, mode=0)
-    functions.alignToAlter(contConnect, joint, mode=0)
-    functions.alignTo(rigConnect, controller, position=False, rotation=True)
-    functions.alignTo(contConnect, controller, position=False, rotation=True)
+    functions.align_to_alter(rigConnect, joint, mode=0)
+    functions.align_to_alter(contConnect, joint, mode=0)
+    functions.align_to(rigConnect, controller, position=False, rotation=True)
+    functions.align_to(contConnect, controller, position=False, rotation=True)
 
-    joint_parent = functions.getParent(joint)
+    joint_parent = functions.get_parent(joint)
     ## if the offset has anouther parent, parent the new hierarchy under that
 
     cmds.parent(joint, contConnect)
@@ -61,8 +61,8 @@ def jointOnBlendshapes(joint=None, controller=None, surface=None, attach_mode="p
         cmds.parent(rigConnect, joint_parent)
 
 
-    cont_surfaceAttach = functions.createUpGrp(controller, "sAttach")
-    cont_negative = functions.createUpGrp(controller, "negative")
+    cont_surfaceAttach = functions.create_offset_group(controller, "sAttach")
+    cont_negative = functions.create_offset_group(controller, "negative")
     follicleList = parentToSurface.parentToSurface([cont_surfaceAttach], surface, mode=attach_mode)
 
     cmds.connectAttr("%s.translate" % controller, "%s.translate" % contConnect)

@@ -27,7 +27,7 @@ class Ribbon(object):
                  scaleable=True
                  ):
         # input vars
-        self._name = naming.uniqueName(name) if name else ""
+        self._name = naming.unique_name(name) if name else ""
         self._startNode = start_node
         self._endNode = end_node
         self._ribbonResolution = ribbon_resolution
@@ -323,7 +323,7 @@ class Ribbon(object):
         cmds.rebuildSurface(n_surf_trans, ch=1, rpo=1, rt=0, end=1, kr=2, kcp=0, kc=0, su=5, du=3, sv=1, dv=1, tol=0,
                             fr=0, dir=1)
         cmds.makeIdentity(a=True)
-        n_surf = functions.getShapes(n_surf_trans)[0]
+        n_surf = functions.get_shapes(n_surf_trans)[0]
         self._toHide.append(n_surf_trans)
 
         # Start up nodes
@@ -335,11 +335,11 @@ class Ribbon(object):
         # cmds.parent(start_ore, self._startAim)
 
         self._startUp = cmds.spaceLocator(name="jRbn_StartUp_%s" % self._name)[0]
-        self._toHide.append(functions.getShapes(self._startUp)[0])
+        self._toHide.append(functions.get_shapes(self._startUp)[0])
         cmds.move(-(length * 0.5), 0.5, 0, self._startUp)
 
         self._startPlug = cmds.spaceLocator(name="jRbn_StartCn_%s" % self._name)[0]
-        self._toHide.append(functions.getShapes(self._startPlug)[0])
+        self._toHide.append(functions.get_shapes(self._startPlug)[0])
         cmds.move(-(length * 0.5), 0, 0, self._startPlug)
         cmds.makeIdentity(self._startPlug, a=True)
 
@@ -356,11 +356,11 @@ class Ribbon(object):
         cmds.move(-(length * -0.5), 0, 0, self._endAim)
         cmds.makeIdentity(self._endAim, a=True)
         self._endUp = cmds.spaceLocator(name="jRbn_End_%s_UP" % self._name)[0]
-        self._toHide.append(functions.getShapes(self._endUp)[0])
+        self._toHide.append(functions.get_shapes(self._endUp)[0])
         cmds.move(-(length * -0.5), 0.5, 0, self._endUp)
 
         self._endPlug = cmds.spaceLocator(name="jRbn_End_%s_endCon" % self._name)[0]
-        self._toHide.append(functions.getShapes(self._endPlug)[0])
+        self._toHide.append(functions.get_shapes(self._endPlug)[0])
         cmds.move(-(length * -0.5), 0, 0, self._endPlug)
         cmds.makeIdentity(self._endPlug, a=True)
 
@@ -373,7 +373,7 @@ class Ribbon(object):
             _name = "follicle_{0}{1}".format(self._name, index)
             _uv = (0.1 + (index / float(self._jointResolution)), 0.5)
             follicle_transform, follicle = connection.create_follicle(_name, n_surf, _uv)
-            attribute.lockAndHide(follicle_transform, ["tx", "ty", "tz", "rx", "ry", "rz"], hide=False)
+            attribute.lock_and_hide(follicle_transform, ["tx", "ty", "tz", "rx", "ry", "rz"], hide=False)
             def_j = cmds.joint(name="jDef_%s%i" % (self._name, index))
             cmds.joint(def_j, e=True, zso=True, oj='zxy')
             self._deformerJoints.append(def_j)
@@ -388,7 +388,7 @@ class Ribbon(object):
                 _uv = (0.1 + (index / float(self._jointResolution)), 0.0)
                 follicle_transform, follicle = connection.create_follicle(_name, n_surf, _uv)
                 self._toHide.append(follicle)
-                attribute.lockAndHide(follicle_transform, ["tx", "ty", "tz", "rx", "ry", "rz"], hide=False)
+                attribute.lock_and_hide(follicle_transform, ["tx", "ty", "tz", "rx", "ry", "rz"], hide=False)
                 cmds.parent(follicle_transform, self._nonScaleGrp)
                 dist_node = cmds.createNode("distanceBetween", name="fDistance_%s%i" % (self._name, index))
                 cmds.connectAttr("%s.outTranslate" % follicle_list[index], "%s.point1" % dist_node)
@@ -424,19 +424,19 @@ class Ribbon(object):
         cmds.select(d=True)
         start_joint = cmds.joint(name="jRbn_Start_%s" % self._name, radius=2)
         self._toHide.append(start_joint)
-        functions.alignTo(start_joint, self._startAim)
+        functions.align_to(start_joint, self._startAim)
 
         cmds.select(d=True)
         end_joint = cmds.joint(name="jRbn_End_%s" % self._name, radius=2)
         self._toHide.append(end_joint)
-        functions.alignTo(end_joint, self._endAim)
+        functions.align_to(end_joint, self._endAim)
 
     def create(self):
         if not self._validate():
             raise Exception("Start and/or End nodes are not defined")
         self._create_groups()
 
-        ribbon_length = functions.getDistance(self.start_node, self.end_node)
+        ribbon_length = functions.get_distance(self.start_node, self.end_node)
         n_surf = self._initial_ribbon(ribbon_length)
 
         self._create_follicles(n_surf)
@@ -449,7 +449,7 @@ class Ribbon(object):
         cmds.select(d=True)
         start_joint = cmds.joint(name="jRbn_Start_%s" % self._name, radius=2)
         self._toHide.append(start_joint)
-        functions.alignTo(start_joint, self._startAim)
+        functions.align_to(start_joint, self._startAim)
         # cmds.move(-(ribbon_length / 2.0), 0, 0, start_joint)
 
         cmds.select(d=True)
@@ -464,7 +464,7 @@ class Ribbon(object):
             for ctrl in self._controllerList:
                 cmds.select(d=True)
                 mid_j = cmds.joint(name="jRbn_Mid_%i_%s" % (counter, self._name), radius=2)
-                functions.alignToAlter(mid_j, ctrl)
+                functions.align_to_alter(mid_j, ctrl)
                 mid_joint_list.append(mid_j)
         else:
             interval = ribbon_length / (self._controllerCount + 1)
@@ -506,19 +506,19 @@ class Ribbon(object):
             mid_cont = Controller(shape="Circle", name="cont_midRbn_%s%i" % (self._name, nmb + 1), normal=(1, 0, 0))
             self._controllers.append(mid_cont.name)
             middle_off = cmds.spaceLocator(name="mid_OFF_%s%i" % (self._name, nmb + 1))[0]
-            self._toHide.append(functions.getShapes(middle_off)[0])
+            self._toHide.append(functions.get_shapes(middle_off)[0])
             middle_aim = cmds.group(em=True, name="mid_AIM_%s%i" % (self._name, nmb + 1))
-            functions.alignTo(middle_aim, mid, position=True, rotation=False)
+            functions.align_to(middle_aim, mid, position=True, rotation=False)
             middle_up = cmds.spaceLocator(name="mid_UP_{0}{1}".format(self._name, nmb + 1))[0]
-            self._toHide.append(functions.getShapes(middle_up)[0])
+            self._toHide.append(functions.get_shapes(middle_up)[0])
 
-            functions.alignTo(middle_up, mid, position=True, rotation=False)
+            functions.align_to(middle_up, mid, position=True, rotation=False)
             cmds.setAttr("%s.ty" % middle_up, 0.5)
 
             middle_pos = cmds.spaceLocator(name="mid_POS_{0}{1}".format(self._name, nmb + 1))[0]
             cmds.parent(middle_pos, self._scaleGrp)
-            self._toHide.append(functions.getShapes(middle_pos)[0])
-            functions.alignTo(middle_pos, mid, position=True, rotation=False)
+            self._toHide.append(functions.get_shapes(middle_pos)[0])
+            functions.align_to(middle_pos, mid, position=True, rotation=False)
 
             cmds.parent(mid, mid_cont.name)
             cmds.parent(mid_cont.name, middle_off)
@@ -530,5 +530,5 @@ class Ribbon(object):
 
             cmds.pointConstraint(self._startUp, self._endUp, middle_up)
 
-        functions.alignAndAim(self._scaleGrp, [self._startNode, self._endNode], [self._endNode],
-                              upVector=self._upVector)
+        functions.align_and_aim(self._scaleGrp, [self._startNode, self._endNode], [self._endNode],
+                                up_vector=self._upVector)

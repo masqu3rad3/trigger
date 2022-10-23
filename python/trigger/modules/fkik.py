@@ -1,13 +1,12 @@
 from maya import cmds
 from maya import mel
 import maya.api.OpenMaya as om
-from trigger.library import api
+from trigger.library import api, joint
 from trigger.library import functions
 from trigger.library import connection
 from trigger.library import naming
 from trigger.library import attribute
 from trigger.library import controllers as ic
-from trigger.library import arithmetic as op
 from trigger.library.tools import make_stretchy_ik
 
 from trigger.core import filelog
@@ -65,7 +64,7 @@ class Fkik(object):
 
         # get the properties from the root
         self.useRefOrientation = cmds.getAttr("%s.useRefOri" % self.fkRoot)
-        self.side = functions.get_joint_side(self.fkRoot)
+        self.side = joint.get_joint_side(self.fkRoot)
         self.sideMult = -1 if self.side == "R" else 1
         self.isLocal = bool(cmds.getAttr("%s.localJoints" % self.inits[0]))
         self.switchMode = int(cmds.getAttr("%s.switchMode" % self.inits[0]))
@@ -73,10 +72,10 @@ class Fkik(object):
         self.ikSolver = int(cmds.getAttr("%s.ikSolver" % self.inits[0]))
 
         # initialize coordinates
-        self.up_axis, self.mirror_axis, self.look_axis = functions.getRigAxes(self.inits[0])
+        self.up_axis, self.mirror_axis, self.look_axis = joint.get_rig_axes(self.inits[0])
 
         # initialize suffix
-        self.suffix = (naming.uniqueName(cmds.getAttr("%s.moduleName" % self.inits[0])))
+        self.suffix = (naming.unique_name(cmds.getAttr("%s.moduleName" % self.inits[0])))
 
         # module specific variables
         self.fkJoints = []
@@ -109,7 +108,7 @@ class Fkik(object):
     def createGrp(self):
         self.limbGrp = cmds.group(name=self.suffix, em=True)
         self.scaleGrp = cmds.group(name="%s_scaleGrp" % self.suffix, em=True)
-        functions.alignTo(self.scaleGrp, self.inits[0], position=True, rotation=False)
+        functions.align_to(self.scaleGrp, self.inits[0], position=True, rotation=False)
         self.nonScaleGrp = cmds.group(name="%s_nonScaleGrp" % self.suffix, em=True)
 
         cmds.addAttr(self.scaleGrp, at="bool", ln="Control_Visibility", sn="contVis", defaultValue=True)
@@ -147,10 +146,10 @@ class Fkik(object):
             self.deformerJoints.append(jnt)
 
         if not self.useRefOrientation:
-            functions.orientJoints(self.deformerJoints, worldUpAxis=(self.look_axis), upAxis=(0, 1, 0), reverseAim=self.sideMult, reverseUp=self.sideMult)
+            joint.orient_joints(self.deformerJoints, worldUpAxis=(self.look_axis), up_axis=(0, 1, 0), reverseAim=self.sideMult, reverseUp=self.sideMult)
         else:
             for x in range (len(self.deformerJoints)):
-                functions.alignTo(self.deformerJoints[x], self.inits[x], position=True, rotation=True)
+                functions.align_to(self.deformerJoints[x], self.inits[x], position=True, rotation=True)
                 cmds.makeIdentity(self.deformerJoints[x], a=True)
 
         cmds.parent(self.deformerJoints[0], self.nonScaleGrp)
@@ -187,16 +186,16 @@ class Fkik(object):
             scale_mult = None
             for nmb, jnt in enumerate(fk_joints):
                 if nmb < (len(fk_joints)-1):
-                    scale_mult = functions.getDistance(jnt, fk_joints[nmb + 1]) * 0.5
+                    scale_mult = functions.get_distance(jnt, fk_joints[nmb + 1]) * 0.5
 
                 cont, _ = icon_handler.create_icon("Cube", icon_name="%s%i_FK_cont" % (self.suffix, nmb),
                                                    scale=(scale_mult, scale_mult, scale_mult))
 
                 cmds.xform(cont, piv=(self.sideMult * (-scale_mult), 0, 0))
-                functions.alignToAlter(cont, jnt, 2)
+                functions.align_to_alter(cont, jnt, 2)
 
-                cont_OFF = functions.createUpGrp(cont, "OFF", freezeTransform=True)
-                cont_ORE = functions.createUpGrp(cont, "ORE")
+                cont_OFF = functions.create_offset_group(cont, "OFF", freezeTransform=True)
+                cont_ORE = functions.create_offset_group(cont, "ORE")
                 cmds.makeIdentity(cont, a=True)
 
                 self.fkControllers.append(cont)
@@ -216,18 +215,18 @@ class Fkik(object):
             cmds.parent(ik_bind_grp, self.localOffGrp)
             connection.matrixConstraint(self.limbPlug, ik_bind_grp, mo=True)
 
-            scale_mult = functions.getDistance(ik_joints[0], ik_joints[1]) * 0.5
+            scale_mult = functions.get_distance(ik_joints[0], ik_joints[1]) * 0.5
             self.rootIkCont, _ = icon_handler.create_icon("Circle", icon_name="%s_rootIK_cont" % self.suffix, normal=(1, 0, 0), scale=(scale_mult, scale_mult, scale_mult))
             self.ikControllers.append(self.rootIkCont)
-            root_ik_cont_off = functions.createUpGrp(self.rootIkCont, "OFF")
+            root_ik_cont_off = functions.create_offset_group(self.rootIkCont, "OFF")
             self.ikControllersOff.append(root_ik_cont_off)
-            functions.alignTo(root_ik_cont_off, ik_joints[0], rotation=True, position=True)
+            functions.align_to(root_ik_cont_off, ik_joints[0], rotation=True, position=True)
 
             self.endIKCont, _ = icon_handler.create_icon("Circle", icon_name="%s_endIK_cont" % self.suffix, normal=(1, 0, 0), scale=(scale_mult, scale_mult, scale_mult))
             self.ikControllers.append(self.endIKCont)
-            end_ik_cont_off = functions.createUpGrp(self.endIKCont, "OFF")
+            end_ik_cont_off = functions.create_offset_group(self.endIKCont, "OFF")
             self.ikControllersOff.append(end_ik_cont_off)
-            functions.alignTo(end_ik_cont_off, ik_joints[-1], rotation=True, position=True)
+            functions.align_to(end_ik_cont_off, ik_joints[-1], rotation=True, position=True)
 
             cmds.parent(root_ik_cont_off, ik_bind_grp)
             cmds.parent(end_ik_cont_off, ik_bind_grp)
@@ -235,7 +234,7 @@ class Fkik(object):
             if self.ikSolver != 0: # if it is a rotate plane or spring solver
                 # create a bridge locator to stay with the local joints
 
-                scale_mult = functions.getDistance(ik_joints[0], ik_joints[-1]) * 0.1
+                scale_mult = functions.get_distance(ik_joints[0], ik_joints[-1]) * 0.1
                 self.poleVectorBridge = cmds.spaceLocator(name="poleVectorBridge_%s" %self.suffix)[0]
                 self.poleVectorCont, _ = icon_handler.create_icon("Plus", icon_name="%s_Pole_cont" % self.suffix, scale=(scale_mult, scale_mult, scale_mult),
                                                                   normal=(self.sideMult, 0, 0))
@@ -243,15 +242,15 @@ class Fkik(object):
                 self.middleIndex = int((len(ik_joints)-1)*0.5)
                 offset_vector = api.get_between_vector(ik_joints[self.middleIndex], ik_joints)
 
-                functions.alignAndAim(self.poleVectorBridge,
-                                      targetList=[ik_joints[self.middleIndex]],
-                                      aimTargetList=ik_joints,
-                                      upVector=self.up_axis,
-                                      translateOff=(offset_vector * offset_magnitude)
-                                      )
+                functions.align_and_aim(self.poleVectorBridge,
+                                        target_list=[ik_joints[self.middleIndex]],
+                                        aim_target_list=ik_joints,
+                                        up_vector=self.up_axis,
+                                        translate_offset=(offset_vector * offset_magnitude)
+                                        )
 
-                functions.alignTo(self.poleVectorCont, self.poleVectorBridge, position=True, rotation=True)
-                pole_cont_off = functions.createUpGrp(self.poleVectorCont, "OFF")
+                functions.align_to(self.poleVectorCont, self.poleVectorBridge, position=True, rotation=True)
+                pole_cont_off = functions.create_offset_group(self.poleVectorCont, "OFF")
                 # connection.matrixConstraint(self.poleVectorBridge, self.poleVectorCont, mo=False, source_parent_cutoff=self.localOffGrp)
                 cmds.parent(pole_cont_off, ik_bind_grp)
 
@@ -270,7 +269,7 @@ class Fkik(object):
 
         # SWITCH Controller
         if self.switchMode == 0:
-            scale_mult = functions.getDistance(self.ikJoints[0], self.ikJoints[1]) * 0.5
+            scale_mult = functions.get_distance(self.ikJoints[0], self.ikJoints[1]) * 0.5
             self.switchController, _ = icon_handler.create_icon("FkikSwitch", icon_name="%s_FK_IK_cont" % self.suffix,
                                                                 scale=(scale_mult, scale_mult, scale_mult))
             self.controllers.append(self.switchController)
@@ -396,7 +395,7 @@ class Fkik(object):
 
         self.scaleConstraints.append(self.scaleGrp)
         # lock and hide
-        _ = [attribute.lockAndHide(cont, ["v"]) for cont in self.controllers]
+        _ = [attribute.lock_and_hide(cont, ["v"]) for cont in self.controllers]
 
         # color
         functions.colorize(self.fkControllers, self.colorCodes[0])
@@ -465,19 +464,19 @@ class Guides(object):
             zig_zag_offset = om.MVector(0, zig_zag*0.3, 0)
             jnt = cmds.joint(p=(rPointTail + (seperation_value * seg) + zig_zag_offset), name="jInit_fkik_%s_%i" %(self.suffix, seg))
 
-            functions.set_joint_side(jnt, self.side)
+            joint.set_joint_side(jnt, self.side)
             # Update the guideJoints list
             self.guideJoints.append(jnt)
             zig_zag = zig_zag*(-1)
 
         # set orientation of joints
-        functions.orientJoints(self.guideJoints, worldUpAxis=self.lookVector, upAxis=(0, 1, 0), reverseAim=self.sideMultiplier, reverseUp=self.sideMultiplier)
+        joint.orient_joints(self.guideJoints, worldUpAxis=self.lookVector, up_axis=(0, 1, 0), reverseAim=self.sideMultiplier, reverseUp=self.sideMultiplier)
 
     def define_attributes(self):
         # set joint side and type attributes
-        functions.set_joint_type(self.guideJoints[0], "FkikRoot")
-        _ = [functions.set_joint_type(jnt, "Fkik") for jnt in self.guideJoints[1:]]
-        _ = [functions.set_joint_side(jnt, self.side) for jnt in self.guideJoints]
+        joint.set_joint_type(self.guideJoints[0], "FkikRoot")
+        _ = [joint.set_joint_type(jnt, "Fkik") for jnt in self.guideJoints[1:]]
+        _ = [joint.set_joint_side(jnt, self.side) for jnt in self.guideJoints]
 
         # ----------Mandatory---------[Start]
         root_jnt = self.guideJoints[0]

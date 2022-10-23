@@ -84,7 +84,7 @@ def connect_bs_targets(
                         name exists, it will use that one.
     """
     if not bs_node_name:
-        bs_node_name = naming.uniqueName("trigger_blendShape")
+        bs_node_name = naming.unique_name("trigger_blendShape")
     if driver_range:
         custom_range = True
     else:
@@ -209,7 +209,7 @@ def localize(mesh, blendshape_node, local_target_name="LocalRig", group_name=Non
         # create a blendshape
         cmds.blendShape(local_mesh, mesh, w=[0, 1], name=blendshape_node, foc=True)
 
-    if functions.getParent(local_mesh) != local_rig_grp:
+    if functions.get_parent(local_mesh) != local_rig_grp:
         cmds.parent(local_mesh, local_rig_grp)
 
     return local_mesh
@@ -219,7 +219,7 @@ def add_target_blendshape(blendshape_node, target_mesh, weight=1.0):
     # TODO is it foolproof?
     # TODO when weight is 0 something goes wrong. The attr name is wrong (weight[0] etc.)
     all_history = cmds.listHistory(blendshape_node)
-    connected_mesh = functions.getParent(cmds.ls(all_history, type="mesh")[0])
+    connected_mesh = functions.get_parent(cmds.ls(all_history, type="mesh")[0])
 
     # connected_mesh = cmds.listConnections(blendshape_node, type="mesh", source=False, destination=True)[0]
     next_index = cmds.blendShape(blendshape_node, q=True, wc=True)
@@ -361,7 +361,7 @@ def create_shrink_wrap(driver, driven, name=None, **kwargs):
     }
 
     if cmds.objectType(driver) == "transform":
-        influence_shape = functions.getShapes(driver)[0]
+        influence_shape = functions.get_shapes(driver)[0]
     else:
         influence_shape = driver
 
@@ -376,7 +376,7 @@ def create_shrink_wrap(driver, driven, name=None, **kwargs):
 
 
 def create_wrap(influence, surface, **kwargs):
-    influence_shape = functions.getShapes(influence)[0]
+    influence_shape = functions.get_shapes(influence)[0]
 
     prefix = kwargs.get('name', surface)
     # create wrap deformer

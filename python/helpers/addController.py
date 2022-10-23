@@ -49,10 +49,10 @@ class AddController(Icon):
             if not name:
                 name = "%s_cont" % sel
             # make sure the name is unique
-            name = naming.uniqueName(name)
+            name = naming.unique_name(name)
             cont, _ = self.create_icon(icon, icon_name=name, scale=(scale, scale, scale), normal=normal)
-            cont_offset = functions.createUpGrp(cont, "offset")
-            functions.alignTo(cont_offset, sel, position=True, rotation=True)
+            cont_offset = functions.create_offset_group(cont, "offset")
+            functions.align_to(cont_offset, sel, position=True, rotation=True)
             if constraint == "Point":
                 cmds.pointConstraint(cont, sel, mo=False)
             elif constraint == "Orient":

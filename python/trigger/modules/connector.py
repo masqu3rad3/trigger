@@ -1,7 +1,7 @@
 from maya import cmds
 import maya.api.OpenMaya as om
 
-from trigger.library import functions, naming
+from trigger.library import functions, naming, joint
 from trigger.library import attribute
 from trigger.objects.controller import Controller
 
@@ -41,14 +41,14 @@ class Connector(object):
 
         # get module properties
         self.useRefOrientation = cmds.getAttr("%s.useRefOri" % self.rootInit)
-        self.side = functions.get_joint_side(self.rootInit)
+        self.side = joint.get_joint_side(self.rootInit)
         # try block for backward compatibility
         try:
             self.curveAsShape = cmds.getAttr("%s.curveAsShape" % self.rootInit)
         except ValueError:
             self.curveAsShape = False
 
-        self.suffix = (naming.uniqueName(cmds.getAttr("%s.moduleName" % self.rootInit)))
+        self.suffix = (naming.unique_name(cmds.getAttr("%s.moduleName" % self.rootInit)))
 
         self.controllers = []
         self.limbGrp = None
@@ -92,7 +92,7 @@ class Connector(object):
         defJ_root = cmds.joint(name="jDef_%s" % self.suffix)
 
         log.warning(self.useRefOrientation)
-        functions.alignTo(defJ_root, self.rootInit, position=True, rotation=self.useRefOrientation)
+        functions.align_to(defJ_root, self.rootInit, position=True, rotation=self.useRefOrientation)
 
         functions.colorize(defJ_root, self.colorCodes[0])
         self.limbPlug = defJ_root
@@ -154,9 +154,9 @@ class Guides(object):
 
     def define_attributes(self):
         # set joint side and type attributes
-        functions.set_joint_type(self.guideJoints[0], "Root")
+        joint.set_joint_type(self.guideJoints[0], "Root")
         cmds.setAttr("{0}.radius".format(self.guideJoints[0]), 2)
-        _ = [functions.set_joint_side(jnt, self.side) for jnt in self.guideJoints]
+        _ = [joint.set_joint_side(jnt, self.side) for jnt in self.guideJoints]
 
         # ----------Mandatory---------[Start]
         root_jnt = self.guideJoints[0]

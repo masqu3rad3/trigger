@@ -10,7 +10,7 @@ from trigger.core.decorators import tracktime, windowsOff
 from trigger.core import compatibility as compat
 from trigger.ui.Qt import QtWidgets
 
-log = filelog.Filelog(logname=__name__, filename="trigger_log")
+LOG = filelog.Filelog(logname=__name__, filename="trigger_log")
 
 
 class ActionsSession(dict):
@@ -57,7 +57,7 @@ class ActionsSession(dict):
 
     def new_session(self):
         """Clears the data"""
-        log.header("New Session")
+        LOG.header("New Session")
         self.__init__()
 
     def save_session(self, file_path):
@@ -68,7 +68,7 @@ class ActionsSession(dict):
         self.io.write(self)
         self.currentFile = file_path
         self.compareActions = deepcopy(self["actions"])
-        log.info("Session Saved Successfully...")
+        LOG.info("Session Saved Successfully...")
 
     def load_session(self, file_path):
         """Loads the session from the file"""
@@ -79,10 +79,10 @@ class ActionsSession(dict):
             self.update(actions_data)
             self.currentFile = file_path
             self.compareActions = deepcopy(self["actions"])
-            log.header("New Session")
-            log.info("Action Session Loaded Successfully...")
+            LOG.header("New Session")
+            LOG.info("Action Session Loaded Successfully...")
         else:
-            log.error("Cannot Open. File doesn't exist or unreadable => %s" % file_path)
+            LOG.error("Cannot Open. File doesn't exist or unreadable => %s" % file_path)
             raise Exception
 
     def import_session(self, file_path, insert_index=None):
@@ -138,9 +138,9 @@ class ActionsSession(dict):
                 idcounter = idcounter + 1
 
         if action_name in self.list_action_names():
-            log.error("Action Name already exists in the Session")
+            LOG.error("Action Name already exists in the Session")
         if not action_type in self.list_valid_actions():
-            log.error("Defined Action type is not valid")
+            LOG.error("Defined Action type is not valid")
         action = {
             "name": action_name,
             "type": action_type,
@@ -163,7 +163,7 @@ class ActionsSession(dict):
         if action_name == new_name:
             return
         if self.get_action(new_name):
-            log.error("Action name %s already exists" % new_name)
+            LOG.error("Action name %s already exists" % new_name)
         action = self.get_action(action_name)
         action["name"] = new_name
 
@@ -175,7 +175,7 @@ class ActionsSession(dict):
         """Duplicates the given action"""
         action = self.get_action(action_name)
         if not action:
-            log.warning("%s is not in the list of actions" % action_name)
+            LOG.warning("%s is not in the list of actions" % action_name)
             return
         id = self["actions"].index(action)
         dup_action = deepcopy(action)
@@ -194,7 +194,7 @@ class ActionsSession(dict):
         if action:
             self["actions"].remove(action)
         else:
-            log.warning("%s is not in the list of actions" % action_name)
+            LOG.warning("%s is not in the list of actions" % action_name)
 
     def edit_action(self, action_name, property, new_value):
         """
@@ -213,7 +213,7 @@ class ActionsSession(dict):
             current_value = action["data"].get(property, defaults.get(property))
             if current_value == None:
                 msg = "The property '%s' does not exist in %s ACTION_DATA" % (property, action["type"])
-                log.error(msg)
+                LOG.error(msg)
                 raise Exception(msg)
             if compat.is_string(new_value):
                 new_value = str(new_value)
@@ -221,14 +221,14 @@ class ActionsSession(dict):
                 current_value = str(current_value)
             if type(current_value) != type(new_value):
                 msg = "%s property only accepts %s values" % (property, str(type(current_value)))
-                log.error(msg)
+                LOG.error(msg)
                 raise Exception(msg)
 
             action["data"][property] = new_value
             # log.info("%s @ %s => %s" % (property, action["name"], new_value))
             return True
         else:
-            log.warning("%s cannot be found in the action list")
+            LOG.warning("%s cannot be found in the action list")
             return False
 
     def query_action(self, action_name, property):
@@ -237,11 +237,11 @@ class ActionsSession(dict):
             defaults=self.action_data_dict[action["type"]]
             current_value = action["data"].get(property, defaults.get(property))
             if current_value == None:
-                log.error("The property '%s' does not exist in %s ACTION_DATA" % (property, action["type"]))
+                LOG.error("The property '%s' does not exist in %s ACTION_DATA" % (property, action["type"]))
             else:
                 return current_value
         else:
-            log.warning("%s cannot be found in the action list")
+            LOG.warning("%s cannot be found in the action list")
             return None
 
     def enable_action(self, action_name):
@@ -300,20 +300,20 @@ class ActionsSession(dict):
 
     @tracktime
     def _action(self, action):
-        log.header("%s" % action["name"])
+        LOG.header("%s" % action["name"])
         action_cmd = "actions.{0}.{1}()".format(action["type"], action["type"].capitalize())
         a_hand = eval(action_cmd)
-        a_hand.FEED(action["data"])
+        a_hand.feed(action["data"])
         a_hand.action()
-        log.info("success...")
+        LOG.info("success...")
 
     @windowsOff
     @tracktime
     def run_all_actions(self, reset_scene=True, until=None):
         """runs all actions in the actions list"""
         # reset scene
-        log.seperator()
-        log.header("BUILDING...")
+        LOG.seperator()
+        LOG.header("BUILDING...")
         if reset_scene:
             cmds.file(new=True, force=True)
         for row, action in enumerate(self["actions"]):
@@ -333,13 +333,13 @@ class ActionsSession(dict):
                 except Exception as e:
                     if self.progressListwidget:
                         self.progressListwidget.errorItem(row)
-                    log.error("Cannot complete action => %s\n%s" % (action["name"], e))
+                    LOG.error("Cannot complete action => %s\n%s" % (action["name"], e))
                     raise
-        log.header("Total BUILDING TIME:")
+        LOG.header("Total BUILDING TIME:")
 
     # @windowsOff
     def run_action(self, action_name):
-        log.info("Running action => %s" % action_name)
+        LOG.info("Running action => %s" % action_name)
         action = self.get_action(action_name)
         try:
             self._action(action)
@@ -348,18 +348,18 @@ class ActionsSession(dict):
         except Exception as e:
             if self.progressListwidget:
                 self.progressListwidget.errorItem(self.progressListwidget.currentRow())
-            log.error("Cannot complete action => %s\n%s" % (action["name"], e))
+            LOG.error("Cannot complete action => %s\n%s" % (action["name"], e))
             raise
 
     @tracktime
     def run_save_action(self, action_name):
-        log.info("saving Action Data")
+        LOG.info("saving Action Data")
         action = self.get_action(action_name)
         action_cmd = "actions.{0}.{1}()".format(action["type"], action["type"].capitalize())
         a_hand = eval(action_cmd)
-        a_hand.FEED(action["data"])
+        a_hand.feed(action["data"])
         a_hand.save_action()
-        log.info("success")
+        LOG.info("success")
 
     def get_layout_ui(self, action_name, ctrl, layout):
         action = self.get_action(action_name)

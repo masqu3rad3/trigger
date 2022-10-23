@@ -1,6 +1,6 @@
 from maya import cmds
 import maya.api.OpenMaya as om
-from trigger.library import api
+from trigger.library import api, joint
 from trigger.library import functions
 from trigger.library import connection
 from trigger.library import naming
@@ -49,15 +49,15 @@ class Fk(object):
 
         # get the properties from the root
         self.useRefOrientation = cmds.getAttr("%s.useRefOri" % self.fkRoot)
-        self.side = functions.get_joint_side(self.fkRoot)
+        self.side = joint.get_joint_side(self.fkRoot)
         self.sideMult = -1 if self.side == "R" else 1
         self.isLocal = bool(cmds.getAttr("%s.localJoints" % self.inits[0]))
 
         # initialize coordinates
-        self.up_axis, self.mirror_axis, self.look_axis = functions.getRigAxes(self.inits[0])
+        self.up_axis, self.mirror_axis, self.look_axis = joint.get_rig_axes(self.inits[0])
 
         # initialize suffix
-        self.suffix = (naming.uniqueName(cmds.getAttr("%s.moduleName" % self.inits[0])))
+        self.suffix = (naming.unique_name(cmds.getAttr("%s.moduleName" % self.inits[0])))
 
         # scratch variables
         self.controllers = []
@@ -75,7 +75,7 @@ class Fk(object):
     def createGrp(self):
         self.limbGrp = cmds.group(name=self.suffix, em=True)
         self.scaleGrp = cmds.group(name="%s_scaleGrp" % self.suffix, em=True)
-        functions.alignTo(self.scaleGrp, self.inits[0], position=True, rotation=False)
+        functions.align_to(self.scaleGrp, self.inits[0], position=True, rotation=False)
         self.nonScaleGrp = cmds.group(name="%s_nonScaleGrp" % self.suffix, em=True)
 
         cmds.addAttr(self.scaleGrp, at="bool", ln="Control_Visibility", sn="contVis", defaultValue=True)
@@ -109,10 +109,10 @@ class Fk(object):
             self.deformerJoints.append(jnt)
 
         if not self.useRefOrientation:
-            functions.orientJoints(self.deformerJoints, worldUpAxis=(self.look_axis), upAxis=(0, 1, 0), reverseAim=self.sideMult, reverseUp=self.sideMult)
+            joint.orient_joints(self.deformerJoints, worldUpAxis=(self.look_axis), up_axis=(0, 1, 0), reverseAim=self.sideMult, reverseUp=self.sideMult)
         else:
             for x in range (len(self.deformerJoints)):
-                functions.alignTo(self.deformerJoints[x], self.inits[x], position=True, rotation=True)
+                functions.align_to(self.deformerJoints[x], self.inits[x], position=True, rotation=True)
                 cmds.makeIdentity(self.deformerJoints[x], a=True)
 
         cmds.parent(self.deformerJoints[0], self.nonScaleGrp)
@@ -128,15 +128,15 @@ class Fk(object):
         self.cont_off_list = []
 
         for nmb, jnt in enumerate(self.deformerJoints[:-1]):
-            scale_mult = functions.getDistance(jnt, self.deformerJoints[nmb + 1]) * 0.5
+            scale_mult = functions.get_distance(jnt, self.deformerJoints[nmb + 1]) * 0.5
             cont, _ = icon_handler.create_icon("Cube", icon_name="%s%i_cont" % (self.suffix, nmb), scale=(scale_mult, scale_mult, scale_mult))
 
             cmds.xform(cont, piv=(self.sideMult * (-scale_mult), 0, 0))
-            functions.alignToAlter(cont, jnt, 2)
+            functions.align_to_alter(cont, jnt, 2)
             # functions.alignTo(cont, jnt, position=True, rotation=True)
 
-            cont_OFF = functions.createUpGrp(cont, "OFF", freezeTransform=True)
-            cont_ORE = functions.createUpGrp(cont, "ORE")
+            cont_OFF = functions.create_offset_group(cont, "OFF", freezeTransform=True)
+            cont_ORE = functions.create_offset_group(cont, "ORE")
             cmds.makeIdentity(cont, a=True)
 
             self.controllers.append(cont)
@@ -295,18 +295,18 @@ class Guides(object):
         for seg in range(self.segments + 1):
             jnt = cmds.joint(p=(rPointTail + (seperation_value * seg)), name="jInit_fk_%s_%i" %(self.suffix, seg))
 
-            functions.set_joint_side(jnt, self.side)
+            joint.set_joint_side(jnt, self.side)
             # Update the guideJoints list
             self.guideJoints.append(jnt)
 
         # set orientation of joints
-        functions.orientJoints(self.guideJoints, worldUpAxis=self.lookVector, upAxis=(0, 1, 0), reverseAim=self.sideMultiplier, reverseUp=self.sideMultiplier)
+        joint.orient_joints(self.guideJoints, worldUpAxis=self.lookVector, up_axis=(0, 1, 0), reverseAim=self.sideMultiplier, reverseUp=self.sideMultiplier)
 
     def define_attributes(self):
         # set joint side and type attributes
-        functions.set_joint_type(self.guideJoints[0], "FkRoot")
-        _ = [functions.set_joint_type(jnt, "Fk") for jnt in self.guideJoints[1:]]
-        _ = [functions.set_joint_side(jnt, self.side) for jnt in self.guideJoints]
+        joint.set_joint_type(self.guideJoints[0], "FkRoot")
+        _ = [joint.set_joint_type(jnt, "Fk") for jnt in self.guideJoints[1:]]
+        _ = [joint.set_joint_side(jnt, self.side) for jnt in self.guideJoints]
 
         # ----------Mandatory---------[Start]
         root_jnt = self.guideJoints[0]

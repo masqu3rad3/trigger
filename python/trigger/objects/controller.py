@@ -49,7 +49,7 @@ class Controller(object):
 
     @property
     def shapes(self):
-        return functions.getShapes(self._name)
+        return functions.get_shapes(self._name)
 
     @property
     def side(self):
@@ -60,7 +60,7 @@ class Controller(object):
         return self._tier
 
     def add_offset(self, suffix="OFF"):
-        offset_grp = functions.createUpGrp(self._name, suffix)
+        offset_grp = functions.create_offset_group(self._name, suffix)
         self._offsets.insert(0, offset_grp)
         return offset_grp
 
@@ -80,7 +80,7 @@ class Controller(object):
         self.freeze()
 
     def set_normal(self, normals):
-        functions.alignNormal(self.name, normals)
+        functions.align_to_normal(self.name, normals)
         self.freeze()
 
     def freeze(self, rotate=True, scale=True, translate=True):
@@ -122,18 +122,18 @@ class Controller(object):
 
     def lock_translate(self, skip="", hide=True):
         array = ["t%s" % attr for attr in "xyz" if attr not in skip]
-        attribute.lockAndHide(self.name, channelArray=array, hide=hide)
+        attribute.lock_and_hide(self.name, channelArray=array, hide=hide)
 
     def lock_rotate(self, skip="", hide=True):
         array = ["r%s" % attr for attr in "xyz" if attr not in skip]
-        attribute.lockAndHide(self.name, channelArray=array, hide=hide)
+        attribute.lock_and_hide(self.name, channelArray=array, hide=hide)
 
     def lock_scale(self, skip="", hide=True):
         array = ["s%s" % attr for attr in "xyz" if attr not in skip]
-        attribute.lockAndHide(self.name, channelArray=array, hide=hide)
+        attribute.lock_and_hide(self.name, channelArray=array, hide=hide)
 
     def lock_visibility(self, hide=True):
-        attribute.lockAndHide(self.name, channelArray=["v"], hide=hide)
+        attribute.lock_and_hide(self.name, channelArray=["v"], hide=hide)
 
     def lock_all(self, hide=True):
         self.lock_translate(hide=hide)

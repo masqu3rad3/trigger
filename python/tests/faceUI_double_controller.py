@@ -21,7 +21,7 @@ for contName in double_controllers:
     cmds.setAttr("%s.ty" % bound, 5)
     cmds.makeIdentity(bound, a=True)
 
-    cont_offset = functions.createUpGrp(cont, "offset")
+    cont_offset = functions.create_offset_group(cont, "offset")
     cmds.parent(cont_offset, bound)
     cmds.group(bound, name="%s_move_offset" % contName)
 

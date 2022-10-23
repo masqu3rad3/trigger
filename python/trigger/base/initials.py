@@ -7,6 +7,7 @@ from trigger.core.decorators import undo
 from trigger.core import database
 
 from trigger.library import functions, naming
+from trigger.library import joint
 from trigger.library import connection
 from trigger.library import attribute
 
@@ -124,7 +125,7 @@ class Initials(object):
                 side = "C"
 
 
-        suffix = naming.uniqueName("%sGrp_%s" % (limb_name, whichSide)).replace("%sGrp_" % (limb_name), "")
+        suffix = naming.unique_name("%sGrp_%s" % (limb_name, whichSide)).replace("%sGrp_" % (limb_name), "")
 
         ## if defineAs is True, define the selected joints as the given limb instead creating new ones.
         if defineAs:
@@ -139,7 +140,7 @@ class Initials(object):
             if cmds.ls(sl=True, type="joint"):
                 j = cmds.ls(sl=True)[-1]
                 try:
-                    if functions.identifyMaster(j, self.module_dict)[1] in self.valid_limbs:
+                    if joint.identify(j, self.module_dict)[1] in self.valid_limbs:
                         masterParent = cmds.ls(sl=True)[-1]
                     else:
                         masterParent = None
@@ -206,10 +207,10 @@ class Initials(object):
             locator = cmds.spaceLocator(name="loc_%s" % guide.guideJoints[jnt])[0]
             locatorsList.append(locator)
             if constrainedTo:
-                functions.alignTo(locator, guide.guideJoints[jnt], position=True, rotation=False)
+                functions.align_to(locator, guide.guideJoints[jnt], position=True, rotation=False)
                 connection.connect_mirror(constrainedTo[jnt], locatorsList[jnt], mirror_axis=self.mirrorVector_asString)
 
-                functions.alignTo(guide.guideJoints[jnt], locator, position=True, rotation=False)
+                functions.align_to(guide.guideJoints[jnt], locator, position=True, rotation=False)
                 cmds.parentConstraint(locator, guide.guideJoints[jnt], mo=True)
                 # extra.matrixConstraint(locator, limbJoints[jnt], mo=True)
             else:
@@ -223,14 +224,14 @@ class Initials(object):
         if masterParent:
             if not constrainedTo:
                 # align the none constrained near to the selected joint
-                functions.alignTo(guide.guideJoints[0], masterParent)
+                functions.align_to(guide.guideJoints[0], masterParent)
                 # move it a little along the mirrorAxis
                 # move it along offsetvector
                 cmds.move(guide.offsetVector[0], guide.offsetVector[1], guide.offsetVector[2], guide.guideJoints[0],
                           relative=True)
             else:
-                for joint in guide.guideJoints:
-                    attribute.lockAndHide(joint, ["tx", "ty", "tz", "rx", "ry", "rz"], hide=False)
+                for jnt in guide.guideJoints:
+                    attribute.lock_and_hide(jnt, ["tx", "ty", "tz", "rx", "ry", "rz"], hide=False)
             cmds.parent(guide.guideJoints[0], masterParent)
         else:
             cmds.parent(guide.guideJoints[0], limbGroup)
@@ -314,7 +315,7 @@ class Initials(object):
         """collects the root joints in the scene and returns the dictionary with properties"""
         all_joints = cmds.ls(type="joint")
         # get roots
-        guide_roots = [jnt for jnt in all_joints if functions.get_joint_type(jnt) in self.validRootList]
+        guide_roots = [jnt for jnt in all_joints if joint.get_joint_type(jnt) in self.validRootList]
         roots_dictionary_list = []
         for jnt in guide_roots:
             # get module name
@@ -323,7 +324,7 @@ class Initials(object):
             except ValueError:
                 continue
             # get module info
-            j_type, limb, side = functions.identifyMaster(jnt, self.module_dict)
+            j_type, limb, side = joint.identify(jnt, self.module_dict)
             roots_dictionary_list.append({"module_name": module_name,
                                           "side": side,
                                           "root_joint": jnt,
@@ -399,7 +400,7 @@ class Initials(object):
                             value["multi_guide"]]
         limb_dict = {}
         multiList = []
-        limb_name, limb_type, limb_side = functions.identifyMaster(node, self.module_dict)
+        limb_name, limb_type, limb_side = joint.identify(node, self.module_dict)
 
         limb_dict[limb_name] = node
         nextNode = node
@@ -411,7 +412,7 @@ class Initials(object):
                 z = False
             failedChildren = 0
             for child in children:
-                child_limb_name, child_limb_type, child_limb_side = functions.identifyMaster(child, self.module_dict)
+                child_limb_name, child_limb_type, child_limb_side = joint.identify(child, self.module_dict)
                 if child_limb_name not in self.validRootList and child_limb_type == limb_type:
                     nextNode = child
                     if child_limb_name in multi_guide_jnts:
@@ -436,7 +437,7 @@ class Initials(object):
                 log.warning("Select a single root_jnt joint")
         if not cmds.objectType(root_jnt, isType="joint"):
             log.error("root_jnt is not a joint")
-        root_name, root_type, root_side = functions.identifyMaster(root_jnt, self.module_dict)
+        root_name, root_type, root_side = joint.identify(root_jnt, self.module_dict)
         if root_name not in self.validRootList:
             log.error("Selected joint is not in the valid Guide Root")
 

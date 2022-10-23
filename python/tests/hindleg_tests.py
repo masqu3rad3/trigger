@@ -5,14 +5,8 @@ cmds.file(new=True, f=True)
 from trigger.modules import spine
 reload(spine)
 
-from trigger.library import ribbon
-reload(ribbon)
-
 from trigger.library import controllers
 reload(controllers)
-
-from trigger.library import objects
-reload(objects)
 
 from trigger.library import tools
 reload(tools)

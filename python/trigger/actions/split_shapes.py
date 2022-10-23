@@ -67,7 +67,7 @@ class Split_shapes(weights.Weights):
         splitter.neutral = self.neutralMesh
 
         # add the blendshapes
-        meshes = functions.getMeshes(self.blendshapeRootGrp)
+        meshes = functions.get_meshes(self.blendshapeRootGrp)
         splitter.clear_blendshapes()
         splitter.add_blendshapes(meshes=meshes)
 
@@ -92,7 +92,7 @@ class Split_shapes(weights.Weights):
                 dead_list.append(mesh_name)
 
         splitter.split_shapes()
-        _ = [functions.deleteObject(x) for x in dead_list]
+        _ = [functions.delete_object(x) for x in dead_list]
 
     def save_action(self, file_path=None, *args, **kwargs):
         file_path = file_path or self.splitMapsFilePath

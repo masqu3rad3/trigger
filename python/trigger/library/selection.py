@@ -41,7 +41,7 @@ def validate(min=None, max=None, groupsOnly=False, meshesOnly=False, nurbsCurves
         return False, "Nothing selected"
 
     if groupsOnly:
-        non_groups = [node for node in selected if not functions.isGroup(node)]
+        non_groups = [node for node in selected if not functions.is_group(node)]
         if non_groups:
             return False, "Selection contains non-group nodes" %non_groups
 
@@ -58,7 +58,7 @@ def validate(min=None, max=None, groupsOnly=False, meshesOnly=False, nurbsCurves
                 return False, "Selection type Error. Only %s type objects can be selected. (No Transform nodes)" %check
         else:
             for node in selected:
-                shapes = functions.getShapes(node)
+                shapes = functions.get_shapes(node)
                 if not shapes:
                     return False, "Selection contains objects other than %s (No shape node)" % check
                 for shape in shapes:

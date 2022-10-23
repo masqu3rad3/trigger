@@ -261,7 +261,7 @@ def drive_attrs(driver_attr, driven_attrs, driver_range=None, driven_range=None,
                 cmds.connectAttr("%s.outValue" % range_node, driven, force=force)
 
 
-def lockAndHide(node, channelArray=None, hide=True):
+def lock_and_hide(node, channelArray=None, hide=True):
     """
     Locks and hides the channels specified in the channelArray.
     Args:
@@ -297,8 +297,8 @@ def is_visible(node, attr):
     return cmds.getAttr("%s.%s" %(node, attr), k=True)
 
 
-def attrPass(sourceNode, targetNode, attributes=[], inConnections=True, outConnections=True, keepSourceAttributes=False,
-             values=True, daisyChain=False, overrideEx=False):
+def attribute_pass(sourceNode, targetNode, attributes=[], inConnections=True, outConnections=True, keepSourceAttributes=False,
+                   values=True, daisyChain=False, overrideEx=False):
     """
     Copies the attributes from source node to the target node.
     Args:
@@ -455,7 +455,7 @@ def create_global_joint_attrs(joint, moduleName=None, upAxis=None, mirrorAxis=No
     cmds.setAttr("{0}.useRefOri".format(joint), True)  ###
 
 
-def getNextIndex(attr, startFrom=0):
+def get_next_index(attr, startFrom=0):
     """Returns the next free index from a multi index attribute"""
     return mel.eval("getNextFreeMultiIndex %s %s" % (attr, startFrom))
 

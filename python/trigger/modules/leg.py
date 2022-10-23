@@ -1,12 +1,12 @@
 from maya import cmds
 import maya.api.OpenMaya as om
 
-from trigger.library import functions
+from trigger.library import functions, joint
 from trigger.library import naming
 from trigger.library import attribute
 from trigger.library import api
 from trigger.library import controllers as ic
-from trigger.library import ribbon as rc
+from trigger.objects.ribbon import Ribbon
 
 from trigger.core import filelog
 log = filelog.Filelog(logname=__name__, filename="trigger_log")
@@ -56,22 +56,22 @@ class Leg(object):
         self.toe_pv_pos = api.get_world_translation(self.toe_pv_ref)
 
         # get distances
-        self.init_upper_leg_dist = functions.getDistance(self.hip_ref, self.knee_ref)
-        self.init_lower_leg_dist = functions.getDistance(self.knee_ref, self.foot_ref)
-        self.init_ball_dist = functions.getDistance(self.foot_ref, self.ball_ref)
-        self.init_toe_dist = functions.getDistance(self.ball_ref, self.toe_pv_ref)
-        self.init_foot_length = functions.getDistance(self.toe_pv_ref, self.heel_pv_ref)
-        self.init_foot_width = functions.getDistance(self.bank_in_ref, self.bank_out_ref)
+        self.init_upper_leg_dist = functions.get_distance(self.hip_ref, self.knee_ref)
+        self.init_lower_leg_dist = functions.get_distance(self.knee_ref, self.foot_ref)
+        self.init_ball_dist = functions.get_distance(self.foot_ref, self.ball_ref)
+        self.init_toe_dist = functions.get_distance(self.ball_ref, self.toe_pv_ref)
+        self.init_foot_length = functions.get_distance(self.toe_pv_ref, self.heel_pv_ref)
+        self.init_foot_width = functions.get_distance(self.bank_in_ref, self.bank_out_ref)
 
-        self.up_axis, self.mirror_axis, self.look_axis = functions.getRigAxes(self.leg_root_ref)
+        self.up_axis, self.mirror_axis, self.look_axis = joint.get_rig_axes(self.leg_root_ref)
 
         # get properties from the root joint
         self.useRefOrientation = cmds.getAttr("%s.useRefOri" % self.leg_root_ref)
-        self.side = functions.get_joint_side(self.leg_root_ref)
+        self.side = joint.get_joint_side(self.leg_root_ref)
         self.sideMult = -1 if self.side == "R" else 1
 
         # self.originalSuffix = suffix
-        self.suffix = (naming.uniqueName(cmds.getAttr("%s.moduleName" % self.leg_root_ref)))
+        self.suffix = (naming.unique_name(cmds.getAttr("%s.moduleName" % self.leg_root_ref)))
 
         # scratch variables
         self.controllers = []
@@ -89,7 +89,7 @@ class Leg(object):
     def createGrp(self):
         self.limbGrp = cmds.group(name=self.suffix, em=True)
         self.scaleGrp = cmds.group(name="%s_scaleGrp" % self.suffix, em=True)
-        functions.alignTo(self.scaleGrp, self.leg_root_ref, position=True, rotation=False)
+        functions.align_to(self.scaleGrp, self.leg_root_ref, position=True, rotation=False)
         self.nonScaleGrp = cmds.group(name="%s_nonScaleGrp" % self.suffix, em=True)
 
         cmds.addAttr(self.scaleGrp, at="bool", ln="Control_Visibility", sn="contVis", defaultValue=True)
@@ -114,12 +114,12 @@ class Leg(object):
         self.sockets.append(self.j_def_hip)
 
         if not self.useRefOrientation:
-            functions.orientJoints([self.jDef_legRoot, self.j_def_hip], worldUpAxis=om.MVector(self.mirror_axis),
-                                   reverseAim=self.sideMult)
+            joint.orient_joints([self.jDef_legRoot, self.j_def_hip], worldUpAxis=om.MVector(self.mirror_axis),
+                                    reverseAim=self.sideMult)
         else:
-            functions.alignTo(self.jDef_legRoot, self.leg_root_ref, position=True, rotation=True)
+            functions.align_to(self.jDef_legRoot, self.leg_root_ref, position=True, rotation=True)
             cmds.makeIdentity(self.jDef_legRoot, a=True)
-            functions.alignTo(self.j_def_hip, self.hip_ref, position=True, rotation=True)
+            functions.align_to(self.j_def_hip, self.hip_ref, position=True, rotation=True)
             cmds.makeIdentity(self.j_def_hip, a=True)
 
         cmds.select(d=True)
@@ -165,49 +165,49 @@ class Leg(object):
 
         # orientations
         if not self.useRefOrientation:
-            functions.orientJoints([self.j_ik_orig_root, self.j_ik_orig_knee, self.j_ik_orig_end],
-                                   worldUpAxis=om.MVector(self.mirror_axis), reverseAim=self.sideMult)
+            joint.orient_joints([self.j_ik_orig_root, self.j_ik_orig_knee, self.j_ik_orig_end],
+                                    worldUpAxis=om.MVector(self.mirror_axis), reverseAim=self.sideMult)
 
         else:
-            functions.alignTo(self.j_ik_orig_root, self.hip_ref, position=True, rotation=True)
+            functions.align_to(self.j_ik_orig_root, self.hip_ref, position=True, rotation=True)
             cmds.makeIdentity(self.j_ik_orig_root, a=True)
-            functions.alignTo(self.j_ik_orig_knee, self.knee_ref, position=True, rotation=True)
+            functions.align_to(self.j_ik_orig_knee, self.knee_ref, position=True, rotation=True)
             cmds.makeIdentity(self.j_ik_orig_knee, a=True)
-            functions.alignTo(self.j_ik_orig_end, self.foot_ref, position=True, rotation=True)
+            functions.align_to(self.j_ik_orig_end, self.foot_ref, position=True, rotation=True)
             cmds.makeIdentity(self.j_ik_orig_end, a=True)
 
         if not self.useRefOrientation:
-            functions.orientJoints([self.j_ik_sc_root, self.j_ik_sc_knee, self.j_ik_sc_end],
-                                   worldUpAxis=om.MVector(self.mirror_axis), reverseAim=self.sideMult)
+            joint.orient_joints([self.j_ik_sc_root, self.j_ik_sc_knee, self.j_ik_sc_end],
+                                    worldUpAxis=om.MVector(self.mirror_axis), reverseAim=self.sideMult)
         else:
-            functions.alignTo(self.j_ik_sc_root, self.hip_ref, position=True, rotation=True)
+            functions.align_to(self.j_ik_sc_root, self.hip_ref, position=True, rotation=True)
             cmds.makeIdentity(self.j_ik_sc_root, a=True)
-            functions.alignTo(self.j_ik_sc_knee, self.knee_ref, position=True, rotation=True)
+            functions.align_to(self.j_ik_sc_knee, self.knee_ref, position=True, rotation=True)
             cmds.makeIdentity(self.j_ik_sc_knee, a=True)
-            functions.alignTo(self.j_ik_sc_end, self.foot_ref, position=True, rotation=True)
+            functions.align_to(self.j_ik_sc_end, self.foot_ref, position=True, rotation=True)
             cmds.makeIdentity(self.j_ik_sc_end, a=True)
 
         if not self.useRefOrientation:
-            functions.orientJoints([self.j_ik_rp_root, self.j_ik_rp_knee, self.j_ik_rp_end], worldUpAxis=om.MVector(self.mirror_axis), reverseAim=self.sideMult)
+            joint.orient_joints([self.j_ik_rp_root, self.j_ik_rp_knee, self.j_ik_rp_end], worldUpAxis=om.MVector(self.mirror_axis), reverseAim=self.sideMult)
 
 
         else:
-            functions.alignTo(self.j_ik_rp_root, self.hip_ref, position=True, rotation=True)
+            functions.align_to(self.j_ik_rp_root, self.hip_ref, position=True, rotation=True)
             cmds.makeIdentity(self.j_ik_rp_root, a=True)
-            functions.alignTo(self.j_ik_rp_knee, self.knee_ref, position=True, rotation=True)
+            functions.align_to(self.j_ik_rp_knee, self.knee_ref, position=True, rotation=True)
             cmds.makeIdentity(self.j_ik_rp_knee, a=True)
-            functions.alignTo(self.j_ik_rp_end, self.foot_ref, position=True, rotation=True)
+            functions.align_to(self.j_ik_rp_end, self.foot_ref, position=True, rotation=True)
             cmds.makeIdentity(self.j_ik_rp_end, a=True)
 
         if not self.useRefOrientation:
-            functions.orientJoints([self.j_ik_foot, self.j_ik_ball, self.j_ik_toe], worldUpAxis=om.MVector(self.mirror_axis),
-                                   reverseAim=self.sideMult)
+            joint.orient_joints([self.j_ik_foot, self.j_ik_ball, self.j_ik_toe], worldUpAxis=om.MVector(self.mirror_axis),
+                                    reverseAim=self.sideMult)
         else:
-            functions.alignTo(self.j_ik_foot, self.foot_ref, position=True, rotation=True)
+            functions.align_to(self.j_ik_foot, self.foot_ref, position=True, rotation=True)
             cmds.makeIdentity(self.j_ik_foot, a=True)
-            functions.alignTo(self.j_ik_ball, self.ball_ref, position=True, rotation=True)
+            functions.align_to(self.j_ik_ball, self.ball_ref, position=True, rotation=True)
             cmds.makeIdentity(self.j_ik_ball, a=True)
-            functions.alignTo(self.j_ik_toe, self.toe_pv_ref, position=True, rotation=True)
+            functions.align_to(self.j_ik_toe, self.toe_pv_ref, position=True, rotation=True)
             cmds.makeIdentity(self.j_ik_toe, a=True)
 
         # FK Joints
@@ -219,34 +219,34 @@ class Leg(object):
         self.jfk_toe = cmds.joint(name="jFK_Toe_%s" % self.suffix, p=self.toe_pv_pos, radius=1.0)
 
         if not self.useRefOrientation:
-            functions.orientJoints([self.jfk_root, self.jfk_knee, self.jfk_foot, self.jfk_ball, self.jfk_toe],
-                                   worldUpAxis=om.MVector(self.mirror_axis), reverseAim=self.sideMult)
+            joint.orient_joints([self.jfk_root, self.jfk_knee, self.jfk_foot, self.jfk_ball, self.jfk_toe],
+                                    worldUpAxis=om.MVector(self.mirror_axis), reverseAim=self.sideMult)
         else:
-            functions.alignTo(self.jfk_root, self.hip_ref, position=True, rotation=True)
+            functions.align_to(self.jfk_root, self.hip_ref, position=True, rotation=True)
             cmds.makeIdentity(self.jfk_root, a=True)
-            functions.alignTo(self.jfk_knee, self.knee_ref, position=True, rotation=True)
+            functions.align_to(self.jfk_knee, self.knee_ref, position=True, rotation=True)
             cmds.makeIdentity(self.jfk_knee, a=True)
-            functions.alignTo(self.jfk_foot, self.foot_ref, position=True, rotation=True)
+            functions.align_to(self.jfk_foot, self.foot_ref, position=True, rotation=True)
             cmds.makeIdentity(self.jfk_foot, a=True)
-            functions.alignTo(self.jfk_ball, self.ball_ref, position=True, rotation=True)
+            functions.align_to(self.jfk_ball, self.ball_ref, position=True, rotation=True)
             cmds.makeIdentity(self.jfk_ball, a=True)
-            functions.alignTo(self.jfk_toe, self.toe_pv_ref, position=True, rotation=True)
+            functions.align_to(self.jfk_toe, self.toe_pv_ref, position=True, rotation=True)
             cmds.makeIdentity(self.jfk_toe, a=True)
 
         # re-orient single joints
-        functions.alignToAlter(self.j_def_hip, self.jfk_root, mode=2)
+        functions.align_to_alter(self.j_def_hip, self.jfk_root, mode=2)
         cmds.makeIdentity(self.j_def_hip, a=True)
-        functions.alignToAlter(self.j_def_midLeg, self.jfk_knee, mode=2)
+        functions.align_to_alter(self.j_def_midLeg, self.jfk_knee, mode=2)
         cmds.makeIdentity(self.j_def_midLeg, a=True)
 
-        functions.alignToAlter(self.j_def_foot, self.jfk_foot, mode=2)
+        functions.align_to_alter(self.j_def_foot, self.jfk_foot, mode=2)
         cmds.makeIdentity(self.j_def_foot, a=True)
-        functions.alignToAlter(self.j_def_ball, self.jfk_ball, mode=2)
+        functions.align_to_alter(self.j_def_ball, self.jfk_ball, mode=2)
         cmds.makeIdentity(self.j_def_ball, a=True)
-        functions.alignToAlter(self.j_toe, self.jfk_toe, mode=2)
+        functions.align_to_alter(self.j_toe, self.jfk_toe, mode=2)
         cmds.makeIdentity(self.j_toe, a=True)
 
-        functions.alignToAlter(self.j_socket_ball, self.jfk_ball, mode=2)
+        functions.align_to_alter(self.j_socket_ball, self.jfk_ball, mode=2)
         cmds.makeIdentity(self.j_socket_ball, a=True)
         cmds.parent(self.j_socket_ball, self.j_def_ball)
 
@@ -265,13 +265,13 @@ class Leg(object):
         thigh_cont_scale = (self.init_upper_leg_dist / 4, self.init_upper_leg_dist / 4, self.init_upper_leg_dist / 16)
         self.cont_thigh, _ = icon.create_icon("Cube", icon_name="%s_Thigh_cont" % self.suffix, scale=thigh_cont_scale, normal=(0, 0, self.sideMult))
         self.controllers.append(self.cont_thigh)
-        functions.alignToAlter(self.cont_thigh, self.jfk_root, mode=2)
+        functions.align_to_alter(self.cont_thigh, self.jfk_root, mode=2)
         cmds.move(0, self.sideMult*((thigh_cont_scale[0] * 2)), 0, self.cont_thigh, r=True, os=True)
         cmds.xform(self.cont_thigh, piv=self.leg_root_pos, ws=True)
 
-        self.cont_thigh_off = functions.createUpGrp(self.cont_thigh, "OFF")
-        self.cont_thigh_ore = functions.createUpGrp(self.cont_thigh, "ORE")
-        self.cont_thigh_auto = functions.createUpGrp(self.cont_thigh, "Auto")
+        self.cont_thigh_off = functions.create_offset_group(self.cont_thigh, "OFF")
+        self.cont_thigh_ore = functions.create_offset_group(self.cont_thigh, "ORE")
+        self.cont_thigh_auto = functions.create_offset_group(self.cont_thigh, "Auto")
 
         cmds.xform(self.cont_thigh_off, piv=self.leg_root_pos, ws=True)
         cmds.xform(self.cont_thigh_ore, piv=self.leg_root_pos, ws=True)
@@ -284,12 +284,12 @@ class Leg(object):
         self.cont_IK_foot, _ = icon.create_icon("Circle", icon_name="%s_IK_foot_cont" % self.suffix, scale=foot_cont_scale, normal=(0, 0, self.sideMult))
         self.controllers.append(self.cont_IK_foot)
         # align it to the ball socket
-        functions.alignToAlter(self.cont_IK_foot, self.j_socket_ball, mode=2)
+        functions.align_to_alter(self.cont_IK_foot, self.j_socket_ball, mode=2)
         cmds.xform(self.cont_IK_foot, piv=self.foot_pos, p=True, ws=True)
 
-        self.cont_IK_OFF = functions.createUpGrp(self.cont_IK_foot, "OFF")
-        cont_ik_foot_ore = functions.createUpGrp(self.cont_IK_foot, "ORE")
-        cont_ik_foot_pos = functions.createUpGrp(self.cont_IK_foot, "POS")
+        self.cont_IK_OFF = functions.create_offset_group(self.cont_IK_foot, "OFF")
+        cont_ik_foot_ore = functions.create_offset_group(self.cont_IK_foot, "ORE")
+        cont_ik_foot_pos = functions.create_offset_group(self.cont_IK_foot, "POS")
 
         cmds.makeIdentity(self.cont_IK_foot, a=True)
 
@@ -321,15 +321,15 @@ class Leg(object):
         offset_mag_pole = ((self.init_upper_leg_dist + self.init_lower_leg_dist) / 4)
         offset_vector_pole = api.get_between_vector(self.j_def_midLeg, [self.j_def_hip, self.jfk_foot])
 
-        functions.alignAndAim(self.cont_Pole,
-                              targetList=[self.j_def_midLeg],
-                              aimTargetList=[self.j_def_hip, self.jfk_foot],
-                              upVector=self.up_axis,
-                              translateOff=(offset_vector_pole * offset_mag_pole)
-                              )
+        functions.align_and_aim(self.cont_Pole,
+                                target_list=[self.j_def_midLeg],
+                                aim_target_list=[self.j_def_hip, self.jfk_foot],
+                                up_vector=self.up_axis,
+                                translate_offset=(offset_vector_pole * offset_mag_pole)
+                                )
 
-        self.cont_pole_off = functions.createUpGrp(self.cont_Pole, "OFF")
-        self.cont_pole_vis = functions.createUpGrp(self.cont_Pole, "VIS")
+        self.cont_pole_off = functions.create_offset_group(self.cont_Pole, "OFF")
+        self.cont_pole_vis = functions.create_offset_group(self.cont_Pole, "VIS")
 
         ## FK UP Leg Controller
         scalecont_fk_up_leg = (self.init_upper_leg_dist / 2, self.init_upper_leg_dist / 6, self.init_upper_leg_dist / 6)
@@ -341,10 +341,10 @@ class Leg(object):
         cmds.xform(self.cont_fk_up_leg, piv=(self.sideMult * -(self.init_upper_leg_dist / 2), 0, 0), ws=True)
 
         # move the controller to the shoulder
-        functions.alignToAlter(self.cont_fk_up_leg, self.jfk_root, mode=2)
+        functions.align_to_alter(self.cont_fk_up_leg, self.jfk_root, mode=2)
 
-        self.cont_fk_up_leg_off = functions.createUpGrp(self.cont_fk_up_leg, "OFF")
-        self.cont_fk_up_leg_ore = functions.createUpGrp(self.cont_fk_up_leg, "ORE")
+        self.cont_fk_up_leg_off = functions.create_offset_group(self.cont_fk_up_leg, "OFF")
+        self.cont_fk_up_leg_ore = functions.create_offset_group(self.cont_fk_up_leg, "ORE")
         cmds.xform(self.cont_fk_up_leg_off, piv=self.hip_pos, ws=True)
         cmds.xform(self.cont_fk_up_leg_ore, piv=self.hip_pos, ws=True)
 
@@ -357,10 +357,10 @@ class Leg(object):
         cmds.xform(self.cont_fk_low_leg, piv=(self.sideMult * -(self.init_lower_leg_dist / 2), 0, 0), ws=True)
 
         # align position and orientation to the joint
-        functions.alignToAlter(self.cont_fk_low_leg, self.jfk_knee, mode=2)
+        functions.align_to_alter(self.cont_fk_low_leg, self.jfk_knee, mode=2)
 
-        self.cont_fk_low_leg_off = functions.createUpGrp(self.cont_fk_low_leg, "OFF")
-        self.cont_fk_low_leg_ore = functions.createUpGrp(self.cont_fk_low_leg, "ORE")
+        self.cont_fk_low_leg_off = functions.create_offset_group(self.cont_fk_low_leg, "OFF")
+        self.cont_fk_low_leg_ore = functions.create_offset_group(self.cont_fk_low_leg, "ORE")
         cmds.xform(self.cont_fk_low_leg_off, piv=self.knee_pos, ws=True)
         cmds.xform(self.cont_fk_low_leg_ore, piv=self.knee_pos, ws=True)
 
@@ -368,29 +368,29 @@ class Leg(object):
         scalecont_fk_foot = (self.init_ball_dist / 2, self.init_ball_dist / 3, self.init_foot_width / 2)
         self.cont_fk_foot, _ = icon.create_icon("Cube", icon_name="%s_FK_Foot_cont" % self.suffix, scale=scalecont_fk_foot)
         self.controllers.append(self.cont_fk_foot)
-        functions.alignToAlter(self.cont_fk_foot, self.jfk_foot, mode=2)
+        functions.align_to_alter(self.cont_fk_foot, self.jfk_foot, mode=2)
 
-        self.cont_fk_foot_off = functions.createUpGrp(self.cont_fk_foot, "OFF")
-        self.cont_fk_foot_ore = functions.createUpGrp(self.cont_fk_foot, "ORE")
+        self.cont_fk_foot_off = functions.create_offset_group(self.cont_fk_foot, "OFF")
+        self.cont_fk_foot_ore = functions.create_offset_group(self.cont_fk_foot, "ORE")
 
         # FK Ball Controller
         scalecont_fk_ball = (self.init_toe_dist / 2, self.init_toe_dist / 3, self.init_foot_width / 2)
         self.cont_fk_ball, _ = icon.create_icon("Cube", icon_name="%s_FK_Ball_cont" % self.suffix, scale=scalecont_fk_ball)
         self.controllers.append(self.cont_fk_ball)
-        functions.alignToAlter(self.cont_fk_ball, self.jfk_ball, mode=2)
+        functions.align_to_alter(self.cont_fk_ball, self.jfk_ball, mode=2)
 
-        self.cont_fk_ball_off = functions.createUpGrp(self.cont_fk_ball, "OFF")
-        self.cont_fk_ball_ore = functions.createUpGrp(self.cont_fk_ball, "ORE")
+        self.cont_fk_ball_off = functions.create_offset_group(self.cont_fk_ball, "OFF")
+        self.cont_fk_ball_ore = functions.create_offset_group(self.cont_fk_ball, "ORE")
 
         # FK-IK SWITCH Controller
         icon_scale = self.init_upper_leg_dist / 4
         self.cont_fk_ik, self.fk_ik_rvs = icon.create_icon("FkikSwitch", icon_name="%s_FK_IK_cont" % self.suffix, scale=(icon_scale, icon_scale, icon_scale))
         self.controllers.append(self.cont_fk_ik)
 
-        functions.alignAndAim(self.cont_fk_ik, targetList=[self.jfk_foot], aimTargetList=[self.j_def_midLeg],
-                              upVector=self.up_axis, rotateOff=(self.sideMult*90, self.sideMult*90, 0))
+        functions.align_and_aim(self.cont_fk_ik, target_list=[self.jfk_foot], aim_target_list=[self.j_def_midLeg],
+                                up_vector=self.up_axis, rotate_offset=(self.sideMult * 90, self.sideMult * 90, 0))
         cmds.move(icon_scale * 2, 0, 0, self.cont_fk_ik, r=True, os=True)
-        self.cont_fk_ik_pos = functions.createUpGrp(self.cont_fk_ik, "POS")
+        self.cont_fk_ik_pos = functions.create_offset_group(self.cont_fk_ik, "POS")
 
         cmds.setAttr("{0}.s{1}".format(self.cont_fk_ik, "x"), self.sideMult)
 
@@ -427,10 +427,10 @@ class Leg(object):
         self.cont_mid_lock, _ = icon.create_icon("Star", icon_name="%s_mid_cont" % self.suffix, scale=midcont_scale, normal=self.mirror_axis)
         self.controllers.append(self.cont_mid_lock)
 
-        functions.alignToAlter(self.cont_mid_lock, self.jfk_knee, 2)
-        self.cont_mid_lock_ext = functions.createUpGrp(self.cont_mid_lock, "EXT")
-        self.cont_mid_lock_pos = functions.createUpGrp(self.cont_mid_lock, "POS")
-        self.cont_mid_lock_ave = functions.createUpGrp(self.cont_mid_lock, "AVE")
+        functions.align_to_alter(self.cont_mid_lock, self.jfk_knee, 2)
+        self.cont_mid_lock_ext = functions.create_offset_group(self.cont_mid_lock, "EXT")
+        self.cont_mid_lock_pos = functions.create_offset_group(self.cont_mid_lock, "POS")
+        self.cont_mid_lock_ave = functions.create_offset_group(self.cont_mid_lock, "AVE")
 
         cmds.parent(self.cont_thigh_off, self.scaleGrp)
         cmds.parent(self.cont_fk_up_leg_off, self.scaleGrp)
@@ -461,16 +461,16 @@ class Leg(object):
     def createRoots(self):
 
         self.master_root = cmds.group(em=True, name="masterRoot_%s" % self.suffix)
-        functions.alignTo(self.master_root, self.leg_root_ref, 0)
+        functions.align_to(self.master_root, self.leg_root_ref, 0)
         cmds.makeIdentity(self.master_root, a=True)
 
         ## Create Start Lock
 
         self.start_lock = cmds.spaceLocator(name="startLock_%s" % self.suffix)[0]
-        functions.alignToAlter(self.start_lock, self.j_ik_orig_root, 2)
-        self.start_lock_ore = functions.createUpGrp(self.start_lock, "_Ore")
-        self.start_lock_pos = functions.createUpGrp(self.start_lock, "_Pos")
-        self.start_lock_twist = functions.createUpGrp(self.start_lock, "_AutoTwist")
+        functions.align_to_alter(self.start_lock, self.j_ik_orig_root, 2)
+        self.start_lock_ore = functions.create_offset_group(self.start_lock, "_Ore")
+        self.start_lock_pos = functions.create_offset_group(self.start_lock, "_Pos")
+        self.start_lock_twist = functions.create_offset_group(self.start_lock, "_AutoTwist")
 
         start_lock_weight = cmds.parentConstraint(self.j_def_hip, self.start_lock, sr=("y", "z"), mo=False)
 
@@ -485,10 +485,10 @@ class Leg(object):
 
         ### Create End Lock
         self.end_lock = cmds.spaceLocator(name="endLock_%s" % self.suffix)[0]
-        functions.alignTo(self.end_lock, self.jfk_foot, position=True, rotation=True)
-        self.end_lock_ore = functions.createUpGrp(self.end_lock, "Ore")
-        self.end_lock_pos = functions.createUpGrp(self.end_lock, "Pos")
-        self.end_lock_twist = functions.createUpGrp(self.end_lock, "Twist")
+        functions.align_to(self.end_lock, self.jfk_foot, position=True, rotation=True)
+        self.end_lock_ore = functions.create_offset_group(self.end_lock, "Ore")
+        self.end_lock_pos = functions.create_offset_group(self.end_lock, "Pos")
+        self.end_lock_twist = functions.create_offset_group(self.end_lock, "Twist")
 
         cmds.parent(self.mid_lock, self.scaleGrp)
         cmds.parent(self.master_root, self.scaleGrp)
@@ -501,7 +501,7 @@ class Leg(object):
     def createIKsetup(self):
 
         master_ik = cmds.spaceLocator(name="masterIK_%s" % self.suffix)[0]
-        functions.alignTo(master_ik, self.j_def_foot)
+        functions.align_to(master_ik, self.j_def_foot)
 
         # axis for foot control groups
         foot_plane = cmds.spaceLocator(name="footPlaneLocator")[0]
@@ -510,42 +510,42 @@ class Leg(object):
         cmds.aimConstraint(self.toe_pv_ref, foot_plane, wuo=self.foot_ref, wut="object")
 
         self.pv_bank_in = cmds.group(name="Pv_BankIn_%s" % self.suffix, em=True)
-        functions.alignTo(self.pv_bank_in, self.bank_in_ref, position=True, rotation=True)
+        functions.align_to(self.pv_bank_in, self.bank_in_ref, position=True, rotation=True)
         cmds.makeIdentity(self.pv_bank_in, a=True, t=False, r=True, s=True)
         pln_rot = cmds.getAttr("%s.rotate" % foot_plane)[0]
         cmds.setAttr("%s.rotate" % self.pv_bank_in, pln_rot[0], pln_rot[1], pln_rot[2])
         # cmds.parent(self.mid_lock, self.scaleGrp)
 
         self.pv_bank_out = cmds.group(name="Pv_BankOut_%s" % self.suffix, em=True)
-        functions.alignTo(self.pv_bank_out, self.bank_out_ref, position=True, rotation=True)
+        functions.align_to(self.pv_bank_out, self.bank_out_ref, position=True, rotation=True)
         cmds.makeIdentity(self.pv_bank_out, a=True, t=False, r=True, s=True)
         cmds.setAttr("%s.rotate" % self.pv_bank_out, pln_rot[0], pln_rot[1], pln_rot[2])
 
         self.pv_toe = cmds.group(name="Pv_Toe_%s" % self.suffix, em=True)
-        functions.alignTo(self.pv_toe, self.toe_pv_ref, position=True, rotation=True)
-        self.pv_toe_ore = functions.createUpGrp(self.pv_toe, "ORE")
+        functions.align_to(self.pv_toe, self.toe_pv_ref, position=True, rotation=True)
+        self.pv_toe_ore = functions.create_offset_group(self.pv_toe, "ORE")
 
         self.pv_ball = cmds.group(name="Pv_Ball_%s" % self.suffix, em=True)
-        functions.alignTo(self.pv_ball, self.ball_ref, position=True, rotation=False)
-        self.pv_ball_ore = functions.createUpGrp(self.pv_ball, "ORE")
+        functions.align_to(self.pv_ball, self.ball_ref, position=True, rotation=False)
+        self.pv_ball_ore = functions.create_offset_group(self.pv_ball, "ORE")
 
         # TODO // SOCKETBALL NEEDS A IK/FK Switch
 
         self.pv_heel = cmds.group(name="Pv_Heel_%s" % self.suffix, em=True)
-        functions.alignTo(self.pv_heel, self.heel_pv_ref, position=True, rotation=True)
-        pv_heel_ore = functions.createUpGrp(self.pv_heel, "ORE")
+        functions.align_to(self.pv_heel, self.heel_pv_ref, position=True, rotation=True)
+        pv_heel_ore = functions.create_offset_group(self.pv_heel, "ORE")
 
         self.pv_ball_spin = cmds.group(name="Pv_BallSpin_%s" % self.suffix, em=True)
-        functions.alignTo(self.pv_ball_spin, self.ball_ref, position=True, rotation=True)
-        self.pv_ball_spin_ore = functions.createUpGrp(self.pv_ball_spin, "ORE")
+        functions.align_to(self.pv_ball_spin, self.ball_ref, position=True, rotation=True)
+        self.pv_ball_spin_ore = functions.create_offset_group(self.pv_ball_spin, "ORE")
 
         self.pv_ball_roll = cmds.group(name="Pv_BallRoll_%s" % self.suffix, em=True)
-        functions.alignTo(self.pv_ball_roll, self.ball_ref, position=True, rotation=True)
-        self.pv_ball_roll_ore = functions.createUpGrp(self.pv_ball_roll, "ORE")
+        functions.align_to(self.pv_ball_roll, self.ball_ref, position=True, rotation=True)
+        self.pv_ball_roll_ore = functions.create_offset_group(self.pv_ball_roll, "ORE")
 
         self.pv_ball_lean = cmds.group(name="Pv_BallLean_%s" % self.suffix, em=True)
-        functions.alignTo(self.pv_ball_lean, self.ball_ref, position=True, rotation=True)
-        self.pv_ball_lean_ore = functions.createUpGrp(self.pv_ball_lean, "ORE")
+        functions.align_to(self.pv_ball_lean, self.ball_ref, position=True, rotation=True)
+        self.pv_ball_lean_ore = functions.create_offset_group(self.pv_ball_lean, "ORE")
 
         # Create IK handles
 
@@ -753,7 +753,7 @@ class Leg(object):
         cmds.connectAttr("%s.output" % mult_al_fix_t_spin, "%s.rotateY" % self.pv_toe)
         cmds.connectAttr("%s.output" % mult_al_fix_t_wiggle, "%s.rotateY" % self.pv_ball)
 
-        pv_bank_in_ore = functions.createUpGrp(self.pv_bank_in, "ORE")
+        pv_bank_in_ore = functions.create_offset_group(self.pv_bank_in, "ORE")
 
         cmds.setDrivenKeyframe("%s.rotateX" % self.pv_bank_out, cd="%s.bank" % self.cont_IK_foot, dv=0, v=0, itt='linear', ott='linear')
         cmds.setDrivenKeyframe("%s.rotateX" % self.pv_bank_out, cd="%s.bank" % self.cont_IK_foot, dv=90, v=90 * self.sideMult, itt='linear', ott='linear')
@@ -762,7 +762,7 @@ class Leg(object):
         cmds.setDrivenKeyframe("%s.rotateX" % self.pv_bank_in, cd="%s.bank" % self.cont_IK_foot, dv=-90, v=90 * (-1 * self.sideMult), itt='linear', ott='linear')
 
         self.ik_parent_grp = cmds.group(name="IK_parentGRP_%s" % self.suffix, em=True)
-        functions.alignToAlter(self.ik_parent_grp, self.cont_IK_foot, 2)
+        functions.align_to_alter(self.ik_parent_grp, self.cont_IK_foot, 2)
         cmds.parent(pv_bank_in_ore, self.ik_parent_grp)
         cmds.parent(self.j_ik_foot, self.ik_parent_grp)
         cmds.parentConstraint(self.j_ik_sc_end, self.j_ik_foot)
@@ -828,7 +828,7 @@ class Leg(object):
         cmds.parent(self.j_ik_rp_root, self.master_root)
 
         pacon_locator_hip = cmds.spaceLocator(name="paConLoc_%s" % self.suffix)[0]
-        functions.alignTo(pacon_locator_hip, self.jDef_legRoot, position=True, rotation=True)
+        functions.align_to(pacon_locator_hip, self.jDef_legRoot, position=True, rotation=True)
         #
         j_def_pa_con = cmds.parentConstraint(self.cont_thigh, pacon_locator_hip, mo=False)
         #
@@ -844,7 +844,7 @@ class Leg(object):
         cmds.connectAttr("%s.rigVis" % self.scaleGrp, "%s.v" % leg_start)
         cmds.connectAttr("%s.rigVis" % self.scaleGrp, "%s.v" % leg_end)
         cmds.connectAttr("%s.rigVis" % self.scaleGrp, "%s.v" % self.ik_parent_grp)
-        cmds.connectAttr("%s.rigVis" % self.scaleGrp, "%s.v" % functions.getShapes(pacon_locator_hip)[0])
+        cmds.connectAttr("%s.rigVis" % self.scaleGrp, "%s.v" % functions.get_shapes(pacon_locator_hip)[0])
 
         cmds.delete(foot_plane)
 
@@ -931,21 +931,22 @@ class Leg(object):
     def createDefJoints(self):
         # UPPERLEG RIBBON
 
-        ribbon_upper_leg = rc.PowerRibbon()
-        ribbon_upper_leg.createPowerRibbon(self.j_def_hip, self.j_def_midLeg, "up_%s" % self.suffix,  side=self.side, connectStartAim=False, upVector=self.mirror_axis)
+        ribbon_upper_leg = Ribbon(self.j_def_hip, self.j_def_midLeg, name="up_%s" % self.suffix,
+                                  connect_start_aim=False,
+                                  up_vector=self.mirror_axis)
+        ribbon_upper_leg.create()
 
-        ribbon_start_pa_con_upper_leg_start = cmds.parentConstraint(self.start_lock, ribbon_upper_leg.startConnection, mo=False)[0]
-
-        cmds.parentConstraint(self.mid_lock, ribbon_upper_leg.endConnection, mo=False)
+        ribbon_start_pa_con_upper_leg_start = ribbon_upper_leg.pin_start(self.start_lock)[0]
+        ribbon_upper_leg.pin_end(self.mid_lock)
 
         # connect the knee scaling
-        cmds.connectAttr("%s.scale" % self.cont_mid_lock, "%s.scale" % ribbon_upper_leg.endConnection)
+        cmds.connectAttr("%s.scale" % self.cont_mid_lock, "%s.scale" % ribbon_upper_leg.end_plug)
         cmds.connectAttr("%s.scale" % self.cont_mid_lock, "%s.scale" % self.j_def_midLeg)
 
-        cmds.scaleConstraint(self.scaleGrp, ribbon_upper_leg.scaleGrp)
+        cmds.scaleConstraint(self.scaleGrp, ribbon_upper_leg.scale_grp)
 
-        ribbon_start_ori_con = cmds.parentConstraint(self.j_ik_orig_root, self.jfk_root, ribbon_upper_leg.startAim, mo=False, skipTranslate=["x","y","z"] )[0]
-        ribbon_start_ori_con2 = cmds.parentConstraint(self.j_def_hip, ribbon_upper_leg.startAim, mo=False, skipTranslate=["x","y","z"] )[0]
+        ribbon_start_ori_con = cmds.parentConstraint(self.j_ik_orig_root, self.jfk_root, ribbon_upper_leg.start_aim, mo=False, skipTranslate=["x","y","z"] )[0]
+        ribbon_start_ori_con2 = cmds.parentConstraint(self.j_def_hip, ribbon_upper_leg.start_aim, mo=False, skipTranslate=["x","y","z"] )[0]
 
         cmds.connectAttr("%s.fk_ik" % self.cont_fk_ik, "%s.%sW0" %(ribbon_start_ori_con, self.j_ik_orig_root))
         cmds.connectAttr("%s.outputX" % self.fk_ik_rvs, "%s.%sW1" %(ribbon_start_ori_con, self.jfk_root))
@@ -957,7 +958,7 @@ class Leg(object):
 
         # Rotate the shoulder connection bone 180 degrees for Right Alignment
         if self.side == "R":
-            rightRBN_startupORE = cmds.listRelatives(ribbon_upper_leg.startAim, children=True, type="transform")[0]
+            rightRBN_startupORE = cmds.listRelatives(ribbon_upper_leg.start_aim, children=True, type="transform")[0]
             cmds.setAttr("%s.ry" % rightRBN_startupORE, 180)
 
         # AUTO AND MANUAL TWIST
@@ -970,7 +971,7 @@ class Leg(object):
         # !!! The parent constrain override should be disconnected like this
         cmds.disconnectAttr(
             "%s.constraintRotateX" % ribbon_start_pa_con_upper_leg_start,
-            "%s.rotateX" % ribbon_upper_leg.startConnection
+            "%s.rotateX" % ribbon_upper_leg.start_plug
         )
 
         # manual
@@ -979,22 +980,24 @@ class Leg(object):
         cmds.connectAttr("%s.upLegManualTwist" % self.cont_fk_ik, "%s.input3D[1].input3Dx" % add_manual_twist_thigh)
 
         # connect to the joint
-        cmds.connectAttr("%s.output3D" % add_manual_twist_thigh, "%s.rotate" % ribbon_upper_leg.startConnection)
+        cmds.connectAttr("%s.output3D" % add_manual_twist_thigh, "%s.rotate" % ribbon_upper_leg.start_plug)
 
         # connect allowScaling
-        cmds.connectAttr("%s.allowScaling" % self.cont_fk_ik, "%s.scaleSwitch" % ribbon_upper_leg.startConnection)
+        cmds.connectAttr("%s.allowScaling" % self.cont_fk_ik, "%s.scaleSwitch" % ribbon_upper_leg.start_plug)
 
         # LOWERLEG RIBBON
 
-        ribbon_lower_leg = rc.PowerRibbon()
-        ribbon_lower_leg.createPowerRibbon(self.j_def_midLeg, self.j_def_foot, "low_%s" % self.suffix, side=self.side,  orientation=90, upVector=self.look_axis)
-        cmds.parentConstraint(self.mid_lock, ribbon_lower_leg.startConnection, mo=False)
-        ribbon_start_pa_con_lower_leg_end = cmds.parentConstraint(self.end_lock, ribbon_lower_leg.endConnection, mo=False)[0]
+        ribbon_lower_leg = Ribbon(self.j_def_midLeg, self.j_def_foot, name="low_%s" % self.suffix,
+                                  connect_start_aim=True,
+                                  up_vector=self.look_axis)
+        ribbon_lower_leg.create()
+        ribbon_lower_leg.pin_start(self.mid_lock)
+        ribbon_start_pa_con_lower_leg_end = ribbon_lower_leg.pin_end(self.end_lock)[0]
 
         # connect the midLeg scaling
-        cmds.connectAttr("%s.scale" % self.cont_mid_lock, "%s.scale" % ribbon_lower_leg.startConnection)
+        cmds.connectAttr("%s.scale" % self.cont_mid_lock, "%s.scale" % ribbon_lower_leg.start_plug)
 
-        cmds.scaleConstraint(self.scaleGrp, ribbon_lower_leg.scaleGrp)
+        cmds.scaleConstraint(self.scaleGrp, ribbon_lower_leg.scale_grp)
 
         # AUTO AND MANUAL TWIST
 
@@ -1004,7 +1007,7 @@ class Leg(object):
         cmds.connectAttr("%s.constraintRotate" % ribbon_start_pa_con_lower_leg_end, "%s.input1" % auto_twist_ankle)
 
         # !!! The parent constrain override should be disconnected like this
-        cmds.disconnectAttr("%s.constraintRotateX" % ribbon_start_pa_con_lower_leg_end, "%s.rotateX" % ribbon_lower_leg.endConnection)
+        cmds.disconnectAttr("%s.constraintRotateX" % ribbon_start_pa_con_lower_leg_end, "%s.rotateX" % ribbon_lower_leg.end_plug)
 
         # manual
         add_manual_twist_ankle = cmds.createNode("plusMinusAverage", name=("AddManualTwist_LowerLeg_%s" % self.suffix))
@@ -1012,10 +1015,10 @@ class Leg(object):
         cmds.connectAttr("%s.footManualTwist" % self.cont_fk_ik, "%s.input3D[1].input3Dx" % add_manual_twist_ankle)
 
         # connect to the joint
-        cmds.connectAttr("%s.output3D" % add_manual_twist_ankle, "%s.rotate" % ribbon_lower_leg.endConnection)
+        cmds.connectAttr("%s.output3D" % add_manual_twist_ankle, "%s.rotate" % ribbon_lower_leg.end_plug)
 
         # connect allowScaling
-        cmds.connectAttr("%s.allowScaling" % self.cont_fk_ik, "%s.scaleSwitch" % ribbon_lower_leg.startConnection)
+        cmds.connectAttr("%s.allowScaling" % self.cont_fk_ik, "%s.scaleSwitch" % ribbon_lower_leg.start_plug)
 
         # Volume Preservation Stuff
         vpExtraInput = cmds.createNode("multiplyDivide", name="vpExtraInput_%s" % self.suffix)
@@ -1039,8 +1042,8 @@ class Leg(object):
         cmds.setAttr("%s.input2" % vpUpperLowerReduce, 0.5)
 
         # vp knee branch
-        cmds.connectAttr("%s.output" % vpExtraInput, "%s.scale" % ribbon_lower_leg.startConnection, force=True)
-        cmds.connectAttr("%s.output" % vpExtraInput, "%s.scale" % ribbon_upper_leg.endConnection, force=True)
+        cmds.connectAttr("%s.output" % vpExtraInput, "%s.scale" % ribbon_lower_leg.start_plug, force=True)
+        cmds.connectAttr("%s.output" % vpExtraInput, "%s.scale" % ribbon_upper_leg.end_plug, force=True)
         cmds.connectAttr("%s.output" % vpExtraInput, "%s.scale" % self.j_def_midLeg, force=True)
         cmds.connectAttr("%s.scale" % self.cont_mid_lock, "%s.input1" % vpExtraInput, force=True)
         cmds.connectAttr("%s.output1D" % vpMidAverage, "%s.input2X" % vpExtraInput, force=True)
@@ -1059,7 +1062,7 @@ class Leg(object):
 
 
         # vp upper branch
-        mid_off_up = functions.getParent(ribbon_upper_leg.middleCont[0])
+        mid_off_up = functions.get_parent(ribbon_upper_leg.controllers[0])
         cmds.connectAttr("%s.outputX" % vpPowerUpperLeg, "%s.scaleX" % mid_off_up)
         cmds.connectAttr("%s.outputX" % vpPowerUpperLeg, "%s.scaleY" % mid_off_up)
         cmds.connectAttr("%s.outputX" % vpPowerUpperLeg, "%s.scaleZ" % mid_off_up)
@@ -1067,7 +1070,7 @@ class Leg(object):
         cmds.connectAttr("%s.output" % vpUpperLowerReduce, "%s.input2X" % vpPowerUpperLeg)
 
         # vp lower branch
-        mid_off_low = functions.getParent(ribbon_lower_leg.middleCont[0])
+        mid_off_low = functions.get_parent(ribbon_lower_leg.controllers[0])
         cmds.connectAttr("%s.outputX" % vpPowerLowerLeg, "%s.scaleX" % mid_off_low)
         cmds.connectAttr("%s.outputX" % vpPowerLowerLeg, "%s.scaleY" % mid_off_low)
         cmds.connectAttr("%s.outputX" % vpPowerLowerLeg, "%s.scaleZ" % mid_off_low)
@@ -1075,25 +1078,22 @@ class Leg(object):
         cmds.connectAttr("%s.output" % vpUpperLowerReduce, "%s.input2X" % vpPowerLowerLeg)
         cmds.connectAttr("%s.volume" % self.cont_IK_foot, "%s.input1" % vpUpperLowerReduce)
 
-        cmds.parent(ribbon_upper_leg.scaleGrp, self.nonScaleGrp)
-        cmds.parent(ribbon_upper_leg.nonScaleGrp, self.nonScaleGrp)
-        cmds.parent(ribbon_lower_leg.scaleGrp, self.nonScaleGrp)
-        cmds.parent(ribbon_lower_leg.nonScaleGrp, self.nonScaleGrp)
+        cmds.parent(ribbon_upper_leg.ribbon_grp, self.nonScaleGrp)
+        cmds.parent(ribbon_lower_leg.ribbon_grp, self.nonScaleGrp)
 
         cmds.connectAttr("%s.tweakControls" %  self.cont_fk_ik, "%s.v" %  self.cont_mid_lock)
-        tweakConts = ribbon_upper_leg.middleCont + ribbon_lower_leg.middleCont
-        # map(lambda x: cmds.connectAttr("%s.tweakControls" % self.cont_fk_ik, "%s.v" % x), tweakConts)
+        tweakConts = ribbon_upper_leg.controllers + ribbon_lower_leg.controllers
         attribute.drive_attrs("%s.tweakControls" % self.cont_fk_ik, ["%s.v" % x for x in tweakConts])
 
-        cmds.connectAttr("%s.contVis" % self.scaleGrp, "%s.v" % ribbon_upper_leg.scaleGrp)
-        cmds.connectAttr("%s.contVis" % self.scaleGrp, "%s.v" % ribbon_lower_leg.scaleGrp)
+        cmds.connectAttr("%s.contVis" % self.scaleGrp, "%s.v" % ribbon_upper_leg.scale_grp)
+        cmds.connectAttr("%s.contVis" % self.scaleGrp, "%s.v" % ribbon_lower_leg.scale_grp)
 
-        self.deformerJoints += ribbon_lower_leg.deformerJoints + ribbon_upper_leg.deformerJoints
+        self.deformerJoints += ribbon_lower_leg.deformer_joints + ribbon_upper_leg.deformer_joints
         attribute.drive_attrs("%s.jointVis" % self.scaleGrp, ["%s.v" % x for x in self.deformerJoints])
-        attribute.drive_attrs("%s.rigVis" % self.scaleGrp, ["%s.v" % x for x in ribbon_lower_leg.toHide])
-        attribute.drive_attrs("%s.rigVis" % self.scaleGrp, ["%s.v" % x for x in ribbon_upper_leg.toHide])
-        functions.colorize(ribbon_upper_leg.middleCont, self.colorCodes[1])
-        functions.colorize(ribbon_lower_leg.middleCont, self.colorCodes[1])
+        attribute.drive_attrs("%s.rigVis" % self.scaleGrp, ["%s.v" % x for x in ribbon_lower_leg.to_hide])
+        attribute.drive_attrs("%s.rigVis" % self.scaleGrp, ["%s.v" % x for x in ribbon_upper_leg.to_hide])
+        functions.colorize(ribbon_upper_leg.controllers, self.colorCodes[1])
+        functions.colorize(ribbon_lower_leg.controllers, self.colorCodes[1])
 
     def createAngleExtractors(self):
         # IK Angle Extractor
@@ -1104,7 +1104,7 @@ class Leg(object):
 
         cmds.parentConstraint(self.limbPlug, angleExt_Root_IK, mo=False)
         cmds.parentConstraint(self.cont_IK_foot, angleExt_Fixed_IK, mo=False)
-        functions.alignToAlter(angleExt_Float_IK, self.jDef_legRoot, 2)
+        functions.align_to_alter(angleExt_Float_IK, self.jDef_legRoot, 2)
         cmds.move(0,self.sideMult*5, 0, angleExt_Float_IK, objectSpace=True)
 
         angleNodeIK = cmds.createNode("angleBetween", name="angleBetweenIK_%s" % self.suffix)
@@ -1159,14 +1159,14 @@ class Leg(object):
         cmds.parentConstraint(self.limbPlug, self.scaleGrp, mo=False)
         cmds.setAttr("%s.rigVis" % self.scaleGrp, 0)
 
-        attribute.lockAndHide(self.cont_IK_foot, ["v"])
-        attribute.lockAndHide(self.cont_Pole, ["rx", "ry", "rz", "sx", "sy", "sz", "v"])
-        attribute.lockAndHide(self.cont_mid_lock, ["v"])
-        attribute.lockAndHide(self.cont_fk_ik, ["sx", "sy", "sz", "v"])
-        attribute.lockAndHide(self.cont_fk_foot, ["tx", "ty", "tz", "v"])
-        attribute.lockAndHide(self.cont_fk_low_leg, ["tx", "ty", "tz", "sy", "sz", "v"])
-        attribute.lockAndHide(self.cont_fk_up_leg, ["tx", "ty", "tz", "sy", "sz", "v"])
-        attribute.lockAndHide(self.cont_thigh, ["sx", "sy", "sz", "v"])
+        attribute.lock_and_hide(self.cont_IK_foot, ["v"])
+        attribute.lock_and_hide(self.cont_Pole, ["rx", "ry", "rz", "sx", "sy", "sz", "v"])
+        attribute.lock_and_hide(self.cont_mid_lock, ["v"])
+        attribute.lock_and_hide(self.cont_fk_ik, ["sx", "sy", "sz", "v"])
+        attribute.lock_and_hide(self.cont_fk_foot, ["tx", "ty", "tz", "v"])
+        attribute.lock_and_hide(self.cont_fk_low_leg, ["tx", "ty", "tz", "sy", "sz", "v"])
+        attribute.lock_and_hide(self.cont_fk_up_leg, ["tx", "ty", "tz", "sy", "sz", "v"])
+        attribute.lock_and_hide(self.cont_thigh, ["sx", "sy", "sz", "v"])
 
         self.scaleConstraints = [self.scaleGrp, self.cont_IK_OFF]
         self.anchors = [(self.cont_IK_foot, "parent", 1, None), (self.cont_Pole, "parent", 1, None)]
@@ -1236,7 +1236,7 @@ class Guides(object):
         hip = cmds.joint(p=hipVec, name=("jInit_Hip_%s" % self.suffix))
         knee = cmds.joint(p=kneeVec, name=("jInit_Knee_%s" % self.suffix))
         foot = cmds.joint(p=footVec, name=("jInit_Foot_%s" % self.suffix))
-        functions.orientJoints([root, hip, knee, foot], worldUpAxis=self.mirrorVector, upAxis=(0, 1, 0), reverseAim=self.sideMultiplier)
+        joint.orient_joints([root, hip, knee, foot], worldUpAxis=self.mirrorVector, up_axis=(0, 1, 0), reverseAim=self.sideMultiplier)
 
         ball = cmds.joint(p=ballVec, name=("jInit_Ball_%s" % self.suffix))
         toe = cmds.joint(p=toeVec, name=("jInit_Toe_%s" % self.suffix))
@@ -1254,7 +1254,7 @@ class Guides(object):
         cmds.parent(bankin, foot)
         cmds.parent(bankout, foot)
 
-        functions.orientJoints([ball, toe], worldUpAxis=self.mirrorVector, upAxis=(0, 1, 0), reverseAim=self.sideMultiplier)
+        joint.orient_joints([ball, toe], worldUpAxis=self.mirrorVector, up_axis=(0, 1, 0), reverseAim=self.sideMultiplier)
 
         # Update the guideJoints list
         self.guideJoints = [root, hip, knee, foot, ball, toe, bankout, bankin, toepv, heelpv]
@@ -1262,17 +1262,17 @@ class Guides(object):
 
     def define_attributes(self):
         # set joint side and type attributes
-        functions.set_joint_type(self.guideJoints[0], "LegRoot")
-        functions.set_joint_type(self.guideJoints[1], "Hip")
-        functions.set_joint_type(self.guideJoints[2], "Knee")
-        functions.set_joint_type(self.guideJoints[3], "Foot")
-        functions.set_joint_type(self.guideJoints[4], "Ball")
-        functions.set_joint_type(self.guideJoints[5], "Toe")
-        functions.set_joint_type(self.guideJoints[6], "BankOUT")
-        functions.set_joint_type(self.guideJoints[7], "BankIN")
-        functions.set_joint_type(self.guideJoints[8], "ToePV")
-        functions.set_joint_type(self.guideJoints[9], "HeelPV")
-        _ = [functions.set_joint_side(jnt, self.side) for jnt in self.guideJoints]
+        joint.set_joint_type(self.guideJoints[0], "LegRoot")
+        joint.set_joint_type(self.guideJoints[1], "Hip")
+        joint.set_joint_type(self.guideJoints[2], "Knee")
+        joint.set_joint_type(self.guideJoints[3], "Foot")
+        joint.set_joint_type(self.guideJoints[4], "Ball")
+        joint.set_joint_type(self.guideJoints[5], "Toe")
+        joint.set_joint_type(self.guideJoints[6], "BankOUT")
+        joint.set_joint_type(self.guideJoints[7], "BankIN")
+        joint.set_joint_type(self.guideJoints[8], "ToePV")
+        joint.set_joint_type(self.guideJoints[9], "HeelPV")
+        _ = [joint.set_joint_side(jnt, self.side) for jnt in self.guideJoints]
 
         # ----------Mandatory---------[Start]
         root_jnt = self.guideJoints[0]

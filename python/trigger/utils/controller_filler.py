@@ -91,7 +91,7 @@ class Filler(BaseNode):
         # create the loft
         self.dag_path = cmds.ls(self.loft_curve(self.controller.dag_path,
                                                 surface_parent=self.hold_group)[0], l=True)[0]
-        bind_offset = functions.createUpGrp(self.name, "BIND")
+        bind_offset = functions.create_offset_group(self.name, "BIND")
         self.refresh_dag_path()
 
         # unfortunately matrix constraint is not safe for all cases (in fact most cases)
@@ -250,7 +250,7 @@ class Filler(BaseNode):
 
         """
         for loft in loft_surfaces:
-            for shape in functions.getShapes(loft):
+            for shape in functions.get_shapes(loft):
                 blend_colors_node = cmds.createNode("blendColors", name="%s_bColor" % shape)
                 cmds.setAttr("%s.color2" % blend_colors_node, *color_a)
                 cmds.setAttr("%s.color1" % blend_colors_node, *color_b)
