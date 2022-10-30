@@ -162,7 +162,7 @@ def drive_attrs(driver_attr, driven_attrs, driver_range=None, driven_range=None,
 
     """
 
-    if type(driven_attrs) != list:
+    if not isinstance(driven_attrs, list):
         driven_attrs = [driven_attrs]
 
     # validation
