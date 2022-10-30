@@ -166,7 +166,7 @@ class Hindleg(object):
         self.scaleHook = cmds.group(name="%s_scaleHook" % self.suffix, em=True)
         cmds.parent(self.scaleHook, self.limbGrp)
         scale_skips = "xyz" if self.isLocal else ""
-        connection.matrixConstraint(self.contBindGrp, self.scaleHook, self.localOffGrp, ss=scale_skips)
+        connection.matrixConstraint(self.contBindGrp, self.scaleHook, self.localOffGrp, skipScale=scale_skips)
 
         self.rigJointsGrp = cmds.group(name="%s_rigJoints_grp" % self.suffix, em=True)
         self.defJointsGrp = cmds.group(name="%s_defJoints_grp" % self.suffix, em=True)
@@ -180,9 +180,9 @@ class Hindleg(object):
         cmds.select(d=True)
         self.limbPlug = cmds.joint(name="jPlug_%s" % self.suffix, p=self.hindleg_root_pos, radius=3)
         cmds.parent(self.limbPlug, self.limbGrp)
-        connection.matrixConstraint(self.limbPlug, self.contBindGrp, mo=True)
+        connection.matrixConstraint(self.limbPlug, self.contBindGrp, maintainOffset=True)
         if self.isLocal:
-            connection.matrixConstraint(self.limbPlug, self.localOffGrp, mo=True)
+            connection.matrixConstraint(self.limbPlug, self.localOffGrp, maintainOffset=True)
 
         cmds.select(d=True)
         self.j_def_hindleg_root = cmds.joint(name="jDef_HindlegRoot_%s" % self.suffix, p=self.hindleg_root_pos,
@@ -298,7 +298,7 @@ class Hindleg(object):
         cmds.makeIdentity(self.j_def_phalanges, a=True)
 
         # parent them under the collar
-        connection.matrixConstraint(self.j_def_hindhip, self.rigJointsGrp, mo=False)
+        connection.matrixConstraint(self.j_def_hindhip, self.rigJointsGrp, maintainOffset=False)
         cmds.parent(self.j_ik_hip, self.rigJointsGrp)
         cmds.parent(self.j_fk_hip, self.rigJointsGrp)
 
@@ -512,7 +512,7 @@ class Hindleg(object):
                           name="ikHandle_PhalangesTip_%s" % self.suffix,
                           sol="ikSCsolver")[0]
 
-        connection.matrixConstraint(self.pole_ik_cont.name, self.pole_bridge, mo=False,
+        connection.matrixConstraint(self.pole_ik_cont.name, self.pole_bridge, maintainOffset=False,
                                     source_parent_cutoff=self.localOffGrp)
 
         def group_align(nodes, pivot_node, name):
@@ -533,7 +533,7 @@ class Hindleg(object):
         cmds.parent(foot_trans_grp, self.nonScaleGrp)
 
         connection.matrixConstraint(self.foot_ik_cont.name, foot_trans_loc, source_parent_cutoff=self.localOffGrp)
-        connection.matrixConstraint(self.hock_ik_cont.name, hock_ik_loc, st="xyz",
+        connection.matrixConstraint(self.hock_ik_cont.name, hock_ik_loc, skipTranslate="xyz",
                                     source_parent_cutoff=self.localOffGrp)
 
         cmds.poleVectorConstraint(self.pole_bridge, hock_ik_handle)
@@ -547,13 +547,13 @@ class Hindleg(object):
             hock_distance_end = cmds.spaceLocator(name="hock_distanceEnd_%s" % self.suffix)[0]
             cmds.parent(hock_distance_end, self.nonScaleGrp)
             functions.align_to(hock_distance_end, self.j_def_hock, position=True)
-            connection.matrixConstraint(hock_ik_loc, hock_distance_end, mo=True)
+            connection.matrixConstraint(hock_ik_loc, hock_distance_end, maintainOffset=True)
 
             # create a dummy controller to be used instead of the end controller
             dummy_hock_cont = cmds.spaceLocator(name="dummy_hock_%s" % self.suffix)[0]
             functions.align_to(dummy_hock_cont, hock_distance_end, position=True, rotation=True)
             # connection.matrixConstraint(self.foot_ik_cont.name, dummy_hock_cont, mo=True)
-            connection.matrixConstraint(self.hock_ik_cont.name, dummy_hock_cont, mo=True)
+            connection.matrixConstraint(self.hock_ik_cont.name, dummy_hock_cont, maintainOffset=True)
 
             cmds.parent(dummy_hock_cont, self.nonScaleGrp)
 
@@ -582,13 +582,13 @@ class Hindleg(object):
             cmds.connectAttr("%s.footRoll" % self.foot_ik_cont.name, "%s.rx" % toe_trans_loc)
 
     def create_fk_setup(self):
-        connection.matrixConstraint(self.upper_leg_fk_cont.name, self.j_fk_hip, mo=True,
+        connection.matrixConstraint(self.upper_leg_fk_cont.name, self.j_fk_hip, maintainOffset=True,
                                     source_parent_cutoff=self.localOffGrp)
-        connection.matrixConstraint(self.lower_leg_fk_cont.name, self.j_fk_stifle, mo=True,
+        connection.matrixConstraint(self.lower_leg_fk_cont.name, self.j_fk_stifle, maintainOffset=True,
                                     source_parent_cutoff=self.localOffGrp)
-        connection.matrixConstraint(self.pastern_fk_cont.name, self.j_fk_hock, mo=True,
+        connection.matrixConstraint(self.pastern_fk_cont.name, self.j_fk_hock, maintainOffset=True,
                                     source_parent_cutoff=self.localOffGrp)
-        connection.matrixConstraint(self.foot_fk_cont.name, self.j_fk_phalanges, mo=True,
+        connection.matrixConstraint(self.foot_fk_cont.name, self.j_fk_phalanges, maintainOffset=True,
                                     source_parent_cutoff=self.localOffGrp)
 
         cmds.parent(self.foot_fk_cont.get_offsets()[-1], self.pastern_fk_cont.name)

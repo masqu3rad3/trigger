@@ -195,13 +195,13 @@ def lip_zipper(upper_lip_edges, lower_lip_edges, morph_mesh, final_mesh, pair_co
         cmds.parent(switch_low, switch_loc_grp)
 
         local_loc_up = cmds.spaceLocator(name="localLoc_up%i" % counter)[0]
-        connection.matrixConstraint(switch_up, local_loc_up, mo=False, source_parent_cutoff=up)
+        connection.matrixConstraint(switch_up, local_loc_up, maintainOffset=False, source_parent_cutoff=up)
         local_loc_up_off = functions.create_offset_group(local_loc_up, "off")
         functions.align_to(local_loc_up_off, up, position=True, rotation=False)
         cmds.parent(local_loc_up_off, switch_loc_grp)
 
         local_loc_low = cmds.spaceLocator(name="localLoc_low%i" % counter)[0]
-        connection.matrixConstraint(switch_low, local_loc_low, mo=False, source_parent_cutoff=low)
+        connection.matrixConstraint(switch_low, local_loc_low, maintainOffset=False, source_parent_cutoff=low)
         local_loc_low_off = functions.create_offset_group(local_loc_low, "off")
         functions.align_to(local_loc_low_off, up, position=True, rotation=False)
         cmds.parent(local_loc_low_off, switch_loc_grp)
@@ -209,13 +209,13 @@ def lip_zipper(upper_lip_edges, lower_lip_edges, morph_mesh, final_mesh, pair_co
         cmds.select(d=True)
         joint_up = cmds.joint(name="lipZip_up%i_jDef" % counter)
         functions.align_to(joint_up, up, position=True, rotation=False)
-        connection.matrixConstraint(local_loc_up, joint_up, mo=False, sr="xyz", ss="xyz")
+        connection.matrixConstraint(local_loc_up, joint_up, maintainOffset=False, skipRotate="xyz", skipScale="xyz")
         cmds.parent(joint_up, jnt_grp)
 
         cmds.select(d=True)
         joint_low = cmds.joint(name="lipZip_low%i_jDef" % counter)
         functions.align_to(joint_low, low, position=True, rotation=False)
-        connection.matrixConstraint(local_loc_low, joint_low, mo=False, sr="xyz", ss="xyz")
+        connection.matrixConstraint(local_loc_low, joint_low, maintainOffset=False, skipRotate="xyz", skipScale="xyz")
         cmds.parent(joint_low, jnt_grp)
 
         # create distance attributes

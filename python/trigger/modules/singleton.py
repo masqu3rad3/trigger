@@ -126,7 +126,7 @@ class Singleton(object):
         self.scaleHook = cmds.group(name="%s_scaleHook" % self.suffix, em=True)
         cmds.parent(self.scaleHook, self.limbGrp)
         scale_skips = "xyz" if self.isLocal else ""
-        connection.matrixConstraint(self.scaleGrp, self.scaleHook, ss=scale_skips)
+        connection.matrixConstraint(self.scaleGrp, self.scaleHook, skipScale=scale_skips)
 
         self.joints_grp = cmds.group(name="%s_joints_grp" % self.suffix, em=True)
         self.conts_grp = cmds.group(name="%s_conts_grp" % self.suffix, em=True)
@@ -183,7 +183,7 @@ class Singleton(object):
                 # Since the connection happening in local transform space, we need to move the joint to its position
                 functions.align_to(j_def_off, j, position=True, rotation=True)
             else:
-                connection.matrixConstraint(cont.name, j_def_bind, mo=False, source_parent_cutoff=_cutoff)
+                connection.matrixConstraint(cont.name, j_def_bind, maintainOffset=False, source_parent_cutoff=_cutoff)
             # else:
             #     if not self.isLocal:
             #         # follow the limb plug only if the joints are not local

@@ -15,11 +15,11 @@ def mrCube (jointList, width=1):
                     functions.align_between(cubeGuy, jnt, c)
                     height=functions.get_distance(jnt, c)
                     cmds.setAttr("%s.sx" % cubeGuy, height)
-                    connection.matrixConstraint(jnt, cubeGuy, mo=True)
+                    connection.matrixConstraint(jnt, cubeGuy, maintainOffset=True)
                     cmds.parent(cubeGuy, mrCubeGrp)
             else:
                 cubeGuy = cmds.polyCube(name=naming.unique_name("mrCube_%s" % jnt), h=width, d=width, w=width)[0]
-                connection.matrixConstraint(jnt, cubeGuy, mo=False)
+                connection.matrixConstraint(jnt, cubeGuy, maintainOffset=False)
                 cmds.parent(cubeGuy, mrCubeGrp)
 
 

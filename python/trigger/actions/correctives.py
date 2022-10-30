@@ -411,7 +411,7 @@ class Correctives(object):
         functions.align_to(root_loc, driver_transform, position=True, rotation=True)
         cmds.pointConstraint(driver_transform, root_loc, mo=False)
         cmds.parentConstraint(driver_transform, point_a, mo=True)
-        connection.matrixConstraint(up_object, point_b_offset, st="xyz", mo=True)
+        connection.matrixConstraint(up_object, point_b_offset, skipTranslate="xyz", maintainOffset=True)
 
         # store controllers initial rotation
         # initial_rotation = cmds.getAttr("%s.r" % controller)[0]

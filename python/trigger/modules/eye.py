@@ -191,7 +191,7 @@ class Eye(object):
                 g_follow = functions.get_parent(cont)
                 _ = [attribute.disconnect_attr(g_follow, attr=attr, suppress_warnings=True) for attr in ["translate", "rotate", "scale"]]
                 # connection.matrixConstraint(self.groupCont, g_follow, mo=True, source_parent_cutoff=self.localOffGrp)
-                connection.matrixConstraint(self.groupCont, g_follow, mo=True)
+                connection.matrixConstraint(self.groupCont, g_follow, maintainOffset=True)
             else:
                 # if the group controller exists, update only its shape and rotation pivot
                 # adjust the pivot
@@ -229,7 +229,7 @@ class Eye(object):
         aim_con = cmds.aimConstraint(self.aimBridge, self.aimDriven, upVector=self.up_axis, aimVector=self.look_axis,
                                      wut="objectrotation", wuo=self.limbPlug)
 
-        connection.matrixConstraint(self.aimCont, self.aimBridge, mo=False,
+        connection.matrixConstraint(self.aimCont, self.aimBridge, maintainOffset=False,
                                     source_parent_cutoff=self.localOffGrp)
 
 

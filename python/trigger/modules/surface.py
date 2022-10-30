@@ -157,13 +157,13 @@ class Surface(object):
                 else:
                     _ss = "xyz"
                 _mo = False if self.rotateObject else True
-                connection.matrixConstraint(follicle, _cont_bind, mo=_mo, sr=_sr, ss=_ss)
+                connection.matrixConstraint(follicle, _cont_bind, maintainOffset=_mo, skipRotate=_sr, skipScale=_ss)
 
                 cmds.parent(follicle, self.nonScaleGrp)
                 cmds.connectAttr("%s.rigVis" % self.scaleGrp, "%s.v" % follicle, force=True)
 
             if self.rotateObject:
-                connection.matrixConstraint(self.rotateObject, _cont_bind, mo=True, st="xyz", ss="xyz")
+                connection.matrixConstraint(self.rotateObject, _cont_bind, maintainOffset=True, skipTranslate="xyz", skipScale="xyz")
                 # connection.matrixConstraint(self.rotateObject, self.cont_bind, mo=True, st="xyz", ss=_ss)
 
             negate_multMatrix = cmds.createNode("multMatrix", name="negate_multMatrix_%s" % self.suffix)

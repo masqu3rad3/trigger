@@ -50,7 +50,7 @@ class Angle(object):
 
     def pin_root(self, node, mo=False):
         """Constraints the angle root to the node"""
-        connection.matrixConstraint(node, self._angle_root, mo=mo)
+        connection.matrixConstraint(node, self._angle_root, maintainOffset=mo)
 
     def pin_fixed(self, node, mo=False):
         """Constraints 'fixed' end to the node"""

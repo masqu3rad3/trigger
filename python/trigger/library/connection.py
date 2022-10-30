@@ -1,3 +1,5 @@
+# pylint: disable=consider-using-f-string
+
 """connections / constrains / attachments / procedural movements"""
 import logging
 from maya.api import OpenMaya
@@ -8,7 +10,6 @@ from trigger.library import api
 from trigger.library import interface
 from trigger.library import attribute
 from trigger.library import arithmetic as op
-from trigger.library.functions import align_to
 from maya import cmds
 
 validate.plugin("matrixNodes")
@@ -84,7 +85,7 @@ def connections(node,
                                             source=True,
                                             destination=False,
                                             connections=True)[1]
-                }
+        }
         result_dict["incoming"].append(conn)
 
     for out_plug in output_plugs:
@@ -154,36 +155,57 @@ def replace_connections(source_node,
             cmds.connectAttr(out_p, in_p, force=True)
 
 
-# camelCase for compatibility with maya
+# camelCase is for keeping the constraint in-line with maya constraints
+
+# pylint: disable=invalid-name
+# pylint: disable=too-many-arguments
+# pylint: disable=too-many-locals
+# pylint: disable=too-many-branches
+# pylint: disable=too-many-statements
 def matrixConstraint(drivers,
                      driven,
-                     mo=True,
+                     maintainOffset=True,
                      prefix="",
-                     sr=None,
-                     st=None,
-                     ss=None,
-                     source_parent_cutoff=None):
+                     skipRotate=None,
+                     skipTranslate=None,
+                     skipScale=None,
+                     source_parent_cutoff=None,
+                     **short_arguments
+                     ):
     """
     Create a Matrix Constraint.
     Args:
         drivers (List) or (str): Parent Node(s)
         driven (str): Child Node
-        mo (bool): Maintain offset.
+        maintainOffset (bool): Maintain offset.
             If True, the existing distance between nodes will be preserved
         prefix (str): Prefix for the nodes names which will be created
-        sr (str or list): Skip Rotations. Listed rotation values
+        skipRotate (str or list): Skip Rotations. Listed rotation values
                     will be skipped. "xyz" or ["x", "y", "z"]
-        st (str or list): Skip Translation. Listed translation values
+        skipTranslate (str or list): Skip Translation. Listed translation values
                     will be skipped. "xyz" or ["x", "y", "z"]
-        ss (str or list): Skip Scale. Listed scale values will be skipped.
+        skipScale (str or list): Skip Scale. Listed scale values will be skipped.
                     "xyz" or ["x", "y", "z"]
         source_parent_cutoff (None or str): The transformation matrices above
                     this node won't affect to the child.
-    Returns: (Tuple) mult_matrix, decompose_matrix
+    Returns: (Tuple) mult_matrix, decompose_matrix, wtAddMatrix
     """
 
-    is_multi = True if isinstance(drivers, list) else False
-    is_joint = True if cmds.objectType(driven) == "joint" else False
+    # match the long names to the short ones if used
+    for key, value in short_arguments:
+        if key == "mo":
+            maintainOffset = key
+        elif key == "sr":
+            skipRotate = value
+        elif key == "st":
+            skipTranslate = value
+        elif key == "ss":
+            skipScale = value
+        elif key == "spc":
+            source_parent_cutoff = value
+
+    is_multi = bool(isinstance(drivers, list))
+    is_joint = bool(cmds.objectType(driven) == "joint")
     if is_multi and source_parent_cutoff:
         LOG.warning("source_parent_cutoff is not supported for multiple inputs. Ignoring it.")
         source_parent_cutoff = None
@@ -191,15 +213,13 @@ def matrixConstraint(drivers,
     parent_of_driven = parents[0] if parents else None
     next_index = -1
 
-    mult_matrix = cmds.createNode("multMatrix", name="%s_multMatrix" % prefix)
+    mult_matrix = cmds.createNode("multMatrix", name="{}_multMatrix".format(prefix))
     decompose_matrix = cmds.createNode(
         "decomposeMatrix", name="{}_decomposeMatrix".format(prefix))
 
     # if there are multiple targets, average them first separately
-
-    ##########################
     if is_multi:
-        driver_matrix_plugs = ["%s.worldMatrix[0]" % x for x in drivers]
+        driver_matrix_plugs = ["{}.worldMatrix[0]".format(x) for x in drivers]
         average_node = op.average_matrix(driver_matrix_plugs,
                                          return_plug=False)
         out_plug = "{}.matrixSum".format(average_node)
@@ -207,20 +227,19 @@ def matrixConstraint(drivers,
         out_plug = "{}.worldMatrix[0]".format(drivers)
         average_node = None
 
-    if mo:
+    if maintainOffset:
         driven_world_matrix = api.get_m_dagpath(driven).inclusiveMatrix()
         if is_multi:
             driver_world_matrix = OpenMaya.MMatrix(cmds.getAttr(out_plug))
-
         else:
             driver_world_matrix = api.get_m_dagpath(drivers).inclusiveMatrix()
         local_offset = driven_world_matrix * driver_world_matrix.inverse()
         next_index += 1
-        cmds.setAttr("%s.matrixIn[%i]" % (mult_matrix, next_index),
+        cmds.setAttr("{0}.matrixIn[{1}]".format(mult_matrix, next_index),
                      local_offset, type="matrix")
 
     next_index += 1
-    cmds.connectAttr(out_plug, "%s.matrixIn[%i]" % (mult_matrix, next_index))
+    cmds.connectAttr(out_plug, "{0}.matrixIn[{1}]".format(mult_matrix, next_index))
 
     cmds.connectAttr("{}.matrixSum".format(mult_matrix),
                      "{}.inputMatrix".format(decompose_matrix))
@@ -228,19 +247,19 @@ def matrixConstraint(drivers,
     if source_parent_cutoff:
         next_index += 1
         cmds.connectAttr("{}.worldInverseMatrix".format(source_parent_cutoff),
-                         "%s.matrixIn[%i]" % (mult_matrix, next_index))
+                         "{0}.matrixIn[{1}]".format(mult_matrix, next_index))
 
     if parent_of_driven:
         next_index += 1
         cmds.connectAttr("{}.worldInverseMatrix[0]".format(parent_of_driven),
-                         "%s.matrixIn[%i]" % (mult_matrix, next_index))
+                         "{0}.matrixIn[{1}]".format(mult_matrix, next_index))
 
-    if not st:
+    if not skipTranslate:
         cmds.connectAttr("{}.outputTranslate".format(decompose_matrix),
                          "{}.translate".format(driven))
     else:
         for attr in "XYZ":
-            if attr.lower() not in st and attr.upper() not in st:
+            if attr.lower() not in skipTranslate and attr.upper() not in skipTranslate:
                 cmds.connectAttr(
                     "{0}.outputTranslate{1}".format(
                         decompose_matrix, attr),
@@ -248,12 +267,12 @@ def matrixConstraint(drivers,
 
     # it the driven is a joint, the rotations needs to be handled differently
     # is there any rotation attribute to connect?
-    if not sr or len(sr) != 3:
+    if not skipRotate or len(skipRotate) != 3:
         if is_joint:
             # store the orientation values
             rot_index = 0
             second_index = 0
-            joint_orientation = cmds.getAttr("%s.jointOrient" % driven)[0]
+            joint_orientation = cmds.getAttr("{}.jointOrient".format(driven))[0]
 
             # create the compensation node strand
             rotation_compose = cmds.createNode(
@@ -271,33 +290,31 @@ def matrixConstraint(drivers,
             cmds.setAttr("{}.inputRotate".format(rotation_compose),
                          *joint_orientation)
             cmds.connectAttr("{}.outputMatrix".format(rotation_compose),
-                             "%s.matrixIn[%i]" % (
+                             "{0}.matrixIn[{1}]".format(
                                  rotation_first_mult_matrix, rot_index))
 
             if parent_of_driven:
                 rot_index += 1
-                cmds.connectAttr("%s.worldMatrix[0]" % parent_of_driven,
-                                 "%s.matrixIn[%i]" % (
+                cmds.connectAttr("{}.worldMatrix[0]".format(parent_of_driven),
+                                 "{0}.matrixIn[{1}]".format(
                                      rotation_first_mult_matrix,
                                      rot_index))
-            cmds.connectAttr("%s.matrixSum" % rotation_first_mult_matrix,
-                             "%s.inputMatrix" % rotation_inverse_matrix)
+            cmds.connectAttr("{}.matrixSum".format(rotation_first_mult_matrix),
+                             "{}.inputMatrix".format(rotation_inverse_matrix))
 
-            cmds.connectAttr(out_plug, "%s.matrixIn[%i]" % (
+            cmds.connectAttr(out_plug, "{0}.matrixIn[{1}]".format(
                 rotation_sec_mult_matrix, second_index))
 
             if source_parent_cutoff:
                 second_index += 1
                 cmds.connectAttr("{}.worldInverseMatrix".format(
                     source_parent_cutoff),
-                    "%s.matrixIn[%i]" %
-                    (rotation_sec_mult_matrix, second_index))
+                    "{0}.matrixIn[{1}]".format(rotation_sec_mult_matrix, second_index))
 
             second_index += 1
             cmds.connectAttr("{}.outputMatrix".format(
                 rotation_inverse_matrix),
-                "%s.matrixIn[%i]" %
-                (rotation_sec_mult_matrix, second_index))
+                "{0}.matrixIn[{1}]".format(rotation_sec_mult_matrix, second_index))
             cmds.connectAttr("{}.matrixSum".format(
                 rotation_sec_mult_matrix),
                 "{}.inputMatrix".format(rotation_decompose_matrix))
@@ -306,22 +323,22 @@ def matrixConstraint(drivers,
             rotation_output_plug = "{}.outputRotate".format(decompose_matrix)
 
         # it All rotation attrs will be connected?
-        if not sr:
+        if not skipRotate:
             cmds.connectAttr(rotation_output_plug, "{}.rotate".format(driven))
         else:
             for attr in "XYZ":
-                if attr.lower() not in sr and attr.upper() not in sr:
+                if attr.lower() not in skipRotate and attr.upper() not in skipRotate:
                     cmds.connectAttr(
                         "{0}{1}".format(
                             rotation_output_plug, attr),
                         "{0}.rotate{1}".format(driven, attr))
 
-    if not ss:
+    if not skipScale:
         cmds.connectAttr("{}.outputScale".format(decompose_matrix),
                          "{}.scale".format(driven))
     else:
         for attr in "XYZ":
-            if attr.lower() not in ss and attr.upper() not in ss:
+            if attr.lower() not in skipScale and attr.upper() not in skipScale:
                 cmds.connectAttr("{0}.outputScale{1}".format(
                     decompose_matrix, attr),
                     "{0}.scale{1}".format(driven, attr))
@@ -358,21 +375,21 @@ def matrix_switch(parent_a,
     attribute.validate_attr(control_attribute, attr_range=[0, 1])
     mult_matrix_a, dump, _ = matrixConstraint(parent_a,
                                               child,
-                                              mo=False,
+                                              maintainOffset=False,
                                               prefix=parent_a,
-                                              sr="xyz",
-                                              st="xyz",
-                                              ss="xyz",
+                                              skipRotate="xyz",
+                                              skipTranslate="xyz",
+                                              skipScale="xyz",
                                               source_parent_cutoff=None)
     attribute.disconnect_attr(dump, attr="inputMatrix")
     cmds.delete(dump)
     mult_matrix_b, dump, _ = matrixConstraint(parent_b,
                                               child,
-                                              mo=False,
+                                              maintainOffset=False,
                                               prefix=parent_b,
-                                              sr="xyz",
-                                              st="xyz",
-                                              ss="xyz",
+                                              skipRotate="xyz",
+                                              skipTranslate="xyz",
+                                              skipScale="xyz",
                                               source_parent_cutoff=None)
     attribute.disconnect_attr(dump, attr="inputMatrix")
     cmds.delete(dump)
@@ -564,7 +581,7 @@ def pin_to_surface(node, surface, sr="", st="", ss="xyz"):
         if attr.lower() not in sr and attr.upper() not in sr:
             cmds.connectAttr("{0}.outputRotate{1}".format(
                 decompose_matrix_node, attr),
-                             "{0}.rotate{1}".format(node, attr))
+                "{0}.rotate{1}".format(node, attr))
 
     for attr in "XYZ":
         if attr.lower() not in st and attr.upper() not in st:
@@ -606,7 +623,7 @@ def average_constraint(target_mesh,
                                 if none provided
     """
     if not force_follicle:
-        assert cmds.about(api=True) >= 20200000,\
+        assert cmds.about(api=True) >= 20200000, \
             "uv_pin requires Maya 2020 and later"
     average_node = cmds.createNode("wtAddMatrix")
     weight_value = 1.0 / float(len(vertex_list))

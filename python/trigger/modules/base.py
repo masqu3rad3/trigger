@@ -99,7 +99,7 @@ class Base(object):
         cmds.connectAttr("%s.contVis" % self.scaleGrp, "%s.v" % placement_off)
         cmds.connectAttr("%s.contVis" % self.scaleGrp, "%s.v" % master_off)
 
-        connection.matrixConstraint(master_cont, self.scaleGrp, ss="xyz")
+        connection.matrixConstraint(master_cont, self.scaleGrp, skipScale="xyz")
 
         attribute.lock_and_hide(placement_cont, ["sx", "sy", "sz", "v"])
         attribute.lock_and_hide(master_cont, ["sx", "sy", "sz", "v"])

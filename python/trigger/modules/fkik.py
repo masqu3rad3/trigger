@@ -131,7 +131,7 @@ class Fkik(object):
         self.scaleHook = cmds.group(name="%s_scaleHook" % self.suffix, em=True)
         cmds.parent(self.scaleHook, self.limbGrp)
         scale_skips = "xyz" if self.isLocal else ""
-        connection.matrixConstraint(self.scaleGrp, self.scaleHook, ss=scale_skips)
+        connection.matrixConstraint(self.scaleGrp, self.scaleHook, skipScale=scale_skips)
 
     def createJoints(self):
         # draw Joints
@@ -213,7 +213,7 @@ class Fkik(object):
             ik_joints = self.deformerJoints if self.switchMode != 0 else self.ikJoints
             ik_bind_grp = cmds.group(name="%s_IK_bind_grp" %self.suffix, em=True)
             cmds.parent(ik_bind_grp, self.localOffGrp)
-            connection.matrixConstraint(self.limbPlug, ik_bind_grp, mo=True)
+            connection.matrixConstraint(self.limbPlug, ik_bind_grp, maintainOffset=True)
 
             scale_mult = functions.get_distance(ik_joints[0], ik_joints[1]) * 0.5
             self.rootIkCont, _ = icon_handler.create_icon("Circle", icon_name="%s_rootIK_cont" % self.suffix, normal=(1, 0, 0), scale=(scale_mult, scale_mult, scale_mult))
@@ -301,7 +301,7 @@ class Fkik(object):
         cmds.parent(ik_handle, self.nonScaleGrp)
         if self.ikSolver != 0:
             cmds.poleVectorConstraint(self.poleVectorBridge, ik_handle)
-            connection.matrixConstraint(self.poleVectorCont, self.poleVectorBridge, mo=False, source_parent_cutoff=self.localOffGrp)
+            connection.matrixConstraint(self.poleVectorCont, self.poleVectorBridge, maintainOffset=False, source_parent_cutoff=self.localOffGrp)
             cmds.parent(self.poleVectorBridge, self.nonScaleGrp)
             cmds.connectAttr("%s.rigVis" % self.scaleGrp, "%s.v" %self.poleVectorBridge)
 
@@ -314,9 +314,9 @@ class Fkik(object):
             cmds.parent(stretch_locs, self.nonScaleGrp)
             attribute.drive_attrs("%s.rigVis" % self.scaleGrp, ["%s.v" % x for x in stretch_locs])
         else:
-            connection.matrixConstraint(self.ikControllers[-1], ik_handle, mo=True, source_parent_cutoff=self.localOffGrp)
-        connection.matrixConstraint(self.ikControllers[0], ik_joints[0], mo=False, source_parent_cutoff=self.localOffGrp)
-        connection.matrixConstraint(self.ikControllers[-1], ik_joints[-1], st="xyz", ss="xyz", mo=False, source_parent_cutoff=self.localOffGrp)
+            connection.matrixConstraint(self.ikControllers[-1], ik_handle, maintainOffset=True, source_parent_cutoff=self.localOffGrp)
+        connection.matrixConstraint(self.ikControllers[0], ik_joints[0], maintainOffset=False, source_parent_cutoff=self.localOffGrp)
+        connection.matrixConstraint(self.ikControllers[-1], ik_joints[-1], skipTranslate="xyz", skipScale="xyz", maintainOffset=False, source_parent_cutoff=self.localOffGrp)
 
     def createFKsetup(self):
         if self.switchMode == 2: # if it is IK only
@@ -327,7 +327,7 @@ class Fkik(object):
         # for cont, jnt in zip(self.fkControllers, fk_joints[:-1]):
         for cont, jnt in zip(self.fkControllers, fk_joints):
             # connection.matrixConstraint(cont, jnt, source_parent_cutoff=self.localOffGrp)
-            connection.matrixConstraint(cont, jnt, source_parent_cutoff=self.localOffGrp, ss="xyz")
+            connection.matrixConstraint(cont, jnt, source_parent_cutoff=self.localOffGrp, skipScale="xyz")
             if not self.isLocal:
                 # additive scalability
                 s_global = cmds.createNode("multiplyDivide", name="sGlobal_%s_%s" % (jnt, self.suffix))

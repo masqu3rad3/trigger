@@ -438,7 +438,7 @@ def make_stretchy_ik(joint_chain, ik_handle, root_controller, end_controller, si
 
     root_loc = cmds.spaceLocator(name="rootLoc_%s" % name)[0]
     functions.align_to(root_loc, joint_chain[0], position=True, rotation=True)
-    connection.matrixConstraint(root_controller, root_loc, sr="xyz", mo=True)
+    connection.matrixConstraint(root_controller, root_loc, skipRotate="xyz", maintainOffset=True)
     cmds.aimConstraint(end_controller, root_loc, wuo=root_controller)
 
     end_loc = cmds.spaceLocator(name="endLoc_%s" % name)[0]
@@ -453,13 +453,13 @@ def make_stretchy_ik(joint_chain, ik_handle, root_controller, end_controller, si
 
     if not distance_start:
         distance_start_loc = cmds.spaceLocator(name="distance_start_%s" % name)[0]
-        connection.matrixConstraint(root_controller, distance_start_loc, sr="xyz", ss="xyz", mo=False)
+        connection.matrixConstraint(root_controller, distance_start_loc, skipRotate="xyz", skipScale="xyz", maintainOffset=False)
     else:
         distance_start_loc = distance_start
 
     if not distance_end:
         distance_end_loc = cmds.spaceLocator(name="distance_end_%s" % name)[0]
-        connection.matrixConstraint(end_controller, distance_end_loc, sr="xyz", ss="xyz", mo=False)
+        connection.matrixConstraint(end_controller, distance_end_loc, skipRotate="xyz", skipScale="xyz", maintainOffset=False)
     else:
         distance_end_loc = distance_end
 
@@ -549,7 +549,7 @@ def make_stretchy_ik(joint_chain, ik_handle, root_controller, end_controller, si
         cmds.connectAttr(output_x_p, "%s.tx" % jnt)
 
     for x in ik_handle:
-        connection.matrixConstraint(soft_blend_loc, x, mo=True, source_parent_cutoff=source_parent_cutoff)
+        connection.matrixConstraint(soft_blend_loc, x, maintainOffset=True, source_parent_cutoff=source_parent_cutoff)
 
     # connection.matrixConstraint(soft_blend_loc, ik_handle, mo=False, source_parent_cutoff=source_parent_cutoff)
     return soft_blend_loc, root_loc, distance_start_loc, distance_end_loc

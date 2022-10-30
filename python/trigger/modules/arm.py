@@ -161,7 +161,7 @@ class Arm(object):
         self.scaleHook = cmds.group(name="%s_scaleHook" % self.suffix, em=True)
         cmds.parent(self.scaleHook, self.limbGrp)
         scale_skips = "xyz" if self.isLocal else ""
-        connection.matrixConstraint(self.contBindGrp, self.scaleHook, self.localOffGrp, ss=scale_skips)
+        connection.matrixConstraint(self.contBindGrp, self.scaleHook, self.localOffGrp, skipScale=scale_skips)
 
         self.rigJointsGrp = cmds.group(name="%s_rigJoints_grp" % self.suffix, em=True)
         self.defJointsGrp = cmds.group(name="%s_defJoints_grp" % self.suffix, em=True)
@@ -174,9 +174,9 @@ class Arm(object):
         cmds.select(d=True)
         self.limbPlug = cmds.joint(name="jPlug_%s" % self.suffix, p=self.collar_pos, radius=3)
         cmds.parent(self.limbPlug, self.limbGrp)
-        connection.matrixConstraint(self.limbPlug, self.contBindGrp, mo=True)
+        connection.matrixConstraint(self.limbPlug, self.contBindGrp, maintainOffset=True)
         if self.isLocal:
-            connection.matrixConstraint(self.limbPlug, self.localOffGrp, mo=True)
+            connection.matrixConstraint(self.limbPlug, self.localOffGrp, maintainOffset=True)
 
         # Shoulder Joints
         cmds.select(d=True)
@@ -298,7 +298,7 @@ class Arm(object):
         cmds.makeIdentity(self.j_def_hand, a=True)
 
         # parent them under the collar
-        connection.matrixConstraint(self.j_collar_end, self.rigJointsGrp, mo=False)
+        connection.matrixConstraint(self.j_collar_end, self.rigJointsGrp, maintainOffset=False)
         cmds.parent(self.j_ik_orig_up, self.rigJointsGrp)
         cmds.parent(self.j_ik_sc_up, self.rigJointsGrp)
         cmds.parent(self.j_ik_rp_up, self.rigJointsGrp)
@@ -576,7 +576,7 @@ class Arm(object):
         cmds.connectAttr("%s.outputTranslate" % decompose_fk_trans, "%s.translate" % self.midLockBridge_FK)
 
         cmds.parent(self.j_def_elbow, self.defMid)
-        connection.matrixConstraint(self.midLockCont.name, self.j_def_elbow, mo=False,
+        connection.matrixConstraint(self.midLockCont.name, self.j_def_elbow, maintainOffset=False,
                                     source_parent_cutoff=self.localOffGrp)
 
         # direct connection to the bridge
@@ -596,7 +596,7 @@ class Arm(object):
         cmds.connectAttr("%s.rigVis" % self.scaleGrp, "%s.v" % rp_ik_handle)
         cmds.parent(rp_ik_handle, self.nonScaleGrp)
         cmds.poleVectorConstraint(self.poleBridge, rp_ik_handle)
-        connection.matrixConstraint(self.poleCont.name, self.poleBridge, mo=False,
+        connection.matrixConstraint(self.poleCont.name, self.poleBridge, maintainOffset=False,
                                     source_parent_cutoff=self.localOffGrp)
         cmds.connectAttr("%s.rigVis" % self.scaleGrp, "%s.v" % self.poleBridge)
 
@@ -617,7 +617,7 @@ class Arm(object):
         cmds.connectAttr("%s.rigVis" % self.scaleGrp, "%s.v" % self.endLock)
         functions.align_to(self.endLock, self.j_def_hand, position=True, rotation=False)
 
-        connection.matrixConstraint(self.j_collar_end, self.startLock, sr=("y", "z"), mo=False)
+        connection.matrixConstraint(self.j_collar_end, self.startLock, skipRotate=("y", "z"), maintainOffset=False)
 
         distance_start = cmds.spaceLocator(name="distanceStart_%s" % self.suffix)[0]
         cmds.connectAttr("%s.rigVis" % self.scaleGrp, "%s.v" % distance_start)
@@ -650,7 +650,7 @@ class Arm(object):
         cmds.parent(sc_stretch_locs[:2] + rp_stretch_locs[:2], self.nonScaleGrp)
 
 
-        connection.matrixConstraint(self.handIkCont.name, self.j_ik_sc_low_end, st="xyz", ss="xyz", mo=False,
+        connection.matrixConstraint(self.handIkCont.name, self.j_ik_sc_low_end, skipTranslate="xyz", skipScale="xyz", maintainOffset=False,
                                     source_parent_cutoff=self.localOffGrp)
         # # pole vector pinning
         pin_blender = cmds.createNode("blendColors", name="%s_polePin_Blender" % self.suffix)
@@ -716,12 +716,12 @@ class Arm(object):
 
     def create_fk_setup(self):
 
-        connection.matrixConstraint(self.shoulderCont.name, self.j_def_collar, mo=True,
+        connection.matrixConstraint(self.shoulderCont.name, self.j_def_collar, maintainOffset=True,
                                     source_parent_cutoff=self.localOffGrp)
-        connection.matrixConstraint(self.upArmFkCont.name, self.j_fk_up, mo=True, source_parent_cutoff=self.localOffGrp)
-        connection.matrixConstraint(self.lowArmFkCont.name, self.j_fk_low, mo=True,
+        connection.matrixConstraint(self.upArmFkCont.name, self.j_fk_up, maintainOffset=True, source_parent_cutoff=self.localOffGrp)
+        connection.matrixConstraint(self.lowArmFkCont.name, self.j_fk_low, maintainOffset=True,
                                     source_parent_cutoff=self.localOffGrp)
-        connection.matrixConstraint(self.handFkCont.name, self.j_fk_low_end, mo=True,
+        connection.matrixConstraint(self.handFkCont.name, self.j_fk_low_end, maintainOffset=True,
                                     source_parent_cutoff=self.localOffGrp)
 
         cmds.parent(self.handFkCont.get_offsets()[-1], self.lowArmFkCont.name)
@@ -743,7 +743,7 @@ class Arm(object):
         connection.matrix_switch(self.midLockBridge_IK, self.midLockBridge_FK, self.defMid,
                                 "%s.FK_IK" % self.switchFkIkCont.name)
 
-        connection.matrixConstraint(self.defEnd, self.j_def_hand, ss="xyz", mo=False)
+        connection.matrixConstraint(self.defEnd, self.j_def_hand, skipScale="xyz", maintainOffset=False)
 
         cmds.connectAttr("%s.FK_IK_Reverse" % self.switchFkIkCont.name, "%s.v" % self.upArmFkCont.name)
         cmds.connectAttr("%s.FK_IK_Reverse" % self.switchFkIkCont.name, "%s.v" % self.lowArmFkCont.name)
@@ -751,7 +751,7 @@ class Arm(object):
         cmds.connectAttr("%s.FK_IK" % self.switchFkIkCont.name, "%s.v" % self.poleCont.name)
         cmds.connectAttr("%s.FK_IK" % self.switchFkIkCont.name, "%s.v" % self.handIkCont.name)
 
-        connection.matrixConstraint(self.j_def_hand, self.switchFkIkCont.name, mo=True)
+        connection.matrixConstraint(self.j_def_hand, self.switchFkIkCont.name, maintainOffset=True)
 
     def create_ribbons(self):
         # UPPER ARM RIBBON
