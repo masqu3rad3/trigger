@@ -107,7 +107,7 @@ class Surface(object):
             nmb = "" if len(self.inits) == 1 else nmb  # for backward compatibility
             j_def = cmds.joint(name="%s%s_jnt" % (self.suffix, nmb))
             self.deformerJoints.append(j_def)
-            cmds.connectAttr("{0}.rigVis".format(self.scaleGrp), "{0}.v".format(j_def))
+            cmds.connectAttr("{0}.rigVis".format(self.scaleGrp), "{0}.v".format(j_def), force=True)
             # Create connection groups
             j_def_offset = functions.create_offset_group(j_def, "offset")
             j_def_bind = functions.create_offset_group(j_def, "bind")
@@ -143,7 +143,7 @@ class Surface(object):
             # functions.alignTo(self.cont_pos, self.rootInit, position=True, rotation=True)
             functions.colorize(_cont, self.colorCodes[0])
 
-            cmds.connectAttr("%s.contVis" % self.scaleGrp, "%s.v" % _cont_offset)
+            cmds.connectAttr("%s.contVis" % self.scaleGrp, "%s.v" % _cont_offset, force=True)
             cmds.parent(_cont_offset, self.controllerGrp)
 
             if self.controllerSurface:
@@ -152,7 +152,7 @@ class Surface(object):
                 # connection.matrixConstraint(follicle, self.cont_bind, mo=False, sr="xyz", ss="xyz")
                 _sr = "xyz" if self.rotateObject else None
                 if self.bindScales:
-                    cmds.connectAttr("%s.scale" % self.scaleGrp, "%s.scale" % follicle)
+                    cmds.connectAttr("%s.scale" % self.scaleGrp, "%s.scale" % follicle, force=True)
                     _ss = None
                 else:
                     _ss = "xyz"
@@ -160,7 +160,7 @@ class Surface(object):
                 connection.matrixConstraint(follicle, _cont_bind, mo=_mo, sr=_sr, ss=_ss)
 
                 cmds.parent(follicle, self.nonScaleGrp)
-                cmds.connectAttr("%s.rigVis" % self.scaleGrp, "%s.v" % follicle)
+                cmds.connectAttr("%s.rigVis" % self.scaleGrp, "%s.v" % follicle, force=True)
 
             if self.rotateObject:
                 connection.matrixConstraint(self.rotateObject, _cont_bind, mo=True, st="xyz", ss="xyz")
@@ -168,11 +168,11 @@ class Surface(object):
 
             negate_multMatrix = cmds.createNode("multMatrix", name="negate_multMatrix_%s" % self.suffix)
             negate_decompose = cmds.createNode("decomposeMatrix", name="negate_decompose_%s" % self.suffix)
-            cmds.connectAttr("%s.inverseMatrix" % _cont, "%s.matrixIn[0]" % negate_multMatrix)
-            cmds.connectAttr("%s.matrixSum" % negate_multMatrix, "%s.inputMatrix" % negate_decompose)
-            cmds.connectAttr("%s.outputTranslate" % negate_decompose, "%s.translate" % _cont_negate)
-            cmds.connectAttr("%s.outputRotate" % negate_decompose, "%s.rotate" % _cont_negate)
-            cmds.connectAttr("%s.outputScale" % negate_decompose, "%s.scale" % _cont_negate)
+            cmds.connectAttr("%s.inverseMatrix" % _cont, "%s.matrixIn[0]" % negate_multMatrix, force=True)
+            cmds.connectAttr("%s.matrixSum" % negate_multMatrix, "%s.inputMatrix" % negate_decompose, force=True)
+            cmds.connectAttr("%s.outputTranslate" % negate_decompose, "%s.translate" % _cont_negate, force=True)
+            cmds.connectAttr("%s.outputRotate" % negate_decompose, "%s.rotate" % _cont_negate, force=True)
+            cmds.connectAttr("%s.outputScale" % negate_decompose, "%s.scale" % _cont_negate, force=True)
 
             if self.isPlugOnLocal:
                 pass  # nothing to connect because plug is local joint itself
@@ -182,7 +182,7 @@ class Surface(object):
             # Direct connection between controller and joint
             for attr in "trs":
                 for axis in "xyz":
-                    cmds.connectAttr("%s.%s%s" % (_cont, attr, axis), "%s.%s%s" % (joint_bind, attr, axis))
+                    cmds.connectAttr("%s.%s%s" % (_cont, attr, axis), "%s.%s%s" % (joint_bind, attr, axis), force=True)
 
     def createLimb(self):
         self.createGrp()

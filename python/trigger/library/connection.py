@@ -1,5 +1,5 @@
 """connections / constrains / attachments / procedural movements"""
-
+import logging
 from maya.api import OpenMaya
 
 from trigger.core import validate
@@ -8,10 +8,12 @@ from trigger.library import api
 from trigger.library import interface
 from trigger.library import attribute
 from trigger.library import arithmetic as op
+from trigger.library.functions import align_to
 from maya import cmds
 
 validate.plugin("matrixNodes")
 
+LOG = logging.getLogger(__name__)
 
 def connections(node,
                 exclude_nodes=None,
@@ -180,8 +182,11 @@ def matrixConstraint(drivers,
     Returns: (Tuple) mult_matrix, decompose_matrix
     """
 
-    is_multi = True if type(drivers) == list else False
+    is_multi = True if isinstance(drivers, list) else False
     is_joint = True if cmds.objectType(driven) == "joint" else False
+    if is_multi and source_parent_cutoff:
+        LOG.warning("source_parent_cutoff is not supported for multiple inputs. Ignoring it.")
+        source_parent_cutoff = None
     parents = cmds.listRelatives(driven, parent=True)
     parent_of_driven = parents[0] if parents else None
     next_index = -1
@@ -209,7 +214,6 @@ def matrixConstraint(drivers,
 
         else:
             driver_world_matrix = api.get_m_dagpath(drivers).inclusiveMatrix()
-
         local_offset = driven_world_matrix * driver_world_matrix.inverse()
         next_index += 1
         cmds.setAttr("%s.matrixIn[%i]" % (mult_matrix, next_index),
@@ -241,9 +245,10 @@ def matrixConstraint(drivers,
                     "{0}.outputTranslate{1}".format(
                         decompose_matrix, attr),
                     "{0}.translate{1}".format(driven, attr))
-    if not sr:
-        # Joint rotations needs to be handled
-        # differently because of the jointOrientation
+
+    # it the driven is a joint, the rotations needs to be handled differently
+    # is there any rotation attribute to connect?
+    if not sr or len(sr) != 3:
         if is_joint:
             # store the orientation values
             rot_index = 0
@@ -252,15 +257,15 @@ def matrixConstraint(drivers,
 
             # create the compensation node strand
             rotation_compose = cmds.createNode(
-                "composeMatrix", name="{}_rotComposeMatrix".format(prefix))
+                "composeMatrix", name="{}_rotateComposeMatrix".format(prefix))
             rotation_first_mult_matrix = cmds.createNode(
-                "multMatrix", name="{}_firstRotMultMatrix".format(prefix))
+                "multMatrix", name="{}_firstRotateMultMatrix".format(prefix))
             rotation_inverse_matrix = cmds.createNode(
-                "inverseMatrix", name="{}_rotInverseMatrix".format(prefix))
+                "inverseMatrix", name="{}_rotateInverseMatrix".format(prefix))
             rotation_sec_mult_matrix = cmds.createNode(
-                "multMatrix", name="{}_secRotMultMatrix".format(prefix))
+                "multMatrix", name="{}_secRotateMultMatrix".format(prefix))
             rotation_decompose_matrix = cmds.createNode(
-                "decomposeMatrix", name="{}_rotDecomposeMatrix".format(prefix))
+                "decomposeMatrix", name="{}_rotateDecomposeMatrix".format(prefix))
 
             # set values and make connections for rotation strand
             cmds.setAttr("{}.inputRotate".format(rotation_compose),
@@ -271,111 +276,46 @@ def matrixConstraint(drivers,
 
             if parent_of_driven:
                 rot_index += 1
-                cmds.connectAttr("{}.worldMatrix[0]".format(parent_of_driven),
+                cmds.connectAttr("%s.worldMatrix[0]" % parent_of_driven,
                                  "%s.matrixIn[%i]" % (
-                                     rotation_first_mult_matrix, rot_index))
-            cmds.connectAttr("{}.matrixSum".format(rotation_first_mult_matrix),
-                             "{}.inputMatrix".format(rotation_inverse_matrix))
+                                     rotation_first_mult_matrix,
+                                     rot_index))
+            cmds.connectAttr("%s.matrixSum" % rotation_first_mult_matrix,
+                             "%s.inputMatrix" % rotation_inverse_matrix)
 
-            cmds.connectAttr(out_plug,
-                             "%s.matrixIn[%i]" % (
-                                 rotation_sec_mult_matrix, second_index))
+            cmds.connectAttr(out_plug, "%s.matrixIn[%i]" % (
+                rotation_sec_mult_matrix, second_index))
 
             if source_parent_cutoff:
                 second_index += 1
                 cmds.connectAttr("{}.worldInverseMatrix".format(
-                    source_parent_cutoff), "%s.matrixIn[%i]" % (
-                                     rotation_sec_mult_matrix, second_index))
+                    source_parent_cutoff),
+                    "%s.matrixIn[%i]" %
+                    (rotation_sec_mult_matrix, second_index))
 
             second_index += 1
             cmds.connectAttr("{}.outputMatrix".format(
-                rotation_inverse_matrix), "%s.matrixIn[%i]" % (
-                rotation_sec_mult_matrix, second_index))
-            cmds.connectAttr("{}.matrixSum".format(rotation_sec_mult_matrix),
-                             "{}.inputMatrix".format(
-                                 rotation_decompose_matrix))
-            cmds.connectAttr("{}.outputRotate".format(
-                                 rotation_decompose_matrix),
-                             "{}.rotate".format(driven))
+                rotation_inverse_matrix),
+                "%s.matrixIn[%i]" %
+                (rotation_sec_mult_matrix, second_index))
+            cmds.connectAttr("{}.matrixSum".format(
+                rotation_sec_mult_matrix),
+                "{}.inputMatrix".format(rotation_decompose_matrix))
+            rotation_output_plug = "{}.outputRotate".format(rotation_decompose_matrix)
         else:
-            cmds.connectAttr("{}.outputRotate".format(decompose_matrix),
-                             "{}.rotate".format(driven))
-    else:
-        # Joint rotations needs to be handled
-        # differently because of the jointOrientation
-        if is_joint:
-            # if all rotation axis defined, don't create the strand
-            if len(sr) != 3:
-                # store the orientation values
-                rot_index = 0
-                second_index = 0
-                joint_orientation = cmds.getAttr("%s.jointOrient" % driven)[0]
+            rotation_output_plug = "{}.outputRotate".format(decompose_matrix)
 
-                # create the compensation node strand
-                rotation_compose = cmds.createNode(
-                    "composeMatrix",
-                    name="{}_rotateComposeMatrix".format(prefix))
-                rotation_first_mult_matrix = cmds.createNode(
-                    "multMatrix",
-                    name="{}_firstRotateMultMatrix".format(prefix))
-                rotation_inverse_matrix = cmds.createNode(
-                    "inverseMatrix",
-                    name="{}_rotateInverseMatrix".format(prefix))
-                rotation_sec_mult_matrix = cmds.createNode(
-                    "multMatrix",
-                    name="{}_secRotateMultMatrix".format(prefix))
-                rotation_decompose_matrix = cmds.createNode(
-                    "decomposeMatrix",
-                    name="{}_rotateDecomposeMatrix".format(prefix))
-
-                # set values and make connections for rotation strand
-                cmds.setAttr("{}.inputRotate".format(rotation_compose),
-                             *joint_orientation)
-                cmds.connectAttr("{}.outputMatrix".format(rotation_compose),
-                                 "%s.matrixIn[%i]" % (
-                                     rotation_first_mult_matrix, rot_index))
-
-                if parent_of_driven:
-                    rot_index += 1
-                    cmds.connectAttr("%s.worldMatrix[0]" % parent_of_driven,
-                                     "%s.matrixIn[%i]" % (
-                                         rotation_first_mult_matrix,
-                                         rot_index))
-                cmds.connectAttr("%s.matrixSum" % rotation_first_mult_matrix,
-                                 "%s.inputMatrix" % rotation_inverse_matrix)
-
-                cmds.connectAttr(out_plug, "%s.matrixIn[%i]" % (
-                    rotation_sec_mult_matrix, second_index))
-
-                if source_parent_cutoff:
-                    second_index += 1
-                    cmds.connectAttr("{}.worldInverseMatrix".format(
-                        source_parent_cutoff),
-                        "%s.matrixIn[%i]" %
-                        (rotation_sec_mult_matrix, second_index))
-
-                second_index += 1
-                cmds.connectAttr("{}.outputMatrix".format(
-                    rotation_inverse_matrix),
-                    "%s.matrixIn[%i]" %
-                    (rotation_sec_mult_matrix, second_index))
-                cmds.connectAttr("{}.matrixSum".format(
-                    rotation_sec_mult_matrix),
-                    "{}.inputMatrix".format(rotation_decompose_matrix))
-
-                for attr in "XYZ":
-                    if attr.lower() not in sr and attr.upper() not in sr:
-                        cmds.connectAttr("{0}.outputRotate{1}".format(
-                            rotation_decompose_matrix, attr),
-                            "{0}.rotate{1}".format(driven, attr))
-            else:
-                pass
+        # it All rotation attrs will be connected?
+        if not sr:
+            cmds.connectAttr(rotation_output_plug, "{}.rotate".format(driven))
         else:
             for attr in "XYZ":
                 if attr.lower() not in sr and attr.upper() not in sr:
-                    cmds.connectAttr("{0}.outputRotate{1}".format(
-                        decompose_matrix, attr),
+                    cmds.connectAttr(
+                        "{0}{1}".format(
+                            rotation_output_plug, attr),
                         "{0}.rotate{1}".format(driven, attr))
+
     if not ss:
         cmds.connectAttr("{}.outputScale".format(decompose_matrix),
                          "{}.scale".format(driven))
