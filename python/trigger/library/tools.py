@@ -1,3 +1,5 @@
+# pylint: disable=consider-using-f-string
+
 from maya import cmds
 from trigger.library import functions, attribute, transform, connection
 from trigger.library import arithmetic as op
@@ -271,14 +273,23 @@ def mirrorController(axis="x", node_list=None, side_flags=("L_", "R_"), side_bia
         cmds.delete(tmp_cont)
 
 
-def whip(node_list, attr_holder=None, create_up_grp=True, offset=5, diminish=0.8, attr_list=None):
-    if type(node_list) is not list:
+# pylint: disable = too-many-arguments
+def whip(node_list,
+         attr_holder=None,
+         create_up_grp=True,
+         maximum_offset=5,
+         diminish=0.8,
+         attr_list=None
+         ):
+    """Create a whip like effect on the given nodes."""
+
+    if not isinstance(node_list, list):
         cmds.error("node_list must be a list variable. duh...")
     if len(node_list) < 2:
         cmds.error("node_list must contain at least 2 elements. duh...")
 
-    attr_holder = node_list[0] if not attr_holder else attr_holder
-    attr_list = ["rx", "ry", "rz"] if not attr_list else attr_list
+    attr_holder = attr_holder or node_list[0]
+    attr_list = attr_list or ["rx", "ry", "rz"]
 
     if create_up_grp:
         temp_list = []
@@ -288,17 +299,20 @@ def whip(node_list, attr_holder=None, create_up_grp=True, offset=5, diminish=0.8
             temp_list.append(up_node)
         node_list = [node_list[0]] + temp_list
 
+    cmds.addAttr(attr_holder, ln="delay", at="long", defaultValue=maximum_offset, k=False)
+    cmds.setAttr("{}.delay".format(attr_holder), edit=True, channelBox=True)
     cmds.addAttr(attr_holder, at="float", ln="powerDim", min=0, max=1, defaultValue=diminish, k=True)
 
     for attr in attr_list:
         cmds.addAttr(attr_holder, at="float", ln="offsetMult_%s" % attr, defaultValue=1, k=True)
 
     for nmb, node in enumerate(node_list[1:]):
-        print("*" * 30)
-        print(nmb, node, node_list[nmb])
-        print("*" * 30)
         for attr in attr_list:
             frame_cache = cmds.createNode("frameCache", name="%s_frameCache" % node)
+            choice = cmds.createNode("choice", name="%s_choice" % node)
+            cmds.connectAttr("%s.delay" % attr_holder, "%s.selector" % choice)
+            for x in range (0, maximum_offset+1):
+                cmds.connectAttr("{0}.past[{1}]".format(frame_cache, x), "{0}.input[{1}]".format(choice, x))
             power_mult = cmds.createNode("multDoubleLinear", name="%s_powerlose" % node)
             master_mult = cmds.createNode("multDoubleLinear", name="%s_%s_masterMult" % (attr_holder, attr))
 
@@ -309,7 +323,7 @@ def whip(node_list, attr_holder=None, create_up_grp=True, offset=5, diminish=0.8
             cmds.connectAttr("%s.%s" % (attr_holder, "offsetMult_%s" % attr), "%s.input2" % (master_mult))
 
             cmds.connectAttr("%s.output" % master_mult, "%s.stream" % frame_cache)
-            cmds.connectAttr("%s.past[%s]" % (frame_cache, int(offset)), "%s.%s" % (node, attr))
+            cmds.connectAttr("%s.output" % choice, "{0}.{1}".format(node, attr))
 
 
 def whip_refresh():
