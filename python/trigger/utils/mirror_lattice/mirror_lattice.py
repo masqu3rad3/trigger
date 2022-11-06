@@ -9,6 +9,25 @@ from maya.api import OpenMaya
 
 LOG = logging.getLogger(__name__)
 
+def unique_name(name, return_counter=False):
+    """
+    Searches the scene for match and returns a unique name for given name
+    Args:
+        name: (String) Name to query
+        return_counter: (Bool) If true, returns the next available number insted of the object name
+
+    Returns: (String) uniquename
+
+    """
+    base_name = name
+    idcounter = 0
+    while cmds.objExists(name):
+        name = "%s%s" % (base_name, str(idcounter + 1))
+        idcounter = idcounter + 1
+    if return_counter:
+        return idcounter
+    else:
+        return name
 
 def get_m_dagpath(node):
     """Return the API 2.0 dagPath of given node."""
@@ -189,13 +208,17 @@ class MirrorLattice(object):
         "include": "'{1}' in '{0}'",
     }
 
-    def __init__(self, meshes=None):
+    def __init__(self, meshes=None, set_from_selection=False):
         """Initialize the class."""
         self._side_keys = ["L_", "R_"]
         self._side_key_bias = "start"
-        if not isinstance(meshes, (list, tuple)):
-            meshes = [meshes]
-        self.meshes = meshes
+        self.meshes = meshes or []
+        if meshes and not set_from_selection:
+            if not isinstance(meshes, (list, tuple)):
+                meshes = [meshes]
+        if set_from_selection:
+            meshes = cmds.ls(sl=True, l=True)
+        self.meshes = meshes or []
         self.mirror_meshes = []
         self.mirror_axis = "x"
 
@@ -287,13 +310,14 @@ class MirrorLattice(object):
     def connect_lattices(self):
         """Connect slave lattice to the master"""
         master_points = cmds.ls("{}.pt[*]".format(self.master_lattice), flatten=True)
+        name = unique_name("multiMesh_cage" if len(self._base_names) > 1 else "{}_cage".format(self._base_names[0]))
 
         # create a polygon cage for the master lattice which will be used to hold the locators
         mesh_cage = cmds.polyCube(
             subdivisionsWidth=self._divisions[0] - 1,
             subdivisionsHeight=self._divisions[1] - 1,
             subdivisionsDepth=self._divisions[2] - 1,
-            name="{}_cage".format(self.meshes),
+            name=name,
             constructionHistory=False,
         )[0]
         cmds.matchTransform(mesh_cage, self.master_base)
@@ -352,7 +376,7 @@ class MirrorLattice(object):
 
     def _create_lattice(self, meshes):
         """Create a lattice on the mesh."""
-        name = "multiMesh" if len(meshes) > 1 else meshes[0]
+        name = unique_name("multiMesh" if len(meshes) > 1 else self._base_names[0])
         deformer, points, base = cmds.lattice(
             meshes,
             divisions=self._divisions,
@@ -367,16 +391,19 @@ class MirrorLattice(object):
     def _find_mirror_mesh_name(self, mesh):
         """Find the mirror mesh in the scene."""
 
+        # temporarily remove the long name
+        _short_name = mesh.split("|")[-1]
+        print(_short_name)
         # find the mirror mesh using the mirror keys and bias
         if eval(
-            self.bias_dict[self._side_key_bias].format(mesh, self._side_keys[0])
+            self.bias_dict[self._side_key_bias].format(_short_name, self._side_keys[0])
         ):
-            self._base_names.append(mesh.replace(self._side_keys[0], ""))
+            self._base_names.append(_short_name.replace(self._side_keys[0], ""))
             return mesh.replace(self._side_keys[0], self._side_keys[1])
         elif eval(
-            self.bias_dict[self._side_key_bias].format(mesh, self._side_keys[1])
+            self.bias_dict[self._side_key_bias].format(_short_name, self._side_keys[1])
         ):
-            self._base_names.append(mesh.replace(self._side_keys[1], ""))
+            self._base_names.append(_short_name.replace(self._side_keys[1], ""))
             return mesh.replace(self._side_keys[1], self._side_keys[0])
         else:
             return None
@@ -430,7 +457,7 @@ class MirrorLattice(object):
         parsed_array[axis_index] = mirror_value
         return parsed_array
 
-    def run(self):
+    def create(self):
         """Run the class."""
         if not self.validate_meshes():
             return

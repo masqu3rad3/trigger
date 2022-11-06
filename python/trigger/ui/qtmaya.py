@@ -1,6 +1,5 @@
 """Qt related Maya Utility Methods"""
 import sys
-from maya import cmds
 from maya import OpenMayaUI as omui
 from trigger.ui.Qt import QtWidgets, QtCore, QtCompat
 
