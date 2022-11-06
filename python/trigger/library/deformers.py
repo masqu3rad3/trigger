@@ -3,7 +3,7 @@
 from maya import cmds
 import maya.api.OpenMaya as api
 from trigger.core.decorators import undo, keepselection
-from trigger.library import functions, transform
+from trigger.library import functions, transform, attribute
 from trigger.library import naming
 from trigger.core import compatibility as compat
 
@@ -438,3 +438,29 @@ def create_wrap(influence, surface, **kwargs):
 
     cmds.connectAttr('%s.dropoff' % influence, '%s.dropoff[0]' % wrap_node)
     return wrap_node, base
+
+
+def add_object_to_lattice(obj, lattice_deformer):
+    """
+    Add the object to the lattice deformer.
+
+    This function does not rely on deformer sets which makes the assignment
+    possible where component tags are enabled in Maya versions 2022+
+    """
+
+    # create a duplicate of the shape. Make the duplicate final, the old one orig
+    # this is in order to keep the incoming connections
+    final_shape = cmds.listRelatives(obj, shapes=True)[0]
+    orig_shape = cmds.rename(final_shape, "{0}Orig".format(final_shape))
+    dup_transform = cmds.duplicate(obj)[0]
+    dup_shape = cmds.listRelatives(dup_transform, shapes=True)[0]
+    final_shape = cmds.rename(dup_shape, final_shape)
+    cmds.parent(final_shape, obj, r=True, s=True)
+    cmds.delete(dup_transform)
+    cmds.setAttr("{}.intermediateObject".format(orig_shape), 1)
+
+    next_index = attribute.get_next_index("{}.originalGeometry".format(lattice_deformer))
+    cmds.connectAttr("{}.worldMesh[0]".format(orig_shape),
+                     "{0}.input[{1}].inputGeometry".format(lattice_deformer, next_index))
+    cmds.connectAttr("{}.outMesh".format(orig_shape), "{0}.originalGeometry[{1}]".format(lattice_deformer, next_index))
+    cmds.connectAttr("{0}.outputGeometry[{1}]".format(lattice_deformer, next_index), "{}.inMesh".format(final_shape))
