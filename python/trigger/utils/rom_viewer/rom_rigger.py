@@ -53,6 +53,24 @@ class RomRigger(object):
         with open(file_path, 'r') as file:
             return file.read()
 
+    def set_tracker_sizes(self, value):
+        """Set the size of all trackers"""
+        for tracker in self.trackers:
+            tracker.size = value
+
+    def set_tracker_fonts(self, font):
+        """Set the font of all trackers"""
+        for tracker in self.trackers:
+            tracker.font = font
+
+    def cascade_trackers(self):
+        """Cascade the trackers"""
+        total_y_offset = 0
+        for nmb, tracker in enumerate(self.trackers):
+            if nmb:
+                total_y_offset -= tracker.size
+            tracker.set_position((0, total_y_offset, 0))
+
 class Tracker(object):
     """Data Class for trackers"""
     def __init__(self, index):
