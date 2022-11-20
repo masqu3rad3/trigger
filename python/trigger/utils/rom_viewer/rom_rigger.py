@@ -10,14 +10,23 @@ LOG = logging.getLogger(__name__)
 def create_type():
     """Create a 3d Type and return relevant nodes"""
     # subtract the current state and previous state to get the created type nodes
-    orig = cmds.ls()
-    cmds.CreatePolygonType()
-    type_nodes = [x for x in cmds.ls() if x not in orig]
-    type_node = [x for x in type_nodes if cmds.objectType(x) == "type"][0]
-    type_extrude = [x for x in type_nodes if cmds.objectType(x) == "typeExtrude"][0]
-    type_shape = [x for x in type_nodes if cmds.objectType(x) == "mesh"][0]
-    type_transform = cmds.listRelatives(type_shape, parent=True)[0]
-    return type_node, type_transform, type_extrude
+    transform = cmds.polyPlane(constructionHistory=False)[0]
+    mesh = cmds.listRelatives(transform, children=True)[0]
+
+    type_node = cmds.createNode("type")
+    type_extrude = cmds.createNode("typeExtrude")
+    cmds.setAttr("{}.extrudeDivisions".format(type_extrude), 1)
+
+    cmds.connectAttr("time1.outTime", "{}.time".format(type_node))
+    cmds.connectAttr("{}.outputMesh".format(type_node), "{}.inputMesh".format(type_extrude))
+    cmds.connectAttr("{}.vertsPerChar".format(type_node), "{}.vertsPerChar".format(type_extrude))
+
+    cmds.connectAttr("{}.outputMesh".format(type_extrude), "{}.inMesh".format(mesh))
+
+    cmds.polyTriangulate(mesh, constructionHistory=True)
+    cmds.polySoftEdge(mesh, angle=30, constructionHistory=True)
+    cmds.select(deselect=True)
+    return type_node, transform, type_extrude
 
 class RomRigger(object):
     def __init__(self):
