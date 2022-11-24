@@ -238,7 +238,7 @@ def colorize(node_list, index=None, custom_color=None, shape=True):
         else:
             LOG.error("Colorize error... Index flag must be integer or string('L', 'R', 'C')", proceed=False)
         if shape:
-            process_nodes = cmds.listRelatives(node, s=True) or [node]
+            process_nodes = cmds.listRelatives(node, s=True) or []
         else:
             process_nodes = [node]
 
