@@ -151,7 +151,7 @@ class Eye(object):
         #     functions.alignTo(eye_jnt, self.inits[0], position=False, rotation=True)
         #     cmds.makeIdentity(eye_jnt, a=True)
         if not self.useRefOrientation:
-            joint.orient_joints(self.deformerJoints, worldUpAxis=(self.look_axis), up_axis=(0, 1, 0), reverseAim=self.sideMult, reverseUp=self.sideMult)
+            joint.orient_joints(self.deformerJoints, world_up_axis=(self.look_axis), up_axis=(0, 1, 0), reverse_aim=self.sideMult, reverse_up=self.sideMult)
 
         cmds.parent(eye_offset, self.jointGrp)
 

@@ -109,7 +109,7 @@ class Fk(object):
             self.deformerJoints.append(jnt)
 
         if not self.useRefOrientation:
-            joint.orient_joints(self.deformerJoints, worldUpAxis=(self.look_axis), up_axis=(0, 1, 0), reverseAim=self.sideMult, reverseUp=self.sideMult)
+            joint.orient_joints(self.deformerJoints, world_up_axis=(self.look_axis), up_axis=(0, 1, 0), reverse_aim=self.sideMult, reverse_up=self.sideMult)
         else:
             for x in range (len(self.deformerJoints)):
                 functions.align_to(self.deformerJoints[x], self.inits[x], position=True, rotation=True)
@@ -300,7 +300,7 @@ class Guides(object):
             self.guideJoints.append(jnt)
 
         # set orientation of joints
-        joint.orient_joints(self.guideJoints, worldUpAxis=self.lookVector, up_axis=(0, 1, 0), reverseAim=self.sideMultiplier, reverseUp=self.sideMultiplier)
+        joint.orient_joints(self.guideJoints, world_up_axis=self.lookVector, up_axis=(0, 1, 0), reverse_aim=self.sideMultiplier, reverse_up=self.sideMultiplier)
 
     def define_attributes(self):
         # set joint side and type attributes

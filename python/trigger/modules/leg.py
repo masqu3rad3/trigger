@@ -114,8 +114,8 @@ class Leg(object):
         self.sockets.append(self.j_def_hip)
 
         if not self.useRefOrientation:
-            joint.orient_joints([self.jDef_legRoot, self.j_def_hip], worldUpAxis=om.MVector(self.mirror_axis),
-                                    reverseAim=self.sideMult)
+            joint.orient_joints([self.jDef_legRoot, self.j_def_hip], world_up_axis=om.MVector(self.mirror_axis),
+                                reverse_aim=self.sideMult)
         else:
             functions.align_to(self.jDef_legRoot, self.leg_root_ref, position=True, rotation=True)
             cmds.makeIdentity(self.jDef_legRoot, a=True)
@@ -166,7 +166,7 @@ class Leg(object):
         # orientations
         if not self.useRefOrientation:
             joint.orient_joints([self.j_ik_orig_root, self.j_ik_orig_knee, self.j_ik_orig_end],
-                                    worldUpAxis=om.MVector(self.mirror_axis), reverseAim=self.sideMult)
+                                world_up_axis=om.MVector(self.mirror_axis), reverse_aim=self.sideMult)
 
         else:
             functions.align_to(self.j_ik_orig_root, self.hip_ref, position=True, rotation=True)
@@ -178,7 +178,7 @@ class Leg(object):
 
         if not self.useRefOrientation:
             joint.orient_joints([self.j_ik_sc_root, self.j_ik_sc_knee, self.j_ik_sc_end],
-                                    worldUpAxis=om.MVector(self.mirror_axis), reverseAim=self.sideMult)
+                                world_up_axis=om.MVector(self.mirror_axis), reverse_aim=self.sideMult)
         else:
             functions.align_to(self.j_ik_sc_root, self.hip_ref, position=True, rotation=True)
             cmds.makeIdentity(self.j_ik_sc_root, a=True)
@@ -188,7 +188,7 @@ class Leg(object):
             cmds.makeIdentity(self.j_ik_sc_end, a=True)
 
         if not self.useRefOrientation:
-            joint.orient_joints([self.j_ik_rp_root, self.j_ik_rp_knee, self.j_ik_rp_end], worldUpAxis=om.MVector(self.mirror_axis), reverseAim=self.sideMult)
+            joint.orient_joints([self.j_ik_rp_root, self.j_ik_rp_knee, self.j_ik_rp_end], world_up_axis=om.MVector(self.mirror_axis), reverse_aim=self.sideMult)
 
 
         else:
@@ -200,8 +200,8 @@ class Leg(object):
             cmds.makeIdentity(self.j_ik_rp_end, a=True)
 
         if not self.useRefOrientation:
-            joint.orient_joints([self.j_ik_foot, self.j_ik_ball, self.j_ik_toe], worldUpAxis=om.MVector(self.mirror_axis),
-                                    reverseAim=self.sideMult)
+            joint.orient_joints([self.j_ik_foot, self.j_ik_ball, self.j_ik_toe], world_up_axis=om.MVector(self.mirror_axis),
+                                reverse_aim=self.sideMult)
         else:
             functions.align_to(self.j_ik_foot, self.foot_ref, position=True, rotation=True)
             cmds.makeIdentity(self.j_ik_foot, a=True)
@@ -220,7 +220,7 @@ class Leg(object):
 
         if not self.useRefOrientation:
             joint.orient_joints([self.jfk_root, self.jfk_knee, self.jfk_foot, self.jfk_ball, self.jfk_toe],
-                                    worldUpAxis=om.MVector(self.mirror_axis), reverseAim=self.sideMult)
+                                world_up_axis=om.MVector(self.mirror_axis), reverse_aim=self.sideMult)
         else:
             functions.align_to(self.jfk_root, self.hip_ref, position=True, rotation=True)
             cmds.makeIdentity(self.jfk_root, a=True)
@@ -1236,7 +1236,7 @@ class Guides(object):
         hip = cmds.joint(p=hipVec, name=("jInit_Hip_%s" % self.suffix))
         knee = cmds.joint(p=kneeVec, name=("jInit_Knee_%s" % self.suffix))
         foot = cmds.joint(p=footVec, name=("jInit_Foot_%s" % self.suffix))
-        joint.orient_joints([root, hip, knee, foot], worldUpAxis=self.mirrorVector, up_axis=(0, 1, 0), reverseAim=self.sideMultiplier)
+        joint.orient_joints([root, hip, knee, foot], world_up_axis=self.mirrorVector, up_axis=(0, 1, 0), reverse_aim=self.sideMultiplier)
 
         ball = cmds.joint(p=ballVec, name=("jInit_Ball_%s" % self.suffix))
         toe = cmds.joint(p=toeVec, name=("jInit_Toe_%s" % self.suffix))
@@ -1254,7 +1254,7 @@ class Guides(object):
         cmds.parent(bankin, foot)
         cmds.parent(bankout, foot)
 
-        joint.orient_joints([ball, toe], worldUpAxis=self.mirrorVector, up_axis=(0, 1, 0), reverseAim=self.sideMultiplier)
+        joint.orient_joints([ball, toe], world_up_axis=self.mirrorVector, up_axis=(0, 1, 0), reverse_aim=self.sideMultiplier)
 
         # Update the guideJoints list
         self.guideJoints = [root, hip, knee, foot, ball, toe, bankout, bankin, toepv, heelpv]

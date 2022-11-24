@@ -197,7 +197,7 @@ class Split_shapes(weights.Weights):
         ctrl.update_ui()
 
         def prepare_bs():
-            sel, msg = selection.validate(min=1, max=1, meshesOnly=True, transforms=True, fullPath=False)
+            sel, msg = selection.validate(minimum=1, maximum=1, meshes_only=True, transforms=True, full_path=False)
             if not sel:
                 feedback.Feedback().pop_info(title="Selection Error", text=msg, critical=True)
                 return

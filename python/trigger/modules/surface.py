@@ -241,8 +241,8 @@ class Guides(object):
         # Update the guideJoints list
 
         # set orientation of joints
-        joint.orient_joints(self.guideJoints, worldUpAxis=self.upVector, up_axis=(0, 1, 0),
-                                reverseAim=self.sideMultiplier, reverseUp=self.sideMultiplier)
+        joint.orient_joints(self.guideJoints, world_up_axis=self.upVector, up_axis=(0, 1, 0),
+                            reverse_aim=self.sideMultiplier, reverse_up=self.sideMultiplier)
 
     def define_attributes(self):
         # set joint side and type attributes

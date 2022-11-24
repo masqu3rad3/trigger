@@ -126,7 +126,7 @@ class Node_presets(object):
         layout.addRow(save_current_lbl, savebox_lay)
 
         def get_nodes():
-            sel, msg = selection.validate(min=1, max=None, meshesOnly=False, transforms=False)
+            sel, msg = selection.validate(minimum=1, maximum=None, meshes_only=False, transforms=False)
             if sel:
                 # remove the items that is already in there
                 existing_list = nodes_listbox.listItemNames()

@@ -139,7 +139,7 @@ class Head(object):
         self.guideJoints.append(cmds.joint(name="jTemp_HeadEnd", p=self.headEndPivPos))
         ## orientations
         if not self.useRefOrientation:
-            joint.orient_joints(self.guideJoints, worldUpAxis=(self.look_axis), up_axis=(0, 1, 0), reverseAim=self.sideMult, reverseUp=self.sideMult)
+            joint.orient_joints(self.guideJoints, world_up_axis=(self.look_axis), up_axis=(0, 1, 0), reverse_aim=self.sideMult, reverse_up=self.sideMult)
         else:
             for x in range (len(self.guideJoints[:-2])):
                 functions.align_to(self.guideJoints[x], self.neckNodes[x], position=True, rotation=True)
@@ -370,7 +370,7 @@ class Guides(object):
         self.guideJoints.append(headEnd)
 
         # Update the guideJoints list
-        joint.orient_joints(self.guideJoints, worldUpAxis=-self.lookVector, reverseAim=self.sideMultiplier, reverseUp=self.sideMultiplier)
+        joint.orient_joints(self.guideJoints, world_up_axis=-self.lookVector, reverse_aim=self.sideMultiplier, reverse_up=self.sideMultiplier)
 
         # set orientation of joints
 

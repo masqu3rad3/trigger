@@ -6,7 +6,7 @@ from trigger.library import arithmetic as ar
 
 def switch_connections(switch, override_switch, kill_nodes, switch_on_visibles, switch_on_invisibles):
     """
-    Creates visibility and nodeState connections between controllers and nodes
+    Create visibility and nodeState connections between controllers and nodes.
 
     Args:
         switch: (String) Attribute which will act as the on off switch. e.g. 'pref_cont.faceProxyMode'

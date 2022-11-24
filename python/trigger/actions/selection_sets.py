@@ -146,7 +146,7 @@ class Selection_sets(object):
             update_model()
 
         def get_selected(list_box_layout, mesh_only=True):
-            sel, msg = selection.validate(min=1, max=None, meshesOnly=False, transforms=False)
+            sel, msg = selection.validate(minimum=1, maximum=None, meshes_only=False, transforms=False)
             if sel:
                 # remove the items that is already in there
                 existing_list = list_box_layout.listItemNames()

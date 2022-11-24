@@ -1,4 +1,3 @@
-import logging
 import os
 import re
 import glob
@@ -12,24 +11,25 @@ def unique_name(name, return_counter=False):
     Searches the scene for match and returns a unique name for given name
     Args:
         name: (String) Name to query
-        return_counter: (Bool) If true, returns the next available number insted of the object name
+        return_counter: (Bool) If true, returns the next available number instead of the object name
 
     Returns: (String) uniquename
 
     """
     base_name = name
-    idcounter = 0
+    id_counter = 0
     while cmds.objExists(name):
-        name = "%s%s" % (base_name, str(idcounter + 1))
-        idcounter = idcounter + 1
+        name = "%s%s" % (base_name, str(id_counter + 1))
+        id_counter = id_counter + 1
     if return_counter:
-        return idcounter
+        return id_counter
     else:
         return name
 
 
 def unique_scene():
-    """Makes sure that everything is named uniquely. Returns list of renamed nodes and list of new names"""
+    """Make sure that everything is named uniquely.
+    Returns list of renamed nodes and list of new names"""
 
     collection = []
     for obj in cmds.ls():
@@ -67,7 +67,8 @@ def resolve_file_path(file_path, new_version, force=True):
     if not stripped_name.endswith("_v"):
         if force:
             return os.path.join(file_dir, "{0}_v{1}{2}".format(file_name, str(new_version).zfill(3), file_ext))
-        else: return None
+        else:
+            return None
     else:
         return os.path.join(file_dir, "{0}{1}{2}".format(stripped_name, str(new_version).zfill(3), file_ext))
 
@@ -90,8 +91,8 @@ def increment(file_path, force_version=True):
             return os.path.join(file_dir, "{0}_v001{1}".format(file_name, file_ext))
         else:
             return None
-    stripped_name = file_name if not version else file_name.replace("_v%s" %(str(version).zfill(3)), "_v{0}")
-    # check if this is has a proper version naming convention
+    stripped_name = file_name if not version else file_name.replace("_v%s" % (str(version).zfill(3)), "_v{0}")
+    # check if this has a proper version naming convention
     if "_v{0}" not in stripped_name:
         if force_version:
             parts = file_name.split(".")
@@ -118,10 +119,7 @@ def get_all_versions(file_path):
     if not version:
         return None
 
-    # stripped_name = file_name if not version else re.search("(.*)(%s)$" % str(version).zfill(3), file_name).groups()[0]
-    stripped_name = file_name if not version else file_name.replace("_v%s" %(str(version).zfill(3)), "_v{0}")
-    # search_template = "{0}{1}".format(stripped_name, file_ext)
-    # files_on_server = glob.glob(os.path.join(file_dir, "{0}*{1}".format(stripped_name, file_ext)))
+    stripped_name = file_name if not version else file_name.replace("_v%s" % (str(version).zfill(3)), "_v{0}")
     files_on_server = glob.glob(os.path.join(file_dir, "{0}{1}".format(stripped_name.format("*"), file_ext)))
     if not files_on_server:
         return None
@@ -138,16 +136,16 @@ def get_next_version(file_path):
         return file_path
     # if the given file path version does exist:
     if current_version in all_versions:
-        id = all_versions.index(current_version)
-        if id != len(all_versions)-1:
-            next_version = all_versions[id+1]
+        uid = all_versions.index(current_version)
+        if uid != len(all_versions)-1:
+            next_version = all_versions[uid+1]
         else:
             return file_path
     # if the given file path version is not in the disk
     else:
-        id = bisect_left(all_versions, current_version)
-        if id != len(all_versions)-1:
-            next_version = all_versions[id]
+        uid = bisect_left(all_versions, current_version)
+        if uid != len(all_versions)-1:
+            next_version = all_versions[uid]
         else:
             return file_path
     return resolve_file_path(file_path=file_path, new_version=next_version)
@@ -162,16 +160,16 @@ def get_previous_version(file_path):
         return file_path
     # if the given file path version does exist:
     if current_version in all_versions:
-        id = all_versions.index(current_version)
-        if id != 0:
-            prev_version = all_versions[id-1]
+        uid = all_versions.index(current_version)
+        if uid != 0:
+            prev_version = all_versions[uid-1]
         else:
             return file_path
     # if the given file path version is not in the disk
     else:
-        id = bisect_left(all_versions, current_version)
-        if id != 0:
-            prev_version = all_versions[id-1]
+        uid = bisect_left(all_versions, current_version)
+        if uid != 0:
+            prev_version = all_versions[uid-1]
         else:
             return file_path
     return resolve_file_path(file_path=file_path, new_version=prev_version)
@@ -185,8 +183,8 @@ def is_latest_version(file_path):
         return False
     if current_version not in all_versions:
         return False
-    id = all_versions.index(current_version)
-    if id == len(all_versions)-1:
+    uid = all_versions.index(current_version)
+    if uid == len(all_versions)-1:
         return True
     else:
         return False
@@ -210,7 +208,7 @@ def get_uuid(prefix="uuid", short=True, no_dashes=True):
     if no_dashes:
         _uuid = _uuid.replace("-", "")
     if prefix:
-        _uuid = "%s%s" %(prefix, _uuid)
+        _uuid = "%s%s" % (prefix, _uuid)
     return _uuid
 
 
@@ -227,12 +225,10 @@ def get_part_name(node_dag_path):
 
 
 def rename_skinclusters():
-    """Renames all skinclusters to match to the geometry names"""
+    """Rename all skinClusters to match to the geometry names."""
     all_skins = cmds.ls(type="skinCluster")
 
     for skin in all_skins:
-        mesh_name = cmds.listConnections("%s.outputGeometry" % skin, shapes=False , source=False, destination=True)[0]
-        sc_name = "%s_%s" %(mesh_name.split("|")[-1], "skinCluster")
+        mesh_name = cmds.listConnections("%s.outputGeometry" % skin, shapes=False, source=False, destination=True)[0]
+        sc_name = "%s_%s" % (mesh_name.split("|")[-1], "skinCluster")
         cmds.rename(skin, sc_name)
-
-

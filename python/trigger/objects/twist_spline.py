@@ -100,7 +100,7 @@ class TwistSpline(object):
         cmds.parent(IKjoints[0], self.nonScaleGrp)
 
         # ORIENT JOINTS PROPERLY
-        joint.orient_joints(IKjoints, worldUpAxis=(self.upAxis))
+        joint.orient_joints(IKjoints, world_up_axis=(self.upAxis))
 
         map(lambda x: cmds.setAttr("%s.displayLocalAxis" %x, True), IKjoints)
         # for j in IKjoints:
@@ -126,7 +126,7 @@ class TwistSpline(object):
             jnt = cmds.joint(p=place, name="jCont_spline_%s%i" %(name, index), radius=5, o=(0, 0, 0))
             contJoints.append(jnt)
 
-        joint.orient_joints(contJoints, worldUpAxis=(self.upAxis))
+        joint.orient_joints(contJoints, world_up_axis=(self.upAxis))
 
         cmds.select(d=True)
         cmds.parent(contJoints[1:], w=True)

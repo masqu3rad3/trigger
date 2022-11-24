@@ -1,9 +1,10 @@
 """Joint related common functions."""
 
 from maya import cmds
-import maya.api.OpenMaya as om
+from maya.api import OpenMaya
 
 from trigger.core import filelog
+
 log = filelog.Filelog(logname=__name__, filename="trigger_log")
 
 JOINT_TYPE_DICT = {
@@ -46,7 +47,6 @@ AXIS_CONVERSION_DICT = {
 }
 
 
-
 def set_joint_type(joint, type_name):
     """
     Sets Trigger Joint Type
@@ -59,26 +59,27 @@ def set_joint_type(joint, type_name):
     """
     if type_name in JOINT_TYPE_DICT.values():
         # get the key from the value. This is compatible with both python3 and python2
-        value_list = [0]+list(JOINT_TYPE_DICT.values())
+        value_list = [0] + list(JOINT_TYPE_DICT.values())
         type_int = value_list.index(type_name)
         cmds.setAttr("%s.type" % joint, type_int)
     else:
-        cmds.setAttr("%s.type" % joint , 18) # 18 is the other
+        cmds.setAttr("%s.type" % joint, 18)  # 18 is the other
         cmds.setAttr("%s.otherType" % joint, type_name, type="string")
 
-def get_joint_type(joint, skipErrors=True):
+
+def get_joint_type(joint, skip_errors=True):
     """
     Gets the joint type
     Args:
         joint: (String) source joint type
-        skipErrors: (Bool) If True, silently return if the type cannot be found, else throw error. Default True
+        skip_errors: (Bool) If True, silently return if the type cannot be found, else throw error. Default True
 
     Returns: (String) joint_type
 
     """
     type_int = cmds.getAttr("%s.type" % joint)
     if type_int not in JOINT_TYPE_DICT.keys():
-        if skipErrors:
+        if skip_errors:
             return
         else:
             log.error("Cannot detect joint type => %s" % joint)
@@ -87,6 +88,7 @@ def get_joint_type(joint, skipErrors=True):
     else:
         type_name = JOINT_TYPE_DICT[type_int]
     return type_name
+
 
 def set_joint_side(joint, side):
     """
@@ -107,63 +109,67 @@ def set_joint_side(joint, side):
     else:
         log.error("%s is not a valid side value" % side)
 
-def get_joint_side(joint, skipErrors=True):
+
+def get_joint_side(joint, skip_errors=True):
     """
     Gets the joint side
     Args:
         joint: (String) Joint to be queried
-        skipErrors: (Bool) If true, error will be silenced and return None
+        skip_errors: (Bool) If true, error will be silenced and return None
 
     Returns: (String) Side
 
     """
     side_int = cmds.getAttr("{0}.side".format(joint))
     if side_int not in JOINT_SIDE_DICT.keys():
-        if skipErrors:
+        if skip_errors:
             return
         else:
             log.error("Joint Side cannot not be detected (%s)" % joint)
     return JOINT_SIDE_DICT[side_int]
 
-def orient_joints(joint_list, aim_axis=(1.0, 0.0, 0.0), up_axis=(0.0, 1.0, 0.0), worldUpAxis=(0.0, 1.0, 0.0), reverseAim=1, reverseUp=1):
+
+def orient_joints(joint_list, aim_axis=(1.0, 0.0, 0.0), up_axis=(0.0, 1.0, 0.0), world_up_axis=(0.0, 1.0, 0.0),
+                  reverse_aim=1, reverse_up=1):
     """
     Orients joints. Alternative to maya's native joint orient method
     Args:
         joint_list: (list) Joints list. Order is important.
         aim_axis: (Tuple) Aim Axis of each joint default X
         up_axis: (Tuple) Up Axis of each joint default Y
-        worldUpAxis: (Tuple) Worls up axis default Y
-        reverseAim: (int) multiplier for aim. Default 1
-        reverseUp: (int) multiplier for reverseUp. Default 1
+        world_up_axis: (Tuple) Worls up axis default Y
+        reverse_aim: (int) multiplier for aim. Default 1
+        reverse_up: (int) multiplier for reverseUp. Default 1
 
     Returns:
 
     """
 
-    aim_axis = reverseAim * om.MVector(aim_axis)
-    up_axis = reverseUp * om.MVector(up_axis)
+    aim_axis = reverse_aim * OpenMaya.MVector(aim_axis)
+    up_axis = reverse_up * OpenMaya.MVector(up_axis)
 
     if len(joint_list) == 1:
         pass
         return
 
-
     for j in range(1, len(joint_list)):
         cmds.parent(joint_list[j], w=True)
 
-    for j in range (0, len(joint_list)):
+    for j in range(0, len(joint_list)):
 
         if not (j == (len(joint_list) - 1)):
-            aim_con = cmds.aimConstraint(joint_list[j + 1], joint_list[j], aim=aim_axis, upVector=up_axis, worldUpVector=worldUpAxis, worldUpType='vector', weight=1.0)
+            aim_con = cmds.aimConstraint(joint_list[j + 1], joint_list[j], aim=aim_axis, upVector=up_axis,
+                                         worldUpVector=world_up_axis, worldUpType='vector', weight=1.0)
             cmds.delete(aim_con)
             cmds.makeIdentity(joint_list[j], a=True)
     #
     # re-parent the hierarchy
-    for j in range (1, len(joint_list)):
+    for j in range(1, len(joint_list)):
         cmds.parent(joint_list[j], joint_list[j - 1])
 
     cmds.makeIdentity(joint_list[-1], a=True)
     cmds.setAttr("{0}.jointOrient".format(joint_list[-1]), 0, 0, 0)
+
 
 def identify(joint, modules_dictionary):
     """
@@ -185,6 +191,7 @@ def identify(joint, modules_dictionary):
     side = get_joint_side(joint)
     return joint_type, limb_type, side
 
+
 def get_rig_axes(joint):
     """
     Gets the axis information from the joint which should be written with initBonesClass when created or defined.
@@ -201,4 +208,3 @@ def get_rig_axes(joint):
     look_axis = [cmds.getAttr("%s.lookAxis%s" % (joint, dir)) for dir in "XYZ"]
 
     return tuple(up_axis), tuple(mirror_axis), tuple(look_axis)
-

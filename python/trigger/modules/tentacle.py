@@ -152,8 +152,8 @@ class Tentacle(object):
         self.guideJoints = [cmds.joint(p=api.get_world_translation(i)) for i in self.inits]
         # orientations
         if not self.useRefOrientation:
-            joint.orient_joints(self.guideJoints, worldUpAxis=(self.up_axis), up_axis=(0, 1, 0), reverseAim=self.sideMult,
-                                    reverseUp=self.sideMult)
+            joint.orient_joints(self.guideJoints, world_up_axis=(self.up_axis), up_axis=(0, 1, 0), reverse_aim=self.sideMult,
+                                reverse_up=self.sideMult)
         else:
             for x in range(len(self.guideJoints)):
                 functions.align_to(self.guideJoints[x], self.inits[x], position=True, rotation=True)
@@ -647,8 +647,8 @@ class Guides(object):
             self.guideJoints.append(tentacle_jnt)
 
         # set orientation of joints
-        joint.orient_joints(self.guideJoints, worldUpAxis=self.upVector, up_axis=(0, 1, 0),
-                                reverseAim=self.sideMultiplier, reverseUp=self.sideMultiplier)
+        joint.orient_joints(self.guideJoints, world_up_axis=self.upVector, up_axis=(0, 1, 0),
+                            reverse_aim=self.sideMultiplier, reverse_up=self.sideMultiplier)
 
     def define_attributes(self):
         # set joint side and type attributes

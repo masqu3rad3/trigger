@@ -407,7 +407,7 @@ class MainUI(QtWidgets.QDialog):
 
     def get_selected(self, line_edit, group=False):
         meshes_only=False if group else True
-        selected, msg = selection.validate(min=1, max=1, meshesOnly=meshes_only, groupsOnly=group, transforms=True, fullPath=False)
+        selected, msg = selection.validate(minimum=1, maximum=1, meshes_only=meshes_only, groups_only=group, transforms=True, full_path=False)
         if not selected:
             self.feed.pop_info(title="Selection Error", text=msg)
             return

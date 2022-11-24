@@ -5,7 +5,7 @@ from maya import cmds
 from PySide2 import QtWidgets, QtCore
 from trigger.core.decorators import keepselection, undo
 from trigger.library.controllers import Icon
-from trigger.library.tools import replace_curve, mirrorController
+from trigger.library.tools import replace_curve, mirror_controller
 
 from trigger.ui.qtmaya import getMayaMainWindow
 
@@ -70,7 +70,7 @@ class Makeup(object):
 
         for side in side_try_list:
             for bias in bias_try_list:
-                r = mirrorController(axis="x", node_list=None, side_flags=side, side_bias=bias, continue_on_fail=False)
+                r = mirror_controller(axis="x", node_list=None, side_flags=side, side_bias=bias, continue_on_fail=False)
                 if r == -1:
                     continue
                 else:

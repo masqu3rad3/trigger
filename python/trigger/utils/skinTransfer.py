@@ -31,7 +31,7 @@ def skinTransfer(source=None, target=None, continue_on_errors=False):
 
     if not source or not target:
         #Get selected objects and find the skin cluster on the first one.
-        sel, msg = selection.validate(min=2, max=2, meshesOnly=True, transforms=True)
+        sel, msg = selection.validate(minimum=2, maximum=2, meshes_only=True, transforms=True)
         if not sel:
             feedback.Feedback().pop_info(title="Selection Error", text=msg, critical=True)
             return

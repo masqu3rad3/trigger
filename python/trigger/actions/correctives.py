@@ -312,7 +312,7 @@ class Correctives(object):
             update_model()
 
         def get_rotation(x_widget, y_widget, z_widget):
-            sel, msg = selection.validate(min=1, max=1, meshesOnly=False, transforms=True)
+            sel, msg = selection.validate(minimum=1, maximum=1, meshes_only=False, transforms=True)
             if sel:
                 rotations = cmds.getAttr("%s.r" % sel[0])[0]
                 x_widget.setValue(rotations[0])
@@ -323,7 +323,7 @@ class Correctives(object):
                 feedback.Feedback().pop_info(title="Selection Error", text=msg, critical=True)
 
         def get_selected(update_widget, mesh_only=True):
-            sel, msg = selection.validate(min=1, max=1, meshesOnly=mesh_only, transforms=True)
+            sel, msg = selection.validate(minimum=1, maximum=1, meshes_only=mesh_only, transforms=True)
             if sel:
                 update_widget.setText(sel[0])
                 update_model()

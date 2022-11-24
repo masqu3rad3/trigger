@@ -141,7 +141,7 @@ class Zipper(object):
             return
 
         def get_selected_mesh(widget):
-            sel, msg = selection.validate(min=1, max=1, meshesOnly=True, transforms=True)
+            sel, msg = selection.validate(minimum=1, maximum=1, meshes_only=True, transforms=True)
             if sel:
                 widget.setText(sel[0])
                 ctrl.update_model()

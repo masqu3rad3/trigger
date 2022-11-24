@@ -188,8 +188,8 @@ class Arm(object):
         cmds.parent(self.j_def_collar, self.defJointsGrp)
 
         if not self.use_ref_orientation:
-            joint.orient_joints([self.j_def_collar, self.j_collar_end], worldUpAxis=self.look_axis, up_axis=(0, 1, 0),
-                                    reverseAim=self.sideMult, reverseUp=self.sideMult)
+            joint.orient_joints([self.j_def_collar, self.j_collar_end], world_up_axis=self.look_axis, up_axis=(0, 1, 0),
+                                reverse_aim=self.sideMult, reverse_up=self.sideMult)
         else:
             functions.align_to(self.j_def_collar, self.collar_ref, position=True, rotation=True)
             cmds.makeIdentity(self.j_def_collar, a=True)
@@ -225,8 +225,8 @@ class Arm(object):
 
         if not self.use_ref_orientation:
             joint.orient_joints([self.j_ik_orig_up, self.j_ik_orig_low, self.j_ik_orig_low_end],
-                                    worldUpAxis=self.look_axis, up_axis=(0, 1, 0), reverseAim=self.sideMult,
-                                    reverseUp=self.sideMult)
+                                world_up_axis=self.look_axis, up_axis=(0, 1, 0), reverse_aim=self.sideMult,
+                                reverse_up=self.sideMult)
         else:
             functions.align_to(self.j_ik_orig_up, self.shoulder_ref, position=True, rotation=True)
             cmds.makeIdentity(self.j_ik_orig_up, a=True)
@@ -239,8 +239,8 @@ class Arm(object):
 
         if not self.use_ref_orientation:
             joint.orient_joints([self.j_ik_sc_up, self.j_ik_sc_low, self.j_ik_sc_low_end],
-                                    worldUpAxis=self.look_axis,
-                                    up_axis=(0, 1, 0), reverseAim=self.sideMult, reverseUp=self.sideMult)
+                                world_up_axis=self.look_axis,
+                                up_axis=(0, 1, 0), reverse_aim=self.sideMult, reverse_up=self.sideMult)
         else:
             functions.align_to(self.j_ik_sc_up, self.shoulder_ref, position=True, rotation=True)
             cmds.makeIdentity(self.j_ik_sc_up, a=True)
@@ -253,8 +253,8 @@ class Arm(object):
 
         if not self.use_ref_orientation:
             joint.orient_joints([self.j_ik_rp_up, self.j_ik_rp_low, self.j_ik_rp_low_end],
-                                    worldUpAxis=self.look_axis,
-                                    up_axis=(0, 1, 0), reverseAim=self.sideMult, reverseUp=self.sideMult)
+                                world_up_axis=self.look_axis,
+                                up_axis=(0, 1, 0), reverse_aim=self.sideMult, reverse_up=self.sideMult)
         else:
             functions.align_to(self.j_ik_rp_up, self.shoulder_ref, position=True, rotation=True)
             cmds.makeIdentity(self.j_ik_rp_up, a=True)
@@ -272,8 +272,8 @@ class Arm(object):
         self.j_fk_low_end = cmds.joint(name="jFK_LowEnd_%s" % self.suffix, p=self.hand_pos, radius=2.0)
 
         if not self.use_ref_orientation:
-            joint.orient_joints([self.j_fk_up, self.j_fk_low, self.j_fk_low_end], worldUpAxis=self.look_axis,
-                                    up_axis=(0, 1, 0), reverseAim=self.sideMult, reverseUp=self.sideMult)
+            joint.orient_joints([self.j_fk_up, self.j_fk_low, self.j_fk_low_end], world_up_axis=self.look_axis,
+                                up_axis=(0, 1, 0), reverse_aim=self.sideMult, reverse_up=self.sideMult)
         else:
             functions.align_to(self.j_fk_up, self.shoulder_ref, position=True, rotation=True)
             cmds.makeIdentity(self.j_fk_up, a=True)
@@ -1065,8 +1065,8 @@ class Guides(object):
         self.guideJoints = [collar, shoulder, elbow, hand]
 
         # Orientation
-        joint.orient_joints(self.guideJoints, worldUpAxis=self.lookVector, up_axis=(0, 1, 0),
-                                reverseAim=self.sideMultiplier, reverseUp=self.sideMultiplier)
+        joint.orient_joints(self.guideJoints, world_up_axis=self.lookVector, up_axis=(0, 1, 0),
+                            reverse_aim=self.sideMultiplier, reverse_up=self.sideMultiplier)
 
     def define_attributes(self):
         joint.set_joint_type(self.guideJoints[0], "Collar")

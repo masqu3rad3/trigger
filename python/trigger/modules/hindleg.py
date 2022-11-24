@@ -193,9 +193,9 @@ class Hindleg(object):
         self.sockets.append(self.j_def_hindhip)
 
         if not self.useRefOrientation:
-            joint.orient_joints([self.j_def_hindleg_root, self.j_def_hindhip], worldUpAxis=self.look_axis,
-                                    up_axis=(0, 1, 0),
-                                    reverseAim=self.sideMult, reverseUp=self.sideMult)
+            joint.orient_joints([self.j_def_hindleg_root, self.j_def_hindhip], world_up_axis=self.look_axis,
+                                up_axis=(0, 1, 0),
+                                reverse_aim=self.sideMult, reverse_up=self.sideMult)
         else:
             functions.align_to(self.j_def_hindleg_root, self.hindleg_root_ref, position=True, rotation=True)
             cmds.makeIdentity(self.j_def_hindleg_root, a=True)
@@ -239,8 +239,8 @@ class Hindleg(object):
         if not self.useRefOrientation:
             joint.orient_joints(
                 [self.j_ik_hip, self.j_ik_stifle, self.j_ik_hock, self.j_ik_phalanges, self.j_ik_phalanges_tip],
-                worldUpAxis=self.look_axis, up_axis=(0, 1, 0), reverseAim=self.sideMult,
-                reverseUp=self.sideMult)
+                world_up_axis=self.look_axis, up_axis=(0, 1, 0), reverse_aim=self.sideMult,
+                reverse_up=self.sideMult)
         else:
             functions.align_to(self.j_ik_hip, self.hindhip_ref, position=True, rotation=True)
             cmds.makeIdentity(self.j_ik_hip, a=True)
@@ -269,8 +269,8 @@ class Hindleg(object):
         if not self.useRefOrientation:
             joint.orient_joints(
                 [self.j_fk_hip, self.j_fk_stifle, self.j_fk_hock, self.j_fk_phalanges, self.j_fk_phalanges_tip],
-                worldUpAxis=self.look_axis, up_axis=(0, 1, 0), reverseAim=self.sideMult,
-                reverseUp=self.sideMult)
+                world_up_axis=self.look_axis, up_axis=(0, 1, 0), reverse_aim=self.sideMult,
+                reverse_up=self.sideMult)
         else:
             functions.align_to(self.j_fk_hip, self.hindhip_ref, position=True, rotation=True)
             cmds.makeIdentity(self.j_fk_hip, a=True)
@@ -768,8 +768,8 @@ class Guides(object):
         self.guideJoints = [hindleg, hip, stifle, hock, toes, toetip]
 
         # Orientation
-        joint.orient_joints(self.guideJoints, worldUpAxis=self.lookVector, up_axis=(0, 1, 0),
-                                reverseAim=self.sideMultiplier, reverseUp=self.sideMultiplier)
+        joint.orient_joints(self.guideJoints, world_up_axis=self.lookVector, up_axis=(0, 1, 0),
+                            reverse_aim=self.sideMultiplier, reverse_up=self.sideMultiplier)
 
     def define_attributes(self):
         joint.set_joint_type(self.guideJoints[0], "HindlegRoot")
