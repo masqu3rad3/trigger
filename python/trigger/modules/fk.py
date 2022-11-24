@@ -135,7 +135,7 @@ class Fk(object):
             functions.align_to_alter(cont, jnt, 2)
             # functions.alignTo(cont, jnt, position=True, rotation=True)
 
-            cont_OFF = functions.create_offset_group(cont, "OFF", freezeTransform=True)
+            cont_OFF = functions.create_offset_group(cont, "OFF", freeze_transform=True)
             cont_ORE = functions.create_offset_group(cont, "ORE")
             cmds.makeIdentity(cont, a=True)
 

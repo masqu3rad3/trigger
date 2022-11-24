@@ -194,7 +194,7 @@ class Fkik(object):
                 cmds.xform(cont, piv=(self.sideMult * (-scale_mult), 0, 0))
                 functions.align_to_alter(cont, jnt, 2)
 
-                cont_OFF = functions.create_offset_group(cont, "OFF", freezeTransform=True)
+                cont_OFF = functions.create_offset_group(cont, "OFF", freeze_transform=True)
                 cont_ORE = functions.create_offset_group(cont, "ORE")
                 cmds.makeIdentity(cont, a=True)
 

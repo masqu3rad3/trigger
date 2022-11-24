@@ -223,7 +223,7 @@ Then you can save and increment versions for all of them at once.
         # make connections with the controller object
 
         def get_deformers_menu():
-            list_of_deformers = list(deformers.get_deformers(namesOnly=True))
+            list_of_deformers = list(deformers.get_deformers(names_only=True))
 
             zortMenu = QtWidgets.QMenu()
             menuActions = [

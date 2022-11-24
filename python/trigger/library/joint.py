@@ -130,14 +130,14 @@ def get_joint_side(joint, skip_errors=True):
 
 
 def orient_joints(joint_list, aim_axis=(1.0, 0.0, 0.0), up_axis=(0.0, 1.0, 0.0), world_up_axis=(0.0, 1.0, 0.0),
-                  reverse_aim=1, reverse_up=1):
-    """
-    Orients joints. Alternative to maya's native joint orient method
+                  reverse_aim=1.0, reverse_up=1.0):
+    """Orient joints.
+    Alternative to Maya's native joint orient method
     Args:
         joint_list: (list) Joints list. Order is important.
         aim_axis: (Tuple) Aim Axis of each joint default X
         up_axis: (Tuple) Up Axis of each joint default Y
-        world_up_axis: (Tuple) Worls up axis default Y
+        world_up_axis: (Tuple) World up axis default Y
         reverse_aim: (int) multiplier for aim. Default 1
         reverse_up: (int) multiplier for reverseUp. Default 1
 
@@ -149,7 +149,6 @@ def orient_joints(joint_list, aim_axis=(1.0, 0.0, 0.0), up_axis=(0.0, 1.0, 0.0),
     up_axis = reverse_up * OpenMaya.MVector(up_axis)
 
     if len(joint_list) == 1:
-        pass
         return
 
     for j in range(1, len(joint_list)):
@@ -172,8 +171,7 @@ def orient_joints(joint_list, aim_axis=(1.0, 0.0, 0.0), up_axis=(0.0, 1.0, 0.0),
 
 
 def identify(joint, modules_dictionary):
-    """
-    Trigger Joint identification
+    """Identify joints for Trigger
     Args:
         joint: (String) Joint to query
         modules_dictionary: (Dictionary)
@@ -193,18 +191,17 @@ def identify(joint, modules_dictionary):
 
 
 def get_rig_axes(joint):
-    """
-    Gets the axis information from the joint which should be written with initBonesClass when created or defined.
+    """Gets the axis information from the joint.
     Args:
-        joint: The node to look at the attributes
+        joint (str): The node to look at the attributes
 
-    Returns: up_axis, mirror_axis, spineDir
+    Returns (tuple): up_axis, mirror_axis, spineDir
 
     """
     # get the up axis
 
-    up_axis = [cmds.getAttr("%s.upAxis%s" % (joint, dir)) for dir in "XYZ"]
-    mirror_axis = [cmds.getAttr("%s.mirrorAxis%s" % (joint, dir)) for dir in "XYZ"]
-    look_axis = [cmds.getAttr("%s.lookAxis%s" % (joint, dir)) for dir in "XYZ"]
+    up_axis = [cmds.getAttr("%s.upAxis%s" % (joint, direction)) for direction in "XYZ"]
+    mirror_axis = [cmds.getAttr("%s.mirrorAxis%s" % (joint, direction)) for direction in "XYZ"]
+    look_axis = [cmds.getAttr("%s.lookAxis%s" % (joint, direction)) for direction in "XYZ"]
 
     return tuple(up_axis), tuple(mirror_axis), tuple(look_axis)

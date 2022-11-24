@@ -99,7 +99,7 @@ class Kinematics(object):
             # grouping for fingers / toes
             for x in self.fingerMatchConts:
                 # TODO: tidy up / matrix constraint
-                cont_offset = functions.create_offset_group(x[0], "offset", freezeTransform=False)
+                cont_offset = functions.create_offset_group(x[0], "offset", freeze_transform=False)
                 socket = self.getNearestSocket(x[1], self.allSocketsList)
                 cmds.parentConstraint(socket, cont_offset, mo=True)
                 cmds.scaleConstraint("pref_cont", cont_offset)

@@ -552,7 +552,7 @@ def uv_pin(mesh_transform, coordinates):
         # hide/intermediate original mesh
         cmds.setAttr("%s.hiddenInOutliner" % original_mesh, 1)
         cmds.setAttr("%s.intermediateObject" % original_mesh, 1)
-        interface.refreshOutliners()
+        interface.refresh_outliner()
     else:
         original_mesh = intermediates[0]
 
