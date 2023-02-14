@@ -117,7 +117,7 @@ Then you can save and increment versions for all of them at once.
         base_folder, file_name_and_ext = os.path.split(file_path)
         file_name, ext = os.path.splitext(file_name_and_ext)
         weights_folder = os.path.join(base_folder, file_name)
-        self.io._folderCheck(weights_folder)
+        self.io.folder_check(weights_folder)
         # build the dictionary
         data_list = []
 
@@ -223,7 +223,7 @@ Then you can save and increment versions for all of them at once.
         # make connections with the controller object
 
         def get_deformers_menu():
-            list_of_deformers = list(deformers.get_deformers(namesOnly=True))
+            list_of_deformers = list(deformers.get_deformers(names_only=True))
 
             zortMenu = QtWidgets.QMenu()
             menuActions = [
@@ -501,7 +501,7 @@ Then you can save and increment versions for all of them at once.
 
         deformer_name = deformer_name or weights_list[0]["deformer"]
         if force_unique_deformer:
-            deformer_name = naming.uniqueName(deformer_name)
+            deformer_name = naming.unique_name(deformer_name)
 
         # if the affected object does not have the deformer, create a new one
         if not cmds.objExists(deformer_name):
@@ -526,7 +526,7 @@ Then you can save and increment versions for all of them at once.
                 ]
                 # first try the custom affected input. If there is none (backward-compatibility) use the weight data
                 if not affected:
-                    affected = functions.uniqueList(
+                    affected = functions.unique_list(
                         [weight_dict.get("shape") for weight_dict in weights_list]
                     )
                 # delete existing skin clusters first

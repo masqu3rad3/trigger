@@ -129,7 +129,7 @@ class Face_cam(object):
         ctrl.update_ui()
 
         def get_selected_face():
-            sel, msg = selection.validate(min=1, max=1, meshesOnly=True, transforms=True)
+            sel, msg = selection.validate(minimum=1, maximum=1, meshes_only=True, transforms=True)
             if sel:
                 face_mesh_leBox.viewWidget.setText(sel[0])
                 ctrl.update_model()
@@ -137,7 +137,7 @@ class Face_cam(object):
                 feedback.Feedback().pop_info(title="Selection Error", text=msg, critical=True)
 
         def get_selected_parent():
-            sel, msg = selection.validate(min=1, max=1, transforms=True)
+            sel, msg = selection.validate(minimum=1, maximum=1, transforms=True)
             if sel:
                 parent_node_leBox.viewWidget.setText(sel[0])
                 ctrl.update_model()

@@ -5,49 +5,63 @@
 import os
 import json
 import shutil
-import re
 
 from trigger.core import filelog
 from trigger.core import compatibility as compat
 
-log = filelog.Filelog(logname=__name__, filename="trigger_log")
+LOG = filelog.Filelog(logname=__name__, filename="trigger_log")
 
 
 class IO(dict):
-    def __init__(self, file_name=None, folder_name=None, root_path=None, file_path=None):
+    def __init__(self,
+                 file_name=None,
+                 folder_name=None,
+                 root_path=None,
+                 file_path=None):
         super(IO, self).__init__()
-        self.valid_extensions = [".json", ".tr", ".trg", ".trw", ".trs", ".trl", ".trsplit", ".trp"]
+        self.extensions = [".json",
+                           ".tr",
+                           ".trg",
+                           ".trw",
+                           ".trs",
+                           ".trl",
+                           ".trsplit",
+                           ".trp"]
         self.default_extension = ".json"
         if file_path:
             self.file_path = file_path
         elif file_name:
             self.folder_name = folder_name or ""
-            # if not folder_name:
-            #     self.folder_name = ""
             if not root_path:
                 self.root_path = os.path.normpath(os.path.expanduser("~"))
-            self.file_path = os.path.join(self.root_path, self.folder_name, file_name)
+            self.file_path = os.path.join(self.root_path,
+                                          self.folder_name,
+                                          file_name)
         else:
-            log.error("IO class cannot initialized. At least a file name or file_path must be defined")
+            LOG.error('IO initialization error. Define name or file_path')
 
     @property
     def file_path(self):
+        """Return the file path."""
         return self["file_path"]
 
     @file_path.setter
     def file_path(self, new_path):
+        """Set the file path and create the folder if it doesn't exist."""
         name, ext = os.path.splitext(new_path)
         directory, _ = os.path.split(new_path)
         if not ext:
-            log.error("IO module needs to know the extension")
+            LOG.error("IO module needs to know the extension")
             raise Exception
-        if ext not in self.valid_extensions:
-            log.error("IO maya_modules does not support this extension (%s)" % ext)
+        if ext not in self.extensions:
+            LOG.error("IO maya_modules does not support this extension ({})"
+                      .format(ext))
             raise Exception
         if directory:
-            self["file_path"] = self._folderCheck(new_path)
+            self["file_path"] = self.folder_check(new_path)
         else:
-            self["file_path"] = os.path.join(self.root_path, self.folder_name, new_path)
+            self["file_path"] = os.path.join(
+                self.root_path, self.folder_name, new_path)
 
     def read(self, file_path=None):
         """Read and returns the data stored in file path"""
@@ -59,10 +73,11 @@ class IO(dict):
 
     def write(self, data, file_path=None):
         """
-        Writes the data to the file
+        Write data to file.
         Args:
             data: <data> Data to be written to the json file
-            file_path: (String) if not specified uses the one defined in the class instantiation.
+            file_path: (String) if not specified uses the one defined
+            in the class instantiation.
 
         Returns:
             (String) Path of the file
@@ -73,21 +88,21 @@ class IO(dict):
 
     @staticmethod
     def _load_json(file_path):
-        """Loads the given json file"""
+        """Load the given json file."""
         if os.path.isfile(file_path):
             try:
                 with open(file_path, 'r') as f:
                     data = json.load(f)
                     return data
             except ValueError:
-                log.error("Corrupted file => %s" % file_path)
+                LOG.error("Corrupted file => %s" % file_path)
                 raise Exception
         else:
-            log.error("File cannot be found => %s" % file_path)
+            LOG.error("File cannot be found => %s" % file_path)
 
     @staticmethod
     def _dump_json(data, file_path):
-        """Saves the data to the json file"""
+        """Save the data to the json file."""
         name, ext = os.path.splitext(compat.encode(file_path))
         temp_file = ("{0}.tmp".format(name))
         with open(temp_file, "w") as f:
@@ -96,15 +111,15 @@ class IO(dict):
         os.remove(temp_file)
 
     @staticmethod
-    def _folderCheck(checkpath):
-        """Checks if the folder exists, creates it if doesnt"""
+    def folder_check(checkpath):
+        """Check if the folder exists, create if it doesn't."""
         if os.path.splitext(checkpath)[1]:
-            basefolder = os.path.split(checkpath)[0] # in case it is a file path
+            base_folder = os.path.split(checkpath)[0]
         else:
-            basefolder = checkpath
+            base_folder = checkpath
 
-        if not os.path.isdir(os.path.normpath(basefolder)):
-            os.makedirs(os.path.normpath(basefolder))
+        if not os.path.isdir(os.path.normpath(base_folder)):
+            os.makedirs(os.path.normpath(base_folder))
         return checkpath
 
     def _load_ini(self, file_path):

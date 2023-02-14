@@ -43,16 +43,16 @@ class AddController(Icon):
         """Adds controllers for each selected object"""
         selection = cmds.ls(sl=True)
         if not selection:
-            cont, _ = self.createIcon(icon, iconName=name, scale=(scale, scale, scale), normal=normal)
+            cont, _ = self.create_icon(icon, icon_name=name, scale=(scale, scale, scale), normal=normal)
             return
         for sel in selection:
             if not name:
                 name = "%s_cont" % sel
             # make sure the name is unique
-            name = naming.uniqueName(name)
-            cont, _ = self.createIcon(icon, iconName=name, scale=(scale, scale, scale), normal=normal)
-            cont_offset = functions.createUpGrp(cont, "offset")
-            functions.alignTo(cont_offset, sel, position=True, rotation=True)
+            name = naming.unique_name(name)
+            cont, _ = self.create_icon(icon, icon_name=name, scale=(scale, scale, scale), normal=normal)
+            cont_offset = functions.create_offset_group(cont, "offset")
+            functions.align_to(cont_offset, sel, position=True, rotation=True)
             if constraint == "Point":
                 cmds.pointConstraint(cont, sel, mo=False)
             elif constraint == "Orient":
@@ -105,7 +105,7 @@ class MainUI(QtWidgets.QDialog):
         self.icon_combo = QtWidgets.QComboBox()
         form_layout.addRow(icon_lbl, self.icon_combo)
         self.icon_combo.setSizePolicy(sizePolicy)
-        self.icon_combo.addItems(self.controller_handler.getIconsList())
+        self.icon_combo.addItems(self.controller_handler.get_icons_list())
 
         icon_scale_lbl = QtWidgets.QLabel()
         icon_scale_lbl.setText("Scale:")

@@ -28,5 +28,5 @@ def transfer_guides(source_mesh, target_mesh, guides_grp):
     cmds.parent(all_joints, guides_grp)
 
     # clean the mess
-    functions.deleteObject(temp_blendshape)
-    functions.deleteObject(follicles)
+    functions.delete_object(temp_blendshape)
+    functions.delete_object(follicles)

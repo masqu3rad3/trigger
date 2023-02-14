@@ -144,14 +144,14 @@ class Cleanup(object):
     @staticmethod
     def delete_unknown_nodes():
         unknown_nodes = cmds.ls(type="unknown")
-        functions.deleteObject(unknown_nodes)
+        functions.delete_object(unknown_nodes)
         log.info("%i unknown nodes deleted" % len(unknown_nodes))
 
     @staticmethod
     def delete_blind_data():
         blind_types = ["polyBlindData", "blindDataTemplate"]
         blind_nodes = cmds.ls(type=blind_types)
-        functions.deleteObject(blind_nodes)
+        functions.delete_object(blind_nodes)
         log.info("%i blind data nodes deleted" % len(blind_nodes))
 
     @staticmethod
@@ -162,13 +162,13 @@ class Cleanup(object):
     def delete_display_layers():
         layers = cmds.ls(type="displayLayer")
         layers.remove("defaultLayer")
-        functions.deleteObject(layers)
+        functions.delete_object(layers)
         log.info("%i display layers deleted" % len(layers))
 
     @staticmethod
     def delete_animation_layers():
         layers = cmds.ls(type="animLayer")
-        functions.deleteObject(layers)
+        functions.delete_object(layers)
         log.info("%i animation layers deleted" % len(layers))
 
     @staticmethod
@@ -181,7 +181,7 @@ class Cleanup(object):
         for file_node in all_file_nodes:
             file_path = cmds.getAttr("%s.fileTextureName" % file_node)
             if not file_path:
-                functions.deleteObject(file_node)
+                functions.delete_object(file_node)
             else:
                 path_dict.setdefault(file_path, []).append(file_node)
 
@@ -192,7 +192,7 @@ class Cleanup(object):
                 for node in node_list[1:]:
                     connection.replace_connections(node, node_list[0], incoming=False, outgoing=True)
                     history.append(node)
-                    functions.deleteObject(node)
+                    functions.delete_object(node)
 
         log.info("%s duplicate file nodes has been deleted" % len(history))
         return path_dict
@@ -245,4 +245,4 @@ class Cleanup(object):
         log.warning("Deleting everything in the root other than the rig_grp")
         exceptions = [u'persp', u'top', u'front', u'side', u'rig_grp']
         morts = [x for x in cmds.ls(assemblies=True) if x not in exceptions]
-        functions.deleteObject(morts)
+        functions.delete_object(morts)

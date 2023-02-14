@@ -5,13 +5,13 @@ from trigger.core.decorators import undo
 from trigger.core import filelog
 from trigger.core import compatibility as compat
 
-log = filelog.Filelog(logname=__name__, filename="trigger_log")
+LOG = filelog.Filelog(logname=__name__, filename="trigger_log")
 
 
 @undo
-def create_attribute(node, property_dict=None, keyable=True, display=True, *args, **kwargs):
+def create_attribute(node, property_dict=None, keyable=True, display=True, **kwargs):
     """
-    Create attribute with the properties defined by the property_dict
+    Create attribute with the properties defined by the property_dict.
     Args:
         node: (String) Node to create attribute on
         property_dict: (Dictionary) This holds the necessary information for the attribute:
@@ -41,13 +41,13 @@ def create_attribute(node, property_dict=None, keyable=True, display=True, *args
     attr_name = property_dict.get("attr_name")
 
     if not attr_name:
-        log.error("The attribute dictionary does not have 'attr_name' value")
+        LOG.error("The attribute dictionary does not have 'attr_name' value")
     nice_name = property_dict.get("nice_name") if property_dict.get("nice_name") else attr_name
     attr_type = property_dict.get("attr_type")
     if not attr_type:
-        log.error("The attribute dictionary does not have 'attr_type' value")
+        LOG.error("The attribute dictionary does not have 'attr_type' value")
     if attr_type not in supported_attrs:
-        log.error("The attribute type (%s) is not supported by this method" % attr_type)
+        LOG.error("The attribute type (%s) is not supported by this method" % attr_type)
     # get the default value. The default values can be false, 0, -1 or anythin else that is why
     # we use DOESNTEXIST. Hopefully no one will use DOESNTEXIST as a default value
     default_value = property_dict.get("default_value", "DOESNTEXIST")
@@ -68,7 +68,7 @@ def create_attribute(node, property_dict=None, keyable=True, display=True, *args
         default_value = default_value if default_value != "DOESNTEXIST" else 0
         enum_list = property_dict.get("enum_list")
         if enum_list is None:
-            log.error("Missing 'enum_list'")
+            LOG.error("Missing 'enum_list'")
         cmds.addAttr(node, longName=attr_name, niceName=nice_name, at=attr_type, en=enum_list, k=keyable,
                      defaultValue=default_value)
         cmds.setAttr("%s.%s" % (node, attr_name), e=True, cb=display)
@@ -162,7 +162,7 @@ def drive_attrs(driver_attr, driven_attrs, driver_range=None, driven_range=None,
 
     """
 
-    if type(driven_attrs) != list:
+    if not isinstance(driven_attrs, list):
         driven_attrs = [driven_attrs]
 
     # validation
@@ -261,11 +261,11 @@ def drive_attrs(driver_attr, driven_attrs, driver_range=None, driven_range=None,
                 cmds.connectAttr("%s.outValue" % range_node, driven, force=force)
 
 
-def lockAndHide(node, channelArray=None, hide=True):
+def lock_and_hide(node, channelArray=None, hide=True):
     """
     Locks and hides the channels specified in the channelArray.
     Args:
-        node: (String) target object
+        node : (String) target object
         channelArray: (List) the channels as string values. eg: ["sx", "sy", "sz"] or ["translateX", "rotateX", "sz"]
         hide: (Bool) if false, the attributes will be only locked but not hidden. Defaulf True
     Returns: None
@@ -297,8 +297,8 @@ def is_visible(node, attr):
     return cmds.getAttr("%s.%s" %(node, attr), k=True)
 
 
-def attrPass(sourceNode, targetNode, attributes=[], inConnections=True, outConnections=True, keepSourceAttributes=False,
-             values=True, daisyChain=False, overrideEx=False):
+def attribute_pass(sourceNode, targetNode, attributes=[], inConnections=True, outConnections=True, keepSourceAttributes=False,
+                   values=True, daisyChain=False, overrideEx=False):
     """
     Copies the attributes from source node to the target node.
     Args:
@@ -455,7 +455,7 @@ def create_global_joint_attrs(joint, moduleName=None, upAxis=None, mirrorAxis=No
     cmds.setAttr("{0}.useRefOri".format(joint), True)  ###
 
 
-def getNextIndex(attr, startFrom=0):
+def get_next_index(attr, startFrom=0):
     """Returns the next free index from a multi index attribute"""
     return mel.eval("getNextFreeMultiIndex %s %s" % (attr, startFrom))
 
@@ -475,7 +475,7 @@ def disconnect_attr(node=None, attr=None, suppress_warnings=False):
         cmds.disconnectAttr(plug[0], attr_path)
     else:
         if not suppress_warnings:
-            log.warning("Nothing connected to this attribute => %s" % attr_path)
+            LOG.warning("Nothing connected to this attribute => %s" % attr_path)
         else:
             pass
 
@@ -497,7 +497,7 @@ def separator(node, name, border="-"):
     nice_name = "{0} {1}".format(border * 5, nice_name)
 
     if cmds.attributeQuery(long_name, node=node, exists=True):
-        log.info("Attribute %s already exists." % long_name)
+        LOG.info("Attribute %s already exists." % long_name)
         return long_name
 
     cmds.addAttr(

@@ -29,7 +29,7 @@ tentacle_handler.action()
 surface_handler = kinematics.Kinematics(root_joint="surface_center")
 surface_handler.action()
 
-functions.deleteObject("trigger_refGuides")
+functions.delete_object("trigger_refGuides")
 
 from trigger.actions import weights
 reload(weights)

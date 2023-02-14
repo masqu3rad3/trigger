@@ -89,9 +89,9 @@ class Correctives(object):
                 log.error("Driver Transform not defined")
                 raise
             if mode == 0:  # vector mode
-                rig_grp = functions.validateGroup("rig_grp")
-                psd_grp = functions.validateGroup("psd_grp")
-                if functions.getParent(psd_grp) != rig_grp:
+                rig_grp = functions.validate_group("rig_grp")
+                psd_grp = functions.validate_group("psd_grp")
+                if functions.get_parent(psd_grp) != rig_grp:
                     cmds.parent(psd_grp, rig_grp)
                 angle_extractor_root = self.vector_psd(driver_transform, controller, target_rotation, up_object,
                                                        prefix=driver_transform)
@@ -312,7 +312,7 @@ class Correctives(object):
             update_model()
 
         def get_rotation(x_widget, y_widget, z_widget):
-            sel, msg = selection.validate(min=1, max=1, meshesOnly=False, transforms=True)
+            sel, msg = selection.validate(minimum=1, maximum=1, meshes_only=False, transforms=True)
             if sel:
                 rotations = cmds.getAttr("%s.r" % sel[0])[0]
                 x_widget.setValue(rotations[0])
@@ -323,7 +323,7 @@ class Correctives(object):
                 feedback.Feedback().pop_info(title="Selection Error", text=msg, critical=True)
 
         def get_selected(update_widget, mesh_only=True):
-            sel, msg = selection.validate(min=1, max=1, meshesOnly=mesh_only, transforms=True)
+            sel, msg = selection.validate(minimum=1, maximum=1, meshes_only=mesh_only, transforms=True)
             if sel:
                 update_widget.setText(sel[0])
                 update_model()
@@ -400,18 +400,18 @@ class Correctives(object):
 
     @staticmethod
     def vector_psd(driver_transform, controller, target_matrix, up_object, return_angle_attr=False, prefix=""):
-        root_loc = cmds.spaceLocator(name=naming.uniqueName("%s_angleExt_root" % prefix))[0]
-        point_a = cmds.spaceLocator(name=naming.uniqueName("%s_angleExt_pointA" % prefix))[0]
+        root_loc = cmds.spaceLocator(name=naming.unique_name("%s_angleExt_root" % prefix))[0]
+        point_a = cmds.spaceLocator(name=naming.unique_name("%s_angleExt_pointA" % prefix))[0]
         cmds.setAttr("%s.tx" % point_a, 5)
-        point_b = cmds.spaceLocator(name=naming.uniqueName("%s_angleExt_pointB" % prefix))[0]
-        point_b_offset = functions.createUpGrp(point_b, "offset")
+        point_b = cmds.spaceLocator(name=naming.unique_name("%s_angleExt_pointB" % prefix))[0]
+        point_b_offset = functions.create_offset_group(point_b, "offset")
         cmds.setAttr("%s.tx" % point_b, 5)
         cmds.parent(point_a, root_loc)
         cmds.parent(point_b_offset, root_loc)
-        functions.alignTo(root_loc, driver_transform, position=True, rotation=True)
+        functions.align_to(root_loc, driver_transform, position=True, rotation=True)
         cmds.pointConstraint(driver_transform, root_loc, mo=False)
         cmds.parentConstraint(driver_transform, point_a, mo=True)
-        connection.matrixConstraint(up_object, point_b_offset, st="xyz", mo=True)
+        connection.matrixConstraint(up_object, point_b_offset, skipTranslate="xyz", maintainOffset=True)
 
         # store controllers initial rotation
         # initial_rotation = cmds.getAttr("%s.r" % controller)[0]
@@ -420,11 +420,11 @@ class Correctives(object):
         cmds.parent(point_b, controller)
         cmds.xform(controller, matrix=target_matrix)
         cmds.parent(point_b, point_b_offset)
-        functions.alignTo(point_b, point_a, position=True, rotation=True)
+        functions.align_to(point_b, point_a, position=True, rotation=True)
 
         cmds.xform(controller, matrix=initial_matrix)
 
-        angle_between = cmds.createNode("angleBetween", name=naming.uniqueName("%s_angleExt_angleBetween" % prefix))
+        angle_between = cmds.createNode("angleBetween", name=naming.unique_name("%s_angleExt_angleBetween" % prefix))
         cmds.connectAttr("%s.t" % point_a, "%s.vector1" % angle_between)
         cmds.connectAttr("%s.t" % point_b, "%s.vector2" % angle_between)
 
@@ -485,7 +485,7 @@ class Correctives(object):
         if foc_blendshapes:
             bs_node = foc_blendshapes[0]
         else:
-            bs_node = naming.uniqueName("corrective_blendshapes")
+            bs_node = naming.unique_name("corrective_blendshapes")
 
         print("bs_node", bs_node)
         print("psd_attr", psd_attr)
@@ -504,4 +504,4 @@ class Correctives(object):
         cmds.xform(controller, matrix=initial_matrix)
 
         if discard_delta:
-            functions.deleteObject(extracted_delta_shape)
+            functions.delete_object(extracted_delta_shape)

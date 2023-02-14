@@ -68,7 +68,7 @@ class Look(object):
         base_folder, file_name_and_ext = os.path.split(file_path)
         file_name, ext = os.path.splitext(file_name_and_ext)
         look_folder = os.path.join(base_folder, file_name)
-        self.io._folderCheck(look_folder)
+        self.io.folder_check(look_folder)
 
         look_data = self.collect_sg_data()
         self.export_sgs(look_data.keys(), look_folder)

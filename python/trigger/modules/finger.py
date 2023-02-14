@@ -1,15 +1,13 @@
 from maya import cmds
 import maya.api.OpenMaya as om
 
-from trigger.library import functions
+from trigger.library import functions, joint
 from trigger.library import naming
 from trigger.library import attribute
 from trigger.library import api
 from trigger.library import controllers as ic
 from trigger.core import filelog
 log = filelog.Filelog(logname=__name__, filename="trigger_log")
-
-
 
 LIMB_DATA = {
         "members": ["FingerRoot", "Finger"],
@@ -57,17 +55,17 @@ class Finger(object):
             self.handController = None
 
         # initialize coordinates
-        self.up_axis, self.mirror_axis, self.look_axis = functions.getRigAxes(self.inits[0])
+        self.up_axis, self.mirror_axis, self.look_axis = joint.get_rig_axes(self.inits[0])
 
         # get the properties from the root
         self.useRefOrientation = cmds.getAttr("%s.useRefOri" % self.inits[0])
         self.fingerType = cmds.getAttr("%s.fingerType" % self.fingerRoot, asString=True)
         self.isThumb = self.fingerType == "Thumb"
-        self.side = functions.get_joint_side(self.inits[0])
+        self.side = joint.get_joint_side(self.inits[0])
         self.sideMult = -1 if self.side == "R" else 1
 
         # initialize suffix
-        self.suffix = (naming.uniqueName("%s_%s" % (cmds.getAttr("%s.moduleName" % self.fingerRoot), self.fingerType)))
+        self.suffix = (naming.unique_name("%s_%s" % (cmds.getAttr("%s.moduleName" % self.fingerRoot), self.fingerType)))
 
         # BASE variables
         self.sockets = []
@@ -85,7 +83,7 @@ class Finger(object):
         self.limbGrp = cmds.group(name=self.suffix, em=True)
         self.scaleGrp = cmds.group(name="%s_scaleGrp" % self.suffix, em=True)
         # extra.alignTo(self.scaleGrp, self.fingerRoot, 0)
-        functions.alignTo(self.scaleGrp, self.fingerRoot, position=True)
+        functions.align_to(self.scaleGrp, self.fingerRoot, position=True)
         self.nonScaleGrp = cmds.group(name="%s_nonScaleGrp" % self.suffix, em=True)
 
         cmds.addAttr(self.scaleGrp, at="bool", ln="Control_Visibility", sn="contVis", defaultValue=True)
@@ -105,25 +103,25 @@ class Finger(object):
 
         cmds.select(d=True)
 
-        self.limbPlug = cmds.joint(name="limbPlug_%s" % self.suffix, p=api.getWorldTranslation(self.inits[0]), radius=2)
+        self.limbPlug = cmds.joint(name="limbPlug_%s" % self.suffix, p=api.get_world_translation(self.inits[0]), radius=2)
 
         for guide in self.inits:
             jnt = cmds.joint(name="jDef_{0}_{1}".format(self.suffix, self.inits.index(guide)), radius=1.0)
-            functions.alignTo(jnt, guide, position=True, rotation=True)
+            functions.align_to(jnt, guide, position=True, rotation=True)
             if guide == self.inits[-1]: # if it is the last joint dont add it to the deformers
                 jnt = cmds.rename(jnt, (jnt.replace("jDef", "jnt")))
             self.sockets.append(jnt)
             self.deformerJoints.append(jnt)
 
-        functions.orientJoints(self.deformerJoints, worldUpAxis=self.up_axis, upAxis=(0, -1, 0), reverseAim=self.sideMult,
-                               reverseUp=self.sideMult)
+        joint.orient_joints(self.deformerJoints, world_up_axis=self.up_axis, up_axis=(0, -1, 0), reverse_aim=self.sideMult,
+                            reverse_up=self.sideMult)
 
         if not self.useRefOrientation:
-            functions.orientJoints(self.deformerJoints, worldUpAxis=self.up_axis, upAxis=(0, -1, 0),
-                                   reverseAim=self.sideMult, reverseUp=self.sideMult)
+            joint.orient_joints(self.deformerJoints, world_up_axis=self.up_axis, up_axis=(0, -1, 0),
+                                reverse_aim=self.sideMult, reverse_up=self.sideMult)
         else:
             for x in range (len(self.deformerJoints)):
-                functions.alignTo(self.deformerJoints[x], self.inits[x], position=True, rotation=True)
+                functions.align_to(self.deformerJoints[x], self.inits[x], position=True, rotation=True)
                 cmds.makeIdentity(self.deformerJoints[x], a=True)
 
 
@@ -147,14 +145,14 @@ class Finger(object):
         for index in range(0, len(self.deformerJoints)-1):
             contScl = (cmds.getAttr("%s.tx" % self.deformerJoints[1]) / 2)
             contName = ("{0}_{1}_cont".format(self.suffix, index))
-            cont, dmp = icon.createIcon("Circle", iconName=contName,scale=(contScl,contScl,contScl), normal=(1,0,0))
+            cont, dmp = icon.create_icon("Circle", icon_name=contName, scale=(contScl, contScl, contScl), normal=(1, 0, 0))
 
-            functions.alignToAlter(cont, self.deformerJoints[index], mode=2)
+            functions.align_to_alter(cont, self.deformerJoints[index], mode=2)
 
-            cont_OFF=functions.createUpGrp(cont, "OFF")
+            cont_OFF=functions.create_offset_group(cont, "OFF")
             self.conts_OFF.append([cont_OFF])
-            cont_ORE = functions.createUpGrp(cont, "ORE")
-            cont_con = functions.createUpGrp(cont, "con")
+            cont_ORE = functions.create_offset_group(cont, "ORE")
+            cont_con = functions.create_offset_group(cont, "con")
 
             if index>0:
                 cmds.parent(cont_OFF, self.controllers[len(self.controllers)-1])
@@ -355,14 +353,14 @@ class Guides(object):
             self.guideJoints.append(finger_jnt)
 
         # set orientation of joints
-        functions.orientJoints(self.guideJoints, worldUpAxis=self.upVector, upAxis=(0, -1, 0), reverseAim=self.sideMultiplier,
-                               reverseUp=self.sideMultiplier)
+        joint.orient_joints(self.guideJoints, world_up_axis=self.upVector, up_axis=(0, -1, 0), reverse_aim=self.sideMultiplier,
+                            reverse_up=self.sideMultiplier)
 
     def define_attributes(self):
         # set joint side and type attributes
-        _ = [functions.set_joint_side(jnt, self.side) for jnt in self.guideJoints]
-        functions.set_joint_type(self.guideJoints[0], "FingerRoot")
-        _ = [functions.set_joint_type(jnt, "Finger") for jnt in self.guideJoints[1:]]
+        _ = [joint.set_joint_side(jnt, self.side) for jnt in self.guideJoints]
+        joint.set_joint_type(self.guideJoints[0], "FingerRoot")
+        _ = [joint.set_joint_type(jnt, "Finger") for jnt in self.guideJoints[1:]]
         cmds.setAttr("%s.radius" % self.guideJoints[0], 1)
 
         # ----------Mandatory---------[Start]

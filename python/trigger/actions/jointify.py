@@ -215,7 +215,7 @@ class Jointify(object):
             return
 
         def get_root_nodes():
-            sel, msg = selection.validate(min=1, meshesOnly=False, transforms=True)
+            sel, msg = selection.validate(minimum=1, meshes_only=False, transforms=True)
             if sel:
                 root_nodes_le_box.viewWidget.setText(ctrl.list_to_text(sel))
                 ctrl.update_model()

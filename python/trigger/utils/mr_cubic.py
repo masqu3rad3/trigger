@@ -11,15 +11,15 @@ def mrCube (jointList, width=1):
             children=cmds.listRelatives(jnt, children=True, type="joint")
             if children:
                 for c in children:
-                    cubeGuy = cmds.polyCube(name=naming.uniqueName("mrCube_%s" % c), h=width, d=width, w=width)[0]
-                    functions.alignBetween(cubeGuy, jnt, c)
-                    height=functions.getDistance(jnt, c)
+                    cubeGuy = cmds.polyCube(name=naming.unique_name("mrCube_%s" % c), h=width, d=width, w=width)[0]
+                    functions.align_between(cubeGuy, jnt, c)
+                    height=functions.get_distance(jnt, c)
                     cmds.setAttr("%s.sx" % cubeGuy, height)
-                    connection.matrixConstraint(jnt, cubeGuy, mo=True)
+                    connection.matrixConstraint(jnt, cubeGuy, maintainOffset=True)
                     cmds.parent(cubeGuy, mrCubeGrp)
             else:
-                cubeGuy = cmds.polyCube(name=naming.uniqueName("mrCube_%s" % jnt), h=width, d=width, w=width)[0]
-                connection.matrixConstraint(jnt, cubeGuy, mo=False)
+                cubeGuy = cmds.polyCube(name=naming.unique_name("mrCube_%s" % jnt), h=width, d=width, w=width)[0]
+                connection.matrixConstraint(jnt, cubeGuy, maintainOffset=False)
                 cmds.parent(cubeGuy, mrCubeGrp)
 
 

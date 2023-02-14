@@ -67,7 +67,7 @@ class Split_shapes(weights.Weights):
         splitter.neutral = self.neutralMesh
 
         # add the blendshapes
-        meshes = functions.getMeshes(self.blendshapeRootGrp)
+        meshes = functions.get_meshes(self.blendshapeRootGrp)
         splitter.clear_blendshapes()
         splitter.add_blendshapes(meshes=meshes)
 
@@ -92,7 +92,7 @@ class Split_shapes(weights.Weights):
                 dead_list.append(mesh_name)
 
         splitter.split_shapes()
-        _ = [functions.deleteObject(x) for x in dead_list]
+        _ = [functions.delete_object(x) for x in dead_list]
 
     def save_action(self, file_path=None, *args, **kwargs):
         file_path = file_path or self.splitMapsFilePath
@@ -100,7 +100,7 @@ class Split_shapes(weights.Weights):
         base_folder, file_name_and_ext = os.path.split(file_path)
         file_name, ext = os.path.splitext(file_name_and_ext)
         weights_folder = os.path.join(base_folder, file_name)
-        self.io._folderCheck(weights_folder)
+        self.io.folder_check(weights_folder)
 
         # build the deformers list from the influencers
         if not self.paintMapBs:
@@ -197,7 +197,7 @@ class Split_shapes(weights.Weights):
         ctrl.update_ui()
 
         def prepare_bs():
-            sel, msg = selection.validate(min=1, max=1, meshesOnly=True, transforms=True, fullPath=False)
+            sel, msg = selection.validate(minimum=1, maximum=1, meshes_only=True, transforms=True, full_path=False)
             if not sel:
                 feedback.Feedback().pop_info(title="Selection Error", text=msg, critical=True)
                 return

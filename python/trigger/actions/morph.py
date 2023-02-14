@@ -51,7 +51,7 @@ class Morph(object):
     def action(self):
         """Execute Action - Mandatory"""
         assert self.blendshapesGroup, "Blendshape Group not defined"
-        self.categorize_blendshapes(functions.getMeshes(self.blendshapesGroup))
+        self.categorize_blendshapes(functions.get_meshes(self.blendshapesGroup))
         # build hierarchy
         self._create_hierarchy()
         print(self.shapeCategories)
@@ -122,20 +122,20 @@ class Morph(object):
 
     def _create_hierarchy(self):
         """Creates the hook node for blendshapes"""
-        rig_grp = functions.validateGroup("rig_grp")
-        attribute.lockAndHide(rig_grp)
-        self.morphGrp = functions.validateGroup("morph_grp")
-        attribute.lockAndHide(self.morphGrp)
-        if functions.getParent(self.morphGrp) != rig_grp:
+        rig_grp = functions.validate_group("rig_grp")
+        attribute.lock_and_hide(rig_grp)
+        self.morphGrp = functions.validate_group("morph_grp")
+        attribute.lock_and_hide(self.morphGrp)
+        if functions.get_parent(self.morphGrp) != rig_grp:
             cmds.parent(self.morphGrp, rig_grp)
 
         if not self.morphHook:
-            self.morphHook = functions.validateGroup("morph_hook")
-            attribute.lockAndHide(self.morphHook)
+            self.morphHook = functions.validate_group("morph_hook")
+            attribute.lock_and_hide(self.morphHook)
             cmds.parent(self.morphHook, rig_grp)
         elif not cmds.objExists(self.morphHook):
-            self.morphHook = functions.validateGroup(self.morphHook)
-            attribute.lockAndHide(rig_grp)
+            self.morphHook = functions.validate_group(self.morphHook)
+            attribute.lock_and_hide(rig_grp)
             cmds.parent(self.morphHook, rig_grp)
 
         if not self.morphMesh:
@@ -147,7 +147,7 @@ class Morph(object):
 
         if not cmds.objExists(rig_grp):
             cmds.group(name=rig_grp, em=True)
-            attribute.lockAndHide(rig_grp)
+            attribute.lock_and_hide(rig_grp)
 
         # self.morphGrp = cmds.group(name="morph_grp", em=True)
         # attribute.lockAndHide(self.morphGrp)
@@ -164,12 +164,12 @@ class Morph(object):
         rig_grp = "rig_grp"
         if not cmds.objExists(rig_grp):
             cmds.group(name=rig_grp, em=True)
-            attribute.lockAndHide(rig_grp)
+            attribute.lock_and_hide(rig_grp)
         self.morphGrp = cmds.group(name="morph_grp", em=True)
-        attribute.lockAndHide(self.morphGrp)
+        attribute.lock_and_hide(self.morphGrp)
         cmds.parent(self.morphGrp, rig_grp)
         morph_hook = cmds.group(name="morph_hook", em=True)
-        attribute.lockAndHide(rig_grp)
+        attribute.lock_and_hide(rig_grp)
         cmds.parent(morph_hook, self.morphGrp)
         return morph_hook
 
@@ -281,11 +281,11 @@ class Morph(object):
 
         # put it where the sculpted mesh is and rename it
         cmds.delete(stack, ch=True)
-        parent_node = functions.getParent(sculpted_mesh)
+        parent_node = functions.get_parent(sculpted_mesh)
         # print("DEBUG:", parent_node)
         if parent_node:
             # print("DEBUG:", stack)
-            if functions.getParent(stack) != parent_node:
+            if functions.get_parent(stack) != parent_node:
                 cmds.parent(stack, parent_node)
         return (cmds.rename(stack, combination_delta))
 

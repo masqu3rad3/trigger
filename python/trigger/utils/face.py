@@ -42,7 +42,7 @@ def shrink_wrap_eyebulge(
     raw_axis = look_axis.replace("+", "").replace("-", "")
 
     group = group or "eye_bulging"
-    bulge_grp = functions.validateGroup(group)
+    bulge_grp = functions.validate_group(group)
 
     mesh_res = resolution - 1
 
@@ -72,8 +72,8 @@ def shrink_wrap_eyebulge(
         ax=axis_d[look_axis],
     )[0]
 
-    functions.alignTo(proxy_plane, iris_guide, position=True, rotation=True)
-    functions.alignTo(proxy_box, iris_guide, position=True, rotation=True)
+    functions.align_to(proxy_plane, iris_guide, position=True, rotation=True)
+    functions.align_to(proxy_box, iris_guide, position=True, rotation=True)
     cmds.setAttr("{0}.s{1}".format(proxy_box, raw_axis.lower()), 0.05)
 
     # Create the shrink wrap
@@ -133,7 +133,7 @@ def lip_zipper(upper_lip_edges, lower_lip_edges, morph_mesh, final_mesh, pair_co
     lower_lip_curve = cmds.polyToCurve(ch=0, name="follicles_low_grp")[0]
     cmds.reverseCurve(lower_lip_curve, ch=0)
 
-    rig_grp = functions.validateGroup("rig_grp")
+    rig_grp = functions.validate_group("rig_grp")
 
     face_mesh = upper_lip_edges[0].split(".")[0]
     lipzip_grp = "lipZip_grp"
@@ -153,8 +153,8 @@ def lip_zipper(upper_lip_edges, lower_lip_edges, morph_mesh, final_mesh, pair_co
 
     upper_locators = tools.motion_path_spline(upper_lip_curve, pair_count, object_type="locator")
     lower_locators = tools.motion_path_spline(lower_lip_curve, pair_count, object_type="locator")
-    upper_locators_grp = functions.getParent(upper_locators[0])
-    lower_locators_grp = functions.getParent(lower_locators[0])
+    upper_locators_grp = functions.get_parent(upper_locators[0])
+    lower_locators_grp = functions.get_parent(lower_locators[0])
     cmds.parent(upper_locators_grp, lipzip_grp)
     cmds.parent(lower_locators_grp, lipzip_grp)
 
@@ -175,53 +175,53 @@ def lip_zipper(upper_lip_edges, lower_lip_edges, morph_mesh, final_mesh, pair_co
         cmds.parent(mid_loc_common, switch_loc_grp)
 
         mid_loc_up = cmds.spaceLocator(name="midLoc_up%i" % counter)[0]
-        functions.alignTo(mid_loc_up, up, position=True, rotation=False)
+        functions.align_to(mid_loc_up, up, position=True, rotation=False)
         cmds.parent(mid_loc_up, mid_loc_common)
 
         mid_loc_low = cmds.spaceLocator(name="midLoc_low%i" % counter)[0]
-        functions.alignTo(mid_loc_low, low, position=True, rotation=False)
+        functions.align_to(mid_loc_low, low, position=True, rotation=False)
         cmds.parent(mid_loc_low, mid_loc_common)
 
         switch_up = cmds.spaceLocator(name="switchLoc_up%i" % counter)[0]
         u_attr = "U{0}".format(str(counter).zfill(2))
-        connection.matrixSwitch(mid_loc_up, up, switch_up, "{0}.{1}".format(switch_hook, u_attr))
+        connection.matrix_switch(mid_loc_up, up, switch_up, "{0}.{1}".format(switch_hook, u_attr))
         hook_U_attrs.append(u_attr)
         cmds.parent(switch_up, switch_loc_grp)
 
         switch_low = cmds.spaceLocator(name="switchLoc_low%i" % counter)[0]
         d_attr = "D{0}".format(str(counter).zfill(2))
-        connection.matrixSwitch(mid_loc_low, low, switch_low, "{0}.{1}".format(switch_hook, d_attr))
+        connection.matrix_switch(mid_loc_low, low, switch_low, "{0}.{1}".format(switch_hook, d_attr))
         hook_D_attrs.append(d_attr)
         cmds.parent(switch_low, switch_loc_grp)
 
         local_loc_up = cmds.spaceLocator(name="localLoc_up%i" % counter)[0]
-        connection.matrixConstraint(switch_up, local_loc_up, mo=False, source_parent_cutoff=up)
-        local_loc_up_off = functions.createUpGrp(local_loc_up, "off")
-        functions.alignTo(local_loc_up_off, up, position=True, rotation=False)
+        connection.matrixConstraint(switch_up, local_loc_up, maintainOffset=False, source_parent_cutoff=up)
+        local_loc_up_off = functions.create_offset_group(local_loc_up, "off")
+        functions.align_to(local_loc_up_off, up, position=True, rotation=False)
         cmds.parent(local_loc_up_off, switch_loc_grp)
 
         local_loc_low = cmds.spaceLocator(name="localLoc_low%i" % counter)[0]
-        connection.matrixConstraint(switch_low, local_loc_low, mo=False, source_parent_cutoff=low)
-        local_loc_low_off = functions.createUpGrp(local_loc_low, "off")
-        functions.alignTo(local_loc_low_off, up, position=True, rotation=False)
+        connection.matrixConstraint(switch_low, local_loc_low, maintainOffset=False, source_parent_cutoff=low)
+        local_loc_low_off = functions.create_offset_group(local_loc_low, "off")
+        functions.align_to(local_loc_low_off, up, position=True, rotation=False)
         cmds.parent(local_loc_low_off, switch_loc_grp)
 
         cmds.select(d=True)
         joint_up = cmds.joint(name="lipZip_up%i_jDef" % counter)
-        functions.alignTo(joint_up, up, position=True, rotation=False)
-        connection.matrixConstraint(local_loc_up, joint_up, mo=False, sr="xyz", ss="xyz")
+        functions.align_to(joint_up, up, position=True, rotation=False)
+        connection.matrixConstraint(local_loc_up, joint_up, maintainOffset=False, skipRotate="xyz", skipScale="xyz")
         cmds.parent(joint_up, jnt_grp)
 
         cmds.select(d=True)
         joint_low = cmds.joint(name="lipZip_low%i_jDef" % counter)
-        functions.alignTo(joint_low, low, position=True, rotation=False)
-        connection.matrixConstraint(local_loc_low, joint_low, mo=False, sr="xyz", ss="xyz")
+        functions.align_to(joint_low, low, position=True, rotation=False)
+        connection.matrixConstraint(local_loc_low, joint_low, maintainOffset=False, skipRotate="xyz", skipScale="xyz")
         cmds.parent(joint_low, jnt_grp)
 
         # create distance attributes
         distance_node = cmds.createNode("distanceBetween", name="distance_%i" % counter)
-        loc_up_shape = functions.getShapes(up)[0]
-        loc_low_shape = functions.getShapes(low)[0]
+        loc_up_shape = functions.get_shapes(up)[0]
+        loc_low_shape = functions.get_shapes(low)[0]
         cmds.connectAttr("%s.worldPosition[0]" % loc_up_shape, "%s.point1" % distance_node)
         cmds.connectAttr("%s.worldPosition[0]" % loc_low_shape, "%s.point2" % distance_node)
         distance_attr_name = "dist{0}".format(str(counter).zfill(2))
@@ -332,7 +332,7 @@ def lip_zipper(upper_lip_edges, lower_lip_edges, morph_mesh, final_mesh, pair_co
                 if not cmds.objExists(center_average):
                     center_average = cmds.createNode("plusMinusAverage", name=center_average)
                     cmds.setAttr("%s.operation" % center_average, 3)
-                next_index = attribute.getNextIndex("%s.input1D" % center_average)
+                next_index = attribute.get_next_index("%s.input1D" % center_average)
                 cmds.connectAttr("{0}.outValue{1}".format(set_range, spare_attr),
                                  "{0}.input1D[{1}]".format(center_average, next_index))
                 output_p = "%s.output1D" % center_average
@@ -361,10 +361,10 @@ def lip_zipper(upper_lip_edges, lower_lip_edges, morph_mesh, final_mesh, pair_co
         cmds.connectAttr("pref_cont.Rig_Visibility", "follicles_low_grp_locators.v")
         cmds.connectAttr("pref_cont.Joints_Visibility", "lipzipJnt_grp.v")
 
-        attribute.lockAndHide(lipzip_grp)
-        attribute.lockAndHide(jnt_grp)
-        attribute.lockAndHide(switch_hook)
-        attribute.lockAndHide(switch_loc_grp)
+        attribute.lock_and_hide(lipzip_grp)
+        attribute.lock_and_hide(jnt_grp)
+        attribute.lock_and_hide(switch_hook)
+        attribute.lock_and_hide(switch_loc_grp)
 
 def face_switcher(bs_node, tongue_cont, l_eye_plug, r_eye_plug, upper_teeth_joint, switch_data, pref_cont="pref_cont"):
     """
@@ -403,9 +403,9 @@ def face_switcher(bs_node, tongue_cont, l_eye_plug, r_eye_plug, upper_teeth_join
     Returns:
 
     """
-    l_eye_parent = functions.getParent(l_eye_plug)
-    r_eye_parent = functions.getParent(r_eye_plug)
-    upper_teeth_parent = functions.getParent(upper_teeth_joint)
+    l_eye_parent = functions.get_parent(l_eye_plug)
+    r_eye_parent = functions.get_parent(r_eye_plug)
+    upper_teeth_parent = functions.get_parent(upper_teeth_joint)
 
     L_eye_b_node = cmds.createNode("blendMatrix", name="charBlender_Leye")
     L_eye_b_m_p = arithmetic.multiply_matrix(["%s.outputMatrix" %L_eye_b_node, cmds.getAttr("%s.worldInverseMatrix[0]" %l_eye_parent)])
@@ -446,7 +446,7 @@ def face_switcher(bs_node, tongue_cont, l_eye_plug, r_eye_plug, upper_teeth_join
         reye_ref = cmds.spaceLocator(name="temp_reye_ref")[0]
         cmds.setAttr("%s.t" % reye_ref, *data["right_eye_pos"])
         upperTeeth_ref = cmds.spaceLocator(name="temp_upperTeeth_ref")[0]
-        functions.alignTo(upperTeeth_ref, upper_teeth_joint, position=True, rotation=False)
+        functions.align_to(upperTeeth_ref, upper_teeth_joint, position=True, rotation=False)
         cmds.parent(upperTeeth_ref, tongue_cont)
         # get the new teeth position by temporarily turning on the switch
         cmds.setAttr("%s.%s" % (pref_cont, data["name"]), 1)
@@ -462,4 +462,4 @@ def face_switcher(bs_node, tongue_cont, l_eye_plug, r_eye_plug, upper_teeth_join
         cmds.setAttr("{0}.target[{1}].targetMatrix".format(upper_teeth_node, nmb), cmds.xform(upperTeeth_ref, q=True, m=True, ws=True), type="matrix")
         attribute.drive_attrs("%s.%s" % (pref_cont, data["name"]), "{0}.target[{1}].weight".format(upper_teeth_node, nmb), driver_range=[0, 1], driven_range=[0, 1], force=False)
 
-        functions.deleteObject([leye_ref, reye_ref, upperTeeth_ref])
+        functions.delete_object([leye_ref, reye_ref, upperTeeth_ref])

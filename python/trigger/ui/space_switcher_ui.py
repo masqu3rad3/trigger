@@ -105,7 +105,7 @@ class MainUI(QtWidgets.QDialog):
         self.deleteanchor_pushButton.clicked.connect(self.onDeleteAnchor)
 
     def onGetAnchor(self):
-        selection, msg = validate(min=1, max=1, transforms=True)
+        selection, msg = validate(minimum=1, maximum=1, transforms=True)
         if not selection:
             self.feed.pop_info(title="Selection Error", text=msg, critical=True)
             return
@@ -117,7 +117,7 @@ class MainUI(QtWidgets.QDialog):
             self.createanchor_pushButton.setStyleSheet("background-color: green; color: black")
 
     def onGetAnchorLocations(self):
-        selection, msg = validate(min=1, max=None, transforms=True)
+        selection, msg = validate(minimum=1, maximum=None, transforms=True)
         if not selection:
             self.feed.pop_info(title="Selection Error", text=msg, critical=True)
             return
@@ -129,7 +129,7 @@ class MainUI(QtWidgets.QDialog):
             self.createanchor_pushButton.setStyleSheet("background-color: green; color: black")
 
     def onDeleteAnchor(self):
-        selection, msg = validate(min=1, max=None, transforms=True)
+        selection, msg = validate(minimum=1, maximum=None, transforms=True)
         if selection:
             for i in selection:
                 space_switcher.remove_space_switch(i)

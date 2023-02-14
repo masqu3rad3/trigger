@@ -3,7 +3,7 @@ import os
 from maya import cmds
 from trigger.core import filelog
 from trigger.core import database
-from trigger.library import functions, naming
+from trigger.library import functions, naming, joint
 from trigger.library import attribute
 from trigger.library import api
 import trigger.library.controllers as ic
@@ -99,7 +99,7 @@ class Kinematics(object):
             # grouping for fingers / toes
             for x in self.fingerMatchConts:
                 # TODO: tidy up / matrix constraint
-                cont_offset = functions.createUpGrp(x[0], "offset", freezeTransform=False)
+                cont_offset = functions.create_offset_group(x[0], "offset", freeze_transform=False)
                 socket = self.getNearestSocket(x[1], self.allSocketsList)
                 cmds.parentConstraint(socket, cont_offset, mo=True)
                 cmds.scaleConstraint("pref_cont", cont_offset)
@@ -109,7 +109,7 @@ class Kinematics(object):
             if self.afterlife == 1: # hide guides
                 cmds.hide(root_joint)
             elif self.afterlife == 2: # delete guides
-                functions.deleteObject(root_joint)
+                functions.delete_object(root_joint)
 
     def save_action(self, *args, **kwargs):
         """Mandatory Method"""
@@ -197,10 +197,9 @@ class Kinematics(object):
     def match_fingers(self, finger_match_list):
         icon = ic.Icon()
         for brother_roots in finger_match_list:
-            # finger_name, finger_type, finger_side = extra.identifyMaster(brother_roots[0], self.module_dict)
-            finger_parent = functions.getParent(brother_roots[0])
-            offsetVector = api.getBetweenVector(finger_parent, brother_roots)
-            iconSize = functions.getDistance(brother_roots[0], brother_roots[-1])
+            finger_parent = functions.get_parent(brother_roots[0])
+            offsetVector = api.get_between_vector(finger_parent, brother_roots)
+            iconSize = functions.get_distance(brother_roots[0], brother_roots[-1])
             translateOff = (iconSize / 2, 0, iconSize / 2)
             rotateOff = (0, 0, 0)
             icon_name = brother_roots[0].replace("jInit", "")
@@ -213,13 +212,13 @@ class Kinematics(object):
             else:
                 pass
 
-            cont_fGroup, dmp = icon.createIcon("Square", iconName="%s_Fgrp_cont" % icon_name,
-                                               scale=(iconSize / 6, iconSize / 4, iconSize / 2))
+            cont_fGroup, dmp = icon.create_icon("Square", icon_name="%s_Fgrp_cont" % icon_name,
+                                                scale=(iconSize / 6, iconSize / 4, iconSize / 2))
             cmds.rotate(90, 0, 0, cont_fGroup)
             cmds.makeIdentity(cont_fGroup, a=True)
 
-            functions.alignAndAim(cont_fGroup, targetList=[finger_parent], aimTargetList=[brother_roots[0], brother_roots[-1]], upObject=brother_roots[0],
-                                  rotateOff=rotateOff, translateOff=(-offsetVector * (iconSize / 2)))
+            functions.align_and_aim(cont_fGroup, target_list=[finger_parent], aim_target_list=[brother_roots[0], brother_roots[-1]], up_object=brother_roots[0],
+                                    rotate_offset=rotateOff, translate_offset=(-offsetVector * (iconSize / 2)))
             cmds.move(0, 0, (-iconSize / 2), cont_fGroup, r=True, os=True)
             self.fingerMatchConts.append([cont_fGroup, finger_parent])
             for finger_root in brother_roots:
@@ -239,7 +238,7 @@ class Kinematics(object):
         allJoints = [] if not allJoints else allJoints
         all_fingers = []
         for jnt in allJoints:
-            limb_name, limb_type, limb_side = functions.identifyMaster(jnt, self.module_dict)
+            limb_name, limb_type, limb_side = joint.identify(jnt, self.module_dict)
             if limb_name == "Hip" and limb_side == "L":
                 l_hip = jnt
             if limb_name == "Hip" and limb_side == "R":
@@ -252,13 +251,13 @@ class Kinematics(object):
             if limb_name == "FingerRoot":
                 all_fingers.append(jnt)
 
-        self.hipDist = functions.getDistance(l_hip, r_hip) if l_hip and r_hip else self.hipDist
-        self.shoulderDist = functions.getDistance(l_shoulder,
-                                                  r_shoulder) if l_shoulder and r_shoulder else self.shoulderDist
+        self.hipDist = functions.get_distance(l_hip, r_hip) if l_hip and r_hip else self.hipDist
+        self.shoulderDist = functions.get_distance(l_shoulder,
+                                                   r_shoulder) if l_shoulder and r_shoulder else self.shoulderDist
 
         for finger in all_fingers:
             # group the same type brothers and append them into the list if it is not already there
-            parent = functions.getParent(finger)
+            parent = functions.get_parent(finger)
             brothers = cmds.listRelatives(parent, c=True, type="joint")
             if brothers:
                 digit_brothers = [brother for brother in brothers if brother in all_fingers]
@@ -291,7 +290,7 @@ class Kinematics(object):
         children = cmds.listRelatives(node, children=True, type="joint")
         children = children if children else []
         for jnt in children:
-            cID = functions.identifyMaster(jnt, self.module_dict)
+            cID = joint.identify(jnt, self.module_dict)
             if cID[0] in self.validRootList:
                 self.get_limb_hierarchy(jnt, isRoot=True, parentIndex=node, r_list=r_list)
             else:
@@ -303,7 +302,7 @@ class Kinematics(object):
                             value["multi_guide"]]
         limb_dict = {}
         multiList = []
-        limb_name, limb_type, limb_side = functions.identifyMaster(node, self.module_dict)
+        limb_name, limb_type, limb_side = joint.identify(node, self.module_dict)
 
         limb_dict[limb_name] = node
         nextNode = node
@@ -315,7 +314,7 @@ class Kinematics(object):
                 z = False
             failedChildren = 0
             for child in children:
-                child_limb_name, child_limb_type, child_limb_side = functions.identifyMaster(child, self.module_dict)
+                child_limb_name, child_limb_type, child_limb_side = joint.identify(child, self.module_dict)
                 if child_limb_name not in self.validRootList and child_limb_type == limb_type:
                     nextNode = child
                     if child_limb_name in multi_guide_jnts:
@@ -342,7 +341,7 @@ class Kinematics(object):
         distanceList = []
         for socket in limbSockets:
             if not socket in excluding:
-                distanceList.append(functions.getDistance(socket, initJoint))
+                distanceList.append(functions.get_distance(socket, initJoint))
         index = distanceList.index(min(distanceList))
         return limbSockets[index]
 
@@ -365,7 +364,7 @@ class Kinematics(object):
             if not selection_mode:
                 if root_plug and parent_socket and master_cont:
                     # check the root
-                    if functions.identifyMaster(root_plug, self.module_dict)[0] not in self.validRootList:
+                    if joint.identify(root_plug, self.module_dict)[0] not in self.validRootList:
                         log.error("root must be a valid root guide node")
                     limbCreationList = self.get_limb_hierarchy(root_plug)
                 else:
@@ -376,7 +375,7 @@ class Kinematics(object):
                 else:
                     log.error(
                         "Select exactly three nodes. First reference root node then target parent and finally master controller")
-                if functions.identifyMaster(root_plug, self.module_dict)[0] not in self.validRootList:
+                if joint.identify(root_plug, self.module_dict)[0] not in self.validRootList:
                     log.error("First selection must be a valid root joint node")
 
             limbCreationList = self.get_limb_hierarchy(root_plug)
@@ -411,7 +410,7 @@ class Kinematics(object):
 
             if self.multi_selectionSets:
                 set_name = "def_%s_%s_Set" % (x[1], x[2])
-                set_name = naming.uniqueName(set_name)
+                set_name = naming.unique_name(set_name)
                 j_def_set = cmds.sets(name=set_name)
 
             # suffix = "%s_%s" % (sideVal, x[1].capitalize()) if sideVal != "C" else x[1].capitalize()
@@ -430,13 +429,13 @@ class Kinematics(object):
                 # Disconnect jDef_ChestSocket_c_spine.scale from jPlug_R_Arm.inverseScale
                 ## Good parenting / scale connections
                 ## get the holder group
-                self.rootGroup = functions.getParent(master_cont)
+                self.rootGroup = functions.get_parent(master_cont)
                 ## Create the holder group if it does not exist
-                scaleGrpPiv = api.getWorldTranslation(limb.limbPlug)
+                scaleGrpPiv = api.get_world_translation(limb.limbPlug)
                 cmds.xform(limb.scaleGrp, piv=scaleGrpPiv, ws=True)
                 ## pass the attributes
 
-                attribute.attrPass(limb.scaleGrp, master_cont, values=True, daisyChain=True, overrideEx=False)
+                attribute.attribute_pass(limb.scaleGrp, master_cont, values=True, daisyChain=True, overrideEx=False)
                 cmds.parent(limb.limbGrp, self.rootGroup)
                 for sCon in limb.scaleConstraints:
                     cmds.scaleConstraint(master_cont, sCon)
@@ -446,7 +445,7 @@ class Kinematics(object):
                     self.anchorLocations += limb.anchorLocations
                     self.anchors += limb.anchors
                 # make them unique lists
-                self.anchorLocations = functions.uniqueList(self.anchorLocations)
+                self.anchorLocations = functions.unique_list(self.anchorLocations)
                 # log.warning(self.anchors)
                 # TODO : pass space switcher anchor arguments from a dictionary rather than a tuple
                 # self.anchors = functions.uniqueList(self.anchors)
@@ -471,12 +470,12 @@ class Kinematics(object):
                         pass
 
                 ## Good parenting / scale connections
-                scaleGrpPiv = api.getWorldTranslation(limb.limbPlug)
+                scaleGrpPiv = api.get_world_translation(limb.limbPlug)
                 cmds.xform(limb.scaleGrp, piv=scaleGrpPiv, ws=True)
                 ## pass the attributes
 
-                attribute.attrPass(limb.scaleGrp, "pref_cont", values=True, daisyChain=True, overrideEx=False)
-                if functions.getParent(limb.limbGrp) != "trigger_grp":
+                attribute.attribute_pass(limb.scaleGrp, "pref_cont", values=True, daisyChain=True, overrideEx=False)
+                if functions.get_parent(limb.limbGrp) != "trigger_grp":
                     cmds.parent(limb.limbGrp, "trigger_grp")
                 # scaler = "master_cont" if cmds.objExists("master_cont") else "pref_cont"
                 for sCon in limb.scaleConstraints:
@@ -498,4 +497,6 @@ class Kinematics(object):
             self.totalDefJoints += limb.deformerJoints
             if j_def_set:
                 cmds.sets(limb.deformerJoints, add=j_def_set)
+
+
 

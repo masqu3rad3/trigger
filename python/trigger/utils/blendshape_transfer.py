@@ -85,7 +85,7 @@ class BlendshapeTransfer(object):
         cmds.parent(self.tmpSource, self.transferShapesGrp)
         cmds.hide(self.tmpSource)
         cmds.parent(self.tmpTarget, self.transferShapesGrp)
-        source_blendshape_list = functions.getMeshes(self.source_blendshape_grp)
+        source_blendshape_list = functions.get_meshes(self.source_blendshape_grp)
 
         if self.is_same_topology(self.tmpSource, self.tmpTarget):
             self.blendshapeNode = cmds.blendShape(source_blendshape_list, self.tmpTarget, w=[0, 0], name="trTMP_blndtrans_blendshape")
@@ -126,11 +126,11 @@ class BlendshapeTransfer(object):
         cmds.parent(self.annotationsGrp, self.offsetCluster[1])
         cmds.setAttr("%s.t" % self.offsetCluster[1], *self.offsetValue)
         cmds.parent(self.offsetCluster[1], self.transferShapesGrp)
-        cmds.hide(functions.getShapes(self.offsetCluster[1])) # hide only shape
+        cmds.hide(functions.get_shapes(self.offsetCluster[1])) # hide only shape
 
     def preview_mode_off(self):
-        functions.deleteObject("trTMP_blndtrans_*")
-        functions.deleteObject(self.transferShapesGrp)
+        functions.delete_object("trTMP_blndtrans_*")
+        functions.delete_object(self.transferShapesGrp)
 
     def qc_blendshapes(self, blendshape_node, separation=5):
         blend_attributes = deformers.get_influencers(blendshape_node)
@@ -195,7 +195,7 @@ class BlendshapeTransfer(object):
             functions.delete_intermediates(new_blendshape)
             cmds.rename(new_blendshape, attr)
             cmds.setAttr("%s.%s" %(self.blendshapeNode[0], attr), 0)
-        functions.deleteObject("trTMP_blndtrans_*")
+        functions.delete_object("trTMP_blndtrans_*")
 
     @staticmethod
     def is_same_topology(source, target):
@@ -205,8 +205,8 @@ class BlendshapeTransfer(object):
         #     return True
         # else:
         #     return False
-        source_count = len(api.getAllVerts(source))
-        target_count = len(api.getAllVerts(target))
+        source_count = len(api.get_all_vertices(source))
+        target_count = len(api.get_all_vertices(target))
 
         if source_count == target_count:
             return True
@@ -407,7 +407,7 @@ class MainUI(QtWidgets.QDialog):
 
     def get_selected(self, line_edit, group=False):
         meshes_only=False if group else True
-        selected, msg = selection.validate(min=1, max=1, meshesOnly=meshes_only, groupsOnly=group, transforms=True, fullPath=False)
+        selected, msg = selection.validate(minimum=1, maximum=1, meshes_only=meshes_only, groups_only=group, transforms=True, full_path=False)
         if not selected:
             self.feed.pop_info(title="Selection Error", text=msg)
             return

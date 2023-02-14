@@ -1,9 +1,8 @@
 from maya import cmds
 import maya.api.OpenMaya as om
-from trigger.library import functions
+from trigger.library import functions, joint
 from trigger.library import naming
 from trigger.library import attribute
-from trigger.library import controllers as ic
 
 from trigger.core import filelog
 log = filelog.Filelog(logname=__name__, filename="trigger_log")
@@ -56,15 +55,15 @@ class Newfinger():
         self.useRefOrientation = cmds.getAttr("%s.useRefOri" % self.inits[0])
         self.fingerType = cmds.getAttr("%s.fingerType" % self.fingerRoot, asString=True)
         self.isThumb = self.fingerType == "Thumb"
-        self.side = functions.get_joint_side(self.inits[0])
+        self.side = joint.get_joint_side(self.inits[0])
         self.sideMult = -1 if self.side == "R" else 1
         self.groupID = int(cmds.getAttr("%s.groupID" % self.inits[0]))
 
         # initialize coordinates
-        self.up_axis, self.mirror_axis, self.look_axis = functions.getRigAxes(self.inits[0])
+        self.up_axis, self.mirror_axis, self.look_axis = joint.get_rig_axes(self.inits[0])
 
         # initialize suffix
-        self.suffix = (naming.uniqueName(cmds.getAttr("%s.moduleName" % self.inits[0])))
+        self.suffix = (naming.unique_name(cmds.getAttr("%s.moduleName" % self.inits[0])))
 
         # BASE variables
         self.controllers = []
@@ -82,7 +81,7 @@ class Newfinger():
     def createGrp(self):
         self.limbGrp = cmds.group(name=self.suffix, em=True)
         self.scaleGrp = cmds.group(name="%s_scaleGrp" % self.suffix, em=True)
-        functions.alignTo(self.scaleGrp, self.inits[0], 0)
+        functions.align_to(self.scaleGrp, self.inits[0], 0)
         self.nonScaleGrp = cmds.group(name="%s_nonScaleGrp" % self.suffix, em=True)
 
         cmds.addAttr(self.scaleGrp, at="bool", ln="Control_Visibility", sn="contVis", defaultValue=True)
@@ -183,7 +182,7 @@ class Guides(object):
 
     def define_attributes(self):
         # set joint side and type attributes
-        _ = [functions.set_joint_side(jnt, self.side) for jnt in self.guideJoints]
+        _ = [joint.set_joint_side(jnt, self.side) for jnt in self.guideJoints]
 
         # ----------Mandatory---------[Start]
         root_jnt = self.guideJoints[0]

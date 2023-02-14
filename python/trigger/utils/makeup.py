@@ -5,7 +5,7 @@ from maya import cmds
 from PySide2 import QtWidgets, QtCore
 from trigger.core.decorators import keepselection, undo
 from trigger.library.controllers import Icon
-from trigger.library.tools import replace_curve, mirrorController
+from trigger.library.tools import replace_curve, mirror_controller
 
 from trigger.ui.qtmaya import getMayaMainWindow
 
@@ -43,7 +43,7 @@ class Makeup(object):
 
     @property
     def list_of_icons(self):
-        return self.icon_handler.getIconsList()
+        return self.icon_handler.get_icons_list()
 
     @undo
     def mirror_curve_controller(self, side, bias):
@@ -70,7 +70,7 @@ class Makeup(object):
 
         for side in side_try_list:
             for bias in bias_try_list:
-                r = mirrorController(axis="x", node_list=None, side_flags=side, side_bias=bias, continue_on_fail=False)
+                r = mirror_controller(axis="x", node_list=None, side_flags=side, side_bias=bias, continue_on_fail=False)
                 if r == -1:
                     continue
                 else:
@@ -84,7 +84,7 @@ class Makeup(object):
             objects = [objects]
 
         for obj in objects:
-            new_shape, _ = self.icon_handler.createIcon(iconType=icon, scale=(1, 1, 1), normal=(0, 1, 0))
+            new_shape, _ = self.icon_handler.create_icon(icon_type=icon, scale=(1, 1, 1), normal=(0, 1, 0))
             if scale:
                 obj_size = self.__get_max_size(obj)
                 new_size = float(obj_size) / self.__get_max_size(new_shape)

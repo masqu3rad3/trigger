@@ -90,7 +90,7 @@ def skinTransfer(source=None, target=None, continue_on_errors=False):
     else:
         if len(targetSkinClusters)==0:
             # sc = cmds.skinCluster(allInfluences, target, tsb=True, name="%s_skincluster" %naming.get_part_name(target))
-            sc = cmds.skinCluster(allInfluences, target, tsb=True, name="%s_skincluster" % target)
+            sc = cmds.skinCluster(allInfluences, target, tsb=True, name="%s_skinCluster" % target.split("|")[-1])
         else:
             sc = targetSkinClusters
         cmds.copySkinWeights (source, target, noMirror=True, surfaceAssociation="closestPoint", influenceAssociation="closestJoint", normalize=True)

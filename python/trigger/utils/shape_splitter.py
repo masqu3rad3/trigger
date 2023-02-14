@@ -27,9 +27,9 @@ class Splitter(dict):
         if not meshes:
             selection = cmds.ls(sl=True, type="transform")
             # remove groups
-            selection = filter(lambda x: functions.getShapes(x), selection)
+            selection = filter(lambda x: functions.get_shapes(x), selection)
             # remove non-meshes
-            selection = filter(lambda x: cmds.objectType(functions.getShapes(x)[0]) == "mesh", selection)
+            selection = filter(lambda x: cmds.objectType(functions.get_shapes(x)[0]) == "mesh", selection)
             self["matches"].update({mesh: [] for mesh in selection})
         else:
             self["matches"].update({mesh: [] for mesh in meshes})
@@ -149,7 +149,7 @@ class Splitter(dict):
             split_maps = [split_maps]
         for map in split_maps:
             local_target = deformers.localize(mesh, "splitMaps_blendshape", local_target_name=map)
-            functions.deleteObject(functions.getParent(local_target))
+            functions.delete_object(functions.get_parent(local_target))
 
         return bs_name
 

@@ -105,7 +105,7 @@ def parentToSurface(objects=None, surface=None, mode="parent", source_parent_cut
         if mode == "pointconstraint":
             cmds.pointConstraint(follicleDag, obj, mo=True)
         if mode == "matrixconstraint":
-            matrixConstraint(follicleDag, obj, mo=True, source_parent_cutoff=source_parent_cutoff)
+            matrixConstraint(follicleDag, obj, maintainOffset=True, source_parent_cutoff=source_parent_cutoff)
         if mode == "none":
             pass
 

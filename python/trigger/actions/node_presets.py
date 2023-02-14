@@ -71,7 +71,7 @@ class Node_presets(object):
         base_folder, file_name_and_ext = os.path.split(file_path)
         file_name, ext = os.path.splitext(file_name_and_ext)
         remote_presets_folder = os.path.join(base_folder, file_name)
-        self.io._folderCheck(remote_presets_folder)
+        self.io.folder_check(remote_presets_folder)
 
         # build .trp data
         data_list = []
@@ -126,7 +126,7 @@ class Node_presets(object):
         layout.addRow(save_current_lbl, savebox_lay)
 
         def get_nodes():
-            sel, msg = selection.validate(min=1, max=None, meshesOnly=False, transforms=False)
+            sel, msg = selection.validate(minimum=1, maximum=None, meshes_only=False, transforms=False)
             if sel:
                 # remove the items that is already in there
                 existing_list = nodes_listbox.listItemNames()

@@ -26,7 +26,7 @@ class Controller(object):
         if cmds.objExists(name):
             self._name = name
         else:
-            self._name = self.icon_handler.createIcon(iconType=self._shape, iconName=name, scale=scale, normal=normal, location=pos)[0]
+            self._name = self.icon_handler.create_icon(icon_type=self._shape, icon_name=name, scale=scale, normal=normal, location=pos)[0]
         self.lockedShapes = ["FkikSwitch"]
 
         if side:
@@ -49,7 +49,7 @@ class Controller(object):
 
     @property
     def shapes(self):
-        return functions.getShapes(self._name)
+        return functions.get_shapes(self._name)
 
     @property
     def side(self):
@@ -60,7 +60,7 @@ class Controller(object):
         return self._tier
 
     def add_offset(self, suffix="OFF"):
-        offset_grp = functions.createUpGrp(self._name, suffix)
+        offset_grp = functions.create_offset_group(self._name, suffix)
         self._offsets.insert(0, offset_grp)
         return offset_grp
 
@@ -71,7 +71,7 @@ class Controller(object):
     def set_shape(self, shape, scale=(1,1,1), normal=(0,1,0)):
         if self._shape in self.lockedShapes:
             log.error("set_shape argument is not valid for locked shapes. Locked Shapes are %s" % self.lockedShapes)
-        new_shape, _ = self.icon_handler.createIcon(iconType=shape, scale=scale, normal=normal)
+        new_shape, _ = self.icon_handler.create_icon(icon_type=shape, scale=scale, normal=normal)
         replace_curve(self._name, new_shape, maintain_offset=True)
         cmds.delete(new_shape)
 
@@ -80,7 +80,7 @@ class Controller(object):
         self.freeze()
 
     def set_normal(self, normals):
-        functions.alignNormal(self.name, normals)
+        functions.align_to_normal(self.name, normals)
         self.freeze()
 
     def freeze(self, rotate=True, scale=True, translate=True):
@@ -122,18 +122,18 @@ class Controller(object):
 
     def lock_translate(self, skip="", hide=True):
         array = ["t%s" % attr for attr in "xyz" if attr not in skip]
-        attribute.lockAndHide(self.name, channelArray=array, hide=hide)
+        attribute.lock_and_hide(self.name, channelArray=array, hide=hide)
 
     def lock_rotate(self, skip="", hide=True):
         array = ["r%s" % attr for attr in "xyz" if attr not in skip]
-        attribute.lockAndHide(self.name, channelArray=array, hide=hide)
+        attribute.lock_and_hide(self.name, channelArray=array, hide=hide)
 
     def lock_scale(self, skip="", hide=True):
         array = ["s%s" % attr for attr in "xyz" if attr not in skip]
-        attribute.lockAndHide(self.name, channelArray=array, hide=hide)
+        attribute.lock_and_hide(self.name, channelArray=array, hide=hide)
 
     def lock_visibility(self, hide=True):
-        attribute.lockAndHide(self.name, channelArray=["v"], hide=hide)
+        attribute.lock_and_hide(self.name, channelArray=["v"], hide=hide)
 
     def lock_all(self, hide=True):
         self.lock_translate(hide=hide)

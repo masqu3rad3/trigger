@@ -1,18 +1,18 @@
 """Module for dynamic Imports
 THIS MODULE IS IMPORTANT FOR actions.script.py
 """
-import os, sys
+import os
+import sys
 
 
 def dynamic_import(file_path):
     """
-    Allows to temporarily import modules from a given path.
+    Temporarily import modules from a given path.
     Imported modules live ONLY IN GIVEN SCOPE not globally
     Args:
         file_path: (String) Path for python module
 
     Returns: <module>
-
     """
     module_name = os.path.splitext(os.path.basename(file_path))[0]
 

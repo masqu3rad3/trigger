@@ -15,13 +15,13 @@ if not cmds.objExists(hookNode):
     cmds.group(name=hookNode, em=True)
 
 for contName in double_controllers:
-    cont, _ = iconHandler.createIcon("Circle", iconName="%s_cont" % contName, normal=(0, 0, 1))
-    bound, _ = iconHandler.createIcon("Square", iconName="%s_bound" % contName, normal=(0, 0, 1))
+    cont, _ = iconHandler.create_icon("Circle", icon_name="%s_cont" % contName, normal=(0, 0, 1))
+    bound, _ = iconHandler.create_icon("Square", icon_name="%s_bound" % contName, normal=(0, 0, 1))
     cmds.setAttr("%s.s" % bound, 10, 5, 10)
     cmds.setAttr("%s.ty" % bound, 5)
     cmds.makeIdentity(bound, a=True)
 
-    cont_offset = functions.createUpGrp(cont, "offset")
+    cont_offset = functions.create_offset_group(cont, "offset")
     cmds.parent(cont_offset, bound)
     cmds.group(bound, name="%s_move_offset" % contName)
 

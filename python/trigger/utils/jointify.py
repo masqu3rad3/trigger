@@ -66,10 +66,10 @@ class Bone(object):
 
     def add_driver(self, t_matrix_plug, r_matrix_plug, position_offset=(0, 0, 0)):
         # connect the driver into nex available attrs
-        t_id = attribute.getNextIndex("%s.matrixIn" % self._translateMult_node)
+        t_id = attribute.get_next_index("%s.matrixIn" % self._translateMult_node)
         cmds.connectAttr(t_matrix_plug, "%s.matrixIn[%i]" % (self._translateMult_node, t_id))
 
-        r_id = attribute.getNextIndex("%s.matrixIn" % self._rotateMult_node)
+        r_id = attribute.get_next_index("%s.matrixIn" % self._rotateMult_node)
         cmds.connectAttr(r_matrix_plug, "%s.matrixIn[%i]" % (self._rotateMult_node, t_id))
 
         # compensate the offset value
@@ -112,7 +112,7 @@ class Bone(object):
 class Driver(object):
     def __init__(self, name="drv", bone=None, time_gap=None, parent_node=None):
         # self._name = cmds.spaceLocator(name=naming.uniqueName(name))[0]
-        self._name = cmds.group(em=True, name=naming.uniqueName(name))
+        self._name = cmds.group(em=True, name=naming.unique_name(name))
         if parent_node:
             cmds.parent(self._name, parent_node)
         self._bone = bone
@@ -181,7 +181,7 @@ class Driver(object):
                               r_matrix_plug="%s.outputMatrix" % self._composeRotate, position_offset=offset)
 
     def clear_node(self):
-        functions.deleteObject(self._name)
+        functions.delete_object(self._name)
 
 
 class Shape(object):
@@ -389,7 +389,7 @@ class Jointify(object):
         _history = cmds.listHistory(self.blendshapeNode, allFuture=True, future=True, pruneDagObjects=False,
                                     bf=False)
         _shape_node = cmds.ls(_history, type="mesh")[0]
-        self.trainingData["mesh"] = functions.getParent(_shape_node)
+        self.trainingData["mesh"] = functions.get_parent(_shape_node)
 
         start_frame = 0
         end_frame = 0
@@ -548,7 +548,7 @@ class Jointify(object):
 
         self.demData["joints"] = cmds.ls(self.demData["demNodes"], type="joint")
         self.demData["meshes"] = cmds.ls(self.demData["demNodes"], type="mesh")
-        self.demData["meshTransform"] = functions.getParent(self.demData["meshes"][0])
+        self.demData["meshTransform"] = functions.get_parent(self.demData["meshes"][0])
         self.demData["skinCluster"] = deformers.get_deformers(self.demData["meshTransform"]).get('skinCluster')[0]
 
         # # create the root joint:
@@ -627,7 +627,7 @@ class Jointify(object):
 
         root_joints_data = {}
         for root_node in self.rootNodes:
-            root_pos = api.getWorldTranslation(root_node)
+            root_pos = api.get_world_translation(root_node)
             cmds.select(d=True)
             root_jnt = cmds.joint(name="jntfRoot_%s" % root_node)
             cmds.setAttr("%s.t" % root_jnt, *root_pos)
@@ -643,7 +643,7 @@ class Jointify(object):
 
         for dem_jnt in self.demData["joints"]:
             if len(self.rootNodes) > 1:
-                parent_jnt = min(root_joints_data.keys(), key=lambda x: functions.getDistance(dem_jnt, x))
+                parent_jnt = min(root_joints_data.keys(), key=lambda x: functions.get_distance(dem_jnt, x))
             else:
                 parent_jnt = list(root_joints_data.keys())[0]
 
@@ -663,12 +663,12 @@ class Jointify(object):
         ######################################
 
         # tidy up the scene with groups
-        drivers_grp = functions.validateGroup("jointifyDrv_grp")
+        drivers_grp = functions.validate_group("jointifyDrv_grp")
 
         # bone_objects = [Bone(x) for x in self.demData["joints"] if x is not "jointifyRoot_jnt"]
         bone_objects = [Bone(x) for x in self.demData["joints"] if x != "jointifyRoot_jnt"]
 
-        jointify_node = functions.validateGroup("jointify")
+        jointify_node = functions.validate_group("jointify")
 
         # before making connections (which clears joint keys), get all the transform data from joints since they are re-used
         shape_objects = []
@@ -705,7 +705,7 @@ class Jointify(object):
                                                      sculpted=original_shape, name="%s_delta" % shape)
 
                     for shp in [original_shape, dem_shape, delta_shape]:
-                        if functions.getParent(shp) != temp_grp:
+                        if functions.get_parent(shp) != temp_grp:
                             cmds.parent(shp, temp_grp)
                 else:
                     delta_shape = None
@@ -746,13 +746,13 @@ class Jointify(object):
         # delete the blendshape and transfer the skin weights to the original
         cmds.currentTime(0)
         cmds.refresh()
-        functions.deleteObject(self.blendshapeNode)
+        functions.delete_object(self.blendshapeNode)
 
         # skinTransfer.skinTransfer(source=self.demData["meshTransform"], target=self.trainingData["mesh"])
         # activate the skincluster
         cmds.setAttr("%s.nodeState" % jointify_sc, 0)
-        functions.deleteObject(self.demData["meshTransform"])
-        functions.deleteObject(temp_grp)
+        functions.delete_object(self.demData["meshTransform"])
+        functions.delete_object(temp_grp)
 
         if self.parent_to_roots:
             for jnt in root_joints_data.keys():
@@ -777,8 +777,8 @@ class Jointify(object):
     def _get_difference(node_a, node_b, threshold=0.001, at_time=None):
         if at_time:
             cmds.currentTime(at_time)
-        a_vertices = api.getAllVerts(node_a)
-        b_vertices = api.getAllVerts(node_b)
+        a_vertices = api.get_all_vertices(node_a)
+        b_vertices = api.get_all_vertices(node_b)
         for a, b in zip(a_vertices, b_vertices):
             d = a.distanceTo(b)
             if d > threshold:

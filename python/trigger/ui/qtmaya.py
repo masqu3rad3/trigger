@@ -1,8 +1,7 @@
 """Qt related Maya Utility Methods"""
 import sys
-from maya import cmds
-from maya import OpenMayaUI as omui
-from trigger.ui.Qt import QtWidgets, QtCore, QtCompat
+from maya import OpenMayaUI
+from trigger.ui.Qt import QtWidgets, QtCompat
 
 def getMayaMainWindow():
     """
@@ -10,7 +9,7 @@ def getMayaMainWindow():
     Returns:
         (long or int) Memory Adress
     """
-    win = omui.MQtUtil_mainWindow()
+    win = OpenMayaUI.MQtUtil.mainWindow()
     if sys.version_info.major == 3:
         ptr = QtCompat.wrapInstance(int(win), QtWidgets.QMainWindow)
     else:

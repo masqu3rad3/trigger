@@ -3,6 +3,7 @@ import os
 from maya import cmds
 from trigger.library import functions
 from trigger.library import attribute
+from trigger.library import joint
 from trigger.library import api
 
 from trigger.core import io
@@ -75,16 +76,16 @@ class Session(object):
         for jnt in flat_jnt_list:
             cmds.select(d=True)
             tmp_jnt = cmds.joint()
-            functions.alignTo(tmp_jnt, jnt, position=True, rotation=True)
-            world_pos = tuple(api.getWorldTranslation(tmp_jnt))
+            functions.align_to(tmp_jnt, jnt, position=True, rotation=True)
+            world_pos = tuple(api.get_world_translation(tmp_jnt))
             rotation = cmds.getAttr("%s.rotate" % tmp_jnt)[0]
             joint_orient = cmds.getAttr("%s.jointOrient" % tmp_jnt)[0]
             scale = cmds.getAttr("%s.scale" % jnt)[0]
-            side = functions.get_joint_side(jnt)
-            j_type = functions.get_joint_type(jnt)
+            side = joint.get_joint_side(jnt)
+            j_type = joint.get_joint_type(jnt)
             color = cmds.getAttr("%s.overrideColor" % jnt)
             radius = cmds.getAttr("%s.radius" % jnt)
-            parent = functions.getParent(jnt)
+            parent = functions.get_parent(jnt)
             if parent in flat_jnt_list:
                 pass
             else:
@@ -132,8 +133,8 @@ class Session(object):
             cmds.setAttr("%s.displayLocalAxis" % jnt, 1)
             cmds.setAttr("%s.overrideEnabled" % jnt, True)
             cmds.setAttr("%s.overrideColor" % jnt, jnt_dict.get("color"))
-            functions.set_joint_side(jnt, jnt_dict.get("side"))
-            functions.set_joint_type(jnt, jnt_dict.get("type"))
+            joint.set_joint_side(jnt, jnt_dict.get("side"))
+            joint.set_joint_type(jnt, jnt_dict.get("type"))
             property_attrs = jnt_dict.get("user_attributes")
             for attr_dict in property_attrs:
                 attribute.create_attribute(jnt, attr_dict)

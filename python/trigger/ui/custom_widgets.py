@@ -1,8 +1,9 @@
 import os
+import re
+
 from trigger.library import naming
 from trigger.ui.Qt import QtWidgets, QtCore, QtGui
 from trigger.ui import feedback
-from trigger.core import foolproof
 from trigger.ui.widgets.browser_button import BrowserButton
 
 # TODO move each widget into separate filen under trigger.ui.widgets
@@ -98,7 +99,7 @@ class ValidatedLineEdit(QtWidgets.QLineEdit):
     def keyPressEvent(self, *args, **kwargs):
         super(ValidatedLineEdit, self).keyPressEvent(*args, **kwargs)
         current_text = self.text()
-        if not foolproof.string_value(current_text, allow_spaces=self.allowSpaces, directory=self.allowDirectory):
+        if not self.string_value(current_text, allow_spaces=self.allowSpaces, directory=self.allowDirectory):
             self.setStyleSheet("background-color: rgb(40,40,40); color: red")
             if self.connected_widgets:
                 for wid in self.connected_widgets:
@@ -108,6 +109,19 @@ class ValidatedLineEdit(QtWidgets.QLineEdit):
             if self.connected_widgets:
                 for wid in self.connected_widgets:
                     wid.setEnabled(True)
+    @staticmethod
+    def string_value(input_text, allow_spaces=False, directory=False):
+        """Check the text for illegal characters."""
+        allow_spaces = " " if allow_spaces else ""
+        directory = "/\\\\:" if directory else ""
+
+        pattern = r'^[:A-Za-z0-9%s%s.A_-]*$' % (directory, allow_spaces)
+
+        if re.match(pattern, input_text):
+            return True
+        else:
+            return False
+
 
 class ListBoxLayout(QtWidgets.QVBoxLayout):
     """Easy to manage listwidget with preset buttons"""

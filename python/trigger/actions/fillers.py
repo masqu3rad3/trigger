@@ -185,7 +185,7 @@ class Fillers(object):
         ctrl.update_ui()
 
         def get_controllers():
-            sel, msg = selection.validate(min=1, max=None, meshesOnly=False, transforms=False)
+            sel, msg = selection.validate(minimum=1, maximum=None, meshes_only=False, transforms=False)
             if sel:
                 # remove the items that is already in there
                 existing_list = controllers_listbox.listItemNames()

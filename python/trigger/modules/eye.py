@@ -1,6 +1,6 @@
 from maya import cmds
 import maya.api.OpenMaya as om
-from trigger.library import api
+from trigger.library import api, joint
 from trigger.library import functions, connection, attribute
 from trigger.library import naming
 from trigger.library import attribute
@@ -54,16 +54,16 @@ class Eye(object):
 
         # get the properties from the root
         self.useRefOrientation = cmds.getAttr("%s.useRefOri" % self.inits[0])
-        self.side = functions.get_joint_side(self.inits[0])
+        self.side = joint.get_joint_side(self.inits[0])
         self.sideMult = -1 if self.side == "R" else 1
         self.isLocal = bool(cmds.getAttr("%s.localJoints" % self.inits[0]))
         self.groupID = int(cmds.getAttr("%s.groupID" % self.inits[0]))
 
         # initialize coordinates
-        self.up_axis, self.mirror_axis, self.look_axis = functions.getRigAxes(self.inits[0])
+        self.up_axis, self.mirror_axis, self.look_axis = joint.get_rig_axes(self.inits[0])
 
         # initialize suffix
-        self.suffix = (naming.uniqueName(cmds.getAttr("%s.moduleName" % self.inits[0])))
+        self.suffix = (naming.unique_name(cmds.getAttr("%s.moduleName" % self.inits[0])))
 
         # module variables
         self.aimBridge = None
@@ -93,7 +93,7 @@ class Eye(object):
     def createGrp(self):
         self.limbGrp = cmds.group(name=self.suffix, em=True)
         self.scaleGrp = cmds.group(name="%s_scaleGrp" % self.suffix, em=True)
-        functions.alignTo(self.scaleGrp, self.inits[0], position=True, rotation=False)
+        functions.align_to(self.scaleGrp, self.inits[0], position=True, rotation=False)
         self.nonScaleGrp = cmds.group(name="%s_nonScaleGrp" % self.suffix, em=True)
 
         cmds.addAttr(self.scaleGrp, at="bool", ln="Control_Visibility", sn="contVis", defaultValue=True)
@@ -105,11 +105,11 @@ class Eye(object):
         cmds.setAttr("%s.rigVis" % self.scaleGrp, cb=True)
 
         self.controllerGrp = cmds.group(name="%s_controller_grp" % self.suffix, em=True)
-        attribute.lockAndHide(self.controllerGrp)
+        attribute.lock_and_hide(self.controllerGrp)
         cmds.parent(self.controllerGrp, self.limbGrp)
 
         self.jointGrp = cmds.group(name="%s_joint_grp" % self.suffix, em=True)
-        attribute.lockAndHide(self.controllerGrp)
+        attribute.lock_and_hide(self.controllerGrp)
         cmds.parent(self.jointGrp, self.limbGrp)
 
         cmds.parent(self.scaleGrp, self.limbGrp)
@@ -121,12 +121,12 @@ class Eye(object):
         cmds.parent(self.plugBindGrp, self.limbGrp)
 
         if self.groupID:
-            functions.validateGroup("Eye_group%i" % self.groupID)
+            functions.validate_group("Eye_group%i" % self.groupID)
             cmds.parent(self.limbGrp, "Eye_group%i" % self.groupID)
             self.limbGrp = "Eye_group%i" % self.groupID
             c_shapes = cmds.listRelatives("Eye_group%i" % self.groupID, ad=True, children=True, ap=False, type="nurbsCurve")
             if c_shapes:
-                self.otherEyeConts = [functions.getParent(shape) for shape in c_shapes]
+                self.otherEyeConts = [functions.get_parent(shape) for shape in c_shapes]
 
             if cmds.objExists("Eye_group%i_cont" %self.groupID):
                 self.groupCont = "Eye_group%i_cont" %self.groupID
@@ -135,15 +135,15 @@ class Eye(object):
 
     def createJoints(self):
         cmds.select(d=True)
-        self.limbPlug = cmds.joint(name="limbPlug_%s" % self.suffix, p=api.getWorldTranslation(self.inits[0]), radius=3)
+        self.limbPlug = cmds.joint(name="limbPlug_%s" % self.suffix, p=api.get_world_translation(self.inits[0]), radius=3)
 
         cmds.select(d=True)
         eye_jnt = cmds.joint(name="jDef_eye_{0}".format(self.suffix))
-        functions.alignTo(eye_jnt, self.inits[0])
-        eye_offset = functions.createUpGrp(eye_jnt, "OFF")
-        self.plugDriven = functions.createUpGrp(eye_jnt, "PLUG_DRIVEN")
-        self.aimDriven = functions.createUpGrp(eye_jnt, "AIM")
-        self.directDriven = functions.createUpGrp(eye_jnt, "DIRECT")
+        functions.align_to(eye_jnt, self.inits[0])
+        eye_offset = functions.create_offset_group(eye_jnt, "OFF")
+        self.plugDriven = functions.create_offset_group(eye_jnt, "PLUG_DRIVEN")
+        self.aimDriven = functions.create_offset_group(eye_jnt, "AIM")
+        self.directDriven = functions.create_offset_group(eye_jnt, "DIRECT")
         self.sockets.append(eye_jnt)
         self.deformerJoints.append(eye_jnt)
 
@@ -151,7 +151,7 @@ class Eye(object):
         #     functions.alignTo(eye_jnt, self.inits[0], position=False, rotation=True)
         #     cmds.makeIdentity(eye_jnt, a=True)
         if not self.useRefOrientation:
-            functions.orientJoints(self.deformerJoints, worldUpAxis=(self.look_axis), upAxis=(0, 1, 0), reverseAim=self.sideMult, reverseUp=self.sideMult)
+            joint.orient_joints(self.deformerJoints, world_up_axis=(self.look_axis), up_axis=(0, 1, 0), reverse_aim=self.sideMult, reverse_up=self.sideMult)
 
         cmds.parent(eye_offset, self.jointGrp)
 
@@ -160,17 +160,17 @@ class Eye(object):
 
         self.aimBridge = cmds.spaceLocator(name="aimBridge_%s" %self.suffix)[0]
         attribute.drive_attrs("%s.rigVis" % self.scaleGrp, "%s.v" % self.aimBridge)
-        self.aimCont, _ = icon_handler.createIcon("Circle", iconName="%s_Aim_cont" % self.suffix, scale = (1,1,1),
-                                                      normal=(0, 0, 1))
+        self.aimCont, _ = icon_handler.create_icon("Circle", icon_name="%s_Aim_cont" % self.suffix, scale = (1, 1, 1),
+                                                   normal=(0, 0, 1))
         self.controllers.append(self.aimCont)
 
         self.otherEyeConts.append(self.aimCont)
 
-        functions.alignTo(self.aimBridge, self.inits[1], position=True, rotation=True)
-        functions.alignTo(self.aimCont, self.inits[1], position=True, rotation=True)
+        functions.align_to(self.aimBridge, self.inits[1], position=True, rotation=True)
+        functions.align_to(self.aimCont, self.inits[1], position=True, rotation=True)
 
-        aimCont_OFF = functions.createUpGrp(self.aimCont, "OFF")
-        self.aimContGroupFollow = functions.createUpGrp(self.aimCont, "GroupFollow")
+        aimCont_OFF = functions.create_offset_group(self.aimCont, "OFF")
+        self.aimContGroupFollow = functions.create_offset_group(self.aimCont, "GroupFollow")
 
         cmds.parent(self.aimBridge, self.nonScaleGrp)
 
@@ -179,35 +179,35 @@ class Eye(object):
 
         if self.groupID:
             if not self.groupCont:
-                self.groupCont, _ = icon_handler.createIcon("Circle", iconName="Eye_group%i_cont" %self.groupID, scale = (2,2,2),
-                                                          normal=(0, 0, 1))
+                self.groupCont, _ = icon_handler.create_icon("Circle", icon_name="Eye_group%i_cont" % self.groupID, scale = (2, 2, 2),
+                                                             normal=(0, 0, 1))
                 functions.colorize(self.groupCont, "C")
                 attribute.drive_attrs("%s.contVis" % self.scaleGrp, "%s.v" % self.groupCont)
                 cmds.delete(cmds.pointConstraint(self.otherEyeConts, self.groupCont, mo=False))
-                groupCont_off = functions.createUpGrp(self.groupCont, "OFF")
+                groupCont_off = functions.create_offset_group(self.groupCont, "OFF")
                 cmds.connectAttr("%s.scale" % self.scaleGrp, "%s.scale" %groupCont_off)
                 cmds.parent(groupCont_off, self.limbGrp)
             for cont in self.otherEyeConts:
-                g_follow = functions.getParent(cont)
+                g_follow = functions.get_parent(cont)
                 _ = [attribute.disconnect_attr(g_follow, attr=attr, suppress_warnings=True) for attr in ["translate", "rotate", "scale"]]
                 # connection.matrixConstraint(self.groupCont, g_follow, mo=True, source_parent_cutoff=self.localOffGrp)
-                connection.matrixConstraint(self.groupCont, g_follow, mo=True)
+                connection.matrixConstraint(self.groupCont, g_follow, maintainOffset=True)
             else:
                 # if the group controller exists, update only its shape and rotation pivot
                 # adjust the pivot
-                cmds.xform(self.groupCont, a=True, ws=True, piv=api.getCenter(self.otherEyeConts))
-                cmds.xform(functions.getParent(self.groupCont), a=True, ws=True, piv=api.getCenter(self.otherEyeConts))
+                cmds.xform(self.groupCont, a=True, ws=True, piv=api.get_center(self.otherEyeConts))
+                cmds.xform(functions.get_parent(self.groupCont), a=True, ws=True, piv=api.get_center(self.otherEyeConts))
 
                 bb = cmds.exactWorldBoundingBox(*self.otherEyeConts)
                 x_dist = abs(bb[0] - bb[3])
                 y_dist = abs(bb[1] - bb[4])
                 z_dist = abs(bb[2] - bb[5])
-                temp_cont, _ = icon_handler.createIcon("Circle", iconName="TEMP_%i_cont" %self.groupID, scale = (x_dist, z_dist, y_dist),
-                                                          normal=(0, 0, 1))
+                temp_cont, _ = icon_handler.create_icon("Circle", icon_name="TEMP_%i_cont" % self.groupID, scale = (x_dist, z_dist, y_dist),
+                                                        normal=(0, 0, 1))
 
                 # cmds.delete(cmds.pointConstraint(test_nodes, cont))
-                temp_cont_shape = functions.getShapes(temp_cont)[0]
-                functions.alignTo(temp_cont, self.groupCont, position=True)
+                temp_cont_shape = functions.get_shapes(temp_cont)[0]
+                functions.align_to(temp_cont, self.groupCont, position=True)
                 # cmds.makeIdentity(temp_cont, a=True)
 
                 # cmds.connectAttr("%s.worldSpace" % temp_cont_shape, "%s.create" % self.groupCont, f=True)
@@ -216,7 +216,7 @@ class Eye(object):
 
                 tools.replace_curve(self.groupCont, temp_cont)
 
-                functions.deleteObject(temp_cont)
+                functions.delete_object(temp_cont)
                 self.anchors = [(self.groupCont, "parent", 1, None)]
                 pass
         else:
@@ -229,7 +229,7 @@ class Eye(object):
         aim_con = cmds.aimConstraint(self.aimBridge, self.aimDriven, upVector=self.up_axis, aimVector=self.look_axis,
                                      wut="objectrotation", wuo=self.limbPlug)
 
-        connection.matrixConstraint(self.aimCont, self.aimBridge, mo=False,
+        connection.matrixConstraint(self.aimCont, self.aimBridge, maintainOffset=False,
                                     source_parent_cutoff=self.localOffGrp)
 
 
@@ -306,9 +306,9 @@ class Guides(object):
 
     def define_attributes(self):
         # set joint side and type attributes
-        functions.set_joint_type(self.guideJoints[0], "EyeRoot")
-        functions.set_joint_type(self.guideJoints[1], "EyeAim")
-        _ = [functions.set_joint_side(jnt, self.side) for jnt in self.guideJoints]
+        joint.set_joint_type(self.guideJoints[0], "EyeRoot")
+        joint.set_joint_type(self.guideJoints[1], "EyeAim")
+        _ = [joint.set_joint_side(jnt, self.side) for jnt in self.guideJoints]
 
         # ----------Mandatory---------[Start]
         root_jnt = self.guideJoints[0]
