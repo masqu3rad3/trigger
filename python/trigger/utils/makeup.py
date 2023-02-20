@@ -7,7 +7,7 @@ from trigger.core.decorators import keepselection, undo
 from trigger.library.controllers import Icon
 from trigger.library.tools import replace_curve, mirror_controller
 
-from trigger.ui.qtmaya import getMayaMainWindow
+from trigger.ui.qtmaya import get_main_maya_window
 
 
 WINDOW_NAME = "Trigger Make-up v0.0.1"
@@ -116,7 +116,7 @@ class MainUI(QtWidgets.QDialog):
     makeup_handler = Makeup()
 
     def __init__(self):
-        parent = getMayaMainWindow()
+        parent = get_main_maya_window()
         super(MainUI, self).__init__(parent=parent)
 
         self.replace_controllers_combo = None

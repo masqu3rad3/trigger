@@ -25,7 +25,7 @@ from trigger.library import deformers, attribute, functions, api, arithmetic, na
 from trigger.core.decorators import keepselection, viewportOff
 from trigger.library import connection
 from trigger.objects import skin
-from trigger.utils import skinTransfer
+from trigger.utils import skin_transfer
 from trigger.core import filelog
 
 
@@ -593,7 +593,7 @@ class Jointify(object):
         mesh_sc = deformers.get_deformers(self.trainingData["mesh"]).get("skinCluster", None)
         if not mesh_sc:
             jointify_sc = \
-            skinTransfer.skinTransfer(source=self.demData["meshTransform"], target=self.trainingData["mesh"])[0]
+            skinTransfer.skin_transfer(source=self.demData["meshTransform"], target=self.trainingData["mesh"])[0]
         else:
             jointify_sc = mesh_sc[0]
             cmds.skinCluster(jointify_sc, edit=True, normalizeWeights=0)
