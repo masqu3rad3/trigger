@@ -1,0 +1,7 @@
+[build-system]
+requires = []
+
+[project]
+name = "trigger"
+authors = [{name = "Arda Kutlu", email = "ardakutlu@gmail.com"}]
+dynamic = ["version", "description"]
