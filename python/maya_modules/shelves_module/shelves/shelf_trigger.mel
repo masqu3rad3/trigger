@@ -1,0 +1,173 @@
+global proc shelf_trigger () {
+    global string $gBuffStr;
+    global string $gBuffStr0;
+    global string $gBuffStr1;
+
+
+    shelfButton
+        -enableCommandRepeat 1
+        -flexibleWidthType 3
+        -flexibleWidthValue 32
+        -enable 1
+        -width 35
+        -height 34
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "Trigger - Modular Rigging Tool"
+        -enableBackground 0
+        -backgroundColor 0 0 0
+        -highlightColor 0.321569 0.521569 0.65098
+        -align "center"
+        -label "Trigger"
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -overlayLabelColor 0.8 0.8 0.8
+        -overlayLabelBackColor 0 0 0 0.5
+        -image "trigger.png"
+        -image1 "trigger.png"
+        -style "iconOnly"
+        -marginWidth 0
+        -marginHeight 1
+        -command "from trigger.ui import main\nmain.launch()"
+        -sourceType "python"
+        -commandRepeatable 1
+        -flat 1
+    ;
+    shelfButton
+        -enableCommandRepeat 1
+        -flexibleWidthType 3
+        -flexibleWidthValue 32
+        -enable 1
+        -width 35
+        -height 34
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "Skin Transfer between Geometries,. Select source mesh first then destination group or mesh."
+        -enableBackground 0
+        -backgroundColor 0 0 0
+        -highlightColor 0.321569 0.521569 0.65098
+        -align "center"
+        -label "SkinTransfer"
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -overlayLabelColor 0.8 0.8 0.8
+        -overlayLabelBackColor 0 0 0 0.5
+        -image "copySkinWeightsIcon.png"
+        -image1 "copySkinWeightsIcon.png"
+        -style "iconOnly"
+        -marginWidth 0
+        -marginHeight 1
+        -command "from trigger.utils import skin_transfer\nskin_transfer.skin_transfer()"
+        -sourceType "python"
+        -commandRepeatable 1
+        -flat 1
+    ;
+    shelfButton
+        -enableCommandRepeat 1
+        -flexibleWidthType 3
+        -flexibleWidthValue 32
+        -enable 1
+        -width 35
+        -height 34
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "Trigger Selection and mocap remap tool"
+        -enableBackground 0
+        -backgroundColor 0 0 0
+        -highlightColor 0.321569 0.521569 0.65098
+        -align "center"
+        -label "Trigger Selector"
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -overlayLabelColor 0.8 0.8 0.8
+        -overlayLabelBackColor 0 0 0 0.5
+        -image "triggerTools.png"
+        -image1 "triggerTools.png"
+        -style "iconOnly"
+        -marginWidth 0
+        -marginHeight 1
+        -command "from trigger.utils import trigger_tools\ntrigger_tools.dock_window(trigger_tools.MainUI)"
+        -sourceType "python"
+        -commandRepeatable 1
+        -flat 1
+    ;
+    shelfButton
+        -enableCommandRepeat 1
+        -flexibleWidthType 3
+        -flexibleWidthValue 32
+        -enable 1
+        -width 35
+        -height 34
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "MakeUp Tools"
+        -enableBackground 0
+        -backgroundColor 0 0 0
+        -highlightColor 0.321569 0.521569 0.65098
+        -align "center"
+        -label "MakeUp Tools"
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -overlayLabelColor 0.8 0.8 0.8
+        -overlayLabelBackColor 0 0 0 0.5
+        -image "D:/dev/trigger/python/maya_modules/shelves_module/icons/makeUp.png"
+        -image1 "D:/dev/trigger/python/maya_modules/shelves_module/icons/makeUp.png"
+        -style "iconOnly"
+        -marginWidth 0
+        -marginHeight 1
+        -command "from trigger.utils import makeup\nmakeup.launch()"
+        -sourceType "python"
+        -commandRepeatable 1
+        -flat 1
+    ;
+    shelfButton
+        -enableCommandRepeat 1
+        -flexibleWidthType 3
+        -flexibleWidthValue 32
+        -enable 1
+        -width 35
+        -height 34
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "Transfers blendshape packs between same or different topology base meshes"
+        -enableBackground 0
+        -backgroundColor 0 0 0
+        -highlightColor 0.321569 0.521569 0.65098
+        -align "center"
+        -label "Blendshape Transfer"
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -overlayLabelColor 0.8 0.8 0.8
+        -overlayLabelBackColor 0 0 0 0.5
+        -image "blendshape_transfer.png"
+        -image1 "blendshape_transfer.png"
+        -style "iconOnly"
+        -marginWidth 0
+        -marginHeight 1
+        -command "from trigger.utils import blendshape_transfer\nblendshape_transfer.MainUI().show()"
+        -sourceType "python"
+        -commandRepeatable 1
+        -flat 1
+    ;
+
+}

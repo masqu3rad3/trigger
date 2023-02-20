@@ -6,7 +6,7 @@ from tabnanny import check
 from trigger.ui.Qt import QtWidgets, QtCore
 
 # from dnmayalib.interface import main_window
-from trigger.ui.qtmaya import getMayaMainWindow as main_window
+from trigger.ui.qtmaya import get_main_maya_window as main_window
 
 from .mirror_lattice import MirrorLattice
 

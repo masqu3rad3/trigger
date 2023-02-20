@@ -8,7 +8,7 @@ from maya import cmds
 from trigger.core import database
 
 from trigger.ui.Qt import QtWidgets, QtCore, QtGui
-from trigger.ui.qtmaya import getMayaMainWindow
+from trigger.ui.qtmaya import get_main_maya_window
 from trigger.ui import model_ctrl
 from trigger.ui import custom_widgets
 from trigger.ui import feedback
@@ -110,7 +110,7 @@ class MainUI(QtWidgets.QMainWindow):
 
     def __init__(self, disable_version_control=False):
 
-        parent = getMayaMainWindow()
+        parent = get_main_maya_window()
         super(MainUI, self).__init__(parent=parent)
         log.clear()
 

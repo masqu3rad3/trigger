@@ -4,7 +4,7 @@ from trigger.core.decorators import viewportOff, keepselection
 
 from trigger.library import deformers, functions, selection, interface, api
 
-from trigger.ui.qtmaya import getMayaMainWindow
+from trigger.ui.qtmaya import get_main_maya_window
 from trigger.ui.Qt import QtWidgets
 from trigger.ui import custom_widgets
 from trigger.ui import feedback
@@ -222,7 +222,7 @@ class MainUI(QtWidgets.QDialog):
                     entry.close()
             except (AttributeError, TypeError):
                 pass
-        parent = getMayaMainWindow()
+        parent = get_main_maya_window()
         super(MainUI, self).__init__(parent=parent)
 
         self.transfer = BlendshapeTransfer()
