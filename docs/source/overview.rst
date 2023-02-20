@@ -1,6 +1,8 @@
 Overview
 ========
 
+.. image:: ../../python/maya_modules/shelves_module/icons/trigger.png
+
 Trigger is a modular rigging and automation tool for Autodesk Maya.
 
 It is designed to streamline and simplify the rigging process for animators and riggers. 
