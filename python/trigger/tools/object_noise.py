@@ -1,34 +1,10 @@
-import sys
 import pymel.core as pm
-import pymel.core.datatypes as dt
 import random
-from trigger.ui import Qt
-from trigger.ui.Qt import QtWidgets, QtCore, QtGui
+from trigger.ui.Qt import QtWidgets, QtCore
+from trigger.ui.qtmaya import get_main_maya_window
 from maya import OpenMayaUI as omui
 
-
-if Qt.__binding__ == "PySide":
-    from shiboken import wrapInstance
-elif Qt.__binding__.startswith('PyQt'):
-    from sip import wrapinstance as wrapInstance
-else:
-    from shiboken2 import wrapInstance
-
 WINDOW_NAME = "Noise Expressions"
-
-def getMayaMainWindow():
-    """
-    Gets the memory adress of the main window to connect Qt dialog to it.
-    Returns:
-        (long) Memory Adress
-    """
-    win = omui.MQtUtil_mainWindow()
-    if sys.version_info.major == 3:
-        ptr = wrapInstance(int(win), QtWidgets.QMainWindow)
-    else:
-        ptr = wrapInstance(long(win), QtWidgets.QMainWindow)
-    return ptr
-
 
 def uniqueName(name):
     baseName = name
@@ -274,7 +250,7 @@ class ObjectNoiseUI(QtWidgets.QDialog):
                     entry.close()
             except (AttributeError, TypeError):
                 pass
-        parent = getMayaMainWindow()
+        parent = get_main_maya_window()
         super(ObjectNoiseUI, self).__init__(parent=parent)
 
         self.setWindowTitle(WINDOW_NAME)

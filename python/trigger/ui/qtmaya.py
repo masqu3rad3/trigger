@@ -3,7 +3,7 @@ import sys
 from maya import OpenMayaUI
 from trigger.ui.Qt import QtWidgets, QtCompat
 
-def getMayaMainWindow():
+def get_main_maya_window():
     """
     Gets the memory adress of the main window to connect Qt dialog to it.
     Returns:
