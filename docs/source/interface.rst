@@ -3,8 +3,8 @@ Interface
 
 Trigger UI contains two main tabs
 
-Actions
-=======
+Actions Tab
+===========
 
 Actions tab is the most important part of the UI and pretty much everything is happening in this section.
 
@@ -36,7 +36,7 @@ Right click any action will display the following menu:
 3. Settings Panel
 ~~~~~~~~~~~~~~~~~
 
-Displays settings for selected action. More detail on action types
+Displays settings for selected action. There are detailed eplanations for each action in :ref:`actions` section
 
 4. Build Rig Button
 ~~~~~~~~~~~~~~~~~~~
@@ -62,8 +62,8 @@ Builds the rig and publishes maya scene [*]_
 ---------------------------------------------------
 
 
-Guides
-======
+Guides Tab
+==========
 
 Guides section is more similar to traditional modular rigging tools. In guides section, we will be creating the 'Guide Joints' which will work with 'Kinematics' action in Actions panel.
 

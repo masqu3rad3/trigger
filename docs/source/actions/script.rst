@@ -1,0 +1,4 @@
+.. _script:
+
+Script
+======

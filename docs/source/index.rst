@@ -10,9 +10,10 @@ Contents
 --------
 
 .. toctree::
+   :maxdepth: 1
 
    overview
-   usage
+   installation
    getting_started
    api
 
