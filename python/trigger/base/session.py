@@ -80,7 +80,8 @@ class Session(object):
             world_pos = tuple(api.get_world_translation(tmp_jnt))
             rotation = cmds.getAttr("%s.rotate" % tmp_jnt)[0]
             joint_orient = cmds.getAttr("%s.jointOrient" % tmp_jnt)[0]
-            scale = cmds.getAttr("%s.scale" % jnt)[0]
+            # scale = cmds.getAttr("%s.scale" % jnt)[0]
+            scale = (1, 1, 1)
             side = joint.get_joint_side(jnt)
             j_type = joint.get_joint_type(jnt)
             color = cmds.getAttr("%s.overrideColor" % jnt)
