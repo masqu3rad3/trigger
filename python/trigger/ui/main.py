@@ -177,7 +177,7 @@ class MainUI(QtWidgets.QMainWindow):
         if self.asset_selection_w and not disable_version_control:
             self.asset_selection_w.set_version()
         else:
-            self.statusbar.showMessage("Asset Control Disabled")
+            self.statusbar.showMessage("Asset Control Disabled", 5000)
 
         log.info("Interface Loaded Successfully")
 
@@ -534,9 +534,15 @@ class MainUI(QtWidgets.QMainWindow):
 
         ## PROPERTIES - General [End]
 
+        button_row_lay = QtWidgets.QHBoxLayout()
+        guides_tab_vlay.addLayout(button_row_lay)
         self.guide_test_pb = QtWidgets.QPushButton()
         self.guide_test_pb.setText("Test Build Selected Branch")
-        guides_tab_vlay.addWidget(self.guide_test_pb)
+        button_row_lay.addWidget(self.guide_test_pb)
+
+        export_guides_pb = QtWidgets.QPushButton()
+        export_guides_pb.setText("Export Guides")
+        button_row_lay.addWidget(export_guides_pb)
 
         ### SHORTCUTS ###
         shortcutForceUpdate = QtWidgets.QShortcut(QtGui.QKeySequence("F5"), self, self.force_update)
@@ -565,6 +571,7 @@ class MainUI(QtWidgets.QMainWindow):
             lambda state=self.inherit_orientation_cb.isChecked(): self.update_properties("useRefOri", state))
 
         self.guide_test_pb.clicked.connect(self.build_test_guides)
+        export_guides_pb.clicked.connect(self.export_guides)
 
     def build_rigging_ui(self):
         self.rigging_tab_vLay = QtWidgets.QVBoxLayout(self.rigging_tab)
@@ -873,6 +880,7 @@ class MainUI(QtWidgets.QMainWindow):
             db.recentSessions.add(new_file)
             self.update_title()
             self.populate_recents()
+            self.statusbar.showMessage("Saved %s" % self.actions_handler.currentFile, 5000)
         else:
             self.feedback.pop_info(title="Cannot Complete",
                                    text="Trigger Session needs to be saved first to increment it\nAborting...",
@@ -886,6 +894,7 @@ class MainUI(QtWidgets.QMainWindow):
             db.recentSessions.add(self.actions_handler.currentFile)
             self.update_title()
             self.populate_recents()
+            self.statusbar.showMessage("Saved %s" % self.actions_handler.currentFile, 5000)
 
     def save_trigger(self):
         if self.actions_handler.currentFile:
@@ -893,8 +902,10 @@ class MainUI(QtWidgets.QMainWindow):
             db.recentSessions.add(self.actions_handler.currentFile)
             self.update_title()
             self.populate_recents()
+            self.statusbar.showMessage("Saved %s" % self.actions_handler.currentFile, 5000)
         else:
             self.save_as_trigger()
+
 
     def vcs_new_session(self, path):
         """Creates and saves a new session using the path coming from version control"""
@@ -1020,6 +1031,7 @@ class MainUI(QtWidgets.QMainWindow):
         self.actions_handler.delete_action(action_name=action_name)
         self.block_all_signals(False)
         self.populate_actions()
+        self.statusbar.showMessage("Action Deleted", 5000)
 
     #######################
     ### GUIDE FUNCTIONS ###
@@ -1029,16 +1041,19 @@ class MainUI(QtWidgets.QMainWindow):
         dlg = QtWidgets.QFileDialog.getOpenFileName(self, str("Import Guides"), "", str("Trigger Guides (*.trg)"))
         if dlg[0]:
             self.guides_handler.load_session(os.path.normpath(dlg[0]), reset_scene=False)
+            self.statusbar.showMessage("Guides imported successfully", 5000)
 
     def export_guides(self):
         dlg = QtWidgets.QFileDialog.getSaveFileName(self, str("Export Guides"), "", str("Trigger Guides (*.trg)"))
         if dlg[0]:
             self.guides_handler.save_session(os.path.normpath(dlg[0]))
+            self.statusbar.showMessage("Guides exported successfully", 5000)
 
     def build_test_guides(self):
         self.progressBar()
         self.guides_handler.init.test_build(progress_bar=self.progress_progressBar)
         self.progress_Dialog.close()
+        self.statusbar.showMessage("Test Build Successfull", 5000)
 
     def populate_guides(self):
         self.block_all_signals(True)

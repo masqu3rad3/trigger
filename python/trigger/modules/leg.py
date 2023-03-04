@@ -989,7 +989,7 @@ class Leg(object):
 
         ribbon_lower_leg = Ribbon(self.j_def_midLeg, self.j_def_foot, name="low_%s" % self.suffix,
                                   connect_start_aim=True,
-                                  up_vector=self.look_axis)
+                                  up_vector=self.mirror_axis)
         ribbon_lower_leg.create()
         ribbon_lower_leg.pin_start(self.mid_lock)
         ribbon_start_pa_con_lower_leg_end = ribbon_lower_leg.pin_end(self.end_lock)[0]
