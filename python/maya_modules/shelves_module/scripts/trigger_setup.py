@@ -46,7 +46,7 @@ def load_menu():
     trigger_command = "from trigger.ui import main\nmain.launch()"
     add_to_menu("Trigger", "Launch Trigger", trigger_command)
 
-    selector_command = "from trigger.utils import trigger_tools\ntrigger_tools.dock_window(trigger_tools.MainUI)"
+    selector_command = "from trigger.utils.wand import panel\npanel.dock_window(panel.MainUI)"
     add_to_menu("Trigger", "Trigger Selector", selector_command)
 
     make_up_command = "from trigger.utils import makeup\nmakeup.launch()"

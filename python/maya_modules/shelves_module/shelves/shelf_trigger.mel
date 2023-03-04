@@ -98,7 +98,7 @@ global proc shelf_trigger () {
         -style "iconOnly"
         -marginWidth 0
         -marginHeight 1
-        -command "from trigger.utils import trigger_tools\ntrigger_tools.dock_window(trigger_tools.MainUI)"
+        -command "from trigger.utils.wand import panel\npanel.dock_window(panel.MainUI)"
         -sourceType "python"
         -commandRepeatable 1
         -flat 1

@@ -10,22 +10,17 @@ import sys
 import weakref
 from functools import wraps
 from maya import cmds
-from trigger.core import filelog
+import logging
 
-log = filelog.Filelog(logname=__name__, filename="trigger_log")
+logger = logging.getLogger(__name__)
 
-from trigger.ui import Qt
-from trigger.ui.Qt import QtWidgets, QtCore, QtGui
+from trigger.core import compatibility
+from trigger.library.functions import unique_list
+from trigger.ui.Qt import QtWidgets, QtCore, QtCompat
 from maya import OpenMayaUI as omui
 
-if Qt.__binding__ == "PySide":
-    from shiboken import wrapInstance
-elif Qt.__binding__.startswith('PyQt'):
-    from sip import wrapinstance as wrapInstance
-else:
-    from shiboken2 import wrapInstance
-
-windowName = "Trigger Tool v0.11"
+__version__ = "0.0.4"
+windowName = "Trigger Tool v%s" % __version__
 qss = """
 QPushButton
 {
@@ -104,11 +99,15 @@ class TriggerTool(object):
     def __init__(self):
         super(TriggerTool, self).__init__()
         self.definitions = self.load_globals()
+        self.mapping = self.load_import_mapping()
+
+        # self.all_ctrls = self.get_all_controllers()
 
         self.overrideNamespace = False
 
         self.namespace = None
 
+        # self.zero_dictionary = {"translate": (0,0,0), "rotate": (0,0,0), "scale": (1,1,1)}
         self.zero_dictionary = {"tx": 0, "ty": 0, "tz": 0, "rx": 0, "ry": 0, "rz": 0, "sx": 1, "sy": 1, "sz": 1}
 
     def _get_all_controls(self):
@@ -156,7 +155,8 @@ class TriggerTool(object):
                     else:
                         cmds.warning("Pair of %s does not exist" % node)
                 else:
-                    cmds.warning("%s is single sided or pair cannot be found" % node)
+                    yield node
+                    # cmds.warning("%s is single sided or pair cannot be found" % node)
 
     @undo
     def select_body(self, modifier="replace", selectVisible=False):
@@ -200,12 +200,14 @@ class TriggerTool(object):
         if selectVisible:
             mirror_gen = filter(self._filter_visibles, mirror_gen)
         if mirror_gen:
+            # cmds.select(self._get_mirror_controls(), add=add)
             if modifier == "replace":
                 cmds.select(mirror_gen)
             elif modifier == "add":
                 cmds.select(mirror_gen, add=True)
             elif modifier == "subtract":
                 cmds.select(mirror_gen, d=True)
+
     @undo
     def zero_pose(self, selectedOnly=True):
         modified = []
@@ -224,7 +226,7 @@ class TriggerTool(object):
 
             if custom_attrs:
                 for attr in custom_attrs:
-                    if cmds.attributeQuery(attr, node=cont, storable=True):
+                    if cmds.attributeQuery(attr, node=cont, storable=True, k=True):
                         default_value = cmds.attributeQuery(attr, node=cont, listDefault=True)
                         if default_value:
                             try:
@@ -247,7 +249,7 @@ class TriggerTool(object):
     @undo
     def mirror_pose(self, mode, swap=False):
         selected_conts = cmds.ls(sl=True)
-        mirror_conts = self._get_mirror_controls()
+        mirror_conts = unique_list(list(self._get_mirror_controls()))
         for mirror_cont, orig_cont in zip(mirror_conts, selected_conts):
             for nmb, attr in enumerate("xyz"):
                 orig_t_value = cmds.getAttr("%s.t%s" %(orig_cont, attr))
@@ -256,7 +258,7 @@ class TriggerTool(object):
                 try:
                     cmds.setAttr("%s.t%s" %(mirror_cont, attr), mirror_t_value)
                     if swap:
-                        cmds.setAttr("%s.t%s" % (orig_cont, attr), swap_t_value)
+                        cmds.setAttr("%s.t%s" % (orig_cont, attr), swap_t_value * self.definitions["mirror_modes"][mode][0][nmb])
                 except:
                     pass
                 orig_r_value = cmds.getAttr("%s.r%s" % (orig_cont, attr))
@@ -265,14 +267,14 @@ class TriggerTool(object):
                 try:
                     cmds.setAttr("%s.r%s" % (mirror_cont, attr), mirror_r_value)
                     if swap:
-                        cmds.setAttr("%s.r%s" % (orig_cont, attr), swap_r_value)
+                        cmds.setAttr("%s.r%s" % (orig_cont, attr), swap_r_value * self.definitions["mirror_modes"][mode][0][nmb])
                 except:
                     pass
 
     def load_globals(self):
         """Loads the given json file"""
         dir_path = os.path.dirname(os.path.realpath(__file__))
-        file_path = os.path.join(dir_path, "tt_globals.json")
+        file_path = os.path.join(dir_path, "panel_globals.json")
         if os.path.isfile(file_path):
             try:
                 with open(file_path, 'r') as f:
@@ -283,17 +285,42 @@ class TriggerTool(object):
         else:
             cmds.warning("Definition file cannot be found. Using default settings")
             default_definitions = {
-                "controller_keys": ["ctrl*", "*cont"],
-                "body_keys": [],
-                "face_keys": [],
-                "side_pairs": [["_L_","_R_"]]
+                "controller_keys": ["ctrl*", "crtl*", "*cont"],
+                "body_keys": ["character", "pelvis", "arm", "leg", "knee", "foot", "clavicle", "elbow","finger", "spine", "head", "hand", "toe", "collar", "torso", "neck", "thumb", "skirt", "hair"],
+                "face_keys": ["jaw", "eye", "cheek", "mouth", "lip", "eyelid", "scalp", "nose", "teeth", "stretch", "brow", "grin", "chin", "grumpy"],
+                "tweaker_keys": ["twk"],
+                "side_pairs": [["_L_","_R_"],["L_", "R_"]],
+                "exclude": ["ctrl_character"],
+                "mirror_modes": {"A": [[1, 1, -1],[-1, -1, 1]],
+                                 "B": [[-1, 1, 1],[1, -1, -1]],
+                                 "C": [[-1, -1, -1],[1, 1, 1]],
+                                 "D": [[1, 1, 1],[1, 1, 1]]
+                                 }
             }
             self.save_globals(default_definitions)
             return default_definitions
 
+    def load_import_mapping(self):
+        # first look at the home folder
+        documents_file_path = os.path.join(os.path.expanduser("~"), "panel_importmapping.json")
+        if os.path.isfile(documents_file_path):
+            file_path = documents_file_path
+        else:
+            dir_path = os.path.dirname(os.path.realpath(__file__))
+            file_path = os.path.join(dir_path, "panel_importmapping.json")
+        if os.path.isfile(file_path):
+            try:
+                with open(file_path, 'r') as f:
+                    definitions = json.load(f)
+                    return definitions
+            except ValueError:
+                cmds.error("Corrupted JSON file => %s" % file_path)
+        else:
+            cmds.error("Definition file cannot be found. Using default settings")
+
     def save_globals(self, definitions_data):
         dir_path = os.path.dirname(os.path.realpath(__file__))
-        file_path = os.path.join(dir_path, "tt_globals.json")
+        file_path = os.path.join(dir_path, "panel_globals.json")
         with open(file_path, "w") as f:
             json.dump(definitions_data, f, indent=4)
 
@@ -319,23 +346,120 @@ class TriggerTool(object):
                 return False
         return True
 
+    @undo
+    def import_animation(self, fbx_path):
+        temp_namespace = "_trigger_"
+        self._load_fbx_plugin()
+        cmds.file(fbx_path, r=True, mergeNamespacesOnClash=True, namespace=temp_namespace)
+
+        print("debug")
+        print("debug")
+        print("debug")
+        print("debug")
+        print(self.mapping)
+        print(self.namespace)
+        print("debug")
+        print("debug")
+        updated_mapping = self._update_mapping_dictionary(self.mapping, temp_namespace, self.namespace)
+
+        print(updated_mapping)
+        print("--------------")
+        print("--------------")
+        print("--------------")
+        print("--------------")
+        print("--------------")
+        print("--------------")
+        self._stick_to_joints(updated_mapping)
+        self._bake_ctrls(updated_mapping)
+
+        cmds.file(fbx_path, rr=True)
+
+    def _info_pop(self, textTitle="info", textHeader="", textInfo="", type="I"):
+        self.msg = QtWidgets.QMessageBox(parent=self)
+        if type == "I":
+            self.msg.setIcon(QtWidgets.QMessageBox.Information)
+        if type == "C":
+            self.msg.setIcon(QtWidgets.QMessageBox.Critical)
+
+        self.msg.setText(textHeader)
+        self.msg.setInformativeText(textInfo)
+        self.msg.setWindowTitle(textTitle)
+        self.msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
+        self.msg.button(QtWidgets.QMessageBox.Ok).setFixedHeight(30)
+        self.msg.button(QtWidgets.QMessageBox.Ok).setFixedWidth(100)
+        self.msg.show()
+
+
+    def _load_fbx_plugin(self):
+        if not cmds.pluginInfo('fbxmaya', l=True, q=True):
+            try:
+                cmds.loadPlugin('fbxmaya')
+            except:
+                msg = "FBX Plugin cannot be initialized."
+                cmds.error(msg)
+
+    def _stick_to_joints(self, mapping_dictionary):
+        for joint, cont in mapping_dictionary.items():
+            # import pdb
+            # pdb.set_trace()
+
+            if cmds.objExists(joint) and cmds.objExists(cont):
+                print("**********")
+                print("**********")
+                print(cont)
+                locked_translates_raw = cmds.listAttr("%s.t" % cont, l=True, sn=True)
+                locked_translates = [attr.replace("t", "") for attr in
+                                     locked_translates_raw] if locked_translates_raw else []
+                locked_rotates_raw = cmds.listAttr("%s.r" % cont, l=True, sn=True)
+                locked_rotates = [attr.replace("r", "") for attr in locked_rotates_raw] if locked_rotates_raw else []
+                cmds.parentConstraint(joint, cont, mo=False, st=locked_translates, sr=locked_rotates)
+
+    def _bake_ctrls(self, mapping_dictionary):
+        for joint, cont in mapping_dictionary.items():
+            if cmds.objExists(joint) and cmds.objExists(cont):
+                first = cmds.findKeyframe(joint, which="first")
+                last = cmds.findKeyframe(joint, which="last") + 1 # makes sure round up
+                cmds.bakeResults(cont, t=(first, last), simulation=False)
+
+
+    def _update_mapping_dictionary(self, mapping_dictionary, joint_namespace, cont_namespace):
+        """Updates the mapping dictionary with namespaces"""
+        jnt_template = "{0}:{1}" if joint_namespace else "{0}{1}"
+        cont_template = "{0}:{1}" if cont_namespace else "{0}{1}"
+        updated_mapping_dictionary = {
+            jnt_template.format(joint_namespace, joint): cont_template.format(cont_namespace, cont) for joint, cont in
+            mapping_dictionary.items()}
+        print("anan")
+        print("anan")
+        print("anan")
+        print("anan")
+        print("anan")
+        print(updated_mapping_dictionary)
+        print("anan")
+        print("anan")
+        return updated_mapping_dictionary
 
 def dock_window(dialog_class):
     try:
         cmds.deleteUI(dialog_class.CONTROL_NAME)
-        log.info('removed workspace {}'.format(dialog_class.CONTROL_NAME))
+        logger.info('removed workspace {}'.format(dialog_class.CONTROL_NAME))
     except:
         pass
 
     # building the workspace control with maya.cmds
+    # main_control = cmds.workspaceControl(dialog_class.CONTROL_NAME, ttc=["AttributeEditor", -1], iw=100, mw=80, wp='preferred', label=dialog_class.DOCK_LABEL_NAME)
     main_control = cmds.workspaceControl(dialog_class.CONTROL_NAME, restore=True, dtc=["AttributeEditor", "top"], iw=100, mw=80, wp='preferred', label=dialog_class.DOCK_LABEL_NAME)
+    # main_control = cmds.workspaceControl(dialog_class.CONTROL_NAME, restore=True, dtc=["AttributeEditor", "top"], iw=100, mw=80, wp='preferred', label=dialog_class.DOCK_LABEL_NAME)
+    # cmds.workspaceControl(main_control, e=True, restore=True, dtc=["AttributeEditor", "top"], iw=100, mw=80, wp='preferred', label=dialog_class.DOCK_LABEL_NAME)
+    # cmds.workspaceControl(main_control, e=True, dtc=["AttributeEditor", "top"])
 
     # now lets get a C++ pointer to it using OpenMaya
     control_widget = omui.MQtUtil.findControl(dialog_class.CONTROL_NAME)
+    # conver the C++ pointer to Qt object we can use
     if sys.version_info.major == 3:
-        control_wrap = wrapInstance(int(control_widget), QtWidgets.QWidget)
+        control_wrap = QtCompat.wrapInstance(int(control_widget), QtWidgets.QWidget)
     else:
-        control_wrap = wrapInstance(long(control_widget), QtWidgets.QWidget)
+        control_wrap = QtCompat.wrapInstance(long(control_widget), QtWidgets.QWidget)
 
     # control_wrap is the widget of the docking window and now we can start working with it:
     control_wrap.setAttribute(QtCore.Qt.WA_DeleteOnClose)
@@ -347,13 +471,13 @@ def dock_window(dialog_class):
     # will return the class of the dock content.
     return win.run()
 
-# class MainUI(QtWidgets.QMainWindow):
 class MainUI(QtWidgets.QWidget):
 
     instances = list()
     CONTROL_NAME = "triggerTools"
     DOCK_LABEL_NAME = windowName
 
+    # def __init__(self):
     def __init__(self, parent=None):
         super(MainUI, self).__init__(parent)
 
@@ -388,7 +512,7 @@ class MainUI(QtWidgets.QWidget):
     @staticmethod
     def delete_instances():
         for ins in MainUI.instances:
-            log.info('Delete {}'.format(ins))
+            logger.info('Delete {}'.format(ins))
             try:
                 ins.setParent(None)
                 ins.deleteLater()
@@ -418,14 +542,15 @@ class MainUI(QtWidgets.QWidget):
 
         selectVisible = self.select_only_visible_cb.isChecked()
 
-        if command is "selectFace":
+        if command == "selectFace":
             self.tr_tool.select_face(modifier=modifier, selectVisible=selectVisible)
-        elif command is "selectBody":
+        elif command == "selectBody":
             self.tr_tool.select_body(modifier=modifier, selectVisible=selectVisible)
-        elif command is "selectTweakers":
+        elif command == "selectTweakers":
             self.tr_tool.select_tweakers(modifier=modifier, selectVisible=selectVisible)
-        elif command is "selectMirror":
+        elif command == "selectMirror":
             self.tr_tool.select_mirror(modifier=modifier, selectVisible=selectVisible)
+
 
     def buildUI(self):
         self.main_vlay = QtWidgets.QVBoxLayout(self.centralwidget)
@@ -553,6 +678,28 @@ class MainUI(QtWidgets.QWidget):
 
         self.main_vlay.addWidget(self.settings_gbox)
 
+
+        self.import_gbox = QtWidgets.QGroupBox(self.centralwidget)
+        self.import_gbox.setTitle("Import FBX")
+
+        self.import_grp_vlay = QtWidgets.QVBoxLayout(self.import_gbox)
+        self.import_grp_vlay.setContentsMargins(5, 0, 5, 0)
+        self.import_grp_vlay.setSpacing(5)
+
+        self.import_grp_hlay1 = QtWidgets.QHBoxLayout(self.import_gbox)
+        self.import_grp_vlay.addLayout(self.import_grp_hlay1)
+        self.import_le = QtWidgets.QLineEdit(self.import_gbox)
+        self.import_le.setPlaceholderText("Browse a FBX file")
+        self.import_grp_hlay1.addWidget(self.import_le)
+        self.import_browse_pb = QtWidgets.QPushButton(self.import_gbox)
+        self.import_browse_pb.setText("...")
+        self.import_grp_hlay1.addWidget(self.import_browse_pb)
+        self.import_animation_pb = QtWidgets.QPushButton(self.import_gbox)
+        self.import_animation_pb.setText("Remap Animation")
+        self.import_grp_vlay.addWidget(self.import_animation_pb)
+
+        self.main_vlay.addWidget(self.import_gbox)
+
         ######3 SIGNALS #######
 
         self.namespace_combo.currentTextChanged.connect(lambda x: self.tr_tool.set_namespace(x))
@@ -569,6 +716,21 @@ class MainUI(QtWidgets.QWidget):
         self.zero_tpose_pb.clicked.connect(self.tr_tool.zero_pose)
         self.reset_tpose_pb.clicked.connect(self.tr_tool.reset_pose)
         self.override_namespace_cb.stateChanged.connect(self.on_override_namespace)
+
+        self.import_browse_pb.clicked.connect(self.on_import_browse)
+        self.import_animation_pb.clicked.connect(self.on_import_animation)
+
+    def on_import_browse(self):
+        dlg = QtWidgets.QFileDialog()
+        dlg.setFileMode(QtWidgets.QFileDialog.ExistingFiles)
+        if dlg.exec_():
+            # selectedroot = os.path.normpath(unicode(dlg.selectedFiles()[0])).encode("utf-8")
+            selectedroot = os.path.normpath(compatibility.encode(dlg.selectedFiles()[0]))
+            self.import_le.setText(selectedroot)
+
+    def on_import_animation(self):
+        fbx_path = os.path.normpath(self.import_le.text())
+        self.tr_tool.import_animation(fbx_path)
 
     def on_override_namespace(self):
         state = self.override_namespace_cb.checkState()
@@ -587,3 +749,29 @@ class MainUI(QtWidgets.QWidget):
     def init_values(self):
         self.populate_namespaces()
         self.on_override_namespace()
+
+
+
+
+# class ModifierButton(QtWidgets.QPushButton):
+#
+# 	def __init__(self, *args, **kwargs):
+# 		super(ModifierButton, self).__init__(*args, **kwargs)
+# 		self.__isShiftPressed = False
+#
+# 		self.clicked.connect(self.handleClick)
+#
+# 	def keyPressEvent(self, event):
+# 		super(ModifierButton, self).keyPressEvent(event)
+# 		self._processKeyEvent(event)
+#
+# 	def keyReleaseEvent(self, event):
+# 		super(ModifierButton, self).keyReleaseEvent(event)
+# 		self._processKeyEvent(event)
+#
+# 	def _processKeyEvent(self, event):
+# 		isShift = event.modifiers() & QtCore.Qt.ShiftModifier
+# 		self.__isShiftPressed = bool(isShift)
+#
+# 	def handleClick(self):
+# 		print "Shift pressed?", self.__isShiftPressed
