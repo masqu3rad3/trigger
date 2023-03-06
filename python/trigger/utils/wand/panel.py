@@ -9,7 +9,6 @@ import json
 import sys
 import weakref
 from functools import wraps
-from maya import cmds
 import logging
 
 logger = logging.getLogger(__name__)
@@ -17,7 +16,10 @@ logger = logging.getLogger(__name__)
 from trigger.core import compatibility
 from trigger.library.functions import unique_list
 from trigger.ui.Qt import QtWidgets, QtCore, QtCompat
+from trigger.ui import feedback
 from maya import OpenMayaUI as omui
+from maya import cmds
+from maya import mel
 
 __version__ = "0.0.4"
 windowName = "Trigger Tool v%s" % __version__
@@ -347,29 +349,44 @@ class TriggerTool(object):
         return True
 
     @undo
-    def import_animation(self, fbx_path):
-        temp_namespace = "_trigger_"
+    def import_animation(self, bind_pose_path, fbx_path):
+        fbx_namespace = "_trigger_"
+        # anim_fbx_namepace = "_trigger_anim_fbx"
         self._load_fbx_plugin()
-        cmds.file(fbx_path, r=True, mergeNamespacesOnClash=True, namespace=temp_namespace)
+        fbx_import_settings = {
+            "FBXImportMergeBackNullPivots": "-v true",
+            "FBXImportMode": "-v add",
+            "FBXImportSetLockedAttribute": "-v false",
+            "FBXImportUnlockNormals": "-v false",
+            "FBXImportScaleFactor": "1.0",
+            "FBXImportProtectDrivenKeys": "-v true",
+            "FBXImportShapes": "-v true",
+            "FBXImportQuaternion": "-v euler",
+            "FBXImportCameras": "-v true",
+            "FBXImportSetMayaFrameRate": "-v false",
+            "FBXImportResamplingRateSource": "-v Scene",
+            "FBXImportGenerateLog": "-v false",
+            "FBXImportConstraints": "-v true",
+            "FBXImportLights": "-v true",
+            "FBXImportConvertDeformingNullsToJoint": "-v true",
+            "FBXImportFillTimeline": "-v false",
+            "FBXImportMergeAnimationLayers": "-v true",
+            "FBXImportHardEdges": "-v false",
+            "FBXImportAxisConversionEnable": "-v true",
+            "FBXImportCacheFile": "-v true",
+            "FBXImportUpAxis": "y",
+            "FBXImportSkins": "-v true",
+            "FBXImportConvertUnitString": "-v true",
+            "FBXImportForcedFileAxis": "-v disabled"
+        }
+        for item in fbx_import_settings.items():
+            mel.eval('%s %s' % (item[0], item[1]))
 
-        print("debug")
-        print("debug")
-        print("debug")
-        print("debug")
-        print(self.mapping)
-        print(self.namespace)
-        print("debug")
-        print("debug")
-        updated_mapping = self._update_mapping_dictionary(self.mapping, temp_namespace, self.namespace)
-
-        print(updated_mapping)
-        print("--------------")
-        print("--------------")
-        print("--------------")
-        print("--------------")
-        print("--------------")
-        print("--------------")
+        cmds.file(bind_pose_path, reference=True, mergeNamespacesOnClash=True, namespace=fbx_namespace)
+        updated_mapping = self._update_mapping_dictionary(self.mapping, fbx_namespace, self.namespace)
         self._stick_to_joints(updated_mapping)
+        cmds.file(fbx_path, reference=True, mergeNamespacesOnClash=True, namespace=fbx_namespace)
+
         self._bake_ctrls(updated_mapping)
 
         cmds.file(fbx_path, rr=True)
@@ -404,15 +421,13 @@ class TriggerTool(object):
             # pdb.set_trace()
 
             if cmds.objExists(joint) and cmds.objExists(cont):
-                print("**********")
-                print("**********")
-                print(cont)
+
                 locked_translates_raw = cmds.listAttr("%s.t" % cont, l=True, sn=True)
                 locked_translates = [attr.replace("t", "") for attr in
                                      locked_translates_raw] if locked_translates_raw else []
                 locked_rotates_raw = cmds.listAttr("%s.r" % cont, l=True, sn=True)
                 locked_rotates = [attr.replace("r", "") for attr in locked_rotates_raw] if locked_rotates_raw else []
-                cmds.parentConstraint(joint, cont, mo=False, st=locked_translates, sr=locked_rotates)
+                cmds.parentConstraint(joint, cont, maintainOffset=True, st=locked_translates, sr=locked_rotates)
 
     def _bake_ctrls(self, mapping_dictionary):
         for joint, cont in mapping_dictionary.items():
@@ -429,14 +444,6 @@ class TriggerTool(object):
         updated_mapping_dictionary = {
             jnt_template.format(joint_namespace, joint): cont_template.format(cont_namespace, cont) for joint, cont in
             mapping_dictionary.items()}
-        print("anan")
-        print("anan")
-        print("anan")
-        print("anan")
-        print("anan")
-        print(updated_mapping_dictionary)
-        print("anan")
-        print("anan")
         return updated_mapping_dictionary
 
 def dock_window(dialog_class):
@@ -447,11 +454,7 @@ def dock_window(dialog_class):
         pass
 
     # building the workspace control with maya.cmds
-    # main_control = cmds.workspaceControl(dialog_class.CONTROL_NAME, ttc=["AttributeEditor", -1], iw=100, mw=80, wp='preferred', label=dialog_class.DOCK_LABEL_NAME)
     main_control = cmds.workspaceControl(dialog_class.CONTROL_NAME, restore=True, dtc=["AttributeEditor", "top"], iw=100, mw=80, wp='preferred', label=dialog_class.DOCK_LABEL_NAME)
-    # main_control = cmds.workspaceControl(dialog_class.CONTROL_NAME, restore=True, dtc=["AttributeEditor", "top"], iw=100, mw=80, wp='preferred', label=dialog_class.DOCK_LABEL_NAME)
-    # cmds.workspaceControl(main_control, e=True, restore=True, dtc=["AttributeEditor", "top"], iw=100, mw=80, wp='preferred', label=dialog_class.DOCK_LABEL_NAME)
-    # cmds.workspaceControl(main_control, e=True, dtc=["AttributeEditor", "top"])
 
     # now lets get a C++ pointer to it using OpenMaya
     control_widget = omui.MQtUtil.findControl(dialog_class.CONTROL_NAME)
@@ -500,6 +503,7 @@ class MainUI(QtWidgets.QWidget):
 #
         self.dynamicButtons = []
         self.tr_tool = TriggerTool()
+        self.feedback = feedback.Feedback()
 
         self.buildUI()
         self.init_values()
@@ -686,6 +690,15 @@ class MainUI(QtWidgets.QWidget):
         self.import_grp_vlay.setContentsMargins(5, 0, 5, 0)
         self.import_grp_vlay.setSpacing(5)
 
+        self.import_grp_hlay0 = QtWidgets.QHBoxLayout()
+        self.import_grp_vlay.addLayout(self.import_grp_hlay0)
+        self.import_bind_pose_le = QtWidgets.QLineEdit(self.import_gbox)
+        self.import_bind_pose_le.setPlaceholderText("Browse a Bind Pose FBX file")
+        self.import_grp_hlay0.addWidget(self.import_bind_pose_le)
+        self.import_bind_pose_browse_pb = QtWidgets.QPushButton(self.import_gbox)
+        self.import_bind_pose_browse_pb.setText("...")
+        self.import_grp_hlay0.addWidget(self.import_bind_pose_browse_pb)
+
         self.import_grp_hlay1 = QtWidgets.QHBoxLayout(self.import_gbox)
         self.import_grp_vlay.addLayout(self.import_grp_hlay1)
         self.import_le = QtWidgets.QLineEdit(self.import_gbox)
@@ -718,7 +731,15 @@ class MainUI(QtWidgets.QWidget):
         self.override_namespace_cb.stateChanged.connect(self.on_override_namespace)
 
         self.import_browse_pb.clicked.connect(self.on_import_browse)
+        self.import_bind_pose_browse_pb.clicked.connect(self.on_import_bind_pose_browse)
         self.import_animation_pb.clicked.connect(self.on_import_animation)
+
+    def on_import_bind_pose_browse(self):
+        dlg = QtWidgets.QFileDialog()
+        dlg.setFileMode(QtWidgets.QFileDialog.ExistingFiles)
+        if dlg.exec_():
+            selectedroot = os.path.normpath(compatibility.encode(dlg.selectedFiles()[0]))
+            self.import_bind_pose_le.setText(selectedroot)
 
     def on_import_browse(self):
         dlg = QtWidgets.QFileDialog()
@@ -729,8 +750,12 @@ class MainUI(QtWidgets.QWidget):
             self.import_le.setText(selectedroot)
 
     def on_import_animation(self):
+        bind_pose_path = os.path.normpath(self.import_bind_pose_le.text())
         fbx_path = os.path.normpath(self.import_le.text())
-        self.tr_tool.import_animation(fbx_path)
+        if not bind_pose_path or not fbx_path:
+            self.feedback.pop_info(title="Missing Fields", text="Please select a bind pose and an animation file")
+            return
+        self.tr_tool.import_animation(bind_pose_path, fbx_path)
 
     def on_override_namespace(self):
         state = self.override_namespace_cb.checkState()
