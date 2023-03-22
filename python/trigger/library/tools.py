@@ -141,12 +141,12 @@ def replace_curve(orig_curve, new_curve, maintain_offset=True):
         cmds.parentConstraint(orig_curve, new_curve)
 
     if cmds.objectType(orig_curve) == 'transform' or cmds.objectType(orig_curve) == "joint":
-        orig_shapes = cmds.listRelatives(orig_curve, s=1)
+        orig_shapes = cmds.listRelatives(orig_curve, shapes=True, type="nurbsCurve")
     else:
         raise Exception("Cant find the shape of the orig_curve")
 
     if cmds.objectType(new_curve) == 'transform' or cmds.objectType(new_curve) == "joint":
-        new_shapes = cmds.listRelatives(new_curve, s=1)
+        new_shapes = cmds.listRelatives(new_curve, shapes=True, type="nurbsCurve")
     else:
         raise Exception("Cant find the shape of the new_curve")
 
@@ -177,13 +177,20 @@ def replace_curve(orig_curve, new_curve, maintain_offset=True):
     orig_shapes = cmds.listRelatives(orig_curve, s=1)
     # For each shape, transfer from original to new.
     for new_shape, orig_shape in zip(new_shapes, orig_shapes):
-        cmds.connectAttr(new_shape + ".worldSpace", orig_shape + ".create")
+        print("-----------------")
+        print("-----------------")
+        print("-----------------")
+        print(new_shape, orig_shape)
+        print("-----------------")
+        print("-----------------")
+        print("-----------------")
+        cmds.connectAttr("{}.worldSpace".format(new_shape), "{}.create".format(orig_shape))
 
-        cmds.dgeval(orig_shape + ".worldSpace")
-        cmds.disconnectAttr(new_shape + ".worldSpace", orig_shape + ".create")
+        cmds.dgeval("{}.worldSpace".format(orig_shape))
+        cmds.disconnectAttr("{}.worldSpace".format(new_shape), "{}.create".format(orig_shape))
 
-        spans = cmds.getAttr(orig_shape + '.degree')
-        degree = cmds.getAttr(orig_shape + '.spans')
+        spans = cmds.getAttr('{}.degree'.format(orig_shape))
+        degree = cmds.getAttr('{}.spans'.format(orig_shape))
         for i in range(0, spans + degree):
             cmds.xform(orig_shape + '.cv[' + str(i) + ']', t=cmds.pointPosition(new_shape + '.cv[' + str(i) + ']'),
                        ws=1)

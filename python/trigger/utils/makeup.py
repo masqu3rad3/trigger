@@ -1,4 +1,5 @@
 
+from json.tool import main
 from maya import cmds
 
 # from trigger.ui.Qt import QtWidgets
@@ -8,9 +9,10 @@ from trigger.library.controllers import Icon
 from trigger.library.tools import replace_curve, mirror_controller
 
 from trigger.ui.qtmaya import get_main_maya_window
+from trigger.ui.feedback import Feedback
 
 
-WINDOW_NAME = "Trigger Make-up v0.0.1"
+WINDOW_NAME = "Trigger Make-up v0.0.2"
 
 
 class Makeup(object):
@@ -80,7 +82,7 @@ class Makeup(object):
     @keepselection
     def replace_curve_controller(self, icon, objects=None, mo=True, scale=True):
         objects = objects or cmds.ls(sl=True)
-        if type(objects) == str:
+        if not isinstance(objects, (tuple, list)):
             objects = [objects]
 
         for obj in objects:
@@ -89,9 +91,18 @@ class Makeup(object):
                 obj_size = self.__get_max_size(obj)
                 new_size = float(obj_size) / self.__get_max_size(new_shape)
                 cmds.setAttr("%s.scale" % new_shape, new_size, new_size, new_size)
-            cmds.makeIdentity(new_shape, a=True, s=True)
+            cmds.makeIdentity(new_shape, apply=True, scale=True)
             replace_curve(obj, new_shape, maintain_offset=mo)
             cmds.delete(new_shape)
+
+    @undo
+    @keepselection
+    def copy_from(self, source, target, maintain_offset=True):
+        """Copies the shape from one controller to other"""
+        # if not isinstance(source, str) or not isinstance(target, str):
+        #     raise ValueError("Both source and target needs to be string values. Got {0}, {1}".format(type(source), type(target)))
+
+        replace_curve(target, source, maintain_offset=maintain_offset)
 
     @staticmethod
     def __get_max_size(obj):
@@ -119,6 +130,7 @@ class MainUI(QtWidgets.QDialog):
         parent = get_main_maya_window()
         super(MainUI, self).__init__(parent=parent)
 
+        self.feedback = Feedback()
         self.replace_controllers_combo = None
         self.mirror_controllers_side_combo = None
         self.mirror_controllers_bias_combo = None
@@ -146,8 +158,10 @@ class MainUI(QtWidgets.QDialog):
         self.replace_controllers_combo = QtWidgets.QComboBox(self)
         self.replace_controllers_combo.setSizePolicy(size_policy)
         replace_controllers_combo_lay.addWidget(self.replace_controllers_combo)
+        scale_controllers_lbl = QtWidgets.QLabel(self, text="Try Scale Match")
         self.scale_controllers_cb = QtWidgets.QCheckBox(self)
-        self.scale_controllers_cb.setChecked(True)
+        self.scale_controllers_cb.setChecked(False)
+        replace_controllers_combo_lay.addWidget(scale_controllers_lbl)
         replace_controllers_combo_lay.addWidget(self.scale_controllers_cb)
         form_lay.addRow(replace_controllers_pb, replace_controllers_combo_lay)
 
@@ -164,12 +178,25 @@ class MainUI(QtWidgets.QDialog):
         mirror_controllers_combo_lay.addWidget(self.mirror_controllers_bias_combo)
         form_lay.addRow(mirror_controllers_pb, mirror_controllers_combo_lay)
 
+        copy_controller_pb = QtWidgets.QPushButton(self)
+        copy_controller_pb.setText("Copy Shape from another")
+        copy_controller_pb.setToolTip("Copies shape from another controller curve. First select the source than the target")
+        copy_controller_maintain_offset_lbl = QtWidgets.QLabel(self, text="Maintain Offset")
+        self.copy_controller_maintain_offset_cb = QtWidgets.QCheckBox(self)
+        self.copy_controller_maintain_offset_cb.setChecked(True)
+        copy_controller_lay = QtWidgets.QHBoxLayout()
+        copy_controller_lay.addWidget(copy_controller_maintain_offset_lbl)
+        copy_controller_lay.addWidget(self.copy_controller_maintain_offset_cb)
+        form_lay.addRow(copy_controller_pb, copy_controller_lay)
+
         # fill the combos
         self.mirror_controllers_side_combo.addItems(self.makeup_handler.side_items)
         self.mirror_controllers_bias_combo.addItems(self.makeup_handler.bias_items)
 
+        # SIGNALS
         replace_controllers_pb.clicked.connect(self.on_replace)
         mirror_controllers_pb.clicked.connect(self.on_mirror)
+        copy_controller_pb.clicked.connect(self.on_copy)
 
     def on_replace(self):
         new_icon = self.replace_controllers_combo.currentText()
@@ -179,3 +206,12 @@ class MainUI(QtWidgets.QDialog):
         side_rule = self.mirror_controllers_side_combo.currentText()
         bias_rule = self.mirror_controllers_bias_combo.currentText()
         self.makeup_handler.mirror_curve_controller(side_rule, bias_rule)
+
+    def on_copy(self):
+        selection = cmds.ls(selection=True)
+        if len(selection) != 2:
+            msg = "Please select exactly 2 control curves (source than target)"
+            self.feedback.pop_info(title="Selection Error", text=msg, critical=True)
+            raise ValueError(msg)
+        maintain_offset = bool(self.copy_controller_maintain_offset_cb.isChecked())
+        self.makeup_handler.copy_from(selection[0], selection[1], maintain_offset=maintain_offset)
