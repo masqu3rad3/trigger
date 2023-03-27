@@ -1,9 +1,9 @@
 
-from json.tool import main
 from maya import cmds
 
 # from trigger.ui.Qt import QtWidgets
-from PySide2 import QtWidgets, QtCore
+# from PySide2 import QtWidgets, QtCore
+from trigger.ui.Qt import QtWidgets
 from trigger.core.decorators import keepselection, undo
 from trigger.library.controllers import Icon
 from trigger.library.tools import replace_curve, mirror_controller
@@ -92,21 +92,26 @@ class Makeup(object):
                 new_size = float(obj_size) / self.__get_max_size(new_shape)
                 cmds.setAttr("%s.scale" % new_shape, new_size, new_size, new_size)
             cmds.makeIdentity(new_shape, apply=True, scale=True)
-            replace_curve(obj, new_shape, maintain_offset=mo)
+            replace_curve(obj, new_shape, snap=mo)
             cmds.delete(new_shape)
 
     @undo
     @keepselection
-    def copy_from(self, source, target, maintain_offset=True):
+    def copy_from(self, source, target, snap=True, copy_color=False):
         """Copies the shape from one controller to other"""
         # if not isinstance(source, str) or not isinstance(target, str):
         #     raise ValueError("Both source and target needs to be string values. Got {0}, {1}".format(type(source), type(target)))
 
-        replace_curve(target, source, maintain_offset=maintain_offset)
+        replace_curve(target, source, snap=snap, transfer_color=copy_color)
 
     @staticmethod
     def __get_max_size(obj):
-        return max(cmds.xform(obj, q=True, bb=True))
+        _bb = cmds.xform(obj, query=True, boundingBox=True)
+        dimensions = []
+        dimensions.append(abs(_bb[3] - _bb[0]))
+        dimensions.append(abs(_bb[4] - _bb[1]))
+        dimensions.append(abs(_bb[5] - _bb[2]))
+        return max(dimensions)
 
 
 def launch(force=True):
@@ -160,7 +165,7 @@ class MainUI(QtWidgets.QDialog):
         replace_controllers_combo_lay.addWidget(self.replace_controllers_combo)
         scale_controllers_lbl = QtWidgets.QLabel(self, text="Try Scale Match")
         self.scale_controllers_cb = QtWidgets.QCheckBox(self)
-        self.scale_controllers_cb.setChecked(False)
+        self.scale_controllers_cb.setChecked(True)
         replace_controllers_combo_lay.addWidget(scale_controllers_lbl)
         replace_controllers_combo_lay.addWidget(self.scale_controllers_cb)
         form_lay.addRow(replace_controllers_pb, replace_controllers_combo_lay)
@@ -181,12 +186,17 @@ class MainUI(QtWidgets.QDialog):
         copy_controller_pb = QtWidgets.QPushButton(self)
         copy_controller_pb.setText("Copy Shape from another")
         copy_controller_pb.setToolTip("Copies shape from another controller curve. First select the source than the target")
-        copy_controller_maintain_offset_lbl = QtWidgets.QLabel(self, text="Maintain Offset")
-        self.copy_controller_maintain_offset_cb = QtWidgets.QCheckBox(self)
-        self.copy_controller_maintain_offset_cb.setChecked(True)
+        copy_controller_snap_lbl = QtWidgets.QLabel(self, text="Snap")
+        self.copy_controller_snap_cb = QtWidgets.QCheckBox(self)
+        self.copy_controller_snap_cb.setChecked(True)
+        copy_controller_transfer_color_lbl = QtWidgets.QLabel(self, text="Copy Color")
+        self.copy_controller_transfer_color_cb = QtWidgets.QCheckBox(self)
         copy_controller_lay = QtWidgets.QHBoxLayout()
-        copy_controller_lay.addWidget(copy_controller_maintain_offset_lbl)
-        copy_controller_lay.addWidget(self.copy_controller_maintain_offset_cb)
+        copy_controller_lay.addWidget(copy_controller_snap_lbl)
+        copy_controller_lay.addWidget(self.copy_controller_snap_cb)
+        copy_controller_lay.addWidget(copy_controller_transfer_color_lbl)
+        copy_controller_lay.addWidget(self.copy_controller_transfer_color_cb)
+
         form_lay.addRow(copy_controller_pb, copy_controller_lay)
 
         # fill the combos
@@ -213,5 +223,6 @@ class MainUI(QtWidgets.QDialog):
             msg = "Please select exactly 2 control curves (source than target)"
             self.feedback.pop_info(title="Selection Error", text=msg, critical=True)
             raise ValueError(msg)
-        maintain_offset = bool(self.copy_controller_maintain_offset_cb.isChecked())
-        self.makeup_handler.copy_from(selection[0], selection[1], maintain_offset=maintain_offset)
+        snap = bool(self.copy_controller_snap_cb.isChecked())
+        copy_color = bool(self.copy_controller_transfer_color_cb.isChecked())
+        self.makeup_handler.copy_from(selection[0], selection[1], snap=snap, copy_color=copy_color)

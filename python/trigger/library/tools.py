@@ -128,7 +128,7 @@ def replace_controller(old_controller, new_controller, mirror=True, mirror_axis=
             pass
 
 
-def replace_curve(orig_curve, new_curve, maintain_offset=True):
+def replace_curve(orig_curve, new_curve, snap=True, transfer_color=True):
     """Replace orig_curve with new_curve.
 
     Args:
@@ -136,7 +136,7 @@ def replace_curve(orig_curve, new_curve, maintain_offset=True):
         new_curve (str): nurbsCurve to replace with.
         maintain_offset (bool, optional): Match position. Defaults to True.
     """
-    if maintain_offset:
+    if snap:
         new_curve = cmds.duplicate(new_curve, rc=1)[0]
         cmds.parentConstraint(orig_curve, new_curve)
 
@@ -151,8 +151,9 @@ def replace_curve(orig_curve, new_curve, maintain_offset=True):
         raise Exception("Cant find the shape of the new_curve")
 
     color = None
-    if cmds.getAttr(orig_shapes[0] + ".overrideEnabled"):
-        color = cmds.getAttr(orig_shapes[0] + ".overrideColor")
+    if transfer_color:
+        if cmds.getAttr(new_curve + ".overrideEnabled"):
+            color = cmds.getAttr(new_curve + ".overrideColor")
 
     # Make amount of shapes equal
     shape_dif = len(orig_shapes) - len(new_shapes)
@@ -162,9 +163,9 @@ def replace_curve(orig_curve, new_curve, maintain_offset=True):
             for shape in range(0, shape_dif * -1):
                 dupe_curve = cmds.duplicate(orig_shapes, rc=1)[0]
                 dupe_shape = cmds.listRelatives(dupe_curve, s=1)[0]
-                if color:
-                    cmds.setAttr(dupe_shape + ".overrideEnabled", 1)
-                    cmds.setAttr(dupe_shape + ".overrideColor", color)
+                # if color:
+                #     cmds.setAttr(dupe_shape + ".overrideEnabled", 1)
+                #     cmds.setAttr(dupe_shape + ".overrideColor", color)
                 orig_shapes.append(dupe_shape)
                 cmds.select(dupe_shape, orig_curve)
                 cmds.parent(r=1, s=1)
@@ -177,13 +178,13 @@ def replace_curve(orig_curve, new_curve, maintain_offset=True):
     orig_shapes = cmds.listRelatives(orig_curve, s=1)
     # For each shape, transfer from original to new.
     for new_shape, orig_shape in zip(new_shapes, orig_shapes):
-        print("-----------------")
-        print("-----------------")
-        print("-----------------")
-        print(new_shape, orig_shape)
-        print("-----------------")
-        print("-----------------")
-        print("-----------------")
+        if color:
+            print("-----------")
+            print("-----------")
+            print("-----------")
+            print("COLOR")
+            cmds.setAttr("{}.overrideEnabled".format(new_shape), 1)
+            cmds.setAttr("{}.overrideColor".format(new_shape), color)
         cmds.connectAttr("{}.worldSpace".format(new_shape), "{}.create".format(orig_shape))
 
         cmds.dgeval("{}.worldSpace".format(orig_shape))
@@ -195,7 +196,7 @@ def replace_curve(orig_curve, new_curve, maintain_offset=True):
             cmds.xform(orig_shape + '.cv[' + str(i) + ']', t=cmds.pointPosition(new_shape + '.cv[' + str(i) + ']'),
                        ws=1)
 
-    if maintain_offset:
+    if snap:
         cmds.delete(new_curve)
 
 
@@ -246,7 +247,7 @@ def mirror_controller(axis="x", node_list=None, side_flags=("L_", "R_"), side_bi
         # ungroup it
         cmds.ungroup(node_grp)
         # cmds.makeIdentity(tmp_cont[0], a=True, r=False, t=False, s=True)
-        replace_curve(other_side, tmp_cont, maintain_offset=False)
+        replace_curve(other_side, tmp_cont, snap=False)
         cmds.delete(tmp_cont)
 
 
