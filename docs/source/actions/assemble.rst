@@ -1,8 +1,11 @@
 .. _assemble:
+.. |assemble| image:: ../../../python/trigger/ui/icons/assemble.png
 
 ========
-Assemble
+Assemble |assemble|
 ========
+
+
 
 Assemble Action is for combining multiple of alembic files into the scene at the same time.
 
