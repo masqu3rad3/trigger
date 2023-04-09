@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Actions &mdash; Trigger 1 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Assemble" href="actions/assemble.html" />
+    <link rel="prev" title="Interface" href="interface.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Trigger
+          </a>
+              <div class="version">
+                2.6.5
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="getting_started.html">Getting Started</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="interface.html">Interface</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Actions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="actions/assemble.html">Assemble </a></li>
+<li class="toctree-l3"><a class="reference internal" href="actions/cleanup.html">Cleanup </a></li>
+<li class="toctree-l3"><a class="reference internal" href="actions/cloth_setup.html">Cloth Setup </a></li>
+<li class="toctree-l3"><a class="reference internal" href="actions/correctives.html">Correctives </a></li>
+<li class="toctree-l3"><a class="reference internal" href="actions/driver.html">Driver </a></li>
+<li class="toctree-l3"><a class="reference internal" href="actions/face_cam.html">Face Cam </a></li>
+<li class="toctree-l3"><a class="reference internal" href="actions/import_asset.html">Import Asset </a></li>
+<li class="toctree-l3"><a class="reference internal" href="actions/kinematics.html">Kinematics </a></li>
+<li class="toctree-l3"><a class="reference internal" href="actions/look.html">Look </a></li>
+<li class="toctree-l3"><a class="reference internal" href="actions/master.html">Master </a></li>
+<li class="toctree-l3"><a class="reference internal" href="actions/morph.html">Morph </a></li>
+<li class="toctree-l3"><a class="reference internal" href="actions/node_presets.html">Node Presets </a></li>
+<li class="toctree-l3"><a class="reference internal" href="actions/reference_session.html">Reference Session </a></li>
+<li class="toctree-l3"><a class="reference internal" href="actions/script.html">Script </a></li>
+<li class="toctree-l3"><a class="reference internal" href="actions/selection_sets.html">Selection Sets </a></li>
+<li class="toctree-l3"><a class="reference internal" href="actions/shapes.html">Shapes </a></li>
+<li class="toctree-l3"><a class="reference internal" href="actions/space_switchers.html">Space Switchers </a></li>
+<li class="toctree-l3"><a class="reference internal" href="actions/split_shapes.html">Split Shapes </a></li>
+<li class="toctree-l3"><a class="reference internal" href="actions/weights.html">Weights </a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Trigger</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="getting_started.html">Getting Started</a></li>
+      <li class="breadcrumb-item active">Actions</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/actions.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="actions">
+<span id="id1"></span><h1>Actions<a class="headerlink" href="#actions" title="Permalink to this heading"></a></h1>
+<p class="linemarker linemarker-7">Trigger Actions are core of the whole system. They can be anything from simple model imports to complex network creations.
+Some can work without any dependency, some would require certain elements, some may require inputs, some can save and store iterations or any
+combination of those.
+The list of current available Actions in Trigger (October 2021)</p>
+<div class="toctree-wrapper compound">
+</div>
+<ul class="simple">
+<li><p class="linemarker linemarker-56"><img alt="assemble" src="_images/assemble.png" /> <span class="xref std std-ref">assemble</span></p></li>
+<li><p class="linemarker linemarker-57"><img alt="cleanup" src="_images/cleanup.png" /> <span class="xref std std-ref">cleanup</span></p></li>
+<li><p class="linemarker linemarker-58"><img alt="cloth_setup" src="_images/cloth_setup.png" /> <span class="xref std std-ref">cloth_setup</span></p></li>
+<li><p class="linemarker linemarker-59"><img alt="correctives" src="_images/correctives.png" /> <span class="xref std std-ref">correctives</span></p></li>
+<li><p class="linemarker linemarker-60"><img alt="driver" src="_images/driver.png" /> <span class="xref std std-ref">driver</span></p></li>
+<li><p class="linemarker linemarker-61"><img alt="face_cam" src="_images/face_cam.png" /> <span class="xref std std-ref">face_cam</span></p></li>
+<li><p class="linemarker linemarker-62"><img alt="import_asset" src="_images/import_asset.png" /> <span class="xref std std-ref">import_asset</span></p></li>
+<li><p class="linemarker linemarker-63"><img alt="kinematics" src="_images/kinematics.png" /> <span class="xref std std-ref">kinematics</span></p></li>
+<li><p class="linemarker linemarker-64"><img alt="look" src="_images/look.png" /> <span class="xref std std-ref">look</span></p></li>
+<li><p class="linemarker linemarker-65"><img alt="master" src="_images/master.png" /> <span class="xref std std-ref">master</span></p></li>
+<li><p class="linemarker linemarker-66"><img alt="morph" src="_images/morph.png" /> <span class="xref std std-ref">morph</span></p></li>
+<li><p class="linemarker linemarker-67"><img alt="node_presets" src="_images/node_presets.png" /> <span class="xref std std-ref">node_presets</span></p></li>
+<li><p class="linemarker linemarker-68"><img alt="reference_session" src="_images/reference_session.png" /> <span class="xref std std-ref">reference_session</span></p></li>
+<li><p class="linemarker linemarker-69"><img alt="script" src="_images/script.png" /> <span class="xref std std-ref">script</span></p></li>
+<li><p class="linemarker linemarker-70"><img alt="selection_sets" src="_images/selection_sets.png" /> <span class="xref std std-ref">selection_sets</span></p></li>
+<li><p class="linemarker linemarker-71"><img alt="shapes" src="_images/shapes.png" /> <span class="xref std std-ref">shapes</span></p></li>
+<li><p class="linemarker linemarker-72"><img alt="space_switchers" src="_images/space_switchers.png" /> <span class="xref std std-ref">space_switchers</span></p></li>
+<li><p class="linemarker linemarker-73"><img alt="split_shapes" src="_images/split_shapes.png" /> <span class="xref std std-ref">split_shapes</span></p></li>
+<li><p class="linemarker linemarker-74"><img alt="weights" src="_images/weights.png" /> <span class="xref std std-ref">weights</span></p></li>
+</ul>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="interface.html" class="btn btn-neutral float-left" title="Interface" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="actions/assemble.html" class="btn btn-neutral float-right" title="Assemble" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Arda Kutlu.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -72,7 +72,7 @@ class Controller(object):
         if self._shape in self.lockedShapes:
             log.error("set_shape argument is not valid for locked shapes. Locked Shapes are %s" % self.lockedShapes)
         new_shape, _ = self.icon_handler.create_icon(icon_type=shape, scale=scale, normal=normal)
-        replace_curve(self._name, new_shape, maintain_offset=True)
+        replace_curve(self._name, new_shape, snap=True)
         cmds.delete(new_shape)
 
     def set_scale(self, values):
