@@ -13,6 +13,8 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+from trigger.library import fbx
+
 from trigger.core import compatibility
 from trigger.library.functions import unique_list
 from trigger.ui.Qt import QtWidgets, QtCore, QtCompat
@@ -382,14 +384,21 @@ class TriggerTool(object):
         for item in fbx_import_settings.items():
             mel.eval('%s %s' % (item[0], item[1]))
 
-        cmds.file(bind_pose_path, reference=True, mergeNamespacesOnClash=True, namespace=fbx_namespace)
-        updated_mapping = self._update_mapping_dictionary(self.mapping, fbx_namespace, self.namespace)
-        self._stick_to_joints(updated_mapping)
-        cmds.file(fbx_path, reference=True, mergeNamespacesOnClash=True, namespace=fbx_namespace)
+        bind_pose_nodes = fbx.load(bind_pose_path, merge_mode="add", animation=False, skins=True)
+        # cmds.file(bind_pose_path, reference=True, mergeNamespacesOnClash=True, namespace=fbx_namespace)
+        # updated_mapping = self._update_mapping_dictionary(self.mapping, fbx_namespace, self.namespace)
+        self._stick_to_joints(self.mapping)
+        # cmds.file(fbx_path, reference=True, mergeNamespacesOnClash=True, namespace=fbx_namespace)
 
-        self._bake_ctrls(updated_mapping)
+        # anim_nodes = fbx.load(fbx_path, merge_mode="merge", animation=True, skins=True)
+        # self._bake_ctrls(updated_mapping)
 
-        cmds.file(fbx_path, rr=True)
+        # self._bake_ctrls(self.mapping)
+
+        # cmds.file(fbx_path, rr=True)
+        # delete imported fbx nodes
+        # all_nodes = list(set(bind_pose_nodes + anim_nodes))
+        # cmds.delete(all_nodes)
 
     def _info_pop(self, textTitle="info", textHeader="", textInfo="", type="I"):
         self.msg = QtWidgets.QMessageBox(parent=self)

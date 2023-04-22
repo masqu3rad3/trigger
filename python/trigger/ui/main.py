@@ -714,7 +714,6 @@ class MainUI(QtWidgets.QMainWindow):
 
         self.action_info_pb.clicked.connect(self.on_action_info)
 
-        # self.build_pb.clicked.connect(lambda x=0: self.actions_handler.run_all_actions())
         self.build_pb.clicked.connect(self.on_build_rig)
         self.rig_actions_listwidget.doubleClicked.connect(self.on_run_action)
         # TODO: Make a seperate method for running run actions wih progressbar
