@@ -5,6 +5,7 @@ from maya import cmds
 
 from trigger.core import io
 from trigger.core import filelog
+from trigger.library import scene
 from trigger import actions
 from trigger.core.decorators import tracktime, windowsOff
 from trigger.core import compatibility as compat
@@ -315,7 +316,7 @@ class ActionsSession(dict):
         LOG.seperator()
         LOG.header("BUILDING...")
         if reset_scene:
-            cmds.file(new=True, force=True)
+            scene.reset()
         for row, action in enumerate(self["actions"]):
             if action["name"] == until:
                 return

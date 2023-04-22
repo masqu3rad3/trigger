@@ -1,14 +1,14 @@
 """This module is for saving / loading custom scripts"""
 
 import os
-from maya import cmds
+from maya import cmds  # NEVER REMOVE THIS LINE!!!
 import platform
 import subprocess
 
 from trigger.core import filelog
-from trigger.core import dynamic_import as dyn
+from trigger.core import dynamic_import as dyn  # NEVER REMOVE THIS LINE!!!
 
-from trigger.ui.Qt import QtWidgets, QtGui # for progressbar
+from trigger.ui.Qt import QtWidgets, QtGui  # for progressbar
 from trigger.ui import custom_widgets
 from trigger.ui.widgets.browser_button import BrowserButton
 
