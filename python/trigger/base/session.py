@@ -1,6 +1,7 @@
 import os
 
 from maya import cmds
+from trigger.library import scene
 from trigger.library import functions
 from trigger.library import attribute
 from trigger.library import joint
@@ -32,12 +33,12 @@ class Session(object):
         self.io.write(guides_data)
         log.info("Session Saved Successfully...")
 
-    # def load_session(self, file_path, reset_scene=True):
     def load_session(self, file_path, reset_scene=False):
         """Loads the session from the file"""
 
         if reset_scene:
-            self.reset_scene()
+            # self.reset_scene()
+            scene.reset()
         guides_data = self._get_guides_data(file_path)
         if guides_data:
             self.rebuild_guides(guides_data)
@@ -147,5 +148,5 @@ class Session(object):
                 cmds.parent(jnt_dict.get("name"), holder_grp)
 
     def reset_scene(self):
-        cmds.file(new=True, force=True)
+        scene.reset()
 

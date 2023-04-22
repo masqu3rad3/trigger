@@ -424,8 +424,14 @@ class Arm(object):
 
         _upArmFK_off = self.upArmFkCont.add_offset("OFF")
         _upArmFK_ore = self.upArmFkCont.add_offset("ORE")
+
         cmds.xform(_upArmFK_off, piv=self.shoulder_pos, ws=True)
         cmds.xform(_upArmFK_ore, piv=self.shoulder_pos, ws=True)
+
+        # matrix constraint doesnt like moving the pivot and freezing. We will move the offset manually
+        cmds.setAttr("{}.tx".format(_upArmFK_ore), self.sideMult * (self.init_upper_arm_dist / 2))
+        cmds.setAttr("{}.tx".format(self.upArmFkCont.name), 0)
+
 
         # FK LOW Arm Controller
         fk_low_arm_scale = (self.init_lower_arm_dist / 2, self.init_lower_arm_dist / 8, self.init_lower_arm_dist / 8)
@@ -445,6 +451,10 @@ class Arm(object):
         _lowArmFkCont_ore = self.lowArmFkCont.add_offset("ORE")
         cmds.xform(_low_arm_fk_cont_off, piv=self.elbow_pos, ws=True)
         cmds.xform(_lowArmFkCont_ore, piv=self.elbow_pos, ws=True)
+
+        # matrix constraint doesnt like moving the pivot and freezing. We will move the offset manually
+        cmds.setAttr("{}.tx".format(_lowArmFkCont_ore), self.sideMult * (self.init_lower_arm_dist / 2))
+        cmds.setAttr("{}.tx".format(self.lowArmFkCont.name), 0)
 
         # FK HAND Controller
         fk_cont_scale = (self.init_lower_arm_dist / 5, self.init_lower_arm_dist / 5, self.init_lower_arm_dist / 5)
@@ -715,7 +725,6 @@ class Arm(object):
                                 "%s.Pole_Vector" % self.handIkCont.name)
 
     def create_fk_setup(self):
-
         connection.matrixConstraint(self.shoulderCont.name, self.j_def_collar, maintainOffset=True,
                                     source_parent_cutoff=self.localOffGrp)
         connection.matrixConstraint(self.upArmFkCont.name, self.j_fk_up, maintainOffset=True, source_parent_cutoff=self.localOffGrp)
