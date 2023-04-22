@@ -7,6 +7,7 @@ from trigger.library import attribute
 from trigger.library import api
 from trigger.library import controllers as ic
 from trigger.objects.ribbon import Ribbon
+from trigger.objects.controller import Controller
 
 from trigger.core import filelog
 log = filelog.Filelog(logname=__name__, filename="trigger_log")
@@ -259,180 +260,232 @@ class Leg(object):
 
         cmds.connectAttr("%s.rigVis" % self.scaleGrp,"%s.v" %self.jfk_root)
 
-    def createControllers(self):
+    def create_controllers(self):
         icon = ic.Icon()
         # Thigh Controller
         thigh_cont_scale = (self.init_upper_leg_dist / 4, self.init_upper_leg_dist / 4, self.init_upper_leg_dist / 16)
-        self.cont_thigh, _ = icon.create_icon("Cube", icon_name="%s_Thigh_cont" % self.suffix, scale=thigh_cont_scale, normal=(0, 0, self.sideMult))
-        self.controllers.append(self.cont_thigh)
-        functions.align_to_alter(self.cont_thigh, self.jfk_root, mode=2)
-        cmds.move(0, self.sideMult*((thigh_cont_scale[0] * 2)), 0, self.cont_thigh, r=True, os=True)
-        cmds.xform(self.cont_thigh, piv=self.leg_root_pos, ws=True)
+        self.cont_thigh = Controller(name="{}_Thigh_cont".format(self.suffix),
+                                     shape="Cube",
+                                     scale=thigh_cont_scale,
+                                     normal=(0, 0, self.sideMult),
+                                     side=self.side,
+                                     tier="primary",
+                                     )
+        self.controllers.append(self.cont_thigh.name)
+        functions.align_to_alter(self.cont_thigh.name, self.jfk_root, mode=2)
+        cmds.move(0, self.sideMult*((thigh_cont_scale[0] * 2)), 0, self.cont_thigh.name, relative=True, objectSpace=True)
+        cmds.xform(self.cont_thigh.name, pivots=self.leg_root_pos, worldSpace=True)
 
-        self.cont_thigh_off = functions.create_offset_group(self.cont_thigh, "OFF")
-        self.cont_thigh_ore = functions.create_offset_group(self.cont_thigh, "ORE")
-        self.cont_thigh_auto = functions.create_offset_group(self.cont_thigh, "Auto")
+        cont_thigh_off = self.cont_thigh.add_offset("OFF")
+        cont_thigh_ore = self.cont_thigh.add_offset("ORE")
+        self.cont_thigh_auto = self.cont_thigh.add_offset("Auto")
 
-        cmds.xform(self.cont_thigh_off, piv=self.leg_root_pos, ws=True)
-        cmds.xform(self.cont_thigh_ore, piv=self.leg_root_pos, ws=True)
-        cmds.xform(self.cont_thigh_auto, piv=self.leg_root_pos, ws=True)
+        cmds.xform(cont_thigh_off, pivots=self.leg_root_pos, worldSpace=True)
+        cmds.xform(cont_thigh_ore, pivots=self.leg_root_pos, worldSpace=True)
+        cmds.xform(self.cont_thigh_auto, pivots=self.leg_root_pos, worldSpace=True)
 
-        cmds.makeIdentity(self.cont_thigh, a=True)
+        self.cont_thigh.freeze()
+        # cmds.makeIdentity(self.cont_thigh, a=True)
 
         # IK Foot Controller
         foot_cont_scale = (self.init_foot_length * 0.75, 1, self.init_foot_width * 0.8)
-        self.cont_IK_foot, _ = icon.create_icon("Circle", icon_name="%s_IK_foot_cont" % self.suffix, scale=foot_cont_scale, normal=(0, 0, self.sideMult))
-        self.controllers.append(self.cont_IK_foot)
+        self.cont_IK_foot = Controller(name="{}_IK_foot_cont".format(self.suffix),
+                                       shape="Circle",
+                                       scale=foot_cont_scale,
+                                       normal=(0, 0, self.sideMult),
+                                       side=self.side,
+                                       tier="primary",
+                                       )
+        self.controllers.append(self.cont_IK_foot.name)
         # align it to the ball socket
-        functions.align_to_alter(self.cont_IK_foot, self.j_socket_ball, mode=2)
-        cmds.xform(self.cont_IK_foot, piv=self.foot_pos, p=True, ws=True)
+        functions.align_to_alter(self.cont_IK_foot.name, self.j_socket_ball, mode=2)
+        cmds.xform(self.cont_IK_foot.name, pivots=self.foot_pos, preserve=True, worldSpace=True)
 
-        self.cont_IK_OFF = functions.create_offset_group(self.cont_IK_foot, "OFF")
-        cont_ik_foot_ore = functions.create_offset_group(self.cont_IK_foot, "ORE")
-        cont_ik_foot_pos = functions.create_offset_group(self.cont_IK_foot, "POS")
+        self.cont_IK_OFF = self.cont_IK_foot.add_offset("OFF")
+        cont_ik_foot_ore = self.cont_IK_foot.add_offset("ORE")
+        cont_ik_foot_pos = self.cont_IK_foot.add_offset("POS")
 
-        cmds.makeIdentity(self.cont_IK_foot, a=True)
+        self.cont_IK_foot.freeze()
 
-        cmds.addAttr(self.cont_IK_foot, shortName="polevector", longName="Pole_Vector", defaultValue=0.0, minValue=0.0, maxValue=1.0,
+        cmds.addAttr(self.cont_IK_foot.name, shortName="polevector", longName="Pole_Vector", defaultValue=0.0, minValue=0.0, maxValue=1.0,
                    at="double", k=True)
-        cmds.addAttr(self.cont_IK_foot, shortName="sUpLeg", longName="Scale_Upper_Leg", defaultValue=1.0, minValue=0.0, at="double", k=True)
-        cmds.addAttr(self.cont_IK_foot, shortName="sLowLeg", longName="Scale_Lower_Leg", defaultValue=1.0, minValue=0.0, at="double", k=True)
-        cmds.addAttr(self.cont_IK_foot, shortName="squash", longName="Squash", defaultValue=0.0, minValue=0.0, maxValue=1.0, at="double", k=True)
-        cmds.addAttr(self.cont_IK_foot, shortName="stretch", longName="Stretch", defaultValue=1.0, minValue=0.0, maxValue=1.0, at="double",
+        cmds.addAttr(self.cont_IK_foot.name, shortName="sUpLeg", longName="Scale_Upper_Leg", defaultValue=1.0, minValue=0.0, at="double", k=True)
+        cmds.addAttr(self.cont_IK_foot.name, shortName="sLowLeg", longName="Scale_Lower_Leg", defaultValue=1.0, minValue=0.0, at="double", k=True)
+        cmds.addAttr(self.cont_IK_foot.name, shortName="squash", longName="Squash", defaultValue=0.0, minValue=0.0, maxValue=1.0, at="double", k=True)
+        cmds.addAttr(self.cont_IK_foot.name, shortName="stretch", longName="Stretch", defaultValue=1.0, minValue=0.0, maxValue=1.0, at="double",
                  k=True)
-        cmds.addAttr(self.cont_IK_foot, shortName="stretchLimit", longName="StretchLimit", defaultValue=100.0, minValue=0.0,
+        cmds.addAttr(self.cont_IK_foot.name, shortName="stretchLimit", longName="StretchLimit", defaultValue=100.0, minValue=0.0,
                  maxValue=1000.0, at="double", k=True)
-        cmds.addAttr(self.cont_IK_foot, shortName="softIK", longName="SoftIK", defaultValue=0.0, minValue=0.0, maxValue=100.0, k=True)
-        cmds.addAttr(self.cont_IK_foot, shortName="volume", longName="Volume_Preserve", defaultValue=0.0, at="double", k=True)
-        cmds.addAttr(self.cont_IK_foot, shortName="bLean", longName="Ball_Lean", defaultValue=0.0, at="double", k=True)
-        cmds.addAttr(self.cont_IK_foot, shortName="bRoll", longName="Ball_Roll", defaultValue=0.0, at="double", k=True)
-        cmds.addAttr(self.cont_IK_foot, shortName="bSpin", longName="Ball_Spin", defaultValue=0.0, at="double", k=True)
-        cmds.addAttr(self.cont_IK_foot, shortName="hRoll", longName="Heel_Roll", defaultValue=0.0, at="double", k=True)
-        cmds.addAttr(self.cont_IK_foot, shortName="hSpin", longName="Heel_Spin", defaultValue=0.0, at="double", k=True)
-        cmds.addAttr(self.cont_IK_foot, shortName="tRoll", longName="Toes_Roll", defaultValue=0.0, at="double", k=True)
-        cmds.addAttr(self.cont_IK_foot, shortName="tSpin", longName="Toes_Spin", defaultValue=0.0, at="double", k=True)
-        cmds.addAttr(self.cont_IK_foot, shortName="tWiggle", longName="Toes_Wiggle", defaultValue=0.0, at="double", k=True)
-        cmds.addAttr(self.cont_IK_foot, shortName="bank", longName="Bank", defaultValue=0.0, at="double", k=True)
+        cmds.addAttr(self.cont_IK_foot.name, shortName="softIK", longName="SoftIK", defaultValue=0.0, minValue=0.0, maxValue=100.0, k=True)
+        cmds.addAttr(self.cont_IK_foot.name, shortName="volume", longName="Volume_Preserve", defaultValue=0.0, at="double", k=True)
+        cmds.addAttr(self.cont_IK_foot.name, shortName="bLean", longName="Ball_Lean", defaultValue=0.0, at="double", k=True)
+        cmds.addAttr(self.cont_IK_foot.name, shortName="bRoll", longName="Ball_Roll", defaultValue=0.0, at="double", k=True)
+        cmds.addAttr(self.cont_IK_foot.name, shortName="bSpin", longName="Ball_Spin", defaultValue=0.0, at="double", k=True)
+        cmds.addAttr(self.cont_IK_foot.name, shortName="hRoll", longName="Heel_Roll", defaultValue=0.0, at="double", k=True)
+        cmds.addAttr(self.cont_IK_foot.name, shortName="hSpin", longName="Heel_Spin", defaultValue=0.0, at="double", k=True)
+        cmds.addAttr(self.cont_IK_foot.name, shortName="tRoll", longName="Toes_Roll", defaultValue=0.0, at="double", k=True)
+        cmds.addAttr(self.cont_IK_foot.name, shortName="tSpin", longName="Toes_Spin", defaultValue=0.0, at="double", k=True)
+        cmds.addAttr(self.cont_IK_foot.name, shortName="tWiggle", longName="Toes_Wiggle", defaultValue=0.0, at="double", k=True)
+        cmds.addAttr(self.cont_IK_foot.name, shortName="bank", longName="Bank", defaultValue=0.0, at="double", k=True)
 
         # Pole Vector Controller
         polecont_scale = ((((self.init_upper_leg_dist + self.init_lower_leg_dist) / 2) / 10), (((self.init_upper_leg_dist + self.init_lower_leg_dist) / 2) / 10), (((self.init_upper_leg_dist + self.init_lower_leg_dist) / 2) / 10))
-        self.cont_Pole, _ = icon.create_icon("Plus", icon_name="%s_Pole_cont" % self.suffix, scale=polecont_scale, normal=self.mirror_axis)
-        self.controllers.append(self.cont_Pole)
+        self.cont_pole = Controller(name="{}_Pole_cont".format(self.suffix),
+                                    shape="Plus",
+                                    scale=polecont_scale,
+                                    normal=self.mirror_axis,
+                                    side=self.side,
+                                    tier="primary",
+                                    )
+
+        self.controllers.append(self.cont_pole.name)
         offset_mag_pole = ((self.init_upper_leg_dist + self.init_lower_leg_dist) / 4)
         offset_vector_pole = api.get_between_vector(self.j_def_midLeg, [self.j_def_hip, self.jfk_foot])
 
-        functions.align_and_aim(self.cont_Pole,
+        functions.align_and_aim(self.cont_pole.name,
                                 target_list=[self.j_def_midLeg],
                                 aim_target_list=[self.j_def_hip, self.jfk_foot],
                                 up_vector=self.up_axis,
                                 translate_offset=(offset_vector_pole * offset_mag_pole)
                                 )
 
-        self.cont_pole_off = functions.create_offset_group(self.cont_Pole, "OFF")
-        self.cont_pole_vis = functions.create_offset_group(self.cont_Pole, "VIS")
+        self.cont_pole_off = self.cont_pole.add_offset("OFF")
+        self.cont_pole_vis = self.cont_pole.add_offset("VIS")
 
         ## FK UP Leg Controller
         scalecont_fk_up_leg = (self.init_upper_leg_dist / 2, self.init_upper_leg_dist / 6, self.init_upper_leg_dist / 6)
 
-        self.cont_fk_up_leg, dmp = icon.create_icon("Cube", icon_name="FK_Upleg_%s_cont" % self.suffix, scale=scalecont_fk_up_leg)
-        self.controllers.append(self.cont_fk_up_leg)
+        # self.cont_fk_up_leg, dmp = icon.create_icon("Cube", icon_name="FK_Upleg_%s_cont" % self.suffix, scale=scalecont_fk_up_leg)
+        self.cont_fk_up_leg = Controller(name="{}_FK_Upleg_cont".format(self.suffix),
+                                         shape="Cube",
+                                         scale=scalecont_fk_up_leg,
+                                         side=self.side,
+                                         tier="primary",
+                                         )
+        self.controllers.append(self.cont_fk_up_leg.name)
 
         # move the pivot to the bottom
-        cmds.xform(self.cont_fk_up_leg, piv=(self.sideMult * -(self.init_upper_leg_dist / 2), 0, 0), ws=True)
+        cmds.xform(self.cont_fk_up_leg.name, pivots=(self.sideMult * -(self.init_upper_leg_dist / 2), 0, 0), worldSpace=True)
 
         # move the controller to the shoulder
-        functions.align_to_alter(self.cont_fk_up_leg, self.jfk_root, mode=2)
+        functions.align_to_alter(self.cont_fk_up_leg.name, self.jfk_root, mode=2)
 
-        self.cont_fk_up_leg_off = functions.create_offset_group(self.cont_fk_up_leg, "OFF")
-        self.cont_fk_up_leg_ore = functions.create_offset_group(self.cont_fk_up_leg, "ORE")
-        cmds.xform(self.cont_fk_up_leg_off, piv=self.hip_pos, ws=True)
-        cmds.xform(self.cont_fk_up_leg_ore, piv=self.hip_pos, ws=True)
+        self.cont_fk_up_leg_off = self.cont_fk_up_leg.add_offset("OFF")
+        self.cont_fk_up_leg_ore = self.cont_fk_up_leg.add_offset("ORE")
+        cmds.xform(self.cont_fk_up_leg_off, pivots=self.hip_pos, worldSpace=True)
+        cmds.xform(self.cont_fk_up_leg_ore, pivots=self.hip_pos, worldSpace=True)
 
         ## FK LOW Leg Controller
         scalecont_fk_low_leg = (self.init_lower_leg_dist / 2, self.init_lower_leg_dist / 6, self.init_lower_leg_dist / 6)
-        self.cont_fk_low_leg, dmp = icon.create_icon("Cube", icon_name="FK_LowLeg_%s_cont" % self.suffix, scale=scalecont_fk_low_leg)
-        self.controllers.append(self.cont_fk_low_leg)
+        self.cont_fk_low_leg = Controller(name="{}_FK_LowLeg_cont".format(self.suffix),
+                                          shape="Cube",
+                                          scale=scalecont_fk_low_leg,
+                                          side=self.side,
+                                          tier="primary",
+                                          )
+        self.controllers.append(self.cont_fk_low_leg.name)
 
         # move the pivot to the bottom
-        cmds.xform(self.cont_fk_low_leg, piv=(self.sideMult * -(self.init_lower_leg_dist / 2), 0, 0), ws=True)
+        cmds.xform(self.cont_fk_low_leg.name, pivots=(self.sideMult * -(self.init_lower_leg_dist / 2), 0, 0), worldSpace=True)
 
         # align position and orientation to the joint
-        functions.align_to_alter(self.cont_fk_low_leg, self.jfk_knee, mode=2)
+        functions.align_to_alter(self.cont_fk_low_leg.name, self.jfk_knee, mode=2)
 
-        self.cont_fk_low_leg_off = functions.create_offset_group(self.cont_fk_low_leg, "OFF")
-        self.cont_fk_low_leg_ore = functions.create_offset_group(self.cont_fk_low_leg, "ORE")
-        cmds.xform(self.cont_fk_low_leg_off, piv=self.knee_pos, ws=True)
-        cmds.xform(self.cont_fk_low_leg_ore, piv=self.knee_pos, ws=True)
+        self.cont_fk_low_leg_off = self.cont_fk_low_leg.add_offset("OFF")
+        self.cont_fk_low_leg_ore = self.cont_fk_low_leg.add_offset("ORE")
+        cmds.xform(self.cont_fk_low_leg_off, pivots=self.knee_pos, worldSpace=True)
+        cmds.xform(self.cont_fk_low_leg_ore, pivots=self.knee_pos, worldSpace=True)
 
         ## FK FOOT Controller
         scalecont_fk_foot = (self.init_ball_dist / 2, self.init_ball_dist / 3, self.init_foot_width / 2)
-        self.cont_fk_foot, _ = icon.create_icon("Cube", icon_name="%s_FK_Foot_cont" % self.suffix, scale=scalecont_fk_foot)
-        self.controllers.append(self.cont_fk_foot)
-        functions.align_to_alter(self.cont_fk_foot, self.jfk_foot, mode=2)
+        self.cont_fk_foot = Controller(name="{}_FK_Foot_cont".format(self.suffix),
+                                       shape="Cube",
+                                       scale=scalecont_fk_foot,
+                                       side=self.side,
+                                       tier="primary",
+                                       )
+        self.controllers.append(self.cont_fk_foot.name)
+        functions.align_to_alter(self.cont_fk_foot.name, self.jfk_foot, mode=2)
 
-        self.cont_fk_foot_off = functions.create_offset_group(self.cont_fk_foot, "OFF")
-        self.cont_fk_foot_ore = functions.create_offset_group(self.cont_fk_foot, "ORE")
+        self.cont_fk_foot_off = self.cont_fk_foot.add_offset("OFF")
+        self.cont_fk_foot_ore = self.cont_fk_foot.add_offset("ORE")
 
         # FK Ball Controller
         scalecont_fk_ball = (self.init_toe_dist / 2, self.init_toe_dist / 3, self.init_foot_width / 2)
-        self.cont_fk_ball, _ = icon.create_icon("Cube", icon_name="%s_FK_Ball_cont" % self.suffix, scale=scalecont_fk_ball)
-        self.controllers.append(self.cont_fk_ball)
-        functions.align_to_alter(self.cont_fk_ball, self.jfk_ball, mode=2)
+        self.cont_fk_ball = Controller(name="{}_FK_Ball_cont".format(self.suffix),
+                                       shape="Cube",
+                                       scale=scalecont_fk_ball,
+                                       side=self.side,
+                                       tier="primary",
+                                       )
+        self.controllers.append(self.cont_fk_ball.name)
+        functions.align_to_alter(self.cont_fk_ball.name, self.jfk_ball, mode=2)
 
-        self.cont_fk_ball_off = functions.create_offset_group(self.cont_fk_ball, "OFF")
-        self.cont_fk_ball_ore = functions.create_offset_group(self.cont_fk_ball, "ORE")
+        self.cont_fk_ball_off = self.cont_fk_ball.add_offset("OFF")
+        self.cont_fk_ball_ore = self.cont_fk_ball.add_offset("ORE")
 
         # FK-IK SWITCH Controller
         icon_scale = self.init_upper_leg_dist / 4
-        self.cont_fk_ik, self.fk_ik_rvs = icon.create_icon("FkikSwitch", icon_name="%s_FK_IK_cont" % self.suffix, scale=(icon_scale, icon_scale, icon_scale))
-        self.controllers.append(self.cont_fk_ik)
+        self.cont_fk_ik = Controller(name="{}_FK_IK_cont".format(self.suffix),
+                                     shape="FkikSwitch",
+                                     scale=(icon_scale, icon_scale, icon_scale),
+                                     side=self.side,
+                                     tier="primary",
+                                     )
+        self.controllers.append(self.cont_fk_ik.name)
 
-        functions.align_and_aim(self.cont_fk_ik, target_list=[self.jfk_foot], aim_target_list=[self.j_def_midLeg],
+        functions.align_and_aim(self.cont_fk_ik.name, target_list=[self.jfk_foot], aim_target_list=[self.j_def_midLeg],
                                 up_vector=self.up_axis, rotate_offset=(self.sideMult * 90, self.sideMult * 90, 0))
-        cmds.move(icon_scale * 2, 0, 0, self.cont_fk_ik, r=True, os=True)
-        self.cont_fk_ik_pos = functions.create_offset_group(self.cont_fk_ik, "POS")
+        cmds.move(icon_scale * 2, 0, 0, self.cont_fk_ik.name, relative=True, objectSpace=True)
+        self.cont_fk_ik_pos = self.cont_fk_ik.add_offset("POS")
 
-        cmds.setAttr("{0}.s{1}".format(self.cont_fk_ik, "x"), self.sideMult)
+        cmds.setAttr("{0}.s{1}".format(self.cont_fk_ik.name, "x"), self.sideMult)
 
         # controller for twist orientation alignment
-        cmds.addAttr(self.cont_fk_ik, shortName="autoHip", longName="Auto_Hip", defaultValue=1.0, at="float",
+        cmds.addAttr(self.cont_fk_ik.name, shortName="autoHip", longName="Auto_Hip", defaultValue=1.0, at="float",
                    minValue=0.0, maxValue=1.0, k=True)
-        cmds.addAttr(self.cont_fk_ik, shortName="alignHip", longName="Align_Hip", defaultValue=0.0, at="float",
+        cmds.addAttr(self.cont_fk_ik.name, shortName="alignHip", longName="Align_Hip", defaultValue=0.0, at="float",
                    minValue=0.0, maxValue=1.0, k=True)
 
-        cmds.addAttr(self.cont_fk_ik, shortName="footAutoTwist", longName="Foot_Auto_Twist", defaultValue=1.0,
+        cmds.addAttr(self.cont_fk_ik.name, shortName="footAutoTwist", longName="Foot_Auto_Twist", defaultValue=1.0,
                    minValue=0.0,
                    maxValue=1.0, at="float", k=True)
-        cmds.addAttr(self.cont_fk_ik, shortName="footManualTwist", longName="Foot_Manual_Twist", defaultValue=0.0,
+        cmds.addAttr(self.cont_fk_ik.name, shortName="footManualTwist", longName="Foot_Manual_Twist", defaultValue=0.0,
                    at="float",
                    k=True)
 
-        cmds.addAttr(self.cont_fk_ik, shortName="upLegAutoTwist", longName="UpLeg_Auto_Twist", defaultValue=1.0,
+        cmds.addAttr(self.cont_fk_ik.name, shortName="upLegAutoTwist", longName="UpLeg_Auto_Twist", defaultValue=1.0,
                    minValue=0.0, maxValue=1.0, at="float", k=True)
-        cmds.addAttr(self.cont_fk_ik, shortName="upLegManualTwist", longName="UpLeg_Manual_Twist", defaultValue=0.0,
+        cmds.addAttr(self.cont_fk_ik.name, shortName="upLegManualTwist", longName="UpLeg_Manual_Twist", defaultValue=0.0,
                    at="float", k=True)
 
-        cmds.addAttr(self.cont_fk_ik, shortName="allowScaling", longName="Allow_Scaling", defaultValue=1.0, minValue=0.0,
+        cmds.addAttr(self.cont_fk_ik.name, shortName="allowScaling", longName="Allow_Scaling", defaultValue=1.0, minValue=0.0,
                    maxValue=1.0, at="float", k=True)
-        cmds.addAttr(self.cont_fk_ik, at="enum", k=True, shortName="interpType", longName="Interp_Type", en="No_Flip:Average:Shortest:Longest:Cache", defaultValue=0)
+        cmds.addAttr(self.cont_fk_ik.name, at="enum", k=True, shortName="interpType", longName="Interp_Type", en="No_Flip:Average:Shortest:Longest:Cache", defaultValue=0)
 
-        cmds.addAttr(self.cont_fk_ik, shortName="tweakControls", longName="Tweak_Controls", defaultValue=0, at="bool")
-        cmds.setAttr("%s.tweakControls" % self.cont_fk_ik, cb=True)
-        cmds.addAttr(self.cont_fk_ik, shortName="fingerControls", longName="Finger_Controls", defaultValue=1, at="bool")
-        cmds.setAttr("%s.fingerControls" % self.cont_fk_ik, cb=True)
+        cmds.addAttr(self.cont_fk_ik.name, shortName="tweakControls", longName="Tweak_Controls", defaultValue=0, at="bool")
+        cmds.setAttr("%s.tweakControls" % self.cont_fk_ik.name, cb=True)
+        cmds.addAttr(self.cont_fk_ik.name, shortName="fingerControls", longName="Finger_Controls", defaultValue=1, at="bool")
+        cmds.setAttr("%s.fingerControls" % self.cont_fk_ik.name, cb=True)
 
         ### Create MidLock controller
 
         midcont_scale = (self.init_lower_leg_dist / 4, self.init_lower_leg_dist / 4, self.init_lower_leg_dist / 4)
-        self.cont_mid_lock, _ = icon.create_icon("Star", icon_name="%s_mid_cont" % self.suffix, scale=midcont_scale, normal=self.mirror_axis)
-        self.controllers.append(self.cont_mid_lock)
+        self.cont_mid_lock = Controller(name="{}_mid_cont".format(self.suffix),
+                                        shape="Star",
+                                        scale=midcont_scale,
+                                        normal=self.mirror_axis,
+                                        side=self.side,
+                                        tier="secondary"
+                                        )
+        self.controllers.append(self.cont_mid_lock.name)
 
-        functions.align_to_alter(self.cont_mid_lock, self.jfk_knee, 2)
-        self.cont_mid_lock_ext = functions.create_offset_group(self.cont_mid_lock, "EXT")
-        self.cont_mid_lock_pos = functions.create_offset_group(self.cont_mid_lock, "POS")
-        self.cont_mid_lock_ave = functions.create_offset_group(self.cont_mid_lock, "AVE")
+        functions.align_to_alter(self.cont_mid_lock.name, self.jfk_knee, 2)
+        self.cont_mid_lock_ext = self.cont_mid_lock.add_offset("EXT")
+        self.cont_mid_lock_pos = self.cont_mid_lock.add_offset("POS")
+        self.cont_mid_lock_ave = self.cont_mid_lock.add_offset("AVE")
 
-        cmds.parent(self.cont_thigh_off, self.scaleGrp)
+        cmds.parent(cont_thigh_off, self.scaleGrp)
         cmds.parent(self.cont_fk_up_leg_off, self.scaleGrp)
         cmds.parent(self.cont_fk_low_leg_off, self.scaleGrp)
         cmds.parent(self.cont_fk_foot_off, self.scaleGrp)
@@ -442,21 +495,12 @@ class Leg(object):
         cmds.parent(self.cont_fk_ball_off, self.scaleGrp)
         cmds.parent(self.cont_IK_OFF, self.limbGrp)
 
-        nodesContVis = [self.cont_pole_off, self.cont_thigh_off, self.cont_IK_OFF, self.cont_fk_foot_off,
+        nodesContVis = [self.cont_pole_off, cont_thigh_off, self.cont_IK_OFF, self.cont_fk_foot_off,
                         self.cont_fk_ik_pos,
                         self.cont_fk_low_leg_off, self.cont_fk_up_leg_off, self.cont_mid_lock_pos]
 
         attribute.drive_attrs("%s.contVis" % self.scaleGrp, ["%s.v" % x for x in nodesContVis])
 
-        functions.colorize(self.cont_thigh, self.colorCodes[0])
-        functions.colorize(self.cont_IK_foot, self.colorCodes[0])
-        functions.colorize(self.cont_Pole, self.colorCodes[0])
-        functions.colorize(self.cont_fk_ik, self.colorCodes[0])
-        functions.colorize(self.cont_fk_up_leg, self.colorCodes[0])
-        functions.colorize(self.cont_fk_low_leg, self.colorCodes[0])
-        functions.colorize(self.cont_fk_foot, self.colorCodes[0])
-        functions.colorize(self.cont_fk_ball, self.colorCodes[0])
-        functions.colorize(self.cont_mid_lock, self.colorCodes[1])
 
     def createRoots(self):
 
@@ -481,7 +525,7 @@ class Leg(object):
 
         self.mid_lock = cmds.spaceLocator(name="midLock_%s" % self.suffix)[0]
         cmds.parentConstraint(self.mid_lock, self.j_def_midLeg)
-        cmds.parentConstraint(self.cont_mid_lock, self.mid_lock, mo=False)
+        cmds.parentConstraint(self.cont_mid_lock.name, self.mid_lock, mo=False)
 
         ### Create End Lock
         self.end_lock = cmds.spaceLocator(name="endLock_%s" % self.suffix)[0]
@@ -552,8 +596,8 @@ class Leg(object):
         ik_handle_sc = cmds.ikHandle(sj=self.j_ik_sc_root, ee=self.j_ik_sc_end, name="ikHandle_SC_%s" % self.suffix)
         ik_handle_rp = cmds.ikHandle(sj=self.j_ik_rp_root, ee=self.j_ik_rp_end, name="ikHandle_RP_%s" % self.suffix, sol="ikRPsolver")
 
-        cmds.poleVectorConstraint(self.cont_Pole, ik_handle_rp[0])
-        cmds.aimConstraint(self.j_ik_rp_knee, self.cont_Pole)
+        cmds.poleVectorConstraint(self.cont_pole.name, ik_handle_rp[0])
+        cmds.aimConstraint(self.j_ik_rp_knee, self.cont_pole.name)
 
         ik_handle_ball = cmds.ikHandle(sj=self.j_ik_foot, ee=self.j_ik_ball, name="ikHandle_Ball_%s" % self.suffix)
         ik_handle_toe = cmds.ikHandle(sj=self.j_ik_ball, ee=self.j_ik_toe, name="ikHandle_Toe_%s" % self.suffix)
@@ -675,7 +719,7 @@ class Leg(object):
         cmds.connectAttr("%s.outputY" % invertedStrSC, "%s.translateX" % self.j_ik_rp_end)
 
         ## iksoft related
-        cmds.connectAttr("%s.softIK" % self.cont_IK_foot, "%s.inputR" % ik_soft_clamp)
+        cmds.connectAttr("%s.softIK" % self.cont_IK_foot.name, "%s.inputR" % ik_soft_clamp)
 
         cmds.connectAttr("%s.output1D" % sum_of_j_lengths_sc, "%s.input1D[0]" % ik_soft_sub1)
         cmds.connectAttr("%s.outputR" % ik_soft_clamp, "%s.input1D[1]" % ik_soft_sub1)
@@ -702,14 +746,14 @@ class Leg(object):
         cmds.connectAttr("%s.outputX" % ik_soft_div2, "%s.input2Y" % ik_soft_stretch_amount)
         cmds.connectAttr("%s.outputX" % ik_soft_stretch_amount, "%s.color2R" % squashiness_sc)
         cmds.connectAttr("%s.outputY" % ik_soft_stretch_amount, "%s.color2G" % squashiness_sc)
-        cmds.connectAttr("%s.rotate" % self.cont_IK_foot, "%s.rotate" % self.j_ik_rp_end)
+        cmds.connectAttr("%s.rotate" % self.cont_IK_foot.name, "%s.rotate" % self.j_ik_rp_end)
         # Stretch Attributes Controller connections
-        cmds.connectAttr("%s.sUpLeg" % self.cont_IK_foot, "%s.input2X" % extra_scale_mult_sc)
-        cmds.connectAttr("%s.sLowLeg" % self.cont_IK_foot, "%s.input2Y" % extra_scale_mult_sc)
-        cmds.connectAttr("%s.squash" % self.cont_IK_foot, "%s.blender" % squashiness_sc)
+        cmds.connectAttr("%s.sUpLeg" % self.cont_IK_foot.name, "%s.input2X" % extra_scale_mult_sc)
+        cmds.connectAttr("%s.sLowLeg" % self.cont_IK_foot.name, "%s.input2Y" % extra_scale_mult_sc)
+        cmds.connectAttr("%s.squash" % self.cont_IK_foot.name, "%s.blender" % squashiness_sc)
         cmds.connectAttr("%s.output1D" % stretch_offset, "%s.maxR" % ik_stretch_distance_clamp)
-        cmds.connectAttr("%s.stretch" % self.cont_IK_foot, "%s.inputR" % ik_stretch_stretchiness_clamp)
-        cmds.connectAttr("%s.stretchLimit" % self.cont_IK_foot, "%s.input1D[2]" % stretch_offset)
+        cmds.connectAttr("%s.stretch" % self.cont_IK_foot.name, "%s.inputR" % ik_stretch_stretchiness_clamp)
+        cmds.connectAttr("%s.stretchLimit" % self.cont_IK_foot.name, "%s.input1D[2]" % stretch_offset)
 
         #
         # Bind Foot Attributes to the controller
@@ -734,14 +778,14 @@ class Leg(object):
         cmds.setAttr("%s.input2" % mult_al_fix_t_spin, self.sideMult)
         cmds.setAttr("%s.input2" % mult_al_fix_t_wiggle, self.sideMult)
 
-        cmds.connectAttr("%s.bLean" % self.cont_IK_foot, "%s.input1" %mult_al_fix_b_lean)
-        cmds.connectAttr("%s.bRoll" % self.cont_IK_foot, "%s.input1" %mult_al_fix_b_roll)
-        cmds.connectAttr("%s.bSpin" % self.cont_IK_foot, "%s.input1" %mult_al_fix_b_spin)
-        cmds.connectAttr("%s.hRoll" % self.cont_IK_foot, "%s.input1" %mult_al_fix_h_roll)
-        cmds.connectAttr("%s.hSpin" % self.cont_IK_foot, "%s.input1" %mult_al_fix_h_spin)
-        cmds.connectAttr("%s.tRoll" % self.cont_IK_foot, "%s.input1" %mult_al_fix_t_roll)
-        cmds.connectAttr("%s.tSpin" % self.cont_IK_foot, "%s.input1" %mult_al_fix_t_spin)
-        cmds.connectAttr("%s.tWiggle" % self.cont_IK_foot, "%s.input1" %mult_al_fix_t_wiggle)
+        cmds.connectAttr("%s.bLean" % self.cont_IK_foot.name, "%s.input1" %mult_al_fix_b_lean)
+        cmds.connectAttr("%s.bRoll" % self.cont_IK_foot.name, "%s.input1" %mult_al_fix_b_roll)
+        cmds.connectAttr("%s.bSpin" % self.cont_IK_foot.name, "%s.input1" %mult_al_fix_b_spin)
+        cmds.connectAttr("%s.hRoll" % self.cont_IK_foot.name, "%s.input1" %mult_al_fix_h_roll)
+        cmds.connectAttr("%s.hSpin" % self.cont_IK_foot.name, "%s.input1" %mult_al_fix_h_spin)
+        cmds.connectAttr("%s.tRoll" % self.cont_IK_foot.name, "%s.input1" %mult_al_fix_t_roll)
+        cmds.connectAttr("%s.tSpin" % self.cont_IK_foot.name, "%s.input1" %mult_al_fix_t_spin)
+        cmds.connectAttr("%s.tWiggle" % self.cont_IK_foot.name, "%s.input1" %mult_al_fix_t_wiggle)
 
 
         cmds.connectAttr("%s.output" % mult_al_fix_b_lean, "%s.rotateZ" % self.pv_ball_lean)
@@ -755,20 +799,20 @@ class Leg(object):
 
         pv_bank_in_ore = functions.create_offset_group(self.pv_bank_in, "ORE")
 
-        cmds.setDrivenKeyframe("%s.rotateX" % self.pv_bank_out, cd="%s.bank" % self.cont_IK_foot, dv=0, v=0, itt='linear', ott='linear')
-        cmds.setDrivenKeyframe("%s.rotateX" % self.pv_bank_out, cd="%s.bank" % self.cont_IK_foot, dv=90, v=90 * self.sideMult, itt='linear', ott='linear')
+        cmds.setDrivenKeyframe("%s.rotateX" % self.pv_bank_out, cd="%s.bank" % self.cont_IK_foot.name, dv=0, v=0, itt='linear', ott='linear')
+        cmds.setDrivenKeyframe("%s.rotateX" % self.pv_bank_out, cd="%s.bank" % self.cont_IK_foot.name, dv=90, v=90 * self.sideMult, itt='linear', ott='linear')
 
-        cmds.setDrivenKeyframe("%s.rotateX" % self.pv_bank_in, cd="%s.bank" % self.cont_IK_foot, dv=0, v=0, itt='linear', ott='linear')
-        cmds.setDrivenKeyframe("%s.rotateX" % self.pv_bank_in, cd="%s.bank" % self.cont_IK_foot, dv=-90, v=90 * (-1 * self.sideMult), itt='linear', ott='linear')
+        cmds.setDrivenKeyframe("%s.rotateX" % self.pv_bank_in, cd="%s.bank" % self.cont_IK_foot.name, dv=0, v=0, itt='linear', ott='linear')
+        cmds.setDrivenKeyframe("%s.rotateX" % self.pv_bank_in, cd="%s.bank" % self.cont_IK_foot.name, dv=-90, v=90 * (-1 * self.sideMult), itt='linear', ott='linear')
 
-        self.ik_parent_grp = cmds.group(name="IK_parentGRP_%s" % self.suffix, em=True)
-        functions.align_to_alter(self.ik_parent_grp, self.cont_IK_foot, 2)
+        self.ik_parent_grp = cmds.group(name="IK_parentGRP_%s" % self.suffix, empty=True)
+        functions.align_to_alter(self.ik_parent_grp, self.cont_IK_foot.name, 2)
         cmds.parent(pv_bank_in_ore, self.ik_parent_grp)
         cmds.parent(self.j_ik_foot, self.ik_parent_grp)
         cmds.parentConstraint(self.j_ik_sc_end, self.j_ik_foot)
 
 
-        cmds.parentConstraint(self.cont_IK_foot, self.ik_parent_grp, mo=False)
+        cmds.parentConstraint(self.cont_IK_foot.name, self.ik_parent_grp, maintainOffset=False)
 
         # parenting should be after the constraint
 
@@ -777,13 +821,13 @@ class Leg(object):
         cmds.connectAttr("%s.rotate" % self.j_ik_sc_root, "%s.color2" % blend_ore_ik_root)
         cmds.connectAttr("%s.rotate" % self.j_ik_rp_root, "%s.color1" % blend_ore_ik_root)
         cmds.connectAttr("%s.output" % blend_ore_ik_root, "%s.rotate" % self.j_ik_orig_root)
-        cmds.connectAttr("%s.polevector" % self.cont_IK_foot, "%s.blender" % blend_ore_ik_root)
+        cmds.connectAttr("%s.polevector" % self.cont_IK_foot.name, "%s.blender" % blend_ore_ik_root)
 
         blend_pos_ik_root = cmds.createNode("blendColors", name="blendPOS_IK_Up_%s" % self.suffix)
         cmds.connectAttr("%s.translate" % self.j_ik_sc_root, "%s.color2" % blend_pos_ik_root)
         cmds.connectAttr("%s.translate" % self.j_ik_rp_root, "%s.color1" % blend_pos_ik_root)
         cmds.connectAttr("%s.output" % blend_pos_ik_root, "%s.translate" % self.j_ik_orig_root)
-        cmds.connectAttr("%s.polevector" % self.cont_IK_foot, "%s.blender" % blend_pos_ik_root)
+        cmds.connectAttr("%s.polevector" % self.cont_IK_foot.name, "%s.blender" % blend_pos_ik_root)
 
         blend_ore_ik_knee = cmds.createNode("blendColors", name="blendORE_IK_Low_%s" % self.suffix)
         cmds.connectAttr("%s.rotate" % self.j_ik_sc_knee, "%s.color2" % blend_ore_ik_knee)
@@ -794,13 +838,13 @@ class Leg(object):
         cmds.connectAttr("%s.outputR" % blend_ore_ik_knee, "%s.rotateX" % self.j_ik_orig_knee)
         cmds.connectAttr("%s.outputG" % blend_ore_ik_knee, "%s.rotateY" % self.j_ik_orig_knee)
         cmds.connectAttr("%s.outputB" % blend_ore_ik_knee, "%s.rotateZ" % self.j_ik_orig_knee)
-        cmds.connectAttr("%s.polevector" % self.cont_IK_foot, "%s.blender" % blend_ore_ik_knee)
+        cmds.connectAttr("%s.polevector" % self.cont_IK_foot.name, "%s.blender" % blend_ore_ik_knee)
 
         blend_pos_ik_knee = cmds.createNode("blendColors", name="blendPOS_IK_Low_%s" % self.suffix)
         cmds.connectAttr("%s.translate" % self.j_ik_sc_knee, "%s.color2" % blend_pos_ik_knee)
         cmds.connectAttr("%s.translate" % self.j_ik_rp_knee, "%s.color1" % blend_pos_ik_knee)
         cmds.connectAttr("%s.output" % blend_pos_ik_knee, "%s.translate" % self.j_ik_orig_knee)
-        cmds.connectAttr("%s.polevector" % self.cont_IK_foot, "%s.blender" % blend_pos_ik_knee)
+        cmds.connectAttr("%s.polevector" % self.cont_IK_foot.name, "%s.blender" % blend_pos_ik_knee)
 
         blend_ore_ik_end = cmds.createNode("blendColors", name="blendORE_IK_LowEnd_%s" % self.suffix)
         cmds.connectAttr("%s.rotate" % self.j_ik_sc_end, "%s.color2" % blend_ore_ik_end)
@@ -811,17 +855,17 @@ class Leg(object):
         cmds.connectAttr("%s.outputR" % blend_ore_ik_end, "%s.rotateX" % self.j_ik_orig_end)
         cmds.connectAttr("%s.outputG" % blend_ore_ik_end, "%s.rotateY" % self.j_ik_orig_end)
         cmds.connectAttr("%s.outputB" % blend_ore_ik_end, "%s.rotateZ" % self.j_ik_orig_end)
-        cmds.connectAttr("%s.polevector" % self.cont_IK_foot, "%s.blender" % blend_ore_ik_end)
+        cmds.connectAttr("%s.polevector" % self.cont_IK_foot.name, "%s.blender" % blend_ore_ik_end)
 
         blend_pos_ik_end = cmds.createNode("blendColors", name="blendPOS_IK_LowEnd_%s" % self.suffix)
         cmds.connectAttr("%s.translate" % self.j_ik_sc_end, "%s.color2" % blend_pos_ik_end)
         cmds.connectAttr("%s.translate" % self.j_ik_rp_end, "%s.color1" % blend_pos_ik_end)
         cmds.connectAttr("%s.output" % blend_pos_ik_end, "%s.translate" % self.j_ik_orig_end)
-        cmds.connectAttr("%s.polevector" % self.cont_IK_foot, "%s.blender" % blend_pos_ik_end)
+        cmds.connectAttr("%s.polevector" % self.cont_IK_foot.name, "%s.blender" % blend_pos_ik_end)
 
         pole_vector_rvs = cmds.createNode("reverse", name="poleVector_Rvs_%s" % self.suffix)
-        cmds.connectAttr("%s.polevector" % self.cont_IK_foot, "%s.inputX" % pole_vector_rvs)
-        cmds.connectAttr("%s.polevector" % self.cont_IK_foot, "%s.v" % self.cont_Pole)
+        cmds.connectAttr("%s.polevector" % self.cont_IK_foot.name, "%s.inputX" % pole_vector_rvs)
+        cmds.connectAttr("%s.polevector" % self.cont_IK_foot.name, "%s.v" % self.cont_pole.name)
 
         cmds.parent(self.j_ik_orig_root, self.master_root)
         cmds.parent(self.j_ik_sc_root, self.master_root)
@@ -830,7 +874,7 @@ class Leg(object):
         pacon_locator_hip = cmds.spaceLocator(name="paConLoc_%s" % self.suffix)[0]
         functions.align_to(pacon_locator_hip, self.jDef_legRoot, position=True, rotation=True)
         #
-        j_def_pa_con = cmds.parentConstraint(self.cont_thigh, pacon_locator_hip, mo=False)
+        j_def_pa_con = cmds.parentConstraint(self.cont_thigh.name, pacon_locator_hip, maintainOffset=False)
         #
         cmds.parent(leg_start, self.scaleGrp)
         cmds.parent(leg_end, self.scaleGrp)
@@ -849,50 +893,50 @@ class Leg(object):
         cmds.delete(foot_plane)
 
     def createFKsetup(self):
-        cmds.connectAttr("%s.scaleX" % self.cont_fk_up_leg, "%s.scaleX" % self.jfk_root)
-        cmds.connectAttr("%s.scaleX" % self.cont_fk_low_leg, "%s.scaleX" % self.jfk_knee)
-        cmds.connectAttr("%s.scaleX" % self.cont_fk_foot, "%s.scaleX" % self.jfk_foot)
-        cmds.connectAttr("%s.scaleX" % self.cont_fk_ball, "%s.scaleX" % self.jfk_ball)
+        cmds.connectAttr("%s.scaleX" % self.cont_fk_up_leg.name, "%s.scaleX" % self.jfk_root)
+        cmds.connectAttr("%s.scaleX" % self.cont_fk_low_leg.name, "%s.scaleX" % self.jfk_knee)
+        cmds.connectAttr("%s.scaleX" % self.cont_fk_foot.name, "%s.scaleX" % self.jfk_foot)
+        cmds.connectAttr("%s.scaleX" % self.cont_fk_ball.name, "%s.scaleX" % self.jfk_ball)
 
-        cmds.orientConstraint(self.cont_fk_up_leg, self.jfk_root, mo=False)
+        cmds.orientConstraint(self.cont_fk_up_leg.name, self.jfk_root, mo=False)
         cmds.pointConstraint(self.start_lock, self.jfk_root, mo=False)
 
-        cmds.orientConstraint(self.cont_fk_low_leg, self.jfk_knee, mo=False)
-        cmds.orientConstraint(self.cont_fk_foot, self.jfk_foot, mo=False)
+        cmds.orientConstraint(self.cont_fk_low_leg.name, self.jfk_knee, mo=False)
+        cmds.orientConstraint(self.cont_fk_foot.name, self.jfk_foot, mo=False)
 
-        cmds.parentConstraint(self.cont_fk_ball, self.jfk_ball, mo=False)
+        cmds.parentConstraint(self.cont_fk_ball.name, self.jfk_ball, mo=False)
 
         # TODO : TAKE A LOOK TO THE OFFSET SOLUTION
-        cmds.parentConstraint(self.cont_thigh, self.cont_fk_up_leg_off, sr=("x", "y", "z"), mo=True)
-        cmds.parentConstraint(self.cont_fk_up_leg, self.cont_fk_low_leg_off, mo=True)
-        cmds.parentConstraint(self.cont_fk_low_leg, self.cont_fk_foot_off, mo=True)
-        cmds.parentConstraint(self.cont_fk_foot, self.cont_fk_ball_off, mo=True)
+        cmds.parentConstraint(self.cont_thigh.name, self.cont_fk_up_leg_off, sr=("x", "y", "z"), mo=True)
+        cmds.parentConstraint(self.cont_fk_up_leg.name, self.cont_fk_low_leg_off, mo=True)
+        cmds.parentConstraint(self.cont_fk_low_leg.name, self.cont_fk_foot_off, mo=True)
+        cmds.parentConstraint(self.cont_fk_foot.name, self.cont_fk_ball_off, mo=True)
 
     def ikfkSwitching(self):
-        cmds.connectAttr("%s.outputX" % self.fk_ik_rvs, "%s.visibility" % self.cont_fk_up_leg_ore)
-        cmds.connectAttr("%s.outputX" % self.fk_ik_rvs, "%s.visibility" % self.cont_fk_low_leg_ore)
-        cmds.connectAttr("%s.outputX" % self.fk_ik_rvs, "%s.visibility" % self.cont_fk_foot_ore)
-        cmds.connectAttr("%s.outputX" % self.fk_ik_rvs, "%s.visibility" % self.cont_fk_ball_ore)
-        cmds.connectAttr("%s.fk_ik" % self.cont_fk_ik, "%s.visibility" % self.cont_IK_foot)
-        cmds.connectAttr("%s.fk_ik" % self.cont_fk_ik, "%s.visibility" % self.cont_pole_vis)
+        cmds.connectAttr("%s.FK_IK_Reverse" % self.cont_fk_ik.name, "%s.visibility" % self.cont_fk_up_leg_ore)
+        cmds.connectAttr("%s.FK_IK_Reverse" % self.cont_fk_ik.name, "%s.visibility" % self.cont_fk_low_leg_ore)
+        cmds.connectAttr("%s.FK_IK_Reverse" % self.cont_fk_ik.name, "%s.visibility" % self.cont_fk_foot_ore)
+        cmds.connectAttr("%s.FK_IK_Reverse" % self.cont_fk_ik.name, "%s.visibility" % self.cont_fk_ball_ore)
+        cmds.connectAttr("%s.fk_ik" % self.cont_fk_ik.name, "%s.visibility" % self.cont_IK_foot.name)
+        cmds.connectAttr("%s.fk_ik" % self.cont_fk_ik.name, "%s.visibility" % self.cont_pole_vis)
 
 
         mid_lock_pa_con_weight = cmds.parentConstraint(self.j_ik_orig_root, self.jfk_root, self.cont_mid_lock_pos, mo=False)[0]
-        cmds.connectAttr("%s.fk_ik" % self.cont_fk_ik, "%s.%sW0" % (mid_lock_pa_con_weight, self.j_ik_orig_root))
-        cmds.connectAttr("%s.outputX" % self.fk_ik_rvs, "%s.%sW1" % (mid_lock_pa_con_weight, self.jfk_root))
+        cmds.connectAttr("%s.fk_ik" % self.cont_fk_ik.name, "%s.%sW0" % (mid_lock_pa_con_weight, self.j_ik_orig_root))
+        cmds.connectAttr("%s.FK_IK_Reverse" % self.cont_fk_ik.name, "%s.%sW1" % (mid_lock_pa_con_weight, self.jfk_root))
 
-        cmds.connectAttr("%s.interpType" % self.cont_fk_ik, "%s.interpType" % mid_lock_pa_con_weight)
+        cmds.connectAttr("%s.interpType" % self.cont_fk_ik.name, "%s.interpType" % mid_lock_pa_con_weight)
 
         mid_lock_po_con_weight = cmds.pointConstraint(self.j_ik_orig_knee, self.jfk_knee, self.cont_mid_lock_ave, mo=False)[0]
-        cmds.connectAttr("%s.fk_ik" % self.cont_fk_ik, "%s.%sW0" % (mid_lock_po_con_weight, self.j_ik_orig_knee))
-        cmds.connectAttr("%s.outputX" % self.fk_ik_rvs, "%s.%sW1" % (mid_lock_po_con_weight, self.jfk_knee))
+        cmds.connectAttr("%s.fk_ik" % self.cont_fk_ik.name, "%s.%sW0" % (mid_lock_po_con_weight, self.j_ik_orig_knee))
+        cmds.connectAttr("%s.FK_IK_Reverse" % self.cont_fk_ik.name, "%s.%sW1" % (mid_lock_po_con_weight, self.jfk_knee))
 
         mid_lock_x_bln = cmds.createNode("multiplyDivide", name="midLock_xBln%s" % self.suffix)
 
         mid_lock_rot_xsw = cmds.createNode("blendTwoAttr", name="midLock_rotXsw%s" % self.suffix)
         cmds.connectAttr("%s.rotateZ" % self.j_ik_orig_knee, "%s.input[0]" % mid_lock_rot_xsw)
         cmds.connectAttr("%s.rotateZ" % self.jfk_knee, "%s.input[1]" % mid_lock_rot_xsw)
-        cmds.connectAttr("%s.outputX" % self.fk_ik_rvs, "%s.attributesBlender" % mid_lock_rot_xsw)
+        cmds.connectAttr("%s.FK_IK_Reverse" % self.cont_fk_ik.name, "%s.attributesBlender" % mid_lock_rot_xsw)
         cmds.connectAttr("%s.output" % mid_lock_rot_xsw, "%s.input1Z" % mid_lock_x_bln)
 
         cmds.setAttr("%s.input2Z" % mid_lock_x_bln, 0.5)
@@ -900,8 +944,8 @@ class Leg(object):
         cmds.connectAttr("%s.outputZ" % mid_lock_x_bln, "%s.rotateZ" % self.cont_mid_lock_ave)
 
         end_lock_weight = cmds.pointConstraint(self.j_ik_orig_end, self.jfk_foot, self.end_lock_pos, mo=False)[0]
-        cmds.connectAttr("%s.fk_ik" % self.cont_fk_ik, "%s.%sW0" % (end_lock_weight, self.j_ik_orig_end))
-        cmds.connectAttr("%s.outputX" % self.fk_ik_rvs, "%s.%sW1" % (end_lock_weight, self.jfk_foot))
+        cmds.connectAttr("%s.fk_ik" % self.cont_fk_ik.name, "%s.%sW0" % (end_lock_weight, self.j_ik_orig_end))
+        cmds.connectAttr("%s.FK_IK_Reverse" % self.cont_fk_ik.name, "%s.%sW1" % (end_lock_weight, self.jfk_foot))
 
         # the following offset parent constraint is not important and wont cause any trouble since
         # it only affects the FK/IK icon
@@ -910,23 +954,23 @@ class Leg(object):
         # ######
         end_lock_rot = cmds.parentConstraint(self.ik_parent_grp, self.jfk_foot, self.end_lock, st=("x", "y", "z"), mo=True)[0]
 
-        cmds.connectAttr("%s.fk_ik" % self.cont_fk_ik,"%s.%sW0" % (end_lock_rot, self.ik_parent_grp))
-        cmds.connectAttr("%s.outputX" % self.fk_ik_rvs, "%s.%sW1" % (end_lock_rot, self.jfk_foot))
-        cmds.connectAttr("%s.interpType" % self.cont_fk_ik, "%s.interpType" % end_lock_rot)
+        cmds.connectAttr("%s.fk_ik" % self.cont_fk_ik.name,"%s.%sW0" % (end_lock_rot, self.ik_parent_grp))
+        cmds.connectAttr("%s.FK_IK_Reverse" % self.cont_fk_ik.name, "%s.%sW1" % (end_lock_rot, self.jfk_foot))
+        cmds.connectAttr("%s.interpType" % self.cont_fk_ik.name, "%s.interpType" % end_lock_rot)
 
         foot_pa_con = cmds.parentConstraint(self.j_ik_foot, self.jfk_foot, self.j_def_foot, mo=False)[0]
         ball_pa_con = cmds.parentConstraint(self.j_ik_ball, self.jfk_ball, self.j_def_ball, mo=False)[0]
         toe_pa_con = cmds.parentConstraint(self.j_ik_toe, self.jfk_toe, self.j_toe, mo=False)[0]
 
-        cmds.connectAttr("%s.fk_ik" % self.cont_fk_ik, "%s.%sW0" % (foot_pa_con, self.j_ik_foot))
-        cmds.connectAttr("%s.outputX" % self.fk_ik_rvs, "%s.%sW1" % (foot_pa_con, self.jfk_foot))
-        cmds.connectAttr("%s.fk_ik" % self.cont_fk_ik, "%s." % "%s.%sW0" % (ball_pa_con, self.j_ik_ball))
-        cmds.connectAttr("%s.outputX" % self.fk_ik_rvs, "%s." % "%s.%sW1" % (ball_pa_con, self.jfk_ball))
-        cmds.connectAttr("%s.fk_ik" % self.cont_fk_ik, "%s." % "%s.%sW0" % (toe_pa_con, self.j_ik_toe))
-        cmds.connectAttr("%s.outputX" % self.fk_ik_rvs, "%s." % "%s.%sW1" % (toe_pa_con, self.jfk_toe))
-        cmds.connectAttr("%s.interpType" % self.cont_fk_ik, "%s.interpType" % foot_pa_con)
-        cmds.connectAttr("%s.interpType" %  self.cont_fk_ik, "%s.interpType" % ball_pa_con)
-        cmds.connectAttr("%s.interpType" % self.cont_fk_ik, "%s.interpType" % toe_pa_con)
+        cmds.connectAttr("%s.fk_ik" % self.cont_fk_ik.name, "%s.%sW0" % (foot_pa_con, self.j_ik_foot))
+        cmds.connectAttr("%s.FK_IK_Reverse" % self.cont_fk_ik.name, "%s.%sW1" % (foot_pa_con, self.jfk_foot))
+        cmds.connectAttr("%s.fk_ik" % self.cont_fk_ik.name, "%s." % "%s.%sW0" % (ball_pa_con, self.j_ik_ball))
+        cmds.connectAttr("%s.FK_IK_Reverse" % self.cont_fk_ik.name, "%s." % "%s.%sW1" % (ball_pa_con, self.jfk_ball))
+        cmds.connectAttr("%s.fk_ik" % self.cont_fk_ik.name, "%s." % "%s.%sW0" % (toe_pa_con, self.j_ik_toe))
+        cmds.connectAttr("%s.FK_IK_Reverse" % self.cont_fk_ik.name, "%s." % "%s.%sW1" % (toe_pa_con, self.jfk_toe))
+        cmds.connectAttr("%s.interpType" % self.cont_fk_ik.name, "%s.interpType" % foot_pa_con)
+        cmds.connectAttr("%s.interpType" %  self.cont_fk_ik.name, "%s.interpType" % ball_pa_con)
+        cmds.connectAttr("%s.interpType" % self.cont_fk_ik.name, "%s.interpType" % toe_pa_con)
 
     def createDefJoints(self):
         # UPPERLEG RIBBON
@@ -940,21 +984,21 @@ class Leg(object):
         ribbon_upper_leg.pin_end(self.mid_lock)
 
         # connect the knee scaling
-        cmds.connectAttr("%s.scale" % self.cont_mid_lock, "%s.scale" % ribbon_upper_leg.end_plug)
-        cmds.connectAttr("%s.scale" % self.cont_mid_lock, "%s.scale" % self.j_def_midLeg)
+        cmds.connectAttr("%s.scale" % self.cont_mid_lock.name, "%s.scale" % ribbon_upper_leg.end_plug)
+        cmds.connectAttr("%s.scale" % self.cont_mid_lock.name, "%s.scale" % self.j_def_midLeg)
 
         cmds.scaleConstraint(self.scaleGrp, ribbon_upper_leg.scale_grp)
 
         ribbon_start_ori_con = cmds.parentConstraint(self.j_ik_orig_root, self.jfk_root, ribbon_upper_leg.start_aim, mo=False, skipTranslate=["x","y","z"] )[0]
         ribbon_start_ori_con2 = cmds.parentConstraint(self.j_def_hip, ribbon_upper_leg.start_aim, mo=False, skipTranslate=["x","y","z"] )[0]
 
-        cmds.connectAttr("%s.fk_ik" % self.cont_fk_ik, "%s.%sW0" %(ribbon_start_ori_con, self.j_ik_orig_root))
-        cmds.connectAttr("%s.outputX" % self.fk_ik_rvs, "%s.%sW1" %(ribbon_start_ori_con, self.jfk_root))
+        cmds.connectAttr("%s.fk_ik" % self.cont_fk_ik.name, "%s.%sW0" %(ribbon_start_ori_con, self.j_ik_orig_root))
+        cmds.connectAttr("%s.FK_IK_Reverse" % self.cont_fk_ik.name, "%s.%sW1" %(ribbon_start_ori_con, self.jfk_root))
 
         pairBlendNode = cmds.listConnections(ribbon_start_ori_con, d=True, t="pairBlend")[0]
         # disconnect the existing weight connection
         # re-connect to the custom attribute
-        cmds.connectAttr("%s.alignHip" % self.cont_fk_ik, "%s.w" % pairBlendNode, force=True)
+        cmds.connectAttr("%s.alignHip" % self.cont_fk_ik.name, "%s.w" % pairBlendNode, force=True)
 
         # Rotate the shoulder connection bone 180 degrees for Right Alignment
         if self.side == "R":
@@ -965,7 +1009,7 @@ class Leg(object):
 
         # auto
         auto_twist_thigh = cmds.createNode("multiplyDivide", name="autoTwistThigh_%s" % self.suffix)
-        cmds.connectAttr("%s.upLegAutoTwist" % self.cont_fk_ik, "%s.input2X" % auto_twist_thigh)
+        cmds.connectAttr("%s.upLegAutoTwist" % self.cont_fk_ik.name, "%s.input2X" % auto_twist_thigh)
         cmds.connectAttr("%s.constraintRotate" % ribbon_start_pa_con_upper_leg_start, "%s.input1" % auto_twist_thigh)
 
         # !!! The parent constrain override should be disconnected like this
@@ -977,13 +1021,13 @@ class Leg(object):
         # manual
         add_manual_twist_thigh = cmds.createNode("plusMinusAverage", name=("AddManualTwist_UpperLeg_%s" % self.suffix))
         cmds.connectAttr("%s.output" % auto_twist_thigh, "%s.input3D[0]" % add_manual_twist_thigh)
-        cmds.connectAttr("%s.upLegManualTwist" % self.cont_fk_ik, "%s.input3D[1].input3Dx" % add_manual_twist_thigh)
+        cmds.connectAttr("%s.upLegManualTwist" % self.cont_fk_ik.name, "%s.input3D[1].input3Dx" % add_manual_twist_thigh)
 
         # connect to the joint
         cmds.connectAttr("%s.output3D" % add_manual_twist_thigh, "%s.rotate" % ribbon_upper_leg.start_plug)
 
         # connect allowScaling
-        cmds.connectAttr("%s.allowScaling" % self.cont_fk_ik, "%s.scaleSwitch" % ribbon_upper_leg.start_plug)
+        cmds.connectAttr("%s.allowScaling" % self.cont_fk_ik.name, "%s.scaleSwitch" % ribbon_upper_leg.start_plug)
 
         # LOWERLEG RIBBON
 
@@ -995,7 +1039,7 @@ class Leg(object):
         ribbon_start_pa_con_lower_leg_end = ribbon_lower_leg.pin_end(self.end_lock)[0]
 
         # connect the midLeg scaling
-        cmds.connectAttr("%s.scale" % self.cont_mid_lock, "%s.scale" % ribbon_lower_leg.start_plug)
+        cmds.connectAttr("%s.scale" % self.cont_mid_lock.name, "%s.scale" % ribbon_lower_leg.start_plug)
 
         cmds.scaleConstraint(self.scaleGrp, ribbon_lower_leg.scale_grp)
 
@@ -1003,7 +1047,7 @@ class Leg(object):
 
         # auto
         auto_twist_ankle = cmds.createNode("multiplyDivide", name="autoTwistAnkle_%s" % self.suffix)
-        cmds.connectAttr("%s.footAutoTwist" % self.cont_fk_ik, "%s.input2X" % auto_twist_ankle)
+        cmds.connectAttr("%s.footAutoTwist" % self.cont_fk_ik.name, "%s.input2X" % auto_twist_ankle)
         cmds.connectAttr("%s.constraintRotate" % ribbon_start_pa_con_lower_leg_end, "%s.input1" % auto_twist_ankle)
 
         # !!! The parent constrain override should be disconnected like this
@@ -1012,13 +1056,13 @@ class Leg(object):
         # manual
         add_manual_twist_ankle = cmds.createNode("plusMinusAverage", name=("AddManualTwist_LowerLeg_%s" % self.suffix))
         cmds.connectAttr("%s.output" % auto_twist_ankle, "%s.input3D[0]" % add_manual_twist_ankle)
-        cmds.connectAttr("%s.footManualTwist" % self.cont_fk_ik, "%s.input3D[1].input3Dx" % add_manual_twist_ankle)
+        cmds.connectAttr("%s.footManualTwist" % self.cont_fk_ik.name, "%s.input3D[1].input3Dx" % add_manual_twist_ankle)
 
         # connect to the joint
         cmds.connectAttr("%s.output3D" % add_manual_twist_ankle, "%s.rotate" % ribbon_lower_leg.end_plug)
 
         # connect allowScaling
-        cmds.connectAttr("%s.allowScaling" % self.cont_fk_ik, "%s.scaleSwitch" % ribbon_lower_leg.start_plug)
+        cmds.connectAttr("%s.allowScaling" % self.cont_fk_ik.name, "%s.scaleSwitch" % ribbon_lower_leg.start_plug)
 
         # Volume Preservation Stuff
         vpExtraInput = cmds.createNode("multiplyDivide", name="vpExtraInput_%s" % self.suffix)
@@ -1045,7 +1089,7 @@ class Leg(object):
         cmds.connectAttr("%s.output" % vpExtraInput, "%s.scale" % ribbon_lower_leg.start_plug, force=True)
         cmds.connectAttr("%s.output" % vpExtraInput, "%s.scale" % ribbon_upper_leg.end_plug, force=True)
         cmds.connectAttr("%s.output" % vpExtraInput, "%s.scale" % self.j_def_midLeg, force=True)
-        cmds.connectAttr("%s.scale" % self.cont_mid_lock, "%s.input1" % vpExtraInput, force=True)
+        cmds.connectAttr("%s.scale" % self.cont_mid_lock.name, "%s.input1" % vpExtraInput, force=True)
         cmds.connectAttr("%s.output1D" % vpMidAverage, "%s.input2X" % vpExtraInput, force=True)
         cmds.connectAttr("%s.output1D" % vpMidAverage, "%s.input2Y" % vpExtraInput, force=True)
         cmds.connectAttr("%s.output1D" % vpMidAverage, "%s.input2Z" % vpExtraInput, force=True)
@@ -1053,8 +1097,8 @@ class Leg(object):
         cmds.connectAttr("%s.outputY" % vpPowerMid, "%s.input1D[1]" % vpMidAverage, force=True)
         cmds.connectAttr("%s.outputX" % vpInitLength, "%s.input1X" % vpPowerMid, force=True)
         cmds.connectAttr("%s.outputY" % vpInitLength, "%s.input1Y" % vpPowerMid, force=True)
-        cmds.connectAttr("%s.volume" % self.cont_IK_foot, "%s.input2X" % vpPowerMid, force=True)
-        cmds.connectAttr("%s.volume" % self.cont_IK_foot, "%s.input2Y" % vpPowerMid, force=True)
+        cmds.connectAttr("%s.volume" % self.cont_IK_foot.name, "%s.input2X" % vpPowerMid, force=True)
+        cmds.connectAttr("%s.volume" % self.cont_IK_foot.name, "%s.input2Y" % vpPowerMid, force=True)
         cmds.connectAttr("%s.outputX" % self.initial_length_multip_sc, "%s.input1X" % vpInitLength, force=True)
         cmds.connectAttr("%s.outputY" % self.initial_length_multip_sc, "%s.input1Y" % vpInitLength, force=True)
         cmds.connectAttr("%s.color1R" % self.stretchiness_sc, "%s.input2X" % vpInitLength, force=True)
@@ -1076,14 +1120,14 @@ class Leg(object):
         cmds.connectAttr("%s.outputX" % vpPowerLowerLeg, "%s.scaleZ" % mid_off_low)
         cmds.connectAttr("%s.outputX" % vpInitLength, "%s.input1X" % vpPowerLowerLeg)
         cmds.connectAttr("%s.output" % vpUpperLowerReduce, "%s.input2X" % vpPowerLowerLeg)
-        cmds.connectAttr("%s.volume" % self.cont_IK_foot, "%s.input1" % vpUpperLowerReduce)
+        cmds.connectAttr("%s.volume" % self.cont_IK_foot.name, "%s.input1" % vpUpperLowerReduce)
 
         cmds.parent(ribbon_upper_leg.ribbon_grp, self.nonScaleGrp)
         cmds.parent(ribbon_lower_leg.ribbon_grp, self.nonScaleGrp)
 
-        cmds.connectAttr("%s.tweakControls" %  self.cont_fk_ik, "%s.v" %  self.cont_mid_lock)
+        cmds.connectAttr("%s.tweakControls" %  self.cont_fk_ik.name, "%s.v" %  self.cont_mid_lock.name)
         tweakConts = ribbon_upper_leg.controllers + ribbon_lower_leg.controllers
-        attribute.drive_attrs("%s.tweakControls" % self.cont_fk_ik, ["%s.v" % x for x in tweakConts])
+        attribute.drive_attrs("%s.tweakControls" % self.cont_fk_ik.name, ["%s.v" % x for x in tweakConts])
 
         cmds.connectAttr("%s.contVis" % self.scaleGrp, "%s.v" % ribbon_upper_leg.scale_grp)
         cmds.connectAttr("%s.contVis" % self.scaleGrp, "%s.v" % ribbon_lower_leg.scale_grp)
@@ -1103,7 +1147,7 @@ class Leg(object):
         cmds.parent(angleExt_Fixed_IK, angleExt_Float_IK, angleExt_Root_IK)
 
         cmds.parentConstraint(self.limbPlug, angleExt_Root_IK, mo=False)
-        cmds.parentConstraint(self.cont_IK_foot, angleExt_Fixed_IK, mo=False)
+        cmds.parentConstraint(self.cont_IK_foot.name, angleExt_Fixed_IK, mo=False)
         functions.align_to_alter(angleExt_Float_IK, self.jDef_legRoot, 2)
         cmds.move(0,self.sideMult*5, 0, angleExt_Float_IK, objectSpace=True)
 
@@ -1128,7 +1172,7 @@ class Leg(object):
         angleRemapFK = cmds.createNode("remapValue", name="angleRemapFK_%s" % self.suffix)
         angleMultFK = cmds.createNode("multDoubleLinear", name="angleMultFK_%s" % self.suffix)
 
-        cmds.connectAttr("%s.rotateZ" % self.cont_fk_up_leg, "%s.inputValue" % angleRemapFK)
+        cmds.connectAttr("%s.rotateZ" % self.cont_fk_up_leg.name, "%s.inputValue" % angleRemapFK)
 
         cmds.setAttr("%s.inputMin" % angleRemapFK, 0)
         cmds.setAttr("%s.inputMax" % angleRemapFK, 90)
@@ -1144,11 +1188,11 @@ class Leg(object):
         angleExt_blend = cmds.createNode("blendTwoAttr", name="angleExt_blend_%s" % self.suffix)
         angleGlobal = cmds.createNode("multDoubleLinear", name="angleGlobal_mult_%s" % self.suffix)
 
-        cmds.connectAttr("%s.fk_ik" % self.cont_fk_ik, "%s.attributesBlender" % angleExt_blend)
+        cmds.connectAttr("%s.fk_ik" % self.cont_fk_ik.name, "%s.attributesBlender" % angleExt_blend)
         cmds.connectAttr("%s.output" % angleMultFK, "%s.input[0]" % angleExt_blend)
         cmds.connectAttr("%s.output" % angleMultIK, "%s.input[1]" % angleExt_blend)
         cmds.connectAttr("%s.output" % angleExt_blend, "%s.input1" % angleGlobal)
-        cmds.connectAttr("%s.autoHip" % self.cont_fk_ik, "%s.input2" % angleGlobal)
+        cmds.connectAttr("%s.autoHip" % self.cont_fk_ik.name, "%s.input2" % angleGlobal)
         cmds.connectAttr("%s.output" % angleGlobal, "%s.rotateZ" % self.cont_thigh_auto)
 
         cmds.parent(angleExt_Root_IK, self.scaleGrp)
@@ -1159,22 +1203,24 @@ class Leg(object):
         cmds.parentConstraint(self.limbPlug, self.scaleGrp, mo=False)
         cmds.setAttr("%s.rigVis" % self.scaleGrp, 0)
 
-        attribute.lock_and_hide(self.cont_IK_foot, ["v"])
-        attribute.lock_and_hide(self.cont_Pole, ["rx", "ry", "rz", "sx", "sy", "sz", "v"])
-        attribute.lock_and_hide(self.cont_mid_lock, ["v"])
-        attribute.lock_and_hide(self.cont_fk_ik, ["sx", "sy", "sz", "v"])
-        attribute.lock_and_hide(self.cont_fk_foot, ["tx", "ty", "tz", "v"])
-        attribute.lock_and_hide(self.cont_fk_low_leg, ["tx", "ty", "tz", "sy", "sz", "v"])
-        attribute.lock_and_hide(self.cont_fk_up_leg, ["tx", "ty", "tz", "sy", "sz", "v"])
-        attribute.lock_and_hide(self.cont_thigh, ["sx", "sy", "sz", "v"])
+        # attribute.lock_and_hide(self.cont_IK_foot, ["v"])
+        self.cont_IK_foot.lock("v")
+        self.cont_pole.lock(["rx", "ry", "rz", "sx", "sy", "sz", "v"])
+        self.cont_mid_lock.lock(["v"])
+        self.cont_fk_ik.lock(["sx", "sy", "sz", "v"])
+        self.cont_fk_foot.lock(["tx", "ty", "tz", "v"])
+        self.cont_fk_low_leg.lock(["tx", "ty", "tz", "sy", "sz", "v"])
+        self.cont_fk_up_leg.lock(["tx", "ty", "tz", "sy", "sz", "v"])
+        self.cont_thigh.lock(["sx", "sy", "sz", "v"])
+
 
         self.scaleConstraints = [self.scaleGrp, self.cont_IK_OFF]
-        self.anchors = [(self.cont_IK_foot, "parent", 1, None), (self.cont_Pole, "parent", 1, None)]
+        self.anchors = [(self.cont_IK_foot.name, "parent", 1, None), (self.cont_pole.name, "parent", 1, None)]
 
     def createLimb(self):
         self.createGrp()
         self.createJoints()
-        self.createControllers()
+        self.create_controllers()
         self.createRoots()
         self.createIKsetup()
         self.createFKsetup()
