@@ -486,7 +486,7 @@ class Arm(object):
         cmds.addAttr(self.switchFkIkCont.name, shortName="autoShoulder", longName="Auto_Shoulder", defaultValue=1.0,
                      at="float",
                      minValue=0.0, maxValue=1.0, k=True)
-        cmds.addAttr(self.switchFkIkCont.name, shortName="alignShoulder", longName="Align_Shoulder", defaultValue=1.0,
+        cmds.addAttr(self.switchFkIkCont.name, shortName="alignShoulder", longName="Align_Shoulder", defaultValue=0.0,
                      at="float",
                      minValue=0.0, maxValue=1.0, k=True)
 

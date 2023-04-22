@@ -397,7 +397,7 @@ class Leg(object):
         # controller for twist orientation alignment
         cmds.addAttr(self.cont_fk_ik, shortName="autoHip", longName="Auto_Hip", defaultValue=1.0, at="float",
                    minValue=0.0, maxValue=1.0, k=True)
-        cmds.addAttr(self.cont_fk_ik, shortName="alignHip", longName="Align_Hip", defaultValue=1.0, at="float",
+        cmds.addAttr(self.cont_fk_ik, shortName="alignHip", longName="Align_Hip", defaultValue=0.0, at="float",
                    minValue=0.0, maxValue=1.0, k=True)
 
         cmds.addAttr(self.cont_fk_ik, shortName="footAutoTwist", longName="Foot_Auto_Twist", defaultValue=1.0,

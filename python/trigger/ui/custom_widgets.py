@@ -73,6 +73,17 @@ class FileLineEdit(QtWidgets.QLineEdit):
 
         menu.exec_(event.globalPos())
 
+class FileBrowserBoxLayout(QtWidgets.QHBoxLayout):
+    """Custom Layout for File and Folder Browsers"""
+    def __init__(self, directory=False, *args, **kwargs):
+        super(FileBrowserBoxLayout, self).__init__(*args, **kwargs)
+        self.directory = directory
+        self.line_edit = FileLineEdit(directory=self.directory)
+        self.browser_button = BrowserButton(update_widget=self.line_edit)
+
+        self.addWidget(self.line_edit)
+        self.addWidget(self.browser_button)
+
 class ValidatedLineEdit(QtWidgets.QLineEdit):
     def __init__(self, connected_widgets=None, allowSpaces=False, allowDirectory=False, *args, **kwargs):
         """Custom QLineEdit widget to validate entered values"""

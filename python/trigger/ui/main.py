@@ -7,6 +7,8 @@ from maya import cmds
 
 from trigger.core import database
 
+import trigger.utils.mocap.ui as mocap_ui
+
 from trigger.ui.Qt import QtWidgets, QtCore, QtGui
 from trigger.ui.qtmaya import get_main_maya_window
 from trigger.ui import model_ctrl
@@ -280,6 +282,10 @@ class MainUI(QtWidgets.QMainWindow):
 
         makeup_action = QtWidgets.QAction(self, text="Make-up")
         menu_tools.addAction(makeup_action)
+
+        mocap_mapper_action = QtWidgets.QAction(self, text="Mocap Mapper")
+        menu_tools.addAction(mocap_mapper_action)
+
         menubar.addAction(menu_tools.menuAction())
 
         # Status BAR
@@ -304,6 +310,7 @@ class MainUI(QtWidgets.QMainWindow):
         exit_action.triggered.connect(self.close)
 
         makeup_action.triggered.connect(self.on_makeup)
+        mocap_mapper_action.triggered.connect(self.on_mocap_mapper)
 
     def build_tabs(self):
 
@@ -1203,6 +1210,11 @@ class MainUI(QtWidgets.QMainWindow):
     def on_makeup():
         from trigger.utils import makeup
         makeup.launch()
+
+    @staticmethod
+    def on_mocap_mapper():
+        import trigger.utils.mocap.ui as mocap_ui
+        mocap_ui.launch()
 
     ##############
     ### COMMON ###

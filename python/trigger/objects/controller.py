@@ -37,6 +37,8 @@ class Controller(object):
             self._side = "center"
             self._tier = tier or "primary"
 
+        self.add_default_attributes()
+
 
     @property
     def name(self):
@@ -159,8 +161,20 @@ class Controller(object):
         if lock_and_hide:
             cmds.setAttr(vis_attr, lock=True, keyable=False, channelBox=False)
 
+    def add_default_attributes(self):
+        """Add default attributes for translate, rotate and scale."""
 
-
+        for ch in ["Translate", "Rotate", "Scale"]:
+            cmds.addAttr(self.name,
+                         longName="default{}".format(ch),
+                         attributeType="double3"
+                         )
+            for axis in "XYZ":
+                cmds.addAttr(self.name,
+                             longName="default{}{}".format(ch, axis),
+                             attributeType="double",
+                             parent="default{}".format(ch)
+                             )
 
 
 

@@ -128,13 +128,6 @@ def _set_fbx_settings(**kwargs):
         value = _format(value)
         if key in import_settings.keys():
             cmd = import_settings[key].format(value)
-            print("-----------------")
-            print("-----------------")
-            print("-----------------")
-            print(cmd)
-            print("-----------------")
-            print("-----------------")
-            print("-----------------")
             mel.eval(cmd)
 
 
