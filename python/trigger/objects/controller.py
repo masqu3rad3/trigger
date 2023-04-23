@@ -13,8 +13,9 @@ from trigger.library.tools import replace_curve
 
 log = filelog.Filelog(logname=__name__, filename="trigger_log")
 
+
 class Controller(object):
-    def __init__(self, name="cont", shape="Circle", scale=(1,1,1), normal=(0,1,0), pos=None, side=None, tier=None):
+    def __init__(self, name="cont", shape="Circle", scale=(1, 1, 1), normal=(0, 1, 0), pos=None, side=None, tier=None):
 
         self.side_dict = {"center": [17, 21, 24],
                           "left": [6, 18, 29],
@@ -26,7 +27,9 @@ class Controller(object):
         if cmds.objExists(name):
             self._name = name
         else:
-            self._name = self.icon_handler.create_icon(icon_type=self._shape, icon_name=name, scale=scale, normal=normal, location=pos)[0]
+            self._name = \
+            self.icon_handler.create_icon(icon_type=self._shape, icon_name=name, scale=scale, normal=normal,
+                                          location=pos)[0]
         self.lockedShapes = ["FkikSwitch"]
 
         if side:
@@ -38,7 +41,6 @@ class Controller(object):
             self._tier = tier or "primary"
 
         self.add_default_attributes()
-
 
     @property
     def name(self):
@@ -61,6 +63,15 @@ class Controller(object):
     def tier(self):
         return self._tier
 
+    @property
+    def parent(self):
+        parents = cmds.listRelatives(self._name, parent=True)
+        return parents[0] if parents else None
+
+    @parent.setter
+    def parent(self, new_parent):
+        cmds.parent(self._name, new_parent)
+
     def add_offset(self, suffix="OFF"):
         offset_grp = functions.create_offset_group(self._name, suffix)
         self._offsets.insert(0, offset_grp)
@@ -70,7 +81,7 @@ class Controller(object):
         return self._offsets
 
     @keepselection
-    def set_shape(self, shape, scale=(1,1,1), normal=(0,1,0)):
+    def set_shape(self, shape, scale=(1, 1, 1), normal=(0, 1, 0)):
         if self._shape in self.lockedShapes:
             log.error("set_shape argument is not valid for locked shapes. Locked Shapes are %s" % self.lockedShapes)
         new_shape, _ = self.icon_handler.create_icon(icon_type=shape, scale=scale, normal=normal)
@@ -112,10 +123,10 @@ class Controller(object):
         elif type(tier) == int:
             pass
         elif tier < 0 or tier > 2:
-            log.error("out of range value for tier (%s)" %tier)
+            log.error("out of range value for tier (%s)" % tier)
             raise
         else:
-            log.error("invalid tier value %s" %tier)
+            log.error("invalid tier value %s" % tier)
             raise
 
         functions.colorize(self.name, index=side_vals[tier])
@@ -136,10 +147,12 @@ class Controller(object):
 
     def lock_visibility(self, hide=True):
         attribute.lock_and_hide(self.name, channelArray=["v"], hide=hide)
+
     def lock(self, attrs, hide=True):
         if isinstance(attrs, str):
             attrs = [attrs]
         attribute.lock_and_hide(self.name, channelArray=attrs, hide=hide)
+
     def lock_all(self, hide=True):
         self.lock_translate(hide=hide)
         self.lock_rotate(hide=hide)
@@ -173,14 +186,17 @@ class Controller(object):
                          attributeType="double3"
                          )
             for axis in "XYZ":
+                _value = 1.0 if ch == "Scale" else 0.0
                 cmds.addAttr(self.name,
                              longName="default{}{}".format(ch, axis),
                              attributeType="double",
+                             defaultValue=_value,
                              parent="default{}".format(ch)
                              )
 
-
-
-
-
-
+    def set_defaults(self):
+        """Grabs the current values of the controller and sets them as default values."""
+        for ch in ["Translate", "Rotate", "Scale"]:
+            for axis in "XYZ":
+                cmds.setAttr("{}.default{}{}".format(self.name, ch, axis),
+                             cmds.getAttr("{}.{}{}".format(self.name, ch.lower(), axis)))

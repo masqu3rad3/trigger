@@ -7,7 +7,6 @@ from maya import cmds
 from trigger.library import functions, naming, connection
 from trigger.library import arithmetic as op
 from trigger.library import attribute
-from trigger.library import controllers as ic
 
 from trigger.objects.controller import Controller
 
@@ -504,7 +503,7 @@ class Ribbon(object):
             print(mid)
             # counter += 1
             mid_cont = Controller(shape="Circle", name="cont_midRbn_%s%i" % (self._name, nmb + 1), normal=(1, 0, 0))
-            self._controllers.append(mid_cont.name)
+            self._controllers.append(mid_cont)
             middle_off = cmds.spaceLocator(name="mid_OFF_%s%i" % (self._name, nmb + 1))[0]
             self._toHide.append(functions.get_shapes(middle_off)[0])
             middle_aim = cmds.group(em=True, name="mid_AIM_%s%i" % (self._name, nmb + 1))

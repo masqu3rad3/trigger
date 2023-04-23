@@ -269,7 +269,7 @@ class Leg(object):
                                      side=self.side,
                                      tier="primary",
                                      )
-        self.controllers.append(self.cont_thigh.name)
+        self.controllers.append(self.cont_thigh)
         functions.align_to_alter(self.cont_thigh.name, self.jfk_root, mode=2)
         cmds.move(0, self.sideMult*((thigh_cont_scale[0] * 2)), 0, self.cont_thigh.name, relative=True, objectSpace=True)
         cmds.xform(self.cont_thigh.name, pivots=self.leg_root_pos, worldSpace=True)
@@ -294,7 +294,7 @@ class Leg(object):
                                        side=self.side,
                                        tier="primary",
                                        )
-        self.controllers.append(self.cont_IK_foot.name)
+        self.controllers.append(self.cont_IK_foot)
         # align it to the ball socket
         functions.align_to_alter(self.cont_IK_foot.name, self.j_socket_ball, mode=2)
         cmds.xform(self.cont_IK_foot.name, pivots=self.foot_pos, preserve=True, worldSpace=True)
@@ -336,7 +336,7 @@ class Leg(object):
                                     tier="primary",
                                     )
 
-        self.controllers.append(self.cont_pole.name)
+        self.controllers.append(self.cont_pole)
         offset_mag_pole = ((self.init_upper_leg_dist + self.init_lower_leg_dist) / 4)
         offset_vector_pole = api.get_between_vector(self.j_def_midLeg, [self.j_def_hip, self.jfk_foot])
 
@@ -360,7 +360,7 @@ class Leg(object):
                                          side=self.side,
                                          tier="primary",
                                          )
-        self.controllers.append(self.cont_fk_up_leg.name)
+        self.controllers.append(self.cont_fk_up_leg)
 
         # move the pivot to the bottom
         cmds.xform(self.cont_fk_up_leg.name, pivots=(self.sideMult * -(self.init_upper_leg_dist / 2), 0, 0), worldSpace=True)
@@ -381,7 +381,7 @@ class Leg(object):
                                           side=self.side,
                                           tier="primary",
                                           )
-        self.controllers.append(self.cont_fk_low_leg.name)
+        self.controllers.append(self.cont_fk_low_leg)
 
         # move the pivot to the bottom
         cmds.xform(self.cont_fk_low_leg.name, pivots=(self.sideMult * -(self.init_lower_leg_dist / 2), 0, 0), worldSpace=True)
@@ -402,7 +402,7 @@ class Leg(object):
                                        side=self.side,
                                        tier="primary",
                                        )
-        self.controllers.append(self.cont_fk_foot.name)
+        self.controllers.append(self.cont_fk_foot)
         functions.align_to_alter(self.cont_fk_foot.name, self.jfk_foot, mode=2)
 
         self.cont_fk_foot_off = self.cont_fk_foot.add_offset("OFF")
@@ -416,7 +416,7 @@ class Leg(object):
                                        side=self.side,
                                        tier="primary",
                                        )
-        self.controllers.append(self.cont_fk_ball.name)
+        self.controllers.append(self.cont_fk_ball)
         functions.align_to_alter(self.cont_fk_ball.name, self.jfk_ball, mode=2)
 
         self.cont_fk_ball_off = self.cont_fk_ball.add_offset("OFF")
@@ -430,7 +430,7 @@ class Leg(object):
                                      side=self.side,
                                      tier="primary",
                                      )
-        self.controllers.append(self.cont_fk_ik.name)
+        self.controllers.append(self.cont_fk_ik)
 
         functions.align_and_aim(self.cont_fk_ik.name, target_list=[self.jfk_foot], aim_target_list=[self.j_def_midLeg],
                                 up_vector=self.up_axis, rotate_offset=(self.sideMult * 90, self.sideMult * 90, 0))
@@ -476,7 +476,7 @@ class Leg(object):
                                         side=self.side,
                                         tier="secondary"
                                         )
-        self.controllers.append(self.cont_mid_lock.name)
+        self.controllers.append(self.cont_mid_lock)
 
         functions.align_to_alter(self.cont_mid_lock.name, self.jfk_knee, 2)
         self.cont_mid_lock_ext = self.cont_mid_lock.add_offset("EXT")
@@ -1104,7 +1104,8 @@ class Leg(object):
 
 
         # vp upper branch
-        mid_off_up = functions.get_parent(ribbon_upper_leg.controllers[0])
+        # mid_off_up = functions.get_parent(ribbon_upper_leg.controllers[0])
+        mid_off_up = ribbon_upper_leg.controllers[0].parent
         cmds.connectAttr("%s.outputX" % vpPowerUpperLeg, "%s.scaleX" % mid_off_up)
         cmds.connectAttr("%s.outputX" % vpPowerUpperLeg, "%s.scaleY" % mid_off_up)
         cmds.connectAttr("%s.outputX" % vpPowerUpperLeg, "%s.scaleZ" % mid_off_up)
@@ -1112,7 +1113,8 @@ class Leg(object):
         cmds.connectAttr("%s.output" % vpUpperLowerReduce, "%s.input2X" % vpPowerUpperLeg)
 
         # vp lower branch
-        mid_off_low = functions.get_parent(ribbon_lower_leg.controllers[0])
+        # mid_off_low = functions.get_parent(ribbon_lower_leg.controllers[0])
+        mid_off_low = ribbon_lower_leg.controllers[0].parent
         cmds.connectAttr("%s.outputX" % vpPowerLowerLeg, "%s.scaleX" % mid_off_low)
         cmds.connectAttr("%s.outputX" % vpPowerLowerLeg, "%s.scaleY" % mid_off_low)
         cmds.connectAttr("%s.outputX" % vpPowerLowerLeg, "%s.scaleZ" % mid_off_low)
@@ -1124,8 +1126,8 @@ class Leg(object):
         cmds.parent(ribbon_lower_leg.ribbon_grp, self.nonScaleGrp)
 
         cmds.connectAttr("%s.tweakControls" %  self.cont_fk_ik.name, "%s.v" %  self.cont_mid_lock.name)
-        tweakConts = ribbon_upper_leg.controllers + ribbon_lower_leg.controllers
-        attribute.drive_attrs("%s.tweakControls" % self.cont_fk_ik.name, ["%s.v" % x for x in tweakConts])
+        tweak_conts = ribbon_upper_leg.controllers + ribbon_lower_leg.controllers
+        attribute.drive_attrs("%s.tweakControls" % self.cont_fk_ik.name, ["%s.v" % x.name for x in tweak_conts])
 
         cmds.connectAttr("%s.contVis" % self.scaleGrp, "%s.v" % ribbon_upper_leg.scale_grp)
         cmds.connectAttr("%s.contVis" % self.scaleGrp, "%s.v" % ribbon_lower_leg.scale_grp)
@@ -1134,8 +1136,8 @@ class Leg(object):
         attribute.drive_attrs("%s.jointVis" % self.scaleGrp, ["%s.v" % x for x in self.deformerJoints])
         attribute.drive_attrs("%s.rigVis" % self.scaleGrp, ["%s.v" % x for x in ribbon_lower_leg.to_hide])
         attribute.drive_attrs("%s.rigVis" % self.scaleGrp, ["%s.v" % x for x in ribbon_upper_leg.to_hide])
-        functions.colorize(ribbon_upper_leg.controllers, self.colorCodes[1])
-        functions.colorize(ribbon_lower_leg.controllers, self.colorCodes[1])
+        for cont in ribbon_upper_leg.controllers + ribbon_lower_leg.controllers:
+            cont.set_side(self.side, tier="tertiary")
 
     def createAngleExtractors(self):
         # IK Angle Extractor
@@ -1214,6 +1216,9 @@ class Leg(object):
 
         self.scaleConstraints = [self.scaleGrp, self.cont_IK_OFF]
         self.anchors = [(self.cont_IK_foot.name, "parent", 1, None), (self.cont_pole.name, "parent", 1, None)]
+
+        for cont in self.controllers:
+            cont.set_defaults()
 
     def createLimb(self):
         self.createGrp()
