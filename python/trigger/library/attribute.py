@@ -324,6 +324,14 @@ def attribute_pass(sourceNode, targetNode, attributes=[], inConnections=True, ou
     if not user_attr:
         return
 
+    #always exclude controller default attributes
+    for a in  ["defaultTranslate", "defaultRotate", "defaultScale"]:
+        if a in user_attr:
+            user_attr.remove(a)
+        for ax in "XYZ":
+            if "{0}{1}".format(a, ax) in user_attr:
+                user_attr.remove("{0}{1}".format(a, ax))
+
     for attr in user_attr:
         flagBuildList = []
         atType = cmds.getAttr("%s.%s" % (sourceNode, attr), type=True)

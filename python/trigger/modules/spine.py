@@ -5,7 +5,6 @@ from trigger.library import functions, joint
 from trigger.library import naming
 from trigger.library import attribute
 from trigger.library import api
-from trigger.library import controllers as ic
 from trigger.objects.controller import Controller
 from trigger.objects import twist_spline as twistSpline
 

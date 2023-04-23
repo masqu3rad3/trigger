@@ -5,7 +5,7 @@ from trigger.library import functions, joint
 from trigger.library import naming
 from trigger.library import attribute
 from trigger.library import api
-from trigger.library import controllers as ic
+from trigger.objects.controller import Controller
 from trigger.core import filelog
 
 log = filelog.Filelog(logname=__name__, filename="trigger_log")
@@ -104,56 +104,61 @@ class Tail(object):
 
     def createControllers(self):
 
-        icon = ic.Icon()
 
         self.controllers=[]
         self.cont_off_list=[]
 
         for jnt in range (len(self.deformerJoints)-1):
             scaleDis = functions.get_distance(self.deformerJoints[jnt], self.deformerJoints[jnt + 1]) / 2
-            cont, _ = icon.create_icon("Cube", icon_name="%s%i_cont" % (self.suffix, jnt), scale=(scaleDis, scaleDis, scaleDis))
+            cont = Controller(name="{0}{1}_cont".format(self.suffix, jnt),
+                              shape="Cube",
+                              scale=(scaleDis, scaleDis, scaleDis),
+                              side=self.side,
+                              tier="primary"
+                              )
 
-            cmds.xform(cont, piv=(self.sideMult * (-scaleDis), 0, 0))
-            functions.align_to_alter(cont, self.deformerJoints[jnt], 2)
+            cmds.xform(cont.name, pivots=(self.sideMult * (-scaleDis), 0, 0))
+            functions.align_to_alter(cont.name, self.deformerJoints[jnt], 2)
 
-            cont_OFF = functions.create_offset_group(cont, "OFF")
-            cont_ORE = functions.create_offset_group(cont, "ORE")
+            cont_OFF = cont.add_offset("OFF")
+            cont_ORE = cont.add_offset("ORE")
 
             self.controllers.append(cont)
             self.cont_off_list.append(cont_OFF)
 
             if jnt is not 0:
-                cmds.parent(self.cont_off_list[jnt], self.controllers[jnt - 1])
+                cmds.parent(self.cont_off_list[jnt], self.controllers[jnt - 1].name)
             else:
                 cmds.parent(self.cont_off_list[jnt], self.scaleGrp)
 
-            cmds.makeIdentity(cont, a=True)
+            cont.freeze()
 
         attribute.drive_attrs("%s.contVis" % self.scaleGrp, ["%s.v" % x for x in self.cont_off_list])
-        functions.colorize(self.controllers, self.colorCodes[0])
 
     def createFKsetup(self):
         for x in range (len(self.controllers)):
-            cmds.parentConstraint(self.controllers[x], self.deformerJoints[x], mo=False)
+            cmds.parentConstraint(self.controllers[x].name, self.deformerJoints[x], mo=False)
 
             # additive scalability
             sGlobal = cmds.createNode("multiplyDivide", name="sGlobal_%s_%s" %(x, self.suffix))
             cmds.connectAttr("%s.scale" % self.limbPlug,"%s.input1" % sGlobal)
-            cmds.connectAttr("%s.scale" % self.controllers[x],"%s.input2" % sGlobal)
+            cmds.connectAttr("%s.scale" % self.controllers[x].name,"%s.input2" % sGlobal)
             cmds.connectAttr("%s.output" % sGlobal,"%s.scale" % self.deformerJoints[x])
 
         ## last joint has no cont, use the previous one to scale that
         sGlobal = cmds.createNode("multiplyDivide", name="sGlobal_Last_%s" %(self.suffix))
         cmds.connectAttr("%s.scale" %self.limbPlug, "%s.input1" %sGlobal)
-        cmds.connectAttr("%s.scale" %self.controllers[-1], "%s.input2" %sGlobal)
+        cmds.connectAttr("%s.scale" %self.controllers[-1].name, "%s.input2" %sGlobal)
         cmds.connectAttr("%s.output" %sGlobal, "%s.scale" %self.deformerJoints[-1])
 
     def roundUp(self):
-        cmds.parentConstraint(self.limbPlug, self.scaleGrp, mo=False)
+        cmds.parentConstraint(self.limbPlug, self.scaleGrp, maintainOffset=False)
         cmds.setAttr("%s.rigVis" % self.scaleGrp, 0)
 
         self.scaleConstraints.append(self.scaleGrp)
-        # lock and hide
+
+        for cont in self.controllers:
+            cont.set_defaults()
 
     def createLimb(self):
         self.createGrp()
