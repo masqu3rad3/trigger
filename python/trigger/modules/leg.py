@@ -5,7 +5,6 @@ from trigger.library import functions, joint
 from trigger.library import naming
 from trigger.library import attribute
 from trigger.library import api
-from trigger.library import controllers as ic
 from trigger.objects.ribbon import Ribbon
 from trigger.objects.controller import Controller
 
@@ -261,7 +260,6 @@ class Leg(object):
         cmds.connectAttr("%s.rigVis" % self.scaleGrp,"%s.v" %self.jfk_root)
 
     def create_controllers(self):
-        icon = ic.Icon()
         # Thigh Controller
         thigh_cont_scale = (self.init_upper_leg_dist / 4, self.init_upper_leg_dist / 4, self.init_upper_leg_dist / 16)
         self.cont_thigh = Controller(name="{}_Thigh_cont".format(self.suffix),
