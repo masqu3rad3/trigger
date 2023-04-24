@@ -3,6 +3,7 @@ import os
 from maya import cmds
 from trigger.core import filelog
 from trigger.core import database
+from trigger.core.compatibility import is_string
 from trigger.library import functions, naming, joint
 from trigger.library import attribute
 from trigger.library import api
@@ -484,7 +485,7 @@ class Kinematics(object):
                         if not limb.controllers:
                             self.scaleRoot = "pref_cont"
                         else:
-                            if isinstance(limb.controllers[0], str):
+                            if is_string(limb.controllers[0]):
                                 self.scaleRoot = limb.controllers[0]
                             else:
                                 self.scaleRoot = limb.controllers[0].name

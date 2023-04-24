@@ -158,6 +158,8 @@ class Singleton(object):
             j_def_off = functions.create_offset_group(j_def, "off")
             j_def_bind = functions.create_offset_group(j_def, "bind")
 
+            # connect the scale downstream
+
             cont = Controller(name="%s%s_cont" % (self.suffix, nmb + 1), shape="Circle")
             cont.drive_visibility("%s.contVis" % self.scaleGrp, lock_and_hide=True)
             cont.set_side(side=self.side)
