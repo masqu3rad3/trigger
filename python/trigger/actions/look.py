@@ -7,7 +7,7 @@ from trigger.core import io
 from trigger.core import filelog
 
 from trigger.ui.Qt import QtWidgets, QtGui
-from trigger.ui import custom_widgets
+from trigger.ui.widgets import save_box
 from trigger.ui.widgets.browser_button import BrowserButton
 from trigger.core.decorators import keepselection
 
@@ -103,7 +103,7 @@ class Look(object):
         layout.addRow(file_path_lbl, file_path_hLay)
 
         save_current_lbl = QtWidgets.QLabel(text="Save Current states")
-        savebox_lay = custom_widgets.SaveBoxLayout(
+        savebox_lay = save_box.SaveBoxLayout(
             alignment="horizontal",
             update_widget=file_path_le,
             filter_extensions=["Trigger Look Files (*.trl)"],

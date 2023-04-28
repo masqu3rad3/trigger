@@ -103,7 +103,7 @@ class Spine(object):
         self.deformerJoints = []
         self.colorCodes = [6, 18]
 
-    def createGrp(self):
+    def create_groups(self):
         self.limbGrp = cmds.group(name=self.suffix, em=True)
         self.scaleGrp = cmds.group(name="%s_scaleGrp" % self.suffix, em=True)
         functions.align_to(self.scaleGrp, self.inits[0], position=True, rotation=False)
@@ -120,7 +120,7 @@ class Spine(object):
         cmds.parent(self.scaleGrp, self.limbGrp)
         cmds.parent(self.nonScaleGrp, self.limbGrp)
 
-    def createJoints(self):
+    def create_joints(self):
         # draw Joints
         # # Create Plug Joints
         cmds.select(None)
@@ -152,15 +152,14 @@ class Spine(object):
         cmds.parent(self.startSocket, self.scaleGrp)
         cmds.connectAttr("%s.rigVis" %self.scaleGrp, "%s.v" %self.limbPlug)
 
-    def createControllers(self):
+    def create_controllers(self):
 
         # icon = ic.Icon()
         ## Hips Controller
-        contHipsScale = (self.iconSize / 1.5, self.iconSize / 1.5, self.iconSize / 1.5)
-        # self.cont_hips, dmp = icon.create_icon("Waist", icon_name="%s_Hips_cont" % self.suffix, scale=contHipsScale, normal=(1, 0, 0))
+        cont_hips_scale = (self.iconSize / 1.5, self.iconSize / 1.5, self.iconSize / 1.5)
         self.cont_hips = Controller(name="{}_Hips_cont".format(self.suffix),
                                     shape="Waist",
-                                    scale=contHipsScale,
+                                    scale=cont_hips_scale,
                                     normal=(1, 0, 0),
                                     side=self.side,
                                     tier="primary"
@@ -170,11 +169,10 @@ class Spine(object):
         self.cont_hips_ORE = self.cont_hips.add_offset("ORE")
 
         ## Body Controller
-        contBodyScale = (self.iconSize * 0.75, self.iconSize * 0.75, self.iconSize * 0.75)
-        # self.cont_body, dmp = icon.create_icon("Square", icon_name="%s_Body_cont" % self.suffix, scale=contBodyScale, normal=(1, 0, 0))
+        cont_body_scale = (self.iconSize * 0.75, self.iconSize * 0.75, self.iconSize * 0.75)
         self.cont_body = Controller(name="{}_Body_cont".format(self.suffix),
                                     shape="Square",
-                                    scale=contBodyScale,
+                                    scale=cont_body_scale,
                                     normal=(1, 0, 0),
                                     side=self.side,
                                     tier="primary"
@@ -193,11 +191,10 @@ class Spine(object):
         cmds.setAttr("{}.tweakVis".format(self.cont_body.name), channelBox=True)
 
         ## Chest Controller
-        contChestScale = (self.iconSize*0.5, self.iconSize*0.35, self.iconSize*0.2)
-        # self.cont_chest, dmp = icon.create_icon("Cube", icon_name="%s_Chest_cont" % self.suffix, scale=contChestScale, normal=(0, 0, 1))
+        cont_chest_scale = (self.iconSize*0.5, self.iconSize*0.35, self.iconSize*0.2)
         self.cont_chest = Controller(name="{}_Chest_cont".format(self.suffix),
                                      shape="Cube",
-                                     scale=contChestScale,
+                                     scale=cont_chest_scale,
                                      normal=(0, 0, 1),
                                      side=self.side,
                                      tier="primary"
@@ -208,31 +205,29 @@ class Spine(object):
 
         self.cont_spineFK_A_List = []
         self.cont_spineFK_B_List = []
-        contSpineFKAScale = (self.iconSize / 2, self.iconSize / 2, self.iconSize / 2)
-        contSpineFKBScale = (self.iconSize / 2.5, self.iconSize / 2.5, self.iconSize / 2.5)
+        cont_spine_fk_a_scale = (self.iconSize / 2, self.iconSize / 2, self.iconSize / 2)
+        cont_spine_fk_b_scale = (self.iconSize / 2.5, self.iconSize / 2.5, self.iconSize / 2.5)
 
         for m in range (0, len(self.guideJoints)):
-            # contA, _ = icon.create_icon("Circle", icon_name="%s%i_SpineFK_A_cont" % (self.suffix, m), scale=contSpineFKAScale, normal=(1, 0, 0))
-            contA = Controller(name="{}{}_SpineFK_A_cont".format(self.suffix, m),
+            cont_a = Controller(name="{}{}_SpineFK_A_cont".format(self.suffix, m),
                                shape="Circle",
-                               scale=contSpineFKAScale,
+                               scale=cont_spine_fk_a_scale,
                                normal=(1, 0, 0),
                                side=self.side,
                                tier="primary"
                                )
-            functions.align_to_alter(contA.name, self.guideJoints[m], 2)
-            contA_ORE = contA.add_offset("ORE")
-            self.cont_spineFK_A_List.append(contA)
-            # contB, dmp = icon.create_icon("Ngon", icon_name="%s%i_SpineFK_B_cont" % (self.suffix, m), scale=contSpineFKBScale, normal=(1, 0, 0))
+            functions.align_to_alter(cont_a.name, self.guideJoints[m], 2)
+            cont_a_ore = cont_a.add_offset("ORE")
+            self.cont_spineFK_A_List.append(cont_a)
             contB = Controller(name="{}{}_SpineFK_B_cont".format(self.suffix, m),
                                shape="Ngon",
-                               scale=contSpineFKBScale,
+                               scale=cont_spine_fk_b_scale,
                                normal=(1, 0, 0),
                                side=self.side,
                                tier="primary"
                                )
             functions.align_to(contB.name, self.guideJoints[m], position=True, rotation=True)
-            contB_ORE = contB.add_offset("ORE")
+            cont_b_ore = contB.add_offset("ORE")
             self.cont_spineFK_B_List.append(contB)
 
             if m != 0:
@@ -257,12 +252,7 @@ class Spine(object):
         attribute.drive_attrs("%s.fkAvis" % self.cont_body.name, ["%s.v" % x.shapes[0] for x in self.cont_spineFK_A_List])
         attribute.drive_attrs("%s.fkBvis" % self.cont_body.name, ["%s.v" % x.shapes[0] for x in self.cont_spineFK_B_List])
 
-
-
-    def createRoots(self):
-        pass
-
-    def createIKsetup(self):
+    def create_ik_setup(self):
         spine = twistSpline.TwistSpline()
         spine.upAxis =  -(om.MVector(self.look_axis))
         spine.createTspline(self.guideJoints, "Spine_%s" % self.suffix, self.resolution, dropoff=self.dropoff, mode=self.splineMode, twistType=self.twistType)
@@ -318,21 +308,6 @@ class Spine(object):
 
         functions.colorize(self.deformerJoints, self.colorCodes[0], shape=False)
 
-    def createFKsetup(self):
-        pass
-
-    def ikfkSwitching(self):
-        pass
-
-    def createRibbons(self):
-        pass
-
-    def createTwistSplines(self):
-        pass
-
-    def createAngleExtractors(self):
-        pass
-
     def roundUp(self):
         cmds.parentConstraint(self.limbPlug, self.scaleGrp, maintainOffset=False)
         cmds.setAttr("%s.rigVis" %self.scaleGrp, 0)
@@ -353,11 +328,10 @@ class Spine(object):
             cont.set_defaults()
 
     def createLimb(self):
-        self.createGrp()
-        self.createJoints()
-        self.createControllers()
-        self.createRoots()
-        self.createIKsetup()
+        self.create_groups()
+        self.create_joints()
+        self.create_controllers()
+        self.create_ik_setup()
         self.roundUp()
 
 class Guides(object):
