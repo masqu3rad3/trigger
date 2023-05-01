@@ -105,12 +105,12 @@ class Leg(object):
 
     def createJoints(self):
         # Create Limb Plug
-        cmds.select(d=True)
-        self.limbPlug = cmds.joint(name="limbPlug_%s" % self.suffix, p=self.leg_root_pos, radius=3)
+        cmds.select(deselect=True)
+        self.limbPlug = cmds.joint(name="limbPlug_%s" % self.suffix, position=self.leg_root_pos, radius=3)
 
-        self.jDef_legRoot = cmds.joint(name="jDef_legRoot_%s" % self.suffix, p=self.leg_root_pos, radius=1.5)
+        self.jDef_legRoot = cmds.joint(name="jDef_legRoot_%s" % self.suffix, position=self.leg_root_pos, radius=1.5)
         self.sockets.append(self.jDef_legRoot)
-        self.j_def_hip = cmds.joint(name="jDef_hip_%s" % self.suffix, p=self.hip_pos, radius=1.5)
+        self.j_def_hip = cmds.joint(name="jDef_hip_%s" % self.suffix, position=self.hip_pos, radius=1.5)
         self.sockets.append(self.j_def_hip)
 
         if not self.useRefOrientation:
@@ -118,50 +118,50 @@ class Leg(object):
                                 reverse_aim=self.sideMult)
         else:
             functions.align_to(self.jDef_legRoot, self.leg_root_ref, position=True, rotation=True)
-            cmds.makeIdentity(self.jDef_legRoot, a=True)
+            cmds.makeIdentity(self.jDef_legRoot, apply=True)
             functions.align_to(self.j_def_hip, self.hip_ref, position=True, rotation=True)
-            cmds.makeIdentity(self.j_def_hip, a=True)
+            cmds.makeIdentity(self.j_def_hip, apply=True)
 
-        cmds.select(d=True)
-        self.j_def_midLeg = cmds.joint(name="jDef_knee_%s" % self.suffix, p=self.knee_pos, radius=1.5)
+        cmds.select(deselect=True)
+        self.j_def_midLeg = cmds.joint(name="jDef_knee_%s" % self.suffix, position=self.knee_pos, radius=1.5)
         self.sockets.append(self.j_def_midLeg)
 
-        cmds.select(d=True)
-        self.j_def_foot = cmds.joint(name="jDef_Foot_%s" % self.suffix, p=self.foot_pos, radius=1.0)
+        cmds.select(deselect=True)
+        self.j_def_foot = cmds.joint(name="jDef_Foot_%s" % self.suffix, position=self.foot_pos, radius=1.0)
         self.sockets.append(self.j_def_foot)
-        self.j_def_ball = cmds.joint(name="jDef_Ball_%s" % self.suffix, p=self.ball_pos, radius=1.0)
+        self.j_def_ball = cmds.joint(name="jDef_Ball_%s" % self.suffix, position=self.ball_pos, radius=1.0)
         self.sockets.append(self.j_def_ball)
-        self.j_toe = cmds.joint(name="jDef_Toe_%s" % self.suffix, p=self.toe_pv_pos, radius=1.0)  # POSSIBLE PROBLEM
+        self.j_toe = cmds.joint(name="jDef_Toe_%s" % self.suffix, position=self.toe_pv_pos, radius=1.0)  # POSSIBLE PROBLEM
         self.sockets.append(self.j_toe)
 
-        cmds.select(d=True)
-        self.j_socket_ball = cmds.joint(name="jBallSocket_%s" % self.suffix, p=self.ball_pos, radius=3)
+        cmds.select(deselect=True)
+        self.j_socket_ball = cmds.joint(name="jBallSocket_%s" % self.suffix, position=self.ball_pos, radius=3)
         self.sockets.append(self.j_socket_ball)
         # IK Joints
         # Follow IK Chain
-        cmds.select(d=True)
-        self.j_ik_orig_root = cmds.joint(name="jIK_orig_Root_%s" % self.suffix, p=self.hip_pos, radius=1.5)
-        self.j_ik_orig_knee = cmds.joint(name="jIK_orig_Knee_%s" % self.suffix, p=self.knee_pos, radius=1.5)
-        self.j_ik_orig_end = cmds.joint(name="jIK_orig_End_%s" % self.suffix, p=self.foot_pos, radius=1.5)
+        cmds.select(deselect=True)
+        self.j_ik_orig_root = cmds.joint(name="jIK_orig_Root_%s" % self.suffix, position=self.hip_pos, radius=1.5)
+        self.j_ik_orig_knee = cmds.joint(name="jIK_orig_Knee_%s" % self.suffix, position=self.knee_pos, radius=1.5)
+        self.j_ik_orig_end = cmds.joint(name="jIK_orig_End_%s" % self.suffix, position=self.foot_pos, radius=1.5)
 
         # Single Chain IK
-        cmds.select(d=True)
-        self.j_ik_sc_root = cmds.joint(name="jIK_SC_Root_%s" % self.suffix, p=self.hip_pos, radius=1)
-        self.j_ik_sc_knee = cmds.joint(name="jIK_SC_Knee_%s" % self.suffix, p=self.knee_pos, radius=1)
-        self.j_ik_sc_end = cmds.joint(name="jIK_SC_End_%s" % self.suffix, p=self.foot_pos, radius=1)
+        cmds.select(deselect=True)
+        self.j_ik_sc_root = cmds.joint(name="jIK_SC_Root_%s" % self.suffix, position=self.hip_pos, radius=1)
+        self.j_ik_sc_knee = cmds.joint(name="jIK_SC_Knee_%s" % self.suffix, position=self.knee_pos, radius=1)
+        self.j_ik_sc_end = cmds.joint(name="jIK_SC_End_%s" % self.suffix, position=self.foot_pos, radius=1)
 
         # Rotate Plane IK
-        cmds.select(d=True)
-        self.j_ik_rp_root = cmds.joint(name="jIK_RP_Root_%s" % self.suffix, p=self.hip_pos, radius=0.7)
-        self.j_ik_rp_knee = cmds.joint(name="jIK_RP_Knee_%s" % self.suffix, p=self.knee_pos, radius=0.7)
-        self.j_ik_rp_end = cmds.joint(name="jIK_RP_End_%s" % self.suffix, p=self.foot_pos, radius=0.7)
+        cmds.select(deselect=True)
+        self.j_ik_rp_root = cmds.joint(name="jIK_RP_Root_%s" % self.suffix, position=self.hip_pos, radius=0.7)
+        self.j_ik_rp_knee = cmds.joint(name="jIK_RP_Knee_%s" % self.suffix, position=self.knee_pos, radius=0.7)
+        self.j_ik_rp_end = cmds.joint(name="jIK_RP_End_%s" % self.suffix, position=self.foot_pos, radius=0.7)
 
-        cmds.select(d=True)
-        self.j_ik_foot = cmds.joint(name="jIK_Foot_%s" % self.suffix, p=self.foot_pos, radius=1.0)
-        self.j_ik_ball = cmds.joint(name="jIK_Ball_%s" % self.suffix, p=self.ball_pos, radius=1.0)
-        self.j_ik_toe = cmds.joint(name="jIK_Toe_%s" % self.suffix, p=self.toe_pv_pos, radius=1.0)
+        cmds.select(deselect=True)
+        self.j_ik_foot = cmds.joint(name="jIK_Foot_%s" % self.suffix, position=self.foot_pos, radius=1.0)
+        self.j_ik_ball = cmds.joint(name="jIK_Ball_%s" % self.suffix, position=self.ball_pos, radius=1.0)
+        self.j_ik_toe = cmds.joint(name="jIK_Toe_%s" % self.suffix, position=self.toe_pv_pos, radius=1.0)
 
-        cmds.select(d=True)
+        cmds.select(deselect=True)
 
         # orientations
         if not self.useRefOrientation:
@@ -170,22 +170,22 @@ class Leg(object):
 
         else:
             functions.align_to(self.j_ik_orig_root, self.hip_ref, position=True, rotation=True)
-            cmds.makeIdentity(self.j_ik_orig_root, a=True)
+            cmds.makeIdentity(self.j_ik_orig_root, apply=True)
             functions.align_to(self.j_ik_orig_knee, self.knee_ref, position=True, rotation=True)
-            cmds.makeIdentity(self.j_ik_orig_knee, a=True)
+            cmds.makeIdentity(self.j_ik_orig_knee, apply=True)
             functions.align_to(self.j_ik_orig_end, self.foot_ref, position=True, rotation=True)
-            cmds.makeIdentity(self.j_ik_orig_end, a=True)
+            cmds.makeIdentity(self.j_ik_orig_end, apply=True)
 
         if not self.useRefOrientation:
             joint.orient_joints([self.j_ik_sc_root, self.j_ik_sc_knee, self.j_ik_sc_end],
                                 world_up_axis=om.MVector(self.mirror_axis), reverse_aim=self.sideMult)
         else:
             functions.align_to(self.j_ik_sc_root, self.hip_ref, position=True, rotation=True)
-            cmds.makeIdentity(self.j_ik_sc_root, a=True)
+            cmds.makeIdentity(self.j_ik_sc_root, apply=True)
             functions.align_to(self.j_ik_sc_knee, self.knee_ref, position=True, rotation=True)
-            cmds.makeIdentity(self.j_ik_sc_knee, a=True)
+            cmds.makeIdentity(self.j_ik_sc_knee, apply=True)
             functions.align_to(self.j_ik_sc_end, self.foot_ref, position=True, rotation=True)
-            cmds.makeIdentity(self.j_ik_sc_end, a=True)
+            cmds.makeIdentity(self.j_ik_sc_end, apply=True)
 
         if not self.useRefOrientation:
             joint.orient_joints([self.j_ik_rp_root, self.j_ik_rp_knee, self.j_ik_rp_end], world_up_axis=om.MVector(self.mirror_axis), reverse_aim=self.sideMult)
@@ -193,61 +193,61 @@ class Leg(object):
 
         else:
             functions.align_to(self.j_ik_rp_root, self.hip_ref, position=True, rotation=True)
-            cmds.makeIdentity(self.j_ik_rp_root, a=True)
+            cmds.makeIdentity(self.j_ik_rp_root, apply=True)
             functions.align_to(self.j_ik_rp_knee, self.knee_ref, position=True, rotation=True)
-            cmds.makeIdentity(self.j_ik_rp_knee, a=True)
+            cmds.makeIdentity(self.j_ik_rp_knee, apply=True)
             functions.align_to(self.j_ik_rp_end, self.foot_ref, position=True, rotation=True)
-            cmds.makeIdentity(self.j_ik_rp_end, a=True)
+            cmds.makeIdentity(self.j_ik_rp_end, apply=True)
 
         if not self.useRefOrientation:
             joint.orient_joints([self.j_ik_foot, self.j_ik_ball, self.j_ik_toe], world_up_axis=om.MVector(self.mirror_axis),
                                 reverse_aim=self.sideMult)
         else:
             functions.align_to(self.j_ik_foot, self.foot_ref, position=True, rotation=True)
-            cmds.makeIdentity(self.j_ik_foot, a=True)
+            cmds.makeIdentity(self.j_ik_foot, apply=True)
             functions.align_to(self.j_ik_ball, self.ball_ref, position=True, rotation=True)
-            cmds.makeIdentity(self.j_ik_ball, a=True)
+            cmds.makeIdentity(self.j_ik_ball, apply=True)
             functions.align_to(self.j_ik_toe, self.toe_pv_ref, position=True, rotation=True)
-            cmds.makeIdentity(self.j_ik_toe, a=True)
+            cmds.makeIdentity(self.j_ik_toe, apply=True)
 
         # FK Joints
-        cmds.select(d=True)
-        self.jfk_root = cmds.joint(name="jFK_UpLeg_%s" % self.suffix, p=self.hip_pos, radius=1.0)
-        self.jfk_knee = cmds.joint(name="jFK_Knee_%s" % self.suffix, p=self.knee_pos, radius=1.0)
-        self.jfk_foot = cmds.joint(name="jFK_Foot_%s" % self.suffix, p=self.foot_pos, radius=1.0)
-        self.jfk_ball = cmds.joint(name="jFK_Ball_%s" % self.suffix, p=self.ball_pos, radius=1.0)
-        self.jfk_toe = cmds.joint(name="jFK_Toe_%s" % self.suffix, p=self.toe_pv_pos, radius=1.0)
+        cmds.select(deselect=True)
+        self.jfk_root = cmds.joint(name="jFK_UpLeg_%s" % self.suffix, position=self.hip_pos, radius=1.0)
+        self.jfk_knee = cmds.joint(name="jFK_Knee_%s" % self.suffix, position=self.knee_pos, radius=1.0)
+        self.jfk_foot = cmds.joint(name="jFK_Foot_%s" % self.suffix, position=self.foot_pos, radius=1.0)
+        self.jfk_ball = cmds.joint(name="jFK_Ball_%s" % self.suffix, position=self.ball_pos, radius=1.0)
+        self.jfk_toe = cmds.joint(name="jFK_Toe_%s" % self.suffix, position=self.toe_pv_pos, radius=1.0)
 
         if not self.useRefOrientation:
             joint.orient_joints([self.jfk_root, self.jfk_knee, self.jfk_foot, self.jfk_ball, self.jfk_toe],
                                 world_up_axis=om.MVector(self.mirror_axis), reverse_aim=self.sideMult)
         else:
             functions.align_to(self.jfk_root, self.hip_ref, position=True, rotation=True)
-            cmds.makeIdentity(self.jfk_root, a=True)
+            cmds.makeIdentity(self.jfk_root, apply=True)
             functions.align_to(self.jfk_knee, self.knee_ref, position=True, rotation=True)
-            cmds.makeIdentity(self.jfk_knee, a=True)
+            cmds.makeIdentity(self.jfk_knee, apply=True)
             functions.align_to(self.jfk_foot, self.foot_ref, position=True, rotation=True)
-            cmds.makeIdentity(self.jfk_foot, a=True)
+            cmds.makeIdentity(self.jfk_foot, apply=True)
             functions.align_to(self.jfk_ball, self.ball_ref, position=True, rotation=True)
-            cmds.makeIdentity(self.jfk_ball, a=True)
+            cmds.makeIdentity(self.jfk_ball, apply=True)
             functions.align_to(self.jfk_toe, self.toe_pv_ref, position=True, rotation=True)
-            cmds.makeIdentity(self.jfk_toe, a=True)
+            cmds.makeIdentity(self.jfk_toe, apply=True)
 
         # re-orient single joints
         functions.align_to_alter(self.j_def_hip, self.jfk_root, mode=2)
-        cmds.makeIdentity(self.j_def_hip, a=True)
+        cmds.makeIdentity(self.j_def_hip, apply=True)
         functions.align_to_alter(self.j_def_midLeg, self.jfk_knee, mode=2)
-        cmds.makeIdentity(self.j_def_midLeg, a=True)
+        cmds.makeIdentity(self.j_def_midLeg, apply=True)
 
         functions.align_to_alter(self.j_def_foot, self.jfk_foot, mode=2)
-        cmds.makeIdentity(self.j_def_foot, a=True)
+        cmds.makeIdentity(self.j_def_foot, apply=True)
         functions.align_to_alter(self.j_def_ball, self.jfk_ball, mode=2)
-        cmds.makeIdentity(self.j_def_ball, a=True)
+        cmds.makeIdentity(self.j_def_ball, apply=True)
         functions.align_to_alter(self.j_toe, self.jfk_toe, mode=2)
-        cmds.makeIdentity(self.j_toe, a=True)
+        cmds.makeIdentity(self.j_toe, apply=True)
 
         functions.align_to_alter(self.j_socket_ball, self.jfk_ball, mode=2)
-        cmds.makeIdentity(self.j_socket_ball, a=True)
+        cmds.makeIdentity(self.j_socket_ball, apply=True)
         cmds.parent(self.j_socket_ball, self.j_def_ball)
 
 

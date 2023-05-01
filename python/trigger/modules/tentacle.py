@@ -116,8 +116,8 @@ class Tentacle(object):
 
     def createJoints(self):
 
-        cmds.select(d=True)
-        self.limbPlug = cmds.joint(name="limbPlug_%s" % self.suffix, p=self.rootPos, radius=3)
+        cmds.select(deselect=True)
+        self.limbPlug = cmds.joint(name="limbPlug_%s" % self.suffix, position=self.rootPos, radius=3)
         ## Make a straight line from inits joints (like in the twistSpline)
         # calculate the necessary distance for the joints
 
@@ -139,17 +139,17 @@ class Tentacle(object):
 
         ## Create Control Joints
         self.contJointsList = []
-        cmds.select(d=True)
+        cmds.select(deselect=True)
         for index in range(0, len(contDistances)):
             ctrlVc = splitVc.normal() * contDistances[index]
             place = self.rootPos + (ctrlVc)
-            jnt = cmds.joint(p=place, name="jCont_tentacle_%s_%i" % (self.suffix, index), radius=5, o=(90, 0, 90))
+            jnt = cmds.joint(position=place, name="jCont_tentacle_%s_%i" % (self.suffix, index), radius=5, o=(90, 0, 90))
             self.contJointsList.append(jnt)
-            cmds.select(d=True)
+            cmds.select(deselect=True)
 
         ## Create temporaray Guide Joints
-        cmds.select(d=True)
-        self.guideJoints = [cmds.joint(p=api.get_world_translation(i)) for i in self.inits]
+        cmds.select(deselect=True)
+        self.guideJoints = [cmds.joint(position=api.get_world_translation(i)) for i in self.inits]
         # orientations
         if not self.useRefOrientation:
             joint.orient_joints(self.guideJoints, world_up_axis=(self.up_axis), up_axis=(0, 1, 0),
@@ -158,9 +158,9 @@ class Tentacle(object):
         else:
             for x in range(len(self.guideJoints)):
                 functions.align_to(self.guideJoints[x], self.inits[x], position=True, rotation=True)
-                cmds.makeIdentity(self.guideJoints[x], a=True)
+                cmds.makeIdentity(self.guideJoints[x], apply=True)
 
-        cmds.select(d=True)
+        cmds.select(deselect=True)
         self.wrapScaleJoint = cmds.joint(name="jWrapScale_{0}".format(self.suffix))
 
         cmds.parent(self.contJointsList, self.scaleGrp)

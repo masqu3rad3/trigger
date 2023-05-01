@@ -8,7 +8,7 @@ from trigger.core import filelog
 
 from trigger.ui.Qt import QtWidgets, QtGui
 from trigger.ui.widgets import save_box
-from trigger.ui.widgets.browser_button import BrowserButton
+from trigger.ui.widgets.browser import BrowserButton, FileLineEdit
 from trigger.core.decorators import keepselection
 
 log = filelog.Filelog(logname=__name__, filename="trigger_log")
@@ -91,7 +91,7 @@ class Look(object):
 
         file_path_lbl = QtWidgets.QLabel(text="Look File Path:")
         file_path_hLay = QtWidgets.QHBoxLayout()
-        file_path_le = custom_widgets.FileLineEdit()
+        file_path_le = FileLineEdit()
         file_path_hLay.addWidget(file_path_le)
         browse_path_pb = BrowserButton(
             mode="openFile",

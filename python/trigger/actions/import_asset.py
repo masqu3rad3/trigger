@@ -11,7 +11,7 @@ from trigger.core import filelog
 # from trigger.ui.Qt import QtWidgets, QtGui # for progressbar
 from PySide2 import QtWidgets, QtGui  # for progressbar
 from trigger.ui import custom_widgets
-from trigger.ui.widgets.browser_button import BrowserButton
+from trigger.ui.widgets.browser import BrowserButton, FileLineEdit
 
 from trigger import version_control
 from trigger.ui.vcs_widgets.publish_selection import PublishSelection
@@ -94,7 +94,7 @@ class Import_asset(object):
 
         file_path_lbl = QtWidgets.QLabel(text="File Path")
         file_path_hLay = QtWidgets.QHBoxLayout()
-        file_path_le = custom_widgets.FileLineEdit()
+        file_path_le = FileLineEdit()
         file_path_hLay.addWidget(file_path_le)
         browse_path_pb = BrowserButton(mode="openFile", update_widget=file_path_le,
                                                       filterExtensions=["All Supported (*.ma *.mb *.usd *.abc *.obj)",

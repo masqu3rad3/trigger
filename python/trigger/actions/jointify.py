@@ -8,7 +8,7 @@ from trigger.core import filelog
 from trigger.core.decorators import tracktime
 from trigger.library import selection, deformers
 
-from trigger.ui.widgets.browser_button import BrowserButton
+from trigger.ui.widgets.browser import BrowserButton, FileLineEdit
 from trigger.ui import custom_widgets
 from trigger.ui import feedback
 
@@ -138,7 +138,7 @@ class Jointify(object):
 
         fbx_source_lbl = QtWidgets.QLabel(text="FBX Source")
         fbx_source_hlay = QtWidgets.QHBoxLayout()
-        fbx_source_le = custom_widgets.FileLineEdit()
+        fbx_source_le = FileLineEdit()
         fbx_source_le.setToolTip("FBX file of the same mesh with custom joints. Joints must be skinclustered to"
                                  "the mesh but weights doesnt have to be painted.")
         fbx_source_le.setPlaceholderText("(Optional)")

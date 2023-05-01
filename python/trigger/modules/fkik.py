@@ -106,42 +106,43 @@ class Fkik(object):
         self.colorCodes = [6, 18]
 
     def createGrp(self):
-        self.limbGrp = cmds.group(name=self.suffix, em=True)
-        self.scaleGrp = cmds.group(name="%s_scaleGrp" % self.suffix, em=True)
+        self.limbGrp = cmds.group(name=self.suffix, empty=True)
+        self.scaleGrp = cmds.group(name="%s_scaleGrp" % self.suffix, empty=True)
         functions.align_to(self.scaleGrp, self.inits[0], position=True, rotation=False)
-        self.nonScaleGrp = cmds.group(name="%s_nonScaleGrp" % self.suffix, em=True)
+        self.nonScaleGrp = cmds.group(name="%s_nonScaleGrp" % self.suffix, empty=True)
 
-        cmds.addAttr(self.scaleGrp, at="bool", ln="Control_Visibility", sn="contVis", defaultValue=True)
-        cmds.addAttr(self.scaleGrp, at="bool", ln="Joints_Visibility", sn="jointVis", defaultValue=True)
-        cmds.addAttr(self.scaleGrp, at="bool", ln="Rig_Visibility", sn="rigVis", defaultValue=False)
+        cmds.addAttr(self.scaleGrp, attributeType="bool", longName="Control_Visibility", shortName="contVis", defaultValue=True)
+        cmds.addAttr(self.scaleGrp, attributeType="bool", longName="Joints_Visibility", shortName="jointVis", defaultValue=True)
+        cmds.addAttr(self.scaleGrp, attributeType="bool", longName="Rig_Visibility", shortName="rigVis", defaultValue=False)
         # make the created attributes visible in the channelbox
-        cmds.setAttr("%s.contVis" % self.scaleGrp, cb=True)
-        cmds.setAttr("%s.jointVis" % self.scaleGrp, cb=True)
-        cmds.setAttr("%s.rigVis" % self.scaleGrp, cb=True)
+        cmds.setAttr("%s.contVis" % self.scaleGrp, channelBox=True)
+        cmds.setAttr("%s.jointVis" % self.scaleGrp, channelBox=True)
+        cmds.setAttr("%s.rigVis" % self.scaleGrp, channelBox=True)
 
         cmds.parent(self.scaleGrp, self.limbGrp)
         cmds.parent(self.nonScaleGrp, self.limbGrp)
 
-        self.localOffGrp = cmds.group(name="%s_localOffset_grp" %self.suffix, em=True)
-        self.plugBindGrp = cmds.group(name="%s_plugBind_grp" %self.suffix, em=True)
+        self.localOffGrp = cmds.group(name="%s_localOffset_grp" %self.suffix, empty=True)
+        self.plugBindGrp = cmds.group(name="%s_plugBind_grp" %self.suffix, empty=True)
         cmds.parent(self.localOffGrp, self.plugBindGrp)
         cmds.parent(self.plugBindGrp, self.limbGrp)
 
         # scale hook gets the scale value from the bind group but not from the localOffset
-        self.scaleHook = cmds.group(name="%s_scaleHook" % self.suffix, em=True)
+        self.scaleHook = cmds.group(name="%s_scaleHook" % self.suffix, empty=True)
         cmds.parent(self.scaleHook, self.limbGrp)
         scale_skips = "xyz" if self.isLocal else ""
         connection.matrixConstraint(self.scaleGrp, self.scaleHook, skipScale=scale_skips)
 
     def createJoints(self):
         # draw Joints
-        cmds.select(d=True)
-        self.limbPlug = cmds.joint(name="limbPlug_%s" % self.suffix, p=api.get_world_translation(self.inits[0]), radius=3)
+        cmds.select(deselect=True)
+        self.limbPlug = cmds.joint(name="limbPlug_%s" % self.suffix, position=api.get_world_translation(self.inits[0]), radius=3)
         cmds.connectAttr("%s.s" %self.scaleGrp, "%s.s" %self.limbPlug)
 
-        cmds.select(d=True)
-        for j in self.inits:
-            jnt = cmds.joint(name="jDef_{0}_{1}".format(j, self.suffix))
+        cmds.select(deselect=True)
+        for nmb, j in enumerate(self.inits):
+            jnt = cmds.joint(name="{0}_{1}_jDef".format(self.suffix, nmb))
+            # jnt = cmds.joint(name="jDef_{0}_{1}".format(j, self.suffix))
             self.sockets.append(jnt)
             self.deformerJoints.append(jnt)
 
@@ -150,7 +151,7 @@ class Fkik(object):
         else:
             for x in range (len(self.deformerJoints)):
                 functions.align_to(self.deformerJoints[x], self.inits[x], position=True, rotation=True)
-                cmds.makeIdentity(self.deformerJoints[x], a=True)
+                cmds.makeIdentity(self.deformerJoints[x], apply=True)
 
         cmds.parent(self.deformerJoints[0], self.nonScaleGrp)
 

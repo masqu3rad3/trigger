@@ -55,7 +55,7 @@ class MocapMapper(object):
             keep_fbx (bool): Keep the FBX file after import.
 
         """
-        if not isinstance(keep_fbx, bool):
+        if not isinstance(keep_fbx, (bool, int)):
             raise TypeError("Keep FBX must be a boolean.")
         self.keep_fbx = keep_fbx
 

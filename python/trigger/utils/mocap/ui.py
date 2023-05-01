@@ -2,7 +2,7 @@
 
 from trigger.ui.Qt import QtWidgets
 from trigger.ui.qtmaya import get_main_maya_window
-from trigger.ui.custom_widgets import FileBrowserBoxLayout
+from trigger.ui.widgets.browser import FileBrowserBoxLayout
 from trigger.utils.mocap import mapper
 
 _version = "0.1.0"
