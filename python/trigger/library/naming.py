@@ -232,3 +232,12 @@ def rename_skinclusters():
         mesh_name = cmds.listConnections("%s.outputGeometry" % skin, shapes=False, source=False, destination=True)[0]
         sc_name = "%s_%s" % (mesh_name.split("|")[-1], "skinCluster")
         cmds.rename(skin, sc_name)
+
+def parse(labels, prefix="", suffix="", side=""):
+    """Parse object name with given parameters"""
+    if not isinstance(labels, (list, tuple)):
+        labels = [labels]
+    elements = [side, prefix] + labels + [suffix]
+    # filter the elements to remove empty strings
+    elements = [e for e in elements if e]
+    return "_".join(elements)
