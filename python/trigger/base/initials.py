@@ -430,7 +430,7 @@ class Initials(object):
     def test_build(self, root_jnt=None, progress_bar=None):
         kinematics = importlib.import_module("trigger.actions.kinematics")
         if not root_jnt:
-            selection = cmds.ls(sl=True)
+            selection = cmds.ls(selection=True)
             if len(selection) == 1:
                 root_jnt = selection[0]
             else:
@@ -444,3 +444,4 @@ class Initials(object):
         test_kinematics = kinematics.Kinematics(root_jnt, progress_bar=progress_bar)
         test_kinematics.afterlife = 0
         test_kinematics.action()
+        return test_kinematics

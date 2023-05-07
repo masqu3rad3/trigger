@@ -43,34 +43,6 @@ def undo(func):
 
     return _undofunc
 
-
-def viewportOff(func):
-    """
-    Decorator - turn off Maya display while func is running.
-    if func will fail, the error will be raised after.
-    """
-    LOG.warning("viewportOff is deprecated and not necessary Maya2020+")
-
-    @wraps(func)
-    def wrap(*args, **kwargs):
-
-        # Turn $gMainPane Off:
-        mel.eval("paneLayout -e -manage false $gMainPane")
-
-        # Decorator will try/except running the function.
-        # But it will always turn on the viewport at the end.
-        # it will prevent leaving maya viewport off.
-        try:
-            return func(*args, **kwargs)
-        except Exception:
-            mel.eval("paneLayout -e -manage true $gMainPane")
-            raise  # will raise original error
-        finally:
-            mel.eval("paneLayout -e -manage true $gMainPane")
-
-    return wrap
-
-
 def keepselection(func):
     """Decorator method to keep the current selection. Useful where
     the wrapped method messes with the current selection"""
