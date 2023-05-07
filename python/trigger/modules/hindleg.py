@@ -588,7 +588,12 @@ class Hindleg(object):
             cmds.parent(hock_stretch_locs[:2], self.nonScaleGrp)
 
             # foot roll
-            cmds.parentConstraint(toe_trans_loc, self.hock_ik_cont.get_offsets()[-1], maintainOffset=True)
+            # cmds.parentConstraint(toe_trans_loc, self.hock_ik_cont.get_offsets()[-1], maintainOffset=True)
+            _m_matrix, _, _ = connection.matrixConstraint(toe_trans_loc, self.hock_ik_cont.get_offsets()[-1], source_parent_cutoff=self.localOffGrp, maintainOffset=True)
+            # replace the inverse matrix with the world matrix for localoffset / hock offset connection. so local joint will work
+            cmds.connectAttr("{}.worldMatrix[0]".format(self.localOffGrp), "{}.matrixIn[2]".format(_m_matrix), force=True)
+
+            # connection.matrixConstraint(toe_trans_loc, self.hock_ik_cont.get_offsets()[-1], maintainOffset=True)
             cmds.connectAttr("%s.footRoll" % self.foot_ik_cont.name, "%s.rx" % toe_trans_loc)
 
     def create_fk_setup(self):

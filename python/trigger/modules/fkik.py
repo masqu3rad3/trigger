@@ -141,8 +141,8 @@ class Fkik(object):
 
         cmds.select(deselect=True)
         for nmb, j in enumerate(self.inits):
-            jnt = cmds.joint(name="{0}_{1}_jDef".format(self.suffix, nmb))
-            # jnt = cmds.joint(name="jDef_{0}_{1}".format(j, self.suffix))
+            # jnt = cmds.joint(name="{0}_{1}_jDef".format(self.suffix, nmb))
+            jnt = cmds.joint(name="jDef_{0}_{1}".format(j, self.suffix))
             self.sockets.append(jnt)
             self.deformerJoints.append(jnt)
 
