@@ -257,10 +257,10 @@ class Guides(object):
 
         # Draw the joints
         for seg in range(self.segments + 1):
-            tentacle_jnt = cmds.joint(position=(r_point_j + (add_val * seg)),
+            singleton_jnt = cmds.joint(position=(r_point_j + (add_val * seg)),
                                       name="jInit_singleton_%s_%i" % (self.suffix, seg))
             # Update the guideJoints list
-            self.guideJoints.append(tentacle_jnt)
+            self.guideJoints.append(singleton_jnt)
 
         # Update the guideJoints list
 

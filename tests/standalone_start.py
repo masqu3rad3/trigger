@@ -5,7 +5,11 @@ def standalone_prep():
     """Prep the tests in Maya standalone mode.
     """
     import maya.standalone
-    maya.standalone.initialize()
+    try:
+        maya.standalone.initialize()
+    except RuntimeError:
+        # Maya is already initialized
+        pass
 
     # Make sure all paths in PYTHONPATH are also in sys.path
     # When a maya module is loaded, the scripts folder is added to PYTHONPATH, but it doesn't seem

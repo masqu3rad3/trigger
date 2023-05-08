@@ -20,9 +20,10 @@ class Filelog(object):
         self.fileName = filename if filename else "defaultLog"
         self.fileDir = filedir if filedir else os.path.expanduser("~")
         self.filePath = os.path.join(self.fileDir, "%s.log" % self.fileName)
-        self.logger = logging.getLogger(self.fileName)
-        self.logger.setLevel(logging.DEBUG)
         self.logName = logname if logname else self.fileName
+        # self.logger = logging.getLogger(self.fileName)
+        self.logger = logging.getLogger(self.logName)
+        self.logger.setLevel(logging.DEBUG)
         self.isDate = date
         self.isTime = time
         if not os.path.isfile(self.filePath):
@@ -47,10 +48,10 @@ class Filelog(object):
     def _welcome(self):
         """Print the welcome message."""
         self._start_logging()
-        self.logger.debug("=" * len(self.logName))
-        self.logger.debug(self.logName)
-        self.logger.debug("=" * len(self.logName))
-        self.logger.debug("")
+        self.logger.info("=" * len(self.logName))
+        self.logger.info(self.logName)
+        self.logger.info("=" * len(self.logName))
+        self.logger.info("")
         self._end_logging()
 
     def debug(self, msg):

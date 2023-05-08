@@ -81,7 +81,7 @@ def create_attribute(node, property_dict=None, keyable=True, display=True, **kwa
         min_val = property_dict.get("min_value") if property_dict.get("min_value") is not None else -99999
         max_val = property_dict.get("max_value") if property_dict.get("max_value") is not None else 99999
 
-        if not default_value or default_value is "DOESNTEXIST":
+        if not default_value or default_value == "DOESNTEXIST":
             default_value = 0
 
         cmds.addAttr(node,

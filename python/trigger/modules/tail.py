@@ -126,7 +126,7 @@ class Tail(object):
             self.controllers.append(cont)
             self.cont_off_list.append(cont_OFF)
 
-            if jnt is not 0:
+            if jnt != 0:
                 cmds.parent(self.cont_off_list[jnt], self.controllers[jnt - 1].name)
             else:
                 cmds.parent(self.cont_off_list[jnt], self.scaleGrp)
@@ -176,7 +176,7 @@ class Guides(object):
         self.side = side
         self.sideMultiplier = -1 if side == "R" else 1
         self.suffix = suffix
-        self.segments = segments
+        self.segments = segments or 1
         self.tMatrix = om.MMatrix(tMatrix) if tMatrix else om.MMatrix()
         self.upVector = om.MVector(upVector)
         self.mirrorVector = om.MVector(mirrorVector)

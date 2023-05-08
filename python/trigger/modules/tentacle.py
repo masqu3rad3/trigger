@@ -660,7 +660,7 @@ class Guides(object):
         self.side = side
         self.sideMultiplier = -1 if side == "R" else 1
         self.suffix = suffix
-        self.segments = segments
+        self.segments = segments or 2
         self.tMatrix = om.MMatrix(tMatrix) if tMatrix else om.MMatrix()
         self.upVector = om.MVector(upVector)
         self.mirrorVector = om.MVector(mirrorVector)

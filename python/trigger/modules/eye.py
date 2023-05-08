@@ -8,7 +8,7 @@ from trigger.library import controllers as ic
 from trigger.library import tools
 
 from trigger.core import filelog
-log = filelog.Filelog(logname=__name__, filename="trigger_log")
+LOG = filelog.Filelog(logname=__name__, filename="trigger_log")
 
 LIMB_DATA = {"members": ["EyeRoot", "EyeAim"],
              "properties": [
@@ -44,13 +44,13 @@ class Eye(object):
             pass
         elif inits:
             if len(inits) != 2:
-                log.error("Simple FK setup needs exactly 2 initial joints")
+                LOG.error("Simple FK setup needs exactly 2 initial joints")
                 return
             self.inits = inits
             # parse inits
             pass
         else:
-            log.error("Class needs either build_data or inits to be constructed")
+            LOG.error("Class needs either build_data or inits to be constructed")
 
         # get the properties from the root
         self.useRefOrientation = cmds.getAttr("%s.useRefOri" % self.inits[0])
@@ -243,6 +243,7 @@ class Eye(object):
 
     def round_up(self):
         _ = [cmds.connectAttr("%s.jointVis" % self.scaleGrp, "%s.v" % x) for x in self.deformerJoints]
+        self.scaleConstraints.append(self.scaleGrp)
 
     def createLimb(self):
         self.createGrp()
@@ -324,7 +325,7 @@ class Guides(object):
 
     def convertJoints(self, joints_list):
         if len(joints_list) != 2:
-            log.warning("Eye Module needs to have exactly 2 Guid Joints! (root, aim)")
+            LOG.warning("Eye Module needs to have exactly 2 Guid Joints! (root, aim)")
             return
         self.guideJoints = joints_list
         self.define_attributes()

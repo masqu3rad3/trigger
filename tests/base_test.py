@@ -9,6 +9,7 @@ import logging
 import maya.standalone
 from maya import cmds
 
+LOG = logging.getLogger(__name__)
 
 class Settings(object):
     """Contains options for running tests."""
