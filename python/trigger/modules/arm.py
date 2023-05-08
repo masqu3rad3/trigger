@@ -1042,13 +1042,13 @@ class Arm(object):
 
 
 class Guides(object):
-    def __init__(self, side="L", suffix="arm", segments=None, tMatrix=None, upVector=(0, 1, 0), mirrorVector=(1, 0, 0),
+    def __init__(self, side="L", name="arm", segments=None, tMatrix=None, upVector=(0, 1, 0), mirrorVector=(1, 0, 0),
                  lookVector=(0, 0, 1), *args, **kwargs):
         super(Guides, self).__init__()
 
         self.side = side
         self.sideMultiplier = -1 if side == "R" else 1
-        self.suffix = suffix
+        self.name = name
         self.segments = segments
         self.tMatrix = om.MMatrix(tMatrix) if tMatrix else om.MMatrix()
         self.upVector = om.MVector(upVector)
@@ -1075,15 +1075,11 @@ class Guides(object):
         self.offsetVector = -((collar_vec - shoulder_vec).normalize())
 
         cmds.select(deselect=True)
-        # collar = cmds.joint(position=collar_vec, name=("jInit_collar_%s" % self.suffix))
-        collar = cmds.joint(position=collar_vec, name=naming.parse([self.suffix, "collar"], side=self.side, suffix="jInit"))
+        collar = cmds.joint(position=collar_vec, name=naming.parse([self.name, "collar"], side=self.side, suffix="jInit"))
         cmds.setAttr("{0}.radius".format(collar), 2)
-        # shoulder = cmds.joint(position=shoulder_vec, name=("jInit_shoulder_%s" % self.suffix))
-        shoulder = cmds.joint(position=shoulder_vec, name=naming.parse([self.suffix, "shoulder"], side=self.side, suffix="jInit"))
-        # elbow = cmds.joint(position=elbow_vec, name=("jInit_elbow_%s" % self.suffix))
-        elbow = cmds.joint(position=elbow_vec, name=naming.parse([self.suffix, "elbow"], side=self.side, suffix="jInit"))
-        # hand = cmds.joint(position=hand_vec, name=("jInit_hand_%s" % self.suffix))
-        hand = cmds.joint(position=hand_vec, name=naming.parse([self.suffix, "hand"], side=self.side, suffix="jInit"))
+        shoulder = cmds.joint(position=shoulder_vec, name=naming.parse([self.name, "shoulder"], side=self.side, suffix="jInit"))
+        elbow = cmds.joint(position=elbow_vec, name=naming.parse([self.name, "elbow"], side=self.side, suffix="jInit"))
+        hand = cmds.joint(position=hand_vec, name=naming.parse([self.name, "hand"], side=self.side, suffix="jInit"))
 
         self.guideJoints = [collar, shoulder, elbow, hand]
 

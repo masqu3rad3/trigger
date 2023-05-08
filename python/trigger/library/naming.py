@@ -239,5 +239,5 @@ def parse(labels, prefix="", suffix="", side=""):
         labels = [labels]
     elements = [side, prefix] + labels + [suffix]
     # filter the elements to remove empty strings
-    elements = [e for e in elements if e]
+    elements = [str(e) for e in elements if e]
     return "_".join(elements)

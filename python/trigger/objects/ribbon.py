@@ -206,20 +206,9 @@ class Ribbon(object):
 
         """
         nodes = [node_a, node_b] if node_b else node_a
-        constraint = cmds.parentConstraint(nodes, self._startPlug, mo=True)
+        constraint = cmds.parentConstraint(nodes, self._startPlug, maintainOffset=True)
         self._switch_weights(nodes, [switch_a, switch_b], constraint)
         return constraint
-
-    #
-    # def pin_start(self, node_a, node_b=None, switch_a=None, switch_b=None):
-    #     nodes = [node_a, node_b] if node_b else node_a
-    #     _, __, ave = connection.matrixConstraint(nodes, self._startPlug, mo=True, ss="xyz")
-    #
-    #     for nmb, sw in enumerate([switch_a, switch_b]):
-    #         if sw:
-    #             cmds.connectAttr("%s.wtMatrix[%i].weightIn" % (ave, nmb), sw)
-    #     if switch_a and not switch_b:
-    #         attribute.drive_attrs(switch_a, ["%s.wtMatrix[1].weightIn" % ave], [0, 1], [1, 0])
 
     def pin_end(self, node_a, node_b=None, switch_a=None, switch_b=None):
         """
@@ -236,25 +225,9 @@ class Ribbon(object):
 
         """
         nodes = [node_a, node_b] if node_b else node_a
-        constraint = cmds.parentConstraint(nodes, self._endPlug, mo=True)
+        constraint = cmds.parentConstraint(nodes, self._endPlug, maintainOffset=True)
         self._switch_weights(nodes, [switch_a, switch_b], constraint)
         return constraint
-
-    # def pin_end(self, node_a, node_b=None, switch_a=None, switch_b=None):
-    #     nodes = [node_a, node_b] if node_b else node_a
-    #     _, __, ave = connection.matrixConstraint(nodes, self._endPlug, mo=True, ss="xyz")
-    #     for nmb, sw in enumerate([switch_a, switch_b]):
-    #         if sw:
-    #             cmds.connectAttr("%s.wtMatrix[%i].weightIn" % (ave, nmb), sw)
-    #     if switch_a and not switch_b:
-    #         attribute.drive_attrs(switch_a, ["%s.wtMatrix[1].weightIn" % ave], [0, 1], [1, 0])
-
-    # if switch_a:
-    #     cmds.connectAttr("%s.wtMatrix[0].weightIn" % ave, switch_a)
-    # if switch_b:
-    #     cmds.connectAttr("%s.wtMatrix[1].weightIn" % ave, switch_b)
-    # else:
-    #     attribute.drive_attrs(switch_a, ["%s.wtMatrix[1].weightIn" % ave], [0, 1], [1, 0])
 
     def orient(self, node_a, node_b=None, switch_a=None, switch_b=None):
         """
@@ -271,7 +244,7 @@ class Ribbon(object):
 
         """
         nodes = [node_a, node_b] if node_b else node_a
-        constraint = cmds.parentConstraint(nodes, self._startAim, mo=True, skipTranslate=["x", "y", "z"])[0]
+        constraint = cmds.parentConstraint(nodes, self._startAim, maintainOffset=True, skipTranslate=["x", "y", "z"])[0]
         self._switch_weights(nodes, [switch_a, switch_b], constraint)
         return constraint
 
@@ -279,7 +252,7 @@ class Ribbon(object):
     def _switch_weights(nodes, switches, constraint):
         if not nodes or not any(switches):
             return
-        attrs = cmds.listAttr(constraint, ud=True)
+        attrs = cmds.listAttr(constraint, userDefined=True)
         for attr, sw in zip(attrs, switches):
             if sw:
                 cmds.connectAttr(sw, "%s.%s" % (constraint, attr))
@@ -298,9 +271,9 @@ class Ribbon(object):
     def _create_groups(self):
         """Creates the holding groups"""
 
-        self._ribbonGrp = cmds.group(name=self._name, em=True)
-        self._scaleGrp = cmds.group(name="RBN_ScaleGrp_%s" % self._name, em=True)
-        self._nonScaleGrp = cmds.group(name="RBN_nonScaleGrp_%s" % self._name, em=True)
+        self._ribbonGrp = cmds.group(name=naming.parse(self._name, suffix="grp"), empty=True)
+        self._scaleGrp = cmds.group(name=naming.parse([self._name, "RBN", "scale"], suffix="grp"), empty=True)
+        self._nonScaleGrp = cmds.group(name=naming.parse([self._name, "RBN", "nonScale"], suffix="grp"), empty=True)
         cmds.parent([self._scaleGrp, self._nonScaleGrp], self._ribbonGrp)
 
     def _initial_ribbon(self, length):
@@ -314,54 +287,78 @@ class Ribbon(object):
             (string) nurbs surface shape
 
         """
-        n_surf_trans = \
-            cmds.nurbsPlane(ax=(0, 0, 1), u=float(self._ribbonResolution), v=1, w=length,
-                            lr=(1.0 / length),
-                            name="nSurf_%s" % self._name)[0]
+
+        n_surf_trans = cmds.nurbsPlane(axis=(0, 0, 1),
+                                       patchesU=int(self._ribbonResolution),
+                                       patchesV=1,
+                                       width=length,
+                                       lengthRatio=(1.0 / length),
+                                       name=naming.parse([self._name], suffix="nSurf")
+                                       )[0]
         cmds.parent(n_surf_trans, self._nonScaleGrp)
-        cmds.rebuildSurface(n_surf_trans, ch=1, rpo=1, rt=0, end=1, kr=2, kcp=0, kc=0, su=5, du=3, sv=1, dv=1, tol=0,
-                            fr=0, dir=1)
-        cmds.makeIdentity(a=True)
+
+        cmds.rebuildSurface(n_surf_trans,
+                            constructionHistory=True,
+                            replaceOriginal=True,
+                            rebuildType=0,
+                            endKnots=1,
+                            keepRange=2,
+                            keepControlPoints=False,
+                            keepCorners=False,
+                            spansU=5,
+                            degreeU=3,
+                            spansV=1,
+                            degreeV=1,
+                            tolerance=0,
+                            fitRebuild=0,
+                            direction=1
+                            )
+        cmds.makeIdentity(apply=True)
         n_surf = functions.get_shapes(n_surf_trans)[0]
         self._toHide.append(n_surf_trans)
 
         # Start up nodes
-        cmds.select(d=True)
-        self._startAim = cmds.group(em=True, name="jRbn_Start_CON_%s" % self._name)
+        cmds.select(clear=True)
+        self._startAim = cmds.group(empty=True, name=naming.parse([self._name, "start", "aim"], suffix="grp"))
         cmds.move(-(length * 0.5), 0, 0, self._startAim)
-        cmds.makeIdentity(self._startAim, a=True)
-        # start_ore = cmds.duplicate(self._startAim, name="jRbn_Start_ORE_%s" % self._name)[0]
-        # cmds.parent(start_ore, self._startAim)
+        cmds.makeIdentity(self._startAim, apply=True)
 
-        self._startUp = cmds.spaceLocator(name="jRbn_StartUp_%s" % self._name)[0]
+        self._startUp = cmds.spaceLocator(name=naming.parse([self._name, "start", "up"], suffix="loc"))[0]
         self._toHide.append(functions.get_shapes(self._startUp)[0])
         cmds.move(-(length * 0.5), 0.5, 0, self._startUp)
 
-        self._startPlug = cmds.spaceLocator(name="jRbn_StartCn_%s" % self._name)[0]
+        self._startPlug = cmds.spaceLocator(name=naming.parse([self._name, "start", "plug"], suffix="loc"))[0]
         self._toHide.append(functions.get_shapes(self._startPlug)[0])
         cmds.move(-(length * 0.5), 0, 0, self._startPlug)
-        cmds.makeIdentity(self._startPlug, a=True)
+        cmds.makeIdentity(self._startPlug, apply=True)
 
         cmds.parent(self._startAim, self._startUp, self._startPlug)
         # cmds.parent(self._startPlug, self._scaleGrp)
 
         if self._scaleable:
-            cmds.addAttr(self._startPlug, shortName="scaleSwitch", longName="Scale_Switch",
-                         defaultValue=1.0, at="float", minValue=0.0, maxValue=1.0, k=True)
+            cmds.addAttr(self._startPlug,
+                         shortName="scaleSwitch",
+                         longName="Scale_Switch",
+                         defaultValue=1.0,
+                         attributeType="float",
+                         minValue=0.0,
+                         maxValue=1.0,
+                         keyable=True
+                         )
 
         # End Upnodes
-        cmds.select(d=True)
-        self._endAim = cmds.group(name="jRbn_End_%s_AIM" % self._name, em=True)
+        cmds.select(clear=True)
+        self._endAim = cmds.group(name=naming.parse([self._name, "end", "aim"], suffix="grp"), empty=True)
         cmds.move(-(length * -0.5), 0, 0, self._endAim)
-        cmds.makeIdentity(self._endAim, a=True)
-        self._endUp = cmds.spaceLocator(name="jRbn_End_%s_UP" % self._name)[0]
+        cmds.makeIdentity(self._endAim, apply=True)
+        self._endUp = cmds.spaceLocator(name=naming.parse([self._name, "end", "up"], suffix="loc"))[0]
         self._toHide.append(functions.get_shapes(self._endUp)[0])
         cmds.move(-(length * -0.5), 0.5, 0, self._endUp)
 
-        self._endPlug = cmds.spaceLocator(name="jRbn_End_%s_endCon" % self._name)[0]
+        self._endPlug = cmds.spaceLocator(name=naming.parse([self._name, "end", "plug"], suffix="loc"))[0]
         self._toHide.append(functions.get_shapes(self._endPlug)[0])
         cmds.move(-(length * -0.5), 0, 0, self._endPlug)
-        cmds.makeIdentity(self._endPlug, a=True)
+        cmds.makeIdentity(self._endPlug, apply=True)
 
         return n_surf
 
@@ -373,8 +370,8 @@ class Ribbon(object):
             _uv = (0.1 + (index / float(self._jointResolution)), 0.5)
             follicle_transform, follicle = connection.create_follicle(_name, n_surf, _uv)
             attribute.lock_and_hide(follicle_transform, ["tx", "ty", "tz", "rx", "ry", "rz"], hide=False)
-            def_j = cmds.joint(name="jDef_%s%i" % (self._name, index))
-            cmds.joint(def_j, e=True, zso=True, oj='zxy')
+            def_j = cmds.joint(name=naming.parse([self._name, index], suffix="jDef"))
+            cmds.joint(def_j, edit=True, zeroScaleOrient=True, orientJoint='zxy')
             self._deformerJoints.append(def_j)
             cmds.parent(follicle_transform, self._nonScaleGrp)
             self._toHide.append(follicle)
@@ -389,14 +386,16 @@ class Ribbon(object):
                 self._toHide.append(follicle)
                 attribute.lock_and_hide(follicle_transform, ["tx", "ty", "tz", "rx", "ry", "rz"], hide=False)
                 cmds.parent(follicle_transform, self._nonScaleGrp)
-                dist_node = cmds.createNode("distanceBetween", name="fDistance_%s%i" % (self._name, index))
+                dist_node = cmds.createNode("distanceBetween",
+                                            name=naming.parse([self._name, "fDistance", index], suffix="loc"))
                 cmds.connectAttr("%s.outTranslate" % follicle_list[index], "%s.point1" % dist_node)
                 cmds.connectAttr("%s.outTranslate" % follicle, "%s.point2" % dist_node)
 
                 mult_plug = op.multiply("%s.distance" % dist_node, 2)
                 global_mult_plug = op.multiply(mult_plug, "%s.scaleX" % self._scaleGrp)
                 global_div_plug = op.divide(global_mult_plug, "%s.scaleX" % self._scaleGrp)
-                global_mixer = cmds.createNode("blendColors", name="fGlobMix_%s%i" % (self._name, index))
+                global_mixer = cmds.createNode("blendColors",
+                                               name=naming.parse([self._name, "fGlobMix", index], suffix="blend"))
 
                 for ch in "RGB":
                     cmds.connectAttr(global_div_plug, "{0}.color1{1}".format(global_mixer, ch))
@@ -411,24 +410,25 @@ class Ribbon(object):
         interval = length / (self._controllerCount + 1)
 
         for index in range(self._controllerCount):
-            cont = Controller(name="cont_midRbn_%s%i" % (self._name, index + 1),
-                              shape="Star",
-                              tier="secondary",
-                              normal=(1, 0, 0),
-                              pos=(-(length / 2.0) + (interval * (index + 1)), 0, 0),
-                              )
+            cont = Controller(
+                name=naming.parse([self._name, "midRbn", index + 1], suffix="cont"),
+                shape="Star",
+                tier="secondary",
+                normal=(1, 0, 0),
+                pos=(-(length / 2.0) + (interval * (index + 1)), 0, 0),
+            )
             yield cont.name
 
-    def _create_control_joints(self):
-        cmds.select(d=True)
-        start_joint = cmds.joint(name="jRbn_Start_%s" % self._name, radius=2)
-        self._toHide.append(start_joint)
-        functions.align_to(start_joint, self._startAim)
-
-        cmds.select(d=True)
-        end_joint = cmds.joint(name="jRbn_End_%s" % self._name, radius=2)
-        self._toHide.append(end_joint)
-        functions.align_to(end_joint, self._endAim)
+    # def _create_control_joints(self):
+    #     cmds.select(clear=True)
+    #     start_joint = cmds.joint(name=naming.parse([self._name, "start"], suffix="j"), radius=2)
+    #     self._toHide.append(start_joint)
+    #     functions.align_to(start_joint, self._startAim)
+    #
+    #     cmds.select(clear=True)
+    #     end_joint = cmds.joint(name=naming.parse([self._name, "end"], suffix="j"), radius=2)
+    #     self._toHide.append(end_joint)
+    #     functions.align_to(end_joint, self._endAim)
 
     def create(self):
         if not self._validate():
@@ -445,14 +445,14 @@ class Ribbon(object):
         # cmds.error("WER")
 
         # create control joints
-        cmds.select(d=True)
-        start_joint = cmds.joint(name="jRbn_Start_%s" % self._name, radius=2)
+        cmds.select(clear=True)
+        start_joint = cmds.joint(name=naming.parse([self._name, "start"], suffix="j"), radius=2)
         self._toHide.append(start_joint)
         functions.align_to(start_joint, self._startAim)
         # cmds.move(-(ribbon_length / 2.0), 0, 0, start_joint)
 
-        cmds.select(d=True)
-        end_joint = cmds.joint(name="jRbn_End_%s" % self._name, radius=2)
+        cmds.select(clear=True)
+        end_joint = cmds.joint(name=naming.parse([self._name, "end"], suffix="j"), radius=2)
         self._toHide.append(end_joint)
         cmds.move((ribbon_length / 2.0), 0, 0, end_joint)
 
@@ -461,8 +461,8 @@ class Ribbon(object):
         if self._controllerList:
             counter += 1
             for ctrl in self._controllerList:
-                cmds.select(d=True)
-                mid_j = cmds.joint(name="jRbn_Mid_%i_%s" % (counter, self._name), radius=2)
+                cmds.select(clear=True)
+                mid_j = cmds.joint(name=naming.parse([self._name, "mid", counter], suffix="j"), radius=2)
                 functions.align_to_alter(mid_j, ctrl)
                 mid_joint_list.append(mid_j)
         else:
@@ -470,50 +470,68 @@ class Ribbon(object):
 
             for index in range(self._controllerCount):
                 counter += 1
-                cmds.select(d=True)
-                mid_j = cmds.joint(name="jRbn_Mid_%i_%s" % (index, self._name),
-                                   p=(-(ribbon_length / 2.0) + (interval * counter), 0, 0), radius=2)
+                cmds.select(clear=True)
+                mid_j = cmds.joint(
+                    name=naming.parse([self._name, "mid", index], suffix="j"),
+                    position=(-(ribbon_length / 2.0) + (interval * counter), 0, 0),
+                    radius=2)
                 mid_joint_list.append(mid_j)
 
-        cmds.skinCluster(start_joint, end_joint, mid_joint_list, n_surf, tsb=True, dropoffRate=self._dropoff)
+        cmds.skinCluster(start_joint, end_joint, mid_joint_list, n_surf, toSelectedBones=True,
+                         dropoffRate=self._dropoff)
 
         # cmds.parent(start_joint, start_ore)
         cmds.parent(start_joint, self._startAim)
         if self._connectStartAim:
             # aim it to the next mid joint after the start
-            cmds.aimConstraint(mid_joint_list[0], self._startAim, aimVector=(1, 0, 0), upVector=(0, 1, 0), wut=1,
-                               wuo=self._startUp, mo=False)
+            cmds.aimConstraint(
+                mid_joint_list[0],
+                self._startAim,
+                aimVector=(1, 0, 0),
+                upVector=(0, 1, 0),
+                worldUpType="object",
+                worldUpObject=self._startUp,
+                maintainOffset=False
+            )
 
         cmds.parent(self._endAim, self._endUp, self._endPlug)
         # cmds.parent(self._endPlug, self._scaleGrp)
         cmds.parent(end_joint, self._endAim)
-        cmds.aimConstraint(mid_joint_list[-1], self._endAim, aimVector=(1, 0, 0), upVector=(0, 1, 0), wut=1,
-                           wuo=self._endUp, mo=True)
+        cmds.aimConstraint(
+            mid_joint_list[-1],
+            self._endAim,
+            aimVector=(1, 0, 0),
+            upVector=(0, 1, 0),
+            worldUpType="object",
+            worldUpObject=self._endUp,
+            maintainOffset=True
+        )
 
         # middle_pos_list = []
         # counter = 0
 
-        cmds.delete(cmds.pointConstraint([self._startPlug, self._endPlug], self._scaleGrp, mo=False)[0])
+        cmds.delete(cmds.pointConstraint([self._startPlug, self._endPlug], self._scaleGrp, maintainOffset=False)[0])
 
-        cmds.makeIdentity(self._scaleGrp, a=True, t=True)
+        cmds.makeIdentity(self._scaleGrp, apply=True, translate=True)
 
         cmds.parent([self._startPlug, self._endPlug], self._scaleGrp)
 
         for nmb, mid in enumerate(mid_joint_list):
             # counter += 1
-            mid_cont = Controller(shape="Circle", name="cont_midRbn_%s%i" % (self._name, nmb + 1), normal=(1, 0, 0))
+            mid_cont = Controller(shape="Circle", name=naming.parse([self._name, "midRbn", nmb + 1], suffix="cont"),
+                                  normal=(1, 0, 0))
             self._controllers.append(mid_cont)
-            middle_off = cmds.spaceLocator(name="mid_OFF_%s%i" % (self._name, nmb + 1))[0]
+            middle_off = cmds.spaceLocator(name=naming.parse([self._name, "off", nmb + 1], suffix="loc"))[0]
             self._toHide.append(functions.get_shapes(middle_off)[0])
-            middle_aim = cmds.group(em=True, name="mid_AIM_%s%i" % (self._name, nmb + 1))
+            middle_aim = cmds.group(empty=True, name=naming.parse([self._name, "aim", nmb + 1], suffix="grp"))
             functions.align_to(middle_aim, mid, position=True, rotation=False)
-            middle_up = cmds.spaceLocator(name="mid_UP_{0}{1}".format(self._name, nmb + 1))[0]
+            middle_up = cmds.spaceLocator(name=naming.parse([self._name, "mid", "up", nmb + 1], suffix="loc"))[0]
             self._toHide.append(functions.get_shapes(middle_up)[0])
 
             functions.align_to(middle_up, mid, position=True, rotation=False)
             cmds.setAttr("%s.ty" % middle_up, 0.5)
 
-            middle_pos = cmds.spaceLocator(name="mid_POS_{0}{1}".format(self._name, nmb + 1))[0]
+            middle_pos = cmds.spaceLocator(name=naming.parse([self._name, "mid", "pos", nmb + 1], suffix="loc"))[0]
             cmds.parent(middle_pos, self._scaleGrp)
             self._toHide.append(functions.get_shapes(middle_pos)[0])
             functions.align_to(middle_pos, mid, position=True, rotation=False)
@@ -522,8 +540,15 @@ class Ribbon(object):
             cmds.parent(mid_cont.name, middle_off)
             cmds.parent(middle_off, middle_aim)
             cmds.parent(middle_up, middle_aim, middle_pos)
-            cmds.aimConstraint(self._startPlug, middle_aim, aimVector=(0, 0, -1), upVector=(0, 1, 0), wut=1,
-                               wuo=middle_up, mo=True)
+            cmds.aimConstraint(
+                self._startPlug,
+                middle_aim,
+                aimVector=(0, 0, -1),
+                upVector=(0, 1, 0),
+                worldUpType="object",
+                worldUpObject=middle_up,
+                maintainOffset=True
+            )
             cmds.pointConstraint(self._startPlug, self._endPlug, middle_pos)
 
             cmds.pointConstraint(self._startUp, self._endUp, middle_up)
