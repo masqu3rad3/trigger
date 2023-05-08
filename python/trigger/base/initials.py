@@ -1,4 +1,3 @@
-from pprint import pprint
 import importlib
 from maya import cmds
 import maya.api.OpenMaya as om
@@ -92,7 +91,6 @@ class Initials(object):
 
     @undo
     def initLimb(self, limb_name, whichSide="left", constrainedTo=None, parentNode=None, defineAs=False, *args, **kwargs):
-
         if limb_name not in self.valid_limbs:
             log.error("%s is not a valid limb" % limb_name)
 

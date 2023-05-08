@@ -500,7 +500,6 @@ class Ribbon(object):
         cmds.parent([self._startPlug, self._endPlug], self._scaleGrp)
 
         for nmb, mid in enumerate(mid_joint_list):
-            print(mid)
             # counter += 1
             mid_cont = Controller(shape="Circle", name="cont_midRbn_%s%i" % (self._name, nmb + 1), normal=(1, 0, 0))
             self._controllers.append(mid_cont)

@@ -798,7 +798,7 @@ def matrix_constrain_localised(
                      "{}.matrixIn[2]".format(mult_matrix))
     # decompose result #
     decomp_matrix = cmds.createNode("decomposeMatrix",
-                                    n="{}_decomposeMatrix".format(destination))
+                                    name="{}_decomposeMatrix".format(destination))
     cmds.connectAttr("{}.matrixSum".format(mult_matrix),
                      "{}.inputMatrix".format(decomp_matrix))
 

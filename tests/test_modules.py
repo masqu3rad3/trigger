@@ -1,11 +1,15 @@
+import sys
 
 import maya.cmds as cmds
 import base_test
-import logging
+from trigger.core import filelog
 
 from standalone_start import standalone_prep
 
-LOG = logging.getLogger(__name__)
+
+LOG = filelog.Filelog(logname=__name__, filename="trigger_log")
+
+LOG.title("Module Tests")
 
 class ModuleTests(base_test.TestCase):
 
@@ -32,7 +36,7 @@ class ModuleTests(base_test.TestCase):
     #     maya.standalone.uninitialize()
 
     def test_arm(self):
-        LOG.info("test_arm")
+        # LOG.info("test_arm")
 
         kinematics = self.basic_creation_test("arm")
         self.assertTrue(kinematics)
@@ -42,7 +46,7 @@ class ModuleTests(base_test.TestCase):
         self.assertTrue(kinematics2)
 
     def test_base(self):
-        LOG.info("test_base")
+        # LOG.info("test_base")
 
         kinematics = self.basic_creation_test("base")
         self.assertTrue(kinematics)
@@ -52,7 +56,7 @@ class ModuleTests(base_test.TestCase):
         self.assertTrue(kinematics2)
 
     def test_connector(self):
-        LOG.info("connector")
+        # LOG.info("connector")
 
         kinematics = self.basic_creation_test("connector")
         self.assertTrue(kinematics)
@@ -62,7 +66,7 @@ class ModuleTests(base_test.TestCase):
         self.assertTrue(kinematics2)
 
     def test_eye(self):
-        LOG.info("eye")
+        # LOG.info("eye")
 
         kinematics = self.basic_creation_test("eye")
         self.assertTrue(kinematics)
@@ -72,7 +76,7 @@ class ModuleTests(base_test.TestCase):
         self.assertTrue(kinematics2)
 
     def test_finger(self):
-        LOG.info("finger")
+        # LOG.info("finger")
 
         kinematics = self.basic_creation_test("finger")
         self.assertTrue(kinematics)
@@ -82,7 +86,7 @@ class ModuleTests(base_test.TestCase):
         self.assertTrue(kinematics2)
 
     def test_fkik(self):
-        LOG.info("fkik")
+        # LOG.info("fkik")
 
         kinematics = self.basic_creation_test("fkik")
         self.assertTrue(kinematics)
@@ -92,7 +96,7 @@ class ModuleTests(base_test.TestCase):
         self.assertTrue(kinematics2)
 
     def test_head(self):
-        LOG.info("head")
+        # LOG.info("head")
 
         kinematics = self.basic_creation_test("head")
         self.assertTrue(kinematics)
@@ -102,7 +106,7 @@ class ModuleTests(base_test.TestCase):
         self.assertTrue(kinematics2)
 
     def test_hindleg(self):
-        LOG.info("test_hindleg")
+        # LOG.info("test_hindleg")
 
         kinematics = self.basic_creation_test("hindleg")
         self.assertTrue(kinematics)
@@ -112,7 +116,7 @@ class ModuleTests(base_test.TestCase):
         self.assertTrue(kinematics2)
 
     def test_leg(self):
-        LOG.info("test_leg")
+        # LOG.info("test_leg")
 
         kinematics = self.basic_creation_test("leg")
         self.assertTrue(kinematics)
@@ -123,7 +127,7 @@ class ModuleTests(base_test.TestCase):
 
 
     def test_singleton(self):
-        LOG.info("test_singleton")
+        # LOG.info("test_singleton")
 
         kinematics = self.basic_creation_test("singleton")
         self.assertTrue(kinematics)
@@ -136,7 +140,7 @@ class ModuleTests(base_test.TestCase):
         self.assertTrue(kinematics2)
 
     def test_spine(self):
-        LOG.info("test_spine")
+        # LOG.info("test_spine")
 
         kinematics = self.basic_creation_test("spine")
         self.assertTrue(kinematics)
@@ -146,7 +150,7 @@ class ModuleTests(base_test.TestCase):
         self.assertTrue(kinematics2)
 
     def test_surface(self):
-        LOG.info("test_surface")
+        # LOG.info("test_surface")
 
         kinematics = self.basic_creation_test("surface")
         self.assertTrue(kinematics)
@@ -156,7 +160,7 @@ class ModuleTests(base_test.TestCase):
         self.assertTrue(kinematics2)
 
     def test_tail(self):
-        LOG.info("test_tail")
+        # LOG.info("test_tail")
 
         kinematics = self.basic_creation_test("tail")
         self.assertTrue(kinematics)
@@ -166,7 +170,7 @@ class ModuleTests(base_test.TestCase):
         self.assertTrue(kinematics2)
 
     def test_tentacle(self):
-        LOG.info("test_tentacle")
+        # LOG.info("test_tentacle")
 
         # single tentacle
         kinematics = self.basic_creation_test("tentacle")
@@ -177,7 +181,7 @@ class ModuleTests(base_test.TestCase):
         self.assertTrue(kinematics2)
 
     def test_humanoid(self):
-        LOG.info("test_humanoid")
+        # LOG.info("test_humanoid")
         # self.reset_scene()
         self.guides_handler.reset_scene()
         self.guides_handler.init.initHumanoid()
@@ -194,14 +198,16 @@ class ModuleTests(base_test.TestCase):
         root_guides = []
         previous_end_guide = None
         for module_name in module_names:
+            cmds.select(clear=True)
             locators, side_dict = self.guides_handler.init.initLimb(module_name, whichSide="left", defineAs=False)
             first_guide = list(side_dict.values())[0][0]
             root_guides.append(first_guide)
 
             if previous_end_guide:
                 # ToDo: this is not working
-                print("first_guide", first_guide)
-                print("previous_end_guide", previous_end_guide)
+                # LOG.debug("first_guide: {}".format(first_guide))
+                # LOG.debug("previous_end_guide: {}".format(previous_end_guide))
+
                 cmds.parent(first_guide, previous_end_guide)
                 cmds.setAttr("{}.translate".format(first_guide), 0, 0, 0)
             previous_end_guide = list(side_dict.values())[0][-1]

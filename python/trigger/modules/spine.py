@@ -123,17 +123,17 @@ class Spine(object):
     def create_joints(self):
         # draw Joints
         # # Create Plug Joints
-        cmds.select(None)
+        cmds.select(clear=True)
         self.limbPlug = cmds.joint(name="limbPlug_%s" % self.suffix, p=self.rootPoint, radius=3)
-        cmds.select(None)
+        cmds.select(clear=True)
         self.endSocket = cmds.joint(name="jDef_ChestSocket_%s" % self.suffix, p=self.chestPoint)
         self.sockets.append(self.endSocket)
-        cmds.select(None)
+        cmds.select(clear=True)
         self.startSocket = cmds.joint(p=self.rootPoint, name="jDef_RootSocket_%s" % self.suffix, radius=3)
         self.sockets.append(self.startSocket)
 
         ## Create temporaray Guide Joints
-        cmds.select(d=True)
+        cmds.select(clear=True)
         self.guideJoints = [cmds.joint(p=api.get_world_translation(i)) for i in self.inits]
 
         if not self.useRefOrientation:

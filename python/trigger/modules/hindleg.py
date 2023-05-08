@@ -39,7 +39,6 @@ class Hindleg(object):
 
         # reinitialize the initial Joints
         if build_data:
-            log.debug(build_data)
             self.hindleg_root_ref = build_data["HindlegRoot"]
             self.hindhip_ref = build_data["Hindhip"]
             self.stifle_ref = build_data["Stifle"]
@@ -702,7 +701,6 @@ class Hindleg(object):
             cmds.connectAttr("%s.s" % self.scaleHook, "%s.s" % ribbon_pastern.scale_grp)
 
         tweak_conts = ribbon_upper_leg.controllers + ribbon_lower_leg.controllers + ribbon_pastern.controllers
-        log.warning(tweak_conts)
         attribute.drive_attrs("%s.tweakControls" % self.switch_cont.name, ["%s.v" % x.name for x in tweak_conts])
 
         # add the ribbon deformer joints to the leg module

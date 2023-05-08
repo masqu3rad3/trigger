@@ -6,7 +6,7 @@ from trigger.library import attribute
 from trigger.objects.controller import Controller
 
 from trigger.core import filelog
-log = filelog.Filelog(logname=__name__, filename="trigger_log")
+LOG = filelog.Filelog(logname=__name__, filename="trigger_log")
 
 
 LIMB_DATA = {
@@ -28,7 +28,7 @@ class Connector(object):
         super(Connector, self).__init__()
         if build_data:
             if len(build_data.keys()) > 1:
-                log.error("Connector can only have one initial joint")
+                LOG.error("Connector can only have one initial joint")
                 return
             self.rootInit = build_data["Root"]
         elif inits:
@@ -37,7 +37,7 @@ class Connector(object):
                 return
             self.rootInit = inits[0]
         else:
-            log.error("Class needs either build_data or inits to be constructed")
+            LOG.error("Class needs either build_data or inits to be constructed")
 
         # get module properties
         self.useRefOrientation = cmds.getAttr("%s.useRefOri" % self.rootInit)
@@ -73,8 +73,9 @@ class Connector(object):
         Returns: None
 
         """
-        log.info("Creating Root %s" % self.suffix)
+        LOG.info("Creating Root %s" % self.suffix)
 
+        cmds.select(clear=True)
         self.scaleGrp = cmds.group(name="%s_scaleGrp" % self.suffix, em=True)
         cmds.addAttr(self.scaleGrp, at="bool", ln="Control_Visibility", sn="contVis", defaultValue=True)
         cmds.addAttr(self.scaleGrp, at="bool", ln="Joints_Visibility", sn="jointVis", defaultValue=True)
@@ -91,7 +92,6 @@ class Connector(object):
 
         defJ_root = cmds.joint(name="jDef_%s" % self.suffix)
 
-        log.warning(self.useRefOrientation)
         functions.align_to(defJ_root, self.rootInit, position=True, rotation=self.useRefOrientation)
 
         functions.colorize(defJ_root, self.colorCodes[0])
@@ -172,7 +172,7 @@ class Guides(object):
 
     def convertJoints(self, joints_list):
         if len(joints_list) != 1:
-            log.warning("Define or select a single joint for Root Guide conversion. Skipping")
+            LOG.warning("Define or select a single joint for Root Guide conversion. Skipping")
             return
         self.guideJoints = joints_list
         self.define_attributes()

@@ -179,10 +179,6 @@ def replace_curve(orig_curve, new_curve, snap=True, transfer_color=True):
     # For each shape, transfer from original to new.
     for new_shape, orig_shape in zip(new_shapes, orig_shapes):
         if color:
-            print("-----------")
-            print("-----------")
-            print("-----------")
-            print("COLOR")
             cmds.setAttr("{}.overrideEnabled".format(new_shape), 1)
             cmds.setAttr("{}.overrideColor".format(new_shape), color)
         cmds.connectAttr("{}.worldSpace".format(new_shape), "{}.create".format(orig_shape))
