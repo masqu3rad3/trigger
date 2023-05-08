@@ -172,7 +172,7 @@ class Arm(object):
 
         # limb plug
         cmds.select(deselect=True)
-        self.limbPlug = cmds.joint(name=naming.parse([self.module_name], suffix="plug"), position=self.collar_pos, radius=3)
+        self.limbPlug = cmds.joint(name=naming.parse([self.module_name, "plug"], suffix="j"), position=self.collar_pos, radius=3)
         cmds.parent(self.limbPlug, self.limbGrp)
         connection.matrixConstraint(self.limbPlug, self.contBindGrp, maintainOffset=True)
         if self.isLocal:

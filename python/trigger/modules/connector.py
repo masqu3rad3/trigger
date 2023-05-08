@@ -48,7 +48,7 @@ class Connector(object):
         except ValueError:
             self.curveAsShape = False
 
-        self.suffix = (naming.unique_name(cmds.getAttr("%s.moduleName" % self.rootInit)))
+        self.module_name = (naming.unique_name(cmds.getAttr("%s.moduleName" % self.rootInit)))
 
         self.controllers = []
         self.limbGrp = None
@@ -73,24 +73,24 @@ class Connector(object):
         Returns: None
 
         """
-        LOG.info("Creating Root %s" % self.suffix)
+        LOG.info("Creating Root %s" % self.module_name)
 
         cmds.select(clear=True)
-        self.scaleGrp = cmds.group(name="%s_scaleGrp" % self.suffix, em=True)
-        cmds.addAttr(self.scaleGrp, at="bool", ln="Control_Visibility", sn="contVis", defaultValue=True)
-        cmds.addAttr(self.scaleGrp, at="bool", ln="Joints_Visibility", sn="jointVis", defaultValue=True)
-        cmds.addAttr(self.scaleGrp, at="bool", ln="Rig_Visibility", sn="rigVis", defaultValue=False)
+        self.scaleGrp = cmds.group(name=naming.parse([self.module_name, "scale"], suffix="grp"), empty=True)
+        cmds.addAttr(self.scaleGrp, attributeType="bool", longName="Control_Visibility", shortName="contVis", defaultValue=True)
+        cmds.addAttr(self.scaleGrp, attributeType="bool", longName="Joints_Visibility", shortName="jointVis", defaultValue=True)
+        cmds.addAttr(self.scaleGrp, attributeType="bool", longName="Rig_Visibility", shortName="rigVis", defaultValue=False)
         # make the created attributes visible in the channelbox
-        cmds.setAttr("%s.contVis" % self.scaleGrp, cb=True)
-        cmds.setAttr("%s.jointVis" % self.scaleGrp, cb=True)
-        cmds.setAttr("%s.rigVis" % self.scaleGrp, cb=True)
+        cmds.setAttr("%s.contVis" % self.scaleGrp, channelBox=True)
+        cmds.setAttr("%s.jointVis" % self.scaleGrp, channelBox=True)
+        cmds.setAttr("%s.rigVis" % self.scaleGrp, channelBox=True)
 
-        self.limbGrp = cmds.group(name=self.suffix, em=True)
+        self.limbGrp = cmds.group(name=naming.parse([self.module_name], suffix="grp"), empty=True)
         cmds.parent(self.scaleGrp, self.nonScaleGrp, self.cont_IK_OFF, self.limbGrp)
 
         self.scaleConstraints.append(self.scaleGrp)
 
-        defJ_root = cmds.joint(name="jDef_%s" % self.suffix)
+        defJ_root = cmds.joint(name=naming.parse([self.module_name], suffix="jDef"))
 
         functions.align_to(defJ_root, self.rootInit, position=True, rotation=self.useRefOrientation)
 
@@ -100,7 +100,7 @@ class Connector(object):
 
         if self.curveAsShape:
             _controller = Controller(shape="Cube",
-                                     name="%s_cont" % self.suffix,
+                                     name=naming.parse([self.module_name], suffix="cont"),
                                      scale=(1,1,1),
                                      normal=(0,0,0))
             _controller.set_side(self.side)
@@ -114,14 +114,14 @@ class Connector(object):
         cmds.connectAttr("%s.jointVis" % self.scaleGrp, "%s.v" % self.limbGrp)
 
 class Guides(object):
-    def __init__(self, side="L", suffix="root", segments=None, tMatrix=None, upVector=(0, 1, 0), mirrorVector=(1, 0, 0), lookVector=(0,0,1), *args, **kwargs):
+    def __init__(self, side="L", name="root", segments=None, tMatrix=None, upVector=(0, 1, 0), mirrorVector=(1, 0, 0), lookVector=(0, 0, 1), *args, **kwargs):
         super(Guides, self).__init__()
         # fool check
 
         #-------Mandatory------[Start]
         self.side = side
         self.sideMultiplier = -1 if side == "R" else 1
-        self.suffix = suffix
+        self.name = name
         self.segments = segments
         self.tMatrix = om.MMatrix(tMatrix) if tMatrix else om.MMatrix()
         self.upVector = om.MVector(upVector)
@@ -144,8 +144,8 @@ class Guides(object):
         self.offsetVector = om.MVector(0, 1, 0)
 
         # Draw the joints
-        cmds.select(d=True)
-        root_jnt = cmds.joint(name="root_{0}".format(self.suffix))
+        cmds.select(clear=True)
+        root_jnt = cmds.joint(name=naming.parse([self.name, "root"], suffix="jInit"))
 
         # Update the guideJoints list
         self.guideJoints.append(root_jnt)
