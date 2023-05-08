@@ -65,7 +65,7 @@ class Finger(object):
         self.sideMult = -1 if self.side == "R" else 1
 
         # initialize suffix
-        self.suffix = (naming.unique_name("%s_%s" % (cmds.getAttr("%s.moduleName" % self.fingerRoot), self.fingerType)))
+        self.module_name = (naming.unique_name("%s_%s" % (cmds.getAttr("%s.moduleName" % self.fingerRoot), self.fingerType)))
 
         # BASE variables
         self.sockets = []
@@ -80,19 +80,21 @@ class Finger(object):
         self.colorCodes = [6, 18]
 
     def createGrp(self):
-        self.limbGrp = cmds.group(name=self.suffix, em=True)
-        self.scaleGrp = cmds.group(name="%s_scaleGrp" % self.suffix, em=True)
-        # extra.alignTo(self.scaleGrp, self.fingerRoot, 0)
+        self.limbGrp = cmds.group(name=naming.parse([self.module_name], suffix="grp"), empty=True)
+        self.scaleGrp = cmds.group(name=naming.parse([self.module_name, "scale"], suffix="grp"), empty=True)
         functions.align_to(self.scaleGrp, self.fingerRoot, position=True)
-        self.nonScaleGrp = cmds.group(name="%s_nonScaleGrp" % self.suffix, em=True)
+        self.nonScaleGrp = cmds.group(name=naming.parse([self.module_name, "nonScale"], suffix="grp"), empty=True)
 
-        cmds.addAttr(self.scaleGrp, at="bool", ln="Control_Visibility", sn="contVis", defaultValue=True)
-        cmds.addAttr(self.scaleGrp, at="bool", ln="Joints_Visibility", sn="jointVis", defaultValue=True)
-        cmds.addAttr(self.scaleGrp, at="bool", ln="Rig_Visibility", sn="rigVis", defaultValue=False)
-        # make the created attributes visible in the channelbox
-        cmds.setAttr("%s.contVis" % self.scaleGrp, cb=True)
-        cmds.setAttr("%s.jointVis" % self.scaleGrp, cb=True)
-        cmds.setAttr("%s.rigVis" % self.scaleGrp, cb=True)
+        for nicename, attrname in zip(["Control_Visibility", "Joints_Visibility", "Rig_Visibility"], ["contVis", "jointVis", "rigVis"]):
+            attribute.create_attribute(self.scaleGrp, nice_name=nicename, attr_name=attrname, attr_type="bool",
+                                       keyable=False, display=True)
+        # cmds.addAttr(self.scaleGrp, attributeType="bool", longName="Control_Visibility", shortName="contVis", defaultValue=True)
+        # cmds.addAttr(self.scaleGrp, attributeType="bool", longName="Joints_Visibility", shortName="jointVis", defaultValue=True)
+        # cmds.addAttr(self.scaleGrp, attributeType="bool", longName="Rig_Visibility", shortName="rigVis", defaultValue=False)
+        # # make the created attributes visible in the channelbox
+        # cmds.setAttr("%s.contVis" % self.scaleGrp, channelBox=True)
+        # cmds.setAttr("%s.jointVis" % self.scaleGrp, channelBox=True)
+        # cmds.setAttr("%s.rigVis" % self.scaleGrp, channelBox=True)
 
         cmds.parent(self.scaleGrp, self.limbGrp)
         cmds.parent(self.nonScaleGrp, self.limbGrp)
@@ -101,15 +103,15 @@ class Finger(object):
 
         ## Create LimbPlug
 
-        cmds.select(d=True)
+        cmds.select(clear=True)
 
-        self.limbPlug = cmds.joint(name="limbPlug_%s" % self.suffix, p=api.get_world_translation(self.inits[0]), radius=2)
+        self.limbPlug = cmds.joint(name=naming.parse([self.module_name, "plug"], suffix="j"), position=api.get_world_translation(self.inits[0]), radius=2)
 
         for guide in self.inits:
-            jnt = cmds.joint(name="jDef_{0}_{1}".format(self.suffix, self.inits.index(guide)), radius=1.0)
+            jnt = cmds.joint(name=naming.parse([self.module_name, self.inits.index(guide)], suffix="jDef"), radius=1.0)
             functions.align_to(jnt, guide, position=True, rotation=True)
-            if guide == self.inits[-1]: # if it is the last joint dont add it to the deformers
-                jnt = cmds.rename(jnt, (jnt.replace("jDef", "jnt")))
+            # if guide == self.inits[-1]: # if it is the last joint dont add it to the deformers
+            #     jnt = cmds.rename(jnt, (jnt.replace("jDef", "jnt")))
             self.sockets.append(jnt)
             self.deformerJoints.append(jnt)
 
@@ -143,9 +145,8 @@ class Finger(object):
 
         for index in range(0, len(self.deformerJoints)-1):
             contScl = (cmds.getAttr("%s.tx" % self.deformerJoints[1]) / 2)
-            contName = ("{0}_{1}_cont".format(self.suffix, index))
-            # cont, dmp = icon.create_icon("Circle", icon_name=contName, scale=(contScl, contScl, contScl), normal=(1, 0, 0))
-            cont = Controller(name=contName,
+            cont_name = naming.parse([self.module_name, index], suffix="cont")
+            cont = Controller(name=cont_name,
                               shape="Circle",
                               scale=(contScl, contScl, contScl),
                               normal=(1, 0, 0),
@@ -180,24 +181,28 @@ class Finger(object):
         if not self.handController:
             self.handController=self.scaleGrp
         # Spread
-        spreadAttr = "{0}_{1}".format(self.suffix, "Spread")
-        cmds.addAttr(self.handController, shortName=spreadAttr, defaultValue=0.0, at="float", k=True)
-        sprMult = cmds.createNode("multiplyDivide", name="sprMult_{0}_{1}".format(self.side, self.suffix))
-        cmds.setAttr("%s.input1Y" % sprMult, 0.4)
-        cmds.connectAttr("%s.%s" % (self.handController, spreadAttr), "%s.input2Y" % sprMult)
-        cmds.connectAttr("%s.outputY" % sprMult, "%s.rotateY" % self.contConList[0])
-        cmds.connectAttr("%s.%s" % (self.handController, spreadAttr), "%s.rotateY" % self.contConList[1])
+        spreadAttr = "{0}_{1}".format(self.module_name, "Spread")
+        cmds.addAttr(self.handController, shortName=spreadAttr, defaultValue=0.0, attributeType="float", keyable=True)
+        # sprMult = cmds.createNode("multiplyDivide", name="sprMult_{0}_{1}".format(self.side, self.module_name))
+        spread_mult = cmds.createNode("multDoubleLinear", name=naming.parse([self.module_name, "spread"], suffix="mult"))
+        cmds.setAttr("{}.input1".format(spread_mult), 0.4)
+        cmds.connectAttr("{0}.{1}".format(self.handController, spreadAttr), "{0}.input2".format(spread_mult))
+        cmds.connectAttr("{}.output".format(spread_mult), "{0}.rotateY".format(self.contConList[1]))
+        # cmds.setAttr("%s.input1Y" % spread_mult, 0.4)
+        # cmds.connectAttr("%s.%s" % (self.handController, spreadAttr), "%s.input2Y" % spread_mult)
+        # cmds.connectAttr("%s.outputY" % spread_mult, "%s.rotateY" % self.contConList[0])
+        # cmds.connectAttr("%s.%s" % (self.handController, spreadAttr), "%s.rotateY" % self.contConList[1])
 
         # Bend
         # add bend attributes for each joint (except the end joint)
-        for f in range (0, (len(self.inits)-1)):
-            if f == 0 and self.isThumb == True:
-                bendAttr="{0}{1}".format(self.suffix, "UpDown")
+        for nmb in range(0, (len(self.inits)-1)):
+            if nmb == 0 and self.isThumb:
+                bendAttr="{0}{1}".format(self.module_name, "UpDown")
             else:
-                bendAttr = "{0}{1}{2}".format(self.suffix, "Bend", f)
+                bendAttr = "{0}{1}{2}".format(self.module_name, "Bend", nmb)
 
-            cmds.addAttr(self.handController, shortName=bendAttr, defaultValue=0.0, at="float", k=True)
-            cmds.connectAttr("{0}.{1}".format(self.handController, bendAttr), "%s.rotateZ" % self.contConList[f])
+            cmds.addAttr(self.handController, shortName=bendAttr, defaultValue=0.0, attributeType="float", keyable=True)
+            cmds.connectAttr("{0}.{1}".format(self.handController, bendAttr), "%s.rotateZ" % self.contConList[nmb])
 
     def roundUp(self):
         cmds.setAttr("%s.rigVis" % self.scaleGrp, 0)
@@ -215,13 +220,13 @@ class Finger(object):
         self.roundUp()
 
 class Guides(object):
-    def __init__(self, side="L", suffix="finger", segments=None, tMatrix=None, upVector=(0, 1, 0), mirrorVector=(1, 0, 0), lookVector=(0,0,1), *args, **kwargs):
+    def __init__(self, side="L", name="finger", segments=None, tMatrix=None, upVector=(0, 1, 0), mirrorVector=(1, 0, 0), lookVector=(0, 0, 1), *args, **kwargs):
         super(Guides, self).__init__()
         # fool check
         #-------Mandatory------[Start]
         self.side = side
         self.sideMultiplier = -1 if side == "R" else 1
-        self.suffix = suffix
+        self.name = name
         self.segments = segments or 2
         self.tMatrix = om.MMatrix(tMatrix) if tMatrix else om.MMatrix()
         self.upVector = om.MVector(upVector)
@@ -245,7 +250,8 @@ class Guides(object):
 
         # Draw the joints
         for seg in range(self.segments + 1):
-            finger_jnt = cmds.joint(p=(rPointFinger + (addFinger * seg)), name="jInit_finger_%s_%i" %(self.suffix, seg))
+            # finger_jnt = cmds.joint(position=(rPointFinger + (addFinger * seg)), name="jInit_finger_%s_%i" %(self.suffix, seg))
+            finger_jnt = cmds.joint(position=(rPointFinger + (addFinger * seg)), name=naming.parse([self.name, seg], suffix="jInit"))
             # Update the guideJoints list
             cmds.setAttr("%s.radius" % finger_jnt, 0.5)
             self.guideJoints.append(finger_jnt)

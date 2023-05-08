@@ -95,7 +95,7 @@ class Head(object):
         self.stretchyHead = cmds.getAttr("%s.stretchyHead" % self.neckNodes[0])
 
         # initialize suffix
-        self.suffix = (naming.unique_name(cmds.getAttr("%s.moduleName" % self.neckNodes[0])))
+        self.module_name = (naming.unique_name(cmds.getAttr("%s.moduleName" % self.neckNodes[0])))
 
         # scratch variables
         self.controllers = []
@@ -111,48 +111,45 @@ class Head(object):
         self.colorCodes = [6, 18]
 
     def createGrp(self):
-        self.limbGrp = cmds.group(name=self.suffix, em=True)
-        self.scaleGrp = cmds.group(name="%s_scaleGrp" % self.suffix, em=True)
+        self.limbGrp = cmds.group(name=naming.parse([self.module_name], suffix="grp"), empty=True)
+        self.scaleGrp = cmds.group(name=naming.parse([self.module_name, "scale"], suffix="grp"), empty=True)
         functions.align_to(self.scaleGrp, self.neckNodes[0], 0)
-        self.nonScaleGrp = cmds.group(name="%s_nonScaleGrp" % self.suffix, em=True)
+        self.nonScaleGrp = cmds.group(name=naming.parse([self.module_name, "nonScale"], suffix="grp"), empty=True)
 
-        cmds.addAttr(self.scaleGrp, at="bool", ln="Control_Visibility", sn="contVis", defaultValue=True)
-        cmds.addAttr(self.scaleGrp, at="bool", ln="Joints_Visibility", sn="jointVis", defaultValue=True)
-        cmds.addAttr(self.scaleGrp, at="bool", ln="Rig_Visibility", sn="rigVis", defaultValue=False)
-        # make the created attributes visible in the channelbox
-        cmds.setAttr("%s.contVis" % self.scaleGrp, cb=True)
-        cmds.setAttr("%s.jointVis" % self.scaleGrp, cb=True)
-        cmds.setAttr("%s.rigVis" % self.scaleGrp, cb=True)
+        for nicename, attrname in zip(["Control_Visibility", "Joints_Visibility", "Rig_Visibility"], ["contVis", "jointVis", "rigVis"]):
+            attribute.create_attribute(self.scaleGrp, nice_name=nicename, attr_name=attrname, attr_type="bool",
+                                       keyable=False, display=True)
 
         cmds.parent(self.scaleGrp, self.limbGrp)
         cmds.parent(self.nonScaleGrp, self.limbGrp)
 
     def createJoints(self):
         # Create Limb Plug
-        cmds.select(d=True)
-        self.limbPlug = cmds.joint(name="jPlug_%s" % self.suffix, p=self.root_pos, radius=3)
+        cmds.select(clear=True)
+        self.limbPlug = cmds.joint(name=naming.parse([self.module_name, "plug"], suffix="j"), position=self.root_pos, radius=3)
 
         ## Create temporaray Guide Joints
-        cmds.select(d=True)
-        self.guideJoints = [cmds.joint(name="jTemp_%s" %i, p=api.get_world_translation(i)) for i in self.neckNodes]
-        self.guideJoints.append(cmds.joint(name="jTemp_Head", p=self.headPivPos))
-        self.guideJoints.append(cmds.joint(name="jTemp_HeadEnd", p=self.headEndPivPos))
+        cmds.select(clear=True)
+        self.guideJoints = [cmds.joint(name=naming.parse([self.module_name, i], suffix="jTemp"), position=api.get_world_translation(i)) for i in self.neckNodes]
+        self.guideJoints.append(cmds.joint(name=naming.parse([self.module_name, "head"], suffix="jTemp"), position=self.headPivPos))
+        self.guideJoints.append(cmds.joint(name=naming.parse([self.module_name, "headEnd"], suffix="jTemp"), position=self.headEndPivPos))
+
         ## orientations
         if not self.useRefOrientation:
             joint.orient_joints(self.guideJoints, world_up_axis=(self.look_axis), up_axis=(0, 1, 0), reverse_aim=self.sideMult, reverse_up=self.sideMult)
         else:
             for x in range (len(self.guideJoints[:-2])):
                 functions.align_to(self.guideJoints[x], self.neckNodes[x], position=True, rotation=True)
-                cmds.makeIdentity(self.guideJoints[x], a=True)
+                cmds.makeIdentity(self.guideJoints[x], apply=True)
             functions.align_to(self.guideJoints[-2], self.headStart, position=True, rotation=True)
-            cmds.makeIdentity(self.guideJoints[-2], a=True)
+            cmds.makeIdentity(self.guideJoints[-2], apply=True)
             functions.align_to(self.guideJoints[-1], self.headEnd, position=True, rotation=True)
-            cmds.makeIdentity(self.guideJoints[-1], a=True)
+            cmds.makeIdentity(self.guideJoints[-1], apply=True)
 
     def createControllers(self):
         ## Neck Controller
         neckScale = (self.neckDist / 2, self.neckDist / 2, self.neckDist / 2)
-        self.cont_neck = Controller(name="{}_neck_cont".format(self.suffix),
+        self.cont_neck = Controller(name=naming.parse([self.module_name, "neck"], suffix="cont"),
                                     shape="CurvedCircle",
                                     scale=neckScale,
                                     normal=(1, 0, 0),
@@ -164,7 +161,7 @@ class Head(object):
         self.cont_neck_ORE = self.cont_neck.add_offset("ORE")
 
         ## Head Controller
-        self.cont_head = Controller(name="{}_head_cont".format(self.suffix),
+        self.cont_head = Controller(name=naming.parse([self.module_name, "head"], suffix="cont"),
                                     shape="HalfDome",
                                     scale=(self.headDist, self.headDist, self.headDist),
                                     normal=(0, 1, 0),
@@ -179,7 +176,7 @@ class Head(object):
 
         if self.stretchyHead:
             ## Head Squash Controller
-            self.cont_headSquash = Controller(name="{}_headSquash_cont".format(self.suffix),
+            self.cont_headSquash = Controller(name=naming.parse([self.module_name, "headSquash"], suffix="cont"),
                                               shape="Circle",
                                               scale=(self.headDist / 2, self.headDist / 2, self.headDist / 2),
                                               normal=(0, 1, 0),
@@ -199,7 +196,7 @@ class Head(object):
         cmds.connectAttr("%s.contVis" % self.scaleGrp, "%s.v" % self.cont_neck_ORE)
 
     def createRoots(self):
-        self.neckRootLoc = cmds.spaceLocator(name="neckRootLoc_%s" % self.suffix)[0]
+        self.neckRootLoc = cmds.spaceLocator(name=naming.parse([self.module_name, "neckRoot"], suffix="loc"))[0]
         functions.align_to_alter(self.neckRootLoc, self.guideJoints[0])
 
         cmds.parent(self.neckRootLoc, self.scaleGrp)
@@ -210,7 +207,7 @@ class Head(object):
         neckSpline = twistSpline.TwistSpline()
         neckSpline.upAxis = -(om.MVector(self.look_axis))
 
-        neckSpline.createTspline(list(self.guideJoints[:-1]), "neckSplineIK_%s" % self.suffix, self.resolution, dropoff=self.dropoff, mode=self.splineMode, twistType=self.twistType, colorCode=self.colorCodes[1])
+        neckSpline.createTspline(list(self.guideJoints[:-1]), "neckSplineIK_%s" % self.module_name, self.resolution, dropoff=self.dropoff, mode=self.splineMode, twistType=self.twistType, colorCode=self.colorCodes[1])
         self.sockets.extend(neckSpline.defJoints[:-1]) # do not add the last neck spline joint to the socket list
 
         # # Connect neck start to the neck controller
@@ -231,7 +228,7 @@ class Head(object):
         if self.stretchyHead:
             headSpline = twistSpline.TwistSpline()
             headSpline.upAxis = -(om.MVector(self.look_axis))
-            headSpline.createTspline(list(self.guideJoints[-2:]), "headSquashSplineIK_%s" % self.suffix, 3, dropoff=2,  mode=self.splineMode, twistType=self.twistType, colorCode=self.colorCodes[1])
+            headSpline.createTspline(list(self.guideJoints[-2:]), "headSquashSplineIK_%s" % self.module_name, 3, dropoff=2, mode=self.splineMode, twistType=self.twistType, colorCode=self.colorCodes[1])
             # map(self.sockets.append, headSpline.defJoints)
             self.sockets.extend(headSpline.defJoints)
 
@@ -254,8 +251,8 @@ class Head(object):
             cmds.disconnectAttr(cmds.listConnections(headSpline.scaleGrp, plugs=True)[0], "%s.scale" % headSpline.scaleGrp)
             self.deformerJoints.extend(headSpline.defJoints)
         else:
-            headJoint = cmds.joint(name="jDef_head_%s" % self.suffix, position=self.headPivPos, radius=3)
-            headJoint_end = cmds.joint(name="jDef_headEnd_%s" % self.suffix, position=self.headEndPivPos, radius=3)
+            headJoint = cmds.joint(name=naming.parse([self.module_name, "head"], suffix="jDef"), position=self.headPivPos, radius=3)
+            headJoint_end = cmds.joint(name=naming.parse([self.module_name, "headEnd"], suffix="jDef"), position=self.headEndPivPos, radius=3)
             cmds.parent(headJoint, self.scaleGrp)
             self.sockets.append(headJoint)
             self.sockets.append(headJoint_end)
@@ -341,14 +338,14 @@ class Head(object):
         self.roundUp()
 
 class Guides(object):
-    def __init__(self, side="L", suffix="head", segments=None, tMatrix=None, upVector=(0, 1, 0), mirrorVector=(1, 0, 0), lookVector=(0,0,1), *args, **kwargs):
+    def __init__(self, side="L", name="head", segments=None, tMatrix=None, upVector=(0, 1, 0), mirrorVector=(1, 0, 0), lookVector=(0, 0, 1), *args, **kwargs):
         super(Guides, self).__init__()
         # fool check
 
         #-------Mandatory------[Start]
         self.side = side
         self.sideMultiplier = -1 if side == "R" else 1
-        self.suffix = suffix
+        self.name = name
         self.segments = segments or 1
         self.tMatrix = om.MMatrix(tMatrix) if tMatrix else om.MMatrix()
         self.upVector = om.MVector(upVector)
@@ -377,12 +374,12 @@ class Guides(object):
 
         # Draw the joints
         for seg in range(self.segments):
-            neck_jnt = cmds.joint(p=(rPointNeck + (addNeck * seg)), name="jInit_neck_%s_%i" %(self.suffix, seg))
+            neck_jnt = cmds.joint(position=(rPointNeck + (addNeck * seg)), name=naming.parse([self.name, "neck", seg], side=self.side, suffix="jInit"))
             self.guideJoints.append(neck_jnt)
         for seg in range(1):
-            head_jnt = cmds.joint(p=(rPointNeck + (addNeck * (seg + self.segments))), name="jInit_head_%s_%i" %(self.suffix, seg))
+            head_jnt = cmds.joint(position=(rPointNeck + (addNeck * (seg + self.segments))), name=naming.parse([self.name, "head", seg], side=self.side, suffix="jInit"))
             self.guideJoints.append(head_jnt)
-        headEnd = cmds.joint(p=pointHead, name="jInit_headEnd_%s" %(self.suffix))
+        headEnd = cmds.joint(position=pointHead, name=naming.parse([self.name, "headEnd"], side=self.side, suffix="jInit"))
         self.guideJoints.append(headEnd)
 
         # Update the guideJoints list
