@@ -185,7 +185,7 @@ class ModuleTests(base_test.TestCase):
         # self.reset_scene()
         self.guides_handler.reset_scene()
         self.guides_handler.init.initHumanoid()
-        self.guides_handler.init.test_build("base_c")
+        self.guides_handler.init.test_build("C_base_root_jInit")
         # self.assertTrue(kinematics)
 
     def basic_creation_test(self, module_names):

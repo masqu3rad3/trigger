@@ -4,20 +4,20 @@ import maya.api.OpenMaya as om
 from trigger.library import functions, naming, joint
 from trigger.library import attribute
 from trigger.library import connection
+from trigger.objects.controller import Controller
 
 from trigger.library import controllers as ic
 from trigger.core import filelog
 
-
 LOG = filelog.Filelog(logname=__name__, filename="trigger_log")
 
-
 LIMB_DATA = {
-        "members": ["Base"],
-        "properties": [],
-        "multi_guide": None,
-        "sided": False,
-    }
+    "members": ["Base"],
+    "properties": [],
+    "multi_guide": None,
+    "sided": False,
+}
+
 
 class Base(object):
     def __init__(self, build_data=None, inits=None, *args, **kwargs):
@@ -35,9 +35,10 @@ class Base(object):
         else:
             LOG.error("Class needs either build_data or inits to be constructed")
 
-        self.suffix = (naming.unique_name(cmds.getAttr("%s.moduleName" % self.baseInit)))
+        self.module_name = (naming.unique_name(cmds.getAttr("%s.moduleName" % self.baseInit)))
 
         self.controllers = []
+        self.base_jnt = None
         self.limbGrp = None
         self.scaleGrp = None
         self.limbPlug = None
@@ -51,21 +52,24 @@ class Base(object):
         self.colorCodes = [6, 18]
 
     def createGrp(self):
-        self.scaleGrp = cmds.group(name="%s_scaleGrp" % self.suffix, em=True)
-        cmds.addAttr(self.scaleGrp, at="bool", ln="Control_Visibility", sn="contVis", defaultValue=True)
-        cmds.addAttr(self.scaleGrp, at="bool", ln="Joints_Visibility", sn="jointVis", defaultValue=True)
-        cmds.addAttr(self.scaleGrp, at="bool", ln="Rig_Visibility", sn="rigVis", defaultValue=True)
+        self.scaleGrp = cmds.group(name=naming.parse([self.module_name, "scale"], suffix="grp"), empty=True)
+        cmds.addAttr(self.scaleGrp, attributeType="bool", longName="Control_Visibility", shortName="contVis",
+                     defaultValue=True)
+        cmds.addAttr(self.scaleGrp, attributeType="bool", longName="Joints_Visibility", shortName="jointVis",
+                     defaultValue=True)
+        cmds.addAttr(self.scaleGrp, attributeType="bool", longName="Rig_Visibility", shortName="rigVis",
+                     defaultValue=True)
         # make the created attributes visible in the channelbox
-        cmds.setAttr("{0}.contVis".format(self.scaleGrp), cb=True)
-        cmds.setAttr("{0}.jointVis".format(self.scaleGrp), cb=True)
-        cmds.setAttr("{0}.rigVis".format(self.scaleGrp), cb=True)
+        cmds.setAttr("{0}.contVis".format(self.scaleGrp), channelBox=True)
+        cmds.setAttr("{0}.jointVis".format(self.scaleGrp), channelBox=True)
+        cmds.setAttr("{0}.rigVis".format(self.scaleGrp), channelBox=True)
 
-        self.limbGrp = cmds.group(name=self.suffix, em=True)
+        self.limbGrp = cmds.group(name=naming.parse([self.module_name], suffix="grp"), empty=True)
         cmds.parent(self.scaleGrp, self.nonScaleGrp, self.cont_IK_OFF, self.limbGrp)
         self.scaleConstraints.append(self.scaleGrp)
 
     def createJoints(self):
-        self.base_jnt = cmds.joint(name="%s_jnt" % self.suffix)
+        self.base_jnt = cmds.joint(name=naming.parse([self.module_name], suffix="j"))
         cmds.connectAttr("{0}.rigVis".format(self.scaleGrp), "{0}.v".format(self.base_jnt))
 
         functions.align_to(self.base_jnt, self.baseInit, position=True, rotation=False)
@@ -73,56 +77,66 @@ class Base(object):
         self.sockets.append(self.base_jnt)
 
     def createControllers(self):
-        icon = ic.Icon()
-        placement_cont, _ = icon.create_icon("Circle", icon_name=naming.unique_name("placement_cont"), scale=(10, 10, 10))
-        master_cont, _ = icon.create_icon("TriCircle", icon_name=naming.unique_name("master_cont"), scale=(15, 15, 15))
+        # placement_cont, _ = icon.create_icon("Circle", icon_name=naming.unique_name("placement_cont"),
+        #                                      scale=(10, 10, 10))
+        placement_cont = Controller(shape="Circle",
+                                    name=naming.parse([self.module_name, "placement"], suffix="cont"),
+                                    scale=(10, 10, 10),
+                                    )
+        # master_cont, _ = icon.create_icon("TriCircle", icon_name=naming.unique_name("master_cont"), scale=(15, 15, 15))
+        master_cont = Controller(shape="TriCircle",
+                                 name=naming.parse([self.module_name, "master"], suffix="cont"),
+                                 scale=(15, 15, 15)
+                                 )
+
+
         self.controllers = [master_cont, placement_cont]
 
-        placement_off = functions.create_offset_group(placement_cont, "off")
-        master_off = functions.create_offset_group(master_cont, "off")
+        placement_off = placement_cont.add_offset("off")
+        master_off = master_cont.add_offset("off")
         functions.align_to(placement_off, self.base_jnt)
         functions.align_to(master_off, self.base_jnt)
 
-        cmds.parent(placement_off, master_cont)
+        cmds.parent(placement_off, master_cont.name)
         # cmds.parent(master_off, self.scaleGrp)
         cmds.parent(master_off, self.limbGrp)
 
         # cmds.connectAttr("%s.s" %self.scaleGrp, "%s.s" %master_off)
 
-        cmds.parentConstraint(placement_cont, self.base_jnt, mo=False)
+        cmds.parentConstraint(placement_cont.name, self.base_jnt, maintainOffset=False)
 
-        functions.colorize(placement_cont, self.colorCodes[0])
-        functions.colorize(master_cont, self.colorCodes[0])
-        self.anchorLocations.append(placement_cont)
-        self.anchorLocations.append(master_cont)
+        # functions.colorize(placement_cont, self.colorCodes[0])
+        # functions.colorize(master_cont, self.colorCodes[0])
+        self.anchorLocations.append(placement_cont.name)
+        self.anchorLocations.append(master_cont.name)
 
         cmds.connectAttr("%s.contVis" % self.scaleGrp, "%s.v" % placement_off)
         cmds.connectAttr("%s.contVis" % self.scaleGrp, "%s.v" % master_off)
 
-        connection.matrixConstraint(master_cont, self.scaleGrp, skipScale="xyz")
+        connection.matrixConstraint(master_cont.name, self.scaleGrp, skipScale="xyz")
 
-        attribute.lock_and_hide(placement_cont, ["sx", "sy", "sz", "v"])
-        attribute.lock_and_hide(master_cont, ["sx", "sy", "sz", "v"])
+
+        placement_cont.lock(["sx", "sy", "sz", "v"])
+        master_cont.lock(["sx", "sy", "sz", "v"])
 
     def createLimb(self):
         """Creates base joint for master and placement conts"""
-        LOG.info("Creating Base %s" % self.suffix)
+        LOG.info("Creating Base %s" % self.module_name)
         self.createGrp()
         self.createJoints()
         self.createControllers()
 
 
-
-
 class Guides(object):
-    def __init__(self, side="L", suffix="base", segments=None, tMatrix=None, upVector=(0, 1, 0), mirrorVector=(1, 0, 0), lookVector=(0,0,1), *args, **kwargs):
+    def __init__(self, side="L", name="base", segments=None, tMatrix=None, upVector=(0, 1, 0), mirrorVector=(1, 0, 0),
+                 lookVector=(0, 0, 1), *args, **kwargs):
         super(Guides, self).__init__()
         # fool check
 
-        #-------Mandatory------[Start]
+        # -------Mandatory------[Start]
         self.side = side
         self.sideMultiplier = -1 if side == "R" else 1
-        self.suffix = suffix
+        self.name = name
         self.segments = segments
         self.tMatrix = om.MMatrix(tMatrix) if tMatrix else om.MMatrix()
         self.upVector = om.MVector(upVector)
@@ -131,7 +145,7 @@ class Guides(object):
 
         self.offsetVector = None
         self.guideJoints = []
-        #-------Mandatory------[End]
+        # -------Mandatory------[End]
 
     def draw_joints(self):
         if self.side == "C":
@@ -145,8 +159,8 @@ class Guides(object):
         self.offsetVector = om.MVector(0, 1, 0)
 
         # Draw the joints
-        cmds.select(d=True)
-        root_jnt = cmds.joint(name="base_{0}".format(self.suffix))
+        cmds.select(clear=True)
+        root_jnt = cmds.joint(name=naming.parse([self.name, "root"], side=self.side, suffix="jInit"))
 
         # Update the guideJoints list
         self.guideJoints.append(root_jnt)
@@ -161,7 +175,8 @@ class Guides(object):
 
         # ----------Mandatory---------[Start]
         root_jnt = self.guideJoints[0]
-        attribute.create_global_joint_attrs(root_jnt, moduleName="Base", upAxis=self.upVector, mirrorAxis=self.mirrorVector, lookAxis=self.lookVector)
+        attribute.create_global_joint_attrs(root_jnt, moduleName="Base", upAxis=self.upVector,
+                                            mirrorAxis=self.mirrorVector, lookAxis=self.lookVector)
         # ----------Mandatory---------[End]
 
         for attr_dict in LIMB_DATA["properties"]:
