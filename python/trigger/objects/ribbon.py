@@ -366,7 +366,8 @@ class Ribbon(object):
 
         follicle_list = []
         for index in range(int(self._jointResolution)):
-            _name = "follicle_{0}{1}".format(self._name, index)
+            # _name = "follicle_{0}{1}".format(self._name, index)
+            _name = naming.parse([self._name, index])
             _uv = (0.1 + (index / float(self._jointResolution)), 0.5)
             follicle_transform, follicle = connection.create_follicle(_name, n_surf, _uv)
             attribute.lock_and_hide(follicle_transform, ["tx", "ty", "tz", "rx", "ry", "rz"], hide=False)
@@ -380,7 +381,7 @@ class Ribbon(object):
         if self._scaleable:
             # create follicles for scaling calculations
             for index in range(int(self._jointResolution)):
-                _name = "follicleSCA_%s%i" % (self._name, index)
+                _name = naming.parse([self._name, index, "SCA"])
                 _uv = (0.1 + (index / float(self._jointResolution)), 0.0)
                 follicle_transform, follicle = connection.create_follicle(_name, n_surf, _uv)
                 self._toHide.append(follicle)

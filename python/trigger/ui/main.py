@@ -1184,6 +1184,7 @@ class MainUI(QtWidgets.QMainWindow):
                 side = "auto"
             else:
                 side = "center"
+
             self.guides_handler.init.initLimb(limb_name, whichSide=side, defineAs=self.ctrl_modifier, **kwargs)
         self.populate_guides()
 

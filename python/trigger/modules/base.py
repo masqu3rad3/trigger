@@ -82,11 +82,15 @@ class Base(object):
         placement_cont = Controller(shape="Circle",
                                     name=naming.parse([self.module_name, "placement"], suffix="cont"),
                                     scale=(10, 10, 10),
+                                    side="C",
+                                    tier="primary"
                                     )
         # master_cont, _ = icon.create_icon("TriCircle", icon_name=naming.unique_name("master_cont"), scale=(15, 15, 15))
         master_cont = Controller(shape="TriCircle",
                                  name=naming.parse([self.module_name, "master"], suffix="cont"),
-                                 scale=(15, 15, 15)
+                                 scale=(15, 15, 15),
+                                 side = "C",
+                                 tier = "primary"
                                  )
 
 
@@ -128,7 +132,7 @@ class Base(object):
 
 
 class Guides(object):
-    def __init__(self, side="L", name="base", segments=None, tMatrix=None, upVector=(0, 1, 0), mirrorVector=(1, 0, 0),
+    def __init__(self, side="L", suffix="base", segments=None, tMatrix=None, upVector=(0, 1, 0), mirrorVector=(1, 0, 0),
                  lookVector=(0, 0, 1), *args, **kwargs):
         super(Guides, self).__init__()
         # fool check
@@ -136,7 +140,7 @@ class Guides(object):
         # -------Mandatory------[Start]
         self.side = side
         self.sideMultiplier = -1 if side == "R" else 1
-        self.name = name
+        self.name = suffix
         self.segments = segments
         self.tMatrix = om.MMatrix(tMatrix) if tMatrix else om.MMatrix()
         self.upVector = om.MVector(upVector)

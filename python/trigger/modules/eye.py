@@ -267,14 +267,14 @@ class Eye(object):
 
 
 class Guides(object):
-    def __init__(self, side="L", name="eye", segments=None, tMatrix=None, upVector=(0, 1, 0), mirrorVector=(1, 0, 0), lookVector=(0, 0, 1), *args, **kwargs):
+    def __init__(self, side="L", suffix="eye", segments=None, tMatrix=None, upVector=(0, 1, 0), mirrorVector=(1, 0, 0), lookVector=(0, 0, 1), *args, **kwargs):
         super(Guides, self).__init__()
         # fool check
 
         #-------Mandatory------[Start]
         self.side = side
         self.sideMultiplier = -1 if side == "R" else 1
-        self.name = name
+        self.name = suffix
         self.segments = segments
         self.tMatrix = om.MMatrix(tMatrix) if tMatrix else om.MMatrix()
         self.upVector = om.MVector(upVector)

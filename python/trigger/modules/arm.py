@@ -1042,13 +1042,13 @@ class Arm(object):
 
 
 class Guides(object):
-    def __init__(self, side="L", name="arm", segments=None, tMatrix=None, upVector=(0, 1, 0), mirrorVector=(1, 0, 0),
+    def __init__(self, side="L", suffix="arm", segments=None, tMatrix=None, upVector=(0, 1, 0), mirrorVector=(1, 0, 0),
                  lookVector=(0, 0, 1), *args, **kwargs):
         super(Guides, self).__init__()
 
         self.side = side
         self.sideMultiplier = -1 if side == "R" else 1
-        self.name = name
+        self.name = suffix
         self.segments = segments
         self.tMatrix = om.MMatrix(tMatrix) if tMatrix else om.MMatrix()
         self.upVector = om.MVector(upVector)

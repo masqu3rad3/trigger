@@ -111,6 +111,7 @@ class Initials(object):
             if whichSide not in valid_sides:
                 log.error(
                     "side argument '%s' is not valid. Valid arguments are: %s" % (whichSide, valid_sides))
+                raise ValueError
             if len(cmds.ls(sl=True, type="joint")) != 1 and whichSide == "auto" and defineAs == False:
                 log.warning("You need to select a single joint to use Auto method")
                 return
