@@ -145,7 +145,7 @@ class Guides(object):
 
         # Draw the joints
         cmds.select(clear=True)
-        root_jnt = cmds.joint(name=naming.parse([self.name, "root"], suffix="jInit"))
+        root_jnt = cmds.joint(name=naming.parse([self.name, "root"], side=self.side, suffix="jInit"))
 
         # Update the guideJoints list
         self.guideJoints.append(root_jnt)

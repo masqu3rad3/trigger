@@ -110,19 +110,11 @@ class Fkik(object):
         self.limbGrp = cmds.group(name=naming.parse([self.module_name], suffix="grp"), empty=True)
         self.scaleGrp = cmds.group(name=naming.parse([self.module_name, "scale"], suffix="grp"), empty=True)
         functions.align_to(self.scaleGrp, self.inits[0], position=True, rotation=False)
-        self.nonScaleGrp = cmds.group(name="%s_nonScaleGrp" % self.module_name, empty=True)
         self.nonScaleGrp = cmds.group(name=naming.parse([self.module_name, "nonScale"], suffix="grp"), empty=True)
 
         for nicename, attrname in zip(["Control_Visibility", "Joints_Visibility", "Rig_Visibility"], ["contVis", "jointVis", "rigVis"]):
             attribute.create_attribute(self.scaleGrp, nice_name=nicename, attr_name=attrname, attr_type="bool",
                                        keyable=False, display=True)
-        # cmds.addAttr(self.scaleGrp, attributeType="bool", longName="Control_Visibility", shortName="contVis", defaultValue=True)
-        # cmds.addAttr(self.scaleGrp, attributeType="bool", longName="Joints_Visibility", shortName="jointVis", defaultValue=True)
-        # cmds.addAttr(self.scaleGrp, attributeType="bool", longName="Rig_Visibility", shortName="rigVis", defaultValue=False)
-        # # make the created attributes visible in the channelbox
-        # cmds.setAttr("%s.contVis" % self.scaleGrp, channelBox=True)
-        # cmds.setAttr("%s.jointVis" % self.scaleGrp, channelBox=True)
-        # cmds.setAttr("%s.rigVis" % self.scaleGrp, channelBox=True)
 
         cmds.parent(self.scaleGrp, self.limbGrp)
         cmds.parent(self.nonScaleGrp, self.limbGrp)
@@ -166,13 +158,16 @@ class Fkik(object):
             self.fkJoints=[]
             self.ikJoints=[]
             dupsIK = cmds.duplicate(self.deformerJoints[0], renameChildren=True)
-            for dup, original in zip(dupsIK, self.inits):
-                jnt = cmds.rename(dup, "jnt_IK_{0}_{1}".format(original, self.module_name))
+            for nmb, dup in enumerate(dupsIK):
+                # jnt = cmds.rename(dup, "jnt_IK_{0}_{1}".format(original, self.module_name))
+                _name = naming.parse([self.module_name, "IK", nmb], suffix="j")
+                jnt = cmds.rename(dup, _name)
                 self.ikJoints.append(jnt)
 
             dupsFK = cmds.duplicate(self.deformerJoints[0], renameChildren=True)
-            for dup, original in zip(dupsFK, self.inits):
-                jnt = cmds.rename(dup, "jnt_FK_{0}_{1}".format(original, self.module_name))
+            for nmb, dup in enumerate(dupsFK):
+                _name = naming.parse([self.module_name, "FK", nmb], suffix="j")
+                jnt = cmds.rename(dup, _name)
                 self.fkJoints.append(jnt)
 
             attribute.drive_attrs("%s.rigVis" % self.scaleGrp, ["%s.v" % x for x in self.ikJoints])
@@ -446,7 +441,7 @@ class Fkik(object):
 
 
 class Guides(object):
-    def __init__(self, side="L", suffix="fkik", segments=None, tMatrix=None, upVector=(0, 1, 0), mirrorVector=(1, 0, 0), lookVector=(0, 0, 1), *args, **kwargs):
+    def __init__(self, side="L", suffix="fkik", segments=None, tMatrix=None, upVector=(0, 1, 0), mirrorVector=(1, 0, 0), lookVector=(0,0,1), *args, **kwargs):
         super(Guides, self).__init__()
         # fool check
 
@@ -454,7 +449,7 @@ class Guides(object):
         self.side = side
         self.sideMultiplier = -1 if side == "R" else 1
         self.name = suffix
-        self.segments = segments
+        self.segments = segments or 2
         self.tMatrix = om.MMatrix(tMatrix) if tMatrix else om.MMatrix()
         self.upVector = om.MVector(upVector)
         self.mirrorVector = om.MVector(mirrorVector)
@@ -467,8 +462,8 @@ class Guides(object):
     def draw_joints(self):
         # fool check
         if not self.segments or self.segments < 1:
-            log.warning("minimum segments required for the fk/ik module is two. current: %s" % self.segments)
-            return
+            log.error("minimum segments required for the fk/ik module is two. current: %s" % self.segments, proceed=False)
+            raise Exception
 
         # rPointTail = om.MVector(0, 0, 0) * self.tMatrix
         if self.side == "C":

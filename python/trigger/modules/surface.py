@@ -5,7 +5,7 @@ from trigger.library import functions, joint
 from trigger.library import naming
 from trigger.library import attribute
 from trigger.library import connection
-from trigger.library import controllers as ic
+from trigger.objects.controller import Controller
 from trigger.utils import parentToSurface
 from trigger.core import filelog
 
@@ -58,12 +58,13 @@ class Surface(object):
         self.controllerSurface = cmds.getAttr("%s.controllerSurface" % self.inits[0])
         self.rotateObject = cmds.getAttr("%s.rotateObject" % self.inits[0])
         self.isPlugOnLocal = cmds.getAttr("%s.limbPlugLocation" % self.inits[0])
+        self.side = joint.get_joint_side(self.inits[0])
         try:
             self.bindScales = cmds.getAttr("%s.bindScales" % self.inits[0])
         except ValueError:
             self.bindScales = False
 
-        self.suffix = (naming.unique_name(cmds.getAttr("%s.moduleName" % self.inits[0])))
+        self.module_name = (naming.unique_name(cmds.getAttr("%s.moduleName" % self.inits[0])))
 
         self.controllerGrp = None
 
@@ -82,19 +83,15 @@ class Surface(object):
         self.colorCodes = []
 
     def createGrp(self):
-        self.controllerGrp = cmds.group(name="%s_contGrp" % self.suffix, em=True)
-        self.scaleGrp = cmds.group(name="%s_scaleGrp" % self.suffix, em=True)
+        self.limbGrp = cmds.group(name=naming.parse([self.module_name], suffix="grp"), empty=True)
+        self.scaleGrp = cmds.group(name=naming.parse([self.module_name, "scale"], suffix="grp"), empty=True)
         functions.align_to(self.scaleGrp, self.inits[0], 0)
-        self.nonScaleGrp = cmds.group(name="%s_nonScaleGrp" % self.suffix, em=True)
-        cmds.addAttr(self.scaleGrp, at="bool", ln="Control_Visibility", sn="contVis", defaultValue=True)
-        cmds.addAttr(self.scaleGrp, at="bool", ln="Joints_Visibility", sn="jointVis", defaultValue=True)
-        cmds.addAttr(self.scaleGrp, at="bool", ln="Rig_Visibility", sn="rigVis", defaultValue=True)
-        # make the created attributes visible in the channelbox
-        cmds.setAttr("{0}.contVis".format(self.scaleGrp), cb=True)
-        cmds.setAttr("{0}.jointVis".format(self.scaleGrp), cb=True)
-        cmds.setAttr("{0}.rigVis".format(self.scaleGrp), cb=True)
+        self.nonScaleGrp = cmds.group(name=naming.parse([self.module_name, "nonScale"], suffix="grp"), em=True)
+        for nicename, attrname in zip(["Control_Visibility", "Joints_Visibility", "Rig_Visibility"], ["contVis", "jointVis", "rigVis"]):
+            attribute.create_attribute(self.scaleGrp, nice_name=nicename, attr_name=attrname, attr_type="bool",
+                                       keyable=False, display=True)
 
-        self.limbGrp = cmds.group(name=self.suffix, em=True)
+        self.controllerGrp = cmds.group(name=naming.parse([self.module_name, "controller"], suffix="grp"), empty=True)
         cmds.parent(self.scaleGrp, self.nonScaleGrp, self.controllerGrp, self.limbGrp)
         self.scaleConstraints.append(self.scaleGrp)
 
@@ -103,9 +100,9 @@ class Surface(object):
         for nmb, init in enumerate(self.inits):
             cmds.select(d=True)
             if len(self.inits) == 1:
-                joint_name = "%s_jnt" % self.suffix
+                joint_name = "%s_jnt" % self.module_name
             nmb = "" if len(self.inits) == 1 else nmb  # for backward compatibility
-            j_def = cmds.joint(name="%s%s_jnt" % (self.suffix, nmb))
+            j_def = cmds.joint(name=naming.parse([self.module_name, nmb], suffix="jDef"))
             self.deformerJoints.append(j_def)
             cmds.connectAttr("{0}.rigVis".format(self.scaleGrp), "{0}.v".format(j_def), force=True)
             # Create connection groups
@@ -119,7 +116,7 @@ class Surface(object):
         if self.isPlugOnLocal:
             self.limbPlug = self.deformerJoints[0]
         else:
-            self.limbPlug = cmds.joint(name="limbPlug_%s" % self.suffix, radius=2)
+            self.limbPlug = cmds.joint(name=naming.parse([self.module_name, "plug"], suffix="j"), radius=2)
             cmds.parent(self.limbPlug, self.scaleGrp)
         self.sockets.append(self.limbPlug)
 
@@ -130,18 +127,23 @@ class Surface(object):
     def create_controllers_and_connections(self):
         for nmb, (init, joint_bind) in enumerate(zip(self.inits, self.jointBinds)):
             nmb = "" if len(self.inits) == 1 else nmb  # for backward compatibility
-            icon = ic.Icon()
-            _cont, _ = icon.create_icon("Diamond", icon_name="%s%s_cont" % (self.suffix, nmb))
+
+            # _cont, _ = icon.create_icon("Diamond", icon_name="%s%s_cont" % (self.module_name, nmb))
+            _cont = Controller(
+                shape="Diamond",
+                name=naming.parse([self.module_name, nmb], suffix="cont"),
+                side=self.side,
+                tier="primary",
+            )
             self.controllers.append(_cont)
-            _cont_offset = functions.create_offset_group(_cont, "offset")
-            _cont_bind = functions.create_offset_group(_cont, "bind")
-            _cont_negate = functions.create_offset_group(_cont, "negate")
-            _cont_pos = functions.create_offset_group(_cont, "pos")
+            _cont_offset = _cont.add_offset("offset")
+            _cont_bind = _cont.add_offset("bind")
+            _cont_negate = _cont.add_offset("negate")
+            _cont_pos = _cont.add_offset("pos")
 
             # functions.alignTo(self.cont_offset, self.rootInit, position=True, rotation=False)
             functions.align_to(_cont_offset, init, position=True, rotation=True)
             # functions.alignTo(self.cont_pos, self.rootInit, position=True, rotation=True)
-            functions.colorize(_cont, self.colorCodes[0])
 
             cmds.connectAttr("%s.contVis" % self.scaleGrp, "%s.v" % _cont_offset, force=True)
             cmds.parent(_cont_offset, self.controllerGrp)
@@ -166,9 +168,9 @@ class Surface(object):
                 connection.matrixConstraint(self.rotateObject, _cont_bind, maintainOffset=True, skipTranslate="xyz", skipScale="xyz")
                 # connection.matrixConstraint(self.rotateObject, self.cont_bind, mo=True, st="xyz", ss=_ss)
 
-            negate_multMatrix = cmds.createNode("multMatrix", name="negate_multMatrix_%s" % self.suffix)
-            negate_decompose = cmds.createNode("decomposeMatrix", name="negate_decompose_%s" % self.suffix)
-            cmds.connectAttr("%s.inverseMatrix" % _cont, "%s.matrixIn[0]" % negate_multMatrix, force=True)
+            negate_multMatrix = cmds.createNode("multMatrix", name=naming.parse([self.module_name, "negate"], suffix="multMatrix"))
+            negate_decompose = cmds.createNode("decomposeMatrix", name=naming.parse([self.module_name, "negate"], suffix="decompose"))
+            cmds.connectAttr("%s.inverseMatrix" % _cont.name, "%s.matrixIn[0]" % negate_multMatrix, force=True)
             cmds.connectAttr("%s.matrixSum" % negate_multMatrix, "%s.inputMatrix" % negate_decompose, force=True)
             cmds.connectAttr("%s.outputTranslate" % negate_decompose, "%s.translate" % _cont_negate, force=True)
             cmds.connectAttr("%s.outputRotate" % negate_decompose, "%s.rotate" % _cont_negate, force=True)
@@ -177,12 +179,12 @@ class Surface(object):
             if self.isPlugOnLocal:
                 pass  # nothing to connect because plug is local joint itself
             else:
-                cmds.parentConstraint(_cont, self.limbPlug, mo=False)
+                cmds.parentConstraint(_cont.name, self.limbPlug, maintainOffset=False)
 
             # Direct connection between controller and joint
             for attr in "trs":
                 for axis in "xyz":
-                    cmds.connectAttr("%s.%s%s" % (_cont, attr, axis), "%s.%s%s" % (joint_bind, attr, axis), force=True)
+                    cmds.connectAttr("%s.%s%s" % (_cont.name, attr, axis), "%s.%s%s" % (joint_bind, attr, axis), force=True)
 
     def createLimb(self):
         self.createGrp()
@@ -199,7 +201,7 @@ class Guides(object):
         # -------Mandatory------[Start]
         self.side = side
         self.sideMultiplier = -1 if side == "R" else 1
-        self.suffix = suffix
+        self.name = suffix
         self.segments = segments
         self.tMatrix = om.MMatrix(tMatrix) if tMatrix else om.MMatrix()
         self.upVector = om.MVector(upVector)
@@ -215,7 +217,7 @@ class Guides(object):
         r_point_j = om.MVector(0, 0, 0) * self.tMatrix
         if not self.segments:
             self.offsetVector = om.MVector(0, 1, 0)
-            surface_root_jnt = cmds.joint(name="jInit_surface_{0}".format(self.suffix))
+            surface_root_jnt = cmds.joint(name=naming.parse([self.name, "root"], suffix="jInit"))
             self.guideJoints.append(surface_root_jnt)
             return
 
@@ -233,8 +235,7 @@ class Guides(object):
 
         # Draw the joints
         for seg in range(self.segments + 1):
-            surface_jnt = cmds.joint(p=(r_point_j + (add_val * seg)),
-                                     name="jInit_surface_%s_%i" % (self.suffix, seg))
+            surface_jnt = cmds.joint(p=(r_point_j + (add_val * seg)), name=naming.parse([self.name, seg], suffix="jInit"))
             # Update the guideJoints list
             self.guideJoints.append(surface_jnt)
 

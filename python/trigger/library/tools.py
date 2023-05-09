@@ -3,6 +3,7 @@
 from maya import cmds
 from trigger.library import functions, attribute, transform, connection
 from trigger.library import arithmetic as op
+from trigger.library import naming
 
 
 def replace_controller(old_controller, new_controller, mirror=True, mirror_axis="X", keep_old_shape=False,
@@ -415,7 +416,7 @@ def make_stretchy_ik(joint_chain, ik_handle, root_controller, end_controller, si
     if not name:
         name = joint_chain[0]
 
-    if type(ik_handle) != list:
+    if not isinstance(ik_handle, (list, tuple)):
         ik_handle = [ik_handle]
 
     attribute.validate_attr("%s.squash" % end_controller, attr_type="double", attr_range=[0.0, 1.0], default_value=0.0)
@@ -425,36 +426,42 @@ def make_stretchy_ik(joint_chain, ik_handle, root_controller, end_controller, si
     attribute.validate_attr("%s.softIK" % end_controller, attr_type="double", attr_range=[0.0, 100.0],
                             default_value=0.0)
 
-    root_loc = cmds.spaceLocator(name="rootLoc_%s" % name)[0]
+    # root_loc = cmds.spaceLocator(name="rootLoc_%s" % name)[0]
+    root_loc = cmds.spaceLocator(name=naming.parse([name, "stretchy", "root"], suffix="loc"))[0]
     functions.align_to(root_loc, joint_chain[0], position=True, rotation=True)
     connection.matrixConstraint(root_controller, root_loc, skipRotate="xyz", maintainOffset=True)
     cmds.aimConstraint(end_controller, root_loc, wuo=root_controller)
 
-    end_loc = cmds.spaceLocator(name="endLoc_%s" % name)[0]
+    # end_loc = cmds.spaceLocator(name="endLoc_%s" % name)[0]
+    end_loc = cmds.spaceLocator(name=naming.parse([name, "stretchy", "end"], suffix="loc"))[0]
     end_loc_shape = functions.get_shapes(end_loc)[0]
     functions.align_to(end_loc, end_controller, position=True, rotation=True)
     cmds.parent(end_loc, root_loc)
-    soft_blend_loc = cmds.spaceLocator(name="softBlendLoc_%s" % name)[0]
+    # soft_blend_loc = cmds.spaceLocator(name="softBlendLoc_%s" % name)[0]
+    soft_blend_loc = cmds.spaceLocator(name=naming.parse([name, "stretchy", "softBlend"], suffix="loc"))[0]
     soft_blend_loc_shape = functions.get_shapes(soft_blend_loc)[0]
     functions.align_to(soft_blend_loc, end_controller, position=True, rotation=True)
     connection.matrix_switch(end_controller, end_loc, soft_blend_loc, "%s.stretch" % end_controller, position=True,
                              rotation=True)
 
     if not distance_start:
-        distance_start_loc = cmds.spaceLocator(name="distance_start_%s" % name)[0]
+        # distance_start_loc = cmds.spaceLocator(name="distance_start_%s" % name)[0]
+        distance_start_loc = cmds.spaceLocator(name=naming.parse([name, "stretchy", "distanceStart"], suffix="loc"))[0]
         connection.matrixConstraint(root_controller, distance_start_loc, skipRotate="xyz", skipScale="xyz",
                                     maintainOffset=False)
     else:
         distance_start_loc = distance_start
 
     if not distance_end:
-        distance_end_loc = cmds.spaceLocator(name="distance_end_%s" % name)[0]
+        # distance_end_loc = cmds.spaceLocator(name="distance_end_%s" % name)[0]
+        distance_end_loc = cmds.spaceLocator(name=naming.parse([name, "stretchy", "distanceEnd"], suffix="loc"))[0]
         connection.matrixConstraint(end_controller, distance_end_loc, skipRotate="xyz", skipScale="xyz",
                                     maintainOffset=False)
     else:
         distance_end_loc = distance_end
 
-    ctrl_distance = cmds.createNode("distanceBetween", name="distance_%s" % name)
+    # ctrl_distance = cmds.createNode("distanceBetween", name="distance_%s" % name)
+    ctrl_distance = cmds.createNode("distanceBetween", name=naming.parse([name, "stretchy"], suffix="distance"))
     cmds.connectAttr("%s.translate" % distance_start_loc, "%s.point1" % ctrl_distance)
     cmds.connectAttr("%s.translate" % distance_end_loc, "%s.point2" % ctrl_distance)
     ctrl_distance_p = "%s.distance" % ctrl_distance
@@ -462,7 +469,7 @@ def make_stretchy_ik(joint_chain, ik_handle, root_controller, end_controller, si
     plugs_to_sum = []
     for nmb, jnt in enumerate(joint_chain[1:]):
         dist = functions.get_distance(jnt, joint_chain[nmb])
-        cmds.addAttr(jnt, ln="initialDistance", at="double", dv=dist)
+        cmds.addAttr(jnt, longName="initialDistance", attributeType="double", defaultValue=dist)
         plugs_to_sum.append("%s.initialDistance" % jnt)
         # cmds.connectAttr("%s.initialDistance" %jnt, "%s.input1D[%i]" %(sum_of_initial_lengths, nmb))
 
@@ -500,7 +507,8 @@ def make_stretchy_ik(joint_chain, ik_handle, root_controller, end_controller, si
     cmds.connectAttr(condition_length_p, "%s.tx" % end_loc)
 
     # STRETCHING PART
-    soft_distance = cmds.createNode("distanceBetween", name="distanceSoft_%s" % name)
+    # soft_distance = cmds.createNode("distanceBetween", name="distanceSoft_%s" % name)
+    soft_distance = cmds.createNode("distanceBetween", name=naming.parse([name, "stretchy", "soft"], suffix="distance"))
     cmds.connectAttr("%s.worldPosition[0]" % end_loc_shape, "%s.point1" % soft_distance)
     cmds.connectAttr("%s.worldPosition[0]" % soft_blend_loc_shape, "%s.point2" % soft_distance)
     soft_distance_p = "%s.distance" % soft_distance
@@ -518,11 +526,13 @@ def make_stretchy_ik(joint_chain, ik_handle, root_controller, end_controller, si
         clamp_p = op.clamp(squash_mult_p, maximum="%s.initialDistance" % jnt)
         switch_p = op.switch(clamp_p, squash_mult_p, "%s.stretch" % end_controller)
 
-        squash_blend_node = cmds.createNode("blendColors", name="squash_blend_%s" % name)
+        # squash_blend_node = cmds.createNode("blendColors", name="squash_blend_%s" % name)
+        squash_blend_node = cmds.createNode("blendColors", name=naming.parse([name, "stretchy", "squash"], suffix="blend"))
         # cmds.connectAttr(squash_mult_p, "%s.color1R" %squash_blend_node)
         cmds.connectAttr(switch_p, "%s.color1R" % squash_blend_node)
         # Stretch limit
-        clamp_node = cmds.createNode("clamp", name="stretchLimit_%s" % name)
+        # clamp_node = cmds.createNode("clamp", name="stretchLimit_%s" % name)
+        clamp_node = cmds.createNode("clamp", name=naming.parse([name, "stretchy", "limit"], suffix="clamp"))
         max_distance_p = op.add("%s.stretchLimit" % end_controller, "%s.initialDistance" % jnt)
         cmds.connectAttr(sum1_p, "%s.inputR" % clamp_node)
         cmds.connectAttr(max_distance_p, "%s.maxR" % clamp_node)

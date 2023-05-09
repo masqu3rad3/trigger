@@ -251,14 +251,13 @@ class Guides(object):
         # Draw the joints
         for seg in range(self.segments + 1):
             # finger_jnt = cmds.joint(position=(rPointFinger + (addFinger * seg)), name="jInit_finger_%s_%i" %(self.suffix, seg))
-            finger_jnt = cmds.joint(position=(rPointFinger + (addFinger * seg)), name=naming.parse([self.name, seg], suffix="jInit"))
+            finger_jnt = cmds.joint(position=(rPointFinger + (addFinger * seg)), name=naming.parse([self.name, seg], side=self.side, suffix="jInit"))
             # Update the guideJoints list
             cmds.setAttr("%s.radius" % finger_jnt, 0.5)
             self.guideJoints.append(finger_jnt)
 
         # set orientation of joints
-        joint.orient_joints(self.guideJoints, world_up_axis=self.upVector, up_axis=(0, -1, 0), reverse_aim=self.sideMultiplier,
-                            reverse_up=self.sideMultiplier)
+        joint.orient_joints(self.guideJoints, world_up_axis=self.upVector, up_axis=(0, -1, 0), reverse_aim=self.sideMultiplier,reverse_up=self.sideMultiplier)
 
     def define_attributes(self):
         # set joint side and type attributes

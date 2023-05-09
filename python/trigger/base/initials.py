@@ -89,7 +89,7 @@ class Initials(object):
             log.warning("cannot find mirror Joint automatically")
             return None, alignmentGiven, None
 
-    @undo
+    # @undo
     def initLimb(self, limb_name, whichSide="left", constrainedTo=None, parentNode=None, defineAs=False, *args, **kwargs):
         if limb_name not in self.valid_limbs:
             log.error("%s is not a valid limb" % limb_name)
@@ -123,13 +123,18 @@ class Initials(object):
             else:
                 side = "C"
 
-
-        suffix = naming.unique_name("%sGrp_%s" % (limb_name, whichSide)).replace("%sGrp_" % (limb_name), "")
+        limb_group_name = naming.parse([limb_name], side=side, suffix="grp")
+        limb_group_name = naming.unique_name(limb_group_name, suffix="_grp")
+        # strip the side and suffix and get the name of the limb
+        limb_name_parts = limb_group_name.split("_")
+        # remove the side and suffix
+        limb_name_parts = [part for part in limb_name_parts if part not in ["L", "R", "C", "grp"]]
+        unique_limb = "_".join(limb_name_parts)
 
         ## if defineAs is True, define the selected joints as the given limb instead creating new ones.
         if defineAs:
             # TODO: AUTO argument can be included by running a seperate method to determine the side of the root joint according to the matrix
-            construct_command = "modules.{0}.Guides(suffix='{1}', side='{2}')".format(limb_name, suffix, side)
+            construct_command = "modules.{0}.Guides(suffix='{1}', side='{2}')".format(limb_name, unique_limb, side)
             guide = eval(construct_command)
             guide.convertJoints(currentselection)
             self.adjust_guide_display(guide)
@@ -165,8 +170,8 @@ class Initials(object):
                 total_locators = locators1
             return total_locators, jnt_dict_side1
 
-        limbGroup = cmds.group(em=True, name="%sGrp_%s" % (limb_name, suffix))
-        cmds.parent(limbGroup, holderGroup)
+        limb_group = cmds.group(em=True, name=limb_group_name)
+        cmds.parent(limb_group, holderGroup)
         cmds.select(d=True)
 
         module = "modules.{0}.{1}".format(limb_name, "Guides")
@@ -176,7 +181,7 @@ class Initials(object):
                 "tMatrix={2}, " \
                 "upVector={3}, " \
                 "mirrorVector={4}, " \
-                "lookVector={5}".format(side, suffix, self.tMatrix,
+                "lookVector={5}".format(side, unique_limb, self.tMatrix,
                                         self.upVector, self.mirrorVector, self.lookVector)
 
         extra_arg_list = []
@@ -198,7 +203,8 @@ class Initials(object):
 
         ### Constrain locating
 
-        loc_grp = cmds.group(name=("locGrp_%s" % suffix), em=True)
+        # loc_grp = cmds.group(name=("locGrp_%s" % unique_limb), em=True)
+        loc_grp = cmds.group(name=naming.parse([unique_limb, "locators"], side=side, suffix="grp"), em=True)
         cmds.setAttr("{0}.v".format(loc_grp), 0)
         locatorsList = []
 
@@ -217,7 +223,7 @@ class Initials(object):
                 # extra.matrixConstraint(limbJoints[jnt], locator, mo=False)
 
             cmds.parent(locator, loc_grp)
-        cmds.parent(loc_grp, limbGroup)
+        cmds.parent(loc_grp, limb_group)
 
         ### MOVE THE LIMB TO THE DESIRED LOCATION
         if masterParent:
@@ -233,7 +239,7 @@ class Initials(object):
                     attribute.lock_and_hide(jnt, ["tx", "ty", "tz", "rx", "ry", "rz"], hide=False)
             cmds.parent(guide.guideJoints[0], masterParent)
         else:
-            cmds.parent(guide.guideJoints[0], limbGroup)
+            cmds.parent(guide.guideJoints[0], limb_group)
         cmds.select(currentselection)
 
         return locatorsList, {side: guide.guideJoints}

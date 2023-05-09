@@ -128,7 +128,6 @@ def get_joint_side(joint, skip_errors=True):
             log.error("Joint Side cannot not be detected (%s)" % joint)
     return JOINT_SIDE_DICT[side_int]
 
-
 def orient_joints(joint_list, aim_axis=(1.0, 0.0, 0.0), up_axis=(0.0, 1.0, 0.0), world_up_axis=(0.0, 1.0, 0.0),
                   reverse_aim=1.0, reverse_up=1.0):
     """Orient joints.
@@ -164,14 +163,6 @@ def orient_joints(joint_list, aim_axis=(1.0, 0.0, 0.0), up_axis=(0.0, 1.0, 0.0),
             cmds.delete(aim_con)
             cmds.makeIdentity(joint, apply=True)
 
-    # for j in range(0, len(joint_list)):
-    #
-    #     if not (j == (len(joint_list) - 1)):
-    #         aim_con = cmds.aimConstraint(joint_list[j + 1], joint_list[j], aim=aim_axis, upVector=up_axis,
-    #                                      worldUpVector=world_up_axis, worldUpType='vector', weight=1.0)
-    #         cmds.delete(aim_con)
-    #         cmds.makeIdentity(joint_list[j], a=True)
-    #
     # re-parent the hierarchy
     for nmb, joint in enumerate(joint_list[1:]):
         cmds.parent(joint, joint_list[nmb])

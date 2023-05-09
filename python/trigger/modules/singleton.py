@@ -78,7 +78,7 @@ class Singleton(object):
         self.up_axis, self.mirror_axis, self.look_axis = joint.get_rig_axes(self.inits[0])
 
         # initialize suffix
-        self.suffix = (naming.unique_name(cmds.getAttr("%s.moduleName" % self.inits[0])))
+        self.module_name = (naming.unique_name(cmds.getAttr("%s.moduleName" % self.inits[0])))
 
         # module specific variables
         self.localOffGrp = None
@@ -104,39 +104,32 @@ class Singleton(object):
     def create_grp(self):
         """Create the necessary groups for the module."""
 
-        self.limbGrp = cmds.group(name=self.suffix, empty=True)
-        self.scaleGrp = cmds.group(name="%s_scaleGrp" % self.suffix, empty=True)
+        self.limbGrp = cmds.group(name=naming.parse([self.module_name], suffix="grp"), empty=True)
+        self.scaleGrp = cmds.group(name=naming.parse([self.module_name, "scale"], suffix="grp"), empty=True)
         functions.align_to(self.scaleGrp, self.inits[0], position=True, rotation=False)
-        self.nonScaleGrp = cmds.group(name="%s_nonScaleGrp" % self.suffix, empty=True)
+        self.nonScaleGrp = cmds.group(name=naming.parse([self.module_name, "nonScale"], suffix="grp"), empty=True)
 
-        cmds.addAttr(self.scaleGrp, attributeType="bool", longName="Control_Visibility", shortName="contVis",
-                     defaultValue=True)
-        cmds.addAttr(self.scaleGrp, attributeType="bool", longName="Joints_Visibility", shortName="jointVis",
-                     defaultValue=True)
-        cmds.addAttr(self.scaleGrp, attributeType="bool", longName="Rig_Visibility", shortName="rigVis",
-                     defaultValue=False)
-        # make the created attributes visible in the channelbox
-        cmds.setAttr("%s.contVis" % self.scaleGrp, channelBox=True)
-        cmds.setAttr("%s.jointVis" % self.scaleGrp, channelBox=True)
-        cmds.setAttr("%s.rigVis" % self.scaleGrp, channelBox=True)
+        for nicename, attrname in zip(["Control_Visibility", "Joints_Visibility", "Rig_Visibility"], ["contVis", "jointVis", "rigVis"]):
+            attribute.create_attribute(self.scaleGrp, nice_name=nicename, attr_name=attrname, attr_type="bool",
+                                       keyable=False, display=True)
 
         cmds.parent(self.scaleGrp, self.limbGrp)
         cmds.parent(self.nonScaleGrp, self.limbGrp)
 
-        self.localOffGrp = cmds.group(name="%s_localOffset_grp" % self.suffix, empty=True)
-        self.plugBindGrp = cmds.group(name="%s_plugBind_grp" % self.suffix, empty=True)
+        self.localOffGrp = cmds.group(name=naming.parse([self.module_name, "localOffset"], suffix="grp"), empty=True)
+        self.plugBindGrp = cmds.group(name=naming.parse([self.module_name, "bind"], suffix="grp"), empty=True)
         cmds.parent(self.localOffGrp, self.plugBindGrp)
         cmds.parent(self.plugBindGrp, self.limbGrp)
 
         # scale hook gets the scale value from the bind group but not from the localOffset
-        self.scaleHook = cmds.group(name="%s_scaleHook" % self.suffix, empty=True)
+        self.scaleHook = cmds.group(name=naming.parse([self.module_name, "scaleHook"], suffix="grp"), empty=True)
         cmds.parent(self.scaleHook, self.limbGrp)
         scale_skips = "xyz" if self.isLocal else ""
         connection.matrixConstraint(self.scaleGrp, self.scaleHook, skipScale=scale_skips)
 
-        self.joints_grp = cmds.group(name="%s_joints_grp" % self.suffix, empty=True)
-        self.conts_grp = cmds.group(name="%s_conts_grp" % self.suffix, empty=True)
-        self.follicle_grp = cmds.group(name="%s_follicle_grp" % self.suffix, empty=True)
+        self.joints_grp = cmds.group(name=naming.parse([self.module_name, "defJoints"], suffix="grp"), empty=True)
+        self.conts_grp = cmds.group(name=naming.parse([self.module_name, "controller"], suffix="grp"), empty=True)
+        self.follicle_grp = cmds.group(name=naming.parse([self.module_name, "follicle"], suffix="grp"), empty=True)
 
         cmds.parent([self.joints_grp, self.conts_grp, self.follicle_grp], self.limbGrp)
         cmds.parent(self.conts_grp, self.localOffGrp)
@@ -144,8 +137,7 @@ class Singleton(object):
     def _build_module(self):
         # draw Joints
         cmds.select(deselect=True)
-        self.limbPlug = cmds.joint(name="limbPlug_%s" % self.suffix, position=api.get_world_translation(self.inits[0]),
-                                   radius=3)
+        self.limbPlug = cmds.joint(name=naming.parse([self.module_name, "plug"], suffix="j"), position=api.get_world_translation(self.inits[0]), radius=3)
         cmds.connectAttr("%s.s" % self.scaleGrp, "%s.s" % self.limbPlug)
         cmds.parent(self.limbPlug, self.limbGrp)
 
@@ -159,13 +151,13 @@ class Singleton(object):
         cmds.select(deselect=True)
         for nmb, j in enumerate(self.inits):
             cmds.select(deselect=True)
-            j_def = cmds.joint(name="jDef_{0}_{1}".format(j, self.suffix))
+            j_def = cmds.joint(name=naming.parse([self.module_name, j], suffix="jDef"))
             j_def_off = functions.create_offset_group(j_def, "off")
             j_def_bind = functions.create_offset_group(j_def, "bind")
 
             # connect the scale downstream
 
-            cont = Controller(name="%s%s_cont" % (self.suffix, nmb + 1), shape="Circle")
+            cont = Controller(name=naming.parse([self.module_name, (nmb + 1)], suffix="cont"), shape="Circle")
             cont.drive_visibility("%s.contVis" % self.scaleGrp, lock_and_hide=True)
             cont.set_side(side=self.side)
             cont_bind = cont.add_offset("bind")
@@ -223,7 +215,7 @@ class Guides(object):
         # -------Mandatory------[Start]
         self.side = side
         self.sideMultiplier = -1 if side == "R" else 1
-        self.suffix = suffix
+        self.name = suffix
         self.segments = segments
         self.tMatrix = om.MMatrix(tMatrix) if tMatrix else om.MMatrix()
         self.upVector = om.MVector(upVector)
@@ -239,7 +231,7 @@ class Guides(object):
         r_point_j = om.MVector(0, 0, 0) * self.tMatrix
         if not self.segments:
             self.offsetVector = om.MVector(0, 1, 0)
-            singleton_root_jnt = cmds.joint(name="jInit_singleton_{0}".format(self.suffix))
+            singleton_root_jnt = cmds.joint(name=naming.parse([self.name, "root"], side=self.side, suffix="jInit"))
             self.guideJoints.append(singleton_root_jnt)
             return
 
@@ -258,7 +250,7 @@ class Guides(object):
         # Draw the joints
         for seg in range(self.segments + 1):
             singleton_jnt = cmds.joint(position=(r_point_j + (add_val * seg)),
-                                      name="jInit_singleton_%s_%i" % (self.suffix, seg))
+                                       name=naming.parse([self.name, seg], side=self.side, suffix="jInit"))
             # Update the guideJoints list
             self.guideJoints.append(singleton_jnt)
 

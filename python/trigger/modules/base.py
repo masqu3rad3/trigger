@@ -152,13 +152,6 @@ class Guides(object):
         # -------Mandatory------[End]
 
     def draw_joints(self):
-        if self.side == "C":
-            # Guide joint positions for limbs with no side orientation
-            pass
-        else:
-            # Guide joint positions for limbs with sides
-            pass
-
         # Define the offset vector
         self.offsetVector = om.MVector(0, 1, 0)
 

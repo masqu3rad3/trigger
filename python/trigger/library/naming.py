@@ -6,26 +6,65 @@ from maya import cmds
 import uuid
 
 
-def unique_name(name, return_counter=False):
+# TODO: update the unique_name function to accept suffix to ignore
+def unique_name(name, return_counter=False, suffix=None):
     """
     Searches the scene for match and returns a unique name for given name
     Args:
         name: (String) Name to query
         return_counter: (Bool) If true, returns the next available number instead of the object name
+        suffix: (String) If defined and if name ends with this suffix, the increment numbers will be put before the.
 
     Returns: (String) uniquename
 
     """
-    base_name = name
+    original_name = name
+    if suffix and name.endswith(suffix):
+        name = name.replace(suffix, "")
+    else:
+        suffix = ""
+    search_name = name
+
     id_counter = 0
-    while cmds.objExists(name):
-        name = "%s%s" % (base_name, str(id_counter + 1))
+    while cmds.objExists(search_name):
+        search_name = "{0}{1}{2}".format(name, str(id_counter + 1), suffix)
         id_counter = id_counter + 1
+
+    # base_name = name
+    # id_counter = 0
+    # # find the counter
+    # while cmds.objExists(name):
+    #     name = "%s%s" % (base_name, str(id_counter + 1))
+    #     id_counter = id_counter + 1
     if return_counter:
         return id_counter
+    # counter_str = str(id_counter) if id_counter else ""
+    # if suffix and base_name.endswith(suffix):
+    #     resolved_name = base_name.replace(suffix, "{0}{1}".format(counter_str, suffix))
+    # else:
+    #     resolved_name = "{0}{1}".format(name, counter_str)
     else:
-        return name
+        return search_name
 
+# def unique_name(name, return_counter=False):
+#     """
+#     Searches the scene for match and returns a unique name for given name
+#     Args:
+#         name: (String) Name to query
+#         return_counter: (Bool) If true, returns the next available number instead of the object name
+#
+#     Returns: (String) uniquename
+#
+#     """
+#     base_name = name
+#     id_counter = 0
+#     while cmds.objExists(name):
+#         name = "%s%s" % (base_name, str(id_counter + 1))
+#         id_counter = id_counter + 1
+#     if return_counter:
+#         return id_counter
+#     else:
+#         return name
 
 def unique_scene():
     """Make sure that everything is named uniquely.

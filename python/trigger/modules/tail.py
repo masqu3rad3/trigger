@@ -42,7 +42,7 @@ class Tail(object):
         self.sideMult = -1 if self.side == "R" else 1
 
         # initialize suffix
-        self.suffix = (naming.unique_name(cmds.getAttr("%s.moduleName" % self.inits[0])))
+        self.module_name = (naming.unique_name(cmds.getAttr("%s.moduleName" % self.inits[0])))
 
         # scratch variables
         self.controllers = []
@@ -58,40 +58,36 @@ class Tail(object):
         self.colorCodes = [6, 18]
 
     def createGrp(self):
-        self.limbGrp = cmds.group(name=self.suffix, em=True)
-        self.scaleGrp = cmds.group(name="%s_scaleGrp" % self.suffix, em=True)
+        self.limbGrp = cmds.group(name=naming.parse([self.module_name], suffix="grp"), empty=True)
+        self.scaleGrp = cmds.group(name=naming.parse([self.module_name, "scale"], suffix="grp"), empty=True)
         functions.align_to(self.scaleGrp, self.tailRoot, position=True, rotation=False)
-        self.nonScaleGrp = cmds.group(name="%s_nonScaleGrp" % self.suffix, em=True)
+        self.nonScaleGrp = cmds.group(name=naming.parse([self.module_name, "nonScale"], suffix="grp"), empty=True)
 
-        cmds.addAttr(self.scaleGrp, at="bool", ln="Control_Visibility", sn="contVis", defaultValue=True)
-        cmds.addAttr(self.scaleGrp, at="bool", ln="Joints_Visibility", sn="jointVis", defaultValue=True)
-        cmds.addAttr(self.scaleGrp, at="bool", ln="Rig_Visibility", sn="rigVis", defaultValue=False)
-        # make the created attributes visible in the channelbox
-        cmds.setAttr("%s.contVis" % self.scaleGrp, cb=True)
-        cmds.setAttr("%s.jointVis" % self.scaleGrp, cb=True)
-        cmds.setAttr("%s.rigVis" % self.scaleGrp, cb=True)
+        for nicename, attrname in zip(["Control_Visibility", "Joints_Visibility", "Rig_Visibility"], ["contVis", "jointVis", "rigVis"]):
+            attribute.create_attribute(self.scaleGrp, nice_name=nicename, attr_name=attrname, attr_type="bool",
+                                       keyable=False, display=True)
 
         cmds.parent(self.scaleGrp, self.limbGrp)
         cmds.parent(self.nonScaleGrp, self.limbGrp)
 
     def createJoints(self):
         # draw Joints
-        cmds.select(d=True)
-        self.limbPlug = cmds.joint(name="limbPlug_%s" % self.suffix, p=api.get_world_translation(self.inits[0]), radius=3)
+        cmds.select(clear=True)
+        self.limbPlug = cmds.joint(name=naming.parse([self.module_name, "plug"], suffix="j"), position=api.get_world_translation(self.inits[0]), radius=3)
 
-        cmds.select(d=True)
-        for j in range (0,len(self.inits)):
-            location = api.get_world_translation(self.inits[j])
-            jnt = cmds.joint(name="jDef_{0}_{1}".format(j, self.suffix), p=location)
-            self.sockets.append(jnt)
-            self.deformerJoints.append(jnt)
+        cmds.select(clear=True)
+        for idx, jnt in enumerate(self.inits):
+            location = api.get_world_translation(jnt)
+            _def_jnt = cmds.joint(name=naming.parse([self.module_name, idx], suffix="jDef"), position=location)
+            self.sockets.append(_def_jnt)
+            self.deformerJoints.append(_def_jnt)
 
         if not self.useRefOrientation:
             joint.orient_joints(self.deformerJoints, world_up_axis=(self.look_axis), up_axis=(0, 1, 0), reverse_aim=self.sideMult, reverse_up=self.sideMult)
         else:
             for x in range (len(self.deformerJoints)):
                 functions.align_to(self.deformerJoints[x], self.inits[x], position=True, rotation=True)
-                cmds.makeIdentity(self.deformerJoints[x], a=True)
+                cmds.makeIdentity(self.deformerJoints[x], apply=True)
 
         cmds.parent(self.deformerJoints[0], self.scaleGrp)
 
@@ -108,17 +104,17 @@ class Tail(object):
         self.controllers=[]
         self.cont_off_list=[]
 
-        for jnt in range (len(self.deformerJoints)-1):
-            scaleDis = functions.get_distance(self.deformerJoints[jnt], self.deformerJoints[jnt + 1]) / 2
-            cont = Controller(name="{0}{1}_cont".format(self.suffix, jnt),
-                              shape="Cube",
-                              scale=(scaleDis, scaleDis, scaleDis),
-                              side=self.side,
-                              tier="primary"
-                              )
-
-            cmds.xform(cont.name, pivots=(self.sideMult * (-scaleDis), 0, 0))
-            functions.align_to_alter(cont.name, self.deformerJoints[jnt], 2)
+        for nmb, jnt in enumerate(self.deformerJoints[:-1]):
+            _scale_distance = functions.get_distance(jnt, self.deformerJoints[nmb + 1]) * 0.5
+            cont = Controller(
+                name=naming.parse([self.module_name, nmb], suffix="cont"),
+                shape="Cube",
+                scale=(_scale_distance, _scale_distance, _scale_distance),
+                side=self.side,
+                tier="primary"
+            )
+            cmds.xform(cont.name, pivots=(self.sideMult * (-_scale_distance), 0, 0))
+            functions.align_to_alter(cont.name, jnt, 2)
 
             cont_OFF = cont.add_offset("OFF")
             cont_ORE = cont.add_offset("ORE")
@@ -126,12 +122,39 @@ class Tail(object):
             self.controllers.append(cont)
             self.cont_off_list.append(cont_OFF)
 
-            if jnt != 0:
-                cmds.parent(self.cont_off_list[jnt], self.controllers[jnt - 1].name)
+            if nmb != 0:
+                cmds.parent(self.cont_off_list[nmb], self.controllers[nmb - 1].name)
             else:
-                cmds.parent(self.cont_off_list[jnt], self.scaleGrp)
+                cmds.parent(self.cont_off_list[nmb], self.scaleGrp)
 
             cont.freeze()
+
+        # for jnt in range (len(self.deformerJoints)-1):
+        #     scaleDis = functions.get_distance(self.deformerJoints[jnt], self.deformerJoints[jnt + 1]) / 2
+        #     cont = Controller(
+        #         # name="{0}{1}_cont".format(self.module_name, jnt),
+        #         name=naming.parse([self.module_name, jnt], suffix="cont"),
+        #         shape="Cube",
+        #         scale=(scaleDis, scaleDis, scaleDis),
+        #         side=self.side,
+        #         tier="primary"
+        #     )
+        #
+        #     cmds.xform(cont.name, pivots=(self.sideMult * (-scaleDis), 0, 0))
+        #     functions.align_to_alter(cont.name, self.deformerJoints[jnt], 2)
+        #
+        #     cont_OFF = cont.add_offset("OFF")
+        #     cont_ORE = cont.add_offset("ORE")
+        #
+        #     self.controllers.append(cont)
+        #     self.cont_off_list.append(cont_OFF)
+        #
+        #     if jnt != 0:
+        #         cmds.parent(self.cont_off_list[jnt], self.controllers[jnt - 1].name)
+        #     else:
+        #         cmds.parent(self.cont_off_list[jnt], self.scaleGrp)
+        #
+        #     cont.freeze()
 
         attribute.drive_attrs("%s.contVis" % self.scaleGrp, ["%s.v" % x for x in self.cont_off_list])
 
@@ -140,13 +163,13 @@ class Tail(object):
             cmds.parentConstraint(self.controllers[x].name, self.deformerJoints[x], mo=False)
 
             # additive scalability
-            sGlobal = cmds.createNode("multiplyDivide", name="sGlobal_%s_%s" %(x, self.suffix))
+            sGlobal = cmds.createNode("multiplyDivide", name=naming.parse([self.module_name, "sGlobal", x], suffix="mult"))
             cmds.connectAttr("%s.scale" % self.limbPlug,"%s.input1" % sGlobal)
             cmds.connectAttr("%s.scale" % self.controllers[x].name,"%s.input2" % sGlobal)
             cmds.connectAttr("%s.output" % sGlobal,"%s.scale" % self.deformerJoints[x])
 
         ## last joint has no cont, use the previous one to scale that
-        sGlobal = cmds.createNode("multiplyDivide", name="sGlobal_Last_%s" %(self.suffix))
+        sGlobal = cmds.createNode("multiplyDivide", name=naming.parse([self.module_name, "sGlobal", "Last"], suffix="mult"))
         cmds.connectAttr("%s.scale" %self.limbPlug, "%s.input1" %sGlobal)
         cmds.connectAttr("%s.scale" %self.controllers[-1].name, "%s.input2" %sGlobal)
         cmds.connectAttr("%s.output" %sGlobal, "%s.scale" %self.deformerJoints[-1])
@@ -175,7 +198,7 @@ class Guides(object):
         #-------Mandatory------[Start]
         self.side = side
         self.sideMultiplier = -1 if side == "R" else 1
-        self.suffix = suffix
+        self.name = suffix
         self.segments = segments or 1
         self.tMatrix = om.MMatrix(tMatrix) if tMatrix else om.MMatrix()
         self.upVector = om.MVector(upVector)
@@ -206,7 +229,7 @@ class Guides(object):
 
         # Draw the joints / set joint side and type attributes
         for seg in range(self.segments + 1):
-            jnt = cmds.joint(p=(rPointTail + (addTail * seg)), name="jInit_tail_%s_%i" %(self.suffix, seg))
+            jnt = cmds.joint(p=(rPointTail + (addTail * seg)), name=naming.parse([self.name, seg], side=self.side, suffix="jInit"))
 
             joint.set_joint_side(jnt, self.side)
             # Update the guideJoints list
