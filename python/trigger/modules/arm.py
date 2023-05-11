@@ -10,6 +10,7 @@ from trigger.objects.ribbon import Ribbon
 from trigger.objects.controller import Controller
 from trigger.objects import measure
 from trigger.library import tools
+from trigger.modules import _module
 
 from trigger.core import filelog
 
@@ -27,7 +28,7 @@ LIMB_DATA = {
 }
 
 
-class Arm(object):
+class Arm(_module.ModuleCore):
     def __init__(self, build_data=None, inits=None, *args, **kwargs):
         super(Arm, self).__init__()
         # fool proofing
@@ -102,12 +103,12 @@ class Arm(object):
         self.startLockPos = None
         self.startLockTwist = None
         self.endLock = None
-        self.scaleHook = None
-        self.rigJointsGrp = None
-        self.defJointsGrp = None
-        self.localOffGrp = None
-        self.controllerGrp = None
-        self.contBindGrp = None
+        # self.scaleHook = None
+        # self.rigJointsGrp = None
+        # self.defJointsGrp = None
+        # self.localOffGrp = None
+        # self.controllerGrp = None
+        # self.contBindGrp = None
 
         # joints
         self.j_def_collar, self.j_collar_end, self.j_def_elbow = None, None, None
@@ -118,19 +119,19 @@ class Arm(object):
         self.j_def_hand = None
 
         # session variables
-        self.controllers = []
-        self.sockets = []
-        self.limbGrp = None
-        self.scaleGrp = None
-        self.nonScaleGrp = None
-        self.limbPlug = None
-        self.scaleConstraints = []
-        self.anchors = []
-        self.anchorLocations = []
-        self.deformerJoints = []
-        self.colorCodes = [6, 18]
+        # self.controllers = []
+        # self.sockets = []
+        # self.limbGrp = None
+        # self.scaleGrp = None
+        # self.nonScaleGrp = None
+        # self.limbPlug = None
+        # self.scaleConstraints = []
+        # self.anchors = []
+        # self.anchorLocations = []
+        # self.deformerJoints = []
+        # self.colorCodes = [6, 18]
 
-    def create_grp(self):
+    def create_groups(self):
         """Create module groups."""
 
         self.limbGrp = cmds.group(name=naming.parse(self.module_name, suffix="grp"), empty=True)
@@ -154,7 +155,7 @@ class Arm(object):
         cmds.parent(self.localOffGrp, self.controllerGrp)
         cmds.parent(self.controllerGrp, self.limbGrp)
 
-        self.contBindGrp = cmds.group(name=naming.parse([self.module_name, "bind"], suffix="grp"), empty=True)
+        self.contBindGrp = cmds.group(name=naming.parse([self.module_name, "controllerBind"], suffix="grp"), empty=True)
         cmds.parent(self.contBindGrp, self.localOffGrp)
 
         # scale hook gets the scale value from the bind group but not from the localOffset
@@ -1027,9 +1028,7 @@ class Arm(object):
         for cont in self.controllers:
             cont.set_defaults()
 
-
-    def createLimb(self):
-        self.create_grp()
+    def execute(self):
         self.create_joints()
         self.create_controllers()
         self.create_roots()
@@ -1039,6 +1038,18 @@ class Arm(object):
         self.create_ribbons()
         self.create_angle_extractors()
         self.round_up()
+
+    # def createLimb(self):
+    #     self.create_groups()
+    #     self.create_joints()
+    #     self.create_controllers()
+    #     self.create_roots()
+    #     self.create_ik_setup()
+    #     self.create_fk_setup()
+    #     self.ik_fk_switching()
+    #     self.create_ribbons()
+    #     self.create_angle_extractors()
+    #     self.round_up()
 
 
 class Guides(object):
@@ -1095,7 +1106,7 @@ class Guides(object):
         _ = [joint.set_joint_side(jnt, self.side) for jnt in self.guideJoints]
 
         root_jnt = self.guideJoints[0]
-        attribute.create_global_joint_attrs(root_jnt, moduleName="%s_Arm" % self.side, upAxis=self.upVector,
+        attribute.create_global_joint_attrs(root_jnt, moduleName=naming.parse([self.name], side=self.side),
                                             mirrorAxis=self.mirrorVector, lookAxis=self.lookVector)
 
         for attr_dict in LIMB_DATA["properties"]:

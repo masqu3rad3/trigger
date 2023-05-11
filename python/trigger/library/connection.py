@@ -228,11 +228,11 @@ def matrixConstraint(drivers,
         average_node = None
 
     if maintainOffset:
-        driven_world_matrix = api.get_m_dagpath(driven).inclusiveMatrix()
+        driven_world_matrix = api.get_mdag_path(driven).inclusiveMatrix()
         if is_multi:
             driver_world_matrix = OpenMaya.MMatrix(cmds.getAttr(out_plug))
         else:
-            driver_world_matrix = api.get_m_dagpath(drivers).inclusiveMatrix()
+            driver_world_matrix = api.get_mdag_path(drivers).inclusiveMatrix()
         local_offset = driven_world_matrix * driver_world_matrix.inverse()
         next_index += 1
         cmds.setAttr("{0}.matrixIn[{1}]".format(mult_matrix, next_index),

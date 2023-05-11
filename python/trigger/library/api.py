@@ -14,7 +14,7 @@ def get_all_vertices(mesh_transform):
     return mfn_object.getPoints(OpenMaya.MSpace.kWorld)
 
 
-def get_m_dagpath(node):
+def get_mdag_path(node):
     """Return the API 2.0 dagPath of given node."""
     sel_list = OpenMaya.MSelectionList()
     sel_list.add(node)
@@ -23,7 +23,7 @@ def get_m_dagpath(node):
 
 def get_world_translation(node):
     """Return given nodes world translation of rotate pivot."""
-    target_m_transform = OpenMaya.MFnTransform(get_m_dagpath(node))
+    target_m_transform = OpenMaya.MFnTransform(get_mdag_path(node))
     target_rotate_pivot = OpenMaya.MVector(
         target_m_transform.rotatePivot(OpenMaya.MSpace.kWorld))
     return target_rotate_pivot

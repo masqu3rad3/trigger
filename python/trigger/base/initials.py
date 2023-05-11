@@ -70,15 +70,15 @@ class Initials(object):
         if not cmds.objExists(parentBone):
             log.warning("Joints cannot be identified automatically")
             return None, None, None
-        if "_right" in parentBone:
-            mirrorBoneName = parentBone.replace("_right", "_left")
+        if parentBone.startswith("R_"):
+            mirrorBoneName = parentBone.replace("R_", "L_")
             alignmentGiven = "right"
             alignmentReturn = "left"
-        elif "_left" in parentBone:
-            mirrorBoneName = parentBone.replace("_left", "_right")
+        elif parentBone.startswith("L_"):
+            mirrorBoneName = parentBone.replace("L_", "R_")
             alignmentGiven = "left"
             alignmentReturn = "right"
-        elif "_c" in parentBone:
+        elif parentBone.startswith("C_"):
             return None, "both", None
         else:
             log.warning("Joints cannot be identified automatically")
@@ -123,8 +123,8 @@ class Initials(object):
             else:
                 side = "C"
 
-        limb_group_name = naming.parse([limb_name], side=side, suffix="grp")
-        limb_group_name = naming.unique_name(limb_group_name, suffix="_grp")
+        limb_group_name = naming.parse([limb_name], side=side)
+        limb_group_name = naming.unique_name(limb_group_name)
         # strip the side and suffix and get the name of the limb
         limb_name_parts = limb_group_name.split("_")
         # remove the side and suffix

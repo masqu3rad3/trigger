@@ -6,6 +6,7 @@ from trigger.library import functions
 from trigger.library import connection
 from trigger.library import naming
 from trigger.library import attribute
+from trigger.modules import _module
 from trigger.objects.controller import Controller
 from trigger.library.tools import make_stretchy_ik
 
@@ -38,7 +39,7 @@ LIMB_DATA = {
 }
 
 
-class Fkik(object):
+class Fkik(_module.ModuleCore):
     def __init__(self, build_data=None, inits=None, *args, **kwargs):
         super(Fkik, self).__init__()
         # fool proofing
@@ -91,50 +92,27 @@ class Fkik(object):
         self.polevector_bridge = None
         self.polevector_cont = None
         self.middleIndex = 1
-        self.scaleHook = None
+        # self.scaleHook = None
 
         # scratch variables
-        self.controllers = []
-        self.sockets = []
-        self.limbGrp = None
-        self.scaleGrp = None
-        self.nonScaleGrp = None
-        self.limbPlug = None
-        self.scaleConstraints = []
-        self.anchors = []
-        self.anchorLocations = []
-        self.deformerJoints = []
-        self.colorCodes = [6, 18]
-
-    def createGrp(self):
-        self.limbGrp = cmds.group(name=naming.parse([self.module_name], suffix="grp"), empty=True)
-        self.scaleGrp = cmds.group(name=naming.parse([self.module_name, "scale"], suffix="grp"), empty=True)
-        functions.align_to(self.scaleGrp, self.inits[0], position=True, rotation=False)
-        self.nonScaleGrp = cmds.group(name=naming.parse([self.module_name, "nonScale"], suffix="grp"), empty=True)
-
-        for nicename, attrname in zip(["Control_Visibility", "Joints_Visibility", "Rig_Visibility"], ["contVis", "jointVis", "rigVis"]):
-            attribute.create_attribute(self.scaleGrp, nice_name=nicename, attr_name=attrname, attr_type="bool",
-                                       keyable=False, display=True)
-
-        cmds.parent(self.scaleGrp, self.limbGrp)
-        cmds.parent(self.nonScaleGrp, self.limbGrp)
-
-        self.localOffGrp = cmds.group(name=naming.parse([self.module_name, "localOffset"], suffix="grp"), empty=True)
-        self.plugBindGrp = cmds.group(name=naming.parse([self.module_name, "bind"], suffix="grp"), empty=True)
-        cmds.parent(self.localOffGrp, self.plugBindGrp)
-        cmds.parent(self.plugBindGrp, self.limbGrp)
-
-        # scale hook gets the scale value from the bind group but not from the localOffset
-        self.scaleHook = cmds.group(name=naming.parse([self.module_name, "scaleHook"], suffix="grp"), empty=True)
-        cmds.parent(self.scaleHook, self.limbGrp)
-        scale_skips = "xyz" if self.isLocal else ""
-        connection.matrixConstraint(self.scaleGrp, self.scaleHook, skipScale=scale_skips)
+        # self.controllers = []
+        # self.sockets = []
+        # self.limbGrp = None
+        # self.scaleGrp = None
+        # self.nonScaleGrp = None
+        # self.limbPlug = None
+        # self.scaleConstraints = []
+        # self.anchors = []
+        # self.anchorLocations = []
+        # self.deformerJoints = []
+        # self.colorCodes = [6, 18]
 
     def createJoints(self):
         # draw Joints
         cmds.select(deselect=True)
         self.limbPlug = cmds.joint(name=naming.parse([self.module_name, "plug"], suffix="j"), position=api.get_world_translation(self.inits[0]), radius=3)
-        cmds.connectAttr("%s.s" %self.scaleGrp, "%s.s" %self.limbPlug)
+        cmds.parent(self.limbPlug, self.limbGrp)
+        # cmds.connectAttr("%s.s" %self.scaleGrp, "%s.s" %self.limbPlug)
 
         cmds.select(deselect=True)
         for nmb, j in enumerate(self.inits):
@@ -151,7 +129,7 @@ class Fkik(object):
                 functions.align_to(self.deformerJoints[x], self.inits[x], position=True, rotation=True)
                 cmds.makeIdentity(self.deformerJoints[x], apply=True)
 
-        cmds.parent(self.deformerJoints[0], self.nonScaleGrp)
+        cmds.parent(self.deformerJoints[0], self.defJointsGrp)
 
         # If the switch mode is fk&ik create duplicate chain for each
         if self.switchMode == 0:
@@ -194,7 +172,9 @@ class Fkik(object):
                     shape="Cube",
                     name=naming.parse([self.module_name, "FK", nmb], suffix="cont"),
                     scale=(scale_mult, scale_mult, scale_mult),
+                    side=self.side
                 )
+                cont.set_side(self.side)
 
                 cmds.xform(cont.name, pivots=(self.sideMult * (-scale_mult), 0, 0))
                 functions.align_to_alter(cont.name, jnt, 2)
@@ -216,7 +196,7 @@ class Fkik(object):
         # IK Controllers
         if self.switchMode == 0 or self.switchMode == 2:
             ik_joints = self.deformerJoints if self.switchMode != 0 else self.ikJoints
-            ik_bind_grp = cmds.group(name=naming.parse([self.module_name, "IK", "bing"], suffix="grp"), empty=True)
+            ik_bind_grp = cmds.group(name=naming.parse([self.module_name, "IK", "bind"], suffix="grp"), empty=True)
             cmds.parent(ik_bind_grp, self.localOffGrp)
             connection.matrixConstraint(self.limbPlug, ik_bind_grp, maintainOffset=True)
 
@@ -226,6 +206,7 @@ class Fkik(object):
                 name=naming.parse([self.module_name, "IK", "root"], suffix="cont"),
                 normal=(1, 0, 0),
                 scale=(scale_mult, scale_mult, scale_mult),
+                side=self.side
             )
             self.ikControllers.append(self.rootIkCont)
             root_ik_cont_off = self.rootIkCont.add_offset("OFF")
@@ -237,6 +218,7 @@ class Fkik(object):
                 name=naming.parse([self.module_name, "IK", "end"], suffix="cont"),
                 normal=(1, 0, 0),
                 scale=(scale_mult, scale_mult, scale_mult),
+                side=self.side
             )
             self.ikControllers.append(self.endIKCont)
             end_ik_cont_off = self.endIKCont.add_offset("OFF")
@@ -256,6 +238,7 @@ class Fkik(object):
                     name=naming.parse([self.module_name, "pole"], suffix="cont"),
                     normal=(self.sideMult, 0, 0),
                     scale=(scale_mult, scale_mult, scale_mult),
+                    side=self.side
                 )
                 offset_magnitude = scale_mult
                 self.middleIndex = int((len(ik_joints)-1)*0.5)
@@ -293,10 +276,10 @@ class Fkik(object):
                 shape="FkikSwitch",
                 name=naming.parse([self.module_name, "FKIK", "switch"], suffix="cont"),
                 scale=(scale_mult, scale_mult, scale_mult),
+                side=self.side
             )
             self.controllers.append(self.switch_controller)
             cmds.parent(self.switch_controller.name, ik_bind_grp)
-
 
     def createRoots(self):
         pass
@@ -318,7 +301,6 @@ class Fkik(object):
             log.error("Unidentified Solver")
             raise
 
-        # ik_handle = cmds.ikHandle(startJoint=ik_joints[0], endEffector=ik_joints[-1], name="ikHandle_%s" % self.module_name, solver=solver)[0]
         ik_handle = cmds.ikHandle(startJoint=ik_joints[0], endEffector=ik_joints[-1], name=naming.parse([self.module_name], suffix="IKHandle"), solver=solver)[0]
         cmds.connectAttr("%s.rigVis" % self.scaleGrp, "%s.v" %ik_handle)
         cmds.parent(ik_handle, self.nonScaleGrp)
@@ -347,9 +329,7 @@ class Fkik(object):
 
         fk_joints = self.deformerJoints if self.switchMode != 0 else self.fkJoints
 
-        # for cont, jnt in zip(self.fkControllers, fk_joints[:-1]):
         for cont, jnt in zip(self.fkControllers, fk_joints):
-            # connection.matrixConstraint(cont, jnt, source_parent_cutoff=self.localOffGrp)
             connection.matrixConstraint(cont.name, jnt, source_parent_cutoff=self.localOffGrp, skipScale="xyz")
             if not self.isLocal:
                 # additive scalability
@@ -360,13 +340,10 @@ class Fkik(object):
             else:
                 cmds.connectAttr("%s.scale" % cont.name, "%s.scale" % jnt)
             # disconnect inverse scale chain to inherit the scale from the controllers properly
-            # attribute.disconnect_attr(node=jnt, attr="inverseScale", suppress_warnings=True)
 
         if self.isLocal:
             connection.matrixConstraint(self.limbPlug, self.plugBindGrp)
         else:
-            # for off in self.fkControllersOff:
-            #     connection.matrixConstraint(self.limbPlug, off)
             connection.matrixConstraint(self.limbPlug, self.fkControllersOff[0])
 
     def ikfkSwitching(self):
@@ -426,8 +403,8 @@ class Fkik(object):
         # functions.colorize(self.polevector_cont, self.colorCodes[0])
         # functions.colorize(self.switch_controller, self.colorCodes[0])
 
-    def createLimb(self):
-        self.createGrp()
+    def execute(self):
+        # self.createGrp()
         self.createJoints()
         self.createControllers()
         self.createRoots()
@@ -440,24 +417,13 @@ class Fkik(object):
         self.roundUp()
 
 
-class Guides(object):
-    def __init__(self, side="L", suffix="fkik", segments=None, tMatrix=None, upVector=(0, 1, 0), mirrorVector=(1, 0, 0), lookVector=(0,0,1), *args, **kwargs):
-        super(Guides, self).__init__()
-        # fool check
+class Guides(_module.GuidesCore):
+    # def __init__(self, side="L", suffix="fkik", segments=None, tMatrix=None, upVector=(0, 1, 0), mirrorVector=(1, 0, 0), lookVector=(0,0,1), *args, **kwargs):
+    def __init__(self, *args, **kwargs):
+        super(Guides, self).__init__(*args, **kwargs)
 
-        #-------Mandatory------[Start]
-        self.side = side
-        self.sideMultiplier = -1 if side == "R" else 1
-        self.name = suffix
-        self.segments = segments or 2
-        self.tMatrix = om.MMatrix(tMatrix) if tMatrix else om.MMatrix()
-        self.upVector = om.MVector(upVector)
-        self.mirrorVector = om.MVector(mirrorVector)
-        self.lookVector = om.MVector(lookVector)
-
-        self.offsetVector = None
-        self.guideJoints = []
-        #-------Mandatory------[End]
+        self.segments = kwargs.get("segments", 2) # minimum segments required for the fk/ik module is two
+        self.limb_data = LIMB_DATA # get the limb data from the module global file
 
     def draw_joints(self):
         # fool check
@@ -494,20 +460,27 @@ class Guides(object):
 
         # set orientation of joints
         joint.orient_joints(self.guideJoints, world_up_axis=self.lookVector, up_axis=(0, 1, 0), reverse_aim=self.sideMultiplier, reverse_up=self.sideMultiplier)
+        joint.set_joint_type(self.guideJoints[0], "FkikRoot")
 
-    def define_attributes(self):
-        # set joint side and type attributes
+    def define_guides(self):
+        """Override the guide definition method"""
         joint.set_joint_type(self.guideJoints[0], "FkikRoot")
         _ = [joint.set_joint_type(jnt, "Fkik") for jnt in self.guideJoints[1:]]
-        _ = [joint.set_joint_side(jnt, self.side) for jnt in self.guideJoints]
 
-        # ----------Mandatory---------[Start]
-        root_jnt = self.guideJoints[0]
-        attribute.create_global_joint_attrs(root_jnt, moduleName="%s_fkik" % self.side, upAxis=self.upVector, mirrorAxis=self.mirrorVector, lookAxis=self.lookVector)
-        # ----------Mandatory---------[End]
 
-        for attr_dict in LIMB_DATA["properties"]:
-            attribute.create_attribute(root_jnt, attr_dict)
+    # def define_attributes(self):
+    #     # set joint side and type attributes
+    #     joint.set_joint_type(self.guideJoints[0], "FkikRoot")
+    #     _ = [joint.set_joint_type(jnt, "Fkik") for jnt in self.guideJoints[1:]]
+    #     _ = [joint.set_joint_side(jnt, self.side) for jnt in self.guideJoints]
+    #
+    #     # ----------Mandatory---------[Start]
+    #     root_jnt = self.guideJoints[0]
+    #     attribute.create_global_joint_attrs(root_jnt, moduleName=naming.parse([self.name], side=self.side), upAxis=self.upVector, mirrorAxis=self.mirrorVector, lookAxis=self.lookVector)
+    #     # ----------Mandatory---------[End]
+    #
+    #     for attr_dict in LIMB_DATA["properties"]:
+    #         attribute.create_attribute(root_jnt, attr_dict)
 
     def createGuides(self):
         self.draw_joints()

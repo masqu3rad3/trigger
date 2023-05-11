@@ -254,7 +254,7 @@ class Guides(object):
 
         # ----------Mandatory---------[Start]
         root_jnt = self.guideJoints[0]
-        attribute.create_global_joint_attrs(root_jnt, moduleName="%s_Surface" % self.side, upAxis=self.upVector,
+        attribute.create_global_joint_attrs(root_jnt, moduleName=naming.parse([self.name], side=self.side), upAxis=self.upVector,
                                             mirrorAxis=self.mirrorVector, lookAxis=self.lookVector)
         # ----------Mandatory---------[End]
 

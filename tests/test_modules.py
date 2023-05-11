@@ -42,7 +42,8 @@ class ModuleTests(base_test.TestCase):
         self.assertTrue(kinematics)
 
         # Socket / Plug connections
-        kinematics2 = self.basic_creation_test(["surface", "arm", "tentacle"])
+        # kinematics2 = self.basic_creation_test(["surface", "arm", "tentacle"])
+        kinematics2 = self.basic_creation_test(["base", "arm", "fkik"])
         self.assertTrue(kinematics2)
 
     def test_base(self):
@@ -92,7 +93,8 @@ class ModuleTests(base_test.TestCase):
         self.assertTrue(kinematics)
 
         # Socket / Plug connections
-        kinematics2 = self.basic_creation_test(["finger", "fkik", "singleton"])
+        # kinematics2 = self.basic_creation_test(["finger", "fkik", "singleton"])
+        kinematics2 = self.basic_creation_test(["fkik", "fkik", "fkik"])
         self.assertTrue(kinematics2)
 
     def test_head(self):

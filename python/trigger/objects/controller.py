@@ -32,6 +32,9 @@ class Controller(object):
                                           location=pos)[0]
         self.lockedShapes = ["FkikSwitch"]
 
+        self._side = side or "center"
+        self._tier = tier or "primary"
+
         if side:
             self.set_side(side, tier=tier)
             self._side = side
