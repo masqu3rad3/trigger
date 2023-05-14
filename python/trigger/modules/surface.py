@@ -7,6 +7,7 @@ from trigger.library import attribute
 from trigger.library import connection
 from trigger.objects.controller import Controller
 from trigger.utils import parentToSurface
+from trigger.modules import _module
 from trigger.core import filelog
 
 log = filelog.Filelog(logname=__name__, filename="trigger_log")
@@ -41,7 +42,7 @@ LIMB_DATA = {
 }
 
 
-class Surface(object):
+class Surface(_module.ModuleCore):
     def __init__(self, build_data=None, inits=None, *args, **kwargs):
         super(Surface, self).__init__()
 
@@ -65,35 +66,35 @@ class Surface(object):
             self.bindScales = False
 
         self.module_name = (naming.unique_name(cmds.getAttr("%s.moduleName" % self.inits[0])))
-
-        self.controllerGrp = None
-
-        self.controllers = []
         self.jointBinds = []
-        self.limbGrp = None
-        self.scaleGrp = None
-        self.limbPlug = None
-        self.nonScaleGrp = None
-        self.cont_IK_OFF = None
-        self.sockets = []
-        self.scaleConstraints = []
-        self.anchors = []
-        self.anchorLocations = []
-        self.deformerJoints = []
-        self.colorCodes = []
 
-    def createGrp(self):
-        self.limbGrp = cmds.group(name=naming.parse([self.module_name], suffix="grp"), empty=True)
-        self.scaleGrp = cmds.group(name=naming.parse([self.module_name, "scale"], suffix="grp"), empty=True)
-        functions.align_to(self.scaleGrp, self.inits[0], 0)
-        self.nonScaleGrp = cmds.group(name=naming.parse([self.module_name, "nonScale"], suffix="grp"), em=True)
-        for nicename, attrname in zip(["Control_Visibility", "Joints_Visibility", "Rig_Visibility"], ["contVis", "jointVis", "rigVis"]):
-            attribute.create_attribute(self.scaleGrp, nice_name=nicename, attr_name=attrname, attr_type="bool",
-                                       keyable=False, display=True)
+        # self.controllerGrp = None
+        #
+        # self.controllers = []
+        # self.limbGrp = None
+        # self.scaleGrp = None
+        # self.limbPlug = None
+        # self.nonScaleGrp = None
+        # self.cont_IK_OFF = None
+        # self.sockets = []
+        # self.scaleConstraints = []
+        # self.anchors = []
+        # self.anchorLocations = []
+        # self.deformerJoints = []
+        # self.colorCodes = []
 
-        self.controllerGrp = cmds.group(name=naming.parse([self.module_name, "controller"], suffix="grp"), empty=True)
-        cmds.parent(self.scaleGrp, self.nonScaleGrp, self.controllerGrp, self.limbGrp)
-        self.scaleConstraints.append(self.scaleGrp)
+    # def createGrp(self):
+    #     self.limbGrp = cmds.group(name=naming.parse([self.module_name], suffix="grp"), empty=True)
+    #     self.scaleGrp = cmds.group(name=naming.parse([self.module_name, "scale"], suffix="grp"), empty=True)
+    #     functions.align_to(self.scaleGrp, self.inits[0], 0)
+    #     self.nonScaleGrp = cmds.group(name=naming.parse([self.module_name, "nonScale"], suffix="grp"), em=True)
+    #     for nicename, attrname in zip(["Control_Visibility", "Joints_Visibility", "Rig_Visibility"], ["contVis", "jointVis", "rigVis"]):
+    #         attribute.create_attribute(self.scaleGrp, nice_name=nicename, attr_name=attrname, attr_type="bool",
+    #                                    keyable=False, display=True)
+    #
+    #     self.controllerGrp = cmds.group(name=naming.parse([self.module_name, "controller"], suffix="grp"), empty=True)
+    #     cmds.parent(self.scaleGrp, self.nonScaleGrp, self.controllerGrp, self.limbGrp)
+    #     self.scaleConstraints.append(self.scaleGrp)
 
     def createJoints(self):
 
@@ -186,38 +187,39 @@ class Surface(object):
                 for axis in "xyz":
                     cmds.connectAttr("%s.%s%s" % (_cont.name, attr, axis), "%s.%s%s" % (joint_bind, attr, axis), force=True)
 
-    def createLimb(self):
-        self.createGrp()
+    def execute(self):
+        # self.createGrp()
         self.createJoints()
         self.create_controllers_and_connections()
 
 
-class Guides(object):
-    def __init__(self, side="L", suffix="surface", segments=None, tMatrix=None, upVector=(0, 1, 0),
-                 mirrorVector=(1, 0, 0), lookVector=(0, 0, 1), *args, **kwargs):
-        super(Guides, self).__init__()
-        # fool check
-
-        # -------Mandatory------[Start]
-        self.side = side
-        self.sideMultiplier = -1 if side == "R" else 1
-        self.name = suffix
-        self.segments = segments
-        self.tMatrix = om.MMatrix(tMatrix) if tMatrix else om.MMatrix()
-        self.upVector = om.MVector(upVector)
-        self.mirrorVector = om.MVector(mirrorVector)
-        self.lookVector = om.MVector(lookVector)
-
-        self.offsetVector = None
-        self.guideJoints = []
-        # -------Mandatory------[End]
+class Guides(_module.GuidesCore):
+    limb_data = LIMB_DATA
+    # def __init__(self, side="L", suffix="surface", segments=None, tMatrix=None, upVector=(0, 1, 0),
+    #              mirrorVector=(1, 0, 0), lookVector=(0, 0, 1), *args, **kwargs):
+    #     super(Guides, self).__init__()
+    #     # fool check
+    #
+    #     # -------Mandatory------[Start]
+    #     self.side = side
+    #     self.sideMultiplier = -1 if side == "R" else 1
+    #     self.name = suffix
+    #     self.segments = segments
+    #     self.tMatrix = om.MMatrix(tMatrix) if tMatrix else om.MMatrix()
+    #     self.upVector = om.MVector(upVector)
+    #     self.mirrorVector = om.MVector(mirrorVector)
+    #     self.lookVector = om.MVector(lookVector)
+    #
+    #     self.offsetVector = None
+    #     self.guideJoints = []
+    #     # -------Mandatory------[End]
 
     def draw_joints(self):
         cmds.select(d=True)
         r_point_j = om.MVector(0, 0, 0) * self.tMatrix
         if not self.segments:
             self.offsetVector = om.MVector(0, 1, 0)
-            surface_root_jnt = cmds.joint(name=naming.parse([self.name, "root"], suffix="jInit"))
+            surface_root_jnt = cmds.joint(name=naming.parse([self.name, "root"], side=self.side, suffix="jInit"))
             self.guideJoints.append(surface_root_jnt)
             return
 
@@ -235,7 +237,7 @@ class Guides(object):
 
         # Draw the joints
         for seg in range(self.segments + 1):
-            surface_jnt = cmds.joint(p=(r_point_j + (add_val * seg)), name=naming.parse([self.name, seg], suffix="jInit"))
+            surface_jnt = cmds.joint(p=(r_point_j + (add_val * seg)), name=naming.parse([self.name, seg], side=self.side, suffix="jInit"))
             # Update the guideJoints list
             self.guideJoints.append(surface_jnt)
 
@@ -245,26 +247,31 @@ class Guides(object):
         joint.orient_joints(self.guideJoints, world_up_axis=self.upVector, up_axis=(0, 1, 0),
                             reverse_aim=self.sideMultiplier, reverse_up=self.sideMultiplier)
 
-    def define_attributes(self):
-        # set joint side and type attributes
+    def define_guides(self):
         joint.set_joint_type(self.guideJoints[0], "Surface")
         if len(self.guideJoints) > 1:
             _ = [joint.set_joint_type(jnt, "SurfaceItem") for jnt in self.guideJoints[1:]]
-        _ = [joint.set_joint_side(jnt, self.side) for jnt in self.guideJoints]
 
-        # ----------Mandatory---------[Start]
-        root_jnt = self.guideJoints[0]
-        attribute.create_global_joint_attrs(root_jnt, moduleName=naming.parse([self.name], side=self.side), upAxis=self.upVector,
-                                            mirrorAxis=self.mirrorVector, lookAxis=self.lookVector)
-        # ----------Mandatory---------[End]
-
-        for attr_dict in LIMB_DATA["properties"]:
-            attribute.create_attribute(root_jnt, attr_dict)
-
-    def createGuides(self):
-        self.draw_joints()
-        self.define_attributes()
-
-    def convertJoints(self, joints_list):
-        self.guideJoints = joints_list
-        self.define_attributes()
+    # def define_attributes(self):
+    #     # set joint side and type attributes
+    #     joint.set_joint_type(self.guideJoints[0], "Surface")
+    #     if len(self.guideJoints) > 1:
+    #         _ = [joint.set_joint_type(jnt, "SurfaceItem") for jnt in self.guideJoints[1:]]
+    #     _ = [joint.set_joint_side(jnt, self.side) for jnt in self.guideJoints]
+    #
+    #     # ----------Mandatory---------[Start]
+    #     root_jnt = self.guideJoints[0]
+    #     attribute.create_global_joint_attrs(root_jnt, moduleName=naming.parse([self.name], side=self.side), upAxis=self.upVector,
+    #                                         mirrorAxis=self.mirrorVector, lookAxis=self.lookVector)
+    #     # ----------Mandatory---------[End]
+    #
+    #     for attr_dict in LIMB_DATA["properties"]:
+    #         attribute.create_attribute(root_jnt, attr_dict)
+    #
+    # def createGuides(self):
+    #     self.draw_joints()
+    #     self.define_attributes()
+    #
+    # def convertJoints(self, joints_list):
+    #     self.guideJoints = joints_list
+    #     self.define_attributes()

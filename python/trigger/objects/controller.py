@@ -15,12 +15,38 @@ log = filelog.Filelog(logname=__name__, filename="trigger_log")
 
 
 class Controller(object):
+    side_dict = {
+        "center": [17, 21, 24],
+        "left": [6, 18, 29],
+        "right": [13, 20, 31]
+    }
+    side_enum_resolve = {
+        "center": 0,
+        "left": 1,
+        "right": 2,
+        "c": 0,
+        "l": 1,
+        "r": 2,
+        "C": 0,
+        "L": 1,
+        "R": 2
+    }
+    side_enums = {
+        0: "center",
+        1: "left",
+        2: "right",
+    }
+    tier_enums = {
+        0: "primary",
+        1: "secondary",
+        2: "tertiary",
+    }
+    lockedShapes = ["FkikSwitch"]
     def __init__(self, name="cont", shape="Circle", scale=(1, 1, 1), normal=(0, 1, 0), pos=None, side=None, tier=None):
 
-        self.side_dict = {"center": [17, 21, 24],
-                          "left": [6, 18, 29],
-                          "right": [13, 20, 31]
-                          }
+
+
+
         self._offsets = []
         self.icon_handler = Icon()
         self._shape = shape
@@ -30,20 +56,43 @@ class Controller(object):
             self._name = \
             self.icon_handler.create_icon(icon_type=self._shape, icon_name=name, scale=scale, normal=normal,
                                           location=pos)[0]
-        self.lockedShapes = ["FkikSwitch"]
 
-        self._side = side or "center"
-        self._tier = tier or "primary"
+        self._side = side or self._get_side_from_node()
+        self._tier = tier or self._get_tier_from_node()
 
-        if side:
-            self.set_side(side, tier=tier)
-            self._side = side
-            self._tier = tier or "primary"
+        self.add_custom_attributes()
+
+        self.set_side(self._side, tier=self._tier)
+        # if side:
+        #     self.set_side(side, tier=tier)
+        #     self._side = side
+        #     self._tier = tier or "primary"
+        # else:
+        #     self._side = "center"
+        #     self._tier = tier or "primary"
+
+
+
+    def _get_side_from_node(self):
+        """Resolve the side from controller in the scene."""
+        # first try the attribute
+        if cmds.objExists("%s.side" % self._name):
+            return self.side_enums[(cmds.getAttr("%s.side" % self._name))]
+        # then try the name
+        elif self._name.startswith("L_"):
+            return "left"
+        elif self._name.startswith("R_"):
+            return "right"
         else:
-            self._side = "center"
-            self._tier = tier or "primary"
+            return "center"
 
-        self.add_default_attributes()
+    def _get_tier_from_node(self):
+        """Resolve the tier from the controller in the scene"""
+        # first try the attribute
+        if cmds.objExists("%s.tier" % self._name):
+            return cmds.getAttr("%s.tier" % self._name)
+        # return the default as primary
+        return "primary"
 
     @property
     def name(self):
@@ -100,7 +149,7 @@ class Controller(object):
         self.freeze()
 
     def freeze(self, rotate=True, scale=True, translate=True):
-        cmds.makeIdentity(self.name, a=True, r=rotate, s=scale, t=translate)
+        cmds.makeIdentity(self.name, apply=True, rotate=rotate, scale=scale, translate=translate)
 
     def set_side(self, side, tier=None):
         if side.lower() == "c":
@@ -115,15 +164,17 @@ class Controller(object):
             log.error("side value is not valid => %s" % side)
             raise
 
+        cmds.setAttr("{}.side".format(self.name), self.side_enum_resolve[side.lower()])
+
         tier = tier or self._tier
-        if type(tier) == str:
+        if isinstance(tier, str):
             if tier.lower() == "primary":
                 tier = 0
             elif tier.lower() == "secondary":
                 tier = 1
             elif tier.lower() == "tertiary":
                 tier = 2
-        elif type(tier) == int:
+        elif isinstance(tier, int):
             pass
         elif tier < 0 or tier > 2:
             log.error("out of range value for tier (%s)" % tier)
@@ -131,6 +182,8 @@ class Controller(object):
         else:
             log.error("invalid tier value %s" % tier)
             raise
+
+        cmds.setAttr("{}.tier".format(self.name), tier)
 
         functions.colorize(self.name, index=side_vals[tier])
         self._side = side
@@ -175,27 +228,31 @@ class Controller(object):
 
         """
         vis_attr = "%s.v" % self.name if up_level is None else "%s.v" % self.get_offsets()[up_level]
-        cmds.setAttr(vis_attr, e=True, k=True, l=False)
-        cmds.connectAttr(driver_attr, vis_attr, f=True)
+        cmds.setAttr(vis_attr, edit=True, keyable=True, lock=False)
+        cmds.connectAttr(driver_attr, vis_attr, force=True)
         if lock_and_hide:
             cmds.setAttr(vis_attr, lock=True, keyable=False, channelBox=False)
 
-    def add_default_attributes(self):
+    def add_custom_attributes(self):
         """Add default attributes for translate, rotate and scale."""
 
         for ch in ["Translate", "Rotate", "Scale"]:
-            cmds.addAttr(self.name,
-                         longName="default{}".format(ch),
-                         attributeType="double3"
-                         )
-            for axis in "XYZ":
-                _value = 1.0 if ch == "Scale" else 0.0
+            attr_name = "default{}".format(ch)
+            if not cmds.attributeQuery(attr_name, node=self.name, exists=True):
                 cmds.addAttr(self.name,
-                             longName="default{}{}".format(ch, axis),
-                             attributeType="double",
-                             defaultValue=_value,
-                             parent="default{}".format(ch)
+                             longName=attr_name,
+                             attributeType="double3"
                              )
+                for axis in "XYZ":
+                    _value = 1.0 if ch == "Scale" else 0.0
+                    cmds.addAttr(self.name,
+                                 longName="{}{}".format(attr_name, axis),
+                                 attributeType="double",
+                                 defaultValue=_value,
+                                 parent=attr_name
+                                 )
+        attribute.create_attribute(self.name, attr_name="side", attr_type="enum", enum_list="center:left:right", default_value=0, keyable=False, display=False)
+        attribute.create_attribute(self.name, attr_name="tier", attr_type="enum", enum_list="primary:secondary:tertiary", default_value=0, keyable=False, display=False)
 
     def set_defaults(self):
         """Grabs the current values of the controller and sets them as default values."""

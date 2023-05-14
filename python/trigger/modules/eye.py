@@ -5,7 +5,7 @@ from trigger.library import functions, connection
 from trigger.library import naming
 from trigger.library import attribute
 from trigger.objects.controller import Controller
-from trigger.library import tools
+from trigger.modules import _module
 
 from trigger.core import filelog
 LOG = filelog.Filelog(logname=__name__, filename="trigger_log")
@@ -30,7 +30,7 @@ LIMB_DATA = {"members": ["EyeRoot", "EyeAim"],
         "multi_guide": None,
         "sided": True,}
 
-class Eye(object):
+class Eye(_module.ModuleCore):
     def __init__(self, build_data=None, inits=None, *args, **kwargs):
         super(Eye, self).__init__()
         # fool proofing
@@ -73,52 +73,68 @@ class Eye(object):
         self.aimContGroupFollow = None
         self.plugDriven = None
         self.controllerGrp = None
-        self.jointGrp = None
+        # self.jointGrp = None
         self.other_eye_conts = []
         self.group_cont = None
 
         # scratch variables
-        self.controllers = []
-        self.sockets = []
-        self.limbGrp = None
-        self.scaleGrp = None
-        self.nonScaleGrp = None
-        self.limbPlug = None
-        self.scaleConstraints = []
-        self.anchors = []
-        self.anchorLocations = []
-        self.deformerJoints = []
-        self.colorCodes = [6, 18]
+        # self.controllers = []
+        # self.sockets = []
+        # self.limbGrp = None
+        # self.scaleGrp = None
+        # self.nonScaleGrp = None
+        # self.limbPlug = None
+        # self.scaleConstraints = []
+        # self.anchors = []
+        # self.anchorLocations = []
+        # self.deformerJoints = []
+        # self.colorCodes = [6, 18]
 
-    def createGrp(self):
-        self.limbGrp = cmds.group(name=naming.parse([self.module_name], suffix="grp"), empty=True)
-        self.scaleGrp = cmds.group(name=naming.parse([self.module_name, "scale"], suffix="grp"), empty=True)
-        functions.align_to(self.scaleGrp, self.inits[0], position=True, rotation=False)
-        self.nonScaleGrp = cmds.group(name=naming.parse([self.module_name, "nonScale"], suffix="grp"), empty=True)
+    # def createGrp(self):
+    #     self.limbGrp = cmds.group(name=naming.parse([self.module_name], suffix="grp"), empty=True)
+    #     self.scaleGrp = cmds.group(name=naming.parse([self.module_name, "scale"], suffix="grp"), empty=True)
+    #     functions.align_to(self.scaleGrp, self.inits[0], position=True, rotation=False)
+    #     self.nonScaleGrp = cmds.group(name=naming.parse([self.module_name, "nonScale"], suffix="grp"), empty=True)
+    #
+    #     cmds.addAttr(self.scaleGrp, attributeType="bool", longName="Control_Visibility", shortName="contVis", defaultValue=True)
+    #     cmds.addAttr(self.scaleGrp, attributeType="bool", longName="Joints_Visibility", shortName="jointVis", defaultValue=True)
+    #     cmds.addAttr(self.scaleGrp, attributeType="bool", longName="Rig_Visibility", shortName="rigVis", defaultValue=False)
+    #     # make the created attributes visible in the channelbox
+    #     cmds.setAttr("%s.contVis" % self.scaleGrp, channelBox=True)
+    #     cmds.setAttr("%s.jointVis" % self.scaleGrp, channelBox=True)
+    #     cmds.setAttr("%s.rigVis" % self.scaleGrp, channelBox=True)
+    #
+    #     self.controllerGrp = cmds.group(name=naming.parse([self.module_name, "controller"], suffix="grp"), empty=True)
+    #     attribute.lock_and_hide(self.controllerGrp)
+    #     cmds.parent(self.controllerGrp, self.limbGrp)
+    #
+    #     self.jointGrp = cmds.group(name=naming.parse([self.module_name, "joint"], suffix="grp"), empty=True)
+    #     attribute.lock_and_hide(self.controllerGrp)
+    #     cmds.parent(self.jointGrp, self.limbGrp)
+    #
+    #     cmds.parent(self.scaleGrp, self.limbGrp)
+    #     cmds.parent(self.nonScaleGrp, self.limbGrp)
+    #
+    #     self.localOffGrp = cmds.group(name=naming.parse([self.module_name, "localOffset"], suffix="grp"), empty=True)
+    #     self.plugBindGrp = cmds.group(name=naming.parse([self.module_name, "bind"], suffix="grp"), empty=True)
+    #     cmds.parent(self.localOffGrp, self.plugBindGrp)
+    #     cmds.parent(self.plugBindGrp, self.limbGrp)
+    #
+    #     if self.groupID:
+    #         functions.validate_group("Eye_group%i" % self.groupID)
+    #         cmds.parent(self.limbGrp, "Eye_group%i" % self.groupID)
+    #         self.limbGrp = "Eye_group%i" % self.groupID
+    #         c_shapes = cmds.listRelatives("Eye_group%i" % self.groupID, allDescendents=True, children=True,
+    #                                       allParents=False, type="nurbsCurve")
+    #         if c_shapes:
+    #             self.other_eye_conts = [functions.get_parent(shape) for shape in c_shapes]
+    #
+    #         if cmds.objExists("Eye_group%i_cont" %self.groupID):
+    #             self.group_cont = "Eye_group%i_cont" % self.groupID
+    #             self.other_eye_conts.remove(self.group_cont)
 
-        cmds.addAttr(self.scaleGrp, attributeType="bool", longName="Control_Visibility", shortName="contVis", defaultValue=True)
-        cmds.addAttr(self.scaleGrp, attributeType="bool", longName="Joints_Visibility", shortName="jointVis", defaultValue=True)
-        cmds.addAttr(self.scaleGrp, attributeType="bool", longName="Rig_Visibility", shortName="rigVis", defaultValue=False)
-        # make the created attributes visible in the channelbox
-        cmds.setAttr("%s.contVis" % self.scaleGrp, channelBox=True)
-        cmds.setAttr("%s.jointVis" % self.scaleGrp, channelBox=True)
-        cmds.setAttr("%s.rigVis" % self.scaleGrp, channelBox=True)
-
-        self.controllerGrp = cmds.group(name=naming.parse([self.module_name, "controller"], suffix="grp"), empty=True)
-        attribute.lock_and_hide(self.controllerGrp)
-        cmds.parent(self.controllerGrp, self.limbGrp)
-
-        self.jointGrp = cmds.group(name=naming.parse([self.module_name, "joint"], suffix="grp"), empty=True)
-        attribute.lock_and_hide(self.controllerGrp)
-        cmds.parent(self.jointGrp, self.limbGrp)
-
-        cmds.parent(self.scaleGrp, self.limbGrp)
-        cmds.parent(self.nonScaleGrp, self.limbGrp)
-
-        self.localOffGrp = cmds.group(name=naming.parse([self.module_name, "localOffset"], suffix="grp"), empty=True)
-        self.plugBindGrp = cmds.group(name=naming.parse([self.module_name, "bind"], suffix="grp"), empty=True)
-        cmds.parent(self.localOffGrp, self.plugBindGrp)
-        cmds.parent(self.plugBindGrp, self.limbGrp)
+    def additional_groups(self):
+        """Create additional groups for the module"""
 
         if self.groupID:
             functions.validate_group("Eye_group%i" % self.groupID)
@@ -127,18 +143,17 @@ class Eye(object):
             c_shapes = cmds.listRelatives("Eye_group%i" % self.groupID, allDescendents=True, children=True,
                                           allParents=False, type="nurbsCurve")
             if c_shapes:
-                self.other_eye_conts = [functions.get_parent(shape) for shape in c_shapes]
+                self.other_eye_conts = [Controller(functions.get_parent(shape)) for shape in c_shapes]
 
             if cmds.objExists("Eye_group%i_cont" %self.groupID):
                 self.group_cont = "Eye_group%i_cont" % self.groupID
                 self.other_eye_conts.remove(self.group_cont)
 
-
     def createJoints(self):
-        cmds.select(d=True)
+        cmds.select(clear=True)
         self.limbPlug = cmds.joint(name=naming.parse([self.module_name, "plug"], suffix="j"), position=api.get_world_translation(self.inits[0]), radius=3)
 
-        cmds.select(d=True)
+        cmds.select(clear=True)
         eye_jnt = cmds.joint(name=naming.parse([self.module_name, "eye"], suffix="jDef"))
         functions.align_to(eye_jnt, self.inits[0])
         eye_offset = functions.create_offset_group(eye_jnt, "OFF")
@@ -151,7 +166,7 @@ class Eye(object):
         if not self.useRefOrientation:
             joint.orient_joints(self.deformerJoints, world_up_axis=self.look_axis, up_axis=(0, 1, 0), reverse_aim=self.sideMult, reverse_up=self.sideMult)
 
-        cmds.parent(eye_offset, self.jointGrp)
+        cmds.parent(eye_offset, self.defJointsGrp)
 
     def createControllers(self):
         self.aim_bridge = cmds.spaceLocator(name=naming.parse([self.module_name, "aim"], suffix="brg"))[0]
@@ -249,10 +264,9 @@ class Eye(object):
 
     def round_up(self):
         _ = [cmds.connectAttr("%s.jointVis" % self.scaleGrp, "%s.v" % x) for x in self.deformerJoints]
-        self.scaleConstraints.append(self.scaleGrp)
+        # self.scaleConstraints.append(self.scaleGrp)
 
-    def createLimb(self):
-        self.createGrp()
+    def execute(self):
         self.createJoints()
         self.createControllers()
         self.createConnections()
@@ -265,25 +279,41 @@ class Eye(object):
         # self.createAngleExtractors()
         self.round_up()
 
+    # def createLimb(self):
+    #     self.createGrp()
+    #     self.createJoints()
+    #     self.createControllers()
+    #     self.createConnections()
+    #     # self.createRoots()
+    #     # self.createIKsetup()
+    #     # self.createFKsetup()
+    #     # self.ikfkSwitching()
+    #     # self.createRibbons()
+    #     # self.createTwistSplines()
+    #     # self.createAngleExtractors()
+    #     self.round_up()
 
-class Guides(object):
-    def __init__(self, side="L", suffix="eye", segments=None, tMatrix=None, upVector=(0, 1, 0), mirrorVector=(1, 0, 0), lookVector=(0, 0, 1), *args, **kwargs):
-        super(Guides, self).__init__()
-        # fool check
 
-        #-------Mandatory------[Start]
-        self.side = side
-        self.sideMultiplier = -1 if side == "R" else 1
-        self.name = suffix
-        self.segments = segments
-        self.tMatrix = om.MMatrix(tMatrix) if tMatrix else om.MMatrix()
-        self.upVector = om.MVector(upVector)
-        self.mirrorVector = om.MVector(mirrorVector)
-        self.lookVector = om.MVector(lookVector)
+class Guides(_module.GuidesCore):
+    limb_data = LIMB_DATA
+    # def __init__(self, side="L", suffix="eye", segments=None, tMatrix=None, upVector=(0, 1, 0), mirrorVector=(1, 0, 0), lookVector=(0, 0, 1), *args, **kwargs):
+    #     super(Guides, self).__init__()
+    # def __init__(self, *args, **kwargs):
+    #     super(Guides, self).__init__(*args, **kwargs)
 
-        self.offsetVector = None
-        self.guideJoints = []
-        #-------Mandatory------[End]
+        # #-------Mandatory------[Start]
+        # self.side = side
+        # self.sideMultiplier = -1 if side == "R" else 1
+        # self.name = suffix
+        # self.segments = segments
+        # self.tMatrix = om.MMatrix(tMatrix) if tMatrix else om.MMatrix()
+        # self.upVector = om.MVector(upVector)
+        # self.mirrorVector = om.MVector(mirrorVector)
+        # self.lookVector = om.MVector(lookVector)
+        #
+        # self.offsetVector = None
+        # self.guideJoints = []
+        # #-------Mandatory------[End]
 
     def draw_joints(self):
         # fool check
@@ -311,27 +341,32 @@ class Guides(object):
 
         # set orientation of joints
 
-    def define_attributes(self):
-        # set joint side and type attributes
+    def define_guides(self):
+        """Override the guide definition method"""
         joint.set_joint_type(self.guideJoints[0], "EyeRoot")
         joint.set_joint_type(self.guideJoints[1], "EyeAim")
-        _ = [joint.set_joint_side(jnt, self.side) for jnt in self.guideJoints]
 
-        # ----------Mandatory---------[Start]
-        root_jnt = self.guideJoints[0]
-        attribute.create_global_joint_attrs(root_jnt, moduleName=naming.parse([self.name], side=self.side), upAxis=self.upVector, mirrorAxis=self.mirrorVector, lookAxis=self.lookVector)
-        # ----------Mandatory---------[End]
+    # def define_attributes(self):
+    #     # set joint side and type attributes
+    #     joint.set_joint_type(self.guideJoints[0], "EyeRoot")
+    #     joint.set_joint_type(self.guideJoints[1], "EyeAim")
+    #     _ = [joint.set_joint_side(jnt, self.side) for jnt in self.guideJoints]
+    #
+    #     # ----------Mandatory---------[Start]
+    #     root_jnt = self.guideJoints[0]
+    #     attribute.create_global_joint_attrs(root_jnt, moduleName=naming.parse([self.name], side=self.side), upAxis=self.upVector, mirrorAxis=self.mirrorVector, lookAxis=self.lookVector)
+    #     # ----------Mandatory---------[End]
+    #
+    #     for attr_dict in LIMB_DATA["properties"]:
+    #         attribute.create_attribute(root_jnt, attr_dict)
 
-        for attr_dict in LIMB_DATA["properties"]:
-            attribute.create_attribute(root_jnt, attr_dict)
-
-    def createGuides(self):
-        self.draw_joints()
-        self.define_attributes()
-
-    def convertJoints(self, joints_list):
-        if len(joints_list) != 2:
-            LOG.warning("Eye Module needs to have exactly 2 Guid Joints! (root, aim)")
-            return
-        self.guideJoints = joints_list
-        self.define_attributes()
+    # def createGuides(self):
+    #     self.draw_joints()
+    #     self.define_attributes()
+    #
+    # def convertJoints(self, joints_list):
+    #     if len(joints_list) != 2:
+    #         LOG.warning("Eye Module needs to have exactly 2 Guid Joints! (root, aim)")
+    #         return
+    #     self.guideJoints = joints_list
+    #     self.define_attributes()

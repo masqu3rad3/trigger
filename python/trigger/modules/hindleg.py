@@ -10,6 +10,7 @@ from trigger.library import api
 from trigger.library import tools
 from trigger.objects.ribbon import Ribbon
 from trigger.objects.controller import Controller
+from trigger.modules import _module
 
 from trigger.core import filelog
 
@@ -33,7 +34,7 @@ LIMB_DATA = {"members": ["HindlegRoot", "Hindhip", "Stifle", "Hock", "Phalanges"
              "sided": True, }
 
 
-class Hindleg(object):
+class Hindleg(_module.ModuleCore):
     def __init__(self, build_data=None, inits=None, *args, **kwargs):
         super(Hindleg, self).__init__()
 
@@ -45,6 +46,7 @@ class Hindleg(object):
             self.hock_ref = build_data["Hock"]
             self.phalanges_ref = build_data["Phalanges"]
             self.phalangestip_ref = build_data["PhalangesTip"]
+            self.inits = [self.hindleg_root_ref, self.hindhip_ref, self.stifle_ref, self.hock_ref, self.phalanges_ref]
         elif inits:
             if len(inits) != 6:
                 log.error("Some or all Hind Leg Guide Bones are missing", proceed=False)
@@ -54,6 +56,7 @@ class Hindleg(object):
             self.hock_ref = inits[3]
             self.phalanges_ref = inits[4]
             self.phalangestip_ref = inits[5]
+            self.inits = inits
 
         else:
             log.error("Class needs either build_data or inits to be constructed", proceed=False)
@@ -117,57 +120,57 @@ class Hindleg(object):
         self.foot_fk_cont = None
         self.switch_cont = None
 
-        # scratch variables
-        self.controllers = []
-        self.sockets = []
-        self.limbGrp = None
-        self.scaleGrp = None
-        self.nonScaleGrp = None
-        self.limbPlug = None
-        self.scaleConstraints = []
-        self.anchors = []
-        self.anchorLocations = []
-        self.deformerJoints = []
-        self.colorCodes = [6, 18]
-        self.localOffGrp = None
-        self.controllerGrp = None
-        self.contBindGrp = None
-        self.scaleHook = None
-        self.rigJointsGrp = None
-        self.defJointsGrp = None
+        # # scratch variables
+        # self.controllers = []
+        # self.sockets = []
+        # self.limbGrp = None
+        # self.scaleGrp = None
+        # self.nonScaleGrp = None
+        # self.limbPlug = None
+        # self.scaleConstraints = []
+        # self.anchors = []
+        # self.anchorLocations = []
+        # self.deformerJoints = []
+        # self.colorCodes = [6, 18]
+        # self.localOffGrp = None
+        # self.controllerGrp = None
+        # self.contBindGrp = None
+        # self.scaleHook = None
+        # self.rigJointsGrp = None
+        # self.defJointsGrp = None
 
-    def create_grp(self):
-        self.limbGrp = cmds.group(name=naming.parse([self.module_name], suffix="grp"), empty=True)
-        self.scaleGrp = cmds.group(name=naming.parse([self.module_name, "scale"], suffix="grp"), empty=True)
-        functions.align_to(self.scaleGrp, self.hindleg_root_ref, position=True, rotation=False)
-        self.nonScaleGrp = cmds.group(name="%s_nonScaleGrp" % self.module_name, empty=True)
-
-        for nicename, attrname in zip(["Control_Visibility", "Joints_Visibility", "Rig_Visibility"], ["contVis", "jointVis", "rigVis"]):
-            attribute.create_attribute(self.scaleGrp, nice_name=nicename, attr_name=attrname, attr_type="bool",
-                                       keyable=False, display=True)
-
-        cmds.parent(self.scaleGrp, self.limbGrp)
-        cmds.parent(self.nonScaleGrp, self.limbGrp)
-
-        self.localOffGrp = cmds.group(name=naming.parse([self.module_name, "localOffset"], suffix="grp"), empty=True)
-        self.controllerGrp = cmds.group(name=naming.parse([self.module_name, "controller"], suffix="grp"), empty=True)
-        cmds.parent(self.localOffGrp, self.controllerGrp)
-        cmds.parent(self.controllerGrp, self.limbGrp)
-
-        self.contBindGrp = cmds.group(name=naming.parse([self.module_name, "bind"], suffix="grp"), empty=True)
-        cmds.parent(self.contBindGrp, self.localOffGrp)
-
-        # scale hook gets the scale value from the bind group but not from the localOffset
-        self.scaleHook = cmds.group(name=naming.parse([self.module_name, "scaleHook"], suffix="grp"), empty=True)
-        cmds.parent(self.scaleHook, self.limbGrp)
-        scale_skips = "xyz" if self.isLocal else ""
-        connection.matrixConstraint(self.contBindGrp, self.scaleHook, self.localOffGrp, skipScale=scale_skips)
-
-        self.rigJointsGrp = cmds.group(name=naming.parse([self.module_name, "rigJoints"], suffix="grp"), empty=True)
-        self.defJointsGrp = cmds.group(name=naming.parse([self.module_name, "defJoints"], suffix="grp"), empty=True)
-
-        cmds.parent(self.rigJointsGrp, self.limbGrp)
-        cmds.parent(self.defJointsGrp, self.limbGrp)
+    # def create_grp(self):
+    #     self.limbGrp = cmds.group(name=naming.parse([self.module_name], suffix="grp"), empty=True)
+    #     self.scaleGrp = cmds.group(name=naming.parse([self.module_name, "scale"], suffix="grp"), empty=True)
+    #     functions.align_to(self.scaleGrp, self.hindleg_root_ref, position=True, rotation=False)
+    #     self.nonScaleGrp = cmds.group(name="%s_nonScaleGrp" % self.module_name, empty=True)
+    #
+    #     for nicename, attrname in zip(["Control_Visibility", "Joints_Visibility", "Rig_Visibility"], ["contVis", "jointVis", "rigVis"]):
+    #         attribute.create_attribute(self.scaleGrp, nice_name=nicename, attr_name=attrname, attr_type="bool",
+    #                                    keyable=False, display=True)
+    #
+    #     cmds.parent(self.scaleGrp, self.limbGrp)
+    #     cmds.parent(self.nonScaleGrp, self.limbGrp)
+    #
+    #     self.localOffGrp = cmds.group(name=naming.parse([self.module_name, "localOffset"], suffix="grp"), empty=True)
+    #     self.controllerGrp = cmds.group(name=naming.parse([self.module_name, "controller"], suffix="grp"), empty=True)
+    #     cmds.parent(self.localOffGrp, self.controllerGrp)
+    #     cmds.parent(self.controllerGrp, self.limbGrp)
+    #
+    #     self.contBindGrp = cmds.group(name=naming.parse([self.module_name, "bind"], suffix="grp"), empty=True)
+    #     cmds.parent(self.contBindGrp, self.localOffGrp)
+    #
+    #     # scale hook gets the scale value from the bind group but not from the localOffset
+    #     self.scaleHook = cmds.group(name=naming.parse([self.module_name, "scaleHook"], suffix="grp"), empty=True)
+    #     cmds.parent(self.scaleHook, self.limbGrp)
+    #     scale_skips = "xyz" if self.isLocal else ""
+    #     connection.matrixConstraint(self.contBindGrp, self.scaleHook, self.localOffGrp, skipScale=scale_skips)
+    #
+    #     self.rigJointsGrp = cmds.group(name=naming.parse([self.module_name, "rigJoints"], suffix="grp"), empty=True)
+    #     self.defJointsGrp = cmds.group(name=naming.parse([self.module_name, "defJoints"], suffix="grp"), empty=True)
+    #
+    #     cmds.parent(self.rigJointsGrp, self.limbGrp)
+    #     cmds.parent(self.defJointsGrp, self.limbGrp)
 
     def create_joints(self):
 
@@ -705,7 +708,7 @@ class Hindleg(object):
         cmds.parentConstraint(self.limbPlug, self.scaleGrp, maintainOffset=False)
         cmds.setAttr("%s.rigVis" % self.scaleGrp, 0)
 
-        self.scaleConstraints.append(self.scaleGrp)
+        # self.scaleConstraints.append(self.scaleGrp)
 
         for jnt in self.deformerJoints:
             cmds.connectAttr("%s.jointVis" % self.scaleGrp, "%s.v" % jnt)
@@ -715,8 +718,8 @@ class Hindleg(object):
         # _ = []
         self.anchors = [(self.foot_ik_cont.name, "parent", 1, None), (self.pole_ik_cont.name, "parent", 1, None)]
 
-    def createLimb(self):
-        self.create_grp()
+    def execute(self):
+        # self.create_grp()
         self.create_joints()
         self.create_controllers()
         self.common()
@@ -729,23 +732,25 @@ class Hindleg(object):
         self.round_up()
 
 
-class Guides(object):
-    def __init__(self, side="L", suffix="hindleg", segments=None, tMatrix=None, upVector=(0, 1, 0),
-                 mirrorVector=(1, 0, 0),
-                 lookVector=(0, 0, 1), *args, **kwargs):
-        super(Guides, self).__init__()
+class Guides(_module.GuidesCore):
+    limb_data = LIMB_DATA
 
-        self.side = side
-        self.sideMultiplier = -1 if side == "R" else 1
-        self.name = suffix
-        self.segments = segments
-        self.tMatrix = om.MMatrix(tMatrix) if tMatrix else om.MMatrix()
-        self.upVector = om.MVector(upVector)
-        self.mirrorVector = om.MVector(mirrorVector)
-        self.lookVector = om.MVector(lookVector)
-
-        self.offsetVector = None
-        self.guideJoints = []
+    # def __init__(self, side="L", suffix="hindleg", segments=None, tMatrix=None, upVector=(0, 1, 0),
+    #              mirrorVector=(1, 0, 0),
+    #              lookVector=(0, 0, 1), *args, **kwargs):
+    #     super(Guides, self).__init__()
+    #
+    #     self.side = side
+    #     self.sideMultiplier = -1 if side == "R" else 1
+    #     self.name = suffix
+    #     self.segments = segments
+    #     self.tMatrix = om.MMatrix(tMatrix) if tMatrix else om.MMatrix()
+    #     self.upVector = om.MVector(upVector)
+    #     self.mirrorVector = om.MVector(mirrorVector)
+    #     self.lookVector = om.MVector(lookVector)
+    #
+    #     self.offsetVector = None
+    #     self.guideJoints = []
 
     def draw_joints(self):
         self.guideJoints = []
@@ -782,31 +787,41 @@ class Guides(object):
         joint.orient_joints(self.guideJoints, world_up_axis=self.lookVector, up_axis=(0, 1, 0),
                             reverse_aim=self.sideMultiplier, reverse_up=self.sideMultiplier)
 
-    def define_attributes(self):
+    def define_guides(self):
+        """Override the guide definition method"""
         joint.set_joint_type(self.guideJoints[0], "HindlegRoot")
         joint.set_joint_type(self.guideJoints[1], "Hindhip")
         joint.set_joint_type(self.guideJoints[2], "Stifle")
         joint.set_joint_type(self.guideJoints[3], "Hock")
         joint.set_joint_type(self.guideJoints[4], "Phalanges")
         joint.set_joint_type(self.guideJoints[5], "PhalangesTip")
-        _ = [joint.set_joint_side(jnt, self.side) for jnt in self.guideJoints]
 
-        root_jnt = self.guideJoints[0]
-        attribute.create_global_joint_attrs(root_jnt, moduleName=naming.parse([self.name], side=self.side), upAxis=self.upVector,
-                                            mirrorAxis=self.mirrorVector, lookAxis=self.lookVector)
 
-        for attr_dict in LIMB_DATA["properties"]:
-            attribute.create_attribute(root_jnt, attr_dict)
-
-    def createGuides(self):
-        """Main Function to create Guides"""
-        self.draw_joints()
-        self.define_attributes()
-
-    def convertJoints(self, joints_list):
-        if len(joints_list) != 6:
-            log.warning("Define or select exactly 5 joints for Arm Guide conversion. Skipping")
-            return
-        self.guideJoints = joints_list
-        _ = [joint.set_joint_side(jnt, self.side) for jnt in self.guideJoints]
-        self.define_attributes()
+    # def define_attributes(self):
+    #     joint.set_joint_type(self.guideJoints[0], "HindlegRoot")
+    #     joint.set_joint_type(self.guideJoints[1], "Hindhip")
+    #     joint.set_joint_type(self.guideJoints[2], "Stifle")
+    #     joint.set_joint_type(self.guideJoints[3], "Hock")
+    #     joint.set_joint_type(self.guideJoints[4], "Phalanges")
+    #     joint.set_joint_type(self.guideJoints[5], "PhalangesTip")
+    #     _ = [joint.set_joint_side(jnt, self.side) for jnt in self.guideJoints]
+    #
+    #     root_jnt = self.guideJoints[0]
+    #     attribute.create_global_joint_attrs(root_jnt, moduleName=naming.parse([self.name], side=self.side), upAxis=self.upVector,
+    #                                         mirrorAxis=self.mirrorVector, lookAxis=self.lookVector)
+    #
+    #     for attr_dict in LIMB_DATA["properties"]:
+    #         attribute.create_attribute(root_jnt, attr_dict)
+    #
+    # def createGuides(self):
+    #     """Main Function to create Guides"""
+    #     self.draw_joints()
+    #     self.define_attributes()
+    #
+    # def convertJoints(self, joints_list):
+    #     if len(joints_list) != 6:
+    #         log.warning("Define or select exactly 5 joints for Arm Guide conversion. Skipping")
+    #         return
+    #     self.guideJoints = joints_list
+    #     _ = [joint.set_joint_side(jnt, self.side) for jnt in self.guideJoints]
+    #     self.define_attributes()

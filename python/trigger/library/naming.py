@@ -18,16 +18,17 @@ def unique_name(name, return_counter=False, suffix=None):
     Returns: (String) uniquename
 
     """
-    original_name = name
+    search_name = name
+    base_name = name
     if suffix and name.endswith(suffix):
-        name = name.replace(suffix, "")
+        base_name = name.replace(suffix, "")
+        # name = name.replace(suffix, "")
     else:
         suffix = ""
-    search_name = name
 
     id_counter = 0
     while cmds.objExists(search_name):
-        search_name = "{0}{1}{2}".format(name, str(id_counter + 1), suffix)
+        search_name = "{0}{1}{2}".format(base_name, str(id_counter + 1), suffix)
         id_counter = id_counter + 1
 
     # base_name = name
@@ -44,7 +45,14 @@ def unique_name(name, return_counter=False, suffix=None):
     # else:
     #     resolved_name = "{0}{1}".format(name, counter_str)
     else:
-        return search_name
+        # if suffix:
+        #     search_name = "{0}{1}".format(search_name, suffix)
+        # return search_name
+        if id_counter:
+            result_name = "{0}{1}{2}".format(base_name, str(id_counter), suffix)
+        else:
+            result_name = name
+        return result_name
 
 # def unique_name(name, return_counter=False):
 #     """

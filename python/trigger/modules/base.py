@@ -2,11 +2,10 @@ from maya import cmds
 import maya.api.OpenMaya as om
 
 from trigger.library import functions, naming, joint
-from trigger.library import attribute
 from trigger.library import connection
 from trigger.objects.controller import Controller
+from trigger.modules import _module
 
-from trigger.library import controllers as ic
 from trigger.core import filelog
 
 LOG = filelog.Filelog(logname=__name__, filename="trigger_log")
@@ -19,60 +18,75 @@ LIMB_DATA = {
 }
 
 
-class Base(object):
+class Base(_module.ModuleCore):
     def __init__(self, build_data=None, inits=None, *args, **kwargs):
         super(Base, self).__init__()
         if build_data:
             if len(build_data.keys()) > 1:
                 LOG.error("Base can only have one initial joint")
                 return
-            self.baseInit = build_data["Base"]
+            self.inits = [build_data["Base"]]
         elif inits:
             if len(inits) > 1:
                 cmds.error("Root can only have one initial joint")
                 return
-            self.baseInit = inits[0]
+
+            self.inits = inits
         else:
             LOG.error("Class needs either build_data or inits to be constructed")
 
-        self.module_name = (naming.unique_name(cmds.getAttr("%s.moduleName" % self.baseInit)))
-
-        self.controllers = []
+        self.module_name = (naming.unique_name(cmds.getAttr("%s.moduleName" % self.inits[0])))
         self.base_jnt = None
-        self.limbGrp = None
-        self.scaleGrp = None
-        self.limbPlug = None
-        self.nonScaleGrp = None
-        self.cont_IK_OFF = None
-        self.sockets = []
-        self.scaleConstraints = []
-        self.anchors = []
-        self.anchorLocations = []
-        self.deformerJoints = []
-        self.colorCodes = [6, 18]
 
-    def createGrp(self):
+        # self.cont_IK_OFF = None
+        # self.controllers = []
+        # self.limbGrp = None
+        # self.scaleGrp = None
+        # self.limbPlug = None
+        # self.nonScaleGrp = None
+        # self.sockets = []
+        # self.scaleConstraints = []
+        # self.anchors = []
+        # self.anchorLocations = []
+        # self.deformerJoints = []
+        # self.colorCodes = [6, 18]
+
+    def create_groups(self):
+        self.limbGrp = cmds.group(name=naming.parse([self.module_name]), empty=True)
+
         self.scaleGrp = cmds.group(name=naming.parse([self.module_name, "scale"], suffix="grp"), empty=True)
-        cmds.addAttr(self.scaleGrp, attributeType="bool", longName="Control_Visibility", shortName="contVis",
-                     defaultValue=True)
-        cmds.addAttr(self.scaleGrp, attributeType="bool", longName="Joints_Visibility", shortName="jointVis",
-                     defaultValue=True)
-        cmds.addAttr(self.scaleGrp, attributeType="bool", longName="Rig_Visibility", shortName="rigVis",
-                     defaultValue=True)
-        # make the created attributes visible in the channelbox
-        cmds.setAttr("{0}.contVis".format(self.scaleGrp), channelBox=True)
-        cmds.setAttr("{0}.jointVis".format(self.scaleGrp), channelBox=True)
-        cmds.setAttr("{0}.rigVis".format(self.scaleGrp), channelBox=True)
 
-        self.limbGrp = cmds.group(name=naming.parse([self.module_name], suffix="grp"), empty=True)
-        cmds.parent(self.scaleGrp, self.nonScaleGrp, self.cont_IK_OFF, self.limbGrp)
-        self.scaleConstraints.append(self.scaleGrp)
+        functions.align_to(self.scaleGrp, self.inits[0], position=True, rotation=False)
+        self.nonScaleGrp = cmds.group(name=naming.parse([self.module_name, "nonScale"], suffix="grp"), empty=True)
+
+
+        cmds.addAttr(self.scaleGrp, attributeType="bool", longName="Control_Visibility", shortName="contVis", defaultValue=True)
+        cmds.addAttr(self.scaleGrp, attributeType="bool", longName="Joints_Visibility", shortName="jointVis", defaultValue=True)
+        cmds.addAttr(self.scaleGrp, attributeType="bool", longName="Rig_Visibility", shortName="rigVis", defaultValue=False)
+        # make the created attributes visible in the channel box
+        cmds.setAttr("%s.contVis" % self.scaleGrp, channelBox=True)
+        cmds.setAttr("%s.jointVis" % self.scaleGrp, channelBox=True)
+        cmds.setAttr("%s.rigVis" % self.scaleGrp, channelBox=True)
+
+        # cmds.parent(self.scaleGrp, self.limbGrp)
+        cmds.parent(self.nonScaleGrp, self.limbGrp)
+
+        # cmds.parent(self.scaleGrp, self.limbGrp)
+        # cmds.parent(self.nonScaleGrp, self.limbGrp)
+        # cmds.parent(self.cont_IK_OFF, self.limbGrp)
+
+        # cmds.parent(self.scaleGrp, self.nonScaleGrp, self.cont_IK_OFF, self.limbGrp)
+
+        # cmds.parent(self.scaleGrp, self.cont_IK_OFF, self.limbGrp)
+        # cmds.parent(self.scaleGrp, None, self.limbGrp)
+        cmds.parent(self.scaleGrp, self.limbGrp)
+        # self.scaleConstraints.append(self.scaleGrp)
 
     def createJoints(self):
         self.base_jnt = cmds.joint(name=naming.parse([self.module_name], suffix="j"))
         cmds.connectAttr("{0}.rigVis".format(self.scaleGrp), "{0}.v".format(self.base_jnt))
 
-        functions.align_to(self.base_jnt, self.baseInit, position=True, rotation=False)
+        functions.align_to(self.base_jnt, self.inits[0], position=True, rotation=False)
         self.limbPlug = self.base_jnt
         self.sockets.append(self.base_jnt)
 
@@ -123,33 +137,42 @@ class Base(object):
         placement_cont.lock(["sx", "sy", "sz", "v"])
         master_cont.lock(["sx", "sy", "sz", "v"])
 
-    def createLimb(self):
-        """Creates base joint for master and placement conts"""
-        LOG.info("Creating Base %s" % self.module_name)
-        self.createGrp()
+    def execute(self):
+        # self.scaleConstraints.append(self.scaleGrp)
         self.createJoints()
         self.createControllers()
 
 
-class Guides(object):
-    def __init__(self, side="L", suffix="base", segments=None, tMatrix=None, upVector=(0, 1, 0), mirrorVector=(1, 0, 0),
-                 lookVector=(0, 0, 1), *args, **kwargs):
-        super(Guides, self).__init__()
+    # def createLimb(self):
+    #     """Creates base joint for master and placement conts"""
+    #     LOG.info("Creating Base %s" % self.module_name)
+    #     self.create_groups()
+    #     self.createJoints()
+    #     self.createControllers()
+
+
+class Guides(_module.GuidesCore):
+    limb_data = LIMB_DATA
+    # def __init__(self, side="L", suffix="base", segments=None, tMatrix=None, upVector=(0, 1, 0), mirrorVector=(1, 0, 0), lookVector=(0, 0, 1), *args, **kwargs):
+    # def __init__(self, suffix="base", **kwargs):
+    #     super(Guides, self).__init__(suffix=suffix, **kwargs)
+    # def __init__(self, *args, **kwargs):
+    #     super(Guides, self).__init__(*args, **kwargs)
         # fool check
 
-        # -------Mandatory------[Start]
-        self.side = side
-        self.sideMultiplier = -1 if side == "R" else 1
-        self.name = suffix
-        self.segments = segments
-        self.tMatrix = om.MMatrix(tMatrix) if tMatrix else om.MMatrix()
-        self.upVector = om.MVector(upVector)
-        self.mirrorVector = om.MVector(mirrorVector)
-        self.lookVector = om.MVector(lookVector)
-
-        self.offsetVector = None
-        self.guideJoints = []
-        # -------Mandatory------[End]
+        # # -------Mandatory------[Start]
+        # self.side = side
+        # self.sideMultiplier = -1 if side == "R" else 1
+        # self.name = suffix
+        # self.segments = segments
+        # self.tMatrix = om.MMatrix(tMatrix) if tMatrix else om.MMatrix()
+        # self.upVector = om.MVector(upVector)
+        # self.mirrorVector = om.MVector(mirrorVector)
+        # self.lookVector = om.MVector(lookVector)
+        #
+        # self.offsetVector = None
+        # self.guideJoints = []
+        # # -------Mandatory------[End]
 
     def draw_joints(self):
         # Define the offset vector
@@ -164,28 +187,32 @@ class Guides(object):
 
         # set orientation of joints
 
-    def define_attributes(self):
-        # set joint side and type attributes
+    def define_guides(self):
+        """Override the guide definition method"""
         joint.set_joint_type(self.guideJoints[0], "Base")
-        cmds.setAttr("{0}.radius".format(self.guideJoints[0]), 2)
-        _ = [joint.set_joint_side(jnt, self.side) for jnt in self.guideJoints]
 
-        # ----------Mandatory---------[Start]
-        root_jnt = self.guideJoints[0]
-        attribute.create_global_joint_attrs(root_jnt, moduleName=naming.parse([self.name], side=self.side), upAxis=self.upVector,
-                                            mirrorAxis=self.mirrorVector, lookAxis=self.lookVector)
-        # ----------Mandatory---------[End]
+    # def define_attributes(self):
+    #     # set joint side and type attributes
+    #     joint.set_joint_type(self.guideJoints[0], "Base")
+    #     cmds.setAttr("{0}.radius".format(self.guideJoints[0]), 2)
+    #     _ = [joint.set_joint_side(jnt, self.side) for jnt in self.guideJoints]
+    #
+    #     # ----------Mandatory---------[Start]
+    #     root_jnt = self.guideJoints[0]
+    #     attribute.create_global_joint_attrs(root_jnt, moduleName=naming.parse([self.name], side=self.side), upAxis=self.upVector,
+    #                                         mirrorAxis=self.mirrorVector, lookAxis=self.lookVector)
+    #     # ----------Mandatory---------[End]
+    #
+    #     for attr_dict in LIMB_DATA["properties"]:
+    #         attribute.create_attribute(root_jnt, attr_dict)
 
-        for attr_dict in LIMB_DATA["properties"]:
-            attribute.create_attribute(root_jnt, attr_dict)
-
-    def createGuides(self):
-        self.draw_joints()
-        self.define_attributes()
-
-    def convertJoints(self, joints_list):
-        if len(joints_list) != 1:
-            LOG.warning("Define or select a single joint for Root Guide conversion. Skipping")
-            return
-        self.guideJoints = joints_list
-        self.define_attributes()
+    # def createGuides(self):
+    #     self.draw_joints()
+    #     self.define_attributes()
+    #
+    # def convertJoints(self, joints_list):
+    #     if len(joints_list) != 1:
+    #         LOG.warning("Define or select a single joint for Root Guide conversion. Skipping")
+    #         return
+    #     self.guideJoints = joints_list
+    #     self.define_attributes()

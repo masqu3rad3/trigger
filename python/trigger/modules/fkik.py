@@ -153,7 +153,7 @@ class Fkik(_module.ModuleCore):
 
         attribute.drive_attrs("%s.jointVis" % self.scaleGrp, ["%s.v" % x for x in self.deformerJoints])
         cmds.connectAttr("%s.jointVis" % self.scaleGrp,"%s.v" % self.limbPlug)
-        functions.colorize(self.deformerJoints, self.colorCodes[0], shape=False)
+        # functions.colorize(self.deformerJoints, self.colorCodes[0], shape=False)
 
     def createControllers(self):
 
@@ -191,7 +191,7 @@ class Fkik(_module.ModuleCore):
             cmds.parent(self.fkControllersOff[0], self.localOffGrp)
 
             attribute.drive_attrs("%s.contVis" % self.scaleGrp, ["%s.v" % x for x in self.fkControllersOff])
-            functions.colorize(self.controllers, self.colorCodes[0])
+            # functions.colorize(self.controllers, self.colorCodes[0])
 
         # IK Controllers
         if self.switchMode == 0 or self.switchMode == 2:
@@ -393,7 +393,7 @@ class Fkik(_module.ModuleCore):
         # cmds.parentConstraint(self.limbPlug, self.scaleGrp, mo=False)
         cmds.setAttr("%s.rigVis" % self.scaleGrp, 0)
 
-        self.scaleConstraints.append(self.scaleGrp)
+        # self.scaleConstraints.append(self.scaleGrp)
         # lock and hide
         _ = [cont.lock_visibility for cont in self.controllers]
 
@@ -418,15 +418,19 @@ class Fkik(_module.ModuleCore):
 
 
 class Guides(_module.GuidesCore):
+    limb_data = LIMB_DATA
+
     # def __init__(self, side="L", suffix="fkik", segments=None, tMatrix=None, upVector=(0, 1, 0), mirrorVector=(1, 0, 0), lookVector=(0,0,1), *args, **kwargs):
     def __init__(self, *args, **kwargs):
         super(Guides, self).__init__(*args, **kwargs)
 
         self.segments = kwargs.get("segments", 2) # minimum segments required for the fk/ik module is two
-        self.limb_data = LIMB_DATA # get the limb data from the module global file
+        # self.limb_data = LIMB_DATA # get the limb data from the module global file
+
+
 
     def draw_joints(self):
-        # fool check
+        # # fool check
         if not self.segments or self.segments < 1:
             log.error("minimum segments required for the fk/ik module is two. current: %s" % self.segments, proceed=False)
             raise Exception
@@ -482,13 +486,13 @@ class Guides(_module.GuidesCore):
     #     for attr_dict in LIMB_DATA["properties"]:
     #         attribute.create_attribute(root_jnt, attr_dict)
 
-    def createGuides(self):
-        self.draw_joints()
-        self.define_attributes()
+    # def createGuides(self):
+    #     self.draw_joints()
+    #     self.define_attributes()
 
-    def convertJoints(self, joints_list):
-        if len(joints_list) < 2:
-            log.warning("Define or select at least 2 joints for FK Guide conversion. Skipping")
-            return
-        self.guideJoints = joints_list
-        self.define_attributes()
+    # def convertJoints(self, joints_list):
+    #     if len(joints_list) < 2:
+    #         log.warning("Define or select at least 2 joints for FK Guide conversion. Skipping")
+    #         return
+    #     self.guideJoints = joints_list
+    #     self.define_attributes()

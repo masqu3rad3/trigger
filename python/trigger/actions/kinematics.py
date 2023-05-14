@@ -501,6 +501,9 @@ class Kinematics(object):
                 # pdb.set_trace()
                 # print("Horayyy")
                 # suppress the warnings
+
+                print(self.scaleRoot)
+
                 cmds.connectAttr("%s.s" % self.scaleRoot, "%s.s" %limb.scaleGrp, force=True)
                 # cmds.error()
                 for s_attr in "xyz":

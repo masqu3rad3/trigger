@@ -86,7 +86,7 @@ class Initials(object):
         if cmds.objExists(mirrorBoneName):
             return mirrorBoneName, alignmentGiven, alignmentReturn
         else:
-            log.warning("cannot find mirror Joint automatically")
+            # log.warning("cannot find mirror Joint automatically")
             return None, alignmentGiven, None
 
     # @undo
@@ -109,8 +109,8 @@ class Initials(object):
             ## check validity of side arguments
             valid_sides = ["left", "right", "center", "both", "auto"]
             if whichSide not in valid_sides:
-                log.error(
-                    "side argument '%s' is not valid. Valid arguments are: %s" % (whichSide, valid_sides))
+                # log.error(
+                #     "side argument '%s' is not valid. Valid arguments are: %s" % (whichSide, valid_sides))
                 raise ValueError
             if len(cmds.ls(sl=True, type="joint")) != 1 and whichSide == "auto" and defineAs == False:
                 log.warning("You need to select a single joint to use Auto method")
@@ -124,9 +124,10 @@ class Initials(object):
                 side = "C"
 
         limb_group_name = naming.parse([limb_name], side=side)
-        limb_group_name = naming.unique_name(limb_group_name)
+        limb_group_name = naming.unique_name("{}_guides".format(limb_group_name), suffix="_guides")
+        # limb_group_name = limb_group_name.replace("_guides", "")
         # strip the side and suffix and get the name of the limb
-        limb_name_parts = limb_group_name.split("_")
+        limb_name_parts = limb_group_name.split("_")[:-1] # don't include the suffix
         # remove the side and suffix
         limb_name_parts = [part for part in limb_name_parts if part not in ["L", "R", "C", "grp"]]
         unique_limb = "_".join(limb_name_parts)
@@ -141,8 +142,8 @@ class Initials(object):
             return
 
         if not parentNode:
-            if cmds.ls(sl=True, type="joint"):
-                j = cmds.ls(sl=True)[-1]
+            if cmds.ls(selection=True, type="joint"):
+                j = cmds.ls(selection=True)[-1]
                 try:
                     if joint.identify(j, self.module_dict)[1] in self.valid_limbs:
                         masterParent = cmds.ls(sl=True)[-1]
@@ -161,6 +162,10 @@ class Initials(object):
             return (locators1 + locators2), jnt_dict_side1
         if whichSide == "auto" and masterParent:
             mirrorParent, givenAlignment, returnAlignment = self.autoGet(masterParent)
+            print("masterParent: ", masterParent)
+            print("mirrorParent: ", mirrorParent)
+            print("givenAlignment: ", givenAlignment)
+            print("returnAlignment: ", returnAlignment)
             locators1, jnt_dict_side1 = self.initLimb(limb_name, givenAlignment, **kwargs)
             if mirrorParent:
                 locators2, jnt_dict_side2 = self.initLimb(limb_name, returnAlignment, constrainedTo=locators1, parentNode=mirrorParent, **kwargs)
@@ -170,9 +175,10 @@ class Initials(object):
                 total_locators = locators1
             return total_locators, jnt_dict_side1
 
-        limb_group = cmds.group(em=True, name=limb_group_name)
+        limb_group = cmds.group(empty=True, name=limb_group_name)
+        # limb_group = cmds.group(empty=True, name=naming.unique_name("{}_guides".format(limb_group_name), suffix = "_guides"))
         cmds.parent(limb_group, holderGroup)
-        cmds.select(d=True)
+        cmds.select(clear=True)
 
         module = "modules.{0}.{1}".format(limb_name, "Guides")
 

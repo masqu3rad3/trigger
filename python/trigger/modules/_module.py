@@ -21,16 +21,17 @@ LIMB_DATA = {
 class ModuleCore(object):
     def __init__(self, build_data=None, inits=None, *args, **kwargs):
 
+        self.inits = []
+        self.limbGrp = None
+        self.scaleGrp = None
+        self.nonScaleGrp = None
+        self.limbPlug = None
         self.scaleHook = None
         self.isLocal = False
         self.inits = []
         self.module_name = None
         self.controllers = []
         self.sockets = []
-        self.limbGrp = None
-        self.scaleGrp = None
-        self.nonScaleGrp = None
-        self.limbPlug = None
         self.scaleConstraints = []
         self.anchors = []
         self.anchorLocations = []
@@ -42,6 +43,9 @@ class ModuleCore(object):
         self.rigJointsGrp = None
         self.defJointsGrp = None
         self.contBindGrp = None
+
+        # TODO: Make this redundant. Check it against all modules.
+        self.cont_IK_OFF = None
 
     def create_groups(self):
         """Create essential groups for the module. Mandatory for all modules."""
@@ -58,6 +62,7 @@ class ModuleCore(object):
         self.limbGrp = cmds.group(name=naming.parse([self.module_name]), empty=True)
 
         self.scaleGrp = cmds.group(name=naming.parse([self.module_name, "scale"], suffix="grp"), empty=True)
+
         functions.align_to(self.scaleGrp, self.inits[0], position=True, rotation=False)
         self.nonScaleGrp = cmds.group(name=naming.parse([self.module_name, "nonScale"], suffix="grp"), empty=True)
 
@@ -77,9 +82,9 @@ class ModuleCore(object):
         attribute.lock_and_hide(self.controllerGrp)
         cmds.parent(self.controllerGrp, self.limbGrp)
 
-        self.jointGrp = cmds.group(name=naming.parse([self.module_name, "joint"], suffix="grp"), empty=True)
-        attribute.lock_and_hide(self.controllerGrp)
-        cmds.parent(self.jointGrp, self.limbGrp)
+        # self.jointGrp = cmds.group(name=naming.parse([self.module_name, "joint"], suffix="grp"), empty=True)
+        # attribute.lock_and_hide(self.controllerGrp)
+        # cmds.parent(self.jointGrp, self.limbGrp)
 
         self.localOffGrp = cmds.group(name=naming.parse([self.module_name, "localOffset"], suffix="grp"), empty=True)
         self.plugBindGrp = cmds.group(name=naming.parse([self.module_name, "plugBind"], suffix="grp"), empty=True)
@@ -107,6 +112,8 @@ class ModuleCore(object):
         cmds.parent(self.rigJointsGrp, self.limbGrp)
         cmds.parent(self.defJointsGrp, self.limbGrp)
 
+        self.additional_groups()
+
     def additional_groups(self):
         """Create additional groups for the module. This method will be overridden for each module."""
         pass
@@ -115,22 +122,33 @@ class ModuleCore(object):
         """Execute the rig creation. This method will be overridden for each module."""
         pass
 
+    def finalize(self):
+        """Finalize the rig creation. This method will be overridden for each module."""
+        # TODO: remove this condition when the modules are finalized
+        if self.scaleGrp in self.scaleConstraints:
+            LOG.warning("Scale group is in scale constraints list. This needs to be done in inherited class. Remove this in module class")
+        else:
+            self.scaleConstraints.append(self.scaleGrp)
+
+
     def createLimb(self):
         """Create the limb rig."""
         self.create_groups()
         self.execute()
+        self.finalize()
+
 
 class GuidesCore(object):
-    def __init__(self, side="L", suffix="fkik", segments=None, tMatrix=None, upVector=(0, 1, 0), mirrorVector=(1, 0, 0), lookVector=(0, 0, 1), *args, **kwargs):
+    limb_data = LIMB_DATA
+    def __init__(self, side="L", suffix="", segments=None, tMatrix=None, upVector=(0, 1, 0), mirrorVector=(1, 0, 0), lookVector=(0, 0, 1), *args, **kwargs):
         self.side = side
         self.sideMultiplier = -1 if side == "R" else 1
-        self.name = suffix
+        self.name = suffix or "noName"
         self.segments = segments
         self.tMatrix = om.MMatrix(tMatrix) if tMatrix else om.MMatrix()
         self.upVector = om.MVector(upVector)
         self.mirrorVector = om.MVector(mirrorVector)
         self.lookVector = om.MVector(lookVector)
-        self.limb_data = LIMB_DATA
 
         self.offsetVector = None
         self.guideJoints = []
@@ -192,8 +210,20 @@ class GuidesCore(object):
         self.define_attributes()
 
     def convertJoints(self, joints_list):
-        if len(joints_list) < 2:
-            LOG.warning("Define or select at least 2 joints for FK Guide conversion. Skipping")
-            return
+        self._validate()
+        # if len(joints_list) < 2:
+        #     LOG.warning("Define or select at least 2 joints for FK Guide conversion. Skipping")
+        #     return
         self.guideJoints = joints_list
         self.define_attributes()
+
+    def _validate(self, joints_list):
+        """Validate the guide joints when converting guides."""
+        _min = len(self.limb_data["members"])
+        _max = _min if self.limb_data["multi_guide"] else 99999
+        if not joints_list:
+            LOG.error("joint list not defined for module {0}".format(self.name), proceed=False)
+        if _min == _max and len(joints_list) != _min:
+            LOG.error("segments for module {0} must be equal to {1}".format(self.name, _min), proceed=False)
+        if len(joints_list) < _min or self.segments > _max:
+            LOG.error("segments for module {0} must be between {1} and {2}".format(self.name, _min, _max), proceed=False)

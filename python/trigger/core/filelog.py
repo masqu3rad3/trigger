@@ -25,7 +25,8 @@ class Filelog(object):
         self.logger = logging.getLogger(self.logName)
         self.logger.setLevel(logging.DEBUG)
         # self.console_handler = ColorHandler()
-        self.logger.addHandler(ColorHandler())
+        # self.logger.addHandler(ColorHandler())
+        # self.logger.addHandler(logging.StreamHandler())
         self.isDate = date
         self.isTime = time
         if not os.path.isfile(self.filePath):
@@ -50,10 +51,10 @@ class Filelog(object):
     def _welcome(self):
         """Print the welcome message."""
         self._start_logging()
-        self.logger.info("=" * len(self.logName))
-        self.logger.info(self.logName)
-        self.logger.info("=" * len(self.logName))
-        self.logger.info("")
+        self.logger.debug("=" * len(self.logName))
+        self.logger.debug(self.logName)
+        self.logger.debug("=" * len(self.logName))
+        self.logger.debug("")
         self._end_logging()
 
     def debug(self, msg):
@@ -121,7 +122,8 @@ class Filelog(object):
 
     def _start_logging(self):
         """Prepare logger to write into log file."""
-        file_logger = logging.FileHandler(self.filePath, delay=True)
+        # file_logger = logging.FileHandler(self.filePath, delay=True)
+        file_logger = logging.FileHandler(self.filePath)
         # file_logger = FileHandler(self.filePath)
         self.logger.addHandler(file_logger)
         # self.logger.addHandler(self.console_handler)
@@ -129,91 +131,87 @@ class Filelog(object):
     def _end_logging(self):
         """Delete handlers once the logging into file finishes."""
         for handler in self.logger.handlers:
-            if isinstance(handler, logging.FileHandler):
-                self.logger.removeHandler(handler)
-                handler.flush()
-                handler.close()
-            # self.logger.removeHandler(handler)
-            # handler.flush()
-            # handler.close()
+            # if isinstance(handler, logging.FileHandler):
+            #     self.logger.removeHandler(handler)
+            #     handler.flush()
+            #     handler.close()
+            self.logger.removeHandler(handler)
+            handler.flush()
+            handler.close()
 
     def get_size(self):
         """Return the size of the log file."""
         size = os.path.getsize(self.filePath)
         return size
 
-class _AnsiColorizer(object):
-    """
-    A colorizer is an object that loosely wraps around a stream, allowing
-    callers to write text to the stream in a particular color.
-
-    Colorizer classes must implement C{supported()} and C{write(text, color)}.
-    """
-    _colors = dict(black=30, red=31, green=32, yellow=33,
-                   blue=34, magenta=35, cyan=36, white=37)
-
-    def __init__(self, stream):
-        self.stream = stream
-
-    @classmethod
-    def supported(cls, stream=sys.stdout):
-        """
-        A class method that returns True if the current platform supports
-        coloring terminal output using this method. Returns False otherwise.
-        """
-        if not stream.isatty():
-            return False  # auto color only on TTYs
-        try:
-            import curses
-        except ImportError:
-            return False
-        else:
-            try:
-                try:
-                    return curses.tigetnum("colors") > 2
-                except curses.error:
-                    curses.setupterm()
-                    return curses.tigetnum("colors") > 2
-            except:
-                raise
-                # guess false in case of error
-                return False
-
-    def write(self, text, color):
-        """
-        Write the given text to the stream in the given color.
-
-        @param text: Text to be written to the stream.
-
-        @param color: A string label for a color. e.g. 'red', 'white'.
-        """
-        color = self._colors[color]
-        self.stream.write('\x1b[%s;1m%s\x1b[0m' % (color, text))
-
-
-class ColorHandler(logging.StreamHandler):
-    def __init__(self, stream=sys.stdout):
-        super(ColorHandler, self).__init__(_AnsiColorizer(stream))
-
-    def emit(self, record):
-        msg_colors = {
-            logging.DEBUG: "green",
-            logging.INFO: "blue",
-            logging.WARNING: "yellow",
-            logging.ERROR: "red"
-        }
-
-        color = msg_colors.get(record.levelno, "blue")
-        self.stream.write(record.msg + "\n", color)
-
-class FileHandler(logging.FileHandler):
-    def emit(self, record):
-        pass
+# class _AnsiColorizer(object):
+#     """
+#     A colorizer is an object that loosely wraps around a stream, allowing
+#     callers to write text to the stream in a particular color.
+#
+#     Colorizer classes must implement C{supported()} and C{write(text, color)}.
+#     """
+#     _colors = dict(black=30, red=31, green=32, yellow=33,
+#                    blue=34, magenta=35, cyan=36, white=37)
+#
+#     def __init__(self, stream):
+#         self.stream = stream
+#
+#     @classmethod
+#     def supported(cls, stream=sys.stdout):
+#         """
+#         A class method that returns True if the current platform supports
+#         coloring terminal output using this method. Returns False otherwise.
+#         """
+#         if not stream.isatty():
+#             return False  # auto color only on TTYs
+#         try:
+#             import curses
+#         except ImportError:
+#             return False
+#         else:
+#             try:
+#                 try:
+#                     return curses.tigetnum("colors") > 2
+#                 except curses.error:
+#                     curses.setupterm()
+#                     return curses.tigetnum("colors") > 2
+#             except:
+#                 raise
+#                 # guess false in case of error
+#                 return False
+#
+#     def write(self, text, color):
+#         """
+#         Write the given text to the stream in the given color.
+#
+#         @param text: Text to be written to the stream.
+#
+#         @param color: A string label for a color. e.g. 'red', 'white'.
+#         """
+#         color = self._colors[color]
+#         self.stream.write('\x1b[%s;1m%s\x1b[0m' % (color, text))
+#
+#
+# class ColorHandler(logging.StreamHandler):
+#     def __init__(self, stream=sys.stdout):
+#         super(ColorHandler, self).__init__(_AnsiColorizer(stream))
+#
+#     def emit(self, record):
+#         msg_colors = {
+#             logging.DEBUG: "green",
+#             logging.INFO: "blue",
+#             logging.WARNING: "yellow",
+#             logging.ERROR: "red"
+#         }
+#
+#         color = msg_colors.get(record.levelno, "blue")
+#         self.stream.write(record.msg + "\n", color)
 
 
-if __name__ == "__main__":
-    a = Filelog()
-    a.info("This is a info test")
-    a.debug("This is a debug test")
-    a.warning("This is a warninge test")
-    a.error("This is a error test")
+# if __name__ == "__main__":
+#     a = Filelog()
+#     a.info("This is a info test")
+#     a.debug("This is a debug test")
+#     a.warning("This is a warninge test")
+#     a.error("This is a error test")

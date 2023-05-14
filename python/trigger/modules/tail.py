@@ -6,6 +6,8 @@ from trigger.library import naming
 from trigger.library import attribute
 from trigger.library import api
 from trigger.objects.controller import Controller
+from trigger.modules import _module
+
 from trigger.core import filelog
 
 log = filelog.Filelog(logname=__name__, filename="trigger_log")
@@ -17,7 +19,7 @@ LIMB_DATA = {
         "sided": True,
     }
 
-class Tail(object):
+class Tail(_module.ModuleCore):
 
     def __init__(self, build_data=None, inits=None, *args, **kwargs):
         super(Tail, self).__init__()
@@ -44,31 +46,31 @@ class Tail(object):
         # initialize suffix
         self.module_name = (naming.unique_name(cmds.getAttr("%s.moduleName" % self.inits[0])))
 
-        # scratch variables
-        self.controllers = []
-        self.sockets = []
-        self.limbGrp = None
-        self.scaleGrp = None
-        self.nonScaleGrp = None
-        self.limbPlug = None
-        self.scaleConstraints = []
-        self.anchors = []
-        self.anchorLocations = []
-        self.deformerJoints = []
-        self.colorCodes = [6, 18]
+        # # scratch variables
+        # self.controllers = []
+        # self.sockets = []
+        # self.limbGrp = None
+        # self.scaleGrp = None
+        # self.nonScaleGrp = None
+        # self.limbPlug = None
+        # self.scaleConstraints = []
+        # self.anchors = []
+        # self.anchorLocations = []
+        # self.deformerJoints = []
+        # self.colorCodes = [6, 18]
 
-    def createGrp(self):
-        self.limbGrp = cmds.group(name=naming.parse([self.module_name], suffix="grp"), empty=True)
-        self.scaleGrp = cmds.group(name=naming.parse([self.module_name, "scale"], suffix="grp"), empty=True)
-        functions.align_to(self.scaleGrp, self.tailRoot, position=True, rotation=False)
-        self.nonScaleGrp = cmds.group(name=naming.parse([self.module_name, "nonScale"], suffix="grp"), empty=True)
-
-        for nicename, attrname in zip(["Control_Visibility", "Joints_Visibility", "Rig_Visibility"], ["contVis", "jointVis", "rigVis"]):
-            attribute.create_attribute(self.scaleGrp, nice_name=nicename, attr_name=attrname, attr_type="bool",
-                                       keyable=False, display=True)
-
-        cmds.parent(self.scaleGrp, self.limbGrp)
-        cmds.parent(self.nonScaleGrp, self.limbGrp)
+    # def createGrp(self):
+    #     self.limbGrp = cmds.group(name=naming.parse([self.module_name], suffix="grp"), empty=True)
+    #     self.scaleGrp = cmds.group(name=naming.parse([self.module_name, "scale"], suffix="grp"), empty=True)
+    #     functions.align_to(self.scaleGrp, self.tailRoot, position=True, rotation=False)
+    #     self.nonScaleGrp = cmds.group(name=naming.parse([self.module_name, "nonScale"], suffix="grp"), empty=True)
+    #
+    #     for nicename, attrname in zip(["Control_Visibility", "Joints_Visibility", "Rig_Visibility"], ["contVis", "jointVis", "rigVis"]):
+    #         attribute.create_attribute(self.scaleGrp, nice_name=nicename, attr_name=attrname, attr_type="bool",
+    #                                    keyable=False, display=True)
+    #
+    #     cmds.parent(self.scaleGrp, self.limbGrp)
+    #     cmds.parent(self.nonScaleGrp, self.limbGrp)
 
     def createJoints(self):
         # draw Joints
@@ -183,31 +185,38 @@ class Tail(object):
         for cont in self.controllers:
             cont.set_defaults()
 
-    def createLimb(self):
-        self.createGrp()
+    def execute(self):
+        # self.createGrp()
         self.createJoints()
         self.createControllers()
         self.createFKsetup()
         self.roundUp()
 
-class Guides(object):
-    def __init__(self, side="C", suffix="tail", segments=None, tMatrix=None, upVector=(0, 1, 0), mirrorVector=(1, 0, 0), lookVector=(0,0,1), *args, **kwargs):
-        super(Guides, self).__init__()
+class Guides(_module.GuidesCore):
+    limb_data = LIMB_DATA
+    def __init__(self, *args, **kwargs):
+        super(Guides, self).__init__(*args, **kwargs)
+
+        self.segments = kwargs.get("segments", 1) # minimum segments required for the module is 1
 
 
-        #-------Mandatory------[Start]
-        self.side = side
-        self.sideMultiplier = -1 if side == "R" else 1
-        self.name = suffix
-        self.segments = segments or 1
-        self.tMatrix = om.MMatrix(tMatrix) if tMatrix else om.MMatrix()
-        self.upVector = om.MVector(upVector)
-        self.mirrorVector = om.MVector(mirrorVector)
-        self.lookVector = om.MVector(lookVector)
-
-        self.offsetVector = None
-        self.guideJoints = []
-        #-------Mandatory------[End]
+    # def __init__(self, side="C", suffix="tail", segments=None, tMatrix=None, upVector=(0, 1, 0), mirrorVector=(1, 0, 0), lookVector=(0,0,1), *args, **kwargs):
+    #     super(Guides, self).__init__()
+    #
+    #
+    #     #-------Mandatory------[Start]
+    #     self.side = side
+    #     self.sideMultiplier = -1 if side == "R" else 1
+    #     self.name = suffix
+    #     self.segments = segments or 1
+    #     self.tMatrix = om.MMatrix(tMatrix) if tMatrix else om.MMatrix()
+    #     self.upVector = om.MVector(upVector)
+    #     self.mirrorVector = om.MVector(mirrorVector)
+    #     self.lookVector = om.MVector(lookVector)
+    #
+    #     self.offsetVector = None
+    #     self.guideJoints = []
+    #     #-------Mandatory------[End]
 
     def draw_joints(self):
         # fool check
@@ -238,25 +247,29 @@ class Guides(object):
         # set orientation of joints
         joint.orient_joints(self.guideJoints, world_up_axis=self.lookVector, up_axis=(0, 1, 0), reverse_aim=self.sideMultiplier, reverse_up=self.sideMultiplier)
 
-    def define_attributes(self):
+    def define_guides(self):
         joint.set_joint_type(self.guideJoints[0], "TailRoot")
         _ = [joint.set_joint_type(jnt, "Tail") for jnt in self.guideJoints[1:]]
-        _ = [joint.set_joint_side(jnt, self.side) for jnt in self.guideJoints]
 
-        # ----------Mandatory---------[Start]
-        root_jnt = self.guideJoints[0]
-        attribute.create_global_joint_attrs(root_jnt, moduleName=naming.parse([self.name], side=self.side), upAxis=self.upVector, mirrorAxis=self.mirrorVector, lookAxis=self.lookVector)
-        # ----------Mandatory---------[End]
-        for attr_dict in LIMB_DATA["properties"]:
-            attribute.create_attribute(root_jnt, attr_dict)
-
-    def createGuides(self):
-        self.draw_joints()
-        self.define_attributes()
-
-    def convertJoints(self, joints_list):
-        if len(joints_list) < 2:
-            log.warning("Define or select at least 2 joints for Tail Guide conversion. Skipping")
-            return
-        self.guideJoints = joints_list
-        self.define_attributes()
+    # def define_attributes(self):
+    #     joint.set_joint_type(self.guideJoints[0], "TailRoot")
+    #     _ = [joint.set_joint_type(jnt, "Tail") for jnt in self.guideJoints[1:]]
+    #     _ = [joint.set_joint_side(jnt, self.side) for jnt in self.guideJoints]
+    #
+    #     # ----------Mandatory---------[Start]
+    #     root_jnt = self.guideJoints[0]
+    #     attribute.create_global_joint_attrs(root_jnt, moduleName=naming.parse([self.name], side=self.side), upAxis=self.upVector, mirrorAxis=self.mirrorVector, lookAxis=self.lookVector)
+    #     # ----------Mandatory---------[End]
+    #     for attr_dict in LIMB_DATA["properties"]:
+    #         attribute.create_attribute(root_jnt, attr_dict)
+    #
+    # def createGuides(self):
+    #     self.draw_joints()
+    #     self.define_attributes()
+    #
+    # def convertJoints(self, joints_list):
+    #     if len(joints_list) < 2:
+    #         log.warning("Define or select at least 2 joints for Tail Guide conversion. Skipping")
+    #         return
+    #     self.guideJoints = joints_list
+    #     self.define_attributes()

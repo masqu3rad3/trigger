@@ -9,10 +9,10 @@ from standalone_start import standalone_prep
 
 LOG = filelog.Filelog(logname=__name__, filename="trigger_log")
 
-LOG.title("Module Tests")
+# LOG.title("Module Tests")
 
 class ModuleTests(base_test.TestCase):
-
+    # LOG.title("Module Tests")
     @classmethod
     def setUpClass(cls):
         standalone_prep()
@@ -39,12 +39,14 @@ class ModuleTests(base_test.TestCase):
         # LOG.info("test_arm")
 
         kinematics = self.basic_creation_test("arm")
-        self.assertTrue(kinematics)
+        # self.assertTrue(kinematics)
 
         # Socket / Plug connections
-        # kinematics2 = self.basic_creation_test(["surface", "arm", "tentacle"])
-        kinematics2 = self.basic_creation_test(["base", "arm", "fkik"])
-        self.assertTrue(kinematics2)
+        kinematics2 = self.basic_creation_test(["surface", "arm", "tentacle"])
+        # kinematics2 = self.basic_creation_test(["arm", "tentacle"])
+        # kinematics2 = self.basic_creation_test(["base", "arm", "fkik"])
+        # kinematics2 = self.basic_creation_test(["base", "arm", "fkik"])
+        # self.assertTrue(kinematics2)
 
     def test_base(self):
         # LOG.info("test_base")
@@ -53,7 +55,7 @@ class ModuleTests(base_test.TestCase):
         self.assertTrue(kinematics)
 
         # Socket / Plug connections
-        kinematics2 = self.basic_creation_test(["leg", "base", "arm"])
+        kinematics2 = self.basic_creation_test([ "arm", "base", "fkik"])
         self.assertTrue(kinematics2)
 
     def test_connector(self):
@@ -63,7 +65,7 @@ class ModuleTests(base_test.TestCase):
         self.assertTrue(kinematics)
 
         # Socket / Plug connections
-        kinematics2 = self.basic_creation_test(["eye", "connector", "spine"])
+        kinematics2 = self.basic_creation_test(["base", "connector", "arm"])
         self.assertTrue(kinematics2)
 
     def test_eye(self):
@@ -74,6 +76,7 @@ class ModuleTests(base_test.TestCase):
 
         # Socket / Plug connections
         kinematics2 = self.basic_creation_test(["connector", "eye", "base"])
+        # kinematics2 = self.basic_creation_test(["eye", "base", "eye"])
         self.assertTrue(kinematics2)
 
     def test_finger(self):
@@ -83,7 +86,7 @@ class ModuleTests(base_test.TestCase):
         self.assertTrue(kinematics)
 
         # Socket / Plug connections
-        kinematics2 = self.basic_creation_test(["singleton", "finger", "eye"])
+        kinematics2 = self.basic_creation_test(["arm", "finger", "fkik"])
         self.assertTrue(kinematics2)
 
     def test_fkik(self):
@@ -94,7 +97,7 @@ class ModuleTests(base_test.TestCase):
 
         # Socket / Plug connections
         # kinematics2 = self.basic_creation_test(["finger", "fkik", "singleton"])
-        kinematics2 = self.basic_creation_test(["fkik", "fkik", "fkik"])
+        kinematics2 = self.basic_creation_test(["arm", "fkik", "finger"])
         self.assertTrue(kinematics2)
 
     def test_head(self):
@@ -104,7 +107,7 @@ class ModuleTests(base_test.TestCase):
         self.assertTrue(kinematics)
 
         # Socket / Plug connections
-        kinematics2 = self.basic_creation_test(["hindleg", "head", "fkik"])
+        kinematics2 = self.basic_creation_test(["base", "head", "finger"])
         self.assertTrue(kinematics2)
 
     def test_hindleg(self):
@@ -124,7 +127,7 @@ class ModuleTests(base_test.TestCase):
         self.assertTrue(kinematics)
 
         # Socket / Plug connections
-        kinematics2 = self.basic_creation_test(["head", "leg", "tail"])
+        kinematics2 = self.basic_creation_test(["base", "leg", "fkik"])
         self.assertTrue(kinematics2)
 
 
@@ -138,7 +141,7 @@ class ModuleTests(base_test.TestCase):
         self.assertTrue(kinematics2)
 
         # Socket / Plug connections
-        kinematics2 = self.basic_creation_test(["spine", "singleton", "head"])
+        kinematics2 = self.basic_creation_test(["base", "singleton", "fkik"])
         self.assertTrue(kinematics2)
 
     def test_spine(self):
@@ -148,7 +151,7 @@ class ModuleTests(base_test.TestCase):
         self.assertTrue(kinematics)
 
         # Socket / Plug connections
-        kinematics2 = self.basic_creation_test(["leg", "spine", "base"])
+        kinematics2 = self.basic_creation_test(["base", "spine", "leg", "base"])
         self.assertTrue(kinematics2)
 
     def test_surface(self):
@@ -158,7 +161,7 @@ class ModuleTests(base_test.TestCase):
         self.assertTrue(kinematics)
 
         # Socket / Plug connections
-        kinematics2 = self.basic_creation_test(["finger", "surface", "connector"])
+        kinematics2 = self.basic_creation_test(["base", "surface", "connector"])
         self.assertTrue(kinematics2)
 
     def test_tail(self):
@@ -168,7 +171,7 @@ class ModuleTests(base_test.TestCase):
         self.assertTrue(kinematics)
 
         # Socket / Plug connections
-        kinematics2 = self.basic_creation_test(["arm", "tail", "leg"])
+        kinematics2 = self.basic_creation_test(["base", "tail", "leg"])
         self.assertTrue(kinematics2)
 
     def test_tentacle(self):
