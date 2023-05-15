@@ -259,7 +259,7 @@ class Spine(_module.ModuleCore):
     def create_ik_setup(self):
         spine = twistSpline.TwistSpline()
         spine.upAxis =  -(om.MVector(self.look_axis))
-        spine.createTspline(self.guideJoints, "Spine_%s" % self.module_name, self.resolution, dropoff=self.dropoff, mode=self.splineMode, twistType=self.twistType)
+        spine.create_t_spline(self.guideJoints, "Spine_%s" % self.module_name, self.resolution, dropoff=self.dropoff, mode=self.splineMode, twistType=self.twistType)
 
         self.sockets.extend(spine.defJoints)
 

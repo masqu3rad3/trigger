@@ -209,7 +209,7 @@ class Head(_module.ModuleCore):
         neckSpline = twistSpline.TwistSpline()
         neckSpline.upAxis = -(om.MVector(self.look_axis))
 
-        neckSpline.createTspline(list(self.guideJoints[:-1]), "neckSplineIK_%s" % self.module_name, self.resolution, dropoff=self.dropoff, mode=self.splineMode, twistType=self.twistType, colorCode=self.colorCodes[1])
+        neckSpline.create_t_spline(list(self.guideJoints[:-1]), "neckSplineIK_%s" % self.module_name, self.resolution, dropoff=self.dropoff, mode=self.splineMode, twistType=self.twistType, colorCode=self.colorCodes[1])
         self.sockets.extend(neckSpline.defJoints[:-1]) # do not add the last neck spline joint to the socket list
 
         # # Connect neck start to the neck controller
@@ -230,7 +230,7 @@ class Head(_module.ModuleCore):
         if self.stretchyHead:
             headSpline = twistSpline.TwistSpline()
             headSpline.upAxis = -(om.MVector(self.look_axis))
-            headSpline.createTspline(list(self.guideJoints[-2:]), "headSquashSplineIK_%s" % self.module_name, 3, dropoff=2, mode=self.splineMode, twistType=self.twistType, colorCode=self.colorCodes[1])
+            headSpline.create_t_spline(list(self.guideJoints[-2:]), "headSquashSplineIK_%s" % self.module_name, 3, dropoff=2, mode=self.splineMode, twistType=self.twistType, colorCode=self.colorCodes[1])
             # map(self.sockets.append, headSpline.defJoints)
             self.sockets.extend(headSpline.defJoints)
 
