@@ -123,17 +123,17 @@ class Spine(_module.ModuleCore):
         # draw Joints
         # # Create Plug Joints
         cmds.select(clear=True)
-        self.limbPlug = cmds.joint(name=naming.parse([self.module_name, "plug"], suffix="j"), p=self.rootPoint, radius=3)
+        self.limbPlug = cmds.joint(name=naming.parse([self.module_name, "plug"], suffix="j"), position=self.rootPoint, radius=3)
         cmds.select(clear=True)
-        self.endSocket = cmds.joint(name=naming.parse([self.module_name, "socket", "chest"], suffix="jDef"), p=self.chestPoint)
+        self.endSocket = cmds.joint(name=naming.parse([self.module_name, "socket", "chest"], suffix="jDef"), position=self.chestPoint)
         self.sockets.append(self.endSocket)
         cmds.select(clear=True)
-        self.startSocket = cmds.joint(p=self.rootPoint, name=naming.parse([self.module_name, "socket", "root"], suffix="grp"), radius=3)
+        self.startSocket = cmds.joint(position=self.rootPoint, name=naming.parse([self.module_name, "socket", "root"], suffix="jDef"), radius=3)
         self.sockets.append(self.startSocket)
 
         ## Create temporaray Guide Joints
         cmds.select(clear=True)
-        self.guideJoints = [cmds.joint(p=api.get_world_translation(i)) for i in self.inits]
+        self.guideJoints = [cmds.joint(position=api.get_world_translation(i)) for i in self.inits]
 
         if not self.useRefOrientation:
             joint.orient_joints(self.guideJoints, world_up_axis=(self.up_axis), up_axis=(0, 0, -1), reverse_aim=self.sideMult, reverse_up=self.sideMult)

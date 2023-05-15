@@ -811,7 +811,6 @@ class Leg(_module.ModuleCore):
         cmds.setDrivenKeyframe("%s.rotateX" % self.pv_bank_in, cd="%s.bank" % self.cont_IK_foot.name, dv=0, v=0, itt='linear', ott='linear')
         cmds.setDrivenKeyframe("%s.rotateX" % self.pv_bank_in, cd="%s.bank" % self.cont_IK_foot.name, dv=-90, v=90 * (-1 * self.sideMult), itt='linear', ott='linear')
 
-        self.ik_parent_grp = cmds.group(name="IK_parentGRP_%s" % self.module_name, empty=True)
         self.ik_parent_grp = cmds.group(name=naming.parse([self.module_name, "IK", "parent"], suffix="grp"), empty=True)
         functions.align_to_alter(self.ik_parent_grp, self.cont_IK_foot.name, 2)
         cmds.parent(pv_bank_in_ore, self.ik_parent_grp)
