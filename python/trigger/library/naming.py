@@ -6,26 +6,73 @@ from maya import cmds
 import uuid
 
 
-def unique_name(name, return_counter=False):
+# TODO: update the unique_name function to accept suffix to ignore
+def unique_name(name, return_counter=False, suffix=None):
     """
     Searches the scene for match and returns a unique name for given name
     Args:
         name: (String) Name to query
         return_counter: (Bool) If true, returns the next available number instead of the object name
+        suffix: (String) If defined and if name ends with this suffix, the increment numbers will be put before the.
 
     Returns: (String) uniquename
 
     """
+    search_name = name
     base_name = name
+    if suffix and name.endswith(suffix):
+        base_name = name.replace(suffix, "")
+        # name = name.replace(suffix, "")
+    else:
+        suffix = ""
+
     id_counter = 0
-    while cmds.objExists(name):
-        name = "%s%s" % (base_name, str(id_counter + 1))
+    while cmds.objExists(search_name):
+        search_name = "{0}{1}{2}".format(base_name, str(id_counter + 1), suffix)
         id_counter = id_counter + 1
+
+    # base_name = name
+    # id_counter = 0
+    # # find the counter
+    # while cmds.objExists(name):
+    #     name = "%s%s" % (base_name, str(id_counter + 1))
+    #     id_counter = id_counter + 1
     if return_counter:
         return id_counter
+    # counter_str = str(id_counter) if id_counter else ""
+    # if suffix and base_name.endswith(suffix):
+    #     resolved_name = base_name.replace(suffix, "{0}{1}".format(counter_str, suffix))
+    # else:
+    #     resolved_name = "{0}{1}".format(name, counter_str)
     else:
-        return name
+        # if suffix:
+        #     search_name = "{0}{1}".format(search_name, suffix)
+        # return search_name
+        if id_counter:
+            result_name = "{0}{1}{2}".format(base_name, str(id_counter), suffix)
+        else:
+            result_name = name
+        return result_name
 
+# def unique_name(name, return_counter=False):
+#     """
+#     Searches the scene for match and returns a unique name for given name
+#     Args:
+#         name: (String) Name to query
+#         return_counter: (Bool) If true, returns the next available number instead of the object name
+#
+#     Returns: (String) uniquename
+#
+#     """
+#     base_name = name
+#     id_counter = 0
+#     while cmds.objExists(name):
+#         name = "%s%s" % (base_name, str(id_counter + 1))
+#         id_counter = id_counter + 1
+#     if return_counter:
+#         return id_counter
+#     else:
+#         return name
 
 def unique_scene():
     """Make sure that everything is named uniquely.
@@ -232,3 +279,12 @@ def rename_skinclusters():
         mesh_name = cmds.listConnections("%s.outputGeometry" % skin, shapes=False, source=False, destination=True)[0]
         sc_name = "%s_%s" % (mesh_name.split("|")[-1], "skinCluster")
         cmds.rename(skin, sc_name)
+
+def parse(labels, prefix="", suffix="", side=""):
+    """Parse object name with given parameters"""
+    if not isinstance(labels, (list, tuple)):
+        labels = [labels]
+    elements = [side, prefix] + labels + [suffix]
+    # filter the elements to remove empty strings
+    elements = [str(e) for e in elements if e != ""]
+    return "_".join(elements)

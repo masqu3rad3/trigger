@@ -9,6 +9,7 @@ from trigger.library import connection
 from trigger.library import api
 from trigger.objects.controller import Controller
 from trigger.utils import parentToSurface
+from trigger.modules import _module
 
 from trigger.core import filelog
 
@@ -42,9 +43,10 @@ LIMB_DATA = {"members": ["SingletonRoot", "Singleton"],
              "sided": True, }
 
 
-class Singleton(object):
+class Singleton(_module.ModuleCore):
     """Creates one or multiple loose controllers. They can be bound to a surface and can be local"""
-    def __init__(self, build_data=None, inits=None, *args, **kwargs):
+
+    def __init__(self, build_data=None, inits=None):
         super(Singleton, self).__init__()
         # fool proofing
 
@@ -57,10 +59,6 @@ class Singleton(object):
             self.inits = inits
         else:
             log.error("Class needs either build_data or inits to be constructed")
-
-        # get distances
-
-        # get positions
 
         # get the properties from the root
         self.useRefOrientation = cmds.getAttr("%s.useRefOri" % self.inits[0])
@@ -77,68 +75,19 @@ class Singleton(object):
         self.up_axis, self.mirror_axis, self.look_axis = joint.get_rig_axes(self.inits[0])
 
         # initialize suffix
-        self.suffix = (naming.unique_name(cmds.getAttr("%s.moduleName" % self.inits[0])))
-
-        # module specific variables
-        self.localOffGrp = None
-        self.plugBindGrp = None
-        self.scaleHook = None
-        self.joints_grp = None
+        self.module_name = (naming.unique_name(cmds.getAttr("%s.moduleName" % self.inits[0])))
         self.follicle_grp = None
-        self.conts_grp = None
 
-        # scratch variables
-        self.controllers = []
-        self.sockets = []
-        self.limbGrp = None
-        self.scaleGrp = None
-        self.nonScaleGrp = None
-        self.limbPlug = None
-        self.scaleConstraints = []
-        self.anchors = []
-        self.anchorLocations = []
-        self.deformerJoints = []
-        self.colorCodes = [6, 18]
-
-    def createGrp(self):
-        self.limbGrp = cmds.group(name=self.suffix, em=True)
-        self.scaleGrp = cmds.group(name="%s_scaleGrp" % self.suffix, em=True)
-        functions.align_to(self.scaleGrp, self.inits[0], position=True, rotation=False)
-        self.nonScaleGrp = cmds.group(name="%s_nonScaleGrp" % self.suffix, em=True)
-
-        cmds.addAttr(self.scaleGrp, at="bool", ln="Control_Visibility", sn="contVis", defaultValue=True)
-        cmds.addAttr(self.scaleGrp, at="bool", ln="Joints_Visibility", sn="jointVis", defaultValue=True)
-        cmds.addAttr(self.scaleGrp, at="bool", ln="Rig_Visibility", sn="rigVis", defaultValue=False)
-        # make the created attributes visible in the channelbox
-        cmds.setAttr("%s.contVis" % self.scaleGrp, cb=True)
-        cmds.setAttr("%s.jointVis" % self.scaleGrp, cb=True)
-        cmds.setAttr("%s.rigVis" % self.scaleGrp, cb=True)
-
-        cmds.parent(self.scaleGrp, self.limbGrp)
-        cmds.parent(self.nonScaleGrp, self.limbGrp)
-
-        self.localOffGrp = cmds.group(name="%s_localOffset_grp" % self.suffix, em=True)
-        self.plugBindGrp = cmds.group(name="%s_plugBind_grp" % self.suffix, em=True)
-        cmds.parent(self.localOffGrp, self.plugBindGrp)
-        cmds.parent(self.plugBindGrp, self.limbGrp)
-
-        # scale hook gets the scale value from the bind group but not from the localOffset
-        self.scaleHook = cmds.group(name="%s_scaleHook" % self.suffix, em=True)
-        cmds.parent(self.scaleHook, self.limbGrp)
-        scale_skips = "xyz" if self.isLocal else ""
-        connection.matrixConstraint(self.scaleGrp, self.scaleHook, skipScale=scale_skips)
-
-        self.joints_grp = cmds.group(name="%s_joints_grp" % self.suffix, em=True)
-        self.conts_grp = cmds.group(name="%s_conts_grp" % self.suffix, em=True)
-        self.follicle_grp = cmds.group(name="%s_follicle_grp" % self.suffix, em=True)
-
-        cmds.parent([self.joints_grp, self.conts_grp, self.follicle_grp], self.limbGrp)
-        cmds.parent(self.conts_grp, self.localOffGrp)
+    def additional_groups(self):
+        """Create additional follicle group."""
+        self.follicle_grp = cmds.group(name=naming.parse([self.module_name, "follicle"], suffix="grp"), empty=True)
+        cmds.parent(self.follicle_grp, self.limbGrp)
 
     def _build_module(self):
         # draw Joints
-        cmds.select(d=True)
-        self.limbPlug = cmds.joint(name="limbPlug_%s" % self.suffix, p=api.get_world_translation(self.inits[0]), radius=3)
+        cmds.select(deselect=True)
+        self.limbPlug = cmds.joint(name=naming.parse([self.module_name, "plug"], suffix="j"),
+                                   position=api.get_world_translation(self.inits[0]), radius=3)
         cmds.connectAttr("%s.s" % self.scaleGrp, "%s.s" % self.limbPlug)
         cmds.parent(self.limbPlug, self.limbGrp)
 
@@ -146,28 +95,24 @@ class Singleton(object):
             # if the deformation joints are local, drive the plugBindGrp with limbPlug for negative compensation
             connection.matrixConstraint(self.limbPlug, self.plugBindGrp)
         else:
-            # connection.matrixConstraint(self.limbPlug, self.conts_grp)
-            # cmds.connectAttr("%s.s" % self.limbPlug, "%s.s" % self.conts_grp)
             # limbplug causes double scaling in here because of that we use scaleHook instead
-            connection.matrixConstraint(self.scaleHook, self.conts_grp)
+            connection.matrixConstraint(self.scaleHook, self.controllerGrp)
 
-        cmds.select(d=True)
+        cmds.select(deselect=True)
         for nmb, j in enumerate(self.inits):
-            cmds.select(d=True)
-            j_def = cmds.joint(name="jDef_{0}_{1}".format(j, self.suffix))
+            cmds.select(deselect=True)
+            j_def = cmds.joint(name=naming.parse([self.module_name, j], suffix="jDef"))
             j_def_off = functions.create_offset_group(j_def, "off")
             j_def_bind = functions.create_offset_group(j_def, "bind")
 
-            cont = Controller(name="%s%s_cont" % (self.suffix, nmb + 1), shape="Circle")
+            # connect the scale downstream
+
+            cont = Controller(name=naming.parse([self.module_name, (nmb + 1)], suffix="cont"), shape="Circle")
             cont.drive_visibility("%s.contVis" % self.scaleGrp, lock_and_hide=True)
             cont.set_side(side=self.side)
             cont_bind = cont.add_offset("bind")
             cont_off = cont.add_offset("pos")
             functions.align_to(cont_off, j, position=True, rotation=True)
-            # connection.matrixConstraint(cont.name, j_def_bind, mo=False, source_parent_cutoff=self.localOffGrp)
-            # connection.matrixConstraint(cont.name, j_def_bind, mo=False, source_parent_cutoff=cont_bind)
-            # connection.matrixConstraint(cont.name, j_def, mo=False, source_parent_cutoff=self.localOffGrp)
-            # cmds.parentConstraint(cont.name, j_def, mo=False)
 
             _cutoff = self.localOffGrp
             if self.surface:
@@ -184,71 +129,37 @@ class Singleton(object):
                 functions.align_to(j_def_off, j, position=True, rotation=True)
             else:
                 connection.matrixConstraint(cont.name, j_def_bind, maintainOffset=False, source_parent_cutoff=_cutoff)
-            # else:
-            #     if not self.isLocal:
-            #         # follow the limb plug only if the joints are not local
-            #         pass
-            #         # connection.matrixConstraint(self.limbPlug, cont_bind, source_parent_cutoff=self.localOffGrp)
 
-            cmds.parent(cont_bind, self.conts_grp)
-            # cmds.parent(j_def_bind, self.joints_grp)
-            cmds.parent(j_def_off, self.joints_grp)
+            cmds.parent(cont_bind, self.controllerGrp)
+            cmds.parent(j_def_off, self.defJointsGrp)
 
             self.sockets.append(j_def)
             self.deformerJoints.append(j_def)
 
-        # if not self.useRefOrientation:
-        #     functions.orientJoints(self.deformerJoints, worldUpAxis=self.look_axis, upAxis=(0, 1, 0),
-        #                            reverseAim=self.sideMult, reverseUp=self.sideMult)
-        # else:
-        #     for x in range (len(self.deformerJoints)):
-        #         functions.alignTo(self.deformerJoints[x], self.inits[x], position=True, rotation=True)
-        #         cmds.makeIdentity(self.deformerJoints[x], a=True)
-
-
         attribute.drive_attrs("%s.jointVis" % self.scaleGrp, ["%s.v" % x for x in self.deformerJoints])
-        cmds.connectAttr("%s.jointVis" % self.scaleGrp,"%s.v" % self.limbPlug)
-        functions.colorize(self.deformerJoints, self.colorCodes[0], shape=False)
+        cmds.connectAttr("%s.jointVis" % self.scaleGrp, "%s.v" % self.limbPlug)
 
-    def roundUp(self):
-        cmds.parentConstraint(self.limbPlug, self.scaleGrp, mo=False)
+    def round_up(self):
+        cmds.parentConstraint(self.limbPlug, self.scaleGrp, maintainOffset=False)
         cmds.setAttr("%s.rigVis" % self.scaleGrp, 0)
-
-        self.scaleConstraints.append(self.scaleGrp)
         # lock and hide
 
-    def createLimb(self):
-        self.createGrp()
+    def execute(self):
+        """Create the limb module."""
+        # self.create_grp()
         self._build_module()
-        self.roundUp()
+        self.round_up()
 
 
-class Guides(object):
-    def __init__(self, side="L", suffix="singleton", segments=1, tMatrix=None, upVector=(0, 1, 0),
-                 mirrorVector=(1, 0, 0), lookVector=(0, 0, 1), *args, **kwargs):
-        super(Guides, self).__init__()
-        # fool check
-
-        # -------Mandatory------[Start]
-        self.side = side
-        self.sideMultiplier = -1 if side == "R" else 1
-        self.suffix = suffix
-        self.segments = segments
-        self.tMatrix = om.MMatrix(tMatrix) if tMatrix else om.MMatrix()
-        self.upVector = om.MVector(upVector)
-        self.mirrorVector = om.MVector(mirrorVector)
-        self.lookVector = om.MVector(lookVector)
-
-        self.offsetVector = None
-        self.guideJoints = []
-        # -------Mandatory------[End]
+class Guides(_module.GuidesCore):
+    limb_data = LIMB_DATA
 
     def draw_joints(self):
-        cmds.select(d=True)
+        cmds.select(deselect=True)
         r_point_j = om.MVector(0, 0, 0) * self.tMatrix
         if not self.segments:
             self.offsetVector = om.MVector(0, 1, 0)
-            singleton_root_jnt = cmds.joint(name="jInit_singleton_{0}".format(self.suffix))
+            singleton_root_jnt = cmds.joint(name=naming.parse([self.name, "root"], side=self.side, suffix="jInit"))
             self.guideJoints.append(singleton_root_jnt)
             return
 
@@ -266,10 +177,10 @@ class Guides(object):
 
         # Draw the joints
         for seg in range(self.segments + 1):
-            tentacle_jnt = cmds.joint(p=(r_point_j + (add_val * seg)),
-                                      name="jInit_singleton_%s_%i" % (self.suffix, seg))
+            singleton_jnt = cmds.joint(position=(r_point_j + (add_val * seg)),
+                                       name=naming.parse([self.name, seg], side=self.side, suffix="jInit"))
             # Update the guideJoints list
-            self.guideJoints.append(tentacle_jnt)
+            self.guideJoints.append(singleton_jnt)
 
         # Update the guideJoints list
 
@@ -277,26 +188,8 @@ class Guides(object):
         joint.orient_joints(self.guideJoints, world_up_axis=self.upVector, up_axis=(0, 1, 0),
                             reverse_aim=self.sideMultiplier, reverse_up=self.sideMultiplier)
 
-    def define_attributes(self):
-        # set joint side and type attributes
+    def define_guides(self):
+        """Define the guides for the limb."""
         joint.set_joint_type(self.guideJoints[0], "SingletonRoot")
         if len(self.guideJoints) > 1:
             _ = [joint.set_joint_type(jnt, "Singleton") for jnt in self.guideJoints[1:]]
-        _ = [joint.set_joint_side(jnt, self.side) for jnt in self.guideJoints]
-
-        # ----------Mandatory---------[Start]
-        root_jnt = self.guideJoints[0]
-        attribute.create_global_joint_attrs(root_jnt, moduleName="%s_Singleton" % self.side, upAxis=self.upVector,
-                                            mirrorAxis=self.mirrorVector, lookAxis=self.lookVector)
-        # ----------Mandatory---------[End]
-
-        for attr_dict in LIMB_DATA["properties"]:
-            attribute.create_attribute(root_jnt, attr_dict)
-
-    def createGuides(self):
-        self.draw_joints()
-        self.define_attributes()
-
-    def convertJoints(self, joints_list):
-        self.guideJoints = joints_list
-        self.define_attributes()

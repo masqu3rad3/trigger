@@ -4,74 +4,9 @@ import re
 from trigger.library import naming
 from trigger.ui.Qt import QtWidgets, QtCore, QtGui
 from trigger.ui import feedback
-from trigger.ui.widgets.browser_button import BrowserButton
+from trigger.ui.widgets.browser import BrowserButton
 
 # TODO move each widget into separate filen under trigger.ui.widgets
-
-class FileLineEdit(QtWidgets.QLineEdit):
-    """Custom Line Edit Widget specific for file and folder paths with version increment and sanity checks"""
-
-    def __init__(self, directory=False, *args, **kwargs):
-        super(FileLineEdit, self).__init__(*args, **kwargs)
-        self.directory = directory
-        self.default_stylesheet = self.styleSheet()
-
-    def validate(self):
-        text = os.path.normpath(str(self.text()))
-        if not text:
-            return
-        if self.directory:
-            if not os.path.isdir(text):
-                self.setStyleSheet("background-color: rgb(40,40,40); color: red")
-            else:
-                self.setStyleSheet(self.default_stylesheet)
-        else:
-            if not os.path.isfile(text):
-                self.setStyleSheet("background-color: rgb(40,40,40); color: red")
-            else:
-                self.setStyleSheet(self.default_stylesheet)
-            if naming.is_latest_version(text):
-                self.setStyleSheet("background-color: rgb(40,40,40); color: rgb(0,255,0)")
-            else:
-                self.setStyleSheet("background-color: rgb(40,40,40); color: yellow")
-
-    def moveEvent(self, *args, **kwargs):
-        super(FileLineEdit, self).moveEvent(*args, **kwargs)
-        self.validate()
-
-    def leaveEvent(self, *args, **kwargs):
-        super(FileLineEdit, self).leaveEvent(*args, **kwargs)
-        self.validate()
-
-    def keyPressEvent(self, e):
-        super(FileLineEdit, self).keyPressEvent(e)
-        self.validate()
-        if e.key() == 16777235: # CTRL + UP arrow
-            self.version_up()
-
-        if e.key() == 16777237: # CTRL + DOWN arrow
-            self.version_down()
-
-    def version_up(self):
-        self.setText(naming.get_next_version(str(self.text())))
-        self.validate()
-
-    def version_down(self):
-        self.setText(naming.get_previous_version(str(self.text())))
-        self.validate()
-
-    def contextMenuEvent(self, event):
-        menu = self.createStandardContextMenu()
-        menu.addSeparator()
-
-        next_version_action = QtWidgets.QAction(self, text="Next Version")
-        previous_version_action = QtWidgets.QAction(self, text="Previous Version")
-        menu.addAction(next_version_action)
-        menu.addAction(previous_version_action)
-        next_version_action.triggered.connect(self.version_up)
-        previous_version_action.triggered.connect(self.version_down)
-
-        menu.exec_(event.globalPos())
 
 class ValidatedLineEdit(QtWidgets.QLineEdit):
     def __init__(self, connected_widgets=None, allowSpaces=False, allowDirectory=False, *args, **kwargs):

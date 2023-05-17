@@ -10,7 +10,7 @@ from trigger.core import dynamic_import as dyn  # NEVER REMOVE THIS LINE!!!
 
 from trigger.ui.Qt import QtWidgets, QtGui  # for progressbar
 from trigger.ui import custom_widgets
-from trigger.ui.widgets.browser_button import BrowserButton
+from trigger.ui.widgets.browser import BrowserButton, FileLineEdit
 
 log = filelog.Filelog(logname=__name__, filename="trigger_log")
 
@@ -59,8 +59,7 @@ class Script(object):
 
         file_path_lbl = QtWidgets.QLabel(text="File Path:")
         file_path_hLay = QtWidgets.QHBoxLayout()
-        # file_path_le = QtWidgets.QLineEdit()
-        file_path_le = custom_widgets.FileLineEdit()
+        file_path_le = FileLineEdit()
         file_path_hLay.addWidget(file_path_le)
         edit_file_pb = QtWidgets.QPushButton(text="Edit")
         file_path_hLay.addWidget(edit_file_pb)

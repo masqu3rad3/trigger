@@ -2,7 +2,7 @@ from maya import cmds
 from trigger.library import functions
 from trigger.core import filelog
 
-log = filelog.Filelog(logname=__name__, filename="trigger_log")
+LOG = filelog.Filelog(logname=__name__, filename="trigger_log")
 
 def create_space_switch(node, targetList, overrideExisting=False, mode="parent", defaultVal=1, listException=None, skip_errors=False):
     """
@@ -22,18 +22,20 @@ def create_space_switch(node, targetList, overrideExisting=False, mode="parent",
     if anchorPoses.__contains__(node):
         # if targetList contains the node itself, remove it
         anchorPoses.remove(node)
-    if anchorPoses == []:
-        log.error("target list is empty or no valid targets")
-        return
+
     if listException != None:
         for x in listException:
             if anchorPoses.__contains__(x):
                 anchorPoses.remove(x)
     if len(anchorPoses) > defaultVal:
         defaultVal = 1
+
+    if anchorPoses == []:
+        LOG.warning("target list is empty or no valid targets. Skipping...")
+        return
     modeList = ("parent", "point", "orient")
     if not modeList.__contains__(mode):
-        cmds.error("unknown mode flag. Valid mode flags are 'parent', 'point' and 'orient' ")
+        LOG.error("unknown mode flag. Valid mode flags are 'parent', 'point' and 'orient' ", proceed=False)
     # create the enumerator list
     enumFlag = "worldSpace:"
     for enum in range(0, len(anchorPoses)):

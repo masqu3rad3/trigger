@@ -1,6 +1,7 @@
 # import sys
 from functools import wraps
 from maya import cmds
+import logging
 from maya import mel
 # import logging
 import traceback
@@ -8,8 +9,7 @@ import traceback
 from trigger.core import filelog
 
 LOG = filelog.Filelog(logname=__name__, filename="trigger_log")
-
-
+logger = logging.getLogger(__name__)
 def logerror(func):
     """Save exceptions into log file."""
 
@@ -24,52 +24,24 @@ def logerror(func):
 
     return _exception
 
-
 def undo(func):
     """ Puts the wrapped `func` into a single Maya Undo action, then
         undoes it when the function enters the finally: block """
-
     @wraps(func)
     def _undofunc(*args, **kwargs):
         cmds.undoInfo(ock=True)
+        result = None
         try:
             # start an undo chunk
-            return func(*args, **kwargs)
+            result = func(*args, **kwargs)
         except Exception as e:
-            raise e
+            traceback.print_exc(e)
         finally:
             # after calling the func, end the undo chunk and undo
             cmds.undoInfo(cck=True)
+            return result
 
     return _undofunc
-
-
-def viewportOff(func):
-    """
-    Decorator - turn off Maya display while func is running.
-    if func will fail, the error will be raised after.
-    """
-    LOG.warning("viewportOff is deprecated and not necessary Maya2020+")
-
-    @wraps(func)
-    def wrap(*args, **kwargs):
-
-        # Turn $gMainPane Off:
-        mel.eval("paneLayout -e -manage false $gMainPane")
-
-        # Decorator will try/except running the function.
-        # But it will always turn on the viewport at the end.
-        # it will prevent leaving maya viewport off.
-        try:
-            return func(*args, **kwargs)
-        except Exception:
-            mel.eval("paneLayout -e -manage true $gMainPane")
-            raise  # will raise original error
-        finally:
-            mel.eval("paneLayout -e -manage true $gMainPane")
-
-    return wrap
-
 
 def keepselection(func):
     """Decorator method to keep the current selection. Useful where
@@ -79,7 +51,6 @@ def keepselection(func):
     def _keepfunc(*args, **kwargs):
         original_selection = cmds.ls(sl=True)
         try:
-            # start an undo chunk
             return func(*args, **kwargs)
         except Exception as e:
             raise e
@@ -88,7 +59,6 @@ def keepselection(func):
             cmds.select(original_selection)
 
     return _keepfunc
-
 
 def keepframe(func):
     """
@@ -110,7 +80,6 @@ def keepframe(func):
 
     return _keepfunc
 
-
 def tracktime(func):
     """Tracks time for the given function."""
 
@@ -127,7 +96,6 @@ def tracktime(func):
             LOG.info("Elapsed: %s" % (end - start))
 
     return _tracktime
-
 
 def windowsOff(func):
     """Turn off the editors."""
@@ -158,3 +126,19 @@ def windowsOff(func):
                     value()
 
     return _windows_off
+
+def suppress_warnings(func):
+    """Suppress scripteditor warnings."""
+
+    @wraps(func)
+    def _suppress(*args, **kwargs):
+        _state = cmds.scriptEditorInfo(query=True, suppressWarnings=True)
+        cmds.scriptEditorInfo(edit=True, suppressWarnings=True)
+        returned = None
+        returned = func(*args, **kwargs)
+        try:
+            cmds.scriptEditorInfo(edit=True, suppressWarnings=_state)
+        except Exception:  # pylint: disable=broad-except
+            pass
+        return returned  # pylint: disable=lost-exception
+    return _suppress

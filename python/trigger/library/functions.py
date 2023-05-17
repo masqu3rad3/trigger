@@ -30,8 +30,8 @@ def align_to(node, target, position=True, rotation=False):
 
     """
 
-    node_m_transform = OpenMaya.MFnTransform(api.get_m_dagpath(node))
-    target_m_transform = OpenMaya.MFnTransform(api.get_m_dagpath(target))
+    node_m_transform = OpenMaya.MFnTransform(api.get_mdag_path(node))
+    target_m_transform = OpenMaya.MFnTransform(api.get_mdag_path(target))
     if position:
         target_rotate_pivot = OpenMaya.MVector(target_m_transform.rotatePivot(OpenMaya.MSpace.kWorld))
         node_m_transform.setTranslation(target_rotate_pivot, OpenMaya.MSpace.kWorld)

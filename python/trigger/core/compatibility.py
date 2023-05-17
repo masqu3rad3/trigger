@@ -30,12 +30,12 @@ def decode(data):
 
 def is_string(data):
     if sys.version_info.major == 3:
-        if type(data) == str:
+        if isinstance(data, str):
             return True
         else:
             return False
     else:
-        if type(data) == str or type(data) == unicode:
+        if isinstance(data, (unicode, str)):
             return True
         else:
             return False

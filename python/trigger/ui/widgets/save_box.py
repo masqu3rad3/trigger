@@ -1,6 +1,6 @@
 
 from trigger.ui.Qt import QtWidgets, QtCore
-from trigger.ui.widgets.browser_button import BrowserButton
+from trigger.ui.widgets.browser import BrowserButton
 from trigger.library import naming
 from trigger.ui import feedback
 

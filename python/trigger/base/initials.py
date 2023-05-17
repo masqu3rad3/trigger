@@ -1,4 +1,3 @@
-from pprint import pprint
 import importlib
 from maya import cmds
 import maya.api.OpenMaya as om
@@ -71,15 +70,15 @@ class Initials(object):
         if not cmds.objExists(parentBone):
             log.warning("Joints cannot be identified automatically")
             return None, None, None
-        if "_right" in parentBone:
-            mirrorBoneName = parentBone.replace("_right", "_left")
+        if parentBone.startswith("R_"):
+            mirrorBoneName = parentBone.replace("R_", "L_")
             alignmentGiven = "right"
             alignmentReturn = "left"
-        elif "_left" in parentBone:
-            mirrorBoneName = parentBone.replace("_left", "_right")
+        elif parentBone.startswith("L_"):
+            mirrorBoneName = parentBone.replace("L_", "R_")
             alignmentGiven = "left"
             alignmentReturn = "right"
-        elif "_c" in parentBone:
+        elif parentBone.startswith("C_"):
             return None, "both", None
         else:
             log.warning("Joints cannot be identified automatically")
@@ -87,12 +86,11 @@ class Initials(object):
         if cmds.objExists(mirrorBoneName):
             return mirrorBoneName, alignmentGiven, alignmentReturn
         else:
-            log.warning("cannot find mirror Joint automatically")
+            # log.warning("cannot find mirror Joint automatically")
             return None, alignmentGiven, None
 
-    @undo
+    # @undo
     def initLimb(self, limb_name, whichSide="left", constrainedTo=None, parentNode=None, defineAs=False, *args, **kwargs):
-
         if limb_name not in self.valid_limbs:
             log.error("%s is not a valid limb" % limb_name)
 
@@ -111,8 +109,9 @@ class Initials(object):
             ## check validity of side arguments
             valid_sides = ["left", "right", "center", "both", "auto"]
             if whichSide not in valid_sides:
-                log.error(
-                    "side argument '%s' is not valid. Valid arguments are: %s" % (whichSide, valid_sides))
+                # log.error(
+                #     "side argument '%s' is not valid. Valid arguments are: %s" % (whichSide, valid_sides))
+                raise ValueError
             if len(cmds.ls(sl=True, type="joint")) != 1 and whichSide == "auto" and defineAs == False:
                 log.warning("You need to select a single joint to use Auto method")
                 return
@@ -124,21 +123,27 @@ class Initials(object):
             else:
                 side = "C"
 
-
-        suffix = naming.unique_name("%sGrp_%s" % (limb_name, whichSide)).replace("%sGrp_" % (limb_name), "")
+        limb_group_name = naming.parse([limb_name], side=side)
+        limb_group_name = naming.unique_name("{}_guides".format(limb_group_name), suffix="_guides")
+        # limb_group_name = limb_group_name.replace("_guides", "")
+        # strip the side and suffix and get the name of the limb
+        limb_name_parts = limb_group_name.split("_")[:-1] # don't include the suffix
+        # remove the side and suffix
+        limb_name_parts = [part for part in limb_name_parts if part not in ["L", "R", "C", "grp"]]
+        unique_limb = "_".join(limb_name_parts)
 
         ## if defineAs is True, define the selected joints as the given limb instead creating new ones.
         if defineAs:
             # TODO: AUTO argument can be included by running a seperate method to determine the side of the root joint according to the matrix
-            construct_command = "modules.{0}.Guides(suffix='{1}', side='{2}')".format(limb_name, suffix, side)
+            construct_command = "modules.{0}.Guides(suffix='{1}', side='{2}')".format(limb_name, unique_limb, side)
             guide = eval(construct_command)
             guide.convertJoints(currentselection)
             self.adjust_guide_display(guide)
             return
 
         if not parentNode:
-            if cmds.ls(sl=True, type="joint"):
-                j = cmds.ls(sl=True)[-1]
+            if cmds.ls(selection=True, type="joint"):
+                j = cmds.ls(selection=True)[-1]
                 try:
                     if joint.identify(j, self.module_dict)[1] in self.valid_limbs:
                         masterParent = cmds.ls(sl=True)[-1]
@@ -157,6 +162,10 @@ class Initials(object):
             return (locators1 + locators2), jnt_dict_side1
         if whichSide == "auto" and masterParent:
             mirrorParent, givenAlignment, returnAlignment = self.autoGet(masterParent)
+            print("masterParent: ", masterParent)
+            print("mirrorParent: ", mirrorParent)
+            print("givenAlignment: ", givenAlignment)
+            print("returnAlignment: ", returnAlignment)
             locators1, jnt_dict_side1 = self.initLimb(limb_name, givenAlignment, **kwargs)
             if mirrorParent:
                 locators2, jnt_dict_side2 = self.initLimb(limb_name, returnAlignment, constrainedTo=locators1, parentNode=mirrorParent, **kwargs)
@@ -166,9 +175,10 @@ class Initials(object):
                 total_locators = locators1
             return total_locators, jnt_dict_side1
 
-        limbGroup = cmds.group(em=True, name="%sGrp_%s" % (limb_name, suffix))
-        cmds.parent(limbGroup, holderGroup)
-        cmds.select(d=True)
+        limb_group = cmds.group(empty=True, name=limb_group_name)
+        # limb_group = cmds.group(empty=True, name=naming.unique_name("{}_guides".format(limb_group_name), suffix = "_guides"))
+        cmds.parent(limb_group, holderGroup)
+        cmds.select(clear=True)
 
         module = "modules.{0}.{1}".format(limb_name, "Guides")
 
@@ -177,7 +187,7 @@ class Initials(object):
                 "tMatrix={2}, " \
                 "upVector={3}, " \
                 "mirrorVector={4}, " \
-                "lookVector={5}".format(side, suffix, self.tMatrix,
+                "lookVector={5}".format(side, unique_limb, self.tMatrix,
                                         self.upVector, self.mirrorVector, self.lookVector)
 
         extra_arg_list = []
@@ -199,7 +209,8 @@ class Initials(object):
 
         ### Constrain locating
 
-        loc_grp = cmds.group(name=("locGrp_%s" % suffix), em=True)
+        # loc_grp = cmds.group(name=("locGrp_%s" % unique_limb), em=True)
+        loc_grp = cmds.group(name=naming.parse([unique_limb, "locators"], side=side, suffix="grp"), em=True)
         cmds.setAttr("{0}.v".format(loc_grp), 0)
         locatorsList = []
 
@@ -218,7 +229,7 @@ class Initials(object):
                 # extra.matrixConstraint(limbJoints[jnt], locator, mo=False)
 
             cmds.parent(locator, loc_grp)
-        cmds.parent(loc_grp, limbGroup)
+        cmds.parent(loc_grp, limb_group)
 
         ### MOVE THE LIMB TO THE DESIRED LOCATION
         if masterParent:
@@ -234,7 +245,7 @@ class Initials(object):
                     attribute.lock_and_hide(jnt, ["tx", "ty", "tz", "rx", "ry", "rz"], hide=False)
             cmds.parent(guide.guideJoints[0], masterParent)
         else:
-            cmds.parent(guide.guideJoints[0], limbGroup)
+            cmds.parent(guide.guideJoints[0], limb_group)
         cmds.select(currentselection)
 
         return locatorsList, {side: guide.guideJoints}
@@ -430,7 +441,7 @@ class Initials(object):
     def test_build(self, root_jnt=None, progress_bar=None):
         kinematics = importlib.import_module("trigger.actions.kinematics")
         if not root_jnt:
-            selection = cmds.ls(sl=True)
+            selection = cmds.ls(selection=True)
             if len(selection) == 1:
                 root_jnt = selection[0]
             else:
@@ -444,3 +455,4 @@ class Initials(object):
         test_kinematics = kinematics.Kinematics(root_jnt, progress_bar=progress_bar)
         test_kinematics.afterlife = 0
         test_kinematics.action()
+        return test_kinematics

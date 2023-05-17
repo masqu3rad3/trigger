@@ -1,59 +1,61 @@
 from maya import cmds
 import maya.api.OpenMaya as om
 
-from trigger.library import functions, joint
+from trigger.library import functions, joint, deformers
 from trigger.library import naming
 from trigger.library import attribute
 from trigger.library import api
-from trigger.library import controllers as ic
+from trigger.objects.controller import Controller
+from trigger.modules import _module
 
 from trigger.core import filelog
 
 log = filelog.Filelog(logname=__name__, filename="trigger_log")
 
 LIMB_DATA = {
-        "members":["TentacleRoot", "Tentacle", "TentacleEnd"],
-        "properties": [{"attr_name": "contRes",
-                        "nice_name": "Ctrl_Res",
-                        "attr_type": "long",
-                        "min_value": 1,
-                        "max_value": 9999,
-                        "default_value": 5,
-                        },
-                       {"attr_name": "jointRes",
-                        "nice_name": "Joint_Res",
-                        "attr_type": "long",
-                        "min_value": 1,
-                        "max_value": 9999,
-                        "default_value": 25,
-                        },
-                       {"attr_name": "deformerRes",
-                        "nice_name": "Deformer_Resolution",
-                        "attr_type": "long",
-                        "min_value": 1,
-                        "max_value": 9999,
-                        "default_value": 25,
-                        },
-                       {"attr_name": "dropoff",
-                        "nice_name": "Drop_Off",
-                        "attr_type": "float",
-                        "min_value": 0.1,
-                        "max_value": 5.0,
-                        "default_value": 1.0,
-                        },
-                       ],
-        "multi_guide": "Tentacle",
-        "sided": True,
-    }
+    "members": ["TentacleRoot", "Tentacle", "TentacleEnd"],
+    "properties": [{"attr_name": "contRes",
+                    "nice_name": "Ctrl_Res",
+                    "attr_type": "long",
+                    "min_value": 1,
+                    "max_value": 9999,
+                    "default_value": 5,
+                    },
+                   {"attr_name": "jointRes",
+                    "nice_name": "Joint_Res",
+                    "attr_type": "long",
+                    "min_value": 1,
+                    "max_value": 9999,
+                    "default_value": 25,
+                    },
+                   {"attr_name": "deformerRes",
+                    "nice_name": "Deformer_Resolution",
+                    "attr_type": "long",
+                    "min_value": 1,
+                    "max_value": 9999,
+                    "default_value": 25,
+                    },
+                   {"attr_name": "dropoff",
+                    "nice_name": "Drop_Off",
+                    "attr_type": "float",
+                    "min_value": 0.1,
+                    "max_value": 5.0,
+                    "default_value": 1.0,
+                    },
+                   ],
+    "multi_guide": "Tentacle",
+    "sided": True,
+}
 
-class Tentacle(object):
 
-    def __init__(self, build_data=None, inits=None, *args, **kwargs):
+class Tentacle(_module.ModuleCore):
+
+    def __init__(self, build_data=None, inits=None):
         super(Tentacle, self).__init__()
         if build_data:
             self.tentacleRoot = build_data.get("TentacleRoot")
             self.tentacles = (build_data.get("Tentacle"))
-            self.inits = [self.tentacleRoot] + (self.tentacles)
+            self.inits = [self.tentacleRoot] + self.tentacles
         elif inits:
             if len(inits) < 2:
                 cmds.error("Tentacle setup needs at least 2 initial joints")
@@ -73,7 +75,7 @@ class Tentacle(object):
 
         # get the properties from the root
         self.useRefOrientation = cmds.getAttr("%s.useRefOri" % self.inits[0])
-        self.contRes = float(cmds.getAttr("%s.contRes" % self.inits[0]))
+        self.controller_resolution = float(cmds.getAttr("%s.contRes" % self.inits[0]))
         self.jointRes = float(cmds.getAttr("%s.jointRes" % self.inits[0]))
         self.deformerRes = float(cmds.getAttr("%s.deformerRes" % self.inits[0]))
         self.dropoff = float(cmds.getAttr("%s.dropoff" % self.inits[0]))
@@ -81,86 +83,66 @@ class Tentacle(object):
         self.sideMult = -1 if self.side == "R" else 1
 
         # initialize suffix
-        self.suffix = (naming.unique_name(cmds.getAttr("%s.moduleName" % self.inits[0])))
+        self.module_name = (naming.unique_name(cmds.getAttr("%s.moduleName" % self.inits[0])))
 
+        # module variables
+        self.totalLength = 0
+        self.contJointsList = None
+        self.guideJoints = None
+        self.wrapScaleJoint = None
+        self.cont_special = None
+        self.cont_fk_list = []
+        self.cont_twk_list = []
 
-        # scratch variables
-        self.controllers = []
-        self.sockets = []
-        self.limbGrp = None
-        self.scaleGrp = None
-        self.nonScaleGrp = None
-        self.limbPlug = None
-        self.scaleConstraints = []
-        self.anchors = []
-        self.anchorLocations = []
-        self.deformerJoints = []
-        self.colorCodes = [6, 18]
+    def create_joints(self):
 
-    def createGrp(self):
-        self.limbGrp = cmds.group(name=self.suffix, em=True)
-        self.scaleGrp = cmds.group(name="%s_scaleGrp" % self.suffix, em=True)
-        functions.align_to(self.scaleGrp, self.inits[0], position=True, rotation=False)
-        self.nonScaleGrp = cmds.group(name="%s_nonScaleGrp" % self.suffix, em=True)
-
-        cmds.addAttr(self.scaleGrp, at="bool", ln="Control_Visibility", sn="contVis", defaultValue=True)
-        cmds.addAttr(self.scaleGrp, at="bool", ln="Joints_Visibility", sn="jointVis", defaultValue=True)
-        cmds.addAttr(self.scaleGrp, at="bool", ln="Rig_Visibility", sn="rigVis", defaultValue=False)
-        # make the created attributes visible in the channelbox
-        cmds.setAttr("%s.contVis" % self.scaleGrp, cb=True)
-        cmds.setAttr("%s.jointVis" % self.scaleGrp, cb=True)
-        cmds.setAttr("%s.rigVis" % self.scaleGrp, cb=True)
-
-        cmds.parent(self.scaleGrp, self.limbGrp)
-        cmds.parent(self.nonScaleGrp, self.limbGrp)
-
-    def createJoints(self):
-
-        cmds.select(d=True)
-        self.limbPlug = cmds.joint(name="limbPlug_%s" % self.suffix, p=self.rootPos, radius=3)
-        ## Make a straight line from inits joints (like in the twistSpline)
+        cmds.select(deselect=True)
+        self.limbPlug = cmds.joint(name=naming.parse([self.module_name, "plug"], suffix="j"), position=self.rootPos,
+                                   radius=3)
+        # Make a straight line from inits joints (like in the twistSpline)
         # calculate the necessary distance for the joints
 
-        self.totalLength = 0
-        contDistances = []
-        ctrlDistance = 0
+        cont_distances = []
+        ctrl_distance = 0
         for i in range(0, len(self.inits)):
             if i == 0:
                 tmin = 0
             else:
                 tmin = i - 1
-            currentJointLength = functions.get_distance(self.inits[i], self.inits[tmin])
-            ctrlDistance = currentJointLength + ctrlDistance
-            self.totalLength += currentJointLength
+            current_joint_length = functions.get_distance(self.inits[i], self.inits[tmin])
+            ctrl_distance = current_joint_length + ctrl_distance
+            self.totalLength += current_joint_length
             # this list contains distance between each control point
-            contDistances.append(ctrlDistance)
-        endVc = om.MVector(self.rootPos.x, (self.rootPos.y + self.totalLength), self.rootPos.z)
-        splitVc = endVc - self.rootPos
+            cont_distances.append(ctrl_distance)
+        end_vc = om.MVector(self.rootPos.x, (self.rootPos.y + self.totalLength), self.rootPos.z)
+        split_vc = end_vc - self.rootPos
 
-        ## Create Control Joints
+        # Create Control Joints
         self.contJointsList = []
-        cmds.select(d=True)
-        for index in range(0, len(contDistances)):
-            ctrlVc = splitVc.normal() * contDistances[index]
-            place = self.rootPos + (ctrlVc)
-            jnt = cmds.joint(p=place, name="jCont_tentacle_%s_%i" % (self.suffix, index), radius=5, o=(90, 0, 90))
+        cmds.select(deselect=True)
+        for index in range(0, len(cont_distances)):
+            ctrl_vc = split_vc.normal() * cont_distances[index]
+            place = self.rootPos + ctrl_vc
+            jnt = cmds.joint(position=place, name=naming.parse([self.module_name, "driver", index], suffix="j"),
+                             radius=5, orientation=(90, 0, 90))
             self.contJointsList.append(jnt)
-            cmds.select(d=True)
+            cmds.select(deselect=True)
 
-        ## Create temporaray Guide Joints
-        cmds.select(d=True)
-        self.guideJoints = [cmds.joint(p=api.get_world_translation(i)) for i in self.inits]
+        # Create temporaray Guide Joints
+        cmds.select(deselect=True)
+        self.guideJoints = [cmds.joint(position=api.get_world_translation(i)) for i in self.inits]
         # orientations
         if not self.useRefOrientation:
-            joint.orient_joints(self.guideJoints, world_up_axis=(self.up_axis), up_axis=(0, 1, 0), reverse_aim=self.sideMult,
+            joint.orient_joints(self.guideJoints, world_up_axis=self.up_axis, up_axis=(0, 1, 0),
+                                reverse_aim=self.sideMult,
                                 reverse_up=self.sideMult)
         else:
             for x in range(len(self.guideJoints)):
                 functions.align_to(self.guideJoints[x], self.inits[x], position=True, rotation=True)
-                cmds.makeIdentity(self.guideJoints[x], a=True)
+                cmds.makeIdentity(self.guideJoints[x], apply=True)
 
-        cmds.select(d=True)
-        self.wrapScaleJoint = cmds.joint(name="jWrapScale_{0}".format(self.suffix))
+        cmds.select(deselect=True)
+        self.wrapScaleJoint = cmds.joint(name=naming.parse([self.module_name, "wrapScale"], suffix="j"))
 
         cmds.parent(self.contJointsList, self.scaleGrp)
         cmds.parent(self.wrapScaleJoint, self.scaleGrp)
@@ -169,169 +151,206 @@ class Tentacle(object):
 
         cmds.connectAttr("%s.rigVis" % self.scaleGrp, "%s.v" % self.wrapScaleJoint)
 
-    def createControllers(self):
+    def create_controllers(self):
 
-        icon = ic.Icon()
-        ## specialController
-        iconScale = functions.get_distance(self.inits[0], self.inits[1]) / 3
-        self.cont_special, dmp = icon.create_icon("Looper", icon_name="tentacleSP_%s_cont" % self.suffix,
-                                                  scale=(iconScale, iconScale, iconScale))
+        # specialController
+        icon_scale = functions.get_distance(self.inits[0], self.inits[1]) / 3
+        self.cont_special = Controller(
+            name=naming.parse([self.module_name, "special"], suffix="cont"),
+            shape="Looper",
+            scale=(icon_scale, icon_scale, icon_scale),
+            side=self.side,
+            tier="primary"
+        )
         self.controllers.append(self.cont_special)
-        functions.align_and_aim(self.cont_special, target_list=[self.inits[0]], aim_target_list=[self.inits[-1]],
+        functions.align_and_aim(self.cont_special.name, target_list=[self.inits[0]], aim_target_list=[self.inits[-1]],
                                 up_vector=self.up_axis, rotate_offset=(90, 0, 0))
-        move_pos = om.MVector(self.up_axis) * (iconScale * 2.0)
+        move_pos = om.MVector(self.up_axis) * (icon_scale * 2.0)
         # cmds.move(self.cont_special, om.MVector(self.up_axis) *(iconScale*2), r=True)
-        cmds.move(move_pos[0], move_pos[1], move_pos[2], self.cont_special, r=True)
+        cmds.move(move_pos[0], move_pos[1], move_pos[2], self.cont_special.name, relative=True)
 
-        cont_special_ORE = functions.create_offset_group(self.cont_special, "ORE")
+        cont_special_ore = self.cont_special.add_offset("ORE")
 
-        ## seperator - curl
-        cmds.addAttr(self.cont_special, shortName="curlSeperator", at="enum", en="----------", k=True)
-        cmds.setAttr("%s.curlSeperator" % self.cont_special, lock=True)
+        # seperator - curl
+        cmds.addAttr(self.cont_special.name, shortName="curlSeperator", attributeType="enum", enumName="----------",
+                     keyable=True)
+        cmds.setAttr("%s.curlSeperator" % self.cont_special.name, lock=True)
 
-        cmds.addAttr(self.cont_special, shortName="curl", longName="Curl", defaultValue=0.0, minValue=-10.0,
-                     maxValue=10.0, at="float",
-                     k=True)
-        cmds.addAttr(self.cont_special, shortName="curlSize", longName="Curl_Size", defaultValue=1.0, at="float",
-                     k=True)
+        cmds.addAttr(self.cont_special.name, shortName="curl", longName="Curl", defaultValue=0.0, minValue=-10.0,
+                     maxValue=10.0, attributeType="float",
+                     keyable=True)
+        cmds.addAttr(self.cont_special.name, shortName="curlSize", longName="Curl_Size", defaultValue=1.0,
+                     attributeType="float",
+                     keyable=True)
 
-        cmds.addAttr(self.cont_special, shortName="curlAngle", longName="Curl_Angle", defaultValue=1.0, at="float",
-                     k=True)
-        cmds.addAttr(self.cont_special, shortName="curlDirection", longName="Curl_Direction", defaultValue=0.0,
-                     at="float",
-                     k=True)
+        cmds.addAttr(self.cont_special.name, shortName="curlAngle", longName="Curl_Angle", defaultValue=1.0,
+                     attributeType="float",
+                     keyable=True)
+        cmds.addAttr(self.cont_special.name, shortName="curlDirection", longName="Curl_Direction", defaultValue=0.0,
+                     attributeType="float",
+                     keyable=True)
 
-        cmds.addAttr(self.cont_special, shortName="curlShift", longName="Curl_Shift", defaultValue=0.0, at="float",
-                     k=True)
+        cmds.addAttr(self.cont_special.name, shortName="curlShift", longName="Curl_Shift", defaultValue=0.0,
+                     attributeType="float",
+                     keyable=True)
 
-        ## seperator - twist
-        cmds.addAttr(self.cont_special, shortName="twistSeperator", at="enum", en="----------", k=True)
-        cmds.setAttr("%s.twistSeperator" % self.cont_special, lock=True)
+        # seperator - twist
+        cmds.addAttr(self.cont_special.name, shortName="twistSeperator", attributeType="enum", enumName="----------",
+                     keyable=True)
+        cmds.setAttr("%s.twistSeperator" % self.cont_special.name, lock=True)
 
-        cmds.addAttr(self.cont_special, shortName="twistAngle", longName="Twist_Angle", defaultValue=0.0, at="float",
-                     k=True)
-        cmds.addAttr(self.cont_special, shortName="twistSlide", longName="Twist_Slide", defaultValue=0.0, at="float",
-                     k=True)
-        cmds.addAttr(self.cont_special, shortName="twistArea", longName="Twist_Area", defaultValue=1.0, at="float",
-                     k=True)
+        cmds.addAttr(self.cont_special.name, shortName="twistAngle", longName="Twist_Angle", defaultValue=0.0,
+                     attributeType="float",
+                     keyable=True)
+        cmds.addAttr(self.cont_special.name, shortName="twistSlide", longName="Twist_Slide", defaultValue=0.0,
+                     attributeType="float",
+                     keyable=True)
+        cmds.addAttr(self.cont_special.name, shortName="twistArea", longName="Twist_Area", defaultValue=1.0,
+                     attributeType="float",
+                     keyable=True)
 
-        ## seperator - sine
-        cmds.addAttr(self.cont_special, shortName="sineSeperator", at="enum", en="----------", k=True)
-        cmds.setAttr("%s.sineSeperator" % self.cont_special, lock=True)
-        cmds.addAttr(self.cont_special, shortName="sineAmplitude", longName="Sine_Amplitude", defaultValue=0.0,
-                     at="float",
-                     k=True)
-        cmds.addAttr(self.cont_special, shortName="sineWavelength", longName="Sine_Wavelength", defaultValue=1.0,
-                     at="float",
-                     k=True)
-        cmds.addAttr(self.cont_special, shortName="sineDropoff", longName="Sine_Dropoff", defaultValue=0.0, at="float",
-                     k=True)
-        cmds.addAttr(self.cont_special, shortName="sineSlide", longName="Sine_Slide", defaultValue=0.0, at="float",
-                     k=True)
-        cmds.addAttr(self.cont_special, shortName="sineArea", longName="Sine_area", defaultValue=1.0, at="float",
-                     k=True)
-        cmds.addAttr(self.cont_special, shortName="sineDirection", longName="Sine_Direction", defaultValue=0.0,
-                     at="float",
-                     k=True)
+        # seperator - sine
+        cmds.addAttr(self.cont_special.name, shortName="sineSeperator", attributeType="enum", enumName="----------",
+                     keyable=True)
+        cmds.setAttr("%s.sineSeperator" % self.cont_special.name, lock=True)
+        cmds.addAttr(self.cont_special.name, shortName="sineAmplitude", longName="Sine_Amplitude", defaultValue=0.0,
+                     attributeType="float",
+                     keyable=True)
+        cmds.addAttr(self.cont_special.name, shortName="sineWavelength", longName="Sine_Wavelength", defaultValue=1.0,
+                     attributeType="float",
+                     keyable=True)
+        cmds.addAttr(self.cont_special.name, shortName="sineDropoff", longName="Sine_Dropoff", defaultValue=0.0,
+                     attributeType="float",
+                     keyable=True)
+        cmds.addAttr(self.cont_special.name, shortName="sineSlide", longName="Sine_Slide", defaultValue=0.0,
+                     attributeType="float",
+                     keyable=True)
+        cmds.addAttr(self.cont_special.name, shortName="sineArea", longName="Sine_area", defaultValue=1.0,
+                     attributeType="float",
+                     keyable=True)
+        cmds.addAttr(self.cont_special.name, shortName="sineDirection", longName="Sine_Direction", defaultValue=0.0,
+                     attributeType="float",
+                     keyable=True)
 
-        cmds.addAttr(self.cont_special, shortName="sineAnimate", longName="Sine_Animate", defaultValue=0.0, at="float",
-                     k=True)
-
-        self.contFK_List = []
-        self.contTwk_List = []
+        cmds.addAttr(self.cont_special.name, shortName="sineAnimate", longName="Sine_Animate", defaultValue=0.0,
+                     attributeType="float",
+                     keyable=True)
 
         for j in range(len(self.guideJoints)):
             s = cmds.getAttr("%s.tx" % self.guideJoints[j]) / 3
-            s = iconScale if s == 0 else s
-            scaleTwk = (s, s, s)
-            contTwk, dmp = icon.create_icon("Circle", icon_name="%s_tentacleTweak%i_cont" % (self.suffix, j),
-                                            scale=scaleTwk, normal=self.mirror_axis)
-            functions.align_to_alter(contTwk, self.guideJoints[j], mode=2)
-            contTwk_OFF = functions.create_offset_group(contTwk, "OFF")
-            contTwk_ORE = functions.create_offset_group(contTwk, "ORE")
-            self.contTwk_List.append(contTwk)
+            s = icon_scale if s == 0 else s
+            scale_twk = (s, s, s)
+            cont_twk = Controller(
+                name=naming.parse([self.module_name, "tweak", j], suffix="cont"),
+                shape="Circle",
+                scale=scale_twk,
+                normal=self.mirror_axis,
+                side=self.side,
+                tier="primary"
+            )
 
-            scaleFK = (s * 1.2, s * 1.2, s * 1.2)
-            contFK, _ = icon.create_icon("Ngon", icon_name="%s_tentacleFK%i_cont" % (self.suffix, j), scale=scaleFK,
-                                         normal=self.mirror_axis)
-            functions.align_to_alter(contFK, self.guideJoints[j], mode=2)
-            contFK_OFF = functions.create_offset_group(contFK, "OFF")
-            contFK_ORE = functions.create_offset_group(contFK, "ORE")
-            self.contFK_List.append(contFK)
+            functions.align_to_alter(cont_twk.name, self.guideJoints[j], mode=2)
+            cont_twk_off = cont_twk.add_offset("OFF")
+            _cont_twk_ore = cont_twk.add_offset("ORE")
+            self.cont_twk_list.append(cont_twk)
 
-            cmds.parent(contTwk_OFF, contFK)
+            scale_fk = (s * 1.2, s * 1.2, s * 1.2)
+            cont_fk = Controller(
+                name=naming.parse([self.module_name, "FK", j], suffix="cont"),
+                shape="Ngon",
+                scale=scale_fk,
+                normal=self.mirror_axis,
+                side=self.side,
+                tier="primary"
+            )
+            functions.align_to_alter(cont_fk.name, self.guideJoints[j], mode=2)
+            cont_fk_off = cont_fk.add_offset("OFF")
+            _cont_fk_ore = cont_fk.add_offset("ORE")
+            self.cont_fk_list.append(cont_fk)
+
+            cmds.parent(cont_twk_off, cont_fk.name)
             if not j == 0:
-                cmds.parent(contFK_OFF, self.contFK_List[j - 1])
+                cmds.parent(cont_fk_off, self.cont_fk_list[j - 1].name)
             else:
-                cmds.parent(contFK_OFF, self.scaleGrp)
+                cmds.parent(cont_fk_off, self.scaleGrp)
 
-        self.controllers.extend(self.contFK_List)
-        self.controllers.extend(self.contTwk_List)
+        self.controllers.extend(self.cont_fk_list)
+        self.controllers.extend(self.cont_twk_list)
 
-        cmds.parent(cont_special_ORE, self.contFK_List[0])
+        cmds.parent(cont_special_ore, self.cont_fk_list[0].name)
 
-        functions.colorize(self.contFK_List, self.colorCodes[0])
-        functions.colorize(self.contTwk_List, self.colorCodes[0])
-        functions.colorize(self.cont_special, self.colorCodes[0])
+        attribute.drive_attrs("%s.contVis" % self.scaleGrp, ["%s.v" % x.name for x in self.cont_twk_list])
+        attribute.drive_attrs("%s.contVis" % self.scaleGrp, ["%s.v" % x.name for x in self.cont_fk_list])
 
-        attribute.drive_attrs("%s.contVis" % self.scaleGrp, ["%s.v" % x for x in self.contTwk_List])
-        attribute.drive_attrs("%s.contVis" % self.scaleGrp, ["%s.v" % x for x in self.contFK_List])
+    def create_ik_setup(self):
+        # Create the Base Nurbs Plane (npBase)
+        ribbon_length = functions.get_distance(self.contJointsList[0], self.contJointsList[-1])
 
-    def createRoots(self):
-        pass
-
-    def createIKsetup(self):
-        ## Create the Base Nurbs Plane (npBase)
-        ribbonLength = functions.get_distance(self.contJointsList[0], self.contJointsList[-1])
-
-        npBase = cmds.nurbsPlane(ax=(0, 1, 0), u=self.contRes, v=1, w=ribbonLength, lr=(1.0 / ribbonLength),
-                                 name="npBase_%s" % self.suffix)[0]
-        cmds.rebuildSurface(npBase, ch=1, rpo=1, rt=0, end=1, kr=2, kcp=0, kc=0, su=5, du=3, sv=1, dv=1, tol=0, fr=0,
-                            dir=1)
-        functions.align_and_aim(npBase, target_list=[self.contJointsList[0], self.contJointsList[-1]],
+        np_base = cmds.nurbsPlane(
+            axis=(0, 1, 0),
+            patchesU=int(self.controller_resolution),
+            patchesV=1,
+            width=ribbon_length,
+            lengthRatio=(1.0 / ribbon_length),
+            name=naming.parse([self.module_name, "npBase"], suffix="surf")
+        )[0]
+        cmds.rebuildSurface(np_base, constructionHistory=True, replaceOriginal=True, rebuildType=0, endKnots=1,
+                            keepRange=2, keepControlPoints=False, keepCorners=False, spansU=5, degreeU=3, spansV=1,
+                            degreeV=1, tolerance=0, fitRebuild=0,
+                            direction=1)
+        functions.align_and_aim(np_base, target_list=[self.contJointsList[0], self.contJointsList[-1]],
                                 aim_target_list=[self.contJointsList[-1]], up_vector=self.up_axis)
 
-        ## Duplicate the Base Nurbs Plane as joint Holder (npJDefHolder)
-        npJdefHolder = cmds.nurbsPlane(ax=(0, 1, 0), u=self.deformerRes, v=1, w=ribbonLength, lr=(1.0 / ribbonLength),
-                                       name="npJDefHolder_%s" % self.suffix)[0]
-        cmds.rebuildSurface(npJdefHolder, ch=1, rpo=1, rt=0, end=1, kr=2, kcp=0, kc=0, su=5, du=3, sv=1, dv=1, tol=0,
-                            fr=0,
-                            dir=1)
-        functions.align_and_aim(npJdefHolder, target_list=[self.contJointsList[0], self.contJointsList[-1]],
+        # Duplicate the Base Nurbs Plane as joint Holder (npJDefHolder)
+        np_jdef_holder = cmds.nurbsPlane(
+            axis=(0, 1, 0),
+            patchesU=int(self.deformerRes),
+            patchesV=1,
+            width=ribbon_length,
+            lengthRatio=(1.0 / ribbon_length),
+            name=naming.parse([self.module_name, "npJointHolder"], suffix="surf"),
+        )[0]
+        cmds.rebuildSurface(np_jdef_holder, constructionHistory=True, replaceOriginal=True, rebuildType=0, endKnots=1,
+                            keepRange=2, keepControlPoints=False, keepCorners=False, spansU=5, degreeU=3, spansV=1,
+                            degreeV=1, tolerance=0,
+                            fitRebuild=0,
+                            direction=1)
+        functions.align_and_aim(np_jdef_holder, target_list=[self.contJointsList[0], self.contJointsList[-1]],
                                 aim_target_list=[self.contJointsList[-1]],
                                 up_vector=self.up_axis)
 
-        ## Create the follicles on the npJDefHolder
-        npJdefHolderShape = functions.get_shapes(npJdefHolder)[0]
-        follicleList = []
-        for i in range(0, int(self.jointRes)):
-            follicle = cmds.createNode('follicle', name="follicle_{0}{1}".format(self.suffix, str(i)))
+        # Create the follicles on the npJDefHolder
+        np_jdef_holder_shape = functions.get_shapes(np_jdef_holder)[0]
+        follicle_list = []
+        for idx in range(0, int(self.jointRes)):
+            follicle = cmds.createNode('follicle', name=naming.parse([self.module_name, idx], suffix="follicle"))
             follicle_transform = functions.get_parent(follicle)
-            cmds.connectAttr("%s.local" % npJdefHolderShape, "%s.inputSurface" % follicle)
-            cmds.connectAttr("%s.worldMatrix[0]" % npJdefHolderShape, "%s.inputWorldMatrix" % follicle)
+            cmds.connectAttr("%s.local" % np_jdef_holder_shape, "%s.inputSurface" % follicle)
+            cmds.connectAttr("%s.worldMatrix[0]" % np_jdef_holder_shape, "%s.inputWorldMatrix" % follicle)
             cmds.connectAttr("%s.outRotate" % follicle, "%s.rotate" % follicle_transform)
             cmds.connectAttr("%s.outTranslate" % follicle, "%s.translate" % follicle_transform)
             cmds.setAttr("%s.parameterV" % follicle, 0.5)
             cmds.setAttr("%s.parameterU" % follicle,
-                         ((1 / self.jointRes) + (i / self.jointRes) - ((1 / self.jointRes) / 2)))
+                         ((1.0 / self.jointRes) + (float(idx) / self.jointRes) - ((1.0 / self.jointRes) / 2.0)))
             attribute.lock_and_hide(follicle_transform, ["tx", "ty", "tz", "rx", "ry", "rz"], hide=False)
-            follicleList.append(follicle)
+            follicle_list.append(follicle)
 
-            defJ = cmds.joint(name="%s_%i_jDef" % (self.suffix, i))
-            cmds.joint(defJ, e=True, zso=True, oj='zxy')
-            self.deformerJoints.append(defJ)
-            self.sockets.append(defJ)
+            j_def = cmds.joint(name=naming.parse([self.module_name, idx], suffix="jDef"))
+            cmds.joint(j_def, exists=True, zeroScaleOrient=True, orientJoint='zxy')
+            self.deformerJoints.append(j_def)
+            self.sockets.append(j_def)
             cmds.parent(follicle_transform, self.nonScaleGrp)
-            cmds.scaleConstraint(self.scaleGrp, follicle_transform, mo=True)
+            cmds.scaleConstraint(self.scaleGrp, follicle_transform, maintainOffset=True)
 
         # create follicles for scaling calculations
         follicle_sca_list = []
         counter = 0
         for index in range(int(self.jointRes)):
-            s_follicle = cmds.createNode('follicle', name="follicleSCA_{0}{1}".format(self.suffix, index))
+            s_follicle = cmds.createNode('follicle',
+                                         name=naming.parse([self.module_name, "SCA", index], suffix="follicle"))
             s_follicle_transform = functions.get_parent(s_follicle)
-            cmds.connectAttr("%s.local" % npJdefHolderShape, "%s.inputSurface" % s_follicle)
-            cmds.connectAttr("%s.worldMatrix[0]" % npJdefHolderShape, "%s.inputWorldMatrix" % s_follicle)
+            cmds.connectAttr("%s.local" % np_jdef_holder_shape, "%s.inputSurface" % s_follicle)
+            cmds.connectAttr("%s.worldMatrix[0]" % np_jdef_holder_shape, "%s.inputWorldMatrix" % s_follicle)
             cmds.connectAttr("%s.outRotate" % s_follicle, "%s.rotate" % s_follicle_transform)
             cmds.connectAttr("%s.outTranslate" % s_follicle, "%s.translate" % s_follicle_transform)
 
@@ -342,15 +361,18 @@ class Tentacle(object):
             follicle_sca_list.append(s_follicle)
             cmds.parent(s_follicle_transform, self.nonScaleGrp)
             # create distance node
-            distNode = cmds.createNode("distanceBetween", name="fDistance_{0}{1}".format(self.suffix, index))
-            cmds.connectAttr("%s.outTranslate" % follicleList[counter], "%s.point1" % distNode)
-            cmds.connectAttr("%s.outTranslate" % s_follicle, "%s.point2" % distNode)
+            dist_node = cmds.createNode("distanceBetween",
+                                        name=naming.parse([self.module_name, "fol", index], suffix="distance"))
+            cmds.connectAttr("%s.outTranslate" % follicle_list[counter], "%s.point1" % dist_node)
+            cmds.connectAttr("%s.outTranslate" % s_follicle, "%s.point2" % dist_node)
 
-            multiplier = cmds.createNode("multDoubleLinear", name="fMult_{0}{1}".format(self.suffix, index))
-            cmds.connectAttr("%s.distance" % distNode, "%s.input1" % multiplier)
+            multiplier = cmds.createNode("multDoubleLinear",
+                                         name=naming.parse([self.module_name, "fol", index], suffix="mult"))
+            cmds.connectAttr("%s.distance" % dist_node, "%s.input1" % multiplier)
             cmds.setAttr("%s.input2" % multiplier, 2)
 
-            global_divide = cmds.createNode("multiplyDivide", name="fGlobDiv_{0}{1}".format(self.suffix, index))
+            global_divide = cmds.createNode("multiplyDivide",
+                                            name=naming.parse([self.module_name, "globalDiv", index], suffix="div"))
             cmds.setAttr("%s.operation" % global_divide, 2)
             cmds.connectAttr("%s.output" % multiplier, "%s.input1X" % global_divide)
             cmds.connectAttr("%s.scaleX" % self.scaleGrp, "%s.input2X" % global_divide)
@@ -360,289 +382,218 @@ class Tentacle(object):
             cmds.connectAttr("%s.outputX" % global_divide, "%s.scaleZ" % self.deformerJoints[counter])
             counter += 1
 
-        ## Duplicate it 3 more times for deformation targets (npDeformers, npTwist, npSine)
-        npDeformers = cmds.duplicate(npJdefHolder, name="npDeformers_%s" % self.suffix)[0]
-        cmds.move(0, self.totalLength / 2, 0, npDeformers)
-        cmds.rotate(0, 0, 90, npDeformers, )
+        # Duplicate it 3 more times for deformation targets (npDeformers, npTwist, npSine)
+        np_deformers = \
+            cmds.duplicate(np_jdef_holder, name=naming.parse([self.module_name, "npDeformers"], suffix="surf"))[
+                0]
+        cmds.move(0, self.totalLength / 2, 0, np_deformers)
+        cmds.rotate(0, 0, 90, np_deformers, )
 
-        ## Create Blendshape node between np_jDefHolder and deformation targets
-        npBlend = cmds.blendShape(npDeformers, npJdefHolder, w=(0, 1))
+        # Create Blendshape node between np_jDefHolder and deformation targets
+        _np_blend = cmds.blendShape(np_deformers, np_jdef_holder, weight=(0, 1))
 
-        ## Wrap npjDefHolder to the Base Plane
-        npWrap, npWrapGeo = self.createWrap(npBase, npJdefHolder, weightThreshold=0.0, maxDistance=50,
-                                            autoWeightThreshold=False)
-        maxDistanceMult = cmds.createNode("multDoubleLinear", name="npWrap_{0}".format(self.suffix))
-        cmds.connectAttr("%s.scaleX" % self.scaleGrp, "%s.input1" % maxDistanceMult)
-        cmds.setAttr("%s.input2" % maxDistanceMult, 50)
-        cmds.connectAttr("%s.output" % maxDistanceMult, "%s.maxDistance" % npWrap)
+        # Wrap npjDefHolder to the Base Plane
+        # np_wrap, np_wrap_geo = self.createWrap(np_base, np_jdef_holder, weightThreshold=0.0, maxDistance=50,
+        #                                        autoWeightThreshold=False)
+        np_wrap, np_wrap_geo = deformers.create_wrap(np_base, np_jdef_holder, weight_threshold=0.0, max_distance=50,
+                                                     auto_weight_threshold=False)
 
-        ## make the Wrap node Scale-able with the rig
-        cmds.skinCluster(self.wrapScaleJoint, npWrapGeo, tsb=True)
+        max_distance_mult = cmds.createNode("multDoubleLinear",
+                                            name=naming.parse([self.module_name, "npWrap"], suffix="mult"))
+        cmds.connectAttr("%s.scaleX" % self.scaleGrp, "%s.input1" % max_distance_mult)
+        cmds.setAttr("%s.input2" % max_distance_mult, 50)
+        cmds.connectAttr("%s.output" % max_distance_mult, "%s.maxDistance" % np_wrap)
 
-        ## Create skin cluster
-        cmds.skinCluster(self.contJointsList, npBase, tsb=True, dropoffRate=self.dropoff)
+        # make the Wrap node Scale-able with the rig
+        cmds.skinCluster(self.wrapScaleJoint, np_wrap_geo, toSelectedBones=True)
 
-        ## CURL DEFORMER
-        curlDeformer = cmds.nonLinear(npDeformers, type='bend', curvature=1500)
-        curlLoc = cmds.spaceLocator(name="curlLoc{0}".format(self.suffix))[0]
-        cmds.parent(curlDeformer[1], curlLoc)
-        cmds.setAttr("%s.lowBound" % curlDeformer[0], -1)
-        cmds.setAttr("%s.highBound" % curlDeformer[0], 0)
+        # Create skin cluster
+        cmds.skinCluster(self.contJointsList, np_base, toSelectedBones=True, dropoffRate=self.dropoff)
 
-        cmds.setDrivenKeyframe("%s.curvature" % curlDeformer[0], cd="%s.curl" % self.cont_special, v=0.0, dv=0.0,
-                               itt='linear', ott='linear')
-        cmds.setDrivenKeyframe("%s.curvature" % curlDeformer[0], cd="%s.curl" % self.cont_special, v=1500.0, dv=0.01,
-                               itt='linear', ott='linear')
-        cmds.setDrivenKeyframe("%s.curvature" % curlDeformer[0], cd="%s.curl" % self.cont_special, v=-1500.0, dv=-0.01,
-                               itt='linear', ott='linear')
+        # CURL DEFORMER
+        curl_deformer = cmds.nonLinear(np_deformers, type='bend', curvature=1500)
+        curl_loc = cmds.spaceLocator(name=naming.parse([self.module_name, "curl"], suffix="loc"))[0]
+        cmds.parent(curl_deformer[1], curl_loc)
+        cmds.setAttr("%s.lowBound" % curl_deformer[0], -1)
+        cmds.setAttr("%s.highBound" % curl_deformer[0], 0)
 
-        cmds.setDrivenKeyframe("%s.ty" % curlDeformer[1], cd="%s.curl" % self.cont_special, v=0.0, dv=10.0,
-                               itt='linear', ott='linear')
-        cmds.setDrivenKeyframe("%s.ty" % curlDeformer[1], cd="%s.curl" % self.cont_special, v=0.0, dv=-10.0,
-                               itt='linear', ott='linear')
-        cmds.setDrivenKeyframe(["%s.sx" % curlDeformer[1], "%s.sy" % curlDeformer[1], "%s.sz" % curlDeformer[1]],
-                               cd="%s.curl" % self.cont_special, v=(self.totalLength * 2), dv=10.0, itt='linear',
-                               ott='linear')
-        cmds.setDrivenKeyframe(["%s.sx" % curlDeformer[1], "%s.sy" % curlDeformer[1], "%s.sz" % curlDeformer[1]],
-                               cd="%s.curl" % self.cont_special, v=(self.totalLength * 2), dv=-10.0, itt='linear',
-                               ott='linear')
-        cmds.setDrivenKeyframe("%s.rz" % curlDeformer[1], cd="%s.curl" % self.cont_special, v=4.0, dv=10.0,
-                               itt='linear', ott='linear')
-        cmds.setDrivenKeyframe("%s.rz" % curlDeformer[1], cd="%s.curl" % self.cont_special, v=-4.0, dv=-10.0,
-                               itt='linear', ott='linear')
-        cmds.setDrivenKeyframe("%s.ty" % curlDeformer[1], cd="%s.curl" % self.cont_special, v=self.totalLength, dv=0.0,
-                               itt='linear', ott='linear')
-        cmds.setDrivenKeyframe(["%s.sx" % curlDeformer[1], "%s.sy" % curlDeformer[1], "%s.sz" % curlDeformer[1]],
-                               cd="%s.curl" % self.cont_special, v=(self.totalLength / 2), dv=0.0, itt='linear',
-                               ott='linear')
-        cmds.setDrivenKeyframe("%s.rz" % curlDeformer[1], cd="%s.curl" % self.cont_special, v=6.0, dv=0.01,
-                               itt='linear', ott='linear')
-        cmds.setDrivenKeyframe("%s.rz" % curlDeformer[1], cd="%s.curl" % self.cont_special, v=-6.0, dv=-0.01,
-                               itt='linear', ott='linear')
+        cmds.setDrivenKeyframe("%s.curvature" % curl_deformer[0], currentDriver="%s.curl" % self.cont_special.name,
+                               value=0.0, driverValue=0.0,
+                               inTangentType='linear', outTangentType='linear')
+        cmds.setDrivenKeyframe("%s.curvature" % curl_deformer[0], currentDriver="%s.curl" % self.cont_special.name,
+                               value=1500.0, driverValue=0.01,
+                               inTangentType='linear', outTangentType='linear')
+        cmds.setDrivenKeyframe("%s.curvature" % curl_deformer[0], currentDriver="%s.curl" % self.cont_special.name,
+                               value=-1500.0, driverValue=-0.01,
+                               inTangentType='linear', outTangentType='linear')
 
-        ## create curl size multipliers
+        cmds.setDrivenKeyframe("%s.ty" % curl_deformer[1], currentDriver="%s.curl" % self.cont_special.name, value=0.0,
+                               driverValue=10.0,
+                               inTangentType='linear', outTangentType='linear')
+        cmds.setDrivenKeyframe("%s.ty" % curl_deformer[1], currentDriver="%s.curl" % self.cont_special.name, value=0.0,
+                               driverValue=-10.0,
+                               inTangentType='linear', outTangentType='linear')
+        cmds.setDrivenKeyframe(["%s.sx" % curl_deformer[1], "%s.sy" % curl_deformer[1], "%s.sz" % curl_deformer[1]],
+                               currentDriver="%s.curl" % self.cont_special.name, value=(self.totalLength * 2),
+                               driverValue=10.0, inTangentType='linear',
+                               outTangentType='linear')
+        cmds.setDrivenKeyframe(["%s.sx" % curl_deformer[1], "%s.sy" % curl_deformer[1], "%s.sz" % curl_deformer[1]],
+                               currentDriver="%s.curl" % self.cont_special.name, value=(self.totalLength * 2),
+                               driverValue=-10.0, inTangentType='linear',
+                               outTangentType='linear')
+        cmds.setDrivenKeyframe("%s.rz" % curl_deformer[1], currentDriver="%s.curl" % self.cont_special.name, value=4.0,
+                               driverValue=10.0,
+                               inTangentType='linear', outTangentType='linear')
+        cmds.setDrivenKeyframe("%s.rz" % curl_deformer[1], currentDriver="%s.curl" % self.cont_special.name, value=-4.0,
+                               driverValue=-10.0,
+                               inTangentType='linear', outTangentType='linear')
+        cmds.setDrivenKeyframe("%s.ty" % curl_deformer[1], currentDriver="%s.curl" % self.cont_special.name,
+                               value=self.totalLength, driverValue=0.0,
+                               inTangentType='linear', outTangentType='linear')
+        cmds.setDrivenKeyframe(["%s.sx" % curl_deformer[1], "%s.sy" % curl_deformer[1], "%s.sz" % curl_deformer[1]],
+                               currentDriver="%s.curl" % self.cont_special.name, value=(self.totalLength / 2),
+                               driverValue=0.0, inTangentType='linear',
+                               outTangentType='linear')
+        cmds.setDrivenKeyframe("%s.rz" % curl_deformer[1], currentDriver="%s.curl" % self.cont_special.name, value=6.0,
+                               driverValue=0.01,
+                               inTangentType='linear', outTangentType='linear')
+        cmds.setDrivenKeyframe("%s.rz" % curl_deformer[1], currentDriver="%s.curl" % self.cont_special.name, value=-6.0,
+                               driverValue=-0.01,
+                               inTangentType='linear', outTangentType='linear')
 
-        curlSizeMultX = cmds.createNode("multDoubleLinear", name="curlSizeMultX_{0}".format(self.suffix))
-        curlSizeMultY = cmds.createNode("multDoubleLinear", name="curlSizeMultY_{0}".format(self.suffix))
-        curlSizeMultZ = cmds.createNode("multDoubleLinear", name="curlSizeMultZ_{0}".format(self.suffix))
+        # create curl size multipliers
 
-        curlAngleMultZ = cmds.createNode("multDoubleLinear", name="curlAngleMultZ_{0}".format(self.suffix))
+        curl_size_mult_x = cmds.createNode("multDoubleLinear",
+                                           name=naming.parse([self.module_name, "curlSizeMultX"], suffix="mult"))
+        curl_size_mult_y = cmds.createNode("multDoubleLinear",
+                                           name=naming.parse([self.module_name, "curlSizeMultY"], suffix="mult"))
+        curl_size_mult_z = cmds.createNode("multDoubleLinear",
+                                           name=naming.parse([self.module_name, "curlSizeMultZ"], suffix="mult"))
 
-        curlShiftAdd = cmds.createNode("plusMinusAverage", name="curlAddShift_{0}".format(self.suffix))
-        cmds.connectAttr("%s.curlShift" % self.cont_special, "%s.input1D[0]" % curlShiftAdd)
-        cmds.setAttr("%s.input1D[1]" % curlShiftAdd, 180)
+        curl_angle_mult_z = cmds.createNode("multDoubleLinear",
+                                            name=naming.parse([self.module_name, "curlAngleMultZ"], suffix="mult"))
 
-        cmds.connectAttr("%s.output1D" % curlShiftAdd, "%s.rx" % curlDeformer[1])
-        cmds.connectAttr("%s.curlSize" % self.cont_special, "%s.input1" % curlSizeMultX)
-        cmds.connectAttr("%s.curlSize" % self.cont_special, "%s.input1" % curlSizeMultY)
-        cmds.connectAttr("%s.curlSize" % self.cont_special, "%s.input1" % curlSizeMultZ)
-        cmds.connectAttr("%s.curlAngle" % self.cont_special, "%s.input1" % curlAngleMultZ)
+        curl_shift_add = cmds.createNode("plusMinusAverage",
+                                         name=naming.parse([self.module_name, "curlAddShift"], suffix="pma"))
+        cmds.connectAttr("%s.curlShift" % self.cont_special.name, "%s.input1D[0]" % curl_shift_add)
+        cmds.setAttr("%s.input1D[1]" % curl_shift_add, 180)
 
-        cmds.connectAttr("%s.output" % cmds.listConnections("%s.sx" % curlDeformer[1])[0], "%s.input2" % curlSizeMultX)
-        cmds.connectAttr("%s.output" % cmds.listConnections("%s.sy" % curlDeformer[1])[0], "%s.input2" % curlSizeMultY)
-        cmds.connectAttr("%s.output" % cmds.listConnections("%s.sz" % curlDeformer[1])[0], "%s.input2" % curlSizeMultZ)
-        cmds.connectAttr("%s.output" % cmds.listConnections("%s.rz" % curlDeformer[1])[0], "%s.input2" % curlAngleMultZ)
+        cmds.connectAttr("%s.output1D" % curl_shift_add, "%s.rx" % curl_deformer[1])
+        cmds.connectAttr("%s.curlSize" % self.cont_special.name, "%s.input1" % curl_size_mult_x)
+        cmds.connectAttr("%s.curlSize" % self.cont_special.name, "%s.input1" % curl_size_mult_y)
+        cmds.connectAttr("%s.curlSize" % self.cont_special.name, "%s.input1" % curl_size_mult_z)
+        cmds.connectAttr("%s.curlAngle" % self.cont_special.name, "%s.input1" % curl_angle_mult_z)
 
-        cmds.connectAttr("%s.output" % curlSizeMultX, "%s.sx" % curlDeformer[1], force=True)
-        cmds.connectAttr("%s.output" % curlSizeMultY, "%s.sy" % curlDeformer[1], force=True)
-        cmds.connectAttr("%s.output" % curlSizeMultZ, "%s.sz" % curlDeformer[1], force=True)
-        cmds.connectAttr("%s.output" % curlAngleMultZ, "%s.rz" % curlDeformer[1], force=True)
-        cmds.connectAttr("%s.curlDirection" % self.cont_special, "%s.ry" % curlLoc)
+        cmds.connectAttr("%s.output" % cmds.listConnections("%s.sx" % curl_deformer[1])[0],
+                         "%s.input2" % curl_size_mult_x)
+        cmds.connectAttr("%s.output" % cmds.listConnections("%s.sy" % curl_deformer[1])[0],
+                         "%s.input2" % curl_size_mult_y)
+        cmds.connectAttr("%s.output" % cmds.listConnections("%s.sz" % curl_deformer[1])[0],
+                         "%s.input2" % curl_size_mult_z)
+        cmds.connectAttr("%s.output" % cmds.listConnections("%s.rz" % curl_deformer[1])[0],
+                         "%s.input2" % curl_angle_mult_z)
 
-        ## TWIST DEFORMER
-        twistDeformer = cmds.nonLinear(npDeformers, type='twist')
-        cmds.rotate(0, 0, 0, twistDeformer[1])
-        twistLoc = cmds.spaceLocator(name="twistLoc_{0}".format(self.suffix))[0]
-        cmds.parent(twistDeformer[1], twistLoc)
+        cmds.connectAttr("%s.output" % curl_size_mult_x, "%s.sx" % curl_deformer[1], force=True)
+        cmds.connectAttr("%s.output" % curl_size_mult_y, "%s.sy" % curl_deformer[1], force=True)
+        cmds.connectAttr("%s.output" % curl_size_mult_z, "%s.sz" % curl_deformer[1], force=True)
+        cmds.connectAttr("%s.output" % curl_angle_mult_z, "%s.rz" % curl_deformer[1], force=True)
+        cmds.connectAttr("%s.curlDirection" % self.cont_special.name, "%s.ry" % curl_loc)
 
-        ## make connections:
-        cmds.connectAttr("%s.twistAngle" % self.cont_special, "%s.endAngle" % twistDeformer[0], force=True)
-        cmds.connectAttr("%s.twistSlide" % self.cont_special, "%s.translateY" % twistLoc)
-        cmds.connectAttr("%s.twistArea" % self.cont_special, "%s.scaleY" % twistLoc)
+        # TWIST DEFORMER
+        twist_deformer = cmds.nonLinear(np_deformers, type='twist')
+        cmds.rotate(0, 0, 0, twist_deformer[1])
+        twist_loc = cmds.spaceLocator(name=naming.parse([self.module_name, "twist"], suffix="loc"))[0]
+        cmds.parent(twist_deformer[1], twist_loc)
 
-        ## SINE DEFORMER
-        sineDeformer = cmds.nonLinear(npDeformers, type='sine')
-        cmds.rotate(0, 0, 0, sineDeformer[1])
-        sineLoc = cmds.spaceLocator(name="sineLoc_{0}".format(self.suffix))[0]
-        cmds.parent(sineDeformer[1], sineLoc)
+        # make connections:
+        cmds.connectAttr("%s.twistAngle" % self.cont_special.name, "%s.endAngle" % twist_deformer[0], force=True)
+        cmds.connectAttr("%s.twistSlide" % self.cont_special.name, "%s.translateY" % twist_loc)
+        cmds.connectAttr("%s.twistArea" % self.cont_special.name, "%s.scaleY" % twist_loc)
 
-        ## make connections:
-        cmds.connectAttr("%s.sineAmplitude" % self.cont_special, "%s.amplitude" % sineDeformer[0], force=True)
-        cmds.connectAttr("%s.sineWavelength" % self.cont_special, "%s.wavelength" % sineDeformer[0], force=True)
-        cmds.connectAttr("%s.sineDropoff" % self.cont_special, "%s.dropoff" % sineDeformer[0], force=True)
-        cmds.connectAttr("%s.sineAnimate" % self.cont_special, "%s.offset" % sineDeformer[0], force=True)
+        # SINE DEFORMER
+        sine_deformer = cmds.nonLinear(np_deformers, type='sine')
+        cmds.rotate(0, 0, 0, sine_deformer[1])
+        sine_loc = cmds.spaceLocator(name=naming.parse([self.module_name, "sine"], suffix="loc"))[0]
+        cmds.parent(sine_deformer[1], sine_loc)
 
-        cmds.connectAttr("%s.sineSlide" % self.cont_special, "%s.translateY" % sineLoc)
-        cmds.connectAttr("%s.sineArea" % self.cont_special, "%s.scaleY" % sineLoc)
-        cmds.connectAttr("%s.sineDirection" % self.cont_special, "%s.rotateY" % sineLoc)
+        # make connections:
+        cmds.connectAttr("%s.sineAmplitude" % self.cont_special.name, "%s.amplitude" % sine_deformer[0], force=True)
+        cmds.connectAttr("%s.sineWavelength" % self.cont_special.name, "%s.wavelength" % sine_deformer[0], force=True)
+        cmds.connectAttr("%s.sineDropoff" % self.cont_special.name, "%s.dropoff" % sine_deformer[0], force=True)
+        cmds.connectAttr("%s.sineAnimate" % self.cont_special.name, "%s.offset" % sine_deformer[0], force=True)
 
-        # WHY THIS OFFSET IS NECESSARY? TRY TO GED RID OF
-        offsetVal = (0, 180, 0) if self.sideMult == -1 else (0, 0, 0)
+        cmds.connectAttr("%s.sineSlide" % self.cont_special.name, "%s.translateY" % sine_loc)
+        cmds.connectAttr("%s.sineArea" % self.cont_special.name, "%s.scaleY" % sine_loc)
+        cmds.connectAttr("%s.sineDirection" % self.cont_special.name, "%s.rotateY" % sine_loc)
+
+        # TODO WHY THIS OFFSET IS NECESSARY?
+        offset_val = (0, 180, 0) if self.sideMult == -1 else (0, 0, 0)
         for j in range(len(self.guideJoints)):
             functions.align_to_alter(self.contJointsList[j], self.guideJoints[j], mode=2)
-            cmds.pointConstraint(self.contTwk_List[j], self.contJointsList[j], mo=False)
-            cmds.orientConstraint(self.contTwk_List[j], self.contJointsList[j], mo=False, offset=offsetVal)
+            cmds.pointConstraint(self.cont_twk_list[j].name, self.contJointsList[j], maintainOffset=False)
+            cmds.orientConstraint(self.cont_twk_list[j].name, self.contJointsList[j], maintainOffset=False,
+                                  offset=offset_val)
 
-            cmds.scaleConstraint(self.contTwk_List[j], self.contJointsList[j], mo=False)
+            cmds.scaleConstraint(self.cont_twk_list[j].name, self.contJointsList[j], maintainOffset=False)
 
-        cmds.parent(npBase, self.nonScaleGrp)
-        cmds.parent(npDeformers, self.nonScaleGrp)
-        cmds.parent(curlLoc, self.nonScaleGrp)
-        cmds.parent(twistLoc, self.nonScaleGrp)
-        cmds.parent(sineLoc, self.nonScaleGrp)
-        cmds.parent(npWrapGeo, self.nonScaleGrp)
-        cmds.parent(npJdefHolder, self.scaleGrp)
+        cmds.parent(np_base, self.nonScaleGrp)
+        cmds.parent(np_deformers, self.nonScaleGrp)
+        cmds.parent(curl_loc, self.nonScaleGrp)
+        cmds.parent(twist_loc, self.nonScaleGrp)
+        cmds.parent(sine_loc, self.nonScaleGrp)
+        cmds.parent(np_wrap_geo, self.nonScaleGrp)
+        cmds.parent(np_jdef_holder, self.scaleGrp)
 
-        nodesRigVis = [npBase, npJdefHolder, npDeformers, sineLoc, twistLoc, curlLoc]
-        attribute.drive_attrs("%s.rigVis" % self.scaleGrp, ["%s.v" % x for x in nodesRigVis])
+        nodes_rig_vis = [np_base, np_jdef_holder, np_deformers, sine_loc, twist_loc, curl_loc]
+        attribute.drive_attrs("%s.rigVis" % self.scaleGrp, ["%s.v" % x for x in nodes_rig_vis])
         attribute.drive_attrs("%s.rigVis" % self.scaleGrp, ["%s.v" % x for x in follicle_sca_list])
-        attribute.drive_attrs("%s.rigVis" % self.scaleGrp, ["%s.v" % x for x in follicleList])
+        attribute.drive_attrs("%s.rigVis" % self.scaleGrp, ["%s.v" % x for x in follicle_list])
 
-        functions.colorize(self.deformerJoints, self.colorCodes[0], shape=False)
-
-    def createFKsetup(self):
-        pass
-
-    def ikfkSwitching(self):
-        pass
-
-    def createRibbons(self):
-        pass
-
-    def createTwistSplines(self):
-        pass
-
-    def createAngleExtractors(self):
-        pass
-
-    def roundUp(self):
-        cmds.parentConstraint(self.limbPlug, self.scaleGrp, mo=False)
+    def round_up(self):
+        cmds.parentConstraint(self.limbPlug, self.scaleGrp, maintainOffset=False)
         cmds.setAttr("%s.rigVis" % self.scaleGrp, 0)
 
-        _ = [attribute.lock_and_hide(x, ["sx", "sy", "sz"]) for x in self.contFK_List]
+        _ = [x.lock(["sx", "sy", "sz"]) for x in self.cont_fk_list]
         self.scaleConstraints = [self.scaleGrp]
 
         cmds.delete(self.guideJoints)
 
-    def createLimb(self):
-        self.createGrp()
-        self.createJoints()
-        self.createControllers()
-        self.createRoots()
-        self.createIKsetup()
-        self.roundUp()
+        for cont in self.controllers:
+            cont.set_defaults()
 
-    def createWrap(self, *args, **kwargs):
-        ## TODO: refine the function and move to the library
-        influence = args[0]
-        surface = args[1]
+    def execute(self):
+        # self.createGrp()
+        self.create_joints()
+        self.create_controllers()
+        self.create_ik_setup()
+        self.round_up()
 
-        shapes = cmds.listRelatives(influence, shapes=True)
-        influenceShape = shapes[0]
 
-        shapes = cmds.listRelatives(surface, shapes=True)
-        surfaceShape = shapes[0]
+class Guides(_module.GuidesCore):
+    limb_data = LIMB_DATA
 
-        # create wrap deformer
-        weightThreshold = kwargs.get('weightThreshold', 0.0)
-        maxDistance = kwargs.get('maxDistance', 1.0)
-        exclusiveBind = kwargs.get('exclusiveBind', False)
-        autoWeightThreshold = kwargs.get('autoWeightThreshold', True)
-        falloffMode = kwargs.get('falloffMode', 0)
-
-        wrapData = cmds.deformer(surface, type='wrap')
-        wrapNode = wrapData[0]
-
-        cmds.setAttr(wrapNode + '.weightThreshold', weightThreshold)
-        cmds.setAttr(wrapNode + '.maxDistance', maxDistance)
-        cmds.setAttr(wrapNode + '.exclusiveBind', exclusiveBind)
-        cmds.setAttr(wrapNode + '.autoWeightThreshold', autoWeightThreshold)
-        cmds.setAttr(wrapNode + '.falloffMode', falloffMode)
-
-        cmds.connectAttr(surface + '.worldMatrix[0]', wrapNode + '.geomMatrix')
-
-        # add influence
-        duplicateData = cmds.duplicate(influence, name=influence + 'Base')
-        base = duplicateData[0]
-        shapes = cmds.listRelatives(base, shapes=True)
-        baseShape = shapes[0]
-        cmds.hide(base)
-
-        # create dropoff attr if it doesn't exist
-        if not cmds.attributeQuery('dropoff', n=influence, exists=True):
-            cmds.addAttr(influence, sn='dr', ln='dropoff', dv=4.0, min=0.0, max=20.0)
-            cmds.setAttr(influence + '.dr', k=True)
-
-        # if type mesh
-        if cmds.nodeType(influenceShape) == 'mesh':
-            # create smoothness attr if it doesn't exist
-            if not cmds.attributeQuery('smoothness', n=influence, exists=True):
-                cmds.addAttr(influence, sn='smt', ln='smoothness', dv=0.0, min=0.0)
-                cmds.setAttr(influence + '.smt', k=True)
-
-            # create the inflType attr if it doesn't exist
-            if not cmds.attributeQuery('inflType', n=influence, exists=True):
-                cmds.addAttr(influence, at='short', sn='ift', ln='inflType', dv=2, min=1, max=2)
-
-            cmds.connectAttr(influenceShape + '.worldMesh', wrapNode + '.driverPoints[0]')
-            cmds.connectAttr(baseShape + '.worldMesh', wrapNode + '.basePoints[0]')
-            cmds.connectAttr(influence + '.inflType', wrapNode + '.inflType[0]')
-            cmds.connectAttr(influence + '.smoothness', wrapNode + '.smoothness[0]')
-
-        # if type nurbsCurve or nurbsSurface
-        if cmds.nodeType(influenceShape) == 'nurbsCurve' or cmds.nodeType(influenceShape) == 'nurbsSurface':
-            # create the wrapSamples attr if it doesn't exist
-            if not cmds.attributeQuery('wrapSamples', n=influence, exists=True):
-                cmds.addAttr(influence, at='short', sn='wsm', ln='wrapSamples', dv=10, min=1)
-                cmds.setAttr(influence + '.wsm', k=True)
-
-            cmds.connectAttr(influenceShape + '.ws', wrapNode + '.driverPoints[0]')
-            cmds.connectAttr(baseShape + '.ws', wrapNode + '.basePoints[0]')
-            cmds.connectAttr(influence + '.wsm', wrapNode + '.nurbsSamples[0]')
-
-        cmds.connectAttr(influence + '.dropoff', wrapNode + '.dropoff[0]')
-        # I want to return a pyNode object for the wrap deformer.
-        # I do not see the reason to rewrite the code here into pymel.
-        return wrapNode, base
-
-class Guides(object):
-    def __init__(self, side="L", suffix="tentacle", segments=None, tMatrix=None, upVector=(0, 1, 0),
-                 mirrorVector=(1, 0, 0), lookVector=(0, 0, 1), *args, **kwargs):
-        super(Guides, self).__init__()
-        # fool check
-
-        # -------Mandatory------[Start]
-        self.side = side
-        self.sideMultiplier = -1 if side == "R" else 1
-        self.suffix = suffix
-        self.segments = segments
-        self.tMatrix = om.MMatrix(tMatrix) if tMatrix else om.MMatrix()
-        self.upVector = om.MVector(upVector)
-        self.mirrorVector = om.MVector(mirrorVector)
-        self.lookVector = om.MVector(lookVector)
-
-        self.offsetVector = None
-        self.guideJoints = []
-        # -------Mandatory------[End]
+    def __init__(self, *args, **kwargs):
+        super(Guides, self).__init__(*args, **kwargs)
+        self.segments = kwargs.get("segments", 2)  # minimum segments required for the module is 2
 
     def draw_joints(self):
-        rPointTentacle = om.MVector(0, 14, 0) * self.tMatrix
+        r_point_tentacle = om.MVector(0, 14, 0) * self.tMatrix
         if self.side == "C":
             # Guide joint positions for limbs with no side orientation
-            nPointTentacle = om.MVector(0, 14, 10) * self.tMatrix
+            n_point_tentacle = om.MVector(0, 14, 10) * self.tMatrix
         else:
             # Guide joint positions for limbs with sides
-            nPointTentacle = om.MVector(10 * self.sideMultiplier, 14, 0) * self.tMatrix
+            n_point_tentacle = om.MVector(10 * self.sideMultiplier, 14, 0) * self.tMatrix
 
-        addTentacle = (nPointTentacle - rPointTentacle) / ((self.segments + 1) - 1)
+        add_tentacle = (n_point_tentacle - r_point_tentacle) / ((self.segments + 1) - 1)
 
         # Define the offset vector
-        self.offsetVector = (nPointTentacle - rPointTentacle).normal()
+        self.offsetVector = (n_point_tentacle - r_point_tentacle).normal()
 
         # Draw the joints
         for seg in range(self.segments + 1):
-            tentacle_jnt = cmds.joint(p=(rPointTentacle + (addTentacle * seg)),
-                                      name="jInit_tentacle_%s_%i" % (self.suffix, seg))
+            tentacle_jnt = cmds.joint(position=(r_point_tentacle + (add_tentacle * seg)),
+                                      name=naming.parse([self.name, seg], side=self.side, suffix="jInit"))
             # Update the guideJoints list
             self.guideJoints.append(tentacle_jnt)
 
@@ -650,30 +601,6 @@ class Guides(object):
         joint.orient_joints(self.guideJoints, world_up_axis=self.upVector, up_axis=(0, 1, 0),
                             reverse_aim=self.sideMultiplier, reverse_up=self.sideMultiplier)
 
-    def define_attributes(self):
-        # set joint side and type attributes
+    def define_guides(self):
         joint.set_joint_type(self.guideJoints[0], "TentacleRoot")
         _ = [joint.set_joint_type(jnt, "Tentacle") for jnt in self.guideJoints[1:]]
-        _ = [joint.set_joint_side(jnt, self.side) for jnt in self.guideJoints]
-
-        # ----------Mandatory---------[Start]
-        root_jnt = self.guideJoints[0]
-        attribute.create_global_joint_attrs(root_jnt, moduleName="%s_Tentacle" % self.side, upAxis=self.upVector, mirrorAxis=self.mirrorVector,
-                                            lookAxis=self.lookVector)
-        # ----------Mandatory---------[End]
-
-        for attr_dict in LIMB_DATA["properties"]:
-            attribute.create_attribute(root_jnt, attr_dict)
-
-    def createGuides(self):
-        self.draw_joints()
-        self.define_attributes()
-
-    def convertJoints(self, joints_list):
-        if len(joints_list) < 2:
-            log.warning("Define or select at least 2 joints for Tentacle Guide conversion. Skipping")
-            return
-        self.guideJoints = joints_list
-        self.define_attributes()
-
-

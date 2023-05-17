@@ -16,7 +16,8 @@ logger = logging.getLogger(__name__)
 from trigger.library import fbx
 
 from trigger.core import compatibility
-from trigger.library.functions import unique_list
+from trigger.library import functions
+from trigger.library import connection
 from trigger.ui.Qt import QtWidgets, QtCore, QtCompat
 from trigger.ui import feedback
 from maya import OpenMayaUI as omui
@@ -103,7 +104,6 @@ class TriggerTool(object):
     def __init__(self):
         super(TriggerTool, self).__init__()
         self.definitions = self.load_globals()
-        self.mapping = self.load_import_mapping()
 
         # self.all_ctrls = self.get_all_controllers()
 
@@ -113,6 +113,8 @@ class TriggerTool(object):
 
         # self.zero_dictionary = {"translate": (0,0,0), "rotate": (0,0,0), "scale": (1,1,1)}
         self.zero_dictionary = {"tx": 0, "ty": 0, "tz": 0, "rx": 0, "ry": 0, "rz": 0, "sx": 1, "sy": 1, "sz": 1}
+
+        # self.follow_locators = []
 
     def _get_all_controls(self):
         """Selects all controllers based on the override settings"""
@@ -253,7 +255,7 @@ class TriggerTool(object):
     @undo
     def mirror_pose(self, mode, swap=False):
         selected_conts = cmds.ls(sl=True)
-        mirror_conts = unique_list(list(self._get_mirror_controls()))
+        mirror_conts = functions.unique_list(list(self._get_mirror_controls()))
         for mirror_cont, orig_cont in zip(mirror_conts, selected_conts):
             for nmb, attr in enumerate("xyz"):
                 orig_t_value = cmds.getAttr("%s.t%s" %(orig_cont, attr))
@@ -304,24 +306,6 @@ class TriggerTool(object):
             self.save_globals(default_definitions)
             return default_definitions
 
-    def load_import_mapping(self):
-        # first look at the home folder
-        documents_file_path = os.path.join(os.path.expanduser("~"), "panel_importmapping.json")
-        if os.path.isfile(documents_file_path):
-            file_path = documents_file_path
-        else:
-            dir_path = os.path.dirname(os.path.realpath(__file__))
-            file_path = os.path.join(dir_path, "panel_importmapping.json")
-        if os.path.isfile(file_path):
-            try:
-                with open(file_path, 'r') as f:
-                    definitions = json.load(f)
-                    return definitions
-            except ValueError:
-                cmds.error("Corrupted JSON file => %s" % file_path)
-        else:
-            cmds.error("Definition file cannot be found. Using default settings")
-
     def save_globals(self, definitions_data):
         dir_path = os.path.dirname(os.path.realpath(__file__))
         file_path = os.path.join(dir_path, "panel_globals.json")
@@ -350,56 +334,6 @@ class TriggerTool(object):
                 return False
         return True
 
-    @undo
-    def import_animation(self, bind_pose_path, fbx_path):
-        fbx_namespace = "_trigger_"
-        # anim_fbx_namepace = "_trigger_anim_fbx"
-        self._load_fbx_plugin()
-        fbx_import_settings = {
-            "FBXImportMergeBackNullPivots": "-v true",
-            "FBXImportMode": "-v add",
-            "FBXImportSetLockedAttribute": "-v false",
-            "FBXImportUnlockNormals": "-v false",
-            "FBXImportScaleFactor": "1.0",
-            "FBXImportProtectDrivenKeys": "-v true",
-            "FBXImportShapes": "-v true",
-            "FBXImportQuaternion": "-v euler",
-            "FBXImportCameras": "-v true",
-            "FBXImportSetMayaFrameRate": "-v false",
-            "FBXImportResamplingRateSource": "-v Scene",
-            "FBXImportGenerateLog": "-v false",
-            "FBXImportConstraints": "-v true",
-            "FBXImportLights": "-v true",
-            "FBXImportConvertDeformingNullsToJoint": "-v true",
-            "FBXImportFillTimeline": "-v false",
-            "FBXImportMergeAnimationLayers": "-v true",
-            "FBXImportHardEdges": "-v false",
-            "FBXImportAxisConversionEnable": "-v true",
-            "FBXImportCacheFile": "-v true",
-            "FBXImportUpAxis": "y",
-            "FBXImportSkins": "-v true",
-            "FBXImportConvertUnitString": "-v true",
-            "FBXImportForcedFileAxis": "-v disabled"
-        }
-        for item in fbx_import_settings.items():
-            mel.eval('%s %s' % (item[0], item[1]))
-
-        bind_pose_nodes = fbx.load(bind_pose_path, merge_mode="add", animation=False, skins=True)
-        # cmds.file(bind_pose_path, reference=True, mergeNamespacesOnClash=True, namespace=fbx_namespace)
-        # updated_mapping = self._update_mapping_dictionary(self.mapping, fbx_namespace, self.namespace)
-        self._stick_to_joints(self.mapping)
-        # cmds.file(fbx_path, reference=True, mergeNamespacesOnClash=True, namespace=fbx_namespace)
-
-        # anim_nodes = fbx.load(fbx_path, merge_mode="merge", animation=True, skins=True)
-        # self._bake_ctrls(updated_mapping)
-
-        # self._bake_ctrls(self.mapping)
-
-        # cmds.file(fbx_path, rr=True)
-        # delete imported fbx nodes
-        # all_nodes = list(set(bind_pose_nodes + anim_nodes))
-        # cmds.delete(all_nodes)
-
     def _info_pop(self, textTitle="info", textHeader="", textInfo="", type="I"):
         self.msg = QtWidgets.QMessageBox(parent=self)
         if type == "I":
@@ -414,46 +348,6 @@ class TriggerTool(object):
         self.msg.button(QtWidgets.QMessageBox.Ok).setFixedHeight(30)
         self.msg.button(QtWidgets.QMessageBox.Ok).setFixedWidth(100)
         self.msg.show()
-
-
-    def _load_fbx_plugin(self):
-        if not cmds.pluginInfo('fbxmaya', l=True, q=True):
-            try:
-                cmds.loadPlugin('fbxmaya')
-            except:
-                msg = "FBX Plugin cannot be initialized."
-                cmds.error(msg)
-
-    def _stick_to_joints(self, mapping_dictionary):
-        for joint, cont in mapping_dictionary.items():
-            # import pdb
-            # pdb.set_trace()
-
-            if cmds.objExists(joint) and cmds.objExists(cont):
-
-                locked_translates_raw = cmds.listAttr("%s.t" % cont, l=True, sn=True)
-                locked_translates = [attr.replace("t", "") for attr in
-                                     locked_translates_raw] if locked_translates_raw else []
-                locked_rotates_raw = cmds.listAttr("%s.r" % cont, l=True, sn=True)
-                locked_rotates = [attr.replace("r", "") for attr in locked_rotates_raw] if locked_rotates_raw else []
-                cmds.parentConstraint(joint, cont, maintainOffset=True, st=locked_translates, sr=locked_rotates)
-
-    def _bake_ctrls(self, mapping_dictionary):
-        for joint, cont in mapping_dictionary.items():
-            if cmds.objExists(joint) and cmds.objExists(cont):
-                first = cmds.findKeyframe(joint, which="first")
-                last = cmds.findKeyframe(joint, which="last") + 1 # makes sure round up
-                cmds.bakeResults(cont, t=(first, last), simulation=False)
-
-
-    def _update_mapping_dictionary(self, mapping_dictionary, joint_namespace, cont_namespace):
-        """Updates the mapping dictionary with namespaces"""
-        jnt_template = "{0}:{1}" if joint_namespace else "{0}{1}"
-        cont_template = "{0}:{1}" if cont_namespace else "{0}{1}"
-        updated_mapping_dictionary = {
-            jnt_template.format(joint_namespace, joint): cont_template.format(cont_namespace, cont) for joint, cont in
-            mapping_dictionary.items()}
-        return updated_mapping_dictionary
 
 def dock_window(dialog_class):
     try:
@@ -692,36 +586,6 @@ class MainUI(QtWidgets.QWidget):
         self.main_vlay.addWidget(self.settings_gbox)
 
 
-        self.import_gbox = QtWidgets.QGroupBox(self.centralwidget)
-        self.import_gbox.setTitle("Import FBX")
-
-        self.import_grp_vlay = QtWidgets.QVBoxLayout(self.import_gbox)
-        self.import_grp_vlay.setContentsMargins(5, 0, 5, 0)
-        self.import_grp_vlay.setSpacing(5)
-
-        self.import_grp_hlay0 = QtWidgets.QHBoxLayout()
-        self.import_grp_vlay.addLayout(self.import_grp_hlay0)
-        self.import_bind_pose_le = QtWidgets.QLineEdit(self.import_gbox)
-        self.import_bind_pose_le.setPlaceholderText("Browse a Bind Pose FBX file")
-        self.import_grp_hlay0.addWidget(self.import_bind_pose_le)
-        self.import_bind_pose_browse_pb = QtWidgets.QPushButton(self.import_gbox)
-        self.import_bind_pose_browse_pb.setText("...")
-        self.import_grp_hlay0.addWidget(self.import_bind_pose_browse_pb)
-
-        self.import_grp_hlay1 = QtWidgets.QHBoxLayout(self.import_gbox)
-        self.import_grp_vlay.addLayout(self.import_grp_hlay1)
-        self.import_le = QtWidgets.QLineEdit(self.import_gbox)
-        self.import_le.setPlaceholderText("Browse a FBX file")
-        self.import_grp_hlay1.addWidget(self.import_le)
-        self.import_browse_pb = QtWidgets.QPushButton(self.import_gbox)
-        self.import_browse_pb.setText("...")
-        self.import_grp_hlay1.addWidget(self.import_browse_pb)
-        self.import_animation_pb = QtWidgets.QPushButton(self.import_gbox)
-        self.import_animation_pb.setText("Remap Animation")
-        self.import_grp_vlay.addWidget(self.import_animation_pb)
-
-        self.main_vlay.addWidget(self.import_gbox)
-
         ######3 SIGNALS #######
 
         self.namespace_combo.currentTextChanged.connect(lambda x: self.tr_tool.set_namespace(x))
@@ -738,10 +602,6 @@ class MainUI(QtWidgets.QWidget):
         self.zero_tpose_pb.clicked.connect(self.tr_tool.zero_pose)
         self.reset_tpose_pb.clicked.connect(self.tr_tool.reset_pose)
         self.override_namespace_cb.stateChanged.connect(self.on_override_namespace)
-
-        self.import_browse_pb.clicked.connect(self.on_import_browse)
-        self.import_bind_pose_browse_pb.clicked.connect(self.on_import_bind_pose_browse)
-        self.import_animation_pb.clicked.connect(self.on_import_animation)
 
     def on_import_bind_pose_browse(self):
         dlg = QtWidgets.QFileDialog()

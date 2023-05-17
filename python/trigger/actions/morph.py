@@ -5,7 +5,6 @@ import itertools
 
 from maya import cmds
 
-from trigger.core.decorators import viewportOff
 from trigger.ui.Qt import QtWidgets, QtGui
 from trigger.library import functions, attribute, deformers, naming
 
@@ -47,7 +46,6 @@ class Morph(object):
         self.morphHook = action_data.get("hook_node")
         self.morphMesh = action_data.get("morph_mesh")
 
-    @viewportOff
     def action(self):
         """Execute Action - Mandatory"""
         assert self.blendshapesGroup, "Blendshape Group not defined"

@@ -3,6 +3,8 @@ import os
 from maya import cmds
 from trigger.core import filelog
 from trigger.core import database
+from trigger.core.decorators import suppress_warnings
+from trigger.core.compatibility import is_string
 from trigger.library import functions, naming, joint
 from trigger.library import attribute
 from trigger.library import api
@@ -17,7 +19,7 @@ from trigger.actions import master
 
 from trigger.ui.Qt import QtWidgets, QtGui # for progressbar
 from trigger.ui import custom_widgets
-from trigger.ui.widgets.browser_button import BrowserButton
+from trigger.ui.widgets.browser import BrowserButton, FileLineEdit
 
 log = filelog.Filelog(logname=__name__, filename="trigger_log")
 db = database.Database()
@@ -123,7 +125,7 @@ class Kinematics(object):
         file_path_lbl = QtWidgets.QLabel(text="File Path:")
         file_path_hLay = QtWidgets.QHBoxLayout()
         file_path_le = QtWidgets.QLineEdit()
-        file_path_le = custom_widgets.FileLineEdit()
+        file_path_le = FileLineEdit()
         file_path_hLay.addWidget(file_path_le)
         browse_path_pb = BrowserButton(update_widget=file_path_le, mode="openFile", filterExtensions=["Trigger Guide Files (*.trg)"])
         file_path_hLay.addWidget(browse_path_pb)
@@ -345,6 +347,7 @@ class Kinematics(object):
         index = distanceList.index(min(distanceList))
         return limbSockets[index]
 
+    @suppress_warnings
     def createlimbs(self, limbCreationList=None, add_limb=False, root_plug=None, parent_socket=None, master_cont=None,
                     selection_mode=False, *args, **kwargs):
         """
@@ -481,7 +484,14 @@ class Kinematics(object):
                 for sCon in limb.scaleConstraints:
                     # if this is the root limb, use its values to scale the entire rig
                     if x == limbCreationList[0]:
-                        self.scaleRoot = "pref_cont" if not limb.controllers else limb.controllers[0]
+                        if not limb.controllers:
+                            self.scaleRoot = "pref_cont"
+                        else:
+                            if is_string(limb.controllers[0]):
+                                self.scaleRoot = limb.controllers[0]
+                            else:
+                                self.scaleRoot = limb.controllers[0].name
+                        # self.scaleRoot = "pref_cont" if not limb.controllers else limb.controllers[0].name
                         # cmds.scaleConstraint(self.scaleRoot, sCon)
 
                         # cmds.connectAttr("%s.s" % self.scaleRoot, "%s.s" %sCon, force=True)
@@ -489,7 +499,13 @@ class Kinematics(object):
                         cmds.connectAttr("%s.s" % self.scaleRoot, "%s.s" %sCon, force=True)
                 # import pdb
                 # pdb.set_trace()
+                # print("Horayyy")
+                # suppress the warnings
+
+                print(self.scaleRoot)
+
                 cmds.connectAttr("%s.s" % self.scaleRoot, "%s.s" %limb.scaleGrp, force=True)
+                # cmds.error()
                 for s_attr in "xyz":
                     cmds.setAttr("{0}.s{1}".format(self.scaleRoot, s_attr), e=True, k=True, l=False)
                     # cmds.scaleConstraint("pref_cont", sCon)

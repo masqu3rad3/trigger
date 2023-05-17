@@ -5,7 +5,7 @@ from trigger.actions import import_asset
 from trigger.library import naming
 
 from trigger.ui.Qt import QtWidgets, QtGui # for progressbar
-from trigger.ui.widgets.browser_button import BrowserButton
+from trigger.ui.widgets.browser import BrowserButton
 from trigger.ui import custom_widgets
 
 log = filelog.Filelog(logname=__name__, filename="trigger_log")

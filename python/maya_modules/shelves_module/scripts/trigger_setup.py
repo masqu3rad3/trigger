@@ -55,6 +55,9 @@ def load_menu():
     blendshape_transfer_command = "from trigger.utils import blendshape_transfer\nblendshape_transfer.MainUI().show()"
     add_to_menu("Trigger", "Blendshape Transfer", blendshape_transfer_command)
 
+    mocap_mapper_command = "import trigger.utils.mocap.ui as mocap_ui\nmocap_ui.launch()"
+    add_to_menu("Trigger", "Mocap Mapper", mocap_mapper_command)
+
     # add a separator
     cmds.menuItem(divider=True)
     recreate_command = "trigger_setup.load_shelves(reset=True)"
