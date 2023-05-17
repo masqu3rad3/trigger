@@ -35,12 +35,13 @@ class TwistSpline(object):
             dropoff: (Float) Drop off value for skin bind between control curve and control joints
             mode: (String) The mode for joint creation. Valid valuer are 'equalDistance' and 'sameDistance'. 
                             If 'equalDistance' The chain joints will be seperated evenly. If 'sameDistance'
-                            cuts value will be ignored and reference joint lengths will be used. Default: 'equalDistance'
-            twistType: (String) Valid values are 'infinite', 'regular' and 'simple'. 'infinite' will use the awesomeSpline method
-                        which will allow 360 degree rotations, but will be problematic if many midcontrollers are present.
-                        'regular' mode is better if there are several middle controllers, but the spine cannot turn a full 360
-                        without flipping. 'simple' mode is best for tentacles and terminal limbs which twisting will occur only
-                        one end of the limb.
+                            cuts value will be ignored and reference joint lengths will be used.
+                            Default: 'equalDistance'
+            twistType: (String) Valid values are 'infinite', 'regular' and 'simple'. 'infinite' will use
+                        the awesomeSpline method which will allow 360 degree rotations, but will be problematic if many
+                        midcontrollers are present. 'regular' mode is better if there are several middle controllers,
+                        but the spine cannot turn a full 360 without flipping. 'simple' mode is best for tentacles and
+                        terminal limbs which twisting will occur only one end of the limb.
 
         Returns: None
 
@@ -97,7 +98,8 @@ class TwistSpline(object):
                 ctrl_vc = split_vc.normal() * cont_distances[index]
                 place = root_vc + ctrl_vc
                 # j = cmds.joint(position=place, name="jIK_%s%i" % (name, index), radius=2, orientation=(0, 0, 0))
-                j = cmds.joint(position=place, name=naming.parse([name, "IK", index], suffix="j"), radius=2, orientation=(0, 0, 0))
+                j = cmds.joint(position=place, name=naming.parse([name, "IK", index], suffix="j"), radius=2,
+                               orientation=(0, 0, 0))
                 ik_joints.append(j)
                 curve_points.append(place)
         else:
@@ -120,7 +122,6 @@ class TwistSpline(object):
         for nmb, jnt in enumerate(_duplicates):
             self.defJoints.append(cmds.rename(jnt, naming.parse([name, nmb], suffix="jDef")))
 
-
         # create the controller joints
         cont_joints = []
         cmds.select(clear=True)
@@ -128,7 +129,8 @@ class TwistSpline(object):
             ctrl_vc = split_vc.normal() * cont_distances[index]
             place = root_vc + ctrl_vc
             # jnt = cmds.joint(position=place, name="jCont_spline_%s%i" % (name, index), radius=5, orientation=(0, 0, 0))
-            jnt = cmds.joint(position=place, name=naming.parse([name, "splineDriver", index], suffix="j"), radius=5, orientation=(0, 0, 0))
+            jnt = cmds.joint(position=place, name=naming.parse([name, "splineDriver", index], suffix="j"), radius=5,
+                             orientation=(0, 0, 0))
             cont_joints.append(jnt)
 
         joint.orient_joints(cont_joints, world_up_axis=self.upAxis)
@@ -141,7 +143,8 @@ class TwistSpline(object):
         # create the splineIK for the IK joints
         # # create the spline curve
         # spline_curve = cmds.curve(name="splineCurve_%s" % name, degree=curve_type, point=curve_points)
-        spline_curve = cmds.curve(name=naming.parse([name, "spline"], suffix="crv"), degree=curve_type, point=curve_points)
+        spline_curve = cmds.curve(name=naming.parse([name, "spline"], suffix="crv"), degree=curve_type,
+                                  point=curve_points)
         # # create spline IK
         spline_ik = cmds.ikHandle(solver="ikSplineSolver", createCurve=False, curve=spline_curve,
                                   startJoint=ik_joints[0],
@@ -218,7 +221,7 @@ class TwistSpline(object):
                     side="center",
                     tier="secondary"
                 )
-                _cont_curve_name = cont_curve.name # workaround to save some lines
+                _cont_curve_name = cont_curve.name  # workaround to save some lines
             else:
                 # cont_curve = cmds.spaceLocator(name="lockPoint_%s%i" % (name, jnt))[0]
                 _cont_curve_name = cmds.spaceLocator(name=naming.parse([name, jnt, "lockPoint"], suffix="loc"))[0]

@@ -9,6 +9,7 @@ from trigger.library import connection
 from trigger.library import joint
 
 from trigger.core import filelog
+
 LOG = filelog.Filelog(logname=__name__, filename="trigger_log")
 
 LIMB_DATA = {
@@ -18,8 +19,9 @@ LIMB_DATA = {
     "sided": True,
 }
 
+
 class ModuleCore(object):
-    def __init__(self, build_data=None, inits=None, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
 
         self.inits = []
         self.limbGrp = None
@@ -43,6 +45,7 @@ class ModuleCore(object):
         self.rigJointsGrp = None
         self.defJointsGrp = None
         self.contBindGrp = None
+        self.plugBindGrp = None
 
         # TODO: Make this redundant. Check it against all modules.
         self.cont_IK_OFF = None
@@ -60,15 +63,17 @@ class ModuleCore(object):
 
         # limb group does not have a suffix.
         self.limbGrp = cmds.group(name=naming.parse([self.module_name]), empty=True)
-
         self.scaleGrp = cmds.group(name=naming.parse([self.module_name, "scale"], suffix="grp"), empty=True)
 
         functions.align_to(self.scaleGrp, self.inits[0], position=True, rotation=False)
         self.nonScaleGrp = cmds.group(name=naming.parse([self.module_name, "nonScale"], suffix="grp"), empty=True)
 
-        cmds.addAttr(self.scaleGrp, attributeType="bool", longName="Control_Visibility", shortName="contVis", defaultValue=True)
-        cmds.addAttr(self.scaleGrp, attributeType="bool", longName="Joints_Visibility", shortName="jointVis", defaultValue=True)
-        cmds.addAttr(self.scaleGrp, attributeType="bool", longName="Rig_Visibility", shortName="rigVis", defaultValue=False)
+        cmds.addAttr(self.scaleGrp, attributeType="bool", longName="Control_Visibility", shortName="contVis",
+                     defaultValue=True)
+        cmds.addAttr(self.scaleGrp, attributeType="bool", longName="Joints_Visibility", shortName="jointVis",
+                     defaultValue=True)
+        cmds.addAttr(self.scaleGrp, attributeType="bool", longName="Rig_Visibility", shortName="rigVis",
+                     defaultValue=False)
         # make the created attributes visible in the channel box
         cmds.setAttr("%s.contVis" % self.scaleGrp, channelBox=True)
         cmds.setAttr("%s.jointVis" % self.scaleGrp, channelBox=True)
@@ -76,15 +81,10 @@ class ModuleCore(object):
 
         cmds.parent(self.scaleGrp, self.limbGrp)
         cmds.parent(self.nonScaleGrp, self.limbGrp)
-        ################################################################################################################
 
         self.controllerGrp = cmds.group(name=naming.parse([self.module_name, "controller"], suffix="grp"), empty=True)
         attribute.lock_and_hide(self.controllerGrp)
         cmds.parent(self.controllerGrp, self.limbGrp)
-
-        # self.jointGrp = cmds.group(name=naming.parse([self.module_name, "joint"], suffix="grp"), empty=True)
-        # attribute.lock_and_hide(self.controllerGrp)
-        # cmds.parent(self.jointGrp, self.limbGrp)
 
         self.localOffGrp = cmds.group(name=naming.parse([self.module_name, "localOffset"], suffix="grp"), empty=True)
         self.plugBindGrp = cmds.group(name=naming.parse([self.module_name, "plugBind"], suffix="grp"), empty=True)
@@ -93,13 +93,6 @@ class ModuleCore(object):
 
         self.contBindGrp = cmds.group(name=naming.parse([self.module_name, "controllerBind"], suffix="grp"), empty=True)
         cmds.parent(self.contBindGrp, self.localOffGrp)
-
-        ################################################################################################################`
-        # self.localOffGrp = cmds.group(name=naming.parse([self.module_name, "localOffset"], suffix="grp"), empty=True)
-        # self.plugBindGrp = cmds.group(name=naming.parse([self.module_name, "bind"], suffix="grp"), empty=True)
-        #
-        # cmds.parent(self.localOffGrp, self.plugBindGrp)
-        # cmds.parent(self.plugBindGrp, self.limbGrp)
 
         # scale hook gets the scale value from the bind group but not from the localOffset
         self.scaleHook = cmds.group(name=naming.parse([self.module_name, "scaleHook"], suffix="grp"), empty=True)
@@ -126,10 +119,11 @@ class ModuleCore(object):
         """Finalize the rig creation. This method will be overridden for each module."""
         # TODO: remove this condition when the modules are finalized
         if self.scaleGrp in self.scaleConstraints:
-            LOG.warning("Scale group is in scale constraints list. This needs to be done in inherited class. Remove this in module class")
+            LOG.warning(
+                "Scale group is in scale constraints list. This needs to be done in inherited class. \
+                Remove this in module class")
         else:
             self.scaleConstraints.append(self.scaleGrp)
-
 
     def createLimb(self):
         """Create the limb rig."""
@@ -140,7 +134,9 @@ class ModuleCore(object):
 
 class GuidesCore(object):
     limb_data = LIMB_DATA
-    def __init__(self, side="L", suffix="", segments=None, tMatrix=None, upVector=(0, 1, 0), mirrorVector=(1, 0, 0), lookVector=(0, 0, 1), *args, **kwargs):
+
+    def __init__(self, side="L", suffix="", segments=None, tMatrix=None, upVector=(0, 1, 0), mirrorVector=(1, 0, 0),
+                 lookVector=(0, 0, 1), *args, **kwargs):
         self.side = side
         self.sideMultiplier = -1 if side == "R" else 1
         self.name = suffix or "noName"
@@ -167,30 +163,10 @@ class GuidesCore(object):
         # TODO: define_guides currently getting overridden on each module.
         #  We need to find a way to make it work without the need of overriding.
         self.define_guides()
-        # multi_guide = self.limb_data["multi_guide"]
-        # members = self.limb_data["members"]
-        # if not multi_guide:
-        #     # if its not a multi guide, set the joint type for each joint with corresponding member
-        #     _ = [joint.set_joint_type(jnt, mem) for jnt, mem in zip(self.guideJoints, members)]
-        # else:
-        #     # if its multi, root is the first member
-        #     joint.set_joint_type(self.guideJoints[0], members[0])
-        #     for nmb, guide in enumerate(self.guideJoints):
-        #         if nmb == 0:
-        #             joint.set_joint_type(self.guideJoints[0], members[0])
-        #             continue
-        #         if members[nmb] == multi_guide:
-        #             joint.set_joint_type(guide, multi_guide)
-        #             # TODO: MAKE THIS WORK
-
-        # # set joint side and type attributes
-        # joint.set_joint_type(self.guideJoints[0], self.limb_data["members"][0]) # root is always first member
-        # _ = [joint.set_joint_type(jnt, "Fkik") for jnt in self.guideJoints[1:]]
 
         # set sides
         _ = [joint.set_joint_side(jnt, self.side) for jnt in self.guideJoints]
 
-        # ----------Mandatory---------[Start]
         root_jnt = self.guideJoints[0]
         attribute.create_global_joint_attrs(
             root_jnt,
@@ -198,11 +174,9 @@ class GuidesCore(object):
             upAxis=self.upVector,
             mirrorAxis=self.mirrorVector,
             lookAxis=self.lookVector)
-        # ----------Mandatory---------[End]
 
         for attr_dict in self.limb_data["properties"]:
             attribute.create_attribute(root_jnt, attr_dict)
-
 
     def createGuides(self):
         """Create the guides."""
@@ -210,10 +184,8 @@ class GuidesCore(object):
         self.define_attributes()
 
     def convertJoints(self, joints_list):
-        self._validate()
-        # if len(joints_list) < 2:
-        #     LOG.warning("Define or select at least 2 joints for FK Guide conversion. Skipping")
-        #     return
+        """Convert regular joints into guide joints."""
+        self._validate(joints_list)
         self.guideJoints = joints_list
         self.define_attributes()
 
@@ -226,4 +198,5 @@ class GuidesCore(object):
         if _min == _max and len(joints_list) != _min:
             LOG.error("segments for module {0} must be equal to {1}".format(self.name, _min), proceed=False)
         if len(joints_list) < _min or self.segments > _max:
-            LOG.error("segments for module {0} must be between {1} and {2}".format(self.name, _min, _max), proceed=False)
+            LOG.error("segments for module {0} must be between {1} and {2}".format(self.name, _min, _max),
+                      proceed=False)

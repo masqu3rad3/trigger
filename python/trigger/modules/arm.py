@@ -29,8 +29,7 @@ LIMB_DATA = {
 
 
 class Arm(_module.ModuleCore):
-# class Arm(object):
-    def __init__(self, build_data=None, inits=None, *args, **kwargs):
+    def __init__(self, build_data=None, inits=None):
         super(Arm, self).__init__()
         # fool proofing
 
@@ -109,15 +108,6 @@ class Arm(_module.ModuleCore):
         self.startLockTwist = None
         self.endLock = None
 
-
-        # self.scaleHook = None
-        # self.rigJointsGrp = None
-        # self.defJointsGrp = None
-        # self.localOffGrp = None
-        # self.controllerGrp = None
-        # self.contBindGrp = None
-
-        # joints
         self.j_def_collar, self.j_collar_end, self.j_def_elbow = None, None, None
         self.j_ik_orig_up, self.j_ik_orig_low, self.j_ik_orig_low_end = None, None, None
         self.j_ik_sc_up, self.j_ik_sc_low, self.j_ik_sc_low_end = None, None, None
@@ -125,64 +115,12 @@ class Arm(_module.ModuleCore):
         self.j_fk_up, self.j_fk_low, self.j_fk_low_end = None, None, None
         self.j_def_hand = None
 
-        # session variables
-        # self.controllers = []
-        # self.sockets = []
-        # self.limbGrp = None
-        # self.scaleGrp = None
-        # self.nonScaleGrp = None
-        # self.limbPlug = None
-        # self.scaleConstraints = []
-        # self.anchors = []
-        # self.anchorLocations = []
-        # self.deformerJoints = []
-        # self.colorCodes = [6, 18]
-
-    # def create_groups(self):
-    #     """Create module groups."""
-    #
-    #     self.limbGrp = cmds.group(name=naming.parse(self.module_name, suffix="grp"), empty=True)
-    #     self.scaleGrp = cmds.group(name=naming.parse([self.module_name, "scale"], suffix="grp"), empty=True)
-    #     functions.align_to(self.scaleGrp, self.collar_ref, position=True, rotation=False)
-    #     self.nonScaleGrp = cmds.group(name=naming.parse([self.module_name, "nonScale"], suffix="grp"), empty=True)
-    #
-    #     cmds.addAttr(self.scaleGrp, attributeType="bool", longName="Control_Visibility", shortName="contVis", defaultValue=True)
-    #     cmds.addAttr(self.scaleGrp, attributeType="bool", longName="Joints_Visibility", shortName="jointVis", defaultValue=True)
-    #     cmds.addAttr(self.scaleGrp, attributeType="bool", longName="Rig_Visibility", shortName="rigVis", defaultValue=False)
-    #     # make the created attributes visible in the channel box
-    #     cmds.setAttr("%s.contVis" % self.scaleGrp, channelBox=True)
-    #     cmds.setAttr("%s.jointVis" % self.scaleGrp, channelBox=True)
-    #     cmds.setAttr("%s.rigVis" % self.scaleGrp, channelBox=True)
-    #
-    #     cmds.parent(self.scaleGrp, self.limbGrp)
-    #     cmds.parent(self.nonScaleGrp, self.limbGrp)
-    #
-    #     self.localOffGrp = cmds.group(name=naming.parse([self.module_name, "localOffset"], suffix="grp"), empty=True)
-    #     self.controllerGrp = cmds.group(name=naming.parse([self.module_name, "controller"], suffix="grp"), empty=True)
-    #     cmds.parent(self.localOffGrp, self.controllerGrp)
-    #     cmds.parent(self.controllerGrp, self.limbGrp)
-    #
-    #     self.contBindGrp = cmds.group(name=naming.parse([self.module_name, "controllerBind"], suffix="grp"), empty=True)
-    #     cmds.parent(self.contBindGrp, self.localOffGrp)
-    #
-    #     # scale hook gets the scale value from the bind group but not from the localOffset
-    #     self.scaleHook = cmds.group(name=naming.parse([self.module_name, "scaleHook"], suffix="grp"), empty=True)
-    #     cmds.parent(self.scaleHook, self.limbGrp)
-    #     scale_skips = "xyz" if self.isLocal else ""
-    #     connection.matrixConstraint(self.contBindGrp, self.scaleHook, self.localOffGrp, skipScale=scale_skips)
-    #
-    #     self.rigJointsGrp = cmds.group(name=naming.parse([self.module_name, "rigJoints"], suffix="grp"), empty=True)
-    #     self.defJointsGrp = cmds.group(name=naming.parse([self.module_name, "defJoints"], suffix="grp"), empty=True)
-    #     cmds.parent(self.rigJointsGrp, self.limbGrp)
-    #     cmds.parent(self.defJointsGrp, self.limbGrp)
-    #
-    #     # self.scaleConstraints.append(self.scaleGrp)
-
     def create_joints(self):
-
+        """Create the joints for the arm."""
         # limb plug
         cmds.select(deselect=True)
-        self.limbPlug = cmds.joint(name=naming.parse([self.module_name, "plug"], suffix="j"), position=self.collar_pos, radius=3)
+        self.limbPlug = cmds.joint(name=naming.parse([self.module_name, "plug"], suffix="j"), position=self.collar_pos,
+                                   radius=3)
         cmds.parent(self.limbPlug, self.limbGrp)
         connection.matrixConstraint(self.limbPlug, self.contBindGrp, maintainOffset=True)
         if self.isLocal:
@@ -190,9 +128,11 @@ class Arm(_module.ModuleCore):
 
         # Shoulder Joints
         cmds.select(deselect=True)
-        self.j_def_collar = cmds.joint(name=naming.parse([self.module_name, "collar"], suffix="jDef"), position=self.collar_pos, radius=1.5)
+        self.j_def_collar = cmds.joint(name=naming.parse([self.module_name, "collar"], suffix="jDef"),
+                                       position=self.collar_pos, radius=1.5)
         self.sockets.append(self.j_def_collar)
-        self.j_collar_end = cmds.joint(name=naming.parse([self.module_name, "collarEnd"], suffix="j"), position=self.shoulder_pos, radius=1.5)
+        self.j_collar_end = cmds.joint(name=naming.parse([self.module_name, "collarEnd"], suffix="j"),
+                                       position=self.shoulder_pos, radius=1.5)
         self.sockets.append(self.j_collar_end)
 
         cmds.parent(self.j_def_collar, self.defJointsGrp)
@@ -208,27 +148,37 @@ class Arm(_module.ModuleCore):
 
         cmds.select(deselect=True)
 
-        self.j_def_elbow = cmds.joint(name=naming.parse([self.module_name, "elbow"], suffix="jDef"), position=self.elbow_pos, radius=1.5)
+        self.j_def_elbow = cmds.joint(name=naming.parse([self.module_name, "elbow"], suffix="jDef"),
+                                      position=self.elbow_pos, radius=1.5)
         self.sockets.append(self.j_def_elbow)
 
         # IK Joints
         # Follow IK Chain
         cmds.select(deselect=True)
-        self.j_ik_orig_up = cmds.joint(name=naming.parse([self.module_name, "IK", "orig", "up"], suffix="j"), position=self.shoulder_pos, radius=0.5)
-        self.j_ik_orig_low = cmds.joint(name=naming.parse([self.module_name, "IK", "orig", "low"], suffix="j"), position=self.elbow_pos, radius=0.5)
-        self.j_ik_orig_low_end = cmds.joint(name=naming.parse([self.module_name, "IK", "orig", "lowEnd"], suffix="j"), position=self.hand_pos, radius=0.5)
+        self.j_ik_orig_up = cmds.joint(name=naming.parse([self.module_name, "IK", "orig", "up"], suffix="j"),
+                                       position=self.shoulder_pos, radius=0.5)
+        self.j_ik_orig_low = cmds.joint(name=naming.parse([self.module_name, "IK", "orig", "low"], suffix="j"),
+                                        position=self.elbow_pos, radius=0.5)
+        self.j_ik_orig_low_end = cmds.joint(name=naming.parse([self.module_name, "IK", "orig", "lowEnd"], suffix="j"),
+                                            position=self.hand_pos, radius=0.5)
 
         # Single Chain IK
         cmds.select(deselect=True)
-        self.j_ik_sc_up = cmds.joint(name=naming.parse([self.module_name, "IK", "SC", "up"], suffix="j"), position=self.shoulder_pos, radius=1.0)
-        self.j_ik_sc_low = cmds.joint(name=naming.parse([self.module_name, "IK", "SC", "low"], suffix="j"), position=self.elbow_pos, radius=1.0)
-        self.j_ik_sc_low_end = cmds.joint(name=naming.parse([self.module_name, "IK", "SC", "lowEnd"], suffix="j"), position=self.hand_pos, radius=1)
+        self.j_ik_sc_up = cmds.joint(name=naming.parse([self.module_name, "IK", "SC", "up"], suffix="j"),
+                                     position=self.shoulder_pos, radius=1.0)
+        self.j_ik_sc_low = cmds.joint(name=naming.parse([self.module_name, "IK", "SC", "low"], suffix="j"),
+                                      position=self.elbow_pos, radius=1.0)
+        self.j_ik_sc_low_end = cmds.joint(name=naming.parse([self.module_name, "IK", "SC", "lowEnd"], suffix="j"),
+                                          position=self.hand_pos, radius=1)
 
         # Rotate Plane IK
         cmds.select(deselect=True)
-        self.j_ik_rp_up = cmds.joint(name=naming.parse([self.module_name, "IK", "RP", "up"], suffix="j"), position=self.shoulder_pos, radius=1.5)
-        self.j_ik_rp_low = cmds.joint(name=naming.parse([self.module_name, "IK", "RP", "low"], suffix="j"), position=self.elbow_pos, radius=1.5)
-        self.j_ik_rp_low_end = cmds.joint(name=naming.parse([self.module_name, "IK", "RP", "lowEnd"], suffix="j"), position=self.hand_pos, radius=1.5)
+        self.j_ik_rp_up = cmds.joint(name=naming.parse([self.module_name, "IK", "RP", "up"], suffix="j"),
+                                     position=self.shoulder_pos, radius=1.5)
+        self.j_ik_rp_low = cmds.joint(name=naming.parse([self.module_name, "IK", "RP", "low"], suffix="j"),
+                                      position=self.elbow_pos, radius=1.5)
+        self.j_ik_rp_low_end = cmds.joint(name=naming.parse([self.module_name, "IK", "RP", "lowEnd"], suffix="j"),
+                                          position=self.hand_pos, radius=1.5)
 
         cmds.select(deselect=True)
 
@@ -278,9 +228,12 @@ class Arm(_module.ModuleCore):
 
         # FK Joints
         cmds.select(deselect=True)
-        self.j_fk_up = cmds.joint(name=naming.parse([self.module_name, "FK", "up"], suffix="j"), position=self.shoulder_pos, radius=2.0)
-        self.j_fk_low = cmds.joint(name=naming.parse([self.module_name, "FK", "low"], suffix="j"), position=self.elbow_pos, radius=2.0)
-        self.j_fk_low_end = cmds.joint(name=naming.parse([self.module_name, "FK", "lowEnd"], suffix="j"), position=self.hand_pos, radius=2.0)
+        self.j_fk_up = cmds.joint(name=naming.parse([self.module_name, "FK", "up"], suffix="j"),
+                                  position=self.shoulder_pos, radius=2.0)
+        self.j_fk_low = cmds.joint(name=naming.parse([self.module_name, "FK", "low"], suffix="j"),
+                                   position=self.elbow_pos, radius=2.0)
+        self.j_fk_low_end = cmds.joint(name=naming.parse([self.module_name, "FK", "lowEnd"], suffix="j"),
+                                       position=self.hand_pos, radius=2.0)
 
         if not self.use_ref_orientation:
             joint.orient_joints([self.j_fk_up, self.j_fk_low, self.j_fk_low_end], world_up_axis=self.look_axis,
@@ -296,7 +249,8 @@ class Arm(_module.ModuleCore):
             cmds.makeIdentity(self.j_fk_low_end, apply=True)
 
         # Hand joint
-        self.j_def_hand = cmds.joint(name=naming.parse([self.module_name, "hand"], suffix="jDef"), position=self.hand_pos, radius=1.0)
+        self.j_def_hand = cmds.joint(name=naming.parse([self.module_name, "hand"], suffix="jDef"),
+                                     position=self.hand_pos, radius=1.0)
         cmds.parent(self.j_def_hand, self.defJointsGrp)
         self.sockets.append(self.j_def_hand)
 
@@ -436,7 +390,8 @@ class Arm(_module.ModuleCore):
         self.controllers.append(self.upArmFkCont)
 
         # move the pivot to the bottom
-        cmds.xform(self.upArmFkCont.name, pivots=(self.sideMult * -(self.init_upper_arm_dist / 2), 0, 0), ws=True)
+        cmds.xform(self.upArmFkCont.name, pivots=(self.sideMult * -(self.init_upper_arm_dist / 2), 0, 0),
+                   worldSpace=True)
 
         # move the controller to the shoulder
         functions.align_to_alter(self.upArmFkCont.name, self.j_fk_up, mode=2)
@@ -451,7 +406,6 @@ class Arm(_module.ModuleCore):
         cmds.setAttr("{}.tx".format(_upArmFK_ore), self.sideMult * (self.init_upper_arm_dist / 2))
         cmds.setAttr("{}.tx".format(self.upArmFkCont.name), 0)
 
-
         # FK LOW Arm Controller
         fk_low_arm_scale = (self.init_lower_arm_dist / 2, self.init_lower_arm_dist / 8, self.init_lower_arm_dist / 8)
         self.lowArmFkCont = Controller(shape="Cube",
@@ -461,7 +415,8 @@ class Arm(_module.ModuleCore):
         self.controllers.append(self.lowArmFkCont)
 
         # move the pivot to the bottom
-        cmds.xform(self.lowArmFkCont.name, pivots=(self.sideMult * -(self.init_lower_arm_dist / 2), 0, 0), ws=True)
+        cmds.xform(self.lowArmFkCont.name, pivots=(self.sideMult * -(self.init_lower_arm_dist / 2), 0, 0),
+                   worldSpace=True)
 
         # align position and orientation to the joint
         functions.align_to_alter(self.lowArmFkCont.name, self.j_fk_low, mode=2)
@@ -478,7 +433,8 @@ class Arm(_module.ModuleCore):
         # FK HAND Controller
         fk_cont_scale = (self.init_lower_arm_dist / 5, self.init_lower_arm_dist / 5, self.init_lower_arm_dist / 5)
         # self.handFkCont, dmp = icon.createIcon("Cube", iconName="%s_FK_Hand_cont" % self.suffix, scale=fk_cont_scale)
-        self.handFkCont = Controller(shape="Cube", name=naming.parse([self.module_name, "FK", "hand"], suffix="cont"), scale=fk_cont_scale)
+        self.handFkCont = Controller(shape="Cube", name=naming.parse([self.module_name, "FK", "hand"], suffix="cont"),
+                                     scale=fk_cont_scale)
         self.handFkCont.set_side(self.side, tier=0)
         self.controllers.append(self.handFkCont)
         functions.align_to_alter(self.handFkCont.name, self.j_def_hand, mode=2)
@@ -489,10 +445,13 @@ class Arm(_module.ModuleCore):
 
         # FK-IK SWITCH Controller
         icon_scale = (self.init_upper_arm_dist / 4, self.init_upper_arm_dist / 4, self.init_upper_arm_dist / 4)
-        self.switchFkIkCont = Controller(shape="FkikSwitch", name=naming.parse([self.module_name, "FKIK", "switch"], suffix="cont"), scale=icon_scale)
+        self.switchFkIkCont = Controller(shape="FkikSwitch",
+                                         name=naming.parse([self.module_name, "FKIK", "switch"], suffix="cont"),
+                                         scale=icon_scale)
         self.switchFkIkCont.set_side(self.side, tier=0)
         self.controllers.append(self.switchFkIkCont)
-        functions.align_and_aim(self.switchFkIkCont.name, target_list=[self.j_def_hand], aim_target_list=[self.j_def_elbow],
+        functions.align_and_aim(self.switchFkIkCont.name, target_list=[self.j_def_hand],
+                                aim_target_list=[self.j_def_elbow],
                                 up_vector=self.up_axis, rotate_offset=(0, 180, 0))
         cmds.move((self.up_axis[0] * icon_scale[0] * 2), (self.up_axis[1] * icon_scale[1] * 2),
                   (self.up_axis[2] * icon_scale[2] * 2), self.switchFkIkCont.name, relative=True)
@@ -527,7 +486,8 @@ class Arm(_module.ModuleCore):
         cmds.addAttr(self.switchFkIkCont.name, shortName="allowScaling", longName="Allow_Scaling", defaultValue=1.0,
                      minValue=0.0,
                      maxValue=1.0, attributeType="float", keyable=True)
-        cmds.addAttr(self.switchFkIkCont.name, attributeType="enum", keyable=True, shortName="interpType", longName="Interp_Type",
+        cmds.addAttr(self.switchFkIkCont.name, attributeType="enum", keyable=True, shortName="interpType",
+                     longName="Interp_Type",
                      enumName="No_Flip:Average:Shortest:Longest:Cache", defaultValue=0)
 
         cmds.addAttr(self.switchFkIkCont.name, shortName="tweakControls", longName="Tweak_Controls", defaultValue=0,
@@ -578,29 +538,35 @@ class Arm(_module.ModuleCore):
         cmds.parent(self.defEnd, self.nonScaleGrp)
 
         # create two locators to hold the midLockCont
-        self.midLockBridge_IK = cmds.spaceLocator(name=naming.parse([self.module_name, "IK", "midLock"], suffix="brg"))[0]
+        self.midLockBridge_IK = cmds.spaceLocator(name=naming.parse([self.module_name, "IK", "midLock"], suffix="brg"))[
+            0]
         cmds.connectAttr("%s.rigVis" % self.scaleGrp, "%s.v" % self.midLockBridge_IK)
         cmds.parent(self.midLockBridge_IK, self.nonScaleGrp)
 
         mult_matrix_ik_up_p = op.multiply_matrix(["%s.worldMatrix[0]" % self.j_ik_orig_up])
         mult_matrix_ik_low_p = op.multiply_matrix(["%s.worldMatrix[0]" % self.j_ik_orig_low])
         average_matrix_ik_p = op.average_matrix([mult_matrix_ik_up_p, mult_matrix_ik_low_p])
-        decompose_ik_rot = cmds.createNode("decomposeMatrix", name=naming.parse([self.module_name, "IK", "rot"], suffix="decompose"))
-        decompose_ik_trans = cmds.createNode("decomposeMatrix", name=naming.parse([self.module_name, "IK", "trans"], suffix="decompose"))
+        decompose_ik_rot = cmds.createNode("decomposeMatrix",
+                                           name=naming.parse([self.module_name, "IK", "rot"], suffix="decompose"))
+        decompose_ik_trans = cmds.createNode("decomposeMatrix",
+                                             name=naming.parse([self.module_name, "IK", "trans"], suffix="decompose"))
         cmds.connectAttr(average_matrix_ik_p, "%s.inputMatrix" % decompose_ik_rot)
         cmds.connectAttr(mult_matrix_ik_low_p, "%s.inputMatrix" % decompose_ik_trans)
         cmds.connectAttr("%s.outputRotate" % decompose_ik_rot, "%s.rotate" % self.midLockBridge_IK)
         cmds.connectAttr("%s.outputTranslate" % decompose_ik_trans, "%s.translate" % self.midLockBridge_IK)
 
-        self.midLockBridge_FK = cmds.spaceLocator(name=naming.parse([self.module_name, "FK", "midLock"], suffix="brg"))[0]
+        self.midLockBridge_FK = cmds.spaceLocator(name=naming.parse([self.module_name, "FK", "midLock"], suffix="brg"))[
+            0]
         cmds.connectAttr("%s.rigVis" % self.scaleGrp, "%s.v" % self.midLockBridge_FK)
         cmds.parent(self.midLockBridge_FK, self.nonScaleGrp)
 
         mult_matrix_fk_up_p = op.multiply_matrix(["%s.worldMatrix[0]" % self.j_fk_up])
         mult_matrix_fk_low_p = op.multiply_matrix(["%s.worldMatrix[0]" % self.j_fk_low])
         average_matrix_fk_p = op.average_matrix([mult_matrix_fk_up_p, mult_matrix_fk_low_p])
-        decompose_fk_rot = cmds.createNode("decomposeMatrix", name=naming.parse([self.module_name, "FK", "rot"], suffix="decompose"))
-        decompose_fk_trans = cmds.createNode("decomposeMatrix", name=naming.parse([self.module_name, "FK", "trans"], suffix="decompose"))
+        decompose_fk_rot = cmds.createNode("decomposeMatrix",
+                                           name=naming.parse([self.module_name, "FK", "rot"], suffix="decompose"))
+        decompose_fk_trans = cmds.createNode("decomposeMatrix",
+                                             name=naming.parse([self.module_name, "FK", "trans"], suffix="decompose"))
         cmds.connectAttr(average_matrix_fk_p, "%s.inputMatrix" % decompose_fk_rot)
         cmds.connectAttr(mult_matrix_fk_low_p, "%s.inputMatrix" % decompose_fk_trans)
         cmds.connectAttr("%s.outputRotate" % decompose_fk_rot, "%s.rotate" % self.midLockBridge_FK)
@@ -646,7 +612,6 @@ class Arm(_module.ModuleCore):
         cmds.connectAttr("%s.rigVis" % self.scaleGrp, "%s.v" % self.startLock)
         cmds.parent(self.startLockOre, self.nonScaleGrp)
 
-
         self.endLock = cmds.spaceLocator(name=naming.parse([self.module_name, "endLock"], suffix="brg"))[0]
         cmds.parent(self.endLock, self.nonScaleGrp)
         cmds.connectAttr("%s.rigVis" % self.scaleGrp, "%s.v" % self.endLock)
@@ -682,12 +647,10 @@ class Arm(_module.ModuleCore):
                                                  is_local=self.isLocal)
         for x in sc_stretch_locs[:2] + rp_stretch_locs[:2]:
             cmds.connectAttr("%s.rigVis" % self.scaleGrp, "%s.v" % x)
-        # _ = [cmds.connectAttr("%s.rigVis" % self.scaleGrp, "%s.v" % x) for x in sc_stretch_locs]
-        # _ = [cmds.connectAttr("%s.rigVis" % self.scaleGrp, "%s.v" % x) for x in rp_stretch_locs]
         cmds.parent(sc_stretch_locs[:2] + rp_stretch_locs[:2], self.nonScaleGrp)
 
-
-        connection.matrixConstraint(self.handIkCont.name, self.j_ik_sc_low_end, skipTranslate="xyz", skipScale="xyz", maintainOffset=False,
+        connection.matrixConstraint(self.handIkCont.name, self.j_ik_sc_low_end, skipTranslate="xyz", skipScale="xyz",
+                                    maintainOffset=False,
                                     source_parent_cutoff=self.localOffGrp)
         # # pole vector pinning
         pin_blender = cmds.createNode("blendColors", name=naming.parse([self.module_name, "polePin"], suffix="blend"))
@@ -735,20 +698,21 @@ class Arm(_module.ModuleCore):
                 cmds.connectAttr(mult_p, "%s.initialDistance" % jnt)
 
         connection.matrix_switch(self.j_ik_rp_up, self.j_ik_sc_up, self.j_ik_orig_up,
-                                "%s.Pole_Vector" % self.handIkCont.name)
+                                 "%s.Pole_Vector" % self.handIkCont.name)
         elbow_switcher = cmds.spaceLocator(name=naming.parse([self.module_name, "elbowSwitcher"], suffix="brg"))[0]
         cmds.connectAttr("%s.rigVis" % self.scaleGrp, "%s.v" % elbow_switcher)
         cmds.parent(elbow_switcher, self.nonScaleGrp)
         connection.matrix_switch(self.j_ik_rp_low, self.j_ik_sc_low, elbow_switcher,
-                                "%s.Pole_Vector" % self.handIkCont.name)
+                                 "%s.Pole_Vector" % self.handIkCont.name)
         connection.matrixConstraint(elbow_switcher, self.j_ik_orig_low)
         connection.matrix_switch(self.j_ik_rp_low_end, self.j_ik_sc_low_end, self.j_ik_orig_low_end,
-                                "%s.Pole_Vector" % self.handIkCont.name)
+                                 "%s.Pole_Vector" % self.handIkCont.name)
 
     def create_fk_setup(self):
         connection.matrixConstraint(self.shoulderCont.name, self.j_def_collar, maintainOffset=True,
                                     source_parent_cutoff=self.localOffGrp)
-        connection.matrixConstraint(self.upArmFkCont.name, self.j_fk_up, maintainOffset=True, source_parent_cutoff=self.localOffGrp)
+        connection.matrixConstraint(self.upArmFkCont.name, self.j_fk_up, maintainOffset=True,
+                                    source_parent_cutoff=self.localOffGrp)
         connection.matrixConstraint(self.lowArmFkCont.name, self.j_fk_low, maintainOffset=True,
                                     source_parent_cutoff=self.localOffGrp)
         connection.matrixConstraint(self.handFkCont.name, self.j_fk_low_end, maintainOffset=True,
@@ -766,12 +730,12 @@ class Arm(_module.ModuleCore):
 
         connection.matrix_switch(self.j_ik_orig_up, self.j_fk_up, self.defStart, "%s.FK_IK" % self.switchFkIkCont.name)
         connection.matrix_switch(self.j_ik_orig_low_end, self.j_fk_low_end, self.defEnd,
-                                "%s.FK_IK" % self.switchFkIkCont.name, position=True, rotation=False)
+                                 "%s.FK_IK" % self.switchFkIkCont.name, position=True, rotation=False)
         connection.matrix_switch(self.handIkCont.name, self.handFkCont.name, self.defEnd,
-                                "%s.FK_IK" % self.switchFkIkCont.name, position=False, rotation=True,
+                                 "%s.FK_IK" % self.switchFkIkCont.name, position=False, rotation=True,
                                  source_parent_cutoff=self.localOffGrp)
         connection.matrix_switch(self.midLockBridge_IK, self.midLockBridge_FK, self.defMid,
-                                "%s.FK_IK" % self.switchFkIkCont.name)
+                                 "%s.FK_IK" % self.switchFkIkCont.name)
 
         connection.matrixConstraint(self.defEnd, self.j_def_hand, skipScale="xyz", maintainOffset=False)
 
@@ -806,7 +770,8 @@ class Arm(_module.ModuleCore):
             cmds.parentConstraint(self.j_ik_orig_up, self.j_fk_up, ribbon_upper_arm.start_aim, maintainOffset=True,
                                   skipTranslate=["x", "y", "z"])[0]
 
-        cmds.parentConstraint(self.j_collar_end, ribbon_upper_arm.start_aim, maintainOffset=True, skipTranslate=["x", "y", "z"])
+        cmds.parentConstraint(self.j_collar_end, ribbon_upper_arm.start_aim, maintainOffset=True,
+                              skipTranslate=["x", "y", "z"])
 
         cmds.connectAttr("{0}.FK_IK".format(self.switchFkIkCont.name),
                          ("%s.%sW0" % (ribbon_start_ori_con, self.j_ik_orig_up)))
@@ -821,7 +786,8 @@ class Arm(_module.ModuleCore):
         # AUTO AND MANUAL TWIST
 
         # auto
-        auto_twist = cmds.createNode("multiplyDivide", name=naming.parse([self.module_name, "autoTwist"], suffix="mult"))
+        auto_twist = cmds.createNode("multiplyDivide",
+                                     name=naming.parse([self.module_name, "autoTwist"], suffix="mult"))
         cmds.connectAttr("{0}.shoulderAutoTwist".format(self.switchFkIkCont.name), "{0}.input2X".format(auto_twist))
         cmds.connectAttr("{0}.constraintRotate".format(ribbon_start_pa_con_upper_arm_start),
                          "{0}.input1".format(auto_twist))
@@ -831,7 +797,9 @@ class Arm(_module.ModuleCore):
                             "{0}.rotateX".format(ribbon_upper_arm.start_plug))
 
         # manual
-        add_manual_twist = cmds.createNode("plusMinusAverage", name=naming.parse([self.module_name, "upperArm", "addManualTwist"], suffix="plus"))
+        add_manual_twist = cmds.createNode("plusMinusAverage",
+                                           name=naming.parse([self.module_name, "upperArm", "addManualTwist"],
+                                                             suffix="plus"))
         cmds.connectAttr("{0}.output".format(auto_twist), "{0}.input3D[0]".format(add_manual_twist))
         cmds.connectAttr("{0}.shoulderManualTwist".format(self.switchFkIkCont.name),
                          "{0}.input3D[1].input3Dx".format(add_manual_twist))
@@ -865,7 +833,8 @@ class Arm(_module.ModuleCore):
         # AUTO AND MANUAL TWIST
 
         # auto
-        auto_twist = cmds.createNode("multiplyDivide", name=naming.parse([self.module_name, "autoTwist"], suffix="mult"))
+        auto_twist = cmds.createNode("multiplyDivide",
+                                     name=naming.parse([self.module_name, "autoTwist"], suffix="mult"))
         cmds.connectAttr("{0}.handAutoTwist".format(self.switchFkIkCont.name), "{0}.input2X".format(auto_twist))
         cmds.connectAttr("{0}.constraintRotate".format(ribbon_start_pa_con_lower_arm_end),
                          "{0}.input1".format(auto_twist))
@@ -875,7 +844,9 @@ class Arm(_module.ModuleCore):
                             "{0}.rotateX".format(ribbon_lower_arm.end_plug))
 
         # manual
-        add_manual_twist = cmds.createNode("plusMinusAverage", name=naming.parse([self.module_name, "lowerArm", "addManualTwist"], suffix="plus"))
+        add_manual_twist = cmds.createNode("plusMinusAverage",
+                                           name=naming.parse([self.module_name, "lowerArm", "addManualTwist"],
+                                                             suffix="plus"))
         cmds.connectAttr("{0}.output".format(auto_twist), "{0}.input3D[0]".format(add_manual_twist))
         cmds.connectAttr("{0}.handManualTwist".format(self.switchFkIkCont.name),
                          "{0}.input3D[1].input3Dx".format(add_manual_twist))
@@ -905,17 +876,19 @@ class Arm(_module.ModuleCore):
         vp_power_lower_leg = cmds.createNode("multiplyDivide", name=naming.parse([self.module_name, "vpPowerLowerLeg"]))
         cmds.setAttr("{0}.operation".format(vp_power_lower_leg), 3)
         #
-        vp_upper_lower_reduce = cmds.createNode("multDoubleLinear", name=naming.parse([self.module_name, "vpUpperLowerReduce"]))
+        vp_upper_lower_reduce = cmds.createNode("multDoubleLinear",
+                                                name=naming.parse([self.module_name, "vpUpperLowerReduce"]))
         cmds.setAttr("{0}.input2".format(vp_upper_lower_reduce), 0.5)
         #
         # vp knee branch
         cmds.connectAttr("{0}.output".format(vp_extra_input), "{0}.scale".format(ribbon_lower_arm.start_plug),
                          force=True)
-        cmds.connectAttr("{0}.output".format(vp_extra_input), "{0}.scale".format(ribbon_upper_arm.end_plug), f=True)
+        cmds.connectAttr("{0}.output".format(vp_extra_input), "{0}.scale".format(ribbon_upper_arm.end_plug), force=True)
         if self.isLocal:
-            cmds.connectAttr("{0}.output".format(vp_extra_input), "{0}.scale".format(self.j_def_elbow), f=True)
+            cmds.connectAttr("{0}.output".format(vp_extra_input), "{0}.scale".format(self.j_def_elbow), force=True)
         else:
-            _mult = cmds.createNode("multiplyDivide", name=naming.parse([self.module_name, "elbow_globalScale"], suffix="mult"))
+            _mult = cmds.createNode("multiplyDivide",
+                                    name=naming.parse([self.module_name, "elbow_globalScale"], suffix="mult"))
             cmds.connectAttr("{0}.output".format(vp_extra_input), "{0}.input1".format(_mult))
             cmds.connectAttr("{0}.scale".format(self.scaleHook), "{0}.input2".format(_mult))
             cmds.connectAttr("{0}.output".format(_mult), "{0}.scale".format(self.j_def_elbow), force=True)
@@ -942,7 +915,6 @@ class Arm(_module.ModuleCore):
         cmds.connectAttr("{0}.translateX".format(self.j_ik_sc_low_end), "{0}.input2Y".format(vp_init_length))
 
         # vp upper branch
-        # mid_off_up = functions.get_parent(ribbon_upper_arm.controllers[0])
         mid_off_up = ribbon_upper_arm.controllers[0].parent
         cmds.connectAttr("{0}.outputX".format(vp_power_upper_leg), "{0}.scaleX".format(mid_off_up))
         cmds.connectAttr("{0}.outputX".format(vp_power_upper_leg), "{0}.scaleY".format(mid_off_up))
@@ -951,7 +923,6 @@ class Arm(_module.ModuleCore):
         cmds.connectAttr("{0}.output".format(vp_upper_lower_reduce), "{0}.input2X".format(vp_power_upper_leg))
 
         # vp lower branch
-        # mid_off_low = functions.get_parent(ribbon_lower_arm.controllers[0])
         mid_off_low = ribbon_lower_arm.controllers[0].parent
         cmds.connectAttr("{0}.outputX".format(vp_power_lower_leg), "{0}.scaleX".format(mid_off_low))
         cmds.connectAttr("{0}.outputX".format(vp_power_lower_leg), "{0}.scaleY".format(mid_off_low))
@@ -990,8 +961,10 @@ class Arm(_module.ModuleCore):
         angle.set_value_multiplier(0.5)
 
         # FK Angle Extractor
-        angle_remap_fk = cmds.createNode("remapValue", name=naming.parse([self.module_name, "FK", "angle"], suffix="remap"))
-        angle_mult_fk = cmds.createNode("multDoubleLinear", name=naming.parse([self.module_name, "FK", "angle"], suffix="mult"))
+        angle_remap_fk = cmds.createNode("remapValue",
+                                         name=naming.parse([self.module_name, "FK", "angle"], suffix="remap"))
+        angle_mult_fk = cmds.createNode("multDoubleLinear",
+                                        name=naming.parse([self.module_name, "FK", "angle"], suffix="mult"))
 
         cmds.connectAttr("{0}.rotateY".format(self.upArmFkCont.name), "{0}.inputValue".format(angle_remap_fk))
         cmds.setAttr("{0}.inputMin".format(angle_remap_fk), 0)
@@ -1003,8 +976,10 @@ class Arm(_module.ModuleCore):
         cmds.setAttr("{0}.input2".format(angle_mult_fk), 0.5)
 
         # create blend attribute and global Mult
-        angle_ext_blend = cmds.createNode("blendTwoAttr", name=naming.parse([self.module_name, "angle", "ext"], suffix="blend"))
-        angle_global = cmds.createNode("multDoubleLinear", name=naming.parse([self.module_name, "angle", "global"], suffix="mult"))
+        angle_ext_blend = cmds.createNode("blendTwoAttr",
+                                          name=naming.parse([self.module_name, "angle", "ext"], suffix="blend"))
+        angle_global = cmds.createNode("multDoubleLinear",
+                                       name=naming.parse([self.module_name, "angle", "global"], suffix="mult"))
 
         cmds.connectAttr("{0}.fk_ik".format(self.switchFkIkCont.name), "{0}.attributesBlender".format(angle_ext_blend))
         cmds.connectAttr("{0}.output".format(angle_mult_fk), "{0}.input[0]".format(angle_ext_blend))
@@ -1048,39 +1023,9 @@ class Arm(_module.ModuleCore):
         self.create_angle_extractors()
         self.round_up()
 
-    # def createLimb(self):
-    #     self.create_groups()
-    #     self.create_joints()
-    #     self.create_controllers()
-    #     self.create_roots()
-    #     self.create_ik_setup()
-    #     self.create_fk_setup()
-    #     self.ik_fk_switching()
-    #     self.create_ribbons()
-    #     self.create_angle_extractors()
-    #     self.round_up()
-
 
 class Guides(_module.GuidesCore):
     limb_data = LIMB_DATA
-# class Guides(object):
-#     def __init__(self, suffix="arm", **kwargs):
-#     # def __init__(self, side="L", suffix="arm", segments=None, tMatrix=None, upVector=(0, 1, 0), mirrorVector=(1, 0, 0),
-#     #              lookVector=(0, 0, 1), *args, **kwargs):
-#         super(Guides, self).__init__(suffix=suffix, **kwargs)
-#     def __init__(self, *args, **kwargs):
-#         super(Guides, self).__init__(*args, **kwargs)
-        # self.side = side
-        # self.sideMultiplier = -1 if side == "R" else 1
-        # self.name = suffix
-        # self.segments = segments
-        # self.tMatrix = om.MMatrix(tMatrix) if tMatrix else om.MMatrix()
-        # self.upVector = om.MVector(upVector)
-        # self.mirrorVector = om.MVector(mirrorVector)
-        # self.lookVector = om.MVector(lookVector)
-
-        # self.offsetVector = None
-        # self.guideJoints = []
 
     def draw_joints(self):
         self.guideJoints = []
@@ -1099,9 +1044,11 @@ class Guides(_module.GuidesCore):
         self.offsetVector = -((collar_vec - shoulder_vec).normalize())
 
         cmds.select(deselect=True)
-        collar = cmds.joint(position=collar_vec, name=naming.parse([self.name, "collar"], side=self.side, suffix="jInit"))
+        collar = cmds.joint(position=collar_vec,
+                            name=naming.parse([self.name, "collar"], side=self.side, suffix="jInit"))
         cmds.setAttr("{0}.radius".format(collar), 2)
-        shoulder = cmds.joint(position=shoulder_vec, name=naming.parse([self.name, "shoulder"], side=self.side, suffix="jInit"))
+        shoulder = cmds.joint(position=shoulder_vec,
+                              name=naming.parse([self.name, "shoulder"], side=self.side, suffix="jInit"))
         elbow = cmds.joint(position=elbow_vec, name=naming.parse([self.name, "elbow"], side=self.side, suffix="jInit"))
         hand = cmds.joint(position=hand_vec, name=naming.parse([self.name, "hand"], side=self.side, suffix="jInit"))
 
@@ -1117,31 +1064,3 @@ class Guides(_module.GuidesCore):
         joint.set_joint_type(self.guideJoints[1], "Shoulder")
         joint.set_joint_type(self.guideJoints[2], "Elbow")
         joint.set_joint_type(self.guideJoints[3], "Hand")
-
-    # def define_attributes(self):
-    #     joint.set_joint_type(self.guideJoints[0], "Collar")
-    #     joint.set_joint_type(self.guideJoints[1], "Shoulder")
-    #     joint.set_joint_type(self.guideJoints[2], "Elbow")
-    #     joint.set_joint_type(self.guideJoints[3], "Hand")
-    #     _ = [joint.set_joint_side(jnt, self.side) for jnt in self.guideJoints]
-    #
-    #     root_jnt = self.guideJoints[0]
-    #     attribute.create_global_joint_attrs(root_jnt, moduleName=naming.parse([self.name], side=self.side),
-    #                                         mirrorAxis=self.mirrorVector, lookAxis=self.lookVector)
-    #
-    #     for attr_dict in LIMB_DATA["properties"]:
-    #         attribute.create_attribute(root_jnt, attr_dict)
-
-    # def createGuides(self):
-    #     """Main Function to create Guides"""
-    #     self.draw_joints()
-    #     self.define_attributes()
-    #
-    # def convertJoints(self, joints_list):
-    #     if len(joints_list) != 4:
-    #         LOG.warning("Define or select exactly 5 joints for Arm Guide conversion. Skipping")
-    #         return
-    #     self.guideJoints = joints_list
-    #     _ = [joint.set_joint_side(jnt, self.side) for jnt in self.guideJoints]
-    #     self.define_attributes()
-
