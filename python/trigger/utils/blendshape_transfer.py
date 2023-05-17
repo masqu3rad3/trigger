@@ -1,6 +1,6 @@
 from maya import cmds
 import maya.api.OpenMaya as om
-from trigger.core.decorators import viewportOff, keepselection
+from trigger.core.decorators import keepselection
 
 from trigger.library import deformers, functions, selection, interface, api
 

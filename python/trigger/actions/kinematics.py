@@ -3,6 +3,7 @@ import os
 from maya import cmds
 from trigger.core import filelog
 from trigger.core import database
+from trigger.core.decorators import suppress_warnings
 from trigger.core.compatibility import is_string
 from trigger.library import functions, naming, joint
 from trigger.library import attribute
@@ -346,6 +347,7 @@ class Kinematics(object):
         index = distanceList.index(min(distanceList))
         return limbSockets[index]
 
+    @suppress_warnings
     def createlimbs(self, limbCreationList=None, add_limb=False, root_plug=None, parent_socket=None, master_cont=None,
                     selection_mode=False, *args, **kwargs):
         """
@@ -497,7 +499,13 @@ class Kinematics(object):
                         cmds.connectAttr("%s.s" % self.scaleRoot, "%s.s" %sCon, force=True)
                 # import pdb
                 # pdb.set_trace()
+                # print("Horayyy")
+                # suppress the warnings
+
+                print(self.scaleRoot)
+
                 cmds.connectAttr("%s.s" % self.scaleRoot, "%s.s" %limb.scaleGrp, force=True)
+                # cmds.error()
                 for s_attr in "xyz":
                     cmds.setAttr("{0}.s{1}".format(self.scaleRoot, s_attr), e=True, k=True, l=False)
                     # cmds.scaleConstraint("pref_cont", sCon)

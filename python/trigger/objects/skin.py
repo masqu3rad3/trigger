@@ -282,7 +282,7 @@ class Weight(object):
         """
         if normalize_other_influences:
             self._clamp_point_weights(influence_data)
-        start = time.time()
+        # start = time.time()
         _influence_name = influence_data.get("source", None)
         if self.get_influence_data(_influence_name) and not force:
             raise Exception("Data already contains weights data for %s" % _influence_name)
@@ -292,11 +292,11 @@ class Weight(object):
         influence_data["deformer"] = _deformer
         influence_data["shape"] = _shape
         influence_data["layer"] = self._get_last_layer()+1
-        print("afer normalization: %s" %str(time.time() - start))
+        # print("afer normalization: %s" %str(time.time() - start))
 
-        s_b = time.time()
+        # s_b = time.time()
         self._data["deformerWeight"]["weights"].append(copy.copy(influence_data))
-        print("apply data: %s" % str(time.time() - s_b))
+        # print("apply data: %s" % str(time.time() - s_b))
 
     def negate(self, influences=None):
         """

@@ -18,7 +18,7 @@ def create_attribute(node, property_dict=None, keyable=True, display=True, **kwa
                 {<nice_name>: (Optional) nice name for the attribute,
                  <attr_name>: name of the attribute,
                  <attr_type>: Valid types are "long", "short", "bool", "enum", "float", "double", "string"
-                 <enum_list>: Must be a single string (hence the name) Eg. "option1:option2:option3"
+                 <enum_list>: Must be a single string (in spite of the name) e.g. "option1:option2:option3"
                             Required if the attr_type is "enum".
                  <default_value>: (Optional) Can be float, integer, string or bool depending on the attr_type.
                             If not provided it is 0, "", or False depending on the attr_type
@@ -81,7 +81,7 @@ def create_attribute(node, property_dict=None, keyable=True, display=True, **kwa
         min_val = property_dict.get("min_value") if property_dict.get("min_value") is not None else -99999
         max_val = property_dict.get("max_value") if property_dict.get("max_value") is not None else 99999
 
-        if not default_value or default_value is "DOESNTEXIST":
+        if not default_value or default_value == "DOESNTEXIST":
             default_value = 0
 
         cmds.addAttr(node,

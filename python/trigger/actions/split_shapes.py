@@ -5,7 +5,6 @@ import os
 from maya import cmds
 
 from trigger.core import io
-from trigger.core.decorators import viewportOff
 from trigger.actions import weights
 from trigger.library import deformers, functions, selection
 from trigger.ui import custom_widgets
@@ -47,7 +46,6 @@ class Split_shapes(weights.Weights):
         self.neutralMesh = action_data.get("neutral_mesh")
         self.splitData = action_data.get("split_data")
 
-    @viewportOff
     def action(self):
         """Execute Action - Mandatory"""
         if not self.splitMapsFilePath or\

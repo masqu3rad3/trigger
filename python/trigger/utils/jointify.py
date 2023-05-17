@@ -22,7 +22,7 @@ import maya.OpenMaya as om
 import maya.OpenMayaAnim as oma
 
 from trigger.library import deformers, attribute, functions, api, arithmetic, naming, transform
-from trigger.core.decorators import keepselection, viewportOff
+from trigger.core.decorators import keepselection
 from trigger.library import connection
 from trigger.objects import skin
 from trigger.utils import skin_transfer
@@ -570,7 +570,6 @@ class Jointify(object):
         end_time = time.time()
         self.log.info("DemBones are created in %s seconds" % (end_time - start_time))
 
-    @viewportOff
     def jointify(self):
         """Creates a joint version of the blendshape deformations using the dem bones data as guidance"""
 
