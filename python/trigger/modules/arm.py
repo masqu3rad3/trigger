@@ -457,6 +457,7 @@ class Arm(_module.ModuleCore):
                   (self.up_axis[2] * icon_scale[2] * 2), self.switchFkIkCont.name, relative=True)
 
         _switch_fk_ik_pos = self.switchFkIkCont.add_offset("POS")
+        _switch_fk_ik_off = self.switchFkIkCont.add_offset("OFF")
 
         cmds.setAttr("{0}.s{1}".format(self.switchFkIkCont.name, "x"), self.sideMult)
 
@@ -745,7 +746,7 @@ class Arm(_module.ModuleCore):
         cmds.connectAttr("%s.FK_IK" % self.switchFkIkCont.name, "%s.v" % self.poleCont.name)
         cmds.connectAttr("%s.FK_IK" % self.switchFkIkCont.name, "%s.v" % self.handIkCont.name)
 
-        connection.matrixConstraint(self.j_def_hand, self.switchFkIkCont.name, maintainOffset=True)
+        connection.matrixConstraint(self.j_def_hand, self.switchFkIkCont.get_offsets()[1], maintainOffset=True)
 
     def create_ribbons(self):
         # UPPER ARM RIBBON

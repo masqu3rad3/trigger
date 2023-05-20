@@ -1,5 +1,7 @@
 """creates driven connections between given attributes. It uses remap or direct connect according to the values"""
 
+import fnmatch
+from maya import cmds
 from trigger.library import attribute
 from trigger.core import filelog
 from trigger.ui import custom_widgets
@@ -30,7 +32,22 @@ class Driver(object):
 
     def action(self):
         for data in self.mappingData:
-            attribute.drive_attrs(data[0], data[3], driver_range=[data[1], data[2]], driven_range=[data[4], data[5]], optimize=False)
+            # ls the driven attribute to make sure it exists
+
+            splits = data[3].split(".")
+            node = splits[0]
+            wild_attr = ".".join(splits[1:])
+            nodes_list = cmds.ls(node)
+            found_attrs = []
+            for n in nodes_list:
+                # get all attributes of the node
+                all_attrs = cmds.listAttr(n)
+                wild_attrs = fnmatch.filter(all_attrs, wild_attr)
+                found_attrs.extend(["{0}.{1}".format(n, w) for w in wild_attrs])
+            if not found_attrs:
+                log.error("No attributes found for %s" %data[3])
+                return
+            attribute.drive_attrs(data[0], found_attrs, driver_range=[data[1], data[2]], driven_range=[data[4], data[5]], optimize=False)
 
     def save_action(self):
         pass
