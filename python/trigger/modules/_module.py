@@ -192,11 +192,11 @@ class GuidesCore(object):
     def _validate(self, joints_list):
         """Validate the guide joints when converting guides."""
         _min = len(self.limb_data["members"])
-        _max = _min if self.limb_data["multi_guide"] else 99999
+        _max = _min if not self.limb_data["multi_guide"] else 99999
         if not joints_list:
             LOG.error("joint list not defined for module {0}".format(self.name), proceed=False)
         if _min == _max and len(joints_list) != _min:
             LOG.error("segments for module {0} must be equal to {1}".format(self.name, _min), proceed=False)
-        if len(joints_list) < _min or self.segments > _max:
+        if _max < len(joints_list) < _min:
             LOG.error("segments for module {0} must be between {1} and {2}".format(self.name, _min, _max),
                       proceed=False)
