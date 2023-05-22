@@ -14,4 +14,4 @@ Whether you are a seasoned professional or just starting out in rigging, Trigger
 Besides rigging, trigger can be used to automate and template tasks, such as assembling shots/assets, quality checks, etc.
 It allows TDs and developers build their own actions and modules as plug-ins and easily integrate as plug-ins.
 
-You can find the online documentation [here](https://trigger.readthedocs.io/en/latest/) (WIP).
+You can find the online documentation [here](https://trigger-maya.readthedocs.io/en/latest/) (WIP).
