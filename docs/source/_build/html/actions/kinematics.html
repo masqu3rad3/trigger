@@ -104,6 +104,23 @@
              
   <span class="target" id="kinematics"></span><section id="kinematics-kinematics">
 <h1>Kinematics <img alt="kinematics" src="../_images/kinematics.png" /><a class="headerlink" href="#kinematics-kinematics" title="Permalink to this heading"></a></h1>
+<p class="linemarker linemarker-8">Kinematics Action is the core of rigging workflow.
+It uses the Trigger Guides created and exported from the Guides Tab in the main menu.</p>
+<p class="linemarker linemarker-11">Essentially, it rigs the modular hierarchy starting from the defined root(s)</p>
+<blockquote>
+<div><ul class="simple">
+<li><p class="linemarker linemarker-13"><strong>File Path</strong>: The absolute path to guide file (.trg). The guides must be either created or defined from the Guides tab and exported to a file.</p></li>
+<li><p class="linemarker linemarker-14"><strong>Guide Roots</strong>: Defines where the modular hiearchy starts from. The kinematic rig will be created starting from the given root(s) and branch out to all children recursively. Multiple roots in a single guide can be defined separeted with “;” (eg. =&gt; ‘jInit_LegRoot_left; jInit_LegRoot_right’)</p></li>
+<li><p class="linemarker linemarker-15"><strong>Get Button</strong>: This button is an easy way to define the roots. It looks up to the trg file and drops down a list for all possible root guides in the file.</p></li>
+<li><p class="linemarker linemarker-16"><strong>Create Auto Switchers</strong>: If checked, it tries to create the space switchers automatically as defined per module. Default is on.</p></li>
+<li><p class="linemarker linemarker-17"><strong>After Action</strong>: Defines what will happen to the guide joints after Action runs successfully. Valid options are ‘Do Nothing’, ‘Hide Guides’ and ‘Delete Guides’. Default state is ‘Delete Guides’</p></li>
+<li><p class="linemarker linemarker-18"><strong>Selection Sets</strong>: If checked, creates the selection sets as defined per kinematic module. Default is off.</p></li>
+</ul>
+</div></blockquote>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p class="linemarker linemarker-21">Defining a Guide Root is not mandatory. In special cases that you want to only import guide joints for later use you can leave it empty and choose “Do Nothing” from After Action modes.</p>
+</div>
 </section>
 
 

@@ -104,6 +104,23 @@
              
   <span class="target" id="face-cam"></span><section id="face-cam-face-cam">
 <h1>Face Cam <img alt="face_cam" src="../_images/face_cam.png" /><a class="headerlink" href="#face-cam-face-cam" title="Permalink to this heading"></a></h1>
+<p class="linemarker linemarker-8">Face Cam action creates a camera fixed on a part of the rig. It can be rotated freely but the translation is limited within the boundaries of given mesh.
+Since faces are the most common use, it is named after that but can be used for any part of the rig.</p>
+<p class="linemarker linemarker-11">Face Cam action has following properties:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p class="linemarker linemarker-13"><strong>Camera Name</strong>: Nothing fancy, just a name for the camera. Default ‘faceCam’</p></li>
+<li><p class="linemarker linemarker-14"><strong>Face Mesh</strong>: The mesh object that the camera will be focused on.</p></li>
+<li><p class="linemarker linemarker-15"><strong>Parent Node</strong>: Parent object that the camera will be constrained</p></li>
+<li><p class="linemarker linemarker-16"><strong>Focal Length</strong>: Focal length of the camera. Default 50</p></li>
+<li><p class="linemarker linemarker-17"><strong>Initial Distance</strong>: The distance between camera and mesh</p></li>
+<li><p class="linemarker linemarker-18"><strong>Limit Multiplier</strong>: The multiplier value which will define the extra transformation boundaries. For example if this set 2, the translation boundaries limits the camera will be doubled</p></li>
+</ul>
+</div></blockquote>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p class="linemarker linemarker-21">The boundary limits of face cam is calculated by defined face mesh * limit multiplier value</p>
+</div>
 </section>
 
 
