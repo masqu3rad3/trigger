@@ -1,4 +1,4 @@
-.. _limbmodules:
+.. _limb_modules:
 
 Limb Modules
 =======

@@ -79,7 +79,7 @@ The guides must exported in order to be used in Kinematic actions. The guides cr
 1. Alignment Panel
 ~~~~~~~~~~~~~~~~~~
 
-Defines the alignment of the next module that will be created
+Defines the alignment of the next limb module that will be created
 
 - **C**: Centered. The modules created with Center alignment are yellow and does not have a mirrored pair
 
@@ -94,7 +94,7 @@ Defines the alignment of the next module that will be created
 2. Modules List
 ~~~~~~~~~~~~~~~
 
-This area contains all available modules in Trigger & pre-defined presets (Essentially, collection of modules with a hierarchy)
+This area contains all available limb modules in Trigger & pre-defined presets (Essentially, collection of modules with a hierarchy)
 
 The numbers next to the modules means that how many joints will be drawn with that module. If the numbers are disabled and not editable, that means that module can only be created with fixed number of joints. For example, the Arm module can only have 4 guide joints defining shoulder, upper arm, elbow and hand
 

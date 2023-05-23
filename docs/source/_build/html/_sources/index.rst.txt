@@ -10,10 +10,13 @@ Contents
 --------
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
    overview
    installation
    getting_started
+   interface
+   actions
+   limb_modules
    api
 

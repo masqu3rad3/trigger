@@ -18,7 +18,7 @@
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="API" href="../api.html" />
+    <link rel="next" title="&lt;no title&gt;" href="../modules.html" />
     <link rel="prev" title="Split Shapes" href="split_shapes.html" /> 
 </head>
 
@@ -44,35 +44,10 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <ul class="current">
+              <ul>
 <li class="toctree-l1"><a class="reference internal" href="../overview.html">Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
-<li class="toctree-l1 current"><a class="reference internal" href="../getting_started.html">Getting Started</a><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="../interface.html">Interface</a></li>
-<li class="toctree-l2 current"><a class="reference internal" href="../actions.html">Actions</a><ul class="current">
-<li class="toctree-l3"><a class="reference internal" href="assemble.html">Assemble </a></li>
-<li class="toctree-l3"><a class="reference internal" href="cleanup.html">Cleanup </a></li>
-<li class="toctree-l3"><a class="reference internal" href="cloth_setup.html">Cloth Setup </a></li>
-<li class="toctree-l3"><a class="reference internal" href="correctives.html">Correctives </a></li>
-<li class="toctree-l3"><a class="reference internal" href="driver.html">Driver </a></li>
-<li class="toctree-l3"><a class="reference internal" href="face_cam.html">Face Cam </a></li>
-<li class="toctree-l3"><a class="reference internal" href="import_asset.html">Import Asset </a></li>
-<li class="toctree-l3"><a class="reference internal" href="kinematics.html">Kinematics </a></li>
-<li class="toctree-l3"><a class="reference internal" href="look.html">Look </a></li>
-<li class="toctree-l3"><a class="reference internal" href="master.html">Master </a></li>
-<li class="toctree-l3"><a class="reference internal" href="morph.html">Morph </a></li>
-<li class="toctree-l3"><a class="reference internal" href="node_presets.html">Node Presets </a></li>
-<li class="toctree-l3"><a class="reference internal" href="reference_session.html">Reference Session </a></li>
-<li class="toctree-l3"><a class="reference internal" href="script.html">Script </a></li>
-<li class="toctree-l3"><a class="reference internal" href="selection_sets.html">Selection Sets </a></li>
-<li class="toctree-l3"><a class="reference internal" href="shapes.html">Shapes </a></li>
-<li class="toctree-l3"><a class="reference internal" href="space_switchers.html">Space Switchers </a></li>
-<li class="toctree-l3"><a class="reference internal" href="split_shapes.html">Split Shapes </a></li>
-<li class="toctree-l3 current"><a class="current reference internal" href="#">Weights </a></li>
-</ul>
-</li>
-</ul>
-</li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../api.html">API</a></li>
 </ul>
 
@@ -90,7 +65,6 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
-          <li class="breadcrumb-item"><a href="../getting_started.html">Getting Started</a></li>
           <li class="breadcrumb-item"><a href="../actions.html">Actions</a></li>
       <li class="breadcrumb-item active">Weights </li>
       <li class="wy-breadcrumbs-aside">
@@ -104,6 +78,32 @@
              
   <span class="target" id="weights"></span><section id="weights-weights">
 <h1>Weights <img alt="weights" src="../_images/weights.png" /><a class="headerlink" href="#weights-weights" title="Permalink to this heading"></a></h1>
+<p class="linemarker linemarker-8">Weights Action stores and restores weight values to any deformer that is defined in its list of deformers.</p>
+<p class="linemarker linemarker-10">In case the deformer does not exist, it will create it.</p>
+<p class="linemarker linemarker-12">Usage of Weights action is similar to other actions that works with Maya scene directly. Remember that all influences that will affect the deformer must be
+already present in the scene when this action run.
+For example, you cannot add weights to a character before the kinematics action because at the time the Weights Action runs, there won’t be any joints to
+affect the skinclusters.</p>
+<p class="linemarker linemarker-17">Ideally, the session should be executed until the Weights Action. Then you can regularly skin cluster the objects to the joints and paint the weights.
+Then you can define the deformers on the Weights Action and save it into a file.</p>
+<p class="linemarker linemarker-20">The easiest way to do that is to select the mesh and hit <strong>Get</strong> button from the right side menu. This will drop down all valid modifiers applied on the mesh.</p>
+<p class="linemarker linemarker-22">Multiple meshes can be selected and <strong>Add All Items</strong> command can be used from the end of the list to define multiple deformers at the same time</p>
+<img alt="../_images/weights_ss.png" src="../_images/weights_ss.png" />
+<ul class="simple">
+<li><p class="linemarker linemarker-26"><strong>File Path</strong>: The absolute path where the trigger weight file (.trw) will be stored AND saved with ‘Save’ button</p></li>
+<li><p class="linemarker linemarker-27"><strong>Deformers</strong>: The list of deformers currently defined in the action</p></li>
+<li><p class="linemarker linemarker-28"><strong>New</strong>: Pops up an input window which you can enter the name of the new deformer manually.</p></li>
+<li><p class="linemarker linemarker-29"><strong>Rename</strong>: Lets you edit the name of the currently selected deformer from the list</p></li>
+<li><p class="linemarker linemarker-30"><strong>Remove</strong>: Removes the selected deformer from the action definition list</p></li>
+<li><p class="linemarker linemarker-31"><strong>Clear</strong>: Removes everything from the action definition list</p></li>
+<li><p class="linemarker linemarker-32"><strong>Save Button</strong>: Saves all shaders and shader-mesh pair information in the CURRENT scene to the file defined in File Path. Think twice before hitting that. Use Save as or increment if you have doubts.</p></li>
+<li><p class="linemarker linemarker-33"><strong>Save As</strong>: Brings up the file browser to specify a save as location and saves it</p></li>
+<li><p class="linemarker linemarker-34"><strong>Increment</strong>: Versions up the file defined in File Path</p></li>
+</ul>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p class="linemarker linemarker-37">Deformers are not limited with skin clusters. Currently skincluster, shrinkwrap, deltamush and blendshape deformers are supported.</p>
+</div>
 </section>
 
 
@@ -111,7 +111,7 @@
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="split_shapes.html" class="btn btn-neutral float-left" title="Split Shapes" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="../api.html" class="btn btn-neutral float-right" title="API" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="../modules.html" class="btn btn-neutral float-right" title="&lt;no title&gt;" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
