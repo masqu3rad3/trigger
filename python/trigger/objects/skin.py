@@ -104,22 +104,28 @@ class Weight(object):
         _influences = cmds.skinCluster(deformer, query=True, influence=True)
         _data_influences = self.get_all_influences()
 
+        # filter the _data_influences to remove the ones that are not in the scene
+        _filtered_data_influences = [x for x in _data_influences if cmds.objExists(x)]
+        # give a big warning if there are missing influences
+        if len(_data_influences) != len(_filtered_data_influences):
+            log.warning("THERE ARE MISSING INFLUENCES IN THE SCENE. The data might not be applied correctly")
+
         # add the missing ones / remove the excess
-        _ = [cmds.skinCluster(deformer, edit=True, addInfluence=x, nw=0) for x in _data_influences if
-             x not in _influences]
-        _ = [cmds.skinCluster(deformer, edit=True, removeInfluence=x, nw=0) for x in _influences if
-             x not in _data_influences]
+        _ = [cmds.skinCluster(deformer, edit=True, addInfluence=x, normalizeWeights=0) for x in _filtered_data_influences if
+             x not in _influences and cmds.objExists(x)]
+        _ = [cmds.skinCluster(deformer, edit=True, removeInfluence=x, normalizeWeights=0) for x in _influences if
+             x not in _filtered_data_influences]
 
         # # temporarily turn off the normalization
         # normalization = cmds.skinCluster(deformer, q=True, normalizeWeights=True)
         # cmds.skinCluster(deformer, edit=True, normalizeWeights=0)
 
-        geo = cmds.skinCluster(deformer, q=True, geometry=True)[0]
+        geo = cmds.skinCluster(deformer, query=True, geometry=True)[0]
         # compare the vertex size and act accordingly if the topologies are different
         if len(api.get_all_vertices(geo)) == self.get_vertex_count():
             # same topology
             self.__set_weights(deformer, geo, self.__convert_to_m_array(self._data))
-            if cmds.skinCluster(deformer, q=True, skinMethod=True):
+            if cmds.skinCluster(deformer, query=True, skinMethod=True):
                 self.__set_blend_weights(deformer, geo, om.MDoubleArray(self._data.get("DQ_weights", [])))
         else:
             log.warning("Applying the values to different topologies is WIP")

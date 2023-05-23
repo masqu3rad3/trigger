@@ -104,6 +104,17 @@
              
   <span class="target" id="morph"></span><section id="morph-morph">
 <h1>Morph <img alt="morph" src="../_images/morph.png" /><a class="headerlink" href="#morph-morph" title="Permalink to this heading"></a></h1>
+<p class="linemarker linemarker-8">Morph Action can be used in a broad range from creating a couple of simple blendshapes to creating a complex FACS based facial rig with dozens of inbetweens and combinations.</p>
+<p class="linemarker linemarker-10">The action strictly depends on naming conventions descriped in Blendshapes Naming Conventions.</p>
+<p class="linemarker linemarker-12">Morph Action creates all blendshapes, inbetweens and combinations (even combinations of combinations) based on this naming convention rules.</p>
+<blockquote>
+<div><ul class="simple">
+<li><p class="linemarker linemarker-14"><strong>Blendshapes Group</strong>: The root group for all the involving shapes. Morph action will automatically figure out how to use which shape under this group based on their naming convention tags.</p></li>
+<li><p class="linemarker linemarker-15"><strong>Neutral Mesh</strong>: The neutral state of the mesh. This will be used to calculate deltas and a duplicate of this will be created during the process if the morph mesh is not defined.</p></li>
+<li><p class="linemarker linemarker-16"><strong>Hook Node</strong>: The controller node that will hold the connections. If the object is not exists in the scene, one group with the same name will be created.</p></li>
+<li><p class="linemarker linemarker-17"><strong>Morph Mesh</strong>: If defined, the blendshape deformer will be applied to this mesh. Must share the same topology with Neutral Mesh.</p></li>
+</ul>
+</div></blockquote>
 </section>
 
 

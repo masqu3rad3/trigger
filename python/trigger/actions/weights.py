@@ -1,13 +1,10 @@
-import importlib
 import os
 from copy import deepcopy
 from maya import cmds
-import maya.api.OpenMaya as om
-import maya.api.OpenMayaAnim as omAnim
 
 from trigger.core import io
 from trigger.core import filelog
-from trigger.core.decorators import keepselection, tracktime, logerror
+from trigger.core.decorators import keepselection
 from trigger.library import functions
 from trigger.library import naming
 from trigger.library import deformers
@@ -24,7 +21,7 @@ log = filelog.Filelog(logname=__name__, filename="trigger_log")
 ACTION_DATA = {"create_deformers": True, "deformers": [], "weights_file_path": ""}
 
 
-def multiplyList(list_of_values):
+def multiply_list(list_of_values):
     # Multiply elements one by one
     result = 1
     for x in list_of_values:
@@ -32,14 +29,14 @@ def multiplyList(list_of_values):
     return result
 
 
-def addList(list_of_values):
+def add_list(list_of_values):
     result = 0
     for x in list_of_values:
         result += x
     return result
 
 
-def subtractList(list_of_values):
+def subtract_list(list_of_values):
     result = list_of_values[0]
     for x in list_of_values[1:]:
         result += x
@@ -47,7 +44,7 @@ def subtractList(list_of_values):
 
 
 class Weights(dict):
-    _api_version = cmds.about(api=True)
+    _api_version = cmds.about(apiVersion=True)
 
     def __init__(self):
         super(Weights, self).__init__()
@@ -134,7 +131,7 @@ Then you can save and increment versions for all of them at once.
                 data["affected"] = cmds.listConnections(
                     "%s.outputGeometry" % deformer,
                     shapes=True,
-                    scn=True,
+                    skipConversionNodes=True,
                     source=False,
                     destination=True,
                 )
@@ -142,14 +139,14 @@ Then you can save and increment versions for all of them at once.
                 data["influencers"] = cmds.listConnections(
                     "%s.targetGeom" % deformer,
                     shapes=True,
-                    scn=True,
+                    skipConversionNodes=True,
                     source=True,
                     destination=False,
                 )
                 data["affected"] = cmds.listConnections(
                     "%s.outputGeometry" % deformer,
                     shapes=True,
-                    scn=True,
+                    skipConversionNodes=True,
                     source=False,
                     destination=True,
                 )
@@ -158,7 +155,7 @@ Then you can save and increment versions for all of them at once.
                 data["affected"] = cmds.listConnections(
                     "%s.outputGeometry" % deformer,
                     shapes=True,
-                    scn=True,
+                    skipConversionNodes=True,
                     source=False,
                     destination=True,
                 )
@@ -167,7 +164,7 @@ Then you can save and increment versions for all of them at once.
                 data["affected"] = cmds.listConnections(
                     "%s.outputGeometry" % deformer,
                     shapes=True,
-                    scn=True,
+                    skipConversionNodes=True,
                     source=False,
                     destination=True,
                 )
@@ -350,8 +347,8 @@ Then you can save and increment versions for all of them at once.
             deformer=deformer,
             path=file_dir,
             defaultValue=default_value,
-            vc=vertexConnections,
-            at=attributes,
+            vertexConnections=vertexConnections,
+            attribute=attributes,
         )
 
         if export_dq_weights:
@@ -439,19 +436,6 @@ Then you can save and increment versions for all of them at once.
             point_attr_template = (
                 "{0}.inputTarget[0].inputTargetGroup[{1}].targetWeights[0]"
             )
-        # elif deformer_type == "skinCluster":
-        #     skin_meshes = cmds.listConnections(deformer, type="mesh")
-        #     for mesh in skin_meshes:
-        #         # Skin cluster weight loading has a bug - Its not loading the value of the first vertex
-        #         cmds.select("%s.vtx[0]" % mesh)
-        #         cmds.WeightHammer()
-        #     if data.get("DQ_weights"):
-        #         for nmb, weight in enumerate(data["DQ_weights"]):
-        #             cmds.setAttr('%s.bw[%s]' % (deformer, nmb), weight)
-        #     if not suppress_messages:
-        #         log.info("%s Weights Lodaded Successfully..." % deformer)
-        #     return
-        #     # point_attr_template = "{0}.weightList[{1}].weights[0]"
         else:
             point_attr_template = "{0}.weightList[{1}].weights[0]"
 
@@ -534,8 +518,19 @@ Then you can save and increment versions for all of them at once.
                 old_skincluster = cmds.ls(affected_history, type="skinCluster")
                 if old_skincluster:
                     cmds.delete(old_skincluster)
+                # before creating the skinCluster, filter the influences that doesn't exist in the scene
+                # this is to avoid errors
+                existing_influencers = []
+                for influencer in influencers:
+                    if cmds.objExists(influencer):
+                        existing_influencers.append(influencer)
+                    else:
+                        log.warning(
+                            "Influencer %s does not exist in the scene. Skipping..."
+                            % influencer
+                        )
                 deformer = cmds.skinCluster(
-                    influencers, affected[0], name=deformer_name, tsb=True
+                    existing_influencers, affected[0], name=deformer_name, tsb=True
                 )[0]
 
             elif deformer_type == "shrinkWrap":
@@ -557,7 +552,6 @@ Then you can save and increment versions for all of them at once.
             for attr_dict in deformer_attrs:
                 attr_name = attr_dict["name"]
                 attr_type = attr_dict["type"]
-                # attr_value = float(attr_dict["value"]) # THIS IS NOT BULLET-PROOF
                 if attr_type == "short":
                     attr_value = int(attr_dict["value"])
                 elif attr_type == "doubleLinear":
@@ -579,7 +573,6 @@ Then you can save and increment versions for all of them at once.
                 cmds.setAttr("%s.%s" % (deformer_name, attr_name), attr_value)
 
         # finally load weights
-        # cmds.evalDeferred('self.load_weights(deformer=deformer_name, file_path=weights_file, method="index", ignore_name=False)')
         self.load_weights(
             deformer=deformer_name,
             file_path=weights_file,
@@ -670,7 +663,7 @@ Then you can save and increment versions for all of them at once.
                         "points"
                     ][point_nmb]["value"]
                     point_values.append(val)
-                point["value"] = multiplyList(point_values)
+                point["value"] = multiply_list(point_values)
         return copy_data
 
     def add_weights(self, data_list, influencer=None, clamp=True):
@@ -688,7 +681,7 @@ Then you can save and increment versions for all of them at once.
                         "points"
                     ][point_nmb]["value"]
                     point_values.append(val)
-                point["value"] = addList(point_values)
+                point["value"] = add_list(point_values)
                 if clamp:
                     point["value"] = max(min(point["value"], 1.0), 0.0)
         return copy_data
@@ -708,7 +701,7 @@ Then you can save and increment versions for all of them at once.
                         "points"
                     ][point_nmb]["value"]
                     point_values.append(val)
-                point["value"] = subtractList(point_values)
+                point["value"] = subtract_list(point_values)
                 if clamp:
                     point["value"] = max(min(point["value"], 1.0), 0.0)
         return copy_data

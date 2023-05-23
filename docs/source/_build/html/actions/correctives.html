@@ -111,7 +111,8 @@
 <p class="linemarker linemarker-10">It can contain as much as definitions as you require in a single Action item.
 Hitting the Add New Definition button creates a new definition.</p>
 <p class="linemarker linemarker-13">Each definition contains a set of properties:</p>
-<ul class="simple">
+<blockquote>
+<div><ul class="simple">
 <li><p class="linemarker linemarker-15"><strong>Mode:</strong> Switches between Vector and Single axis modes. Vector is useful for multi axis moving joints like shoulders. Single Axis is less resource consuming and suitable for joints moving on a single axis.</p></li>
 <li><p class="linemarker linemarker-16"><strong>Driver Transform:</strong> This is usually the bone object that we put the PSD (pose space deformer) on</p></li>
 <li><p class="linemarker linemarker-17"><strong>Controller:</strong> object which is getting used to acquire the pose that we want to put corrective shape. This must be the currently active controller. For example if there are switchable IK and FK controllers for the defined Driver Transform and the default mode is IK, then the IK controller needsto be selected. Since the PSD is getting the angle information from the joint, the same corrective will be triggered with both IK and FK once created. This is only for initial creation of PSDs and delta shapes</p></li>
@@ -120,6 +121,7 @@ Hitting the Add New Definition button creates a new definition.</p>
 <li><p class="linemarker linemarker-20"><strong>Corrected Shape:</strong> The sculpted shape of the corrected pose. This mesh MUST be sculpted from the captured state of target transform. This line can be left empty. In that case only the PSD will be created.</p></li>
 <li><p class="linemarker linemarker-21"><strong>Skinned Mesh:</strong> the mesh that has the skincluster applied.</p></li>
 </ul>
+</div></blockquote>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
 <p class="linemarker linemarker-24">This Action requires the extractDeltas.py plugin to work</p>

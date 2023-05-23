@@ -12,13 +12,13 @@ Hitting the Add New Definition button creates a new definition.
 
 Each definition contains a set of properties:
 
-- **Mode:** Switches between Vector and Single axis modes. Vector is useful for multi axis moving joints like shoulders. Single Axis is less resource consuming and suitable for joints moving on a single axis.
-- **Driver Transform:** This is usually the bone object that we put the PSD (pose space deformer) on
-- **Controller:** object which is getting used to acquire the pose that we want to put corrective shape. This must be the currently active controller. For example if there are switchable IK and FK controllers for the defined Driver Transform and the default mode is IK, then the IK controller needsto be selected. Since the PSD is getting the angle information from the joint, the same corrective will be triggered with both IK and FK once created. This is only for initial creation of PSDs and delta shapes
-- **Target Transform:** Holds and displays the captured values of Controller.
-- **CAPTURE button:** captures the current transform values of Controller. Move and/or rotate the controller object to the pose that you want to activate the corrective 100% and hit this button to capture the pose to be used later during rig creation Up O ject: Only available in Vector mode. Defines the up vector to align the PSD. Usually any parent node of the Driver Transform works.
-- **Corrected Shape:** The sculpted shape of the corrected pose. This mesh MUST be sculpted from the captured state of target transform. This line can be left empty. In that case only the PSD will be created.
-- **Skinned Mesh:** the mesh that has the skincluster applied.
+    - **Mode:** Switches between Vector and Single axis modes. Vector is useful for multi axis moving joints like shoulders. Single Axis is less resource consuming and suitable for joints moving on a single axis.
+    - **Driver Transform:** This is usually the bone object that we put the PSD (pose space deformer) on
+    - **Controller:** object which is getting used to acquire the pose that we want to put corrective shape. This must be the currently active controller. For example if there are switchable IK and FK controllers for the defined Driver Transform and the default mode is IK, then the IK controller needsto be selected. Since the PSD is getting the angle information from the joint, the same corrective will be triggered with both IK and FK once created. This is only for initial creation of PSDs and delta shapes
+    - **Target Transform:** Holds and displays the captured values of Controller.
+    - **CAPTURE button:** captures the current transform values of Controller. Move and/or rotate the controller object to the pose that you want to activate the corrective 100% and hit this button to capture the pose to be used later during rig creation Up O ject: Only available in Vector mode. Defines the up vector to align the PSD. Usually any parent node of the Driver Transform works.
+    - **Corrected Shape:** The sculpted shape of the corrected pose. This mesh MUST be sculpted from the captured state of target transform. This line can be left empty. In that case only the PSD will be created.
+    - **Skinned Mesh:** the mesh that has the skincluster applied.
 
 .. warning:: 
     This Action requires the extractDeltas.py plugin to work

@@ -361,6 +361,7 @@ class ActionsSession(dict):
         a_hand.feed(action["data"])
         a_hand.save_action()
         LOG.info("success")
+        return True
 
     def get_layout_ui(self, action_name, ctrl, layout):
         action = self.get_action(action_name)

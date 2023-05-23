@@ -104,6 +104,31 @@
              
   <span class="target" id="import-asset"></span><section id="import-asset-import-asset">
 <h1>Import Asset <img alt="import_asset" src="../_images/import_asset.png" /><a class="headerlink" href="#import-asset-import-asset" title="Permalink to this heading"></a></h1>
+<p class="linemarker linemarker-8">Import Asset action is used to dynamically import any kind of asset into the build session. This is probably the most commonly used action in all Trigger sessions.</p>
+<p class="linemarker linemarker-10">Any valid format can be brought in into the scene. Please note that, the import method is not using any namespaces and changes the names in case of
+clashes. If you want to collect assets together sharing a similar hierarchy use Assemble action instead.</p>
+<p class="linemarker linemarker-13">Valid formats are:</p>
+<ul class="simple">
+<li><p class="linemarker linemarker-15">Maya ASCII (.ma)</p></li>
+<li><p class="linemarker linemarker-16">Maya Binary (.mb)</p></li>
+<li><p class="linemarker linemarker-17">USD (.usd)</p></li>
+<li><p class="linemarker linemarker-18">Alembic (.abc)</p></li>
+<li><p class="linemarker linemarker-19">FBX (.fbx)</p></li>
+<li><p class="linemarker linemarker-20">OBJ (.obj)</p></li>
+</ul>
+<p class="linemarker linemarker-22">This action has the following features:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p class="linemarker linemarker-24"><strong>File Path</strong>: Absolute path of the asset that is going to be brought in</p></li>
+<li><p class="linemarker linemarker-25"><strong>Scale</strong>: Post Scale compensation of the asset. Always uses the world origin as scale pivot.</p></li>
+<li><p class="linemarker linemarker-26"><strong>Root Suffix</strong>: Adds the value in here as suffix to the root group of imported asset</p></li>
+<li><p class="linemarker linemarker-27"><strong>Parent Under</strong>: The imported asset will be parented under the node defined here if defined.</p></li>
+</ul>
+</div></blockquote>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p class="linemarker linemarker-30">Import Asset Action does not use namespaces and changes names if a node already exists in the scene</p>
+</div>
 </section>
 
 
