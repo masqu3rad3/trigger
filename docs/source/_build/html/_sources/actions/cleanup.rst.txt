@@ -1,9 +1,9 @@
 .. _cleanup:
 .. |cleanup| image:: ../../../python/trigger/ui/icons/cleanup.png
 
-========
+=================
 Cleanup |cleanup|
-========
+=================
 
 Cleanup action is an action to help keep the rig file as clean as possible. It validates the current state of the scene with checked items and tries to fix
 those issues automatically.

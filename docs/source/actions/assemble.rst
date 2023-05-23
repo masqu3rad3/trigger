@@ -1,9 +1,9 @@
 .. _assemble:
 .. |assemble| image:: ../../../python/trigger/ui/icons/assemble.png
 
-========
+===================
 Assemble |assemble|
-========
+===================
 
 
 
