@@ -46,7 +46,7 @@ class ModuleTests(base_test.TestCase):
         # kinematics2 = self.basic_creation_test(["arm", "tentacle"])
         # kinematics2 = self.basic_creation_test(["base", "arm", "fkik"])
         # kinematics2 = self.basic_creation_test(["base", "arm", "fkik"])
-        # self.assertTrue(kinematics2)
+        self.assertTrue(kinematics2)
 
     def test_base(self):
         # LOG.info("test_base")
@@ -137,9 +137,6 @@ class ModuleTests(base_test.TestCase):
         kinematics = self.basic_creation_test("singleton")
         self.assertTrue(kinematics)
 
-        kinematics2 = self.basic_creation_test("singleton")
-        self.assertTrue(kinematics2)
-
         # Socket / Plug connections
         kinematics2 = self.basic_creation_test(["base", "singleton", "fkik"])
         self.assertTrue(kinematics2)
@@ -151,7 +148,7 @@ class ModuleTests(base_test.TestCase):
         self.assertTrue(kinematics)
 
         # Socket / Plug connections
-        kinematics2 = self.basic_creation_test(["base", "spine", "leg", "base"])
+        kinematics2 = self.basic_creation_test(["base", "spine", "leg"])
         self.assertTrue(kinematics2)
 
     def test_surface(self):
@@ -209,19 +206,7 @@ class ModuleTests(base_test.TestCase):
             root_guides.append(first_guide)
 
             if previous_end_guide:
-                # ToDo: this is not working
-                # LOG.debug("first_guide: {}".format(first_guide))
-                # LOG.debug("previous_end_guide: {}".format(previous_end_guide))
-
                 cmds.parent(first_guide, previous_end_guide)
                 cmds.setAttr("{}.translate".format(first_guide), 0, 0, 0)
             previous_end_guide = list(side_dict.values())[0][-1]
-            # last_guides.append(list(side_dict.values())[0][-1])
         return self.guides_handler.init.test_build(root_guides[0])
-        # return self.initializer.test_build(_guider.guideJoints[0])
-
-
-    # @staticmethod
-    # def reset_scene():
-    #     """Reset the scene to a blank Maya scene."""
-    #     cmds.file(newFile=True, force=True)
