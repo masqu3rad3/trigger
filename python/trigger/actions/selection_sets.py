@@ -112,7 +112,7 @@ class Selection_sets(object):
             def_formlayout.addRow(def_members_lbl, def_members_listBox)
 
             def_remove_lbl = QtWidgets.QLabel(text="")
-            def_remove_pb = QtWidgets.QPushButton(text="Remove")
+            def_remove_pb = QtWidgets.QPushButton(text="Remove Selection Set")
             def_formlayout.addRow(def_remove_lbl, def_remove_pb)
 
             id_lbl = QtWidgets.QLabel("")

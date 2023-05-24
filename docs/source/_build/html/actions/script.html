@@ -44,35 +44,10 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <ul class="current">
+              <ul>
 <li class="toctree-l1"><a class="reference internal" href="../overview.html">Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
-<li class="toctree-l1 current"><a class="reference internal" href="../getting_started.html">Getting Started</a><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="../interface.html">Interface</a></li>
-<li class="toctree-l2 current"><a class="reference internal" href="../actions.html">Actions</a><ul class="current">
-<li class="toctree-l3"><a class="reference internal" href="assemble.html">Assemble </a></li>
-<li class="toctree-l3"><a class="reference internal" href="cleanup.html">Cleanup </a></li>
-<li class="toctree-l3"><a class="reference internal" href="cloth_setup.html">Cloth Setup </a></li>
-<li class="toctree-l3"><a class="reference internal" href="correctives.html">Correctives </a></li>
-<li class="toctree-l3"><a class="reference internal" href="driver.html">Driver </a></li>
-<li class="toctree-l3"><a class="reference internal" href="face_cam.html">Face Cam </a></li>
-<li class="toctree-l3"><a class="reference internal" href="import_asset.html">Import Asset </a></li>
-<li class="toctree-l3"><a class="reference internal" href="kinematics.html">Kinematics </a></li>
-<li class="toctree-l3"><a class="reference internal" href="look.html">Look </a></li>
-<li class="toctree-l3"><a class="reference internal" href="master.html">Master </a></li>
-<li class="toctree-l3"><a class="reference internal" href="morph.html">Morph </a></li>
-<li class="toctree-l3"><a class="reference internal" href="node_presets.html">Node Presets </a></li>
-<li class="toctree-l3"><a class="reference internal" href="reference_session.html">Reference Session </a></li>
-<li class="toctree-l3 current"><a class="current reference internal" href="#">Script </a></li>
-<li class="toctree-l3"><a class="reference internal" href="selection_sets.html">Selection Sets </a></li>
-<li class="toctree-l3"><a class="reference internal" href="shapes.html">Shapes </a></li>
-<li class="toctree-l3"><a class="reference internal" href="space_switchers.html">Space Switchers </a></li>
-<li class="toctree-l3"><a class="reference internal" href="split_shapes.html">Split Shapes </a></li>
-<li class="toctree-l3"><a class="reference internal" href="weights.html">Weights </a></li>
-</ul>
-</li>
-</ul>
-</li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../api.html">API</a></li>
 </ul>
 
@@ -90,7 +65,6 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
-          <li class="breadcrumb-item"><a href="../getting_started.html">Getting Started</a></li>
           <li class="breadcrumb-item"><a href="../actions.html">Actions</a></li>
       <li class="breadcrumb-item active">Script </li>
       <li class="wy-breadcrumbs-aside">
@@ -104,6 +78,23 @@
              
   <span class="target" id="script"></span><section id="script-script">
 <h1>Script <img alt="script" src="../_images/script.png" /><a class="headerlink" href="#script-script" title="Permalink to this heading"></a></h1>
+<p class="linemarker linemarker-8">Script action is for running custom python scripts and commands inside Trigger context.</p>
+<p class="linemarker linemarker-10">The modules imported and variables defined (even the global
+ones) are not accessible other than the individual action module itself.</p>
+<blockquote>
+<div><ul class="simple">
+<li><p class="linemarker linemarker-13"><strong>File Path</strong>: The python module or python script file (.py) which will be loaded. This can be left empty for the non-dependant simple cmds commands.</p></li>
+<li><p class="linemarker linemarker-14"><strong>Edit</strong>: This button either opens the default code editor assigned for .py files by os or pops a browser windows to select a save location for a new .py file if nothing defined in file path section.</p></li>
+<li><p class="linemarker linemarker-15"><strong>Import As</strong>: If the file defined in file path is a module, it will be imported as the word defined here</p></li>
+<li><p class="linemarker linemarker-16"><strong>Commands</strong>: multiple commands can be entered separated with ‘;’</p></li>
+</ul>
+</div></blockquote>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p class="linemarker linemarker-19">simple commands may not require a file path defined. Cmds module can be imported and the command can run in commands section without
+the need of any external file like this::
+from maya import cmds; cmds.delete(“trigger_refGuides”)</p>
+</div>
 </section>
 
 

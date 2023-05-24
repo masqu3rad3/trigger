@@ -44,35 +44,10 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <ul class="current">
+              <ul>
 <li class="toctree-l1"><a class="reference internal" href="../overview.html">Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
-<li class="toctree-l1 current"><a class="reference internal" href="../getting_started.html">Getting Started</a><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="../interface.html">Interface</a></li>
-<li class="toctree-l2 current"><a class="reference internal" href="../actions.html">Actions</a><ul class="current">
-<li class="toctree-l3"><a class="reference internal" href="assemble.html">Assemble </a></li>
-<li class="toctree-l3"><a class="reference internal" href="cleanup.html">Cleanup </a></li>
-<li class="toctree-l3"><a class="reference internal" href="cloth_setup.html">Cloth Setup </a></li>
-<li class="toctree-l3"><a class="reference internal" href="correctives.html">Correctives </a></li>
-<li class="toctree-l3"><a class="reference internal" href="driver.html">Driver </a></li>
-<li class="toctree-l3"><a class="reference internal" href="face_cam.html">Face Cam </a></li>
-<li class="toctree-l3"><a class="reference internal" href="import_asset.html">Import Asset </a></li>
-<li class="toctree-l3"><a class="reference internal" href="kinematics.html">Kinematics </a></li>
-<li class="toctree-l3"><a class="reference internal" href="look.html">Look </a></li>
-<li class="toctree-l3"><a class="reference internal" href="master.html">Master </a></li>
-<li class="toctree-l3"><a class="reference internal" href="morph.html">Morph </a></li>
-<li class="toctree-l3"><a class="reference internal" href="node_presets.html">Node Presets </a></li>
-<li class="toctree-l3"><a class="reference internal" href="reference_session.html">Reference Session </a></li>
-<li class="toctree-l3"><a class="reference internal" href="script.html">Script </a></li>
-<li class="toctree-l3"><a class="reference internal" href="selection_sets.html">Selection Sets </a></li>
-<li class="toctree-l3"><a class="reference internal" href="shapes.html">Shapes </a></li>
-<li class="toctree-l3 current"><a class="current reference internal" href="#">Space Switchers </a></li>
-<li class="toctree-l3"><a class="reference internal" href="split_shapes.html">Split Shapes </a></li>
-<li class="toctree-l3"><a class="reference internal" href="weights.html">Weights </a></li>
-</ul>
-</li>
-</ul>
-</li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../api.html">API</a></li>
 </ul>
 
@@ -90,7 +65,6 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
-          <li class="breadcrumb-item"><a href="../getting_started.html">Getting Started</a></li>
           <li class="breadcrumb-item"><a href="../actions.html">Actions</a></li>
       <li class="breadcrumb-item active">Space Switchers </li>
       <li class="wy-breadcrumbs-aside">
@@ -104,6 +78,24 @@
              
   <span class="target" id="space-switchers"></span><section id="space-switchers-space-switchers">
 <h1>Space Switchers <img alt="space_switchers" src="../_images/space_switchers.png" /><a class="headerlink" href="#space-switchers-space-switchers" title="Permalink to this heading"></a></h1>
+<p class="linemarker linemarker-8">Creates space switches on the rig. Any number of space switches can be defined with a single Space Switcher Action.</p>
+<blockquote>
+<div><ul class="simple">
+<li><p class="linemarker linemarker-10"><strong>Add New Definition</strong>: Adds a new space switcher definition.</p></li>
+<li><p class="linemarker linemarker-11"><strong>Anchor</strong>: The object that is going to be ‘anchored’ to different specified locations. The switch controller will be created on this object</p></li>
+<li><p class="linemarker linemarker-12"><strong>Locations</strong>: Any number of objects which the anchor object can follow.</p></li>
+<li><dl class="simple">
+<dt><strong>Mode</strong>: Type of space switch.</dt><dd><ul>
+<li><p class="linemarker linemarker-14"><strong>Parent</strong>: Anchor follows both translation and rotation.</p></li>
+<li><p class="linemarker linemarker-15"><strong>Point</strong>: Anchor only follows translation of objects.</p></li>
+<li><p class="linemarker linemarker-16"><strong>Orient</strong>: Anchor only follows rotation of objects.</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><p class="linemarker linemarker-17"><strong>Remove</strong>: Removes the Definition</p></li>
+</ul>
+</div></blockquote>
 </section>
 
 

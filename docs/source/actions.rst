@@ -52,23 +52,22 @@ The list of current available Actions in Trigger (October 2021)
     /actions/split_shapes
     /actions/weights
 
-
-- |assemble| :ref:`assemble`
-- |cleanup| :ref:`cleanup`
-- |cloth_setup| :ref:`cloth_setup`
-- |correctives| :ref:`correctives`
-- |driver| :ref:`driver`
-- |face_cam| :ref:`face_cam`
-- |import_asset| :ref:`import_asset`
-- |kinematics| :ref:`kinematics`
-- |look| :ref:`look`
-- |master| :ref:`master`
-- |morph| :ref:`morph`
-- |node_presets| :ref:`node_presets`
-- |reference_session| :ref:`reference_session`
-- |script| :ref:`script`
-- |selection_sets| :ref:`selection_sets`
-- |shapes| :ref:`shapes`
-- |space_switchers| :ref:`space_switchers`
-- |split_shapes| :ref:`split_shapes`
-- |weights| :ref:`weights`
+- |assemble| :doc:`./actions/assemble`
+- |cleanup| :doc:`./actions/cleanup`
+- |cloth_setup| :doc:`./actions/cloth_setup`
+- |correctives| :doc:`./actions/correctives`
+- |driver| :doc:`./actions/driver`
+- |face_cam| :doc:`./actions/face_cam`
+- |import_asset| :doc:`./actions/import_asset`
+- |kinematics| :doc:`./actions/kinematics`
+- |look| :doc:`./actions/look`
+- |master| :doc:`./actions/master`
+- |morph| :doc:`./actions/morph`
+- |node_presets| :doc:`./actions/node_presets`
+- |reference_session| :doc:`./actions/reference_session`
+- |script| :doc:`./actions/script`
+- |selection_sets| :doc:`./actions/selection_sets`
+- |shapes| :doc:`./actions/shapes`
+- |space_switchers| :doc:`./actions/space_switchers`
+- |split_shapes| :doc:`./actions/split_shapes`
+- |weights| :doc:`./actions/weights`

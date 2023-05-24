@@ -44,35 +44,10 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <ul class="current">
+              <ul>
 <li class="toctree-l1"><a class="reference internal" href="../overview.html">Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
-<li class="toctree-l1 current"><a class="reference internal" href="../getting_started.html">Getting Started</a><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="../interface.html">Interface</a></li>
-<li class="toctree-l2 current"><a class="reference internal" href="../actions.html">Actions</a><ul class="current">
-<li class="toctree-l3"><a class="reference internal" href="assemble.html">Assemble </a></li>
-<li class="toctree-l3"><a class="reference internal" href="cleanup.html">Cleanup </a></li>
-<li class="toctree-l3"><a class="reference internal" href="cloth_setup.html">Cloth Setup </a></li>
-<li class="toctree-l3"><a class="reference internal" href="correctives.html">Correctives </a></li>
-<li class="toctree-l3"><a class="reference internal" href="driver.html">Driver </a></li>
-<li class="toctree-l3"><a class="reference internal" href="face_cam.html">Face Cam </a></li>
-<li class="toctree-l3"><a class="reference internal" href="import_asset.html">Import Asset </a></li>
-<li class="toctree-l3"><a class="reference internal" href="kinematics.html">Kinematics </a></li>
-<li class="toctree-l3"><a class="reference internal" href="look.html">Look </a></li>
-<li class="toctree-l3"><a class="reference internal" href="master.html">Master </a></li>
-<li class="toctree-l3"><a class="reference internal" href="morph.html">Morph </a></li>
-<li class="toctree-l3"><a class="reference internal" href="node_presets.html">Node Presets </a></li>
-<li class="toctree-l3"><a class="reference internal" href="reference_session.html">Reference Session </a></li>
-<li class="toctree-l3"><a class="reference internal" href="script.html">Script </a></li>
-<li class="toctree-l3"><a class="reference internal" href="selection_sets.html">Selection Sets </a></li>
-<li class="toctree-l3"><a class="reference internal" href="shapes.html">Shapes </a></li>
-<li class="toctree-l3"><a class="reference internal" href="space_switchers.html">Space Switchers </a></li>
-<li class="toctree-l3 current"><a class="current reference internal" href="#">Split Shapes </a></li>
-<li class="toctree-l3"><a class="reference internal" href="weights.html">Weights </a></li>
-</ul>
-</li>
-</ul>
-</li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../api.html">API</a></li>
 </ul>
 
@@ -90,7 +65,6 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
-          <li class="breadcrumb-item"><a href="../getting_started.html">Getting Started</a></li>
           <li class="breadcrumb-item"><a href="../actions.html">Actions</a></li>
       <li class="breadcrumb-item active">Split Shapes </li>
       <li class="wy-breadcrumbs-aside">
@@ -104,6 +78,41 @@
              
   <span class="target" id="split-shapes"></span><section id="split-shapes-split-shapes">
 <h1>Split Shapes <img alt="split_shapes" src="../_images/split_shapes.png" /><a class="headerlink" href="#split-shapes-split-shapes" title="Permalink to this heading"></a></h1>
+<p class="linemarker linemarker-8">Split Shapes is a blendshape action which splits the given shapes into different parts with customizable masks.</p>
+<p class="linemarker linemarker-10">Split Shapes Action usually prepares the scene for Morph Actions. The most common usage is to gather symmetrically sculpted shapes and split them into vertical and horizontal splits to provide localized and asymmetrical controls.</p>
+<p class="linemarker linemarker-13">Sample Workflow:</p>
+<ol class="arabic">
+<li><p class="linemarker linemarker-15">Import the sculpted blendshapes pack with an Import Asset Action or Assemble Action</p></li>
+<li><p class="linemarker linemarker-16">Select the neutral mesh from the Maya outliner and hit <strong>prepare</strong> button in the Split Shapes action. A temporary blendshape will be created on neutral mesh with 3 preset split maps. Vertical Sharp, Vertical Smooth and Horizontal Sharp.</p></li>
+<li><p class="linemarker linemarker-17">Using Maya’s paint blendshape weights tool, paint each target separately.</p>
+<blockquote>
+<div><p class="linemarker linemarker-19">In vertical maps, Left side of the character is represented by white. In horizontal maps upper sides of the character should be white.
+The results for Vertical Sharp, Vertical Smooth and Horizontal Sharp maps should be similar to these:</p>
+<img alt="../_images/split_shapes_ss1.png" src="../_images/split_shapes_ss1.png" />
+</div></blockquote>
+</li>
+<li><p class="linemarker linemarker-23">If more split maps are required, duplicate the Neutral mesh, rename it as the extra split map that you want (e.g horizontal_smooth) and add it as an additional blendshape target to splitMaps_blendshape node and paint it as you like.</p></li>
+<li><p class="linemarker linemarker-24">Hit <strong>Save</strong> button and browse a filepath to save the split maps. Next time you want to edit a map, selecting the neutral mesh and hitting prepare button will bring your painted maps from this file instead of just the blank template</p></li>
+<li><p class="linemarker linemarker-25">Fill the <strong>Blendshapes Root Group</strong> section with the name of the group which holds all the blendshapes.</p></li>
+<li><p class="linemarker linemarker-26">Fill the <strong>Neutral Mesh</strong> section with the name of the neutral mesh in the scene. As a convention, neutral mesh is part of the blendshape pack. Even though it is in the Blendshapes root group, the neutral must be specified here.</p></li>
+<li><p class="linemarker linemarker-27">For each shape in the pack, we need to make a definition. Hit <strong>New</strong> button and a new pop up dialog should appear.</p></li>
+<li><p class="linemarker linemarker-28">In the new menu, write down the shape name that is going to be splitted into the <strong>Mesh</strong> section. Then from the right hand side, select the split maps that you want to apply to this shape.</p>
+<blockquote>
+<div><img alt="../_images/split_shapes_ss2.png" src="../_images/split_shapes_ss2.png" />
+<p class="linemarker linemarker-31"><em>In this case, we are instructiong the lipPuckerer shape to be split into 4 parts using two split maps.</em></p>
+</div></blockquote>
+</li>
+<li><p class="linemarker linemarker-32">Hit <strong>Ok</strong> and repeat the same step for each shape.</p></li>
+</ol>
+<p class="linemarker linemarker-34">Use the preset split map names (vertical_smooth, vertical_sharp, horizontal_sharp, horizontal_smooth) as it is as long as they serve the purpose and do no substitute them with custom named split maps unless you know what you are doing. The reason for that is, these will always split the shapes with the correct naming convention in a way that the Morph Action Action will understand.</p>
+<p class="linemarker linemarker-36">For example, if we are splitting the lipPuckerer both horizontally and vertically, when the preset names are used, it will split the shape as</p>
+<ul class="simple">
+<li><p class="linemarker linemarker-38"><em>ULlipPuckerer (upper left)</em></p></li>
+<li><p class="linemarker linemarker-39"><em>URlipPuckerer (upper right)</em></p></li>
+<li><p class="linemarker linemarker-40"><em>DLlipPuckerer (lower left)</em></p></li>
+<li><p class="linemarker linemarker-41"><em>LRlipPuckerer (lower right)</em></p></li>
+</ul>
+<p class="linemarker linemarker-43">After Split Shapes Actions execution complete during building, the splitted shapes will be gathered in a new group called SPLITTES_SHAPES_grp and the unsplit version will be deleted. Any shape not defined in the Split Definitions will stay untouched where it was.</p>
 </section>
 
 

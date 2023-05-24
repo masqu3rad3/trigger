@@ -44,35 +44,10 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <ul class="current">
+              <ul>
 <li class="toctree-l1"><a class="reference internal" href="../overview.html">Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
-<li class="toctree-l1 current"><a class="reference internal" href="../getting_started.html">Getting Started</a><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="../interface.html">Interface</a></li>
-<li class="toctree-l2 current"><a class="reference internal" href="../actions.html">Actions</a><ul class="current">
-<li class="toctree-l3"><a class="reference internal" href="assemble.html">Assemble </a></li>
-<li class="toctree-l3"><a class="reference internal" href="cleanup.html">Cleanup </a></li>
-<li class="toctree-l3"><a class="reference internal" href="cloth_setup.html">Cloth Setup </a></li>
-<li class="toctree-l3"><a class="reference internal" href="correctives.html">Correctives </a></li>
-<li class="toctree-l3"><a class="reference internal" href="driver.html">Driver </a></li>
-<li class="toctree-l3"><a class="reference internal" href="face_cam.html">Face Cam </a></li>
-<li class="toctree-l3"><a class="reference internal" href="import_asset.html">Import Asset </a></li>
-<li class="toctree-l3"><a class="reference internal" href="kinematics.html">Kinematics </a></li>
-<li class="toctree-l3"><a class="reference internal" href="look.html">Look </a></li>
-<li class="toctree-l3"><a class="reference internal" href="master.html">Master </a></li>
-<li class="toctree-l3"><a class="reference internal" href="morph.html">Morph </a></li>
-<li class="toctree-l3"><a class="reference internal" href="node_presets.html">Node Presets </a></li>
-<li class="toctree-l3"><a class="reference internal" href="reference_session.html">Reference Session </a></li>
-<li class="toctree-l3"><a class="reference internal" href="script.html">Script </a></li>
-<li class="toctree-l3"><a class="reference internal" href="selection_sets.html">Selection Sets </a></li>
-<li class="toctree-l3 current"><a class="current reference internal" href="#">Shapes </a></li>
-<li class="toctree-l3"><a class="reference internal" href="space_switchers.html">Space Switchers </a></li>
-<li class="toctree-l3"><a class="reference internal" href="split_shapes.html">Split Shapes </a></li>
-<li class="toctree-l3"><a class="reference internal" href="weights.html">Weights </a></li>
-</ul>
-</li>
-</ul>
-</li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../api.html">API</a></li>
 </ul>
 
@@ -90,7 +65,6 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
-          <li class="breadcrumb-item"><a href="../getting_started.html">Getting Started</a></li>
           <li class="breadcrumb-item"><a href="../actions.html">Actions</a></li>
       <li class="breadcrumb-item active">Shapes </li>
       <li class="wy-breadcrumbs-aside">
@@ -104,6 +78,28 @@
              
   <span class="target" id="shapes"></span><section id="shapes-shapes">
 <h1>Shapes <img alt="shapes" src="../_images/shapes.png" /><a class="headerlink" href="#shapes-shapes" title="Permalink to this heading"></a></h1>
+<p class="linemarker linemarker-8">Shapes Action stores and loads the edits on controller curves.</p>
+<p class="linemarker linemarker-10">When the action runs, it only replaces the curves already existing in the scene, ignoring the rest. Similar to Look Action, it collects the current maya scene information during save. Therefore it is advised to be careful when hitting save button since it will replace the already existing Trigger Shapes file (.trs) with whatever the scene contains.</p>
+<p class="linemarker linemarker-12">Common usage of shapes action is to edit default controller shapes created with Kinematics Action.</p>
+<ol class="arabic simple">
+<li><p class="linemarker linemarker-14">Simply drop a Shapes action after the kinematics.</p></li>
+<li><p class="linemarker linemarker-15">Run the session until Shapes action.</p></li>
+<li><p class="linemarker linemarker-16">Edit the controller shapes to match the rig better</p></li>
+<li><p class="linemarker linemarker-17">save the Shapes file.</p></li>
+</ol>
+<p class="linemarker linemarker-19">With the next build, these shapes will be replaced with the default Kinematics shapes.</p>
+<blockquote>
+<div><ul class="simple">
+<li><p class="linemarker linemarker-21"><strong>File Path</strong>: The absolute path where the Trigger Shapes file (.trs) will be stored AND saved with ‘Save’ button</p></li>
+<li><p class="linemarker linemarker-22"><strong>Save Button</strong>: Saves all shaders and shader-mesh pair information in the CURRENT scene to the file defined in File Path. Think twice before hitting that. Use Save as or increment if you have doubts.</p></li>
+<li><p class="linemarker linemarker-23"><strong>Save As</strong>: Brings up the file browser to specify a save as location and saves it</p></li>
+<li><p class="linemarker linemarker-24"><strong>Increment</strong>: Versions up the file defined in File Path.</p></li>
+</ul>
+</div></blockquote>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p class="linemarker linemarker-27">Be careful when hitting the save button. The current scene will be used to overwrite the file.</p>
+</div>
 </section>
 
 
