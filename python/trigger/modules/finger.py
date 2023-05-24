@@ -4,6 +4,7 @@ import maya.api.OpenMaya as om
 from trigger.library import functions, joint
 from trigger.library import naming
 from trigger.library import attribute
+from trigger.library import connection
 from trigger.library import api
 from trigger.objects.controller import Controller
 from trigger.modules import _module
@@ -46,15 +47,15 @@ class Finger(_module.ModuleCore):
         else:
             log.error("Class needs either build_data or finger inits to be constructed")
 
-        hand_controller = cmds.getAttr("%s.handController" % self.inits[0])
-        if hand_controller:
-            if cmds.objExists(hand_controller):
-                self.handController = hand_controller
-            else:
-                log.warning("Hand Control object %s is not exist. Skipping hand controller" % hand_controller)
-                self.handController = None
-        else:
-            self.handController = None
+        # hand_controller = cmds.getAttr("%s.handController" % self.inits[0])
+        # if hand_controller:
+        #     if cmds.objExists(hand_controller):
+        #         self.handController = hand_controller
+        #     else:
+        #         log.warning("Hand Control object %s is not exist. Skipping hand controller" % hand_controller)
+        #         self.handController = None
+        # else:
+        #     self.handController = None
 
         # initialize coordinates
         self.up_axis, self.mirror_axis, self.look_axis = joint.get_rig_axes(self.inits[0])
@@ -65,6 +66,7 @@ class Finger(_module.ModuleCore):
         self.isThumb = self.fingerType == "Thumb"
         self.side = joint.get_joint_side(self.inits[0])
         self.sideMult = -1 if self.side == "R" else 1
+        self.handController = cmds.getAttr("%s.handController" % self.inits[0])
 
         # initialize suffix
         self.module_name = (
@@ -72,6 +74,29 @@ class Finger(_module.ModuleCore):
 
         # module variables
         self.contConList = []
+
+    def additional_groups(self):
+        """Create additional groups for the module"""
+
+        if self.handController:
+            grp_name = naming.parse([self.handController, "Group"])
+            functions.validate_group(grp_name)
+            # functions.validate_group("Fingers_group%i" % self.groupID)
+            cmds.parent(self.limbGrp, grp_name)
+            self.limbGrp = grp_name
+            # c_shapes = cmds.listRelatives(grp_name, allDescendents=True, children=True,
+            #                               allParents=False, type="nurbsCurve")
+            # if c_shapes:
+            #     self.other_eye_conts = [Controller(functions.get_parent(shape)) for shape in c_shapes]
+            # if not cmds.objExists(self.handController):
+            #     self.handController = Controller(self.handController, shape="Square", side=self.side)
+
+            # if cmds.objExists("Eye_group_%i_cont" % self.groupID):
+            #     self.group_cont = Controller("Eye_group_%i_cont" % self.groupID)
+            #     for cont in self.other_eye_conts:
+            #         if self.group_cont.name == cont.name:
+            #             self.other_eye_conts.remove(cont)
+            #             break
 
     def create_joints(self):
 
@@ -83,10 +108,13 @@ class Finger(_module.ModuleCore):
                                    position=api.get_world_translation(self.inits[0]), radius=2)
 
         for nmb, guide in enumerate(self.inits):
-            jnt = cmds.joint(name=naming.parse([self.module_name, nmb], suffix="jDef"), radius=1.0)
+            # if this is the last one make the suffix "j"
+            _suffix = "j" if nmb == len(self.inits) - 1 else "jDef"
+            jnt = cmds.joint(name=naming.parse([self.module_name, nmb], suffix=_suffix), radius=1.0)
             functions.align_to(jnt, guide, position=True, rotation=True)
             self.sockets.append(jnt)
-            self.deformerJoints.append(jnt)
+            if _suffix == "jDef":
+                self.deformerJoints.append(jnt)
 
         joint.orient_joints(self.deformerJoints, world_up_axis=self.up_axis, up_axis=(0, -1, 0),
                             reverse_aim=self.sideMult,
@@ -102,6 +130,7 @@ class Finger(_module.ModuleCore):
 
         cmds.parentConstraint(self.limbPlug, self.scaleGrp)
         attribute.drive_attrs("%s.jointVis" % self.scaleGrp, ["%s.v" % x for x in self.deformerJoints])
+
 
     def create_controllers(self):
 
@@ -143,20 +172,31 @@ class Finger(_module.ModuleCore):
 
         attribute.drive_attrs("%s.contVis" % self.scaleGrp, ["%s.v" % x[0] for x in conts_off])
 
-    def create_fk_setup(self):
+        if self.handController:
+            if cmds.objExists(self.handController):
+                self.handController = Controller(self.handController)
+            else:
+                self.handController = Controller(self.handController, shape="Square", side=self.side)
+                _bind = self.handController.add_offset("bind")
+                _offset = self.handController.add_offset("OFF")
+                connection.matrixConstraint(self.limbPlug, _bind, maintainOffset=False)
+                cmds.parent(_bind, self.limbGrp)
+
+
+    def hand_setup(self):
         """Create the FK setup for the finger."""
         # If there is no parent controller defined, create one. Everyone needs a parent
 
         if not self.handController:
-            self.handController = self.scaleGrp
+            return
         # Spread
         spread_attr = "{0}_{1}".format(self.module_name, "Spread")
-        cmds.addAttr(self.handController, shortName=spread_attr, defaultValue=0.0, attributeType="float", keyable=True)
+        cmds.addAttr(self.handController.name, shortName=spread_attr, defaultValue=0.0, attributeType="float", keyable=True)
         # sprMult = cmds.createNode("multiplyDivide", name="sprMult_{0}_{1}".format(self.side, self.module_name))
         spread_mult = cmds.createNode("multDoubleLinear",
                                       name=naming.parse([self.module_name, "spread"], suffix="mult"))
         cmds.setAttr("{}.input1".format(spread_mult), 0.4)
-        cmds.connectAttr("{0}.{1}".format(self.handController, spread_attr), "{0}.input2".format(spread_mult))
+        cmds.connectAttr("{0}.{1}".format(self.handController.name, spread_attr), "{0}.input2".format(spread_mult))
         cmds.connectAttr("{}.output".format(spread_mult), "{0}.rotateY".format(self.contConList[1]))
 
         # Bend
@@ -167,9 +207,9 @@ class Finger(_module.ModuleCore):
             else:
                 bend_attr = "{0}{1}{2}".format(self.module_name, "Bend", nmb)
 
-            cmds.addAttr(self.handController, shortName=bend_attr, defaultValue=0.0, attributeType="float",
+            cmds.addAttr(self.handController.name, shortName=bend_attr, defaultValue=0.0, attributeType="float",
                          keyable=True)
-            cmds.connectAttr("{0}.{1}".format(self.handController, bend_attr), "%s.rotateZ" % self.contConList[nmb])
+            cmds.connectAttr("{0}.{1}".format(self.handController.name, bend_attr), "%s.rotateZ" % self.contConList[nmb])
 
     def round_up(self):
         cmds.setAttr("%s.rigVis" % self.scaleGrp, 0)
@@ -179,7 +219,7 @@ class Finger(_module.ModuleCore):
     def execute(self):
         self.create_joints()
         self.create_controllers()
-        self.create_fk_setup()
+        self.hand_setup()
         self.round_up()
 
 

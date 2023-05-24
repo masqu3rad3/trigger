@@ -47,8 +47,8 @@ class Kinematics(object):
         self.module_dict = {mod: eval("modules.{0}.LIMB_DATA".format(mod)) for mod in modules.__all__}
         self.validRootList = [values["members"][0] for values in self.module_dict.values()]
 
-        self.fingerMatchList = []
-        self.fingerMatchConts = []
+        # self.fingerMatchList = []
+        # self.fingerMatchConts = []
         # self.spaceSwitchers = []
         self.shoulderDist = 1.0
         self.hipDist = 1.0
@@ -89,7 +89,7 @@ class Kinematics(object):
         for root_joint in self.root_joints:
             self.collect_guides_info(root_joint)
             self.limbCreationList = self.get_limb_hierarchy(root_joint)
-            self.match_fingers(self.fingerMatchList)
+            # self.match_fingers(self.fingerMatchList)
             self.createlimbs(self.limbCreationList)
 
             if self.autoSwitchers and self.anchorLocations:
@@ -99,14 +99,14 @@ class Kinematics(object):
                                                     listException=anchor[3], skip_errors=True)
 
             # grouping for fingers / toes
-            for x in self.fingerMatchConts:
-                # TODO: tidy up / matrix constraint
-                cont_offset = functions.create_offset_group(x[0], "offset", freeze_transform=False)
-                socket = self.getNearestSocket(x[1], self.allSocketsList)
-                cmds.parentConstraint(socket, cont_offset, mo=True)
-                cmds.scaleConstraint("pref_cont", cont_offset)
-                cmds.parent(cont_offset, root_grp)
-                cmds.connectAttr("pref_cont.Control_Visibility", "%s.v" % cont_offset)
+            # for x in self.fingerMatchConts:
+            #     # TODO: tidy up / matrix constraint
+            #     cont_offset = functions.create_offset_group(x[0], "offset", freeze_transform=False)
+            #     socket = self.getNearestSocket(x[1], self.allSocketsList)
+            #     cmds.parentConstraint(socket, cont_offset, mo=True)
+            #     cmds.scaleConstraint("pref_cont", cont_offset)
+            #     cmds.parent(cont_offset, root_grp)
+            #     cmds.connectAttr("pref_cont.Control_Visibility", "%s.v" % cont_offset)
 
             if self.afterlife == 1: # hide guides
                 cmds.hide(root_joint)
@@ -196,35 +196,35 @@ class Kinematics(object):
         multi_selectionSets_cb.stateChanged.connect(lambda x=0: ctrl.update_model())
 
 
-    def match_fingers(self, finger_match_list):
-        icon = ic.Icon()
-        for brother_roots in finger_match_list:
-            finger_parent = functions.get_parent(brother_roots[0])
-            offsetVector = api.get_between_vector(finger_parent, brother_roots)
-            iconSize = functions.get_distance(brother_roots[0], brother_roots[-1])
-            translateOff = (iconSize / 2, 0, iconSize / 2)
-            rotateOff = (0, 0, 0)
-            icon_name = brother_roots[0].replace("jInit", "")
-            if "_left" in icon_name:
-                icon_name = "L%s" % icon_name.replace("_left", "")
-            elif "_right" in icon_name:
-                icon_name = "R%s" % icon_name.replace("_right", "")
-                rotateOff = (0, 180, 0)
-                translateOff = (iconSize / 2, 0, -iconSize / 2)
-            else:
-                pass
-
-            cont_fGroup, dmp = icon.create_icon("Square", icon_name="%s_Fgrp_cont" % icon_name,
-                                                scale=(iconSize / 6, iconSize / 4, iconSize / 2))
-            cmds.rotate(90, 0, 0, cont_fGroup)
-            cmds.makeIdentity(cont_fGroup, a=True)
-
-            functions.align_and_aim(cont_fGroup, target_list=[finger_parent], aim_target_list=[brother_roots[0], brother_roots[-1]], up_object=brother_roots[0],
-                                    rotate_offset=rotateOff, translate_offset=(-offsetVector * (iconSize / 2)))
-            cmds.move(0, 0, (-iconSize / 2), cont_fGroup, r=True, os=True)
-            self.fingerMatchConts.append([cont_fGroup, finger_parent])
-            for finger_root in brother_roots:
-                cmds.setAttr("%s.handController" % finger_root, cont_fGroup, type="string")
+    # def match_fingers(self, finger_match_list):
+    #     icon = ic.Icon()
+    #     for brother_roots in finger_match_list:
+    #         finger_parent = functions.get_parent(brother_roots[0])
+    #         offsetVector = api.get_between_vector(finger_parent, brother_roots)
+    #         iconSize = functions.get_distance(brother_roots[0], brother_roots[-1])
+    #         translateOff = (iconSize / 2, 0, iconSize / 2)
+    #         rotateOff = (0, 0, 0)
+    #         icon_name = brother_roots[0].replace("jInit", "")
+    #         if "_left" in icon_name:
+    #             icon_name = "L%s" % icon_name.replace("_left", "")
+    #         elif "_right" in icon_name:
+    #             icon_name = "R%s" % icon_name.replace("_right", "")
+    #             rotateOff = (0, 180, 0)
+    #             translateOff = (iconSize / 2, 0, -iconSize / 2)
+    #         else:
+    #             pass
+    #
+    #         cont_fGroup, dmp = icon.create_icon("Square", icon_name="%s_Fgrp_cont" % icon_name,
+    #                                             scale=(iconSize / 6, iconSize / 4, iconSize / 2))
+    #         cmds.rotate(90, 0, 0, cont_fGroup)
+    #         cmds.makeIdentity(cont_fGroup, a=True)
+    #
+    #         functions.align_and_aim(cont_fGroup, target_list=[finger_parent], aim_target_list=[brother_roots[0], brother_roots[-1]], up_object=brother_roots[0],
+    #                                 rotate_offset=rotateOff, translate_offset=(-offsetVector * (iconSize / 2)))
+    #         cmds.move(0, 0, (-iconSize / 2), cont_fGroup, r=True, os=True)
+    #         self.fingerMatchConts.append([cont_fGroup, finger_parent])
+    #         for finger_root in brother_roots:
+    #             cmds.setAttr("%s.handController" % finger_root, cont_fGroup, type="string")
 
     def collect_guides_info(self, rootNode):
         """
@@ -238,7 +238,7 @@ class Kinematics(object):
         l_hip, r_hip, l_shoulder, r_shoulder = [None, None, None, None]
         allJoints = cmds.listRelatives(rootNode, type="joint", ad=True)
         allJoints = [] if not allJoints else allJoints
-        all_fingers = []
+        # all_fingers = []
         for jnt in allJoints:
             limb_name, limb_type, limb_side = joint.identify(jnt, self.module_dict)
             if limb_name == "Hip" and limb_side == "L":
@@ -250,21 +250,21 @@ class Kinematics(object):
             if limb_name == "Shoulder" and limb_side == "R":
                 r_shoulder = jnt
             ## collect fingers
-            if limb_name == "FingerRoot":
-                all_fingers.append(jnt)
+            # if limb_name == "FingerRoot":
+            #     all_fingers.append(jnt)
 
         self.hipDist = functions.get_distance(l_hip, r_hip) if l_hip and r_hip else self.hipDist
         self.shoulderDist = functions.get_distance(l_shoulder,
                                                    r_shoulder) if l_shoulder and r_shoulder else self.shoulderDist
 
-        for finger in all_fingers:
-            # group the same type brothers and append them into the list if it is not already there
-            parent = functions.get_parent(finger)
-            brothers = cmds.listRelatives(parent, c=True, type="joint")
-            if brothers:
-                digit_brothers = [brother for brother in brothers if brother in all_fingers]
-                if digit_brothers and digit_brothers not in self.fingerMatchList:
-                    self.fingerMatchList.append(digit_brothers)
+        # for finger in all_fingers:
+        #     # group the same type brothers and append them into the list if it is not already there
+        #     parent = functions.get_parent(finger)
+        #     brothers = cmds.listRelatives(parent, c=True, type="joint")
+        #     if brothers:
+        #         digit_brothers = [brother for brother in brothers if brother in all_fingers]
+        #         if digit_brothers and digit_brothers not in self.fingerMatchList:
+        #             self.fingerMatchList.append(digit_brothers)
 
 
     def get_limb_hierarchy(self, node, isRoot=True, parentIndex=None, r_list=None):
