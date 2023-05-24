@@ -89,7 +89,7 @@ class Initials(object):
             # log.warning("cannot find mirror Joint automatically")
             return None, alignmentGiven, None
 
-    # @undo
+    @undo
     def initLimb(self, limb_name, whichSide="left", constrainedTo=None, parentNode=None, defineAs=False, *args, **kwargs):
         if limb_name not in self.valid_limbs:
             log.error("%s is not a valid limb" % limb_name)
@@ -162,10 +162,6 @@ class Initials(object):
             return (locators1 + locators2), jnt_dict_side1
         if whichSide == "auto" and masterParent:
             mirrorParent, givenAlignment, returnAlignment = self.autoGet(masterParent)
-            print("masterParent: ", masterParent)
-            print("mirrorParent: ", mirrorParent)
-            print("givenAlignment: ", givenAlignment)
-            print("returnAlignment: ", returnAlignment)
             locators1, jnt_dict_side1 = self.initLimb(limb_name, givenAlignment, **kwargs)
             if mirrorParent:
                 locators2, jnt_dict_side2 = self.initLimb(limb_name, returnAlignment, constrainedTo=locators1, parentNode=mirrorParent, **kwargs)
@@ -273,7 +269,10 @@ class Initials(object):
         for nmb in range(5):
             cmds.select(left_hand)
             _, finger_dict = self.initLimb("finger", whichSide="auto", segments=3)
-            fingers.append(finger_dict["L"])
+            # import pdb
+            # pdb.set_trace()
+            # fingers.append(finger_dict["L"])
+            fingers.append(finger_dict)
 
         thumb_pos_data = [(1.1, 0.9, 0.25), (0.8, 0.0, 0.0), (0.55, 0.0, 0.00012367864829724757), (0.45, 0.0, 0.0)]
         thumb_rot_data = [(31.0, 45.0, 3.0000000000000004), (-1.0, -2.0, 17.0), (0.0, 0.0, 0.0), (0.0, 0.0, 0.0)]
@@ -286,26 +285,34 @@ class Initials(object):
         pinky_pos_data = [(1.5, -1.1, 0.0), (0.8, 0.0, 0.0), (0.5, 0.0, 0.0), (0.5, 0.0, 0.0)]
         pinky_rot_data = [(0.0, -12.000000000000002, 0.0), (0.0, 0.0, 0.0), (0.0, 0.0, 0.0), (0.0, 0.0, 0.0)]
 
+        for nmb, member in enumerate(fingers[0]["L"]):
+            cmds.xform(member, absolute=True, translation=thumb_pos_data[nmb], rotation=thumb_rot_data[nmb])
+        cmds.setAttr("%s.fingerType" % fingers[0]["L"][0], 1)
+        cmds.setAttr("%s.fingerType" % fingers[0]["R"][0], 1)
 
-        for nmb, member in enumerate(fingers[0]):
-            cmds.xform(member, a=True, t=thumb_pos_data[nmb], ro=thumb_rot_data[nmb])
-        cmds.setAttr("%s.fingerType" % fingers[0][0], 1)
+        # for nmb, member in enumerate(fingers[0]):
+        #     cmds.xform(member, absolute=True, translation=thumb_pos_data[nmb], rotation=thumb_rot_data[nmb])
+        # cmds.setAttr("%s.fingerType" % fingers[0][0], 1)
 
-        for nmb, member in enumerate(fingers[1]):
-            cmds.xform(member, a=True, t=index_pos_data[nmb], ro=index_rot_data[nmb])
-        cmds.setAttr("%s.fingerType" % fingers[1][0], 2)
+        for nmb, member in enumerate(fingers[1]["L"]):
+            cmds.xform(member, absolute=True, translation=index_pos_data[nmb], rotation=index_rot_data[nmb])
+        cmds.setAttr("%s.fingerType" % fingers[1]["L"][0], 2)
+        cmds.setAttr("%s.fingerType" % fingers[1]["R"][0], 2)
 
-        for nmb, member in enumerate(fingers[2]):
-            cmds.xform(member, a=True, t=middle_pos_data[nmb], ro=middle_rot_data[nmb])
-        cmds.setAttr("%s.fingerType" % fingers[2][0], 3)
+        for nmb, member in enumerate(fingers[2]["L"]):
+            cmds.xform(member, absolute=True, translation=middle_pos_data[nmb], rotation=middle_rot_data[nmb])
+        cmds.setAttr("%s.fingerType" % fingers[2]["L"][0], 3)
+        cmds.setAttr("%s.fingerType" % fingers[2]["R"][0], 3)
 
-        for nmb, member in enumerate(fingers[3]):
-            cmds.xform(member, a=True, t=ring_pos_data[nmb], ro=ring_rot_data[nmb])
-        cmds.setAttr("%s.fingerType" % fingers[3][0], 4)
+        for nmb, member in enumerate(fingers[3]["L"]):
+            cmds.xform(member, absolute=True, translation=ring_pos_data[nmb], rotation=ring_rot_data[nmb])
+        cmds.setAttr("%s.fingerType" % fingers[3]["L"][0], 4)
+        cmds.setAttr("%s.fingerType" % fingers[3]["L"][0], 4)
 
-        for nmb, member in enumerate(fingers[4]):
-            cmds.xform(member, a=True, t=pinky_pos_data[nmb], ro=pinky_rot_data[nmb])
-        cmds.setAttr("%s.fingerType" % fingers[4][0], 5)
+        for nmb, member in enumerate(fingers[4]["L"]):
+            cmds.xform(member, absolute=True, translation=pinky_pos_data[nmb], rotation=pinky_rot_data[nmb])
+        cmds.setAttr("%s.fingerType" % fingers[4]["L"][0], 5)
+        cmds.setAttr("%s.fingerType" % fingers[4]["R"][0], 5)
         return True
 
     def adjust_guide_display(self, guide_object):
@@ -437,7 +444,7 @@ class Initials(object):
                 z = False
         return [limb_dict, limb_type, limb_side]
 
-    # @undo
+    @undo
     def test_build(self, root_jnt=None, progress_bar=None):
         kinematics = importlib.import_module("trigger.actions.kinematics")
         if not root_jnt:
