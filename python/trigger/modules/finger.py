@@ -141,7 +141,8 @@ class Finger(_module.ModuleCore):
         cont_list = []
         self.contConList = []
 
-        for index in range(0, len(self.deformerJoints) - 1):
+        # for index in range(0, len(self.deformerJoints) - 1):
+        for index in range(0, len(self.deformerJoints)):
             cont_scl = (cmds.getAttr("%s.tx" % self.deformerJoints[1]) / 2)
             cont_name = naming.parse([self.module_name, index], suffix="cont")
             cont = Controller(name=cont_name,
