@@ -10,7 +10,7 @@ FEED = Feedback()
 
 def plugin(plugin_name):
     """Make sure the given plugin is loaded."""
-    if not cmds.pluginInfo(plugin_name, l=True, q=True):
+    if not cmds.pluginInfo(plugin_name, loaded=True, query=True):
         try:
             cmds.loadPlugin(plugin_name)
             return True

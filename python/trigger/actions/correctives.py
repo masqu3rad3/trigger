@@ -2,6 +2,7 @@
 
 from maya import cmds
 
+from trigger.core import validate
 from trigger.library import functions
 from trigger.library import connection
 from trigger.library import attribute
@@ -9,17 +10,13 @@ from trigger.library import selection
 from trigger.library import deformers
 from trigger.library import naming
 
-from trigger.core import io
 from trigger.core import filelog
-from trigger.core.decorators import tracktime
 
 from trigger.ui.Qt import QtWidgets
 from trigger.ui import custom_widgets
 from trigger.ui import feedback
 
-from PySide2 import QtWidgets
-
-log = filelog.Filelog(logname=__name__, filename="trigger_log")
+LOG = filelog.Filelog(logname=__name__, filename="trigger_log")
 
 """
 example action data:
@@ -58,7 +55,7 @@ ACTION_DATA = {
 
 
 class Correctives(object):
-    def __init__(self, *args, **kwargs):
+    def __init__(self):
         super(Correctives, self).__init__()
 
         # user defined variables
@@ -68,7 +65,7 @@ class Correctives(object):
         self.definition_widgets = None
         self.uid = 0
 
-    def feed(self, action_data, *args, **kwargs):
+    def feed(self, action_data):
         """Mandatory Method - Feeds the instance with the action data stored in actions session"""
         self.correctiveDefinitions = action_data.get("definitions")
 
@@ -86,7 +83,7 @@ class Correctives(object):
             corrected_shape = definition.get("corrected_shape")
             skinned_mesh = definition.get("skinned_mesh")
             if not driver_transform:
-                log.error("Driver Transform not defined")
+                LOG.error("Driver Transform not defined")
                 raise
             if mode == 0:  # vector mode
                 rig_grp = functions.validate_group("rig_grp")
@@ -101,16 +98,17 @@ class Correctives(object):
             elif mode == 1:  # single axis mode
                 psd_attr = "{0}.rotate{1}".format(driver_transform, driver_axis.upper())
             else:
-                log.error("This mode (index=>%i) is not yet implemented" % mode)
+                LOG.error("This mode (index=>%i) is not yet implemented" % mode)
                 continue
 
             if corrected_shape:
                 if not skinned_mesh:
-                    log.error("If corrected shape defined, skinned mesh must defined as well. "
+                    LOG.error("If corrected shape defined, skinned mesh must defined as well. "
                               "skipping connecting correctives...")
                     continue
                 else:
-                    self.load_extract_deltas()
+                    # self.load_extract_deltas()
+                    validate.plugin("extractDeltas")
                     self.connect_correctives(corrected_shape, skinned_mesh, controller, target_rotation, psd_attr)
 
     def save_action(self, file_path=None, *args, **kwargs):
@@ -120,7 +118,7 @@ class Correctives(object):
         # Else, this method can stay empty
         pass
 
-    def ui(self, ctrl, layout, handler, *args, **kwargs):
+    def ui(self, ctrl, layout, handler):
         """
         Mandatory Method - UI setting definitions
 
@@ -129,8 +127,6 @@ class Correctives(object):
             layout: (QLayout) The layout object from the main ui. All setting widgets should be added to this layout
             handler: (actions_session) An instance of the actions_session.
             TRY NOT TO USE HANDLER UNLESS ABSOLUTELY NECESSARY
-            *args:
-            **kwargs:
 
         Returns: None
 
@@ -265,7 +261,7 @@ class Correctives(object):
                 cont = cmds.ls(def_controller_lebox.viewWidget.text())
                 if cont:
                     target_matrix_list.clear()
-                    tm_matrix = cmds.xform(cont[0], matrix=True, q=True)
+                    tm_matrix = cmds.xform(cont[0], matrix=True, query=True)
                     str_tm_matrix = [str(x) for x in tm_matrix]
                     target_matrix_list.addItems(str_tm_matrix)
                     update_model()
@@ -311,7 +307,7 @@ class Correctives(object):
 
             update_model()
 
-        def get_rotation(x_widget, y_widget, z_widget):
+        def _get_rotation(x_widget, y_widget, z_widget):
             sel, msg = selection.validate(minimum=1, maximum=1, meshes_only=False, transforms=True)
             if sel:
                 rotations = cmds.getAttr("%s.r" % sel[0])[0]
@@ -409,13 +405,13 @@ class Correctives(object):
         cmds.parent(point_a, root_loc)
         cmds.parent(point_b_offset, root_loc)
         functions.align_to(root_loc, driver_transform, position=True, rotation=True)
-        cmds.pointConstraint(driver_transform, root_loc, mo=False)
-        cmds.parentConstraint(driver_transform, point_a, mo=True)
+        cmds.pointConstraint(driver_transform, root_loc, maintainOffset=False)
+        cmds.parentConstraint(driver_transform, point_a, maintainOffset=True)
         connection.matrixConstraint(up_object, point_b_offset, skipTranslate="xyz", maintainOffset=True)
 
         # store controllers initial rotation
         # initial_rotation = cmds.getAttr("%s.r" % controller)[0]
-        initial_matrix = cmds.xform(controller, matrix=True, q=True)
+        initial_matrix = cmds.xform(controller, matrix=True, query=True)
         # temporarily parent b to the controller and move it to its target position
         cmds.parent(point_b, controller)
         cmds.xform(controller, matrix=target_matrix)
@@ -436,18 +432,19 @@ class Correctives(object):
         else:
             return root_loc
 
-    @staticmethod
-    def load_extract_deltas():
-        is_loaded = cmds.pluginInfo("extractDeltas", q=True, loaded=True)
-        if is_loaded:
-            return
-        else:
-            try:
-                cmds.loadPlugin("extractDeltas")
-                return
-            except:
-                log.error("extractDeltas plug-in cannot loaded. Check if the plugin exists in your environment")
-                raise
+    # @staticmethod
+    # def load_extract_deltas():
+    #     validate.plugin("extractDeltas")
+        # is_loaded = cmds.pluginInfo("extractDeltas", query=True, loaded=True)
+        # if is_loaded:
+        #     return
+        # else:
+        #     try:
+        #         cmds.loadPlugin("extractDeltas")
+        #         return
+        #     except:
+        #         LOG.error("extractDeltas plug-in cannot loaded. Check if the plugin exists in your environment")
+        #         raise
 
     @staticmethod
     def connect_correctives(corrected_mesh, skinned_mesh, controller, target_matrix, psd_attr, discard_delta=True):
@@ -471,7 +468,7 @@ class Correctives(object):
         r_start = cmds.getAttr(psd_attr)
 
         # store controllers initial rotation
-        initial_matrix = cmds.xform(controller, matrix=True, q=True)
+        initial_matrix = cmds.xform(controller, matrix=True, query=True)
 
         cmds.xform(controller, matrix=target_matrix)
 
