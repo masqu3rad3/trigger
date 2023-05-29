@@ -7,7 +7,7 @@ from trigger.core import filelog
 from trigger.library import selection
 from trigger.library import connection
 import trigger.library.functions as functions
-import trigger.library.controllers as ic
+import trigger.library.icons as ic
 
 from trigger.ui.Qt import QtWidgets, QtGui # for progressbar
 from trigger.ui import feedback

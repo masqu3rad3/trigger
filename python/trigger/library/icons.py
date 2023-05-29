@@ -45,9 +45,9 @@ class Icon(object):
 
         icon_name = icon_name or "%s_cont" % icon_type
 
-        rvsCon = None
+        rvs_con = None
         if icon_type == "FkikSwitch":
-            cont, rvsCon = self.iconDictionary[icon_type](name=icon_name)
+            cont, rvs_con = self.iconDictionary[icon_type](name=icon_name)
         else:
             cont = self.iconDictionary[icon_type](name=icon_name)
 
@@ -57,12 +57,12 @@ class Icon(object):
 
         cmds.setAttr("%s.scale" % cont, *scale)
         functions.align_to_normal(cont, normal)
-        cmds.makeIdentity(cont, a=True)
+        cmds.makeIdentity(cont, apply=True)
 
         if location:
             cmds.move(location[0], location[1], location[2], cont)
 
-        return cont, rvsCon
+        return cont, rvs_con
 
     def get_icons_list(self):
         return self.iconDictionary.keys()
@@ -204,29 +204,29 @@ class Icon(object):
                                   name="letterFK_K")
 
         letter_f_k_k_shape = functions.get_shapes(letter_f_k_k)[0]
-        cmds.parent(letter_f_k_k_shape, letter_fk_f, r=True, s=True)
+        cmds.parent(letter_f_k_k_shape, letter_fk_f, relative=True, shape=True)
         cmds.delete(letter_f_k_k)
         letter_fk = cmds.rename(letter_fk_f, "letterFK")
         letter_ik = cmds.duplicate(letter_fk, name="letterIK", renameChildren=True)[0]
         letter_ik_shapes = functions.get_shapes(letter_ik)
 
-        cmds.move(-4.168608, 0, 0, "{0}.cv[2]".format(letter_ik_shapes[0]), r=True, os=True, wd=True)
-        cmds.move(-4.168608, 0, 0, "{0}.cv[3]".format(letter_ik_shapes[0]), r=True, os=True, wd=True)
-        cmds.move(-3.334886, 0, 0, "{0}.cv[6]".format(letter_ik_shapes[0]), r=True, os=True, wd=True)
-        cmds.move(-3.334886, 0, 0, "{0}.cv[7]".format(letter_ik_shapes[0]), r=True, os=True, wd=True)
-        cmds.move(2.897946, 0, 0, "{0}.cv[0:10]".format(letter_ik_shapes[0]), r=True, os=True, wd=True)
-        cmds.move(-1.505933, 0, 0, "{0}.cv[0:12]".format(letter_ik_shapes[1]), r=True, os=True, wd=True)
+        cmds.move(-4.168608, 0, 0, "{0}.cv[2]".format(letter_ik_shapes[0]), relative=True, objectSpace=True, worldSpaceDistance=True)
+        cmds.move(-4.168608, 0, 0, "{0}.cv[3]".format(letter_ik_shapes[0]), relative=True, objectSpace=True, worldSpaceDistance=True)
+        cmds.move(-3.334886, 0, 0, "{0}.cv[6]".format(letter_ik_shapes[0]), relative=True, objectSpace=True, worldSpaceDistance=True)
+        cmds.move(-3.334886, 0, 0, "{0}.cv[7]".format(letter_ik_shapes[0]), relative=True, objectSpace=True, worldSpaceDistance=True)
+        cmds.move(2.897946, 0, 0, "{0}.cv[0:10]".format(letter_ik_shapes[0]), relative=True, objectSpace=True, worldSpaceDistance=True)
+        cmds.move(-1.505933, 0, 0, "{0}.cv[0:12]".format(letter_ik_shapes[1]), relative=True, objectSpace=True, worldSpaceDistance=True)
 
         bl_shape_f_kto_ik = cmds.blendShape(letter_ik, letter_fk)
 
         cont_fk_ik = cmds.rename(letter_fk, name)
         cmds.addAttr(cont_fk_ik, shortName="fk_ik", longName="FK_IK", defaultValue=1.0, minValue=0.0, maxValue=1.0,
-                     at="float",
-                     k=True)
+                     attributeType="float",
+                     keyable=True)
         cmds.addAttr(cont_fk_ik, shortName="fk_ik_reverse", longName="FK_IK_Reverse", defaultValue=1.0, minValue=0.0,
-                     maxValue=1.0, at="float")
+                     maxValue=1.0, attributeType="float")
 
-        fk_ik_rvs = cmds.createNode("reverse", name="fk_ik_rvs%s" % name)
+        fk_ik_rvs = cmds.createNode("reverse", name="{}_FKIK_rvs".format(name))
         cmds.connectAttr("%s.fk_ik" % cont_fk_ik, "%s.weight[0]" % bl_shape_f_kto_ik[0])
         cmds.connectAttr("%s.fk_ik" % cont_fk_ik, "%s.inputX" % fk_ik_rvs)
 
@@ -235,7 +235,7 @@ class Icon(object):
         cmds.setAttr("%s.scale" % cont_fk_ik, 0.1, 0.1, 0.1)
         cmds.delete(letter_ik)
         cmds.select(cont_fk_ik)
-        cmds.makeIdentity(a=True)
+        cmds.makeIdentity(apply=True)
         return cont_fk_ik, fk_ik_rvs
 
     @staticmethod

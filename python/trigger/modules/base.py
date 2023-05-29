@@ -41,6 +41,7 @@ class Base(_module.ModuleCore):
     def create_joints(self):
         self.base_jnt = cmds.joint(name=naming.parse([self.module_name], suffix="j"))
         cmds.connectAttr("{0}.rigVis".format(self.scaleGrp), "{0}.v".format(self.base_jnt))
+        cmds.connectAttr("{}.s".format(self.scaleGrp), "{}.s".format(self.base_jnt))
 
         functions.align_to(self.base_jnt, self.inits[0], position=True, rotation=False)
         self.limbPlug = self.base_jnt

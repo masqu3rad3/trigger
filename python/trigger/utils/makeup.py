@@ -5,7 +5,7 @@ from maya import cmds
 # from PySide2 import QtWidgets, QtCore
 from trigger.ui.Qt import QtWidgets
 from trigger.core.decorators import keepselection, undo
-from trigger.library.controllers import Icon
+from trigger.library.icons import Icon
 from trigger.library.tools import replace_curve, mirror_controller
 
 from trigger.ui.qtmaya import get_main_maya_window

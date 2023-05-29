@@ -5,7 +5,7 @@ cmds.file(new=True, f=True)
 from trigger.modules import spine
 reload(spine)
 
-from trigger.library import controllers
+from trigger.library import icons
 reload(controllers)
 
 from trigger.library import tools
