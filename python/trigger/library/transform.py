@@ -2,6 +2,7 @@
 from maya import cmds
 from trigger.core.decorators import keepframe
 from trigger.core import filelog
+from trigger.library import api
 
 log = filelog.Filelog(logname=__name__, filename="trigger_log")
 

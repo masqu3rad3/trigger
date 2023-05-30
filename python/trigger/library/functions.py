@@ -15,6 +15,16 @@ def get_distance(node1, node2):
     return ((ax-bx)**2 + (ay-by)**2 + (az-bz)**2)**0.5
 
 
+def get_closest_transform(node, list_of_nodes=None):
+    """Return the closest transform node from the given list of nodes."""
+    if not list_of_nodes:
+        list_of_nodes = cmds.ls(type="transform")
+    distances = {}
+    for n in list_of_nodes:
+        distances[n] = get_distance(node, n)
+    return min(distances, key=distances.get)
+
+
 def align_to(node, target, position=True, rotation=False):
     """
     This is the fastest align method. May not work in all cases
