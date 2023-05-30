@@ -4,7 +4,7 @@ from maya import cmds
 
 from trigger.library import functions
 from trigger.library import attribute
-from trigger.library import controllers as ic
+from trigger.library import icons as ic
 
 ACTION_DATA = {}
 class Master(object):

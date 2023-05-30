@@ -99,3 +99,4 @@ def unlock_normals(transform, soften=False):
         mfn_mesh.setEdgeSmoothings(edge_ids, smooths)
         mfn_mesh.cleanupEdgeSmoothing()
         mfn_mesh.updateSurface()
+

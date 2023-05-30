@@ -4,16 +4,16 @@ import pdb
 
 ACTION_DATA = {}
 
-def get_closest_vert(mayaMesh, pos, threshold=0.001):
+def get_closest_vert(maya_mesh, pos, threshold=0.001):
     # mVector = api.MVector(pos)#using MVector type to represent position
-    selectionList = om.MSelectionList()
-    selectionList.add(mayaMesh)
-    dPath = selectionList.getDagPath(0)
-    mMesh = om.MFnMesh(dPath)
-    ID = mMesh.getClosestPoint(pos, om.MSpace.kWorld)[1]  # getting closest face ID\
-    verts = mMesh.getPolygonVertices(ID)
+    selection_list = om.MSelectionList()
+    selection_list.add(maya_mesh)
+    d_path = selection_list.getDagPath(0)
+    m_mesh = om.MFnMesh(d_path)
+    id = m_mesh.getClosestPoint(pos, om.MSpace.kWorld)[1]  # getting closest face ID\
+    verts = m_mesh.getPolygonVertices(id)
 
-    point_list = mMesh.getPoints(om.MSpace.kTransform)
+    point_list = m_mesh.getPoints(om.MSpace.kTransform)
     for vert_index in verts:
         if pos.distanceTo(point_list[vert_index]) < threshold:
             return vert_index
@@ -60,12 +60,12 @@ def connect_face_to_body(face_mesh, body_mesh, method="wrap", name="connect_face
         wrap_node = [node for node in node_history if cmds.objectType(node) == "proximityWrap"][0]
         wrap_node = cmds.rename(wrap_node, "proximity_wrap_{0}".format(name))
         # Copy the face mesh and make a orig intermediate obj
-        face_mesh_shape = cmds.listRelatives(face_mesh, c=True, type="shape")[0]
+        face_mesh_shape = cmds.listRelatives(face_mesh, children=True, type="shape")[0]
         # check if there is another orig shape
         if not cmds.objExists("{0}Orig".format(face_mesh_shape)):
             temp = cmds.duplicate(face_mesh_shape)[0]
-            orig_shape = cmds.listRelatives(temp, c=True, type="shape")[0]
-            cmds.parent(orig_shape, face_mesh, r=True, shape=True)
+            orig_shape = cmds.listRelatives(temp, children=True, type="shape")[0]
+            cmds.parent(orig_shape, face_mesh, relative=True, shape=True)
             orig_shape = cmds.rename(orig_shape, "%sOrig" % face_mesh_shape)
             cmds.delete(temp)
             cmds.setAttr("{0}.intermediateObject".format(orig_shape), 1)

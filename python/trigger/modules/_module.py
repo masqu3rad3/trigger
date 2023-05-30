@@ -83,6 +83,7 @@ class ModuleCore(object):
         cmds.parent(self.nonScaleGrp, self.limbGrp)
 
         self.controllerGrp = cmds.group(name=naming.parse([self.module_name, "controller"], suffix="grp"), empty=True)
+        attribute.drive_attrs("%s.contVis" % self.scaleGrp, ["{}.v".format(self.controllerGrp)])
         attribute.lock_and_hide(self.controllerGrp)
         cmds.parent(self.controllerGrp, self.limbGrp)
 
@@ -104,6 +105,8 @@ class ModuleCore(object):
         self.defJointsGrp = cmds.group(name=naming.parse([self.module_name, "defJoints"], suffix="grp"), empty=True)
         cmds.parent(self.rigJointsGrp, self.limbGrp)
         cmds.parent(self.defJointsGrp, self.limbGrp)
+
+
 
         self.additional_groups()
 

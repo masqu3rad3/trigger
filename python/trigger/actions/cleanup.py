@@ -5,7 +5,7 @@ from maya import mel
 from trigger.core import filelog
 from trigger.library import functions, connection, shading
 
-from trigger.ui.Qt import QtWidgets, QtGui # for progressbar
+from trigger.ui.Qt import QtWidgets  # for progressbar
 
 log = filelog.Filelog(logname=__name__, filename="trigger_log")
 
@@ -22,7 +22,7 @@ ACTION_DATA = {
 
 
 class Cleanup(object):
-    def __init__(self, *args, **kwargs):
+    def __init__(self):
         super(Cleanup, self).__init__()
 
         # user defined variables
@@ -37,7 +37,7 @@ class Cleanup(object):
 
         # class variables
 
-    def feed(self, action_data, *args, **kwargs):
+    def feed(self, action_data):
         """Mandatory Method - Feeds the instance with the action data stored in actions session"""
         self.deleteUnknownNodes = action_data.get("delete_unknown_nodes")
         self.deleteBlindData = action_data.get("delete_blind_data")
@@ -74,7 +74,8 @@ class Cleanup(object):
         # Else, this method can stay empty
         pass
 
-    def ui(self, ctrl, layout, handler, *args, **kwargs):
+    @staticmethod
+    def ui(ctrl, layout, handler):
         """
         Mandatory Method - UI setting definitions
 
@@ -83,8 +84,6 @@ class Cleanup(object):
             layout: (QLayout) The layout object from the main ui. All setting widgets should be added to this layout
             handler: (actions_session) An instance of the actions_session.
             TRY NOT TO USE HANDLER UNLESS ABSOLUTELY NECESSARY
-            *args:
-            **kwargs:
 
         Returns: None
 
@@ -216,7 +215,8 @@ class Cleanup(object):
                     texture_name = cmds.getAttr("%s.fileTextureName" % file_node)
                     file_dict[plug.split(".")[-1]] = texture_name
                 else:
-                    connected_node = cmds.listConnections(plug, s=True, d=False, scn=True)[0]
+                    connected_node = cmds.listConnections(plug, source=True, destination=False,
+                                                          skipConversionNodes=True)[0]
                     file_dict[plug.split(".")[-1]] = connected_node
                 mat_dict["filedata"] = file_dict
             dict_list.append(mat_dict)
@@ -231,8 +231,8 @@ class Cleanup(object):
             selection_list = []
             shading_engines = cmds.listConnections(same, source=False, destination=True, type="shadingEngine")
             for _ in shading_engines:
-                selection_list.extend(cmds.sets(shading_engines, q=True))
-            cmds.sets(selection_list, e=True, forceElement=shading_engines[0])
+                selection_list.extend(cmds.sets(shading_engines, query=True))
+            cmds.sets(selection_list, edit=True, forceElement=shading_engines[0])
 
         total_shader_count = 0
         for same in same_shaders_list:

@@ -1,7 +1,7 @@
 # Example script for creating double blendshape face ui controls
 
 from maya import cmds
-from trigger.library import controllers
+from trigger.library import icons
 from trigger.library import functions
 from trigger.library import attribute
 

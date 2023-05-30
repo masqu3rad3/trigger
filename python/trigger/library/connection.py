@@ -395,7 +395,7 @@ def matrix_switch(parent_a,
     cmds.delete(dump)
 
     wt_add_matrix = cmds.createNode("wtAddMatrix",
-                                    name="wtAdd_{0}_{1}".format(
+                                    name="{0}_{1}_wtAdd".format(
                                         parent_a, parent_b))
     cmds.connectAttr("{}.matrixSum".format(mult_matrix_a),
                      "{}.wtMatrix[0].matrixIn".format(wt_add_matrix))
@@ -415,7 +415,7 @@ def matrix_switch(parent_a,
     if source_parent_cutoff:
         mult_matrix_cutoff = cmds.createNode(
             "multMatrix",
-            name="multMatrixCutoff_{0}_{1}".format(parent_a, parent_b))
+            name="{0}_{1}_multMatrixCutoff".format(parent_a, parent_b))
         cmds.connectAttr("{}.matrixSum".format(wt_add_matrix),
                          "{}.matrixIn[0]".format(mult_matrix_cutoff))
         cmds.connectAttr("{}.worldInverseMatrix".format(source_parent_cutoff),
@@ -425,7 +425,7 @@ def matrix_switch(parent_a,
         out_plug = "{}.matrixSum".format(wt_add_matrix)
 
     decompose_node = cmds.createNode("decomposeMatrix",
-                                     name="decompose_switch")
+                                     name="{0}_{1}_decompose_switch".format(parent_a, parent_b))
     cmds.connectAttr(out_plug, "%s.inputMatrix" % decompose_node)
 
     if position:

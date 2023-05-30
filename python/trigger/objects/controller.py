@@ -8,7 +8,7 @@ from trigger.core import filelog
 from trigger.core.decorators import keepselection
 
 from trigger.library import functions, attribute
-from trigger.library.controllers import Icon
+from trigger.library.icons import Icon
 from trigger.library.tools import replace_curve
 
 log = filelog.Filelog(logname=__name__, filename="trigger_log")

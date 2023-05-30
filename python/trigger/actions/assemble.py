@@ -4,7 +4,7 @@ from trigger.core import filelog
 from trigger.actions import import_asset
 from trigger.library import naming
 
-from trigger.ui.Qt import QtWidgets, QtGui # for progressbar
+from trigger.ui.Qt import QtWidgets, QtGui  # for progressbar
 from trigger.ui.widgets.browser import BrowserButton
 from trigger.ui import custom_widgets
 
@@ -14,11 +14,12 @@ ACTION_DATA = {
     "alembic_path_list": [],
 }
 
+
 # Name of the class MUST be the capitalized version of file name. eg. morph.py => Morph, split_shapes.py => Split_shapes
 
 
 class Assemble(import_asset.Import_asset):
-    def __init__(self, *args, **kwargs):
+    def __init__(self):
         super(Assemble, self).__init__()
 
         # user defined variables
@@ -70,7 +71,7 @@ class Assemble(import_asset.Import_asset):
         alembic_paths_listbox.viewWidget.setAlternatingRowColors(True)
 
         browse_pb = BrowserButton(text="Add", filterExtensions=["Alembic (*.abc)"],
-                                                 title="Choose Alembic Asset Cache")
+                                  title="Choose Alembic Asset Cache")
         alembic_paths_listbox.addNewButton(browse_pb, insert=0)
         next_version_pb = QtWidgets.QPushButton(text="Next Version")
         previous_version_pb = QtWidgets.QPushButton(text="Previous Version")

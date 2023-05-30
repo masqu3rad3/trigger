@@ -1,0 +1,3132 @@
+[
+    {
+        "name": "R_Toe1_FKIK_switch_cont",
+        "type": "transform",
+        "user_defined": [
+            {
+                "name": "FK_IK",
+                "type": "float",
+                "value": 1.0
+            },
+            {
+                "name": "FK_IK_Reverse",
+                "type": "float",
+                "value": 0.0
+            },
+            {
+                "name": "defaultTranslate",
+                "type": "double3",
+                "value": [
+                    [
+                        0.0,
+                        0.0,
+                        0.0
+                    ]
+                ]
+            },
+            {
+                "name": "defaultTranslateX",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultTranslateY",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultTranslateZ",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultRotate",
+                "type": "double3",
+                "value": [
+                    [
+                        0.0,
+                        0.0,
+                        0.0
+                    ]
+                ]
+            },
+            {
+                "name": "defaultRotateX",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultRotateY",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultRotateZ",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultScale",
+                "type": "double3",
+                "value": [
+                    [
+                        1.0,
+                        1.0,
+                        1.0
+                    ]
+                ]
+            },
+            {
+                "name": "defaultScaleX",
+                "type": "double",
+                "value": 1.0
+            },
+            {
+                "name": "defaultScaleY",
+                "type": "double",
+                "value": 1.0
+            },
+            {
+                "name": "defaultScaleZ",
+                "type": "double",
+                "value": 1.0
+            },
+            {
+                "name": "side",
+                "type": "enum",
+                "value": 2
+            },
+            {
+                "name": "tier",
+                "type": "enum",
+                "value": 0
+            }
+        ]
+    },
+    {
+        "name": "L_Dewclaw_FKIK_switch_cont",
+        "type": "transform",
+        "user_defined": [
+            {
+                "name": "FK_IK",
+                "type": "float",
+                "value": 1.0
+            },
+            {
+                "name": "FK_IK_Reverse",
+                "type": "float",
+                "value": 0.0
+            },
+            {
+                "name": "defaultTranslate",
+                "type": "double3",
+                "value": [
+                    [
+                        0.0,
+                        0.0,
+                        0.0
+                    ]
+                ]
+            },
+            {
+                "name": "defaultTranslateX",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultTranslateY",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultTranslateZ",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultRotate",
+                "type": "double3",
+                "value": [
+                    [
+                        0.0,
+                        0.0,
+                        0.0
+                    ]
+                ]
+            },
+            {
+                "name": "defaultRotateX",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultRotateY",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultRotateZ",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultScale",
+                "type": "double3",
+                "value": [
+                    [
+                        1.0,
+                        1.0,
+                        1.0
+                    ]
+                ]
+            },
+            {
+                "name": "defaultScaleX",
+                "type": "double",
+                "value": 1.0
+            },
+            {
+                "name": "defaultScaleY",
+                "type": "double",
+                "value": 1.0
+            },
+            {
+                "name": "defaultScaleZ",
+                "type": "double",
+                "value": 1.0
+            },
+            {
+                "name": "side",
+                "type": "enum",
+                "value": 1
+            },
+            {
+                "name": "tier",
+                "type": "enum",
+                "value": 0
+            }
+        ]
+    },
+    {
+        "name": "R_Dewclaw_FKIK_switch_cont",
+        "type": "transform",
+        "user_defined": [
+            {
+                "name": "FK_IK",
+                "type": "float",
+                "value": 1.0
+            },
+            {
+                "name": "FK_IK_Reverse",
+                "type": "float",
+                "value": 0.0
+            },
+            {
+                "name": "defaultTranslate",
+                "type": "double3",
+                "value": [
+                    [
+                        0.0,
+                        0.0,
+                        0.0
+                    ]
+                ]
+            },
+            {
+                "name": "defaultTranslateX",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultTranslateY",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultTranslateZ",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultRotate",
+                "type": "double3",
+                "value": [
+                    [
+                        0.0,
+                        0.0,
+                        0.0
+                    ]
+                ]
+            },
+            {
+                "name": "defaultRotateX",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultRotateY",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultRotateZ",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultScale",
+                "type": "double3",
+                "value": [
+                    [
+                        1.0,
+                        1.0,
+                        1.0
+                    ]
+                ]
+            },
+            {
+                "name": "defaultScaleX",
+                "type": "double",
+                "value": 1.0
+            },
+            {
+                "name": "defaultScaleY",
+                "type": "double",
+                "value": 1.0
+            },
+            {
+                "name": "defaultScaleZ",
+                "type": "double",
+                "value": 1.0
+            },
+            {
+                "name": "side",
+                "type": "enum",
+                "value": 2
+            },
+            {
+                "name": "tier",
+                "type": "enum",
+                "value": 0
+            }
+        ]
+    },
+    {
+        "name": "L_Toe2_FKIK_switch_cont",
+        "type": "transform",
+        "user_defined": [
+            {
+                "name": "FK_IK",
+                "type": "float",
+                "value": 1.0
+            },
+            {
+                "name": "FK_IK_Reverse",
+                "type": "float",
+                "value": 0.0
+            },
+            {
+                "name": "defaultTranslate",
+                "type": "double3",
+                "value": [
+                    [
+                        0.0,
+                        0.0,
+                        0.0
+                    ]
+                ]
+            },
+            {
+                "name": "defaultTranslateX",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultTranslateY",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultTranslateZ",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultRotate",
+                "type": "double3",
+                "value": [
+                    [
+                        0.0,
+                        0.0,
+                        0.0
+                    ]
+                ]
+            },
+            {
+                "name": "defaultRotateX",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultRotateY",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultRotateZ",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultScale",
+                "type": "double3",
+                "value": [
+                    [
+                        1.0,
+                        1.0,
+                        1.0
+                    ]
+                ]
+            },
+            {
+                "name": "defaultScaleX",
+                "type": "double",
+                "value": 1.0
+            },
+            {
+                "name": "defaultScaleY",
+                "type": "double",
+                "value": 1.0
+            },
+            {
+                "name": "defaultScaleZ",
+                "type": "double",
+                "value": 1.0
+            },
+            {
+                "name": "side",
+                "type": "enum",
+                "value": 1
+            },
+            {
+                "name": "tier",
+                "type": "enum",
+                "value": 0
+            }
+        ]
+    },
+    {
+        "name": "R_Toe2_FKIK_switch_cont",
+        "type": "transform",
+        "user_defined": [
+            {
+                "name": "FK_IK",
+                "type": "float",
+                "value": 1.0
+            },
+            {
+                "name": "FK_IK_Reverse",
+                "type": "float",
+                "value": 0.0
+            },
+            {
+                "name": "defaultTranslate",
+                "type": "double3",
+                "value": [
+                    [
+                        0.0,
+                        0.0,
+                        0.0
+                    ]
+                ]
+            },
+            {
+                "name": "defaultTranslateX",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultTranslateY",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultTranslateZ",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultRotate",
+                "type": "double3",
+                "value": [
+                    [
+                        0.0,
+                        0.0,
+                        0.0
+                    ]
+                ]
+            },
+            {
+                "name": "defaultRotateX",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultRotateY",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultRotateZ",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultScale",
+                "type": "double3",
+                "value": [
+                    [
+                        1.0,
+                        1.0,
+                        1.0
+                    ]
+                ]
+            },
+            {
+                "name": "defaultScaleX",
+                "type": "double",
+                "value": 1.0
+            },
+            {
+                "name": "defaultScaleY",
+                "type": "double",
+                "value": 1.0
+            },
+            {
+                "name": "defaultScaleZ",
+                "type": "double",
+                "value": 1.0
+            },
+            {
+                "name": "side",
+                "type": "enum",
+                "value": 2
+            },
+            {
+                "name": "tier",
+                "type": "enum",
+                "value": 0
+            }
+        ]
+    },
+    {
+        "name": "L_Toe1_FKIK_switch_cont",
+        "type": "transform",
+        "user_defined": [
+            {
+                "name": "FK_IK",
+                "type": "float",
+                "value": 1.0
+            },
+            {
+                "name": "FK_IK_Reverse",
+                "type": "float",
+                "value": 0.0
+            },
+            {
+                "name": "defaultTranslate",
+                "type": "double3",
+                "value": [
+                    [
+                        0.0,
+                        0.0,
+                        0.0
+                    ]
+                ]
+            },
+            {
+                "name": "defaultTranslateX",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultTranslateY",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultTranslateZ",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultRotate",
+                "type": "double3",
+                "value": [
+                    [
+                        0.0,
+                        0.0,
+                        0.0
+                    ]
+                ]
+            },
+            {
+                "name": "defaultRotateX",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultRotateY",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultRotateZ",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultScale",
+                "type": "double3",
+                "value": [
+                    [
+                        1.0,
+                        1.0,
+                        1.0
+                    ]
+                ]
+            },
+            {
+                "name": "defaultScaleX",
+                "type": "double",
+                "value": 1.0
+            },
+            {
+                "name": "defaultScaleY",
+                "type": "double",
+                "value": 1.0
+            },
+            {
+                "name": "defaultScaleZ",
+                "type": "double",
+                "value": 1.0
+            },
+            {
+                "name": "side",
+                "type": "enum",
+                "value": 1
+            },
+            {
+                "name": "tier",
+                "type": "enum",
+                "value": 0
+            }
+        ]
+    },
+    {
+        "name": "L_Leg_FKIK_switch_cont",
+        "type": "transform",
+        "user_defined": [
+            {
+                "name": "FK_IK",
+                "type": "float",
+                "value": 1.0
+            },
+            {
+                "name": "FK_IK_Reverse",
+                "type": "float",
+                "value": 0.0
+            },
+            {
+                "name": "defaultTranslate",
+                "type": "double3",
+                "value": [
+                    [
+                        -3.552713678800501e-15,
+                        3.552713678800501e-15,
+                        1.7763568394002505e-15
+                    ]
+                ]
+            },
+            {
+                "name": "defaultTranslateX",
+                "type": "double",
+                "value": -3.552713678800501e-15
+            },
+            {
+                "name": "defaultTranslateY",
+                "type": "double",
+                "value": 3.552713678800501e-15
+            },
+            {
+                "name": "defaultTranslateZ",
+                "type": "double",
+                "value": 1.7763568394002505e-15
+            },
+            {
+                "name": "defaultRotate",
+                "type": "double3",
+                "value": [
+                    [
+                        0.0,
+                        0.0,
+                        0.0
+                    ]
+                ]
+            },
+            {
+                "name": "defaultRotateX",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultRotateY",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultRotateZ",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultScale",
+                "type": "double3",
+                "value": [
+                    [
+                        1.0,
+                        1.0000000000000002,
+                        1.0000000000000002
+                    ]
+                ]
+            },
+            {
+                "name": "defaultScaleX",
+                "type": "double",
+                "value": 1.0
+            },
+            {
+                "name": "defaultScaleY",
+                "type": "double",
+                "value": 1.0000000000000002
+            },
+            {
+                "name": "defaultScaleZ",
+                "type": "double",
+                "value": 1.0000000000000002
+            },
+            {
+                "name": "side",
+                "type": "enum",
+                "value": 1
+            },
+            {
+                "name": "tier",
+                "type": "enum",
+                "value": 0
+            },
+            {
+                "name": "Auto_Hip",
+                "type": "float",
+                "value": 1.0
+            },
+            {
+                "name": "Align_Hip",
+                "type": "float",
+                "value": 0.0
+            },
+            {
+                "name": "Foot_Auto_Twist",
+                "type": "float",
+                "value": 1.0
+            },
+            {
+                "name": "Foot_Manual_Twist",
+                "type": "float",
+                "value": 0.0
+            },
+            {
+                "name": "UpLeg_Auto_Twist",
+                "type": "float",
+                "value": 1.0
+            },
+            {
+                "name": "UpLeg_Manual_Twist",
+                "type": "float",
+                "value": 0.0
+            },
+            {
+                "name": "Allow_Scaling",
+                "type": "float",
+                "value": 1.0
+            },
+            {
+                "name": "Interp_Type",
+                "type": "enum",
+                "value": 0
+            },
+            {
+                "name": "Tweak_Controls",
+                "type": "bool",
+                "value": false
+            },
+            {
+                "name": "Finger_Controls",
+                "type": "bool",
+                "value": true
+            }
+        ]
+    },
+    {
+        "name": "R_Leg_FKIK_switch_cont",
+        "type": "transform",
+        "user_defined": [
+            {
+                "name": "FK_IK",
+                "type": "float",
+                "value": 1.0
+            },
+            {
+                "name": "FK_IK_Reverse",
+                "type": "float",
+                "value": 0.0
+            },
+            {
+                "name": "defaultTranslate",
+                "type": "double3",
+                "value": [
+                    [
+                        0.0,
+                        -3.552713678800501e-15,
+                        -1.7763568394002505e-15
+                    ]
+                ]
+            },
+            {
+                "name": "defaultTranslateX",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultTranslateY",
+                "type": "double",
+                "value": -3.552713678800501e-15
+            },
+            {
+                "name": "defaultTranslateZ",
+                "type": "double",
+                "value": -1.7763568394002505e-15
+            },
+            {
+                "name": "defaultRotate",
+                "type": "double3",
+                "value": [
+                    [
+                        0.0,
+                        0.0,
+                        0.0
+                    ]
+                ]
+            },
+            {
+                "name": "defaultRotateX",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultRotateY",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultRotateZ",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultScale",
+                "type": "double3",
+                "value": [
+                    [
+                        -1.0,
+                        0.9999999999999999,
+                        1.0
+                    ]
+                ]
+            },
+            {
+                "name": "defaultScaleX",
+                "type": "double",
+                "value": -1.0
+            },
+            {
+                "name": "defaultScaleY",
+                "type": "double",
+                "value": 0.9999999999999999
+            },
+            {
+                "name": "defaultScaleZ",
+                "type": "double",
+                "value": 1.0
+            },
+            {
+                "name": "side",
+                "type": "enum",
+                "value": 2
+            },
+            {
+                "name": "tier",
+                "type": "enum",
+                "value": 0
+            },
+            {
+                "name": "Auto_Hip",
+                "type": "float",
+                "value": 1.0
+            },
+            {
+                "name": "Align_Hip",
+                "type": "float",
+                "value": 0.0
+            },
+            {
+                "name": "Foot_Auto_Twist",
+                "type": "float",
+                "value": 1.0
+            },
+            {
+                "name": "Foot_Manual_Twist",
+                "type": "float",
+                "value": 0.0
+            },
+            {
+                "name": "UpLeg_Auto_Twist",
+                "type": "float",
+                "value": 1.0
+            },
+            {
+                "name": "UpLeg_Manual_Twist",
+                "type": "float",
+                "value": 0.0
+            },
+            {
+                "name": "Allow_Scaling",
+                "type": "float",
+                "value": 1.0
+            },
+            {
+                "name": "Interp_Type",
+                "type": "enum",
+                "value": 0
+            },
+            {
+                "name": "Tweak_Controls",
+                "type": "bool",
+                "value": false
+            },
+            {
+                "name": "Finger_Controls",
+                "type": "bool",
+                "value": true
+            }
+        ]
+    },
+    {
+        "name": "L_Lower_Arm_FKIK_switch_cont",
+        "type": "transform",
+        "user_defined": [
+            {
+                "name": "FK_IK",
+                "type": "float",
+                "value": 0.0
+            },
+            {
+                "name": "FK_IK_Reverse",
+                "type": "float",
+                "value": 1.0
+            },
+            {
+                "name": "defaultTranslate",
+                "type": "double3",
+                "value": [
+                    [
+                        2.842170943040401e-14,
+                        -2.842170943040401e-14,
+                        3.552713678800501e-15
+                    ]
+                ]
+            },
+            {
+                "name": "defaultTranslateX",
+                "type": "double",
+                "value": 2.842170943040401e-14
+            },
+            {
+                "name": "defaultTranslateY",
+                "type": "double",
+                "value": -2.842170943040401e-14
+            },
+            {
+                "name": "defaultTranslateZ",
+                "type": "double",
+                "value": 3.552713678800501e-15
+            },
+            {
+                "name": "defaultRotate",
+                "type": "double3",
+                "value": [
+                    [
+                        0.0,
+                        0.0,
+                        0.0
+                    ]
+                ]
+            },
+            {
+                "name": "defaultRotateX",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultRotateY",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultRotateZ",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultScale",
+                "type": "double3",
+                "value": [
+                    [
+                        1.0,
+                        1.0,
+                        1.0
+                    ]
+                ]
+            },
+            {
+                "name": "defaultScaleX",
+                "type": "double",
+                "value": 1.0
+            },
+            {
+                "name": "defaultScaleY",
+                "type": "double",
+                "value": 1.0
+            },
+            {
+                "name": "defaultScaleZ",
+                "type": "double",
+                "value": 1.0
+            },
+            {
+                "name": "side",
+                "type": "enum",
+                "value": 1
+            },
+            {
+                "name": "tier",
+                "type": "enum",
+                "value": 0
+            },
+            {
+                "name": "Auto_Shoulder",
+                "type": "float",
+                "value": 1.0
+            },
+            {
+                "name": "Align_Shoulder",
+                "type": "float",
+                "value": 0.0
+            },
+            {
+                "name": "Hand_Auto_Twist",
+                "type": "float",
+                "value": 1.0
+            },
+            {
+                "name": "Hand_Manual_Twist",
+                "type": "float",
+                "value": 0.0
+            },
+            {
+                "name": "Shoulder_Auto_Twist",
+                "type": "float",
+                "value": 1.0
+            },
+            {
+                "name": "Shoulder_Manual_Twist",
+                "type": "float",
+                "value": 0.0
+            },
+            {
+                "name": "Allow_Scaling",
+                "type": "float",
+                "value": 1.0
+            },
+            {
+                "name": "Interp_Type",
+                "type": "enum",
+                "value": 0
+            },
+            {
+                "name": "Tweak_Controls",
+                "type": "bool",
+                "value": false
+            },
+            {
+                "name": "Finger_Controls",
+                "type": "bool",
+                "value": true
+            }
+        ]
+    },
+    {
+        "name": "L_Upper_Arm_FKIK_switch_cont",
+        "type": "transform",
+        "user_defined": [
+            {
+                "name": "FK_IK",
+                "type": "float",
+                "value": 1.0
+            },
+            {
+                "name": "FK_IK_Reverse",
+                "type": "float",
+                "value": 0.0
+            },
+            {
+                "name": "defaultTranslate",
+                "type": "double3",
+                "value": [
+                    [
+                        0.0,
+                        -1.4210854715202004e-14,
+                        -1.0658141036401503e-14
+                    ]
+                ]
+            },
+            {
+                "name": "defaultTranslateX",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultTranslateY",
+                "type": "double",
+                "value": -1.4210854715202004e-14
+            },
+            {
+                "name": "defaultTranslateZ",
+                "type": "double",
+                "value": -1.0658141036401503e-14
+            },
+            {
+                "name": "defaultRotate",
+                "type": "double3",
+                "value": [
+                    [
+                        0.0,
+                        0.0,
+                        0.0
+                    ]
+                ]
+            },
+            {
+                "name": "defaultRotateX",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultRotateY",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultRotateZ",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultScale",
+                "type": "double3",
+                "value": [
+                    [
+                        1.0,
+                        1.0,
+                        1.0
+                    ]
+                ]
+            },
+            {
+                "name": "defaultScaleX",
+                "type": "double",
+                "value": 1.0
+            },
+            {
+                "name": "defaultScaleY",
+                "type": "double",
+                "value": 1.0
+            },
+            {
+                "name": "defaultScaleZ",
+                "type": "double",
+                "value": 1.0
+            },
+            {
+                "name": "side",
+                "type": "enum",
+                "value": 1
+            },
+            {
+                "name": "tier",
+                "type": "enum",
+                "value": 0
+            },
+            {
+                "name": "Auto_Shoulder",
+                "type": "float",
+                "value": 1.0
+            },
+            {
+                "name": "Align_Shoulder",
+                "type": "float",
+                "value": 0.0
+            },
+            {
+                "name": "Hand_Auto_Twist",
+                "type": "float",
+                "value": 1.0
+            },
+            {
+                "name": "Hand_Manual_Twist",
+                "type": "float",
+                "value": 0.0
+            },
+            {
+                "name": "Shoulder_Auto_Twist",
+                "type": "float",
+                "value": 1.0
+            },
+            {
+                "name": "Shoulder_Manual_Twist",
+                "type": "float",
+                "value": 0.0
+            },
+            {
+                "name": "Allow_Scaling",
+                "type": "float",
+                "value": 1.0
+            },
+            {
+                "name": "Interp_Type",
+                "type": "enum",
+                "value": 0
+            },
+            {
+                "name": "Tweak_Controls",
+                "type": "bool",
+                "value": false
+            },
+            {
+                "name": "Finger_Controls",
+                "type": "bool",
+                "value": true
+            }
+        ]
+    },
+    {
+        "name": "R_Upper_Arm_FKIK_switch_cont",
+        "type": "transform",
+        "user_defined": [
+            {
+                "name": "FK_IK",
+                "type": "float",
+                "value": 1.0
+            },
+            {
+                "name": "FK_IK_Reverse",
+                "type": "float",
+                "value": 0.0
+            },
+            {
+                "name": "defaultTranslate",
+                "type": "double3",
+                "value": [
+                    [
+                        -7.105427357601002e-15,
+                        -1.4210854715202004e-14,
+                        1.0658141036401503e-14
+                    ]
+                ]
+            },
+            {
+                "name": "defaultTranslateX",
+                "type": "double",
+                "value": -7.105427357601002e-15
+            },
+            {
+                "name": "defaultTranslateY",
+                "type": "double",
+                "value": -1.4210854715202004e-14
+            },
+            {
+                "name": "defaultTranslateZ",
+                "type": "double",
+                "value": 1.0658141036401503e-14
+            },
+            {
+                "name": "defaultRotate",
+                "type": "double3",
+                "value": [
+                    [
+                        0.0,
+                        0.0,
+                        0.0
+                    ]
+                ]
+            },
+            {
+                "name": "defaultRotateX",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultRotateY",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultRotateZ",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultScale",
+                "type": "double3",
+                "value": [
+                    [
+                        -1.0,
+                        0.9999999999999996,
+                        0.9999999999999991
+                    ]
+                ]
+            },
+            {
+                "name": "defaultScaleX",
+                "type": "double",
+                "value": -1.0
+            },
+            {
+                "name": "defaultScaleY",
+                "type": "double",
+                "value": 0.9999999999999996
+            },
+            {
+                "name": "defaultScaleZ",
+                "type": "double",
+                "value": 0.9999999999999991
+            },
+            {
+                "name": "side",
+                "type": "enum",
+                "value": 2
+            },
+            {
+                "name": "tier",
+                "type": "enum",
+                "value": 0
+            },
+            {
+                "name": "Auto_Shoulder",
+                "type": "float",
+                "value": 1.0
+            },
+            {
+                "name": "Align_Shoulder",
+                "type": "float",
+                "value": 0.0
+            },
+            {
+                "name": "Hand_Auto_Twist",
+                "type": "float",
+                "value": 1.0
+            },
+            {
+                "name": "Hand_Manual_Twist",
+                "type": "float",
+                "value": 0.0
+            },
+            {
+                "name": "Shoulder_Auto_Twist",
+                "type": "float",
+                "value": 1.0
+            },
+            {
+                "name": "Shoulder_Manual_Twist",
+                "type": "float",
+                "value": 0.0
+            },
+            {
+                "name": "Allow_Scaling",
+                "type": "float",
+                "value": 1.0
+            },
+            {
+                "name": "Interp_Type",
+                "type": "enum",
+                "value": 0
+            },
+            {
+                "name": "Tweak_Controls",
+                "type": "bool",
+                "value": false
+            },
+            {
+                "name": "Finger_Controls",
+                "type": "bool",
+                "value": true
+            }
+        ]
+    },
+    {
+        "name": "R_Lower_Arm_FKIK_switch_cont",
+        "type": "transform",
+        "user_defined": [
+            {
+                "name": "FK_IK",
+                "type": "float",
+                "value": 0.0
+            },
+            {
+                "name": "FK_IK_Reverse",
+                "type": "float",
+                "value": 1.0
+            },
+            {
+                "name": "defaultTranslate",
+                "type": "double3",
+                "value": [
+                    [
+                        -2.842170943040401e-14,
+                        5.684341886080802e-14,
+                        3.552713678800501e-15
+                    ]
+                ]
+            },
+            {
+                "name": "defaultTranslateX",
+                "type": "double",
+                "value": -2.842170943040401e-14
+            },
+            {
+                "name": "defaultTranslateY",
+                "type": "double",
+                "value": 5.684341886080802e-14
+            },
+            {
+                "name": "defaultTranslateZ",
+                "type": "double",
+                "value": 3.552713678800501e-15
+            },
+            {
+                "name": "defaultRotate",
+                "type": "double3",
+                "value": [
+                    [
+                        0.0,
+                        0.0,
+                        0.0
+                    ]
+                ]
+            },
+            {
+                "name": "defaultRotateX",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultRotateY",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultRotateZ",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultScale",
+                "type": "double3",
+                "value": [
+                    [
+                        -1.0,
+                        1.0,
+                        1.0
+                    ]
+                ]
+            },
+            {
+                "name": "defaultScaleX",
+                "type": "double",
+                "value": -1.0
+            },
+            {
+                "name": "defaultScaleY",
+                "type": "double",
+                "value": 1.0
+            },
+            {
+                "name": "defaultScaleZ",
+                "type": "double",
+                "value": 1.0
+            },
+            {
+                "name": "side",
+                "type": "enum",
+                "value": 2
+            },
+            {
+                "name": "tier",
+                "type": "enum",
+                "value": 0
+            },
+            {
+                "name": "Auto_Shoulder",
+                "type": "float",
+                "value": 1.0
+            },
+            {
+                "name": "Align_Shoulder",
+                "type": "float",
+                "value": 0.0
+            },
+            {
+                "name": "Hand_Auto_Twist",
+                "type": "float",
+                "value": 1.0
+            },
+            {
+                "name": "Hand_Manual_Twist",
+                "type": "float",
+                "value": 0.0
+            },
+            {
+                "name": "Shoulder_Auto_Twist",
+                "type": "float",
+                "value": 1.0
+            },
+            {
+                "name": "Shoulder_Manual_Twist",
+                "type": "float",
+                "value": 0.0
+            },
+            {
+                "name": "Allow_Scaling",
+                "type": "float",
+                "value": 1.0
+            },
+            {
+                "name": "Interp_Type",
+                "type": "enum",
+                "value": 0
+            },
+            {
+                "name": "Tweak_Controls",
+                "type": "bool",
+                "value": false
+            },
+            {
+                "name": "Finger_Controls",
+                "type": "bool",
+                "value": true
+            }
+        ]
+    },
+    {
+        "name": "R_Middle_Arm_FKIK_switch_cont",
+        "type": "transform",
+        "user_defined": [
+            {
+                "name": "FK_IK",
+                "type": "float",
+                "value": 0.0
+            },
+            {
+                "name": "FK_IK_Reverse",
+                "type": "float",
+                "value": 1.0
+            },
+            {
+                "name": "defaultTranslate",
+                "type": "double3",
+                "value": [
+                    [
+                        0.0,
+                        0.0,
+                        -7.105427357601002e-15
+                    ]
+                ]
+            },
+            {
+                "name": "defaultTranslateX",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultTranslateY",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultTranslateZ",
+                "type": "double",
+                "value": -7.105427357601002e-15
+            },
+            {
+                "name": "defaultRotate",
+                "type": "double3",
+                "value": [
+                    [
+                        0.0,
+                        0.0,
+                        0.0
+                    ]
+                ]
+            },
+            {
+                "name": "defaultRotateX",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultRotateY",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultRotateZ",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultScale",
+                "type": "double3",
+                "value": [
+                    [
+                        -1.0,
+                        0.9999999999999998,
+                        0.9999999999999998
+                    ]
+                ]
+            },
+            {
+                "name": "defaultScaleX",
+                "type": "double",
+                "value": -1.0
+            },
+            {
+                "name": "defaultScaleY",
+                "type": "double",
+                "value": 0.9999999999999998
+            },
+            {
+                "name": "defaultScaleZ",
+                "type": "double",
+                "value": 0.9999999999999998
+            },
+            {
+                "name": "side",
+                "type": "enum",
+                "value": 2
+            },
+            {
+                "name": "tier",
+                "type": "enum",
+                "value": 0
+            },
+            {
+                "name": "Auto_Shoulder",
+                "type": "float",
+                "value": 1.0
+            },
+            {
+                "name": "Align_Shoulder",
+                "type": "float",
+                "value": 0.0
+            },
+            {
+                "name": "Hand_Auto_Twist",
+                "type": "float",
+                "value": 1.0
+            },
+            {
+                "name": "Hand_Manual_Twist",
+                "type": "float",
+                "value": 0.0
+            },
+            {
+                "name": "Shoulder_Auto_Twist",
+                "type": "float",
+                "value": 1.0
+            },
+            {
+                "name": "Shoulder_Manual_Twist",
+                "type": "float",
+                "value": 0.0
+            },
+            {
+                "name": "Allow_Scaling",
+                "type": "float",
+                "value": 1.0
+            },
+            {
+                "name": "Interp_Type",
+                "type": "enum",
+                "value": 0
+            },
+            {
+                "name": "Tweak_Controls",
+                "type": "bool",
+                "value": false
+            },
+            {
+                "name": "Finger_Controls",
+                "type": "bool",
+                "value": true
+            }
+        ]
+    },
+    {
+        "name": "L_Middle_Arm_FKIK_switch_cont",
+        "type": "transform",
+        "user_defined": [
+            {
+                "name": "FK_IK",
+                "type": "float",
+                "value": 0.0
+            },
+            {
+                "name": "FK_IK_Reverse",
+                "type": "float",
+                "value": 1.0
+            },
+            {
+                "name": "defaultTranslate",
+                "type": "double3",
+                "value": [
+                    [
+                        0.0,
+                        0.0,
+                        1.4210854715202004e-14
+                    ]
+                ]
+            },
+            {
+                "name": "defaultTranslateX",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultTranslateY",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultTranslateZ",
+                "type": "double",
+                "value": 1.4210854715202004e-14
+            },
+            {
+                "name": "defaultRotate",
+                "type": "double3",
+                "value": [
+                    [
+                        0.0,
+                        0.0,
+                        0.0
+                    ]
+                ]
+            },
+            {
+                "name": "defaultRotateX",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultRotateY",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultRotateZ",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultScale",
+                "type": "double3",
+                "value": [
+                    [
+                        1.0,
+                        0.9999999999999999,
+                        0.9999999999999998
+                    ]
+                ]
+            },
+            {
+                "name": "defaultScaleX",
+                "type": "double",
+                "value": 1.0
+            },
+            {
+                "name": "defaultScaleY",
+                "type": "double",
+                "value": 0.9999999999999999
+            },
+            {
+                "name": "defaultScaleZ",
+                "type": "double",
+                "value": 0.9999999999999998
+            },
+            {
+                "name": "side",
+                "type": "enum",
+                "value": 1
+            },
+            {
+                "name": "tier",
+                "type": "enum",
+                "value": 0
+            },
+            {
+                "name": "Auto_Shoulder",
+                "type": "float",
+                "value": 1.0
+            },
+            {
+                "name": "Align_Shoulder",
+                "type": "float",
+                "value": 0.0
+            },
+            {
+                "name": "Hand_Auto_Twist",
+                "type": "float",
+                "value": 1.0
+            },
+            {
+                "name": "Hand_Manual_Twist",
+                "type": "float",
+                "value": 0.0
+            },
+            {
+                "name": "Shoulder_Auto_Twist",
+                "type": "float",
+                "value": 1.0
+            },
+            {
+                "name": "Shoulder_Manual_Twist",
+                "type": "float",
+                "value": 0.0
+            },
+            {
+                "name": "Allow_Scaling",
+                "type": "float",
+                "value": 1.0
+            },
+            {
+                "name": "Interp_Type",
+                "type": "enum",
+                "value": 0
+            },
+            {
+                "name": "Tweak_Controls",
+                "type": "bool",
+                "value": false
+            },
+            {
+                "name": "Finger_Controls",
+                "type": "bool",
+                "value": true
+            }
+        ]
+    },
+    {
+        "name": "Head_head_cont",
+        "type": "transform",
+        "user_defined": [
+            {
+                "name": "defaultTranslate",
+                "type": "double3",
+                "value": [
+                    [
+                        0.0,
+                        0.0,
+                        0.0
+                    ]
+                ]
+            },
+            {
+                "name": "defaultTranslateX",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultTranslateY",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultTranslateZ",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultRotate",
+                "type": "double3",
+                "value": [
+                    [
+                        0.0,
+                        0.0,
+                        0.0
+                    ]
+                ]
+            },
+            {
+                "name": "defaultRotateX",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultRotateY",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultRotateZ",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultScale",
+                "type": "double3",
+                "value": [
+                    [
+                        1.0,
+                        1.0,
+                        1.0
+                    ]
+                ]
+            },
+            {
+                "name": "defaultScaleX",
+                "type": "double",
+                "value": 1.0
+            },
+            {
+                "name": "defaultScaleY",
+                "type": "double",
+                "value": 1.0
+            },
+            {
+                "name": "defaultScaleZ",
+                "type": "double",
+                "value": 1.0
+            },
+            {
+                "name": "side",
+                "type": "enum",
+                "value": 0
+            },
+            {
+                "name": "tier",
+                "type": "enum",
+                "value": 0
+            },
+            {
+                "name": "point_Switch",
+                "type": "enum",
+                "value": 6
+            },
+            {
+                "name": "orient_Switch",
+                "type": "enum",
+                "value": 6
+            }
+        ]
+    },
+    {
+        "name": "C_Tentacle_special_cont",
+        "type": "transform",
+        "user_defined": [
+            {
+                "name": "defaultTranslate",
+                "type": "double3",
+                "value": [
+                    [
+                        0.0,
+                        0.0,
+                        0.0
+                    ]
+                ]
+            },
+            {
+                "name": "defaultTranslateX",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultTranslateY",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultTranslateZ",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultRotate",
+                "type": "double3",
+                "value": [
+                    [
+                        0.0,
+                        0.0,
+                        0.0
+                    ]
+                ]
+            },
+            {
+                "name": "defaultRotateX",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultRotateY",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultRotateZ",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultScale",
+                "type": "double3",
+                "value": [
+                    [
+                        1.0,
+                        1.0,
+                        1.0
+                    ]
+                ]
+            },
+            {
+                "name": "defaultScaleX",
+                "type": "double",
+                "value": 1.0
+            },
+            {
+                "name": "defaultScaleY",
+                "type": "double",
+                "value": 1.0
+            },
+            {
+                "name": "defaultScaleZ",
+                "type": "double",
+                "value": 1.0
+            },
+            {
+                "name": "side",
+                "type": "enum",
+                "value": 0
+            },
+            {
+                "name": "tier",
+                "type": "enum",
+                "value": 0
+            },
+            {
+                "name": "curlSeperator",
+                "type": "enum",
+                "value": 0
+            },
+            {
+                "name": "Curl",
+                "type": "float",
+                "value": 0.0
+            },
+            {
+                "name": "Curl_Size",
+                "type": "float",
+                "value": 3.5
+            },
+            {
+                "name": "Curl_Angle",
+                "type": "float",
+                "value": 1.0
+            },
+            {
+                "name": "Curl_Direction",
+                "type": "float",
+                "value": 90.0
+            },
+            {
+                "name": "Curl_Shift",
+                "type": "float",
+                "value": 0.0
+            },
+            {
+                "name": "twistSeperator",
+                "type": "enum",
+                "value": 0
+            },
+            {
+                "name": "Twist_Angle",
+                "type": "float",
+                "value": 0.0
+            },
+            {
+                "name": "Twist_Slide",
+                "type": "float",
+                "value": 0.0
+            },
+            {
+                "name": "Twist_Area",
+                "type": "float",
+                "value": 1.0
+            },
+            {
+                "name": "sineSeperator",
+                "type": "enum",
+                "value": 0
+            },
+            {
+                "name": "Sine_Amplitude",
+                "type": "float",
+                "value": 0.0
+            },
+            {
+                "name": "Sine_Wavelength",
+                "type": "float",
+                "value": 1.5
+            },
+            {
+                "name": "Sine_Dropoff",
+                "type": "float",
+                "value": 1.0
+            },
+            {
+                "name": "Sine_Slide",
+                "type": "float",
+                "value": -1.0
+            },
+            {
+                "name": "Sine_area",
+                "type": "float",
+                "value": 2.0
+            },
+            {
+                "name": "Sine_Direction",
+                "type": "float",
+                "value": 90.0
+            },
+            {
+                "name": "Sine_Animate",
+                "type": "float",
+                "value": 0.0
+            }
+        ]
+    },
+    {
+        "name": "L_Leg_FK_ball_cont",
+        "type": "transform",
+        "user_defined": [
+            {
+                "name": "defaultTranslate",
+                "type": "double3",
+                "value": [
+                    [
+                        0.0,
+                        0.0,
+                        0.0
+                    ]
+                ]
+            },
+            {
+                "name": "defaultTranslateX",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultTranslateY",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultTranslateZ",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultRotate",
+                "type": "double3",
+                "value": [
+                    [
+                        0.0,
+                        0.0,
+                        0.0
+                    ]
+                ]
+            },
+            {
+                "name": "defaultRotateX",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultRotateY",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultRotateZ",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultScale",
+                "type": "double3",
+                "value": [
+                    [
+                        1.0,
+                        1.0,
+                        1.0
+                    ]
+                ]
+            },
+            {
+                "name": "defaultScaleX",
+                "type": "double",
+                "value": 1.0
+            },
+            {
+                "name": "defaultScaleY",
+                "type": "double",
+                "value": 1.0
+            },
+            {
+                "name": "defaultScaleZ",
+                "type": "double",
+                "value": 1.0
+            },
+            {
+                "name": "side",
+                "type": "enum",
+                "value": 1
+            },
+            {
+                "name": "tier",
+                "type": "enum",
+                "value": 0
+            }
+        ]
+    },
+    {
+        "name": "R_Leg_FK_ball_cont",
+        "type": "transform",
+        "user_defined": [
+            {
+                "name": "defaultTranslate",
+                "type": "double3",
+                "value": [
+                    [
+                        -1.7763568394002505e-15,
+                        0.0,
+                        3.552713678800501e-15
+                    ]
+                ]
+            },
+            {
+                "name": "defaultTranslateX",
+                "type": "double",
+                "value": -1.7763568394002505e-15
+            },
+            {
+                "name": "defaultTranslateY",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultTranslateZ",
+                "type": "double",
+                "value": 3.552713678800501e-15
+            },
+            {
+                "name": "defaultRotate",
+                "type": "double3",
+                "value": [
+                    [
+                        0.0,
+                        0.0,
+                        0.0
+                    ]
+                ]
+            },
+            {
+                "name": "defaultRotateX",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultRotateY",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultRotateZ",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultScale",
+                "type": "double3",
+                "value": [
+                    [
+                        1.0,
+                        1.0,
+                        0.9999999999999999
+                    ]
+                ]
+            },
+            {
+                "name": "defaultScaleX",
+                "type": "double",
+                "value": 1.0
+            },
+            {
+                "name": "defaultScaleY",
+                "type": "double",
+                "value": 1.0
+            },
+            {
+                "name": "defaultScaleZ",
+                "type": "double",
+                "value": 0.9999999999999999
+            },
+            {
+                "name": "side",
+                "type": "enum",
+                "value": 2
+            },
+            {
+                "name": "tier",
+                "type": "enum",
+                "value": 0
+            }
+        ]
+    },
+    {
+        "name": "L_Toe2_IK_end_cont",
+        "type": "transform",
+        "user_defined": [
+            {
+                "name": "defaultTranslate",
+                "type": "double3",
+                "value": [
+                    [
+                        0.0,
+                        0.0,
+                        0.0
+                    ]
+                ]
+            },
+            {
+                "name": "defaultTranslateX",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultTranslateY",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultTranslateZ",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultRotate",
+                "type": "double3",
+                "value": [
+                    [
+                        0.0,
+                        0.0,
+                        0.0
+                    ]
+                ]
+            },
+            {
+                "name": "defaultRotateX",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultRotateY",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultRotateZ",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultScale",
+                "type": "double3",
+                "value": [
+                    [
+                        1.0,
+                        1.0,
+                        1.0
+                    ]
+                ]
+            },
+            {
+                "name": "defaultScaleX",
+                "type": "double",
+                "value": 1.0
+            },
+            {
+                "name": "defaultScaleY",
+                "type": "double",
+                "value": 1.0
+            },
+            {
+                "name": "defaultScaleZ",
+                "type": "double",
+                "value": 1.0
+            },
+            {
+                "name": "side",
+                "type": "enum",
+                "value": 1
+            },
+            {
+                "name": "tier",
+                "type": "enum",
+                "value": 0
+            },
+            {
+                "name": "Squash",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "Stretch",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "StretchLimit",
+                "type": "double",
+                "value": 100.0
+            },
+            {
+                "name": "SoftIK",
+                "type": "double",
+                "value": 0.0
+            }
+        ]
+    },
+    {
+        "name": "L_Toe1_IK_end_cont",
+        "type": "transform",
+        "user_defined": [
+            {
+                "name": "defaultTranslate",
+                "type": "double3",
+                "value": [
+                    [
+                        0.0,
+                        0.0,
+                        0.0
+                    ]
+                ]
+            },
+            {
+                "name": "defaultTranslateX",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultTranslateY",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultTranslateZ",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultRotate",
+                "type": "double3",
+                "value": [
+                    [
+                        0.0,
+                        0.0,
+                        0.0
+                    ]
+                ]
+            },
+            {
+                "name": "defaultRotateX",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultRotateY",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultRotateZ",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultScale",
+                "type": "double3",
+                "value": [
+                    [
+                        1.0,
+                        1.0,
+                        1.0
+                    ]
+                ]
+            },
+            {
+                "name": "defaultScaleX",
+                "type": "double",
+                "value": 1.0
+            },
+            {
+                "name": "defaultScaleY",
+                "type": "double",
+                "value": 1.0
+            },
+            {
+                "name": "defaultScaleZ",
+                "type": "double",
+                "value": 1.0
+            },
+            {
+                "name": "side",
+                "type": "enum",
+                "value": 1
+            },
+            {
+                "name": "tier",
+                "type": "enum",
+                "value": 0
+            },
+            {
+                "name": "Squash",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "Stretch",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "StretchLimit",
+                "type": "double",
+                "value": 100.0
+            },
+            {
+                "name": "SoftIK",
+                "type": "double",
+                "value": 0.0
+            }
+        ]
+    },
+    {
+        "name": "L_Dewclaw_IK_end_cont",
+        "type": "transform",
+        "user_defined": [
+            {
+                "name": "defaultTranslate",
+                "type": "double3",
+                "value": [
+                    [
+                        0.0,
+                        0.0,
+                        0.0
+                    ]
+                ]
+            },
+            {
+                "name": "defaultTranslateX",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultTranslateY",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultTranslateZ",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultRotate",
+                "type": "double3",
+                "value": [
+                    [
+                        0.0,
+                        0.0,
+                        0.0
+                    ]
+                ]
+            },
+            {
+                "name": "defaultRotateX",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultRotateY",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultRotateZ",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultScale",
+                "type": "double3",
+                "value": [
+                    [
+                        1.0,
+                        1.0,
+                        1.0
+                    ]
+                ]
+            },
+            {
+                "name": "defaultScaleX",
+                "type": "double",
+                "value": 1.0
+            },
+            {
+                "name": "defaultScaleY",
+                "type": "double",
+                "value": 1.0
+            },
+            {
+                "name": "defaultScaleZ",
+                "type": "double",
+                "value": 1.0
+            },
+            {
+                "name": "side",
+                "type": "enum",
+                "value": 1
+            },
+            {
+                "name": "tier",
+                "type": "enum",
+                "value": 0
+            },
+            {
+                "name": "Squash",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "Stretch",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "StretchLimit",
+                "type": "double",
+                "value": 100.0
+            },
+            {
+                "name": "SoftIK",
+                "type": "double",
+                "value": 0.0
+            }
+        ]
+    },
+    {
+        "name": "R_Dewclaw_IK_end_cont",
+        "type": "transform",
+        "user_defined": [
+            {
+                "name": "defaultTranslate",
+                "type": "double3",
+                "value": [
+                    [
+                        0.0,
+                        0.0,
+                        0.0
+                    ]
+                ]
+            },
+            {
+                "name": "defaultTranslateX",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultTranslateY",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultTranslateZ",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultRotate",
+                "type": "double3",
+                "value": [
+                    [
+                        0.0,
+                        0.0,
+                        0.0
+                    ]
+                ]
+            },
+            {
+                "name": "defaultRotateX",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultRotateY",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultRotateZ",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultScale",
+                "type": "double3",
+                "value": [
+                    [
+                        1.0,
+                        1.0,
+                        1.0
+                    ]
+                ]
+            },
+            {
+                "name": "defaultScaleX",
+                "type": "double",
+                "value": 1.0
+            },
+            {
+                "name": "defaultScaleY",
+                "type": "double",
+                "value": 1.0
+            },
+            {
+                "name": "defaultScaleZ",
+                "type": "double",
+                "value": 1.0
+            },
+            {
+                "name": "side",
+                "type": "enum",
+                "value": 2
+            },
+            {
+                "name": "tier",
+                "type": "enum",
+                "value": 0
+            },
+            {
+                "name": "Squash",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "Stretch",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "StretchLimit",
+                "type": "double",
+                "value": 100.0
+            },
+            {
+                "name": "SoftIK",
+                "type": "double",
+                "value": 0.0
+            }
+        ]
+    },
+    {
+        "name": "R_Toe1_IK_end_cont",
+        "type": "transform",
+        "user_defined": [
+            {
+                "name": "defaultTranslate",
+                "type": "double3",
+                "value": [
+                    [
+                        0.0,
+                        0.0,
+                        0.0
+                    ]
+                ]
+            },
+            {
+                "name": "defaultTranslateX",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultTranslateY",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultTranslateZ",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultRotate",
+                "type": "double3",
+                "value": [
+                    [
+                        0.0,
+                        0.0,
+                        0.0
+                    ]
+                ]
+            },
+            {
+                "name": "defaultRotateX",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultRotateY",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultRotateZ",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultScale",
+                "type": "double3",
+                "value": [
+                    [
+                        1.0,
+                        1.0,
+                        1.0
+                    ]
+                ]
+            },
+            {
+                "name": "defaultScaleX",
+                "type": "double",
+                "value": 1.0
+            },
+            {
+                "name": "defaultScaleY",
+                "type": "double",
+                "value": 1.0
+            },
+            {
+                "name": "defaultScaleZ",
+                "type": "double",
+                "value": 1.0
+            },
+            {
+                "name": "side",
+                "type": "enum",
+                "value": 2
+            },
+            {
+                "name": "tier",
+                "type": "enum",
+                "value": 0
+            },
+            {
+                "name": "Squash",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "Stretch",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "StretchLimit",
+                "type": "double",
+                "value": 100.0
+            },
+            {
+                "name": "SoftIK",
+                "type": "double",
+                "value": 0.0
+            }
+        ]
+    },
+    {
+        "name": "R_Toe2_IK_end_cont",
+        "type": "transform",
+        "user_defined": [
+            {
+                "name": "defaultTranslate",
+                "type": "double3",
+                "value": [
+                    [
+                        0.0,
+                        0.0,
+                        0.0
+                    ]
+                ]
+            },
+            {
+                "name": "defaultTranslateX",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultTranslateY",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultTranslateZ",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultRotate",
+                "type": "double3",
+                "value": [
+                    [
+                        0.0,
+                        0.0,
+                        0.0
+                    ]
+                ]
+            },
+            {
+                "name": "defaultRotateX",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultRotateY",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultRotateZ",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultScale",
+                "type": "double3",
+                "value": [
+                    [
+                        1.0,
+                        1.0,
+                        1.0
+                    ]
+                ]
+            },
+            {
+                "name": "defaultScaleX",
+                "type": "double",
+                "value": 1.0
+            },
+            {
+                "name": "defaultScaleY",
+                "type": "double",
+                "value": 1.0
+            },
+            {
+                "name": "defaultScaleZ",
+                "type": "double",
+                "value": 1.0
+            },
+            {
+                "name": "side",
+                "type": "enum",
+                "value": 2
+            },
+            {
+                "name": "tier",
+                "type": "enum",
+                "value": 0
+            },
+            {
+                "name": "Squash",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "Stretch",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "StretchLimit",
+                "type": "double",
+                "value": 100.0
+            },
+            {
+                "name": "SoftIK",
+                "type": "double",
+                "value": 0.0
+            }
+        ]
+    },
+    {
+        "name": "Head_neck_cont",
+        "type": "transform",
+        "user_defined": [
+            {
+                "name": "defaultTranslate",
+                "type": "double3",
+                "value": [
+                    [
+                        0.0,
+                        7.105427357601002e-15,
+                        0.0
+                    ]
+                ]
+            },
+            {
+                "name": "defaultTranslateX",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultTranslateY",
+                "type": "double",
+                "value": 7.105427357601002e-15
+            },
+            {
+                "name": "defaultTranslateZ",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultRotate",
+                "type": "double3",
+                "value": [
+                    [
+                        0.0,
+                        0.0,
+                        0.0
+                    ]
+                ]
+            },
+            {
+                "name": "defaultRotateX",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultRotateY",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultRotateZ",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "defaultScale",
+                "type": "double3",
+                "value": [
+                    [
+                        1.0,
+                        1.0,
+                        1.0
+                    ]
+                ]
+            },
+            {
+                "name": "defaultScaleX",
+                "type": "double",
+                "value": 1.0
+            },
+            {
+                "name": "defaultScaleY",
+                "type": "double",
+                "value": 1.0
+            },
+            {
+                "name": "defaultScaleZ",
+                "type": "double",
+                "value": 1.0
+            },
+            {
+                "name": "side",
+                "type": "enum",
+                "value": 0
+            },
+            {
+                "name": "tier",
+                "type": "enum",
+                "value": 0
+            },
+            {
+                "name": "Preserve_Volume",
+                "type": "double",
+                "value": 0.0
+            },
+            {
+                "name": "Volume_Factor",
+                "type": "double",
+                "value": 1.0
+            },
+            {
+                "name": "Stretchyness",
+                "type": "double",
+                "value": 1.0
+            },
+            {
+                "name": "orient_Switch",
+                "type": "enum",
+                "value": 5
+            }
+        ]
+    }
+]

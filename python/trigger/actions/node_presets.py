@@ -213,8 +213,14 @@ class Node_presets(object):
             except RuntimeError:
                 if cmds.listConnections(attr, source=True, destination=False):
                     continue
-                elif cmds.getAttr(attr, l=True):
+                elif cmds.getAttr(attr, lock=True):
                     continue
-                cmds.setAttr("{0}.{1}".format(node, data["name"]), data["value"], type=data["type"])
+                print("node", node)
+                print("data", data)
+                # skip the double3 attributes
+                if data["type"] == "double3":
+                    cmds.setAttr("{0}.{1}".format(node, data["name"]), *data["value"][0], type=data["type"])
+                else:
+                    cmds.setAttr("{0}.{1}".format(node, data["name"]), data["value"], type=data["type"])
         return
 

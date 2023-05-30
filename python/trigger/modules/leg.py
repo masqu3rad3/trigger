@@ -602,7 +602,7 @@ class Leg(_module.ModuleCore):
         cmds.parent(self.cont_IK_OFF, self.limbGrp)
 
         nodes_cont_vis = [cont_pole_off, cont_thigh_off, self.cont_IK_OFF, self.cont_fk_foot_off,
-                          self.cont_fk_ik_pos,
+                          self.cont_fk_ik_pos, self.cont_fk_ball_off,
                           self.cont_fk_low_leg_off, self.cont_fk_up_leg_off, self.cont_mid_lock_pos]
 
         attribute.drive_attrs("%s.contVis" % self.scaleGrp, ["%s.v" % x for x in nodes_cont_vis])

@@ -234,6 +234,9 @@ def mirror_controller(axis="x", node_list=None, side_flags=("L_", "R_"), side_bi
                              esx=(0, 0), esy=(0, 0), esz=(0, 0))
         attribute.unlock(tmp_cont[0])
         cmds.delete(cmds.listRelatives(tmp_cont, type="transform"))
+        print("HEDEGOT")
+        print(other_side)
+        print(tmp_cont)
 
         # create a group for the selected controller
         node_grp = cmds.group(name="tmpGrp", em=True)
@@ -244,8 +247,8 @@ def mirror_controller(axis="x", node_list=None, side_flags=("L_", "R_"), side_bi
         # ungroup it
         cmds.ungroup(node_grp)
         # cmds.makeIdentity(tmp_cont[0], a=True, r=False, t=False, s=True)
-        replace_curve(other_side, tmp_cont, snap=False)
-        cmds.delete(tmp_cont)
+        replace_curve(other_side, tmp_cont[0], snap=False)
+        cmds.delete(tmp_cont[0])
 
 
 # pylint: disable = too-many-arguments

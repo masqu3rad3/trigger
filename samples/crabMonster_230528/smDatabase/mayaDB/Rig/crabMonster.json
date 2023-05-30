@@ -1,0 +1,28 @@
+{
+    "ReferenceFile": null,
+    "ReferencedVersion": null,
+    "ID": "SmMayaV03_sceneFile",
+    "MayaVersion": 20230300,
+    "Name": "crabMonster",
+    "Path": "scenes\\Rig\\crabMonster",
+    "Category": "Rig",
+    "Creator": "Arda Kutlu",
+    "CreatorHost": "arda-3060",
+    "Versions": [
+        {
+            "RelativePath": "scenes\\Rig\\crabMonster\\crabMonster_Rig_ardk_v001.mb",
+            "Note": "[Arda Kutlu] on 30/05/2023-15:32\ninitial\n",
+            "User": "Arda Kutlu",
+            "Workstation": "arda-3060",
+            "Preview": {},
+            "Thumb": "smDatabase\\mayaDB\\Rig\\crabMonster_v001_thumb.jpg",
+            "Ranges": [
+                0.0,
+                0.0,
+                24.0,
+                48.0
+            ]
+        }
+    ],
+    "SubProject": "None"
+}

@@ -1,0 +1,674 @@
+[
+    {
+        "deformer": "lowerleg_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "lowerleg_GEOShape"
+        ]
+    },
+    {
+        "deformer": "upperleg_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "upperleg_GEOShape"
+        ]
+    },
+    {
+        "deformer": "kneefront_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "kneefront_GEOShape"
+        ]
+    },
+    {
+        "deformer": "kneeback_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "kneeback_GEOShape"
+        ]
+    },
+    {
+        "deformer": "front_foot_outter_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "front_foot_outter_GEOShape"
+        ]
+    },
+    {
+        "deformer": "front_foot_inner_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "front_foot_inner_GEOShape"
+        ]
+    },
+    {
+        "deformer": "back_foot_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "back_foot_GEOShape"
+        ]
+    },
+    {
+        "deformer": "tailinside_01_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "tailinside_01_GEOShape"
+        ]
+    },
+    {
+        "deformer": "tailinside_02_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "tailinside_02_GEOShape"
+        ]
+    },
+    {
+        "deformer": "tailinside_03_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "tailinside_03_GEOShape"
+        ]
+    },
+    {
+        "deformer": "tailinside_04_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "tailinside_04_GEOShape"
+        ]
+    },
+    {
+        "deformer": "tailinside_05_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "tailinside_05_GEOShape"
+        ]
+    },
+    {
+        "deformer": "tailinside_06_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "tailinside_06_GEOShape"
+        ]
+    },
+    {
+        "deformer": "tailoutsdie_01_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "tailoutsdie_01_GEOShape"
+        ]
+    },
+    {
+        "deformer": "tailoutsdie_02_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "tailoutsdie_02_GEOShape"
+        ]
+    },
+    {
+        "deformer": "tailoutsdie_03_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "tailoutsdie_03_GEOShape"
+        ]
+    },
+    {
+        "deformer": "tailoutsdie_04_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "tailoutsdie_04_GEOShape"
+        ]
+    },
+    {
+        "deformer": "tailoutsdie_05_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "tailoutsdie_05_GEOShape"
+        ]
+    },
+    {
+        "deformer": "tailoutsdie_06_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "tailoutsdie_06_GEOShape"
+        ]
+    },
+    {
+        "deformer": "tailoutsdie_07_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "tailoutsdie_07_GEOShape"
+        ]
+    },
+    {
+        "deformer": "tailflaps_01_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "tailflaps_01_GEOShape"
+        ]
+    },
+    {
+        "deformer": "tailflaps_02_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "tailflaps_02_GEOShape"
+        ]
+    },
+    {
+        "deformer": "tailflaps_03_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "tailflaps_03_GEOShape"
+        ]
+    },
+    {
+        "deformer": "outter_upperabs_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "outter_upperabs_GEOShape"
+        ]
+    },
+    {
+        "deformer": "breasts_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "breasts_GEOShape"
+        ]
+    },
+    {
+        "deformer": "upper_chest_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "upper_chest_GEOShape"
+        ]
+    },
+    {
+        "deformer": "abs_01_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "abs_01_GEOShape"
+        ]
+    },
+    {
+        "deformer": "abs_03_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "abs_03_GEOShape"
+        ]
+    },
+    {
+        "deformer": "abs_04_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "abs_04_GEOShape"
+        ]
+    },
+    {
+        "deformer": "abs_05_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "abs_05_GEOShape"
+        ]
+    },
+    {
+        "deformer": "outterabs_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "outterabs_GEOShape"
+        ]
+    },
+    {
+        "deformer": "loweroutterabs_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "loweroutterabs_GEOShape"
+        ]
+    },
+    {
+        "deformer": "lower_pelvis_0_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "lower_pelvis_0_GEOShape"
+        ]
+    },
+    {
+        "deformer": "lower_pelivs_1_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "lower_pelivs_1_GEOShape"
+        ]
+    },
+    {
+        "deformer": "pelvis_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "pelvis_GEOShape"
+        ]
+    },
+    {
+        "deformer": "upperback_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "upperback_GEOShape"
+        ]
+    },
+    {
+        "deformer": "shoulderback_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "shoulderback_GEOShape"
+        ]
+    },
+    {
+        "deformer": "backmid_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "backmid_GEOShape"
+        ]
+    },
+    {
+        "deformer": "backmid_lower_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "backmid_lower_GEOShape"
+        ]
+    },
+    {
+        "deformer": "centerlowerbacktop_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "centerlowerbacktop_GEOShape"
+        ]
+    },
+    {
+        "deformer": "lowerarmshoulder_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "lowerarmshoulder_GEOShape"
+        ]
+    },
+    {
+        "deformer": "midback_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "midback_GEOShape"
+        ]
+    },
+    {
+        "deformer": "underlowerbackshoulder_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "underlowerbackshoulder_GEOShape"
+        ]
+    },
+    {
+        "deformer": "lowerback_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "lowerback_GEOShape"
+        ]
+    },
+    {
+        "deformer": "underarm_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "underarm_GEOShape"
+        ]
+    },
+    {
+        "deformer": "topshoulder_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "topshoulder_GEOShape"
+        ]
+    },
+    {
+        "deformer": "bottombackoutter_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "bottombackoutter_GEOShape"
+        ]
+    },
+    {
+        "deformer": "shoulder_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "shoulder_GEOShape"
+        ]
+    },
+    {
+        "deformer": "bicep_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "bicep_GEOShape"
+        ]
+    },
+    {
+        "deformer": "elbow_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "elbow_GEOShape"
+        ]
+    },
+    {
+        "deformer": "lowerarm_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "lowerarm_GEOShape"
+        ]
+    },
+    {
+        "deformer": "smallclaw_main_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "smallclaw_main_GEOShape"
+        ]
+    },
+    {
+        "deformer": "largeclaw_top_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "largeclaw_top_GEOShape"
+        ]
+    },
+    {
+        "deformer": "smalclaw_top_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "smalclaw_top_GEOShape"
+        ]
+    },
+    {
+        "deformer": "largeclaw_main_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "largeclaw_main_GEOShape"
+        ]
+    },
+    {
+        "deformer": "smallarm_shoulder_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "smallarm_shoulder_GEOShape"
+        ]
+    },
+    {
+        "deformer": "smallarm_bicep_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "smallarm_bicep_GEOShape"
+        ]
+    },
+    {
+        "deformer": "smallelbow_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "smallelbow_GEOShape"
+        ]
+    },
+    {
+        "deformer": "smalllowerarm_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "smalllowerarm_GEOShape"
+        ]
+    },
+    {
+        "deformer": "smallclawlower_main_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "smallclawlower_main_GEOShape"
+        ]
+    },
+    {
+        "deformer": "smallcalwlower_r_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "smallcalwlower_r_GEOShape"
+        ]
+    },
+    {
+        "deformer": "smallcalwlower_l_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "smallcalwlower_l_GEOShape"
+        ]
+    },
+    {
+        "deformer": "littleshoulder_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "littleshoulder_GEOShape"
+        ]
+    },
+    {
+        "deformer": "littlemid_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "littlemid_GEOShape"
+        ]
+    },
+    {
+        "deformer": "littlemainclaw_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "littlemainclaw_GEOShape"
+        ]
+    },
+    {
+        "deformer": "littleclaw_pointer_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "littleclaw_pointer_GEOShape"
+        ]
+    },
+    {
+        "deformer": "headmain_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "headmain_GEOShape"
+        ]
+    },
+    {
+        "deformer": "headunder_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "headunder_GEOShape"
+        ]
+    },
+    {
+        "deformer": "neckmain_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "neckmain_GEOShape"
+        ]
+    },
+    {
+        "deformer": "neckinnerback_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "neckinnerback_GEOShape"
+        ]
+    },
+    {
+        "deformer": "neckinner_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "neckinner_GEOShape"
+        ]
+    },
+    {
+        "deformer": "lowerneck_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "lowerneck_GEOShape"
+        ]
+    },
+    {
+        "deformer": "lowersmallneck_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "lowersmallneck_GEOShape"
+        ]
+    },
+    {
+        "deformer": "lowersmallneckmid_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "lowersmallneckmid_GEOShape"
+        ]
+    },
+    {
+        "deformer": "midneck_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "midneck_GEOShape"
+        ]
+    },
+    {
+        "deformer": "midnecklarge_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "midnecklarge_GEOShape"
+        ]
+    },
+    {
+        "deformer": "jaw_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "jaw_GEOShape"
+        ]
+    },
+    {
+        "deformer": "frontmouth_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "frontmouth_GEOShape"
+        ]
+    },
+    {
+        "deformer": "backmouth_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "backmouth_GEOShape"
+        ]
+    },
+    {
+        "deformer": "uppermouthinner_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "uppermouthinner_GEOShape"
+        ]
+    },
+    {
+        "deformer": "tounge_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "tounge_GEOShape"
+        ]
+    },
+    {
+        "deformer": "upperjawoutter_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "upperjawoutter_GEOShape"
+        ]
+    },
+    {
+        "deformer": "upperjawinner_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "upperjawinner_GEOShape"
+        ]
+    },
+    {
+        "deformer": "teeth_GEO_skinCluster",
+        "type": "skinCluster",
+        "influencers": 0,
+        "affected": [
+            "teeth_GEOShape"
+        ]
+    }
+]

@@ -140,7 +140,6 @@ class Fkik(_module.ModuleCore):
         cmds.connectAttr("%s.jointVis" % self.scaleGrp, "%s.v" % self.limbPlug)
 
     def create_controllers(self):
-
         # FK Controllers
         if self.switchMode == 0 or self.switchMode == 1:
             fk_joints = self.deformerJoints if self.switchMode != 0 else self.fkJoints
