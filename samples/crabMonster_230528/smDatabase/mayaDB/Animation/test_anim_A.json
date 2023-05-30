@@ -1,0 +1,30 @@
+{
+    "ReferenceFile": null,
+    "ReferencedVersion": null,
+    "ID": "SmMayaV03_sceneFile",
+    "MayaVersion": 20230300,
+    "Name": "test_anim_A",
+    "Path": "scenes\\Animation\\test_anim_A",
+    "Category": "Animation",
+    "Creator": "Arda Kutlu",
+    "CreatorHost": "arda-3060",
+    "Versions": [
+        {
+            "RelativePath": "scenes\\Animation\\test_anim_A\\test_anim_A_Animation_ardk_v001.mb",
+            "Note": "[Arda Kutlu] on 30/05/2023-15:34\ninitial\n",
+            "User": "Arda Kutlu",
+            "Workstation": "arda-3060",
+            "Preview": {
+                "persp": "Playblasts\\Maya\\Animation\\test_anim_A\\test_anim_A_Animation_ardk_v001_persp_PB.mp4"
+            },
+            "Thumb": "smDatabase\\mayaDB\\Animation\\test_anim_A_v001_thumb.jpg",
+            "Ranges": [
+                0.0,
+                0.0,
+                385.0,
+                385.0
+            ]
+        }
+    ],
+    "SubProject": "None"
+}

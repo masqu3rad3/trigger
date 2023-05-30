@@ -1,0 +1,25 @@
+{
+    "Resolution": [
+        1280,
+        720
+    ],
+    "Format": "avi",
+    "Codec": "IYUV codec",
+    "Percent": 100,
+    "Quality": 100,
+    "ShowFrameNumber": true,
+    "ShowSceneName": false,
+    "ShowCategory": false,
+    "ShowFrameRange": true,
+    "ShowFPS": true,
+    "PolygonOnly": true,
+    "ShowGrid": false,
+    "ClearSelection": true,
+    "DisplayTextures": true,
+    "WireOnShaded": false,
+    "UseDefaultMaterial": false,
+    "ConvertMP4": true,
+    "CrfValue": 23,
+    "ViewportAsItIs": false,
+    "HudsAsItIs": false
+}
