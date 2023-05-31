@@ -20,6 +20,6 @@ In addition to rigging, Trigger can also be used for automation and templating t
 
 ## Documentation
 
-Please note that the online documentation for Trigger is currently a work in progress (WIP). You can find the latest updates and information in the [Trigger Documentation](documentation_link).
+Please note that the online documentation for Trigger is currently a work in progress (WIP). You can find the latest updates and information in the [Trigger Documentation](https://trigger-maya.readthedocs.io/en/latest/).
 
 Feel free to explore Trigger and leverage its capabilities to enhance your rigging and automation workflows in Maya.
