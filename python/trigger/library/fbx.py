@@ -278,7 +278,7 @@ def load(
     }.get(quaternion_interpolation_mode, "Resample As Euler Interpolation")
     reset_import_settings()
     if namespace:
-        if not cmds.namespace(query=True, exists=namespace):
+        if not cmds.namespace(exists=namespace):
             cmds.namespace(addNamespace=namespace)
         cmds.namespace(setNamespace=namespace)
 
