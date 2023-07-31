@@ -592,7 +592,7 @@ class Jointify(object):
         mesh_sc = deformers.get_deformers(self.trainingData["mesh"]).get("skinCluster", None)
         if not mesh_sc:
             jointify_sc = \
-            skinTransfer.skin_transfer(source=self.demData["meshTransform"], target=self.trainingData["mesh"])[0]
+            skin_transfer.skin_transfer(source=self.demData["meshTransform"], target=self.trainingData["mesh"])[0]
         else:
             jointify_sc = mesh_sc[0]
             cmds.skinCluster(jointify_sc, edit=True, normalizeWeights=0)
