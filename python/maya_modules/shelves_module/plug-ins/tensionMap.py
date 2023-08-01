@@ -52,9 +52,9 @@ class tensionMap( om2.MPxNode ):
 		interpPlug.setInt(interpolation)
 
 	def postConstructor( self ):
-		self.initialize_ramp( self.thisMObject(), self.aColorRamp, 0, 0.0, om2.MColor( 0, 1, 0 ), 1 )
-		self.initialize_ramp( self.thisMObject(), self.aColorRamp, 1, 0.5, om2.MColor( 0, 0, 0 ), 1 )
-		self.initialize_ramp( self.thisMObject(), self.aColorRamp, 2, 1.0, om2.MColor( 1, 0, 0 ), 1 )
+		self.initialize_ramp( self.thisMObject(), self.aColorRamp, 0, 0.0, om2.MColor(( 0, 1, 0 )), 1 )
+		self.initialize_ramp( self.thisMObject(), self.aColorRamp, 1, 0.5, om2.MColor(( 0, 0, 0 )), 1 )
+		self.initialize_ramp( self.thisMObject(), self.aColorRamp, 2, 1.0, om2.MColor(( 1, 0, 0 )), 1 )
 
 	def setDependentsDirty( self, dirtyPlug, affectedPlugs ):
 		if dirtyPlug.partialName() == deformedAttrName:
@@ -92,7 +92,7 @@ class tensionMap( om2.MPxNode ):
 			vertColors.setLength( numVerts )
 			vertIds.setLength( numVerts )
 
-			for i in xrange(numVerts):
+			for i in range(numVerts):
 				delta = 0
 				vertColor = om2.MColor()
 				if len(self.origEdgeLenArray) == len(self.deformedEdgeLenArray):
@@ -115,7 +115,7 @@ class tensionMap( om2.MPxNode ):
 			lengthSum = 0.0
 			connectedEdges = om2.MIntArray()
 			connectedEdges = vertIter.getConnectedEdges()
-			for i in xrange( connectedEdges.__len__() ):
+			for i in range( connectedEdges.__len__() ):
 				edgeIter.setIndex( connectedEdges[i] )
 				length = edgeIter.length(om2.MSpace.kWorld)
 				lengthSum += length * 1.0
