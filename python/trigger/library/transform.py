@@ -47,6 +47,7 @@ def query_limits(node, attribute):
         node(str): Name of node to quert limits.
         attribute(str): Name of transform attribute to query limits.
     """
+    log.warning("transform.query_limits is deprecated. Use attribute.query_limits instead")
     enabled_flag_dict = {
         "translateX": {"etx": True},
         "tx": {"etx": True},
