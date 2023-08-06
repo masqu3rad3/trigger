@@ -36,41 +36,37 @@ class Collector(object):
 
     def get_attribute_items(self):
         """Create and return attribute items."""
-        attribute_items = []
+        # attribute_items = []
         for controller in self._controllers:
             for attr in cmds.listAttr(controller, keyable=True):
                 if cmds.getAttr("{0}.{1}".format(controller, attr), settable=True):
-                    attribute_items.append(AttributeItem(controller, attr, cmds.getAttr("{0}.{1}".format(controller, attr))))
-        return attribute_items
+                    yield AttributeItem(controller, attr, cmds.getAttr("{0}.{1}".format(controller, attr)))
+                    # attribute_items.append(AttributeItem(controller, attr, cmds.getAttr("{0}.{1}".format(controller, attr))))
+        # return attribute_items
 
 
 class FaceRomGenerator(object):
-    def __init__(self):
-        self._controllers = []
-        self.morph_hook = "morph_hook"
+    def __init__(self, collector_object):
+        self.collector = collector_object
         self._animation_duration = animation_duration
 
-        self._attribute_items = []
+    def random_pose(self, seed=None):
+        """Generate a random pose."""
+        random.seed(seed)
+        attribute_items = self.collector.get_attribute_items()
+        for attribute_item in attribute_items:
+            attribute_item.set_random_value()
+        # cmds.refresh()
+        # cmds.redrawViewports()
+        return attribute_items
+    def generate_random_rom(self, seed=None):
+        """Generate a random rom."""
+        random.seed(seed)
+        attribute_items = self.collector.get_attribute_items()
+        for attribute_item in attribute_items:
+            attribute_item.set_random_value()
+        return attribute_items
 
-    def collect_controllers(self):
-        all_morphs = cmds.listAttr(self.morph_hook, userDefined=True)
-        controllers = []
-        for morph_attr in all_morphs:
-            remap_node = cmds.listConnections("{0}.{1}".format(self.morph_hook, morph_attr), source=True, destination=False,
-                                              type="remapValue")
-            if remap_node:
-                cont = cmds.listConnections("{0}.inputValue".format(remap_node[0]), source=True, destination=False,
-                                            type="transform")
-                if cont:
-                    controllers.append(cont[0])
-
-        return list(set(controllers))
-
-    def collect_attributes(self):
-        for controller in self._controllers:
-            for attr in cmds.listAttr(controller, keyable=True):
-                if cmds.getAttr("{0}.{1}".format(controller, attr), settable=True):
-                    self._attribute_dictionary[controller][attr] = cmds.getAttr("{0}.{1}".format(controller, attr))
 
 class AttributeItem(object):
     """Attribute item class."""
@@ -101,6 +97,7 @@ class AttributeItem(object):
     translate = ["translateX", "translateY", "translateZ", "tx", "ty", "tz"]
     rotate = ["rotateX", "rotateY", "rotateZ", "rx", "ry", "rz"]
     rotate = ["scaleX", "scaleY", "scaleZ", "sx", "sy", "sz"]
+
     def __init__(self, controller, attribute, value):
         self.default_translate_limits = [-100, 100]
         self.default_rotate_limits = [-90, 90]
@@ -146,7 +143,6 @@ class AttributeItem(object):
         """query the limits of the attribute FROM SCENE.
         If there are no limits, use the default limits defined
         """
-        print("getting limits for {}".format(self.attribute_path))
         _state, _limits = attribute.query_limits(self.controller, self.attribute, only_hard_limits=False)
         if all(_state):
             return _limits
@@ -160,6 +156,14 @@ class AttributeItem(object):
                 _limits[idx] = self.default_limits[self.attribute][idx]
         return _limits
 
-
+    def set_random_value(self, seed=None):
+        """Set a random value within the resolved or overriden limits."""
+        random.seed(seed)
+        _limits = self.limits or self.override_limits
+        if not _limits:
+            raise ValueError("No limits defined for {}".format(self.attribute_path))
+        _min, _max = _limits
+        _value = random.uniform(_min, _max)
+        cmds.setAttr(self.attribute_path, _value)
 
 
