@@ -1,11 +1,8 @@
 import os
 import logging
-from tabnanny import check
 
-# from Qt import QtWidgets, QtCore
 from trigger.ui.Qt import QtWidgets, QtCore
 
-# from dnmayalib.interface import main_window
 from trigger.ui.qtmaya import get_main_maya_window as main_window
 
 from .mirror_lattice import MirrorLattice
@@ -34,7 +31,6 @@ class MainUI(QtWidgets.QDialog):
         self.size_policy.setVerticalStretch(0)
 
         self.build_ui()
-        # self.setMinimumSize(600, 70)
 
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
         self.setFocus()
@@ -76,7 +72,6 @@ class MainUI(QtWidgets.QDialog):
 
     def on_create_mirror_lattice(self):
         """Create a mirror lattice from selection"""
-        # selection = cmds.ls(sl=True)
         mirror_lattice = MirrorLattice(set_from_selection=True)
         mirror_lattice.divisions = [self.ml_division_box.spinners[0].value(),
                                     self.ml_division_box.spinners[1].value(),
