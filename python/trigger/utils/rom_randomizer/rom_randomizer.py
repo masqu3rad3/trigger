@@ -240,6 +240,16 @@ class FaceRomGenerator(object):
                 end_frames.append(attribute_item.key_min_to_max(start_frame, interval))
             start_frame = max(end_frames)
 
+    def generate_ordered_rom(self, start_frame=1, interval=5):
+        """Generate an ordered rom based on the collected controller criteria.
+        This is not a random rom. Just triggers all shapes in a sequence.
+        """
+        all_attributes = self._get_all_attributes()
+        self.default_key(start_frame)
+        start_frame += interval
+        for attribute_item in all_attributes:
+            start_frame = attribute_item.key_min_to_max(start_frame, interval)
+
 class AttributeItem(object):
     """Attribute item class."""
 
