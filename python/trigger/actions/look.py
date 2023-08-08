@@ -6,8 +6,8 @@ from maya import cmds
 from trigger.core import io
 from trigger.core import filelog
 
-from trigger.ui.Qt import QtWidgets, QtGui
-from trigger.ui.widgets import save_box
+from trigger.ui.Qt import QtWidgets
+from trigger.ui.layouts import save_box
 from trigger.ui.widgets.browser import BrowserButton, FileLineEdit
 from trigger.core.decorators import keepselection
 

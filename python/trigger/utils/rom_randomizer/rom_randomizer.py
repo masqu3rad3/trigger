@@ -3,17 +3,14 @@
 Sample usage:
 
 from importlib import reload
-from trigger.utils import rom_generator
-reload(rom_generator)
-from trigger.library import attribute
-reload(attribute)
+from trigger.utils.rom_randomizer import rom_randomizer
 
-collector = rom_generator.Collector()
+collector = rom_randomizer.Collector()
 collector.add_morph_controllers("morph_hook")
 collector.excluded_attributes = ["activate", "lZip", "rZip", "stickyness", "rampEdges", "rampCenter"]
 
 
-rom = rom_generator.FaceRomGenerator(collector)
+rom = rom_randomizer.FaceRomGenerator(collector)
 
 # rom.random_pose(seed=1234)
 
@@ -246,8 +243,8 @@ class FaceRomGenerator(object):
 class AttributeItem(object):
     """Attribute item class."""
 
-    default_translate_limits = [-100, 100]
-    default_rotate_limits = [-90, 90]
+    default_translate_limits = [-5, 5]
+    default_rotate_limits = [-15, 15]
     default_scale_limits = [0.5, 2]
     default_custom_limits = [-100, 100]
     default_limits = {

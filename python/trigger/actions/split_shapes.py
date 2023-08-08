@@ -9,8 +9,8 @@ from trigger.actions import weights
 from trigger.library import deformers, functions, selection
 from trigger.ui import custom_widgets
 from trigger.ui.widgets.browser import BrowserButton, FileLineEdit
-from trigger.ui.widgets.save_box import SaveBoxLayout
-from trigger.ui.Qt import QtWidgets, QtGui
+from trigger.ui.layouts.save_box import SaveBoxLayout
+from trigger.ui.Qt import QtWidgets
 from trigger.ui import feedback
 from trigger.core import filelog
 from trigger.utils import shape_splitter

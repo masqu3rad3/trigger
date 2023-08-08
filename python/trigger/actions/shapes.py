@@ -1,5 +1,4 @@
 """This module is for saving / loading custom shapes"""
-import os
 
 from maya import cmds
 import platform
@@ -8,11 +7,9 @@ from trigger.core import filelog
 # from trigger.library import functions
 from trigger.core.decorators import keepselection
 
-from trigger.ui.Qt import QtWidgets, QtGui
-from trigger.ui import custom_widgets
-from trigger.ui.widgets.save_box import SaveBoxLayout
+from trigger.ui.Qt import QtWidgets
+from trigger.ui.layouts.save_box import SaveBoxLayout
 from trigger.ui.widgets.browser import BrowserButton, FileLineEdit
-from trigger.ui import feedback
 
 log = filelog.Filelog(logname=__name__, filename="trigger_log")
 
