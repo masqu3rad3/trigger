@@ -380,7 +380,7 @@ class Jointify(object):
         self.log.info("Original data collected successfully")
         return self.originalData
 
-    def prepare_training_set(self):
+    def prepare_training_set(self, smooth=False):
         """Creates a ROM from blendshape targets"""
 
         self.log.header("Preparing Training Set")
@@ -395,6 +395,7 @@ class Jointify(object):
         end_frame = 0
         for nmb, (attr, data) in enumerate(self.originalData.items()):
             duration = self.shapeDuration or self._get_shape_duration(self.blendshapeNode, attr)
+            end_delay = 1 if not smooth else duration
             end_frame = start_frame + duration
             # disconnect inputs
             if data["connected"]:
@@ -402,9 +403,9 @@ class Jointify(object):
 
             cmds.setKeyframe(self.blendshapeNode, at=attr, t=start_frame, value=0, itt="linear", ott="linear")
             cmds.setKeyframe(self.blendshapeNode, at=attr, t=end_frame, value=1, itt="linear", ott="linear")
-            cmds.setKeyframe(self.blendshapeNode, at=attr, t=end_frame + 1, value=0, itt="linear", ott="linear")
+            cmds.setKeyframe(self.blendshapeNode, at=attr, t=end_frame + end_delay, value=0, itt="linear", ott="linear")
             data["timeGap"] = [start_frame, end_frame]
-            start_frame = end_frame + 1
+            start_frame = end_frame + end_delay
 
         self.trainingData["animationRange"] = [0, end_frame]
         self.log.info("Training data prepared")
@@ -592,7 +593,7 @@ class Jointify(object):
         mesh_sc = deformers.get_deformers(self.trainingData["mesh"]).get("skinCluster", None)
         if not mesh_sc:
             jointify_sc = \
-            skinTransfer.skin_transfer(source=self.demData["meshTransform"], target=self.trainingData["mesh"])[0]
+            skin_transfer.skin_transfer(source=self.demData["meshTransform"], target=self.trainingData["mesh"])[0]
         else:
             jointify_sc = mesh_sc[0]
             cmds.skinCluster(jointify_sc, edit=True, normalizeWeights=0)

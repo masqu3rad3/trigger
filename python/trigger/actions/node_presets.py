@@ -7,12 +7,11 @@ from maya import cmds
 from trigger.core import io
 from trigger.core import filelog
 from trigger.library import selection
-from trigger.core.decorators import tracktime
 
 from trigger.ui import custom_widgets
 from trigger.ui.widgets.browser import BrowserButton, FileLineEdit
-from trigger.ui.widgets.save_box import SaveBoxLayout
-from trigger.ui.Qt import QtWidgets, QtGui # for progressbar
+from trigger.ui.layouts.save_box import SaveBoxLayout
+from trigger.ui.Qt import QtWidgets  # for progressbar
 from trigger.ui import feedback
 
 log = filelog.Filelog(logname=__name__, filename="trigger_log")

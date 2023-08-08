@@ -149,6 +149,7 @@ def _export_fbx(file_path, selected=False):
 def load(
         file_path,
         merge_mode="merge",  # add, merge, exmergem, exmergekeyedxforms
+        namespace=None,
         smoothing_groups=False,
         unlock_normals=False,
         combine_per_vertex_normals=False,
@@ -193,6 +194,7 @@ def load(
                                 exmerge: updates existing animation and poses. No new content is added.
                                 exmergekeyedxforms: only updates keyed animation.
                                 Defaults to merge.
+        namespace (str): Namespace. If defined, the namespace will be added to the imported objects. defaults to None.
         smoothing_groups (bool): Import smoothing groups. Defaults to False.
         unlock_normals (bool): Unlock normals. Defaults to False.
         combine_per_vertex_normals (bool): Import hard edges. Defaults to False.
@@ -274,8 +276,12 @@ def load(
         "euler": "Set As Euler Interpolation",
         "quaternion": "Retain Quaternion Interpolation",
     }.get(quaternion_interpolation_mode, "Resample As Euler Interpolation")
-
     reset_import_settings()
+    if namespace:
+        if not cmds.namespace(exists=namespace):
+            cmds.namespace(addNamespace=namespace)
+        cmds.namespace(setNamespace=namespace)
+
     _set_fbx_settings(**locals())
 
     # file_path = file_path.replace("\\", "//")  ## for compatibility with mel syntax.
@@ -283,6 +289,8 @@ def load(
     # grab a list of nodes before importing
     nodes_before = cmds.ls()
     _import_fbx(file_path, take=take)
+    if namespace:
+        cmds.namespace(setNamespace=":")
     # mel.eval(import_cmd)
     # grab a list of nodes after importing
     nodes_after = cmds.ls()

@@ -286,18 +286,21 @@ def unlock(node, attr_list=None):
     for attr in attr_list:
         cmds.setAttr("{0}.{1}".format(node, attr), e=True, k=True, l=False)
 
+
 def is_locked(node, attr):
     """Returns the locked state of the given attribute on defined node
     """
-    return cmds.getAttr("%s.%s" %(node, attr), lock=True)
+    return cmds.getAttr("%s.%s" % (node, attr), lock=True)
+
 
 def is_visible(node, attr):
     """Returns the channelbox state of the given attribute on defined node
     """
-    return cmds.getAttr("%s.%s" %(node, attr), k=True)
+    return cmds.getAttr("%s.%s" % (node, attr), k=True)
 
 
-def attribute_pass(sourceNode, targetNode, attributes=[], inConnections=True, outConnections=True, keepSourceAttributes=False,
+def attribute_pass(sourceNode, targetNode, attributes=[], inConnections=True, outConnections=True,
+                   keepSourceAttributes=False,
                    values=True, daisyChain=False, overrideEx=False):
     """
     Copies the attributes from source node to the target node.
@@ -324,8 +327,8 @@ def attribute_pass(sourceNode, targetNode, attributes=[], inConnections=True, ou
     if not user_attr:
         return
 
-    #always exclude controller default attributes
-    for a in  ["defaultTranslate", "defaultRotate", "defaultScale"]:
+    # always exclude controller default attributes
+    for a in ["defaultTranslate", "defaultRotate", "defaultScale"]:
         if a in user_attr:
             user_attr.remove(a)
         for ax in "XYZ":
@@ -402,11 +405,11 @@ def attribute_pass(sourceNode, targetNode, attributes=[], inConnections=True, ou
         if cmds.attributeQuery(attr, node=targetNode, exists=True):
             if overrideEx:
                 cmds.deleteAttr("%s.%s" % (targetNode, attr))
-                exec (addAttribute)
+                exec(addAttribute)
             else:
                 continue
         else:
-            exec (addAttribute)
+            exec(addAttribute)
 
     if daisyChain == True:
         # create connections between old and new attributes
@@ -518,3 +521,89 @@ def separator(node, name, border="-"):
     cmds.setAttr("{0}.{1}".format(node, long_name), channelBox=True, lock=True)
 
     return "{0}.{1}".format(node, long_name)
+
+
+def query_limits(node, attribute, only_hard_limits=True):
+    """Query the limits of scalar attributes both transform and custom ones.
+
+    Args:
+        node(str): Name of node to query limits.
+        attribute(str): Name of the attribute to query limits.
+        only_hard_limits(bool): If True, soft limits for custom attribute are not
+                    going to be considered as a limit. Default True.
+    """
+
+    attr_path = "{0}.{1}".format(node, attribute)
+    # if this is not a scalar attribute, throw error
+    if not cmds.listAttr(attr_path, scalar=True):
+        msg = "{0}.{1} is not a scalar attribute. " \
+              "Only scalar attribute limits can be queried".format(node, attribute)
+        LOG.error(msg)
+        raise Exception(msg)
+
+    enabled_flag_dict = {
+        "translateX": {"etx": True},
+        "tx": {"etx": True},
+        "translateY": {"ety": True},
+        "ty": {"ety": True},
+        "translateZ": {"etz": True},
+        "tz": {"etz": True},
+        "rotateX": {"erx": True},
+        "rx": {"erx": True},
+        "rotateY": {"ery": True},
+        "ry": {"ery": True},
+        "rotateZ": {"erz": True},
+        "rz": {"erz": True},
+        "scaleX": {"esx": True},
+        "sx": {"esx": True},
+        "scaleY": {"esy": True},
+        "sy": {"esy": True},
+        "scaleZ": {"esz": True},
+        "sz": {"esz": True},
+    }
+    limits_flag_dict = {
+        "translateX": {"tx": True},
+        "tx": {"tx": True},
+        "translateY": {"ty": True},
+        "ty": {"ty": True},
+        "translateZ": {"tz": True},
+        "tz": {"tz": True},
+        "rotateX": {"rx": True},
+        "rx": {"rx": True},
+        "rotateY": {"ry": True},
+        "ry": {"ry": True},
+        "rotateZ": {"rz": True},
+        "rz": {"rz": True},
+        "scaleX": {"sx": True},
+        "sx": {"sx": True},
+        "scaleY": {"sy": True},
+        "sy": {"sy": True},
+        "scaleZ": {"sz": True},
+        "sz": {"sz": True},
+    }
+    if attribute in enabled_flag_dict.keys():
+        # this means this is a transform attribute
+        state = cmds.transformLimits(node, query=True, **enabled_flag_dict[attribute])
+        limits = cmds.transformLimits(node, query=True, **limits_flag_dict[attribute])
+    else:
+        state = [cmds.addAttr(attr_path, query=True, hasMinValue=True),
+        cmds.addAttr(attr_path, query=True, hasMaxValue=True)]
+        limits = [cmds.addAttr(attr_path, query=True, minValue=True),
+        cmds.addAttr(attr_path, query=True, maxValue=True)]
+        if not only_hard_limits and not all(state):
+            # try to query the soft limits for the ones there are no hard limits
+            soft_state = [cmds.addAttr(attr_path, query=True, hasSoftMinValue=True),
+            cmds.addAttr(attr_path, query=True, hasSoftMaxValue=True)]
+            soft_limits = [cmds.addAttr(attr_path, query=True, softMinValue=True),
+            cmds.addAttr(attr_path, query=True, softMaxValue=True)]
+
+            state = [
+                state[0] or soft_state[0],
+                state[1] or soft_state[1]
+            ]
+            limits = [
+                limits[0] or soft_limits[0],
+                limits[1] or soft_limits[1]
+            ]
+
+    return state, limits

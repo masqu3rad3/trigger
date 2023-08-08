@@ -9,8 +9,6 @@ from trigger.ui.Qt import QtWidgets
 from trigger.ui import custom_widgets
 from trigger.ui import feedback
 
-from PySide2 import QtWidgets # temp
-
 windowName = "Blendshape Transfer v0.0.2"
 
 class BlendshapeTransfer(object):

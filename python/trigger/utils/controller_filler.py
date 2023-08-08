@@ -66,7 +66,8 @@ class Filler(BaseNode):
         self.controller = Origin(dag_path, primary_channel=self.primary_channel)
         self.driver_hook = attribute.create_attribute(self.controller.dag_path,
                                                       attr_name="fillerPercentage_%s" % self.primary_channel,
-                                                      attr_type="float")
+                                                      attr_type="float",
+                                                      keyable=False)
 
         _range = self.controller.primary_ranges
         if not _range:

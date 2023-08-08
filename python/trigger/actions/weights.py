@@ -13,7 +13,7 @@ from trigger.objects import skin
 
 from trigger.ui.Qt import QtWidgets, QtGui  # for progressbar
 from trigger.ui import custom_widgets
-from trigger.ui.widgets.save_box import SaveBoxLayout
+from trigger.ui.layouts.save_box import SaveBoxLayout
 from trigger.ui.widgets.browser import BrowserButton, FileLineEdit
 
 log = filelog.Filelog(logname=__name__, filename="trigger_log")
