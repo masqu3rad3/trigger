@@ -27,10 +27,8 @@ import time
 
 from trigger.library import attribute
 
+__version__ = "1.0.1"
 LOG = logging.getLogger(__name__)
-
-animation_duration = 5000  # as frames
-
 
 class Collector(object):
     """Collects controllers and attributes."""
@@ -70,27 +68,37 @@ class Collector(object):
         """Clear controllers."""
         self._controllers = []
 
-    def add_morph_controllers(self, morph_hook):
+    def get_connected_transforms(self, attribute, visited_nodes=None):
+        if visited_nodes is None:
+            visited_nodes = set()
+
+        connected_transforms = []
+
+        # Get the list of all connections to the attribute
+        connections = cmds.listConnections(attribute, source=True, destination=False, plugs=False)
+
+        if connections:
+            for conn in connections:
+                # Get the node type of the connection
+                node_type = cmds.nodeType(conn)
+
+                if node_type == "transform":
+                    connected_transforms.append(conn)
+                elif node_type not in visited_nodes:
+                    visited_nodes.add(node_type)
+                    connected_transforms.extend(self.get_connected_transforms(conn, visited_nodes))
+
+        return connected_transforms
+
+    def add_hooked_controllers(self, hook_node):
         """Get morph controllers."""
-        all_morphs = cmds.listAttr(morph_hook, userDefined=True)
+        all_morphs = cmds.listAttr(hook_node, userDefined=True)
         for morph_attr in all_morphs:
-            remap_node = cmds.listConnections(
-                "{0}.{1}".format(morph_hook, morph_attr),
-                source=True,
-                destination=False,
-                type="remapValue",
-            )
-            if remap_node:
-                cont = cmds.listConnections(
-                    "{0}.inputValue".format(remap_node[0]),
-                    source=True,
-                    destination=False,
-                    type="transform",
-                )
-                if cont:
-                    if cont[0] not in self._controllers:
-                        self._controllers.append(cont[0])
-                        LOG.info("Added controller: {0}".format(cont[0]))
+            transforms = self.get_connected_transforms("{0}.{1}".format(hook_node, morph_attr))
+            for transform in transforms:
+                if transform not in self._controllers:
+                    self._controllers.append(transform)
+                    LOG.info("Added controller: {0}".format(transform))
 
     def print_controllers(self):
         """Print controllers."""
@@ -117,7 +125,15 @@ class Collector(object):
 
         for controller in self._controllers:
             for attr in cmds.listAttr(controller, keyable=True):
-                if attr in self._excluded_attributes:
+                # test both short and long names
+                _short = cmds.attributeQuery(attr, node=controller, shortName=True)
+                _long = cmds.attributeQuery(attr, node=controller, longName=True)
+                if _short in self._excluded_attributes or _long in self._excluded_attributes:
+                    continue
+                # skip bool, compound and enum attributes
+                # TODO: starting from Maya 2024, listAttr accepts attributeType flag which can simplify here
+                attribute_type = cmds.attributeQuery(attr, node=controller, attributeType=True)
+                if attribute_type in ["bool", "compound", "enum"]:
                     continue
                 if cmds.getAttr("{0}.{1}".format(controller, attr), settable=True):
                     symmetry_pair = controller_pairs.get(controller, None)
@@ -131,11 +147,22 @@ class Collector(object):
         # return attribute_items
 
 
-class FaceRomGenerator(object):
-    def __init__(self, collector_object, symmetry=False):
-        self.collectors = [collector_object]
+class RomGenerator(object):
+    def __init__(self, collector_objects=None, symmetry=False):
+        if collector_objects:
+            if isinstance(collector_objects, list):
+                self.collectors = collector_objects
+            else:
+                self.collectors = [collector_objects]
         self._animation_duration = animation_duration
         self._symmetry = symmetry
+
+        self.methods = {
+            "Random Poses": self.generate_random_poses_rom,
+            "Random Combinations": self.generate_random_combo_rom,
+            "Ordered": self.generate_ordered_rom,
+            "Wiggle": self.generate_wiggle_rom
+        }
 
     @property
     def symmetry(self):
@@ -152,6 +179,10 @@ class FaceRomGenerator(object):
     def add_collector(self, collector_object):
         """Add collector."""
         self.collectors.append(collector_object)
+
+    def set_collector(self, collector_object):
+        """Set collector."""
+        self.collectors = [collector_object]
 
     def clear_keys(self):
         """Clear all keys on all defined controllers."""
@@ -190,7 +221,7 @@ class FaceRomGenerator(object):
                 all_attributes.append(attribute_item)
         return all_attributes
 
-    def generate_random_poses_rom(self, start_frame=1, duration=100, interval=5, seed=None):
+    def generate_random_poses_rom(self, start_frame=1, duration=100, interval=5, seed=None, *args, **kwargs):
         """
         Generate a random rom.
         Args:
@@ -216,7 +247,9 @@ class FaceRomGenerator(object):
                                   minimum_combinations=1,
                                   maximum_combinations=5,
                                   interval=5,
-                                  seed=None
+                                  seed=None,
+                                  *args,
+                                  **kwargs
                                   ):
         """Create a random rom using the combinations of n number of controllers."""
         all_attributes = self._get_all_attributes()
@@ -240,7 +273,7 @@ class FaceRomGenerator(object):
                 end_frames.append(attribute_item.key_min_to_max(start_frame, interval))
             start_frame = max(end_frames)
 
-    def generate_ordered_rom(self, start_frame=1, interval=5):
+    def generate_ordered_rom(self, start_frame=1, interval=5, *args, **kwargs):
         """Generate an ordered rom based on the collected controller criteria.
         This is not a random rom. Just triggers all shapes in a sequence.
         """
@@ -250,12 +283,29 @@ class FaceRomGenerator(object):
         for attribute_item in all_attributes:
             start_frame = attribute_item.key_min_to_max(start_frame, interval)
 
+    def generate_wiggle_rom(self, start_frame=1, interval=5, *args, **kwargs):
+        """Generate a wiggle rom which Ziva RT will like.
+
+        Wiggle Rom only works on rotate attributes
+        """
+        rotation_attributes = ["rotateX", "rotateY", "rotateZ", "rx", "ry", "rz"]
+        all_attributes = self._get_all_attributes()
+        # filter the attributes to only rotate attributes
+        rotate_attributes = [x for x in all_attributes if x.attribute in rotation_attributes]
+        self.default_key(start_frame)
+        start_frame += interval
+        # TODO: apply the proposed wiggle rom method by Ziva
+        LOG.warning("Wiggle Rom is not implemented yet.")
+        # for attribute_item in rotate_attributes:
+        #     start_frame = attribute_item.key_min_to_max(start_frame, interval)
+
+
 class AttributeItem(object):
     """Attribute item class."""
 
     default_translate_limits = [-5, 5]
     default_rotate_limits = [-15, 15]
-    default_scale_limits = [0.5, 2]
+    default_scale_limits = [0.25, 1.75]
     default_custom_limits = [-100, 100]
     default_limits = {
         "translateX": default_translate_limits,
