@@ -58,6 +58,9 @@ def load_menu():
     mocap_mapper_command = "import trigger.utils.mocap.ui as mocap_ui\nmocap_ui.launch()"
     add_to_menu("Trigger", "Mocap Mapper", mocap_mapper_command)
 
+    rom_randomizer_command = "import trigger.utils.rom_randomizer.ui as rom_randomizer_ui\nrom_randomizer_ui.launch()"
+    add_to_menu("Trigger", "ROM Randomizer", rom_randomizer_command)
+
     # add a separator
     cmds.menuItem(divider=True)
     recreate_command = "trigger_setup.load_shelves(reset=True)"

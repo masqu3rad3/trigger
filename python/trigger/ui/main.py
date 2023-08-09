@@ -286,6 +286,9 @@ class MainUI(QtWidgets.QMainWindow):
         mocap_mapper_action = QtWidgets.QAction(self, text="Mocap Mapper")
         menu_tools.addAction(mocap_mapper_action)
 
+        rom_randomizer_action = QtWidgets.QAction(self, text="ROM Randomizer")
+        menu_tools.addAction(rom_randomizer_action)
+
         menubar.addAction(menu_tools.menuAction())
 
         # Status BAR
@@ -311,6 +314,7 @@ class MainUI(QtWidgets.QMainWindow):
 
         makeup_action.triggered.connect(self.on_makeup)
         mocap_mapper_action.triggered.connect(self.on_mocap_mapper)
+        rom_randomizer_action.triggered.connect(self.on_rom_randomizer)
 
     def build_tabs(self):
 
@@ -1216,6 +1220,11 @@ class MainUI(QtWidgets.QMainWindow):
     def on_mocap_mapper():
         import trigger.utils.mocap.ui as mocap_ui
         mocap_ui.launch()
+
+    @staticmethod
+    def on_rom_randomizer():
+        import trigger.utils.rom_randomizer.ui as rom_randomizer_ui
+        rom_randomizer_ui.launch()
 
     ##############
     ### COMMON ###

@@ -154,7 +154,6 @@ class RomGenerator(object):
                 self.collectors = collector_objects
             else:
                 self.collectors = [collector_objects]
-        self._animation_duration = animation_duration
         self._symmetry = symmetry
 
         self.methods = {
