@@ -1,15 +1,11 @@
 """Prepares Cloth Sim Setup"""
 
-import os
 from maya import cmds
 from maya import mel
 from trigger.core import filelog
 from trigger.library import selection
-from trigger.library import connection
-import trigger.library.functions as functions
-import trigger.library.icons as ic
 
-from trigger.ui.Qt import QtWidgets, QtGui # for progressbar
+from trigger.ui.Qt import QtWidgets  # for progressbar
 from trigger.ui import feedback
 
 log = filelog.Filelog(logname=__name__, filename="trigger_log")
@@ -20,6 +16,7 @@ ACTION_DATA = {
     "collider_objects": [],
     "motion_multiplier_vertices": [],
 }
+
 
 class Cloth_setup(object):
     def __init__(self, *args, **kwargs):
@@ -41,12 +38,6 @@ class Cloth_setup(object):
         self.createCloth(self.clothObjects)
         self.createStartFrameLoc()
         self.createWindControl()
-
-        ## makeMotionMult
-
-        ## createCollider Loop
-
-        pass
 
     def save_action(self):
         pass
@@ -92,7 +83,11 @@ class Cloth_setup(object):
                 if obj in cloth_objects_le.text():
                     selection.remove(obj)
                 if obj in collider_objects_le.text():
-                    feedback_handler.pop_info(title="Conflict", text="%s defined as collider. Objects cannot be defined both cloth and passive collider, Skipping" %obj)
+                    feedback_handler.pop_info(
+                        title="Conflict",
+                        text="%s defined as collider. Objects cannot be "
+                        "defined both cloth and passive collider, Skipping" % obj,
+                    )
                     continue
             cloth_objects_le.setText(ctrl.list_to_text(selection))
             ctrl.update_model()
@@ -105,20 +100,27 @@ class Cloth_setup(object):
                 if obj in collider_objects_le.text():
                     selection.remove(obj)
                 if obj in cloth_objects_le.text():
-                    feedback_handler.pop_info(title="Conflict", text="%s defined as cloth. Objects cannot be defined both cloth and passive collider, Skipping" %obj)
+                    feedback_handler.pop_info(
+                        title="Conflict",
+                        text="%s defined as cloth. Objects cannot be defined "
+                        "both cloth and passive collider, Skipping" % obj,
+                    )
                     continue
             collider_objects_le.setText(ctrl.list_to_text(selection))
             ctrl.update_model()
 
         def get_mm_vertices():
             if selection.get_selection_type() != "vertex":
-                feedback_handler.pop_info(title="Wrong selection", text="N number of vertices from a single mesh must me selected")
+                feedback_handler.pop_info(
+                    title="Wrong selection",
+                    text="N number of vertices from a single mesh must me selected",
+                )
                 return
-            ids = [(val.split('.vtx[', 1)[1].split(']')[0]) for val in cmds.ls(sl=True)]
+            ids = [(val.split(".vtx[", 1)[1].split("]")[0]) for val in cmds.ls(sl=True)]
             mm_vertices_le.setText(ctrl.list_to_text(ids))
             ctrl.update_model()
 
-        ### Signals
+        # Signals
         get_cloth_objects_pb.clicked.connect(get_cloth_objects)
         get_collider_objects_pb.clicked.connect(get_collider_objects)
         get_vertices_pb.clicked.connect(get_mm_vertices)
@@ -127,51 +129,58 @@ class Cloth_setup(object):
     def setupHierarchy():
         # Creates the basic Hierarchy and tags to the groups
         name = "simRig"
-        simRigName = "%s_grp" %name
+        simRigName = "%s_grp" % name
         cmds.group(n=simRigName, em=True)
 
-        for i in ["driver", "skeleton", "controls", "cloth", "motionMultiplier", "output"]:
-            grpCreate = cmds.group(n='%s_grp' % i, em=True, p=simRigName)
-            cmds.addAttr(ln='simRig_%s' % i, at='bool', dv=True)
+        for i in [
+            "driver",
+            "skeleton",
+            "controls",
+            "cloth",
+            "motionMultiplier",
+            "output",
+        ]:
+            _grp = cmds.group(n="%s_grp" % i, em=True, p=simRigName)
+            cmds.addAttr(ln="simRig_%s" % i, at="bool", dv=True)
 
         for i in ["colliders", "constraints", "forces"]:
-            grpCreate = cmds.group(n='%s_grp' % i, em=True, p='cloth_grp')
-            cmds.addAttr(ln='simRig_%s' % i, at='bool', dv=True)
+            _grp = cmds.group(n="%s_grp" % i, em=True, p="cloth_grp")
+            cmds.addAttr(ln="simRig_%s" % i, at="bool", dv=True)
 
         for i in ["world", "local"]:
-            grpCreate = cmds.group(n='%s_grp' % i, em=True, p='output_grp')
-            cmds.addAttr(ln='simRig_%s' % i, at='bool', dv=True)
+            _grp = cmds.group(n="%s_grp" % i, em=True, p="output_grp")
+            cmds.addAttr(ln="simRig_%s" % i, at="bool", dv=True)
 
-            outLYR = cmds.createDisplayLayer(n="Output_LYR", e=True)
-            clthLYR = cmds.createDisplayLayer(n="Cloth_LYR", e=True)
-            drvLYR = cmds.createDisplayLayer(n="Driver_LYR", e=True)
+            _out_layer = cmds.createDisplayLayer(n="Output_LYR", e=True)
+            _cloth_layer = cmds.createDisplayLayer(n="Cloth_LYR", e=True)
+            _drv_layer = cmds.createDisplayLayer(n="Driver_LYR", e=True)
 
-            cmds.setAttr('Driver_LYR.color', 29)
-            cmds.setAttr('Cloth_LYR.color', 31)
-            cmds.setAttr('Driver_LYR.color', 17)
-            cmds.editDisplayLayerMembers('Driver_LYR', 'driver_grp')
-            cmds.editDisplayLayerMembers('Cloth_LYR', 'cloth_grp')
-            cmds.editDisplayLayerMembers('Output_LYR', 'output_grp')
+            cmds.setAttr("Driver_LYR.color", 29)
+            cmds.setAttr("Cloth_LYR.color", 31)
+            cmds.setAttr("Driver_LYR.color", 17)
+            cmds.editDisplayLayerMembers("Driver_LYR", "driver_grp")
+            cmds.editDisplayLayerMembers("Cloth_LYR", "cloth_grp")
+            cmds.editDisplayLayerMembers("Output_LYR", "output_grp")
 
-            nucName = '%sNucleus' % name
-            cmds.createNode('nucleus', n=nucName)
-            cmds.setAttr('*Nucleus.subSteps', 12)
-            cmds.setAttr('*Nucleus.maxCollisionIterations', 16)
-            cmds.setAttr('*Nucleus.spaceScale', 0.01)
-            cmds.parent(nucName, 'controls_grp')
-            cmds.connectAttr('*time1.outTime', '*Nucleus.currentTime')
+            nucName = "%sNucleus" % name
+            cmds.createNode("nucleus", n=nucName)
+            cmds.setAttr("*Nucleus.subSteps", 12)
+            cmds.setAttr("*Nucleus.maxCollisionIterations", 16)
+            cmds.setAttr("*Nucleus.spaceScale", 0.01)
+            cmds.parent(nucName, "controls_grp")
+            cmds.connectAttr("*time1.outTime", "*Nucleus.currentTime")
             return nucName
 
     def createClothGroup(self, name=""):
         # Creates Cloth Group Hierarchy based on an input name
-        groupName = "%s_cloth_grp" %name
+        groupName = "%s_cloth_grp" % name
 
         if not cmds.objExists(groupName):
             cmds.group(n=groupName, em=True)
 
         for i in ["wrapBase", "constraints", "colliders", "forces"]:
-            grpCreate = cmds.group(n='%s_grp' % i, em=True, p=groupName)
-            cmds.addAttr(ln='simRig_%s' % i, at='bool', dv=True)
+            grpCreate = cmds.group(n="%s_grp" % i, em=True, p=groupName)
+            cmds.addAttr(ln="simRig_%s" % i, at="bool", dv=True)
         cmds.parent(groupName, "simRig_grp")
         return groupName
 
@@ -183,9 +192,9 @@ class Cloth_setup(object):
             part = cloth.split("_")[1]
             cloth_group = self.createClothGroup(part)
 
-            createInIt = cmds.duplicate(cloth, n=cloth + '_INIT')
-            createCloth = cmds.duplicate(cloth, n=cloth + '_CLOTH')
-            createRest = cmds.duplicate(cloth, n=cloth + '_REST')
+            createInIt = cmds.duplicate(cloth, n=cloth + "_INIT")
+            createCloth = cmds.duplicate(cloth, n=cloth + "_CLOTH")
+            createRest = cmds.duplicate(cloth, n=cloth + "_REST")
 
             cmds.parent(createInIt, cloth_group)
             cmds.parent(createCloth, cloth_group)
@@ -196,8 +205,8 @@ class Cloth_setup(object):
             cmds.blendShape(createInIt, createCloth, n="%s_InitBlend" % cloth, w=(0, 1))
 
             cmds.select(createCloth, r=True)
-            mel.eval('createNCloth 0')
-            cmds.parent('nCloth*', cloth_group)
+            mel.eval("createNCloth 0")
+            cmds.parent("nCloth*", cloth_group)
 
     @staticmethod
     def createStartFrameLoc(nucleusName=None):
@@ -208,9 +217,9 @@ class Cloth_setup(object):
             assert nucleuses, "There are no Nucleuses in the scene"
             nucleusName = nucleuses[0]
 
-        startLoc = cmds.spaceLocator(n='StartFrameLoc')[0]
-        cmds.addAttr(ln="StartFrame", at='float', dv=0)
-        cmds.setAttr('%s.StartFrame' % startLoc, cb=True)
+        startLoc = cmds.spaceLocator(n="StartFrameLoc")[0]
+        cmds.addAttr(ln="StartFrame", at="float", dv=0)
+        cmds.setAttr("%s.StartFrame" % startLoc, cb=True)
 
         cmds.setAttr("%s.tx" % startLoc, k=False, cb=False)
         cmds.setAttr("%s.ty" % startLoc, k=False, cb=False)
@@ -225,13 +234,18 @@ class Cloth_setup(object):
         cmds.setAttr("%s.sz" % startLoc, k=False, cb=False)
         cmds.setAttr("%s.v" % startLoc, 0, k=False, cb=False)
 
-        cmds.expression(s="StartFrameLoc.StartFrame = `playbackOptions -q -min`", o='StartFrameLoc', ae=1, uc=all)
+        cmds.expression(
+            s="StartFrameLoc.StartFrame = `playbackOptions -q -min`",
+            o="StartFrameLoc",
+            ae=1,
+            uc=all,
+        )
         cmds.select(cl=True)
 
-        if cmds.objExists('cloth_grp') == True:
-            cmds.parent(startLoc, 'cloth_grp')
+        if cmds.objExists("cloth_grp") == True:
+            cmds.parent(startLoc, "cloth_grp")
 
-        cmds.connectAttr('StartFrameLoc.StartFrame', '%s.startFrame' % nucleusName)
+        cmds.connectAttr("StartFrameLoc.StartFrame", "%s.startFrame" % nucleusName)
 
     @staticmethod
     def createWindControl(nucleusName=None):
@@ -242,66 +256,95 @@ class Cloth_setup(object):
             assert nucleuses, "There are no Nucleuses in the scene"
             nucleusName = nucleuses[0]
         _list = []
-        _list.append(cmds.curve(
-            p=[(-1.0, 0.0, 0.0), (-1.0, 0.0, 2.0), (1.0, 0.0, 2.0), (1.0, 0.0, 0.0), (2.0, 0.0, 0.0), (0.0, 0.0, -2.0),
-               (-2.0, 0.0, 0.0), (-1.0, 0.0, 0.0)], per=False, d=1, k=[0, 1, 2, 3, 4, 5, 6, 7]))
+        _list.append(
+            cmds.curve(
+                p=[
+                    (-1.0, 0.0, 0.0),
+                    (-1.0, 0.0, 2.0),
+                    (1.0, 0.0, 2.0),
+                    (1.0, 0.0, 0.0),
+                    (2.0, 0.0, 0.0),
+                    (0.0, 0.0, -2.0),
+                    (-2.0, 0.0, 0.0),
+                    (-1.0, 0.0, 0.0),
+                ],
+                per=False,
+                d=1,
+                k=[0, 1, 2, 3, 4, 5, 6, 7],
+            )
+        )
         for x in range(len(_list) - 1):
             cmds.makeIdentity(_list[x + 1], apply=True, t=1, r=1, s=1, n=0)
             shapeNode = cmds.listRelatives(_list[x + 1], shapes=True)
             cmds.parent(shapeNode, _list[0], add=True, s=True)
             cmds.delete(_list[x + 1])
         cmds.select(_list[0])
-        cmds.rename(_list[0], 'pvWindArrow')
+        cmds.rename(_list[0], "pvWindArrow")
         cmds.rotate(0, -90, 0)
         cmds.makeIdentity(apply=True, t=True, r=True, n=True)
         getShape = cmds.listRelatives(s=True, pa=True)[0]
-        cmds.rename(getShape, 'pvWindArrowShape')
-        cmds.spaceLocator(n='pvWindOrigin')
-        cmds.setAttr('pvWindOrigin.visibility', 0)
-        cmds.spaceLocator(n='pvWindAim')
-        cmds.setAttr('pvWindAim.visibility', 0)
-        cmds.group('pvWindAim', n='pvWindAim_Null')
-        cmds.setAttr('pvWindAim.translateX', 1)
-        cmds.aimConstraint('pvWindAim', 'pvWindOrigin')
-        windCntrl = cmds.group('pvWindArrow', n='windCTRL')
-        cmds.parentConstraint('windCTRL', 'pvWindAim_Null')
-        cmds.select('pvWindArrowShape', 'windCTRL')
+        cmds.rename(getShape, "pvWindArrowShape")
+        cmds.spaceLocator(n="pvWindOrigin")
+        cmds.setAttr("pvWindOrigin.visibility", 0)
+        cmds.spaceLocator(n="pvWindAim")
+        cmds.setAttr("pvWindAim.visibility", 0)
+        cmds.group("pvWindAim", n="pvWindAim_Null")
+        cmds.setAttr("pvWindAim.translateX", 1)
+        cmds.aimConstraint("pvWindAim", "pvWindOrigin")
+        windCntrl = cmds.group("pvWindArrow", n="windCTRL")
+        cmds.parentConstraint("windCTRL", "pvWindAim_Null")
+        cmds.select("pvWindArrowShape", "windCTRL")
         cmds.parent(r=True, s=True)
-        cmds.delete('pvWindArrow')
-        cmds.pointConstraint('windCTRL', 'pvWindOrigin')
+        cmds.delete("pvWindArrow")
+        cmds.pointConstraint("windCTRL", "pvWindOrigin")
         cmds.pickWalk(direction="up")
 
-        cmds.addAttr(ln='windSpeed', nn='Wind Speed', at='float', dv=0)
-        cmds.addAttr(ln='windNoise', nn='Wind Noise', at='float', dv=0)
+        cmds.addAttr(ln="windSpeed", nn="Wind Speed", at="float", dv=0)
+        cmds.addAttr(ln="windNoise", nn="Wind Noise", at="float", dv=0)
 
-        cmds.connectAttr('windCTRL.windSpeed', '%s.windSpeed' % nucleusName)
-        cmds.connectAttr('windCTRL.windNoise', '%s.windNoise' % nucleusName)
+        cmds.connectAttr("windCTRL.windSpeed", "%s.windSpeed" % nucleusName)
+        cmds.connectAttr("windCTRL.windNoise", "%s.windNoise" % nucleusName)
 
-        cmds.setAttr('windCTRL.windSpeed', k=True)
-        cmds.setAttr('windCTRL.windNoise', k=True)
+        cmds.setAttr("windCTRL.windSpeed", k=True)
+        cmds.setAttr("windCTRL.windNoise", k=True)
 
-        cmds.setAttr('pvWindArrowShape.overrideEnabled', 1)
-        cmds.setAttr('pvWindArrowShape.overrideColor', 18)
+        cmds.setAttr("pvWindArrowShape.overrideEnabled", 1)
+        cmds.setAttr("pvWindArrowShape.overrideColor", 18)
 
-        cmds.group('pvWindOrigin', 'pvWindAim_Null', windCntrl, n='globalWind_grp', p='controls_grp')
+        cmds.group(
+            "pvWindOrigin",
+            "pvWindAim_Null",
+            windCntrl,
+            n="globalWind_grp",
+            p="controls_grp",
+        )
 
-        cmds.setAttr('globalWind_grp.translateX', k=False, l=True)
-        cmds.setAttr('globalWind_grp.translateY', k=False, l=True)
-        cmds.setAttr('globalWind_grp.translateZ', k=False, l=True)
+        cmds.setAttr("globalWind_grp.translateX", k=False, l=True)
+        cmds.setAttr("globalWind_grp.translateY", k=False, l=True)
+        cmds.setAttr("globalWind_grp.translateZ", k=False, l=True)
 
-        cmds.setAttr('globalWind_grp.rotateX', k=False, l=True)
-        cmds.setAttr('globalWind_grp.rotateY', k=False, l=True)
-        cmds.setAttr('globalWind_grp.rotateZ', k=False, l=True)
+        cmds.setAttr("globalWind_grp.rotateX", k=False, l=True)
+        cmds.setAttr("globalWind_grp.rotateY", k=False, l=True)
+        cmds.setAttr("globalWind_grp.rotateZ", k=False, l=True)
 
-        cmds.setAttr('globalWind_grp.scaleX', k=False, l=True)
-        cmds.setAttr('globalWind_grp.scaleY', k=False, l=True)
-        cmds.setAttr('globalWind_grp.scaleZ', k=False, l=True)
+        cmds.setAttr("globalWind_grp.scaleX", k=False, l=True)
+        cmds.setAttr("globalWind_grp.scaleY", k=False, l=True)
+        cmds.setAttr("globalWind_grp.scaleZ", k=False, l=True)
 
-        cmds.setAttr('globalWind_grp.visibility', k=False, l=True)
+        cmds.setAttr("globalWind_grp.visibility", k=False, l=True)
 
-        cmds.connectAttr('pvWindOrigin_aimConstraint1.constraintVectorX', '%s.windDirectionX' % nucleusName)
-        cmds.connectAttr('pvWindOrigin_aimConstraint1.constraintVectorY', '%s.windDirectionY' % nucleusName)
-        cmds.connectAttr('pvWindOrigin_aimConstraint1.constraintVectorZ', '%s.windDirectionZ' % nucleusName)
+        cmds.connectAttr(
+            "pvWindOrigin_aimConstraint1.constraintVectorX",
+            "%s.windDirectionX" % nucleusName,
+        )
+        cmds.connectAttr(
+            "pvWindOrigin_aimConstraint1.constraintVectorY",
+            "%s.windDirectionY" % nucleusName,
+        )
+        cmds.connectAttr(
+            "pvWindOrigin_aimConstraint1.constraintVectorZ",
+            "%s.windDirectionZ" % nucleusName,
+        )
 
         cmds.select(cl=True)
         return windCntrl
@@ -309,7 +352,7 @@ class Cloth_setup(object):
     @staticmethod
     def makeMotionMult(average_vertex_list):
         """Creates a motion multiplier to reduce or increase input motion for cloth simulation"""
-        grpNames = ['driver_grp', 'output_grp']
+        grpNames = ["driver_grp", "output_grp"]
         # pelvises = cmds.ls("*:bn_pelvis")
         # assert len(pelvises) == 1, "There are no or multiple pelvis joints"
         # moBase = pelvises[0]
@@ -319,38 +362,62 @@ class Cloth_setup(object):
             cmds.select(grp, hi=True)
             cmds.select(grp, d=True)
             grpSel = cmds.ls(sl=True, fl=True)
-            if grp == 'Driver_grp':
-                localCl = cmds.cluster(n='localCluster')
+            if grp == "Driver_grp":
+                localCl = cmds.cluster(n="localCluster")
             else:
-                worldCl = cmds.cluster(n='worldCluster')
-            localMult = cmds.shadingNode('multiplyDivide', asUtility=True, n='LocalMultiplyDivide')
-            invertNode = cmds.shadingNode('reverse', asUtility=True, n='InvertInput')
-            worldMult = cmds.shadingNode('localCluster', asUtility=True)
-            decompMat = cmds.shadingNode('decomposeMatrix', asUtility=True)
+                worldCl = cmds.cluster(n="worldCluster")
+            localMult = cmds.shadingNode(
+                "multiplyDivide", asUtility=True, n="LocalMultiplyDivide"
+            )
+            invertNode = cmds.shadingNode("reverse", asUtility=True, n="InvertInput")
+            worldMult = cmds.shadingNode("localCluster", asUtility=True)
+            decompMat = cmds.shadingNode("decomposeMatrix", asUtility=True)
 
-            cmds.connectAttr(str(moBase) + 'Shape.worldMatrix[0]', str(decompMat) + '.inputMatrix', f=True)
-            cmds.connectAttr(str(localMult) + '.input2', str(invertNode) + '.input', f=True)
-            cmds.connectAttr(str(invertNode) + '.output', str(worldMult) + 'input2', f=True)
-            cmds.connectAttr(str(decompMat) + '.outputTranslate', str(localMult) + '.input1', f=True)
-            cmds.connectAttr(str(decompMat) + '.outputTranslate', str(worldMult) + '.input1', f=True)
-            cmds.connectAttr(str(localMult) + 'output', str(localCl[1]) + '.translate', f=True)
-            cmds.connectAttr(str(localMult) + 'output', str(worldCl[1]) + '.translate', f=True)
+            cmds.connectAttr(
+                str(moBase) + "Shape.worldMatrix[0]",
+                str(decompMat) + ".inputMatrix",
+                f=True,
+            )
+            cmds.connectAttr(
+                str(localMult) + ".input2", str(invertNode) + ".input", f=True
+            )
+            cmds.connectAttr(
+                str(invertNode) + ".output", str(worldMult) + "input2", f=True
+            )
+            cmds.connectAttr(
+                str(decompMat) + ".outputTranslate", str(localMult) + ".input1", f=True
+            )
+            cmds.connectAttr(
+                str(decompMat) + ".outputTranslate", str(worldMult) + ".input1", f=True
+            )
+            cmds.connectAttr(
+                str(localMult) + "output", str(localCl[1]) + ".translate", f=True
+            )
+            cmds.connectAttr(
+                str(localMult) + "output", str(worldCl[1]) + ".translate", f=True
+            )
 
-            nucleus = cmds.ls(type='nucleus')
-            cmds.addAttr(nucleus, ln='MontionMultiplier', at="enum", en="----------:")
-            cmds.setAttr(str(nucleus[0]) + 'MotionMultiplier', k=False, cb=True, l=True)
+            nucleus = cmds.ls(type="nucleus")
+            cmds.addAttr(nucleus, ln="MontionMultiplier", at="enum", en="----------:")
+            cmds.setAttr(str(nucleus[0]) + "MotionMultiplier", k=False, cb=True, l=True)
 
-            cmds.addAttr(nucleus, ln="X", at='double', dv=0)
-            cmds.setAttr(str(nucleus[0]) + 'X', k=True)
+            cmds.addAttr(nucleus, ln="X", at="double", dv=0)
+            cmds.setAttr(str(nucleus[0]) + "X", k=True)
 
-            cmds.addAttr(nucleus, ln="Y", at='double', dv=0)
-            cmds.setAttr(str(nucleus[0]) + 'Y', k=True)
+            cmds.addAttr(nucleus, ln="Y", at="double", dv=0)
+            cmds.setAttr(str(nucleus[0]) + "Y", k=True)
 
-            cmds.addAttr(nucleus, ln="Z", at='double', dv=0)
-            cmds.setAttr(str(nucleus[0]) + 'Z', k=True)
+            cmds.addAttr(nucleus, ln="Z", at="double", dv=0)
+            cmds.setAttr(str(nucleus[0]) + "Z", k=True)
 
-            cmds.connectAttr(str(nucleus[0]) + '.X', str(localMult) + '.input2.input2X', f=True)
-            cmds.connectAttr(str(nucleus[0]) + '.Y', str(localMult) + '.input2.input2Y', f=True)
-            cmds.connectAttr(str(nucleus[0]) + '.Z', str(localMult) + '.input2.input2Z', f=True)
+            cmds.connectAttr(
+                str(nucleus[0]) + ".X", str(localMult) + ".input2.input2X", f=True
+            )
+            cmds.connectAttr(
+                str(nucleus[0]) + ".Y", str(localMult) + ".input2.input2Y", f=True
+            )
+            cmds.connectAttr(
+                str(nucleus[0]) + ".Z", str(localMult) + ".input2.input2Z", f=True
+            )
 
-            cmds.parent(localCl, worldCl, 'MotionMultiplier')
+            cmds.parent(localCl, worldCl, "MotionMultiplier")

@@ -6,6 +6,7 @@ from maya import OpenMayaUI as omui
 
 WINDOW_NAME = "Noise Expressions"
 
+
 def uniqueName(name):
     baseName = name
     idcounter = 0
@@ -14,7 +15,8 @@ def uniqueName(name):
         idcounter = idcounter + 1
     return name
 
-def alignToAlter(node1, node2, mode=0, o=(0,0,0)):
+
+def alignToAlter(node1, node2, mode=0, o=(0, 0, 0)):
     """
     Aligns the first node to the second.
     Args:
@@ -32,14 +34,14 @@ def alignToAlter(node1, node2, mode=0, o=(0,0,0)):
     if type(node2) == str:
         node2 = pm.PyNode(node2)
 
-    if mode==0:
+    if mode == 0:
         ##Position Only
         tempPocon = pm.pointConstraint(node2, node1, mo=False)
         pm.delete(tempPocon)
         # targetLoc = node2.getRotatePivot(space="world")
         # pm.move(node1, targetLoc, a=True, ws=True)
 
-    elif mode==1:
+    elif mode == 1:
         ##Rotation Only
         if node2.type() == "joint":
             tempOri = pm.orientConstraint(node2, node1, o=o, mo=False)
@@ -48,96 +50,343 @@ def alignToAlter(node1, node2, mode=0, o=(0,0,0)):
             targetRot = node2.getRotation()
             pm.rotate(node1, targetRot, a=True, ws=True)
 
-    elif mode==2:
+    elif mode == 2:
         ##Position and Rotation
         tempPacon = pm.parentConstraint(node2, node1, mo=False)
         pm.delete(tempPacon)
 
 
 def objectNoise(node, rotate=True, translate=True, scale=False, randomSeed=True):
-
     if randomSeed:
-        seedVal = random.randint(1,99999)
+        seedVal = random.randint(1, 99999)
     else:
         seedVal = 12345
 
     # Create noise locator and master controller
-    locator = pm.spaceLocator(name=uniqueName("Loc_%s" %node.name()))
-    controller = pm.circle(name=uniqueName("cont_loc_%s" %node.name()), nr=(0,1,0))[0]
+    locator = pm.spaceLocator(name=uniqueName("Loc_%s" % node.name()))
+    controller = pm.circle(name=uniqueName("cont_loc_%s" % node.name()), nr=(0, 1, 0))[
+        0
+    ]
     pm.parent(locator, controller)
     alignToAlter(controller, node, mode=2)
 
-    #check if the target object has a parent
+    # check if the target object has a parent
     originalParent = pm.listRelatives(node, p=True)
-    if (len(originalParent) > 0):
+    if len(originalParent) > 0:
         pm.parent(controller, originalParent[0], r=False)
     pm.parent(node, locator)
 
-    #Create rotation noise attributes if rotate flag is set
+    # Create rotation noise attributes if rotate flag is set
 
-    pm.addAttr(controller, longName="seedRND", niceName="Seed", at="long", k=True, defaultValue=seedVal)
+    pm.addAttr(
+        controller,
+        longName="seedRND",
+        niceName="Seed",
+        at="long",
+        k=True,
+        defaultValue=seedVal,
+    )
 
     if rotate:
-        pm.addAttr(controller, longName="rotationAtt", niceName="##ROTATION##", at="enum", enumName="-------", k=True)
+        pm.addAttr(
+            controller,
+            longName="rotationAtt",
+            niceName="##ROTATION##",
+            at="enum",
+            enumName="-------",
+            k=True,
+        )
         pm.setAttr(controller.rotationAtt, l=True)
-        pm.addAttr(controller, longName="rotSpeed", niceName="Overall_Rotation_Speed", at="float", defaultValue=10, k=True)
+        pm.addAttr(
+            controller,
+            longName="rotSpeed",
+            niceName="Overall_Rotation_Speed",
+            at="float",
+            defaultValue=10,
+            k=True,
+        )
 
-        pm.addAttr(controller, longName="xRotType", niceName="X_Rotation_Type", at="enum", enumName="Noise:Sinus:Continuous", k=True)
-        pm.addAttr(controller, longName="yRotType", niceName="Y_Rotation_Type", at="enum", enumName="Noise:Sinus:Continuous", k=True)
-        pm.addAttr(controller, longName="zRotType", niceName="Z_Rotation_Type", at="enum", enumName="Noise:Sinus:Continuous", k=True)
+        pm.addAttr(
+            controller,
+            longName="xRotType",
+            niceName="X_Rotation_Type",
+            at="enum",
+            enumName="Noise:Sinus:Continuous",
+            k=True,
+        )
+        pm.addAttr(
+            controller,
+            longName="yRotType",
+            niceName="Y_Rotation_Type",
+            at="enum",
+            enumName="Noise:Sinus:Continuous",
+            k=True,
+        )
+        pm.addAttr(
+            controller,
+            longName="zRotType",
+            niceName="Z_Rotation_Type",
+            at="enum",
+            enumName="Noise:Sinus:Continuous",
+            k=True,
+        )
 
-        pm.addAttr(controller, longName="xRotMult", niceName="X_Rotation_Multiplier", at="float", defaultValue=1, k=True)
-        pm.addAttr(controller, longName="yRotMult", niceName="Y_Rotation_Multiplier", at="float", defaultValue=1, k=True)
-        pm.addAttr(controller, longName="zRotMult", niceName="Z_Rotation_Multiplier", at="float", defaultValue=1, k=True)
+        pm.addAttr(
+            controller,
+            longName="xRotMult",
+            niceName="X_Rotation_Multiplier",
+            at="float",
+            defaultValue=1,
+            k=True,
+        )
+        pm.addAttr(
+            controller,
+            longName="yRotMult",
+            niceName="Y_Rotation_Multiplier",
+            at="float",
+            defaultValue=1,
+            k=True,
+        )
+        pm.addAttr(
+            controller,
+            longName="zRotMult",
+            niceName="Z_Rotation_Multiplier",
+            at="float",
+            defaultValue=1,
+            k=True,
+        )
 
-        pm.addAttr(controller, longName="xRotMax", niceName="X_Rotation_Max", at="float", defaultValue=25, k=True)
-        pm.addAttr(controller, longName="yRotMax", niceName="Y_Rotation_Max", at="float", defaultValue=25, k=True)
-        pm.addAttr(controller, longName="zRotMax", niceName="Z_Rotation_Max", at="float", defaultValue=25, k=True)
+        pm.addAttr(
+            controller,
+            longName="xRotMax",
+            niceName="X_Rotation_Max",
+            at="float",
+            defaultValue=25,
+            k=True,
+        )
+        pm.addAttr(
+            controller,
+            longName="yRotMax",
+            niceName="Y_Rotation_Max",
+            at="float",
+            defaultValue=25,
+            k=True,
+        )
+        pm.addAttr(
+            controller,
+            longName="zRotMax",
+            niceName="Z_Rotation_Max",
+            at="float",
+            defaultValue=25,
+            k=True,
+        )
 
     if translate:
-        pm.addAttr(controller, longName="positionAtt", niceName="##POSITION##", at="enum", enumName="-------", k=True)
+        pm.addAttr(
+            controller,
+            longName="positionAtt",
+            niceName="##POSITION##",
+            at="enum",
+            enumName="-------",
+            k=True,
+        )
         pm.setAttr(controller.positionAtt, l=True)
-        pm.addAttr(controller, longName="posSpeed", niceName="Overall_Position_Speed", at="float", defaultValue=1, k=True)
+        pm.addAttr(
+            controller,
+            longName="posSpeed",
+            niceName="Overall_Position_Speed",
+            at="float",
+            defaultValue=1,
+            k=True,
+        )
 
-        pm.addAttr(controller, longName="xPosType", niceName="X_Position_Type", at="enum", enumName="Noise:Sinus", k=True)
-        pm.addAttr(controller, longName="yPosType", niceName="Y_Position_Type", at="enum", enumName="Noise:Sinus", k=True)
-        pm.addAttr(controller, longName="zPosType", niceName="Z_Position_Type", at="enum", enumName="Noise:Sinus", k=True)
+        pm.addAttr(
+            controller,
+            longName="xPosType",
+            niceName="X_Position_Type",
+            at="enum",
+            enumName="Noise:Sinus",
+            k=True,
+        )
+        pm.addAttr(
+            controller,
+            longName="yPosType",
+            niceName="Y_Position_Type",
+            at="enum",
+            enumName="Noise:Sinus",
+            k=True,
+        )
+        pm.addAttr(
+            controller,
+            longName="zPosType",
+            niceName="Z_Position_Type",
+            at="enum",
+            enumName="Noise:Sinus",
+            k=True,
+        )
 
-        pm.addAttr(controller, longName="xPosMult", niceName="X_Position_Multiplier", at="float", defaultValue=1, k=True)
-        pm.addAttr(controller, longName="yPosMult", niceName="Y_Position_Multiplier", at="float", defaultValue=1, k=True)
-        pm.addAttr(controller, longName="zPosMult", niceName="Z_Position_Multiplier", at="float", defaultValue=1, k=True)
+        pm.addAttr(
+            controller,
+            longName="xPosMult",
+            niceName="X_Position_Multiplier",
+            at="float",
+            defaultValue=1,
+            k=True,
+        )
+        pm.addAttr(
+            controller,
+            longName="yPosMult",
+            niceName="Y_Position_Multiplier",
+            at="float",
+            defaultValue=1,
+            k=True,
+        )
+        pm.addAttr(
+            controller,
+            longName="zPosMult",
+            niceName="Z_Position_Multiplier",
+            at="float",
+            defaultValue=1,
+            k=True,
+        )
 
-        pm.addAttr(controller, longName="xPosMax", niceName="X_Position_Max", at="float", defaultValue=1, k=True)
-        pm.addAttr(controller, longName="yPosMax", niceName="Y_Position_Max", at="float", defaultValue=1, k=True)
-        pm.addAttr(controller, longName="zPosMax", niceName="Z_Position_Max", at="float", defaultValue=1, k=True)
+        pm.addAttr(
+            controller,
+            longName="xPosMax",
+            niceName="X_Position_Max",
+            at="float",
+            defaultValue=1,
+            k=True,
+        )
+        pm.addAttr(
+            controller,
+            longName="yPosMax",
+            niceName="Y_Position_Max",
+            at="float",
+            defaultValue=1,
+            k=True,
+        )
+        pm.addAttr(
+            controller,
+            longName="zPosMax",
+            niceName="Z_Position_Max",
+            at="float",
+            defaultValue=1,
+            k=True,
+        )
 
     if scale:
-        pm.addAttr(controller, longName="scaleAtt", niceName="##SCALE##", at="enum", enumName="-------", k=True)
+        pm.addAttr(
+            controller,
+            longName="scaleAtt",
+            niceName="##SCALE##",
+            at="enum",
+            enumName="-------",
+            k=True,
+        )
         pm.setAttr(controller.scaleAtt, l=True)
-        pm.addAttr(controller, longName="scaSpeed", niceName="Overall_Scale_Speed", at="float", defaultValue=1, k=True)
+        pm.addAttr(
+            controller,
+            longName="scaSpeed",
+            niceName="Overall_Scale_Speed",
+            at="float",
+            defaultValue=1,
+            k=True,
+        )
 
-        pm.addAttr(controller, longName="xScaType", niceName="X_Scale_Type", at="enum", enumName="Noise:Sinus", k=True)
-        pm.addAttr(controller, longName="yScaType", niceName="Y_Scale_Type", at="enum", enumName="Noise:Sinus", k=True)
-        pm.addAttr(controller, longName="zScaType", niceName="Z_Scale_Type", at="enum", enumName="Noise:Sinus", k=True)
+        pm.addAttr(
+            controller,
+            longName="xScaType",
+            niceName="X_Scale_Type",
+            at="enum",
+            enumName="Noise:Sinus",
+            k=True,
+        )
+        pm.addAttr(
+            controller,
+            longName="yScaType",
+            niceName="Y_Scale_Type",
+            at="enum",
+            enumName="Noise:Sinus",
+            k=True,
+        )
+        pm.addAttr(
+            controller,
+            longName="zScaType",
+            niceName="Z_Scale_Type",
+            at="enum",
+            enumName="Noise:Sinus",
+            k=True,
+        )
 
-        pm.addAttr(controller, longName="xScaMult", niceName="X_Scale_Multiplier", at="float", defaultValue=1, k=True)
-        pm.addAttr(controller, longName="yScaMult", niceName="Y_Scale_Multiplier", at="float", defaultValue=1, k=True)
-        pm.addAttr(controller, longName="zScaMult", niceName="Z_Scale_Multiplier", at="float", defaultValue=1, k=True)
+        pm.addAttr(
+            controller,
+            longName="xScaMult",
+            niceName="X_Scale_Multiplier",
+            at="float",
+            defaultValue=1,
+            k=True,
+        )
+        pm.addAttr(
+            controller,
+            longName="yScaMult",
+            niceName="Y_Scale_Multiplier",
+            at="float",
+            defaultValue=1,
+            k=True,
+        )
+        pm.addAttr(
+            controller,
+            longName="zScaMult",
+            niceName="Z_Scale_Multiplier",
+            at="float",
+            defaultValue=1,
+            k=True,
+        )
 
-        pm.addAttr(controller, longName="xScaMax", niceName="X_Scale_Max", at="float", defaultValue=1, k=True)
-        pm.addAttr(controller, longName="yScaMax", niceName="Y_Scale_Max", at="float", defaultValue=1, k=True)
-        pm.addAttr(controller, longName="zScaMax", niceName="Z_Scale_Max", at="float", defaultValue=1, k=True)
+        pm.addAttr(
+            controller,
+            longName="xScaMax",
+            niceName="X_Scale_Max",
+            at="float",
+            defaultValue=1,
+            k=True,
+        )
+        pm.addAttr(
+            controller,
+            longName="yScaMax",
+            niceName="Y_Scale_Max",
+            at="float",
+            defaultValue=1,
+            k=True,
+        )
+        pm.addAttr(
+            controller,
+            longName="zScaMax",
+            niceName="Z_Scale_Max",
+            at="float",
+            defaultValue=1,
+            k=True,
+        )
 
-        pm.addAttr(controller, longName="uniformScale", niceName="Uniform_Scale", at="enum", enumName="True:False", k=True)
+        pm.addAttr(
+            controller,
+            longName="uniformScale",
+            niceName="Uniform_Scale",
+            at="enum",
+            enumName="True:False",
+            k=True,
+        )
 
-
-    exp="""
+    exp = """
     $seedRND= {0}.seedRND;
     seed $seedRND;
     $geoRandomX=rand(1000);;
     $geoRandomY=rand(1000);
     $geoRandomZ=rand(1000);;
-    """.format(controller)
+    """.format(
+        controller
+    )
 
     if rotate:
         noiseExpRot = """
@@ -170,7 +419,9 @@ def objectNoise(node, rotate=True, translate=True, scale=False, randomSeed=True)
         {{{1}.rotateZ=(sin((time*$rotSpeed+$geoRandomZ)*($zRotMult)))*$zRotMax;}}
         if ($zRotType==2)//Continuous Movement
         {{{1}.rotateZ=((time*5*($rotSpeed*$zRotMult)));}}
-        """.format(controller, locator)
+        """.format(
+            controller, locator
+        )
 
         exp += noiseExpRot
 
@@ -199,7 +450,9 @@ def objectNoise(node, rotate=True, translate=True, scale=False, randomSeed=True)
         {{{1}.translateZ=(noise((time*$posSpeed+$geoRandomZ)*($zPosMult)))*$zPosMax;}}
         if ($zPosType==1)//Sinus Movement
         {{{1}.translateZ=(sin((time*$posSpeed+$geoRandomZ)*($zPosMult)))*$zPosMax;}}
-        """.format(controller, locator)
+        """.format(
+            controller, locator
+        )
         exp += noiseExpPos
 
     if scale:
@@ -237,10 +490,13 @@ def objectNoise(node, rotate=True, translate=True, scale=False, randomSeed=True)
         {{{1}.scaleZ=1+(noise((time*$scaSpeed+$sRandZ)*($zScaMult)))*$zScaMax;}}
         if ($zScaType==1)//Sinus Movement
         {{{1}.scaleZ=1+(sin((time*$scaSpeed+$sRandZ)*($zScaMult)))*$zScaMax;}}
-        """.format(controller, locator)
+        """.format(
+            controller, locator
+        )
         exp += noiseExpPos
 
-    pm.expression(string=exp, name="%s_noiseExp" %node)
+    pm.expression(string=exp, name="%s_noiseExp" % node)
+
 
 class ObjectNoiseUI(QtWidgets.QDialog):
     def __init__(self):
@@ -294,4 +550,10 @@ class ObjectNoiseUI(QtWidgets.QDialog):
             if len(selection) == 0:
                 pm.warning("You need to select at least one object - Nothing happened")
             for i in selection:
-                objectNoise(i, translate = self.position_checkBox.isChecked(), rotate=self.rotation_checkBox.isChecked(), scale=self.scale_checkBox.isChecked(), randomSeed = self.randomseed_checkBox.isChecked())
+                objectNoise(
+                    i,
+                    translate=self.position_checkBox.isChecked(),
+                    rotate=self.rotation_checkBox.isChecked(),
+                    scale=self.scale_checkBox.isChecked(),
+                    randomSeed=self.randomseed_checkBox.isChecked(),
+                )

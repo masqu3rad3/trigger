@@ -5,15 +5,26 @@
 from maya import cmds
 from trigger.library.connection import matrixConstraint
 
+
 def convertToCmFactor():
     unit = cmds.currentUnit(q=True, linear=True)
-    unitDictionary = {"mm": 0.1, "cm": 1.0, "m": 100.0, "in": 2.54, "ft": 30.48, "yd": 91.44}
+    unitDictionary = {
+        "mm": 0.1,
+        "cm": 1.0,
+        "m": 100.0,
+        "in": 2.54,
+        "ft": 30.48,
+        "yd": 91.44,
+    }
     try:
         return unitDictionary[unit]
     except KeyError:
         return 1.0
 
-def parentToSurface(objects=None, surface=None, mode="parent", source_parent_cutoff=None):
+
+def parentToSurface(
+    objects=None, surface=None, mode="parent", source_parent_cutoff=None
+):
     """
     Attaches the given objects to the surface by follicles
     Args:
@@ -29,7 +40,9 @@ def parentToSurface(objects=None, surface=None, mode="parent", source_parent_cut
     if objects == None and surface == None:
         numSel = cmds.ls(sl=True)
         if len(numSel) < 2:
-            cmds.warning("ParentToSurface: select object(s) to parent followed by a mesh or nurbsSurface to attach to.")
+            cmds.warning(
+                "ParentToSurface: select object(s) to parent followed by a mesh or nurbsSurface to attach to."
+            )
             return
         else:
             objects = numSel[0:-1]
@@ -65,24 +78,28 @@ def parentToSurface(objects=None, surface=None, mode="parent", source_parent_cut
 
     follicleTransformList = []
     for obj in objects:
-        _name = obj.split("|")[-1] # if the object is a dag path
+        _name = obj.split("|")[-1]  # if the object is a dag path
         cmds.connectAttr("%s.worldMesh" % surface, "%s.inMesh" % clPos, f=True)
 
         bbox = cmds.xform(obj, q=True, ws=True, bb=True)
-        pos = (((bbox[0] + bbox[3]) * 0.5) * convertFactor,
-               ((bbox[1] + bbox[4]) * 0.5) * convertFactor,
-               ((bbox[2] + bbox[5]) * 0.5) * convertFactor)
+        pos = (
+            ((bbox[0] + bbox[3]) * 0.5) * convertFactor,
+            ((bbox[1] + bbox[4]) * 0.5) * convertFactor,
+            ((bbox[2] + bbox[5]) * 0.5) * convertFactor,
+        )
         cmds.setAttr("%s.inPosition" % clPos, *pos)
 
         closestU = cmds.getAttr("%s.parameterU" % clPos)
         closestV = cmds.getAttr("%s.parameterV" % clPos)
 
         # attachObjectToSurface(obj, surface, closestU, closestV)
-        follicle = cmds.createNode("follicle", name=("%s_follicleShape" %_name))
+        follicle = cmds.createNode("follicle", name=("%s_follicleShape" % _name))
         follicleDag = cmds.listRelatives(follicle, parent=True)[0]
-        cmds.rename(follicleDag, ("%s_follicle" %obj))
+        cmds.rename(follicleDag, ("%s_follicle" % obj))
 
-        cmds.connectAttr("%s.worldMatrix[0]" % surface, "%s.inputWorldMatrix" % follicle)
+        cmds.connectAttr(
+            "%s.worldMatrix[0]" % surface, "%s.inputWorldMatrix" % follicle
+        )
         nType = cmds.nodeType(surface)
         if nType == "nurbsSurface":
             cmds.connectAttr("%s.local" % surface, "%s.inputSurface" % follicle)
@@ -105,11 +122,15 @@ def parentToSurface(objects=None, surface=None, mode="parent", source_parent_cut
         if mode == "pointconstraint":
             cmds.pointConstraint(follicleDag, obj, mo=True)
         if mode == "matrixconstraint":
-            matrixConstraint(follicleDag, obj, maintainOffset=True, source_parent_cutoff=source_parent_cutoff)
+            matrixConstraint(
+                follicleDag,
+                obj,
+                maintainOffset=True,
+                source_parent_cutoff=source_parent_cutoff,
+            )
         if mode == "none":
             pass
 
     cmds.delete(clPos)
-
 
     return follicleTransformList

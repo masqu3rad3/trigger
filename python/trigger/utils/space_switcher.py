@@ -4,7 +4,16 @@ from trigger.core import filelog
 
 LOG = filelog.Filelog(logname=__name__, filename="trigger_log")
 
-def create_space_switch(node, targetList, overrideExisting=False, mode="parent", defaultVal=1, listException=None, skip_errors=False):
+
+def create_space_switch(
+    node,
+    targetList,
+    overrideExisting=False,
+    mode="parent",
+    defaultVal=1,
+    listException=None,
+    skip_errors=False,
+):
     """
     Creates the space switch attributes between selected node (controller) and targets.
     Args:
@@ -35,7 +44,10 @@ def create_space_switch(node, targetList, overrideExisting=False, mode="parent",
         return
     modeList = ("parent", "point", "orient")
     if not modeList.__contains__(mode):
-        LOG.error("unknown mode flag. Valid mode flags are 'parent', 'point' and 'orient' ", proceed=False)
+        LOG.error(
+            "unknown mode flag. Valid mode flags are 'parent', 'point' and 'orient' ",
+            proceed=False,
+        )
     # create the enumerator list
     enumFlag = "worldSpace:"
     for enum in range(0, len(anchorPoses)):
@@ -51,9 +63,18 @@ def create_space_switch(node, targetList, overrideExisting=False, mode="parent",
             if skip_errors:
                 return
             else:
-                cmds.error("Switch Attribute already exists. Use overrideExisting=True to delete the old")
-    cmds.addAttr(node, at="enum", k=True, shortName=mode + "Switch", longName=mode + "_Switch", en=enumFlag,
-                 defaultValue=defaultVal)
+                cmds.error(
+                    "Switch Attribute already exists. Use overrideExisting=True to delete the old"
+                )
+    cmds.addAttr(
+        node,
+        at="enum",
+        k=True,
+        shortName=mode + "Switch",
+        longName=mode + "_Switch",
+        en=enumFlag,
+        defaultValue=defaultVal,
+    )
     driver = "%s.%sSwitch" % (node, mode)
 
     # Offset grp [START]
@@ -75,7 +96,9 @@ def create_space_switch(node, targetList, overrideExisting=False, mode="parent",
     elif mode == "orient":
         con = cmds.parentConstraint(anchorPoses, switchGrp, st=("x", "y", "z"), mo=True)
     else:
-        raise Exception("Non-valid mode. The valid modes are 'parent', 'point' and 'orient'")
+        raise Exception(
+            "Non-valid mode. The valid modes are 'parent', 'point' and 'orient'"
+        )
 
     ## make worldSpace driven key (all zero)
     for i in range(0, len(anchorPoses)):
@@ -92,7 +115,9 @@ def create_space_switch(node, targetList, overrideExisting=False, mode="parent",
                 value = 1
             else:
                 value = 0
-            cmds.setDrivenKeyframe(con, cd=driver, at=attr, dv=float(dPos + 1), v=float(value))
+            cmds.setDrivenKeyframe(
+                con, cd=driver, at=attr, dv=float(dPos + 1), v=float(value)
+            )
 
 
 def remove_space_switch(node):
@@ -109,13 +134,15 @@ def remove_space_switch(node):
     switchDir = {"point": "pointSW", "orient": "orientSW", "parent": "parentSW"}
 
     for switch in switchAtts:
-
-        for type in (switchDir.keys()):
+        for type in switchDir.keys():
             if type in switch:
-                switchNode = ("{0}_{1}".format(node, switchDir[type]))
+                switchNode = "{0}_{1}".format(node, switchDir[type])
                 # r = switchNode.getChildren()
-                constraint = cmds.listRelatives(switchNode, c=True,
-                                                type=["parentConstraint", "orientConstraint", "pointConstraint"])
+                constraint = cmds.listRelatives(
+                    switchNode,
+                    c=True,
+                    type=["parentConstraint", "orientConstraint", "pointConstraint"],
+                )
                 cmds.delete(constraint)
                 child = cmds.listRelatives(switchNode, c=True, type="transform")[0]
                 parent = cmds.listRelatives(switchNode, p=True, type="transform")

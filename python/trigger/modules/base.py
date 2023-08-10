@@ -35,12 +35,16 @@ class Base(_module.ModuleCore):
         else:
             LOG.error("Class needs either build_data or inits to be constructed")
 
-        self.module_name = (naming.unique_name(cmds.getAttr("%s.moduleName" % self.inits[0])))
+        self.module_name = naming.unique_name(
+            cmds.getAttr("%s.moduleName" % self.inits[0])
+        )
         self.base_jnt = None
 
     def create_joints(self):
         self.base_jnt = cmds.joint(name=naming.parse([self.module_name], suffix="j"))
-        cmds.connectAttr("{0}.rigVis".format(self.scaleGrp), "{0}.v".format(self.base_jnt))
+        cmds.connectAttr(
+            "{0}.rigVis".format(self.scaleGrp), "{0}.v".format(self.base_jnt)
+        )
         cmds.connectAttr("{}.s".format(self.scaleGrp), "{}.s".format(self.base_jnt))
 
         functions.align_to(self.base_jnt, self.inits[0], position=True, rotation=False)
@@ -48,18 +52,20 @@ class Base(_module.ModuleCore):
         self.sockets.append(self.base_jnt)
 
     def create_controllers(self):
-        placement_cont = Controller(shape="Circle",
-                                    name=naming.parse([self.module_name, "placement"], suffix="cont"),
-                                    scale=(10, 10, 10),
-                                    side="C",
-                                    tier="primary"
-                                    )
-        master_cont = Controller(shape="TriCircle",
-                                 name=naming.parse([self.module_name, "master"], suffix="cont"),
-                                 scale=(15, 15, 15),
-                                 side="C",
-                                 tier="primary"
-                                 )
+        placement_cont = Controller(
+            shape="Circle",
+            name=naming.parse([self.module_name, "placement"], suffix="cont"),
+            scale=(10, 10, 10),
+            side="C",
+            tier="primary",
+        )
+        master_cont = Controller(
+            shape="TriCircle",
+            name=naming.parse([self.module_name, "master"], suffix="cont"),
+            scale=(15, 15, 15),
+            side="C",
+            tier="primary",
+        )
 
         self.controllers = [master_cont, placement_cont]
 
@@ -97,7 +103,9 @@ class Guides(_module.GuidesCore):
 
         # Draw the joints
         cmds.select(clear=True)
-        root_jnt = cmds.joint(name=naming.parse([self.name, "root"], side=self.side, suffix="jInit"))
+        root_jnt = cmds.joint(
+            name=naming.parse([self.name, "root"], side=self.side, suffix="jInit")
+        )
 
         # Update the guideJoints list
         self.guideJoints.append(root_jnt)

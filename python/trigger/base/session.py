@@ -27,7 +27,7 @@ class Session(object):
     def save_session(self, file_path):
         """Saves the session to the given file path"""
         if not os.path.splitext(file_path)[1]:
-            file_path = "%s.trg" %file_path
+            file_path = "%s.trg" % file_path
         self.io.file_path = file_path
         guides_data = self.collect_guides()
         self.io.write(guides_data)
@@ -44,7 +44,7 @@ class Session(object):
             self.rebuild_guides(guides_data)
             log.info("Guides Loaded Successfully...")
         else:
-            log.error("Guides File doesn't exist or unreadable => %s" %file_path)
+            log.error("Guides File doesn't exist or unreadable => %s" % file_path)
             raise Exception
 
     def get_roots_from_file(self, file_path):
@@ -65,7 +65,7 @@ class Session(object):
 
         all_trigger_joints = []
         for r_dict in all_root_jnts_data:
-            root_jnt = (r_dict.get("root_joint"))
+            root_jnt = r_dict.get("root_joint")
             root_joints_list.append(root_jnt)
             limb_dict, _, __ = self.init.getWholeLimb(root_jnt)
             all_trigger_joints.append(limb_dict.values())
@@ -96,17 +96,19 @@ class Session(object):
             # this returns list of dictionaries compatible with create_attribute method in library.functions
             user_attrs = self.init.get_user_attrs(jnt)
 
-            jnt_dict = {"name": jnt,
-                        "position": world_pos,
-                        "rotation": rotation,
-                        "joint_orient": joint_orient,
-                        "scale": scale,
-                        "parent": parent,
-                        "side": side,
-                        "type": j_type,
-                        "color": color,
-                        "radius": radius,
-                        "user_attributes": user_attrs}
+            jnt_dict = {
+                "name": jnt,
+                "position": world_pos,
+                "rotation": rotation,
+                "joint_orient": joint_orient,
+                "scale": scale,
+                "parent": parent,
+                "side": side,
+                "type": j_type,
+                "color": color,
+                "radius": radius,
+                "user_attributes": user_attrs,
+            }
             save_data.append(jnt_dict)
             cmds.delete(tmp_jnt)
         return save_data
@@ -149,4 +151,3 @@ class Session(object):
 
     def reset_scene(self):
         scene.reset()
-

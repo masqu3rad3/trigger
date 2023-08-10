@@ -5,14 +5,12 @@ from maya import cmds
 from trigger.library import attribute
 from trigger.core import filelog
 from trigger.ui import custom_widgets
-from trigger.ui.Qt import QtWidgets, QtGui # for progressbar
+from trigger.ui.Qt import QtWidgets, QtGui  # for progressbar
 
 log = filelog.Filelog(logname=__name__, filename="trigger_log")
 
 
-ACTION_DATA = {
-    "mapping_data": []
-}
+ACTION_DATA = {"mapping_data": []}
 
 """Example Mapping Data:
 [
@@ -21,6 +19,7 @@ ACTION_DATA = {
     ["L_cheekArea_cont.cheekRaiser", "0", "100", "morph_hook.LcheekRaiser", "0", "1"],
 ]
 """
+
 
 class Driver(object):
     def __init__(self, *args, **kwargs):
@@ -45,18 +44,29 @@ class Driver(object):
                 wild_attrs = fnmatch.filter(all_attrs, wild_attr)
                 found_attrs.extend(["{0}.{1}".format(n, w) for w in wild_attrs])
             if not found_attrs:
-                log.error("No attributes found for %s" %data[3])
+                log.error("No attributes found for %s" % data[3])
                 return
-            attribute.drive_attrs(data[0], found_attrs, driver_range=[data[1], data[2]], driven_range=[data[4], data[5]], optimize=False)
+            attribute.drive_attrs(
+                data[0],
+                found_attrs,
+                driver_range=[data[1], data[2]],
+                driven_range=[data[4], data[5]],
+                optimize=False,
+            )
 
     def save_action(self):
         pass
 
     def ui(self, ctrl, layout, handler, *args, **kwargs):
         mappings_lbl = QtWidgets.QLabel(text="Mappings:")
-        mappings_tablebox = custom_widgets.TableBoxLayout(buttonsPosition="top",
-                                                          buttonDown=True, buttonUp=True,
-                                                          buttonAdd=False, buttonRename=False, buttonGet=False)
+        mappings_tablebox = custom_widgets.TableBoxLayout(
+            buttonsPosition="top",
+            buttonDown=True,
+            buttonUp=True,
+            buttonAdd=False,
+            buttonRename=False,
+            buttonGet=False,
+        )
         mappings_tablebox.viewWidget.setMinimumHeight(400)
         layout.addRow(mappings_lbl, mappings_tablebox)
 
@@ -64,7 +74,9 @@ class Driver(object):
         ctrl.update_ui()
 
         ## SIGNALS ##
-        mappings_tablebox.viewWidget.cellChanged.connect(lambda x=0: ctrl.update_model())
+        mappings_tablebox.viewWidget.cellChanged.connect(
+            lambda x=0: ctrl.update_model()
+        )
         mappings_tablebox.buttonRemove.clicked.connect(lambda x=0: ctrl.update_model())
         mappings_tablebox.buttonUp.clicked.connect(lambda x=0: ctrl.update_model())
         mappings_tablebox.buttonDown.clicked.connect(lambda x=0: ctrl.update_model())
@@ -75,7 +87,16 @@ class Driver(object):
         validated_data = []
         for row in data_matrix:
             try:
-                validated_data.append([str(row[0]), float(row[1]), float(row[2]), str(row[3]), float(row[4]), float(row[5])])
+                validated_data.append(
+                    [
+                        str(row[0]),
+                        float(row[1]),
+                        float(row[2]),
+                        str(row[3]),
+                        float(row[4]),
+                        float(row[5]),
+                    ]
+                )
             except ValueError:
-                log.error("Range values must be digits => %s" %row)
+                log.error("Range values must be digits => %s" % row)
         return validated_data

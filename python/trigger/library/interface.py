@@ -14,7 +14,9 @@ def refresh_outliner():
 
 
 @undo
-def annotate(transform_node, text, name=None, offset=None, visibility_range=None, arrow=False):
+def annotate(
+    transform_node, text, name=None, offset=None, visibility_range=None, arrow=False
+):
     name = name or "annotate_%s" % transform_node
     center = cmds.objectCenter(transform_node, gl=True)
     offset = offset or (0, 0, 0)

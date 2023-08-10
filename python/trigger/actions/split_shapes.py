@@ -48,10 +48,12 @@ class Split_shapes(weights.Weights):
 
     def action(self):
         """Execute Action - Mandatory"""
-        if not self.splitMapsFilePath or\
-            not self.blendshapeRootGrp or\
-            not self.neutralMesh or\
-            not self.splitData:
+        if (
+            not self.splitMapsFilePath
+            or not self.blendshapeRootGrp
+            or not self.neutralMesh
+            or not self.splitData
+        ):
             raise Exception("MISSING ACTION DATA IN SPLIT SHAPES ")
 
         # instanciate class object
@@ -78,7 +80,7 @@ class Split_shapes(weights.Weights):
         split_maps = self.io.read(self.splitMapsFilePath)
         for split_map in split_maps:
             # add available split maps
-            splitter.add_splitmap(os.path.join(import_root, "%s.json" %split_map))
+            splitter.add_splitmap(os.path.join(import_root, "%s.json" % split_map))
 
         # Define Split Maps
         dead_list = []
@@ -105,7 +107,10 @@ class Split_shapes(weights.Weights):
             if cmds.objExists("splitMaps_blendshape"):
                 self.paintMapBs = "splitMaps_blendshape"
             else:
-                feedback.Feedback().pop_info(title="Cannot find Blendshape", text="splitMaps blendshape cannot be found")
+                feedback.Feedback().pop_info(
+                    title="Cannot find Blendshape",
+                    text="splitMaps blendshape cannot be found",
+                )
         influencers = deformers.get_influencers(self.paintMapBs)
         for influencer in influencers:
             inf_file_path = os.path.join(weights_folder, "%s.json" % influencer)
@@ -117,7 +122,10 @@ class Split_shapes(weights.Weights):
 
         # export the whole weights for future paint fixes
         whole_weights_path = os.path.join(weights_folder, "wholeWeights.json")
-        self.save_weights(deformer=self.paintMapBs, file_path=whole_weights_path, )
+        self.save_weights(
+            deformer=self.paintMapBs,
+            file_path=whole_weights_path,
+        )
 
     def ui(self, ctrl, layout, handler, *args, **kwargs):
         """UI - Mandatory"""
@@ -127,12 +135,23 @@ class Split_shapes(weights.Weights):
         file_path_hLay.addWidget(file_path_le)
         prepare_bs_pb = QtWidgets.QPushButton(text="Prepare")
         file_path_hLay.addWidget(prepare_bs_pb)
-        browse_path_pb = BrowserButton(mode="openFile", update_widget=file_path_le, filterExtensions=["Trigger Split Files (*.trsplit)"], overwrite_check=False)
+        browse_path_pb = BrowserButton(
+            mode="openFile",
+            update_widget=file_path_le,
+            filterExtensions=["Trigger Split Files (*.trsplit)"],
+            overwrite_check=False,
+        )
         file_path_hLay.addWidget(browse_path_pb)
         layout.addRow(file_path_lbl, file_path_hLay)
 
         save_current_lbl = QtWidgets.QLabel(text="Save Current states")
-        savebox_lay = SaveBoxLayout(alignment="horizontal", update_widget=file_path_le, filter_extensions=["Trigger Split Files (*.trsplit)"], overwrite_check=True, control_model=ctrl)
+        savebox_lay = SaveBoxLayout(
+            alignment="horizontal",
+            update_widget=file_path_le,
+            filter_extensions=["Trigger Split Files (*.trsplit)"],
+            overwrite_check=True,
+            control_model=ctrl,
+        )
         layout.addRow(save_current_lbl, savebox_lay)
 
         blendshapes_group_lbl = QtWidgets.QLabel(text="Blendshapes Root Group:")
@@ -144,7 +163,9 @@ class Split_shapes(weights.Weights):
         layout.addRow(neutral_mesh_lbl, neutral_mesh_le)
 
         split_definitions_lbl = QtWidgets.QLabel(text="Split Definitions:")
-        split_definitions_treeBox = custom_widgets.TreeBoxLayout(buttonAdd=False, buttonNew=True)
+        split_definitions_treeBox = custom_widgets.TreeBoxLayout(
+            buttonAdd=False, buttonNew=True
+        )
         split_definitions_treeBox.viewWidget.setMinimumHeight(300)
 
         def on_add():
@@ -169,15 +190,25 @@ class Split_shapes(weights.Weights):
                 for smap in split_maps:
                     extra_button = QtWidgets.QPushButton(text=smap)
                     value_listbox.buttonslayout.addWidget(extra_button)
-                    extra_button.clicked.connect(lambda ignore=0, val=smap: value_listbox.viewWidget.addItem(str(val)))
+                    extra_button.clicked.connect(
+                        lambda ignore=0, val=smap: value_listbox.viewWidget.addItem(
+                            str(val)
+                        )
+                    )
             form_layout.addRow(value_lbl, value_listbox)
 
             button_box = QtWidgets.QDialogButtonBox(dialog)
-            button_box.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel | QtWidgets.QDialogButtonBox.Ok)
+            button_box.setStandardButtons(
+                QtWidgets.QDialogButtonBox.Cancel | QtWidgets.QDialogButtonBox.Ok
+            )
             master_layout.addWidget(button_box)
 
             # Signals
-            button_box.accepted.connect(lambda x=0: split_definitions_treeBox._add_tree_item(key_le.text(), value_listbox.listItemNames()))
+            button_box.accepted.connect(
+                lambda x=0: split_definitions_treeBox._add_tree_item(
+                    key_le.text(), value_listbox.listItemNames()
+                )
+            )
             button_box.accepted.connect(dialog.close)
             button_box.rejected.connect(dialog.close)
 
@@ -186,7 +217,6 @@ class Split_shapes(weights.Weights):
         split_definitions_treeBox._on_new = on_add
         layout.addRow(split_definitions_lbl, split_definitions_treeBox)
 
-
         ctrl.connect(file_path_le, "split_maps_file_path", str)
         ctrl.connect(blendshapes_group_le, "blendshapes_root_group", str)
         ctrl.connect(neutral_mesh_le, "neutral_mesh", str)
@@ -194,9 +224,13 @@ class Split_shapes(weights.Weights):
         ctrl.update_ui()
 
         def prepare_bs():
-            sel, msg = selection.validate(minimum=1, maximum=1, meshes_only=True, transforms=True, full_path=False)
+            sel, msg = selection.validate(
+                minimum=1, maximum=1, meshes_only=True, transforms=True, full_path=False
+            )
             if not sel:
-                feedback.Feedback().pop_info(title="Selection Error", text=msg, critical=True)
+                feedback.Feedback().pop_info(
+                    title="Selection Error", text=msg, critical=True
+                )
                 return
             self.paintMapBs = self.splitter.prepare_for_painting(sel[0])
             file_path = file_path_le.text()
@@ -207,14 +241,17 @@ class Split_shapes(weights.Weights):
                 import_root = os.path.join(file_root, maps_folder_name)
                 whole_weights_file = os.path.join(import_root, "wholeWeights.json")
                 if os.path.isfile(whole_weights_file):
-                    self.load_weights(deformer=self.paintMapBs, file_path=whole_weights_file)
+                    self.load_weights(
+                        deformer=self.paintMapBs, file_path=whole_weights_file
+                    )
             ctrl.update_model()
-
 
         ### Signals
         file_path_le.textChanged.connect(lambda x=0: ctrl.update_model())
         browse_path_pb.clicked.connect(lambda x=0: ctrl.update_model())
-        browse_path_pb.clicked.connect(file_path_le.validate)  # to validate on initial browse result
+        browse_path_pb.clicked.connect(
+            file_path_le.validate
+        )  # to validate on initial browse result
         prepare_bs_pb.clicked.connect(prepare_bs)
 
         savebox_lay.saved.connect(lambda file_path: self.save_action(file_path))
@@ -222,7 +259,15 @@ class Split_shapes(weights.Weights):
         blendshapes_group_le.editingFinished.connect(lambda x=0: ctrl.update_model())
         neutral_mesh_le.editingFinished.connect(lambda x=0: ctrl.update_model())
 
-        split_definitions_treeBox.buttonNew.clicked.connect(lambda x=0: ctrl.update_model())
-        split_definitions_treeBox.buttonRemove.clicked.connect(lambda x=0: ctrl.update_model())
-        split_definitions_treeBox.buttonClear.clicked.connect(lambda x=0: ctrl.update_model())
-        split_definitions_treeBox.buttonRename.clicked.connect(lambda x=0: ctrl.update_model())
+        split_definitions_treeBox.buttonNew.clicked.connect(
+            lambda x=0: ctrl.update_model()
+        )
+        split_definitions_treeBox.buttonRemove.clicked.connect(
+            lambda x=0: ctrl.update_model()
+        )
+        split_definitions_treeBox.buttonClear.clicked.connect(
+            lambda x=0: ctrl.update_model()
+        )
+        split_definitions_treeBox.buttonRename.clicked.connect(
+            lambda x=0: ctrl.update_model()
+        )

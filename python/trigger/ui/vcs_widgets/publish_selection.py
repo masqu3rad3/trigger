@@ -4,10 +4,13 @@ from trigger import version_control
 from trigger.ui.vcs_widgets.task_selection import TaskSelection
 
 from trigger.ui.Qt import QtWidgets, QtCore
+
 # from PySide2 import QtWidgets, QtCore
+
 
 class PublishSelection(TaskSelection):
     selectionChanged = QtCore.Signal(str)
+
     def __init__(self):
         super(PublishSelection, self).__init__()
 
@@ -15,8 +18,12 @@ class PublishSelection(TaskSelection):
 
         self.second_line = QtWidgets.QHBoxLayout()
         self.addLayout(self.second_line)
-        self.published_versions_combo = TaskSelection._insert_single_combo(self.second_line, "Publish Version")
-        self.published_types_combo = TaskSelection._insert_single_combo(self.second_line, "Publish Type")
+        self.published_versions_combo = TaskSelection._insert_single_combo(
+            self.second_line, "Publish Version"
+        )
+        self.published_types_combo = TaskSelection._insert_single_combo(
+            self.second_line, "Publish Type"
+        )
         self.published_types_combo.setSizePolicy(self.size_policy)
 
         # SUGNAL
@@ -70,13 +77,13 @@ class PublishSelection(TaskSelection):
         self.published_versions_combo.clear()
         current_task = self.sgh.task or self.task_combo.currentText()
         _int_version_list = sorted(self.sgh.get_publish_versions(current_task))
-        _str_version_list = ([str(x) for x in _int_version_list])
+        _str_version_list = [str(x) for x in _int_version_list]
         print("DEBUG___")
         print(current_task)
         print(_int_version_list)
         print(_str_version_list)
         self.published_versions_combo.addItems(_str_version_list)
-        last_version = self.published_versions_combo.count()-1
+        last_version = self.published_versions_combo.count() - 1
         self.published_versions_combo.setCurrentIndex(last_version)
         # if self.sgh.publish_version:
         #     self.published_versions_combo.setCurrentText(self.sgh.publish_version)
@@ -88,7 +95,9 @@ class PublishSelection(TaskSelection):
     def populate_publish_types(self):
         """Lists available published types which belongs to the parent task"""
         self.published_types_combo.clear()
-        current_version = self.sgh.publish_version or self.published_versions_combo.currentText()
+        current_version = (
+            self.sgh.publish_version or self.published_versions_combo.currentText()
+        )
         if not current_version:
             return
         self.published_types_combo.addItems(self.sgh.get_publish_types(current_version))
@@ -96,7 +105,6 @@ class PublishSelection(TaskSelection):
             self.published_types_combo.setCurrentText(self.sgh.publish_type)
         else:
             self.published_types_combo.setCurrentIndex(0)
-
 
         print(self.sgh.get_publish_path())
 

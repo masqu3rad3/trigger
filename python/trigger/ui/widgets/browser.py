@@ -6,8 +6,17 @@ from trigger.library import naming
 
 
 class BrowserButton(QtWidgets.QPushButton):
-    def __init__(self, text="Browse", update_widget=None, mode="openFile", filterExtensions=None, title=None,
-                 overwrite_check=True, *args, **kwargs):
+    def __init__(
+        self,
+        text="Browse",
+        update_widget=None,
+        mode="openFile",
+        filterExtensions=None,
+        title=None,
+        overwrite_check=True,
+        *args,
+        **kwargs
+    ):
         """
         Customized Pushbutton opens the file browser by default
 
@@ -30,8 +39,12 @@ class BrowserButton(QtWidgets.QPushButton):
         if mode in self._validModes:
             self._mode = mode
         else:
-            raise Exception("Mode is not valid. Valid modes are %s" % (", ".join(self._validModes)))
-        self._filterExtensions = self._listToFilter(filterExtensions) if filterExtensions else ""
+            raise Exception(
+                "Mode is not valid. Valid modes are %s" % (", ".join(self._validModes))
+            )
+        self._filterExtensions = (
+            self._listToFilter(filterExtensions) if filterExtensions else ""
+        )
         self._title = title if title else ""
         self._selectedPath = ""
         self._overwriteCheck = overwrite_check
@@ -48,7 +61,9 @@ class BrowserButton(QtWidgets.QPushButton):
 
     def setMode(self, mode):
         if mode not in self._validModes:
-            raise Exception("Mode is not valid. Valid modes are %s" % (", ".join(self._validModes)))
+            raise Exception(
+                "Mode is not valid. Valid modes are %s" % (", ".join(self._validModes))
+            )
         self._mode = mode
 
     def mode(self):
@@ -79,24 +94,37 @@ class BrowserButton(QtWidgets.QPushButton):
         else:
             default_path = self._selectedPath
         if self._mode == "openFile":
-            dlg = QtWidgets.QFileDialog.getOpenFileName(self, self._title, default_path, self._filterExtensions)
+            dlg = QtWidgets.QFileDialog.getOpenFileName(
+                self, self._title, default_path, self._filterExtensions
+            )
             if dlg:
                 new_path, selected_extension = dlg
             else:
                 new_path, selected_extension = None, None
         elif self._mode == "saveFile":
             if not self._overwriteCheck:
-                dlg = QtWidgets.QFileDialog.getSaveFileName(self, self._title, default_path, self._filterExtensions,
-                                                            options=(QtWidgets.QFileDialog.DontConfirmOverwrite))
+                dlg = QtWidgets.QFileDialog.getSaveFileName(
+                    self,
+                    self._title,
+                    default_path,
+                    self._filterExtensions,
+                    options=(QtWidgets.QFileDialog.DontConfirmOverwrite),
+                )
             else:
-                dlg = QtWidgets.QFileDialog.getSaveFileName(self, self._title, default_path, self._filterExtensions)
+                dlg = QtWidgets.QFileDialog.getSaveFileName(
+                    self, self._title, default_path, self._filterExtensions
+                )
             if dlg:
                 new_path, selected_extension = dlg
             else:
                 new_path, selected_extension = None, None
         elif self._mode == "directory":
-            dlg = QtWidgets.QFileDialog.getExistingDirectory(self, self._title, default_path,
-                                                             options=(QtWidgets.QFileDialog.ShowDirsOnly))
+            dlg = QtWidgets.QFileDialog.getExistingDirectory(
+                self,
+                self._title,
+                default_path,
+                options=(QtWidgets.QFileDialog.ShowDirsOnly),
+            )
             if dlg:
                 new_path, selected_extension = dlg
             else:
@@ -107,7 +135,7 @@ class BrowserButton(QtWidgets.QPushButton):
 
         if new_path:
             if self._mode == "saveFile" and selected_extension:
-                ext = selected_extension.split('(*', 1)[1].split(')')[0]
+                ext = selected_extension.split("(*", 1)[1].split(")")[0]
                 if not new_path.endswith(ext):
                     new_path = "%s%s" % (new_path, ext)
             self._selectedPath = os.path.normpath(new_path)
@@ -147,7 +175,9 @@ class FileLineEdit(QtWidgets.QLineEdit):
             else:
                 self.setStyleSheet(self.default_stylesheet)
             if naming.is_latest_version(text):
-                self.setStyleSheet("background-color: rgb(40,40,40); color: rgb(0,255,0)")
+                self.setStyleSheet(
+                    "background-color: rgb(40,40,40); color: rgb(0,255,0)"
+                )
             else:
                 self.setStyleSheet("background-color: rgb(40,40,40); color: yellow")
 
@@ -162,10 +192,10 @@ class FileLineEdit(QtWidgets.QLineEdit):
     def keyPressEvent(self, e):
         super(FileLineEdit, self).keyPressEvent(e)
         self.validate()
-        if e.key() == 16777235: # CTRL + UP arrow
+        if e.key() == 16777235:  # CTRL + UP arrow
             self.version_up()
 
-        if e.key() == 16777237: # CTRL + DOWN arrow
+        if e.key() == 16777237:  # CTRL + DOWN arrow
             self.version_down()
 
     def version_up(self):
@@ -189,8 +219,10 @@ class FileLineEdit(QtWidgets.QLineEdit):
 
         menu.exec_(event.globalPos())
 
+
 class FileBrowserBoxLayout(QtWidgets.QHBoxLayout):
     """Custom Layout for File and Folder Browsers"""
+
     def __init__(self, directory=False, *args, **kwargs):
         super(FileBrowserBoxLayout, self).__init__(*args, **kwargs)
         self.directory = directory

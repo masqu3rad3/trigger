@@ -7,6 +7,8 @@ from trigger.library import attribute
 from trigger.library import icons as ic
 
 ACTION_DATA = {}
+
+
 class Master(object):
     def __init__(self, *args, **kwargs):
         super(Master, self).__init__()
@@ -29,26 +31,31 @@ class Master(object):
             preferences_cont = icon.create_icon("Preferences", pref_name)
             cmds.parent(preferences_cont, trigger_rig_grp)
         # create attributes
-        attributes = [{"attr_name": "cacheMode",
-                       "nice_name": "Cache_Mode",
-                       "attr_type": "bool",
-                       "default_value": 0,
-                       },
-                      {"attr_name": "Control_Visibility",
-                       "nice_name": "Control_Visibility",
-                       "attr_type": "bool",
-                       "default_value": 1,
-                       },
-                      {"attr_name": "Joints_Visibility",
-                       "nice_name": "Joints_Visibility",
-                       "attr_type": "bool",
-                       "default_value": 0,
-                       },
-                      {"attr_name": "Rig_Visibility",
-                       "nice_name": "Rig_Visibility",
-                       "attr_type": "bool",
-                       "default_value": 0,
-                       },
+        attributes = [
+            {
+                "attr_name": "cacheMode",
+                "nice_name": "Cache_Mode",
+                "attr_type": "bool",
+                "default_value": 0,
+            },
+            {
+                "attr_name": "Control_Visibility",
+                "nice_name": "Control_Visibility",
+                "attr_type": "bool",
+                "default_value": 1,
+            },
+            {
+                "attr_name": "Joints_Visibility",
+                "nice_name": "Joints_Visibility",
+                "attr_type": "bool",
+                "default_value": 0,
+            },
+            {
+                "attr_name": "Rig_Visibility",
+                "nice_name": "Rig_Visibility",
+                "attr_type": "bool",
+                "default_value": 0,
+            },
         ]
         for attr_dict in attributes:
             attribute.create_attribute(pref_name, attr_dict, keyable=False)

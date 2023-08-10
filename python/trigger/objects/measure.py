@@ -4,24 +4,46 @@ from trigger.library import connection, attribute
 
 class Angle(object):
     """Creates set of locators to create angle extractors"""
-    def __init__(self, suffix="", ):
+
+    def __init__(
+        self,
+        suffix="",
+    ):
         self._angle_root = cmds.spaceLocator(name="angleExt_Root_IK_%s" % suffix)[0]
         self._angle_fixed = cmds.spaceLocator(name="angleExt_Fixed_IK_%s" % suffix)[0]
         self._angle_float = cmds.spaceLocator(name="angleExt_Float_IK_%s" % suffix)[0]
         cmds.parent(self._angle_fixed, self._angle_float, self._angle_root)
 
         # create calculation nodes
-        self._angle_node = cmds.createNode("angleBetween", name="angleBetweenIK_%s" % suffix)
-        self._remap_node = cmds.createNode("remapValue", name="angleRemapIK_%s" % suffix)
-        self._mult_node = cmds.createNode("multDoubleLinear", name="angleMultIK_%s" % suffix)
+        self._angle_node = cmds.createNode(
+            "angleBetween", name="angleBetweenIK_%s" % suffix
+        )
+        self._remap_node = cmds.createNode(
+            "remapValue", name="angleRemapIK_%s" % suffix
+        )
+        self._mult_node = cmds.createNode(
+            "multDoubleLinear", name="angleMultIK_%s" % suffix
+        )
 
-        cmds.connectAttr("{0}.translate".format(self._angle_fixed), "{0}.vector1".format(self._angle_node))
-        cmds.connectAttr("{0}.translate".format(self._angle_float), "{0}.vector2".format(self._angle_node))
+        cmds.connectAttr(
+            "{0}.translate".format(self._angle_fixed),
+            "{0}.vector1".format(self._angle_node),
+        )
+        cmds.connectAttr(
+            "{0}.translate".format(self._angle_float),
+            "{0}.vector2".format(self._angle_node),
+        )
 
-        cmds.connectAttr("{0}.angle".format(self._angle_node), "{0}.inputValue".format(self._remap_node))
+        cmds.connectAttr(
+            "{0}.angle".format(self._angle_node),
+            "{0}.inputValue".format(self._remap_node),
+        )
         self.calibrate()
 
-        cmds.connectAttr("{0}.outValue".format(self._remap_node), "{0}.input1".format(self._mult_node))
+        cmds.connectAttr(
+            "{0}.outValue".format(self._remap_node),
+            "{0}.input1".format(self._mult_node),
+        )
 
         self.angle_attr, self.value_attr, self.value_mult_attr = self.__attributes()
 
@@ -62,16 +84,31 @@ class Angle(object):
 
     def calibrate(self):
         """Calibrates the value mapper accepting the current angle 100 percent"""
-        cmds.setAttr("{0}.inputMin".format(self._remap_node), cmds.getAttr("{0}.angle".format(self._angle_node)))
+        cmds.setAttr(
+            "{0}.inputMin".format(self._remap_node),
+            cmds.getAttr("{0}.angle".format(self._angle_node)),
+        )
         cmds.setAttr("{0}.inputMax".format(self._remap_node), 0)
         cmds.setAttr("{0}.outputMin".format(self._remap_node), 0)
-        cmds.setAttr("{0}.outputMax".format(self._remap_node), cmds.getAttr("{0}.angle".format(self._angle_node)))
+        cmds.setAttr(
+            "{0}.outputMax".format(self._remap_node),
+            cmds.getAttr("{0}.angle".format(self._angle_node)),
+        )
 
     def __attributes(self):
-        angle_attr = attribute.create_attribute(self._angle_root, keyable=False, attr_name="Angle", attr_type="float")
-        value_attr = attribute.create_attribute(self._angle_root, keyable=False, attr_name="Value", attr_type="float")
-        value_mult_attr = attribute.create_attribute(self._angle_root, keyable=True, attr_name="valueMultiplier",
-                                                     attr_type="float", default_value=1.0)
+        angle_attr = attribute.create_attribute(
+            self._angle_root, keyable=False, attr_name="Angle", attr_type="float"
+        )
+        value_attr = attribute.create_attribute(
+            self._angle_root, keyable=False, attr_name="Value", attr_type="float"
+        )
+        value_mult_attr = attribute.create_attribute(
+            self._angle_root,
+            keyable=True,
+            attr_name="valueMultiplier",
+            attr_type="float",
+            default_value=1.0,
+        )
 
         cmds.connectAttr("%s.angle" % self._angle_node, angle_attr)
         cmds.connectAttr("%s.output" % self._mult_node, value_attr)
@@ -81,7 +118,9 @@ class Angle(object):
 
 class Distance(object):
     def __init__(self, start=None, end=None, suffix=""):
-        self._distance_node = cmds.createNode("distanceBetween", name="%s_distance" % suffix)
+        self._distance_node = cmds.createNode(
+            "distanceBetween", name="%s_distance" % suffix
+        )
         self._start = None
         self._end = None
 
@@ -109,5 +148,3 @@ class Distance(object):
     @property
     def plug(self):
         return "%s.distance" % self._distance_node
-
-

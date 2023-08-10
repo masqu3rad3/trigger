@@ -4,6 +4,7 @@ from maya import cmds
 from trigger.library import transform, functions
 from trigger.objects.base_node import BaseNode
 
+
 class ShapeEditor(object):
     """
     Logic class responsible to storing blendshape pack data, preparing scene and objects for edit,
@@ -67,8 +68,6 @@ class ShapeEditor(object):
         for mesh in _meshes:
             pass
 
-
-
     def prep_shape(self, shape_dag_path):
         """
         Prepares the shape for editing
@@ -96,11 +95,12 @@ class ShapeEditor(object):
 
     def _validate_workspace(self):
         """Validates presence of required elements"""
-        transform.validate_group(self.work_group)  # checks the group existence, creates if not
+        transform.validate_group(
+            self.work_group
+        )  # checks the group existence, creates if not
         if not self.neutral:
             ShapeEditorException().raise_error("Neutral Shape not defined")
             return False
-
 
     @staticmethod
     def categorize_shapes(meshes):
@@ -117,11 +117,12 @@ class ShapeEditor(object):
                     _combination_shapes.append(mesh)
                 else:
                     _combination_shapes.insert(0, mesh)
-            elif re.search('.*?([0-9]+)$', mesh):
+            elif re.search(".*?([0-9]+)$", mesh):
                 _inbetweem_shapes.append(mesh)
             else:
                 _base_shapes.append(mesh)
         return _base_shapes, _inbetweem_shapes, _combination_shapes
+
 
 class ShapeEditorException:
     msg = ""
@@ -150,13 +151,17 @@ class Blendshape(BaseNode):
     def __init__(self, dag_path):
         super(Blendshape, self).__init__()
         self.dag_path = dag_path
-        self.type = self.get_shape_type(self.name) # base, inbetween, combination, combination_inbetween or None
+        self.type = self.get_shape_type(
+            self.name
+        )  # base, inbetween, combination, combination_inbetween or None
         if self.type == "inbetween" or self.type == "combination_inbetween":
             self.percentage = self.get_percentage(self.name)
         else:
-            self.percentage = 0 # valid only if its an inbetween
+            self.percentage = 0  # valid only if its an inbetween
         if self.type.startswith("combination"):
-            self.combination_parts = self.get_combination_parts(self.name) # valid only if its a combination
+            self.combination_parts = self.get_combination_parts(
+                self.name
+            )  # valid only if its a combination
         else:
             self.combination_parts = []
 
@@ -170,7 +175,7 @@ class Blendshape(BaseNode):
                 _type = "combination_inbetween"
             else:
                 _type = "combination"
-        elif re.search('.*?([0-9]+)$', shape):
+        elif re.search(".*?([0-9]+)$", shape):
             _type = "inbetween"
         else:
             _type = "base"

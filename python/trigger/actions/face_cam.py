@@ -27,6 +27,7 @@ ACTION_DATA = {
     "limit_multiplier": 1.0,
 }
 
+
 # Name of the class MUST be the capitalized version of file name. eg. morph.py => Morph, split_shapes.py => Split_shapes
 class Face_cam(object):
     def __init__(self, *args, **kwargs):
@@ -37,7 +38,7 @@ class Face_cam(object):
         self.faceMesh = None
         self.parentNode = None
         self.focalLength = 50.0
-        self.initialDistance = 7.0,
+        self.initialDistance = (7.0,)
         self.limitMultiplier = 1.0
 
         # class variables
@@ -129,12 +130,16 @@ class Face_cam(object):
         ctrl.update_ui()
 
         def get_selected_face():
-            sel, msg = selection.validate(minimum=1, maximum=1, meshes_only=True, transforms=True)
+            sel, msg = selection.validate(
+                minimum=1, maximum=1, meshes_only=True, transforms=True
+            )
             if sel:
                 face_mesh_leBox.viewWidget.setText(sel[0])
                 ctrl.update_model()
             else:
-                feedback.Feedback().pop_info(title="Selection Error", text=msg, critical=True)
+                feedback.Feedback().pop_info(
+                    title="Selection Error", text=msg, critical=True
+                )
 
         def get_selected_parent():
             sel, msg = selection.validate(minimum=1, maximum=1, transforms=True)
@@ -142,7 +147,9 @@ class Face_cam(object):
                 parent_node_leBox.viewWidget.setText(sel[0])
                 ctrl.update_model()
             else:
-                feedback.Feedback().pop_info(title="Selection Error", text=msg, critical=True)
+                feedback.Feedback().pop_info(
+                    title="Selection Error", text=msg, critical=True
+                )
 
         # SIGNALS
 
@@ -150,23 +157,25 @@ class Face_cam(object):
         face_mesh_leBox.buttonGet.clicked.connect(get_selected_face)
         parent_node_leBox.buttonGet.clicked.connect(get_selected_parent)
         face_mesh_leBox.viewWidget.textChanged.connect(lambda x=0: ctrl.update_model())
-        parent_node_leBox.viewWidget.textChanged.connect(lambda x=0: ctrl.update_model())
+        parent_node_leBox.viewWidget.textChanged.connect(
+            lambda x=0: ctrl.update_model()
+        )
         focal_length_sp.valueChanged.connect(lambda x=0: ctrl.update_model())
         initial_distance_sp.valueChanged.connect(lambda x=0: ctrl.update_model())
         limit_multiplier_sp.valueChanged.connect(lambda x=0: ctrl.update_model())
 
     @staticmethod
     def create_face_camera(
-            aim_pos=None,
-            face_mesh=None,
-            parent=None,
-            name="faceCam",
-            focal=50.0,
-            distance=7.0,
-            limits=None,
-            rig_grp=None,
-            limit_mult=1.0,
-            hidden=True,
+        aim_pos=None,
+        face_mesh=None,
+        parent=None,
+        name="faceCam",
+        focal=50.0,
+        distance=7.0,
+        limits=None,
+        rig_grp=None,
+        limit_mult=1.0,
+        hidden=True,
     ):
         """Creates a face camera locked to the face.
         Args:
@@ -204,8 +213,12 @@ class Face_cam(object):
             bounds = None
 
         if not aim_pos and not limits:
-            log.error("One of the limits, aim_pos or face_mesh arguments must be defined")
-            raise Exception("One of the limits, aim_pos or face_mesh arguments must be defined")
+            log.error(
+                "One of the limits, aim_pos or face_mesh arguments must be defined"
+            )
+            raise Exception(
+                "One of the limits, aim_pos or face_mesh arguments must be defined"
+            )
 
         cam = cmds.camera(
             filmFit="Fill",

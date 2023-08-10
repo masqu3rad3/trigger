@@ -54,7 +54,14 @@ class Zipper(object):
         """Mandatory Method - Execute Action"""
         # everything in this method will be executed automatically.
         # This method does not accept any arguments. all the user variable must be defined to the instance before
-        lip_zipper(self.upper_edges, self.lower_edges, self.morph_mesh, self.final_mesh, self.pair_count, self.controller)
+        lip_zipper(
+            self.upper_edges,
+            self.lower_edges,
+            self.morph_mesh,
+            self.final_mesh,
+            self.pair_count,
+            self.controller,
+        )
 
     def save_action(self, file_path=None, *args, **kwargs):
         """Mandatory Method - Save Action"""
@@ -82,14 +89,18 @@ class Zipper(object):
         upper_edges_le_box = custom_widgets.LineEditBoxLayout(buttonsPosition="right")
         upper_edges_le_box.buttonGet.setText("<")
         upper_edges_le_box.buttonGet.setMaximumWidth(30)
-        upper_edges_le_box.buttonGet.setToolTip("Gets the selected edges from a polygon object")
+        upper_edges_le_box.buttonGet.setToolTip(
+            "Gets the selected edges from a polygon object"
+        )
         layout.addRow(upper_edges_lbl, upper_edges_le_box)
 
         lower_edges_lbl = QtWidgets.QLabel(text="Lower Edges")
         lower_edges_le_box = custom_widgets.LineEditBoxLayout(buttonsPosition="right")
         lower_edges_le_box.buttonGet.setText("<")
         lower_edges_le_box.buttonGet.setMaximumWidth(30)
-        lower_edges_le_box.buttonGet.setToolTip("Gets the selected edges from a polygon object")
+        lower_edges_le_box.buttonGet.setToolTip(
+            "Gets the selected edges from a polygon object"
+        )
         layout.addRow(lower_edges_lbl, lower_edges_le_box)
 
         morph_mesh_lbl = QtWidgets.QLabel(text="Morph Mesh")
@@ -129,11 +140,19 @@ class Zipper(object):
 
         def get_selected_edges(widget):
             if selection.get_selection_type() != "edge":
-                feedback.Feedback().pop_info(title="Selection Error", text="Edges from the same object must be selected", critical=True)
+                feedback.Feedback().pop_info(
+                    title="Selection Error",
+                    text="Edges from the same object must be selected",
+                    critical=True,
+                )
                 return
             all_object_selection = cmds.ls(sl=True, o=True)
             if len(all_object_selection) > 1:
-                feedback.Feedback().pop_info(title="Selection Error", text="Edges from the same object must be selected", critical=True)
+                feedback.Feedback().pop_info(
+                    title="Selection Error",
+                    text="Edges from the same object must be selected",
+                    critical=True,
+                )
                 return
             sel = cmds.ls(sl=True)
             widget.setText(ctrl.list_to_text(sel))
@@ -141,23 +160,37 @@ class Zipper(object):
             return
 
         def get_selected_mesh(widget):
-            sel, msg = selection.validate(minimum=1, maximum=1, meshes_only=True, transforms=True)
+            sel, msg = selection.validate(
+                minimum=1, maximum=1, meshes_only=True, transforms=True
+            )
             if sel:
                 widget.setText(sel[0])
                 ctrl.update_model()
                 return
             else:
-                feedback.Feedback().pop_info(title="Selection Error", text=msg, critical=True)
+                feedback.Feedback().pop_info(
+                    title="Selection Error", text=msg, critical=True
+                )
                 return
 
         # SIGNALS
 
-        upper_edges_le_box.buttonGet.pressed.connect(lambda: get_selected_edges(upper_edges_le_box.viewWidget))
-        lower_edges_le_box.buttonGet.pressed.connect(lambda: get_selected_edges(lower_edges_le_box.viewWidget))
-        morph_mesh_le_box.buttonGet.pressed.connect(lambda: get_selected_mesh(morph_mesh_le_box.viewWidget))
-        final_mesh_le_box.buttonGet.pressed.connect(lambda: get_selected_mesh(final_mesh_le_box.viewWidget))
+        upper_edges_le_box.buttonGet.pressed.connect(
+            lambda: get_selected_edges(upper_edges_le_box.viewWidget)
+        )
+        lower_edges_le_box.buttonGet.pressed.connect(
+            lambda: get_selected_edges(lower_edges_le_box.viewWidget)
+        )
+        morph_mesh_le_box.buttonGet.pressed.connect(
+            lambda: get_selected_mesh(morph_mesh_le_box.viewWidget)
+        )
+        final_mesh_le_box.buttonGet.pressed.connect(
+            lambda: get_selected_mesh(final_mesh_le_box.viewWidget)
+        )
         pair_count_sp.valueChanged.connect(lambda: ctrl.update_model())
-        controller_le_box.buttonGet.pressed.connect(lambda: get_selected_mesh(controller_le_box.viewWidget))
+        controller_le_box.buttonGet.pressed.connect(
+            lambda: get_selected_mesh(controller_le_box.viewWidget)
+        )
 
         upper_edges_le_box.viewWidget.textChanged.connect(lambda: ctrl.update_model())
         lower_edges_le_box.viewWidget.textChanged.connect(lambda: ctrl.update_model())
