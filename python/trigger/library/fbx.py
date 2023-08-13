@@ -463,7 +463,7 @@ def save(file_path,
 
     _set_fbx_settings(**settings_dict)
 
-    _export_fbx(file_path)
+    _export_fbx(file_path, selected=selection_only)
     return file_path
 
 #############################################################################
