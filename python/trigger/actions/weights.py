@@ -159,6 +159,15 @@ Then you can save and increment versions for all of them at once.
                     source=False,
                     destination=True,
                 )
+            elif deformer_type == "tension":
+                data["influencers"] = 0  # not needed
+                data["affected"] = cmds.listConnections(
+                    "%s.outputGeometry" % deformer,
+                    shapes=True,
+                    skipConversionNodes=True,
+                    source=False,
+                    destination=True,
+                )
             elif deformer_type == "blendShape":
                 data["influencers"] = 0  # ??? not needed ???
                 data["affected"] = cmds.listConnections(
@@ -326,7 +335,6 @@ Then you can save and increment versions for all of them at once.
                 "shapePreservationReprojection",
             ]
         elif deformer_type == "deltaMush":
-            # attributes = []
             attributes = [
                 "smoothingIterations",
                 "smoothingStep",
@@ -334,6 +342,19 @@ Then you can save and increment versions for all of them at once.
                 "outwardConstraint",
                 "distanceWeight",
                 "displacement",
+            ]
+        elif deformer_type == "tension":
+            attributes = [
+                "smoothingIterations",
+                "smoothingStep",
+                "inwardConstraint",
+                "outwardConstraint",
+                "squashConstraint",
+                "stretchConstraint",
+                "relative",
+                "shearStrength",
+                "bendStrength",
+                "pinBorderVertices"
             ]
         else:
             attributes = []
@@ -543,10 +564,13 @@ Then you can save and increment versions for all of them at once.
                 if 20209999 < self._api_version < 20220300:
                     deferred_loading = True
 
+            elif deformer_type == "tension":
+                cmds.tension(affected[0], name=deformer_name)
+
             else:
                 # TODO : SUPPORT FOR ALL DEFORMERS
                 log.error(
-                    "deformers OTHER than skinCluster, shrinkWrap and deltaMush are not YET supported"
+                    "deformers OTHER than skinCluster, shrinkWrap tension and deltaMush are not YET supported"
                 )
                 return
             for attr_dict in deformer_attrs:
