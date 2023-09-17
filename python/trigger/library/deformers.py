@@ -22,9 +22,6 @@ def get_deformers(mesh=None, names_only=False):
 
     """
 
-<<<<<<< HEAD
-    valid_deformers = ["skinCluster", "blendShape", "nonLinear", "cluster", "jiggle", "deltaMush", "tension", "shrinkWrap"]
-=======
     valid_deformers = [
         "skinCluster",
         "blendShape",
@@ -34,7 +31,6 @@ def get_deformers(mesh=None, names_only=False):
         "deltaMush",
         "shrinkWrap",
     ]
->>>>>>> 6a8548ae39861f2f42e47e3b50543f16f796b908
     if cmds.about(q=True, api=True) >= 20180400:
         valid_deformers.append("ffd")
     # get deformer from mesh
