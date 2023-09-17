@@ -1,10 +1,12 @@
 from maya import cmds
 from trigger.library import api
 from trigger.library import naming
+
 # USING MAYA API 2.0
 from maya.api import OpenMaya
 
 from trigger.core import filelog
+
 LOG = filelog.Filelog(logname=__name__, filename="trigger_log")
 
 
@@ -12,7 +14,7 @@ def get_distance(node1, node2):
     """Return the distance between two nodes."""
     ax, ay, az = api.get_world_translation(node1)
     bx, by, bz = api.get_world_translation(node2)
-    return ((ax-bx)**2 + (ay-by)**2 + (az-bz)**2)**0.5
+    return ((ax - bx) ** 2 + (ay - by) ** 2 + (az - bz) ** 2) ** 0.5
 
 
 def get_closest_transform(node, list_of_nodes=None):
@@ -43,14 +45,19 @@ def align_to(node, target, position=True, rotation=False):
     node_m_transform = OpenMaya.MFnTransform(api.get_mdag_path(node))
     target_m_transform = OpenMaya.MFnTransform(api.get_mdag_path(target))
     if position:
-        target_rotate_pivot = OpenMaya.MVector(target_m_transform.rotatePivot(OpenMaya.MSpace.kWorld))
+        target_rotate_pivot = OpenMaya.MVector(
+            target_m_transform.rotatePivot(OpenMaya.MSpace.kWorld)
+        )
         node_m_transform.setTranslation(target_rotate_pivot, OpenMaya.MSpace.kWorld)
     if rotation:
         target_mt_matrix = OpenMaya.MTransformationMatrix(
-            OpenMaya.MMatrix(cmds.xform(target, matrix=True, ws=1, q=True)))
+            OpenMaya.MMatrix(cmds.xform(target, matrix=True, ws=1, q=True))
+        )
         # using the target matrix decomposition
         # Worked on all cases tested
-        node_m_transform.setRotation(target_mt_matrix.rotation(True), OpenMaya.MSpace.kWorld)
+        node_m_transform.setRotation(
+            target_mt_matrix.rotation(True), OpenMaya.MSpace.kWorld
+        )
 
 
 def align_to_alter(node1, node2, mode=0, offset=(0, 0, 0)):
@@ -76,15 +83,17 @@ def align_to_alter(node1, node2, mode=0, offset=(0, 0, 0)):
         cmds.delete(cmds.parentConstraint(node2, node1, mo=False))
 
 
-def align_and_aim(node,
-                  target_list,
-                  aim_target_list,
-                  up_object=None,
-                  up_vector=None,
-                  local_up=(0.0, 1.0, 0.0),
-                  rotate_offset=None,
-                  translate_offset=None,
-                  freeze_transforms=False):
+def align_and_aim(
+    node,
+    target_list,
+    aim_target_list,
+    up_object=None,
+    up_vector=None,
+    local_up=(0.0, 1.0, 0.0),
+    rotate_offset=None,
+    translate_offset=None,
+    freeze_transforms=False,
+):
     """
     Aligns the position of the node to the target and rotation to the aimTarget object.
     Args:
@@ -134,14 +143,26 @@ def align_and_aim(node,
     cmds.delete(temp_pc)
     cmds.delete(temp_aim)
     if translate_offset:
-        cmds.move(translate_offset[0], translate_offset[1], translate_offset[2], node, r=True)
+        cmds.move(
+            translate_offset[0], translate_offset[1], translate_offset[2], node, r=True
+        )
     if rotate_offset:
-        cmds.rotate(rotate_offset[0], rotate_offset[1], rotate_offset[2], node, r=True, os=True)
+        cmds.rotate(
+            rotate_offset[0], rotate_offset[1], rotate_offset[2], node, r=True, os=True
+        )
     if freeze_transforms:
         cmds.makeIdentity(node, a=True, t=True)
 
 
-def align_between(node, target_a, target_b, position=True, aim_b=True, orientation=False, offset=(0, 0, 0)):
+def align_between(
+    node,
+    target_a,
+    target_b,
+    position=True,
+    aim_b=True,
+    orientation=False,
+    offset=(0, 0, 0),
+):
     """Align the node between target A and target B
     Args:
         node(String): Node to be aligned
@@ -157,11 +178,19 @@ def align_between(node, target_a, target_b, position=True, aim_b=True, orientati
 
     """
     if position:
-        cmds.delete(cmds.pointConstraint(target_a, target_b, node, maintainOffset=False))
+        cmds.delete(
+            cmds.pointConstraint(target_a, target_b, node, maintainOffset=False)
+        )
     if aim_b:
-        cmds.delete(cmds.aimConstraint(target_b, node, maintainOffset=False, offset=offset))
+        cmds.delete(
+            cmds.aimConstraint(target_b, node, maintainOffset=False, offset=offset)
+        )
     if orientation:
-        cmds.delete(cmds.orientConstraint(target_a, target_b, node, maintainOffset=False, offset=offset))
+        cmds.delete(
+            cmds.orientConstraint(
+                target_a, target_b, node, maintainOffset=False, offset=offset
+            )
+        )
 
 
 # TODO: MOVE TO THE TRANSFORM MODULE
@@ -209,12 +238,17 @@ def validate_group(group_name):
     """Check if the group exist, if not creates it.
     If there are any non-group object with that name, raises exception
     """
-    LOG.warning("validate_group function moved to transform.validate_group. Use that one instead")
+    LOG.warning(
+        "validate_group function moved to transform.validate_group. Use that one instead"
+    )
     if cmds.objExists(group_name):
         if is_group(group_name):
             return group_name
         else:
-            LOG.error("%s is not a valid group name. There is another non-group object with the same same" % group_name)
+            LOG.error(
+                "%s is not a valid group name. There is another non-group object with the same same"
+                % group_name
+            )
     else:
         return cmds.group(name=group_name, em=True)
 
@@ -246,7 +280,10 @@ def colorize(node_list, index=None, custom_color=None, shape=True):
             else:
                 LOG.error("Colorize error... Unknown index command", proceed=False)
         else:
-            LOG.error("Colorize error... Index flag must be integer or string('L', 'R', 'C')", proceed=False)
+            LOG.error(
+                "Colorize error... Index flag must be integer or string('L', 'R', 'C')",
+                proceed=False,
+            )
         if shape:
             process_nodes = cmds.listRelatives(node, s=True) or []
         else:
@@ -307,7 +344,9 @@ def get_shapes(node, full_path=False):
 # TODO: MOVE TO THE TRANSFORM MODULE ??
 def get_meshes(node, full_path=False):
     """Gets only the mesh transform nodes under a group"""
-    all_mesh_shapes = cmds.listRelatives(node, ad=True, children=True, type="mesh", fullPath=full_path)
+    all_mesh_shapes = cmds.listRelatives(
+        node, ad=True, children=True, type="mesh", fullPath=full_path
+    )
     return unique_list([get_parent(mesh) for mesh in all_mesh_shapes])
 
 

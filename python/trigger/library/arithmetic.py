@@ -7,12 +7,7 @@ from trigger.core import filelog
 LOG = filelog.Filelog(logname=__name__, filename="trigger_log")
 
 
-def add(a=None,
-        b=None,
-        value_list=None,
-        return_plug=True,
-        name="add"
-        ):
+def add(a=None, b=None, value_list=None, return_plug=True, name="add"):
     """
     Create plusMinusAverage Node, add the values or plugs and
     return the output node or plug.
@@ -47,12 +42,7 @@ def add(a=None,
         return add_node
 
 
-def subtract(a=None,
-             b=None,
-             value_list=None,
-             return_plug=True,
-             name="subtract"
-             ):
+def subtract(a=None, b=None, value_list=None, return_plug=True, name="subtract"):
     """
     Create plusMinusAverage Node, subtract the values and
     return the output node or plug.
@@ -191,7 +181,7 @@ def invert(a, return_plug=True, name="invert"):
     Returns:
         String: Output plug or node
     """
-    return (multiply(a, -1, return_plug=return_plug, name=name))
+    return multiply(a, -1, return_plug=return_plug, name=name)
 
 
 def reverse(a, return_plug=True, name="reverse"):
@@ -277,9 +267,15 @@ def switch(a, b, switch_value, return_plug=True, name="switch"):
         return switch_node
 
 
-def if_else(first_term, operation, second_term, if_true, if_false,
-            return_plug=True,
-            name="condition"):
+def if_else(
+    first_term,
+    operation,
+    second_term,
+    if_true,
+    if_false,
+    return_plug=True,
+    name="condition",
+):
     """
     Create a condition node with given information
     Args:
@@ -294,22 +290,13 @@ def if_else(first_term, operation, second_term, if_true, if_false,
     Returns:
         String: Output plug or node
     """
-    operation_dict = {
-        "==": 0,
-        "!=": 1,
-        ">": 2,
-        ">=": 3,
-        "<": 4,
-        "<=": 5
-    }
+    operation_dict = {"==": 0, "!=": 1, ">": 2, ">=": 3, "<": 4, "<=": 5}
     if operation not in operation_dict.keys():
-        msg = "Operation must be one of the following: {}".format(
-            operation_dict.keys())
+        msg = "Operation must be one of the following: {}".format(operation_dict.keys())
         LOG.error(msg)
         raise ValueError(msg)
     condition_node = cmds.createNode("condition", name=name)
-    cmds.setAttr("{}.operation".format(condition_node),
-                 operation_dict.get(operation))
+    cmds.setAttr("{}.operation".format(condition_node), operation_dict.get(operation))
     if compat.is_string(first_term):
         cmds.connectAttr(first_term, "{}.firstTerm".format(condition_node))
     else:
@@ -349,11 +336,11 @@ def multiply_matrix(matrices_list, return_plug=True, name="multMatrix"):
     mult_matrix_node = cmds.createNode("multMatrix", name=name)
     for index, matrix in enumerate(matrices_list):
         if compat.is_string(matrix):
-            cmds.connectAttr(
-                matrix, "%s.matrixIn[%i]" % (mult_matrix_node, index))
+            cmds.connectAttr(matrix, "%s.matrixIn[%i]" % (mult_matrix_node, index))
         else:
-            cmds.setAttr("%s.matrixIn[%i]" % (
-                mult_matrix_node, index), matrix, type="matrix")
+            cmds.setAttr(
+                "%s.matrixIn[%i]" % (mult_matrix_node, index), matrix, type="matrix"
+            )
     if return_plug:
         return "%s.matrixSum" % mult_matrix_node
     else:
@@ -374,12 +361,15 @@ def decompose_matrix(matrix, return_plug=True, name="decomposeMatrix"):
     if compat.is_string(matrix):
         cmds.connectAttr(matrix, "%s.inputMatrix" % decompose_matrix_node)
     else:
-        cmds.setAttr("{}.inputMatrix".format(
-            decompose_matrix_node), matrix, type="matrix")
+        cmds.setAttr(
+            "{}.inputMatrix".format(decompose_matrix_node), matrix, type="matrix"
+        )
     if return_plug:
-        return ["{}.outputTranslate".format(decompose_matrix_node),
-                "{}.outputRotate".format(decompose_matrix_node),
-                "{}.outputScale".format(decompose_matrix_node)]
+        return [
+            "{}.outputTranslate".format(decompose_matrix_node),
+            "{}.outputRotate".format(decompose_matrix_node),
+            "{}.outputScale".format(decompose_matrix_node),
+        ]
     else:
         return decompose_matrix_node
 
@@ -397,10 +387,13 @@ def average_matrix(matrices_list, return_plug=True, name="averageMatrix"):
     average_matrix_node = cmds.createNode("wtAddMatrix", name=name)
     average_value = 1.0 / len(matrices_list)
     for index, matrix in enumerate(matrices_list):
-        cmds.connectAttr(matrix, "{0}.wtMatrix[{1}].matrixIn".format(
-            average_matrix_node, index))
-        cmds.setAttr("{0}.wtMatrix[{1}].weightIn".format(
-            average_matrix_node, index), average_value)
+        cmds.connectAttr(
+            matrix, "{0}.wtMatrix[{1}].matrixIn".format(average_matrix_node, index)
+        )
+        cmds.setAttr(
+            "{0}.wtMatrix[{1}].weightIn".format(average_matrix_node, index),
+            average_value,
+        )
     if return_plug:
         return "{}.matrixSum".format(average_matrix_node)
     else:

@@ -7,15 +7,18 @@ import datetime
 
 class Filelog(object):
     """Filelog class for logging to file"""
-    def __init__(self,
-                 logname=None,
-                 filename=None,
-                 filedir=None,
-                 date=True,
-                 time=True,
-                 size_cap=500000,
-                 *args,
-                 **kwargs):
+
+    def __init__(
+        self,
+        logname=None,
+        filename=None,
+        filedir=None,
+        date=True,
+        time=True,
+        size_cap=500000,
+        *args,
+        **kwargs
+    ):
         super(Filelog, self).__init__()
         self.fileName = filename if filename else "defaultLog"
         self.fileDir = filedir if filedir else os.path.expanduser("~")
@@ -143,6 +146,7 @@ class Filelog(object):
         """Return the size of the log file."""
         size = os.path.getsize(self.filePath)
         return size
+
 
 # class _AnsiColorizer(object):
 #     """

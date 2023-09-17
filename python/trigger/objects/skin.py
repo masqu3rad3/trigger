@@ -17,6 +17,7 @@ log = filelog.Filelog(logname=__name__, filename="trigger_log")
 def clamp(num, min_value=0, max_value=1):
     return max(min(num, max_value), min_value)
 
+
 def multiplyList(list_of_values):
     # Multiply elements one by one
     result = 1
@@ -37,6 +38,7 @@ def subtractList(list_of_values):
     for x in list_of_values[1:]:
         result += x
     return result
+
 
 class Weight(object):
     def __init__(self, source=None):
@@ -66,7 +68,7 @@ class Weight(object):
          - absolute json path (string) (valid weight formatted matching cmds.deformerWeights output))
          - dictionary item (matching cmds.deformerWeights output
          - skinCluster node (String) (must be present in the current maya scene)
-         """
+        """
         if isinstance(source, dict):
             _data = source
         elif isinstance(source, str):
@@ -75,7 +77,10 @@ class Weight(object):
             elif cmds.ls(source, type="skinCluster"):
                 _data = self.__read_data_from_deformer(source)
             else:
-                raise Exception("Source (%s) cannot identified neither as a file or skinCluster" % source)
+                raise Exception(
+                    "Source (%s) cannot identified neither as a file or skinCluster"
+                    % source
+                )
         else:
             raise Exception("invalid source (%s). Must be dictionary, file or deformer")
 
@@ -108,13 +113,21 @@ class Weight(object):
         _filtered_data_influences = [x for x in _data_influences if cmds.objExists(x)]
         # give a big warning if there are missing influences
         if len(_data_influences) != len(_filtered_data_influences):
-            log.warning("THERE ARE MISSING INFLUENCES IN THE SCENE. The data might not be applied correctly")
+            log.warning(
+                "THERE ARE MISSING INFLUENCES IN THE SCENE. The data might not be applied correctly"
+            )
 
         # add the missing ones / remove the excess
-        _ = [cmds.skinCluster(deformer, edit=True, addInfluence=x, normalizeWeights=0) for x in _filtered_data_influences if
-             x not in _influences and cmds.objExists(x)]
-        _ = [cmds.skinCluster(deformer, edit=True, removeInfluence=x, normalizeWeights=0) for x in _influences if
-             x not in _filtered_data_influences]
+        _ = [
+            cmds.skinCluster(deformer, edit=True, addInfluence=x, normalizeWeights=0)
+            for x in _filtered_data_influences
+            if x not in _influences and cmds.objExists(x)
+        ]
+        _ = [
+            cmds.skinCluster(deformer, edit=True, removeInfluence=x, normalizeWeights=0)
+            for x in _influences
+            if x not in _filtered_data_influences
+        ]
 
         # # temporarily turn off the normalization
         # normalization = cmds.skinCluster(deformer, q=True, normalizeWeights=True)
@@ -126,7 +139,9 @@ class Weight(object):
             # same topology
             self.__set_weights(deformer, geo, self.__convert_to_m_array(self._data))
             if cmds.skinCluster(deformer, query=True, skinMethod=True):
-                self.__set_blend_weights(deformer, geo, om.MDoubleArray(self._data.get("DQ_weights", [])))
+                self.__set_blend_weights(
+                    deformer, geo, om.MDoubleArray(self._data.get("DQ_weights", []))
+                )
         else:
             log.warning("Applying the values to different topologies is WIP")
             # different topology
@@ -164,8 +179,12 @@ class Weight(object):
     def _check_vc(self):
         """Checks the data if vc (vertex connections) has or not"""
         # TODO test if its getting much faster when you query only the keys, not the values
-        poly_counts = self._data["deformerWeight"]["shapes"][0].get("polygonCounts", None)
-        poly_connects = self._data["deformerWeight"]["shapes"][0].get("polygonConnects", None)
+        poly_counts = self._data["deformerWeight"]["shapes"][0].get(
+            "polygonCounts", None
+        )
+        poly_connects = self._data["deformerWeight"]["shapes"][0].get(
+            "polygonConnects", None
+        )
 
         if poly_counts and poly_connects:
             return True
@@ -176,14 +195,19 @@ class Weight(object):
         """validates data against the maya weight format standards"""
         _data = data or self._data
         if not _data.get("deformerWeight", None):
-            log.warning("skin.py => The weight data cannot be validated. key deformerWeight is missing")
+            log.warning(
+                "skin.py => The weight data cannot be validated. key deformerWeight is missing"
+            )
             return False
         keys = ["headerInfo", "deformers", "shapes", "weights"]
         for key in keys:
             try:
                 _d = _data["deformerWeight"][key]
             except KeyError:
-                log.warning("skin.py => The weight data cannot be validated. key %s is missing" % key)
+                log.warning(
+                    "skin.py => The weight data cannot be validated. key %s is missing"
+                    % key
+                )
                 return False
         return True
 
@@ -199,10 +223,23 @@ class Weight(object):
         """Gets the weight dictionary from specified deformer"""
         # write the json file using maya thingie. Read it back and discard the temporary file
         # Specific attributes for skinClusters
-        attributes = ["envelope", "skinningMethod", "useComponents", "normalizeWeights", "deformUserNormals"]
+        attributes = [
+            "envelope",
+            "skinningMethod",
+            "useComponents",
+            "normalizeWeights",
+            "deformUserNormals",
+        ]
         _file_path, _file_name = os.path.split(self.temp_io.file_path)
         # cmds.deformerWeights(_file_name, export=True, deformer=deformer, path=_file_path, defaultValue=-1.0, vc=False, at=attributes)
-        cmds.deformerWeights(_file_name, export=True, deformer=deformer, path=_file_path, vc=True, at=attributes)
+        cmds.deformerWeights(
+            _file_name,
+            export=True,
+            deformer=deformer,
+            path=_file_path,
+            vc=True,
+            at=attributes,
+        )
         # cmds.deformerWeights(_file_name, export=True, deformer=deformer, path=_file_path, vc=False, at=attributes)
 
         # read it back
@@ -231,7 +268,6 @@ class Weight(object):
         for index, value in dict_data.items():
             points_list.append({"index": index, "value": value})
         return points_list
-
 
     def get_influence_data(self, influence_name):
         """searches the data dictionary and returns the related influence dictionary like
@@ -276,7 +312,9 @@ class Weight(object):
             _layers.append(weights.get("layer", 0))
         return max(_layers)
 
-    def add_influence(self, influence_data, force=True, normalize_other_influences=True):
+    def add_influence(
+        self, influence_data, force=True, normalize_other_influences=True
+    ):
         """
         Adds the influence to the data
         Args:
@@ -291,13 +329,15 @@ class Weight(object):
         # start = time.time()
         _influence_name = influence_data.get("source", None)
         if self.get_influence_data(_influence_name) and not force:
-            raise Exception("Data already contains weights data for %s" % _influence_name)
+            raise Exception(
+                "Data already contains weights data for %s" % _influence_name
+            )
         # match the deformer and shape
         _deformer = self._data["deformerWeight"]["deformers"][0]["name"]
         _shape = self._data["deformerWeight"]["shapes"][0]["name"]
         influence_data["deformer"] = _deformer
         influence_data["shape"] = _shape
-        influence_data["layer"] = self._get_last_layer()+1
+        influence_data["layer"] = self._get_last_layer() + 1
         # print("afer normalization: %s" %str(time.time() - start))
 
         # s_b = time.time()
@@ -344,10 +384,6 @@ class Weight(object):
                 weight_dict_data[idx] = new_val
             # convert it back and put it back
             source_data["points"] = self.__dict_to_points(weight_dict_data)
-
-
-
-
 
         # # TODO : not tested
         # copy_data = copy.deepcopy(data_list[0])
@@ -415,7 +451,9 @@ class Weight(object):
             <MDoubleArray> of skin weights
 
         """
-        mesh_path, vertex_comp, skin_fn = self.__get_path_and_component(mesh, skincluster)
+        mesh_path, vertex_comp, skin_fn = self.__get_path_and_component(
+            mesh, skincluster
+        )
         return skin_fn.getWeights(mesh_path, vertex_comp)
 
     def __set_weights(self, skincluster, mesh, m_array):
@@ -431,7 +469,9 @@ class Weight(object):
             None
         """
         # https://gist.github.com/utatsuya/a95afe3c5523ab61e61b
-        mesh_path, vertex_comp, skin_fn = self.__get_path_and_component(mesh, skincluster)
+        mesh_path, vertex_comp, skin_fn = self.__get_path_and_component(
+            mesh, skincluster
+        )
 
         inf_dags = skin_fn.influenceObjects()
         inf_indexes = om.MIntArray(len(inf_dags), 0)
@@ -452,7 +492,9 @@ class Weight(object):
             <MDoubleArray> of DQ blend weights
 
         """
-        mesh_path, vertex_comp, skin_fn = self.__get_path_and_component(mesh, skincluster)
+        mesh_path, vertex_comp, skin_fn = self.__get_path_and_component(
+            mesh, skincluster
+        )
         return skin_fn.getBlendWeights(mesh_path, vertex_comp)
 
     def __set_blend_weights(self, skincluster, mesh, m_array):
@@ -467,12 +509,14 @@ class Weight(object):
         Returns:
             None
         """
-        mesh_path, vertex_comp, skin_fn = self.__get_path_and_component(mesh, skincluster)
+        mesh_path, vertex_comp, skin_fn = self.__get_path_and_component(
+            mesh, skincluster
+        )
         skin_fn.setBlendWeights(mesh_path, vertex_comp, m_array)
 
     @staticmethod
     def barycentric_interpolate(vec_a, vec_b, vec_c, vec_p):
-        '''
+        """
         Calculates barycentricInterpolation of a point in a triangle.
 
         :param vec_a - OpenMaya.MVector of a vertex point.
@@ -481,7 +525,7 @@ class Weight(object):
         :param vec_p - OpenMaya.MVector of a point to be interpolated.
 
         Returns list of 3 floats representing weight values per each point.
-        '''
+        """
         # https://gamedev.stackexchange.com/questions/23743/whats-the-most-efficient-way-to-find-barycentric-coordinates
         v0 = vec_b - vec_a
         v1 = vec_c - vec_a
@@ -529,14 +573,14 @@ class Weight(object):
             vtx_inf_dict = {}
             for inf_name, p_dict in inf_dict.items():
                 # p_dict = self.__points_to_dict(inf["points"])
-                value = p_dict.get(vtx_id, 0) # get the value on the vtx id
+                value = p_dict.get(vtx_id, 0)  # get the value on the vtx id
                 vtx_inf_dict[inf_name] = value
             #
             impact_list = list(reversed(sorted(vtx_inf_dict, key=vtx_inf_dict.get)))
             # print(impact_list)
             for _inf in impact_list:
                 original_value = inf_dict[_inf].get(vtx_id, 0)
-                inf_dict[_inf].update({vtx_id:clamp(original_value-excess_value)})
+                inf_dict[_inf].update({vtx_id: clamp(original_value - excess_value)})
                 excess_value = clamp(excess_value - original_value)
 
             # # TODO maybe this speed it up a bit
@@ -551,10 +595,8 @@ class Weight(object):
             #     excess_value = clamp(excess_value - original_value)
             #     counter += 1
 
-
             # convert back to the maya JSON compatibility
             for inf_data in self._data["deformerWeight"]["weights"]:
                 inf_name = inf_data.get("source")
                 reconverted_points_data = self.__dict_to_points(inf_dict[inf_name])
                 inf_data["points"] = reconverted_points_data
-

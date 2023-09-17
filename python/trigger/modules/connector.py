@@ -16,7 +16,7 @@ LIMB_DATA = {
             "attr_name": "curveAsShape",
             "nice_name": "Use_Curve_as_Joint_Shape",
             "attr_type": "bool",
-            "default_value": False
+            "default_value": False,
         }
     ],
     "multi_guide": None,
@@ -50,23 +50,29 @@ class Connector(_module.ModuleCore):
         except ValueError:
             self.curveAsShape = False
 
-        self.module_name = (naming.unique_name(cmds.getAttr("%s.moduleName" % self.rootInit)))
+        self.module_name = naming.unique_name(
+            cmds.getAttr("%s.moduleName" % self.rootInit)
+        )
 
     def execute(self):
         """Execute the module. This is the main function that is called when the module is built."""
         LOG.info("Creating Connector %s" % self.module_name)
         def_j_root = cmds.joint(name=naming.parse([self.module_name], suffix="jDef"))
 
-        functions.align_to(def_j_root, self.rootInit, position=True, rotation=self.useRefOrientation)
+        functions.align_to(
+            def_j_root, self.rootInit, position=True, rotation=self.useRefOrientation
+        )
 
         self.limbPlug = def_j_root
         self.sockets.append(def_j_root)
 
         if self.curveAsShape:
-            _controller = Controller(shape="Cube",
-                                     name=naming.parse([self.module_name], suffix="cont"),
-                                     scale=(1, 1, 1),
-                                     normal=(0, 0, 0))
+            _controller = Controller(
+                shape="Cube",
+                name=naming.parse([self.module_name], suffix="cont"),
+                scale=(1, 1, 1),
+                normal=(0, 0, 0),
+            )
             _controller.set_side(self.side)
             cmds.parent(_controller.shapes[0], def_j_root, relative=True, shape=True)
             cmds.delete(_controller.name)
@@ -87,7 +93,9 @@ class Guides(_module.GuidesCore):
 
         # Draw the joints
         cmds.select(clear=True)
-        root_jnt = cmds.joint(name=naming.parse([self.name, "root"], side=self.side, suffix="jInit"))
+        root_jnt = cmds.joint(
+            name=naming.parse([self.name, "root"], side=self.side, suffix="jInit")
+        )
 
         # Update the guideJoints list
         self.guideJoints.append(root_jnt)

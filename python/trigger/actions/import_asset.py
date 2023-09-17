@@ -8,6 +8,7 @@ import platform
 from trigger.library import attribute
 
 from trigger.core import filelog
+
 # from trigger.ui.Qt import QtWidgets, QtGui # for progressbar
 from PySide2 import QtWidgets, QtGui  # for progressbar
 from trigger.ui import custom_widgets
@@ -60,14 +61,18 @@ class Import_asset(object):
             log.warning("Unrecognized file format => %s" % ext)
             return
 
-        self.post_process(new_nodes, scale=self.scale, suffix=self.rootSuffix, parent_under=self.parentUnder)
+        self.post_process(
+            new_nodes,
+            scale=self.scale,
+            suffix=self.rootSuffix,
+            parent_under=self.parentUnder,
+        )
 
     def save_action(self):
         """Mandatory method for all action modules"""
         pass
 
     def ui(self, ctrl, layout, handler, *args, **kwargs):
-
         vcs_lay = None
         override_vcs_cb = None
         path_available_in_vcs = False
@@ -80,33 +85,40 @@ class Import_asset(object):
             # _hold_lay.addStretch(1)
             layout.addRow(vcs_lbl, vcs_lay)
 
-            path_available_in_vcs = vcs_lay.set_path(ctrl.model.query_action(ctrl.action_name, "import_file_path"))
+            path_available_in_vcs = vcs_lay.set_path(
+                ctrl.model.query_action(ctrl.action_name, "import_file_path")
+            )
             # vcs_lay.path = ctrl.model.query_action(ctrl.action_name, "import_file_path")
 
             override_vcs_lbl = QtWidgets.QLabel(text="Override Version Control")
             override_vcs_cb = QtWidgets.QCheckBox(checked=not path_available_in_vcs)
             layout.addRow(override_vcs_lbl, override_vcs_cb)
 
-
-
-
-
-
         file_path_lbl = QtWidgets.QLabel(text="File Path")
         file_path_hLay = QtWidgets.QHBoxLayout()
         file_path_le = FileLineEdit()
         file_path_hLay.addWidget(file_path_le)
-        browse_path_pb = BrowserButton(mode="openFile", update_widget=file_path_le,
-                                                      filterExtensions=["All Supported (*.ma *.mb *.usd *.abc *.obj)",
-                                                                        "Maya ASCII (*.ma)", "Maya Binary (*.mb)",
-                                                                        "USD (*.usd)", "Alembic (*.abc)", "FBX (*.fbx)",
-                                                                        "OBJ (*.obj)",
-                                                                        ], overwrite_check=False)
+        browse_path_pb = BrowserButton(
+            mode="openFile",
+            update_widget=file_path_le,
+            filterExtensions=[
+                "All Supported (*.ma *.mb *.usd *.abc *.obj)",
+                "Maya ASCII (*.ma)",
+                "Maya Binary (*.mb)",
+                "USD (*.usd)",
+                "Alembic (*.abc)",
+                "FBX (*.fbx)",
+                "OBJ (*.obj)",
+            ],
+            overwrite_check=False,
+        )
         file_path_hLay.addWidget(browse_path_pb)
         layout.addRow(file_path_lbl, file_path_hLay)
 
         scale_lbl = QtWidgets.QLabel(text="Scale:")
-        scale_sp = QtWidgets.QDoubleSpinBox(buttonSymbols=QtWidgets.QAbstractSpinBox.NoButtons, maximum=999999.9)
+        scale_sp = QtWidgets.QDoubleSpinBox(
+            buttonSymbols=QtWidgets.QAbstractSpinBox.NoButtons, maximum=999999.9
+        )
         layout.addRow(scale_lbl, scale_sp)
 
         root_suffix_lbl = QtWidgets.QLabel(text="Root Suffix:")
@@ -136,7 +148,9 @@ class Import_asset(object):
             override_vcs_cb.stateChanged.connect(browse_path_pb.setEnabled)
         file_path_le.textChanged.connect(lambda x=0: ctrl.update_model())
         browse_path_pb.clicked.connect(lambda x=0: ctrl.update_model())
-        browse_path_pb.clicked.connect(file_path_le.validate)  # to validate on initial browse result
+        browse_path_pb.clicked.connect(
+            file_path_le.validate
+        )  # to validate on initial browse result
         scale_sp.valueChanged.connect(lambda x=0: ctrl.update_model())
         root_suffix_le.textChanged.connect(lambda x=0: ctrl.update_model())
         parent_under_suffix_le.textChanged.connect(lambda x=0: ctrl.update_model())
@@ -155,15 +169,24 @@ class Import_asset(object):
         if not update_only:
             cmds.AbcImport(file_path, ftr=False, sts=False)
         else:
-            cmds.AbcImport(file_path, connect="/", createIfNotFound=True, ftr=False, sts=False)
+            cmds.AbcImport(
+                file_path, connect="/", createIfNotFound=True, ftr=False, sts=False
+            )
         after = cmds.ls(long=True)
         new_nodes = [x for x in after if x not in pre]
         return new_nodes
 
     def import_usd(self, file_path, *args, **kwargs):
         self._load_usd_plugin()
-        new_nodes = cmds.file(file_path, i=True, type="USD Import", ignoreVersion=True, mergeNamespacesOnClash=False,
-                              rpr=True, returnNewNodes=True)
+        new_nodes = cmds.file(
+            file_path,
+            i=True,
+            type="USD Import",
+            ignoreVersion=True,
+            mergeNamespacesOnClash=False,
+            rpr=True,
+            returnNewNodes=True,
+        )
         return new_nodes
 
     def import_fbx(self, file_path, *args, **kwargs):
@@ -194,15 +217,17 @@ class Import_asset(object):
             "FBXImportUpAxis": "y",
             "FBXImportSkins": "-v true",
             "FBXImportConvertUnitString": "-v true",
-            "FBXImportForcedFileAxis": "-v disabled"
+            "FBXImportForcedFileAxis": "-v disabled",
         }
 
         for item in fbx_import_settings.items():
-            mel.eval('%s %s' % (item[0], item[1]))
+            mel.eval("%s %s" % (item[0], item[1]))
 
         try:
-            compFilePath = file_path.replace("\\", "//")  ## for compatibility with mel syntax.
-            cmd = ('FBXImport -f "{0}";'.format(compFilePath))
+            compFilePath = file_path.replace(
+                "\\", "//"
+            )  ## for compatibility with mel syntax.
+            cmd = 'FBXImport -f "{0}";'.format(compFilePath)
             mel.eval(cmd)
             after = cmds.ls(long=True)
             new_nodes = [x for x in after if x not in pre]
@@ -228,7 +253,9 @@ class Import_asset(object):
             for node in root_nodes:
                 temp_grp = cmds.group(name="trigger_temp_grp", em=True)
                 cmds.parent(node, temp_grp)
-                cmds.xform(temp_grp, s=(scale, scale, scale), piv=(0, 0, 0), ztp=True, p=True)
+                cmds.xform(
+                    temp_grp, s=(scale, scale, scale), piv=(0, 0, 0), ztp=True, p=True
+                )
                 cmds.makeIdentity(temp_grp, a=True, t=False, r=False, s=True)
                 cmds.parent(temp_grp + node, world=True)
                 cmds.delete(temp_grp)
@@ -257,7 +284,7 @@ class Import_asset(object):
 
     def _load_fbx_plugin(self):
         """Makes sure the FBX plugin is loaded"""
-        if not cmds.pluginInfo('fbxmaya', l=True, q=True):
+        if not cmds.pluginInfo("fbxmaya", l=True, q=True):
             try:
                 cmds.loadPlugin("fbxmaya")
             except:
@@ -265,7 +292,7 @@ class Import_asset(object):
 
     def _load_usd_plugin(self):
         """Makes sure the usd plugin loaded"""
-        if not cmds.pluginInfo('mayaUsdPlugin', l=True, q=True):
+        if not cmds.pluginInfo("mayaUsdPlugin", l=True, q=True):
             try:
                 cmds.loadPlugin("mayaUsdPlugin")
             except:

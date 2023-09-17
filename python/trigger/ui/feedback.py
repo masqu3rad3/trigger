@@ -4,10 +4,10 @@ from trigger.core import filelog
 log = filelog.Filelog(logname=__name__, filename="trigger_log")
 
 
-class Feedback():
+class Feedback:
     def __init__(self, *args, **kwargs):
         # super(Feedback, self).__init__()
-        self.parent=None
+        self.parent = None
 
     def pop_info(self, title="Info", text="", details="", critical=False):
         msg = QtWidgets.QMessageBox(parent=self.parent)
@@ -24,19 +24,24 @@ class Feedback():
         msg.button(QtWidgets.QMessageBox.Ok).setFixedWidth(100)
         return msg.exec_()
 
-    def pop_question(self, title="Question", text="", details="", buttons=["save", "no", "cancel"]):
+    def pop_question(
+        self, title="Question", text="", details="", buttons=["save", "no", "cancel"]
+    ):
         button_dict = {
             "yes": "QtWidgets.QMessageBox.Yes",
             "save": "QtWidgets.QMessageBox.Save",
             "ok": "QtWidgets.QMessageBox.Ok",
             "no": "QtWidgets.QMessageBox.No",
-            "cancel": "QtWidgets.QMessageBox.Cancel"
+            "cancel": "QtWidgets.QMessageBox.Cancel",
         }
         widgets = []
         for button in buttons:
             widget = button_dict.get(button)
             if not widget:
-                log.error("Non-valid button defined. Valid buttons are: %s" % button_dict.keys())
+                log.error(
+                    "Non-valid button defined. Valid buttons are: %s"
+                    % button_dict.keys()
+                )
             widgets.append(widget)
 
         q = QtWidgets.QMessageBox(parent=self.parent)
@@ -44,12 +49,11 @@ class Feedback():
         q.setWindowTitle(title)
         q.setText(text)
         q.setInformativeText(details)
-        eval('q.setStandardButtons(%s)' %(" | ".join(widgets)))
+        eval("q.setStandardButtons(%s)" % (" | ".join(widgets)))
         ret = q.exec_()
         for key, value in button_dict.items():
             if ret == eval(value):
                 return key
-
 
     # def infoPop(self, textTitle="info", textHeader="", textInfo="", type="I"):
     #     msg = QtWidgets.QMessageBox(parent=self.parent)

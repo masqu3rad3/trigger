@@ -13,6 +13,7 @@ from trigger.library import deformers
 
 log = filelog.Filelog(logname=__name__, filename="trigger_log")
 
+
 class Splitter(dict):
     def __init__(self):
         super(Splitter, self).__init__()
@@ -29,13 +30,16 @@ class Splitter(dict):
             # remove groups
             selection = filter(lambda x: functions.get_shapes(x), selection)
             # remove non-meshes
-            selection = filter(lambda x: cmds.objectType(functions.get_shapes(x)[0]) == "mesh", selection)
+            selection = filter(
+                lambda x: cmds.objectType(functions.get_shapes(x)[0]) == "mesh",
+                selection,
+            )
             self["matches"].update({mesh: [] for mesh in selection})
         else:
             self["matches"].update({mesh: [] for mesh in meshes})
 
     def add_splitmap(self, file_path, name=None):
-        file_path = os.path.normpath(file_path) # stupid slashes
+        file_path = os.path.normpath(file_path)  # stupid slashes
         name, _ = os.path.splitext(os.path.basename(file_path)) if not name else name
 
         # check for the negative map, create if does not exist
@@ -59,8 +63,11 @@ class Splitter(dict):
     def _bs_split(self, mesh, split_map_path, name, grp):
         splitted_mesh = cmds.duplicate(self.neutral, name=name)[0]
         cmds.blendShape(mesh, splitted_mesh, w=[0, 1], name="tmp_split_blendshape")
-        self.weightsHandler.load_weights(deformer="tmp_split_blendshape", file_path=split_map_path,
-                                         suppress_messages=True)
+        self.weightsHandler.load_weights(
+            deformer="tmp_split_blendshape",
+            file_path=split_map_path,
+            suppress_messages=True,
+        )
         cmds.delete(splitted_mesh, ch=True)
         cmds.parent(splitted_mesh, grp)
         return splitted_mesh
@@ -117,7 +124,9 @@ class Splitter(dict):
             for nmb, map_path in enumerate(map_paths):
                 # resolve the name suffix
                 splitted_name = self._resolve_split_name(shape, map_path)
-                splitted_mesh = self._bs_split(shape, map_path, splitted_name, self.splittedShapesGrp)
+                splitted_mesh = self._bs_split(
+                    shape, map_path, splitted_name, self.splittedShapesGrp
+                )
 
                 if len(split_maps) > 1:
                     mort_list.append(splitted_mesh)
@@ -148,10 +157,9 @@ class Splitter(dict):
         if type(split_maps) == str:
             split_maps = [split_maps]
         for map in split_maps:
-            local_target = deformers.localize(mesh, "splitMaps_blendshape", local_target_name=map)
+            local_target = deformers.localize(
+                mesh, "splitMaps_blendshape", local_target_name=map
+            )
             functions.delete_object(functions.get_parent(local_target))
 
         return bs_name
-
-
-

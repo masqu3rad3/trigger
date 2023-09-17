@@ -6,9 +6,10 @@
 from PySide2 import QtWidgets, QtCore
 from trigger import version_control
 
-class TaskSelection(QtWidgets.QVBoxLayout):
 
+class TaskSelection(QtWidgets.QVBoxLayout):
     task_changed_signal = QtCore.Signal(str)
+
     def __init__(self):
         super(TaskSelection, self).__init__()
 
@@ -17,7 +18,9 @@ class TaskSelection(QtWidgets.QVBoxLayout):
         else:
             self.sgh = version_control.controller.VersionControl()
 
-        self.size_policy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        self.size_policy = QtWidgets.QSizePolicy(
+            QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding
+        )
         self.size_policy.setHorizontalStretch(0)
         self.size_policy.setVerticalStretch(0)
 

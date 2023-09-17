@@ -56,15 +56,15 @@ class UserSettings(object):
         if data:
             for key, value in data.items():
                 if UserSettings.__dict__.get(key):
-                    exec("self." + key + '=value')
+                    exec("self." + key + "=value")
             self.compareData = deepcopy(data)
         else:
             self.apply()
 
     def _parse_to_dict(self):
         data = deepcopy(self.__dict__)
-        data.pop('handler', None)
-        data.pop('compareData', None)
+        data.pop("handler", None)
+        data.pop("compareData", None)
         return data
         # self.handler.write(data)
 

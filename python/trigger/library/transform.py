@@ -47,7 +47,9 @@ def query_limits(node, attribute):
         node(str): Name of node to quert limits.
         attribute(str): Name of transform attribute to query limits.
     """
-    log.warning("transform.query_limits is deprecated. Use attribute.query_limits instead")
+    log.warning(
+        "transform.query_limits is deprecated. Use attribute.query_limits instead"
+    )
     enabled_flag_dict = {
         "translateX": {"etx": True},
         "tx": {"etx": True},
@@ -93,7 +95,9 @@ def query_limits(node, attribute):
         limits = cmds.transformLimits(node, q=True, **limits_flag_dict[attribute])
         return state, limits
     else:
-        log.error("query_limits error. %s is not a valid transform attribute" % attribute)
+        log.error(
+            "query_limits error. %s is not a valid transform attribute" % attribute
+        )
 
 
 def free_limits(node, attr_list=None):
@@ -139,7 +143,10 @@ def validate_group(group_name):
         if is_group(group_name):
             return group_name
         else:
-            log.error("%s is not a valid group name. There is another non-group object with the same same" % group_name)
+            log.error(
+                "%s is not a valid group name. There is another non-group object with the same same"
+                % group_name
+            )
     else:
         return cmds.group(name=group_name, em=True)
 
@@ -187,12 +194,15 @@ def get_color(node):
                     28: (0.188, 0.631, 0.631),
                     29: (0.188, 0.404, 0.631),
                     30: (0.435, 0.188, 0.631),
-                    31: (0.631, 0.188, 0.412)
+                    31: (0.631, 0.188, 0.412),
                 }
                 return color_ids[_color_id]
     else:
         # check for the shapes
-        _shapes = cmds.listRelatives(node, c=True, shapes=True, path=True, fullPath=True) or []
+        _shapes = (
+            cmds.listRelatives(node, c=True, shapes=True, path=True, fullPath=True)
+            or []
+        )
         for shape in _shapes:
             _color = get_color(shape)
     return _color

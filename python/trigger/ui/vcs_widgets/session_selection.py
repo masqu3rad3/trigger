@@ -1,13 +1,16 @@
 """Custom shotgrid control widget for selecting trigger sessions and versions """
 
 from trigger.ui.Qt import QtWidgets, QtCore
+
 # from PySide2 import QtWidgets, QtCore
 from trigger import version_control
+
 
 class SessionSelection(QtWidgets.QHBoxLayout):
     new_session_signal = QtCore.Signal(str)
     increment_version_signal = QtCore.Signal(str)
     session_changed_signal = QtCore.Signal(str)
+
     def __init__(self):
         super(SessionSelection, self).__init__()
 
@@ -20,8 +23,12 @@ class SessionSelection(QtWidgets.QHBoxLayout):
         self.asset_combo = self.__insert_single_combo(self, "Asset")
         self.step_combo = self.__insert_single_combo(self, "Step")
         self.task_combo = self.__insert_single_combo(self, "Task")
-        self.session_combo, self.new_session_pb = self.__insert_combo_with_add_button(self, "Session")
-        self.version_combo, self.new_version_pb = self.__insert_combo_with_add_button(self, "Version")
+        self.session_combo, self.new_session_pb = self.__insert_combo_with_add_button(
+            self, "Session"
+        )
+        self.version_combo, self.new_version_pb = self.__insert_combo_with_add_button(
+            self, "Version"
+        )
 
         # self.parent_widget = QtWidgets.QWidget()
         # self.addWidget(self.parent_widget)
@@ -57,7 +64,9 @@ class SessionSelection(QtWidgets.QHBoxLayout):
     def new_session_dialog(self):
         # w = QtWidgets.QWidget()
         # self.addWidget(w)
-        new_session_name, ok = QtWidgets.QInputDialog.getText(self.asset_type_combo, "New Session", "Enter new session name:")
+        new_session_name, ok = QtWidgets.QInputDialog.getText(
+            self.asset_type_combo, "New Session", "Enter new session name:"
+        )
         # new_session_name, ok = QtWidgets.QInputDialog.getText(self.parent_widget, "New Session", "Enter new session name:")
         # new_session_name, ok = QtWidgets.QInputDialog.getText(w, "New Session", "Enter new session name:")
         if ok:
@@ -150,7 +159,9 @@ class SessionSelection(QtWidgets.QHBoxLayout):
         self.session_combo.clear()
         asset = self.sgh.asset or self.asset_combo.currentText()
         step = self.sgh.step or self.step_combo.currentText()
-        variant = self.sgh.variant or self.sgh._variant_from_task(self.task_combo.currentText())
+        variant = self.sgh.variant or self.sgh._variant_from_task(
+            self.task_combo.currentText()
+        )
         self.session_combo.addItems(self.sgh.get_sessions(asset, step, variant))
         if self.sgh.session:
             self.session_combo.setCurrentText(self.sgh.session)
@@ -180,12 +191,16 @@ class SessionSelection(QtWidgets.QHBoxLayout):
         self.version_combo.clear()
         asset = self.sgh.asset or self.asset_combo.currentText()
         step = self.sgh.step or self.step_combo.currentText()
-        variant = self.sgh.variant or self.sgh._variant_from_task(self.task_combo.currentText())
+        variant = self.sgh.variant or self.sgh._variant_from_task(
+            self.task_combo.currentText()
+        )
         session = self.sgh.session or self.session_combo.currentText()
-        _int_version_list = sorted(self.sgh.get_session_versions(asset, step, variant, session))
-        _str_version_list = ([str(x) for x in _int_version_list])
+        _int_version_list = sorted(
+            self.sgh.get_session_versions(asset, step, variant, session)
+        )
+        _str_version_list = [str(x) for x in _int_version_list]
         self.version_combo.addItems(_str_version_list)
-        last_version = self.version_combo.count()-1
+        last_version = self.version_combo.count() - 1
         self.version_combo.setCurrentIndex(last_version)
         # self.sgh.session_version = last_version
         self.__validate_button_states()
@@ -220,7 +235,3 @@ class SessionSelection(QtWidgets.QHBoxLayout):
         if self.version_combo.currentText():
             self.sgh.session_version = int(self.version_combo.currentText())
             self.session_changed_signal.emit(self.sgh.get_session_path())
-
-
-
-

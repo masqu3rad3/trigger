@@ -10,7 +10,7 @@ def get_file_nodes(mesh_transforms):
     return_list = []
     for transform in mesh_transforms:
         # Get the shading group from the selected mesh
-        shading_groups = cmds.listConnections(transform, type='shadingEngine')
+        shading_groups = cmds.listConnections(transform, type="shadingEngine")
         if not shading_groups:
             continue
         all_inputs = []
@@ -32,7 +32,9 @@ def find_file_node(plug):
     if cmds.objectType(connected_node) == "file":
         return connected_node[0]
     else:
-        connections = cmds.listConnections(connected_node, source=True, destination=False, plugs=True, connections=True)
+        connections = cmds.listConnections(
+            connected_node, source=True, destination=False, plugs=True, connections=True
+        )
         if connections:
             active_plugs = connections[::2]
             for sub_plug in active_plugs:
@@ -52,15 +54,17 @@ def get_shading_groups(mesh):
 def get_shaders(mesh):
     """Return all shaders connected to the given mesh"""
     shading_engines = get_shading_groups(mesh)
-    shaders = (cmds.ls(cmds.listConnections(shading_engines), materials=True))
+    shaders = cmds.ls(cmds.listConnections(shading_engines), materials=True)
     return shaders
 
 
 def get_all_materials():
     """Return all materials IN USE."""
-    for shading_engine in cmds.ls(type='shadingEngine'):
+    for shading_engine in cmds.ls(type="shadingEngine"):
         if cmds.sets(shading_engine, q=True):
-            for material in cmds.ls(cmds.listConnections(shading_engine), materials=True):
+            for material in cmds.ls(
+                cmds.listConnections(shading_engine), materials=True
+            ):
                 yield material
 
 
@@ -78,16 +82,22 @@ def assign_shader(shader, mesh=None, shading_group=None):
             cmds.connectAttr("%s.outColor" % shader, "%s.surfaceShader" % sg, f=True)
             cmds.sets(mesh, e=True, forceElement=sg)
     elif shading_group:
-        cmds.connectAttr("%s.outColor" % shader, "%s.surfaceShader" % shading_group, f=True)
+        cmds.connectAttr(
+            "%s.outColor" % shader, "%s.surfaceShader" % shading_group, f=True
+        )
     else:
-        raise Exception("Only one of the mesh or shading_group arguments should be defined")
+        raise Exception(
+            "Only one of the mesh or shading_group arguments should be defined"
+        )
 
 
 @keepselection
 def create_shading_engine(mesh, name=None):
     """Create a new shading engine and connect it to the given mesh."""
     name = name or "%s_SG" % mesh
-    shading_group = cmds.sets(renderable=True, noSurfaceShader=True, empty=True, name=name)
+    shading_group = cmds.sets(
+        renderable=True, noSurfaceShader=True, empty=True, name=name
+    )
     return shading_group
 
 
@@ -97,15 +107,26 @@ def collect_material_database():
     Note that, this function ONLY collects the shader attribute values as it is. It does not collect
     any connected node information like ramp, file etc.
     """
-    excluded_mats = ['lambert1', 'standardSurface1', 'particleCloud1']
-    excluded_attrs = ['message', 'caching', 'frozen', 'isHistoricallyInteresting', 'nodeState', 'binMembership', ]
+    excluded_mats = ["lambert1", "standardSurface1", "particleCloud1"]
+    excluded_attrs = [
+        "message",
+        "caching",
+        "frozen",
+        "isHistoricallyInteresting",
+        "nodeState",
+        "binMembership",
+    ]
     all_materials = [mat for mat in cmds.ls(materials=True) if mat not in excluded_mats]
 
     material_dict = {}
     for mat in all_materials:
         material_dict[mat] = {}
         material_dict[mat]["shaderType"] = cmds.objectType(mat)
-        all_attrs = [attr for attr in cmds.listAttr(mat, visible=True) if attr not in excluded_attrs]
+        all_attrs = [
+            attr
+            for attr in cmds.listAttr(mat, visible=True)
+            if attr not in excluded_attrs
+        ]
         for attr in all_attrs:
             material_dict[mat][attr] = cmds.getAttr("{0}.{1}".format(mat, attr))
     return material_dict

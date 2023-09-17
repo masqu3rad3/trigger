@@ -19,6 +19,7 @@ from trigger.core.decorators import keepselection
 from trigger.library import selection, naming
 from trigger.ui import feedback
 
+
 @keepselection
 def skin_transfer(source=None, target=None, continue_on_errors=False):
     """
@@ -30,10 +31,14 @@ def skin_transfer(source=None, target=None, continue_on_errors=False):
     """
 
     if not source or not target:
-        #Get selected objects and find the skin cluster on the first one.
-        sel, msg = selection.validate(minimum=2, maximum=2, meshes_only=True, transforms=True)
+        # Get selected objects and find the skin cluster on the first one.
+        sel, msg = selection.validate(
+            minimum=2, maximum=2, meshes_only=True, transforms=True
+        )
         if not sel:
-            feedback.Feedback().pop_info(title="Selection Error", text=msg, critical=True)
+            feedback.Feedback().pop_info(
+                title="Selection Error", text=msg, critical=True
+            )
             return
         source = sel[0]
         target = sel[1]
@@ -45,8 +50,8 @@ def skin_transfer(source=None, target=None, continue_on_errors=False):
     targetSkinClusters = cmds.ls(targetObjHist, type="skinCluster")
 
     # if there is no skin cluster on the first object do not continue
-    if (len(sourceSkinClusters)<1):
-        msg =" There is no skin cluster on the source object"
+    if len(sourceSkinClusters) < 1:
+        msg = " There is no skin cluster on the source object"
         if continue_on_errors:
             cmds.warning(msg)
             return
@@ -54,9 +59,9 @@ def skin_transfer(source=None, target=None, continue_on_errors=False):
             feedback.Feedback().pop_info(title="Error", text=msg)
             raise
 
-    if (len(targetSkinClusters)>1):
+    if len(targetSkinClusters) > 1:
         msg = "There is more than one skin clusters on the target object"
-        cmds.error ("There is more than one skin clusters on the target object")
+        cmds.error("There is more than one skin clusters on the target object")
         if continue_on_errors:
             cmds.warning(msg)
             return
@@ -64,35 +69,64 @@ def skin_transfer(source=None, target=None, continue_on_errors=False):
             feedback.Feedback().pop_info(title="Error", text=msg)
             raise
 
-    allInfluences=cmds.skinCluster(sourceSkinClusters[0], query=True, weightedInfluence=True)
-
+    allInfluences = cmds.skinCluster(
+        sourceSkinClusters[0], query=True, weightedInfluence=True
+    )
 
     ## add skin cluster for each shape under the transform node
-    allTransform = cmds.listRelatives(target, children=True, allDescendents=True, type="transform")
+    allTransform = cmds.listRelatives(
+        target, children=True, allDescendents=True, type="transform"
+    )
     # if the selected object has other transform nodes under it (if it is a group)
     if allTransform:
         for transform in allTransform:
-            #if the node already has a skinCluster
+            # if the node already has a skinCluster
             shapeObjHist = cmds.listHistory(transform, pruneDagObjects=True)
             shapeSkinClusters = cmds.ls(shapeObjHist, type="skinCluster")
             print("presentSkinClusters", shapeSkinClusters)
             # If there is exactly one skin cluster connected to the target, continue with a simple copySkinWeights
             if len(shapeSkinClusters) == 1:
-                cmds.copySkinWeights (source, transform, noMirror=True, surfaceAssociation="closestPoint", influenceAssociation="closestJoint", normalize=True)
-                sys.stdout.write('Success...')
+                cmds.copySkinWeights(
+                    source,
+                    transform,
+                    noMirror=True,
+                    surfaceAssociation="closestPoint",
+                    influenceAssociation="closestJoint",
+                    normalize=True,
+                )
+                sys.stdout.write("Success...")
                 return shapeSkinClusters
             # eliminate the ones without shape (eliminate the groups under the group)
             if transform.getShape() != None:
                 sc = cmds.skinCluster(allInfluences, transform, toSelectedBones=True)
-                cmds.copySkinWeights (source, transform, noMirror=True, surfaceAssociation="closestPoint", influenceAssociation="closestJoint", normalize=True)
-                sys.stdout.write('Success...')
+                cmds.copySkinWeights(
+                    source,
+                    transform,
+                    noMirror=True,
+                    surfaceAssociation="closestPoint",
+                    influenceAssociation="closestJoint",
+                    normalize=True,
+                )
+                sys.stdout.write("Success...")
                 return shapeSkinClusters
     else:
-        if len(targetSkinClusters)==0:
+        if len(targetSkinClusters) == 0:
             # sc = cmds.skinCluster(allInfluences, target, tsb=True, name="%s_skincluster" %naming.get_part_name(target))
-            sc = cmds.skinCluster(allInfluences, target, toSelectedBones=True, name="%s_skinCluster" % target.split("|")[-1])
+            sc = cmds.skinCluster(
+                allInfluences,
+                target,
+                toSelectedBones=True,
+                name="%s_skinCluster" % target.split("|")[-1],
+            )
         else:
             sc = targetSkinClusters
-        cmds.copySkinWeights (source, target, noMirror=True, surfaceAssociation="closestPoint", influenceAssociation="closestJoint", normalize=True)
-        sys.stdout.write('Success...')
+        cmds.copySkinWeights(
+            source,
+            target,
+            noMirror=True,
+            surfaceAssociation="closestPoint",
+            influenceAssociation="closestJoint",
+            normalize=True,
+        )
+        sys.stdout.write("Success...")
         return sc

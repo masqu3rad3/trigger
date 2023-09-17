@@ -13,20 +13,20 @@ LOG = filelog.Filelog(logname=__name__, filename="trigger_log")
 
 
 class IO(dict):
-    def __init__(self,
-                 file_name=None,
-                 folder_name=None,
-                 root_path=None,
-                 file_path=None):
+    def __init__(
+        self, file_name=None, folder_name=None, root_path=None, file_path=None
+    ):
         super(IO, self).__init__()
-        self.extensions = [".json",
-                           ".tr",
-                           ".trg",
-                           ".trw",
-                           ".trs",
-                           ".trl",
-                           ".trsplit",
-                           ".trp"]
+        self.extensions = [
+            ".json",
+            ".tr",
+            ".trg",
+            ".trw",
+            ".trs",
+            ".trl",
+            ".trsplit",
+            ".trp",
+        ]
         self.default_extension = ".json"
         if file_path:
             self.file_path = file_path
@@ -34,11 +34,9 @@ class IO(dict):
             self.folder_name = folder_name or ""
             if not root_path:
                 self.root_path = os.path.normpath(os.path.expanduser("~"))
-            self.file_path = os.path.join(self.root_path,
-                                          self.folder_name,
-                                          file_name)
+            self.file_path = os.path.join(self.root_path, self.folder_name, file_name)
         else:
-            LOG.error('IO initialization error. Define name or file_path')
+            LOG.error("IO initialization error. Define name or file_path")
 
     @property
     def file_path(self):
@@ -54,14 +52,14 @@ class IO(dict):
             LOG.error("IO module needs to know the extension")
             raise Exception
         if ext not in self.extensions:
-            LOG.error("IO maya_modules does not support this extension ({})"
-                      .format(ext))
+            LOG.error(
+                "IO maya_modules does not support this extension ({})".format(ext)
+            )
             raise Exception
         if directory:
             self["file_path"] = self.folder_check(new_path)
         else:
-            self["file_path"] = os.path.join(
-                self.root_path, self.folder_name, new_path)
+            self["file_path"] = os.path.join(self.root_path, self.folder_name, new_path)
 
     def read(self, file_path=None):
         """Read and returns the data stored in file path"""
@@ -91,7 +89,7 @@ class IO(dict):
         """Load the given json file."""
         if os.path.isfile(file_path):
             try:
-                with open(file_path, 'r') as f:
+                with open(file_path, "r") as f:
                     data = json.load(f)
                     return data
             except ValueError:
@@ -104,7 +102,7 @@ class IO(dict):
     def _dump_json(data, file_path):
         """Save the data to the json file."""
         name, ext = os.path.splitext(compat.encode(file_path))
-        temp_file = ("{0}.tmp".format(name))
+        temp_file = "{0}.tmp".format(name)
         with open(temp_file, "w") as f:
             json.dump(data, f, indent=4)
         shutil.copyfile(temp_file, file_path)

@@ -1,5 +1,6 @@
 import collections
 
+
 def flatten(l):
     for el in l:
         if isinstance(el, collections.Iterable) and not isinstance(el, basestring):

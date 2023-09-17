@@ -17,7 +17,9 @@ LOG = logging.getLogger(__name__)
 class MocapMapper(object):
     """Mocap mapper for importing motion capture data from an FBX file."""
 
-    def __init__(self, anim_fbx_file=None, bind_pose_fbx_file=None, keep_fbx=False, bake=True):
+    def __init__(
+        self, anim_fbx_file=None, bind_pose_fbx_file=None, keep_fbx=False, bake=True
+    ):
         """Initialize the mocap mapper.
 
         Args:
@@ -25,13 +27,15 @@ class MocapMapper(object):
             mapping (dict): Mapping of the FBX file to the scene.
 
         """
-        self.bind_pose_fbx = self._validate_file(bind_pose_fbx_file) if bind_pose_fbx_file else None
+        self.bind_pose_fbx = (
+            self._validate_file(bind_pose_fbx_file) if bind_pose_fbx_file else None
+        )
         self.anim_fbx = self._validate_file(anim_fbx_file) if anim_fbx_file else None
         self.keep_fbx = keep_fbx
         self.bake = bake
         self.mapping = None
         self.mappings_dictionary = None
-        self._get_mappings() # get the available mappings
+        self._get_mappings()  # get the available mappings
 
         # set the first mapping as the default (if available)
         if self.mappings_dictionary:
@@ -122,7 +126,7 @@ class MocapMapper(object):
         mapping_path = self.mappings_dictionary[mapping_name]
         if os.path.isfile(mapping_path):
             try:
-                with open(mapping_path, 'r') as f:
+                with open(mapping_path, "r") as f:
                     self.mapping = json.load(f)
                     return True
             except ValueError:
@@ -149,19 +153,23 @@ class MocapMapper(object):
                     pass
 
         if self.bind_pose_fbx:
-            bind_pose_nodes = fbx.load(self.bind_pose_fbx, merge_mode="add", animation=False, skins=True)
+            bind_pose_nodes = fbx.load(
+                self.bind_pose_fbx, merge_mode="add", animation=False, skins=True
+            )
         else:
             bind_pose_nodes = []
 
         self._stick_to_joints()
 
-        anim_nodes = fbx.load(self.anim_fbx, merge_mode="merge", animation=True, skins=True)
+        anim_nodes = fbx.load(
+            self.anim_fbx, merge_mode="merge", animation=True, skins=True
+        )
 
         if self.bake:
             self._bake_ctrls()
 
         if not self.keep_fbx:
-        # cmds.delete(cmds.ls("TRIGGER_MOCAP_IMPORT*"))
+            # cmds.delete(cmds.ls("TRIGGER_MOCAP_IMPORT*"))
             all_nodes = list(set(bind_pose_nodes + anim_nodes))
             cmds.delete(all_nodes)
 
@@ -184,12 +192,22 @@ class MocapMapper(object):
                     # connection.matrixConstraint(joint, cont, maintainOffset=True, skipRotate=skip_rotate, skipTranslate=skip_translate, prefix="TRIGGER_MOCAP_IMPORT")
                     # cmds.parentConstraint(joint, cont, maintainOffset=True, skipRotate=skip_rotate, skipTranslate=skip_translate)
                     # if cmds.objExists(joint) and cmds.objExists(cont):
-                    locked_translates_raw = cmds.listAttr("%s.t" % cont, locked=True, shortNames=True)
-                    locked_translates = [attr.replace("t", "") for attr in
-                                         locked_translates_raw] if locked_translates_raw else []
-                    locked_rotates_raw = cmds.listAttr("%s.r" % cont, locked=True, shortNames=True)
-                    locked_rotates = [attr.replace("r", "") for attr in
-                                      locked_rotates_raw] if locked_rotates_raw else []
+                    locked_translates_raw = cmds.listAttr(
+                        "%s.t" % cont, locked=True, shortNames=True
+                    )
+                    locked_translates = (
+                        [attr.replace("t", "") for attr in locked_translates_raw]
+                        if locked_translates_raw
+                        else []
+                    )
+                    locked_rotates_raw = cmds.listAttr(
+                        "%s.r" % cont, locked=True, shortNames=True
+                    )
+                    locked_rotates = (
+                        [attr.replace("r", "") for attr in locked_rotates_raw]
+                        if locked_rotates_raw
+                        else []
+                    )
                     # add the locked attributes to the skip list if it is not already there
                     for attr in locked_translates:
                         if attr not in skip_translate:
@@ -198,7 +216,13 @@ class MocapMapper(object):
                         if attr not in skip_rotate:
                             skip_rotate.append(attr)
 
-                    cmds.parentConstraint(joint, cont, maintainOffset=True, skipTranslate=skip_translate, skipRotate=skip_rotate)
+                    cmds.parentConstraint(
+                        joint,
+                        cont,
+                        maintainOffset=True,
+                        skipTranslate=skip_translate,
+                        skipRotate=skip_rotate,
+                    )
 
     def _bake_ctrls(self):
         """Bake the controllers."""
@@ -209,11 +233,13 @@ class MocapMapper(object):
             for joint, cont in data.items():
                 if cmds.objExists(joint) and cmds.objExists(cont):
                     first = cmds.findKeyframe(joint, which="first")
-                    last = cmds.findKeyframe(joint, which="last") + 1 # makes sure round up
+                    last = (
+                        cmds.findKeyframe(joint, which="last") + 1
+                    )  # makes sure round up
                     all_controllers.append(cont)
                     first_keys.append(first)
                     last_keys.append(last)
 
         first = min(first_keys)
         last = max(last_keys)
-        cmds.bakeResults(all_controllers, time=(first-1, last), simulation=True)
+        cmds.bakeResults(all_controllers, time=(first - 1, last), simulation=True)

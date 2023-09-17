@@ -18,6 +18,7 @@ ACTION_DATA = {
     "look_file_path": "",
 }
 
+
 # Name of the class MUST be the capitalized version of file name. eg. morph.py => Morph, split_shapes.py => Split_shapes
 class Look(object):
     def __init__(self, *args, **kwargs):

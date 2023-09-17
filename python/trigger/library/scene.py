@@ -2,6 +2,7 @@
 
 from maya import cmds
 
+
 def reset():
     """Reset the scene to a clean state and preserve the perspective camera."""
     # get the camera matrix before deleting everything

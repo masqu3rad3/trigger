@@ -23,7 +23,7 @@ class ActionsSession(dict):
         self.currentFile = None
         self.action_data_dict = {}
         for mod in actions.__all__:
-            self.action_data_dict[mod] = eval('actions.{0}.ACTION_DATA'.format(mod))
+            self.action_data_dict[mod] = eval("actions.{0}.ACTION_DATA".format(mod))
 
         """
         Structure:
@@ -146,7 +146,7 @@ class ActionsSession(dict):
             "name": action_name,
             "type": action_type,
             "data": deepcopy(self.action_data_dict.get(action_type)),
-            "enabled": True
+            "enabled": True,
         }
         if insert_index == None:
             self["actions"].append(action)
@@ -210,10 +210,13 @@ class ActionsSession(dict):
         """
         action = self.get_action(action_name)
         if action:
-            defaults=self.action_data_dict[action["type"]]
+            defaults = self.action_data_dict[action["type"]]
             current_value = action["data"].get(property, defaults.get(property))
             if current_value == None:
-                msg = "The property '%s' does not exist in %s ACTION_DATA" % (property, action["type"])
+                msg = "The property '%s' does not exist in %s ACTION_DATA" % (
+                    property,
+                    action["type"],
+                )
                 LOG.error(msg)
                 raise Exception(msg)
             if compat.is_string(new_value):
@@ -221,7 +224,10 @@ class ActionsSession(dict):
             if compat.is_string(current_value):
                 current_value = str(current_value)
             if type(current_value) != type(new_value):
-                msg = "%s property only accepts %s values" % (property, str(type(current_value)))
+                msg = "%s property only accepts %s values" % (
+                    property,
+                    str(type(current_value)),
+                )
                 LOG.error(msg)
                 raise Exception(msg)
 
@@ -235,10 +241,13 @@ class ActionsSession(dict):
     def query_action(self, action_name, property):
         action = self.get_action(action_name)
         if action:
-            defaults=self.action_data_dict[action["type"]]
+            defaults = self.action_data_dict[action["type"]]
             current_value = action["data"].get(property, defaults.get(property))
             if current_value == None:
-                LOG.error("The property '%s' does not exist in %s ACTION_DATA" % (property, action["type"]))
+                LOG.error(
+                    "The property '%s' does not exist in %s ACTION_DATA"
+                    % (property, action["type"])
+                )
             else:
                 return current_value
         else:
@@ -291,7 +300,9 @@ class ActionsSession(dict):
 
     def get_info(self, action_name):
         action = self.get_action(action_name)
-        action_cmd = "actions.{0}.{1}()".format(action["type"], action["type"].capitalize())
+        action_cmd = "actions.{0}.{1}()".format(
+            action["type"], action["type"].capitalize()
+        )
         a_hand = eval(action_cmd)
         # backward compatibility for v2.0.0
         try:
@@ -302,7 +313,9 @@ class ActionsSession(dict):
     @tracktime
     def _action(self, action):
         LOG.header("%s" % action["name"])
-        action_cmd = "actions.{0}.{1}()".format(action["type"], action["type"].capitalize())
+        action_cmd = "actions.{0}.{1}()".format(
+            action["type"], action["type"].capitalize()
+        )
         a_hand = eval(action_cmd)
         a_hand.feed(action["data"])
         a_hand.action()
@@ -325,7 +338,10 @@ class ActionsSession(dict):
                     self.progressListwidget.setCurrentRow(-1)
                     self.progressListwidget.activateItem(row)
 
-                    self.progressListwidget.scrollToItem(self.progressListwidget.item(row), QtWidgets.QAbstractItemView.EnsureVisible)
+                    self.progressListwidget.scrollToItem(
+                        self.progressListwidget.item(row),
+                        QtWidgets.QAbstractItemView.EnsureVisible,
+                    )
                     QtWidgets.QApplication.processEvents()
                 try:
                     self._action(action)
@@ -345,7 +361,9 @@ class ActionsSession(dict):
         try:
             self._action(action)
             if self.progressListwidget:
-                self.progressListwidget.successItem(self.progressListwidget.currentRow())
+                self.progressListwidget.successItem(
+                    self.progressListwidget.currentRow()
+                )
         except Exception as e:
             if self.progressListwidget:
                 self.progressListwidget.errorItem(self.progressListwidget.currentRow())
@@ -356,7 +374,9 @@ class ActionsSession(dict):
     def run_save_action(self, action_name):
         LOG.info("saving Action Data")
         action = self.get_action(action_name)
-        action_cmd = "actions.{0}.{1}()".format(action["type"], action["type"].capitalize())
+        action_cmd = "actions.{0}.{1}()".format(
+            action["type"], action["type"].capitalize()
+        )
         a_hand = eval(action_cmd)
         a_hand.feed(action["data"])
         a_hand.save_action()
@@ -365,6 +385,8 @@ class ActionsSession(dict):
 
     def get_layout_ui(self, action_name, ctrl, layout):
         action = self.get_action(action_name)
-        action_cmd = "actions.{0}.{1}()".format(action["type"], action["type"].capitalize())
+        action_cmd = "actions.{0}.{1}()".format(
+            action["type"], action["type"].capitalize()
+        )
         a_hand = eval(action_cmd)
         a_hand.ui(ctrl, layout, self)

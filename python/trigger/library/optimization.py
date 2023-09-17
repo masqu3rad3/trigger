@@ -4,7 +4,9 @@ from maya import cmds
 from trigger.library import arithmetic as ar
 
 
-def switch_connections(switch, override_switch, kill_nodes, switch_on_visibles, switch_on_invisibles):
+def switch_connections(
+    switch, override_switch, kill_nodes, switch_on_visibles, switch_on_invisibles
+):
     """
     Create visibility and nodeState connections between controllers and nodes.
 
@@ -23,15 +25,17 @@ def switch_connections(switch, override_switch, kill_nodes, switch_on_visibles, 
 
     """
     switch_n = ar.reverse(switch)
-    condition_node = ar.if_else(override_switch, "==", 1, 1, switch_n, return_plug=False)
+    condition_node = ar.if_else(
+        override_switch, "==", 1, 1, switch_n, return_plug=False
+    )
     cmds.setAttr("%s.colorIfTrueG" % condition_node, 1)
     cmds.setAttr("%s.colorIfTrueB" % condition_node, 0)
     cmds.connectAttr(switch, "%s.colorIfFalseG" % condition_node)
     cmds.connectAttr(switch, "%s.colorIfFalseB" % condition_node)
 
-    switch_on_invisible_p = ("%s.outColorR" % condition_node)
-    switch_on_visible_p = ("%s.outColorG" % condition_node)
-    switch_on_kill_p = ("%s.outColorB" % condition_node)
+    switch_on_invisible_p = "%s.outColorR" % condition_node
+    switch_on_visible_p = "%s.outColorG" % condition_node
+    switch_on_kill_p = "%s.outColorB" % condition_node
 
     for node in switch_on_visibles:
         cmds.connectAttr(switch_on_visible_p, "%s.v" % node)

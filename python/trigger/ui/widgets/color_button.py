@@ -44,10 +44,10 @@ class ColorButton(QtWidgets.QPushButton):
         if rgb:
             pass
         elif normalized_rgb:
-            rgb = tuple(int(x*255) for x in normalized_rgb)
+            rgb = tuple(int(x * 255) for x in normalized_rgb)
         elif hex:
             _hex = hex.lstrip("#")
-            rgb = tuple(int(_hex[i:i+2], 16) for i in (0, 2, 4))
+            rgb = tuple(int(_hex[i : i + 2], 16) for i in (0, 2, 4))
         self._color.setRgb(*rgb)
         self._update_button_color()
 
@@ -56,7 +56,7 @@ class ColorButton(QtWidgets.QPushButton):
 
     def getNormalized(self):
         _rgb = self._color.getRgb()
-        return tuple(x/255 for x in _rgb)
+        return tuple(x / 255 for x in _rgb)
 
     def _update_button_color(self):
         self.setStyleSheet("background-color:rgb{0}".format(self._color.getRgb()))
