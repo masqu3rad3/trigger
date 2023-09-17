@@ -318,6 +318,13 @@ def delete_intermediates(transform_node):
         if cmds.getAttr("%s.intermediateObject" % shape) == 1:
             delete_object(shape)
 
+def duplicate_clean(node, name=None):
+    """Duplicate a clean version of the given transform without any intermediate shapes."""
+    if not name:
+        name = naming.unique_name("%s_dup" % node)
+    dup = cmds.duplicate(node, name=name)[0]
+    delete_intermediates(dup)
+    return dup
 
 def delete_object(keyword, force=True):
     """
