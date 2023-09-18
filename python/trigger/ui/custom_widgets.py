@@ -269,16 +269,6 @@ class LineEditBoxLayout(ListBoxLayout):
         *args,
         **kwargs
     ):
-        # buttonsPosition = "left"
-        # alignment=None
-        # # buttonAdd=False
-        # # buttonNew=True
-        # # buttonRename=True
-        # # buttonGet=True
-        # # buttonUp=False
-        # # buttonDown=False
-        # # buttonRemove=True
-        # # buttonClear=True
         super(LineEditBoxLayout, self).__init__(
             buttonNew=buttonNew,
             buttonRename=buttonRename,
@@ -304,6 +294,8 @@ class TreeBoxLayout(ListBoxLayout):
     def init_widget(self):
         # override the widget with tree widget
         self.viewWidget = QtWidgets.QTreeWidget()
+        # make is sortable
+        self.viewWidget.setSortingEnabled(True)
 
     def _on_new(self):
         dialog = QtWidgets.QDialog()
@@ -340,6 +332,20 @@ class TreeBoxLayout(ListBoxLayout):
 
     def _add_tree_item(self, key, value_list):
         topLevel = QtWidgets.QTreeWidgetItem([key])
+        # if the topLevel item exists, only update the value list
+        for item in range(self.viewWidget.topLevelItemCount()):
+            item = self.viewWidget.topLevelItem(item)
+            if item.text(0) == key:
+                # get the existing children
+                children = [item.child(i) for i in range(item.childCount())]
+                item.addChildren(
+                    [
+                        QtWidgets.QTreeWidgetItem([value])
+                        for value in value_list
+                        if value not in children
+                    ]
+                )
+                return
         self.viewWidget.addTopLevelItem(topLevel)
         children = [QtWidgets.QTreeWidgetItem([value]) for value in value_list]
         topLevel.addChildren(children)

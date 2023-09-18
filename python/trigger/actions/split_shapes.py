@@ -214,6 +214,8 @@ class Split_shapes(weights.Weights):
 
             dialog.exec_()
 
+            # ctrl.update_model()
+
         split_definitions_treeBox._on_new = on_add
         layout.addRow(split_definitions_lbl, split_definitions_treeBox)
 
