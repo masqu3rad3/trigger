@@ -178,6 +178,10 @@ class Split_shapes(weights.Weights):
 
             key_lbl = QtWidgets.QLabel(text="Mesh")
             key_le = QtWidgets.QLineEdit()
+            # if the selection is a mesh, get the name
+            sel = cmds.ls(sl=True, type="transform")
+            if sel:
+                key_le.setText(sel[0])
             form_layout.addRow(key_lbl, key_le)
 
             value_lbl = QtWidgets.QLabel(text="Split Maps")

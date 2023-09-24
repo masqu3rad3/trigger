@@ -108,11 +108,17 @@ class Morph(object):
                     self.shapeCategories["combination"].append(mesh)
                 else:
                     self.shapeCategories["combination"].insert(0, mesh)
-            elif re.search(".*?([0-9]+)$", mesh):
+            elif self.is_inbetween(mesh):
                 self.shapeCategories["inbetween"].append(mesh)
             else:
                 self.shapeCategories["base"].append(mesh)
         return self.shapeCategories
+
+    def is_inbetween(self, blendshape):
+        """Check if the given shape is an inbetween or not by looking at the digits."""
+        if re.search(".*?([0-9]+)$", blendshape):
+            return True
+        return False
 
     def _create_hierarchy(self):
         """Creates the hook node for blendshapes"""
@@ -193,13 +199,14 @@ class Morph(object):
 
     def ingest_inbetween(self, blendshape):
         # get the base shape
-        digits = re.search(".*?([0-9]+)$", blendshape)
-        percentage = float(digits.groups()[0]) * 0.01
-        base = (
-            blendshape
-            if not digits
-            else re.search("(.*)(%s)$" % digits.groups()[0], blendshape).groups()[0]
-        )
+        base, percentage = self.get_inbetween_base_and_value(blendshape)
+        # digits = re.search(".*?([0-9]+)$", blendshape)
+        # percentage = float(digits.groups()[0]) * 0.01
+        # base = (
+        #     blendshape
+        #     if not digits
+        #     else re.search("(.*)(%s)$" % digits.groups()[0], blendshape).groups()[0]
+        # )
 
         id = deformers.get_bs_index_by_name(self.bsNode, base)
         cmds.blendShape(
@@ -208,6 +215,17 @@ class Morph(object):
             ib=True,
             t=(self.morphMesh, id, blendshape, percentage),
         )
+
+    def get_inbetween_base_and_value(self, shape):
+        """Resolve the base mesh and inbetween value from a given shape."""
+        digits = re.search(".*?([0-9]+)$", shape)
+        value = float(digits.groups()[0]) * 0.01
+        base = (
+            shape
+            if not digits
+            else re.search("(.*)(%s)$" % digits.groups()[0], shape).groups()[0]
+        )
+        return base, value
 
     def ingest_combination(self, blendshape):
         is_inbetween = False
@@ -238,8 +256,30 @@ class Morph(object):
             )
             input_list = blendshape.split("_")
             for nmb, input_shape in enumerate(input_list):
+                # if the part is an inbetween, find the base and activate only the percentage
+                if self.is_inbetween(input_shape):
+                    base, percentage = self.get_inbetween_base_and_value(input_shape)
+                    _remap_node = cmds.createNode("remapValue", name="remap_%s" % base)
+                    cmds.setAttr("%s.inputMin" % _remap_node, 0)
+                    cmds.setAttr("%s.inputMax" % _remap_node, percentage)
+                    cmds.setAttr("%s.outputMin" % _remap_node, 0)
+                    cmds.setAttr("%s.outputMax" % _remap_node, 1)
+                    cmds.connectAttr(
+                        "%s.%s" % (self.bsNode, base),
+                        "%s.inputValue" % _remap_node,
+                        force=True,
+                    )
+                    output_plug = "{}.outValue".format(_remap_node)
+                    # attribute.drive_attrs("{}.{}".format(self.bsNode, base), "%s.inputWeight[%s]" % (combination_node, nmb), driver_range=[0, percentage], driven_range=[0, 1], force=True)
+                else:
+                    output_plug = "{}.{}".format(self.bsNode, input_shape)
+                # cmds.connectAttr(
+                #     "%s.%s" % (self.bsNode, input_shape),
+                #     "%s.inputWeight[%s]" % (combination_node, nmb),
+                #     force=True,
+                # )
                 cmds.connectAttr(
-                    "%s.%s" % (self.bsNode, input_shape),
+                    output_plug,
                     "%s.inputWeight[%s]" % (combination_node, nmb),
                     force=True,
                 )

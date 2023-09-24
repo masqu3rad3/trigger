@@ -8,7 +8,7 @@ from trigger.library import (
     connection,
     tools,
     arithmetic,
-    api,
+    naming,
 )
 from trigger.core.decorators import undo
 
@@ -162,35 +162,49 @@ def lip_zipper(
     final_mesh,
     pair_count,
     controller=None,
+    negative_z_direction=True,
+    prefix="lipZip"
 ):
+    zip_grp = "{}_zipper_grp".format(prefix)
+    if cmds.objExists(zip_grp):
+        raise RuntimeError("Lip zipper group already exists. Aborting.")
+
     cmds.select(upper_lip_edges)
-    upper_lip_curve = cmds.polyToCurve(ch=0, name="follicles_up_grp")[0]
+    upper_lip_curve = cmds.polyToCurve(ch=0, name="{}_follicles_up_grp".format(prefix))[0]
+    # cmds.reverseCurve(upper_lip_curve, ch=0)
 
     cmds.select(lower_lip_edges)
-    lower_lip_curve = cmds.polyToCurve(ch=0, name="follicles_low_grp")[0]
-    cmds.reverseCurve(lower_lip_curve, ch=0)
+    lower_lip_curve = cmds.polyToCurve(ch=0, name="{}_follicles_low_grp".format(prefix))[0]
+    # cmds.reverseCurve(lower_lip_curve, ch=0)
+
+    if negative_z_direction:
+        cmds.reverseCurve(lower_lip_curve, ch=0)
+    else:
+        cmds.reverseCurve(upper_lip_curve, ch=0)
+
+
 
     rig_grp = functions.validate_group("rig_grp")
 
     face_mesh = upper_lip_edges[0].split(".")[0]
-    lipzip_grp = "lipZip_grp"
+
     lipzip_mesh = deformers.localize(
         final_mesh,
         "local_face",
-        local_target_name="trigger_lipZipMesh",
-        group_name=lipzip_grp,
+        local_target_name="trigger_{}Mesh".format(prefix),
+        group_name=zip_grp,
     )
-    cmds.parent(lipzip_grp, rig_grp)
-    jnt_grp = cmds.group(name="lipzipJnt_grp", em=True)
-    cmds.parent(jnt_grp, lipzip_grp)
-    cmds.select(d=True)
-    lipzip_root_jnt = cmds.joint(name="lipZip_root_jDef")
+    cmds.parent(zip_grp, rig_grp)
+    jnt_grp = cmds.group(name=naming.unique_name("{}Jnt_grp".format(prefix)), empty=True)
+    cmds.parent(jnt_grp, zip_grp)
+    cmds.select(deselect=True)
+    lipzip_root_jnt = cmds.joint(name="{}_root_jDef".format(prefix))
     cmds.parent(lipzip_root_jnt, jnt_grp)
-    switch_hook = cmds.group(em=True, name="lipZip_switch_hook")
+    switch_hook = cmds.group(em=True, name="{}_switch_hook".format(prefix))
 
-    cmds.parent(switch_hook, lipzip_grp)
-    switch_loc_grp = cmds.group(name="switchLocs_grp", em=True)
-    cmds.parent(switch_loc_grp, lipzip_grp)
+    cmds.parent(switch_hook, zip_grp)
+    switch_loc_grp = cmds.group(name="{}_switchLocs_grp".format(prefix), empty=True)
+    cmds.parent(switch_loc_grp, zip_grp)
 
     upper_locators = tools.motion_path_spline(
         upper_lip_curve, pair_count, object_type="locator"
@@ -200,8 +214,8 @@ def lip_zipper(
     )
     upper_locators_grp = functions.get_parent(upper_locators[0])
     lower_locators_grp = functions.get_parent(lower_locators[0])
-    cmds.parent(upper_locators_grp, lipzip_grp)
-    cmds.parent(lower_locators_grp, lipzip_grp)
+    cmds.parent(upper_locators_grp, zip_grp)
+    cmds.parent(lower_locators_grp, zip_grp)
 
     cmds.delete([upper_lip_curve, lower_lip_curve])
 
@@ -214,19 +228,19 @@ def lip_zipper(
     hook_D_attrs = []
     hook_dist_attrs = []
     for up, low in zip(upper_locators, lower_locators):
-        mid_loc_common = cmds.spaceLocator(name="midLoc_common%i" % counter)[0]
+        mid_loc_common = cmds.spaceLocator(name="{0}_midLoc_common{1}".format(prefix, counter))[0]
         cmds.pointConstraint(up, low, mid_loc_common, mo=False)
         cmds.parent(mid_loc_common, switch_loc_grp)
 
-        mid_loc_up = cmds.spaceLocator(name="midLoc_up%i" % counter)[0]
+        mid_loc_up = cmds.spaceLocator(name="{0}_midLoc_up{1}".format(prefix, counter))[0]
         functions.align_to(mid_loc_up, up, position=True, rotation=False)
         cmds.parent(mid_loc_up, mid_loc_common)
 
-        mid_loc_low = cmds.spaceLocator(name="midLoc_low%i" % counter)[0]
+        mid_loc_low = cmds.spaceLocator(name="{0}_midLoc_low{1}".format(prefix, counter))[0]
         functions.align_to(mid_loc_low, low, position=True, rotation=False)
         cmds.parent(mid_loc_low, mid_loc_common)
 
-        switch_up = cmds.spaceLocator(name="switchLoc_up%i" % counter)[0]
+        switch_up = cmds.spaceLocator(name="{0}_switchLoc_up{1}".format(prefix, counter))[0]
         u_attr = "U{0}".format(str(counter).zfill(2))
         connection.matrix_switch(
             mid_loc_up, up, switch_up, "{0}.{1}".format(switch_hook, u_attr)
@@ -234,7 +248,7 @@ def lip_zipper(
         hook_U_attrs.append(u_attr)
         cmds.parent(switch_up, switch_loc_grp)
 
-        switch_low = cmds.spaceLocator(name="switchLoc_low%i" % counter)[0]
+        switch_low = cmds.spaceLocator(name="{0}_switchLoc_low{1}".format(prefix, counter))[0]
         d_attr = "D{0}".format(str(counter).zfill(2))
         connection.matrix_switch(
             mid_loc_low, low, switch_low, "{0}.{1}".format(switch_hook, d_attr)
@@ -242,7 +256,7 @@ def lip_zipper(
         hook_D_attrs.append(d_attr)
         cmds.parent(switch_low, switch_loc_grp)
 
-        local_loc_up = cmds.spaceLocator(name="localLoc_up%i" % counter)[0]
+        local_loc_up = cmds.spaceLocator(name="{0}_localLoc_up{1}".format(prefix, counter))[0]
         connection.matrixConstraint(
             switch_up, local_loc_up, maintainOffset=False, source_parent_cutoff=up
         )
@@ -250,7 +264,7 @@ def lip_zipper(
         functions.align_to(local_loc_up_off, up, position=True, rotation=False)
         cmds.parent(local_loc_up_off, switch_loc_grp)
 
-        local_loc_low = cmds.spaceLocator(name="localLoc_low%i" % counter)[0]
+        local_loc_low = cmds.spaceLocator(name="{0}_localLoc_low{1}".format(prefix, counter))[0]
         connection.matrixConstraint(
             switch_low, local_loc_low, maintainOffset=False, source_parent_cutoff=low
         )
@@ -259,7 +273,7 @@ def lip_zipper(
         cmds.parent(local_loc_low_off, switch_loc_grp)
 
         cmds.select(d=True)
-        joint_up = cmds.joint(name="lipZip_up%i_jDef" % counter)
+        joint_up = cmds.joint(name="{0}_up{1}_jDef".format(prefix, counter))
         functions.align_to(joint_up, up, position=True, rotation=False)
         connection.matrixConstraint(
             local_loc_up,
@@ -271,7 +285,7 @@ def lip_zipper(
         cmds.parent(joint_up, jnt_grp)
 
         cmds.select(d=True)
-        joint_low = cmds.joint(name="lipZip_low%i_jDef" % counter)
+        joint_low = cmds.joint(name="{0}_low{1}_jDef".format(prefix, counter))
         functions.align_to(joint_low, low, position=True, rotation=False)
         connection.matrixConstraint(
             local_loc_low,
@@ -283,26 +297,26 @@ def lip_zipper(
         cmds.parent(joint_low, jnt_grp)
 
         # create distance attributes
-        distance_node = cmds.createNode("distanceBetween", name="distance_%i" % counter)
+        distance_node = cmds.createNode("distanceBetween", name="{0}_distance_{1}".format(prefix, counter))
         loc_up_shape = functions.get_shapes(up)[0]
         loc_low_shape = functions.get_shapes(low)[0]
         cmds.connectAttr(
-            "%s.worldPosition[0]" % loc_up_shape, "%s.point1" % distance_node
+            "{}.worldPosition[0]".format(loc_up_shape), "{}.point1".format(distance_node)
         )
         cmds.connectAttr(
-            "%s.worldPosition[0]" % loc_low_shape, "%s.point2" % distance_node
+            "{}.worldPosition[0]".format(loc_low_shape), "{}.point2".format(distance_node)
         )
         distance_attr_name = "dist{0}".format(str(counter).zfill(2))
         dist_attr = attribute.create_attribute(
             switch_hook, attr_name=distance_attr_name, attr_type="float"
         )
-        if cmds.getAttr("%s.distance" % distance_node):
+        if cmds.getAttr("{}.distance".format(distance_node)):
             normalized_distance_p = arithmetic.subtract(
-                "%s.distance" % distance_node,
-                float(cmds.getAttr("%s.distance" % distance_node)),
+                "{}.distance".format(distance_node),
+                float(cmds.getAttr("{}.distance".format(distance_node))),
             )
         else:
-            normalized_distance_p = "%s.distance" % distance_node
+            normalized_distance_p = "{}.distance".format(distance_node)
         cmds.connectAttr(normalized_distance_p, dist_attr)
         hook_dist_attrs.append(distance_attr_name)
 
@@ -315,11 +329,21 @@ def lip_zipper(
     D_Left_loc, D_C_loc, D_Right_loc = parse_sides(lower_locators)
 
     controller = controller or switch_hook
-    attribute.separator(controller, name="Lip Zip")
+
+    # attribute names
+    lzip_attr = "L_{}".format(prefix)
+    rzip_attr = "R_{}".format(prefix)
+    ramp_edges_attr = "{}RampEdges".format(prefix)
+    ramp_center_attr = "{}RampCenter".format(prefix)
+    auto_sticky_attr = "{}AutoSticky".format(prefix)
+    auto_distance_attr = "{}StickyDistance".format(prefix)
+    auto_strength_attr = "{}StickyStrength".format(prefix)
+
+    attribute.separator(controller, name="__{}__".format(prefix))
     attribute.create_attribute(
         node=controller,
-        nice_name="L_Zip",
-        attr_name="lZip",
+        # nice_name="L_Zip",
+        attr_name=lzip_attr,
         attr_type="float",
         min_value=0,
         max_value=100,
@@ -327,8 +351,8 @@ def lip_zipper(
     )
     attribute.create_attribute(
         node=controller,
-        nice_name="R_Zip",
-        attr_name="rZip",
+        # nice_name="R_Zip",
+        attr_name=rzip_attr,
         attr_type="float",
         min_value=0,
         max_value=100,
@@ -337,7 +361,7 @@ def lip_zipper(
     attribute.create_attribute(
         node=controller,
         nice_name="Ramp Edges",
-        attr_name="rampEdges",
+        attr_name=ramp_edges_attr,
         attr_type="float",
         min_value=0,
         max_value=100,
@@ -345,7 +369,7 @@ def lip_zipper(
     attribute.create_attribute(
         node=controller,
         nice_name="Ramp Center",
-        attr_name="rampCenter",
+        attr_name=ramp_center_attr,
         attr_type="float",
         min_value=0,
         max_value=100,
@@ -353,7 +377,7 @@ def lip_zipper(
     attribute.create_attribute(
         node=controller,
         nice_name="Auto_Sticky",
-        attr_name="stickyness",
+        attr_name=auto_sticky_attr,
         attr_type="float",
         min_value=0,
         max_value=1,
@@ -361,14 +385,14 @@ def lip_zipper(
     attribute.create_attribute(
         node=controller,
         nice_name="Auto_Distance",
-        attr_name="stickyDistance",
+        attr_name=auto_distance_attr,
         attr_type="float",
         default_value=1,
     )
     attribute.create_attribute(
         node=controller,
         nice_name="Auto_Strength",
-        attr_name="stickyStrength",
+        attr_name=auto_strength_attr,
         attr_type="float",
         default_value=5,
     )
@@ -386,15 +410,15 @@ def lip_zipper(
     for n, side_group in enumerate(
         [[U_Left + U_C, D_Left + D_C], [U_Right + U_C, D_Right + D_C]]
     ):
-        zip_attr = "%s.lZip" % controller if n == 0 else "%s.rZip" % controller
-        rampA_attr = "%s.rampEdges" % controller
-        rampB_attr = "%s.rampCenter" % controller
+        zip_attr = "{0}.{1}".format(controller, lzip_attr) if n == 0 else "{0}.{1}".format(controller, rzip_attr)
+        rampA_attr = "{0}.{1}".format(controller, ramp_edges_attr)
+        rampB_attr = "{0}.{1}".format(controller, ramp_center_attr)
         for nmb, (up, down) in enumerate(zip(side_group[0], side_group[1])):
             mod = nmb % 3
             if mod == 0:
-                plus_node = cmds.createNode("plusMinusAverage", name="plus")
+                plus_node = cmds.createNode("plusMinusAverage", name="{}_plus".format(prefix))
                 cmds.setAttr("%s.operation" % plus_node, 1)
-                minus_node = cmds.createNode("plusMinusAverage", name="minus")
+                minus_node = cmds.createNode("plusMinusAverage", name="{}_minus".format(prefix))
                 cmds.setAttr("%s.operation" % minus_node, 2)
                 plus_clamp = cmds.createNode("clamp")
                 cmds.setAttr("%s.min" % plus_clamp, 0, 0, 0)
@@ -407,7 +431,7 @@ def lip_zipper(
                 cmds.setAttr("%s.max" % set_range, 1, 1, 1)
 
                 # auto nodes
-                auto_range = cmds.createNode("setRange", name="autoRange")
+                auto_range = cmds.createNode("setRange", name="{}_autoRange".format(prefix))
                 cmds.setAttr("%s.min" % auto_range, 1, 1, 1)
                 cmds.setAttr("%s.oldMax" % auto_range, 1, 1, 1)
                 auto_clamp = cmds.createNode("clamp")
@@ -426,11 +450,11 @@ def lip_zipper(
                         rampB_attr, "{0}.input3D[1].input3D{1}".format(minus_node, a)
                     )
                     cmds.connectAttr(
-                        "%s.stickyStrength" % controller,
+                        "{0}.{1}".format(controller, auto_strength_attr),
                         "{0}.min{1}".format(auto_range, a.upper()),
                     )
                     cmds.connectAttr(
-                        "%s.stickyDistance" % controller,
+                        "{0}.{1}".format(controller, auto_distance_attr),
                         "{0}.oldMax{1}".format(auto_range, a.upper()),
                     )
                 cmds.connectAttr("%s.output3D" % plus_node, "%s.input" % plus_clamp)
@@ -462,7 +486,7 @@ def lip_zipper(
 
             # center joints averaged between two sides
             if up in U_C or down in D_C:
-                center_average = "{0}_{1}_average".format(up, down)
+                center_average = "{0}_{1}_{2}_average".format(prefix, up, down)
                 if not cmds.objExists(center_average):
                     center_average = cmds.createNode(
                         "plusMinusAverage", name=center_average
@@ -493,7 +517,7 @@ def lip_zipper(
                 "{0}.input[1]".format(blend_node),
             )
             cmds.connectAttr(
-                "{0}.stickyness".format(controller),
+                "{0}.{1}".format(controller, auto_sticky_attr),
                 "{0}.attributesBlender".format(blend_node),
             )
 
@@ -507,13 +531,14 @@ def lip_zipper(
             )
 
     if cmds.objExists("pref_cont"):
-        cmds.connectAttr("pref_cont.Rig_Visibility", "trigger_lipZipMesh.v")
-        cmds.connectAttr("pref_cont.Rig_Visibility", "switchLocs_grp.v")
-        cmds.connectAttr("pref_cont.Rig_Visibility", "follicles_up_grp_locators.v")
-        cmds.connectAttr("pref_cont.Rig_Visibility", "follicles_low_grp_locators.v")
-        cmds.connectAttr("pref_cont.Joints_Visibility", "lipzipJnt_grp.v")
+        cmds.connectAttr("pref_cont.Rig_Visibility", "{}.v".format(zip_grp))
+        # cmds.connectAttr("pref_cont.Rig_Visibility", "{}.v".format(lipzip_mesh))
+        # cmds.connectAttr("pref_cont.Rig_Visibility", "{}.v".format(switch_loc_grp))
+        # cmds.connectAttr("pref_cont.Rig_Visibility", "follicles_up_grp_locators.v")
+        # cmds.connectAttr("pref_cont.Rig_Visibility", "follicles_low_grp_locators.v")
+        cmds.connectAttr("pref_cont.Joints_Visibility", "{}.v".format(jnt_grp))
 
-        attribute.lock_and_hide(lipzip_grp)
+        attribute.lock_and_hide(zip_grp)
         attribute.lock_and_hide(jnt_grp)
         attribute.lock_and_hide(switch_hook)
         attribute.lock_and_hide(switch_loc_grp)

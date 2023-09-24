@@ -296,6 +296,8 @@ class TreeBoxLayout(ListBoxLayout):
         self.viewWidget = QtWidgets.QTreeWidget()
         # make is sortable
         self.viewWidget.setSortingEnabled(True)
+        # sort alphabetically
+        self.viewWidget.sortItems(0, QtCore.Qt.AscendingOrder)
 
     def _on_new(self):
         dialog = QtWidgets.QDialog()
