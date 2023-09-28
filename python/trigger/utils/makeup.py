@@ -90,6 +90,10 @@ class Makeup(object):
     @keepselection
     def replace_curve_controller(self, icon, objects=None, mo=True, scale=True):
         objects = objects or cmds.ls(sl=True)
+        # create the controller on the origin if nothing is selected
+        if not objects:
+            self.icon_handler.create_icon(icon_type=icon, scale=(1, 1, 1), normal=(0, 1, 0))
+
         if not isinstance(objects, (tuple, list)):
             objects = [objects]
 
@@ -150,7 +154,6 @@ class MainUI(QtWidgets.QDialog):
         self.mirror_controllers_side_combo = None
         self.mirror_controllers_bias_combo = None
         self.build_ui()
-        # self.setWindowFlag(QtCore.Qt.WindowMaximizeButtonHint, False)
 
     def build_ui(self):
         self.setObjectName(WINDOW_NAME)
@@ -169,7 +172,10 @@ class MainUI(QtWidgets.QDialog):
         master_lay.addLayout(form_lay)
 
         replace_controllers_pb = QtWidgets.QPushButton(self)
-        replace_controllers_pb.setText("Replace Controller(s)")
+        replace_controllers_pb.setText("Replace:")
+        replace_controllers_pb.setToolTip(
+            "Mirror selected controllers shapes to the other side."
+        )
         replace_controllers_pb.setSizePolicy(size_policy)
         replace_controllers_combo_lay = QtWidgets.QHBoxLayout()
         self.replace_controllers_combo = QtWidgets.QComboBox(self)
@@ -182,10 +188,13 @@ class MainUI(QtWidgets.QDialog):
         replace_controllers_combo_lay.addWidget(self.scale_controllers_cb)
         form_lay.addRow(replace_controllers_pb, replace_controllers_combo_lay)
 
-        self.replace_controllers_combo.addItems(self.makeup_handler.list_of_icons)
+        self.replace_controllers_combo.addItems(sorted(self.makeup_handler.list_of_icons))
 
         mirror_controllers_pb = QtWidgets.QPushButton(self)
-        mirror_controllers_pb.setText("Mirror Controller(s)")
+        mirror_controllers_pb.setText("Mirror:")
+        mirror_controllers_pb.setToolTip(
+            "Mirror selected controllers shapes to the other side."
+        )
         mirror_controllers_combo_lay = QtWidgets.QHBoxLayout()
         self.mirror_controllers_side_combo = QtWidgets.QComboBox(self)
         self.mirror_controllers_side_combo.setSizePolicy(size_policy)
@@ -196,7 +205,7 @@ class MainUI(QtWidgets.QDialog):
         form_lay.addRow(mirror_controllers_pb, mirror_controllers_combo_lay)
 
         copy_controller_pb = QtWidgets.QPushButton(self)
-        copy_controller_pb.setText("Copy Shape from another")
+        copy_controller_pb.setText("Transfer:")
         copy_controller_pb.setToolTip(
             "Copies shape from another controller curve. First select the source than the target"
         )

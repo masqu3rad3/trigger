@@ -48,6 +48,7 @@ class Controller(object):
         pos=None,
         side=None,
         tier=None,
+        line_width=-1,
     ):
         self._offsets = []
         self.icon_handler = Icon()
@@ -69,6 +70,7 @@ class Controller(object):
         self.add_custom_attributes()
 
         self.set_side(self._side, tier=self._tier)
+        self._line_width = line_width
         # if side:
         #     self.set_side(side, tier=tier)
         #     self._side = side
@@ -76,6 +78,15 @@ class Controller(object):
         # else:
         #     self._side = "center"
         #     self._tier = tier or "primary"
+
+    @property
+    def line_width(self):
+        return self._line_width
+
+    @line_width.setter
+    def line_width(self, value):
+        cmds.setAttr("{}.lineWidth".format(self.name), value)
+        self._line_width = value
 
     def _get_side_from_node(self):
         """Resolve the side from controller in the scene."""

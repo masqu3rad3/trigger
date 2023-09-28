@@ -1,3 +1,7 @@
+"""Module to create icons for rigging purposes."""
+
+# pylint: disable=too-many-lines
+
 from maya import cmds
 from trigger.library import functions
 from trigger.library import naming
@@ -5,7 +9,7 @@ from trigger.library import naming
 
 class Icon(object):
     def __init__(self):
-        self.iconDictionary = {
+        self.icon_dictionary = {
             "Circle": self.circle,
             "Cube": self.cube,
             "Thigh": self.thigh,
@@ -34,6 +38,8 @@ class Icon(object):
             "Drop": self.drop,
             "Cog": self.cog,
             "Cylinder": self.cylinder,
+            "TriangleArrow": self.triangle_arrow,
+            "TriangleDualArrow": self.triangle_dual_arrow,
         }
 
     def create_icon(
@@ -44,26 +50,27 @@ class Icon(object):
         location=None,
         normal=(0, 1, 0),
     ):
+        """Creates an icon of given type."""
         if icon_type not in (self.get_icons_list()):
-            cmds.warning(
-                "This icon is not available. Valid Icons are:\n  %s"
-                % (self.iconDictionary.keys())
+            raise Exception(
+                "This icon is not available. Valid Icons are:\n  {}".format(
+                    self.icon_dictionary.keys()
+                )
             )
-            return
 
-        icon_name = icon_name or "%s_cont" % icon_type
+        icon_name = icon_name or "{}_cont".format(icon_type)
 
         rvs_con = None
         if icon_type == "FkikSwitch":
-            cont, rvs_con = self.iconDictionary[icon_type](name=icon_name)
+            cont, rvs_con = self.icon_dictionary[icon_type](name=icon_name)
         else:
-            cont = self.iconDictionary[icon_type](name=icon_name)
+            cont = self.icon_dictionary[icon_type](name=icon_name)
 
         for shape in functions.get_shapes(cont):
-            if shape != "%sShape" % cont:
-                cmds.rename(shape, naming.unique_name("%sShape" % cont))
+            if shape != "{}Shape".format(cont):
+                cmds.rename(shape, naming.unique_name("{}Shape".format(cont)))
 
-        cmds.setAttr("%s.scale" % cont, *scale)
+        cmds.setAttr("{}.scale".format(cont), *scale)
         functions.align_to_normal(cont, normal)
         cmds.makeIdentity(cont, apply=True)
 
@@ -73,7 +80,8 @@ class Icon(object):
         return cont, rvs_con
 
     def get_icons_list(self):
-        return self.iconDictionary.keys()
+        """Return the list of icons available."""
+        return self.icon_dictionary.keys()
 
     @staticmethod
     def circle(name="circle_cont"):
@@ -106,7 +114,7 @@ class Icon(object):
         """
         cont_cube = cmds.curve(
             name=name,
-            d=1,
+            degree=1,
             p=[
                 (-1, 1, 1),
                 (-1, 1, -1),
@@ -126,7 +134,7 @@ class Icon(object):
                 (1, -1, -1),
                 (-1, -1, -1),
             ],
-            k=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+            knot=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
         )
         return cont_cube
 
@@ -2603,5 +2611,17 @@ class Icon(object):
                 47,
             ],
         )
+        cmds.makeIdentity(_cont, apply=True, scale=True)
+        return _cont
+
+    @staticmethod
+    def triangle_arrow(name="triangleArrow_cont"):
+        _cont = cmds.curve(name=name, d=1, p=[(-0.822577,0,0),(-0.855148,0,-0.00553407),(-0.884063,0,-0.0215153),(-0.906078,0,-0.0461498),(-0.918721,0,-0.076673),(-0.920574,0,-0.109659),(-0.911428,0,-0.141406),(-0.89231,0,-0.16835),(-0.0911106,0,-0.969549),(-0.0685523,0,-0.987539),(-0.0425564,0,-1.000058),(-0.0144266,0,-1.006478),(0.0144266,0,-1.006478),(0.0425564,0,-1.000058),(0.0685523,0,-0.987539),(0.0911106,0,-0.969549),(0.89231,0,-0.16835),(0.911428,0,-0.141406),(0.920574,0,-0.109659),(0.918721,0,-0.076673),(0.906078,0,-0.0461498),(0.884063,0,-0.0215153),(0.855148,0,-0.00553407),(0.822577,0,0),(-0.822577,0,0)], k=[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24])
+        cmds.makeIdentity(_cont, apply=True, scale=True)
+        return _cont
+
+    @staticmethod
+    def triangle_dual_arrow(name="triangleDualArrow_cont"):
+        _cont = cmds.curve(name=name, d=1, p=[(-0.014138,0,0.991161),(-0.0417053,0,0.985595),(-0.0671812,0,0.974744),(-0.0892884,0,0.959151),(-0.895676,0,0.245923),(-0.914412,0,0.222568),(-0.923375,0,0.195051),(-0.92156,0,0.166459),(-0.90917,0,0.140002),(-0.887595,0,0.118649),(-0.859258,0,0.104797),(-0.827338,0,0.1),(-0.211751,0,0.1),(-0.211751,0,-0.1),(-0.827338,0,-0.1),(-0.859258,0,-0.104797),(-0.887595,0,-0.118649),(-0.90917,0,-0.140002),(-0.92156,0,-0.166459),(-0.923375,0,-0.195051),(-0.914412,0,-0.222568),(-0.895676,0,-0.245923),(-0.0892884,0,-0.959151),(-0.0671812,0,-0.974744),(-0.0417053,0,-0.985595),(-0.014138,0,-0.991161),(0.014138,0,-0.991161),(0.0417053,0,-0.985595),(0.0671812,0,-0.974744),(0.0892884,0,-0.959151),(0.895676,0,-0.245923),(0.914412,0,-0.222568),(0.923375,0,-0.195051),(0.92156,0,-0.166459),(0.90917,0,-0.140002),(0.887595,0,-0.118649),(0.859258,0,-0.104797),(0.827338,0,-0.1),(0.211751,0,-0.1),(0.211751,0,0.1),(0.827338,0,0.1),(0.859258,0,0.104797),(0.887595,0,0.118649),(0.90917,0,0.140002),(0.92156,0,0.166459),(0.923375,0,0.195051),(0.914412,0,0.222568),(0.895676,0,0.245923),(0.0892884,0,0.959151),(0.0671812,0,0.974744),(0.0417053,0,0.985595),(0.014138,0,0.991161),(-0.014138,0,0.991161)], k=[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52])
         cmds.makeIdentity(_cont, apply=True, scale=True)
         return _cont
