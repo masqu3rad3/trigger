@@ -15,8 +15,8 @@ class ShapeTransfer(object):
         super(ShapeTransfer, self).__init__()
 
         # user defined
-        self._source_mesh = source_mesh
-        self._target_mesh = target_mesh
+        self.source_mesh = source_mesh
+        self.target_mesh = target_mesh
         self._source_blendshape_grp = source_blendshape_grp
 
         # general settings
@@ -44,29 +44,29 @@ class ShapeTransfer(object):
 
         self.active_protocol = None
 
-    @property
-    def source_mesh(self):
-        return self._source_mesh
-
-    @source_mesh.setter
-    def source_mesh(self, new_value):
-        self._source_mesh = new_value
-
-    @property
-    def target_mesh(self):
-        return self._target_mesh
-
-    @target_mesh.setter
-    def target_mesh(self, new_value):
-        self._target_mesh = new_value
-
-    @property
-    def source_blendshape_grp(self):
-        return self._source_blendshape_grp
-
-    @source_blendshape_grp.setter
-    def source_blendshape_grp(self, new_value):
-        self._source_blendshape_grp = new_value
+    # @property
+    # def source_mesh(self):
+    #     return self._source_mesh
+    #
+    # @source_mesh.setter
+    # def source_mesh(self, new_value):
+    #     self._source_mesh = new_value
+    #
+    # @property
+    # def target_mesh(self):
+    #     return self._target_mesh
+    #
+    # @target_mesh.setter
+    # def target_mesh(self, new_value):
+    #     self._target_mesh = new_value
+    #
+    # @property
+    # def source_blendshape_grp(self):
+    #     return self._source_blendshape_grp
+    #
+    # @source_blendshape_grp.setter
+    # def source_blendshape_grp(self, new_value):
+    #     self._source_blendshape_grp = new_value
 
     @property
     def shape_protocols(self):
@@ -128,23 +128,21 @@ class ShapeTransfer(object):
         protocol = self.active_protocol(self.source_mesh, self.target_mesh, self._source_blendshape_grp)
         protocol.prepare()
 
-        cmds.parent(protocol.protocol_group, self.master_group)
+        if protocol.protocol_group not in cmds.listRelatives(self.master_group, children=True):
+            cmds.parent(protocol.protocol_group, self.master_group)
         # if the protocol cluster is not already a child of the transform, parent it
         # if not cmds.listRelatives(protocol.offset_cluster, parent=True) == self.transform:
         #     cmds.parent(protocol.offset_cluster[1], self.transform)
 
+        _state = protocol.qc_blendshapes(separation=5)
+
         # make a direct connection to the protocol's offset cluster
+        if _state:
+            for ch in "xyz":
+                cmds.connectAttr("{0}.t{1}".format(self.transform, ch), "{0}.t{1}".format(protocol.offset_cluster, ch), force=True)
+                cmds.connectAttr("{0}.t{1}".format(self.transform, ch), "{0}.t{1}".format(protocol.annotations_group, ch), force=True)
 
-
-
-
-        protocol.qc_blendshapes(separation=5)
-
-        # for ch in "xyz":
-        #     cmds.connectAttr("{0}.t{1}".format(self.transform, ch), "{0}.t{1}".format(protocol.offset_cluster[1], ch), force=True)
-        #     cmds.connectAttr("{0}.t{1}".format(self.transform, ch), "{0}.t{1}".format(protocol.annotations_group, ch), force=True)
-        #
-        # cmds.setAttr("%s.t" % self.transform, *self.offsetValue)
+        cmds.setAttr("%s.t" % self.transform, *self.offsetValue)
 
 
         # self.offsetCluster = cmds.cluster(
@@ -188,14 +186,13 @@ class ShapeTransfer(object):
                 group_name = "{}_grp".format(splits[1])
                 grp = cmds.group(em=True, parent=self.transferShapesGrp, name=group_name)
                 cmds.parent(new_blendshape, grp)
-                # cmds.parent(grp, self.source_blendshape_grp)
 
             cmds.rename(new_blendshape, attr)
             cmds.setAttr("%s.%s" % (self.blendshapeNode[0], attr), 0)
         functions.delete_object("trTMP_blndtrans_*")
         cmds.rename(
             self.transferShapesGrp,
-            "TRANSFERRED_{}".format(self.source_blendshape_grp),
+            "TRANSFERRED_{}".format(self._source_blendshape_grp),
         )
 
     @staticmethod

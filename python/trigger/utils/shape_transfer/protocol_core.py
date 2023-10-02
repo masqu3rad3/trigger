@@ -123,14 +123,14 @@ class ProtocolCore(dict):
 
         offset_cluster_name = "trTMP_{0}__offsetCluster".format(self.name)
         if cmds.objExists(offset_cluster_name):
-            self.offset_cluster = offset_cluster_name
+            self.offset_cluster = cmds.listConnections("{}.matrix".format(offset_cluster_name), source=True, destination=False)[0]
         else:
             # create a cluster to be used fo offsetting the target mesh
             self.offset_cluster = cmds.cluster(
                 self.tmp_target, name=offset_cluster_name
-            )
-            cmds.parent(self.offset_cluster[1], self.protocol_group)
-            cmds.hide(functions.get_shapes(self.offset_cluster[1])) # hide only shape
+            )[1]
+            cmds.parent(self.offset_cluster, self.protocol_group)
+            cmds.hide(functions.get_shapes(self.offset_cluster)) # hide only shape
 
         self.blendshape_list = functions.get_meshes(
             self.blendshape_pack, full_path=True
@@ -144,7 +144,7 @@ class ProtocolCore(dict):
         ):
             self.annotations_group = annotations_group_name
             # if the annotations group already exists, assume that qc blendshapes are ready
-            return
+            return False
 
         self.annotations_group = cmds.group(empty=True, name=annotations_group_name)
         cmds.parent(self.annotations_group, self.protocol_group)
@@ -235,6 +235,8 @@ class ProtocolCore(dict):
 
         # extend the timeline range to fit the qc
         cmds.playbackOptions(min=1, max=separation * len(blend_attributes) + separation)
+
+        return True
 
     def refresh(self):
         """To fix weird maya bug with blendshape node which is not triggering the next target after the cursor
