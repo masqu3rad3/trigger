@@ -14,7 +14,7 @@ class ProtocolCore(dict):
     display_name = ""
     type = None  # "shape" or "topology"
 
-    def __init__(self, source_mesh, target_mesh, blendshape_pack):
+    def __init__(self):
 
         self.master_group = "trTMP_blndtrans__master"
         self.protocol_group = None
@@ -22,44 +22,34 @@ class ProtocolCore(dict):
         self.blendshape_node = None
         self.source_blendshape_node = None
 
-        self.source_mesh = source_mesh
-        self.target_mesh = target_mesh
-        self.blendshape_pack = blendshape_pack
+        self.source_mesh = None
+        self.target_mesh = None
+        self.source_blendshape_grp = None
         self.blendshape_list = []
 
         self.tmp_source = None
         self.tmp_target = None
         self.offset_cluster = None
 
-    # @property
-    # def visibility(self):
-    #     """Return the visibility of the protocol."""
-    #     return cmds.getAttr("{}.v".format(self.protocol_group))
-    #
-    # @visibility.setter
-    # def visibility(self, value):
-    #     """Set the visibility of the protocol."""
-    #     cmds.setAttr("{}.v".format(self.protocol_group), value)
-    #
-    # @property
-    # def source_visibility(self):
-    #     """Return the source mesh visibility."""
-    #     return cmds.getAttr("{}.v".format(self.tmp_source))
-    #
-    # @source_visibility.setter
-    # def source_visibility(self, value):
-    #     """Set the source mesh visibility."""
-    #     cmds.setAttr("{}.v".format(self.tmp_source), value)
-    #
-    # @property
-    # def target_visibility(self):
-    #     """Return the target mesh visibility."""
-    #     return cmds.getAttr("{}.v".format(self.tmp_target))
-    #
-    # @target_visibility.setter
-    # def target_visibility(self, value):
-    #     """Set the target mesh visibility."""
-    #     cmds.setAttr("{}.v".format(self.tmp_target), value)
+        # we are deliberately not adding the node to the property objects.
+        # that will be done in the prepare method
+        self["visibility"] = Property(
+            attribute_name="visibility",
+            attribute_type="boolean",
+            default_value=True,
+        )
+
+        self["source_visibility"] = Property(
+            attribute_name="visibility",
+            attribute_type="boolean",
+            default_value=True,
+        )
+
+        self["target_visibility"] = Property(
+            attribute_name="visibility",
+            attribute_type="boolean",
+            default_value=True,
+        )
 
     def create_protocol_group(self):
         """Create the protocol group if it doesn't exist."""
@@ -68,17 +58,28 @@ class ProtocolCore(dict):
             self.protocol_group = cmds.group(empty=True, name=_grp_name)
         else:
             self.protocol_group = _grp_name
-        self["visibility"] = Property(
-            attribute_name="visibility",
-            attribute_type="float",
-            node=self.protocol_group,
-            default_value=0.0,
-            minimum=-99999,
-            maximum=99999,
-        )
+
+        # add the node to the visibility property
+        self["visibility"].node = self.protocol_group
 
     def prepare(self):
         """Prepare temporary meshes for the protocol."""
+
+        # if source target and blendshape packs are not defined raise error
+        if (
+            not self.source_mesh
+            or not self.target_mesh
+            or not self.source_blendshape_grp
+        ):
+            raise ValueError(
+                "Source mesh, target mesh and blendshape pack must be defined"
+            )
+
+        # if source and target has different topology, raise error
+        if self.type == "shape" and not self.is_same_topology(
+            self.source_mesh, self.target_mesh
+        ):
+            raise ValueError("Source mesh and target mesh must have the same topology")
 
         # This is the bare minimum for a protocol to work.
         self.create_protocol_group()
@@ -93,14 +94,8 @@ class ProtocolCore(dict):
             api.unlock_normals(self.tmp_source)
             cmds.parent(self.tmp_source, self.protocol_group)
 
-        self["source_visibility"] = Property(
-            attribute_name="visibility",
-            attribute_type="float",
-            node=self.tmp_source,
-            default_value=0.0,
-            minimum=-99999,
-            maximum=99999,
-        )
+        # add the node to the source visibility property
+        self["source_visibility"].node = self.tmp_source
 
         tmp_target_name = "trTMP_{0}__target_mesh".format(self.name)
         if cmds.objExists("{0}|{1}".format(self.protocol_group, tmp_target_name)):
@@ -112,28 +107,24 @@ class ProtocolCore(dict):
             api.unlock_normals(self.tmp_target)
             cmds.parent(self.tmp_target, self.protocol_group)
 
-        self["target_visibility"] = Property(
-            attribute_name="visibility",
-            attribute_type="float",
-            node=self.tmp_target,
-            default_value=0.0,
-            minimum=-99999,
-            maximum=99999,
-        )
+        # add the node to the target visibility property
+        self["target_visibility"].node = self.tmp_target
 
         offset_cluster_name = "trTMP_{0}__offsetCluster".format(self.name)
         if cmds.objExists(offset_cluster_name):
-            self.offset_cluster = cmds.listConnections("{}.matrix".format(offset_cluster_name), source=True, destination=False)[0]
+            self.offset_cluster = cmds.listConnections(
+                "{}.matrix".format(offset_cluster_name), source=True, destination=False
+            )[0]
         else:
             # create a cluster to be used fo offsetting the target mesh
             self.offset_cluster = cmds.cluster(
                 self.tmp_target, name=offset_cluster_name
             )[1]
             cmds.parent(self.offset_cluster, self.protocol_group)
-            cmds.hide(functions.get_shapes(self.offset_cluster)) # hide only shape
+            cmds.hide(functions.get_shapes(self.offset_cluster))  # hide only shape
 
         self.blendshape_list = functions.get_meshes(
-            self.blendshape_pack, full_path=True
+            self.source_blendshape_grp, full_path=True
         )
 
     def qc_blendshapes(self, separation=5):
@@ -249,9 +240,19 @@ class ProtocolCore(dict):
         if cmds.objExists(self.protocol_group):
             cmds.delete(self.protocol_group)
 
+    @staticmethod
+    def is_same_topology(source, target):
+        """checks if the source and target shares the same topology"""
+
+        # assume they have the same topology if they have same vertex count
+        source_count = len(api.get_all_vertices(source))
+        target_count = len(api.get_all_vertices(target))
+
+        return source_count == target_count
+
 
 class Property(object):
-    """Simple property item."""
+    """Property item for holding, getting and setting values."""
 
     def __init__(
         self,
@@ -278,7 +279,7 @@ class Property(object):
     @property
     def value(self):
         """Get the current value."""
-        if self.node:
+        if self.node and cmds.objExists(self.node):
             return cmds.getAttr("{0}.{1}".format(self.node, self.attribute))
         return self._current_value
 
@@ -286,7 +287,15 @@ class Property(object):
     def value(self, val):
         """Set the value."""
         # if the node is not created yet, use the memory value
-        if self.node:
+        self.set_value(val)
+        self._current_value = val
+
+    def set_value(self, val):
+        """Set the value."""
+        # if the node is not created yet, use the memory value
+        if self.type == "boolean":
+            val = bool(val)
+        if self.node and cmds.objExists(self.node):
             cmds.setAttr("{0}.{1}".format(self.node, self.attribute), val)
         self._current_value = val
 

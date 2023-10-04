@@ -1,11 +1,10 @@
 """Delta Transfer Protocol."""
 
 from maya import cmds
-from trigger.utils.shape_transfer.protocol_core import ProtocolCore
-
+from trigger.utils.shape_transfer.protocol_core import ProtocolCore, Property
 class DeltaTransfer(ProtocolCore):
-    name = "deltaTransfer"
-    display_name = "Delta Transfer"
+    name = "shapeTest"
+    display_name = "Shape Test"
     type = "shape"
     def __init__(self):
         super(DeltaTransfer, self).__init__()
@@ -13,6 +12,12 @@ class DeltaTransfer(ProtocolCore):
         # self.name = "deltaTransfer"
         # self.display_name = "Delta Transfer"
         # self.type = "shape"
+
+        self["testTest"] = Property(attribute_name="hedeHot",
+                                    attribute_type="integer",
+                                    default_value=1,
+                                    minimum=1,
+                                    maximum=100)
         
     def prepare(self):
         super(DeltaTransfer, self).prepare()
