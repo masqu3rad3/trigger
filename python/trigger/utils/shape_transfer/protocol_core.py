@@ -59,6 +59,11 @@ class ProtocolCore(dict):
         else:
             self.protocol_group = _grp_name
 
+        # first apply the existing visibility state to the mesh
+        cmds.setAttr(
+            "{0}.visibility".format(self.protocol_group), self["visibility"].value
+        )
+
         # add the node to the visibility property
         self["visibility"].node = self.protocol_group
 
@@ -94,6 +99,11 @@ class ProtocolCore(dict):
             api.unlock_normals(self.tmp_source)
             cmds.parent(self.tmp_source, self.protocol_group)
 
+        # first apply the existing visibility state to the mesh
+        cmds.setAttr(
+            "{0}.visibility".format(self.tmp_source), self["source_visibility"].value
+        )
+
         # add the node to the source visibility property
         self["source_visibility"].node = self.tmp_source
 
@@ -107,9 +117,19 @@ class ProtocolCore(dict):
             api.unlock_normals(self.tmp_target)
             cmds.parent(self.tmp_target, self.protocol_group)
 
+        # first apply the existing visibility state to the mesh
+        cmds.setAttr(
+            "{0}.visibility".format(self.tmp_target), self["target_visibility"].value
+        )
+
         # add the node to the target visibility property
         self["target_visibility"].node = self.tmp_target
 
+        self.blendshape_list = functions.get_meshes(
+            self.source_blendshape_grp, full_path=True
+        )
+
+    def  create_cluster(self):
         offset_cluster_name = "trTMP_{0}__offsetCluster".format(self.name)
         if cmds.objExists(offset_cluster_name):
             self.offset_cluster = cmds.listConnections(
@@ -122,10 +142,6 @@ class ProtocolCore(dict):
             )[1]
             cmds.parent(self.offset_cluster, self.protocol_group)
             cmds.hide(functions.get_shapes(self.offset_cluster))  # hide only shape
-
-        self.blendshape_list = functions.get_meshes(
-            self.source_blendshape_grp, full_path=True
-        )
 
     def qc_blendshapes(self, separation=5):
         """Animate the blendshapes for preview."""
@@ -232,8 +248,8 @@ class ProtocolCore(dict):
     def refresh(self):
         """To fix weird maya bug with blendshape node which is not triggering the next target after the cursor
         for some reason"""
-        cmds.setAttr("%s.nodeState" % self.blendshape_node[0], 1)
-        cmds.setAttr("%s.nodeState" % self.blendshape_node[0], 0)
+        cmds.setAttr("%s.nodeState" % self.blendshape_node, 1)
+        cmds.setAttr("%s.nodeState" % self.blendshape_node, 0)
 
     def destroy(self):
         """Destroy the protocol."""
@@ -249,6 +265,56 @@ class ProtocolCore(dict):
         target_count = len(api.get_all_vertices(target))
 
         return source_count == target_count
+
+    def transfer(self):
+        """Bake the QC into a shape pack."""
+
+        # make sure to move to the first frame
+        _current_frame = cmds.currentTime(query=True)
+        cmds.currentTime(0)
+
+        blend_attributes = deformers.get_influencers(self.blendshape_node)
+
+        # create a TRANSFERRED group to put the shapes in
+        self.transferred_shapes_grp = cmds.group(
+            empty=True,
+            name="TRANSFERRED_{0}_{1}".format(self.source_blendshape_grp, self.name),
+        )
+
+        # delete the annotations
+        if cmds.objExists(self.annotations_group):
+            cmds.delete(self.annotations_group)
+
+        # negateSource is only for the neutral and preview purposes. Remove it from the list.
+        if "negateSource" in blend_attributes:
+            cmds.setAttr("{}.negateSource".format(self.blendshape_node), -1)
+            blend_attributes.remove("negateSource")
+        for attr in blend_attributes:
+            cmds.setAttr("%s.%s" % (self.blendshape_node, attr), 1)
+            new_blendshape = cmds.duplicate(self.tmp_target)[0]
+
+            # cmds.parent(new_blendshape, self.transferShapesGrp)
+            # get rid of the intermediates
+            functions.delete_intermediates(new_blendshape)
+
+            # put in a group which facial tools likes
+            # splits = attr.split("__")
+            # if len(splits) > 1:
+            #     group_name = "{}_grp".format(splits[1])
+            #     grp = cmds.group(
+            #         em=True, parent=self.transferred_shapes_grp, name=group_name
+            #     )
+            #     cmds.parent(new_blendshape, grp)
+
+            cmds.parent(new_blendshape, self.transferred_shapes_grp)
+
+            cmds.rename(new_blendshape, attr)
+            cmds.setAttr("%s.%s" % (self.blendshape_node, attr), 0)
+
+        # destroy the tmp meshes
+        self.destroy()
+
+        cmds.currentTime(_current_frame)
 
 
 class Property(object):

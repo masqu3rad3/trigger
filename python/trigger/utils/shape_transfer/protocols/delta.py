@@ -9,10 +9,6 @@ class DeltaTransfer(ProtocolCore):
     type = "shape"
     def __init__(self):
         super(DeltaTransfer, self).__init__()
-
-        # self.name = "deltaTransfer"
-        # self.display_name = "Delta Transfer"
-        # self.type = "shape"
         
     def prepare(self):
         super(DeltaTransfer, self).prepare()
@@ -26,7 +22,7 @@ class DeltaTransfer(ProtocolCore):
                         self.tmp_target,
                         w=[0, 0],
                         name="trTMP_{0}_blendshape".format(self.name),
-                    )
+                    )[0]
 
             next_index = cmds.blendShape(self.blendshape_node, query=True, weightCount=True)
             cmds.blendShape(
@@ -38,7 +34,7 @@ class DeltaTransfer(ProtocolCore):
             # rename is something obvious to treat differently in QC
             cmds.aliasAttr(
                 "negateSource",
-                "%s.w[%i]" % (self.blendshape_node[0], next_index),
+                "%s.w[%i]" % (self.blendshape_node, next_index),
             )
 
 
@@ -52,5 +48,7 @@ class DeltaTransfer(ProtocolCore):
                 w=[0, 0],
                 name="trTMP_{0}_source_blendshape".format(self.name),
             )
+
+        self.create_cluster()
 
 

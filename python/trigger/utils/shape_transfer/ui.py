@@ -60,8 +60,6 @@ class ProtocolWidget(QtWidgets.QWidget):
         for property_name, data in self._protocol.items():
             if property_name in self.excluded_property_names:
                 continue
-            print(property_name)
-            print(data)
             if data.type == "combo":
                 label = QtWidgets.QLabel(text=property_name)
                 combo = QtWidgets.QComboBox()
@@ -95,9 +93,7 @@ class ProtocolWidget(QtWidgets.QWidget):
     def setVisible(self, visible):
         """Override the setVisible method to set the layout visible and the protocol visible."""
         super(ProtocolWidget, self).setVisible(visible)
-        print("setVisible -- dbg")
         print(self._protocol.name)
-        print("setVisible -- dbg")
 
         self._protocol["visibility"].value = visible
 
@@ -131,6 +127,7 @@ class MainUI(QtWidgets.QDialog):
         source_mesh_ssl = SceneSelectLayout(
             selection_type="object", single_selection=True
         )
+
         source_mesh_ssl.select_textbox.setText(self.transfer_handler._source_mesh)
         meshes_formlayout.addRow(source_mesh_lbl, source_mesh_ssl)
 
@@ -219,6 +216,10 @@ class MainUI(QtWidgets.QDialog):
             if _source != _target:  # Check if a and b have different states
                 source_visible_cb.setChecked(_target)
                 target_visible_cb.setChecked(_source)
+
+        # set the initial visibility values to the transfer_handler
+        self.on_source_visibility(source_visible_cb.isChecked())
+        self.on_target_visibility(target_visible_cb.isChecked())
 
         # SIGNALS
         offset_x_sp.valueChanged.connect(self.transfer_handler.set_offset_x)
@@ -358,6 +359,9 @@ class MainUI(QtWidgets.QDialog):
         # when the preview button is clicked
         preview_pb.clicked.connect(self.transfer_handler.preview_mode)
 
+        transfer_pb.clicked.connect(self.on_transfer)
+
+
     def build_ui(self):
         """Build the UI."""
 
@@ -368,6 +372,11 @@ class MainUI(QtWidgets.QDialog):
 
         return
 
+    def on_transfer(self):
+        """Run the transfer and inform the user about the progress and result."""
+        # TODO: Add a progress bar
+        self.transfer_handler.active_protocol.transfer()
+        # TODO: Add a feedback message
     def on_source_visibility(self, value):
         """Set visibility of all sources on all protocols."""
         for protocol in self.transfer_handler.all_protocols:
