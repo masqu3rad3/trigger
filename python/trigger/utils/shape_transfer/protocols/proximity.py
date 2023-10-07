@@ -6,6 +6,7 @@ from trigger.utils.shape_transfer.protocol_core import ProtocolCore, Property
 
 
 class ProximityTransfer(ProtocolCore):
+    """Proximity Wrap Topology Transfer Protocol."""
     name = "proximity"
     display_name = "Proximity"
     type = "topology"
@@ -74,6 +75,7 @@ class ProximityTransfer(ProtocolCore):
         )
 
     def prepare(self):
+        """Prepare the protocol for execution."""
         super(ProximityTransfer, self).prepare()
         self.blendshape_node = "trTMP_{0}_blendshape".format(self.name)
         if not cmds.objExists(self.blendshape_node):

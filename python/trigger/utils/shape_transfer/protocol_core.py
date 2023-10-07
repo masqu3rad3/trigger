@@ -1,10 +1,10 @@
+# pylint: disable=consider-using-f-string
 """Core Class for protocols."""
 import re
 from maya import cmds
 from trigger.library import api
 from trigger.library import functions
 from trigger.library import deformers
-from trigger.library import interface
 
 
 class ProtocolCore(dict):
@@ -17,10 +17,11 @@ class ProtocolCore(dict):
     def __init__(self):
 
         self.master_group = "trTMP_blndtrans__master"
-        self.protocol_group = None
-        self.annotations_group = None
+        self.transform_group = None
+        self.protocol_group = "trTMP_{0}__grp".format(self.name)
         self.blendshape_node = None
         self.source_blendshape_node = None
+        self.transferred_shapes_grp = None
 
         self.source_mesh = None
         self.target_mesh = None
@@ -53,11 +54,10 @@ class ProtocolCore(dict):
 
     def create_protocol_group(self):
         """Create the protocol group if it doesn't exist."""
-        _grp_name = "trTMP_{0}__grp".format(self.name)
-        if not cmds.objExists(_grp_name):
-            self.protocol_group = cmds.group(empty=True, name=_grp_name)
-        else:
-            self.protocol_group = _grp_name
+        if not cmds.objExists(self.protocol_group):
+            self.protocol_group = cmds.group(
+                empty=True, name=self.protocol_group, parent=self.master_group
+            )
 
         # first apply the existing visibility state to the mesh
         cmds.setAttr(
@@ -129,7 +129,8 @@ class ProtocolCore(dict):
             self.source_blendshape_grp, full_path=True
         )
 
-    def  create_cluster(self):
+    def create_cluster(self):
+        """Create a cluster to be used for offsetting the target mesh."""
         offset_cluster_name = "trTMP_{0}__offsetCluster".format(self.name)
         if cmds.objExists(offset_cluster_name):
             self.offset_cluster = cmds.listConnections(
@@ -142,23 +143,36 @@ class ProtocolCore(dict):
             )[1]
             cmds.parent(self.offset_cluster, self.protocol_group)
             cmds.hide(functions.get_shapes(self.offset_cluster))  # hide only shape
+            for cha in "xyz":
+                cmds.connectAttr(
+                    "{0}.t{1}".format(self.transform_group, cha),
+                    "{0}.t{1}".format(self.offset_cluster, cha),
+                )
 
-    def qc_blendshapes(self, separation=5):
+    def get_blend_attributes(self):
+        """Return the available blend attributes."""
+        _blend_attributes = deformers.get_influencers(self.blendshape_node)
+        if "negateSource" in _blend_attributes:  # remove negateSource
+            _blend_attributes.remove("negateSource")
+        return _blend_attributes
+
+    def qc_blendshapes(self, separation=1, force=False):
         """Animate the blendshapes for preview."""
-        annotations_group_name = "trTMP_{0}__annotations".format(self.name)
-        if cmds.objExists(
-            "{0}|{1}".format(self.protocol_group, annotations_group_name)
-        ):
-            self.annotations_group = annotations_group_name
-            # if the annotations group already exists, assume that qc blendshapes are ready
-            return False
 
-        self.annotations_group = cmds.group(empty=True, name=annotations_group_name)
-        cmds.parent(self.annotations_group, self.protocol_group)
+        # _current_time = cmds.currentTime(query=True)
+        # cmds.currentTime(0)
 
-        blend_attributes = deformers.get_influencers(self.blendshape_node)
-        if "negateSource" in blend_attributes:
-            blend_attributes.remove("negateSource")
+        qc_data = {}
+
+        # check if there are any keyframes on self.blendshape_node
+        # if there are, assume everything is already set-up.
+        if cmds.keyframe(self.blendshape_node, query=True, keyframeCount=True):
+            if force:
+                cmds.cutKey(self.blendshape_node, clear=True)
+            else:
+                return {}
+
+        blend_attributes = self.get_blend_attributes()
 
         for nmb, attr in enumerate(blend_attributes):
             start_frame = separation * (nmb + 1)
@@ -175,19 +189,7 @@ class ProtocolCore(dict):
             cmds.setKeyframe(
                 self.blendshape_node, attribute=attr, time=end_frame + 1, value=0
             )
-            # annotations
-            center = cmds.objectCenter(self.tmp_target, gl=True)
-            raw = cmds.xform(self.tmp_target, query=1, boundingBox=1)
-            offset = (0, (raw[4] - center[1]) * 1.1, 0)
 
-            annotation = interface.annotate(
-                self.tmp_target,
-                attr,
-                offset=offset,
-                name="trTMP_{0}_annotate_{1}".format(self.name, attr),
-                visibility_range=[start_frame, end_frame],
-            )
-            cmds.parent(annotation, self.annotations_group)
             if self.source_blendshape_node:
                 # This is for comparing between the source and target.
                 # Topology transfers doesn't have source blendshape node,
@@ -213,6 +215,8 @@ class ProtocolCore(dict):
                     time=end_frame + 1,
                     value=0,
                 )
+
+                qc_data[attr] = [start_frame, end_frame]
         if self.type == "shape":
             # if the same topo animate the delta shape at the beginning and end of range
             cmds.setKeyframe(
@@ -241,13 +245,17 @@ class ProtocolCore(dict):
             )
 
         # extend the timeline range to fit the qc
-        cmds.playbackOptions(min=1, max=separation * len(blend_attributes) + separation)
+        cmds.playbackOptions(
+            minTime=0, maxTime=separation * len(blend_attributes) + separation
+        )
 
-        return True
+        # cmds.currentTime(_current_time)
+        return qc_data
 
     def refresh(self):
-        """To fix weird maya bug with blendshape node which is not triggering the next target after the cursor
-        for some reason"""
+        """Refresh the node state of the blendshape node.
+        This is to fix the weird bug in blendshape node where it sometimes fails to update.
+        """
         cmds.setAttr("%s.nodeState" % self.blendshape_node, 1)
         cmds.setAttr("%s.nodeState" % self.blendshape_node, 0)
 
@@ -281,10 +289,6 @@ class ProtocolCore(dict):
             name="TRANSFERRED_{0}_{1}".format(self.source_blendshape_grp, self.name),
         )
 
-        # delete the annotations
-        if cmds.objExists(self.annotations_group):
-            cmds.delete(self.annotations_group)
-
         # negateSource is only for the neutral and preview purposes. Remove it from the list.
         if "negateSource" in blend_attributes:
             cmds.setAttr("{}.negateSource".format(self.blendshape_node), -1)
@@ -296,15 +300,6 @@ class ProtocolCore(dict):
             # cmds.parent(new_blendshape, self.transferShapesGrp)
             # get rid of the intermediates
             functions.delete_intermediates(new_blendshape)
-
-            # put in a group which facial tools likes
-            # splits = attr.split("__")
-            # if len(splits) > 1:
-            #     group_name = "{}_grp".format(splits[1])
-            #     grp = cmds.group(
-            #         em=True, parent=self.transferred_shapes_grp, name=group_name
-            #     )
-            #     cmds.parent(new_blendshape, grp)
 
             cmds.parent(new_blendshape, self.transferred_shapes_grp)
 
@@ -367,6 +362,7 @@ class Property(object):
 
     @staticmethod
     def camel_case_to_nice_name(input_str):
+        """Convert camel case to nice name."""
         # Use regular expression to split the string at camel case boundaries
         words = re.findall(r"[A-Z][a-z]*|[a-z]+", input_str)
 

@@ -11,6 +11,7 @@ class DeltaTransfer(ProtocolCore):
         super(DeltaTransfer, self).__init__()
         
     def prepare(self):
+        """Prepare the protocol for execution."""
         super(DeltaTransfer, self).prepare()
 
         blendshape_node_name = "trTMP_{0}_blendshape".format(self.name)

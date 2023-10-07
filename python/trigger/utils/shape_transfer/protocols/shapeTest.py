@@ -2,25 +2,16 @@
 
 from maya import cmds
 from trigger.utils.shape_transfer.protocol_core import ProtocolCore, Property
-class DeltaTransfer(ProtocolCore):
+class ShapeTest(ProtocolCore):
     name = "shapeTest"
     display_name = "Shape Test"
     type = "shape"
     def __init__(self):
-        super(DeltaTransfer, self).__init__()
-
-        # self.name = "deltaTransfer"
-        # self.display_name = "Delta Transfer"
-        # self.type = "shape"
-
-        self["testTest"] = Property(attribute_name="hedeHot",
-                                    attribute_type="integer",
-                                    default_value=1,
-                                    minimum=1,
-                                    maximum=100)
+        super(ShapeTest, self).__init__()
         
     def prepare(self):
-        super(DeltaTransfer, self).prepare()
+        """Prepare the protocol for execution."""
+        super(ShapeTest, self).prepare()
 
         blendshape_node_name = "trTMP_{0}_blendshape".format(self.name)
         if cmds.objExists(blendshape_node_name):
@@ -58,4 +49,4 @@ class DeltaTransfer(ProtocolCore):
                 name="trTMP_{0}_source_blendshape".format(self.name),
             )
 
-
+        self.create_cluster()
