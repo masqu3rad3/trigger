@@ -83,7 +83,7 @@ class ProximityTransfer(ProtocolCore):
                 self.blendshape_list,
                 self.tmp_source,
                 w=[0, 0],
-                name="trTMP_{0}_blendshape".format(self.name),
+                name=self.blendshape_node,
             )
 
         self.wrap_node = "proximity_wrap_trTMP_{0}_wrap".format(self.name)

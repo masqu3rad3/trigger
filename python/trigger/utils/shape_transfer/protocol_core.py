@@ -80,11 +80,11 @@ class ProtocolCore(dict):
                 "Source mesh, target mesh and blendshape pack must be defined"
             )
 
-        # if source and target has different topology, raise error
-        if self.type == "shape" and not self.is_same_topology(
-            self.source_mesh, self.target_mesh
-        ):
-            raise ValueError("Source mesh and target mesh must have the same topology")
+        # # if source and target has different topology, raise error
+        # if self.type == "shape" and not self.is_same_topology(
+        #     self.source_mesh, self.target_mesh
+        # ):
+        #     raise ValueError("Source mesh and target mesh must have the same topology")
 
         # This is the bare minimum for a protocol to work.
         self.create_protocol_group()
@@ -190,6 +190,9 @@ class ProtocolCore(dict):
                 self.blendshape_node, attribute=attr, time=end_frame + 1, value=0
             )
 
+            # add it to the qc data
+            qc_data[attr] = [start_frame, end_frame]
+
             if self.source_blendshape_node:
                 # This is for comparing between the source and target.
                 # Topology transfers doesn't have source blendshape node,
@@ -216,7 +219,6 @@ class ProtocolCore(dict):
                     value=0,
                 )
 
-                qc_data[attr] = [start_frame, end_frame]
         if self.type == "shape":
             # if the same topo animate the delta shape at the beginning and end of range
             cmds.setKeyframe(

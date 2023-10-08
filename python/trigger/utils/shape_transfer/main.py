@@ -195,7 +195,11 @@ class ShapeTransfer(object):
         _qc_scene_data = SceneDictionary(node=self.annotations_group)
 
         state = self.active_protocol.qc_blendshapes(separation=1, force=force_qc)
+        print("force_qc: ", force_qc)
+        print("state: ", state)
+        # state = self.active_protocol.qc_blendshapes(separation=1, force=True)
         qc_data = state or _qc_scene_data.get("qc_data", {})
+        print("qc_data: ", qc_data)
 
         if state:
             self._create_annotations(qc_data)
