@@ -1,5 +1,7 @@
 # pylint: disable=consider-using-f-string
 """Main module for the shape transfer tool."""
+from time import time
+import logging
 
 from maya import cmds
 
@@ -8,6 +10,7 @@ from trigger.library import functions
 from trigger.utils.shape_transfer.scene_data import SceneDictionary
 from trigger.utils.shape_transfer import protocols
 
+LOG = logging.getLogger(__name__)
 
 class ShapeTransfer(object):
     """Shape Transfer Main Class."""
@@ -254,8 +257,13 @@ class ShapeTransfer(object):
 
         cmds.delete(_temp_dup)
 
-    def transfer(self):
+    def transfer(self, q_progressbar=None):
         """Bake the QC into a shape pack."""
+
+        # Disable maya viewport update
+        cmds.refresh(suspend=True)
+
+        start = time()
 
         # get the qc data
         _qc_scene_data = SceneDictionary(node=self.annotations_group)
@@ -273,6 +281,11 @@ class ShapeTransfer(object):
         if self.active_protocol.offset_cluster:
             cmds.delete(self.active_protocol.offset_cluster)
 
+        if q_progressbar:
+            q_progressbar.reset()
+            q_progressbar.setRange(0, len(_qc_scene_data.get("qc_data", {})))
+
+        count = 0
         for attr, frames in _qc_scene_data.get("qc_data", {}).items():
             cmds.currentTime(frames[0])
             new_blendshape = cmds.duplicate(self.active_protocol.tmp_target)[0]
@@ -282,7 +295,21 @@ class ShapeTransfer(object):
             cmds.parent(new_blendshape, transferred_shapes_grp)
             cmds.rename(new_blendshape, attr)
 
+            # update the progress bar
+            if q_progressbar:
+                q_progressbar.setValue(count)
+                count += 1
+
         # destroy the tmp meshes
         self.active_protocol.destroy()
 
         cmds.currentTime(_current_frame)
+
+        if q_progressbar:
+            q_progressbar.reset()
+
+        # Enable maya viewport update
+        cmds.refresh(suspend=False)
+        LOG.info("Time taken: {}".format(time() - start))
+
+

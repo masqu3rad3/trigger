@@ -117,6 +117,8 @@ class MainUI(QtWidgets.QMainWindow):
         self.statusbar = QtWidgets.QStatusBar(self)
         self.setStatusBar(self.statusbar)
 
+        self.progress_bar = None
+
         self.build_ui()
         self.setMinimumSize(290, 600)
 
@@ -147,6 +149,15 @@ class MainUI(QtWidgets.QMainWindow):
         replace_sequence = QtWidgets.QAction("&Replace Sequence", self)
         replace_sequence.setToolTip("Replace the selected animated shape with the active preview sequence")
         tools_menu.addAction(replace_sequence)
+
+        # Create a progress bar
+        self.progress_bar = QtWidgets.QProgressBar()
+        # self.progress_bar.setRange(0, 2000)
+        # self.progress_bar.setValue(25)
+        # self.progress_bar.reset()
+        # self.progress_bar.setTextVisible(True)
+        # self.progress_bar.setFormat("%p%")
+        self.master_vlay.addWidget(self.progress_bar)
 
         # SIGNALS
         # TODO: Add signals for the menu actions
@@ -346,9 +357,9 @@ class MainUI(QtWidgets.QMainWindow):
         buttons_hlay = QtWidgets.QHBoxLayout()
         self.master_vlay.addLayout(buttons_hlay)
 
-        preview_pb = QtWidgets.QPushButton(text="Preview")
-        preview_pb.setCheckable(True)
-        buttons_hlay.addWidget(preview_pb)
+        self.preview_pb = QtWidgets.QPushButton(text="Preview")
+        self.preview_pb.setCheckable(True)
+        buttons_hlay.addWidget(self.preview_pb)
 
         refresh_pb = QtWidgets.QPushButton(text="R")
         refresh_pb.setMaximumWidth(15)
@@ -359,17 +370,17 @@ class MainUI(QtWidgets.QMainWindow):
 
         # SIGNALS
         # when the preview button is clicked
-        preview_pb.clicked.connect(self.transfer_handler.preview_mode)
+        self.preview_pb.clicked.connect(self.transfer_handler.preview_mode)
 
         transfer_pb.clicked.connect(self.on_transfer)
 
     def build_ui(self):
         """Build the UI."""
 
-        self.build_bars()
         self.build_commons()
         self.build_general_settings()
         self.build_transfer_tabs()
+        self.build_bars()
         self.build_buttons()
 
     def set_protocol(self, *args, **kwargs):
@@ -410,8 +421,10 @@ class MainUI(QtWidgets.QMainWindow):
 
     def on_transfer(self):
         """Run the transfer and inform the user about the progress and result."""
-        # TODO: Add a progress bar
-        self.transfer_handler.transfer()
+        self.transfer_handler.transfer(q_progressbar=self.progress_bar)
+        # uncheck the preview button and emit its signal
+        self.preview_pb.setChecked(False)
+        self.preview_pb.clicked.emit()
         # TODO: Add a feedback message
 
     def on_source_visibility(self, value):
@@ -423,3 +436,5 @@ class MainUI(QtWidgets.QMainWindow):
         """Set visibility of all sources on all protocols."""
         for protocol in self.transfer_handler.all_protocols:
             protocol["target_visibility"].value = bool(value)
+
+
