@@ -274,42 +274,33 @@ class ProtocolCore(dict):
 
         return source_count == target_count
 
-    def transfer(self):
-        """Bake the QC into a shape pack."""
-
-        # make sure to move to the first frame
-        _current_frame = cmds.currentTime(query=True)
-        cmds.currentTime(0)
-
-        blend_attributes = deformers.get_influencers(self.blendshape_node)
-
-        # create a TRANSFERRED group to put the shapes in
-        self.transferred_shapes_grp = cmds.group(
-            empty=True,
-            name="TRANSFERRED_{0}_{1}".format(self.source_blendshape_grp, self.name),
-        )
-
-        # negateSource is only for the neutral and preview purposes. Remove it from the list.
-        if "negateSource" in blend_attributes:
-            cmds.setAttr("{}.negateSource".format(self.blendshape_node), -1)
-            blend_attributes.remove("negateSource")
-        for attr in blend_attributes:
-            cmds.setAttr("%s.%s" % (self.blendshape_node, attr), 1)
-            new_blendshape = cmds.duplicate(self.tmp_target)[0]
-
-            # cmds.parent(new_blendshape, self.transferShapesGrp)
-            # get rid of the intermediates
-            functions.delete_intermediates(new_blendshape)
-
-            cmds.parent(new_blendshape, self.transferred_shapes_grp)
-
-            cmds.rename(new_blendshape, attr)
-            cmds.setAttr("%s.%s" % (self.blendshape_node, attr), 0)
-
-        # destroy the tmp meshes
-        self.destroy()
-
-        cmds.currentTime(_current_frame)
+    # def transfer(self, qc_data):
+    #     """Bake the QC into a shape pack."""
+    #
+    #     _current_frame = cmds.currentTime(query=True)
+    #
+    #     self.transferred_shapes_grp = cmds.group(
+    #         empty=True,
+    #         name="TRANSFERRED_{0}_{1}".format(self.source_blendshape_grp, self.name),
+    #     )
+    #
+    #     # delete the offset cluster
+    #     if self.offset_cluster:
+    #         cmds.delete(self.offset_cluster)
+    #
+    #     for attr, frames in qc_data.items():
+    #         cmds.currentTime(frames[0])
+    #         new_blendshape = cmds.duplicate(self.tmp_target)[0]
+    #         functions.delete_intermediates(new_blendshape)
+    #
+    #         cmds.parent(new_blendshape, self.transferred_shapes_grp)
+    #         cmds.rename(new_blendshape, attr)
+    #         cmds.setAttr("{}.v".format(new_blendshape), True)
+    #
+    #     # destroy the tmp meshes
+    #     self.destroy()
+    #
+    #     cmds.currentTime(_current_frame)
 
 
 class Property(object):

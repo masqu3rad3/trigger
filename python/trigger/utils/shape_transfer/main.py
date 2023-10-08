@@ -4,12 +4,14 @@
 from maya import cmds
 
 from trigger.library import interface
+from trigger.library import functions
 from trigger.utils.shape_transfer.scene_data import SceneDictionary
 from trigger.utils.shape_transfer import protocols
 
 
 class ShapeTransfer(object):
     """Shape Transfer Main Class."""
+
     def __init__(self):
         super(ShapeTransfer, self).__init__()
 
@@ -38,6 +40,7 @@ class ShapeTransfer(object):
                 self._topology_protocols.append(protocol())
 
         self.active_protocol = None
+        self.is_preview_on = False
 
     def set_source_mesh(self, source_mesh):
         """Set the source mesh and update the message attribute."""
@@ -77,6 +80,8 @@ class ShapeTransfer(object):
         if protocol not in self.shape_protocols + self.topology_protocols:
             raise ValueError("Protocol {} doesn't exist".format(protocol))
         self.active_protocol = protocol
+        # keep the preview mode same as before (prepare the protocol if not prepared)
+        self.preview_mode(turn_on=self.is_preview_on)
 
     def set_active_protocol_by_name(self, protocol_name):
         """Set the active protocol."""
@@ -130,6 +135,7 @@ class ShapeTransfer(object):
         # if we are turning off the preview mode, simply hide the group, don't destroy anything.
         if not turn_on:
             cmds.setAttr("{}.v".format(self.master_group), False)
+            self.is_preview_on = False
             return
 
         # validate variables
@@ -201,6 +207,8 @@ class ShapeTransfer(object):
 
         _qc_scene_data.update({"qc_data": qc_data})
 
+        self.is_preview_on = True
+
     def _create_annotations(self, qc_data):
         """Create the annotations."""
 
@@ -246,4 +254,35 @@ class ShapeTransfer(object):
 
         cmds.delete(_temp_dup)
 
+    def transfer(self):
+        """Bake the QC into a shape pack."""
 
+        # get the qc data
+        _qc_scene_data = SceneDictionary(node=self.annotations_group)
+
+        _current_frame = cmds.currentTime(query=True)
+
+        transferred_shapes_grp = cmds.group(
+            empty=True,
+            name="TRANSFERRED_{0}_{1}".format(
+                self._source_blendshape_grp, self.active_protocol.name
+            ),
+        )
+
+        # delete the offset cluster
+        if self.active_protocol.offset_cluster:
+            cmds.delete(self.active_protocol.offset_cluster)
+
+        for attr, frames in _qc_scene_data.get("qc_data", {}).items():
+            cmds.currentTime(frames[0])
+            new_blendshape = cmds.duplicate(self.active_protocol.tmp_target)[0]
+            functions.delete_intermediates(new_blendshape)
+
+            cmds.setAttr("{}.v".format(new_blendshape), True)  # make sure it's visible
+            cmds.parent(new_blendshape, transferred_shapes_grp)
+            cmds.rename(new_blendshape, attr)
+
+        # destroy the tmp meshes
+        self.active_protocol.destroy()
+
+        cmds.currentTime(_current_frame)

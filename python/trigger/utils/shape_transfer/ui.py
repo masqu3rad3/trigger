@@ -1,7 +1,7 @@
 import logging
 
 # from PySide2 import QtWidgets
-from trigger.ui.Qt import QtWidgets
+from trigger.ui.Qt import QtWidgets, QtCore
 from trigger.ui import qtmaya
 
 # import dnmayalib
@@ -93,12 +93,11 @@ class ProtocolWidget(QtWidgets.QWidget):
     def setVisible(self, visible):
         """Override the setVisible method to set the layout visible and the protocol visible."""
         super(ProtocolWidget, self).setVisible(visible)
-        print(self._protocol.name)
-
         self._protocol["visibility"].value = visible
 
 
-class MainUI(QtWidgets.QDialog):
+# class MainUI(QtWidgets.QDialog):
+class MainUI(QtWidgets.QMainWindow):
     def __init__(self, parent=None):
         super(MainUI, self).__init__(parent=parent)
         self.transfer_handler = ShapeTransfer()
@@ -107,11 +106,52 @@ class MainUI(QtWidgets.QDialog):
         self.setObjectName(WINDOWNAME)
         self.feed = Feedback()
 
-        self.master_vlay = QtWidgets.QVBoxLayout()
-        self.setLayout(self.master_vlay)
+        self.centralwidget = QtWidgets.QWidget(self)
+        self.centralwidget.setObjectName("centralwidget")
+        self.setCentralWidget(self.centralwidget)
+
+        self.master_vlay = QtWidgets.QVBoxLayout(self.centralwidget)
+        # self.setLayout(self.master_vlay)
+
+        # STaTUS BAR
+        self.statusbar = QtWidgets.QStatusBar(self)
+        self.setStatusBar(self.statusbar)
 
         self.build_ui()
         self.setMinimumSize(290, 600)
+
+    def build_bars(self):
+        """Build the menu and status bars."""
+        menu_bar = QtWidgets.QMenuBar(self, geometry=QtCore.QRect(0, 0, 1680, 18))
+        self.setMenuBar(menu_bar)
+
+        file_menu = menu_bar.addMenu("File")
+        tools_menu = menu_bar.addMenu("Tools")
+        help_menu = menu_bar.addMenu("Help")
+
+        # File Menu
+        export_active_shape = QtWidgets.QAction("&Export Active Shape", self)
+        file_menu.addAction(export_active_shape)
+        export_active_sequence = QtWidgets.QAction("&Export Active Sequence", self)
+        file_menu.addAction(export_active_sequence)
+        file_menu.addSeparator()
+        ingest_shape = QtWidgets.QAction("&Ingest Shape", self)
+        file_menu.addAction(ingest_shape)
+        ingest_sequence = QtWidgets.QAction("&Ingest Sequence", self)
+        file_menu.addAction(ingest_sequence)
+
+        # Tools Menu
+        replace_shape = QtWidgets.QAction("&Replace Shape", self)
+        replace_shape.setToolTip("Replace the selected shape with the active shape")
+        tools_menu.addAction(replace_shape)
+        replace_sequence = QtWidgets.QAction("&Replace Sequence", self)
+        replace_sequence.setToolTip("Replace the selected animated shape with the active preview sequence")
+        tools_menu.addAction(replace_sequence)
+
+        # SIGNALS
+        # TODO: Add signals for the menu actions
+
+
 
     def build_commons(self):
         """Build the commons section."""
@@ -300,44 +340,6 @@ class MainUI(QtWidgets.QDialog):
         self.shape_transfer_type_combo.currentIndexChanged.connect(self.set_protocol)
         self.topology_transfer_type_combo.currentIndexChanged.connect(self.set_protocol)
 
-    def set_protocol(self, *args, **kwargs):
-        """Set the active protocol on shape_transfer object according to the active tab and protocol combo box."""
-
-        print("set_protocol -- dbg")
-        # get the active tab
-        active_tab = self.tab_widget.currentWidget()
-
-        # if the active tab is the shape transfer tab
-        if active_tab == self.shape_transfer_tab:
-            print("shape transfer tab")
-            # get the protocol id from the combo box
-            protocol_id = self.shape_transfer_type_combo.currentIndex()
-            _protocol = self.transfer_handler.shape_protocols[protocol_id]
-            self.transfer_handler.set_active_protocol(_protocol)
-            # find the protocol widget using the id and set it visible and the rest invisible
-            for protocol_widget in self.shape_widgets:
-                if protocol_widget._protocol == _protocol:
-                    protocol_widget.setVisible(True)
-                else:
-                    protocol_widget.setVisible(False)
-
-        elif active_tab == self.topology_transfer_tab:
-            print("topology transfer tab")
-            # get the protocol id from the combo box
-            protocol_id = self.topology_transfer_type_combo.currentIndex()
-            _protocol = self.transfer_handler.topology_protocols[protocol_id]
-            self.transfer_handler.set_active_protocol(_protocol)
-            for protocol_widget in self.topology_widgets:
-                if protocol_widget._protocol == _protocol:
-                    protocol_widget.setVisible(True)
-                else:
-                    protocol_widget.setVisible(False)
-        else:
-            pass
-
-        print(self.transfer_handler.active_protocol.name)
-        print(self.transfer_handler.active_protocol.display_name)
-
     def build_buttons(self):
         """Build command buttons."""
 
@@ -361,22 +363,57 @@ class MainUI(QtWidgets.QDialog):
 
         transfer_pb.clicked.connect(self.on_transfer)
 
-
     def build_ui(self):
         """Build the UI."""
 
+        self.build_bars()
         self.build_commons()
         self.build_general_settings()
         self.build_transfer_tabs()
         self.build_buttons()
 
-        return
+    def set_protocol(self, *args, **kwargs):
+        """Set the active protocol on shape_transfer object according to the active tab and protocol combo box."""
+
+        # get the active tab
+        active_tab = self.tab_widget.currentWidget()
+
+        # if the active tab is the shape transfer tab
+        if active_tab == self.shape_transfer_tab:
+            # get the protocol id from the combo box
+            protocol_id = self.shape_transfer_type_combo.currentIndex()
+            _protocol = self.transfer_handler.shape_protocols[protocol_id]
+            self.transfer_handler.set_active_protocol(_protocol)
+            # find the protocol widget using the id and set it visible and the rest invisible
+            for protocol_widget in self.shape_widgets:
+                protocol_widget.setVisible(protocol_widget._protocol == _protocol)
+            # hide all the topology widgets
+            _ = [
+                protocol_widget.setVisible(False)
+                for protocol_widget in self.topology_widgets
+            ]
+
+        elif active_tab == self.topology_transfer_tab:
+            # get the protocol id from the combo box
+            protocol_id = self.topology_transfer_type_combo.currentIndex()
+            _protocol = self.transfer_handler.topology_protocols[protocol_id]
+            self.transfer_handler.set_active_protocol(_protocol)
+            for protocol_widget in self.topology_widgets:
+                protocol_widget.setVisible(protocol_widget._protocol == _protocol)
+            # hide all the shape widgets
+            _ = [
+                protocol_widget.setVisible(False)
+                for protocol_widget in self.shape_widgets
+            ]
+        else:
+            pass
 
     def on_transfer(self):
         """Run the transfer and inform the user about the progress and result."""
         # TODO: Add a progress bar
-        self.transfer_handler.active_protocol.transfer()
+        self.transfer_handler.transfer()
         # TODO: Add a feedback message
+
     def on_source_visibility(self, value):
         """Set visibility of all sources on all protocols."""
         for protocol in self.transfer_handler.all_protocols:
@@ -386,25 +423,3 @@ class MainUI(QtWidgets.QDialog):
         """Set visibility of all sources on all protocols."""
         for protocol in self.transfer_handler.all_protocols:
             protocol["target_visibility"].value = bool(value)
-
-    # def on_switch_visibility(self):
-    #     """Toggle visibility between the source and target meshes."""
-    #     _source = self.transfer.source_visible
-    #     _target = self.transfer.target_visible
-    #     if _source != _target:  # Check if a and b have different states
-    #         self.source_visible_cb.setChecked(_target)
-    #         self.target_visible_cb.setChecked(_source)
-
-    # def on_source_visibility(value):
-    #     self.transfer.source_visible = bool(value)
-    #
-    # def on_target_visibility(value):
-    #     self.transfer.target_visible = bool(value)
-    #
-    # def on_switch_visibility():
-    #     """Toggle visibility between the source and target meshes."""
-    #     _source = self.transfer.source_visible
-    #     _target = self.transfer.target_visible
-    #     if _source != _target:  # Check if a and b have different states
-    #         self.source_visible_cb.setChecked(_target)
-    #         self.target_visible_cb.setChecked(_source)
