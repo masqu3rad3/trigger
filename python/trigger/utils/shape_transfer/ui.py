@@ -63,6 +63,7 @@ class ProtocolWidget(QtWidgets.QWidget):
             if data.type == "combo":
                 label = QtWidgets.QLabel(text=property_name)
                 combo = QtWidgets.QComboBox()
+                combo.setObjectName(property_name)
                 combo.addItems(data.items)
                 combo.setCurrentIndex(data.default)
                 self.formlayout.addRow(label, combo)
@@ -70,6 +71,7 @@ class ProtocolWidget(QtWidgets.QWidget):
             elif data.type == "integer":
                 label = QtWidgets.QLabel(text=property_name)
                 spinbox = QtWidgets.QSpinBox()
+                spinbox.setObjectName(property_name)
                 spinbox.setMinimum(data.minimum)
                 spinbox.setMaximum(data.maximum)
                 spinbox.setValue(data.default)
@@ -78,6 +80,7 @@ class ProtocolWidget(QtWidgets.QWidget):
             elif data.type == "float":
                 label = QtWidgets.QLabel(text=property_name)
                 spinbox = QtWidgets.QDoubleSpinBox()
+                spinbox.setObjectName(property_name)
                 spinbox.setMinimum(data.minimum)
                 spinbox.setMaximum(data.maximum)
                 spinbox.setValue(data.default)
@@ -86,6 +89,7 @@ class ProtocolWidget(QtWidgets.QWidget):
             elif data.type == "boolean":
                 label = QtWidgets.QLabel(text=property_name)
                 checkbox = QtWidgets.QCheckBox()
+                checkbox.setObjectName(property_name)
                 checkbox.setChecked(data.default)
                 self.formlayout.addRow(label, checkbox)
                 checkbox.stateChanged.connect(data.set_value)
@@ -94,6 +98,22 @@ class ProtocolWidget(QtWidgets.QWidget):
         """Override the setVisible method to set the layout visible and the protocol visible."""
         super(ProtocolWidget, self).setVisible(visible)
         self._protocol["visibility"].value = visible
+        self.initialize_values()
+
+    def initialize_values(self):
+        """Get the values from the protocol object and update the widgets."""
+        for property_name, data in self._protocol.items():
+            if property_name in self.excluded_property_names:
+                continue
+            widget = self.findChild(QtWidgets.QWidget, property_name)
+            if isinstance(widget, QtWidgets.QComboBox):
+                widget.setCurrentIndex(data.value)
+            elif isinstance(widget, QtWidgets.QSpinBox):
+                widget.setValue(data.value)
+            elif isinstance(widget, QtWidgets.QDoubleSpinBox):
+                widget.setValue(data.value)
+            elif isinstance(widget, QtWidgets.QCheckBox):
+                widget.setChecked(data.value)
 
 
 # class MainUI(QtWidgets.QDialog):
@@ -147,7 +167,9 @@ class MainUI(QtWidgets.QMainWindow):
         replace_shape.setToolTip("Replace the selected shape with the active shape")
         tools_menu.addAction(replace_shape)
         replace_sequence = QtWidgets.QAction("&Replace Sequence", self)
-        replace_sequence.setToolTip("Replace the selected animated shape with the active preview sequence")
+        replace_sequence.setToolTip(
+            "Replace the selected animated shape with the active preview sequence"
+        )
         tools_menu.addAction(replace_sequence)
 
         # Create a progress bar
@@ -161,8 +183,6 @@ class MainUI(QtWidgets.QMainWindow):
 
         # SIGNALS
         # TODO: Add signals for the menu actions
-
-
 
     def build_commons(self):
         """Build the commons section."""
@@ -370,7 +390,7 @@ class MainUI(QtWidgets.QMainWindow):
 
         # SIGNALS
         # when the preview button is clicked
-        self.preview_pb.clicked.connect(self.transfer_handler.preview_mode)
+        self.preview_pb.clicked.connect(self.on_preview)
 
         transfer_pb.clicked.connect(self.on_transfer)
 
@@ -397,6 +417,7 @@ class MainUI(QtWidgets.QMainWindow):
             self.transfer_handler.set_active_protocol(_protocol)
             # find the protocol widget using the id and set it visible and the rest invisible
             for protocol_widget in self.shape_widgets:
+
                 protocol_widget.setVisible(protocol_widget._protocol == _protocol)
             # hide all the topology widgets
             _ = [
@@ -419,13 +440,38 @@ class MainUI(QtWidgets.QMainWindow):
         else:
             pass
 
+    def on_preview(self, state):
+        """Set the preview mode on the transfer handler."""
+
+        state, message = self.transfer_handler.preview_mode(turn_on=state)
+        if not state:
+            self.feed.pop_info(title="Preview Error", text=message, critical=True)
+            self.preview_pb.setChecked(False)
+            return
+        # update the active widget values
+        active_tab = self.tab_widget.currentWidget()
+
+        if active_tab == self.shape_transfer_tab:
+            for protocol_widget in self.shape_widgets:
+                protocol_widget.initialize_values()
+        elif active_tab == self.topology_transfer_tab:
+            for protocol_widget in self.topology_widgets:
+                protocol_widget.initialize_values()
+
+        self.statusbar.showMessage(message, 5000)
+
     def on_transfer(self):
         """Run the transfer and inform the user about the progress and result."""
-        self.transfer_handler.transfer(q_progressbar=self.progress_bar)
+        state, message = self.transfer_handler.transfer(q_progressbar=self.progress_bar)
+        if not state:
+            self.feed.pop_info(title="Transfer Error", text=message, critical=True)
+            return
         # uncheck the preview button and emit its signal
         self.preview_pb.setChecked(False)
         self.preview_pb.clicked.emit()
         # TODO: Add a feedback message
+
+        self.statusbar.showMessage(message, 5000)
 
     def on_source_visibility(self, value):
         """Set visibility of all sources on all protocols."""
@@ -436,5 +482,3 @@ class MainUI(QtWidgets.QMainWindow):
         """Set visibility of all sources on all protocols."""
         for protocol in self.transfer_handler.all_protocols:
             protocol["target_visibility"].value = bool(value)
-
-

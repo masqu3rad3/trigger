@@ -132,6 +132,22 @@ class ShapeTransfer(object):
                 name=self.annotations_group, empty=True, parent=self.master_group
             )
 
+    def validate_variables(self):
+        """Validate if the variables are set correctly.
+        Return the LOG message if not.
+        """
+        if self.active_protocol == None:  # pylint: disable=singleton-comparison
+            return False, "No protocol is set. Please set a protocol first using set_active_protocol()"
+
+        # if any of the variables are not set, return False
+        inputs = [self._source_mesh, self._target_mesh, self._source_blendshape_grp]
+        if not all(inputs):
+            return False, ("Some of the variables are not set. "
+                           "All Source mesh, Target mesh and Source blendshape group must be set.")
+
+        return True, "Success"
+
+
     def preview_mode(self, turn_on=True):
         """Make the preparations for the preview the transfer."""
 
@@ -139,19 +155,13 @@ class ShapeTransfer(object):
         if not turn_on:
             cmds.setAttr("{}.v".format(self.master_group), False)
             self.is_preview_on = False
-            return
+            return True, "Disabled"
 
         # validate variables
-        if self.active_protocol == None:  # pylint: disable=singleton-comparison
-            raise ValueError(
-                "No protocol is set. Please set a protocol first using set_active_protocol()"
-            )
-        if not self._source_mesh:
-            raise ValueError("Source mesh is not set")
-        if not self._target_mesh:
-            raise ValueError("Target mesh is not set")
-        if not self._source_blendshape_grp:
-            raise ValueError("Source blendshape group is not set")
+        state, message = self.validate_variables()
+        if not state:
+            LOG.warning(message)
+            return False, message
 
         # create the master and transform groups if they don't exist
         self._create_groups()
@@ -195,11 +205,9 @@ class ShapeTransfer(object):
         _qc_scene_data = SceneDictionary(node=self.annotations_group)
 
         state = self.active_protocol.qc_blendshapes(separation=1, force=force_qc)
-        print("force_qc: ", force_qc)
-        print("state: ", state)
-        # state = self.active_protocol.qc_blendshapes(separation=1, force=True)
+
         qc_data = state or _qc_scene_data.get("qc_data", {})
-        print("qc_data: ", qc_data)
+
 
         if state:
             self._create_annotations(qc_data)
@@ -215,6 +223,8 @@ class ShapeTransfer(object):
         _qc_scene_data.update({"qc_data": qc_data})
 
         self.is_preview_on = True
+
+        return True, "Success"
 
     def _create_annotations(self, qc_data):
         """Create the annotations."""
@@ -263,6 +273,11 @@ class ShapeTransfer(object):
 
     def transfer(self, q_progressbar=None):
         """Bake the QC into a shape pack."""
+
+        if not self.is_preview_on:
+            state, message = self.preview_mode(turn_on=True)
+            if not state:
+                return state, message
 
         # Disable maya viewport update
         cmds.refresh(suspend=True)
@@ -315,5 +330,6 @@ class ShapeTransfer(object):
         # Enable maya viewport update
         cmds.refresh(suspend=False)
         LOG.info("Time taken: {}".format(time() - start))
+        return True, "Transferred Successfully"
 
 
