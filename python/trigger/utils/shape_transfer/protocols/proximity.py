@@ -12,6 +12,7 @@ class ProximityTransfer(ProtocolCore):
     type = "topology"
 
     wrap_properties = [
+        "envelope",
         "wrapMode",
         "maxDrivers",
         "falloffScale",
@@ -27,6 +28,13 @@ class ProximityTransfer(ProtocolCore):
         self.wrap_node = None
 
         # define the property values for the protocol
+        self["envelope"] = Property(
+            attribute_name="envelope",
+            attribute_type="slider",
+            default_value=1.0,
+            minimum=0.0,
+            maximum=1.0,
+        )
         self["wrapMode"] = Property(
             attribute_name="wrapMode",
             attribute_type="combo",

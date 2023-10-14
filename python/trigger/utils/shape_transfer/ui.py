@@ -93,6 +93,20 @@ class ProtocolWidget(QtWidgets.QWidget):
                 checkbox.setChecked(data.default)
                 self.formlayout.addRow(label, checkbox)
                 checkbox.stateChanged.connect(data.set_value)
+            elif data.type == "slider":
+                label = QtWidgets.QLabel(text=property_name)
+                # slider = QtWidgets.QSlider(QtCore.Qt.Horizontal)
+                slider = DoubleSlider(QtCore.Qt.Horizontal)
+                # slider = QtWidgets.QDial()
+                slider.setObjectName(property_name)
+                slider.setMinimum(0)
+                slider.setMaximum(100.0)
+                slider.set_original_minimum(data.minimum)
+                slider.set_original_maximum(data.maximum)
+                slider.setValue(data.default)
+                # adjust the slide step size according to the range
+                self.formlayout.addRow(label, slider)
+                slider.doubleValueChanged.connect(data.set_value)
 
     def setVisible(self, visible):
         """Override the setVisible method to set the layout visible and the protocol visible."""
@@ -114,6 +128,8 @@ class ProtocolWidget(QtWidgets.QWidget):
                 widget.setValue(data.value)
             elif isinstance(widget, QtWidgets.QCheckBox):
                 widget.setChecked(data.value)
+            elif isinstance(widget, QtWidgets.QSlider):
+                widget.setValue(data.value)
 
 
 # class MainUI(QtWidgets.QDialog):
@@ -482,3 +498,60 @@ class MainUI(QtWidgets.QMainWindow):
         """Set visibility of all sources on all protocols."""
         for protocol in self.transfer_handler.all_protocols:
             protocol["target_visibility"].value = bool(value)
+
+
+class DoubleSlider(QtWidgets.QSlider):
+
+    # create our our signal that we can connect to if necessary
+    doubleValueChanged = QtCore.Signal(float)
+
+    def __init__(self, *args, **kargs):
+        super(DoubleSlider, self).__init__( *args, **kargs)
+        # self._multi = 10 ** decimals
+        self._multi = 10 ** 3.0
+
+        self._original_minimum = 0.0
+        self._original_maximum = 1.0
+
+
+        self.valueChanged.connect(self.emitDoubleValueChanged)
+
+    def set_original_minimum(self, value):
+        self._original_minimum =  round(value, 2)
+
+    def set_original_maximum(self, value):
+        self._original_maximum = round(value, 2)
+
+    def map_to_slider(self, value):
+        """map the value from original range to the slider range (0-100)"""
+        return int(( round(value, 2) - self._original_minimum) / (self._original_maximum - self._original_minimum) * 100.0)
+
+    def map_to_original(self, value):
+        """map the value from slider range (0-100) to the original range"""
+        return  round((value / 100.0), 2) * (self._original_maximum - self._original_minimum) + self._original_minimum
+
+    def emitDoubleValueChanged(self):
+        _raw_value = float(super(DoubleSlider, self).value())
+        value = round((_raw_value / self._multi), 2)
+        self.doubleValueChanged.emit(self.map_to_original(value))
+
+    def value(self):
+        _raw_value = float(super(DoubleSlider, self).value())
+        value = round((_raw_value / self._multi), 2)
+        return (self.map_to_original(value))
+
+    def setMinimum(self, value):
+        return super(DoubleSlider, self).setMinimum(value * self._multi)
+
+    def setMaximum(self, value):
+        return super(DoubleSlider, self).setMaximum(value * self._multi)
+
+    def setSingleStep(self, value):
+        return super(DoubleSlider, self).setSingleStep(value * self._multi)
+
+    def singleStep(self):
+        return float(super(DoubleSlider, self).singleStep()) / self._multi
+
+    def setValue(self, value):
+        mapped_value = round(self.map_to_slider(value),2)
+        super(DoubleSlider, self).setValue(int(mapped_value * self._multi))
