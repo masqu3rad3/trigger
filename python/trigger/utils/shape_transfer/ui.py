@@ -1,20 +1,11 @@
 import logging
 
-# from PySide2 import QtWidgets
 from trigger.ui.Qt import QtWidgets, QtCore
 from trigger.ui import qtmaya
-
-# import dnmayalib
 
 from trigger.utils.shape_transfer.main import ShapeTransfer
 from trigger.ui.feedback import Feedback
 from trigger.ui.layouts.scene_select import SceneSelectLayout
-
-# from utils import validate
-# from widgets import Feedback, LineEditBoxLayout
-
-# from Qt import QtWidgets
-
 
 LOG = logging.getLogger(__name__)
 
@@ -46,12 +37,13 @@ class ProtocolWidget(QtWidgets.QWidget):
     def __init__(self, protocol_object):
         super(ProtocolWidget, self).__init__()
         self._protocol = protocol_object
-
         self.master_vlay = QtWidgets.QVBoxLayout(self)
         self.formlayout = QtWidgets.QFormLayout()
         self.master_vlay.addLayout(self.formlayout)
 
         self.build_layout()
+
+        self.initialize_values()  # !!!
 
     def build_layout(self):
         """Build the layout."""
@@ -61,40 +53,42 @@ class ProtocolWidget(QtWidgets.QWidget):
             if property_name in self.excluded_property_names:
                 continue
             if data.type == "combo":
-                label = QtWidgets.QLabel(text=property_name)
+                label = QtWidgets.QLabel(text=data.nice_name)
                 combo = QtWidgets.QComboBox()
                 combo.setObjectName(property_name)
                 combo.addItems(data.items)
-                combo.setCurrentIndex(data.default)
+                # combo.setCurrentIndex(data.default)
                 self.formlayout.addRow(label, combo)
                 combo.currentIndexChanged.connect(data.set_value)
             elif data.type == "integer":
-                label = QtWidgets.QLabel(text=property_name)
+                label = QtWidgets.QLabel(text=data.nice_name)
                 spinbox = QtWidgets.QSpinBox()
                 spinbox.setObjectName(property_name)
                 spinbox.setMinimum(data.minimum)
                 spinbox.setMaximum(data.maximum)
-                spinbox.setValue(data.default)
+                # spinbox.setValue(data.default)
                 self.formlayout.addRow(label, spinbox)
                 spinbox.valueChanged.connect(data.set_value)
             elif data.type == "float":
-                label = QtWidgets.QLabel(text=property_name)
+                label = QtWidgets.QLabel(text=data.nice_name)
                 spinbox = QtWidgets.QDoubleSpinBox()
                 spinbox.setObjectName(property_name)
                 spinbox.setMinimum(data.minimum)
                 spinbox.setMaximum(data.maximum)
-                spinbox.setValue(data.default)
+                # spinbox.setValue(data.default)
                 self.formlayout.addRow(label, spinbox)
                 spinbox.valueChanged.connect(data.set_value)
             elif data.type == "boolean":
-                label = QtWidgets.QLabel(text=property_name)
+                label = QtWidgets.QLabel(text=data.nice_name)
                 checkbox = QtWidgets.QCheckBox()
                 checkbox.setObjectName(property_name)
-                checkbox.setChecked(data.default)
+                # checkbox.setChecked(data.default)
                 self.formlayout.addRow(label, checkbox)
                 checkbox.stateChanged.connect(data.set_value)
+                # ==> Grab from here
+                # !!!
             elif data.type == "slider":
-                label = QtWidgets.QLabel(text=property_name)
+                label = QtWidgets.QLabel(text=data.nice_name)
                 # slider = QtWidgets.QSlider(QtCore.Qt.Horizontal)
                 slider = DoubleSlider(QtCore.Qt.Horizontal)
                 # slider = QtWidgets.QDial()
@@ -103,10 +97,22 @@ class ProtocolWidget(QtWidgets.QWidget):
                 slider.setMaximum(100.0)
                 slider.set_original_minimum(data.minimum)
                 slider.set_original_maximum(data.maximum)
-                slider.setValue(data.default)
+                # slider.setValue(data.default)
                 # adjust the slide step size according to the range
                 self.formlayout.addRow(label, slider)
                 slider.doubleValueChanged.connect(data.set_value)
+            elif data.type == "list":  # !!!
+                label = QtWidgets.QLabel(text=data.nice_name)
+                combo = QtWidgets.QComboBox()
+                combo.setObjectName(property_name)
+                # combo.addItems(data.items)
+                # list is not enum. The default value is string. So we need to find the index of the default value
+                # combo.setCurrentIndex(data.items.index(data.default))
+                self.formlayout.addRow(label, combo)
+                # we need to emit the string value instead of the index
+                combo.currentTextChanged.connect(data.set_value)
+
+                # To Here <==
 
     def setVisible(self, visible):
         """Override the setVisible method to set the layout visible and the protocol visible."""
@@ -120,8 +126,15 @@ class ProtocolWidget(QtWidgets.QWidget):
             if property_name in self.excluded_property_names:
                 continue
             widget = self.findChild(QtWidgets.QWidget, property_name)
-            if isinstance(widget, QtWidgets.QComboBox):
-                widget.setCurrentIndex(data.value)
+            widget.blockSignals(True)
+            if isinstance(widget, QtWidgets.QComboBox):  # !!!
+                if data.type == "list":
+                    # for list, update both items and value. List is mutable
+                    widget.clear()
+                    widget.addItems(data.items)
+                    widget.setCurrentText(data.value)
+                elif data.type == "combo":  # combo is immutable
+                    widget.setCurrentIndex(data.value)
             elif isinstance(widget, QtWidgets.QSpinBox):
                 widget.setValue(data.value)
             elif isinstance(widget, QtWidgets.QDoubleSpinBox):
@@ -131,8 +144,9 @@ class ProtocolWidget(QtWidgets.QWidget):
             elif isinstance(widget, QtWidgets.QSlider):
                 widget.setValue(data.value)
 
+            widget.blockSignals(False)
 
-# class MainUI(QtWidgets.QDialog):
+
 class MainUI(QtWidgets.QMainWindow):
     def __init__(self, parent=None):
         super(MainUI, self).__init__(parent=parent)
@@ -190,11 +204,6 @@ class MainUI(QtWidgets.QMainWindow):
 
         # Create a progress bar
         self.progress_bar = QtWidgets.QProgressBar()
-        # self.progress_bar.setRange(0, 2000)
-        # self.progress_bar.setValue(25)
-        # self.progress_bar.reset()
-        # self.progress_bar.setTextVisible(True)
-        # self.progress_bar.setFormat("%p%")
         self.master_vlay.addWidget(self.progress_bar)
 
         # SIGNALS
@@ -433,8 +442,8 @@ class MainUI(QtWidgets.QMainWindow):
             self.transfer_handler.set_active_protocol(_protocol)
             # find the protocol widget using the id and set it visible and the rest invisible
             for protocol_widget in self.shape_widgets:
-
                 protocol_widget.setVisible(protocol_widget._protocol == _protocol)
+                protocol_widget.initialize_values()
             # hide all the topology widgets
             _ = [
                 protocol_widget.setVisible(False)
@@ -506,29 +515,36 @@ class DoubleSlider(QtWidgets.QSlider):
     doubleValueChanged = QtCore.Signal(float)
 
     def __init__(self, *args, **kargs):
-        super(DoubleSlider, self).__init__( *args, **kargs)
+        super(DoubleSlider, self).__init__(*args, **kargs)
         # self._multi = 10 ** decimals
-        self._multi = 10 ** 3.0
+        self._multi = 10**3.0
 
         self._original_minimum = 0.0
         self._original_maximum = 1.0
 
-
         self.valueChanged.connect(self.emitDoubleValueChanged)
 
     def set_original_minimum(self, value):
-        self._original_minimum =  round(value, 2)
+        self._original_minimum = round(value, 2)
 
     def set_original_maximum(self, value):
         self._original_maximum = round(value, 2)
 
     def map_to_slider(self, value):
         """map the value from original range to the slider range (0-100)"""
-        return int(( round(value, 2) - self._original_minimum) / (self._original_maximum - self._original_minimum) * 100.0)
+        return int(
+            (round(value, 2) - self._original_minimum)
+            / (self._original_maximum - self._original_minimum)
+            * 100.0
+        )
 
     def map_to_original(self, value):
         """map the value from slider range (0-100) to the original range"""
-        return  round((value / 100.0), 2) * (self._original_maximum - self._original_minimum) + self._original_minimum
+        return (
+            round((value / 100.0), 2)
+            * (self._original_maximum - self._original_minimum)
+            + self._original_minimum
+        )
 
     def emitDoubleValueChanged(self):
         _raw_value = float(super(DoubleSlider, self).value())
@@ -538,7 +554,7 @@ class DoubleSlider(QtWidgets.QSlider):
     def value(self):
         _raw_value = float(super(DoubleSlider, self).value())
         value = round((_raw_value / self._multi), 2)
-        return (self.map_to_original(value))
+        return self.map_to_original(value)
 
     def setMinimum(self, value):
         return super(DoubleSlider, self).setMinimum(value * self._multi)
@@ -553,5 +569,5 @@ class DoubleSlider(QtWidgets.QSlider):
         return float(super(DoubleSlider, self).singleStep()) / self._multi
 
     def setValue(self, value):
-        mapped_value = round(self.map_to_slider(value),2)
+        mapped_value = round(self.map_to_slider(value), 2)
         super(DoubleSlider, self).setValue(int(mapped_value * self._multi))

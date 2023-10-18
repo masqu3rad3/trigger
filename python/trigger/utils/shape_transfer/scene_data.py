@@ -11,59 +11,6 @@ from maya import cmds
 
 LOG = logging.getLogger(__name__)
 
-class SceneDictionaryPython2(dict):
-    """Python 2 version of SceneDictionary."""
-    def __init__(self, node, attribute="sceneData"):
-        super(SceneDictionaryPython2, self).__init__()
-        self.node = node
-        self.attribute = attribute
-
-    def __setitem__(self, key, value):
-        """Set the data on the node."""
-        if not self._check_node():
-            LOG.error("Node {} doesn't exist".format(self.node))
-            return False
-
-        super(SceneDictionaryPython2, self).__setitem__(key, value)
-
-        self.validate_attribute()
-        cmds.setAttr("{}.{}".format(self.node, self.attribute), str(self), type="string")
-
-    def __getitem__(self, key):
-        """Retrieve the data from the scene node."""
-        if not self._check_node():
-            _data = None
-        else:
-            self.validate_attribute()
-            _all_data = cmds.getAttr("{}.{}".format(self.node, self.attribute)) or "{}"
-            _data = ast.literal_eval(_all_data).get(key, None)
-        # first ingest the data to the dict
-        if _data:
-            super(SceneDictionaryPython2, self).__setitem__(key, _data)
-        # now run the original function with the new data
-        return super(SceneDictionaryPython2, self).__getitem__(key)
-
-    def update(self, *args, **kwargs):
-        """Update the dictionary."""
-        for k, v in dict(*args, **kwargs).items():
-            self[k] = v
-
-    def get(self, key, default=None):
-        """Get the value from the dictionary."""
-        return self.__getitem__(key) or default
-
-    def _check_node(self):
-        """Check if the node exists."""
-        if not cmds.objExists(self.node):
-            return False
-        return True
-
-    def validate_attribute(self):
-        """Create the attribute on the node."""
-        if not cmds.attributeQuery(self.attribute, node=self.node, exists=True):
-            cmds.addAttr(self.node, longName=self.attribute, dataType="string")
-
-
 class SceneDictionary(UserDict):
     def __init__(self, node, attribute="sceneData"):
         super(SceneDictionary, self).__init__()
@@ -105,3 +52,4 @@ class SceneDictionary(UserDict):
         """Create the attribute on the node."""
         if not cmds.attributeQuery(self.attribute, node=self.node, exists=True):
             cmds.addAttr(self.node, longName=self.attribute, dataType="string")
+

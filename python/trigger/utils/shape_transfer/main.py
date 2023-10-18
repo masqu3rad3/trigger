@@ -83,6 +83,15 @@ class ShapeTransfer(object):
         if protocol not in self.shape_protocols + self.topology_protocols:
             raise ValueError("Protocol {} doesn't exist".format(protocol))
         self.active_protocol = protocol
+
+        # define the available variables for the protocol. Some values are required for ui_refresh()
+        self.active_protocol.master_group = self.master_group # !!!
+        self.active_protocol.source_mesh = self._source_mesh # !!!
+        self.active_protocol.target_mesh = self._target_mesh # !!!
+        self.active_protocol.source_blendshape_grp = self._source_blendshape_grp # !!!
+        self.active_protocol.transform_group = self.transform # !!!
+        self.active_protocol.ui_refresh() # !!!
+
         # keep the preview mode same as before (prepare the protocol if not prepared)
         self.preview_mode(turn_on=self.is_preview_on)
 

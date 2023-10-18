@@ -342,7 +342,7 @@ def lock_and_hide(node, channelArray=None, hide=True):
         else channelArray
     )
     for i in channelArray:
-        attribute = "%s.%s" % (node, i)
+        attribute = "{0}.{1}".format(node, i)
         cmds.setAttr(attribute, lock=True, keyable=not hide, channelBox=not hide)
 
 
@@ -354,7 +354,7 @@ def unlock(node, attr_list=None):
         if not attr_list
         else attr_list
     )
-    if type(attr_list) != list:
+    if not isinstance(attr_list, list):
         attr_list = [attr_list]
     for attr in attr_list:
         cmds.setAttr("{0}.{1}".format(node, attr), e=True, k=True, l=False)
@@ -362,12 +362,12 @@ def unlock(node, attr_list=None):
 
 def is_locked(node, attr):
     """Returns the locked state of the given attribute on defined node"""
-    return cmds.getAttr("%s.%s" % (node, attr), lock=True)
+    return cmds.getAttr("{0}.{1}".format(node, attr), lock=True)
 
 
 def is_visible(node, attr):
     """Returns the channelbox state of the given attribute on defined node"""
-    return cmds.getAttr("%s.%s" % (node, attr), k=True)
+    return cmds.getAttr("{0}.{1}".format(node, attr), k=True)
 
 
 def attribute_pass(

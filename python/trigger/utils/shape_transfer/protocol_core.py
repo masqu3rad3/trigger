@@ -261,6 +261,12 @@ class ProtocolCore(dict):
         cmds.setAttr("%s.nodeState" % self.blendshape_node, 1)
         cmds.setAttr("%s.nodeState" % self.blendshape_node, 0)
 
+    def ui_refresh(self):
+        """Reinitialize the exposed (UI) properties."""
+
+        # This method is called when the UI is refreshed.
+        pass
+
     def destroy(self):
         """Destroy the protocol."""
         if cmds.objExists(self.protocol_group):
@@ -275,34 +281,6 @@ class ProtocolCore(dict):
         target_count = len(api.get_all_vertices(target))
 
         return source_count == target_count
-
-    # def transfer(self, qc_data):
-    #     """Bake the QC into a shape pack."""
-    #
-    #     _current_frame = cmds.currentTime(query=True)
-    #
-    #     self.transferred_shapes_grp = cmds.group(
-    #         empty=True,
-    #         name="TRANSFERRED_{0}_{1}".format(self.source_blendshape_grp, self.name),
-    #     )
-    #
-    #     # delete the offset cluster
-    #     if self.offset_cluster:
-    #         cmds.delete(self.offset_cluster)
-    #
-    #     for attr, frames in qc_data.items():
-    #         cmds.currentTime(frames[0])
-    #         new_blendshape = cmds.duplicate(self.tmp_target)[0]
-    #         functions.delete_intermediates(new_blendshape)
-    #
-    #         cmds.parent(new_blendshape, self.transferred_shapes_grp)
-    #         cmds.rename(new_blendshape, attr)
-    #         cmds.setAttr("{}.v".format(new_blendshape), True)
-    #
-    #     # destroy the tmp meshes
-    #     self.destroy()
-    #
-    #     cmds.currentTime(_current_frame)
 
 
 class Property(object):
@@ -350,7 +328,10 @@ class Property(object):
         if self.type == "boolean":
             val = bool(val)
         if self.node and cmds.objExists(self.node):
-            cmds.setAttr("{0}.{1}".format(self.node, self.attribute), val)
+            if self.type == "list":
+                cmds.setAttr("{0}.{1}".format(self.node, self.attribute), val, type="string")
+            else:
+                cmds.setAttr("{0}.{1}".format(self.node, self.attribute), val)
         self._current_value = val
 
     @staticmethod
