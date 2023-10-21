@@ -1,6 +1,7 @@
 import os
 import re
 import glob
+import itertools
 from bisect import bisect_left
 from maya import cmds
 import uuid
@@ -280,3 +281,33 @@ def parse(labels, prefix="", suffix="", side=""):
     # filter the elements to remove empty strings
     elements = [str(e) for e in elements if e != ""]
     return "_".join(elements)
+
+def convert_to_ranged_format(ids, prefix="vtx"):
+    """Convert the given vertex ids to ranged format.
+
+    Examples:
+        [1, 2, 3, 4, 5, 6, 7, 8, 9] -> ['vtx[1:9]']
+        [1, 2, 3, 4, 5, 6, 7, 8, 9, 11] -> ['vtx[1:9]', 'vtx[11]']
+    """
+    custom = []
+    ids.sort()  # Sort the IDs in ascending order
+
+    start = ids[0]
+    end = ids[0]
+
+    for x in range(1, len(ids)):
+        if ids[x] == end + 1:
+            end = ids[x]
+        else:
+            if start == end:
+                custom.append("{0}[{1}]".format(prefix, start))
+            else:
+                custom.append("{0}[{1}:{2}]".format(prefix, start, end))
+            start = end = ids[x]
+
+    if start == end:
+        custom.append("{0}[{1}]".format(prefix, start))
+    else:
+        custom.append("{0}[{1}:{2}]".format(prefix, start, end))
+
+    return custom

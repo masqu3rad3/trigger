@@ -13,6 +13,23 @@ def get_all_vertices(mesh_transform):
     mfn_object = OpenMaya.MFnMesh(sel_obj)
     return mfn_object.getPoints(OpenMaya.MSpace.kWorld)
 
+def get_vertex_ids_in_radius(source_mesh, point_node, radius=0.2, select=False):
+    _e = get_world_translation(point_node)
+    compare_point = OpenMaya.MPoint(_e)
+    vertices = get_all_vertices(source_mesh)
+
+    vertex_ids = []
+    for vertex_id, vertex in enumerate(vertices):
+        distance = (vertex - compare_point).length()
+        if distance < radius:
+            vertex_ids.append(vertex_id)
+
+    if select:
+        # Select the vertices
+        select_vertices(source_mesh, vertex_ids)
+
+    return vertex_ids
+
 
 def get_mdag_path(node):
     """Return the API 2.0 dagPath of given node."""

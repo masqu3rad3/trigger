@@ -2,6 +2,7 @@
 
 from maya import cmds
 from trigger.library import arithmetic as ar
+from trigger.library.naming import convert_to_ranged_format
 
 
 def switch_connections(
@@ -45,3 +46,51 @@ def switch_connections(
 
     for node in kill_nodes:
         cmds.connectAttr(switch_on_kill_p, "%s.nodeState" % node)
+
+
+def set_deformer_influence(deformer, vertex_ids):
+    """Limit the deformer influence to the given vertex ids."""
+
+    # get the original geometry from the originalGeometry plug
+    _original_geo = cmds.listConnections("{}.originalGeometry".format(deformer),  source=True, destination=False, shapes=True) or []
+    _input_geo = cmds.listConnections("{}.input[0].inputGeometry".format(deformer),  source=True, destination=False, shapes=True) or []
+    original_geo = (_original_geo + _input_geo)[0]
+
+    # check if a groupID node already connected to the deformer.
+    # if so, use that instead of creating a new one
+    group_id_list = cmds.listConnections(deformer, type="groupId")
+    if cmds.listConnections(deformer, type="groupId"):
+        group_id_node = group_id_list[0]
+    else:
+        group_id_node = cmds.createNode("groupId")
+        cmds.connectAttr(
+            "{}.groupId".format(group_id_node), "{}.input[0].groupId".format(deformer)
+        )
+
+    # check if there is a groupParts node already connected to the deformer.
+    # if so, use that instead of creating a new one
+    group_parts_list = cmds.listConnections(deformer, type="groupParts")
+    if group_parts_list:
+        group_parts_node = group_parts_list[0]
+    else:
+        group_parts_node = cmds.createNode("groupParts")
+        cmds.connectAttr(
+            "{}.outputGeometry".format(group_parts_node),
+            "{}.input[0].inputGeometry".format(deformer),
+            force=True,
+        )
+        cmds.connectAttr(
+            "{}.worldMesh[0]".format(original_geo),
+            "{}.inputGeometry".format(group_parts_node),
+        )
+
+    # make sure out group_id connected to our groupParts node
+    cmds.connectAttr(
+        "{}.groupId".format(group_id_node),
+        "{}.groupId".format(group_parts_node),
+        force=True,
+    )
+
+    # convert the vetex ids to the custom format
+    ranged_string_list = convert_to_ranged_format(vertex_ids, prefix="vtx")
+    cmds.setAttr("{}.inputComponents".format(group_parts_node), len(ranged_string_list), *ranged_string_list, type="componentList")
