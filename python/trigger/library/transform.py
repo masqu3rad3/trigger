@@ -121,9 +121,9 @@ def duplicate(node, name=None, at_time=None):
     Returns:
         str: Name of new node.
     """
-    if not isinstance(at_time, (int, float)):
-        raise ValueError("at_time must be an int or float")
     if at_time:
+        if not isinstance(at_time, (int, float)):
+            raise ValueError("at_time must be an int or float")
         cmds.currentTime(at_time)
     node_name = name or "%s_dup" % node
     return cmds.duplicate(node, name=node_name)[0]

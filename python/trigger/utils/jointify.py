@@ -468,9 +468,28 @@ class Jointify(object):
                     plugs = cmds.listConnections(
                         incoming, plugs=True, source=True, destination=False
                     )
-                    self.originalData[shape]["combinations"] = [
-                        x.split(".")[1] for x in plugs
-                    ]
+                    _combinations = []
+                    for plug in plugs:
+                        _node, _attr = plug.split(".")
+                        if _node == self.blendshapeNode:
+                            _combinations.append(_attr)
+                        # if it is not the self.blendshapeNode, try to find it from the incoming connections
+                        else:
+                            # TODO: This is a hotfix for the combination shapes which includes inbetweens.
+                            # FIXME This is not a good solution. It should be fixed in the future
+                            # print("This is a hotfix for the combination shapes which includes inbetweens.")
+                            # print(plug)
+                            _node_input_plug = cmds.listConnections(
+                                _node, plugs=True, source=True, destination=False
+                            )[0]
+                            _node_parent_node, _node_parent_attr = _node_input_plug.split(".")
+                            if _node_parent_node == self.blendshapeNode:
+                                _combinations.append(_node_parent_attr)
+                    self.originalData[shape]["combinations"] = _combinations
+
+                    # self.originalData[shape]["combinations"] = [
+                    #     x.split(".")[1] for x in plugs
+                    # ]
                 else:
                     self.originalData[shape]["type"] = "base"
                     self.originalData[shape]["combinations"] = []
@@ -862,6 +881,9 @@ class Jointify(object):
                 raise Exception("Cancelled by user")
             scene_hook = data["in"].split(".")[0] if data["in"] else None
             if data["type"] == "combination":
+                print("debug")
+                print(shape)
+                print(data)
                 scene_hooks = [
                     self.originalData[x]["in"]
                     for x in data["combinations"]

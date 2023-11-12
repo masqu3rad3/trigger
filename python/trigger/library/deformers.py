@@ -30,9 +30,9 @@ def get_deformers(mesh=None, names_only=False):
         "jiggle",
         "deltaMush",
         "shrinkWrap",
+        "tension",
+        "ffd"
     ]
-    if cmds.about(q=True, api=True) >= 20180400:
-        valid_deformers.append("ffd")
     # get deformer from mesh
     if not mesh:
         mesh = cmds.ls(sl=True)
