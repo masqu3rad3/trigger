@@ -7,8 +7,10 @@ from trigger.core import filelog
 
 import importlib
 from trigger.ui.Qt import QtWidgets
-from trigger.ui import custom_widgets
 from trigger.ui.widgets.browser import BrowserButton, FileLineEdit
+
+from trigger.core.action import ActionCore
+
 
 log = filelog.Filelog(logname=__name__, filename="trigger_log")
 
@@ -17,7 +19,7 @@ ACTION_DATA = {"trigger_file_path": ""}
 
 
 # Name of the class MUST be the capitalized version of file name. eg. morph.py => Morph, split_shapes.py => Split_shapes
-class Reference_session(object):
+class Reference_session(ActionCore):
     def __init__(self, *args, **kwargs):
         super(Reference_session, self).__init__()
         # user defined variables

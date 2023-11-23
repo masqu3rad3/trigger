@@ -6,11 +6,11 @@ from trigger.library import naming
 from trigger.library import attribute
 from trigger.library import api
 from trigger.objects.controller import Controller
-from trigger.modules import _module
+from trigger.core.module import ModuleCore, GuidesCore
 
 from trigger.core import filelog
 
-log = filelog.Filelog(logname=__name__, filename="trigger_log")
+LOG = filelog.Filelog(logname=__name__, filename="trigger_log")
 
 LIMB_DATA = {
     "members": ["TailRoot", "Tail"],
@@ -20,7 +20,8 @@ LIMB_DATA = {
 }
 
 
-class Tail(_module.ModuleCore):
+class Tail(ModuleCore):
+    name = "Tail"
     def __init__(self, build_data=None, inits=None):
         super(Tail, self).__init__()
         if build_data:
@@ -29,11 +30,11 @@ class Tail(_module.ModuleCore):
             self.inits = [self.tailRoot] + self.tails
         elif inits:
             if len(inits) < 2:
-                log.error("Tail setup needs at least 2 initial joints")
+                LOG.error("Tail setup needs at least 2 initial joints")
                 return
             self.inits = inits
         else:
-            log.error("Class needs either build_data or inits to be constructed")
+            LOG.error("Class needs either build_data or inits to be constructed")
 
         # initialize coordinates
         self.up_axis, self.mirror_axis, self.look_axis = joint.get_rig_axes(
@@ -173,7 +174,8 @@ class Tail(_module.ModuleCore):
         self.round_up()
 
 
-class Guides(_module.GuidesCore):
+class Guides(GuidesCore):
+    name = "Tail"
     limb_data = LIMB_DATA
 
     def __init__(self, *args, **kwargs):
@@ -185,7 +187,7 @@ class Guides(_module.GuidesCore):
     def draw_joints(self):
         # fool check
         if not self.segments or self.segments < 1:
-            log.warning(
+            LOG.warning(
                 "minimum segments required for the simple tail is two. current: %s"
                 % self.segments
             )

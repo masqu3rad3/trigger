@@ -6,13 +6,13 @@ from trigger.library import functions
 from trigger.library import connection
 from trigger.library import naming
 from trigger.library import attribute
-from trigger.modules import _module
+from trigger.core.module import ModuleCore, GuidesCore
 from trigger.objects.controller import Controller
 from trigger.library.tools import make_stretchy_ik
 
 from trigger.core import filelog
 
-log = filelog.Filelog(logname=__name__, filename="trigger_log")
+LOG = filelog.Filelog(logname=__name__, filename="trigger_log")
 
 LIMB_DATA = {
     "members": ["FkikRoot", "Fkik"],
@@ -49,7 +49,8 @@ LIMB_DATA = {
 }
 
 
-class Fkik(_module.ModuleCore):
+class Fkik(ModuleCore):
+    name = "FK/IK"
     def __init__(self, build_data=None, inits=None):
         super(Fkik, self).__init__()
         # fool proofing
@@ -61,12 +62,12 @@ class Fkik(_module.ModuleCore):
             self.inits = [self.fkRoot] + self.fks
         elif inits:
             if len(inits) < 2:
-                log.error("Simple FK setup needs at least 2 initial joints")
+                LOG.error("Simple FK setup needs at least 2 initial joints")
                 return
             self.fkRoot = inits[0]
             self.inits = inits
         else:
-            log.error("Class needs either build_data or inits to be constructed")
+            LOG.error("Class needs either build_data or inits to be constructed")
 
         # get distances
 
@@ -358,7 +359,7 @@ class Fkik(_module.ModuleCore):
             mel.eval("ikSpringSolver;")
             solver = "ikSpringSolver"
         else:
-            log.error("Unidentified Solver")
+            LOG.error("Unidentified Solver")
             raise
 
         ik_handle = cmds.ikHandle(
@@ -524,7 +525,8 @@ class Fkik(_module.ModuleCore):
         self.round_up()
 
 
-class Guides(_module.GuidesCore):
+class Guides(GuidesCore):
+    name = "FK/IK"
     limb_data = LIMB_DATA
 
     def __init__(self, *args, **kwargs):
@@ -536,7 +538,7 @@ class Guides(_module.GuidesCore):
     def draw_joints(self):
         # # fool check
         if not self.segments or self.segments < 1:
-            log.error(
+            LOG.error(
                 "minimum segments required for the fk/ik module is two. current: %s"
                 % self.segments,
                 proceed=False,

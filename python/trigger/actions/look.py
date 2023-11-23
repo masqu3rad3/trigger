@@ -5,6 +5,7 @@ from maya import cmds
 
 from trigger.core import io
 from trigger.core import filelog
+from trigger.core.action import ActionCore
 
 from trigger.ui.Qt import QtWidgets
 from trigger.ui.layouts import save_box
@@ -20,7 +21,7 @@ ACTION_DATA = {
 
 
 # Name of the class MUST be the capitalized version of file name. eg. morph.py => Morph, split_shapes.py => Split_shapes
-class Look(object):
+class Look(ActionCore):
     def __init__(self, *args, **kwargs):
         super(Look, self).__init__()
         self.io = io.IO(file_name="tmp_look.trl")

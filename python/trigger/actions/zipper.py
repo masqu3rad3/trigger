@@ -2,6 +2,7 @@
 from maya import cmds
 
 from trigger.core import filelog
+from trigger.core.action import ActionCore
 
 from trigger.library import selection
 from trigger.utils.face import lip_zipper
@@ -29,7 +30,7 @@ ACTION_DATA = {
 # Name of the class MUST be the capitalized version of file name. eg. morph.py => Morph, split_shapes.py => Split_shapes
 
 
-class Zipper(object):
+class Zipper(ActionCore):
     def __init__(self, *args, **kwargs):
         super(Zipper, self).__init__()
 

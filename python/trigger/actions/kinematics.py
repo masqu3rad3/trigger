@@ -2,6 +2,8 @@
 import os
 from maya import cmds
 from trigger.core import filelog
+from trigger.core.action import ActionCore
+
 from trigger.core import database
 from trigger.core.decorators import suppress_warnings
 from trigger.core.compatibility import is_string
@@ -32,7 +34,7 @@ ACTION_DATA = {
 }
 
 
-class Kinematics(object):
+class Kinematics(ActionCore):
     def __init__(
         self, root_joints=None, progress_bar=None, create_switchers=True, rig_name=None
     ):
@@ -43,9 +45,8 @@ class Kinematics(object):
 
         self.autoSwitchers = create_switchers
         self.root_joints = root_joints if type(root_joints) == list else [root_joints]
-        self.module_dict = {
-            mod: eval("modules.{0}.LIMB_DATA".format(mod)) for mod in modules.__all__
-        }
+        self.module_dict =  {module_name: data["guide"].limb_data for module_name, data in modules.class_data.items()}
+
         self.validRootList = [
             values["members"][0] for values in self.module_dict.values()
         ]
@@ -422,11 +423,7 @@ class Kinematics(object):
                 set_name = naming.unique_name(set_name)
                 j_def_set = cmds.sets(name=set_name)
 
-            module = "modules.{0}.{1}".format(x[1], x[1].capitalize())
-            flags = "build_data={0}".format(x[0])
-            construct_command = "{0}({1})".format(module, flags)
-
-            limb = eval(construct_command)
+            limb = modules.class_data[x[1]]["build"](build_data=x[0])
             limb.colorCodes = color_codes
             limb.createLimb()
 

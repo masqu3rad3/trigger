@@ -4,6 +4,8 @@ from maya import cmds
 
 from trigger.core import io
 from trigger.core import filelog
+from trigger.core.action import ActionCore
+
 from trigger.core.decorators import keepselection
 from trigger.library import functions
 from trigger.library import naming
@@ -43,7 +45,7 @@ def subtract_list(list_of_values):
     return result
 
 
-class Weights(dict):
+class Weights(ActionCore, dict):
     _api_version = cmds.about(apiVersion=True)
 
     def __init__(self):

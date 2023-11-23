@@ -3,15 +3,13 @@
 import os
 from maya import cmds
 from maya import mel
-import platform
 
 from trigger.library import attribute
 
 from trigger.core import filelog
+from trigger.core.action import ActionCore
 
-# from trigger.ui.Qt import QtWidgets, QtGui # for progressbar
-from PySide2 import QtWidgets, QtGui  # for progressbar
-from trigger.ui import custom_widgets
+from trigger.ui.Qt import QtWidgets, QtGui # for progressbar
 from trigger.ui.widgets.browser import BrowserButton, FileLineEdit
 
 from trigger import version_control
@@ -27,7 +25,7 @@ ACTION_DATA = {
 }
 
 
-class Import_asset(object):
+class Import_asset(ActionCore):
     def __init__(self, *args, **kwargs):
         super(Import_asset, self).__init__()
         self.filePath = None

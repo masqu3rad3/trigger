@@ -6,11 +6,11 @@ from trigger.library import naming
 from trigger.library import attribute
 from trigger.library import api
 from trigger.objects.controller import Controller
-from trigger.modules import _module
+from trigger.core.module import ModuleCore, GuidesCore
 
 from trigger.core import filelog
 
-log = filelog.Filelog(logname=__name__, filename="trigger_log")
+LOG = filelog.Filelog(logname=__name__, filename="trigger_log")
 
 LIMB_DATA = {
     "members": ["TentacleRoot", "Tentacle", "TentacleEnd"],
@@ -53,7 +53,8 @@ LIMB_DATA = {
 }
 
 
-class Tentacle(_module.ModuleCore):
+class Tentacle(ModuleCore):
+    name = "Tentacle"
     def __init__(self, build_data=None, inits=None):
         super(Tentacle, self).__init__()
         if build_data:
@@ -66,7 +67,7 @@ class Tentacle(_module.ModuleCore):
                 return
             self.inits = inits
         else:
-            log.error("Class needs either build_data or inits to be constructed")
+            LOG.error("Class needs either build_data or inits to be constructed")
 
         # get distances
 
@@ -974,7 +975,8 @@ class Tentacle(_module.ModuleCore):
         self.round_up()
 
 
-class Guides(_module.GuidesCore):
+class Guides(GuidesCore):
+    name = "Tentacle"
     limb_data = LIMB_DATA
 
     def __init__(self, *args, **kwargs):

@@ -1,14 +1,18 @@
 """Assembles the scene geo with alembic caches"""
 import os
+
+from maya import cmds
+
 from trigger.core import filelog
-from trigger.actions import import_asset
+from trigger.core.action import ActionCore
+
 from trigger.library import naming
 
 from trigger.ui.Qt import QtWidgets, QtGui  # for progressbar
 from trigger.ui.widgets.browser import BrowserButton
 from trigger.ui import custom_widgets
 
-log = filelog.Filelog(logname=__name__, filename="trigger_log")
+LOG = filelog.Filelog(logname=__name__, filename="trigger_log")
 
 ACTION_DATA = {
     "alembic_path_list": [],
@@ -19,7 +23,8 @@ ACTION_DATA = {
 # morph.py => Morph, split_shapes.py => Split_shapes
 
 
-class Assemble(import_asset.Import_asset):
+class Assemble(ActionCore):
+    action_data = ACTION_DATA
     def __init__(self):
         super(Assemble, self).__init__()
 
@@ -40,7 +45,7 @@ class Assemble(import_asset.Import_asset):
         # This method does not accept any arguments. all the user variable
         # must be defined to the instance before
         for file_path in self.alembicPathList:
-            self.import_alembic(file_path, update_only=True)
+            self.import_alembic(file_path)
 
     def save_action(self, file_path=None, *args, **kwargs):
         """Mandatory Method - Save Action"""
@@ -151,6 +156,16 @@ class Assemble(import_asset.Import_asset):
         browse_pb.clicked.connect(add_path_to_list)
         next_version_pb.clicked.connect(version_up)
         previous_version_pb.clicked.connect(version_down)
+
+    def import_alembic(self, file_path):
+        self._load_alembic_plugin()
+        pre = cmds.ls(long=True)
+        cmds.AbcImport(
+                file_path, connect="/", createIfNotFound=True, ftr=False, sts=False
+            )
+        after = cmds.ls(long=True)
+        new_nodes = [x for x in after if x not in pre]
+        return new_nodes
 
     @staticmethod
     def info():

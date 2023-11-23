@@ -7,11 +7,11 @@ from trigger.library import attribute
 from trigger.library import api
 from trigger.objects.controller import Controller
 from trigger.objects import twist_spline as tspline
-from trigger.modules import _module
+from trigger.core.module import ModuleCore, GuidesCore
 
 from trigger.core import filelog
 
-log = filelog.Filelog(logname=__name__, filename="trigger_log")
+LOG = filelog.Filelog(logname=__name__, filename="trigger_log")
 
 LIMB_DATA = {
     "members": ["SpineRoot", "Spine", "SpineEnd"],
@@ -52,7 +52,8 @@ LIMB_DATA = {
 }
 
 
-class Spine(_module.ModuleCore):
+class Spine(ModuleCore):
+    name = "Spine"
     def __init__(self, build_data=None, inits=None):
         super(Spine, self).__init__()
         if build_data:
@@ -72,7 +73,7 @@ class Spine(_module.ModuleCore):
             self.inits = inits
 
         else:
-            log.error("Class needs either build_data or arminits to be constructed")
+            LOG.error("Class needs either build_data or arminits to be constructed")
 
         # get positions
         self.rootPoint = api.get_world_translation(self.inits[0])
@@ -412,7 +413,8 @@ class Spine(_module.ModuleCore):
         self.round_up()
 
 
-class Guides(_module.GuidesCore):
+class Guides(GuidesCore):
+    name = "Spine"
     limb_data = LIMB_DATA
 
     def __init__(self, *args, **kwargs):

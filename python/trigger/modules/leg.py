@@ -7,11 +7,11 @@ from trigger.library import attribute
 from trigger.library import api
 from trigger.objects.ribbon import Ribbon
 from trigger.objects.controller import Controller
-from trigger.modules import _module
+from trigger.core.module import ModuleCore, GuidesCore
 
 from trigger.core import filelog
 
-log = filelog.Filelog(logname=__name__, filename="trigger_log")
+LOG = filelog.Filelog(logname=__name__, filename="trigger_log")
 
 LIMB_DATA = {
     "members": [
@@ -31,7 +31,8 @@ LIMB_DATA = {
 }
 
 
-class Leg(_module.ModuleCore):
+class Leg(ModuleCore):
+    name = "Leg"
     def __init__(self, build_data=None, inits=None):
         super(Leg, self).__init__()
         if build_data:
@@ -70,7 +71,7 @@ class Leg(_module.ModuleCore):
             self.bank_out_ref = inits[8]
             self.inits = inits
         else:
-            log.error("Class needs either build_data or arm inits to be constructed")
+            LOG.error("Class needs either build_data or arm inits to be constructed")
 
         # get positions
         self.leg_root_pos = api.get_world_translation(self.leg_root_ref)
@@ -2508,7 +2509,8 @@ class Leg(_module.ModuleCore):
         self.round_up()
 
 
-class Guides(_module.GuidesCore):
+class Guides(GuidesCore):
+    name = "Leg"
     limb_data = LIMB_DATA
 
     def draw_joints(self):

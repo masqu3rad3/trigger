@@ -9,11 +9,11 @@ from trigger.library import connection
 from trigger.library import api
 from trigger.objects.controller import Controller
 from trigger.utils import parentToSurface
-from trigger.modules import _module
+from trigger.core.module import ModuleCore, GuidesCore
 
 from trigger.core import filelog
 
-log = filelog.Filelog(logname=__name__, filename="trigger_log")
+LOG = filelog.Filelog(logname=__name__, filename="trigger_log")
 
 LIMB_DATA = {
     "members": ["SingletonRoot", "Singleton"],
@@ -44,9 +44,9 @@ LIMB_DATA = {
 }
 
 
-class Singleton(_module.ModuleCore):
+class Singleton(ModuleCore):
     """Creates one or multiple loose controllers. They can be bound to a surface and can be local"""
-
+    name = "Singleton"
     def __init__(self, build_data=None, inits=None):
         super(Singleton, self).__init__()
         # fool proofing
@@ -59,7 +59,7 @@ class Singleton(_module.ModuleCore):
         elif inits:
             self.inits = inits
         else:
-            log.error("Class needs either build_data or inits to be constructed")
+            LOG.error("Class needs either build_data or inits to be constructed")
 
         # get the properties from the root
         self.useRefOrientation = cmds.getAttr("%s.useRefOri" % self.inits[0])
@@ -173,7 +173,8 @@ class Singleton(_module.ModuleCore):
         self.round_up()
 
 
-class Guides(_module.GuidesCore):
+class Guides(GuidesCore):
+    name = "Singleton"
     limb_data = LIMB_DATA
 
     def draw_joints(self):

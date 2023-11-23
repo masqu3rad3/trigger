@@ -3,8 +3,8 @@
 from maya import cmds
 import platform
 from trigger.core import filelog
+from trigger.core.action import ActionCore
 
-# from trigger.library import functions
 from trigger.core.decorators import keepselection
 
 from trigger.ui.Qt import QtWidgets
@@ -21,7 +21,7 @@ ACTION_DATA = {
 }
 
 
-class Shapes(object):
+class Shapes(ActionCore):
     def __init__(self, *args, **kwargs):
         super(Shapes, self).__init__()
         self.shapes_file_path = ""

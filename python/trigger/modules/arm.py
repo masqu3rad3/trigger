@@ -10,7 +10,7 @@ from trigger.objects.ribbon import Ribbon
 from trigger.objects.controller import Controller
 from trigger.objects import measure
 from trigger.library import tools
-from trigger.modules import _module
+from trigger.core.module import ModuleCore, GuidesCore
 
 from trigger.core import filelog
 
@@ -31,7 +31,8 @@ LIMB_DATA = {
 }
 
 
-class Arm(_module.ModuleCore):
+class Arm(ModuleCore):
+    name = "Arm"
     def __init__(self, build_data=None, inits=None):
         super(Arm, self).__init__()
         # fool proofing
@@ -1736,7 +1737,8 @@ class Arm(_module.ModuleCore):
         self.round_up()
 
 
-class Guides(_module.GuidesCore):
+class Guides(GuidesCore):
+    name = "Arm"
     limb_data = LIMB_DATA
 
     def draw_joints(self):

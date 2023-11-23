@@ -15,22 +15,14 @@ ACTION_DATA = {
 # morph.py => Morph, split_shapes.py => Split_shapes
 
 
-class Boiler_plate(object):
-    def __init__(self, *args, **kwargs):
-        super(Boiler_plate, self).__init__()
-
-        # user defined variables
-        self.someProperty = None
-        self.someMoreProperty = None
-
-        # class variables
+class ActionCore(object):
+    action_data = ACTION_DATA
 
     def feed(self, action_data, *args, **kwargs):
         """Mandatory Method - Feeds the instance with the action data
         stored in actions session.
         """
-        self.someProperty = action_data.get("some_property")
-        self.someMoreProperty = action_data.get("some_more_property")
+        pass
 
     def action(self):
         """Mandatory Method - Execute Action"""

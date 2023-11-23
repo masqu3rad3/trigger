@@ -526,7 +526,7 @@ class ProgressListWidget(QtWidgets.QListWidget):
         font = QtGui.QFont()
         font.setPointSize(12)
         font.setBold(False)
-        font.setWeight(150)
+        # font.setWeight(150)
         font.setStrikeOut(False)
         self.setFont(font)
         self.setMouseTracking(False)

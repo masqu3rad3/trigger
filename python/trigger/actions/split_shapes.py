@@ -13,6 +13,8 @@ from trigger.ui.layouts.save_box import SaveBoxLayout
 from trigger.ui.Qt import QtWidgets
 from trigger.ui import feedback
 from trigger.core import filelog
+from trigger.core.action import ActionCore
+
 from trigger.utils import shape_splitter
 
 log = filelog.Filelog(logname=__name__, filename="trigger_log")

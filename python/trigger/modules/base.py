@@ -4,7 +4,7 @@ import maya.api.OpenMaya as om
 from trigger.library import functions, naming, joint
 from trigger.library import connection
 from trigger.objects.controller import Controller
-from trigger.modules import _module
+from trigger.core.module import ModuleCore, GuidesCore
 
 from trigger.core import filelog
 
@@ -18,7 +18,8 @@ LIMB_DATA = {
 }
 
 
-class Base(_module.ModuleCore):
+class Base(ModuleCore):
+    name = "Base"
     def __init__(self, build_data=None, inits=None):
         super(Base, self).__init__()
         if build_data:
@@ -94,7 +95,8 @@ class Base(_module.ModuleCore):
         self.create_controllers()
 
 
-class Guides(_module.GuidesCore):
+class Guides(GuidesCore):
+    name = "Base"
     limb_data = LIMB_DATA
 
     def draw_joints(self):

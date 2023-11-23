@@ -6,10 +6,11 @@ import platform
 import subprocess
 
 from trigger.core import filelog
+from trigger.core.action import ActionCore
+
 from trigger.core import dynamic_import as dyn  # NEVER REMOVE THIS LINE!!!
 
 from trigger.ui.Qt import QtWidgets, QtGui  # for progressbar
-from trigger.ui import custom_widgets
 from trigger.ui.widgets.browser import BrowserButton, FileLineEdit
 
 log = filelog.Filelog(logname=__name__, filename="trigger_log")
@@ -22,7 +23,7 @@ ACTION_DATA = {
 }
 
 
-class Script(object):
+class Script(ActionCore):
     def __init__(self):
         super(Script, self).__init__()
         self.filePath = None

@@ -3,13 +3,15 @@
 from maya import cmds
 
 from trigger.library import functions
+from trigger.core.action import ActionCore
+
 from trigger.library import attribute
 from trigger.library import icons as ic
 
 ACTION_DATA = {}
 
 
-class Master(object):
+class Master(ActionCore):
     def __init__(self, *args, **kwargs):
         super(Master, self).__init__()
 

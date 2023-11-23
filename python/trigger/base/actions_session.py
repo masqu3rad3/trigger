@@ -21,9 +21,11 @@ class ActionsSession(dict):
         # at least a file name is necessary while instancing the IO
         self.io = io.IO(file_name="tmp_actions_session.tr")
         self.currentFile = None
-        self.action_data_dict = {}
-        for mod in actions.__all__:
-            self.action_data_dict[mod] = eval("actions.{0}.ACTION_DATA".format(mod))
+        self.action_data_dict =  {module_name: class_obj.action_data for module_name, class_obj in actions.class_data.items()}
+
+        # self.action_data_dict = {}
+        # for mod in actions.__all__:
+        #     self.action_data_dict[mod] = eval("actions.{0}.ACTION_DATA".format(mod))
 
         """
         Structure:
@@ -313,10 +315,14 @@ class ActionsSession(dict):
     @tracktime
     def _action(self, action):
         LOG.header("%s" % action["name"])
-        action_cmd = "actions.{0}.{1}()".format(
-            action["type"], action["type"].capitalize()
-        )
-        a_hand = eval(action_cmd)
+
+        # action_cmd = "actions.{0}.{1}()".format(
+        #     action["type"], action["type"].capitalize()
+        # )
+        # a_hand = eval(action_cmd)
+
+        a_hand = actions.class_data[action["type"]]()
+
         a_hand.feed(action["data"])
         a_hand.action()
         LOG.info("success...")
@@ -374,10 +380,14 @@ class ActionsSession(dict):
     def run_save_action(self, action_name):
         LOG.info("saving Action Data")
         action = self.get_action(action_name)
-        action_cmd = "actions.{0}.{1}()".format(
-            action["type"], action["type"].capitalize()
-        )
-        a_hand = eval(action_cmd)
+
+
+        # action_cmd = "actions.{0}.{1}()".format(
+        #     action["type"], action["type"].capitalize()
+        # )
+        # a_hand = eval(action_cmd)
+
+        a_hand = actions.class_data[action["type"]]()
         a_hand.feed(action["data"])
         a_hand.save_action()
         LOG.info("success")
@@ -385,8 +395,10 @@ class ActionsSession(dict):
 
     def get_layout_ui(self, action_name, ctrl, layout):
         action = self.get_action(action_name)
-        action_cmd = "actions.{0}.{1}()".format(
-            action["type"], action["type"].capitalize()
-        )
-        a_hand = eval(action_cmd)
+        # action_cmd = "actions.{0}.{1}()".format(
+        #     action["type"], action["type"].capitalize()
+        # )
+        # a_hand = eval(action_cmd)
+
+        a_hand = actions.class_data[action["type"]]()
         a_hand.ui(ctrl, layout, self)

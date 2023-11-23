@@ -1,9 +1,7 @@
-"""Boiler Plate template for actions"""
-from maya import cmds
+"""Define and create selection sets."""
 
-from trigger.core import io
 from trigger.core import filelog
-from trigger.core.decorators import tracktime
+from trigger.core.action import ActionCore
 
 from trigger.library import selection
 
@@ -36,7 +34,7 @@ ACTION_DATA = {
 
 
 # Name of the class MUST be the capitalized version of file name. eg. morph.py => Morph, split_shapes.py => Split_shapes
-class Selection_sets(object):
+class Selection_sets(ActionCore):
     def __init__(self, *args, **kwargs):
         super(Selection_sets, self).__init__()
 

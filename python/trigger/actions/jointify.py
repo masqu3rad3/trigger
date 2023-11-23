@@ -2,17 +2,16 @@
 from maya import cmds
 from trigger.utils import jointify
 
-
-from trigger.core import io
 from trigger.core import filelog
-from trigger.core.decorators import tracktime
+from trigger.core.action import ActionCore
+
 from trigger.library import selection, deformers
 
 from trigger.ui.widgets.browser import BrowserButton, FileLineEdit
 from trigger.ui import custom_widgets
 from trigger.ui import feedback
+from trigger.ui.Qt import QtWidgets, QtGui
 
-from PySide2 import QtWidgets, QtGui  # temp
 
 log = filelog.Filelog(logname=__name__, filename="trigger_log")
 
@@ -33,7 +32,7 @@ ACTION_DATA = {
 # Name of the class MUST be the capitalized version of file name. eg. morph.py => Morph, split_shapes.py => Split_shapes
 
 
-class Jointify(object):
+class Jointify(ActionCore):
     def __init__(self, *args, **kwargs):
         super(Jointify, self).__init__()
 

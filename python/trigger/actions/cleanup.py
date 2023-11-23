@@ -3,6 +3,8 @@ from maya import cmds
 from maya import mel
 
 from trigger.core import filelog
+from trigger.core.action import ActionCore
+
 from trigger.library import functions, connection, shading
 
 from trigger.ui.Qt import QtWidgets  # for progressbar
@@ -21,7 +23,7 @@ ACTION_DATA = {
 }
 
 
-class Cleanup(object):
+class Cleanup(ActionCore):
     def __init__(self):
         super(Cleanup, self).__init__()
 

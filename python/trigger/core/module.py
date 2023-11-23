@@ -21,6 +21,7 @@ LIMB_DATA = {
 
 
 class ModuleCore(object):
+    name = ""
     def __init__(self, *args, **kwargs):
         self.inits = []
         self.limbGrp = None
@@ -174,6 +175,7 @@ class ModuleCore(object):
 
 
 class GuidesCore(object):
+    name = ""
     limb_data = LIMB_DATA
 
     def __init__(

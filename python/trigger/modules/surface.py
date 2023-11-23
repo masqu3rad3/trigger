@@ -7,10 +7,10 @@ from trigger.library import attribute
 from trigger.library import connection
 from trigger.objects.controller import Controller
 from trigger.utils import parentToSurface
-from trigger.modules import _module
+from trigger.core.module import ModuleCore, GuidesCore
 from trigger.core import filelog
 
-log = filelog.Filelog(logname=__name__, filename="trigger_log")
+LOG = filelog.Filelog(logname=__name__, filename="trigger_log")
 
 LIMB_DATA = {
     "members": ["Surface", "SurfaceItem"],
@@ -46,7 +46,8 @@ LIMB_DATA = {
 }
 
 
-class Surface(_module.ModuleCore):
+class Surface(ModuleCore):
+    name = "Surface"
     def __init__(self, build_data=None, inits=None):
         super(Surface, self).__init__()
 
@@ -57,7 +58,7 @@ class Surface(_module.ModuleCore):
         elif inits:
             self.inits = inits
         else:
-            log.error("Class needs either build_data or inits to be constructed")
+            LOG.error("Class needs either build_data or inits to be constructed")
 
         # get properties
         self.controllerSurface = cmds.getAttr("%s.controllerSurface" % self.inits[0])
@@ -230,7 +231,8 @@ class Surface(_module.ModuleCore):
         self.create_controllers_and_connections()
 
 
-class Guides(_module.GuidesCore):
+class Guides(GuidesCore):
+    name = "Surface"
     limb_data = LIMB_DATA
 
     def draw_joints(self):

@@ -11,6 +11,7 @@ from trigger.library import deformers
 from trigger.library import naming
 
 from trigger.core import filelog
+from trigger.core.action import ActionCore
 
 from trigger.ui.Qt import QtWidgets
 from trigger.ui import custom_widgets
@@ -54,7 +55,7 @@ ACTION_DATA = {
 # Name of the class MUST be the capitalized version of file name. eg. morph.py => Morph, split_shapes.py => Split_shapes
 
 
-class Correctives(object):
+class Correctives(ActionCore):
     def __init__(self):
         super(Correctives, self).__init__()
 

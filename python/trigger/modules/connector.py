@@ -3,7 +3,7 @@ import maya.api.OpenMaya as om
 
 from trigger.library import functions, naming, joint
 from trigger.objects.controller import Controller
-from trigger.modules import _module
+from trigger.core.module import ModuleCore, GuidesCore
 
 from trigger.core import filelog
 
@@ -24,7 +24,8 @@ LIMB_DATA = {
 }
 
 
-class Connector(_module.ModuleCore):
+class Connector(ModuleCore):
+    name = "Connector"
     def __init__(self, build_data=None, inits=None):
         super(Connector, self).__init__()
         if build_data:
@@ -84,7 +85,8 @@ class Connector(_module.ModuleCore):
         cmds.connectAttr("%s.jointVis" % self.scaleGrp, "%s.v" % self.limbGrp)
 
 
-class Guides(_module.GuidesCore):
+class Guides(GuidesCore):
+    name = "Connector"
     limb_data = LIMB_DATA
 
     def draw_joints(self):

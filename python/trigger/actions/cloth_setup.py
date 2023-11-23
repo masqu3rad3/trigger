@@ -2,7 +2,10 @@
 
 from maya import cmds
 from maya import mel
+
 from trigger.core import filelog
+from trigger.core.action import ActionCore
+
 from trigger.library import selection
 
 from trigger.ui.Qt import QtWidgets  # for progressbar
@@ -18,7 +21,7 @@ ACTION_DATA = {
 }
 
 
-class Cloth_setup(object):
+class Cloth_setup(ActionCore):
     def __init__(self, *args, **kwargs):
         super(Cloth_setup, self).__init__()
         self.clothObjects = []

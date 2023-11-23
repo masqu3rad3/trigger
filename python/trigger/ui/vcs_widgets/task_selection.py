@@ -2,8 +2,7 @@
 
 """Custom shotgrid control widget for selecting trigger sessions and versions """
 
-# from trigger.ui.Qt import QtWidgets, QtCore
-from PySide2 import QtWidgets, QtCore
+from trigger.ui.Qt import QtWidgets, QtCore
 from trigger import version_control
 
 

@@ -7,10 +7,10 @@ from trigger.library import attribute
 from trigger.library import connection
 from trigger.library import api
 from trigger.objects.controller import Controller
-from trigger.modules import _module
+from trigger.core.module import ModuleCore, GuidesCore
 from trigger.core import filelog
 
-log = filelog.Filelog(logname=__name__, filename="trigger_log")
+LOG = filelog.Filelog(logname=__name__, filename="trigger_log")
 
 LIMB_DATA = {
     "members": ["FingerRoot", "Finger"],
@@ -34,7 +34,8 @@ LIMB_DATA = {
 }
 
 
-class Finger(_module.ModuleCore):
+class Finger(ModuleCore):
+    name = "Finger"
     def __init__(self, build_data=None, inits=None):
         super(Finger, self).__init__()
         if build_data:
@@ -44,11 +45,11 @@ class Finger(_module.ModuleCore):
         elif inits:
             # fool proofing
             if len(inits) < 2:
-                log.error("Insufficient Finger Initialization Joints")
+                LOG.error("Insufficient Finger Initialization Joints")
                 return
             self.inits = inits
         else:
-            log.error("Class needs either build_data or finger inits to be constructed")
+            LOG.error("Class needs either build_data or finger inits to be constructed")
 
         # hand_controller = cmds.getAttr("%s.handController" % self.inits[0])
         # if hand_controller:
@@ -272,7 +273,8 @@ class Finger(_module.ModuleCore):
         self.round_up()
 
 
-class Guides(_module.GuidesCore):
+class Guides(GuidesCore):
+    name = "Finger"
     limb_data = LIMB_DATA
 
     def __init__(self, *args, **kwargs):
@@ -284,7 +286,7 @@ class Guides(_module.GuidesCore):
 
     def draw_joints(self):
         if self.segments < 2:
-            log.warning(
+            LOG.warning(
                 "minimum segments for the fingers are two. current: %s" % self.segments
             )
             return

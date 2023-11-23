@@ -23,9 +23,8 @@ class Initials(object):
         super(Initials, self).__init__()
         self.parseSettings()
         self.projectName = "trigger"
-        self.module_dict = {
-            mod: eval("modules.{0}.LIMB_DATA".format(mod)) for mod in modules.__all__
-        }
+
+        self.module_dict =  {module_name: data["guide"].limb_data for module_name, data in modules.class_data.items()}
         self.valid_limbs = self.module_dict.keys()
         self.validRootList = [
             values["members"][0] for values in self.module_dict.values()
@@ -212,38 +211,10 @@ class Initials(object):
             return total_locators, jnt_dict_side1
 
         limb_group = cmds.group(empty=True, name=limb_group_name)
-        # limb_group = cmds.group(empty=True, name=naming.unique_name("{}_guides".format(limb_group_name), suffix = "_guides"))
         cmds.parent(limb_group, holderGroup)
         cmds.select(clear=True)
 
-        module = "modules.{0}.{1}".format(limb_name, "Guides")
-
-        flags = (
-            "side='{0}', "
-            "suffix='{1}', "
-            "tMatrix={2}, "
-            "upVector={3}, "
-            "mirrorVector={4}, "
-            "lookVector={5}".format(
-                side,
-                unique_limb,
-                self.tMatrix,
-                self.upVector,
-                self.mirrorVector,
-                self.lookVector,
-            )
-        )
-
-        extra_arg_list = []
-        for key, value in kwargs.items():
-            if type(value) == str:
-                extra_arg_list.append("%s='%s'" % (key, value))
-            else:
-                extra_arg_list.append("%s=%s" % (key, value))
-
-        extra_flags = ", ".join(extra_arg_list)
-        construct_command = "{0}({1},{2})".format(module, flags, extra_flags)
-        guide = eval(construct_command)
+        guide = modules.class_data[limb_name]["guide"](side=side, suffix=unique_limb, tMatrix=self.tMatrix, upVector=self.upVector, mirrorVector=self.mirrorVector, lookVector=self.lookVector, **kwargs)
         guide.createGuides()
 
         self.adjust_guide_display(guide)

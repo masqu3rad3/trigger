@@ -1,11 +1,9 @@
 """Widget to be used to select published assets. Derived from task_selection"""
 
-from trigger import version_control
 from trigger.ui.vcs_widgets.task_selection import TaskSelection
 
 from trigger.ui.Qt import QtWidgets, QtCore
 
-# from PySide2 import QtWidgets, QtCore
 
 
 class PublishSelection(TaskSelection):

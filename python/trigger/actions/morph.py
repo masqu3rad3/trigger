@@ -5,10 +5,11 @@ import itertools
 
 from maya import cmds
 
-from trigger.ui.Qt import QtWidgets, QtGui
-from trigger.library import functions, attribute, deformers, naming
+from trigger.ui.Qt import QtWidgets
+from trigger.library import functions, attribute, deformers
 
 from trigger.core import filelog
+from trigger.core.action import ActionCore
 
 log = filelog.Filelog(logname=__name__, filename="trigger_log")
 
@@ -20,7 +21,7 @@ ACTION_DATA = {
 }
 
 
-class Morph(object):
+class Morph(ActionCore):
     def __init__(self, *args, **kwargs):
         super(Morph, self).__init__()
 

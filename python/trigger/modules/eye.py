@@ -5,7 +5,7 @@ from trigger.library import functions, connection
 from trigger.library import naming
 from trigger.library import attribute
 from trigger.objects.controller import Controller
-from trigger.modules import _module
+from trigger.core.module import ModuleCore, GuidesCore
 
 from trigger.core import filelog
 
@@ -34,7 +34,8 @@ LIMB_DATA = {
 }
 
 
-class Eye(_module.ModuleCore):
+class Eye(ModuleCore):
+    name = "Eye"
     def __init__(self, build_data=None, inits=None):
         super(Eye, self).__init__()
         # fool proofing
@@ -271,7 +272,8 @@ class Eye(_module.ModuleCore):
         self.round_up()
 
 
-class Guides(_module.GuidesCore):
+class Guides(GuidesCore):
+    name = "Eye"
     limb_data = LIMB_DATA
 
     def draw_joints(self):

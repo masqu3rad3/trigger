@@ -17,7 +17,9 @@ ACTION_DATA = {
 """
 
 from trigger.core import filelog
-from trigger.ui.Qt import QtWidgets, QtGui, QtCore
+from trigger.core.action import ActionCore
+
+from trigger.ui.Qt import QtWidgets, QtCore
 
 from trigger.utils import space_switcher
 
@@ -29,7 +31,7 @@ ACTION_DATA = {
 
 
 # Name of the class MUST be the capitalized version of file name. eg. morph.py => Morph, split_shapes.py => Split_shapes
-class Space_switchers(object):
+class Space_switchers(ActionCore):
     def __init__(self, *args, **kwargs):
         super(Space_switchers, self).__init__()
 
