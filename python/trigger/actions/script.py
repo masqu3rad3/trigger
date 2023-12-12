@@ -24,6 +24,8 @@ ACTION_DATA = {
 
 
 class Script(ActionCore):
+    action_data = ACTION_DATA
+
     def __init__(self):
         super(Script, self).__init__()
         self.filePath = None

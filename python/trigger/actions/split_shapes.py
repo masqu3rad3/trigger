@@ -29,6 +29,8 @@ ACTION_DATA = {
 
 
 class Split_shapes(weights.Weights):
+    action_data = ACTION_DATA
+
     def __init__(self):
         super(Split_shapes, self).__init__()
         self.io = io.IO(file_name="tmp_shape_maps.trsplit")

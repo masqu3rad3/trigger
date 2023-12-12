@@ -32,6 +32,8 @@ ACTION_DATA = {
 
 # Name of the class MUST be the capitalized version of file name. eg. morph.py => Morph, split_shapes.py => Split_shapes
 class Space_switchers(ActionCore):
+    action_data = ACTION_DATA
+
     def __init__(self, *args, **kwargs):
         super(Space_switchers, self).__init__()
 

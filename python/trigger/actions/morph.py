@@ -22,6 +22,8 @@ ACTION_DATA = {
 
 
 class Morph(ActionCore):
+    action_data = ACTION_DATA
+
     def __init__(self, *args, **kwargs):
         super(Morph, self).__init__()
 

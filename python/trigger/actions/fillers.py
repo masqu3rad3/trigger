@@ -29,6 +29,8 @@ ACTION_DATA = {
 
 
 class Fillers(ActionCore):
+    action_data = ACTION_DATA
+
     def __init__(self, *args, **kwargs):
         super(Fillers, self).__init__()
 

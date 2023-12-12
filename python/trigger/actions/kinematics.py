@@ -35,6 +35,8 @@ ACTION_DATA = {
 
 
 class Kinematics(ActionCore):
+    action_data = ACTION_DATA
+
     def __init__(
         self, root_joints=None, progress_bar=None, create_switchers=True, rig_name=None
     ):
@@ -45,7 +47,10 @@ class Kinematics(ActionCore):
 
         self.autoSwitchers = create_switchers
         self.root_joints = root_joints if type(root_joints) == list else [root_joints]
-        self.module_dict =  {module_name: data["guide"].limb_data for module_name, data in modules.class_data.items()}
+        self.module_dict = {
+            module_name: data["guide"].limb_data
+            for module_name, data in modules.class_data.items()
+        }
 
         self.validRootList = [
             values["members"][0] for values in self.module_dict.values()

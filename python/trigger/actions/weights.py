@@ -46,6 +46,7 @@ def subtract_list(list_of_values):
 
 
 class Weights(ActionCore, dict):
+    action_data = ACTION_DATA
     _api_version = cmds.about(apiVersion=True)
 
     def __init__(self):
@@ -356,7 +357,7 @@ Then you can save and increment versions for all of them at once.
                 "relative",
                 "shearStrength",
                 "bendStrength",
-                "pinBorderVertices"
+                "pinBorderVertices",
             ]
         else:
             attributes = []

@@ -20,6 +20,8 @@ ACTION_DATA = {"trigger_file_path": ""}
 
 # Name of the class MUST be the capitalized version of file name. eg. morph.py => Morph, split_shapes.py => Split_shapes
 class Reference_session(ActionCore):
+    action_data = ACTION_DATA
+
     def __init__(self, *args, **kwargs):
         super(Reference_session, self).__init__()
         # user defined variables

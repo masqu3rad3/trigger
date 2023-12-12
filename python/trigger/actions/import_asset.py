@@ -9,7 +9,7 @@ from trigger.library import attribute
 from trigger.core import filelog
 from trigger.core.action import ActionCore
 
-from trigger.ui.Qt import QtWidgets, QtGui # for progressbar
+from trigger.ui.Qt import QtWidgets, QtGui  # for progressbar
 from trigger.ui.widgets.browser import BrowserButton, FileLineEdit
 
 from trigger import version_control
@@ -26,6 +26,8 @@ ACTION_DATA = {
 
 
 class Import_asset(ActionCore):
+    action_data = ACTION_DATA
+
     def __init__(self, *args, **kwargs):
         super(Import_asset, self).__init__()
         self.filePath = None

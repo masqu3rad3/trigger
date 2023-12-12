@@ -33,6 +33,8 @@ ACTION_DATA = {
 
 
 class Jointify(ActionCore):
+    action_data = ACTION_DATA
+
     def __init__(self, *args, **kwargs):
         super(Jointify, self).__init__()
 

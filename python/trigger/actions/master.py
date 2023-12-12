@@ -12,6 +12,8 @@ ACTION_DATA = {}
 
 
 class Master(ActionCore):
+    action_data = ACTION_DATA
+
     def __init__(self, *args, **kwargs):
         super(Master, self).__init__()
 

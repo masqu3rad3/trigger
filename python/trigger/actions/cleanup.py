@@ -24,6 +24,8 @@ ACTION_DATA = {
 
 
 class Cleanup(ActionCore):
+    action_data = ACTION_DATA
+
     def __init__(self):
         super(Cleanup, self).__init__()
 

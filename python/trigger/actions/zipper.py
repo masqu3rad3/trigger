@@ -23,7 +23,7 @@ ACTION_DATA = {
     "pair_count": 30,
     "controller": "",
     "negative_z": True,
-    "name": "lipZip"
+    "name": "lipZip",
 }
 
 
@@ -31,6 +31,8 @@ ACTION_DATA = {
 
 
 class Zipper(ActionCore):
+    action_data = ACTION_DATA
+
     def __init__(self, *args, **kwargs):
         super(Zipper, self).__init__()
 
@@ -69,7 +71,7 @@ class Zipper(ActionCore):
             self.pair_count,
             self.controller,
             self.negative_z,
-            self.name
+            self.name,
         )
 
     def save_action(self, file_path=None, *args, **kwargs):
@@ -145,7 +147,9 @@ class Zipper(ActionCore):
 
         negative_z_lbl = QtWidgets.QLabel(text="Negative Z")
         negative_z_cb = QtWidgets.QCheckBox()
-        negative_z_cb.setToolTip("Check this if the face is looking into the negative Z direction")
+        negative_z_cb.setToolTip(
+            "Check this if the face is looking into the negative Z direction"
+        )
         layout.addRow(negative_z_lbl, negative_z_cb)
 
         ctrl.connect(upper_edges_le_box.viewWidget, "upper_edges", list)

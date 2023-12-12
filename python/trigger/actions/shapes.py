@@ -22,6 +22,8 @@ ACTION_DATA = {
 
 
 class Shapes(ActionCore):
+    action_data = ACTION_DATA
+
     def __init__(self, *args, **kwargs):
         super(Shapes, self).__init__()
         self.shapes_file_path = ""
