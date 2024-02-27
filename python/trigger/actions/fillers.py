@@ -31,9 +31,8 @@ ACTION_DATA = {
 class Fillers(ActionCore):
     action_data = ACTION_DATA
 
-    def __init__(self, *args, **kwargs):
-        super(Fillers, self).__init__()
-
+    def __init__(self, **kwargs):
+        super(Fillers, self).__init__(kwargs)
         # user defined variables
         self.controllers = None
         self.scaling = None

@@ -31,8 +31,8 @@ class PublishSelection(TaskSelection):
         self.populate_asset_types()
 
     # @property
-    def get_path(self):
-        return self.sgh.get_publish_path()
+    # def get_path(self):
+    #     return self.sgh.get_publish_path()
 
     # @path.setter
     # def path(self, path):
@@ -43,11 +43,11 @@ class PublishSelection(TaskSelection):
 
     def set_path(self, path):
         # set the model
-        state = self.sgh.set_publish_fields_from_path(path)
+        # state = self.sgh.set_publish_fields_from_path(path)
         # refresh the combos
-        if state:
-            self.populate_asset_types()
-        return state
+        # if state:
+        #     self.populate_asset_types()
+        return False
 
     def populate_tasks(self):
         super(PublishSelection, self).populate_tasks()
@@ -73,16 +73,16 @@ class PublishSelection(TaskSelection):
     def populate_publish_versions(self):
         """Lists all versions for selected publish element"""
         self.published_versions_combo.clear()
-        current_task = self.sgh.task or self.task_combo.currentText()
-        _int_version_list = sorted(self.sgh.get_publish_versions(current_task))
-        _str_version_list = [str(x) for x in _int_version_list]
-        print("DEBUG___")
-        print(current_task)
-        print(_int_version_list)
-        print(_str_version_list)
-        self.published_versions_combo.addItems(_str_version_list)
-        last_version = self.published_versions_combo.count() - 1
-        self.published_versions_combo.setCurrentIndex(last_version)
+        # current_task = self.sgh.task or self.task_combo.currentText()
+        # _int_version_list = sorted(self.sgh.get_publish_versions(current_task))
+        # _str_version_list = [str(x) for x in _int_version_list]
+        # print("DEBUG___")
+        # print(current_task)
+        # print(_int_version_list)
+        # print(_str_version_list)
+        # self.published_versions_combo.addItems(_str_version_list)
+        # last_version = self.published_versions_combo.count() - 1
+        # self.published_versions_combo.setCurrentIndex(last_version)
         # if self.sgh.publish_version:
         #     self.published_versions_combo.setCurrentText(self.sgh.publish_version)
         # else:
@@ -93,34 +93,34 @@ class PublishSelection(TaskSelection):
     def populate_publish_types(self):
         """Lists available published types which belongs to the parent task"""
         self.published_types_combo.clear()
-        current_version = (
-            self.sgh.publish_version or self.published_versions_combo.currentText()
-        )
-        if not current_version:
-            return
-        self.published_types_combo.addItems(self.sgh.get_publish_types(current_version))
-        if self.sgh.publish_type:
-            self.published_types_combo.setCurrentText(self.sgh.publish_type)
-        else:
-            self.published_types_combo.setCurrentIndex(0)
-
-        print(self.sgh.get_publish_path())
+        # current_version = (
+        #     self.sgh.publish_version or self.published_versions_combo.currentText()
+        # )
+        # if not current_version:
+        #     return
+        # self.published_types_combo.addItems(self.sgh.get_publish_types(current_version))
+        # if self.sgh.publish_type:
+        #     self.published_types_combo.setCurrentText(self.sgh.publish_type)
+        # else:
+        #     self.published_types_combo.setCurrentIndex(0)
+        #
+        # print(self.sgh.get_publish_path())
 
     def set_publish_version(self):
         """Sets the selected publish version"""
         _version = self.published_versions_combo.currentText()
-        if _version:
-            self.sgh.publish_version = int(_version)
-        else:
-            self.sgh.publish_version = None
+        # if _version:
+        #     self.sgh.publish_version = int(_version)
+        # else:
+        #     self.sgh.publish_version = None
         self.populate_publish_types()
         self.set_publish_type()
 
     def set_publish_type(self):
         """sets the selected publish on model"""
-        self.sgh.publish_type = self.published_types_combo.currentText()
-        self.selectionChanged.emit(self.sgh.get_publish_path())
-
+        # self.sgh.publish_type = self.published_types_combo.currentText()
+        # self.selectionChanged.emit(self.sgh.get_publish_path())
+        pass
     # def set_from_path(self, path):
     #     """Sets the dropdown lists from the path"""
     #     # set the model

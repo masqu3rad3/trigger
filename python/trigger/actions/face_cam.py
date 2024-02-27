@@ -31,9 +31,8 @@ ACTION_DATA = {
 class Face_cam(ActionCore):
     action_data = ACTION_DATA
 
-    def __init__(self, *args, **kwargs):
-        super(Face_cam, self).__init__()
-
+    def __init__(self, **kwargs):
+        super(Face_cam, self).__init__(kwargs)
         # user defined variables
         self.cameraName = "faceCam"
         self.faceMesh = None

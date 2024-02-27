@@ -21,14 +21,15 @@ from trigger.base import actions_session
 from trigger.library import naming
 
 from trigger.core import filelog
-
+import trigger._version as version
 from trigger import version_control
-from trigger.ui.vcs_widgets.session_selection import SessionSelection
+
+# from trigger.ui.vcs_widgets.session_selection import SessionSelection
 
 log = filelog.Filelog(logname=__name__, filename="trigger_log")
 db = database.Database()
 
-WINDOW_NAME = "Trigger v2.2.5"
+WINDOW_NAME = "Trigger {0}".format(version.__version__)
 
 qss = """
 QPushButton
@@ -92,7 +93,8 @@ def _kill_callbacks(callback_id_list):
             cmds.scriptJob(kill=ID)
 
 
-def launch(force=False):
+def launch(force=False, disable_version_control=False):
+    """Launch the Trigger UI"""
     for entry in QtWidgets.QApplication.allWidgets():
         try:
             if entry.objectName() == WINDOW_NAME:
@@ -106,7 +108,7 @@ def launch(force=False):
                     return
         except (AttributeError, TypeError):
             pass
-    MainUI().show()
+    MainUI(disable_version_control=disable_version_control).show()
 
 
 class MainUI(QtWidgets.QMainWindow):
@@ -117,8 +119,15 @@ class MainUI(QtWidgets.QMainWindow):
         super(MainUI, self).__init__(parent=parent)
         log.clear()
 
+        # first instanciate the version controller
+        if version_control.controller and not disable_version_control:
+            self.vcs = version_control.controller()
+            self.vcs.trigger_main_window = self
+        else:
+            self.vcs = None
+
         # PEP8 vars
-        self.menuFile = None
+        self.menu_file = None
         self.recents_menu = None
         self.statusbar = None
         self.asset_selection_w = None
@@ -145,17 +154,21 @@ class MainUI(QtWidgets.QMainWindow):
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.setCentralWidget(self.centralwidget)
 
-        self.centralWidget_vLay = QtWidgets.QVBoxLayout(
-            self.centralwidget
-        )  # this is only to fit the tab widget
+        self.centralWidget_vLay = QtWidgets.QVBoxLayout(self.centralwidget)
+
+        self.vcs_vlay = QtWidgets.QVBoxLayout()
+        self.centralWidget_vLay.addLayout(self.vcs_vlay)
+        # this is only to fit the tab widget
         # self.centralWidget_vLay.setSpacing(0)
         # Build the UI elements
-        if version_control.controller and not disable_version_control:
-            try:
-                self.asset_control()
-            except AttributeError:
-                version_control.controller = None
-                disable_version_control = True
+
+        # self.asset_control()
+        # if version_control.controller and disable_version_controller:
+        #     try:
+        #         self.asset_control()
+        #     except AttributeError:
+        #         version_control.controller = None
+        #         disable_version_controller = True
 
         self.rigging_tab, self.guides_tab = self.build_tabs()
         self.build_bars_ui()
@@ -163,10 +176,10 @@ class MainUI(QtWidgets.QMainWindow):
         self.build_guides_ui()
 
         # define the listwidget to the actions handler to update it during build
-        self.actions_handler.progressListwidget = self.rig_actions_listwidget
+        self.actions_handler.progress_listwidget = self.rig_actions_listwidget
 
-        self.rig_LR_splitter.setStretchFactor(0, 10)
-        self.rig_LR_splitter.setStretchFactor(1, 90)
+        self.rig_left_right_splitter.setStretchFactor(0, 10)
+        self.rig_left_right_splitter.setStretchFactor(1, 90)
 
         # populate and show
         self.populate_recents()
@@ -181,23 +194,30 @@ class MainUI(QtWidgets.QMainWindow):
         )
 
         # force open the trigger session on initialization if a session found
-        if self.asset_selection_w and not disable_version_control:
-            self.asset_selection_w.set_version()
-        else:
-            self.statusbar.showMessage("Asset Control Disabled", 5000)
+        # if self.asset_selection_w and not disable_version_controller:
+        #     self.asset_selection_w.set_version()
+        # else:
+        #     self.statusbar.showMessage("Asset Control Disabled", 5000)
+
+        if self.vcs:
+            self.build_vcs_ui()
 
         log.info("Interface Loaded Successfully")
 
-    def asset_control(self):
-        _asset_selection_vlay = QtWidgets.QVBoxLayout()
-        self.centralWidget_vLay.addLayout(_asset_selection_vlay)
-        self.asset_selection_w = SessionSelection()
-        _asset_selection_vlay.addLayout(self.asset_selection_w)
+    def build_vcs_ui(self):
+        """Build the Version Control System UI"""
+        self.vcs.build_session_header(self.vcs_vlay)
 
-        self.asset_selection_w.new_session_signal.connect(self.vcs_new_session)
-        # self.asset_selection_w.increment_version_signal.connect(self.vcs_new_session)
-        self.asset_selection_w.increment_version_signal.connect(self.vcs_new_version)
-        self.asset_selection_w.session_changed_signal.connect(self.vcs_open_session)
+    # def asset_control(self):
+    #     _asset_selection_vlay = QtWidgets.QVBoxLayout()
+    #     self.centralWidget_vLay.addLayout(_asset_selection_vlay)
+    #     self.asset_selection_w = SessionSelection()
+    #     _asset_selection_vlay.addLayout(self.asset_selection_w)
+    #
+    #     self.asset_selection_w.new_session_signal.connect(self.vcs_new_session)
+    #     # self.asset_selection_w.increment_version_signal.connect(self.vcs_new_session)
+    #     self.asset_selection_w.increment_version_signal.connect(self.vcs_new_version)
+    #     self.asset_selection_w.session_changed_signal.connect(self.vcs_open_session)
 
     def keyPressEvent(self, e):
         super(MainUI, self).keyPressEvent(e)
@@ -216,13 +236,11 @@ class MainUI(QtWidgets.QMainWindow):
                 button.style().polish(button)
 
     def update_title(self):
-        file_name = (
-            self.actions_handler.currentFile
-            if self.actions_handler.currentFile
-            else "untitled"
-        )
+        file_name = self.actions_handler.session_path or "untitled"
         asteriks = "*" if self.actions_handler.is_modified() else ""
         self.setWindowTitle("{0} - {1}{2}".format(WINDOW_NAME, file_name, asteriks))
+        if self.vcs:
+            self.vcs.update_info()
 
     def closeEvent(self, event):
         if self.actions_handler.is_modified():
@@ -250,8 +268,8 @@ class MainUI(QtWidgets.QMainWindow):
         self.setMenuBar(menubar)
 
         # FILE main menu
-        self.menuFile = QtWidgets.QMenu(menubar)
-        self.menuFile.setTitle("File")
+        self.menu_file = QtWidgets.QMenu(menubar)
+        self.menu_file.setTitle("File")
 
         new_trigger_action = QtWidgets.QAction(self, text="New Trigger Session")
         open_trigger_action = QtWidgets.QAction(self, text="Open Trigger Session")
@@ -267,27 +285,27 @@ class MainUI(QtWidgets.QMainWindow):
         reset_scene_action = QtWidgets.QAction(self, text="Reset Scene")
         exit_action = QtWidgets.QAction(self, text="Exit")
 
-        self.menuFile.addAction(new_trigger_action)
-        self.menuFile.addAction(open_trigger_action)
-        self.menuFile.addAction(import_trigger_action)
-        self.menuFile.addSeparator()
-        self.menuFile.addAction(save_trigger_action)
-        self.menuFile.addAction(save_as_trigger_action)
-        self.menuFile.addAction(increment_trigger_action)
-        self.menuFile.addSeparator()
-        self.menuFile.addAction(import_guides_action)
-        self.menuFile.addAction(export_guides_action)
-        self.menuFile.addSeparator()
-        self.menuFile.addAction(settings_action)
-        self.menuFile.addSeparator()
-        self.menuFile.addAction(reset_scene_action)
-        self.menuFile.addSeparator()
+        self.menu_file.addAction(new_trigger_action)
+        self.menu_file.addAction(open_trigger_action)
+        self.menu_file.addAction(import_trigger_action)
+        self.menu_file.addSeparator()
+        self.menu_file.addAction(save_trigger_action)
+        self.menu_file.addAction(save_as_trigger_action)
+        self.menu_file.addAction(increment_trigger_action)
+        self.menu_file.addSeparator()
+        self.menu_file.addAction(import_guides_action)
+        self.menu_file.addAction(export_guides_action)
+        self.menu_file.addSeparator()
+        self.menu_file.addAction(settings_action)
+        self.menu_file.addSeparator()
+        self.menu_file.addAction(reset_scene_action)
+        self.menu_file.addSeparator()
 
         self.recents_menu = QtWidgets.QMenu("Recent Sessions")
-        self.menuFile.addMenu(self.recents_menu)
-        self.menuFile.addAction(exit_action)
+        self.menu_file.addMenu(self.recents_menu)
+        self.menu_file.addAction(exit_action)
 
-        menubar.addAction(self.menuFile.menuAction())
+        menubar.addAction(self.menu_file.menuAction())
 
         # TOOLS Main Menu
         menu_tools = QtWidgets.QMenu(menubar)
@@ -685,10 +703,10 @@ class MainUI(QtWidgets.QMainWindow):
     def build_rigging_ui(self):
         self.rigging_tab_vLay = QtWidgets.QVBoxLayout(self.rigging_tab)
 
-        self.rig_LR_splitter = QtWidgets.QSplitter(self.rigging_tab)
-        self.rig_LR_splitter.setOrientation(QtCore.Qt.Horizontal)
+        self.rig_left_right_splitter = QtWidgets.QSplitter(self.rigging_tab)
+        self.rig_left_right_splitter.setOrientation(QtCore.Qt.Horizontal)
 
-        self.layoutWidget_2 = QtWidgets.QWidget(self.rig_LR_splitter)
+        self.layoutWidget_2 = QtWidgets.QWidget(self.rig_left_right_splitter)
 
         self.rig_actions_vLay = QtWidgets.QVBoxLayout(self.layoutWidget_2)
         self.rig_actions_vLay.setContentsMargins(0, 0, 0, 0)
@@ -724,7 +742,7 @@ class MainUI(QtWidgets.QMainWindow):
 
         self.rig_actions_vLay.addWidget(self.rig_actions_listwidget)
 
-        self.verticalLayoutWidget_3 = QtWidgets.QWidget(self.rig_LR_splitter)
+        self.verticalLayoutWidget_3 = QtWidgets.QWidget(self.rig_left_right_splitter)
         self.action_settings_vLay = QtWidgets.QVBoxLayout(self.verticalLayoutWidget_3)
         self.action_settings_vLay.setContentsMargins(0, 0, 0, 0)
 
@@ -766,7 +784,7 @@ class MainUI(QtWidgets.QMainWindow):
 
         self.action_settings_scrollArea.setWidget(self.action_settings_WidgetContents)
         self.action_settings_vLay.addWidget(self.action_settings_scrollArea)
-        self.rigging_tab_vLay.addWidget(self.rig_LR_splitter)
+        self.rigging_tab_vLay.addWidget(self.rig_left_right_splitter)
         self.rig_buttons_hLay = QtWidgets.QHBoxLayout()
 
         self.build_pb = QtWidgets.QPushButton(self.rigging_tab, text="Build Rig")
@@ -786,33 +804,33 @@ class MainUI(QtWidgets.QMainWindow):
         # List Widget Right Click Menu
 
         def on_context_menu_rig_actions(point):
-            popMenu_rig_action.exec_(self.rig_actions_listwidget.mapToGlobal(point))
+            pop_menu_rig_action.exec_(self.rig_actions_listwidget.mapToGlobal(point))
 
-        # for some reason, if the popMenu_rig_action is a class variable, it causes random crashes
-        popMenu_rig_action = QtWidgets.QMenu()
+        # for some reason, if the pop_menu_rig_action is a class variable, it causes random crashes
+        pop_menu_rig_action = QtWidgets.QMenu()
         self.rig_actions_listwidget.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.rig_actions_listwidget.customContextMenuRequested.connect(
             on_context_menu_rig_actions
         )
 
         self.action_rc_rename = QtWidgets.QAction("Rename", self)
-        popMenu_rig_action.addAction(self.action_rc_rename)
+        pop_menu_rig_action.addAction(self.action_rc_rename)
 
         self.action_rc_dup = QtWidgets.QAction("Duplicate", self)
-        popMenu_rig_action.addAction(self.action_rc_dup)
+        pop_menu_rig_action.addAction(self.action_rc_dup)
 
         self.action_rc_delete = QtWidgets.QAction("Delete", self)
-        popMenu_rig_action.addAction(self.action_rc_delete)
+        pop_menu_rig_action.addAction(self.action_rc_delete)
 
-        popMenu_rig_action.addSeparator()
+        pop_menu_rig_action.addSeparator()
         self.action_rc_run = QtWidgets.QAction("Run", self)
-        popMenu_rig_action.addAction(self.action_rc_run)
+        pop_menu_rig_action.addAction(self.action_rc_run)
 
         self.action_rc_run_until = QtWidgets.QAction("Run Until Here", self)
-        popMenu_rig_action.addAction(self.action_rc_run_until)
+        pop_menu_rig_action.addAction(self.action_rc_run_until)
 
         self.action_rc_toggle = QtWidgets.QAction("Toggle Disable/Enable", self)
-        popMenu_rig_action.addAction(self.action_rc_toggle)
+        pop_menu_rig_action.addAction(self.action_rc_toggle)
 
         ### SHORTCUTS ###
         shortcutRefresh = QtWidgets.QShortcut(
@@ -853,7 +871,7 @@ class MainUI(QtWidgets.QMainWindow):
         """Clears and reloads the recent sessions action menu item"""
         self.recents_menu.clear()
         for recent in db.recentSessions:
-            recent_action = QtWidgets.QAction(self.menuFile, text=recent)
+            recent_action = QtWidgets.QAction(self.menu_file, text=recent)
             self.recents_menu.addAction(recent_action)
             recent_action.triggered.connect(
                 lambda _=0, x=recent: self.open_trigger(file_path=x)
@@ -959,8 +977,8 @@ class MainUI(QtWidgets.QMainWindow):
 
     def _validate_unsaved_work(self):
         if self.actions_handler.is_modified():
-            if self.actions_handler.currentFile:
-                file_name = os.path.basename(self.actions_handler.currentFile)
+            if self.actions_handler.session_path:
+                file_name = os.path.basename(self.actions_handler.session_path)
             else:
                 file_name = "untitled"
             state = self.feedback.pop_question(
@@ -978,15 +996,15 @@ class MainUI(QtWidgets.QMainWindow):
         else:
             return True
 
-    def open_trigger(self, file_path=None):
-        if not self._validate_unsaved_work():
+    def open_trigger(self, file_path=None, force=False):
+        if not force and not self._validate_unsaved_work():
             return False
 
         if not file_path:
             dlg = QtWidgets.QFileDialog.getOpenFileName(
                 self,
                 str("Open Trigger Session"),
-                self.actions_handler.currentFile,
+                self.actions_handler.session_path,
                 str("Trigger Session (*.tr)"),
             )
             if dlg[0]:
@@ -1009,7 +1027,7 @@ class MainUI(QtWidgets.QMainWindow):
             dlg = QtWidgets.QFileDialog.getOpenFileName(
                 self,
                 str("Open Trigger Session"),
-                self.actions_handler.currentFile,
+                self.actions_handler.session_path,
                 str("Trigger Session (*.tr)"),
             )
             if dlg[0]:
@@ -1021,14 +1039,14 @@ class MainUI(QtWidgets.QMainWindow):
         self.populate_actions()
 
     def increment_trigger(self):
-        if self.actions_handler.currentFile:
-            new_file = naming.increment(self.actions_handler.currentFile)
+        if self.actions_handler.session_path:
+            new_file = naming.increment(self.actions_handler.session_path)
             self.actions_handler.save_session(new_file)
             db.recentSessions.add(new_file)
             self.update_title()
             self.populate_recents()
             self.statusbar.showMessage(
-                "Saved %s" % self.actions_handler.currentFile, 5000
+                "Saved %s" % self.actions_handler.session_path, 5000
             )
         else:
             self.feedback.pop_info(
@@ -1041,60 +1059,40 @@ class MainUI(QtWidgets.QMainWindow):
         dlg = QtWidgets.QFileDialog.getSaveFileName(
             self,
             str("Save Trigger Session"),
-            self.actions_handler.currentFile,
+            self.actions_handler.session_path,
             str("Trigger Session (*.tr)"),
         )
         if dlg[0]:
             self.actions_handler.save_session(os.path.normpath(dlg[0]))
-            db.recentSessions.add(self.actions_handler.currentFile)
+            db.recentSessions.add(self.actions_handler.session_path)
             self.update_title()
             self.populate_recents()
             self.statusbar.showMessage(
-                "Saved %s" % self.actions_handler.currentFile, 5000
+                "Saved %s" % self.actions_handler.session_path, 5000
             )
 
     def save_trigger(self):
-        if self.actions_handler.currentFile:
-            self.actions_handler.save_session(self.actions_handler.currentFile)
-            db.recentSessions.add(self.actions_handler.currentFile)
+        if self.actions_handler.session_path:
+            self.actions_handler.save_session(self.actions_handler.session_path)
+            db.recentSessions.add(self.actions_handler.session_path)
             self.update_title()
             self.populate_recents()
             self.statusbar.showMessage(
-                "Saved %s" % self.actions_handler.currentFile, 5000
+                "Saved %s" % self.actions_handler.session_path, 5000
             )
         else:
             self.save_as_trigger()
 
-    def vcs_new_session(self, path):
-        """Creates and saves a new session using the path coming from version control"""
+    def vcs_save_session(self, path):
+        """Creates and saves a new session using the path coming from version control.
 
-        if not self._validate_unsaved_work():
-            return False
-        if not self.new_trigger():
-            return False
+        This skips validations or error messages and just saves the session.
+        """
         self.actions_handler.save_session(os.path.normpath(path))
-        db.recentSessions.add(self.actions_handler.currentFile)
-        self.asset_selection_w.populate_sessions()
+        db.recentSessions.add(self.actions_handler.session_path)
         self.update_title()
         self.populate_recents()
         return True
-
-    def vcs_new_version(self, path):
-        """Increments the version using the path coming from the version control"""
-        if not self._validate_unsaved_work():
-            return False
-
-        self.actions_handler.save_session(os.path.normpath(path))
-        db.recentSessions.add(self.actions_handler.currentFile)
-        self.asset_selection_w.populate_versions()
-        self.update_title()
-        self.populate_recents()
-        return True
-
-    def vcs_open_session(self, path):
-        if not self._validate_unsaved_work():
-            return False
-        self.open_trigger(path)
 
     def action_settings_menu(self):
         """Builds the action settings depending on action type"""
@@ -1118,32 +1116,32 @@ class MainUI(QtWidgets.QMainWindow):
         row = self.rig_actions_listwidget.currentRow()
         index = None if row == -1 else row + 1
 
-        zortMenu = QtWidgets.QMenu()
+        zort_menu = QtWidgets.QMenu()
         for action_item in list_of_actions:
             icon_path = os.path.join(self.iconsPath, "%s.png" % action_item)
-            tempAction = QtWidgets.QAction(
+            temp_action = QtWidgets.QAction(
                 QtGui.QIcon(icon_path), action_item.capitalize().replace("_", " "), self
             )
-            zortMenu.addAction(tempAction)
-            tempAction.triggered.connect(
+            zort_menu.addAction(temp_action)
+            temp_action.triggered.connect(
                 lambda ignore=action_item, item=action_item: self.actions_handler.add_action(
                     action_type=item, insert_index=index
                 )
             )
-            tempAction.triggered.connect(self.populate_actions)
-            tempAction.triggered.connect(
+            temp_action.triggered.connect(self.populate_actions)
+            temp_action.triggered.connect(
                 lambda: self.rig_actions_listwidget.setCurrentRow(row + 1)
             )
             ## Take note about the usage of lambda "item=z" makes it possible using the loop, ignore -> for discarding emitted value
 
         self.populate_actions()
         self.rig_actions_listwidget.setCurrentRow(row)
-        zortMenu.exec_((QtGui.QCursor.pos()))
+        zort_menu.exec_((QtGui.QCursor.pos()))
 
     def actions_rc(self):
         pass
 
-    def populate_actions(self, keep_selection=False):
+    def populate_actions(self):
         self.rig_actions_listwidget.clear()
         self.rig_actions_listwidget.addItems(self.actions_handler.list_action_names())
 
@@ -1438,6 +1436,7 @@ class MainUI(QtWidgets.QMainWindow):
     @staticmethod
     def on_rom_randomizer():
         import trigger.utils.rom_randomizer.ui as rom_randomizer_ui
+
         rom_randomizer_ui.launch()
 
     ##############
@@ -1493,3 +1492,7 @@ class MainUI(QtWidgets.QMainWindow):
         self.progress_progressBar.setObjectName(("progress_progressBar"))
 
         ret = self.progress_Dialog.show()
+
+    def get_version(self):
+        """Return trigger version."""
+        return version.__version__

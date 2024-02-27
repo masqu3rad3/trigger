@@ -26,8 +26,8 @@ ACTION_DATA = {
 class Script(ActionCore):
     action_data = ACTION_DATA
 
-    def __init__(self):
-        super(Script, self).__init__()
+    def __init__(self, **kwargs):
+        super(Script, self).__init__(kwargs)
         self.filePath = None
         self.importAs = None
         self.commands = []

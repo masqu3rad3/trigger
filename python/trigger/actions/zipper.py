@@ -33,8 +33,8 @@ ACTION_DATA = {
 class Zipper(ActionCore):
     action_data = ACTION_DATA
 
-    def __init__(self, *args, **kwargs):
-        super(Zipper, self).__init__()
+    def __init__(self, **kwargs):
+        super(Zipper, self).__init__(kwargs)
 
         # user defined variables
         self.upper_edges = None

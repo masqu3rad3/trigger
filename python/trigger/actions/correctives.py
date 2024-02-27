@@ -58,9 +58,8 @@ ACTION_DATA = {
 class Correctives(ActionCore):
     action_data = ACTION_DATA
 
-    def __init__(self):
-        super(Correctives, self).__init__()
-
+    def __init__(self, **kwargs):
+        super(Correctives, self).__init__(kwargs)
         # user defined variables
         self.correctiveDefinitions = None
 

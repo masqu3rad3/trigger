@@ -49,8 +49,8 @@ class Weights(ActionCore, dict):
     action_data = ACTION_DATA
     _api_version = cmds.about(apiVersion=True)
 
-    def __init__(self):
-        super(Weights, self).__init__()
+    def __init__(self, *args, **kwargs):
+        super(Weights, self).__init__(kwargs)
         self.io = io.IO(file_name="tmp_weights.trw")
         self["deformer"] = None
         self.isCreateDeformers = True

@@ -34,8 +34,8 @@ ACTION_DATA = {
 class Space_switchers(ActionCore):
     action_data = ACTION_DATA
 
-    def __init__(self, *args, **kwargs):
-        super(Space_switchers, self).__init__()
+    def __init__(self, **kwargs):
+        super(Space_switchers, self).__init__(kwargs)
 
         # user defined variables
         self.swithcerDefinitions = None

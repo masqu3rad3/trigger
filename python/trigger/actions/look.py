@@ -24,8 +24,8 @@ ACTION_DATA = {
 class Look(ActionCore):
     action_data = ACTION_DATA
 
-    def __init__(self, *args, **kwargs):
-        super(Look, self).__init__()
+    def __init__(self, **kwargs):
+        super(Look, self).__init__(kwargs)
         self.io = io.IO(file_name="tmp_look.trl")
         # user defined variables
         self.lookFilePath = None

@@ -24,8 +24,8 @@ ACTION_DATA = {
 class Shapes(ActionCore):
     action_data = ACTION_DATA
 
-    def __init__(self, *args, **kwargs):
-        super(Shapes, self).__init__()
+    def __init__(self, **kwargs):
+        super(Shapes, self).__init__(kwargs)
         self.shapes_file_path = ""
         self.search_key = ""
         self.exclude_key = ""

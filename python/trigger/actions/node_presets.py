@@ -26,9 +26,8 @@ ACTION_DATA = {"nodes": [], "nodes_file_path": "", "skip_non_existing": True}
 class Node_presets(ActionCore):
     action_data = ACTION_DATA
 
-    def __init__(self, *args, **kwargs):
-        super(Node_presets, self).__init__()
-
+    def __init__(self, **kwargs):
+        super(Node_presets, self).__init__(kwargs)
         self.io = io.IO(file_name="tmp_presets.trp")
         # user defined variables
         self.nodes = None

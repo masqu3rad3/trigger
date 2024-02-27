@@ -28,8 +28,8 @@ ACTION_DATA = {
 class Import_asset(ActionCore):
     action_data = ACTION_DATA
 
-    def __init__(self, *args, **kwargs):
-        super(Import_asset, self).__init__()
+    def __init__(self, **kwargs):
+        super(Import_asset, self).__init__(kwargs)
         self.filePath = None
         self.scale = None
         self.rootSuffix = None
@@ -73,26 +73,26 @@ class Import_asset(ActionCore):
         pass
 
     def ui(self, ctrl, layout, handler, *args, **kwargs):
-        vcs_lay = None
-        override_vcs_cb = None
+        # vcs_lay = None
+        # override_vcs_cb = None
         path_available_in_vcs = False
-        if version_control.controller:
+        if self.vcs:
             vcs_lbl = QtWidgets.QLabel(text="Version Control")
-            # _hold_lay = QtWidgets.QVBoxLayout()
-            vcs_lay = PublishSelection()
-            vcs_lay.addStretch(1)
-            # _hold_lay.addLayout(vcs_lay)
-            # _hold_lay.addStretch(1)
-            layout.addRow(vcs_lbl, vcs_lay)
-
-            path_available_in_vcs = vcs_lay.set_path(
-                ctrl.model.query_action(ctrl.action_name, "import_file_path")
-            )
-            # vcs_lay.path = ctrl.model.query_action(ctrl.action_name, "import_file_path")
-
-            override_vcs_lbl = QtWidgets.QLabel(text="Override Version Control")
-            override_vcs_cb = QtWidgets.QCheckBox(checked=not path_available_in_vcs)
-            layout.addRow(override_vcs_lbl, override_vcs_cb)
+            _hold_lay = QtWidgets.QVBoxLayout()
+        #     vcs_lay = PublishSelection()
+        #     vcs_lay.addStretch(1)
+        #     # _hold_lay.addLayout(vcs_lay)
+        #     # _hold_lay.addStretch(1)
+            layout.addRow(vcs_lbl, _hold_lay)
+        #
+        #     path_available_in_vcs = vcs_lay.set_path(
+        #         ctrl.model.query_action(ctrl.action_name, "import_file_path")
+        #     )
+        #     # vcs_lay.path = ctrl.model.query_action(ctrl.action_name, "import_file_path")
+        #
+        #     override_vcs_lbl = QtWidgets.QLabel(text="Override Version Control")
+        #     override_vcs_cb = QtWidgets.QCheckBox(checked=not path_available_in_vcs)
+        #     layout.addRow(override_vcs_lbl, override_vcs_cb)
 
         file_path_lbl = QtWidgets.QLabel(text="File Path")
         file_path_hLay = QtWidgets.QHBoxLayout()
@@ -142,10 +142,10 @@ class Import_asset(ActionCore):
         #     pass
 
         # SIGNALS
-        if version_control.controller:
-            vcs_lay.selectionChanged.connect(lambda path: file_path_le.setText(path))
-            override_vcs_cb.stateChanged.connect(file_path_le.setEnabled)
-            override_vcs_cb.stateChanged.connect(browse_path_pb.setEnabled)
+        # if version_control.controller:
+        #     vcs_lay.selectionChanged.connect(lambda path: file_path_le.setText(path))
+        #     override_vcs_cb.stateChanged.connect(file_path_le.setEnabled)
+        #     override_vcs_cb.stateChanged.connect(browse_path_pb.setEnabled)
         file_path_le.textChanged.connect(lambda x=0: ctrl.update_model())
         browse_path_pb.clicked.connect(lambda x=0: ctrl.update_model())
         browse_path_pb.clicked.connect(

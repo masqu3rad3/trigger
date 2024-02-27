@@ -24,8 +24,8 @@ ACTION_DATA = {
 class Cloth_setup(ActionCore):
     action_data = ACTION_DATA
 
-    def __init__(self, *args, **kwargs):
-        super(Cloth_setup, self).__init__()
+    def __init__(self, **kwargs):
+        super(Cloth_setup, self).__init__(kwargs)
         self.clothObjects = []
         self.colliderObjects = []
         self.motionMultiplierVertices = []

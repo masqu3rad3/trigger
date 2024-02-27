@@ -15,9 +15,10 @@ LOG = filelog.Filelog(logname=__name__, filename="trigger_log")
 
 
 class ActionsSession(dict):
-    def __init__(self, progress_listwidget=None, *args, **kwargs):
+    def __init__(self, progress_listwidget=None, version_controller=None, *args, **kwargs):
         super(ActionsSession, self).__init__(*args, **kwargs)
-        self.progressListwidget = progress_listwidget
+        self.progress_listwidget = progress_listwidget
+        self.vcs = version_controller
         # at least a file name is necessary while instancing the IO
         self.io = io.IO(file_name="tmp_actions_session.tr")
         self.currentFile = None
@@ -57,6 +58,10 @@ class ActionsSession(dict):
 
         self["actions"] = []
         self.compareActions = deepcopy(self["actions"])
+
+    @property
+    def session_path(self):
+        return self.currentFile
 
     def new_session(self):
         """Clears the data"""
@@ -137,7 +142,7 @@ class ActionsSession(dict):
             action_name = action_type + "1"
             idcounter = 0
             while action_name in self.list_action_names():
-                action_name = "%s%s" % (action_type, str(idcounter + 1))
+                action_name = "{}{}".format(action_type, str(idcounter + 1))
                 idcounter = idcounter + 1
 
         if action_name in self.list_action_names():
@@ -316,12 +321,7 @@ class ActionsSession(dict):
     def _action(self, action):
         LOG.header("%s" % action["name"])
 
-        # action_cmd = "actions.{0}.{1}()".format(
-        #     action["type"], action["type"].capitalize()
-        # )
-        # a_hand = eval(action_cmd)
-
-        a_hand = actions.class_data[action["type"]]()
+        a_hand = actions.class_data[action["type"]](vcs=self.vcs)
 
         a_hand.feed(action["data"])
         a_hand.action()
@@ -340,22 +340,22 @@ class ActionsSession(dict):
             if action["name"] == until:
                 return
             if self.is_enabled(action["name"]):
-                if self.progressListwidget:
-                    self.progressListwidget.setCurrentRow(-1)
-                    self.progressListwidget.activateItem(row)
+                if self.progress_listwidget:
+                    self.progress_listwidget.setCurrentRow(-1)
+                    self.progress_listwidget.activateItem(row)
 
-                    self.progressListwidget.scrollToItem(
-                        self.progressListwidget.item(row),
+                    self.progress_listwidget.scrollToItem(
+                        self.progress_listwidget.item(row),
                         QtWidgets.QAbstractItemView.EnsureVisible,
                     )
                     QtWidgets.QApplication.processEvents()
                 try:
                     self._action(action)
-                    if self.progressListwidget:
-                        self.progressListwidget.successItem(row)
+                    if self.progress_listwidget:
+                        self.progress_listwidget.successItem(row)
                 except Exception as e:
-                    if self.progressListwidget:
-                        self.progressListwidget.errorItem(row)
+                    if self.progress_listwidget:
+                        self.progress_listwidget.errorItem(row)
                     LOG.error("Cannot complete action => %s\n%s" % (action["name"], e))
                     raise
         LOG.header("Total BUILDING TIME:")
@@ -366,13 +366,13 @@ class ActionsSession(dict):
         action = self.get_action(action_name)
         try:
             self._action(action)
-            if self.progressListwidget:
-                self.progressListwidget.successItem(
-                    self.progressListwidget.currentRow()
+            if self.progress_listwidget:
+                self.progress_listwidget.successItem(
+                    self.progress_listwidget.currentRow()
                 )
         except Exception as e:
-            if self.progressListwidget:
-                self.progressListwidget.errorItem(self.progressListwidget.currentRow())
+            if self.progress_listwidget:
+                self.progress_listwidget.errorItem(self.progress_listwidget.currentRow())
             LOG.error("Cannot complete action => %s\n%s" % (action["name"], e))
             raise
 
@@ -381,13 +381,7 @@ class ActionsSession(dict):
         LOG.info("saving Action Data")
         action = self.get_action(action_name)
 
-
-        # action_cmd = "actions.{0}.{1}()".format(
-        #     action["type"], action["type"].capitalize()
-        # )
-        # a_hand = eval(action_cmd)
-
-        a_hand = actions.class_data[action["type"]]()
+        a_hand = actions.class_data[action["type"]](vcs=self.vcs)
         a_hand.feed(action["data"])
         a_hand.save_action()
         LOG.info("success")
@@ -395,10 +389,6 @@ class ActionsSession(dict):
 
     def get_layout_ui(self, action_name, ctrl, layout):
         action = self.get_action(action_name)
-        # action_cmd = "actions.{0}.{1}()".format(
-        #     action["type"], action["type"].capitalize()
-        # )
-        # a_hand = eval(action_cmd)
 
-        a_hand = actions.class_data[action["type"]]()
+        a_hand = actions.class_data[action["type"]](vcs=self.vcs)
         a_hand.ui(ctrl, layout, self)

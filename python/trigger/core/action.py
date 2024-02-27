@@ -17,6 +17,9 @@ ACTION_DATA = {
 
 class ActionCore(object):
     action_data = ACTION_DATA
+    def __init__(self, vcs=None):
+        """Initialize the action instance"""
+        self.vcs = vcs
 
     def feed(self, action_data, *args, **kwargs):
         """Mandatory Method - Feeds the instance with the action data

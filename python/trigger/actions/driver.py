@@ -26,8 +26,8 @@ ACTION_DATA = {"mapping_data": []}
 class Driver(ActionCore):
     action_data = ACTION_DATA
 
-    def __init__(self, *args, **kwargs):
-        super(Driver, self).__init__(*args, **kwargs)
+    def __init__(self, **kwargs):
+        super(Driver, self).__init__(kwargs)
         self.mappingData = []
 
     def feed(self, action_data, *args, **kwargs):
