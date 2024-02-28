@@ -24,8 +24,6 @@ from trigger.core import filelog
 import trigger._version as version
 from trigger import version_control
 
-# from trigger.ui.vcs_widgets.session_selection import SessionSelection
-
 log = filelog.Filelog(logname=__name__, filename="trigger_log")
 db = database.Database()
 
@@ -121,8 +119,7 @@ class MainUI(QtWidgets.QMainWindow):
 
         # first instanciate the version controller
         if version_control.controller and not disable_version_control:
-            self.vcs = version_control.controller()
-            self.vcs.trigger_main_window = self
+            self.vcs = version_control.controller(self)
         else:
             self.vcs = None
 

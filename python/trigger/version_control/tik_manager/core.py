@@ -10,9 +10,7 @@ import tik_manager4._version as version
 
 from tik_manager4.ui import main
 
-# TIK = tik_manager4.initialize("trigger")
-
-# from tik_manager4.dcc.trigger import main as trigger_main
+from trigger.version_control.api import ApiHandler
 
 
 @dataclasses.dataclass
@@ -25,9 +23,10 @@ class DisplayWidgets:
 class VCS(object):
     """Tik Manager4 version control integrator."""
 
-    def __init__(self):
+    def __init__(self, trigger_main_window):
         """Initialize."""
-        self.trigger_main_window = None
+        # self._trigger_main_window = trigger_main_window
+        self.trigger_main_window = trigger_main_window
         self.tik = tik_manager4.initialize("trigger")
 
         self.display_widgets = DisplayWidgets(
@@ -36,10 +35,8 @@ class VCS(object):
             ),
         )
 
-        from tik_manager4.dcc.trigger import main as trigger_main
-
-        self.tik_trigger_handler = trigger_main.Dcc()
-        self.tik_trigger_handler.set_trigger_main_window(self.trigger_main_window)
+        self.api_handler = ApiHandler()
+        self.api_handler.set_trigger_handler(trigger_main_window)
 
     def build_session_header(self, layout):
         """Build the session header."""
@@ -75,9 +72,7 @@ class VCS(object):
         tik_new_version_btn.clicked.connect(self.save_new_version)
 
     def update_info(self):
-        # self.tik_trigger_handler = trigger_main.Dcc()
-        self.tik_trigger_handler.set_trigger_main_window(self.trigger_main_window)
-
+        """Update the info on UI."""
         work_obj, version = self.tik.project.get_current_work()
         # current_scene_path = self.tik_trigger_handler.get_scene_file()
 
@@ -94,9 +89,6 @@ class VCS(object):
 
     def launch_main_ui(self):
         """Launch the main UI."""
-        # self.tik_trigger_handler = trigger_main.Dcc()
-        self.tik_trigger_handler.set_trigger_main_window(self.trigger_main_window)
-
         window_name = f"Tik Manager {version.__version__} - trigger"
         all_widgets = QtWidgets.QApplication.allWidgets()
         for entry in all_widgets:
@@ -106,15 +98,15 @@ class VCS(object):
                     entry.deleteLater()
             except (AttributeError, TypeError):
                 pass
-        ui = main.MainUI(self.tik, parent=self.trigger_main_window, window_name=window_name)
+        ui = main.MainUI(
+            self.tik, parent=self.trigger_main_window, window_name=window_name
+        )
         ui.show()
         self.update_info()
         # ui.exec_()
 
     def save_new_version(self):
         """Save new version."""
-        # self.tik_trigger_handler = trigger_main.Dcc()
-        self.tik_trigger_handler.set_trigger_main_window(self.trigger_main_window)
         ui = main.MainUI(self.tik, parent=self.trigger_main_window)
         ui.on_new_version()
         self.update_info()
