@@ -24,10 +24,20 @@ class ApiHandler():
         self.main_ui.vcs_save_session(file_path)
         return file_path
 
+    def export_session(self, file_path):
+        """Export the current session to the given file path."""
+        self.validate_trigger_handler()
+        self.main_ui.actions_handler.export_session(file_path)
+
     def open_session(self, file_path):
         """Open the given file path."""
         self.validate_trigger_handler()
         self.main_ui.open_trigger(file_path)
+
+    def build_session(self):
+        """Build the session."""
+        self.validate_trigger_handler()
+        self.main_ui.actions_handler.run_all_actions()
 
     def is_modified(self):
         """Returns True if the scene has unsaved changes."""

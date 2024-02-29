@@ -71,6 +71,8 @@ class VCS(object):
         tik_main_btn.clicked.connect(self.launch_main_ui)
         tik_new_version_btn.clicked.connect(self.save_new_version)
 
+        tik_publish_btn.clicked.connect(self.publish)
+
     def update_info(self):
         """Update the info on UI."""
         work_obj, version = self.tik.project.get_current_work()
@@ -109,4 +111,10 @@ class VCS(object):
         """Save new version."""
         ui = main.MainUI(self.tik, parent=self.trigger_main_window)
         ui.on_new_version()
+        self.update_info()
+
+    def publish(self):
+        """Publish the current version."""
+        ui = main.MainUI(self.tik, parent=self.trigger_main_window)
+        ui.on_publish_scene()
         self.update_info()

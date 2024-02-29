@@ -855,6 +855,7 @@ class MainUI(QtWidgets.QMainWindow):
         self.action_info_pb.clicked.connect(self.on_action_info)
 
         self.build_pb.clicked.connect(self.on_build_rig)
+        self.build_and_publish_pb.clicked.connect(self.on_build_and_publish)
         self.rig_actions_listwidget.doubleClicked.connect(self.on_run_action)
         # TODO: Make a seperate method for running run actions wih progressbar
 
@@ -962,6 +963,12 @@ class MainUI(QtWidgets.QMainWindow):
             self.actions_handler.run_all_actions()
         else:
             return
+
+    def on_build_and_publish(self):
+        """Publish the rig.
+        This will work only if there is an active version control system."""
+        if self.vcs:
+            self.vcs.publish()
 
     def new_trigger(self):
         if not self._validate_unsaved_work():

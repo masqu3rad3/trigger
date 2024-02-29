@@ -78,6 +78,13 @@ class ActionsSession(dict):
         self.compareActions = deepcopy(self["actions"])
         LOG.info("Session Saved Successfully...")
 
+    def export_session(self, file_path):
+        """Exports the session to the given file path"""
+        if not os.path.splitext(file_path)[1] == ".tr":
+            file_path = "%s.tr" % file_path
+        self.io.write(self, file_path=file_path)
+        LOG.info("Session Exported Successfully...")
+
     def load_session(self, file_path):
         """Loads the session from the file"""
         self.io.file_path = file_path
