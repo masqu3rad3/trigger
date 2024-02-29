@@ -38,9 +38,9 @@ class Kinematics(ActionCore):
     action_data = ACTION_DATA
 
     def __init__(
-        self, root_joints=None, progress_bar=None, create_switchers=True, rig_name=None, **kwargs,
+        self, root_joints=None, progress_bar=None, create_switchers=True, rig_name=None, vcs=None
     ):
-        super(Kinematics, self).__init__(kwargs)
+        super(Kinematics, self).__init__()
         self.progress_bar = progress_bar
         if self.progress_bar:
             self.progress_bar.setProperty("value", 0)
