@@ -27,7 +27,7 @@ class VCS(object):
         """Initialize."""
         # self._trigger_main_window = trigger_main_window
         self.trigger_main_window = trigger_main_window
-        self.tik = tik_manager4.initialize("trigger")
+        # self.tik = tik_manager4.initialize("trigger")
 
         self.display_widgets = DisplayWidgets(
             resolved_text=ResolvedText(
@@ -41,7 +41,8 @@ class VCS(object):
     def build_session_header(self, layout):
         """Build the session header."""
         # add all display widgets to the layout
-        project_setter = project_mcv.TikProjectLayout(self.tik)
+        tik = tik_manager4.initialize("trigger")
+        project_setter = project_mcv.TikProjectLayout(tik)
         layout.addLayout(project_setter)
         buttons_lay = QtWidgets.QHBoxLayout()
         buttons_lay.setMargin(0)
@@ -75,7 +76,8 @@ class VCS(object):
 
     def update_info(self):
         """Update the info on UI."""
-        work_obj, version = self.tik.project.get_current_work()
+        tik = tik_manager4.initialize("trigger")
+        work_obj, version = tik.project.get_current_work()
         # current_scene_path = self.tik_trigger_handler.get_scene_file()
 
         if work_obj:
@@ -100,8 +102,9 @@ class VCS(object):
                     entry.deleteLater()
             except (AttributeError, TypeError):
                 pass
+        tik = tik_manager4.initialize("trigger")
         ui = main.MainUI(
-            self.tik, parent=self.trigger_main_window, window_name=window_name
+            tik, parent=self.trigger_main_window, window_name=window_name
         )
         ui.show()
         self.update_info()
@@ -109,12 +112,15 @@ class VCS(object):
 
     def save_new_version(self):
         """Save new version."""
-        ui = main.MainUI(self.tik, parent=self.trigger_main_window)
+        # we need to reinitialize the tik object because it may get overridden by maya tik object
+        tik = tik_manager4.initialize("trigger")
+        ui = main.MainUI(tik, parent=self.trigger_main_window)
         ui.on_new_version()
         self.update_info()
 
     def publish(self):
         """Publish the current version."""
-        ui = main.MainUI(self.tik, parent=self.trigger_main_window)
+        tik = tik_manager4.initialize("trigger")
+        ui = main.MainUI(tik, parent=self.trigger_main_window)
         ui.on_publish_scene()
         self.update_info()
