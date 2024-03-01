@@ -15,15 +15,18 @@ LOG = filelog.Filelog(logname=__name__, filename="trigger_log")
 
 
 class ActionsSession(dict):
-    def __init__(self, progress_listwidget=None, *args, **kwargs):
+    def __init__(self, progress_listwidget=None, version_controller=None, *args, **kwargs):
         super(ActionsSession, self).__init__(*args, **kwargs)
-        self.progressListwidget = progress_listwidget
+        self.progress_listwidget = progress_listwidget
+        self.vcs = version_controller
         # at least a file name is necessary while instancing the IO
         self.io = io.IO(file_name="tmp_actions_session.tr")
         self.currentFile = None
-        self.action_data_dict = {}
-        for mod in actions.__all__:
-            self.action_data_dict[mod] = eval('actions.{0}.ACTION_DATA'.format(mod))
+        self.action_data_dict =  {module_name: class_obj.action_data for module_name, class_obj in actions.class_data.items()}
+
+        # self.action_data_dict = {}
+        # for mod in actions.__all__:
+        #     self.action_data_dict[mod] = eval("actions.{0}.ACTION_DATA".format(mod))
 
         """
         Structure:
@@ -56,6 +59,10 @@ class ActionsSession(dict):
         self["actions"] = []
         self.compareActions = deepcopy(self["actions"])
 
+    @property
+    def session_path(self):
+        return self.currentFile
+
     def new_session(self):
         """Clears the data"""
         LOG.header("New Session")
@@ -70,6 +77,13 @@ class ActionsSession(dict):
         self.currentFile = file_path
         self.compareActions = deepcopy(self["actions"])
         LOG.info("Session Saved Successfully...")
+
+    def export_session(self, file_path):
+        """Exports the session to the given file path"""
+        if not os.path.splitext(file_path)[1] == ".tr":
+            file_path = "%s.tr" % file_path
+        self.io.write(self, file_path=file_path)
+        LOG.info("Session Exported Successfully...")
 
     def load_session(self, file_path):
         """Loads the session from the file"""
@@ -135,7 +149,7 @@ class ActionsSession(dict):
             action_name = action_type + "1"
             idcounter = 0
             while action_name in self.list_action_names():
-                action_name = "%s%s" % (action_type, str(idcounter + 1))
+                action_name = "{}{}".format(action_type, str(idcounter + 1))
                 idcounter = idcounter + 1
 
         if action_name in self.list_action_names():
@@ -146,7 +160,7 @@ class ActionsSession(dict):
             "name": action_name,
             "type": action_type,
             "data": deepcopy(self.action_data_dict.get(action_type)),
-            "enabled": True
+            "enabled": True,
         }
         if insert_index == None:
             self["actions"].append(action)
@@ -210,10 +224,13 @@ class ActionsSession(dict):
         """
         action = self.get_action(action_name)
         if action:
-            defaults=self.action_data_dict[action["type"]]
+            defaults = self.action_data_dict[action["type"]]
             current_value = action["data"].get(property, defaults.get(property))
             if current_value == None:
-                msg = "The property '%s' does not exist in %s ACTION_DATA" % (property, action["type"])
+                msg = "The property '%s' does not exist in %s ACTION_DATA" % (
+                    property,
+                    action["type"],
+                )
                 LOG.error(msg)
                 raise Exception(msg)
             if compat.is_string(new_value):
@@ -221,7 +238,10 @@ class ActionsSession(dict):
             if compat.is_string(current_value):
                 current_value = str(current_value)
             if type(current_value) != type(new_value):
-                msg = "%s property only accepts %s values" % (property, str(type(current_value)))
+                msg = "%s property only accepts %s values" % (
+                    property,
+                    str(type(current_value)),
+                )
                 LOG.error(msg)
                 raise Exception(msg)
 
@@ -235,10 +255,13 @@ class ActionsSession(dict):
     def query_action(self, action_name, property):
         action = self.get_action(action_name)
         if action:
-            defaults=self.action_data_dict[action["type"]]
+            defaults = self.action_data_dict[action["type"]]
             current_value = action["data"].get(property, defaults.get(property))
             if current_value == None:
-                LOG.error("The property '%s' does not exist in %s ACTION_DATA" % (property, action["type"]))
+                LOG.error(
+                    "The property '%s' does not exist in %s ACTION_DATA"
+                    % (property, action["type"])
+                )
             else:
                 return current_value
         else:
@@ -291,7 +314,9 @@ class ActionsSession(dict):
 
     def get_info(self, action_name):
         action = self.get_action(action_name)
-        action_cmd = "actions.{0}.{1}()".format(action["type"], action["type"].capitalize())
+        action_cmd = "actions.{0}.{1}()".format(
+            action["type"], action["type"].capitalize()
+        )
         a_hand = eval(action_cmd)
         # backward compatibility for v2.0.0
         try:
@@ -302,8 +327,9 @@ class ActionsSession(dict):
     @tracktime
     def _action(self, action):
         LOG.header("%s" % action["name"])
-        action_cmd = "actions.{0}.{1}()".format(action["type"], action["type"].capitalize())
-        a_hand = eval(action_cmd)
+
+        a_hand = actions.class_data[action["type"]](vcs=self.vcs)
+
         a_hand.feed(action["data"])
         a_hand.action()
         LOG.info("success...")
@@ -321,19 +347,22 @@ class ActionsSession(dict):
             if action["name"] == until:
                 return
             if self.is_enabled(action["name"]):
-                if self.progressListwidget:
-                    self.progressListwidget.setCurrentRow(-1)
-                    self.progressListwidget.activateItem(row)
+                if self.progress_listwidget:
+                    self.progress_listwidget.setCurrentRow(-1)
+                    self.progress_listwidget.activateItem(row)
 
-                    self.progressListwidget.scrollToItem(self.progressListwidget.item(row), QtWidgets.QAbstractItemView.EnsureVisible)
+                    self.progress_listwidget.scrollToItem(
+                        self.progress_listwidget.item(row),
+                        QtWidgets.QAbstractItemView.EnsureVisible,
+                    )
                     QtWidgets.QApplication.processEvents()
                 try:
                     self._action(action)
-                    if self.progressListwidget:
-                        self.progressListwidget.successItem(row)
+                    if self.progress_listwidget:
+                        self.progress_listwidget.successItem(row)
                 except Exception as e:
-                    if self.progressListwidget:
-                        self.progressListwidget.errorItem(row)
+                    if self.progress_listwidget:
+                        self.progress_listwidget.errorItem(row)
                     LOG.error("Cannot complete action => %s\n%s" % (action["name"], e))
                     raise
         LOG.header("Total BUILDING TIME:")
@@ -344,11 +373,13 @@ class ActionsSession(dict):
         action = self.get_action(action_name)
         try:
             self._action(action)
-            if self.progressListwidget:
-                self.progressListwidget.successItem(self.progressListwidget.currentRow())
+            if self.progress_listwidget:
+                self.progress_listwidget.successItem(
+                    self.progress_listwidget.currentRow()
+                )
         except Exception as e:
-            if self.progressListwidget:
-                self.progressListwidget.errorItem(self.progressListwidget.currentRow())
+            if self.progress_listwidget:
+                self.progress_listwidget.errorItem(self.progress_listwidget.currentRow())
             LOG.error("Cannot complete action => %s\n%s" % (action["name"], e))
             raise
 
@@ -356,8 +387,8 @@ class ActionsSession(dict):
     def run_save_action(self, action_name):
         LOG.info("saving Action Data")
         action = self.get_action(action_name)
-        action_cmd = "actions.{0}.{1}()".format(action["type"], action["type"].capitalize())
-        a_hand = eval(action_cmd)
+
+        a_hand = actions.class_data[action["type"]](vcs=self.vcs)
         a_hand.feed(action["data"])
         a_hand.save_action()
         LOG.info("success")
@@ -365,6 +396,6 @@ class ActionsSession(dict):
 
     def get_layout_ui(self, action_name, ctrl, layout):
         action = self.get_action(action_name)
-        action_cmd = "actions.{0}.{1}()".format(action["type"], action["type"].capitalize())
-        a_hand = eval(action_cmd)
+
+        a_hand = actions.class_data[action["type"]](vcs=self.vcs)
         a_hand.ui(ctrl, layout, self)

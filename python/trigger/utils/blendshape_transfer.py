@@ -11,6 +11,7 @@ from trigger.ui import feedback
 
 windowName = "Blendshape Transfer v0.0.2"
 
+
 class BlendshapeTransfer(object):
     def __init__(self, source_mesh=None, target_mesh=None, source_blendshape_grp=None):
         super(BlendshapeTransfer, self).__init__()
@@ -21,7 +22,7 @@ class BlendshapeTransfer(object):
         self._sourceBlendShapeGrp = source_blendshape_grp
 
         # general settings
-        self.offsetValue = [0,40,0]
+        self.offsetValue = [0, 40, 0]
         self.offsetCluster = None
         self.annotationsGrp = None
 
@@ -76,8 +77,12 @@ class BlendshapeTransfer(object):
         if not cmds.objExists(self.transferShapesGrp):
             cmds.group(name=self.transferShapesGrp, em=True)
 
-        self.tmpSource = cmds.duplicate(self.source_mesh, name="trTMP_blndtrans__source_mesh")[0]
-        self.tmpTarget = cmds.duplicate(self.target_mesh, name="trTMP_blndtrans__target_mesh")[0]
+        self.tmpSource = cmds.duplicate(
+            self.source_mesh, name="trTMP_blndtrans__source_mesh"
+        )[0]
+        self.tmpTarget = cmds.duplicate(
+            self.target_mesh, name="trTMP_blndtrans__target_mesh"
+        )[0]
         self._unlock_normals(self.tmpSource)
         self._unlock_normals(self.tmpTarget)
         cmds.parent(self.tmpSource, self.transferShapesGrp)
@@ -86,25 +91,45 @@ class BlendshapeTransfer(object):
         source_blendshape_list = functions.get_meshes(self.source_blendshape_grp)
 
         if self.is_same_topology(self.tmpSource, self.tmpTarget):
-            self.blendshapeNode = cmds.blendShape(source_blendshape_list, self.tmpTarget, w=[0, 0], name="trTMP_blndtrans_blendshape")
+            self.blendshapeNode = cmds.blendShape(
+                source_blendshape_list,
+                self.tmpTarget,
+                w=[0, 0],
+                name="trTMP_blndtrans_blendshape",
+            )
             next_index = cmds.blendShape(self.blendshapeNode, q=True, wc=True)
-            cmds.blendShape(self.blendshapeNode, edit=True, t=(self.tmpTarget, next_index, self.source_mesh, 1.0), w=[next_index, -1.0])
+            cmds.blendShape(
+                self.blendshapeNode,
+                edit=True,
+                t=(self.tmpTarget, next_index, self.source_mesh, 1.0),
+                w=[next_index, -1.0],
+            )
             # rename is something obvious to treat differently in QC
-            cmds.aliasAttr("negateSource", "%s.w[%i]" %(self.blendshapeNode[0], next_index))
+            cmds.aliasAttr(
+                "negateSource", "%s.w[%i]" % (self.blendshapeNode[0], next_index)
+            )
         else:
-            self.blendshapeNode = cmds.blendShape(source_blendshape_list, self.tmpSource, w=[0, 0], name="trTMP_blndtrans_blendshape")
-            self.wrap_node = deformers.create_proximity_wrap(self.tmpSource, self.tmpTarget,
-                                                        wrap_mode=self.wrapMode,
-                                                        falloff_scale=self.falloffScale,
-                                                        max_drivers=self.maxDrivers,
-                                                        smooth_influences=self.smoothInfluences,
-                                                        smooth_normals=self.smoothNormals,
-                                                        soft_normalization=self.softNormalization,
-                                                        span_samples=self.spanSamples)
+            self.blendshapeNode = cmds.blendShape(
+                source_blendshape_list,
+                self.tmpSource,
+                w=[0, 0],
+                name="trTMP_blndtrans_blendshape",
+            )
+            self.wrap_node = deformers.create_proximity_wrap(
+                self.tmpSource,
+                self.tmpTarget,
+                wrap_mode=self.wrapMode,
+                falloff_scale=self.falloffScale,
+                max_drivers=self.maxDrivers,
+                smooth_influences=self.smoothInfluences,
+                smooth_normals=self.smoothNormals,
+                soft_normalization=self.softNormalization,
+                span_samples=self.spanSamples,
+            )
 
     def tweak_wrap(self, property, value):
         if self.wrap_node and cmds.objExists(self.wrap_node):
-            cmds.setAttr("%s.%s" %(self.wrap_node, property), value)
+            cmds.setAttr("%s.%s" % (self.wrap_node, property), value)
         return
 
     def tweak_offset(self, values):
@@ -115,16 +140,18 @@ class BlendshapeTransfer(object):
     def preview_mode_on(self):
         # cmds.currentTime(300)
 
-        self.preview_mode_off() # reset first
+        self.preview_mode_off()  # reset first
         self._prepare_meshes()
 
         self.qc_blendshapes(self.blendshapeNode)
 
-        self.offsetCluster = cmds.cluster(self.tmpTarget, name="trTMP_blndtrans__offsetCluster")
+        self.offsetCluster = cmds.cluster(
+            self.tmpTarget, name="trTMP_blndtrans__offsetCluster"
+        )
         cmds.parent(self.annotationsGrp, self.offsetCluster[1])
         cmds.setAttr("%s.t" % self.offsetCluster[1], *self.offsetValue)
         cmds.parent(self.offsetCluster[1], self.transferShapesGrp)
-        cmds.hide(functions.get_shapes(self.offsetCluster[1])) # hide only shape
+        cmds.hide(functions.get_shapes(self.offsetCluster[1]))  # hide only shape
 
     def preview_mode_off(self):
         functions.delete_object("trTMP_blndtrans_*")
@@ -151,33 +178,45 @@ class BlendshapeTransfer(object):
             # annotations
             center = cmds.objectCenter(self.tmpTarget, gl=True)
             raw = cmds.xform(self.tmpTarget, q=1, bb=1)
-            offset = (0, (raw[4] - center[1])*1.1, 0)
+            offset = (0, (raw[4] - center[1]) * 1.1, 0)
             # offset = om.MVector(0, (raw[4] - center[1])*1.1, 0) + om.MVector(self.offsetValue)
 
-
-            annotation = interface.annotate(self.tmpTarget, attr, offset=offset,
-                               name="trTMP_blndtrans_%s" %attr,
-                               visibility_range=[start_frame, end_frame])
+            annotation = interface.annotate(
+                self.tmpTarget,
+                attr,
+                offset=offset,
+                name="trTMP_blndtrans_%s" % attr,
+                visibility_range=[start_frame, end_frame],
+            )
             cmds.parent(annotation, self.annotationsGrp)
-
 
         if same_topo:
             # if the same topo animate the delta shape at the beginning and end of range
-            cmds.setKeyframe(blendshape_node, at="negateSource", t=separation-1, value=0)
+            cmds.setKeyframe(
+                blendshape_node, at="negateSource", t=separation - 1, value=0
+            )
             cmds.setKeyframe(blendshape_node, at="negateSource", t=separation, value=-1)
-            cmds.setKeyframe(blendshape_node, at="negateSource", t=separation*len(blend_attributes)+separation-1, value=-1)
-            cmds.setKeyframe(blendshape_node, at="negateSource", t=separation*len(blend_attributes)+separation, value=0)
+            cmds.setKeyframe(
+                blendshape_node,
+                at="negateSource",
+                t=separation * len(blend_attributes) + separation - 1,
+                value=-1,
+            )
+            cmds.setKeyframe(
+                blendshape_node,
+                at="negateSource",
+                t=separation * len(blend_attributes) + separation,
+                value=0,
+            )
 
         # extend the timeline range to fit the qc
-        cmds.playbackOptions(min=1, max=separation*len(blend_attributes)+separation)
-
+        cmds.playbackOptions(min=1, max=separation * len(blend_attributes) + separation)
 
     def refresh(self):
         """To fix weird maya bug with blendshape node which is not triggering the next target after the cursor
         for some reason"""
         cmds.setAttr("%s.nodeState" % self.blendshapeNode[0], 1)
         cmds.setAttr("%s.nodeState" % self.blendshapeNode[0], 0)
-
 
     def transfer(self):
         self.preview_mode_off()
@@ -186,13 +225,13 @@ class BlendshapeTransfer(object):
         if "negateSource" in blend_attributes:
             blend_attributes.remove("negateSource")
         for attr in blend_attributes:
-            cmds.setAttr("%s.%s" %(self.blendshapeNode[0], attr), 1)
+            cmds.setAttr("%s.%s" % (self.blendshapeNode[0], attr), 1)
             new_blendshape = cmds.duplicate(self.tmpTarget)[0]
             # cmds.parent(new_blendshape, self.transferShapesGrp)
             # get rid of the intermediates
             functions.delete_intermediates(new_blendshape)
             cmds.rename(new_blendshape, attr)
-            cmds.setAttr("%s.%s" %(self.blendshapeNode[0], attr), 0)
+            cmds.setAttr("%s.%s" % (self.blendshapeNode[0], attr), 0)
         functions.delete_object("trTMP_blndtrans_*")
 
     @staticmethod
@@ -228,8 +267,7 @@ class MainUI(QtWidgets.QDialog):
         self.setWindowTitle(windowName)
         self.setObjectName(windowName)
         self.feed = feedback.Feedback()
-        self.setMinimumSize(250,50)
-
+        self.setMinimumSize(250, 50)
 
         self.build_ui()
 
@@ -245,21 +283,31 @@ class MainUI(QtWidgets.QDialog):
 
         source_mesh_lbl = QtWidgets.QLabel(text="Source Neutral Mesh")
         source_mesh_lbl.setToolTip("The source mesh which has the blendshape pack")
-        self.source_mesh_leBox = custom_widgets.LineEditBoxLayout(buttonsPosition="right")
+        self.source_mesh_leBox = custom_widgets.LineEditBoxLayout(
+            buttonsPosition="right"
+        )
         self.source_mesh_leBox.buttonGet.setText("<")
         self.source_mesh_leBox.buttonGet.setMaximumWidth(30)
         meshes_formlayout.addRow(source_mesh_lbl, self.source_mesh_leBox)
 
         source_blpack_lbl = QtWidgets.QLabel(text="Blendshapes Group")
-        source_blpack_lbl.setToolTip("blendshape group includes all the shapes compatible with the source mesh")
-        self.source_blpack_leBox = custom_widgets.LineEditBoxLayout(buttonsPosition="right")
+        source_blpack_lbl.setToolTip(
+            "blendshape group includes all the shapes compatible with the source mesh"
+        )
+        self.source_blpack_leBox = custom_widgets.LineEditBoxLayout(
+            buttonsPosition="right"
+        )
         self.source_blpack_leBox.buttonGet.setText("<")
         self.source_blpack_leBox.buttonGet.setMaximumWidth(30)
         meshes_formlayout.addRow(source_blpack_lbl, self.source_blpack_leBox)
-        
+
         target_mesh_lbl = QtWidgets.QLabel(text="Target Neutral Mesh")
-        target_mesh_lbl.setToolTip("The target mesh which does not have a blendshape pack")
-        self.target_mesh_leBox = custom_widgets.LineEditBoxLayout(buttonsPosition="right")
+        target_mesh_lbl.setToolTip(
+            "The target mesh which does not have a blendshape pack"
+        )
+        self.target_mesh_leBox = custom_widgets.LineEditBoxLayout(
+            buttonsPosition="right"
+        )
         self.target_mesh_leBox.buttonGet.setText("<")
         self.target_mesh_leBox.buttonGet.setMaximumWidth(30)
         meshes_formlayout.addRow(target_mesh_lbl, self.target_mesh_leBox)
@@ -278,7 +326,9 @@ class MainUI(QtWidgets.QDialog):
         offset_preview_mesh_hlay.addWidget(self.offset_x_sp)
         offset_preview_mesh_hlay.addWidget(self.offset_y_sp)
         offset_preview_mesh_hlay.addWidget(self.offset_z_sp)
-        gen_settings_formlayout.addRow(offset_preview_mesh_lbl, offset_preview_mesh_hlay)
+        gen_settings_formlayout.addRow(
+            offset_preview_mesh_lbl, offset_preview_mesh_hlay
+        )
 
         wrap_settings_group = QtWidgets.QGroupBox()
         wrap_settings_group.setTitle("Wrap Settings")
@@ -299,11 +349,15 @@ class MainUI(QtWidgets.QDialog):
         smooth_influences_lbl = QtWidgets.QLabel(text="Smooth Influences")
         self.smooth_influences_sp = QtWidgets.QSpinBox()
         self.smooth_influences_sp.setMinimum(0)
-        wrap_settings_formlayout.addRow(smooth_influences_lbl, self.smooth_influences_sp)
+        wrap_settings_formlayout.addRow(
+            smooth_influences_lbl, self.smooth_influences_sp
+        )
 
         soft_normalization_lbl = QtWidgets.QLabel(text="Soft Normalization")
         self.soft_normalization_cb = QtWidgets.QCheckBox()
-        wrap_settings_formlayout.addRow(soft_normalization_lbl, self.soft_normalization_cb)
+        wrap_settings_formlayout.addRow(
+            soft_normalization_lbl, self.soft_normalization_cb
+        )
 
         span_samples_lbl = QtWidgets.QLabel(text="Span Samples")
         self.span_samples_sp = QtWidgets.QSpinBox()
@@ -328,7 +382,9 @@ class MainUI(QtWidgets.QDialog):
         def on_toggle_preview():
             self.update_model()
             if preview_pb.isChecked():
-                if self.transfer.is_same_topology(self.transfer.source_mesh, self.transfer.target_mesh):
+                if self.transfer.is_same_topology(
+                    self.transfer.source_mesh, self.transfer.target_mesh
+                ):
                     wrap_settings_group.setEnabled(False)
                 else:
                     wrap_settings_group.setEnabled(True)
@@ -344,31 +400,53 @@ class MainUI(QtWidgets.QDialog):
             preview_pb.setChecked(False)
             preview_pb.blockSignals(False)
 
-
-
         # SIGNALS
-        self.source_mesh_leBox.buttonGet.clicked.connect(lambda x=0: self.get_selected(self.source_mesh_leBox.viewWidget))
-        self.source_blpack_leBox.buttonGet.clicked.connect(lambda x=0: self.get_selected(self.source_blpack_leBox.viewWidget, group=True))
-        self.target_mesh_leBox.buttonGet.clicked.connect(lambda x=0: self.get_selected(self.target_mesh_leBox.viewWidget))
+        self.source_mesh_leBox.buttonGet.clicked.connect(
+            lambda x=0: self.get_selected(self.source_mesh_leBox.viewWidget)
+        )
+        self.source_blpack_leBox.buttonGet.clicked.connect(
+            lambda x=0: self.get_selected(
+                self.source_blpack_leBox.viewWidget, group=True
+            )
+        )
+        self.target_mesh_leBox.buttonGet.clicked.connect(
+            lambda x=0: self.get_selected(self.target_mesh_leBox.viewWidget)
+        )
 
         self.offset_x_sp.valueChanged.connect(self.on_tweak_offset)
         self.offset_y_sp.valueChanged.connect(self.on_tweak_offset)
         self.offset_z_sp.valueChanged.connect(self.on_tweak_offset)
 
-        self.wrap_mode_combo.currentIndexChanged.connect(lambda v, p="wrapMode": self.transfer.tweak_wrap(property=p, value=v))
-        self.falloff_scale_sp.valueChanged.connect(lambda v, p="falloffScale": self.transfer.tweak_wrap(property=p, value=v))
-        self.smooth_influences_sp.valueChanged.connect(lambda v, p="smoothInfluences": self.transfer.tweak_wrap(property=p, value=v))
-        self.soft_normalization_cb.stateChanged.connect(lambda v, p="softNormalization": self.transfer.tweak_wrap(property=p, value=v))
-        self.span_samples_sp.valueChanged.connect(lambda v, p="spanSamples": self.transfer.tweak_wrap(property=p, value=v))
-
-
+        self.wrap_mode_combo.currentIndexChanged.connect(
+            lambda v, p="wrapMode": self.transfer.tweak_wrap(property=p, value=v)
+        )
+        self.falloff_scale_sp.valueChanged.connect(
+            lambda v, p="falloffScale": self.transfer.tweak_wrap(property=p, value=v)
+        )
+        self.smooth_influences_sp.valueChanged.connect(
+            lambda v, p="smoothInfluences": self.transfer.tweak_wrap(
+                property=p, value=v
+            )
+        )
+        self.soft_normalization_cb.stateChanged.connect(
+            lambda v, p="softNormalization": self.transfer.tweak_wrap(
+                property=p, value=v
+            )
+        )
+        self.span_samples_sp.valueChanged.connect(
+            lambda v, p="spanSamples": self.transfer.tweak_wrap(property=p, value=v)
+        )
 
         preview_pb.toggled.connect(on_toggle_preview)
         refresh_pb.clicked.connect(self.transfer.refresh)
         transfer_pb.clicked.connect(on_transfer)
 
     def on_tweak_offset(self):
-        offset_value = (self.offset_x_sp.value(), self.offset_y_sp.value(), self.offset_z_sp.value())
+        offset_value = (
+            self.offset_x_sp.value(),
+            self.offset_y_sp.value(),
+            self.offset_z_sp.value(),
+        )
         self.transfer.tweak_offset(offset_value)
 
     def update_ui(self):
@@ -404,16 +482,17 @@ class MainUI(QtWidgets.QDialog):
         self.transfer.spanSamples = self.span_samples_sp.value()
 
     def get_selected(self, line_edit, group=False):
-        meshes_only=False if group else True
-        selected, msg = selection.validate(minimum=1, maximum=1, meshes_only=meshes_only, groups_only=group, transforms=True, full_path=False)
+        meshes_only = False if group else True
+        selected, msg = selection.validate(
+            minimum=1,
+            maximum=1,
+            meshes_only=meshes_only,
+            groups_only=group,
+            transforms=True,
+            full_path=False,
+        )
         if not selected:
             self.feed.pop_info(title="Selection Error", text=msg)
             return
         else:
             line_edit.setText(selected[0])
-
-
-
-
-
-

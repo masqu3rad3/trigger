@@ -2,6 +2,8 @@
 import os
 from maya import cmds
 from trigger.core import filelog
+from trigger.core.action import ActionCore
+
 from trigger.core import database
 from trigger.core.decorators import suppress_warnings
 from trigger.core.compatibility import is_string
@@ -28,12 +30,16 @@ ACTION_DATA = {
     "auto_switchers": True,
     "extra_switchers": [],  # list of dictionaries?
     "after_creation": 2,  # 0=nothing 1=hide 2=delete
-    "multi_selectionSets": False
+    "multi_selectionSets": False,
 }
 
 
-class Kinematics(object):
-    def __init__(self, root_joints=None, progress_bar=None, create_switchers=True, rig_name=None):
+class Kinematics(ActionCore):
+    action_data = ACTION_DATA
+
+    def __init__(
+        self, root_joints=None, progress_bar=None, create_switchers=True, rig_name=None, vcs=None
+    ):
         super(Kinematics, self).__init__()
         self.progress_bar = progress_bar
         if self.progress_bar:
@@ -41,8 +47,14 @@ class Kinematics(object):
 
         self.autoSwitchers = create_switchers
         self.root_joints = root_joints if type(root_joints) == list else [root_joints]
-        self.module_dict = {mod: eval("modules.{0}.LIMB_DATA".format(mod)) for mod in modules.__all__}
-        self.validRootList = [values["members"][0] for values in self.module_dict.values()]
+        self.module_dict = {
+            module_name: data["guide"].limb_data
+            for module_name, data in modules.class_data.items()
+        }
+
+        self.validRootList = [
+            values["members"][0] for values in self.module_dict.values()
+        ]
 
         self.shoulderDist = 1.0
         self.hipDist = 1.0
@@ -87,9 +99,14 @@ class Kinematics(object):
 
             if self.autoSwitchers and self.anchorLocations:
                 for anchor in self.anchors:
-                    anchor_maker.create_space_switch(anchor[0], self.anchorLocations, mode=anchor[1],
-                                                     defaultVal=anchor[2],
-                                                     listException=anchor[3], skip_errors=True)
+                    anchor_maker.create_space_switch(
+                        anchor[0],
+                        self.anchorLocations,
+                        mode=anchor[1],
+                        defaultVal=anchor[2],
+                        listException=anchor[3],
+                        skip_errors=True,
+                    )
 
             if self.afterlife == 1:  # hide guides
                 cmds.hide(root_joint)
@@ -111,8 +128,11 @@ class Kinematics(object):
         file_path_le = QtWidgets.QLineEdit()
         file_path_le = FileLineEdit()
         file_path_h_lay.addWidget(file_path_le)
-        browse_path_pb = BrowserButton(update_widget=file_path_le, mode="openFile",
-                                       filterExtensions=["Trigger Guide Files (*.trg)"])
+        browse_path_pb = BrowserButton(
+            update_widget=file_path_le,
+            mode="openFile",
+            filterExtensions=["Trigger Guide Files (*.trg)"],
+        )
         file_path_h_lay.addWidget(browse_path_pb)
         layout.addRow(file_path_lbl, file_path_h_lay)
 
@@ -151,12 +171,16 @@ class Kinematics(object):
                 if not os.path.isfile(file_path_le.text()):
                     log.error("Guides file does not exist")
 
-                list_of_roots = list(guides_handler.get_roots_from_file(file_path=file_path_le.text()))
+                list_of_roots = list(
+                    guides_handler.get_roots_from_file(file_path=file_path_le.text())
+                )
                 zort_menu = QtWidgets.QMenu()
                 menu_actions = [QtWidgets.QAction(str(root)) for root in list_of_roots]
                 zort_menu.addActions(menu_actions)
                 for defo, menu_action in zip(list_of_roots, menu_actions):
-                    menu_action.triggered.connect(lambda ignore=defo, item=defo: add_root(str(item)))
+                    menu_action.triggered.connect(
+                        lambda ignore=defo, item=defo: add_root(str(item))
+                    )
 
                 zort_menu.exec_((QtGui.QCursor.pos()))
 
@@ -165,14 +189,18 @@ class Kinematics(object):
             if root in current_roots:
                 log.warning("%s is already in the list" % root)
                 return
-            new_roots = root if not current_roots else "{0}; {1}".format(current_roots, root)
+            new_roots = (
+                root if not current_roots else "{0}; {1}".format(current_roots, root)
+            )
             guide_roots_le.setText(new_roots)
             ctrl.update_model()
 
         # Signals
         file_path_le.textChanged.connect(lambda x=0: ctrl.update_model())
         browse_path_pb.clicked.connect(lambda x=0: ctrl.update_model())
-        browse_path_pb.clicked.connect(file_path_le.validate)  # to validate on initial browse result
+        browse_path_pb.clicked.connect(
+            file_path_le.validate
+        )  # to validate on initial browse result
         guide_roots_le.editingFinished.connect(lambda x=0: ctrl.update_model())
         get_guide_roots_pb.clicked.connect(get_roots_menu)
         create_auto_sw_cb.stateChanged.connect(lambda x=0: ctrl.update_model())
@@ -203,9 +231,14 @@ class Kinematics(object):
             if limb_name == "Shoulder" and limb_side == "R":
                 r_shoulder = jnt
 
-        self.hipDist = functions.get_distance(l_hip, r_hip) if l_hip and r_hip else self.hipDist
-        self.shoulderDist = functions.get_distance(l_shoulder,
-                                                   r_shoulder) if l_shoulder and r_shoulder else self.shoulderDist
+        self.hipDist = (
+            functions.get_distance(l_hip, r_hip) if l_hip and r_hip else self.hipDist
+        )
+        self.shoulderDist = (
+            functions.get_distance(l_shoulder, r_shoulder)
+            if l_shoulder and r_shoulder
+            else self.shoulderDist
+        )
 
     def get_limb_hierarchy(self, node, is_root=True, parent_index=None, r_list=None):
         """Checks the given nodes entire hieararchy for roots, and catalogues the root nodes into dictionaries.
@@ -232,13 +265,19 @@ class Kinematics(object):
         for jnt in children:
             c_id = joint.identify(jnt, self.module_dict)
             if c_id[0] in self.validRootList:
-                self.get_limb_hierarchy(jnt, is_root=True, parent_index=node, r_list=r_list)
+                self.get_limb_hierarchy(
+                    jnt, is_root=True, parent_index=node, r_list=r_list
+                )
             else:
                 self.get_limb_hierarchy(jnt, is_root=False, r_list=r_list)
         return r_list
 
     def get_whole_limb(self, node):
-        multi_guide_jnts = [value["multi_guide"] for value in self.module_dict.values() if value["multi_guide"]]
+        multi_guide_jnts = [
+            value["multi_guide"]
+            for value in self.module_dict.values()
+            if value["multi_guide"]
+        ]
         limb_dict = {}
         multi_list = []
         limb_name, limb_type, limb_side = joint.identify(node, self.module_dict)
@@ -253,8 +292,13 @@ class Kinematics(object):
                 z = False
             failed_children = 0
             for child in children:
-                child_limb_name, child_limb_type, child_limb_side = joint.identify(child, self.module_dict)
-                if child_limb_name not in self.validRootList and child_limb_type == limb_type:
+                child_limb_name, child_limb_type, child_limb_side = joint.identify(
+                    child, self.module_dict
+                )
+                if (
+                    child_limb_name not in self.validRootList
+                    and child_limb_type == limb_type
+                ):
                     next_node = child
                     if child_limb_name in multi_guide_jnts:
                         multi_list.append(child)
@@ -288,9 +332,15 @@ class Kinematics(object):
         return limb_sockets[index]
 
     @suppress_warnings
-    def create_limbs(self, limb_creation_list=None, add_limb=False, root_plug=None, parent_socket=None,
-                     master_cont=None,
-                     selection_mode=False):
+    def create_limbs(
+        self,
+        limb_creation_list=None,
+        add_limb=False,
+        root_plug=None,
+        parent_socket=None,
+        master_cont=None,
+        selection_mode=False,
+    ):
         """
         Creates limb with the order defined in the limbCreationList (which created with getLimbProperties)
         Args:
@@ -311,18 +361,27 @@ class Kinematics(object):
             if not selection_mode:
                 if root_plug and parent_socket and master_cont:
                     # check the root
-                    if joint.identify(root_plug, self.module_dict)[0] not in self.validRootList:
+                    if (
+                        joint.identify(root_plug, self.module_dict)[0]
+                        not in self.validRootList
+                    ):
                         log.error("root must be a valid root guide node")
                     # limb_creation_list = self.get_limb_hierarchy(root_plug)
                 else:
-                    log.error("add_limb mode requires all root, parent and master_cont flags")
+                    log.error(
+                        "add_limb mode requires all root, parent and master_cont flags"
+                    )
             else:
                 if len(cmds.ls(selection=True)) == 3:
                     root_plug, parent_socket, master_cont = cmds.ls(selection=True)
                 else:
                     log.error(
-                        "Select exactly three nodes. First reference root node then target parent and finally master controller")
-                if joint.identify(root_plug, self.module_dict)[0] not in self.validRootList:
+                        "Select exactly three nodes. First reference root node then target parent and finally master controller"
+                    )
+                if (
+                    joint.identify(root_plug, self.module_dict)[0]
+                    not in self.validRootList
+                ):
                     log.error("First selection must be a valid root joint node")
 
             limb_creation_list = self.get_limb_hierarchy(root_plug)
@@ -347,31 +406,38 @@ class Kinematics(object):
 
             if x[2] == "R":
                 _side_val = "R"
-                color_codes = [db.userSettings.majorRightColor, db.userSettings.minorRightColor]
+                color_codes = [
+                    db.userSettings.majorRightColor,
+                    db.userSettings.minorRightColor,
+                ]
             elif x[2] == "L":
                 _side_val = "L"
-                color_codes = [db.userSettings.majorLeftColor, db.userSettings.minorLeftColor]
+                color_codes = [
+                    db.userSettings.majorLeftColor,
+                    db.userSettings.minorLeftColor,
+                ]
             else:
                 _side_val = "C"
-                color_codes = [db.userSettings.majorCenterColor, db.userSettings.majorCenterColor]
+                color_codes = [
+                    db.userSettings.majorCenterColor,
+                    db.userSettings.majorCenterColor,
+                ]
 
             if self.multi_selectionSets:
                 set_name = "def_%s_%s_Set" % (x[1], x[2])
                 set_name = naming.unique_name(set_name)
                 j_def_set = cmds.sets(name=set_name)
 
-            module = "modules.{0}.{1}".format(x[1], x[1].capitalize())
-            flags = "build_data={0}".format(x[0])
-            construct_command = "{0}({1})".format(module, flags)
-
-            limb = eval(construct_command)
+            limb = modules.class_data[x[1]]["build"](build_data=x[0])
             limb.colorCodes = color_codes
             limb.createLimb()
 
             ##############################################
             if add_limb:
                 cmds.parent(limb.limbPlug, parent_socket)
-                cmds.disconnectAttr("%s.scale" % parent_socket, "%s.inverseScale" % limb.limbPlug)
+                cmds.disconnectAttr(
+                    "%s.scale" % parent_socket, "%s.inverseScale" % limb.limbPlug
+                )
                 # Good parenting / scale connections
                 # get the holder group
                 self.rootGroup = functions.get_parent(master_cont)
@@ -380,7 +446,13 @@ class Kinematics(object):
                 cmds.xform(limb.scaleGrp, pivots=scale_grp_piv, worldSpace=True)
                 # pass the attributes
 
-                attribute.attribute_pass(limb.scaleGrp, master_cont, values=True, daisyChain=True, overrideEx=False)
+                attribute.attribute_pass(
+                    limb.scaleGrp,
+                    master_cont,
+                    values=True,
+                    daisyChain=True,
+                    overrideEx=False,
+                )
                 cmds.parent(limb.limbGrp, self.rootGroup)
                 for s_con in limb.scaleConstraints:
                     cmds.scaleConstraint(master_cont, s_con)
@@ -399,12 +471,16 @@ class Kinematics(object):
 
                 parent_guide_joint = x[3]
                 if parent_guide_joint:
-                    parent_socket = self.get_nearest_socket(parent_guide_joint, self.allSocketsList,
-                                                            excluding=limb.sockets)
+                    parent_socket = self.get_nearest_socket(
+                        parent_guide_joint, self.allSocketsList, excluding=limb.sockets
+                    )
 
                     cmds.parent(limb.limbPlug, parent_socket)
                     try:
-                        cmds.disconnectAttr("%s.scale" % parent_socket, "%s.inverseScale" % limb.limbPlug)
+                        cmds.disconnectAttr(
+                            "%s.scale" % parent_socket,
+                            "%s.inverseScale" % limb.limbPlug,
+                        )
                     except RuntimeError:
                         pass
 
@@ -412,7 +488,13 @@ class Kinematics(object):
                 scale_grp_piv = api.get_world_translation(limb.limbPlug)
                 cmds.xform(limb.scaleGrp, pivots=scale_grp_piv, worldSpace=True)
 
-                attribute.attribute_pass(limb.scaleGrp, "pref_cont", values=True, daisyChain=True, overrideEx=False)
+                attribute.attribute_pass(
+                    limb.scaleGrp,
+                    "pref_cont",
+                    values=True,
+                    daisyChain=True,
+                    overrideEx=False,
+                )
                 if functions.get_parent(limb.limbGrp) != "trigger_grp":
                     cmds.parent(limb.limbGrp, "trigger_grp")
                 for s_con in limb.scaleConstraints:
@@ -426,10 +508,19 @@ class Kinematics(object):
                             else:
                                 self.scaleRoot = limb.controllers[0].name
                     else:
-                        cmds.connectAttr("%s.s" % self.scaleRoot, "%s.s" % s_con, force=True)
-                cmds.connectAttr("%s.s" % self.scaleRoot, "%s.s" % limb.scaleGrp, force=True)
+                        cmds.connectAttr(
+                            "%s.s" % self.scaleRoot, "%s.s" % s_con, force=True
+                        )
+                cmds.connectAttr(
+                    "%s.s" % self.scaleRoot, "%s.s" % limb.scaleGrp, force=True
+                )
                 for s_attr in "xyz":
-                    cmds.setAttr("{0}.s{1}".format(self.scaleRoot, s_attr), edit=True, keyable=True, lock=False)
+                    cmds.setAttr(
+                        "{0}.s{1}".format(self.scaleRoot, s_attr),
+                        edit=True,
+                        keyable=True,
+                        lock=False,
+                    )
             self.totalDefJoints += limb.deformerJoints
             if j_def_set:
                 cmds.sets(limb.deformerJoints, addElement=j_def_set)

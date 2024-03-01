@@ -13,6 +13,23 @@ def get_all_vertices(mesh_transform):
     mfn_object = OpenMaya.MFnMesh(sel_obj)
     return mfn_object.getPoints(OpenMaya.MSpace.kWorld)
 
+def get_vertex_ids_in_radius(source_mesh, point_node, radius=0.2, select=False):
+    _e = get_world_translation(point_node)
+    compare_point = OpenMaya.MPoint(_e)
+    vertices = get_all_vertices(source_mesh)
+
+    vertex_ids = []
+    for vertex_id, vertex in enumerate(vertices):
+        distance = (vertex - compare_point).length()
+        if distance < radius:
+            vertex_ids.append(vertex_id)
+
+    if select:
+        # Select the vertices
+        select_vertices(source_mesh, vertex_ids)
+
+    return vertex_ids
+
 
 def get_mdag_path(node):
     """Return the API 2.0 dagPath of given node."""
@@ -25,7 +42,8 @@ def get_world_translation(node):
     """Return given nodes world translation of rotate pivot."""
     target_m_transform = OpenMaya.MFnTransform(get_mdag_path(node))
     target_rotate_pivot = OpenMaya.MVector(
-        target_m_transform.rotatePivot(OpenMaya.MSpace.kWorld))
+        target_m_transform.rotatePivot(OpenMaya.MSpace.kWorld)
+    )
     return target_rotate_pivot
 
 
@@ -62,19 +80,20 @@ def select_vertices(mesh, id_list):
     """Selects vertices of the mesh with given id list"""
     sel = OpenMaya.MSelectionList()
     sel.add(mesh)
-    dag, mObject = sel.getComponent(0)
-    mfn_components = OpenMaya.MFnSingleIndexedComponent(mObject)
+    dag, m_object = sel.getComponent(0)
+    mfn_components = OpenMaya.MFnSingleIndexedComponent(m_object)
     mfn_object = mfn_components.create(OpenMaya.MFn.kMeshVertComponent)
     mfn_components.addElements(id_list)
     selection_list = OpenMaya.MSelectionList()
     selection_list.add((dag, mfn_object))
     OpenMaya.MGlobal.setActiveSelectionList(selection_list)
 
+
 def unlock_normals(transform, soften=False):
     """Unlock the normals of the specified geometry.
 
     Args:
-        geometries (str or list): string or list of strings for the geometries
+        transform (str or list): string or list of strings for the geometries
             to unlock.
         soften (bool, optional): If true, softens the edges with given
             softedge_angle value. Defaults to True.
@@ -90,13 +109,10 @@ def unlock_normals(transform, soften=False):
         for normal_index in range(mfn_mesh.numNormals)
     )
     if lock_state:
-        mfn_mesh.unlockVertexNormals(
-            OpenMaya.MIntArray(range(mfn_mesh.numVertices))
-        )
+        mfn_mesh.unlockVertexNormals(OpenMaya.MIntArray(range(mfn_mesh.numVertices)))
     if soften:
         edge_ids = OpenMaya.MIntArray(range(mfn_mesh.numEdges))
         smooths = OpenMaya.MIntArray([True] * mfn_mesh.numEdges)
         mfn_mesh.setEdgeSmoothings(edge_ids, smooths)
         mfn_mesh.cleanupEdgeSmoothing()
         mfn_mesh.updateSurface()
-

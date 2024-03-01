@@ -1,13 +1,22 @@
-
 from trigger.ui.Qt import QtWidgets, QtCore
 from trigger.ui.widgets.browser import BrowserButton
 from trigger.library import naming
 from trigger.ui import feedback
 
+
 class SaveBoxLayout(QtWidgets.QVBoxLayout):
     saved = QtCore.Signal(str)
 
-    def __init__(self, alignment=None, update_widget=None, filter_extensions=None, overwrite_check=False, control_model=None, *args, **kwargs):
+    def __init__(
+        self,
+        alignment=None,
+        update_widget=None,
+        filter_extensions=None,
+        overwrite_check=False,
+        control_model=None,
+        *args,
+        **kwargs
+    ):
         super(SaveBoxLayout, self).__init__(*args, **kwargs)
         self.saveButton = None
         self.saveAsButton = None
@@ -21,7 +30,6 @@ class SaveBoxLayout(QtWidgets.QVBoxLayout):
         self.controlModel = control_model
         self.feedback = feedback.Feedback()
 
-
         self.build()
 
     def build(self):
@@ -30,15 +38,27 @@ class SaveBoxLayout(QtWidgets.QVBoxLayout):
         elif self.alignment == "vertical":
             self.masterLayout = QtWidgets.QVBoxLayout()
         else:
-            raise Exception("alignment argument is not valid. Valid arguments are 'horizontal' and 'vertical'")
+            raise Exception(
+                "alignment argument is not valid. Valid arguments are 'horizontal' and 'vertical'"
+            )
 
         self.addLayout(self.masterLayout)
-        self.classic_mode_checkbox = QtWidgets.QCheckBox(text="Use classic save options")
+        self.classic_mode_checkbox = QtWidgets.QCheckBox(
+            text="Use classic save options"
+        )
         self.classic_mode_checkbox.setChecked(False)
         self.saveButton = QtWidgets.QPushButton(text="Save")
-        self.saveAsButton = BrowserButton(text="Save As", mode="saveFile", update_widget=self.updateWidget, filterExtensions=self.filterExtensions, overwrite_check=self.overwriteCheck)
+        self.saveAsButton = BrowserButton(
+            text="Save As",
+            mode="saveFile",
+            update_widget=self.updateWidget,
+            filterExtensions=self.filterExtensions,
+            overwrite_check=self.overwriteCheck,
+        )
         self.storeButton = QtWidgets.QPushButton(text="Store")
-        self.storeButton.setToolTip("Saves the file in the correct folder under the trigger file")
+        self.storeButton.setToolTip(
+            "Saves the file in the correct folder under the trigger file"
+        )
         self.incrementButton = QtWidgets.QPushButton(text="Increment")
         self.masterLayout.addWidget(self.saveButton)
         self.masterLayout.addWidget(self.storeButton)
@@ -76,13 +96,16 @@ class SaveBoxLayout(QtWidgets.QVBoxLayout):
         pass
 
     def increment(self):
-
         if self.controlModel:
             self.controlModel.update_model()
         if self.updateWidget:
             file_path = str(self.updateWidget.text())
             if not file_path:
-                self.feedback.pop_info(title="Cannot Proceed", text="No path defined to increment", critical=True)
+                self.feedback.pop_info(
+                    title="Cannot Proceed",
+                    text="No path defined to increment",
+                    critical=True,
+                )
                 return
             incremented_file_path = naming.increment(file_path)
             self.saveEvent(incremented_file_path)

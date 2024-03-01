@@ -4,24 +4,23 @@ from trigger.ui.Qt import QtWidgets
 
 log = filelog.Filelog(logname=__name__, filename="trigger_log")
 
-class Controller(object):
 
+class Controller(object):
     def __init__(self):
         super(Controller, self).__init__()
         self.model = None
         self.action_name = None
         self.connections = []
 
-
     def connect(self, widget, property, property_type):
         connection_item = {
             "action_name": self.action_name,
             "property": property,
             "widget": widget,
-            "type": property_type
+            "type": property_type,
         }
         self.connections.append(connection_item)
-        
+
     def _widget_val(self, widget, property_type, value=None, get=None, set=None):
         """Returns the required widget method if the widget is supported"""
         widget_class = widget.__class__.__name__
@@ -42,7 +41,11 @@ class Controller(object):
                     get_value = property_type(widget.text())
                 return get_value
             else:
-                set_value = self.list_to_text(value) if property_type == list else property_type(value)
+                set_value = (
+                    self.list_to_text(value)
+                    if property_type == list
+                    else property_type(value)
+                )
                 widget.setText(set_value)
         elif widget_class == "QCheckBox":
             if get:
@@ -83,7 +86,9 @@ class Controller(object):
                 for key, value_list in value.items():
                     topLevel = QtWidgets.QTreeWidgetItem([key])
                     widget.addTopLevelItem(topLevel)
-                    children = [QtWidgets.QTreeWidgetItem([value]) for value in value_list]
+                    children = [
+                        QtWidgets.QTreeWidgetItem([value]) for value in value_list
+                    ]
                     topLevel.addChildren(children)
         elif widget_class == "TableBoxLayout":
             if get:
@@ -101,16 +106,21 @@ class Controller(object):
             log.error("UNSUPPORTED WIDGET CLASS ==> %s" % widget_class)
             raise
 
-
     def update_model(self):
         for item in self.connections:
             ui_property_value = self._widget_val(item["widget"], item["type"], get=True)
-            self.model.edit_action(item["action_name"], item["property"], ui_property_value)
+            self.model.edit_action(
+                item["action_name"], item["property"], ui_property_value
+            )
 
     def update_ui(self):
         for item in self.connections:
-            model_property_value = self.model.query_action(self.action_name, item["property"])
-            self._widget_val(item["widget"], item["type"], model_property_value, set=True)
+            model_property_value = self.model.query_action(
+                self.action_name, item["property"]
+            )
+            self._widget_val(
+                item["widget"], item["type"], model_property_value, set=True
+            )
 
     @staticmethod
     def list_to_text(list_item):
@@ -122,6 +132,3 @@ class Controller(object):
             return str(text_item).split("; ")
         else:
             return []
-
-
-

@@ -4,6 +4,8 @@ from maya import cmds
 
 from trigger.core import io
 from trigger.core import filelog
+from trigger.core.action import ActionCore
+
 from trigger.core.decorators import keepselection
 from trigger.library import functions
 from trigger.library import naming
@@ -43,11 +45,12 @@ def subtract_list(list_of_values):
     return result
 
 
-class Weights(dict):
+class Weights(ActionCore, dict):
+    action_data = ACTION_DATA
     _api_version = cmds.about(apiVersion=True)
 
-    def __init__(self):
-        super(Weights, self).__init__()
+    def __init__(self, *args, **kwargs):
+        super(Weights, self).__init__(kwargs)
         self.io = io.IO(file_name="tmp_weights.trw")
         self["deformer"] = None
         self.isCreateDeformers = True
@@ -151,6 +154,15 @@ Then you can save and increment versions for all of them at once.
                     destination=True,
                 )
             elif deformer_type == "deltaMush":
+                data["influencers"] = 0  # not needed
+                data["affected"] = cmds.listConnections(
+                    "%s.outputGeometry" % deformer,
+                    shapes=True,
+                    skipConversionNodes=True,
+                    source=False,
+                    destination=True,
+                )
+            elif deformer_type == "tension":
                 data["influencers"] = 0  # not needed
                 data["affected"] = cmds.listConnections(
                     "%s.outputGeometry" % deformer,
@@ -326,7 +338,6 @@ Then you can save and increment versions for all of them at once.
                 "shapePreservationReprojection",
             ]
         elif deformer_type == "deltaMush":
-            # attributes = []
             attributes = [
                 "smoothingIterations",
                 "smoothingStep",
@@ -334,6 +345,19 @@ Then you can save and increment versions for all of them at once.
                 "outwardConstraint",
                 "distanceWeight",
                 "displacement",
+            ]
+        elif deformer_type == "tension":
+            attributes = [
+                "smoothingIterations",
+                "smoothingStep",
+                "inwardConstraint",
+                "outwardConstraint",
+                "squashConstraint",
+                "stretchConstraint",
+                "relative",
+                "shearStrength",
+                "bendStrength",
+                "pinBorderVertices",
             ]
         else:
             attributes = []
@@ -543,10 +567,13 @@ Then you can save and increment versions for all of them at once.
                 if 20209999 < self._api_version < 20220300:
                     deferred_loading = True
 
+            elif deformer_type == "tension":
+                cmds.tension(affected[0], name=deformer_name)
+
             else:
                 # TODO : SUPPORT FOR ALL DEFORMERS
                 log.error(
-                    "deformers OTHER than skinCluster, shrinkWrap and deltaMush are not YET supported"
+                    "deformers OTHER than skinCluster, shrinkWrap tension and deltaMush are not YET supported"
                 )
                 return
             for attr_dict in deformer_attrs:

@@ -1,3 +1,5 @@
+"""Attribute related library functions."""
+
 import re
 from maya import cmds
 from maya import mel
@@ -42,7 +44,9 @@ def create_attribute(node, property_dict=None, keyable=True, display=True, **kwa
 
     if not attr_name:
         LOG.error("The attribute dictionary does not have 'attr_name' value")
-    nice_name = property_dict.get("nice_name") if property_dict.get("nice_name") else attr_name
+    nice_name = (
+        property_dict.get("nice_name") if property_dict.get("nice_name") else attr_name
+    )
     attr_type = property_dict.get("attr_type")
     if not attr_type:
         LOG.error("The attribute dictionary does not have 'attr_type' value")
@@ -62,37 +66,62 @@ def create_attribute(node, property_dict=None, keyable=True, display=True, **kwa
         return attr_plug
     if attr_type == "bool":
         default_value = default_value if default_value != "DOESNTEXIST" else False
-        cmds.addAttr(node, longName=attr_name, niceName=nice_name, at=attr_type, k=keyable, defaultValue=default_value)
+        cmds.addAttr(
+            node,
+            longName=attr_name,
+            niceName=nice_name,
+            at=attr_type,
+            k=keyable,
+            defaultValue=default_value,
+        )
         cmds.setAttr("%s.%s" % (node, attr_name), e=True, cb=display)
     elif attr_type == "enum":
         default_value = default_value if default_value != "DOESNTEXIST" else 0
         enum_list = property_dict.get("enum_list")
         if enum_list is None:
             LOG.error("Missing 'enum_list'")
-        cmds.addAttr(node, longName=attr_name, niceName=nice_name, at=attr_type, en=enum_list, k=keyable,
-                     defaultValue=default_value)
+        cmds.addAttr(
+            node,
+            longName=attr_name,
+            niceName=nice_name,
+            at=attr_type,
+            en=enum_list,
+            k=keyable,
+            defaultValue=default_value,
+        )
         cmds.setAttr("%s.%s" % (node, attr_name), e=True, cb=display)
     elif attr_type == "string":
         default_value = default_value if default_value != "DOESNTEXIST" else ""
-        cmds.addAttr(node, longName=attr_name, niceName=nice_name, k=keyable, dataType="string")
+        cmds.addAttr(
+            node, longName=attr_name, niceName=nice_name, k=keyable, dataType="string"
+        )
         cmds.setAttr("%s.%s" % (node, attr_name), default_value, type="string")
         cmds.setAttr("%s.%s" % (node, attr_name), e=True, cb=display)
     else:
-        min_val = property_dict.get("min_value") if property_dict.get("min_value") is not None else -99999
-        max_val = property_dict.get("max_value") if property_dict.get("max_value") is not None else 99999
+        min_val = (
+            property_dict.get("min_value")
+            if property_dict.get("min_value") is not None
+            else -99999
+        )
+        max_val = (
+            property_dict.get("max_value")
+            if property_dict.get("max_value") is not None
+            else 99999
+        )
 
         if not default_value or default_value == "DOESNTEXIST":
             default_value = 0
 
-        cmds.addAttr(node,
-                     longName=attr_name,
-                     niceName=nice_name,
-                     at=attr_type,
-                     minValue=min_val,
-                     maxValue=max_val,
-                     defaultValue=default_value,
-                     k=keyable,
-                     )
+        cmds.addAttr(
+            node,
+            longName=attr_name,
+            niceName=nice_name,
+            at=attr_type,
+            minValue=min_val,
+            maxValue=max_val,
+            defaultValue=default_value,
+            k=keyable,
+        )
 
     if display and not keyable:
         cmds.setAttr(attr_plug, e=True, channelBox=True)
@@ -100,8 +129,15 @@ def create_attribute(node, property_dict=None, keyable=True, display=True, **kwa
     return attr_plug
 
 
-def validate_attr(attr, attr_range=None, nice_name=None, attr_type="float", default_value=None, keyable=True,
-                  display=True, ):
+def validate_attr(
+    attr,
+    attr_range=None,
+    nice_name=None,
+    attr_type="float",
+    default_value=None,
+    keyable=True,
+    display=True,
+):
     """Validate attribute.
 
     Check if attr exists, and create if it doesn't
@@ -119,14 +155,10 @@ def validate_attr(attr, attr_range=None, nice_name=None, attr_type="float", defa
             min_value = cmds.addAttr(attr, query=True, min=True)
             max_value = cmds.addAttr(attr, query=True, max=True)
             if min_value is None or attr_range[0] < min_value:
-                cmds.addAttr(
-                    attr, edit=True, hasMinValue=True, min=attr_range[0]
-                )
+                cmds.addAttr(attr, edit=True, hasMinValue=True, min=attr_range[0])
 
             if max_value is None or attr_range[1] > max_value:
-                cmds.addAttr(
-                    attr, edit=True, hasMaxValue=True, max=attr_range[1]
-                )
+                cmds.addAttr(attr, edit=True, hasMaxValue=True, max=attr_range[1])
     else:
         # create the creation dict
         min_value = None if not attr_range else attr_range[0]
@@ -137,14 +169,23 @@ def validate_attr(attr, attr_range=None, nice_name=None, attr_type="float", defa
             "attr_type": attr_type,
             "default_value": default_value,
             "min_value": min_value,
-            "max_value": max_value
+            "max_value": max_value,
         }
-        create_attribute(node_name, property_dict=property_dict, keyable=keyable, display=display)
+        create_attribute(
+            node_name, property_dict=property_dict, keyable=keyable, display=display
+        )
 
     return attr
 
 
-def drive_attrs(driver_attr, driven_attrs, driver_range=None, driven_range=None, force=True, optimize=True):
+def drive_attrs(
+    driver_attr,
+    driven_attrs,
+    driver_range=None,
+    driven_range=None,
+    force=True,
+    optimize=True,
+):
     """
     Creates a ranged connection between driver and driven attr(s)
     Args:
@@ -191,16 +232,21 @@ def drive_attrs(driver_attr, driven_attrs, driver_range=None, driven_range=None,
     if len(splits) > 2:
         driver_attr_children = []
     else:
-        driver_attr_children = cmds.attributeQuery(attr_name, n=driver_node, listChildren=True)
+        driver_attr_children = cmds.attributeQuery(
+            attr_name, n=driver_node, listChildren=True
+        )
     is_driver_compound = True if driver_attr_children else False
     # if it is eligible use a single set range node
     if is_driver_compound:
         if len(driver_attr_children) > 3:
             cmds.error(
                 "drive_attrs does not support more than 3 channel compounds. Connect channels separately ==> %s"
-                % driver_attr)
+                % driver_attr
+            )
             return
-        range_node = cmds.createNode("setRange", name="%s_%s_setRange" % (driver_name, attr_name))
+        range_node = cmds.createNode(
+            "setRange", name="%s_%s_setRange" % (driver_name, attr_name)
+        )
         for ch in "XYZ":
             cmds.setAttr("%s.oldMin%s" % (range_node, ch), driver_range[0])
             cmds.setAttr("%s.oldMax%s" % (range_node, ch), driver_range[1])
@@ -210,13 +256,20 @@ def drive_attrs(driver_attr, driven_attrs, driver_range=None, driven_range=None,
         if len(driver_attr_children) == 3:
             cmds.connectAttr(driver_attr, "%s.value" % range_node, force=force)
         else:
-            range_node_input_children = cmds.attributeQuery("value", n=range_node, listChildren=True)
+            range_node_input_children = cmds.attributeQuery(
+                "value", n=range_node, listChildren=True
+            )
             for nmb, attr in enumerate(driver_attr_children):
-                cmds.connectAttr("%s.%s" % (driver_node, attr), "%s.%s" % (range_node, range_node_input_children[nmb]),
-                                 force=force)
+                cmds.connectAttr(
+                    "%s.%s" % (driver_node, attr),
+                    "%s.%s" % (range_node, range_node_input_children[nmb]),
+                    force=force,
+                )
     # if single channel
     else:
-        range_node = cmds.createNode("remapValue", name="%s_%s_setRange" % (driver_name, attr_name))
+        range_node = cmds.createNode(
+            "remapValue", name="%s_%s_setRange" % (driver_name, attr_name)
+        )
         cmds.setAttr("%s.inputMin" % range_node, driver_range[0])
         cmds.setAttr("%s.inputMax" % range_node, driver_range[1])
         cmds.setAttr("%s.outputMin" % range_node, driven_range[0])
@@ -232,22 +285,30 @@ def drive_attrs(driver_attr, driven_attrs, driver_range=None, driven_range=None,
         if len(splits) > 2:
             driven_attr_children = []
         else:
-            driven_attr_children = cmds.attributeQuery(driven_attr_name, n=driven_node, listChildren=True)
+            driven_attr_children = cmds.attributeQuery(
+                driven_attr_name, n=driven_node, listChildren=True
+            )
         is_driven_compound = True if driven_attr_children else False
         if is_driven_compound:
             if len(driven_attr_children) > 3:
                 cmds.error(
                     "drive_attrs does not support more than 3 channel compounds. Connect channels separately ==> %s"
-                    % driven)
+                    % driven
+                )
                 return
             if is_driver_compound:
                 if len(driven_attr_children) == 3:
                     cmds.connectAttr("%s.outValue" % range_node, driven, force=force)
                 else:
-                    range_node_output_children = cmds.attributeQuery("outValue", n=range_node, listChildren=True)
+                    range_node_output_children = cmds.attributeQuery(
+                        "outValue", n=range_node, listChildren=True
+                    )
                     for nmb in range(len(driven_attr_children)):
-                        cmds.connectAttr("%s.%s" % (range_node, range_node_output_children[nmb]),
-                                         "%s.%s" % (driven_node, driven_attr_children[nmb]), force=force)
+                        cmds.connectAttr(
+                            "%s.%s" % (range_node, range_node_output_children[nmb]),
+                            "%s.%s" % (driven_node, driven_attr_children[nmb]),
+                            force=force,
+                        )
             else:
                 # if the driver is compound but the driven isnt, just connect the first one
                 cmds.connectAttr("%s.outputValueX" % range_node, driven, force=force)
@@ -255,7 +316,11 @@ def drive_attrs(driver_attr, driven_attrs, driver_range=None, driven_range=None,
             # driver is not compound but driven is
             if is_driven_compound:
                 for attr_name in driven_attr_children:
-                    cmds.connectAttr("%s.outValue" % range_node, "%s.%s" % (driven_node, attr_name), force=force)
+                    cmds.connectAttr(
+                        "%s.outValue" % range_node,
+                        "%s.%s" % (driven_node, attr_name),
+                        force=force,
+                    )
             # nothing is compound
             else:
                 cmds.connectAttr("%s.outValue" % range_node, driven, force=force)
@@ -271,37 +336,51 @@ def lock_and_hide(node, channelArray=None, hide=True):
     Returns: None
 
     """
-    channelArray = ["tx", "ty", "tz", "rx", "ry", "rz", "sx", "sy", "sz", "v"] if not channelArray else channelArray
+    channelArray = (
+        ["tx", "ty", "tz", "rx", "ry", "rz", "sx", "sy", "sz", "v"]
+        if not channelArray
+        else channelArray
+    )
     for i in channelArray:
-        attribute = ("%s.%s" % (node, i))
+        attribute = "{0}.{1}".format(node, i)
         cmds.setAttr(attribute, lock=True, keyable=not hide, channelBox=not hide)
 
 
 def unlock(node, attr_list=None):
     """Unlocks the list of provided attributes on defined node"""
 
-    attr_list = ["tx", "ty", "tz", "rx", "ry", "rz", "sx", "sy", "sz", "v"] if not attr_list else attr_list
-    if type(attr_list) != list:
+    attr_list = (
+        ["tx", "ty", "tz", "rx", "ry", "rz", "sx", "sy", "sz", "v"]
+        if not attr_list
+        else attr_list
+    )
+    if not isinstance(attr_list, list):
         attr_list = [attr_list]
     for attr in attr_list:
         cmds.setAttr("{0}.{1}".format(node, attr), e=True, k=True, l=False)
 
 
 def is_locked(node, attr):
-    """Returns the locked state of the given attribute on defined node
-    """
-    return cmds.getAttr("%s.%s" % (node, attr), lock=True)
+    """Returns the locked state of the given attribute on defined node"""
+    return cmds.getAttr("{0}.{1}".format(node, attr), lock=True)
 
 
 def is_visible(node, attr):
-    """Returns the channelbox state of the given attribute on defined node
-    """
-    return cmds.getAttr("%s.%s" % (node, attr), k=True)
+    """Returns the channelbox state of the given attribute on defined node"""
+    return cmds.getAttr("{0}.{1}".format(node, attr), k=True)
 
 
-def attribute_pass(sourceNode, targetNode, attributes=[], inConnections=True, outConnections=True,
-                   keepSourceAttributes=False,
-                   values=True, daisyChain=False, overrideEx=False):
+def attribute_pass(
+    sourceNode,
+    targetNode,
+    attributes=[],
+    inConnections=True,
+    outConnections=True,
+    keepSourceAttributes=False,
+    values=True,
+    daisyChain=False,
+    overrideEx=False,
+):
     """
     Copies the attributes from source node to the target node.
     Args:
@@ -393,7 +472,6 @@ def attribute_pass(sourceNode, targetNode, attributes=[], inConnections=True, ou
         # parse the flagBuildList into single string
         addAttribute = "cmds.addAttr('%s', " % (targetNode)
         for i in range(0, len(flagBuildList)):
-
             # addAttribute+=flagBuildList[i]
             addAttribute = "%s%s" % (addAttribute, flagBuildList[i])
             if i < len(flagBuildList) - 1:
@@ -419,16 +497,31 @@ def attribute_pass(sourceNode, targetNode, attributes=[], inConnections=True, ou
                 value = cmds.getAttr("%s.%s" % (sourceNode, user_attr[i]))
                 # set Value
                 cmds.setAttr("%s.%s" % (targetNode, user_attr[i]), value)
-            cmds.connectAttr("{0}.{1}".format(targetNode, user_attr[i]), "{0}.{1}".format(sourceNode, user_attr[i]))
+            cmds.connectAttr(
+                "{0}.{1}".format(targetNode, user_attr[i]),
+                "{0}.{1}".format(sourceNode, user_attr[i]),
+            )
     else:
-        cmds.copyAttr(sourceNode, targetNode, inConnections=inConnections, outConnections=outConnections, values=values,
-                      attribute=user_attr)
+        cmds.copyAttr(
+            sourceNode,
+            targetNode,
+            inConnections=inConnections,
+            outConnections=outConnections,
+            values=values,
+            attribute=user_attr,
+        )
         if keepSourceAttributes == False:
             for i in user_attr:
                 cmds.deleteAttr("%s.%s" % (sourceNode, i))
 
 
-def create_global_joint_attrs(joint, moduleName=None, upAxis=None, mirrorAxis=None, lookAxis=None, ):
+def create_global_joint_attrs(
+    joint,
+    moduleName=None,
+    upAxis=None,
+    mirrorAxis=None,
+    lookAxis=None,
+):
     """
     Creates Trigger specific global attrubutes.
 
@@ -455,14 +548,29 @@ def create_global_joint_attrs(joint, moduleName=None, upAxis=None, mirrorAxis=No
             cmds.addAttr(joint, ln="%sY" % attr, at="float", parent=attr)
             cmds.addAttr(joint, ln="%sZ" % attr, at="float", parent=attr)
     if upAxis:
-        _ = [cmds.setAttr("%s.upAxis%s" % (joint, axis), upAxis[nmb]) for nmb, axis in enumerate("XYZ")]
+        _ = [
+            cmds.setAttr("%s.upAxis%s" % (joint, axis), upAxis[nmb])
+            for nmb, axis in enumerate("XYZ")
+        ]
     if mirrorAxis:
-        _ = [cmds.setAttr("%s.mirrorAxis%s" % (joint, axis), mirrorAxis[nmb]) for nmb, axis in enumerate("XYZ")]
+        _ = [
+            cmds.setAttr("%s.mirrorAxis%s" % (joint, axis), mirrorAxis[nmb])
+            for nmb, axis in enumerate("XYZ")
+        ]
     if lookAxis:
-        _ = [cmds.setAttr("%s.lookAxis%s" % (joint, axis), lookAxis[nmb]) for nmb, axis in enumerate("XYZ")]
+        _ = [
+            cmds.setAttr("%s.lookAxis%s" % (joint, axis), lookAxis[nmb])
+            for nmb, axis in enumerate("XYZ")
+        ]
 
     if not cmds.attributeQuery("useRefOri", node=joint, exists=True):
-        cmds.addAttr(joint, longName="useRefOri", niceName="Inherit_Orientation", at="bool", keyable=True)
+        cmds.addAttr(
+            joint,
+            longName="useRefOri",
+            niceName="Inherit_Orientation",
+            at="bool",
+            keyable=True,
+        )
     cmds.setAttr("{0}.useRefOri".format(joint), True)  ###
 
 
@@ -475,7 +583,9 @@ def disconnect_attr(node=None, attr=None, suppress_warnings=False):
     """Disconnects all INCOMING connections to the attribute"""
     if len(node.split(".")) < 2:
         if not attr:
-            cmds.error("You need to provide node=<node> and attr=<attr> or node=<node>.<attr>")
+            cmds.error(
+                "You need to provide node=<node> and attr=<attr> or node=<node>.<attr>"
+            )
             return
         attr_path = "%s.%s" % (node, attr)
     else:
@@ -536,8 +646,10 @@ def query_limits(node, attribute, only_hard_limits=True):
     attr_path = "{0}.{1}".format(node, attribute)
     # if this is not a scalar attribute, throw error
     if not cmds.listAttr(attr_path, scalar=True):
-        msg = "{0}.{1} is not a scalar attribute. " \
-              "Only scalar attribute limits can be queried".format(node, attribute)
+        msg = (
+            "{0}.{1} is not a scalar attribute. "
+            "Only scalar attribute limits can be queried".format(node, attribute)
+        )
         LOG.error(msg)
         raise Exception(msg)
 
@@ -586,24 +698,26 @@ def query_limits(node, attribute, only_hard_limits=True):
         state = cmds.transformLimits(node, query=True, **enabled_flag_dict[attribute])
         limits = cmds.transformLimits(node, query=True, **limits_flag_dict[attribute])
     else:
-        state = [cmds.addAttr(attr_path, query=True, hasMinValue=True),
-        cmds.addAttr(attr_path, query=True, hasMaxValue=True)]
-        limits = [cmds.addAttr(attr_path, query=True, minValue=True),
-        cmds.addAttr(attr_path, query=True, maxValue=True)]
+        state = [
+            cmds.addAttr(attr_path, query=True, hasMinValue=True),
+            cmds.addAttr(attr_path, query=True, hasMaxValue=True),
+        ]
+        limits = [
+            cmds.addAttr(attr_path, query=True, minValue=True),
+            cmds.addAttr(attr_path, query=True, maxValue=True),
+        ]
         if not only_hard_limits and not all(state):
             # try to query the soft limits for the ones there are no hard limits
-            soft_state = [cmds.addAttr(attr_path, query=True, hasSoftMinValue=True),
-            cmds.addAttr(attr_path, query=True, hasSoftMaxValue=True)]
-            soft_limits = [cmds.addAttr(attr_path, query=True, softMinValue=True),
-            cmds.addAttr(attr_path, query=True, softMaxValue=True)]
+            soft_state = [
+                cmds.addAttr(attr_path, query=True, hasSoftMinValue=True),
+                cmds.addAttr(attr_path, query=True, hasSoftMaxValue=True),
+            ]
+            soft_limits = [
+                cmds.addAttr(attr_path, query=True, softMinValue=True),
+                cmds.addAttr(attr_path, query=True, softMaxValue=True),
+            ]
 
-            state = [
-                state[0] or soft_state[0],
-                state[1] or soft_state[1]
-            ]
-            limits = [
-                limits[0] or soft_limits[0],
-                limits[1] or soft_limits[1]
-            ]
+            state = [state[0] or soft_state[0], state[1] or soft_state[1]]
+            limits = [limits[0] or soft_limits[0], limits[1] or soft_limits[1]]
 
     return state, limits

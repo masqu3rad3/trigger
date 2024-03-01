@@ -9,43 +9,44 @@ from trigger.library import connection
 from trigger.library import api
 from trigger.objects.controller import Controller
 from trigger.utils import parentToSurface
-from trigger.modules import _module
+from trigger.core.module import ModuleCore, GuidesCore
 
 from trigger.core import filelog
 
-log = filelog.Filelog(logname=__name__, filename="trigger_log")
+LOG = filelog.Filelog(logname=__name__, filename="trigger_log")
 
-LIMB_DATA = {"members": ["SingletonRoot", "Singleton"],
-             "properties": [
-                 {
-                     "attr_name": "localJoints",
-                     "nice_name": "Local_Joints",
-                     "attr_type": "bool",
-                     "default_value": False,
-                 },
-                 {
-                     "attr_name": "surface",
-                     "nice_name": "Surface",
-                     "attr_type": "string",
-                     "default_value": "",
-                 },
-                 {
-                     "attr_name": "directConnect",
-                     "nice_name": "Direct_Connect",
-                     "attr_type": "bool",
-                     "default_value": False,
-                     "tooltip": "If checked, controllers will drive joints with a direct connection. This can be"
-                                "useful to prevent cycles"
-                 },
+LIMB_DATA = {
+    "members": ["SingletonRoot", "Singleton"],
+    "properties": [
+        {
+            "attr_name": "localJoints",
+            "nice_name": "Local_Joints",
+            "attr_type": "bool",
+            "default_value": False,
+        },
+        {
+            "attr_name": "surface",
+            "nice_name": "Surface",
+            "attr_type": "string",
+            "default_value": "",
+        },
+        {
+            "attr_name": "directConnect",
+            "nice_name": "Direct_Connect",
+            "attr_type": "bool",
+            "default_value": False,
+            "tooltip": "If checked, controllers will drive joints with a direct connection. This can be"
+            "useful to prevent cycles",
+        },
+    ],
+    "multi_guide": "Singleton",
+    "sided": True,
+}
 
-             ],
-             "multi_guide": "Singleton",
-             "sided": True, }
 
-
-class Singleton(_module.ModuleCore):
+class Singleton(ModuleCore):
     """Creates one or multiple loose controllers. They can be bound to a surface and can be local"""
-
+    name = "Singleton"
     def __init__(self, build_data=None, inits=None):
         super(Singleton, self).__init__()
         # fool proofing
@@ -58,7 +59,7 @@ class Singleton(_module.ModuleCore):
         elif inits:
             self.inits = inits
         else:
-            log.error("Class needs either build_data or inits to be constructed")
+            LOG.error("Class needs either build_data or inits to be constructed")
 
         # get the properties from the root
         self.useRefOrientation = cmds.getAttr("%s.useRefOri" % self.inits[0])
@@ -72,22 +73,31 @@ class Singleton(_module.ModuleCore):
             self.isDirect = False
 
         # initialize coordinates
-        self.up_axis, self.mirror_axis, self.look_axis = joint.get_rig_axes(self.inits[0])
+        self.up_axis, self.mirror_axis, self.look_axis = joint.get_rig_axes(
+            self.inits[0]
+        )
 
         # initialize suffix
-        self.module_name = (naming.unique_name(cmds.getAttr("%s.moduleName" % self.inits[0])))
+        self.module_name = naming.unique_name(
+            cmds.getAttr("%s.moduleName" % self.inits[0])
+        )
         self.follicle_grp = None
 
     def additional_groups(self):
         """Create additional follicle group."""
-        self.follicle_grp = cmds.group(name=naming.parse([self.module_name, "follicle"], suffix="grp"), empty=True)
+        self.follicle_grp = cmds.group(
+            name=naming.parse([self.module_name, "follicle"], suffix="grp"), empty=True
+        )
         cmds.parent(self.follicle_grp, self.limbGrp)
 
     def _build_module(self):
         # draw Joints
         cmds.select(deselect=True)
-        self.limbPlug = cmds.joint(name=naming.parse([self.module_name, "plug"], suffix="j"),
-                                   position=api.get_world_translation(self.inits[0]), radius=3)
+        self.limbPlug = cmds.joint(
+            name=naming.parse([self.module_name, "plug"], suffix="j"),
+            position=api.get_world_translation(self.inits[0]),
+            radius=3,
+        )
         cmds.connectAttr("%s.s" % self.scaleGrp, "%s.s" % self.limbPlug)
         cmds.parent(self.limbPlug, self.limbGrp)
 
@@ -107,7 +117,10 @@ class Singleton(_module.ModuleCore):
 
             # connect the scale downstream
 
-            cont = Controller(name=naming.parse([self.module_name, (nmb + 1)], suffix="cont"), shape="Circle")
+            cont = Controller(
+                name=naming.parse([self.module_name, (nmb + 1)], suffix="cont"),
+                shape="Circle",
+            )
             cont.drive_visibility("%s.contVis" % self.scaleGrp, lock_and_hide=True)
             cont.set_side(side=self.side)
             cont_bind = cont.add_offset("bind")
@@ -117,7 +130,9 @@ class Singleton(_module.ModuleCore):
             _cutoff = self.localOffGrp
             if self.surface:
                 # if there is a surface constraint, matrix constraint it to the surface and ignore limbPlug
-                fol = parentToSurface.parentToSurface([cont_bind], self.surface, mode="matrixConstraint")
+                fol = parentToSurface.parentToSurface(
+                    [cont_bind], self.surface, mode="matrixConstraint"
+                )
                 cmds.parent(fol, self.follicle_grp)
                 _cutoff = cont_bind if self.isLocal else self.localOffGrp
 
@@ -128,7 +143,12 @@ class Singleton(_module.ModuleCore):
                 # Since the connection happening in local transform space, we need to move the joint to its position
                 functions.align_to(j_def_off, j, position=True, rotation=True)
             else:
-                connection.matrixConstraint(cont.name, j_def_bind, maintainOffset=False, source_parent_cutoff=_cutoff)
+                connection.matrixConstraint(
+                    cont.name,
+                    j_def_bind,
+                    maintainOffset=False,
+                    source_parent_cutoff=_cutoff,
+                )
 
             cmds.parent(cont_bind, self.controllerGrp)
             cmds.parent(j_def_off, self.defJointsGrp)
@@ -136,7 +156,9 @@ class Singleton(_module.ModuleCore):
             self.sockets.append(j_def)
             self.deformerJoints.append(j_def)
 
-        attribute.drive_attrs("%s.jointVis" % self.scaleGrp, ["%s.v" % x for x in self.deformerJoints])
+        attribute.drive_attrs(
+            "%s.jointVis" % self.scaleGrp, ["%s.v" % x for x in self.deformerJoints]
+        )
         cmds.connectAttr("%s.jointVis" % self.scaleGrp, "%s.v" % self.limbPlug)
 
     def round_up(self):
@@ -151,7 +173,8 @@ class Singleton(_module.ModuleCore):
         self.round_up()
 
 
-class Guides(_module.GuidesCore):
+class Guides(GuidesCore):
+    name = "Singleton"
     limb_data = LIMB_DATA
 
     def draw_joints(self):
@@ -159,7 +182,9 @@ class Guides(_module.GuidesCore):
         r_point_j = om.MVector(0, 0, 0) * self.tMatrix
         if not self.segments:
             self.offsetVector = om.MVector(0, 1, 0)
-            singleton_root_jnt = cmds.joint(name=naming.parse([self.name, "root"], side=self.side, suffix="jInit"))
+            singleton_root_jnt = cmds.joint(
+                name=naming.parse([self.name, "root"], side=self.side, suffix="jInit")
+            )
             self.guideJoints.append(singleton_root_jnt)
             return
 
@@ -177,16 +202,23 @@ class Guides(_module.GuidesCore):
 
         # Draw the joints
         for seg in range(self.segments + 1):
-            singleton_jnt = cmds.joint(position=(r_point_j + (add_val * seg)),
-                                       name=naming.parse([self.name, seg], side=self.side, suffix="jInit"))
+            singleton_jnt = cmds.joint(
+                position=(r_point_j + (add_val * seg)),
+                name=naming.parse([self.name, seg], side=self.side, suffix="jInit"),
+            )
             # Update the guideJoints list
             self.guideJoints.append(singleton_jnt)
 
         # Update the guideJoints list
 
         # set orientation of joints
-        joint.orient_joints(self.guideJoints, world_up_axis=self.upVector, up_axis=(0, 1, 0),
-                            reverse_aim=self.sideMultiplier, reverse_up=self.sideMultiplier)
+        joint.orient_joints(
+            self.guideJoints,
+            world_up_axis=self.upVector,
+            up_axis=(0, 1, 0),
+            reverse_aim=self.sideMultiplier,
+            reverse_up=self.sideMultiplier,
+        )
 
     def define_guides(self):
         """Define the guides for the limb."""

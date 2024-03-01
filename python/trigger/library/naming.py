@@ -1,6 +1,7 @@
 import os
 import re
 import glob
+import itertools
 from bisect import bisect_left
 from maya import cmds
 import uuid
@@ -37,6 +38,7 @@ def unique_name(name, return_counter=False, suffix=None):
             result_name = name
         return result_name
 
+
 def unique_scene():
     """Make sure that everything is named uniquely.
     Returns list of renamed nodes and list of new names"""
@@ -61,7 +63,7 @@ def resolve_version(file_path):
     """Resolves the version of the given file"""
     no_ext = os.path.splitext(file_path)[0]
     # is_digits = re.search('.*?([0-9]+)$', no_ext.split(".")[0])
-    is_digits = re.search('.*?([0-9]+)$', no_ext)
+    is_digits = re.search(".*?([0-9]+)$", no_ext)
     if not is_digits:
         return 0
     return int(is_digits.groups()[0])
@@ -73,14 +75,24 @@ def resolve_file_path(file_path, new_version, force=True):
     file_dir, file_name_with_ext = os.path.split(file_path)
     file_name, file_ext = os.path.splitext(file_name_with_ext)
     version = resolve_version(file_path)
-    stripped_name = file_name if not version else re.search("(.*)(%s)$" % str(version).zfill(3), file_name).groups()[0]
+    stripped_name = (
+        file_name
+        if not version
+        else re.search("(.*)(%s)$" % str(version).zfill(3), file_name).groups()[0]
+    )
     if not stripped_name.endswith("_v"):
         if force:
-            return os.path.join(file_dir, "{0}_v{1}{2}".format(file_name, str(new_version).zfill(3), file_ext))
+            return os.path.join(
+                file_dir,
+                "{0}_v{1}{2}".format(file_name, str(new_version).zfill(3), file_ext),
+            )
         else:
             return None
     else:
-        return os.path.join(file_dir, "{0}{1}{2}".format(stripped_name, str(new_version).zfill(3), file_ext))
+        return os.path.join(
+            file_dir,
+            "{0}{1}{2}".format(stripped_name, str(new_version).zfill(3), file_ext),
+        )
 
 
 def increment(file_path, force_version=True):
@@ -101,7 +113,11 @@ def increment(file_path, force_version=True):
             return os.path.join(file_dir, "{0}_v001{1}".format(file_name, file_ext))
         else:
             return None
-    stripped_name = file_name if not version else file_name.replace("_v%s" % (str(version).zfill(3)), "_v{0}")
+    stripped_name = (
+        file_name
+        if not version
+        else file_name.replace("_v%s" % (str(version).zfill(3)), "_v{0}")
+    )
     # check if this has a proper version naming convention
     if "_v{0}" not in stripped_name:
         if force_version:
@@ -110,13 +126,18 @@ def increment(file_path, force_version=True):
             forced_filename = ".".join(parts)
             return os.path.join(file_dir, "{0}{1}".format(forced_filename, file_ext))
 
-    files_on_server = glob.glob(os.path.join(file_dir, "{0}{1}".format(stripped_name.format("*"), file_ext)))
+    files_on_server = glob.glob(
+        os.path.join(file_dir, "{0}{1}".format(stripped_name.format("*"), file_ext))
+    )
     if not files_on_server:
         return file_path
 
     last_saved_version = resolve_version(max(files_on_server, key=resolve_version))
     next_version = max(version + 1, last_saved_version + 1)
-    return os.path.join(file_dir, "{0}{1}".format(stripped_name.format(str(next_version).zfill(3)), file_ext))
+    return os.path.join(
+        file_dir,
+        "{0}{1}".format(stripped_name.format(str(next_version).zfill(3)), file_ext),
+    )
 
 
 def get_all_versions(file_path):
@@ -129,8 +150,14 @@ def get_all_versions(file_path):
     if not version:
         return None
 
-    stripped_name = file_name if not version else file_name.replace("_v%s" % (str(version).zfill(3)), "_v{0}")
-    files_on_server = glob.glob(os.path.join(file_dir, "{0}{1}".format(stripped_name.format("*"), file_ext)))
+    stripped_name = (
+        file_name
+        if not version
+        else file_name.replace("_v%s" % (str(version).zfill(3)), "_v{0}")
+    )
+    files_on_server = glob.glob(
+        os.path.join(file_dir, "{0}{1}".format(stripped_name.format("*"), file_ext))
+    )
     if not files_on_server:
         return None
 
@@ -147,14 +174,14 @@ def get_next_version(file_path):
     # if the given file path version does exist:
     if current_version in all_versions:
         uid = all_versions.index(current_version)
-        if uid != len(all_versions)-1:
-            next_version = all_versions[uid+1]
+        if uid != len(all_versions) - 1:
+            next_version = all_versions[uid + 1]
         else:
             return file_path
     # if the given file path version is not in the disk
     else:
         uid = bisect_left(all_versions, current_version)
-        if uid != len(all_versions)-1:
+        if uid != len(all_versions) - 1:
             next_version = all_versions[uid]
         else:
             return file_path
@@ -172,14 +199,14 @@ def get_previous_version(file_path):
     if current_version in all_versions:
         uid = all_versions.index(current_version)
         if uid != 0:
-            prev_version = all_versions[uid-1]
+            prev_version = all_versions[uid - 1]
         else:
             return file_path
     # if the given file path version is not in the disk
     else:
         uid = bisect_left(all_versions, current_version)
         if uid != 0:
-            prev_version = all_versions[uid-1]
+            prev_version = all_versions[uid - 1]
         else:
             return file_path
     return resolve_file_path(file_path=file_path, new_version=prev_version)
@@ -194,7 +221,7 @@ def is_latest_version(file_path):
     if current_version not in all_versions:
         return False
     uid = all_versions.index(current_version)
-    if uid == len(all_versions)-1:
+    if uid == len(all_versions) - 1:
         return True
     else:
         return False
@@ -239,9 +266,12 @@ def rename_skinclusters():
     all_skins = cmds.ls(type="skinCluster")
 
     for skin in all_skins:
-        mesh_name = cmds.listConnections("%s.outputGeometry" % skin, shapes=False, source=False, destination=True)[0]
+        mesh_name = cmds.listConnections(
+            "%s.outputGeometry" % skin, shapes=False, source=False, destination=True
+        )[0]
         sc_name = "%s_%s" % (mesh_name.split("|")[-1], "skinCluster")
         cmds.rename(skin, sc_name)
+
 
 def parse(labels, prefix="", suffix="", side=""):
     """Parse object name with given parameters"""
@@ -251,3 +281,33 @@ def parse(labels, prefix="", suffix="", side=""):
     # filter the elements to remove empty strings
     elements = [str(e) for e in elements if e != ""]
     return "_".join(elements)
+
+def convert_to_ranged_format(ids, prefix="vtx"):
+    """Convert the given vertex ids to ranged format.
+
+    Examples:
+        [1, 2, 3, 4, 5, 6, 7, 8, 9] -> ['vtx[1:9]']
+        [1, 2, 3, 4, 5, 6, 7, 8, 9, 11] -> ['vtx[1:9]', 'vtx[11]']
+    """
+    custom = []
+    ids.sort()  # Sort the IDs in ascending order
+
+    start = ids[0]
+    end = ids[0]
+
+    for x in range(1, len(ids)):
+        if ids[x] == end + 1:
+            end = ids[x]
+        else:
+            if start == end:
+                custom.append("{0}[{1}]".format(prefix, start))
+            else:
+                custom.append("{0}[{1}:{2}]".format(prefix, start, end))
+            start = end = ids[x]
+
+    if start == end:
+        custom.append("{0}[{1}]".format(prefix, start))
+    else:
+        custom.append("{0}[{1}:{2}]".format(prefix, start, end))
+
+    return custom

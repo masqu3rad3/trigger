@@ -3,7 +3,7 @@ import maya.api.OpenMaya as om
 
 from trigger.library import functions, naming, joint
 from trigger.objects.controller import Controller
-from trigger.modules import _module
+from trigger.core.module import ModuleCore, GuidesCore
 
 from trigger.core import filelog
 
@@ -16,7 +16,7 @@ LIMB_DATA = {
             "attr_name": "curveAsShape",
             "nice_name": "Use_Curve_as_Joint_Shape",
             "attr_type": "bool",
-            "default_value": False
+            "default_value": False,
         }
     ],
     "multi_guide": None,
@@ -24,7 +24,8 @@ LIMB_DATA = {
 }
 
 
-class Connector(_module.ModuleCore):
+class Connector(ModuleCore):
+    name = "Connector"
     def __init__(self, build_data=None, inits=None):
         super(Connector, self).__init__()
         if build_data:
@@ -50,23 +51,29 @@ class Connector(_module.ModuleCore):
         except ValueError:
             self.curveAsShape = False
 
-        self.module_name = (naming.unique_name(cmds.getAttr("%s.moduleName" % self.rootInit)))
+        self.module_name = naming.unique_name(
+            cmds.getAttr("%s.moduleName" % self.rootInit)
+        )
 
     def execute(self):
         """Execute the module. This is the main function that is called when the module is built."""
         LOG.info("Creating Connector %s" % self.module_name)
         def_j_root = cmds.joint(name=naming.parse([self.module_name], suffix="jDef"))
 
-        functions.align_to(def_j_root, self.rootInit, position=True, rotation=self.useRefOrientation)
+        functions.align_to(
+            def_j_root, self.rootInit, position=True, rotation=self.useRefOrientation
+        )
 
         self.limbPlug = def_j_root
         self.sockets.append(def_j_root)
 
         if self.curveAsShape:
-            _controller = Controller(shape="Cube",
-                                     name=naming.parse([self.module_name], suffix="cont"),
-                                     scale=(1, 1, 1),
-                                     normal=(0, 0, 0))
+            _controller = Controller(
+                shape="Cube",
+                name=naming.parse([self.module_name], suffix="cont"),
+                scale=(1, 1, 1),
+                normal=(0, 0, 0),
+            )
             _controller.set_side(self.side)
             cmds.parent(_controller.shapes[0], def_j_root, relative=True, shape=True)
             cmds.delete(_controller.name)
@@ -78,7 +85,8 @@ class Connector(_module.ModuleCore):
         cmds.connectAttr("%s.jointVis" % self.scaleGrp, "%s.v" % self.limbGrp)
 
 
-class Guides(_module.GuidesCore):
+class Guides(GuidesCore):
+    name = "Connector"
     limb_data = LIMB_DATA
 
     def draw_joints(self):
@@ -87,7 +95,9 @@ class Guides(_module.GuidesCore):
 
         # Draw the joints
         cmds.select(clear=True)
-        root_jnt = cmds.joint(name=naming.parse([self.name, "root"], side=self.side, suffix="jInit"))
+        root_jnt = cmds.joint(
+            name=naming.parse([self.name, "root"], side=self.side, suffix="jInit")
+        )
 
         # Update the guideJoints list
         self.guideJoints.append(root_jnt)

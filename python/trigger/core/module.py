@@ -21,8 +21,8 @@ LIMB_DATA = {
 
 
 class ModuleCore(object):
+    name = ""
     def __init__(self, *args, **kwargs):
-
         self.inits = []
         self.limbGrp = None
         self.scaleGrp = None
@@ -63,17 +63,36 @@ class ModuleCore(object):
 
         # limb group does not have a suffix.
         self.limbGrp = cmds.group(name=naming.parse([self.module_name]), empty=True)
-        self.scaleGrp = cmds.group(name=naming.parse([self.module_name, "scale"], suffix="grp"), empty=True)
+        self.scaleGrp = cmds.group(
+            name=naming.parse([self.module_name, "scale"], suffix="grp"), empty=True
+        )
 
         functions.align_to(self.scaleGrp, self.inits[0], position=True, rotation=False)
-        self.nonScaleGrp = cmds.group(name=naming.parse([self.module_name, "nonScale"], suffix="grp"), empty=True)
+        self.nonScaleGrp = cmds.group(
+            name=naming.parse([self.module_name, "nonScale"], suffix="grp"), empty=True
+        )
 
-        cmds.addAttr(self.scaleGrp, attributeType="bool", longName="Control_Visibility", shortName="contVis",
-                     defaultValue=True)
-        cmds.addAttr(self.scaleGrp, attributeType="bool", longName="Joints_Visibility", shortName="jointVis",
-                     defaultValue=True)
-        cmds.addAttr(self.scaleGrp, attributeType="bool", longName="Rig_Visibility", shortName="rigVis",
-                     defaultValue=False)
+        cmds.addAttr(
+            self.scaleGrp,
+            attributeType="bool",
+            longName="Control_Visibility",
+            shortName="contVis",
+            defaultValue=True,
+        )
+        cmds.addAttr(
+            self.scaleGrp,
+            attributeType="bool",
+            longName="Joints_Visibility",
+            shortName="jointVis",
+            defaultValue=True,
+        )
+        cmds.addAttr(
+            self.scaleGrp,
+            attributeType="bool",
+            longName="Rig_Visibility",
+            shortName="rigVis",
+            defaultValue=False,
+        )
         # make the created attributes visible in the channel box
         cmds.setAttr("%s.contVis" % self.scaleGrp, channelBox=True)
         cmds.setAttr("%s.jointVis" % self.scaleGrp, channelBox=True)
@@ -82,31 +101,50 @@ class ModuleCore(object):
         cmds.parent(self.scaleGrp, self.limbGrp)
         cmds.parent(self.nonScaleGrp, self.limbGrp)
 
-        self.controllerGrp = cmds.group(name=naming.parse([self.module_name, "controller"], suffix="grp"), empty=True)
-        attribute.drive_attrs("%s.contVis" % self.scaleGrp, ["{}.v".format(self.controllerGrp)])
+        self.controllerGrp = cmds.group(
+            name=naming.parse([self.module_name, "controller"], suffix="grp"),
+            empty=True,
+        )
+        attribute.drive_attrs(
+            "%s.contVis" % self.scaleGrp, ["{}.v".format(self.controllerGrp)]
+        )
         attribute.lock_and_hide(self.controllerGrp)
         cmds.parent(self.controllerGrp, self.limbGrp)
 
-        self.localOffGrp = cmds.group(name=naming.parse([self.module_name, "localOffset"], suffix="grp"), empty=True)
-        self.plugBindGrp = cmds.group(name=naming.parse([self.module_name, "plugBind"], suffix="grp"), empty=True)
+        self.localOffGrp = cmds.group(
+            name=naming.parse([self.module_name, "localOffset"], suffix="grp"),
+            empty=True,
+        )
+        self.plugBindGrp = cmds.group(
+            name=naming.parse([self.module_name, "plugBind"], suffix="grp"), empty=True
+        )
         cmds.parent(self.localOffGrp, self.plugBindGrp)
         cmds.parent(self.plugBindGrp, self.controllerGrp)
 
-        self.contBindGrp = cmds.group(name=naming.parse([self.module_name, "controllerBind"], suffix="grp"), empty=True)
+        self.contBindGrp = cmds.group(
+            name=naming.parse([self.module_name, "controllerBind"], suffix="grp"),
+            empty=True,
+        )
         cmds.parent(self.contBindGrp, self.localOffGrp)
 
         # scale hook gets the scale value from the bind group but not from the localOffset
-        self.scaleHook = cmds.group(name=naming.parse([self.module_name, "scaleHook"], suffix="grp"), empty=True)
+        self.scaleHook = cmds.group(
+            name=naming.parse([self.module_name, "scaleHook"], suffix="grp"), empty=True
+        )
         cmds.parent(self.scaleHook, self.limbGrp)
         scale_skips = "xyz" if self.isLocal else ""
-        connection.matrixConstraint(self.scaleGrp, self.scaleHook, skipScale=scale_skips)
+        connection.matrixConstraint(
+            self.scaleGrp, self.scaleHook, skipScale=scale_skips
+        )
 
-        self.rigJointsGrp = cmds.group(name=naming.parse([self.module_name, "rigJoints"], suffix="grp"), empty=True)
-        self.defJointsGrp = cmds.group(name=naming.parse([self.module_name, "defJoints"], suffix="grp"), empty=True)
+        self.rigJointsGrp = cmds.group(
+            name=naming.parse([self.module_name, "rigJoints"], suffix="grp"), empty=True
+        )
+        self.defJointsGrp = cmds.group(
+            name=naming.parse([self.module_name, "defJoints"], suffix="grp"), empty=True
+        )
         cmds.parent(self.rigJointsGrp, self.limbGrp)
         cmds.parent(self.defJointsGrp, self.limbGrp)
-
-
 
         self.additional_groups()
 
@@ -124,7 +162,8 @@ class ModuleCore(object):
         if self.scaleGrp in self.scaleConstraints:
             LOG.warning(
                 "Scale group is in scale constraints list. This needs to be done in inherited class. \
-                Remove this in module class")
+                Remove this in module class"
+            )
         else:
             self.scaleConstraints.append(self.scaleGrp)
 
@@ -136,10 +175,21 @@ class ModuleCore(object):
 
 
 class GuidesCore(object):
+    name = ""
     limb_data = LIMB_DATA
 
-    def __init__(self, side="L", suffix="", segments=None, tMatrix=None, upVector=(0, 1, 0), mirrorVector=(1, 0, 0),
-                 lookVector=(0, 0, 1), *args, **kwargs):
+    def __init__(
+        self,
+        side="L",
+        suffix="",
+        segments=None,
+        tMatrix=None,
+        upVector=(0, 1, 0),
+        mirrorVector=(1, 0, 0),
+        lookVector=(0, 0, 1),
+        *args,
+        **kwargs
+    ):
         self.side = side
         self.sideMultiplier = -1 if side == "R" else 1
         self.name = suffix or "noName"
@@ -176,7 +226,8 @@ class GuidesCore(object):
             moduleName=naming.parse([self.name], side=self.side),
             upAxis=self.upVector,
             mirrorAxis=self.mirrorVector,
-            lookAxis=self.lookVector)
+            lookAxis=self.lookVector,
+        )
 
         for attr_dict in self.limb_data["properties"]:
             attribute.create_attribute(root_jnt, attr_dict)
@@ -197,9 +248,18 @@ class GuidesCore(object):
         _min = len(self.limb_data["members"])
         _max = _min if not self.limb_data["multi_guide"] else 99999
         if not joints_list:
-            LOG.error("joint list not defined for module {0}".format(self.name), proceed=False)
+            LOG.error(
+                "joint list not defined for module {0}".format(self.name), proceed=False
+            )
         if _min == _max and len(joints_list) != _min:
-            LOG.error("segments for module {0} must be equal to {1}".format(self.name, _min), proceed=False)
+            LOG.error(
+                "segments for module {0} must be equal to {1}".format(self.name, _min),
+                proceed=False,
+            )
         if _max < len(joints_list) < _min:
-            LOG.error("segments for module {0} must be between {1} and {2}".format(self.name, _min, _max),
-                      proceed=False)
+            LOG.error(
+                "segments for module {0} must be between {1} and {2}".format(
+                    self.name, _min, _max
+                ),
+                proceed=False,
+            )

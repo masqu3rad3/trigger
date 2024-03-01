@@ -7,20 +7,23 @@ from trigger.core import filelog
 
 import importlib
 from trigger.ui.Qt import QtWidgets
-from trigger.ui import custom_widgets
 from trigger.ui.widgets.browser import BrowserButton, FileLineEdit
+
+from trigger.core.action import ActionCore
+
 
 log = filelog.Filelog(logname=__name__, filename="trigger_log")
 
 
-ACTION_DATA = {
-    "trigger_file_path": ""
-}
+ACTION_DATA = {"trigger_file_path": ""}
+
 
 # Name of the class MUST be the capitalized version of file name. eg. morph.py => Morph, split_shapes.py => Split_shapes
-class Reference_session(object):
-    def __init__(self, *args, **kwargs):
-        super(Reference_session, self).__init__()
+class Reference_session(ActionCore):
+    action_data = ACTION_DATA
+
+    def __init__(self, **kwargs):
+        super(Reference_session, self).__init__(kwargs)
         # user defined variables
         self.triggerFilePath = None
 
@@ -44,7 +47,6 @@ class Reference_session(object):
         referenced_session = actions_session.ActionsSession()
         referenced_session.load_session(self.triggerFilePath)
         referenced_session.run_all_actions(reset_scene=False)
-
 
     def save_action(self):
         """Mandatory Method - Save Action"""
@@ -72,7 +74,12 @@ class Reference_session(object):
         trigger_file_path_hLay = QtWidgets.QHBoxLayout()
         trigger_file_path_le = FileLineEdit()
         trigger_file_path_hLay.addWidget(trigger_file_path_le)
-        browse_path_pb = BrowserButton(mode="openFile", update_widget=trigger_file_path_le, filterExtensions=["Trigger Session (*.tr)"], overwrite_check=False)
+        browse_path_pb = BrowserButton(
+            mode="openFile",
+            update_widget=trigger_file_path_le,
+            filterExtensions=["Trigger Session (*.tr)"],
+            overwrite_check=False,
+        )
         trigger_file_path_hLay.addWidget(browse_path_pb)
         layout.addRow(trigger_file_path_lbl, trigger_file_path_hLay)
 
@@ -83,5 +90,3 @@ class Reference_session(object):
         browse_path_pb.clicked.connect(lambda x=0: ctrl.update_model())
         # to validate on initial browse result
         browse_path_pb.clicked.connect(trigger_file_path_le.validate)
-
-

@@ -11,6 +11,7 @@ from trigger.library import deformers
 from trigger.library import naming
 
 from trigger.core import filelog
+from trigger.core.action import ActionCore
 
 from trigger.ui.Qt import QtWidgets
 from trigger.ui import custom_widgets
@@ -54,10 +55,11 @@ ACTION_DATA = {
 # Name of the class MUST be the capitalized version of file name. eg. morph.py => Morph, split_shapes.py => Split_shapes
 
 
-class Correctives(object):
-    def __init__(self):
-        super(Correctives, self).__init__()
+class Correctives(ActionCore):
+    action_data = ACTION_DATA
 
+    def __init__(self, **kwargs):
+        super(Correctives, self).__init__(kwargs)
         # user defined variables
         self.correctiveDefinitions = None
 
@@ -90,8 +92,13 @@ class Correctives(object):
                 psd_grp = functions.validate_group("psd_grp")
                 if functions.get_parent(psd_grp) != rig_grp:
                     cmds.parent(psd_grp, rig_grp)
-                angle_extractor_root = self.vector_psd(driver_transform, controller, target_rotation, up_object,
-                                                       prefix=driver_transform)
+                angle_extractor_root = self.vector_psd(
+                    driver_transform,
+                    controller,
+                    target_rotation,
+                    up_object,
+                    prefix=driver_transform,
+                )
                 cmds.parent(angle_extractor_root, psd_grp)
                 psd_attr = "%s.angleBetween" % angle_extractor_root
 
@@ -103,13 +110,21 @@ class Correctives(object):
 
             if corrected_shape:
                 if not skinned_mesh:
-                    LOG.error("If corrected shape defined, skinned mesh must defined as well. "
-                              "skipping connecting correctives...")
+                    LOG.error(
+                        "If corrected shape defined, skinned mesh must defined as well. "
+                        "skipping connecting correctives..."
+                    )
                     continue
                 else:
                     # self.load_extract_deltas()
                     validate.plugin("extractDeltas")
-                    self.connect_correctives(corrected_shape, skinned_mesh, controller, target_rotation, psd_attr)
+                    self.connect_correctives(
+                        corrected_shape,
+                        skinned_mesh,
+                        controller,
+                        target_rotation,
+                        psd_attr,
+                    )
 
     def save_action(self, file_path=None, *args, **kwargs):
         """Mandatory Method - Save Action"""
@@ -142,16 +157,16 @@ class Correctives(object):
         self.uid = 0
         self.definition_widgets = []
 
-        def add_new_definition(mode_val=0,
-                               driver_transform_val="",
-                               controller_val="",
-                               target_matrix_val=None,
-                               up_object_val="",
-                               driver_axis_val="",
-                               corrected_shape_val="",
-                               skinned_mesh_val=""
-                               ):
-
+        def add_new_definition(
+            mode_val=0,
+            driver_transform_val="",
+            controller_val="",
+            target_matrix_val=None,
+            up_object_val="",
+            driver_axis_val="",
+            corrected_shape_val="",
+            skinned_mesh_val="",
+        ):
             target_matrix_val = target_matrix_val or []
             self.uid += 1
 
@@ -163,19 +178,25 @@ class Correctives(object):
             def_formlayout.addRow(def_mode_lbl, def_mode_combo)
 
             def_driver_transform_lbl = QtWidgets.QLabel(text="Driver Transform")
-            def_driver_transform_lebox = custom_widgets.LineEditBoxLayout(buttonsPosition="right")
+            def_driver_transform_lebox = custom_widgets.LineEditBoxLayout(
+                buttonsPosition="right"
+            )
             def_driver_transform_lebox.buttonGet.setText("<")
             def_driver_transform_lebox.buttonGet.setMaximumWidth(30)
             def_formlayout.addRow(def_driver_transform_lbl, def_driver_transform_lebox)
 
             def_controller_lbl = QtWidgets.QLabel(text="Controller")
-            def_controller_lebox = custom_widgets.LineEditBoxLayout(buttonsPosition="right")
+            def_controller_lebox = custom_widgets.LineEditBoxLayout(
+                buttonsPosition="right"
+            )
             def_controller_lebox.buttonGet.setText("<")
             def_controller_lebox.buttonGet.setMaximumWidth(30)
             def_formlayout.addRow(def_controller_lbl, def_controller_lebox)
 
             def_target_matrix_lbl = QtWidgets.QLabel(text="Target Transform")
-            def_target_matrix_lbl.setToolTip("The ultimate position which will be the corrective 100% activated")
+            def_target_matrix_lbl.setToolTip(
+                "The ultimate position which will be the corrective 100% activated"
+            )
             matrix_hlay = QtWidgets.QHBoxLayout()
             target_matrix_list = QtWidgets.QListWidget()
 
@@ -184,20 +205,26 @@ class Correctives(object):
             matrix_vlay = QtWidgets.QVBoxLayout()
             matrix_hlay.addLayout(matrix_vlay)
             capture_matrix_pb = QtWidgets.QPushButton(text="CAPTURE")
-            capture_matrix_pb.setToolTip("Adjust the controller to the angle and position where the corrective "
-                                         "will be active and press this button to set the values")
+            capture_matrix_pb.setToolTip(
+                "Adjust the controller to the angle and position where the corrective "
+                "will be active and press this button to set the values"
+            )
             capture_matrix_pb.setMaximumWidth(200)
             capture_matrix_pb.setFixedHeight(100)
             matrix_vlay.addWidget(capture_matrix_pb)
             edit_matrix_pb = QtWidgets.QPushButton(text="Edit")
-            edit_matrix_pb.setToolTip("sets the current controller to the defined target transform")
+            edit_matrix_pb.setToolTip(
+                "sets the current controller to the defined target transform"
+            )
             edit_matrix_pb.setMaximumWidth(200)
             edit_matrix_pb.setFixedHeight(20)
             matrix_vlay.addWidget(edit_matrix_pb)
             def_formlayout.addRow(def_target_matrix_lbl, matrix_hlay)
 
             def_up_object_lbl = QtWidgets.QLabel(text="Up Object")
-            def_up_object_lebox = custom_widgets.LineEditBoxLayout(buttonsPosition="right")
+            def_up_object_lebox = custom_widgets.LineEditBoxLayout(
+                buttonsPosition="right"
+            )
             def_up_object_lebox.buttonGet.setText("<")
             def_up_object_lebox.buttonGet.setMaximumWidth(30)
             def_formlayout.addRow(def_up_object_lbl, def_up_object_lebox)
@@ -208,13 +235,17 @@ class Correctives(object):
             def_formlayout.addRow(def_driver_axis_lbl, def_driver_axis_combo)
 
             def_corrected_shape_lbl = QtWidgets.QLabel(text="Corrected Shape")
-            def_corrected_shape_lebox = custom_widgets.LineEditBoxLayout(buttonsPosition="right")
+            def_corrected_shape_lebox = custom_widgets.LineEditBoxLayout(
+                buttonsPosition="right"
+            )
             def_corrected_shape_lebox.buttonGet.setText("<")
             def_corrected_shape_lebox.buttonGet.setMaximumWidth(30)
             def_formlayout.addRow(def_corrected_shape_lbl, def_corrected_shape_lebox)
 
             def_skinned_mesh_lbl = QtWidgets.QLabel(text="Skinned Mesh")
-            def_skinned_mesh_lebox = custom_widgets.LineEditBoxLayout(buttonsPosition="right")
+            def_skinned_mesh_lebox = custom_widgets.LineEditBoxLayout(
+                buttonsPosition="right"
+            )
             def_skinned_mesh_lebox.buttonGet.setText("<")
             def_skinned_mesh_lebox.buttonGet.setMaximumWidth(30)
             def_formlayout.addRow(def_skinned_mesh_lbl, def_skinned_mesh_lebox)
@@ -240,7 +271,7 @@ class Correctives(object):
                 "def_corrected_shape_lebox": def_corrected_shape_lebox,
                 "def_skinned_mesh_lebox": def_skinned_mesh_lebox,
                 "def_driver_axis_lbl": def_driver_axis_lbl,
-                "def_up_object_lbl": def_up_object_lbl
+                "def_up_object_lbl": def_up_object_lbl,
             }
             self.definition_widgets.append(tmp_dict)
 
@@ -266,49 +297,78 @@ class Correctives(object):
                     target_matrix_list.addItems(str_tm_matrix)
                     update_model()
                 else:
-                    feedback.Feedback().pop_info(title="Selection Error",
-                                                 text="Controller not defined or does not exist in the scene",
-                                                 critical=True)
+                    feedback.Feedback().pop_info(
+                        title="Selection Error",
+                        text="Controller not defined or does not exist in the scene",
+                        critical=True,
+                    )
 
             def edit_matrix():
                 cont = cmds.ls(def_controller_lebox.viewWidget.text())
                 if cont:
-                    _matrix = [float(target_matrix_list.item(x).text()) for x in range(target_matrix_list.count())]
+                    _matrix = [
+                        float(target_matrix_list.item(x).text())
+                        for x in range(target_matrix_list.count())
+                    ]
                     cmds.xform(cont[0], matrix=_matrix)
                 else:
-                    feedback.Feedback().pop_info(title="Selection Error",
-                                                 text="Controller not defined or does not exist in the scene",
-                                                 critical=True)
+                    feedback.Feedback().pop_info(
+                        title="Selection Error",
+                        text="Controller not defined or does not exist in the scene",
+                        critical=True,
+                    )
 
             # signals
             def_mode_combo.currentIndexChanged.connect(
-                lambda val, w_dict=tmp_dict: update_widget_visibility(val, w_dict))
+                lambda val, w_dict=tmp_dict: update_widget_visibility(val, w_dict)
+            )
             def_mode_combo.currentIndexChanged.connect(update_model)
             def_driver_transform_lebox.viewWidget.textChanged.connect(update_model)
             def_driver_transform_lebox.buttonGet.clicked.connect(
-                lambda _=0, widget=def_driver_transform_lebox.viewWidget: get_selected(widget, mesh_only=False))
+                lambda _=0, widget=def_driver_transform_lebox.viewWidget: get_selected(
+                    widget, mesh_only=False
+                )
+            )
             def_controller_lebox.viewWidget.textChanged.connect(update_model)
             def_controller_lebox.buttonGet.clicked.connect(
-                lambda _=0, widget=def_controller_lebox.viewWidget: get_selected(widget, mesh_only=False))
+                lambda _=0, widget=def_controller_lebox.viewWidget: get_selected(
+                    widget, mesh_only=False
+                )
+            )
             capture_matrix_pb.clicked.connect(capture_matrix)
             edit_matrix_pb.clicked.connect(edit_matrix)
             def_up_object_lebox.viewWidget.textChanged.connect(update_model)
             def_up_object_lebox.buttonGet.clicked.connect(
-                lambda _=0, widget=def_up_object_lebox.viewWidget: get_selected(widget, mesh_only=False))
+                lambda _=0, widget=def_up_object_lebox.viewWidget: get_selected(
+                    widget, mesh_only=False
+                )
+            )
             def_driver_axis_combo.currentIndexChanged.connect(update_model)
             def_corrected_shape_lebox.viewWidget.textChanged.connect(update_model)
             def_corrected_shape_lebox.buttonGet.clicked.connect(
-                lambda _=0, widget=def_corrected_shape_lebox.viewWidget: get_selected(widget))
+                lambda _=0, widget=def_corrected_shape_lebox.viewWidget: get_selected(
+                    widget
+                )
+            )
             def_skinned_mesh_lebox.viewWidget.textChanged.connect(update_model)
             def_skinned_mesh_lebox.buttonGet.clicked.connect(
-                lambda _=0, widget=def_skinned_mesh_lebox.viewWidget: get_selected(widget))
-            def_remove_pb.clicked.connect(lambda _=0, lay=def_formlayout, uid=self.uid: delete_definition(lay, uid))
+                lambda _=0, widget=def_skinned_mesh_lebox.viewWidget: get_selected(
+                    widget
+                )
+            )
+            def_remove_pb.clicked.connect(
+                lambda _=0, lay=def_formlayout, uid=self.uid: delete_definition(
+                    lay, uid
+                )
+            )
             def_remove_pb.clicked.connect(update_model)
 
             update_model()
 
         def _get_rotation(x_widget, y_widget, z_widget):
-            sel, msg = selection.validate(minimum=1, maximum=1, meshes_only=False, transforms=True)
+            sel, msg = selection.validate(
+                minimum=1, maximum=1, meshes_only=False, transforms=True
+            )
             if sel:
                 rotations = cmds.getAttr("%s.r" % sel[0])[0]
                 x_widget.setValue(rotations[0])
@@ -316,15 +376,21 @@ class Correctives(object):
                 z_widget.setValue(rotations[2])
                 update_model()
             else:
-                feedback.Feedback().pop_info(title="Selection Error", text=msg, critical=True)
+                feedback.Feedback().pop_info(
+                    title="Selection Error", text=msg, critical=True
+                )
 
         def get_selected(update_widget, mesh_only=True):
-            sel, msg = selection.validate(minimum=1, maximum=1, meshes_only=mesh_only, transforms=True)
+            sel, msg = selection.validate(
+                minimum=1, maximum=1, meshes_only=mesh_only, transforms=True
+            )
             if sel:
                 update_widget.setText(sel[0])
                 update_model()
             else:
-                feedback.Feedback().pop_info(title="Selection Error", text=msg, critical=True)
+                feedback.Feedback().pop_info(
+                    title="Selection Error", text=msg, critical=True
+                )
 
         def update_widget_visibility(val, w_dict):
             if val == 0:  # vector mode
@@ -348,14 +414,25 @@ class Correctives(object):
             definitions = []
             for widget_dict in self.definition_widgets:
                 tm_widget = widget_dict["target_matrix_list"]
-                tmp_dict = {"mode": widget_dict["def_mode_combo"].currentIndex(),
-                            "driver_transform": widget_dict["def_driver_transform_lebox"].viewWidget.text(),
-                            "controller": widget_dict["def_controller_lebox"].viewWidget.text(),
-                            "target_matrix": [float(tm_widget.item(x).text()) for x in range(tm_widget.count())],
-                            "up_object": widget_dict["def_up_object_lebox"].viewWidget.text(),
-                            "driver_axis": widget_dict["def_driver_axis_combo"].currentText(),
-                            "corrected_shape": widget_dict["def_corrected_shape_lebox"].viewWidget.text(),
-                            "skinned_mesh": widget_dict["def_skinned_mesh_lebox"].viewWidget.text()}
+                tmp_dict = {
+                    "mode": widget_dict["def_mode_combo"].currentIndex(),
+                    "driver_transform": widget_dict[
+                        "def_driver_transform_lebox"
+                    ].viewWidget.text(),
+                    "controller": widget_dict["def_controller_lebox"].viewWidget.text(),
+                    "target_matrix": [
+                        float(tm_widget.item(x).text())
+                        for x in range(tm_widget.count())
+                    ],
+                    "up_object": widget_dict["def_up_object_lebox"].viewWidget.text(),
+                    "driver_axis": widget_dict["def_driver_axis_combo"].currentText(),
+                    "corrected_shape": widget_dict[
+                        "def_corrected_shape_lebox"
+                    ].viewWidget.text(),
+                    "skinned_mesh": widget_dict[
+                        "def_skinned_mesh_lebox"
+                    ].viewWidget.text(),
+                }
                 definitions.append(tmp_dict)
             # feed the model with the definitions
             ctrl.model.edit_action(ctrl.action_name, "definitions", definitions)
@@ -363,15 +440,16 @@ class Correctives(object):
         def update_ui():
             data = ctrl.model.query_action(ctrl.action_name, "definitions")
             for definition in data:
-                add_new_definition(mode_val=definition["mode"],
-                                   driver_transform_val=definition["driver_transform"],
-                                   controller_val=definition["controller"],
-                                   target_matrix_val=definition["target_matrix"],
-                                   up_object_val=definition["up_object"],
-                                   driver_axis_val=definition["driver_axis"],
-                                   corrected_shape_val=definition["corrected_shape"],
-                                   skinned_mesh_val=definition["skinned_mesh"],
-                                   )
+                add_new_definition(
+                    mode_val=definition["mode"],
+                    driver_transform_val=definition["driver_transform"],
+                    controller_val=definition["controller"],
+                    target_matrix_val=definition["target_matrix"],
+                    up_object_val=definition["up_object"],
+                    driver_axis_val=definition["driver_axis"],
+                    corrected_shape_val=definition["corrected_shape"],
+                    skinned_mesh_val=definition["skinned_mesh"],
+                )
 
         def delete_definition(layout_widget, item_id):
             for item in self.definition_widgets:
@@ -395,11 +473,24 @@ class Correctives(object):
         add_new_definition_btn.clicked.connect(add_new_definition)
 
     @staticmethod
-    def vector_psd(driver_transform, controller, target_matrix, up_object, return_angle_attr=False, prefix=""):
-        root_loc = cmds.spaceLocator(name=naming.unique_name("%s_angleExt_root" % prefix))[0]
-        point_a = cmds.spaceLocator(name=naming.unique_name("%s_angleExt_pointA" % prefix))[0]
+    def vector_psd(
+        driver_transform,
+        controller,
+        target_matrix,
+        up_object,
+        return_angle_attr=False,
+        prefix="",
+    ):
+        root_loc = cmds.spaceLocator(
+            name=naming.unique_name("%s_angleExt_root" % prefix)
+        )[0]
+        point_a = cmds.spaceLocator(
+            name=naming.unique_name("%s_angleExt_pointA" % prefix)
+        )[0]
         cmds.setAttr("%s.tx" % point_a, 5)
-        point_b = cmds.spaceLocator(name=naming.unique_name("%s_angleExt_pointB" % prefix))[0]
+        point_b = cmds.spaceLocator(
+            name=naming.unique_name("%s_angleExt_pointB" % prefix)
+        )[0]
         point_b_offset = functions.create_offset_group(point_b, "offset")
         cmds.setAttr("%s.tx" % point_b, 5)
         cmds.parent(point_a, root_loc)
@@ -407,7 +498,9 @@ class Correctives(object):
         functions.align_to(root_loc, driver_transform, position=True, rotation=True)
         cmds.pointConstraint(driver_transform, root_loc, maintainOffset=False)
         cmds.parentConstraint(driver_transform, point_a, maintainOffset=True)
-        connection.matrixConstraint(up_object, point_b_offset, skipTranslate="xyz", maintainOffset=True)
+        connection.matrixConstraint(
+            up_object, point_b_offset, skipTranslate="xyz", maintainOffset=True
+        )
 
         # store controllers initial rotation
         # initial_rotation = cmds.getAttr("%s.r" % controller)[0]
@@ -420,12 +513,19 @@ class Correctives(object):
 
         cmds.xform(controller, matrix=initial_matrix)
 
-        angle_between = cmds.createNode("angleBetween", name=naming.unique_name("%s_angleExt_angleBetween" % prefix))
+        angle_between = cmds.createNode(
+            "angleBetween", name=naming.unique_name("%s_angleExt_angleBetween" % prefix)
+        )
         cmds.connectAttr("%s.t" % point_a, "%s.vector1" % angle_between)
         cmds.connectAttr("%s.t" % point_b, "%s.vector2" % angle_between)
 
-        angle_attr = attribute.create_attribute(root_loc, attr_name="angleBetween", attr_type="float", keyable=False,
-                                                display=True)
+        angle_attr = attribute.create_attribute(
+            root_loc,
+            attr_name="angleBetween",
+            attr_type="float",
+            keyable=False,
+            display=True,
+        )
         cmds.connectAttr("%s.angle" % angle_between, angle_attr)
         if return_angle_attr:
             return angle_attr
@@ -435,19 +535,26 @@ class Correctives(object):
     # @staticmethod
     # def load_extract_deltas():
     #     validate.plugin("extractDeltas")
-        # is_loaded = cmds.pluginInfo("extractDeltas", query=True, loaded=True)
-        # if is_loaded:
-        #     return
-        # else:
-        #     try:
-        #         cmds.loadPlugin("extractDeltas")
-        #         return
-        #     except:
-        #         LOG.error("extractDeltas plug-in cannot loaded. Check if the plugin exists in your environment")
-        #         raise
+    # is_loaded = cmds.pluginInfo("extractDeltas", query=True, loaded=True)
+    # if is_loaded:
+    #     return
+    # else:
+    #     try:
+    #         cmds.loadPlugin("extractDeltas")
+    #         return
+    #     except:
+    #         LOG.error("extractDeltas plug-in cannot loaded. Check if the plugin exists in your environment")
+    #         raise
 
     @staticmethod
-    def connect_correctives(corrected_mesh, skinned_mesh, controller, target_matrix, psd_attr, discard_delta=True):
+    def connect_correctives(
+        corrected_mesh,
+        skinned_mesh,
+        controller,
+        target_matrix,
+        psd_attr,
+        discard_delta=True,
+    ):
         """
         Extracts the deltas of the corrected mesh and connects it to the psd attribute
 
@@ -494,7 +601,7 @@ class Correctives(object):
             driver_range=[r_start, r_end],
             force_new=False,
             front_of_chain=True,
-            bs_node_name=bs_node
+            bs_node_name=bs_node,
         )
 
         # back to original state

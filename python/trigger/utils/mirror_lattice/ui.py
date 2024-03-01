@@ -26,7 +26,9 @@ class MainUI(QtWidgets.QDialog):
         self.setWindowTitle(WINDOWNAME)
         self.setObjectName(WINDOWNAME)
 
-        self.size_policy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed)
+        self.size_policy = QtWidgets.QSizePolicy(
+            QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed
+        )
         self.size_policy.setHorizontalStretch(1)
         self.size_policy.setVerticalStretch(0)
 
@@ -57,7 +59,9 @@ class MainUI(QtWidgets.QDialog):
         self.ml_local_divisions_box.spinners[0].setValue(2)
         self.ml_local_divisions_box.spinners[1].setValue(2)
         self.ml_local_divisions_box.spinners[2].setValue(2)
-        mirror_lattice_formlayout.addRow(ml_local_divisions_lbl, self.ml_local_divisions_box)
+        mirror_lattice_formlayout.addRow(
+            ml_local_divisions_lbl, self.ml_local_divisions_box
+        )
 
         ml_axis_lbl = QtWidgets.QLabel(text="Mirror axis: ")
         self.ml_axis_box = AxisBoxLayout()
@@ -73,14 +77,19 @@ class MainUI(QtWidgets.QDialog):
     def on_create_mirror_lattice(self):
         """Create a mirror lattice from selection"""
         mirror_lattice = MirrorLattice(set_from_selection=True)
-        mirror_lattice.divisions = [self.ml_division_box.spinners[0].value(),
-                                    self.ml_division_box.spinners[1].value(),
-                                    self.ml_division_box.spinners[2].value()]
-        mirror_lattice.local_divisions = [self.ml_local_divisions_box.spinners[0].value(),
-                                          self.ml_local_divisions_box.spinners[1].value(),
-                                          self.ml_local_divisions_box.spinners[2].value()]
+        mirror_lattice.divisions = [
+            self.ml_division_box.spinners[0].value(),
+            self.ml_division_box.spinners[1].value(),
+            self.ml_division_box.spinners[2].value(),
+        ]
+        mirror_lattice.local_divisions = [
+            self.ml_local_divisions_box.spinners[0].value(),
+            self.ml_local_divisions_box.spinners[1].value(),
+            self.ml_local_divisions_box.spinners[2].value(),
+        ]
         mirror_lattice.mirror_axis = self.ml_axis_box.get_axis()
         mirror_lattice.create()
+
 
 class AxisBoxLayout(QtWidgets.QHBoxLayout):
     def __init__(self, parent=None):
@@ -106,6 +115,7 @@ class AxisBoxLayout(QtWidgets.QHBoxLayout):
             return "z"
         else:
             raise ValueError("No axis selected")
+
 
 class DivisionBoxLayout(QtWidgets.QHBoxLayout):
     """Custom layout for the division spinners"""
@@ -192,8 +202,17 @@ class FileLineEdit(QtWidgets.QLineEdit):
 
 
 class BrowserButton(QtWidgets.QPushButton):
-    def __init__(self, text="Browse", update_widget=None, mode="openFile", filterExtensions=None, title=None,
-                 overwrite_check=True, *args, **kwargs):
+    def __init__(
+        self,
+        text="Browse",
+        update_widget=None,
+        mode="openFile",
+        filterExtensions=None,
+        title=None,
+        overwrite_check=True,
+        *args,
+        **kwargs
+    ):
         """
         Customized Pushbutton opens the file browser by default
 
@@ -216,8 +235,12 @@ class BrowserButton(QtWidgets.QPushButton):
         if mode in self._validModes:
             self._mode = mode
         else:
-            raise Exception("Mode is not valid. Valid modes are %s" % (", ".join(self._validModes)))
-        self._filterExtensions = self._listToFilter(filterExtensions) if filterExtensions else ""
+            raise Exception(
+                "Mode is not valid. Valid modes are %s" % (", ".join(self._validModes))
+            )
+        self._filterExtensions = (
+            self._listToFilter(filterExtensions) if filterExtensions else ""
+        )
         self._title = title if title else ""
         self._selectedPath = ""
         self._overwriteCheck = overwrite_check
@@ -234,7 +257,9 @@ class BrowserButton(QtWidgets.QPushButton):
 
     def setMode(self, mode):
         if mode not in self._validModes:
-            raise Exception("Mode is not valid. Valid modes are %s" % (", ".join(self._validModes)))
+            raise Exception(
+                "Mode is not valid. Valid modes are %s" % (", ".join(self._validModes))
+            )
         self._mode = mode
 
     def mode(self):
@@ -265,24 +290,37 @@ class BrowserButton(QtWidgets.QPushButton):
         else:
             default_path = self._selectedPath
         if self._mode == "openFile":
-            dlg = QtWidgets.QFileDialog.getOpenFileName(self, self._title, default_path, self._filterExtensions)
+            dlg = QtWidgets.QFileDialog.getOpenFileName(
+                self, self._title, default_path, self._filterExtensions
+            )
             if dlg:
                 new_path, selected_extension = dlg
             else:
                 new_path, selected_extension = None, None
         elif self._mode == "saveFile":
             if not self._overwriteCheck:
-                dlg = QtWidgets.QFileDialog.getSaveFileName(self, self._title, default_path, self._filterExtensions,
-                                                            options=(QtWidgets.QFileDialog.DontConfirmOverwrite))
+                dlg = QtWidgets.QFileDialog.getSaveFileName(
+                    self,
+                    self._title,
+                    default_path,
+                    self._filterExtensions,
+                    options=(QtWidgets.QFileDialog.DontConfirmOverwrite),
+                )
             else:
-                dlg = QtWidgets.QFileDialog.getSaveFileName(self, self._title, default_path, self._filterExtensions)
+                dlg = QtWidgets.QFileDialog.getSaveFileName(
+                    self, self._title, default_path, self._filterExtensions
+                )
             if dlg:
                 new_path, selected_extension = dlg
             else:
                 new_path, selected_extension = None, None
         elif self._mode == "directory":
-            dlg = QtWidgets.QFileDialog.getExistingDirectory(self, self._title, default_path,
-                                                             options=(QtWidgets.QFileDialog.ShowDirsOnly))
+            dlg = QtWidgets.QFileDialog.getExistingDirectory(
+                self,
+                self._title,
+                default_path,
+                options=(QtWidgets.QFileDialog.ShowDirsOnly),
+            )
             if dlg:
                 new_path = dlg
             else:
@@ -293,7 +331,7 @@ class BrowserButton(QtWidgets.QPushButton):
 
         if new_path:
             if self._mode == "saveFile" and selected_extension:
-                ext = selected_extension.split('(*', 1)[1].split(')')[0]
+                ext = selected_extension.split("(*", 1)[1].split(")")[0]
                 if not new_path.endswith(ext):
                     new_path = "%s%s" % (new_path, ext)
             self._selectedPath = os.path.normpath(new_path)

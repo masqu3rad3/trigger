@@ -1,6 +1,7 @@
 """Base node object class for inheriting purposes"""
 from maya import cmds
 
+
 class BaseNode(object):
     def __init__(self):
         super(BaseNode, self).__init__()
@@ -36,4 +37,3 @@ class BaseNode(object):
         if len(encounters) > 1 and not force:
             raise Exception("Object %s is not unique" % self._name)
         self.dag_path = encounters[0]
-

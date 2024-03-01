@@ -14,9 +14,16 @@ def refresh_outliner():
 
 
 @undo
-def annotate(transform_node, text, name=None, offset=None, visibility_range=None, arrow=False):
+def annotate(
+    transform_node, text, name=None, offset=None, visibility_range=None, arrow=False
+):
     name = name or "annotate_%s" % transform_node
-    center = cmds.objectCenter(transform_node, gl=True)
+    # center = cmds.objectCenter(transform_node, gl=True)
+    bbx = cmds.xform(transform_node, q=True, bb=True, ws=True)  # world space
+    center_x = (bbx[0] + bbx[3]) / 2.0
+    center_y = (bbx[1] + bbx[4]) / 2.0
+    center_z = (bbx[2] + bbx[5]) / 2.0
+    center = (center_x, center_y, center_z)
     offset = offset or (0, 0, 0)
     pos = OpenMaya.MVector(center) + OpenMaya.MVector(offset)
     annotation_shape = cmds.annotate(transform_node, tx=text, p=pos)

@@ -10,7 +10,9 @@ reload(parentToSurface)
 from trigger.library import functions
 
 
-def jointOnBlendshapes(joint=None, controller=None, surface=None, attach_mode="parentConstraint"):
+def jointOnBlendshapes(
+    joint=None, controller=None, surface=None, attach_mode="parentConstraint"
+):
     """
     Creates the follicle and makes the necessary connections for using joint tweaking over
     blendshapes. If no arguments are given, it uses current selection to find out nodes.
@@ -27,7 +29,9 @@ def jointOnBlendshapes(joint=None, controller=None, surface=None, attach_mode="p
     if joint == None and controller == None and surface == None:
         selection = cmds.ls(sl=True)
         if len(selection) != 3:
-            cmds.warning("3 objects must be selected (control curve, joint, mesh surface")
+            cmds.warning(
+                "3 objects must be selected (control curve, joint, mesh surface"
+            )
             return
         else:
             try:
@@ -60,10 +64,11 @@ def jointOnBlendshapes(joint=None, controller=None, surface=None, attach_mode="p
     if joint_parent:
         cmds.parent(rigConnect, joint_parent)
 
-
     cont_surfaceAttach = functions.create_offset_group(controller, "sAttach")
     cont_negative = functions.create_offset_group(controller, "negative")
-    follicleList = parentToSurface.parentToSurface([cont_surfaceAttach], surface, mode=attach_mode)
+    follicleList = parentToSurface.parentToSurface(
+        [cont_surfaceAttach], surface, mode=attach_mode
+    )
 
     cmds.connectAttr("%s.translate" % controller, "%s.translate" % contConnect)
     cmds.connectAttr("%s.rotate" % controller, "%s.rotate" % contConnect)

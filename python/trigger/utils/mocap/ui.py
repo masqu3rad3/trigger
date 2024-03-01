@@ -8,6 +8,7 @@ from trigger.utils.mocap import mapper
 _version = "0.1.0"
 WINDOW_NAME = "Mocap Mapper v{}".format(_version)
 
+
 def launch(force=True):
     for entry in QtWidgets.QApplication.allWidgets():
         try:
@@ -55,7 +56,9 @@ class MainUI(QtWidgets.QDialog):
         # create a line edit box layout for bind pose fbx file
         bind_pose_fbx_lbl = QtWidgets.QLabel("Bind Pose FBX File:")
         bind_pose_fbx_fbox = FileBrowserBoxLayout()
-        bind_pose_fbx_fbox.line_edit.setPlaceholderText("Set the bind pose FBX (optional)")
+        bind_pose_fbx_fbox.line_edit.setPlaceholderText(
+            "Set the bind pose FBX (optional)"
+        )
 
         form_layout.addRow(bind_pose_fbx_lbl, bind_pose_fbx_fbox)
 
@@ -78,7 +81,9 @@ class MainUI(QtWidgets.QDialog):
         form_layout.addRow(bake_lbl, bake_chk)
 
         # create a button box
-        button_box = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel)
+        button_box = QtWidgets.QDialogButtonBox(
+            QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel
+        )
         master_layout.addWidget(button_box)
 
         # change the label of the OK button to "Import"
@@ -86,12 +91,11 @@ class MainUI(QtWidgets.QDialog):
 
         # SIGNALS
         mapping_combo.currentTextChanged.connect(self._mocap_mapper.set_mapping)
-        bind_pose_fbx_fbox.line_edit.textChanged.connect(self._mocap_mapper.set_bind_pose_fbx)
+        bind_pose_fbx_fbox.line_edit.textChanged.connect(
+            self._mocap_mapper.set_bind_pose_fbx
+        )
         anim_fbx_fbox.line_edit.textChanged.connect(self._mocap_mapper.set_anim_fbx)
         keep_fbx_chk.stateChanged.connect(self._mocap_mapper.set_keep_fbx)
         bake_chk.stateChanged.connect(self._mocap_mapper.set_bake)
         button_box.accepted.connect(self._mocap_mapper.apply_animation)
         button_box.rejected.connect(self.close)
-
-
-

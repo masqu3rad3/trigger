@@ -27,9 +27,8 @@ import time
 
 from trigger.library import attribute
 
+__version__ = "1.0.1"
 LOG = logging.getLogger(__name__)
-
-animation_duration = 5000  # as frames
 
 
 class Collector(object):
@@ -70,27 +69,44 @@ class Collector(object):
         """Clear controllers."""
         self._controllers = []
 
-    def add_morph_controllers(self, morph_hook):
+    def get_connected_transforms(self, attr, visited_nodes=None):
+        """Get connected transforms recursively."""
+        if visited_nodes is None:
+            visited_nodes = set()
+
+        connected_transforms = []
+
+        # Get the list of all connections to the attribute
+        connections = cmds.listConnections(
+            attr, source=True, destination=False, plugs=False
+        )
+
+        if connections:
+            for conn in connections:
+                # Get the node type of the connection
+                node_type = cmds.nodeType(conn)
+
+                if node_type == "transform":
+                    connected_transforms.append(conn)
+                elif node_type not in visited_nodes:
+                    visited_nodes.add(node_type)
+                    connected_transforms.extend(
+                        self.get_connected_transforms(conn, visited_nodes)
+                    )
+
+        return connected_transforms
+
+    def add_hooked_controllers(self, hook_node):
         """Get morph controllers."""
-        all_morphs = cmds.listAttr(morph_hook, userDefined=True)
+        all_morphs = cmds.listAttr(hook_node, userDefined=True)
         for morph_attr in all_morphs:
-            remap_node = cmds.listConnections(
-                "{0}.{1}".format(morph_hook, morph_attr),
-                source=True,
-                destination=False,
-                type="remapValue",
+            transforms = self.get_connected_transforms(
+                "{0}.{1}".format(hook_node, morph_attr)
             )
-            if remap_node:
-                cont = cmds.listConnections(
-                    "{0}.inputValue".format(remap_node[0]),
-                    source=True,
-                    destination=False,
-                    type="transform",
-                )
-                if cont:
-                    if cont[0] not in self._controllers:
-                        self._controllers.append(cont[0])
-                        LOG.info("Added controller: {0}".format(cont[0]))
+            for transform in transforms:
+                if transform not in self._controllers:
+                    self._controllers.append(transform)
+                    LOG.info("Added controller: {0}".format(transform))
 
     def print_controllers(self):
         """Print controllers."""
@@ -113,11 +129,27 @@ class Collector(object):
                     if cmds.objExists(pair):
                         controller_pairs[controller] = pair
             # remove right controllers from the list
-            self._controllers = [x for x in self._controllers if not x in controller_pairs.values()]
+            self._controllers = [
+                x for x in self._controllers if not x in controller_pairs.values()
+            ]
 
         for controller in self._controllers:
             for attr in cmds.listAttr(controller, keyable=True):
-                if attr in self._excluded_attributes:
+                # test both short and long names
+                _short = cmds.attributeQuery(attr, node=controller, shortName=True)
+                _long = cmds.attributeQuery(attr, node=controller, longName=True)
+                if (
+                    _short in self._excluded_attributes
+                    or _long in self._excluded_attributes
+                ):
+                    continue
+                # skip bool, compound and enum attributes
+                # TODO:starting from Maya 2024, listAttr accepts attributeType flag
+                #  which can simplify here
+                attribute_type = cmds.attributeQuery(
+                    attr, node=controller, attributeType=True
+                )
+                if attribute_type in ["bool", "compound", "enum"]:
                     continue
                 if cmds.getAttr("{0}.{1}".format(controller, attr), settable=True):
                     symmetry_pair = controller_pairs.get(controller, None)
@@ -125,17 +157,25 @@ class Collector(object):
                         controller,
                         attr,
                         cmds.getAttr("{0}.{1}".format(controller, attr)),
-                        symmetry_controller=symmetry_pair
+                        symmetry_controller=symmetry_pair,
                     )
-                    # attribute_items.append(AttributeItem(controller, attr, cmds.getAttr("{0}.{1}".format(controller, attr))))
-        # return attribute_items
 
 
-class FaceRomGenerator(object):
-    def __init__(self, collector_object, symmetry=False):
-        self.collectors = [collector_object]
-        self._animation_duration = animation_duration
+class RomGenerator(object):
+    def __init__(self, collector_objects=None, symmetry=False):
+        if collector_objects:
+            if isinstance(collector_objects, list):
+                self.collectors = collector_objects
+            else:
+                self.collectors = [collector_objects]
         self._symmetry = symmetry
+
+        self.methods = {
+            "Random Poses": self.generate_random_poses_rom,
+            "Random Combinations": self.generate_random_combo_rom,
+            "Ordered": self.generate_ordered_rom,
+            "Wiggle": self.generate_wiggle_rom,
+        }
 
     @property
     def symmetry(self):
@@ -152,6 +192,10 @@ class FaceRomGenerator(object):
     def add_collector(self, collector_object):
         """Add collector."""
         self.collectors.append(collector_object)
+
+    def set_collector(self, collector_object):
+        """Set collector."""
+        self.collectors = [collector_object]
 
     def clear_keys(self):
         """Clear all keys on all defined controllers."""
@@ -185,12 +229,16 @@ class FaceRomGenerator(object):
         """Return all attributes."""
         all_attributes = []
         for collector in self.collectors:
-            attribute_items = list(collector.get_attribute_items(symmetry=self.symmetry))
+            attribute_items = list(
+                collector.get_attribute_items(symmetry=self.symmetry)
+            )
             for attribute_item in attribute_items:
                 all_attributes.append(attribute_item)
         return all_attributes
 
-    def generate_random_poses_rom(self, start_frame=1, duration=100, interval=5, seed=None):
+    def generate_random_poses_rom(
+        self, start_frame=1, duration=100, interval=5, seed=None, *args, **kwargs
+    ):
         """
         Generate a random rom.
         Args:
@@ -210,14 +258,17 @@ class FaceRomGenerator(object):
             start_frame += interval
             duration -= interval
 
-    def generate_random_combo_rom(self,
-                                  start_frame=1,
-                                  duration=100,
-                                  minimum_combinations=1,
-                                  maximum_combinations=5,
-                                  interval=5,
-                                  seed=None
-                                  ):
+    def generate_random_combo_rom(
+        self,
+        start_frame=1,
+        duration=100,
+        minimum_combinations=1,
+        maximum_combinations=5,
+        interval=5,
+        seed=None,
+        *args,
+        **kwargs
+    ):
         """Create a random rom using the combinations of n number of controllers."""
         all_attributes = self._get_all_attributes()
         seed = seed or int(time.time())
@@ -225,22 +276,21 @@ class FaceRomGenerator(object):
         self.default_key(start_frame)
         start_frame += interval
         while duration > start_frame:
-            # random.seed(seed + start_frame)
             # generate a random number of combinations
             number_of_combinations = random.randint(
-                minimum_combinations, maximum_combinations,
+                minimum_combinations,
+                maximum_combinations,
             )
             # pick the attributes to use randomly from the all_attributes list
             random.seed(seed + start_frame)
             random_attributes = random.sample(all_attributes, number_of_combinations)
             # attribute_start = int(start_frame)
-            end_frame = start_frame
             end_frames = []
             for attribute_item in random_attributes:
                 end_frames.append(attribute_item.key_min_to_max(start_frame, interval))
             start_frame = max(end_frames)
 
-    def generate_ordered_rom(self, start_frame=1, interval=5):
+    def generate_ordered_rom(self, start_frame=1, interval=5, *args, **kwargs):
         """Generate an ordered rom based on the collected controller criteria.
         This is not a random rom. Just triggers all shapes in a sequence.
         """
@@ -250,12 +300,29 @@ class FaceRomGenerator(object):
         for attribute_item in all_attributes:
             start_frame = attribute_item.key_min_to_max(start_frame, interval)
 
+    def generate_wiggle_rom(self, start_frame=1, interval=5, *args, **kwargs):
+        """Generate a wiggle rom which Ziva RT will like.
+
+        Wiggle Rom only works on rotate attributes
+        """
+        rotation_attributes = ["rotateX", "rotateY", "rotateZ", "rx", "ry", "rz"]
+        all_attributes = self._get_all_attributes()
+        # filter the attributes to only rotate attributes
+        rotate_attributes = [
+            x for x in all_attributes if x.attribute in rotation_attributes
+        ]
+        self.default_key(start_frame)
+        start_frame += interval
+        # TODO: apply the proposed wiggle rom method by Ziva
+        LOG.warning("Wiggle Rom is not implemented yet.")
+
+
 class AttributeItem(object):
     """Attribute item class."""
 
     default_translate_limits = [-5, 5]
     default_rotate_limits = [-15, 15]
-    default_scale_limits = [0.5, 2]
+    default_scale_limits = [0.25, 1.75]
     default_custom_limits = [-100, 100]
     default_limits = {
         "translateX": default_translate_limits,
@@ -355,25 +422,43 @@ class AttributeItem(object):
         if self.symmetry_attribute_path:
             cmds.setAttr(self.symmetry_attribute_path, _value)
 
-    def key_random_value(self, at_time, seed=None, in_tangent_type="linear", out_tangent_type="linear"):
+    def key_random_value(
+        self, at_time, seed=None, in_tangent_type="linear", out_tangent_type="linear"
+    ):
         random.seed(seed)
         _limits = self.limits or self.override_limits
         _value = random.uniform(_limits[0], _limits[1])
-        cmds.setKeyframe(self.controller, attribute=self.attribute, time=at_time, value=_value,
-                         inTangentType=in_tangent_type, outTangentType=out_tangent_type)
+        cmds.setKeyframe(
+            self.controller,
+            attribute=self.attribute,
+            time=at_time,
+            value=_value,
+            inTangentType=in_tangent_type,
+            outTangentType=out_tangent_type,
+        )
         if self.symmetry_controller:
-            cmds.setKeyframe(self.symmetry_controller, attribute=self.attribute, time=at_time, value=_value,
-                             inTangentType=in_tangent_type, outTangentType=out_tangent_type)
+            cmds.setKeyframe(
+                self.symmetry_controller,
+                attribute=self.attribute,
+                time=at_time,
+                value=_value,
+                inTangentType=in_tangent_type,
+                outTangentType=out_tangent_type,
+            )
 
     def _get_default_value(self):
         """Intermediary method to get the default value of the attribute."""
         if self.user_defined:
-            default_value = cmds.addAttr(self.attribute_path, query=True, defaultValue=True)
+            default_value = cmds.addAttr(
+                self.attribute_path, query=True, defaultValue=True
+            )
         else:
             # try to get it from the custom trigger attributes.
             default_attr = "default{0}".format(self.attribute)
             if cmds.attributeQuery(default_attr, node=self.controller, exists=True):
-                default_value = cmds.getAttr("{0}.{1}".format(self.controller, default_attr))
+                default_value = cmds.getAttr(
+                    "{0}.{1}".format(self.controller, default_attr)
+                )
             else:
                 # get the average of default limits
                 default_value = sum(self.default_limits[self.attribute]) * 0.5
@@ -389,11 +474,23 @@ class AttributeItem(object):
     def key_default(self, at_time, in_tangent_type="linear", out_tangent_type="linear"):
         """Set the default for the attribute."""
         default_value = self._get_default_value()
-        cmds.setKeyframe(self.controller, attribute=self.attribute, time=at_time, value=default_value,
-                         inTangentType=in_tangent_type, outTangentType=out_tangent_type)
+        cmds.setKeyframe(
+            self.controller,
+            attribute=self.attribute,
+            time=at_time,
+            value=default_value,
+            inTangentType=in_tangent_type,
+            outTangentType=out_tangent_type,
+        )
         if self.symmetry_controller:
-            cmds.setKeyframe(self.symmetry_controller, attribute=self.attribute, time=at_time, value=default_value,
-                             inTangentType=in_tangent_type, outTangentType=out_tangent_type)
+            cmds.setKeyframe(
+                self.symmetry_controller,
+                attribute=self.attribute,
+                time=at_time,
+                value=default_value,
+                inTangentType=in_tangent_type,
+                outTangentType=out_tangent_type,
+            )
 
     def clear_keys(self):
         """Clear all keys on the attribute."""
@@ -413,7 +510,6 @@ class AttributeItem(object):
             int: end frame of the animation
         """
         # put a key at the start frame
-        end_frame = start_frame
         cmds.setKeyframe(self.controller, attribute=self.attribute, time=start_frame)
         # check the existing value of the attribute. If it is same a the minimum or maximum limit,
         # use only the different one
@@ -433,7 +529,14 @@ class AttributeItem(object):
         key_dict[end_frame] = original_value
 
         for frame, value in key_dict.items():
-            cmds.setKeyframe(self.controller, attribute=self.attribute, time=frame, value=value)
+            cmds.setKeyframe(
+                self.controller, attribute=self.attribute, time=frame, value=value
+            )
             if self.symmetry_controller:
-                cmds.setKeyframe(self.symmetry_controller, attribute=self.attribute, time=frame, value=value)
+                cmds.setKeyframe(
+                    self.symmetry_controller,
+                    attribute=self.attribute,
+                    time=frame,
+                    value=value,
+                )
         return end_frame

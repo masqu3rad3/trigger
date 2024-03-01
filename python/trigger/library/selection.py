@@ -5,16 +5,22 @@ from trigger.library import functions
 
 def get_selection_type():
     """Return the type of the selection."""
-    component_selection = cmds.ls(sl=True, type='float3')
+    component_selection = cmds.ls(sl=True, type="float3")
     if not component_selection:
         obj_selection = cmds.ls(sl=True, o=True)
         if obj_selection:
             return "object"
         else:
             return None
-    face_selection = cmds.polyListComponentConversion(component_selection, ff=True, tf=True)
-    edge_selection = cmds.polyListComponentConversion(component_selection, fe=True, te=True)
-    vertex_selection = cmds.polyListComponentConversion(component_selection, fv=True, tv=True)
+    face_selection = cmds.polyListComponentConversion(
+        component_selection, ff=True, tf=True
+    )
+    edge_selection = cmds.polyListComponentConversion(
+        component_selection, fe=True, te=True
+    )
+    vertex_selection = cmds.polyListComponentConversion(
+        component_selection, fv=True, tv=True
+    )
     if face_selection:
         return "face"
     elif edge_selection:
@@ -31,14 +37,23 @@ def selection_validate():
     all_object_selection = cmds.ls(sl=True, o=True)
     if len(all_object_selection) > 1:
         return False
-    face_selection = cmds.polyListComponentConversion(cmds.ls(sl=True, type='float3'), ff=True, tf=True)
+    face_selection = cmds.polyListComponentConversion(
+        cmds.ls(sl=True, type="float3"), ff=True, tf=True
+    )
     if not face_selection:
         return False
     return True
 
 
-def validate(minimum=None, maximum=None, groups_only=False, meshes_only=False, nurbs_curves_only=False, transforms=True,
-             full_path=False):
+def validate(
+    minimum=None,
+    maximum=None,
+    groups_only=False,
+    meshes_only=False,
+    nurbs_curves_only=False,
+    transforms=True,
+    full_path=False,
+):
     selected = cmds.ls(sl=True, long=full_path)
     if not selected:
         return False, "Nothing selected"
@@ -58,12 +73,20 @@ def validate(minimum=None, maximum=None, groups_only=False, meshes_only=False, n
         if not transforms:
             filtered = cmds.ls(selected, type=check)
             if len(filtered) != len(selected):
-                return False, "Selection type Error. Only %s type objects can be selected. (No Transform nodes)" % check
+                return (
+                    False,
+                    "Selection type Error. Only %s type objects can be selected. (No Transform nodes)"
+                    % check,
+                )
         else:
             for node in selected:
                 shapes = functions.get_shapes(node)
                 if not shapes:
-                    return False, "Selection contains objects other than %s (No shape node)" % check
+                    return (
+                        False,
+                        "Selection contains objects other than %s (No shape node)"
+                        % check,
+                    )
                 for shape in shapes:
                     if cmds.objectType(shape) != check:
                         return False, "Selection contains objects other than %s" % check

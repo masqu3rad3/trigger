@@ -7,25 +7,33 @@ from trigger.library import functions
 from trigger.ui.Qt import QtWidgets, QtCore
 from trigger.ui import feedback
 
+
 class SceneSelectLayout(QtWidgets.QHBoxLayout):
     """Layout for selecting objects or nodes from the scene"""
+
     selection_types = ["object", "vertex", "edge", "face", "attribute"]
-    def __init__(self,
-                 selection_type = "object",
-                 single_selection=False,
-                 select_button=True,
-                 add_button=False,
-                 read_only=False,
-                 unique=True,
-                 *args, **kwargs):
+
+    def __init__(
+        self,
+        selection_type="object",
+        single_selection=False,
+        select_button=True,
+        add_button=False,
+        read_only=False,
+        unique=True,
+        *args,
+        **kwargs
+    ):
         super(SceneSelectLayout, self).__init__(*args, **kwargs)
         self.single_selection = single_selection
         self.selection_type = "object"
-        self.set_selection_type(selection_type) # object, vertex, edge, face
+        self.set_selection_type(selection_type)  # object, vertex, edge, face
 
         self.feedback = feedback.Feedback(parent=self)
         self._is_select_button = select_button
-        self._is_add_button = not single_selection or add_button # if its single selection, then there is no add button
+        self._is_add_button = (
+            not single_selection or add_button
+        )  # if its single selection, then there is no add button
 
         self.select_button = None
         self.add_button = None
@@ -46,7 +54,11 @@ class SceneSelectLayout(QtWidgets.QHBoxLayout):
     def set_selection_type(self, selection_type):
         """Set the selection type."""
         if selection_type not in self.selection_types:
-            raise ValueError("Invalid selection type: {0}. Valid values are {1}".format(selection_type, self.selection_types))
+            raise ValueError(
+                "Invalid selection type: {0}. Valid values are {1}".format(
+                    selection_type, self.selection_types
+                )
+            )
         self.selection_type = selection_type
 
     def build(self):
@@ -71,13 +83,20 @@ class SceneSelectLayout(QtWidgets.QHBoxLayout):
         """Validate the selection."""
         selection_type = trigger.library.selection.get_selection_type()
         if selection_type != self.selection_type and self.selection_type != "attribute":
-            self.feedback.pop_info(title="Selection Error", text="Please select a {0}".format(self.selection_type), critical=True)
+            self.feedback.pop_info(
+                title="Selection Error",
+                text="Please select a {0}".format(self.selection_type),
+                critical=True,
+            )
             return None
         if self.selection_type == "attribute":
-            selection = cmds.channelBox('mainChannelBox', query=True, selectedMainAttributes=True)
+            selection = cmds.channelBox(
+                "mainChannelBox", query=True, selectedMainAttributes=True
+            )
         else:
             selection = cmds.ls(selection=True)
         return selection
+
     def select(self):
         """Select objects or nodes from the scene."""
 
@@ -110,4 +129,3 @@ class SceneSelectLayout(QtWidgets.QHBoxLayout):
             return str(text_item).split("; ")
         else:
             return []
-

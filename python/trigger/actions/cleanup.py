@@ -3,6 +3,8 @@ from maya import cmds
 from maya import mel
 
 from trigger.core import filelog
+from trigger.core.action import ActionCore
+
 from trigger.library import functions, connection, shading
 
 from trigger.ui.Qt import QtWidgets  # for progressbar
@@ -17,14 +19,15 @@ ACTION_DATA = {
     "delete_animation_layers": True,
     "merge_similar_file_nodes": True,
     "merge_similar_shaders": True,
-    "clean_root": False
+    "clean_root": False,
 }
 
 
-class Cleanup(object):
-    def __init__(self):
-        super(Cleanup, self).__init__()
+class Cleanup(ActionCore):
+    action_data = ACTION_DATA
 
+    def __init__(self, **kwargs):
+        super(Cleanup, self).__init__(kwargs)
         # user defined variables
         self.deleteUnknownNodes = True
         self.deleteBlindData = True
@@ -38,7 +41,9 @@ class Cleanup(object):
         # class variables
 
     def feed(self, action_data):
-        """Mandatory Method - Feeds the instance with the action data stored in actions session"""
+        """Mandatory Method - Feeds the instance with the action data stored
+        in actions session.
+        """
         self.deleteUnknownNodes = action_data.get("delete_unknown_nodes")
         self.deleteBlindData = action_data.get("delete_blind_data")
         self.deleteUnusedNodes = action_data.get("delete_unused_nodes")
@@ -51,7 +56,8 @@ class Cleanup(object):
     def action(self):
         """Mandatory Method - Execute Action"""
         # everything in this method will be executed automatically.
-        # This method does not accept any arguments. all the user variable must be defined to the instance before
+        # This method does not accept any arguments. all the user variable must
+        # be defined to the instance before
         if self.deleteUnknownNodes:
             self.delete_unknown_nodes()
         if self.deleteBlindData:
@@ -80,8 +86,10 @@ class Cleanup(object):
         Mandatory Method - UI setting definitions
 
         Args:
-            ctrl: (model_ctrl) ctrl object instance of /ui/model_ctrl. Updates UI and Model
-            layout: (QLayout) The layout object from the main ui. All setting widgets should be added to this layout
+            ctrl: (model_ctrl) ctrl object instance of /ui/model_ctrl.
+                                Updates UI and Model
+            layout: (QLayout) The layout object from the main ui.
+                                All setting widgets should be added to this layout
             handler: (actions_session) An instance of the actions_session.
             TRY NOT TO USE HANDLER UNLESS ABSOLUTELY NECESSARY
 
@@ -98,7 +106,6 @@ class Cleanup(object):
         display_layers_cb = QtWidgets.QCheckBox(text="Display Layers")
         animation_layers_cb = QtWidgets.QCheckBox(text="Animation Layers")
         clean_root_cb = QtWidgets.QCheckBox(text="Clean Root")
-        # clean_root_cb.setToolTip("WARNING: Removes everything other than the rig_grp from the root")
         clear_vlay.addWidget(unknown_nodes_cb)
         clear_vlay.addWidget(blind_data_cb)
         clear_vlay.addWidget(delete_unused_nodes_cb)
@@ -111,7 +118,9 @@ class Cleanup(object):
         # optimize section
         optimize_lbl = QtWidgets.QLabel(text="Optimize: ")
         optimize_vlay = QtWidgets.QVBoxLayout()
-        merge_similar_file_nodes_cb = QtWidgets.QCheckBox(text="Merge Similar File Nodes")
+        merge_similar_file_nodes_cb = QtWidgets.QCheckBox(
+            text="Merge Similar File Nodes"
+        )
         merge_similar_shaders_cb = QtWidgets.QCheckBox(text="Merge Similar Shaders")
         optimize_vlay.addWidget(merge_similar_file_nodes_cb)
         optimize_vlay.addWidget(merge_similar_shaders_cb)
@@ -137,7 +146,9 @@ class Cleanup(object):
         animation_layers_cb.stateChanged.connect(lambda x=0: ctrl.update_model())
         clean_root_cb.stateChanged.connect(lambda x=0: ctrl.update_model())
 
-        merge_similar_file_nodes_cb.stateChanged.connect(lambda x=0: ctrl.update_model())
+        merge_similar_file_nodes_cb.stateChanged.connect(
+            lambda x=0: ctrl.update_model()
+        )
         merge_similar_shaders_cb.stateChanged.connect(lambda x=0: ctrl.update_model())
 
     @staticmethod
@@ -189,7 +200,9 @@ class Cleanup(object):
             if len(node_list) > 1:
                 # replace the outgoing connections with first node for the rest
                 for node in node_list[1:]:
-                    connection.replace_connections(node, node_list[0], incoming=False, outgoing=True)
+                    connection.replace_connections(
+                        node, node_list[0], incoming=False, outgoing=True
+                    )
                     history.append(node)
                     functions.delete_object(node)
 
@@ -203,7 +216,9 @@ class Cleanup(object):
         dict_list = []
         for mat in all_materials:
             mat_dict = {"name": mat}
-            connections = cmds.listConnections(mat, source=True, destination=False, plugs=True, connections=True)
+            connections = cmds.listConnections(
+                mat, source=True, destination=False, plugs=True, connections=True
+            )
             if connections:
                 active_plugs = connections[::2]
             else:
@@ -215,8 +230,9 @@ class Cleanup(object):
                     texture_name = cmds.getAttr("%s.fileTextureName" % file_node)
                     file_dict[plug.split(".")[-1]] = texture_name
                 else:
-                    connected_node = cmds.listConnections(plug, source=True, destination=False,
-                                                          skipConversionNodes=True)[0]
+                    connected_node = cmds.listConnections(
+                        plug, source=True, destination=False, skipConversionNodes=True
+                    )[0]
                     file_dict[plug.split(".")[-1]] = connected_node
                 mat_dict["filedata"] = file_dict
             dict_list.append(mat_dict)
@@ -224,12 +240,14 @@ class Cleanup(object):
         # group the shaders sharing the same filedata
         out = {}
         for d in dict_list:
-            out.setdefault(tuple(d['filedata'].items()), []).append(d['name'])
+            out.setdefault(tuple(d["filedata"].items()), []).append(d["name"])
         same_shaders_list = [v for v in out.values() if len(v) > 1]
 
         for same in same_shaders_list:
             selection_list = []
-            shading_engines = cmds.listConnections(same, source=False, destination=True, type="shadingEngine")
+            shading_engines = cmds.listConnections(
+                same, source=False, destination=True, type="shadingEngine"
+            )
             for _ in shading_engines:
                 selection_list.extend(cmds.sets(shading_engines, query=True))
             cmds.sets(selection_list, edit=True, forceElement=shading_engines[0])
@@ -238,11 +256,14 @@ class Cleanup(object):
         for same in same_shaders_list:
             total_shader_count += len(same)
         mel.eval('hyperShadePanelMenuCommand("hyperShadePanel1", "deleteUnusedNodes");')
-        log.info("%s shaders merged into %s shaders" % (total_shader_count, len(same_shaders_list)))
+        log.info(
+            "%s shaders merged into %s shaders"
+            % (total_shader_count, len(same_shaders_list))
+        )
 
     @staticmethod
     def clean_root():
         log.warning("Deleting everything in the root other than the rig_grp")
-        exceptions = [u'persp', u'top', u'front', u'side', u'rig_grp']
+        exceptions = ["persp", "top", "front", "side", "rig_grp"]
         morts = [x for x in cmds.ls(assemblies=True) if x not in exceptions]
         functions.delete_object(morts)

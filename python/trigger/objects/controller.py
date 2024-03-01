@@ -15,11 +15,7 @@ log = filelog.Filelog(logname=__name__, filename="trigger_log")
 
 
 class Controller(object):
-    side_dict = {
-        "center": [17, 21, 24],
-        "left": [6, 18, 29],
-        "right": [13, 20, 31]
-    }
+    side_dict = {"center": [17, 21, 24], "left": [6, 18, 29], "right": [13, 20, 31]}
     side_enum_resolve = {
         "center": 0,
         "left": 1,
@@ -29,7 +25,7 @@ class Controller(object):
         "r": 2,
         "C": 0,
         "L": 1,
-        "R": 2
+        "R": 2,
     }
     side_enums = {
         0: "center",
@@ -42,20 +38,31 @@ class Controller(object):
         2: "tertiary",
     }
     lockedShapes = ["FkikSwitch"]
-    def __init__(self, name="cont", shape="Circle", scale=(1, 1, 1), normal=(0, 1, 0), pos=None, side=None, tier=None):
 
-
-
-
+    def __init__(
+        self,
+        name="cont",
+        shape="Circle",
+        scale=(1, 1, 1),
+        normal=(0, 1, 0),
+        pos=None,
+        side=None,
+        tier=None,
+        line_width=-1,
+    ):
         self._offsets = []
         self.icon_handler = Icon()
         self._shape = shape
         if cmds.objExists(name):
             self._name = name
         else:
-            self._name = \
-            self.icon_handler.create_icon(icon_type=self._shape, icon_name=name, scale=scale, normal=normal,
-                                          location=pos)[0]
+            self._name = self.icon_handler.create_icon(
+                icon_type=self._shape,
+                icon_name=name,
+                scale=scale,
+                normal=normal,
+                location=pos,
+            )[0]
 
         self._side = side or self._get_side_from_node()
         self._tier = tier or self._get_tier_from_node()
@@ -63,6 +70,7 @@ class Controller(object):
         self.add_custom_attributes()
 
         self.set_side(self._side, tier=self._tier)
+        self._line_width = line_width
         # if side:
         #     self.set_side(side, tier=tier)
         #     self._side = side
@@ -71,7 +79,14 @@ class Controller(object):
         #     self._side = "center"
         #     self._tier = tier or "primary"
 
+    @property
+    def line_width(self):
+        return self._line_width
 
+    @line_width.setter
+    def line_width(self, value):
+        cmds.setAttr("{}.lineWidth".format(self.name), value)
+        self._line_width = value
 
     def _get_side_from_node(self):
         """Resolve the side from controller in the scene."""
@@ -135,8 +150,13 @@ class Controller(object):
     @keepselection
     def set_shape(self, shape, scale=(1, 1, 1), normal=(0, 1, 0)):
         if self._shape in self.lockedShapes:
-            log.error("set_shape argument is not valid for locked shapes. Locked Shapes are %s" % self.lockedShapes)
-        new_shape, _ = self.icon_handler.create_icon(icon_type=shape, scale=scale, normal=normal)
+            log.error(
+                "set_shape argument is not valid for locked shapes. Locked Shapes are %s"
+                % self.lockedShapes
+            )
+        new_shape, _ = self.icon_handler.create_icon(
+            icon_type=shape, scale=scale, normal=normal
+        )
         replace_curve(self._name, new_shape, snap=True)
         cmds.delete(new_shape)
 
@@ -149,7 +169,9 @@ class Controller(object):
         self.freeze()
 
     def freeze(self, rotate=True, scale=True, translate=True):
-        cmds.makeIdentity(self.name, apply=True, rotate=rotate, scale=scale, translate=translate)
+        cmds.makeIdentity(
+            self.name, apply=True, rotate=rotate, scale=scale, translate=translate
+        )
 
     def set_side(self, side, tier=None):
         if side.lower() == "c":
@@ -227,7 +249,11 @@ class Controller(object):
         Returns:
 
         """
-        vis_attr = "%s.v" % self.name if up_level is None else "%s.v" % self.get_offsets()[up_level]
+        vis_attr = (
+            "%s.v" % self.name
+            if up_level is None
+            else "%s.v" % self.get_offsets()[up_level]
+        )
         cmds.setAttr(vis_attr, edit=True, keyable=True, lock=False)
         cmds.connectAttr(driver_attr, vis_attr, force=True)
         if lock_and_hide:
@@ -239,24 +265,40 @@ class Controller(object):
         for ch in ["Translate", "Rotate", "Scale"]:
             attr_name = "default{}".format(ch)
             if not cmds.attributeQuery(attr_name, node=self.name, exists=True):
-                cmds.addAttr(self.name,
-                             longName=attr_name,
-                             attributeType="double3"
-                             )
+                cmds.addAttr(self.name, longName=attr_name, attributeType="double3")
                 for axis in "XYZ":
                     _value = 1.0 if ch == "Scale" else 0.0
-                    cmds.addAttr(self.name,
-                                 longName="{}{}".format(attr_name, axis),
-                                 attributeType="double",
-                                 defaultValue=_value,
-                                 parent=attr_name
-                                 )
-        attribute.create_attribute(self.name, attr_name="side", attr_type="enum", enum_list="center:left:right", default_value=0, keyable=False, display=False)
-        attribute.create_attribute(self.name, attr_name="tier", attr_type="enum", enum_list="primary:secondary:tertiary", default_value=0, keyable=False, display=False)
+                    cmds.addAttr(
+                        self.name,
+                        longName="{}{}".format(attr_name, axis),
+                        attributeType="double",
+                        defaultValue=_value,
+                        parent=attr_name,
+                    )
+        attribute.create_attribute(
+            self.name,
+            attr_name="side",
+            attr_type="enum",
+            enum_list="center:left:right",
+            default_value=0,
+            keyable=False,
+            display=False,
+        )
+        attribute.create_attribute(
+            self.name,
+            attr_name="tier",
+            attr_type="enum",
+            enum_list="primary:secondary:tertiary",
+            default_value=0,
+            keyable=False,
+            display=False,
+        )
 
     def set_defaults(self):
         """Grabs the current values of the controller and sets them as default values."""
         for ch in ["Translate", "Rotate", "Scale"]:
             for axis in "XYZ":
-                cmds.setAttr("{}.default{}{}".format(self.name, ch, axis),
-                             cmds.getAttr("{}.{}{}".format(self.name, ch.lower(), axis)))
+                cmds.setAttr(
+                    "{}.default{}{}".format(self.name, ch, axis),
+                    cmds.getAttr("{}.{}{}".format(self.name, ch.lower(), axis)),
+                )

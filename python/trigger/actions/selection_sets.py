@@ -1,9 +1,7 @@
-"""Boiler Plate template for actions"""
-from maya import cmds
+"""Define and create selection sets."""
 
-from trigger.core import io
 from trigger.core import filelog
-from trigger.core.decorators import tracktime
+from trigger.core.action import ActionCore
 
 from trigger.library import selection
 
@@ -34,11 +32,13 @@ ACTION_DATA = {
     "definitions": [],
 }
 
-# Name of the class MUST be the capitalized version of file name. eg. morph.py => Morph, split_shapes.py => Split_shapes
-class Selection_sets(object):
-    def __init__(self, *args, **kwargs):
-        super(Selection_sets, self).__init__()
 
+# Name of the class MUST be the capitalized version of file name. eg. morph.py => Morph, split_shapes.py => Split_shapes
+class Selection_sets(ActionCore):
+    action_data = ACTION_DATA
+
+    def __init__(self, **kwargs):
+        super(Selection_sets, self).__init__(kwargs)
         # user defined variables
         self.setDefinitions = []
 
@@ -83,7 +83,7 @@ class Selection_sets(object):
         definitions_lay = QtWidgets.QVBoxLayout()
         layout.addRow(definitions_lbl, definitions_lay)
 
-        add_new_definition_btn = QtWidgets.QPushButton(text= "Add New Set")
+        add_new_definition_btn = QtWidgets.QPushButton(text="Add New Set")
         definitions_lay.addWidget(add_new_definition_btn)
 
         self.id = 0
@@ -108,7 +108,9 @@ class Selection_sets(object):
             def_formlayout.addRow(def_name_lbl, def_name_le)
 
             def_members_lbl = QtWidgets.QLabel(text="Members")
-            def_members_listBox = custom_widgets.ListBoxLayout(buttonAdd=False, buttonGet=True, buttonRename=False, buttonRemove=True)
+            def_members_listBox = custom_widgets.ListBoxLayout(
+                buttonAdd=False, buttonGet=True, buttonRename=False, buttonRemove=True
+            )
             def_formlayout.addRow(def_members_lbl, def_members_listBox)
 
             def_remove_lbl = QtWidgets.QLabel(text="")
@@ -116,7 +118,7 @@ class Selection_sets(object):
             def_formlayout.addRow(def_remove_lbl, def_remove_pb)
 
             id_lbl = QtWidgets.QLabel("")
-            id_separator_lbl = QtWidgets.QLabel("-"*100)
+            id_separator_lbl = QtWidgets.QLabel("-" * 100)
             def_formlayout.addRow(id_lbl, id_separator_lbl)
 
             definitions_lay.insertLayout(0, def_formlayout)
@@ -134,19 +136,31 @@ class Selection_sets(object):
 
             # signals
             def_name_le.editingFinished.connect(update_model)
-            def_members_listBox.viewWidget.model().rowsInserted.connect(update_model) # catch the signal from the list
-            def_members_listBox.viewWidget.model().rowsRemoved.connect(update_model) # catch the signal from the list
-            def_members_listBox.buttonClear.clicked.connect(update_model) # catch the signal from the list
+            def_members_listBox.viewWidget.model().rowsInserted.connect(
+                update_model
+            )  # catch the signal from the list
+            def_members_listBox.viewWidget.model().rowsRemoved.connect(
+                update_model
+            )  # catch the signal from the list
+            def_members_listBox.buttonClear.clicked.connect(
+                update_model
+            )  # catch the signal from the list
             # def_members_listBox.viewWidget.model().modelReset.connect(update_model) # catch the signal from the list
             def_members_listBox.buttonGet.clicked.connect(
-                lambda _=0, widget=def_members_listBox: get_selected(widget, mesh_only=False)
+                lambda _=0, widget=def_members_listBox: get_selected(
+                    widget, mesh_only=False
+                )
             )
-            def_remove_pb.clicked.connect(lambda _=0, lay=def_formlayout, uid=self.id: delete_definition(lay, uid))
+            def_remove_pb.clicked.connect(
+                lambda _=0, lay=def_formlayout, uid=self.id: delete_definition(lay, uid)
+            )
 
             update_model()
 
         def get_selected(list_box_layout, mesh_only=True):
-            sel, msg = selection.validate(minimum=1, maximum=None, meshes_only=False, transforms=False)
+            sel, msg = selection.validate(
+                minimum=1, maximum=None, meshes_only=False, transforms=False
+            )
             if sel:
                 # remove the items that is already in there
                 existing_list = list_box_layout.listItemNames()
@@ -154,7 +168,9 @@ class Selection_sets(object):
                 list_box_layout.viewWidget.addItems(refined_sel)
                 update_model()
             else:
-                feedback.Feedback().pop_info(title="Selection Error", text=msg, critical=True)
+                feedback.Feedback().pop_info(
+                    title="Selection Error", text=msg, critical=True
+                )
 
         def update_model():
             definitions = []
@@ -167,13 +183,13 @@ class Selection_sets(object):
             # feed the model with the definitions
             ctrl.model.edit_action(ctrl.action_name, "definitions", definitions)
 
-
         def update_ui():
             data = ctrl.model.query_action(ctrl.action_name, "definitions")
             for definition in data:
-                add_new_definition(set_name=definition["name"],
-                                   members=definition["members"],
-                                   )
+                add_new_definition(
+                    set_name=definition["name"],
+                    members=definition["members"],
+                )
 
         def delete_definition(layout_item, uid):
             for item in self.definition_widgets:

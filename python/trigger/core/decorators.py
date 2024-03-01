@@ -3,6 +3,7 @@ from functools import wraps
 from maya import cmds
 import logging
 from maya import mel
+
 # import logging
 import traceback
 
@@ -10,6 +11,8 @@ from trigger.core import filelog
 
 LOG = filelog.Filelog(logname=__name__, filename="trigger_log")
 logger = logging.getLogger(__name__)
+
+
 def logerror(func):
     """Save exceptions into log file."""
 
@@ -24,9 +27,11 @@ def logerror(func):
 
     return _exception
 
+
 def undo(func):
-    """ Puts the wrapped `func` into a single Maya Undo action, then
-        undoes it when the function enters the finally: block """
+    """Puts the wrapped `func` into a single Maya Undo action, then
+    undoes it when the function enters the finally: block"""
+
     @wraps(func)
     def _undofunc(*args, **kwargs):
         cmds.undoInfo(ock=True)
@@ -42,6 +47,7 @@ def undo(func):
             return result
 
     return _undofunc
+
 
 def keepselection(func):
     """Decorator method to keep the current selection. Useful where
@@ -59,6 +65,7 @@ def keepselection(func):
             cmds.select(original_selection)
 
     return _keepfunc
+
 
 def keepframe(func):
     """
@@ -80,12 +87,14 @@ def keepframe(func):
 
     return _keepfunc
 
+
 def tracktime(func):
     """Tracks time for the given function."""
 
     @wraps(func)
     def _tracktime(*args, **kwargs):
         import time
+
         start = time.time()
         try:
             return func(*args, **kwargs)
@@ -97,6 +106,7 @@ def tracktime(func):
 
     return _tracktime
 
+
 def windowsOff(func):
     """Turn off the editors."""
 
@@ -106,7 +116,7 @@ def windowsOff(func):
             "nodeEditorPanel1Window": cmds.NodeEditorWindow,
             "hyperShadePanel1Window": cmds.HypershadeWindow,
             "blendShapePanel1Window": cmds.BlendShapeEditor,
-            "graphEditor1Window": cmds.GraphEditor
+            "graphEditor1Window": cmds.GraphEditor,
         }
         open_windows = cmds.lsUI(type="window")
         # close the windows
@@ -127,6 +137,7 @@ def windowsOff(func):
 
     return _windows_off
 
+
 def suppress_warnings(func):
     """Suppress scripteditor warnings."""
 
@@ -141,4 +152,5 @@ def suppress_warnings(func):
         except Exception:  # pylint: disable=broad-except
             pass
         return returned  # pylint: disable=lost-exception
+
     return _suppress

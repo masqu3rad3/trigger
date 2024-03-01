@@ -6,10 +6,11 @@ import platform
 import subprocess
 
 from trigger.core import filelog
+from trigger.core.action import ActionCore
+
 from trigger.core import dynamic_import as dyn  # NEVER REMOVE THIS LINE!!!
 
 from trigger.ui.Qt import QtWidgets, QtGui  # for progressbar
-from trigger.ui import custom_widgets
 from trigger.ui.widgets.browser import BrowserButton, FileLineEdit
 
 log = filelog.Filelog(logname=__name__, filename="trigger_log")
@@ -21,9 +22,12 @@ ACTION_DATA = {
     "commands": [],
 }
 
-class Script(object):
-    def __init__(self):
-        super(Script, self).__init__()
+
+class Script(ActionCore):
+    action_data = ACTION_DATA
+
+    def __init__(self, **kwargs):
+        super(Script, self).__init__(kwargs)
         self.filePath = None
         self.importAs = None
         self.commands = []
@@ -41,14 +45,14 @@ class Script(object):
             # if import as not defined, use file name instead
             if not self.importAs:
                 self.importAs = os.path.splitext(os.path.basename(self.filePath))[0]
-            exec("%s=dyn.dynamic_import('%s')" %(self.importAs, self.filePath))
+            exec("%s=dyn.dynamic_import('%s')" % (self.importAs, self.filePath))
 
         ## run the commands
         log.warning(self.commands)
         for command in self.commands:
             if "\\n" in command:
                 command = command.replace("\\n", "\n")
-            log.info("Executing command: %s" %command)
+            log.info("Executing command: %s" % command)
             exec(command)
 
     def save_action(self):
@@ -56,15 +60,24 @@ class Script(object):
         pass
 
     def ui(self, ctrl, layout, *args, **kwargs):
-
         file_path_lbl = QtWidgets.QLabel(text="File Path:")
         file_path_hLay = QtWidgets.QHBoxLayout()
         file_path_le = FileLineEdit()
         file_path_hLay.addWidget(file_path_le)
         edit_file_pb = QtWidgets.QPushButton(text="Edit")
         file_path_hLay.addWidget(edit_file_pb)
-        browse_path_pb = BrowserButton(mode="openFile", update_widget=file_path_le, filterExtensions=["Python Files (*.py)"], overwrite_check=False)
-        save_path_pb = BrowserButton(mode="saveFile", update_widget=file_path_le, filterExtensions=["Python Files (*.py)"], overwrite_check=False)
+        browse_path_pb = BrowserButton(
+            mode="openFile",
+            update_widget=file_path_le,
+            filterExtensions=["Python Files (*.py)"],
+            overwrite_check=False,
+        )
+        save_path_pb = BrowserButton(
+            mode="saveFile",
+            update_widget=file_path_le,
+            filterExtensions=["Python Files (*.py)"],
+            overwrite_check=False,
+        )
         file_path_hLay.addWidget(browse_path_pb)
         layout.addRow(file_path_lbl, file_path_hLay)
 
@@ -108,8 +121,8 @@ class Script(object):
         import_as_le.textChanged.connect(lambda x=0: ctrl.update_model())
         edit_file_pb.clicked.connect(edit_file)
         browse_path_pb.clicked.connect(lambda x=0: ctrl.update_model())
-        browse_path_pb.clicked.connect(file_path_le.validate)  # to validate on initial browse result
+        browse_path_pb.clicked.connect(
+            file_path_le.validate
+        )  # to validate on initial browse result
         save_path_pb.clicked.connect(lambda x=0: ctrl.update_model())
         commands_le.textEdited.connect(lambda x=0: ctrl.update_model())
-
-

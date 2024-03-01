@@ -8,8 +8,16 @@ from trigger.ui.widgets.browser import BrowserButton
 
 # TODO move each widget into separate filen under trigger.ui.widgets
 
+
 class ValidatedLineEdit(QtWidgets.QLineEdit):
-    def __init__(self, connected_widgets=None, allowSpaces=False, allowDirectory=False, *args, **kwargs):
+    def __init__(
+        self,
+        connected_widgets=None,
+        allowSpaces=False,
+        allowDirectory=False,
+        *args,
+        **kwargs
+    ):
         """Custom QLineEdit widget to validate entered values"""
         super(ValidatedLineEdit, self).__init__(*args, **kwargs)
         self.allowSpaces = allowSpaces
@@ -34,7 +42,9 @@ class ValidatedLineEdit(QtWidgets.QLineEdit):
     def keyPressEvent(self, *args, **kwargs):
         super(ValidatedLineEdit, self).keyPressEvent(*args, **kwargs)
         current_text = self.text()
-        if not self.string_value(current_text, allow_spaces=self.allowSpaces, directory=self.allowDirectory):
+        if not self.string_value(
+            current_text, allow_spaces=self.allowSpaces, directory=self.allowDirectory
+        ):
             self.setStyleSheet("background-color: rgb(40,40,40); color: red")
             if self.connected_widgets:
                 for wid in self.connected_widgets:
@@ -44,13 +54,14 @@ class ValidatedLineEdit(QtWidgets.QLineEdit):
             if self.connected_widgets:
                 for wid in self.connected_widgets:
                     wid.setEnabled(True)
+
     @staticmethod
     def string_value(input_text, allow_spaces=False, directory=False):
         """Check the text for illegal characters."""
         allow_spaces = " " if allow_spaces else ""
         directory = "/\\\\:" if directory else ""
 
-        pattern = r'^[:A-Za-z0-9%s%s.A_-]*$' % (directory, allow_spaces)
+        pattern = r"^[:A-Za-z0-9%s%s.A_-]*$" % (directory, allow_spaces)
 
         if re.match(pattern, input_text):
             return True
@@ -60,18 +71,23 @@ class ValidatedLineEdit(QtWidgets.QLineEdit):
 
 class ListBoxLayout(QtWidgets.QVBoxLayout):
     """Easy to manage listwidget with preset buttons"""
-    def __init__(self, buttonsPosition="right",
-                 alignment=None,
-                 buttonAdd=False,
-                 buttonNew=True,
-                 buttonRename=True,
-                 buttonGet=True,
-                 buttonUp=False,
-                 buttonDown=False,
-                 buttonRemove=True,
-                 buttonClear=True,
-                 multiSelect=True,
-                 *args, **kwargs):
+
+    def __init__(
+        self,
+        buttonsPosition="right",
+        alignment=None,
+        buttonAdd=False,
+        buttonNew=True,
+        buttonRename=True,
+        buttonGet=True,
+        buttonUp=False,
+        buttonDown=False,
+        buttonRemove=True,
+        buttonClear=True,
+        multiSelect=True,
+        *args,
+        **kwargs
+    ):
         super(ListBoxLayout, self).__init__(*args, **kwargs)
         self.buttonsPosition = buttonsPosition
         self.alignment = alignment
@@ -104,21 +120,29 @@ class ListBoxLayout(QtWidgets.QVBoxLayout):
             self.buttonsStretchLay = QtWidgets.QHBoxLayout()
             self.buttonslayout = QtWidgets.QHBoxLayout()
         else:
-            raise Exception ("invalid value for buttonsPosition. Valid values are 'top', 'bottom', 'left', 'right'")
+            raise Exception(
+                "invalid value for buttonsPosition. Valid values are 'top', 'bottom', 'left', 'right'"
+            )
         self.addLayout(self.masterLayout)
         if self.alignment == "start":
-            spacer = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+            spacer = QtWidgets.QSpacerItem(
+                20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding
+            )
             self.buttonsStretchLay.addLayout(self.buttonslayout)
             self.buttonsStretchLay.addItem(spacer)
         elif self.alignment == "end":
-            spacer = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+            spacer = QtWidgets.QSpacerItem(
+                20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding
+            )
             self.buttonsStretchLay.addItem(spacer)
             self.buttonsStretchLay.addLayout(self.buttonslayout)
         else:
             self.buttonsStretchLay.addLayout(self.buttonslayout)
 
         if self.isMultiSelect:
-            self.viewWidget.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
+            self.viewWidget.setSelectionMode(
+                QtWidgets.QAbstractItemView.ExtendedSelection
+            )
 
         if self.isButtonAdd:
             self.buttonAdd = QtWidgets.QPushButton(text="Add")
@@ -163,16 +187,22 @@ class ListBoxLayout(QtWidgets.QVBoxLayout):
 
     def _on_new(self):
         w = QtWidgets.QWidget()
-        newitem, ok = QtWidgets.QInputDialog.getText(w, "New Item", "Enter new item name:")
+        newitem, ok = QtWidgets.QInputDialog.getText(
+            w, "New Item", "Enter new item name:"
+        )
         if ok:
             self.viewWidget.addItem(str(newitem))
 
     def _on_rename(self):
-        all_selected_rows = [self.viewWidget.row(item) for item in self.viewWidget.selectedItems()]
+        all_selected_rows = [
+            self.viewWidget.row(item) for item in self.viewWidget.selectedItems()
+        ]
         if not all_selected_rows:
             return
         w = QtWidgets.QWidget()
-        newname, ok = QtWidgets.QInputDialog.getText(w, "Rename Item", "Enter new name:")
+        newname, ok = QtWidgets.QInputDialog.getText(
+            w, "Rename Item", "Enter new name:"
+        )
         if ok:
             for row in all_selected_rows:
                 self.viewWidget.item(row).setText(newname)
@@ -183,7 +213,7 @@ class ListBoxLayout(QtWidgets.QVBoxLayout):
             return
         if not row == 0:
             current_list = self.listItemNames()
-            current_list.insert(row-1, current_list.pop(row))
+            current_list.insert(row - 1, current_list.pop(row))
             self.viewWidget.clear()
             self.viewWidget.addItems(current_list)
             self.viewWidget.setCurrentRow(row - 1)
@@ -193,8 +223,8 @@ class ListBoxLayout(QtWidgets.QVBoxLayout):
         if row == -1:
             return
         current_list = self.listItemNames()
-        if not row == len(current_list)-1:
-            current_list.insert(row+1, current_list.pop(row))
+        if not row == len(current_list) - 1:
+            current_list.insert(row + 1, current_list.pop(row))
             self.viewWidget.clear()
             self.viewWidget.addItems(current_list)
             self.viewWidget.setCurrentRow(row + 1)
@@ -202,7 +232,9 @@ class ListBoxLayout(QtWidgets.QVBoxLayout):
             self.viewWidget.setCurrentRow(row)
 
     def _on_remove(self):
-        all_selected_rows = [self.viewWidget.row(item) for item in self.viewWidget.selectedItems()]
+        all_selected_rows = [
+            self.viewWidget.row(item) for item in self.viewWidget.selectedItems()
+        ]
 
         for row in reversed(all_selected_rows):
             self.viewWidget.takeItem(row)
@@ -213,7 +245,6 @@ class ListBoxLayout(QtWidgets.QVBoxLayout):
         else:
             self.buttonslayout.insertWidget(insert, buttonwidget)
 
-
     def removeButton(self, buttonwidget):
         buttonwidget.setEnabled(False)
         buttonwidget.deleteLater()
@@ -222,29 +253,36 @@ class ListBoxLayout(QtWidgets.QVBoxLayout):
         return [self.viewWidget.item(index) for index in range(self.viewWidget.count())]
 
     def listItemNames(self):
-        return [self.viewWidget.item(index).text() for index in range(self.viewWidget.count())]
+        return [
+            self.viewWidget.item(index).text()
+            for index in range(self.viewWidget.count())
+        ]
+
 
 class LineEditBoxLayout(ListBoxLayout):
-    def __init__(self, buttonNew=False, buttonRename=False, buttonRemove=False, buttonClear=False, *args, **kwargs):
-        # buttonsPosition = "left"
-        # alignment=None
-        # # buttonAdd=False
-        # # buttonNew=True
-        # # buttonRename=True
-        # # buttonGet=True
-        # # buttonUp=False
-        # # buttonDown=False
-        # # buttonRemove=True
-        # # buttonClear=True
-        super(LineEditBoxLayout, self).__init__(buttonNew=buttonNew,
-                                                buttonRename=buttonRename,
-                                                buttonRemove=buttonRemove,
-                                                buttonClear=buttonClear,
-                                                multiSelect=False, *args, **kwargs)
+    def __init__(
+        self,
+        buttonNew=False,
+        buttonRename=False,
+        buttonRemove=False,
+        buttonClear=False,
+        *args,
+        **kwargs
+    ):
+        super(LineEditBoxLayout, self).__init__(
+            buttonNew=buttonNew,
+            buttonRename=buttonRename,
+            buttonRemove=buttonRemove,
+            buttonClear=buttonClear,
+            multiSelect=False,
+            *args,
+            **kwargs
+        )
 
     def init_widget(self):
         # override the widget with tree widget
         self.viewWidget = QtWidgets.QLineEdit()
+
 
 class TreeBoxLayout(ListBoxLayout):
     def __init__(self, *args, **kwargs):
@@ -256,6 +294,10 @@ class TreeBoxLayout(ListBoxLayout):
     def init_widget(self):
         # override the widget with tree widget
         self.viewWidget = QtWidgets.QTreeWidget()
+        # make is sortable
+        self.viewWidget.setSortingEnabled(True)
+        # sort alphabetically
+        self.viewWidget.sortItems(0, QtCore.Qt.AscendingOrder)
 
     def _on_new(self):
         dialog = QtWidgets.QDialog()
@@ -274,11 +316,17 @@ class TreeBoxLayout(ListBoxLayout):
         form_layout.addRow(value_lbl, value_listbox)
 
         button_box = QtWidgets.QDialogButtonBox(dialog)
-        button_box.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel | QtWidgets.QDialogButtonBox.Ok)
+        button_box.setStandardButtons(
+            QtWidgets.QDialogButtonBox.Cancel | QtWidgets.QDialogButtonBox.Ok
+        )
         master_layout.addWidget(button_box)
 
         # Signals
-        button_box.accepted.connect(lambda x=0: self._add_tree_item(key_le.text(), value_listbox.listItemNames()))
+        button_box.accepted.connect(
+            lambda x=0: self._add_tree_item(
+                key_le.text(), value_listbox.listItemNames()
+            )
+        )
         button_box.accepted.connect(dialog.close)
         button_box.rejected.connect(dialog.close)
 
@@ -286,6 +334,20 @@ class TreeBoxLayout(ListBoxLayout):
 
     def _add_tree_item(self, key, value_list):
         topLevel = QtWidgets.QTreeWidgetItem([key])
+        # if the topLevel item exists, only update the value list
+        for item in range(self.viewWidget.topLevelItemCount()):
+            item = self.viewWidget.topLevelItem(item)
+            if item.text(0) == key:
+                # get the existing children
+                children = [item.child(i) for i in range(item.childCount())]
+                item.addChildren(
+                    [
+                        QtWidgets.QTreeWidgetItem([value])
+                        for value in value_list
+                        if value not in children
+                    ]
+                )
+                return
         self.viewWidget.addTopLevelItem(topLevel)
         children = [QtWidgets.QTreeWidgetItem([value]) for value in value_list]
         topLevel.addChildren(children)
@@ -295,7 +357,9 @@ class TreeBoxLayout(ListBoxLayout):
         if not all_selected_items:
             return
         w = QtWidgets.QWidget()
-        newname, ok = QtWidgets.QInputDialog.getText(w, "Rename Item", "Enter new name:")
+        newname, ok = QtWidgets.QInputDialog.getText(
+            w, "Rename Item", "Enter new name:"
+        )
         if ok:
             for x in self.viewWidget.selectedItems():
                 x.setText(0, newname)
@@ -313,10 +377,19 @@ class TreeBoxLayout(ListBoxLayout):
         return_dict = {}
         top_items = self.get_children(self.viewWidget.invisibleRootItem())
         for item in top_items:
-            return_dict[item.text(0)] = [data.text(0) for data in self.get_children(item)]
+            return_dict[item.text(0)] = [
+                data.text(0) for data in self.get_children(item)
+            ]
+
 
 class TableBoxLayout(ListBoxLayout):
-    def __init__(self, labels=["Driver", "Start", "End", "Driven", "Start", "End"], buttonDuplicate=True,  *args, **kwargs):
+    def __init__(
+        self,
+        labels=["Driver", "Start", "End", "Driven", "Start", "End"],
+        buttonDuplicate=True,
+        *args,
+        **kwargs
+    ):
         self.labels = labels
         self.isButtonDuplicate = buttonDuplicate
         super(TableBoxLayout, self).__init__(*args, **kwargs)
@@ -339,10 +412,14 @@ class TableBoxLayout(ListBoxLayout):
         self.viewWidget.setHorizontalHeaderLabels(self.labels)
 
         self.viewWidget.horizontalHeader().setMinimumSectionSize(60)
-        self.viewWidget.horizontalHeader().setSectionResizeMode(0, QtWidgets.QHeaderView.Stretch)
+        self.viewWidget.horizontalHeader().setSectionResizeMode(
+            0, QtWidgets.QHeaderView.Stretch
+        )
         self.viewWidget.horizontalHeader().resizeSection(1, 50)
         self.viewWidget.horizontalHeader().resizeSection(2, 50)
-        self.viewWidget.horizontalHeader().setSectionResizeMode(3, QtWidgets.QHeaderView.Stretch)
+        self.viewWidget.horizontalHeader().setSectionResizeMode(
+            3, QtWidgets.QHeaderView.Stretch
+        )
         self.viewWidget.horizontalHeader().resizeSection(4, 50)
         self.viewWidget.horizontalHeader().resizeSection(5, 50)
 
@@ -354,7 +431,11 @@ class TableBoxLayout(ListBoxLayout):
         for row in all_selected_rows:
             new_row = self._on_new()
             for column in range(column_count):
-                self.viewWidget.setItem(new_row, column, QtWidgets.QTableWidgetItem(self.viewWidget.item(row, column)))
+                self.viewWidget.setItem(
+                    new_row,
+                    column,
+                    QtWidgets.QTableWidgetItem(self.viewWidget.item(row, column)),
+                )
 
     def _on_new(self):
         """Adds a new row and returns the new row number"""
@@ -366,7 +447,11 @@ class TableBoxLayout(ListBoxLayout):
         row_count = self.viewWidget.rowCount()
         if row_count:
             feedback_h = feedback.Feedback()
-            q = feedback_h.pop_question(title="Are you sure?", text="Are you sure you want to clear all items?\n There is no undo for this action.", buttons=["yes", "cancel"])
+            q = feedback_h.pop_question(
+                title="Are you sure?",
+                text="Are you sure you want to clear all items?\n There is no undo for this action.",
+                buttons=["yes", "cancel"],
+            )
             if q == "yes":
                 for x in reversed(range(self.viewWidget.rowCount())):
                     self.viewWidget.removeRow(x)
@@ -380,30 +465,34 @@ class TableBoxLayout(ListBoxLayout):
 
     def _on_move_down(self):
         row = self.viewWidget.currentRow()
-        column = self.viewWidget.currentColumn();
-        if row < self.viewWidget.rowCount()-1:
-            self.viewWidget.insertRow(row+2)
+        column = self.viewWidget.currentColumn()
+        if row < self.viewWidget.rowCount() - 1:
+            self.viewWidget.insertRow(row + 2)
             for i in range(self.viewWidget.columnCount()):
-               self.viewWidget.setItem(row+2,i,self.viewWidget.takeItem(row,i))
-               self.viewWidget.setCurrentCell(row+2,column)
+                self.viewWidget.setItem(row + 2, i, self.viewWidget.takeItem(row, i))
+                self.viewWidget.setCurrentCell(row + 2, column)
             self.viewWidget.removeRow(row)
 
     def _on_move_up(self):
         row = self.viewWidget.currentRow()
-        column = self.viewWidget.currentColumn();
+        column = self.viewWidget.currentColumn()
         if row > 0:
-            self.viewWidget.insertRow(row-1)
+            self.viewWidget.insertRow(row - 1)
             for i in range(self.viewWidget.columnCount()):
-               self.viewWidget.setItem(row-1,i,self.viewWidget.takeItem(row+1,i))
-               self.viewWidget.setCurrentCell(row-1,column)
-            self.viewWidget.removeRow(row+1)
+                self.viewWidget.setItem(
+                    row - 1, i, self.viewWidget.takeItem(row + 1, i)
+                )
+                self.viewWidget.setCurrentCell(row - 1, column)
+            self.viewWidget.removeRow(row + 1)
 
     def set_data(self, data_list):
         self._on_clear()
         for row, mapping_data in enumerate(data_list):
             self.viewWidget.insertRow(row)
             for column, cell_data in enumerate(mapping_data):
-                self.viewWidget.setItem(row, column, QtWidgets.QTableWidgetItem(str(cell_data)))
+                self.viewWidget.setItem(
+                    row, column, QtWidgets.QTableWidgetItem(str(cell_data))
+                )
 
     def get_data(self):
         row_count = self.viewWidget.rowCount()
@@ -420,14 +509,16 @@ class TableBoxLayout(ListBoxLayout):
             data.append(row_data)
         return data
 
+
 class ProgressListWidget(QtWidgets.QListWidget):
     """Custom QListWidget which the rows can be color coded with simple commands"""
+
     colorDictionary = {
         "disabled": QtGui.QColor(80, 80, 80, 255),
         "enabled": QtGui.QColor(255, 255, 255, 255),
         "active": QtGui.QColor(255, 255, 0, 255),
         "success": QtGui.QColor(0, 255, 0, 255),
-        "error": QtGui.QColor(255, 0, 0, 255)
+        "error": QtGui.QColor(255, 0, 0, 255),
     }
 
     def __init__(self):
@@ -435,7 +526,7 @@ class ProgressListWidget(QtWidgets.QListWidget):
         font = QtGui.QFont()
         font.setPointSize(12)
         font.setBold(False)
-        font.setWeight(150)
+        # font.setWeight(150)
         font.setStrikeOut(False)
         self.setFont(font)
         self.setMouseTracking(False)

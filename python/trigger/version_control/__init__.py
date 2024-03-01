@@ -1,7 +1,13 @@
+"""Choose the version control system to use."""
+import sys
+
 try:
-    from trigger.version_control import rbl_shotgrid as controller
-    from trigger.version_control.vcs import Vcs
-    _ = Vcs()
-    _.controller = "rbl_shotgrid"
-except ImportError:
+    if sys.version_info[0] < 3:
+        controller = None
+    else:
+        from trigger.version_control.tik_manager import core
+        controller = core.VCS
+
+# except ImportError or SyntaxError:
+except (ImportError, RuntimeError) as e:
     controller = None

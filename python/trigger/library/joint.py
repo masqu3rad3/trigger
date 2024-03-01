@@ -8,43 +8,41 @@ from trigger.core import filelog
 log = filelog.Filelog(logname=__name__, filename="trigger_log")
 
 JOINT_TYPE_DICT = {
-    1: 'Root',
-    2: 'Hip',
-    3: 'Knee',
-    4: 'Foot',
-    5: 'Toe',
-    6: 'Spine',
-    7: 'Neck',
-    8: 'Head',
-    9: 'Collar',
-    10: 'Shoulder',
-    11: 'Elbow',
-    12: 'Hand',
-    13: 'Finger',
-    14: 'Thumb',
-    18: 'Other',
-    19: 'Index_F',
-    20: 'Middle_F',
-    21: 'Ring_F',
-    22: 'Pinky_F',
-    23: 'Extra_F',
-    24: 'Big_T',
-    25: 'Index_T',
-    26: 'Middle_T',
-    27: 'Ring_T',
-    28: 'Pinky_T',
-    29: 'Extra_T'
+    1: "Root",
+    2: "Hip",
+    3: "Knee",
+    4: "Foot",
+    5: "Toe",
+    6: "Spine",
+    7: "Neck",
+    8: "Head",
+    9: "Collar",
+    10: "Shoulder",
+    11: "Elbow",
+    12: "Hand",
+    13: "Finger",
+    14: "Thumb",
+    18: "Other",
+    19: "Index_F",
+    20: "Middle_F",
+    21: "Ring_F",
+    22: "Pinky_F",
+    23: "Extra_F",
+    24: "Big_T",
+    25: "Index_T",
+    26: "Middle_T",
+    27: "Ring_T",
+    28: "Pinky_T",
+    29: "Extra_T",
 }
 
 JOINT_SIDE_DICT = {
-    0: 'C',
-    1: 'L',
-    2: 'R',
+    0: "C",
+    1: "L",
+    2: "R",
 }
 
-AXIS_CONVERSION_DICT = {
-
-}
+AXIS_CONVERSION_DICT = {}
 
 
 def set_joint_type(joint, type_name):
@@ -128,8 +126,15 @@ def get_joint_side(joint, skip_errors=True):
             log.error("Joint Side cannot not be detected (%s)" % joint)
     return JOINT_SIDE_DICT[side_int]
 
-def orient_joints(joint_list, aim_axis=(1.0, 0.0, 0.0), up_axis=(0.0, 1.0, 0.0), world_up_axis=(0.0, 1.0, 0.0),
-                  reverse_aim=1.0, reverse_up=1.0):
+
+def orient_joints(
+    joint_list,
+    aim_axis=(1.0, 0.0, 0.0),
+    up_axis=(0.0, 1.0, 0.0),
+    world_up_axis=(0.0, 1.0, 0.0),
+    reverse_aim=1.0,
+    reverse_up=1.0,
+):
     """Orient joints.
     Alternative to Maya's native joint orient method
     Args:
@@ -158,8 +163,15 @@ def orient_joints(joint_list, aim_axis=(1.0, 0.0, 0.0), up_axis=(0.0, 1.0, 0.0),
     for nmb, joint in enumerate(joint_list):
         # if its not the last joint:
         if nmb != len(joint_list) - 1:
-            aim_con = cmds.aimConstraint(joint_list[nmb + 1], joint, aimVector=aim_axis, upVector=up_axis,
-                                         worldUpVector=world_up_axis, worldUpType='vector', weight=1.0)
+            aim_con = cmds.aimConstraint(
+                joint_list[nmb + 1],
+                joint,
+                aimVector=aim_axis,
+                upVector=up_axis,
+                worldUpVector=world_up_axis,
+                worldUpType="vector",
+                weight=1.0,
+            )
             cmds.delete(aim_con)
             cmds.makeIdentity(joint, apply=True)
 
@@ -205,7 +217,11 @@ def get_rig_axes(joint):
     # get the up axis
 
     up_axis = [cmds.getAttr("%s.upAxis%s" % (joint, direction)) for direction in "XYZ"]
-    mirror_axis = [cmds.getAttr("%s.mirrorAxis%s" % (joint, direction)) for direction in "XYZ"]
-    look_axis = [cmds.getAttr("%s.lookAxis%s" % (joint, direction)) for direction in "XYZ"]
+    mirror_axis = [
+        cmds.getAttr("%s.mirrorAxis%s" % (joint, direction)) for direction in "XYZ"
+    ]
+    look_axis = [
+        cmds.getAttr("%s.lookAxis%s" % (joint, direction)) for direction in "XYZ"
+    ]
 
     return tuple(up_axis), tuple(mirror_axis), tuple(look_axis)

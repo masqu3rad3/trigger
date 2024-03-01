@@ -1,4 +1,3 @@
-
 from maya import cmds
 
 # from trigger.ui.Qt import QtWidgets
@@ -17,26 +16,29 @@ WINDOW_NAME = "Trigger Make-up v0.0.2"
 
 class Makeup(object):
     """Visualization aimed tools for trigger"""
-    side_items = ("Auto Side",
-                  "_LEFT_ <> _RIGHT_",
-                  "_LEFT <> _RIGHT",
-                  "LEFT_ <> RIGHT_",
-                  "LEFT <> RIGHT",
-                  "_left_ <> _right_",
-                  "_left <> _right",
-                  "left_ <> right_",
-                  "left <> right",
-                  "_L_ <> _R_",
-                  "_L <> _R",
-                  "L_ <> R_",
-                  "L <-> R",
-                  )
 
-    bias_items = ("Auto Bias",
-                  "Start",
-                  "End",
-                  "Include",
-                  )
+    side_items = (
+        "Auto Side",
+        "_LEFT_ <> _RIGHT_",
+        "_LEFT <> _RIGHT",
+        "LEFT_ <> RIGHT_",
+        "LEFT <> RIGHT",
+        "_left_ <> _right_",
+        "_left <> _right",
+        "left_ <> right_",
+        "left <> right",
+        "_L_ <> _R_",
+        "_L <> _R",
+        "L_ <> R_",
+        "L <-> R",
+    )
+
+    bias_items = (
+        "Auto Bias",
+        "Start",
+        "End",
+        "Include",
+    )
 
     icon_handler = Icon()
 
@@ -72,7 +74,13 @@ class Makeup(object):
 
         for side in side_try_list:
             for bias in bias_try_list:
-                r = mirror_controller(axis="x", node_list=None, side_flags=side, side_bias=bias, continue_on_fail=False)
+                r = mirror_controller(
+                    axis="x",
+                    node_list=None,
+                    side_flags=side,
+                    side_bias=bias,
+                    continue_on_fail=False,
+                )
                 if r == -1:
                     continue
                 else:
@@ -82,11 +90,17 @@ class Makeup(object):
     @keepselection
     def replace_curve_controller(self, icon, objects=None, mo=True, scale=True):
         objects = objects or cmds.ls(sl=True)
+        # create the controller on the origin if nothing is selected
+        if not objects:
+            self.icon_handler.create_icon(icon_type=icon, scale=(1, 1, 1), normal=(0, 1, 0))
+
         if not isinstance(objects, (tuple, list)):
             objects = [objects]
 
         for obj in objects:
-            new_shape, _ = self.icon_handler.create_icon(icon_type=icon, scale=(1, 1, 1), normal=(0, 1, 0))
+            new_shape, _ = self.icon_handler.create_icon(
+                icon_type=icon, scale=(1, 1, 1), normal=(0, 1, 0)
+            )
             if scale:
                 obj_size = self.__get_max_size(obj)
                 new_size = float(obj_size) / self.__get_max_size(new_shape)
@@ -140,14 +154,15 @@ class MainUI(QtWidgets.QDialog):
         self.mirror_controllers_side_combo = None
         self.mirror_controllers_bias_combo = None
         self.build_ui()
-        # self.setWindowFlag(QtCore.Qt.WindowMaximizeButtonHint, False)
 
     def build_ui(self):
         self.setObjectName(WINDOW_NAME)
         self.setWindowTitle(WINDOW_NAME)
         self.resize(288, 100)
 
-        size_policy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed)
+        size_policy = QtWidgets.QSizePolicy(
+            QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed
+        )
         size_policy.setHorizontalStretch(1)
         size_policy.setVerticalStretch(0)
 
@@ -157,7 +172,10 @@ class MainUI(QtWidgets.QDialog):
         master_lay.addLayout(form_lay)
 
         replace_controllers_pb = QtWidgets.QPushButton(self)
-        replace_controllers_pb.setText("Replace Controller(s)")
+        replace_controllers_pb.setText("Replace:")
+        replace_controllers_pb.setToolTip(
+            "Mirror selected controllers shapes to the other side."
+        )
         replace_controllers_pb.setSizePolicy(size_policy)
         replace_controllers_combo_lay = QtWidgets.QHBoxLayout()
         self.replace_controllers_combo = QtWidgets.QComboBox(self)
@@ -170,10 +188,13 @@ class MainUI(QtWidgets.QDialog):
         replace_controllers_combo_lay.addWidget(self.scale_controllers_cb)
         form_lay.addRow(replace_controllers_pb, replace_controllers_combo_lay)
 
-        self.replace_controllers_combo.addItems(self.makeup_handler.list_of_icons)
+        self.replace_controllers_combo.addItems(sorted(self.makeup_handler.list_of_icons))
 
         mirror_controllers_pb = QtWidgets.QPushButton(self)
-        mirror_controllers_pb.setText("Mirror Controller(s)")
+        mirror_controllers_pb.setText("Mirror:")
+        mirror_controllers_pb.setToolTip(
+            "Mirror selected controllers shapes to the other side."
+        )
         mirror_controllers_combo_lay = QtWidgets.QHBoxLayout()
         self.mirror_controllers_side_combo = QtWidgets.QComboBox(self)
         self.mirror_controllers_side_combo.setSizePolicy(size_policy)
@@ -184,8 +205,10 @@ class MainUI(QtWidgets.QDialog):
         form_lay.addRow(mirror_controllers_pb, mirror_controllers_combo_lay)
 
         copy_controller_pb = QtWidgets.QPushButton(self)
-        copy_controller_pb.setText("Copy Shape from another")
-        copy_controller_pb.setToolTip("Copies shape from another controller curve. First select the source than the target")
+        copy_controller_pb.setText("Transfer:")
+        copy_controller_pb.setToolTip(
+            "Copies shape from another controller curve. First select the source than the target"
+        )
         copy_controller_snap_lbl = QtWidgets.QLabel(self, text="Snap")
         self.copy_controller_snap_cb = QtWidgets.QCheckBox(self)
         self.copy_controller_snap_cb.setChecked(True)
@@ -210,7 +233,9 @@ class MainUI(QtWidgets.QDialog):
 
     def on_replace(self):
         new_icon = self.replace_controllers_combo.currentText()
-        self.makeup_handler.replace_curve_controller(new_icon, scale=self.scale_controllers_cb.isChecked())
+        self.makeup_handler.replace_curve_controller(
+            new_icon, scale=self.scale_controllers_cb.isChecked()
+        )
 
     def on_mirror(self):
         side_rule = self.mirror_controllers_side_combo.currentText()
@@ -225,4 +250,6 @@ class MainUI(QtWidgets.QDialog):
             raise ValueError(msg)
         snap = bool(self.copy_controller_snap_cb.isChecked())
         copy_color = bool(self.copy_controller_transfer_color_cb.isChecked())
-        self.makeup_handler.copy_from(selection[0], selection[1], snap=snap, copy_color=copy_color)
+        self.makeup_handler.copy_from(
+            selection[0], selection[1], snap=snap, copy_color=copy_color
+        )

@@ -7,42 +7,47 @@ from trigger.library import attribute
 from trigger.library import connection
 from trigger.objects.controller import Controller
 from trigger.utils import parentToSurface
-from trigger.modules import _module
+from trigger.core.module import ModuleCore, GuidesCore
 from trigger.core import filelog
 
-log = filelog.Filelog(logname=__name__, filename="trigger_log")
+LOG = filelog.Filelog(logname=__name__, filename="trigger_log")
 
 LIMB_DATA = {
     "members": ["Surface", "SurfaceItem"],
-    "properties": [{"attr_name": "controllerSurface",
-                    "nice_name": "Mesh to Stick",
-                    "attr_type": "string",
-                    "default_value": ""
-                    },
-                   {"attr_name": "rotateObject",
-                    "nice_name": "Rotation Parent",
-                    "attr_type": "string",
-                    "default_value": ""
-                    },
-                   {
-                       "attr_name": "bindScales",
-                       "nice_name": "Bind Scales",
-                       "attr_type": "bool",
-                       "default_value": False
-                   },
-                   {"attr_name": "limbPlugLocation",
-                    "nice_name": "Module Plug Location",
-                    "attr_type": "enum",
-                    "enum_list": "On Surface Controller:On Local Joint",
-                    "default_value": 0,
-                    },
-                   ],
+    "properties": [
+        {
+            "attr_name": "controllerSurface",
+            "nice_name": "Mesh to Stick",
+            "attr_type": "string",
+            "default_value": "",
+        },
+        {
+            "attr_name": "rotateObject",
+            "nice_name": "Rotation Parent",
+            "attr_type": "string",
+            "default_value": "",
+        },
+        {
+            "attr_name": "bindScales",
+            "nice_name": "Bind Scales",
+            "attr_type": "bool",
+            "default_value": False,
+        },
+        {
+            "attr_name": "limbPlugLocation",
+            "nice_name": "Module Plug Location",
+            "attr_type": "enum",
+            "enum_list": "On Surface Controller:On Local Joint",
+            "default_value": 0,
+        },
+    ],
     "multi_guide": "SurfaceItem",
     "sided": True,
 }
 
 
-class Surface(_module.ModuleCore):
+class Surface(ModuleCore):
+    name = "Surface"
     def __init__(self, build_data=None, inits=None):
         super(Surface, self).__init__()
 
@@ -53,7 +58,7 @@ class Surface(_module.ModuleCore):
         elif inits:
             self.inits = inits
         else:
-            log.error("Class needs either build_data or inits to be constructed")
+            LOG.error("Class needs either build_data or inits to be constructed")
 
         # get properties
         self.controllerSurface = cmds.getAttr("%s.controllerSurface" % self.inits[0])
@@ -65,19 +70,24 @@ class Surface(_module.ModuleCore):
         except ValueError:
             self.bindScales = False
 
-        self.module_name = (naming.unique_name(cmds.getAttr("%s.moduleName" % self.inits[0])))
+        self.module_name = naming.unique_name(
+            cmds.getAttr("%s.moduleName" % self.inits[0])
+        )
         self.jointBinds = []
 
     def create_joints(self):
-
         for nmb, init in enumerate(self.inits):
             cmds.select(clear=True)
             if len(self.inits) == 1:
                 _joint_name = "%s_jnt" % self.module_name
             nmb = "" if len(self.inits) == 1 else nmb  # for backward compatibility
-            j_def = cmds.joint(name=naming.parse([self.module_name, nmb], suffix="jDef"))
+            j_def = cmds.joint(
+                name=naming.parse([self.module_name, nmb], suffix="jDef")
+            )
             self.deformerJoints.append(j_def)
-            cmds.connectAttr("{0}.rigVis".format(self.scaleGrp), "{0}.v".format(j_def), force=True)
+            cmds.connectAttr(
+                "{0}.rigVis".format(self.scaleGrp), "{0}.v".format(j_def), force=True
+            )
             # Create connection groups
             j_def_offset = functions.create_offset_group(j_def, "offset")
             j_def_bind = functions.create_offset_group(j_def, "bind")
@@ -89,12 +99,18 @@ class Surface(_module.ModuleCore):
         if self.isPlugOnLocal:
             self.limbPlug = self.deformerJoints[0]
         else:
-            self.limbPlug = cmds.joint(name=naming.parse([self.module_name, "plug"], suffix="j"), radius=2)
+            self.limbPlug = cmds.joint(
+                name=naming.parse([self.module_name, "plug"], suffix="j"), radius=2
+            )
             cmds.parent(self.limbPlug, self.scaleGrp)
         self.sockets.append(self.limbPlug)
 
-        attribute.drive_attrs("%s.jointVis" % self.scaleGrp, ["%s.v" % x for x in self.deformerJoints])
-        cmds.connectAttr("%s.jointVis" % self.scaleGrp, "%s.v" % self.limbPlug, force=True)
+        attribute.drive_attrs(
+            "%s.jointVis" % self.scaleGrp, ["%s.v" % x for x in self.deformerJoints]
+        )
+        cmds.connectAttr(
+            "%s.jointVis" % self.scaleGrp, "%s.v" % self.limbPlug, force=True
+        )
         # functions.colorize(self.deformerJoints, self.colorCodes[0], shape=False)
 
     def create_controllers_and_connections(self):
@@ -118,39 +134,82 @@ class Surface(_module.ModuleCore):
             functions.align_to(_cont_offset, init, position=True, rotation=True)
             # functions.alignTo(self.cont_pos, self.rootInit, position=True, rotation=True)
 
-            cmds.connectAttr("%s.contVis" % self.scaleGrp, "%s.v" % _cont_offset, force=True)
+            cmds.connectAttr(
+                "%s.contVis" % self.scaleGrp, "%s.v" % _cont_offset, force=True
+            )
             cmds.parent(_cont_offset, self.controllerGrp)
 
             if self.controllerSurface:
-                follicle = parentToSurface.parentToSurface([_cont_bind], surface=self.controllerSurface, mode="none")[0]
+                follicle = parentToSurface.parentToSurface(
+                    [_cont_bind], surface=self.controllerSurface, mode="none"
+                )[0]
                 # constrain controller translate to the follicle
                 # connection.matrixConstraint(follicle, self.cont_bind, mo=False, sr="xyz", ss="xyz")
                 _sr = "xyz" if self.rotateObject else None
                 if self.bindScales:
-                    cmds.connectAttr("%s.scale" % self.scaleGrp, "%s.scale" % follicle, force=True)
+                    cmds.connectAttr(
+                        "%s.scale" % self.scaleGrp, "%s.scale" % follicle, force=True
+                    )
                     _ss = None
                 else:
                     _ss = "xyz"
                 _mo = False if self.rotateObject else True
-                connection.matrixConstraint(follicle, _cont_bind, maintainOffset=_mo, skipRotate=_sr, skipScale=_ss)
+                connection.matrixConstraint(
+                    follicle,
+                    _cont_bind,
+                    maintainOffset=_mo,
+                    skipRotate=_sr,
+                    skipScale=_ss,
+                )
 
                 cmds.parent(follicle, self.nonScaleGrp)
-                cmds.connectAttr("%s.rigVis" % self.scaleGrp, "%s.v" % follicle, force=True)
+                cmds.connectAttr(
+                    "%s.rigVis" % self.scaleGrp, "%s.v" % follicle, force=True
+                )
 
             if self.rotateObject:
-                connection.matrixConstraint(self.rotateObject, _cont_bind, maintainOffset=True, skipTranslate="xyz",
-                                            skipScale="xyz")
+                connection.matrixConstraint(
+                    self.rotateObject,
+                    _cont_bind,
+                    maintainOffset=True,
+                    skipTranslate="xyz",
+                    skipScale="xyz",
+                )
                 # connection.matrixConstraint(self.rotateObject, self.cont_bind, mo=True, st="xyz", ss=_ss)
 
-            negate_mult_matrix = cmds.createNode("multMatrix",
-                                                 name=naming.parse([self.module_name, "negate"], suffix="multMatrix"))
-            negate_decompose = cmds.createNode("decomposeMatrix",
-                                               name=naming.parse([self.module_name, "negate"], suffix="decompose"))
-            cmds.connectAttr("%s.inverseMatrix" % _cont.name, "%s.matrixIn[0]" % negate_mult_matrix, force=True)
-            cmds.connectAttr("%s.matrixSum" % negate_mult_matrix, "%s.inputMatrix" % negate_decompose, force=True)
-            cmds.connectAttr("%s.outputTranslate" % negate_decompose, "%s.translate" % _cont_negate, force=True)
-            cmds.connectAttr("%s.outputRotate" % negate_decompose, "%s.rotate" % _cont_negate, force=True)
-            cmds.connectAttr("%s.outputScale" % negate_decompose, "%s.scale" % _cont_negate, force=True)
+            negate_mult_matrix = cmds.createNode(
+                "multMatrix",
+                name=naming.parse([self.module_name, "negate"], suffix="multMatrix"),
+            )
+            negate_decompose = cmds.createNode(
+                "decomposeMatrix",
+                name=naming.parse([self.module_name, "negate"], suffix="decompose"),
+            )
+            cmds.connectAttr(
+                "%s.inverseMatrix" % _cont.name,
+                "%s.matrixIn[0]" % negate_mult_matrix,
+                force=True,
+            )
+            cmds.connectAttr(
+                "%s.matrixSum" % negate_mult_matrix,
+                "%s.inputMatrix" % negate_decompose,
+                force=True,
+            )
+            cmds.connectAttr(
+                "%s.outputTranslate" % negate_decompose,
+                "%s.translate" % _cont_negate,
+                force=True,
+            )
+            cmds.connectAttr(
+                "%s.outputRotate" % negate_decompose,
+                "%s.rotate" % _cont_negate,
+                force=True,
+            )
+            cmds.connectAttr(
+                "%s.outputScale" % negate_decompose,
+                "%s.scale" % _cont_negate,
+                force=True,
+            )
 
             if self.isPlugOnLocal:
                 pass  # nothing to connect because plug is local joint itself
@@ -160,8 +219,11 @@ class Surface(_module.ModuleCore):
             # Direct connection between controller and joint
             for attr in "trs":
                 for axis in "xyz":
-                    cmds.connectAttr("%s.%s%s" % (_cont.name, attr, axis), "%s.%s%s" % (joint_bind, attr, axis),
-                                     force=True)
+                    cmds.connectAttr(
+                        "%s.%s%s" % (_cont.name, attr, axis),
+                        "%s.%s%s" % (joint_bind, attr, axis),
+                        force=True,
+                    )
 
     def execute(self):
         # self.createGrp()
@@ -169,7 +231,8 @@ class Surface(_module.ModuleCore):
         self.create_controllers_and_connections()
 
 
-class Guides(_module.GuidesCore):
+class Guides(GuidesCore):
+    name = "Surface"
     limb_data = LIMB_DATA
 
     def draw_joints(self):
@@ -177,7 +240,9 @@ class Guides(_module.GuidesCore):
         r_point_j = om.MVector(0, 0, 0) * self.tMatrix
         if not self.segments:
             self.offsetVector = om.MVector(0, 1, 0)
-            surface_root_jnt = cmds.joint(name=naming.parse([self.name, "root"], side=self.side, suffix="jInit"))
+            surface_root_jnt = cmds.joint(
+                name=naming.parse([self.name, "root"], side=self.side, suffix="jInit")
+            )
             self.guideJoints.append(surface_root_jnt)
             return
 
@@ -195,18 +260,27 @@ class Guides(_module.GuidesCore):
 
         # Draw the joints
         for seg in range(self.segments + 1):
-            surface_jnt = cmds.joint(position=(r_point_j + (add_val * seg)),
-                                     name=naming.parse([self.name, seg], side=self.side, suffix="jInit"))
+            surface_jnt = cmds.joint(
+                position=(r_point_j + (add_val * seg)),
+                name=naming.parse([self.name, seg], side=self.side, suffix="jInit"),
+            )
             # Update the guideJoints list
             self.guideJoints.append(surface_jnt)
 
         # Update the guideJoints list
 
         # set orientation of joints
-        joint.orient_joints(self.guideJoints, world_up_axis=self.upVector, up_axis=(0, 1, 0),
-                            reverse_aim=self.sideMultiplier, reverse_up=self.sideMultiplier)
+        joint.orient_joints(
+            self.guideJoints,
+            world_up_axis=self.upVector,
+            up_axis=(0, 1, 0),
+            reverse_aim=self.sideMultiplier,
+            reverse_up=self.sideMultiplier,
+        )
 
     def define_guides(self):
         joint.set_joint_type(self.guideJoints[0], "Surface")
         if len(self.guideJoints) > 1:
-            _ = [joint.set_joint_type(jnt, "SurfaceItem") for jnt in self.guideJoints[1:]]
+            _ = [
+                joint.set_joint_type(jnt, "SurfaceItem") for jnt in self.guideJoints[1:]
+            ]

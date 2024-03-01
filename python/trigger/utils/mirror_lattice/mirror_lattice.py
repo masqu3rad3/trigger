@@ -9,6 +9,7 @@ from maya.api import OpenMaya
 
 LOG = logging.getLogger(__name__)
 
+
 def unique_name(name, return_counter=False):
     """
     Searches the scene for match and returns a unique name for given name
@@ -28,6 +29,7 @@ def unique_name(name, return_counter=False):
         return idcounter
     else:
         return name
+
 
 def get_m_dagpath(node):
     """Return the API 2.0 dagPath of given node."""
@@ -300,17 +302,28 @@ class MirrorLattice(object):
             self.slave_base,
         ) = self._create_lattice(self.mirror_meshes)
 
-        self.mirror_group = cmds.group(em=True, name="{}_grp".format("_".join(self._base_names)))
+        self.mirror_group = cmds.group(
+            em=True, name="{}_grp".format("_".join(self._base_names))
+        )
         _master_parent = cmds.listRelatives(self.master_base, parent=True)[0]
         _slave_parent = cmds.listRelatives(self.slave_base, parent=True)[0]
         cmds.parent(_master_parent, _slave_parent, self.mirror_group)
         for attr in ["tx", "ty", "tz", "rx", "ry", "rz", "sx", "sy", "sz"]:
-            cmds.setAttr("{}.{}".format(self.mirror_group, attr), lock=True, keyable=False, channelBox=False)
+            cmds.setAttr(
+                "{}.{}".format(self.mirror_group, attr),
+                lock=True,
+                keyable=False,
+                channelBox=False,
+            )
 
     def connect_lattices(self):
         """Connect slave lattice to the master"""
         master_points = cmds.ls("{}.pt[*]".format(self.master_lattice), flatten=True)
-        name = unique_name("multiMesh_cage" if len(self._base_names) > 1 else "{}_cage".format(self._base_names[0]))
+        name = unique_name(
+            "multiMesh_cage"
+            if len(self._base_names) > 1
+            else "{}_cage".format(self._base_names[0])
+        )
 
         # create a polygon cage for the master lattice which will be used to hold the locators
         mesh_cage = cmds.polyCube(
@@ -326,7 +339,12 @@ class MirrorLattice(object):
         _data_grp = cmds.group(mesh_cage, name="data_grp", parent=self.mirror_group)
         # lock and hide the attributes
         for attr in ["tx", "ty", "tz", "rx", "ry", "rz", "sx", "sy", "sz"]:
-            cmds.setAttr("{}.{}".format(_data_grp, attr), lock=True, keyable=False, channelBox=False)
+            cmds.setAttr(
+                "{}.{}".format(_data_grp, attr),
+                lock=True,
+                keyable=False,
+                channelBox=False,
+            )
         cmds.setAttr("{}.v".format(_data_grp), 0)
 
         for point in master_points:
@@ -369,8 +387,15 @@ class MirrorLattice(object):
             # # connect the locator to the cluster mirroring with mirror axis
             negate_node = cmds.createNode("multDoubleLinear", name="negate")
             cmds.setAttr("{0}.input2".format(negate_node), -1)
-            cmds.connectAttr("{0}.t{1}".format(master_locator, self.mirror_axis), "{0}.input1".format(negate_node))
-            cmds.connectAttr("{0}.output".format(negate_node), "{0}.t{1}".format(slave_locator, self.mirror_axis), force=True)
+            cmds.connectAttr(
+                "{0}.t{1}".format(master_locator, self.mirror_axis),
+                "{0}.input1".format(negate_node),
+            )
+            cmds.connectAttr(
+                "{0}.output".format(negate_node),
+                "{0}.t{1}".format(slave_locator, self.mirror_axis),
+                force=True,
+            )
 
             # TODO make an optional keep offset option which will retain any asymmetry
 
@@ -424,7 +449,11 @@ class MirrorLattice(object):
             if mirror_mesh:
                 self.mirror_meshes.append(mirror_mesh)
             else:
-                LOG.error("Mirror of {0} cannot be identified with these keys: {1}".format(mesh, self._side_keys))
+                LOG.error(
+                    "Mirror of {0} cannot be identified with these keys: {1}".format(
+                        mesh, self._side_keys
+                    )
+                )
                 return False
             if not cmds.objExists(mirror_mesh):
                 LOG.error("Mirror mesh {0} does not exist.".format(mirror_mesh))

@@ -17,26 +17,31 @@ from trigger.core import filelog
 log = filelog.Filelog(logname=__name__, filename="trigger_log")
 db = database.Database()
 
-class Initials(object):
 
+class Initials(object):
     def __init__(self):
         super(Initials, self).__init__()
         self.parseSettings()
         self.projectName = "trigger"
-        self.module_dict = {mod: eval("modules.{0}.LIMB_DATA".format(mod)) for mod in modules.__all__}
+
+        self.module_dict =  {module_name: data["guide"].limb_data for module_name, data in modules.class_data.items()}
         self.valid_limbs = self.module_dict.keys()
-        self.validRootList = [values["members"][0] for values in self.module_dict.values()]
-        self.non_sided_limbs = [limb for limb in self.valid_limbs if not self.module_dict[limb]["sided"]]
+        self.validRootList = [
+            values["members"][0] for values in self.module_dict.values()
+        ]
+        self.non_sided_limbs = [
+            limb for limb in self.valid_limbs if not self.module_dict[limb]["sided"]
+        ]
 
     def parseSettings(self):
-
-        parsingDictionary = {u'+x': (1, 0, 0),
-                             u'+y': (0, 1, 0),
-                             u'+z': (0, 0, 1),
-                             u'-x': (-1, 0, 0),
-                             u'-y': (0, -1, 0),
-                             u'-z': (0, 0, -1)
-                             }
+        parsingDictionary = {
+            "+x": (1, 0, 0),
+            "+y": (0, 1, 0),
+            "+z": (0, 0, 1),
+            "-x": (-1, 0, 0),
+            "-y": (0, -1, 0),
+            "-z": (0, 0, -1),
+        }
         self.upVector_asString = db.userSettings.upAxis
         self.lookVector_asString = db.userSettings.lookAxis
         self.mirrorVector_asString = db.userSettings.mirrorAxis
@@ -53,9 +58,14 @@ class Initials(object):
         # recross in case up and front were not originally orthoganl:
         front_vect = side_vect ^ self.upVector
         # the new matrix is
-        self.tMatrix = om.MMatrix(((side_vect.x, side_vect.y, side_vect.z, 0),
-                                   (self.upVector.x, self.upVector.y, self.upVector.z, 0),
-                                   (front_vect.x, front_vect.y, front_vect.z, 0), (0, 0, 0, 1)))
+        self.tMatrix = om.MMatrix(
+            (
+                (side_vect.x, side_vect.y, side_vect.z, 0),
+                (self.upVector.x, self.upVector.y, self.upVector.z, 0),
+                (front_vect.x, front_vect.y, front_vect.z, 0),
+                (0, 0, 0, 1),
+            )
+        )
 
     def autoGet(self, parentBone):
         """
@@ -90,7 +100,16 @@ class Initials(object):
             return None, alignmentGiven, None
 
     @undo
-    def initLimb(self, limb_name, whichSide="left", constrainedTo=None, parentNode=None, defineAs=False, *args, **kwargs):
+    def initLimb(
+        self,
+        limb_name,
+        whichSide="left",
+        constrainedTo=None,
+        parentNode=None,
+        defineAs=False,
+        *args,
+        **kwargs
+    ):
         if limb_name not in self.valid_limbs:
             log.error("%s is not a valid limb" % limb_name)
 
@@ -112,7 +131,11 @@ class Initials(object):
                 # log.error(
                 #     "side argument '%s' is not valid. Valid arguments are: %s" % (whichSide, valid_sides))
                 raise ValueError
-            if len(cmds.ls(sl=True, type="joint")) != 1 and whichSide == "auto" and defineAs == False:
+            if (
+                len(cmds.ls(sl=True, type="joint")) != 1
+                and whichSide == "auto"
+                and defineAs == False
+            ):
                 log.warning("You need to select a single joint to use Auto method")
                 return
             ## get the necessary info from arguments
@@ -124,18 +147,24 @@ class Initials(object):
                 side = "C"
 
         limb_group_name = naming.parse([limb_name], side=side)
-        limb_group_name = naming.unique_name("{}_guides".format(limb_group_name), suffix="_guides")
+        limb_group_name = naming.unique_name(
+            "{}_guides".format(limb_group_name), suffix="_guides"
+        )
         # limb_group_name = limb_group_name.replace("_guides", "")
         # strip the side and suffix and get the name of the limb
-        limb_name_parts = limb_group_name.split("_")[:-1] # don't include the suffix
+        limb_name_parts = limb_group_name.split("_")[:-1]  # don't include the suffix
         # remove the side and suffix
-        limb_name_parts = [part for part in limb_name_parts if part not in ["L", "R", "C", "grp"]]
+        limb_name_parts = [
+            part for part in limb_name_parts if part not in ["L", "R", "C", "grp"]
+        ]
         unique_limb = "_".join(limb_name_parts)
 
         ## if defineAs is True, define the selected joints as the given limb instead creating new ones.
         if defineAs:
             # TODO: AUTO argument can be included by running a seperate method to determine the side of the root joint according to the matrix
-            construct_command = "modules.{0}.Guides(suffix='{1}', side='{2}')".format(limb_name, unique_limb, side)
+            construct_command = "modules.{0}.Guides(suffix='{1}', side='{2}')".format(
+                limb_name, unique_limb, side
+            )
             guide = eval(construct_command)
             guide.convertJoints(currentselection)
             self.adjust_guide_display(guide)
@@ -157,14 +186,24 @@ class Initials(object):
             masterParent = parentNode
         if whichSide == "both":
             locators1, jnt_dict_side1 = self.initLimb(limb_name, "left", **kwargs)
-            locators2, jnt_dict_side2 = self.initLimb(limb_name, "right", constrainedTo=locators1, **kwargs)
+            locators2, jnt_dict_side2 = self.initLimb(
+                limb_name, "right", constrainedTo=locators1, **kwargs
+            )
             jnt_dict_side1.update(jnt_dict_side2)
             return (locators1 + locators2), jnt_dict_side1
         if whichSide == "auto" and masterParent:
             mirrorParent, givenAlignment, returnAlignment = self.autoGet(masterParent)
-            locators1, jnt_dict_side1 = self.initLimb(limb_name, givenAlignment, **kwargs)
+            locators1, jnt_dict_side1 = self.initLimb(
+                limb_name, givenAlignment, **kwargs
+            )
             if mirrorParent:
-                locators2, jnt_dict_side2 = self.initLimb(limb_name, returnAlignment, constrainedTo=locators1, parentNode=mirrorParent, **kwargs)
+                locators2, jnt_dict_side2 = self.initLimb(
+                    limb_name,
+                    returnAlignment,
+                    constrainedTo=locators1,
+                    parentNode=mirrorParent,
+                    **kwargs
+                )
                 total_locators = locators1 + locators2
                 jnt_dict_side1.update(jnt_dict_side2)
             else:
@@ -172,41 +211,23 @@ class Initials(object):
             return total_locators, jnt_dict_side1
 
         limb_group = cmds.group(empty=True, name=limb_group_name)
-        # limb_group = cmds.group(empty=True, name=naming.unique_name("{}_guides".format(limb_group_name), suffix = "_guides"))
         cmds.parent(limb_group, holderGroup)
         cmds.select(clear=True)
 
-        module = "modules.{0}.{1}".format(limb_name, "Guides")
-
-        flags = "side='{0}', " \
-                "suffix='{1}', " \
-                "tMatrix={2}, " \
-                "upVector={3}, " \
-                "mirrorVector={4}, " \
-                "lookVector={5}".format(side, unique_limb, self.tMatrix,
-                                        self.upVector, self.mirrorVector, self.lookVector)
-
-        extra_arg_list = []
-        for key, value in kwargs.items():
-            if type(value) == str:
-                extra_arg_list.append("%s='%s'" % (key, value))
-            else:
-                extra_arg_list.append("%s=%s" % (key, value))
-
-        extra_flags = ", ".join(extra_arg_list)
-        construct_command = "{0}({1},{2})".format(module, flags, extra_flags)
-        guide = eval(construct_command)
+        guide = modules.class_data[limb_name]["guide"](side=side, suffix=unique_limb, tMatrix=self.tMatrix, upVector=self.upVector, mirrorVector=self.mirrorVector, lookVector=self.lookVector, **kwargs)
         guide.createGuides()
 
         self.adjust_guide_display(guide)
 
         cmds.select(d=True)
 
-
         ### Constrain locating
 
         # loc_grp = cmds.group(name=("locGrp_%s" % unique_limb), em=True)
-        loc_grp = cmds.group(name=naming.parse([unique_limb, "locators"], side=side, suffix="grp"), em=True)
+        loc_grp = cmds.group(
+            name=naming.parse([unique_limb, "locators"], side=side, suffix="grp"),
+            em=True,
+        )
         cmds.setAttr("{0}.v".format(loc_grp), 0)
         locatorsList = []
 
@@ -214,10 +235,18 @@ class Initials(object):
             locator = cmds.spaceLocator(name="loc_%s" % guide.guideJoints[jnt])[0]
             locatorsList.append(locator)
             if constrainedTo:
-                functions.align_to(locator, guide.guideJoints[jnt], position=True, rotation=False)
-                connection.connect_mirror(constrainedTo[jnt], locatorsList[jnt], mirror_axis=self.mirrorVector_asString)
+                functions.align_to(
+                    locator, guide.guideJoints[jnt], position=True, rotation=False
+                )
+                connection.connect_mirror(
+                    constrainedTo[jnt],
+                    locatorsList[jnt],
+                    mirror_axis=self.mirrorVector_asString,
+                )
 
-                functions.align_to(guide.guideJoints[jnt], locator, position=True, rotation=False)
+                functions.align_to(
+                    guide.guideJoints[jnt], locator, position=True, rotation=False
+                )
                 cmds.parentConstraint(locator, guide.guideJoints[jnt], mo=True)
                 # extra.matrixConstraint(locator, limbJoints[jnt], mo=True)
             else:
@@ -234,11 +263,18 @@ class Initials(object):
                 functions.align_to(guide.guideJoints[0], masterParent)
                 # move it a little along the mirrorAxis
                 # move it along offsetvector
-                cmds.move(guide.offsetVector[0], guide.offsetVector[1], guide.offsetVector[2], guide.guideJoints[0],
-                          relative=True)
+                cmds.move(
+                    guide.offsetVector[0],
+                    guide.offsetVector[1],
+                    guide.offsetVector[2],
+                    guide.guideJoints[0],
+                    relative=True,
+                )
             else:
                 for jnt in guide.guideJoints:
-                    attribute.lock_and_hide(jnt, ["tx", "ty", "tz", "rx", "ry", "rz"], hide=False)
+                    attribute.lock_and_hide(
+                        jnt, ["tx", "ty", "tz", "rx", "ry", "rz"], hide=False
+                    )
             cmds.parent(guide.guideJoints[0], masterParent)
         else:
             cmds.parent(guide.guideJoints[0], limb_group)
@@ -274,19 +310,74 @@ class Initials(object):
             # fingers.append(finger_dict["L"])
             fingers.append(finger_dict)
 
-        thumb_pos_data = [(1.1, 0.9, 0.25), (0.8, 0.0, 0.0), (0.55, 0.0, 0.00012367864829724757), (0.45, 0.0, 0.0)]
-        thumb_rot_data = [(31.0, 45.0, 3.0000000000000004), (-1.0, -2.0, 17.0), (0.0, 0.0, 0.0), (0.0, 0.0, 0.0)]
-        index_pos_data = [(2.0, 0.55, 0.0), (1.0, 0.0, 0.0), (0.65, 0.0, 0.0), (0.6, 0.0, 0.0)]
-        index_rot_data = [(1.0, 17.0, -3.0000000000000004), (0.0, 0.0, 0.0), (0.0, 0.0, 0.0), (0.0, 0.0, 0.0)]
-        middle_pos_data = [(2.0, -0.05, -0.09983537560644819), (0.9997424668383346, 0.0, 0.0), (0.7, 0.0, 0.0), (0.7, 0.0, 0.0)]
-        middle_rot_data = [(0.0, 7.805352401908098, -0.9999999999999998), (0.0, 0.0, 0.0), (0.0, 0.0, 0.0), (0.0, 0.0, 0.0)]
-        ring_pos_data = [(1.8, -0.55, -0.10011550541107042), (0.95, 0.0, 0.0), (0.7, 0.0, 0.0), (0.6, 0.0, 0.0)]
-        ring_rot_data = [(0.0, -5.0, -1.0), (0.0, 0.0, 0.0), (0.0, 0.0, 0.0), (0.0, 0.0, 0.0)]
-        pinky_pos_data = [(1.5, -1.1, 0.0), (0.8, 0.0, 0.0), (0.5, 0.0, 0.0), (0.5, 0.0, 0.0)]
-        pinky_rot_data = [(0.0, -12.000000000000002, 0.0), (0.0, 0.0, 0.0), (0.0, 0.0, 0.0), (0.0, 0.0, 0.0)]
+        thumb_pos_data = [
+            (1.1, 0.9, 0.25),
+            (0.8, 0.0, 0.0),
+            (0.55, 0.0, 0.00012367864829724757),
+            (0.45, 0.0, 0.0),
+        ]
+        thumb_rot_data = [
+            (31.0, 45.0, 3.0000000000000004),
+            (-1.0, -2.0, 17.0),
+            (0.0, 0.0, 0.0),
+            (0.0, 0.0, 0.0),
+        ]
+        index_pos_data = [
+            (2.0, 0.55, 0.0),
+            (1.0, 0.0, 0.0),
+            (0.65, 0.0, 0.0),
+            (0.6, 0.0, 0.0),
+        ]
+        index_rot_data = [
+            (1.0, 17.0, -3.0000000000000004),
+            (0.0, 0.0, 0.0),
+            (0.0, 0.0, 0.0),
+            (0.0, 0.0, 0.0),
+        ]
+        middle_pos_data = [
+            (2.0, -0.05, -0.09983537560644819),
+            (0.9997424668383346, 0.0, 0.0),
+            (0.7, 0.0, 0.0),
+            (0.7, 0.0, 0.0),
+        ]
+        middle_rot_data = [
+            (0.0, 7.805352401908098, -0.9999999999999998),
+            (0.0, 0.0, 0.0),
+            (0.0, 0.0, 0.0),
+            (0.0, 0.0, 0.0),
+        ]
+        ring_pos_data = [
+            (1.8, -0.55, -0.10011550541107042),
+            (0.95, 0.0, 0.0),
+            (0.7, 0.0, 0.0),
+            (0.6, 0.0, 0.0),
+        ]
+        ring_rot_data = [
+            (0.0, -5.0, -1.0),
+            (0.0, 0.0, 0.0),
+            (0.0, 0.0, 0.0),
+            (0.0, 0.0, 0.0),
+        ]
+        pinky_pos_data = [
+            (1.5, -1.1, 0.0),
+            (0.8, 0.0, 0.0),
+            (0.5, 0.0, 0.0),
+            (0.5, 0.0, 0.0),
+        ]
+        pinky_rot_data = [
+            (0.0, -12.000000000000002, 0.0),
+            (0.0, 0.0, 0.0),
+            (0.0, 0.0, 0.0),
+            (0.0, 0.0, 0.0),
+        ]
 
         for nmb, member in enumerate(fingers[0]["L"]):
-            cmds.xform(member, absolute=True, translation=thumb_pos_data[nmb], rotation=thumb_rot_data[nmb])
+            cmds.xform(
+                member,
+                absolute=True,
+                translation=thumb_pos_data[nmb],
+                rotation=thumb_rot_data[nmb],
+            )
         cmds.setAttr("%s.fingerType" % fingers[0]["L"][0], 1)
         cmds.setAttr("%s.fingerType" % fingers[0]["R"][0], 1)
 
@@ -295,45 +386,73 @@ class Initials(object):
         # cmds.setAttr("%s.fingerType" % fingers[0][0], 1)
 
         for nmb, member in enumerate(fingers[1]["L"]):
-            cmds.xform(member, absolute=True, translation=index_pos_data[nmb], rotation=index_rot_data[nmb])
+            cmds.xform(
+                member,
+                absolute=True,
+                translation=index_pos_data[nmb],
+                rotation=index_rot_data[nmb],
+            )
         cmds.setAttr("%s.fingerType" % fingers[1]["L"][0], 2)
         cmds.setAttr("%s.fingerType" % fingers[1]["R"][0], 2)
 
         for nmb, member in enumerate(fingers[2]["L"]):
-            cmds.xform(member, absolute=True, translation=middle_pos_data[nmb], rotation=middle_rot_data[nmb])
+            cmds.xform(
+                member,
+                absolute=True,
+                translation=middle_pos_data[nmb],
+                rotation=middle_rot_data[nmb],
+            )
         cmds.setAttr("%s.fingerType" % fingers[2]["L"][0], 3)
         cmds.setAttr("%s.fingerType" % fingers[2]["R"][0], 3)
 
         for nmb, member in enumerate(fingers[3]["L"]):
-            cmds.xform(member, absolute=True, translation=ring_pos_data[nmb], rotation=ring_rot_data[nmb])
+            cmds.xform(
+                member,
+                absolute=True,
+                translation=ring_pos_data[nmb],
+                rotation=ring_rot_data[nmb],
+            )
         cmds.setAttr("%s.fingerType" % fingers[3]["L"][0], 4)
         cmds.setAttr("%s.fingerType" % fingers[3]["L"][0], 4)
 
         for nmb, member in enumerate(fingers[4]["L"]):
-            cmds.xform(member, absolute=True, translation=pinky_pos_data[nmb], rotation=pinky_rot_data[nmb])
+            cmds.xform(
+                member,
+                absolute=True,
+                translation=pinky_pos_data[nmb],
+                rotation=pinky_rot_data[nmb],
+            )
         cmds.setAttr("%s.fingerType" % fingers[4]["L"][0], 5)
         cmds.setAttr("%s.fingerType" % fingers[4]["R"][0], 5)
         return True
 
     def adjust_guide_display(self, guide_object):
-        """ Adjusts the display proerties of guid joints according to the settings. Accepts guide object as input"""
+        """Adjusts the display proerties of guid joints according to the settings. Accepts guide object as input"""
 
         for jnt in guide_object.guideJoints:
             cmds.setAttr("%s.displayLocalAxis" % jnt, 1)
             cmds.setAttr("%s.drawLabel" % jnt, 1)
 
         if guide_object.side == "C":
-            functions.colorize(guide_object.guideJoints, db.userSettings.majorCenterColor, shape=False)
+            functions.colorize(
+                guide_object.guideJoints, db.userSettings.majorCenterColor, shape=False
+            )
         if guide_object.side == "L":
-            functions.colorize(guide_object.guideJoints, db.userSettings.majorLeftColor, shape=False)
+            functions.colorize(
+                guide_object.guideJoints, db.userSettings.majorLeftColor, shape=False
+            )
         if guide_object.side == "R":
-            functions.colorize(guide_object.guideJoints, db.userSettings.majorRightColor, shape=False)
+            functions.colorize(
+                guide_object.guideJoints, db.userSettings.majorRightColor, shape=False
+            )
 
     def get_scene_roots(self):
         """collects the root joints in the scene and returns the dictionary with properties"""
         all_joints = cmds.ls(type="joint")
         # get roots
-        guide_roots = [jnt for jnt in all_joints if joint.get_joint_type(jnt) in self.validRootList]
+        guide_roots = [
+            jnt for jnt in all_joints if joint.get_joint_type(jnt) in self.validRootList
+        ]
         roots_dictionary_list = []
         for jnt in guide_roots:
             # get module name
@@ -343,11 +462,14 @@ class Initials(object):
                 continue
             # get module info
             j_type, limb, side = joint.identify(jnt, self.module_dict)
-            roots_dictionary_list.append({"module_name": module_name,
-                                          "side": side,
-                                          "root_joint": jnt,
-                                          "module_type": limb
-                                          })
+            roots_dictionary_list.append(
+                {
+                    "module_name": module_name,
+                    "side": side,
+                    "root_joint": jnt,
+                    "module_type": limb,
+                }
+            )
 
         return roots_dictionary_list
 
@@ -358,7 +480,7 @@ class Initials(object):
         try:
             return cmds.getAttr("%s.%s" % (jnt, attr))
         except ValueError:
-            log.warning("Attribute cannot find %s.%s" %(jnt, attr))
+            log.warning("Attribute cannot find %s.%s" % (jnt, attr))
             return False
 
     def set_property(self, jnt, attr, value):
@@ -379,7 +501,16 @@ class Initials(object):
         This is part of guide data collection and this data is going to be used while re-creating guides
         """
 
-        supported_attrs = ["long", "short", "bool", "enum", "float", "double", "string", "typed"]  # wtf is typed
+        supported_attrs = [
+            "long",
+            "short",
+            "bool",
+            "enum",
+            "float",
+            "double",
+            "string",
+            "typed",
+        ]  # wtf is typed
         list_of_dicts = []
         user_attr_list = cmds.listAttr(jnt, userDefined=True)
         if not user_attr_list:
@@ -402,11 +533,15 @@ class Initials(object):
                 tmp_dict["attr_type"] = "string"
             else:
                 try:
-                    tmp_dict["min_value"] = cmds.attributeQuery(attr, node=jnt, min=True)[0]
+                    tmp_dict["min_value"] = cmds.attributeQuery(
+                        attr, node=jnt, min=True
+                    )[0]
                 except RuntimeError:
                     pass
                 try:
-                    tmp_dict["max_value"] = cmds.attributeQuery(attr, node=jnt, max=True)[0]
+                    tmp_dict["max_value"] = cmds.attributeQuery(
+                        attr, node=jnt, max=True
+                    )[0]
                 except RuntimeError:
                     pass
 
@@ -414,8 +549,11 @@ class Initials(object):
         return list_of_dicts
 
     def getWholeLimb(self, node):
-        multi_guide_jnts = [value["multi_guide"] for value in self.module_dict.values() if
-                            value["multi_guide"]]
+        multi_guide_jnts = [
+            value["multi_guide"]
+            for value in self.module_dict.values()
+            if value["multi_guide"]
+        ]
         limb_dict = {}
         multiList = []
         limb_name, limb_type, limb_side = joint.identify(node, self.module_dict)
@@ -430,8 +568,13 @@ class Initials(object):
                 z = False
             failedChildren = 0
             for child in children:
-                child_limb_name, child_limb_type, child_limb_side = joint.identify(child, self.module_dict)
-                if child_limb_name not in self.validRootList and child_limb_type == limb_type:
+                child_limb_name, child_limb_type, child_limb_side = joint.identify(
+                    child, self.module_dict
+                )
+                if (
+                    child_limb_name not in self.validRootList
+                    and child_limb_type == limb_type
+                ):
                     nextNode = child
                     if child_limb_name in multi_guide_jnts:
                         multiList.append(child)
