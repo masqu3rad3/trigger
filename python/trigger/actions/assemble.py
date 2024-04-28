@@ -25,6 +25,7 @@ ACTION_DATA = {
 
 class Assemble(ActionCore):
     action_data = ACTION_DATA
+
     def __init__(self, **kwargs):
         super(Assemble, self).__init__(kwargs)
         # user defined variables
@@ -157,11 +158,16 @@ class Assemble(ActionCore):
         previous_version_pb.clicked.connect(version_down)
 
     def import_alembic(self, file_path):
-        self._load_alembic_plugin()
+        if not cmds.pluginInfo("AbcExport", loaded=True, query=True):
+            try:
+                cmds.loadPlugin("AbcExport")
+            except Exception as e:  # pylint: disable=broad-except
+                LOG.error("Alembic Plugin cannot be initialized")
+                raise e
         pre = cmds.ls(long=True)
         cmds.AbcImport(
-                file_path, connect="/", createIfNotFound=True, ftr=False, sts=False
-            )
+            file_path, connect="/", createIfNotFound=True, ftr=False, sts=False
+        )
         after = cmds.ls(long=True)
         new_nodes = [x for x in after if x not in pre]
         return new_nodes

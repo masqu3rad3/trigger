@@ -180,6 +180,25 @@ Then you can save and increment versions for all of them at once.
                     source=False,
                     destination=True,
                 )
+            elif deformer_type == "proximityWrap":
+                driver_shapes = cmds.listConnections(
+                    "{}.drivers[*].driverGeometry".format(deformer),
+                    shapes=True,
+                    skipConversionNodes=True,
+                    source=True,
+                    destination=False,
+                )
+                driver_transforms = [functions.get_parent(x) for x in driver_shapes]
+                data["influencers"] = driver_transforms
+                driven_shapes = cmds.listConnections(
+                    "{}.outputGeometry[*]".format(deformer),
+                    shapes=True,
+                    skipConversionNodes=True,
+                    source=False,
+                    destination=True,
+                )
+                driven_transforms = [functions.get_parent(x) for x in driven_shapes]
+                data["affected"] = driven_transforms
             else:
                 # TODO ADD OTHER DEFORMERS
                 raise Exception(
@@ -359,6 +378,18 @@ Then you can save and increment versions for all of them at once.
                 "bendStrength",
                 "pinBorderVertices",
             ]
+        elif deformer_type == "proximityWrap":
+            attributes = [
+                "wrapMode",
+                "maxDrivers",
+                "dropoffRateScale",
+                "falloffScale",
+                "smoothInfluences",
+                "smoothNormals",
+                "softNormalization",
+                "spanSamples",
+                "useBindTags"
+            ]
         else:
             attributes = []
         # TODO: ADD ATTRIBUTES FOR ALL DEFORMER TYPES
@@ -441,34 +472,37 @@ Then you can save and increment versions for all of them at once.
                 log.info("%s Weights Lodaded Successfully..." % deformer)
             return
 
-        cmds.deformerWeights(
-            file_name,
-            im=True,
-            deformer=deformer,
-            path=file_dir,
-            method=method,
-            ignoreName=ignore_name,
-        )
-
-        # this is a bug I came across one with one test geo.
-        # Somehow it does not assign the value to index: 0
-        # the following part forces to assign the correct value to index 0
-
-        self.io.file_path = os.path.join(file_dir, file_name)
-        data = self.io.read()
-        if deformer_type == "blendShape":
-            point_attr_template = (
-                "{0}.inputTarget[0].inputTargetGroup[{1}].targetWeights[0]"
+        try:
+            cmds.deformerWeights(
+                file_name,
+                im=True,
+                deformer=deformer,
+                path=file_dir,
+                method=method,
+                ignoreName=ignore_name,
             )
-        else:
-            point_attr_template = "{0}.weightList[{1}].weights[0]"
+            # this is a bug I came across one with one test geo.
+            # Somehow it does not assign the value to index: 0
+            # the following part forces to assign the correct value to index 0
 
-        for nmb, weight_dict in enumerate(data["deformerWeight"]["weights"]):
-            index0_val = weight_dict["points"][0]["value"]
-            cmds.setAttr(point_attr_template.format(deformer, nmb), index0_val)
+            self.io.file_path = os.path.join(file_dir, file_name)
+            data = self.io.read()
+            if deformer_type == "blendShape":
+                point_attr_template = (
+                    "{0}.inputTarget[0].inputTargetGroup[{1}].targetWeights[0]"
+                )
+            else:
+                point_attr_template = "{0}.weightList[{1}].weights[0]"
 
-        if not suppress_messages:
-            log.info("%s Weights Lodaded Successfully..." % deformer)
+            for nmb, weight_dict in enumerate(data["deformerWeight"]["weights"]):
+                index0_val = weight_dict["points"][0]["value"]
+                cmds.setAttr(point_attr_template.format(deformer, nmb), index0_val)
+
+            if not suppress_messages:
+                log.info("%s Weights Lodaded Successfully..." % deformer)
+        except RuntimeError:
+            is_weights = False
+            log.warning("No weights found for %s" % deformer)
         return True
 
     def create_deformer(
@@ -570,10 +604,15 @@ Then you can save and increment versions for all of them at once.
             elif deformer_type == "tension":
                 cmds.tension(affected[0], name=deformer_name)
 
+            elif deformer_type == "proximityWrap":
+                deformers.create_proximity_wrap(
+                    influencers[0], affected[0], name=deformer_name
+                )
+
             else:
                 # TODO : SUPPORT FOR ALL DEFORMERS
                 log.error(
-                    "deformers OTHER than skinCluster, shrinkWrap tension and deltaMush are not YET supported"
+                    "deformers OTHER than skinCluster, shrinkWrap tension, deltaMush and proximityWrap are not YET supported"
                 )
                 return
             for attr_dict in deformer_attrs:
@@ -584,7 +623,7 @@ Then you can save and increment versions for all of them at once.
                 elif attr_type == "doubleLinear":
                     attr_value = float(attr_dict["value"])
                 elif attr_type == "bool":
-                    attr_value = bool(attr_dict["value"])
+                    attr_value = int(attr_dict["value"])
                 elif attr_type == "enum":
                     attr_value = int(attr_dict["value"])
                 elif attr_type == "string":
@@ -593,10 +632,14 @@ Then you can save and increment versions for all of them at once.
                     attr_value = float(attr_dict["value"])
                 elif attr_type == "long":
                     attr_value = int(attr_dict["value"])
+                elif attr_type == "double":
+                    attr_value = float(attr_dict["value"])
                 else:
                     log.error("Undefined attribute type => %s" % attr_type)
-                    raise
+                    raise ValueError("Undefined attribute type => %s" % attr_type)
 
+                print("Setting %s to %s" % (attr_name, attr_value))
+                print(attr_dict)
                 cmds.setAttr("%s.%s" % (deformer_name, attr_name), attr_value)
 
         # finally load weights
