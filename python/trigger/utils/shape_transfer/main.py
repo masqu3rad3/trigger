@@ -7,7 +7,7 @@ from maya import cmds
 
 from trigger.library import interface
 from trigger.library import functions
-from trigger.utils.shape_transfer.scene_data import SceneDictionary
+from trigger.objects.scene_data import SceneDictionary
 from trigger.utils.shape_transfer import protocols
 
 LOG = logging.getLogger(__name__)
