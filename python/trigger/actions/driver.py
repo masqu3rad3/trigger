@@ -13,7 +13,7 @@ from trigger.core.action import ActionCore
 from trigger.ui import custom_widgets
 from trigger.ui.Qt import QtWidgets, QtGui  # for progressbar
 
-LOG = filelog.Filelog(logname=__name__, filename="trigger_log")
+FILELOG = filelog.Filelog(logname=__name__, filename="trigger_log")
 
 
 ACTION_DATA = {"mapping_data": [], "proxy_controller": ""}
@@ -42,11 +42,11 @@ class Driver(ActionCore):
     def action(self):
         for data in self.mapping_data:
             # Check if this is a separator.
-            if len(data[0].split(".")) == 1:
+            if data[0] == "separator":
                 if self.proxy_controller:
-                    attribute.separator(self.proxy_controller, data[0])
+                    attribute.separator(self.proxy_controller, data[6])
                 else:
-                    LOG.warning("Proxy controller not defined. Separator %s will not be created.", data[0])
+                    FILELOG.warning("Proxy controller not defined. Separator %s will not be created." % data[6])
                 continue
 
             splits = data[3].split(".")
@@ -61,10 +61,9 @@ class Driver(ActionCore):
                 wild_attrs = fnmatch.filter(all_attrs, wild_attr)
                 found_attrs.extend(["{0}.{1}".format(n, w) for w in wild_attrs])
             if not found_attrs:
-                LOG.error("No attributes found for %s" % data[3])
+                FILELOG.error("No attributes found for %s" % data[3])
                 return
 
-            print(data)
             if data[6] and self.proxy_controller:
                 proxy_attr = "{0}.{1}".format(self.proxy_controller, data[6])
             else:
@@ -159,5 +158,9 @@ class Driver(ActionCore):
                     row_data.append("")
                 validated_data.append(row_data)
             except ValueError:
-                LOG.error("Range values must be digits => %s" % row)
+                # if the row values between 0-5 are empty, collect this as a separator
+                if not any(row[:6]):
+                    validated_data.append(["separator", 0, 0, "separator", 0, 0, str(row[6])])
+                else:
+                    FILELOG.error("Range values must be digits => %s" % row)
         return validated_data

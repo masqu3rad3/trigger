@@ -330,10 +330,9 @@ def drive_attrs(
     # if there is a proxy driver attributes defined, create that as proxy.
     if proxy_driver_attr:
         prx_node, prx_attr = proxy_driver_attr.split(".")
-        print(prx_node, prx_attr, driver_attr)
         # check if the attribute exists
         if not cmds.attributeQuery(prx_attr, node=prx_node, exists=True):
-            cmds.addAttr(prx_node, longName=prx_attr, proxy=driver_attr)
+            cmds.addAttr(prx_node, longName=prx_attr, niceName=prx_attr, proxy=driver_attr)
 
 
 def lock_and_hide(node, channelArray=None, hide=True):
