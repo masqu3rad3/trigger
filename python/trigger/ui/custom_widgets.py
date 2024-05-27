@@ -385,7 +385,7 @@ class TreeBoxLayout(ListBoxLayout):
 class TableBoxLayout(ListBoxLayout):
     def __init__(
         self,
-        labels=["Driver", "Start", "End", "Driven", "Start", "End"],
+        labels=["Driver", "Start", "End", "Driven", "Start", "End", "Proxy"],
         buttonDuplicate=True,
         *args,
         **kwargs
@@ -396,6 +396,9 @@ class TableBoxLayout(ListBoxLayout):
 
     def build(self):
         super(TableBoxLayout, self).build()
+        self.button_insert = QtWidgets.QPushButton(text="Insert")
+        self.buttonslayout.addWidget(self.button_insert)
+        self.button_insert.clicked.connect(self._on_insert)
         if self.isButtonDuplicate:
             self.buttonDuplicate = QtWidgets.QPushButton(text="Duplicate")
             self.buttonslayout.addWidget(self.buttonDuplicate)
@@ -408,7 +411,7 @@ class TableBoxLayout(ListBoxLayout):
         self.viewWidget.setLayoutDirection(QtCore.Qt.LeftToRight)
         self.viewWidget.setAutoFillBackground(True)
         self.viewWidget.setRowCount(0)
-        self.viewWidget.setColumnCount(6)
+        self.viewWidget.setColumnCount(len(self.labels))
         self.viewWidget.setHorizontalHeaderLabels(self.labels)
 
         self.viewWidget.horizontalHeader().setMinimumSectionSize(60)
@@ -442,6 +445,11 @@ class TableBoxLayout(ListBoxLayout):
         next_row = self.viewWidget.rowCount()
         self.viewWidget.insertRow(next_row)
         return next_row
+
+    def _on_insert(self):
+        """Insert a new row above the selected row."""
+        row = self.viewWidget.currentRow()
+        self.viewWidget.insertRow(row)
 
     def _on_clear(self):
         row_count = self.viewWidget.rowCount()

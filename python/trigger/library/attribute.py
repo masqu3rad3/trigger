@@ -185,6 +185,7 @@ def drive_attrs(
     driven_range=None,
     force=True,
     optimize=True,
+    proxy_driver_attr=None,
 ):
     """
     Creates a ranged connection between driver and driven attr(s)
@@ -198,6 +199,7 @@ def drive_attrs(
         direct connection between driver and driven
         force: (Bool) If true, any existing connections on driven will be overriden.
         optimize: (Bool) When enabled, it uses direct connections where applicable. Default True
+        proxy_driver_attr (str, optional): If defined this attribute will be created as a proxy for the driver_attr.
 
     Returns:
 
@@ -324,6 +326,14 @@ def drive_attrs(
             # nothing is compound
             else:
                 cmds.connectAttr("%s.outValue" % range_node, driven, force=force)
+
+    # if there is a proxy driver attributes defined, create that as proxy.
+    if proxy_driver_attr:
+        prx_node, prx_attr = proxy_driver_attr.split(".")
+        print(prx_node, prx_attr, driver_attr)
+        # check if the attribute exists
+        if not cmds.attributeQuery(prx_attr, node=prx_node, exists=True):
+            cmds.addAttr(prx_node, longName=prx_attr, proxy=driver_attr)
 
 
 def lock_and_hide(node, channelArray=None, hide=True):
