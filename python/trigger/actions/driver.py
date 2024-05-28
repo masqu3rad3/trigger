@@ -46,7 +46,27 @@ class Driver(ActionCore):
                 if self.proxy_controller:
                     attribute.separator(self.proxy_controller, data[6])
                 else:
-                    FILELOG.warning("Proxy controller not defined. Separator %s will not be created." % data[6])
+                    FILELOG.warning(
+                        "Proxy controller not defined. Separator %s will not be created."
+                        % data[6]
+                    )
+                continue
+
+            if data[3] == "proxy_only":
+                # TODO: make a create_proxy_attribute function with built-in nice name generation
+                if self.proxy_controller:
+                    if not cmds.attributeQuery(data[6], node=self.proxy_controller, exists=True):
+                        cmds.addAttr(
+                            self.proxy_controller,
+                            longName=data[6],
+                            niceName=data[6],
+                            proxy=data[0],
+                        )
+                else:
+                    FILELOG.warning(
+                        "Proxy controller not defined. Proxy %s will not be created."
+                        % data[6]
+                    )
                 continue
 
             splits = data[3].split(".")
@@ -75,7 +95,7 @@ class Driver(ActionCore):
                 driver_range=[data[1], data[2]],
                 driven_range=[data[4], data[5]],
                 optimize=False,
-                proxy_driver_attr=proxy_attr
+                proxy_driver_attr=proxy_attr,
             )
 
     def save_action(self):
@@ -110,18 +130,17 @@ class Driver(ActionCore):
 
         controller_lbl = QtWidgets.QLabel(text="Controller For Proxies:")
         controller_le_box = custom_widgets.LineEditBoxLayout(buttonsPosition="right")
-        controller_le_box.viewWidget.setPlaceholderText("If defined, proxy attributes will be created on controller.")
+        controller_le_box.viewWidget.setPlaceholderText(
+            "If defined, proxy attributes will be created on controller."
+        )
         controller_le_box.buttonGet.setText("<")
         controller_le_box.buttonGet.setMaximumWidth(30)
         controller_le_box.buttonGet.setToolTip("Gets the selected object as controller")
         layout.addRow(controller_lbl, controller_le_box)
 
-
         ctrl.connect(mappings_tablebox, "mapping_data", list)
         ctrl.connect(controller_le_box.viewWidget, "proxy_controller", str)
         ctrl.update_ui()
-
-
 
         ## SIGNALS ##
         mappings_tablebox.viewWidget.cellChanged.connect(
@@ -144,13 +163,13 @@ class Driver(ActionCore):
         for row in data_matrix:
             try:
                 row_data = [
-                        str(row[0]),
-                        float(row[1]),
-                        float(row[2]),
-                        str(row[3]),
-                        float(row[4]),
-                        float(row[5]),
-                    ]
+                    str(row[0]),
+                    float(row[1]),
+                    float(row[2]),
+                    str(row[3]),
+                    float(row[4]),
+                    float(row[5]),
+                ]
                 # for backwards compatibility
                 if len(row) == 7:
                     row_data.append(str(row[6]))
@@ -160,7 +179,13 @@ class Driver(ActionCore):
             except ValueError:
                 # if the row values between 0-5 are empty, collect this as a separator
                 if not any(row[:6]):
-                    validated_data.append(["separator", 0, 0, "separator", 0, 0, str(row[6])])
+                    validated_data.append(
+                        ["separator", 0, 0, "separator", 0, 0, str(row[6])]
+                    )
+                elif row[0] and row[6]:
+                    validated_data.append(
+                        [str(row[0]), 0, 0, "proxy_only", 0, 0, str(row[6])]
+                    )
                 else:
                     FILELOG.error("Range values must be digits => %s" % row)
         return validated_data

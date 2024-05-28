@@ -334,7 +334,6 @@ def drive_attrs(
         if not cmds.attributeQuery(prx_attr, node=prx_node, exists=True):
             cmds.addAttr(prx_node, longName=prx_attr, niceName=prx_attr, proxy=driver_attr)
 
-
 def lock_and_hide(node, channelArray=None, hide=True):
     """
     Locks and hides the channels specified in the channelArray.
