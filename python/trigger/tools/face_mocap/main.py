@@ -5,6 +5,8 @@ import logging
 
 from maya import cmds, mel
 
+from trigger.core.decorators import tracktime
+
 LOG = logging.getLogger(__name__)
 
 
@@ -22,6 +24,7 @@ class FaceMocap:
         """
         self._mapping = None
         self._start_frame = 1
+        self._controller = None
         self.mappings_dictionary = {}
 
         self._get_mappings()  # get the available mappings
@@ -29,6 +32,20 @@ class FaceMocap:
         # set the first mapping as the default (if available)
         if self.mappings_dictionary:
             self.set_mapping(list(self.mappings_dictionary.keys())[0])
+
+        self._enable_neutralize = True
+        self._neutralize_frame = 0
+
+    @property
+    def enable_neutralize(self):
+        """Get the enable neutralize flag."""
+        return self._enable_neutralize
+
+    def set_enable_neutralize(self, value):
+        """Set the enable neutralize flag."""
+        if not isinstance(value, bool):
+            raise ValueError("Enable neutralize must be a boolean.")
+        self._enable_neutralize = value
 
     @property
     def mapping(self):
@@ -44,6 +61,25 @@ class FaceMocap:
         """
         mapping_path = self.mappings_dictionary[mapping_name]
         self._mapping = self._load_json(mapping_path)
+
+    @property
+    def neutralize_frame(self):
+        """Get the neutralize frame."""
+        return self._neutralize_frame
+
+    def set_neutralize_frame(self, neutralize_frame):
+        """Set the neutralize frame."""
+        if not isinstance(neutralize_frame, int):
+            raise ValueError("Neutralize frame must be an integer.")
+        self._neutralize_frame = neutralize_frame
+    @property
+    def controller(self):
+        """Get the controller."""
+        return self._controller
+
+    def set_controller(self, controller):
+        """Set the controller."""
+        self._controller = controller
 
     @property
     def start_frame(self):
@@ -73,12 +109,15 @@ class FaceMocap:
             self.mappings_dictionary[mapping_name] = mapping_path
             LOG.info(mapping_name)
 
+    @tracktime
     def import_audio2face_data(self, json_file):
         """Import the audio2face data.
 
         Args:
             json_file (str): Path to the json file.
         """
+        if not self._controller or not cmds.objExists(self._controller):
+            raise ValueError("Controller not defined or doesn't exist.")
 
         audio_2_face_data = self._load_json(json_file)
         fps = audio_2_face_data["exportFps"]
@@ -105,11 +144,72 @@ class FaceMocap:
         cmds.currentTime(frame_range[0])
         facs_names = audio_2_face_data["facsNames"]
 
-        for frame, data in enumerate(audio_2_face_data["weightMat"]):
-            cmds.currentTime(frame + frame_range[0])
-            for key, value in zip(facs_names, data):
-                pass
+        # create the animlayers for the lower and upper face
+        lower_face_layer = cmds.animLayer("a2f_lowerFace")
+        upper_face_layer = cmds.animLayer("a2f_upperFace")
+        # before loops, add all the attributes to the anim layers
+        # self._add_attributes_to_anim_layer(self._controller, self._mapping["statics"].keys(), lower_face_layer)
+        # self._add_attributes_to_anim_layer(self._controller, self._mapping["statics"].keys(), upper_face_layer)
 
+        for static_key, value in self._mapping["statics"].items():
+            cmds.animLayer(lower_face_layer, edit=True, attribute="{}.{}".format(self._controller, static_key))
+            cmds.animLayer(upper_face_layer, edit=True, attribute="{}.{}".format(self._controller, static_key))
+            cmds.setKeyframe(self._controller, value=value, attribute=static_key, animLayer=lower_face_layer)
+            cmds.setKeyframe(self._controller, value=value, attribute=static_key, animLayer=upper_face_layer)
+
+        # if self._enable_neutralize:
+        #     neutralize_value_list = audio_2_face_data["weightMat"][self._neutralize_frame]
+        # else:
+        #     neutralize_value_list = None
+
+        for upper_key, data in self._mapping["upper_face_mappings"].items():
+            id = audio_2_face_data["facsNames"].index(upper_key)
+            # compensate = 0
+            # if neutralize_value_list:
+            #     compensate = neutralize_value_list[id]
+            for dest_attr_pack in data:
+                mult = dest_attr_pack[3]
+                attr = dest_attr_pack[0]
+                cmds.animLayer(upper_face_layer, edit=True, attribute="{}.{}".format(self._controller, attr))
+                for frame, value_list in enumerate(audio_2_face_data["weightMat"]):
+                    # mapped_value = dest_attr_pack[1] + (dest_attr_pack[2] - dest_attr_pack[1]) * (value_list[id]-compensate) * mult
+                    mapped_value = dest_attr_pack[1] + (dest_attr_pack[2] - dest_attr_pack[1]) * value_list[id] * mult
+                    cmds.setKeyframe(self._controller, value=mapped_value, attribute=attr, time=frame + frame_range[0], animLayer=upper_face_layer)
+
+        for lower_key, data in self._mapping["lower_face_mappings"].items():
+            id = audio_2_face_data["facsNames"].index(lower_key)
+            # compensate = 0
+            # if neutralize_value_list:
+            #     compensate = neutralize_value_list[id]
+            for dest_attr_pack in data:
+                mult = dest_attr_pack[3]
+                attr = dest_attr_pack[0]
+                cmds.animLayer(lower_face_layer, edit=True, attribute="{}.{}".format(self._controller, attr))
+                for frame, value_list in enumerate(audio_2_face_data["weightMat"]):
+                    # mapped_value = dest_attr_pack[1] + (dest_attr_pack[2] - dest_attr_pack[1]) * (value_list[id]-compensate) * mult
+                    mapped_value = dest_attr_pack[1] + (dest_attr_pack[2] - dest_attr_pack[1]) * value_list[id] * mult
+                    cmds.setKeyframe(self._controller, value=mapped_value, attribute=attr, time=frame + frame_range[0], animLayer=lower_face_layer)
+
+        # create a neutralize layer if the neutralize frame is set
+        if self._enable_neutralize:
+            neutralize_layer = cmds.animLayer("a2f_neutralize")
+            self.__neutralize(self._neutralize_frame, self._mapping["upper_face_mappings"].values(), neutralize_layer)
+            self.__neutralize(self._neutralize_frame, self._mapping["lower_face_mappings"].values(), neutralize_layer)
+            # for data in self._mapping["upper_face_mappings"].values() + self._mapping["lower_face_mappings"].values():
+            #     for dest_attr_pack in data:
+            #         # mult = dest_attr_pack[3]
+            #         attr = dest_attr_pack[0]
+            #         min_value = dest_attr_pack[1]
+            #         cmds.setKeyframe(self._controller, value=min_value, attribute=attr, time=self._neutralize_frame, animLayer=neutralize_layer)
+
+    def __neutralize(self, neutralize_frame, mapping_datas, neutralize_layer):
+        """Neutralize the animation data."""
+        for data in mapping_datas:
+            for dest_attr_pack in data:
+                attr = dest_attr_pack[0]
+                min_value = dest_attr_pack[1]
+                cmds.animLayer(neutralize_layer, edit=True, attribute="{}.{}".format(self._controller, attr))
+                cmds.setKeyframe(self._controller, value=min_value, attribute=attr, time=neutralize_frame, animLayer=neutralize_layer)
 
 
     @staticmethod
