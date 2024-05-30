@@ -1,11 +1,11 @@
 {
     "upper_face_mappings": {
-        "eyeBlinkLeft": [["L_blinkUpperLidRaiser", 0, 100, 1.0]],
-        "eyeBlinkRight": [["R_blinkUpperLidRaiser", 0, 100, 1.0]],
         "eyeSquintLeft": [["L_squint", 0, 100, 1.0]],
         "eyeSquintRight": [["R_squint", 0, 100, 1.0]],
         "eyeWideLeft": [["L_blinkUpperLidRaiser", 0, -100, 1.0]],
         "eyeWideRight": [["R_blinkUpperLidRaiser", 0, -100, 1.0]],
+        "eyeBlinkLeft": [["L_blinkUpperLidRaiser", 0, 100, 1.0]],
+        "eyeBlinkRight": [["R_blinkUpperLidRaiser", 0, 100, 1.0]],
         "browDownLeft": [["L_browLowerer", 0, 100, 1.0]],
         "browDownRight": [["R_browLowerer", 0, 100, 1.0]],
         "browInnerUp": [["L_innerBrowRaiser", 0, 100, 1.0], ["R_innerBrowRaiser", 0, 100, 1.0]],
@@ -15,7 +15,11 @@
         "cheekSquintLeft": [["L_cheekRaiser", 0, 100, 1.0]],
         "cheekSquintRight": [["R_cheekRaiser", 0, 100, 1.0]],
         "noseSneerLeft": [["L_noseWrinkler", 0, 100, 1.0]],
-        "noseSneerRight": [["R_noseWrinkler", 0, 100, 1.0]]
+        "noseSneerRight": [["R_noseWrinkler", 0, 100, 1.0]],
+        "eyeLookDownRight": [["L_dartY", 0, 100, 1.0], ["R_dartY", 0, 100, 1.0]],
+        "eyeLookInRight": [["L_dartX", 0, -100, 1.0], ["R_dartX", 0, -100, 1.0]],
+        "eyeLookOutRight": [["L_dartX", 0, 100, 1.0], ["R_dartX", 0, 100, 1.0]],
+        "eyeLookUpRight": [["L_dartY", 0, -100, 1.0], ["R_dartY", 0, -100, 1.0]]
     },
     "lower_face_mappings": {
         "jawForward": [["jawThrustBack", 0, 100, 1.0]],
@@ -24,7 +28,7 @@
         "jawOpen": [["jawDrop", 0, -100, 1.2]],
         "mouthClose": [["L_lipzip", 0, 100, 1.0], ["R_lipzip", 0, 100, 1.0]],
         "mouthFunnel": [["L_upperFunnelerLipsSuck", 0, 100, 1.0], ["R_upperFunnelerLipsSuck", 0, 100, 1.0], ["L_lowerFunnelerLipsSuck", 0, 100, 1.0], ["R_lowerFunnelerLipsSuck", 0, 100, 1.0]],
-        "mouthPucker": [["L_lipPucker", 0, 100, 1.0], ["R_lipPucker", 0, 100, 1.0]],
+        "mouthPucker": [["L_lipPucker", 0, 100, 0.7], ["R_lipPucker", 0, 100, 0.7]],
         "mouthLeft": [["mouthLeftRight", 0, 100, 1.0]],
         "mouthRight": [["mouthLeftRight", 0, -100, 1.0]],
         "mouthSmileLeft": [["L_lipCornerPuller", 0, 100, 1.0]],

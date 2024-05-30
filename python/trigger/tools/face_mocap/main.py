@@ -142,14 +142,10 @@ class FaceMocap:
         cmds.playbackOptions(playbackSpeed=1)  # set playback speed to real-time
 
         cmds.currentTime(frame_range[0])
-        facs_names = audio_2_face_data["facsNames"]
 
         # create the animlayers for the lower and upper face
         lower_face_layer = cmds.animLayer("a2f_lowerFace")
         upper_face_layer = cmds.animLayer("a2f_upperFace")
-        # before loops, add all the attributes to the anim layers
-        # self._add_attributes_to_anim_layer(self._controller, self._mapping["statics"].keys(), lower_face_layer)
-        # self._add_attributes_to_anim_layer(self._controller, self._mapping["statics"].keys(), upper_face_layer)
 
         for static_key, value in self._mapping["statics"].items():
             cmds.animLayer(lower_face_layer, edit=True, attribute="{}.{}".format(self._controller, static_key))
@@ -157,50 +153,27 @@ class FaceMocap:
             cmds.setKeyframe(self._controller, value=value, attribute=static_key, animLayer=lower_face_layer)
             cmds.setKeyframe(self._controller, value=value, attribute=static_key, animLayer=upper_face_layer)
 
-        # if self._enable_neutralize:
-        #     neutralize_value_list = audio_2_face_data["weightMat"][self._neutralize_frame]
-        # else:
-        #     neutralize_value_list = None
-
-        for upper_key, data in self._mapping["upper_face_mappings"].items():
-            id = audio_2_face_data["facsNames"].index(upper_key)
-            # compensate = 0
-            # if neutralize_value_list:
-            #     compensate = neutralize_value_list[id]
-            for dest_attr_pack in data:
-                mult = dest_attr_pack[3]
-                attr = dest_attr_pack[0]
-                cmds.animLayer(upper_face_layer, edit=True, attribute="{}.{}".format(self._controller, attr))
-                for frame, value_list in enumerate(audio_2_face_data["weightMat"]):
-                    # mapped_value = dest_attr_pack[1] + (dest_attr_pack[2] - dest_attr_pack[1]) * (value_list[id]-compensate) * mult
-                    mapped_value = dest_attr_pack[1] + (dest_attr_pack[2] - dest_attr_pack[1]) * value_list[id] * mult
-                    cmds.setKeyframe(self._controller, value=mapped_value, attribute=attr, time=frame + frame_range[0], animLayer=upper_face_layer)
-
-        for lower_key, data in self._mapping["lower_face_mappings"].items():
-            id = audio_2_face_data["facsNames"].index(lower_key)
-            # compensate = 0
-            # if neutralize_value_list:
-            #     compensate = neutralize_value_list[id]
-            for dest_attr_pack in data:
-                mult = dest_attr_pack[3]
-                attr = dest_attr_pack[0]
-                cmds.animLayer(lower_face_layer, edit=True, attribute="{}.{}".format(self._controller, attr))
-                for frame, value_list in enumerate(audio_2_face_data["weightMat"]):
-                    # mapped_value = dest_attr_pack[1] + (dest_attr_pack[2] - dest_attr_pack[1]) * (value_list[id]-compensate) * mult
-                    mapped_value = dest_attr_pack[1] + (dest_attr_pack[2] - dest_attr_pack[1]) * value_list[id] * mult
-                    cmds.setKeyframe(self._controller, value=mapped_value, attribute=attr, time=frame + frame_range[0], animLayer=lower_face_layer)
+        self.__apply_a2f_data(self._mapping["upper_face_mappings"], audio_2_face_data, upper_face_layer, frame_range[0])
+        self.__apply_a2f_data(self._mapping["lower_face_mappings"], audio_2_face_data, lower_face_layer, frame_range[0])
 
         # create a neutralize layer if the neutralize frame is set
         if self._enable_neutralize:
             neutralize_layer = cmds.animLayer("a2f_neutralize")
             self.__neutralize(self._neutralize_frame, self._mapping["upper_face_mappings"].values(), neutralize_layer)
             self.__neutralize(self._neutralize_frame, self._mapping["lower_face_mappings"].values(), neutralize_layer)
-            # for data in self._mapping["upper_face_mappings"].values() + self._mapping["lower_face_mappings"].values():
-            #     for dest_attr_pack in data:
-            #         # mult = dest_attr_pack[3]
-            #         attr = dest_attr_pack[0]
-            #         min_value = dest_attr_pack[1]
-            #         cmds.setKeyframe(self._controller, value=min_value, attribute=attr, time=self._neutralize_frame, animLayer=neutralize_layer)
+
+    def __apply_a2f_data(self, trigger_mappings, audio_2_face_data, animlayer, start_frame):
+        """Apply the audio2face data to the controller."""
+        for key, data in trigger_mappings.items():
+            id = audio_2_face_data["facsNames"].index(key)
+            for dest_attr_pack in data:
+                mult = dest_attr_pack[3]
+                attr = dest_attr_pack[0]
+                cmds.animLayer(animlayer, edit=True, attribute="{}.{}".format(self._controller, attr))
+                for frame, value_list in enumerate(audio_2_face_data["weightMat"]):
+                    mapped_value = dest_attr_pack[1] + (dest_attr_pack[2] - dest_attr_pack[1]) * value_list[id] * mult
+                    cmds.setKeyframe(self._controller, value=mapped_value, attribute=attr, time=frame + start_frame,
+                                     animLayer=animlayer)
 
     def __neutralize(self, neutralize_frame, mapping_datas, neutralize_layer):
         """Neutralize the animation data."""
