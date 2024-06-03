@@ -1,7 +1,9 @@
 import os
 import glob
+import csv
 import json
 import logging
+from pathlib import Path
 
 from maya import cmds, mel
 
@@ -36,6 +38,28 @@ class FaceMocap:
         self._enable_neutralize = True
         self._neutralize_frame = 0
 
+        self._bake_on_controllers = False # if true, bakes on the controllers
+
+        self._a2f_mocap_layer = "A2F_mocap_layer"
+        self._livelink_mocap_layer = "LiveLink_mocap_layer"
+
+    @property
+    def bake_on_controllers(self):
+        """Get the bake on controllers flag."""
+        return self._bake_on_controllers
+
+    def set_bake_on_controllers(self, value):
+        """Set the bake on controllers flag.
+
+        Args:
+            value (bool): If True, the mocap data is getting applied
+                directly to the controllers. Otherwise, it will be added to
+                the morph hook values with a separate controller.
+        """
+        if not isinstance(value, bool):
+            raise ValueError("Bake on controllers must be a boolean.")
+        self._bake_on_controllers = value
+
     @property
     def enable_neutralize(self):
         """Get the enable neutralize flag."""
@@ -61,6 +85,20 @@ class FaceMocap:
         """
         mapping_path = self.mappings_dictionary[mapping_name]
         self._mapping = self._load_json(mapping_path)
+
+    @property
+    def upper_face_mappings(self):
+        """Return the mappings data depending on the controller type."""
+        if self.bake_on_controllers:
+            return self._mapping["upper_face_controller_mappings"]
+        return self._mapping["upper_face_morph_mappings"]
+
+    @property
+    def lower_face_mappings(self):
+        """Return the mappings data depending on the controller type."""
+        if self.bake_on_controllers:
+            return self._mapping["lower_face_controller_mappings"]
+        return self._mapping["lower_face_morph_mappings"]
 
     @property
     def neutralize_frame(self):
@@ -109,6 +147,100 @@ class FaceMocap:
             self.mappings_dictionary[mapping_name] = mapping_path
             LOG.info(mapping_name)
 
+    # def set_static_keys(self, animlayers):
+    #     """Sets the static keys for all provided animlayers."""
+    #     for animlayer in animlayers:
+    #         for static_key, value in self._mapping["statics"].items():
+    #             cmds.animLayer(animlayer, edit=True, attribute="{}.{}".format(self._controller, static_key))
+    #             cmds.setKeyframe(self._controller, value=value, attribute=static_key, animLayer=animlayer)
+
+    @tracktime
+    def import_livelinkface_data(self, csv_file):
+        """Import the LiveLinkFace data.
+
+        Args:
+            csv_file (str): Path to the csv file.
+        """
+        if not self._controller or not cmds.objExists(self._controller):
+            raise ValueError("Controller not defined or doesn't exist.")
+
+        live_link_face_data = list(csv.DictReader(open(csv_file)))
+
+        # TODO assume the fps 60 for now
+        fps = 60
+        self.set_scene_fps(fps)
+
+        frame_range = [
+            self.start_frame,
+            self.start_frame + len(live_link_face_data),
+        ]
+
+        self.set_ranges(
+            [frame_range[0], frame_range[0], frame_range[1], frame_range[1]]
+        )
+
+        cmds.currentTime(frame_range[0])
+
+        # create the animlayers for the lower and upper face
+        lower_face_layer = cmds.animLayer("livelink_lowerFace")
+        upper_face_layer = cmds.animLayer("livelink_upperFace")
+        key_object = self._controller if self.bake_on_controllers else self._livelink_mocap_layer
+
+        # self.set_static_keys([lower_face_layer, upper_face_layer])
+
+        self.__apply_livelinkface_data(key_object, self.upper_face_mappings, live_link_face_data, upper_face_layer, frame_range[0])
+        self.__apply_livelinkface_data(key_object, self.lower_face_mappings, live_link_face_data, lower_face_layer, frame_range[0])
+
+        # create a neutralize layer if the neutralize frame is set
+        if self._enable_neutralize:
+            neutralize_layer = cmds.animLayer("livelink_neutralize")
+            self.__neutralize(key_object, self._neutralize_frame,self.upper_face_mappings.values(), neutralize_layer)
+            self.__neutralize(key_object, self._neutralize_frame, self.lower_face_mappings.values(), neutralize_layer)
+
+
+    @staticmethod
+    def __apply_livelinkface_data(controller, trigger_mappings, livelinkface_data, animlayer, start_frame):
+        """Apply the livelinkface data to the controller."""
+        for key, data in trigger_mappings.items():
+            for dest_attr_pack in data:
+                attr = dest_attr_pack[0]
+                cmds.animLayer(animlayer, edit=True, attribute="{}.{}".format(controller, attr))
+        for frame, row_dict in enumerate(livelinkface_data):
+            incase_sensitive_row_dict = {k.lower(): j for k,j in row_dict.items()}
+            for key, data in trigger_mappings.items():
+                for dest_attr_pack in data:
+                    mult = dest_attr_pack[3]
+                    attr = dest_attr_pack[0]
+                    livelink_value = float(incase_sensitive_row_dict[key.lower()])
+                    mapped_value = float(dest_attr_pack[1] + (dest_attr_pack[2] - dest_attr_pack[1])) * livelink_value * mult
+                    cmds.setKeyframe(controller, value=mapped_value, attribute=attr, time=frame + start_frame,
+                                     animLayer=animlayer)
+
+    def validations(self, file_path):
+        """Run some validations before starting and return the result."""
+        # get the file extension
+        # check if the file exists
+        path_obj = Path(file_path)
+        if not path_obj.exists():
+            return False, "File doesn't exist."
+
+        if self.bake_on_controllers:
+            if not self._controller:
+                return False, "Controller not defined."
+            if not cmds.objExists(self._controller):
+                return False, "Controller doesn't exist."
+
+        else:
+            if path_obj.suffix == ".json":
+                if not cmds.objExists(self._a2f_mocap_layer):
+                    return False, "No A2F mocap layer found."
+            elif path_obj.suffix == ".csv":
+                if not cmds.objExists(self._livelink_mocap_layer):
+                    return False, "No LiveLink mocap layer found."
+            else:
+                return False, "Invalid file type."
+        return True, ""
+
     @tracktime
     def import_audio2face_data(self, json_file):
         """Import the audio2face data.
@@ -116,6 +248,7 @@ class FaceMocap:
         Args:
             json_file (str): Path to the json file.
         """
+
         if not self._controller or not cmds.objExists(self._controller):
             raise ValueError("Controller not defined or doesn't exist.")
 
@@ -144,45 +277,45 @@ class FaceMocap:
         cmds.currentTime(frame_range[0])
 
         # create the animlayers for the lower and upper face
-        lower_face_layer = cmds.animLayer("a2f_lowerFace")
         upper_face_layer = cmds.animLayer("a2f_upperFace")
+        lower_face_layer = cmds.animLayer("a2f_lowerFace")
 
-        for static_key, value in self._mapping["statics"].items():
-            cmds.animLayer(lower_face_layer, edit=True, attribute="{}.{}".format(self._controller, static_key))
-            cmds.animLayer(upper_face_layer, edit=True, attribute="{}.{}".format(self._controller, static_key))
-            cmds.setKeyframe(self._controller, value=value, attribute=static_key, animLayer=lower_face_layer)
-            cmds.setKeyframe(self._controller, value=value, attribute=static_key, animLayer=upper_face_layer)
+        # upper_face_mappings = self._mapping["upper_face_controller_mappings"] if self.bake_on_controllers else self._mapping["upper_face_morph_mappings"]
+        # lower_face_mappings = self._mapping["lower_face_controller_mappings"] if self.bake_on_controllers else self._mapping["lower_face_morph_mappings"]
+        key_object = self._controller if self.bake_on_controllers else self._a2f_mocap_layer
 
-        self.__apply_a2f_data(self._mapping["upper_face_mappings"], audio_2_face_data, upper_face_layer, frame_range[0])
-        self.__apply_a2f_data(self._mapping["lower_face_mappings"], audio_2_face_data, lower_face_layer, frame_range[0])
+        self.__apply_a2f_data(key_object, self.upper_face_mappings, audio_2_face_data, upper_face_layer, frame_range[0])
+        self.__apply_a2f_data(key_object, self.lower_face_mappings, audio_2_face_data, lower_face_layer, frame_range[0])
 
         # create a neutralize layer if the neutralize frame is set
         if self._enable_neutralize:
             neutralize_layer = cmds.animLayer("a2f_neutralize")
-            self.__neutralize(self._neutralize_frame, self._mapping["upper_face_mappings"].values(), neutralize_layer)
-            self.__neutralize(self._neutralize_frame, self._mapping["lower_face_mappings"].values(), neutralize_layer)
+            self.__neutralize(key_object, self._neutralize_frame, self.upper_face_mappings.values(), neutralize_layer)
+            self.__neutralize(key_object, self._neutralize_frame, self.lower_face_mappings.values(), neutralize_layer)
 
-    def __apply_a2f_data(self, trigger_mappings, audio_2_face_data, animlayer, start_frame):
+    @staticmethod
+    def __apply_a2f_data(controller, trigger_mappings, audio_2_face_data, animlayer, start_frame):
         """Apply the audio2face data to the controller."""
         for key, data in trigger_mappings.items():
             id = audio_2_face_data["facsNames"].index(key)
             for dest_attr_pack in data:
                 mult = dest_attr_pack[3]
                 attr = dest_attr_pack[0]
-                cmds.animLayer(animlayer, edit=True, attribute="{}.{}".format(self._controller, attr))
+                cmds.animLayer(animlayer, edit=True, attribute="{}.{}".format(controller, attr))
                 for frame, value_list in enumerate(audio_2_face_data["weightMat"]):
                     mapped_value = dest_attr_pack[1] + (dest_attr_pack[2] - dest_attr_pack[1]) * value_list[id] * mult
-                    cmds.setKeyframe(self._controller, value=mapped_value, attribute=attr, time=frame + start_frame,
+                    cmds.setKeyframe(controller, value=mapped_value, attribute=attr, time=frame + start_frame,
                                      animLayer=animlayer)
 
-    def __neutralize(self, neutralize_frame, mapping_datas, neutralize_layer):
+    @staticmethod
+    def __neutralize(controller, neutralize_frame, mapping_datas, neutralize_layer):
         """Neutralize the animation data."""
         for data in mapping_datas:
             for dest_attr_pack in data:
                 attr = dest_attr_pack[0]
                 min_value = dest_attr_pack[1]
-                cmds.animLayer(neutralize_layer, edit=True, attribute="{}.{}".format(self._controller, attr))
-                cmds.setKeyframe(self._controller, value=min_value, attribute=attr, time=neutralize_frame, animLayer=neutralize_layer)
+                cmds.animLayer(neutralize_layer, edit=True, attribute="{}.{}".format(controller, attr))
+                cmds.setKeyframe(controller, value=min_value, attribute=attr, time=neutralize_frame, animLayer=neutralize_layer)
 
 
     @staticmethod

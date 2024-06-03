@@ -15,8 +15,8 @@ def create_attribute(node, property_dict=None, keyable=True, display=True, **kwa
     """
     Create attribute with the properties defined by the property_dict.
     Args:
-        node: (String) Node to create attribute on
-        property_dict: (Dictionary) This holds the necessary information for the attribute:
+        node (str): Node to create attribute on
+        property_dict (dict, optional): This holds the necessary information for the attribute:
                 {<nice_name>: (Optional) nice name for the attribute,
                  <attr_name>: name of the attribute,
                  <attr_type>: Valid types are "long", "short", "bool", "enum", "float", "double", "string"
@@ -29,8 +29,8 @@ def create_attribute(node, property_dict=None, keyable=True, display=True, **kwa
 
                  For easier use, each these elements can be entered as kwargs.
 
-        keyable: (bool) Makes the attribute keyable and visible in the channelbox
-        display: (bool) Makes the attr displayable in the cb
+        keyable (bool, optional): Makes the attribute keyable and visible in the channelbox
+        display (bool, optional): Makes the attr displayable in the cb
 
     Returns:
 
@@ -381,7 +381,7 @@ def is_visible(node, attr):
 def attribute_pass(
     sourceNode,
     targetNode,
-    attributes=[],
+    attributes=None,
     inConnections=True,
     outConnections=True,
     keepSourceAttributes=False,
@@ -404,7 +404,7 @@ def attribute_pass(
     Returns: None
 
     """
-
+    attributes = attributes or []
     # get the user defined attributes:
     if len(attributes) == 0:
         user_attr = cmds.listAttr(sourceNode, ud=True)
