@@ -1,3 +1,21 @@
+"""Mapper module to import the csv and json files (livelink and audio2face)
+
+from importlib import reload
+from trigger.tools.face_mocap import decode
+reload(decode)
+from trigger.tools.face_mocap import a2f
+reload(a2f)
+from trigger.tools.face_mocap import main as focap
+reload(focap)
+
+handler = focap.FaceMocap()
+
+# test_path = "D:/PROJECT_AND_ARGE/Elf_Facial_Collaboration/_TRANSFER/LiveLinkFace_20240531_MySlate_4_iPhone/20240531_MySlate_4/"
+test_path = "D:/PROJECT_AND_ARGE/Elf_Facial_Collaboration/_TRANSFER/LiveLinkFace_20240531_MySlate_3_iPhone/20240531_MySlate_3"
+handler.import_livelinkface_package(test_path)
+
+"""
+
 import os
 import glob
 import csv
@@ -6,6 +24,10 @@ import logging
 from pathlib import Path
 
 from maya import cmds, mel
+
+# import the decode package from the same directory
+from .decode import extract_wav, extract_jpg
+from .a2f import process_wav_file
 
 from trigger.core.decorators import tracktime
 
@@ -155,7 +177,7 @@ class FaceMocap:
     #             cmds.setKeyframe(self._controller, value=value, attribute=static_key, animLayer=animlayer)
 
     @tracktime
-    def import_livelinkface_data(self, csv_file):
+    def import_livelinkface_data(self, csv_file, fps=60):
         """Import the LiveLinkFace data.
 
         Args:
@@ -166,8 +188,6 @@ class FaceMocap:
 
         live_link_face_data = list(csv.DictReader(open(csv_file)))
 
-        # TODO assume the fps 60 for now
-        fps = 60
         self.set_scene_fps(fps)
 
         frame_range = [
@@ -315,7 +335,6 @@ class FaceMocap:
                     cmds.setKeyframe(controller, value=mapped_value, attribute=attr, time=frame + start_frame,
                                      animLayer=animlayer)
 
-
     @staticmethod
     def __neutralize(controller, neutralize_frame, mapping_datas, neutralize_layer):
         """Neutralize the animation data."""
@@ -325,7 +344,6 @@ class FaceMocap:
                 min_value = dest_attr_pack[1]
                 cmds.animLayer(neutralize_layer, edit=True, attribute="{}.{}".format(controller, attr))
                 cmds.setKeyframe(controller, value=min_value, attribute=attr, time=neutralize_frame, animLayer=neutralize_layer)
-
 
     @staticmethod
     def _load_json(file_path):
@@ -377,3 +395,76 @@ class FaceMocap:
             maxTime=range_list[2],
             animationEndTime=range_list[3],
         )
+
+    def import_livelinkface_package(self, livelinkface_folder, use_calibrated=True, bake_a2f=False, bake_livelink=False):
+        """Bring the full package."""
+
+        # get the take.json file
+        folder = Path(livelinkface_folder)
+        takes = list(folder.rglob("take.json"))
+        if not takes:
+            raise FileNotFoundError("No take.json file found.")
+        take_file = takes[0]
+        take_data = self._load_json(take_file)
+        is_calibrated = take_data["calibrated"]
+        subject = take_data["subject"]
+        take = take_data["take"]
+        slate = take_data["slate"]
+
+        _video_metadatas = list(folder.rglob("video_metadata.json"))
+        if not _video_metadatas:
+            raise FileNotFoundError("No video_metadata.json file found.")
+        video_metadata_file = _video_metadatas[0]
+        video_metadata = self._load_json(video_metadata_file)
+        frame_rate = video_metadata["FrameRate"]
+
+        mov_file = folder / f"{slate}_{take}_{subject}.mov"
+        cal_csv = folder / f"{slate}_{take}_{subject}_cal.csv"
+        raw_csv = folder / f"{slate}_{take}_{subject}_raw.csv"
+        neutral_csv = folder / f"{slate}_{take}_{subject}_neutral.csv"
+
+        if is_calibrated and use_calibrated:
+            csv_file = cal_csv
+        else:
+            csv_file = raw_csv
+
+        # extract the wav file
+        wav_file_path = extract_wav(mov_file.as_posix())
+
+        # extract the jpg files
+        jpg_folder_path = extract_jpg(mov_file.as_posix())
+
+        # process the wav file and get the json file
+        a2f_file_path = process_wav_file(wav_file_path)
+
+        self.set_mapping("arkit_a2f")
+        self.set_bake_on_controllers(bake_a2f)
+        self.import_audio2face_data(a2f_file_path)
+
+        # create the image plane
+        ip_trns, ip_shape = cmds.imagePlane()
+
+        # get the first jpg from the folder
+        jpg_files = list(Path(jpg_folder_path).rglob("*.jpg"))
+        cmds.setAttr(f"{ip_shape}.imageName", jpg_files[0], type="string")
+        cmds.setAttr(f"{ip_shape}.useFrameExtension", 1)
+        cmds.setAttr(f"{ip_shape}.frameOffset", -self._start_frame)
+        height = video_metadata["Dimensions"]["height"]
+        width = video_metadata["Dimensions"]["width"]
+        ratio = height / width
+        bbx = cmds.exactWorldBoundingBox(cmds.ls(), ignoreInvisible=True)
+        # x = bbx[3] - bbx[0]
+        height_mult = bbx[4] - bbx[1]
+        cmds.setAttr(f"{ip_trns}.rotateY", 180)
+
+        cmds.setAttr(f"{ip_shape}.width", ratio*height_mult)
+        cmds.setAttr(f"{ip_shape}.height", height_mult)
+        cmds.setAttr(f"{ip_shape}.imageCenterY", height_mult*0.5)
+
+        self.set_neutralize_frame(0)
+        self.set_mapping("arkit")
+        self.set_bake_on_controllers(bake_livelink)
+        self.import_livelinkface_data(csv_file.as_posix(), fps=frame_rate)
+
+
+
