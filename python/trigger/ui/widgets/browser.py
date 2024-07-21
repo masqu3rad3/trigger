@@ -8,7 +8,7 @@ from trigger.library import naming
 class BrowserButton(QtWidgets.QPushButton):
     def __init__(
         self,
-        text="Browse",
+        text=None,
         update_widget=None,
         mode="openFile",
         filterExtensions=None,
@@ -35,6 +35,9 @@ class BrowserButton(QtWidgets.QPushButton):
         self._updateWidget = update_widget
         if text:
             self.setText(text)
+        else:
+            icon = QtWidgets.QApplication.style().standardIcon(QtWidgets.QStyle.SP_DirOpenIcon)
+            self.setIcon(icon)
         self._validModes = ["openFile", "saveFile", "directory"]
         if mode in self._validModes:
             self._mode = mode
@@ -125,10 +128,8 @@ class BrowserButton(QtWidgets.QPushButton):
                 default_path,
                 options=(QtWidgets.QFileDialog.ShowDirsOnly),
             )
-            if dlg:
-                new_path, selected_extension = dlg
-            else:
-                new_path, selected_extension = None, None
+            new_path = dlg
+            selected_extension = None
         else:
             new_path = None
             selected_extension = None
@@ -228,6 +229,18 @@ class FileBrowserBoxLayout(QtWidgets.QHBoxLayout):
         self.directory = directory
         self.line_edit = FileLineEdit(directory=self.directory)
         self.browser_button = BrowserButton(update_widget=self.line_edit)
+
+        self.addWidget(self.line_edit)
+        self.addWidget(self.browser_button)
+
+class FolderBrowserBoxLayout(QtWidgets.QHBoxLayout):
+    """Custom Layout for File and Folder Browsers"""
+
+    def __init__(self, directory=False, *args, **kwargs):
+        super(FolderBrowserBoxLayout, self).__init__(*args, **kwargs)
+        self.directory = directory
+        self.line_edit = FileLineEdit(directory=self.directory)
+        self.browser_button = BrowserButton(update_widget=self.line_edit,  mode="directory")
 
         self.addWidget(self.line_edit)
         self.addWidget(self.browser_button)
