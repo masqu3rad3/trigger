@@ -1,11 +1,12 @@
 """UI for Face Mocap."""
 
 import dataclasses
-from trigger.ui.Qt import QtWidgets
+from trigger.ui.Qt import QtWidgets, QtCore
 from trigger.ui.qtmaya import get_main_maya_window
 from trigger.ui.widgets.browser import FolderBrowserBoxLayout
 from trigger.tools.face_mocap import main as focap
 from trigger.ui import feedback
+from trigger.ui.widgets.information_bar import InformationBar
 
 _version = "1.0.0"
 WINDOW_NAME = "Face Mocap v{}".format(_version)
@@ -45,6 +46,8 @@ class FaceMocapWidgets:
     controller: QtWidgets.QLineEdit = None
     a2f_mocap_layer: QtWidgets.QLineEdit = None
     livelink_mocap_layer: QtWidgets.QLineEdit = None
+    # loading_progressbar: LoadingProgressBar = None
+    information_bar: QtWidgets.QWidget = None
     button_box: QtWidgets.QDialogButtonBox = None
 
 class MainUI(QtWidgets.QDialog):
@@ -125,6 +128,13 @@ class MainUI(QtWidgets.QDialog):
         self.widgets.livelink_mocap_layer.setDisabled(self.data.bake_on_controllers)
         form_layout.addRow(livelink_mocap_layer_lbl, self.widgets.livelink_mocap_layer)
 
+        self.widgets.information_bar = InformationBar()
+        self.widgets.information_bar.set_text("Ready")
+        self.widgets.information_bar.set_border_color("#A9A9A9")
+        # set the height of the information bar
+        self.widgets.information_bar.setFixedHeight(25)
+        master_layout.addWidget(self.widgets.information_bar)
+
         # create a button box
         self.widgets.button_box = QtWidgets.QDialogButtonBox(
             QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel
@@ -151,9 +161,13 @@ class MainUI(QtWidgets.QDialog):
     def apply_animation(self):
         """Apply the animation based on the current widget settings."""
 
+        self.widgets.information_bar.set_text("Processing...")
+        self.widgets.information_bar.set_border_color("yellow")
+
         livelink_folder = self.widgets.live_link_folder.line_edit.text()
         if not livelink_folder:
             self.feedback.pop_info(title="Missing information", text="Please set the Live Link folder\n\nThe Live Link folder is required to import the animation.", critical=True)
+            self.widgets.loading_progressbar.stop()
             return
 
         import_livelink = self.widgets.import_livelink.isChecked()
@@ -169,13 +183,13 @@ class MainUI(QtWidgets.QDialog):
         self.handler.set_livelink_mocap_layer(livelink_mocap_layer)
         self.handler.set_start_frame(start_frame)
 
+        #################
+
+        QtWidgets.QApplication.processEvents()
+
         self.handler.import_livelinkface_package(livelink_folder, import_livelink=import_livelink, import_a2f=import_a2f, bake_a2f=bake_on_controllers, bake_livelink=bake_on_controllers)
 
-
-
-
-
-
-
-
+        self.widgets.information_bar.set_text("Facial Animation Applied")
+        self.widgets.information_bar.set_border_color("green")
+        #################
 

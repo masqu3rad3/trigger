@@ -23,6 +23,9 @@ import json
 import logging
 from pathlib import Path
 
+from trigger.ui.Qt import QtWidgets
+
+
 from maya import cmds, mel
 
 # import the decode package from the same directory
@@ -420,8 +423,8 @@ class FaceMocap:
 
     def import_livelinkface_package(self, livelinkface_folder, import_livelink=True, import_a2f=True, use_calibrated=True, bake_a2f=False, bake_livelink=False):
         """Bring the full package."""
-
         # get the take.json file
+
         folder = Path(livelinkface_folder)
         takes = list(folder.rglob("take.json"))
         if not takes:
@@ -463,20 +466,24 @@ class FaceMocap:
              frame_range[1]]
         )
 
+        QtWidgets.QApplication.processEvents()
+
         if import_a2f:
             # extract the wav file
             wav_file_path = extract_wav(mov_file.as_posix())
+            QtWidgets.QApplication.processEvents()
 
             # process the wav file and get the json file
             a2f_file_path = process_wav_file(wav_file_path)
+            QtWidgets.QApplication.processEvents()
 
             self.set_mapping("arkit_a2f")
             self.set_bake_on_controllers(bake_a2f)
             self.import_audio2face_data(a2f_file_path, set_fps=False, set_ranges=False)
-
         if import_livelink:
             # extract the jpg files
             jpg_folder_path = extract_jpg(mov_file.as_posix())
+            QtWidgets.QApplication.processEvents()
 
             # create the image plane
             ip_trns, ip_shape = cmds.imagePlane()
@@ -497,6 +504,7 @@ class FaceMocap:
             cmds.setAttr(f"{ip_shape}.width", ratio*height_mult)
             cmds.setAttr(f"{ip_shape}.height", height_mult)
             cmds.setAttr(f"{ip_shape}.imageCenterY", height_mult*0.5)
+            QtWidgets.QApplication.processEvents()
 
             self.set_neutralize_frame(0)
             self.set_mapping("arkit")
