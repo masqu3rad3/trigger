@@ -17,8 +17,8 @@
         "noseSneerLeft": [["L_noseWrinkler", 0, 100, 1.0]],
         "noseSneerRight": [["R_noseWrinkler", 0, 100, 1.0]],
         "eyeLookDownRight": [["L_dartY", 0, 100, 1.0], ["R_dartY", 0, 100, 1.0]],
-        "eyeLookInRight": [["L_dartX", 0, -100, 1.0], ["R_dartX", 0, -100, 1.0]],
-        "eyeLookOutRight": [["L_dartX", 0, 100, 1.0], ["R_dartX", 0, 100, 1.0]],
+        "eyeLookInRight": [["L_dartX", 0, 100, 1.0], ["R_dartX", 0, 100, 1.0]],
+        "eyeLookOutRight": [["L_dartX", 0, -100, 1.0], ["R_dartX", 0, -100, 1.0]],
         "eyeLookUpRight": [["L_dartY", 0, -100, 1.0], ["R_dartY", 0, -100, 1.0]]
     },
     "lower_face_controller_mappings": {
@@ -29,8 +29,8 @@
         "mouthClose": [["mouthClose", 0, 100, 1.0]],
         "mouthFunnel": [["L_upperFunnelerLipsSuck", 0, 100, 1.0], ["R_upperFunnelerLipsSuck", 0, 100, 1.0], ["L_lowerFunnelerLipsSuck", 0, 100, 1.0], ["R_lowerFunnelerLipsSuck", 0, 100, 1.0]],
         "mouthPucker": [["L_lipPucker", 0, 100, 1.0], ["R_lipPucker", 0, 100, 1.0]],
-        "mouthLeft": [["mouthLeftRight", 0, 100, 1.0]],
-        "mouthRight": [["mouthLeftRight", 0, -100, 1.0]],
+        "mouthLeft": [["mouthLeftRight", 0, -100, 1.0]],
+        "mouthRight": [["mouthLeftRight", 0, 100, 1.0]],
         "mouthSmileLeft": [["L_lipCornerPuller", 0, 100, 1.0]],
         "mouthSmileRight": [["R_lipCornerPuller", 0, 100, 1.0]],
         "mouthFrownLeft": [["L_lipCornerDepressor", 0, 100, 1.0]],
@@ -69,8 +69,8 @@
         "noseSneerLeft": [["LnoseWrinkler", 0.0, 1.0, 1.0]],
         "noseSneerRight": [["RnoseWrinkler", 0.0, 1.0, 1.0]],
         "eyeLookDownRight": [["LdartY", 0, 100, 1.0], ["RdartY", 0, 100, 1.0]],
-        "eyeLookInRight": [["LdartX", 0, -100, 1.0], ["RdartX", 0, -100, 1.0]],
-        "eyeLookOutRight": [["LdartX", 0, 100, 1.0], ["RdartX", 0, 100, 1.0]],
+        "eyeLookInRight": [["LdartX", 0, 100, 1.0], ["RdartX", 0, 100, 1.0]],
+        "eyeLookOutRight": [["LdartX", 0, -100, 1.0], ["RdartX", 0, -100, 1.0]],
         "eyeLookUpRight": [["LdartY", 0, -100, 1.0], ["RdartY", 0, -100, 1.0]]
     },
     "lower_face_morph_mappings": {
@@ -81,8 +81,8 @@
         "mouthClose": [["LUmouthClose", 0.0, 1.0, 1.0], ["RUmouthClose", 0.0, 1.0, 1.0], ["LDmouthClose", 0.0, 1.0, 1.0], ["RDmouthClose", 0.0, 1.0, 1.0]],
         "mouthFunnel": [["LUfunneler", 0.0, 1.0, 1.0], ["RUfunneler", 0.0, 1.0, 1.0], ["LDfunneler", 0.0, 1.0, 1.0], ["RDfunneler", 0.0, 1.0, 1.0]],
         "mouthPucker": [["LUlipPucker", 0.0, 1.0, 1.0], ["RUlipPucker", 0.0, 1.0, 1.0], ["LDlipPucker", 0.0, 1.0, 1.0], ["RDlipPucker", 0.0, 1.0, 1.0]],
-        "mouthLeft": [["mouthLeft", 0.0, 1.0, 1.0]],
-        "mouthRight": [["mouthRight", 0.0, 1.0, 1.0]],
+        "mouthLeft": [["mouthRight", 0.0, 1.0, 1.0]],
+        "mouthRight": [["mouthLeft", 0.0, 1.0, 1.0]],
         "mouthSmileLeft": [["LUlipCornerPuller", 0.0, 1.0, 1.0], ["LDlipCornerPuller", 0.0, 1.0, 1.0]],
         "mouthSmileRight": [["RUlipCornerPuller", 0.0, 1.0, 1.0], ["RDlipCornerPuller", 0.0, 1.0, 1.0]],
         "mouthFrownLeft": [["LlipCornerDepressor", 0.0, 1.0, 1.0]],

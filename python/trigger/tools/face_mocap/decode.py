@@ -31,13 +31,15 @@ def extract_wav(mov_file_path, output_file=None, overwrite=False):
             return output_path
         else:
             Path(output_path).unlink()
+
     flags = [
         ffmpeg_path.as_posix(),
-        "-i",
-        mov_file_path,
-        "-vn",
-        "-acodec",
-        "pcm_s16le",
+        "-i", mov_file_path,  # Input file
+        "-vn",  # Disable video
+        "-acodec", "pcm_s16le",
+        # Set audio codec to PCM signed 16-bit little-endian
+        "-ar", "48000",  # Set audio sampling rate to 48kHz
+        "-ac", "2",  # Set number of audio channels to 2 (stereo)
         output_path
     ]
 
