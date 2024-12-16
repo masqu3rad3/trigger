@@ -13,7 +13,6 @@ from trigger.utils.eyebulge.methodology.method_base import MethodBase
 
 LOG = logging.getLogger(__name__)
 
-1
 class ShrinkWrapEyeBulge(MethodBase):
     """Eye Bulging with dnSculpt Deformers."""
 

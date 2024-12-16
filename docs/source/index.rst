@@ -18,5 +18,4 @@ Contents
    interface
    actions
    limb_modules
-   api
 
