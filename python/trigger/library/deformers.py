@@ -31,7 +31,8 @@ def get_deformers(mesh=None, names_only=False):
         "deltaMush",
         "shrinkWrap",
         "tension",
-        "ffd"
+        "ffd",
+        "proximityWrap"
     ]
     # get deformer from mesh
     if not mesh:
@@ -316,8 +317,8 @@ def create_proximity_wrap(
     wrap_node = [
         node for node in node_history if cmds.objectType(node) == "proximityWrap"
     ][0]
-    wrap_node = cmds.rename(wrap_node, "proximity_wrap_{0}".format(name))
-    driver_shape = cmds.listRelatives(driver, c=True, type="shape")[0]
+    wrap_node = cmds.rename(wrap_node, name)
+    driver_shape = cmds.listRelatives(driver, children=True, type="shape")[0]
 
     # check if there is another orig shape
     if not cmds.objExists("{0}Orig".format(driver_shape)):

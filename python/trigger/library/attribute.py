@@ -15,8 +15,8 @@ def create_attribute(node, property_dict=None, keyable=True, display=True, **kwa
     """
     Create attribute with the properties defined by the property_dict.
     Args:
-        node: (String) Node to create attribute on
-        property_dict: (Dictionary) This holds the necessary information for the attribute:
+        node (str): Node to create attribute on
+        property_dict (dict, optional): This holds the necessary information for the attribute:
                 {<nice_name>: (Optional) nice name for the attribute,
                  <attr_name>: name of the attribute,
                  <attr_type>: Valid types are "long", "short", "bool", "enum", "float", "double", "string"
@@ -29,8 +29,8 @@ def create_attribute(node, property_dict=None, keyable=True, display=True, **kwa
 
                  For easier use, each these elements can be entered as kwargs.
 
-        keyable: (bool) Makes the attribute keyable and visible in the channelbox
-        display: (bool) Makes the attr displayable in the cb
+        keyable (bool, optional): Makes the attribute keyable and visible in the channelbox
+        display (bool, optional): Makes the attr displayable in the cb
 
     Returns:
 
@@ -185,6 +185,7 @@ def drive_attrs(
     driven_range=None,
     force=True,
     optimize=True,
+    proxy_driver_attr=None,
 ):
     """
     Creates a ranged connection between driver and driven attr(s)
@@ -198,6 +199,7 @@ def drive_attrs(
         direct connection between driver and driven
         force: (Bool) If true, any existing connections on driven will be overriden.
         optimize: (Bool) When enabled, it uses direct connections where applicable. Default True
+        proxy_driver_attr (str, optional): If defined this attribute will be created as a proxy for the driver_attr.
 
     Returns:
 
@@ -325,6 +327,12 @@ def drive_attrs(
             else:
                 cmds.connectAttr("%s.outValue" % range_node, driven, force=force)
 
+    # if there is a proxy driver attributes defined, create that as proxy.
+    if proxy_driver_attr:
+        prx_node, prx_attr = proxy_driver_attr.split(".")
+        # check if the attribute exists
+        if not cmds.attributeQuery(prx_attr, node=prx_node, exists=True):
+            cmds.addAttr(prx_node, longName=prx_attr, niceName=prx_attr, proxy=driver_attr)
 
 def lock_and_hide(node, channelArray=None, hide=True):
     """
@@ -373,7 +381,7 @@ def is_visible(node, attr):
 def attribute_pass(
     sourceNode,
     targetNode,
-    attributes=[],
+    attributes=None,
     inConnections=True,
     outConnections=True,
     keepSourceAttributes=False,
@@ -396,7 +404,7 @@ def attribute_pass(
     Returns: None
 
     """
-
+    attributes = attributes or []
     # get the user defined attributes:
     if len(attributes) == 0:
         user_attr = cmds.listAttr(sourceNode, ud=True)

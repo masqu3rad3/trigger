@@ -259,7 +259,8 @@ class Guides(GuidesCore):
         self.offsetVector = (n_point_j - r_point_j).normal()
 
         # Draw the joints
-        for seg in range(self.segments + 1):
+        # for seg in range(self.segments + 1):
+        for seg in range(self.segments):
             surface_jnt = cmds.joint(
                 position=(r_point_j + (add_val * seg)),
                 name=naming.parse([self.name, seg], side=self.side, suffix="jInit"),

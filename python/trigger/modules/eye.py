@@ -12,7 +12,7 @@ from trigger.core import filelog
 LOG = filelog.Filelog(logname=__name__, filename="trigger_log")
 
 LIMB_DATA = {
-    "members": ["EyeRoot", "EyeAim"],
+    "members": ["EyeRoot", "EyeAim", "EyePupil"],
     "properties": [
         {
             "attr_name": "localJoints",
@@ -44,16 +44,14 @@ class Eye(ModuleCore):
         if build_data:
             eye_root = build_data.get("EyeRoot")
             eye_aim = build_data.get("EyeAim")
-            self.inits = [eye_root, eye_aim]
-            # parse build data
-            pass
+            eye_pupil = build_data.get("EyePupil")
+            self.inits = [eye_root, eye_aim, eye_pupil]
         elif inits:
-            if len(inits) != 2:
-                LOG.error("Simple FK setup needs exactly 2 initial joints")
+            if len(inits) != 3:
+                LOG.error("Eye Module needs exactly 3 initial joints (EyeRoot, EyeAim, EyePupil)")
                 return
             self.inits = inits
             # parse inits
-            pass
         else:
             LOG.error("Class needs either build_data or inits to be constructed")
 
@@ -124,6 +122,12 @@ class Eye(ModuleCore):
             name=naming.parse([self.module_name, "eye"], suffix="jDef")
         )
         functions.align_to(eye_jnt, self.inits[0])
+        # for backward compatibility purposes, don't create the pupil joint if its not in the data
+        if self.inits[2]:
+            pupil_jnt = cmds.joint(
+                name=naming.parse([self.module_name, "pupil"], suffix="jDef")
+            )
+            functions.align_to(pupil_jnt, self.inits[2])
         eye_offset = functions.create_offset_group(eye_jnt, "OFF")
         self.plugDriven = functions.create_offset_group(eye_jnt, "PLUG_DRIVEN")
         self.aimDriven = functions.create_offset_group(eye_jnt, "AIM")
@@ -279,14 +283,18 @@ class Guides(GuidesCore):
     def draw_joints(self):
         if self.side == "C":
             root_point = om.MVector(0, 0, 0)
+            pupil_point = om.MVector(0, 0, 1) * self.tMatrix
+            aim_point = om.MVector(0, 0, 10) * self.tMatrix
             self.offsetVector = om.MVector(0, 0, 10) * self.tMatrix
-            pass
+            # pass
         else:
             root_point = om.MVector(2 * self.sideMultiplier, 0, 0) * self.tMatrix
+            pupil_point = om.MVector(2 * self.sideMultiplier, 0, 1) * self.tMatrix
+            aim_point = om.MVector(2 * self.sideMultiplier, 0, 10) * self.tMatrix
             self.offsetVector = (
                 om.MVector(2 * self.sideMultiplier, 0, 10) * self.tMatrix
             )
-            pass
+            # pass
 
         # Draw the joints
         cmds.select(clear=True)
@@ -294,18 +302,27 @@ class Guides(GuidesCore):
             name=naming.parse([self.name, "root"], side=self.side, suffix="jInit"),
             position=root_point,
         )
+
+        pupil_jnt = cmds.joint(
+            name=naming.parse([self.name, "pupil"], side=self.side, suffix="jInit"),
+            position=pupil_point,
+        )
+
+        cmds.select(clear=True)
         aim_jnt = cmds.joint(
             name=naming.parse([self.name, "aim"], side=self.side, suffix="jInit"),
-            position=self.offsetVector,
+            position=aim_point,
         )
+        cmds.parent(aim_jnt, root_jnt)
 
         # Update the guideJoints list
         self.guideJoints.append(root_jnt)
         self.guideJoints.append(aim_jnt)
+        self.guideJoints.append(pupil_jnt)
 
-        # set orientation of joints
 
     def define_guides(self):
         """Override the guide definition method"""
         joint.set_joint_type(self.guideJoints[0], "EyeRoot")
         joint.set_joint_type(self.guideJoints[1], "EyeAim")
+        joint.set_joint_type(self.guideJoints[2], "EyePupil")

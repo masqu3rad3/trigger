@@ -3,22 +3,26 @@
 import fnmatch
 from maya import cmds
 from trigger.library import attribute
+from trigger.library import selection
+
+from trigger.ui import feedback
+
 from trigger.core import filelog
 from trigger.core.action import ActionCore
 
 from trigger.ui import custom_widgets
 from trigger.ui.Qt import QtWidgets, QtGui  # for progressbar
 
-log = filelog.Filelog(logname=__name__, filename="trigger_log")
+FILELOG = filelog.Filelog(logname=__name__, filename="trigger_log")
 
 
-ACTION_DATA = {"mapping_data": []}
+ACTION_DATA = {"mapping_data": [], "proxy_controller": ""}
 
 """Example Mapping Data:
 [
-    ["mouthArea_cont.L_upperlipRaiser", "0", "100", "morph_hook.LupperlipRaiser", "0", "1"],
-    ["mouthArea_cont.R_upperlipRaiser", "0", "100", "morph_hook.RupperlipRaiser", "0", "1"],
-    ["L_cheekArea_cont.cheekRaiser", "0", "100", "morph_hook.LcheekRaiser", "0", "1"],
+    ["mouthArea_cont.L_upperlipRaiser", "0", "100", "morph_hook.LupperlipRaiser", "0", "1", ""],
+    ["mouthArea_cont.R_upperlipRaiser", "0", "100", "morph_hook.RupperlipRaiser", "0", "1", ""],
+    ["L_cheekArea_cont.cheekRaiser", "0", "100", "morph_hook.LcheekRaiser", "0", "1", "proxyCheekRaiser"],
 ]
 """
 
@@ -28,18 +32,47 @@ class Driver(ActionCore):
 
     def __init__(self, **kwargs):
         super(Driver, self).__init__(kwargs)
-        self.mappingData = []
+        self.mapping_data = []
+        self.proxy_controller = None
 
     def feed(self, action_data, *args, **kwargs):
-        self.mappingData = self._validate(action_data.get("mapping_data"))
+        self.mapping_data = self._validate(action_data.get("mapping_data"))
+        self.proxy_controller = action_data.get("proxy_controller")
 
     def action(self):
-        for data in self.mappingData:
-            # ls the driven attribute to make sure it exists
+        for data in self.mapping_data:
+            # Check if this is a separator.
+            if data[0] == "separator":
+                if self.proxy_controller:
+                    attribute.separator(self.proxy_controller, data[6])
+                else:
+                    FILELOG.warning(
+                        "Proxy controller not defined. Separator %s will not be created."
+                        % data[6]
+                    )
+                continue
+
+            if data[3] == "proxy_only":
+                # TODO: make a create_proxy_attribute function with built-in nice name generation
+                if self.proxy_controller:
+                    if not cmds.attributeQuery(data[6], node=self.proxy_controller, exists=True):
+                        cmds.addAttr(
+                            self.proxy_controller,
+                            longName=data[6],
+                            niceName=data[6],
+                            proxy=data[0],
+                        )
+                else:
+                    FILELOG.warning(
+                        "Proxy controller not defined. Proxy %s will not be created."
+                        % data[6]
+                    )
+                continue
 
             splits = data[3].split(".")
             node = splits[0]
             wild_attr = ".".join(splits[1:])
+            # ls the driven attribute to make sure it exists
             nodes_list = cmds.ls(node)
             found_attrs = []
             for n in nodes_list:
@@ -48,14 +81,21 @@ class Driver(ActionCore):
                 wild_attrs = fnmatch.filter(all_attrs, wild_attr)
                 found_attrs.extend(["{0}.{1}".format(n, w) for w in wild_attrs])
             if not found_attrs:
-                log.error("No attributes found for %s" % data[3])
+                FILELOG.error("No attributes found for %s" % data[3])
                 return
+
+            if data[6] and self.proxy_controller:
+                proxy_attr = "{0}.{1}".format(self.proxy_controller, data[6])
+            else:
+                proxy_attr = None
+
             attribute.drive_attrs(
                 data[0],
                 found_attrs,
                 driver_range=[data[1], data[2]],
                 driven_range=[data[4], data[5]],
                 optimize=False,
+                proxy_driver_attr=proxy_attr,
             )
 
     def save_action(self):
@@ -74,7 +114,32 @@ class Driver(ActionCore):
         mappings_tablebox.viewWidget.setMinimumHeight(400)
         layout.addRow(mappings_lbl, mappings_tablebox)
 
+        def get_selected_controller(widget):
+            sel, msg = selection.validate(
+                minimum=1, maximum=1, meshes_only=False, transforms=True
+            )
+            if sel:
+                widget.setText(sel[0])
+                ctrl.update_model()
+                return
+            else:
+                feedback.Feedback().pop_info(
+                    title="Selection Error", text=msg, critical=True
+                )
+                return
+
+        controller_lbl = QtWidgets.QLabel(text="Controller For Proxies:")
+        controller_le_box = custom_widgets.LineEditBoxLayout(buttonsPosition="right")
+        controller_le_box.viewWidget.setPlaceholderText(
+            "If defined, proxy attributes will be created on controller."
+        )
+        controller_le_box.buttonGet.setText("<")
+        controller_le_box.buttonGet.setMaximumWidth(30)
+        controller_le_box.buttonGet.setToolTip("Gets the selected object as controller")
+        layout.addRow(controller_lbl, controller_le_box)
+
         ctrl.connect(mappings_tablebox, "mapping_data", list)
+        ctrl.connect(controller_le_box.viewWidget, "proxy_controller", str)
         ctrl.update_ui()
 
         ## SIGNALS ##
@@ -86,21 +151,41 @@ class Driver(ActionCore):
         mappings_tablebox.buttonDown.clicked.connect(lambda x=0: ctrl.update_model())
         mappings_tablebox.buttonClear.clicked.connect(lambda x=0: ctrl.update_model())
 
+        controller_le_box.buttonGet.pressed.connect(
+            lambda: get_selected_controller(controller_le_box.viewWidget)
+        )
+
+        controller_le_box.viewWidget.textChanged.connect(lambda: ctrl.update_model())
+
     @staticmethod
     def _validate(data_matrix):
         validated_data = []
         for row in data_matrix:
             try:
-                validated_data.append(
-                    [
-                        str(row[0]),
-                        float(row[1]),
-                        float(row[2]),
-                        str(row[3]),
-                        float(row[4]),
-                        float(row[5]),
-                    ]
-                )
+                row_data = [
+                    str(row[0]),
+                    float(row[1]),
+                    float(row[2]),
+                    str(row[3]),
+                    float(row[4]),
+                    float(row[5]),
+                ]
+                # for backwards compatibility
+                if len(row) == 7:
+                    row_data.append(str(row[6]))
+                else:
+                    row_data.append("")
+                validated_data.append(row_data)
             except ValueError:
-                log.error("Range values must be digits => %s" % row)
+                # if the row values between 0-5 are empty, collect this as a separator
+                if not any(row[:6]):
+                    validated_data.append(
+                        ["separator", 0, 0, "separator", 0, 0, str(row[6])]
+                    )
+                elif row[0] and row[6]:
+                    validated_data.append(
+                        [str(row[0]), 0, 0, "proxy_only", 0, 0, str(row[6])]
+                    )
+                else:
+                    FILELOG.error("Range values must be digits => %s" % row)
         return validated_data

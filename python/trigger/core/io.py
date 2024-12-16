@@ -9,7 +9,7 @@ import shutil
 from trigger.core import filelog
 from trigger.core import compatibility as compat
 
-LOG = filelog.Filelog(logname=__name__, filename="trigger_log")
+FILELOG = filelog.Filelog(logname=__name__, filename="trigger_log")
 
 
 class IO(dict):
@@ -36,7 +36,7 @@ class IO(dict):
                 self.root_path = os.path.normpath(os.path.expanduser("~"))
             self.file_path = os.path.join(self.root_path, self.folder_name, file_name)
         else:
-            LOG.error("IO initialization error. Define name or file_path")
+            FILELOG.error("IO initialization error. Define name or file_path")
 
     @property
     def file_path(self):
@@ -49,10 +49,10 @@ class IO(dict):
         name, ext = os.path.splitext(new_path)
         directory, _ = os.path.split(new_path)
         if not ext:
-            LOG.error("IO module needs to know the extension")
+            FILELOG.error("IO module needs to know the extension")
             raise Exception
         if ext not in self.extensions:
-            LOG.error(
+            FILELOG.error(
                 "IO maya_modules does not support this extension ({})".format(ext)
             )
             raise Exception
@@ -93,10 +93,10 @@ class IO(dict):
                     data = json.load(f)
                     return data
             except ValueError:
-                LOG.error("Corrupted file => %s" % file_path)
+                FILELOG.error("Corrupted file => %s" % file_path)
                 raise Exception
         else:
-            LOG.error("File cannot be found => %s" % file_path)
+            FILELOG.error("File cannot be found => %s" % file_path)
 
     @staticmethod
     def _dump_json(data, file_path):
