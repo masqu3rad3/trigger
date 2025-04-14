@@ -1,7 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Python3 - Python2 compatibility methods"""
+"""Python3 - Python2 and Maya version compatibility methods"""
 import sys
+from maya import cmds
+
+if cmds.about(api=True) >= 20260000:
+    ADD_NODE_NAME = "addDL"
+    MULT_NODE_NAME = "multDL"
+else:
+    ADD_NODE_NAME = "addDoubleLinear"
+    MULT_NODE_NAME = "multDoubleLinear"
 
 if sys.version_info.major == 3:
     from trigger.core.python3_only import flatten

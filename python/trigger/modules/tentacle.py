@@ -1,6 +1,7 @@
 from maya import cmds
 import maya.api.OpenMaya as om
 
+from trigger.core import compatibility as compat
 from trigger.library import functions, joint, deformers
 from trigger.library import naming
 from trigger.library import attribute
@@ -579,7 +580,7 @@ class Tentacle(ModuleCore):
             cmds.connectAttr("%s.outTranslate" % s_follicle, "%s.point2" % dist_node)
 
             multiplier = cmds.createNode(
-                "multDoubleLinear",
+                compat.MULT_NODE_NAME,
                 name=naming.parse([self.module_name, "fol", index], suffix="mult"),
             )
             cmds.connectAttr("%s.distance" % dist_node, "%s.input1" % multiplier)
@@ -632,7 +633,7 @@ class Tentacle(ModuleCore):
         )
 
         max_distance_mult = cmds.createNode(
-            "multDoubleLinear",
+            compat.MULT_NODE_NAME,
             name=naming.parse([self.module_name, "npWrap"], suffix="mult"),
         )
         cmds.connectAttr("%s.scaleX" % self.scaleGrp, "%s.input1" % max_distance_mult)
@@ -777,20 +778,20 @@ class Tentacle(ModuleCore):
         # create curl size multipliers
 
         curl_size_mult_x = cmds.createNode(
-            "multDoubleLinear",
+            compat.MULT_NODE_NAME,
             name=naming.parse([self.module_name, "curlSizeMultX"], suffix="mult"),
         )
         curl_size_mult_y = cmds.createNode(
-            "multDoubleLinear",
+            compat.MULT_NODE_NAME,
             name=naming.parse([self.module_name, "curlSizeMultY"], suffix="mult"),
         )
         curl_size_mult_z = cmds.createNode(
-            "multDoubleLinear",
+            compat.MULT_NODE_NAME,
             name=naming.parse([self.module_name, "curlSizeMultZ"], suffix="mult"),
         )
 
         curl_angle_mult_z = cmds.createNode(
-            "multDoubleLinear",
+            compat.MULT_NODE_NAME,
             name=naming.parse([self.module_name, "curlAngleMultZ"], suffix="mult"),
         )
 

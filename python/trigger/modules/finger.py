@@ -1,6 +1,7 @@
 from maya import cmds
 import maya.api.OpenMaya as om
 
+from trigger.core import compatibility as compat
 from trigger.library import functions, joint
 from trigger.library import naming
 from trigger.library import attribute
@@ -229,7 +230,7 @@ class Finger(ModuleCore):
         )
         # sprMult = cmds.createNode("multiplyDivide", name="sprMult_{0}_{1}".format(self.side, self.module_name))
         spread_mult = cmds.createNode(
-            "multDoubleLinear",
+            compat.MULT_NODE_NAME,
             name=naming.parse([self.module_name, "spread"], suffix="mult"),
         )
         cmds.setAttr("{}.input1".format(spread_mult), 0.4)

@@ -7,6 +7,8 @@ import logging
 from maya import cmds, mel
 from maya.api import OpenMaya
 
+from trigger.core import compatibility as compat
+
 LOG = logging.getLogger(__name__)
 
 
@@ -385,7 +387,7 @@ class MirrorLattice(object):
                     "{0}.t{1}".format(slave_locator, attr),
                 )
             # # connect the locator to the cluster mirroring with mirror axis
-            negate_node = cmds.createNode("multDoubleLinear", name="negate")
+            negate_node = cmds.createNode(compat.MULT_NODE_NAME, name="negate")
             cmds.setAttr("{0}.input2".format(negate_node), -1)
             cmds.connectAttr(
                 "{0}.t{1}".format(master_locator, self.mirror_axis),

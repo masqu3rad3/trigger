@@ -1,5 +1,7 @@
 from maya import cmds
 import maya.api.OpenMaya as om
+
+from trigger.core import compatibility as compat
 from trigger.library import functions, joint
 from trigger.library import naming
 from trigger.library import attribute
@@ -1460,7 +1462,7 @@ class Arm(ModuleCore):
         cmds.setAttr("{0}.operation".format(vp_power_lower_leg), 3)
         #
         vp_upper_lower_reduce = cmds.createNode(
-            "multDoubleLinear",
+            compat.MULT_NODE_NAME,
             name=naming.parse([self.module_name, "vpUpperLowerReduce"]),
         )
         cmds.setAttr("{0}.input2".format(vp_upper_lower_reduce), 0.5)
@@ -1648,7 +1650,7 @@ class Arm(ModuleCore):
             name=naming.parse([self.module_name, "FK", "angle"], suffix="remap"),
         )
         angle_mult_fk = cmds.createNode(
-            "multDoubleLinear",
+            compat.MULT_NODE_NAME,
             name=naming.parse([self.module_name, "FK", "angle"], suffix="mult"),
         )
 
@@ -1672,7 +1674,7 @@ class Arm(ModuleCore):
             name=naming.parse([self.module_name, "angle", "ext"], suffix="blend"),
         )
         angle_global = cmds.createNode(
-            "multDoubleLinear",
+            compat.MULT_NODE_NAME,
             name=naming.parse([self.module_name, "angle", "global"], suffix="mult"),
         )
 
