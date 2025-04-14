@@ -45,7 +45,6 @@ class VCS(object):
         project_setter = project_mcv.TikProjectLayout(tik)
         layout.addLayout(project_setter)
         buttons_lay = QtWidgets.QHBoxLayout()
-        buttons_lay.setMargin(0)
         buttons_lay.setSpacing(5)
         tik_main_btn = TikIconButton(
             icon_name="tik4_main_ui.png", size=32, icon_size=22, circle=False

@@ -1,11 +1,12 @@
 # Example script for creating double blendshape face ui controls
 
 from maya import cmds
+from trigger.core import compatibility as compat
 from trigger.library import icons
 from trigger.library import functions
 from trigger.library import attribute
 
-iconHandler = controllers.Icon()
+iconHandler = icons.Icon()
 
 hookNode = "hook_blendshapes"
 
@@ -25,8 +26,8 @@ for contName in double_controllers:
     cmds.parent(cont_offset, bound)
     cmds.group(bound, name="%s_move_offset" % contName)
 
-    left_mult = cmds.createNode("multDoubleLinear", name="%s_L_mult" % contName)
-    right_mult = cmds.createNode("multDoubleLinear", name="%s_R_mult" % contName)
+    left_mult = cmds.createNode(compat.MULT_NODE_NAME, name="%s_L_mult" % contName)
+    right_mult = cmds.createNode(compat.MULT_NODE_NAME, name="%s_R_mult" % contName)
 
     attribute.drive_attrs("%s.ty" % cont, ["%s.input1" % right_mult, "%s.input1" % left_mult], driver_range=[0, 10],
                           driven_range=[0, 1])

@@ -1,6 +1,7 @@
 from maya import cmds
 import maya.api.OpenMaya as om
 
+from trigger.core import compatibility as compat
 from trigger.library import functions, joint
 from trigger.library import naming
 from trigger.library import attribute
@@ -1272,7 +1273,7 @@ class Leg(ModuleCore):
         cmds.setAttr("%s.operation" % ik_soft_div1, 2)
 
         ik_soft_mult1 = cmds.createNode(
-            "multDoubleLinear",
+            compat.MULT_NODE_NAME,
             name=naming.parse([self.module_name, "ikSoft", "mult1"], suffix="mult"),
         )
         cmds.setAttr("%s.input1" % ik_soft_mult1, -1)
@@ -1285,7 +1286,7 @@ class Leg(ModuleCore):
         cmds.setAttr("%s.input1X" % ik_soft_pow, 2.718)
 
         ik_soft_mult2 = cmds.createNode(
-            "multDoubleLinear",
+            compat.MULT_NODE_NAME,
             name=naming.parse([self.module_name, "ikSoft", "mult2"], suffix="mult"),
         )
 
@@ -1498,35 +1499,35 @@ class Leg(ModuleCore):
         # Bind Foot Attributes to the controller
         # create multiply nodes for alignment fix
         mult_al_fix_b_lean = cmds.createNode(
-            "multDoubleLinear",
+            compat.MULT_NODE_NAME,
             name=naming.parse([self.module_name, "multAlFix", "bLean"], suffix="mult"),
         )
         mult_al_fix_b_roll = cmds.createNode(
-            "multDoubleLinear",
+            compat.MULT_NODE_NAME,
             name=naming.parse([self.module_name, "multAlFix", "bRoll"], suffix="mult"),
         )
         mult_al_fix_b_spin = cmds.createNode(
-            "multDoubleLinear",
+            compat.MULT_NODE_NAME,
             name=naming.parse([self.module_name, "multAlFix", "bSpin"], suffix="mult"),
         )
         mult_al_fix_h_roll = cmds.createNode(
-            "multDoubleLinear",
+            compat.MULT_NODE_NAME,
             name=naming.parse([self.module_name, "multAlFix", "hRoll"], suffix="mult"),
         )
         mult_al_fix_h_spin = cmds.createNode(
-            "multDoubleLinear",
+            compat.MULT_NODE_NAME,
             name=naming.parse([self.module_name, "multAlFix", "hSpin"], suffix="mult"),
         )
         mult_al_fix_t_roll = cmds.createNode(
-            "multDoubleLinear",
+            compat.MULT_NODE_NAME,
             name=naming.parse([self.module_name, "multAlFix", "tRoll"], suffix="mult"),
         )
         mult_al_fix_t_spin = cmds.createNode(
-            "multDoubleLinear",
+            compat.MULT_NODE_NAME,
             name=naming.parse([self.module_name, "multAlFix", "tSpin"], suffix="mult"),
         )
         mult_al_fix_t_wiggle = cmds.createNode(
-            "multDoubleLinear",
+            compat.MULT_NODE_NAME,
             name=naming.parse(
                 [self.module_name, "multAlFix", "tWiggle"], suffix="mult"
             ),
@@ -2227,7 +2228,7 @@ class Leg(ModuleCore):
         cmds.setAttr("%s.operation" % vp_power_lower_leg, 3)
 
         vp_upper_lower_reduce = cmds.createNode(
-            "multDoubleLinear",
+            compat.MULT_NODE_NAME,
             name=naming.parse([self.module_name, "vpUpperLowerReduce"], suffix="mult"),
         )
         cmds.setAttr("%s.input2" % vp_upper_lower_reduce, 0.5)
@@ -2400,7 +2401,7 @@ class Leg(ModuleCore):
             name=naming.parse([self.module_name, "IK", "angle"], suffix="remap"),
         )
         angle_mult_ik = cmds.createNode(
-            "multDoubleLinear",
+            compat.MULT_NODE_NAME,
             name=naming.parse([self.module_name, "IK", "angle"], suffix="mult"),
         )
 
@@ -2431,7 +2432,7 @@ class Leg(ModuleCore):
             name=naming.parse([self.module_name, "FK", "angle"], suffix="remap"),
         )
         angle_mult_fk = cmds.createNode(
-            "multDoubleLinear",
+            compat.MULT_NODE_NAME,
             name=naming.parse([self.module_name, "FK", "angle"], suffix="mult"),
         )
 
@@ -2454,7 +2455,7 @@ class Leg(ModuleCore):
             name=naming.parse([self.module_name, "angleExt"], suffix="blend"),
         )
         angle_global = cmds.createNode(
-            "multDoubleLinear",
+            compat.MULT_NODE_NAME,
             name=naming.parse([self.module_name, "angleGlobal"], suffix="mult"),
         )
 

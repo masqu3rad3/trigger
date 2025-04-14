@@ -1,6 +1,7 @@
 # pylint: disable=consider-using-f-string
 
 from maya import cmds
+from trigger.core import compatibility as compat
 from trigger.library import functions, attribute, transform, connection
 from trigger.library import arithmetic as op
 from trigger.library import naming
@@ -366,9 +367,9 @@ def whip(
                     "{0}.past[{1}]".format(frame_cache, x),
                     "{0}.input[{1}]".format(choice, x),
                 )
-            power_mult = cmds.createNode("multDoubleLinear", name="%s_powerLose" % node)
+            power_mult = cmds.createNode(compat.MULT_NODE_NAME, name="%s_powerLose" % node)
             master_mult = cmds.createNode(
-                "multDoubleLinear", name="%s_%s_masterMult" % (attr_holder, attr)
+                compat.MULT_NODE_NAME, name="%s_%s_masterMult" % (attr_holder, attr)
             )
 
             cmds.connectAttr("%s.%s" % (node_list[nmb], attr), "%s.input1" % power_mult)
