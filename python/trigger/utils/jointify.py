@@ -1,10 +1,11 @@
 """Module for converting blendshape deformations joint based deformations"""
+
 import sys
 import subprocess
 import os
 import platform
 
-import sys
+from trigger.core import compatibility as compat
 
 if sys.version_info.major == 3:
     from math import gcd
@@ -345,12 +346,10 @@ class Shape(object):
     def _multiply_connect(self, driver_attr, driven_attr, mult_value):
         if mult_value != 1:
             name = "%s_mult" % driven_attr.split(".")[-1]
-            mult_node = cmds.createNode("multDoubleLinear", name=name)
-            # mult_node = cmds.createNode("multDoubleLinear", name="BACIN")
+            mult_node = cmds.createNode(compat.MULT_NODE_NAME, name=name)
             cmds.setAttr("%s.isHistoricallyInteresting" % mult_node, 0)
             cmds.connectAttr(driver_attr, "%s.input1" % mult_node)
             cmds.setAttr("%s.input2" % mult_node, mult_value)
-            # output_plug = arithmetic.multiply(driver_attr, mult_value)
             cmds.connectAttr("%s.output" % mult_node, driven_attr)
         else:
             cmds.connectAttr(driver_attr, driven_attr)

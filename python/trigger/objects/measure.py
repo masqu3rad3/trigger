@@ -1,6 +1,6 @@
 from maya import cmds
+from trigger.core import compatibility as compat
 from trigger.library import connection, attribute
-
 
 class Angle(object):
     """Creates set of locators to create angle extractors"""
@@ -22,7 +22,7 @@ class Angle(object):
             "remapValue", name="angleRemapIK_%s" % suffix
         )
         self._mult_node = cmds.createNode(
-            "multDoubleLinear", name="angleMultIK_%s" % suffix
+            compat.MULT_NODE_NAME, name="angleMultIK_%s" % suffix
         )
 
         cmds.connectAttr(

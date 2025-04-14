@@ -89,7 +89,8 @@ def multiply(a, b, return_plug=True, name="multiply"):
     Returns:
         String: Output plug or node
     """
-    mult_node = cmds.createNode("multDoubleLinear", name=name)
+    # if the version is 2026 and above use the new name for the node
+    mult_node = cmds.createNode(compat.MULT_NODE_NAME, name=name)
 
     for nmb, value in enumerate([a, b]):
         if compat.is_string(value):
