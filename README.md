@@ -18,6 +18,9 @@ Trigger is designed to streamline and simplify the rigging process for animators
 
 In addition to rigging, Trigger can also be used for automation and templating tasks. It enables users to automate repetitive tasks, such as assembling shots/assets and performing quality checks. TDs and developers can build their own actions and modules as plug-ins and seamlessly integrate them into Trigger.
 
+## Installation
+https://trigger-maya.readthedocs.io/en/latest/installation.html
+
 ## Documentation
 
 Please note that the online documentation for Trigger is currently a work in progress (WIP). You can find the latest updates and information in the [Trigger Documentation](https://trigger-maya.readthedocs.io/en/latest/).
