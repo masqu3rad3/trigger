@@ -11,7 +11,7 @@ from trigger.ui.Qt import QtWidgets
 from trigger.ui.layouts.save_box import SaveBoxLayout
 from trigger.ui.widgets.browser import BrowserButton, FileLineEdit
 
-log = filelog.Filelog(logname=__name__, filename="trigger_log")
+LOG = filelog.Filelog(logname=__name__, filename="trigger_log")
 
 
 ACTION_DATA = {
@@ -35,9 +35,6 @@ class Shapes(ActionCore):
         self.shapes_file_path = action_data.get("shapes_file_path")
         self.search_key = action_data.get("search_key", "*_cont")
         self.exclude_key = action_data.get("exclude_key", "")
-        print(self.shapes_file_path)
-        print(self.search_key)
-        print(self.exclude_key)
 
     def action(self):
         """Mandatory method for all action maya_modules"""
@@ -174,7 +171,7 @@ class Shapes(ActionCore):
             exportSelected=True,
         )
         cmds.delete(export_grp)
-        log.info("Controller Shapes Exported successfully...")
+        LOG.info("Controller Shapes Exported successfully...")
 
     ### ALEMBIC CURVE EXPORT HAS A BUG - ITs DEPRECATED UNTIL FURTHER FIXes
     # def export_shapes(self, alembic_file_path):
@@ -255,4 +252,4 @@ class Shapes(ActionCore):
         try:
             cmds.loadPlugin("AbcExport%s" % ext)
         except:
-            log.error("Alembic Plugin cannot be loaded")
+            LOG.error("Alembic Plugin cannot be loaded")

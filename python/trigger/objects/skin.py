@@ -95,14 +95,12 @@ class Weight(object):
         Exports the data to specified json file path
 
         """
-        "TODO data validation?"
         IO().write(self._data, file_path)
 
     def apply(self, deformer):
         """Applies the data to specified deformer"""
         if not self._data:
             raise Exception("There is no data to apply")
-        # TODO data validation?
 
         deformer = deformer or self._data["deformerWeight"]["deformers"][0]["name"]
         # get the active influences
@@ -130,9 +128,6 @@ class Weight(object):
         ]
 
         # # temporarily turn off the normalization
-        # normalization = cmds.skinCluster(deformer, q=True, normalizeWeights=True)
-        # cmds.skinCluster(deformer, edit=True, normalizeWeights=0)
-
         geo = cmds.skinCluster(deformer, query=True, geometry=True)[0]
         # compare the vertex size and act accordingly if the topologies are different
         if len(api.get_all_vertices(geo)) == self.get_vertex_count():
@@ -156,25 +151,12 @@ class Weight(object):
             # TODO figure out a way get barycentric and/or bilinear values on different topos
             # TODO deformerWeighst => JSON does not support it and XML tends to crash a lot (and slower)
             # TODO It would be better and probably faster if can be done a conversion and apply __set_weights
-            # if self._check_vc():
-            #     method = "bilinear"
-            # else:
-            #     log.warning("There are no vertex connections provided with the weights file. Using 'nearest' method"
-            #                 "instead of 'barycentric' to apply the weights")
-            #     method = "nearest"
 
             method = "nearest"
 
             # TODO it turned out even the nearest method is not working with deformerWeights JSON implementation.
             # TODO json is still fast and good for read/write. We need to figure out to convert the data or come up
             # TODO with our implementation
-            # _file_path, _file_name = os.path.split(self.temp_io.file_path)
-            # cmds.deformerWeights(_file_name, im=True, deformer=deformer, path=_file_path, method=method,
-            #                      ignoreName=True)
-            # os.remove(self.temp_io.file_path)
-
-        # back to original normalization setting
-        # cmds.skinCluster(deformer, edit=True, normalizeWeights=normalization)
 
     def _check_vc(self):
         """Checks the data if vc (vertex connections) has or not"""
@@ -231,7 +213,6 @@ class Weight(object):
             "deformUserNormals",
         ]
         _file_path, _file_name = os.path.split(self.temp_io.file_path)
-        # cmds.deformerWeights(_file_name, export=True, deformer=deformer, path=_file_path, defaultValue=-1.0, vc=False, at=attributes)
         cmds.deformerWeights(
             _file_name,
             export=True,
@@ -240,7 +221,6 @@ class Weight(object):
             vc=True,
             at=attributes,
         )
-        # cmds.deformerWeights(_file_name, export=True, deformer=deformer, path=_file_path, vc=False, at=attributes)
 
         # read it back
         _data = self.temp_io.read()
@@ -338,11 +318,8 @@ class Weight(object):
         influence_data["deformer"] = _deformer
         influence_data["shape"] = _shape
         influence_data["layer"] = self._get_last_layer() + 1
-        # print("afer normalization: %s" %str(time.time() - start))
 
-        # s_b = time.time()
         self._data["deformerWeight"]["weights"].append(copy.copy(influence_data))
-        # print("apply data: %s" % str(time.time() - s_b))
 
     def negate(self, influences=None):
         """
@@ -384,21 +361,6 @@ class Weight(object):
                 weight_dict_data[idx] = new_val
             # convert it back and put it back
             source_data["points"] = self.__dict_to_points(weight_dict_data)
-
-        # # TODO : not tested
-        # copy_data = copy.deepcopy(data_list[0])
-        # for weights_list_nmb, weights in enumerate(copy_data["deformerWeight"]["weights"]):
-        #     if influencer and weights["source"] != influencer:
-        #         continue
-        #     for point_nmb, point in enumerate(weights["points"]):
-        #         point_values = []
-        #         for data_list_nmb, json_data in enumerate(data_list):
-        #             val = json_data["deformerWeight"]["weights"][weights_list_nmb]["points"][point_nmb]["value"]
-        #             point_values.append(val)
-        #         point["value"] = subtractList(point_values)
-        #         if clamp:
-        #             point["value"] = max(min(point["value"], 1.0), 0.0)
-        # return copy_data
 
     @staticmethod
     def __convert_to_m_array(json_data):
@@ -543,17 +505,6 @@ class Weight(object):
 
         return [u, v, w]
 
-    # def test_get_weights(self, skincluster, mesh):
-    #     return self.__get_weights(skincluster, mesh)
-    #
-    # def test_set_weights(self, skincluster, mesh, m_array):
-    #     self.__set_weights(skincluster, mesh, m_array)
-    #
-    # def test_get_blend_weights(self, skincluster, mesh):
-    #     return self.__get_blend_weights(skincluster, mesh)
-    #
-    # def test_set_blend_weights(self, skincluster, mesh, m_array):
-    #     self.__set_blend_weights(skincluster, mesh, m_array)
     def _clamp_point_weights(self, constant_inf_data):
         """uses the constant_inf_data values as constant and removes the excess values from other influences"""
         # convert all influence weights into dictionary right at the beginning (so only once per influence)
@@ -563,16 +514,12 @@ class Weight(object):
             inf_dict[inf.get("source")] = p_dict
 
         # get the list of vtx and remaining values
-        # reduction_dict = {} # dictionary of excess values that needs to be reduced from the other incluences
         for points_data in constant_inf_data["points"]:
             vtx_id = points_data["index"]
             excess_value = clamp(points_data["value"])
-            # excess_value = clamp((1 - points_data["value"]))
-            # reduction_dict[vtx_id] = excess_value
             # build a dictionary for that vtx where keys are influences
             vtx_inf_dict = {}
             for inf_name, p_dict in inf_dict.items():
-                # p_dict = self.__points_to_dict(inf["points"])
                 value = p_dict.get(vtx_id, 0)  # get the value on the vtx id
                 vtx_inf_dict[inf_name] = value
             #
@@ -582,18 +529,6 @@ class Weight(object):
                 original_value = inf_dict[_inf].get(vtx_id, 0)
                 inf_dict[_inf].update({vtx_id: clamp(original_value - excess_value)})
                 excess_value = clamp(excess_value - original_value)
-
-            # # TODO maybe this speed it up a bit
-            # counter = 0
-            # while excess_value:
-            #     try:
-            #         _inf = impact_list[counter]
-            #     except IndexError:
-            #         break
-            #     original_value = inf_dict[_inf].get(vtx_id, 0)
-            #     inf_dict[_inf].update({vtx_id: clamp(original_value - excess_value)})
-            #     excess_value = clamp(excess_value - original_value)
-            #     counter += 1
 
             # convert back to the maya JSON compatibility
             for inf_data in self._data["deformerWeight"]["weights"]:
