@@ -294,9 +294,6 @@ def mirror_controller(
         )
         attribute.unlock(tmp_cont[0])
         cmds.delete(cmds.listRelatives(tmp_cont, type="transform"))
-        print("HEDEGOT")
-        print(other_side)
-        print(tmp_cont)
 
         # create a group for the selected controller
         node_grp = cmds.group(name="tmpGrp", em=True)

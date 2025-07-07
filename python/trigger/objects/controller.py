@@ -71,13 +71,6 @@ class Controller(object):
 
         self.set_side(self._side, tier=self._tier)
         self._line_width = line_width
-        # if side:
-        #     self.set_side(side, tier=tier)
-        #     self._side = side
-        #     self._tier = tier or "primary"
-        # else:
-        #     self._side = "center"
-        #     self._tier = tier or "primary"
 
     @property
     def line_width(self):
