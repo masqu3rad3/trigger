@@ -169,7 +169,7 @@ global proc shelf_trigger () {
         -style "iconOnly"
         -marginWidth 0
         -marginHeight 1
-        -command "from trigger.utils import blendshape_transfer\nblendshape_transfer.MainUI().show()"
+        -command "from trigger.utils.shape_transfer import ui as shp_ui\nshp_ui.launch()"
         -sourceType "python"
         -commandRepeatable 1
         -flat 1

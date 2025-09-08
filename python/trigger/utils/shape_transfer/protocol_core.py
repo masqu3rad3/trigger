@@ -80,12 +80,6 @@ class ProtocolCore(dict):
                 "Source mesh, target mesh and blendshape pack must be defined"
             )
 
-        # # if source and target has different topology, raise error
-        # if self.type == "shape" and not self.is_same_topology(
-        #     self.source_mesh, self.target_mesh
-        # ):
-        #     raise ValueError("Source mesh and target mesh must have the same topology")
-
         # This is the bare minimum for a protocol to work.
         self.create_protocol_group()
         # If the tmp source and targets are already created, use them.
