@@ -42,8 +42,6 @@ class SceneSelectLayout(QtWidgets.QHBoxLayout):
         self.read_only = read_only
         self.unique = unique
 
-        self.setMargin(0)
-
         self.build()
 
     @property

@@ -122,15 +122,15 @@ class MainUI(QtWidgets.QDialog):
 
         time_range_lbl = QtWidgets.QLabel("Time Range")
 
-        time_range_layout = QtWidgets.QVBoxLayout(margin=0)
-        time_range_selection_layout = QtWidgets.QHBoxLayout(margin=0)
+        time_range_layout = QtWidgets.QVBoxLayout()
+        time_range_selection_layout = QtWidgets.QHBoxLayout()
         time_range_layout.addLayout(time_range_selection_layout)
         # make a radio button selection to choose between time slider or custom range
         time_range_selection_layout.addWidget(self.time_slider_rb)
         time_range_selection_layout.addWidget(self.custom_range_rb)
 
         # make two spinboxes for the custom range
-        time_range_spinbox_layout = QtWidgets.QHBoxLayout(margin=0)
+        time_range_spinbox_layout = QtWidgets.QHBoxLayout()
         time_range_layout.addLayout(time_range_spinbox_layout)
 
         # make the default range 0-100
@@ -166,7 +166,7 @@ class MainUI(QtWidgets.QDialog):
 
         options_formlayout.addRow(interval_lbl, self.interval_spinbox)
         min_max_combinations_lbl = QtWidgets.QLabel("Min/Max Combinations")
-        min_max_combinations_spinbox_layout = QtWidgets.QHBoxLayout(margin=0)
+        min_max_combinations_spinbox_layout = QtWidgets.QHBoxLayout()
 
         self.min_combinations_spinbox.setValue(2)
         min_max_combinations_spinbox_layout.addWidget(self.min_combinations_spinbox)
@@ -191,7 +191,7 @@ class MainUI(QtWidgets.QDialog):
         options_formlayout.addRow(symmetry_lbl, self.symmetry_cb)
 
         seed_lbl = QtWidgets.QLabel("Seed")
-        seed_spinbox_layout = QtWidgets.QHBoxLayout(margin=0)
+        seed_spinbox_layout = QtWidgets.QHBoxLayout()
         seed_enable_cb = QtWidgets.QCheckBox()
         seed_spinbox_layout.addWidget(seed_enable_cb)
         seed_spinbox_layout.addWidget(self.seed_sp)
