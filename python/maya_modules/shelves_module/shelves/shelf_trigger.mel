@@ -150,12 +150,12 @@ global proc shelf_trigger () {
         -manage 1
         -visible 1
         -preventOverride 0
-        -annotation "Transfers blendshape packs between same or different topology base meshes"
+        -annotation "Transfers shape packs between same or different topology base meshes"
         -enableBackground 0
         -backgroundColor 0 0 0
         -highlightColor 0.321569 0.521569 0.65098
         -align "center"
-        -label "Blendshape Transfer"
+        -label "Shape Transfer"
         -labelOffset 0
         -rotation 0
         -flipX 0

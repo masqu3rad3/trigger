@@ -53,7 +53,7 @@ def load_menu():
     add_to_menu("Trigger", "Make Up", make_up_command)
 
     blendshape_transfer_command = "from trigger.utils.shape_transfer import ui as shp_ui\nshp_ui.launch()"
-    add_to_menu("Trigger", "Blendshape Transfer", blendshape_transfer_command)
+    add_to_menu("Trigger", "Shape Transfer", blendshape_transfer_command)
 
     mocap_mapper_command = "import trigger.utils.mocap.ui as mocap_ui\nmocap_ui.launch()"
     add_to_menu("Trigger", "Mocap Mapper", mocap_mapper_command)
