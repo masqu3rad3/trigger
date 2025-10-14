@@ -521,6 +521,8 @@ class Kinematics(ActionCore):
                         keyable=True,
                         lock=False,
                     )
+
+            limb.post_connect()
             self.totalDefJoints += limb.deformerJoints
             if j_def_set:
                 cmds.sets(limb.deformerJoints, addElement=j_def_set)

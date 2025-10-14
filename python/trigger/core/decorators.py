@@ -1,6 +1,7 @@
 # import sys
 from functools import wraps
 from maya import cmds
+from maya.utils import executeDeferred
 import logging
 from maya import mel
 
@@ -27,7 +28,6 @@ def logerror(func):
 
     return _exception
 
-
 def undo(func):
     """Puts the wrapped `func` into a single Maya Undo action, then
     undoes it when the function enters the finally: block"""
@@ -35,16 +35,11 @@ def undo(func):
     @wraps(func)
     def _undofunc(*args, **kwargs):
         cmds.undoInfo(ock=True)
-        result = None
         try:
-            # start an undo chunk
-            result = func(*args, **kwargs)
-        except Exception as e:
-            traceback.print_exc(e)
-        finally:
-            # after calling the func, end the undo chunk and undo
+            return func(*args, **kwargs)
+        except Exception as exc:
             cmds.undoInfo(cck=True)
-            return result
+            raise exc
 
     return _undofunc
 

@@ -167,6 +167,10 @@ class ModuleCore(object):
         else:
             self.scaleConstraints.append(self.scaleGrp)
 
+    def post_connect(self):
+        """Post connection tasks. This method will be overridden for each module."""
+        pass
+
     def createLimb(self):
         """Create the limb rig."""
         self.create_groups()

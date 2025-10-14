@@ -55,7 +55,7 @@ class Import_asset(ActionCore):
             new_nodes = self.import_fbx(self.filePath)
         elif ext == ".ma" or ext == ".mb":
             new_nodes = self.import_scene(self.filePath)
-        elif ext == ".usd":
+        elif ext in [".usd", ".usdc", ".usda"]:
             new_nodes = self.import_usd(self.filePath)
         else:
             log.warning("Unrecognized file format => %s" % ext)
@@ -73,26 +73,11 @@ class Import_asset(ActionCore):
         pass
 
     def ui(self, ctrl, layout, handler, *args, **kwargs):
-        # vcs_lay = None
-        # override_vcs_cb = None
         path_available_in_vcs = False
         if self.vcs:
             vcs_lbl = QtWidgets.QLabel(text="Version Control")
             _hold_lay = QtWidgets.QVBoxLayout()
-        #     vcs_lay = PublishSelection()
-        #     vcs_lay.addStretch(1)
-        #     # _hold_lay.addLayout(vcs_lay)
-        #     # _hold_lay.addStretch(1)
             layout.addRow(vcs_lbl, _hold_lay)
-        #
-        #     path_available_in_vcs = vcs_lay.set_path(
-        #         ctrl.model.query_action(ctrl.action_name, "import_file_path")
-        #     )
-        #     # vcs_lay.path = ctrl.model.query_action(ctrl.action_name, "import_file_path")
-        #
-        #     override_vcs_lbl = QtWidgets.QLabel(text="Override Version Control")
-        #     override_vcs_cb = QtWidgets.QCheckBox(checked=not path_available_in_vcs)
-        #     layout.addRow(override_vcs_lbl, override_vcs_cb)
 
         file_path_lbl = QtWidgets.QLabel(text="File Path")
         file_path_hLay = QtWidgets.QHBoxLayout()
@@ -102,10 +87,12 @@ class Import_asset(ActionCore):
             mode="openFile",
             update_widget=file_path_le,
             filterExtensions=[
-                "All Supported (*.ma *.mb *.usd *.abc *.obj)",
+                "All Supported (*.ma *.mb *.usd *.usdc *usda *.abc *.obj)",
                 "Maya ASCII (*.ma)",
                 "Maya Binary (*.mb)",
                 "USD (*.usd)",
+                "USDC (*.usdc)",
+                "USDA (*.usda)",
                 "Alembic (*.abc)",
                 "FBX (*.fbx)",
                 "OBJ (*.obj)",

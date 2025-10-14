@@ -106,7 +106,10 @@ def launch(force=False, disable_version_control=False):
                     return
         except (AttributeError, TypeError):
             pass
-    MainUI(disable_version_control=disable_version_control).show()
+    ui = MainUI(disable_version_control=disable_version_control)
+    ui.show()
+    return ui
+
 
 
 class MainUI(QtWidgets.QMainWindow):
