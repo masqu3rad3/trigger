@@ -36,11 +36,14 @@ def undo(func):
     def _undofunc(*args, **kwargs):
         cmds.undoInfo(ock=True)
         try:
-            return func(*args, **kwargs)
+            result = func(*args, **kwargs)
         except Exception as exc:
             cmds.undoInfo(cck=True)
             raise exc
-
+        finally:
+            # after calling the func, end the undo chunk and undo
+            cmds.undoInfo(cck=True)
+            return result
     return _undofunc
 
 

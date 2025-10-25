@@ -1,7 +1,5 @@
 from maya import cmds
 
-# from trigger.ui.Qt import QtWidgets
-# from PySide2 import QtWidgets, QtCore
 from trigger.ui.Qt import QtWidgets
 from trigger.core.decorators import keepselection, undo
 from trigger.library.icons import Icon
