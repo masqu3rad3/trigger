@@ -52,7 +52,6 @@ class Selection_sets(ActionCore):
 
     def action(self):
         """Mandatory Method - Execute Action"""
-
         for definition in self.setDefinitions:
             # if the set exists use it
             selection.add_to_set(definition["members"], definition["name"], force=True)

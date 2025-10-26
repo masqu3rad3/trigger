@@ -219,6 +219,17 @@ class Shapes(ActionCore):
             )
             cmds.dgeval("%s.worldSpace" % rig_shape)
 
+            # apply the color if there is an override in the imported shape
+            if cmds.getAttr("%s.overrideEnabled" % curve_shape):
+                cmds.setAttr(f"{rig_shape}.overrideEnabled", 1)
+
+                override_color = cmds.getAttr(f"{curve_shape}.overrideColor")
+                override_rgb_color = cmds.getAttr(f"{curve_shape}.overrideColorRGB")
+                mode = cmds.getAttr(f"{curve_shape}.overrideRGBColors")
+                cmds.setAttr(f"{curve_shape}.overrideRGBColors", mode)
+                cmds.setAttr(f"{rig_shape}.overrideColor", override_color)
+                cmds.setAttr(f"{rig_shape}.overrideColorRGB", *override_rgb_color[0])
+
         # oddly, it requires a viewport refresh before disconnecting (or deleting) the replacement shapes
         cmds.refresh()
         cmds.delete("replaceShapes_grp")

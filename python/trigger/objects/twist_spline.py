@@ -271,10 +271,10 @@ class TwistSpline(object):
                 )
                 _cont_curve_name = cont_curve.name  # workaround to save some lines
             else:
-                # cont_curve = cmds.spaceLocator(name="lockPoint_%s%i" % (name, jnt))[0]
                 _cont_curve_name = cmds.spaceLocator(
                     name=naming.parse([name, jnt, "lockPoint"], suffix="loc")
                 )[0]
+                cmds.hide(_cont_curve_name)
             functions.align_to_alter(_cont_curve_name, cont_joints[jnt], mode=2)
             cont_curve_ore = functions.create_offset_group(_cont_curve_name, "ORE")
             cmds.parentConstraint(

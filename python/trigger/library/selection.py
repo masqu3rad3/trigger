@@ -1,5 +1,7 @@
 """Functions, checks and queries for selection dependant tasks"""
 from maya import cmds
+
+from trigger.core.decorators import keepselection
 from trigger.library import functions
 
 
@@ -97,7 +99,7 @@ def validate(
         return False, "The maximum selection is %s" % maximum
     return selected, ""
 
-
+@keepselection
 def add_to_set(members, set_name, force=True):
     """
     Adds the given members to a selection set. Returns the set name
@@ -112,12 +114,13 @@ def add_to_set(members, set_name, force=True):
     Returns: (String) name of the used set.
 
     """
+    cmds.select(clear=True)
     if cmds.objExists(set_name):
         if cmds.objectType(set_name) == "objectSet":
             set_name = set_name
         else:
             if not force:
-                raise Exception("%s is not a unique node name in the scene")
+                raise Exception(f"{set_name} is not a unique node name in the scene")
             set_name = cmds.sets(name=set_name)
     else:
         set_name = cmds.sets(name=set_name)
