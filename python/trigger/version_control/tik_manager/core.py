@@ -42,8 +42,10 @@ class VCS(object):
         """Build the session header."""
         # add all display widgets to the layout
         tik = tik_manager4.initialize("trigger")
-        project_setter = project_mcv.TikProjectLayout(tik)
-        layout.addLayout(project_setter)
+        # project_setter = project_mcv.TikProjectLayout(tik)
+        project_setter = project_mcv.TikProjectWidget(tik)
+        # layout.addLayout(project_setter)
+        layout.addWidget(project_setter)
         buttons_lay = QtWidgets.QHBoxLayout()
         buttons_lay.setSpacing(5)
         tik_main_btn = TikIconButton(
@@ -63,7 +65,7 @@ class VCS(object):
         buttons_lay.addWidget(tik_publish_btn)
 
         # insert the tik button into the the beginning of project_setter layout
-        project_setter.insertLayout(0, buttons_lay)
+        project_setter.main_layout.insertLayout(0, buttons_lay)
 
         layout.addWidget(self.display_widgets.resolved_text)
         self.update_info()
